@@ -16,12 +16,14 @@ import { type Id } from "@advantis/convex/dataModel";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useMutation, useQuery } from "convex/react";
 import {
+  AlertTriangle,
   BookOpen,
   Calendar,
   CalendarPlus,
   Clock,
   FolderOpen,
   LayoutDashboard,
+  Lightbulb,
   Megaphone,
   MessageSquare,
   Plane,
@@ -32,6 +34,7 @@ import {
   UploadCloud,
   UserRoundSearch,
   Users,
+  Wrench,
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -40,6 +43,7 @@ import posthog from "posthog-js";
 import { accessibleGuidebooks, guidebookTitle } from "@/components/guidebooks/registry";
 import {
   useCurrentUser,
+  useHasCapability,
   useHasApplicantAccess,
   useIsManager,
 } from "@/components/providers/current-user";
@@ -116,6 +120,8 @@ export function CommandPalette() {
   const router = useRouter();
   const isManager = useIsManager();
   const hasApplicantAccess = useHasApplicantAccess();
+  const hasFilesAccess = useHasCapability("access_files");
+  const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
   const user = useCurrentUser();
   const guidebooks = accessibleGuidebooks(user);
   const keyboardInset = useKeyboardInset();
@@ -198,14 +204,16 @@ export function CommandPalette() {
     const all = [
       { href: "/", label: tNav("dashboard"), icon: LayoutDashboard },
       { href: "/calendar", label: tNav("calendar"), icon: Calendar },
-      { href: "/clockodo", label: tNav("absences"), icon: Plane },
+      ...(user.clockodoUserId || hasClockodoTeamAccess
+        ? [{ href: "/clockodo", label: tNav("absences"), icon: Plane }]
+        : []),
       {
         href: "/announcements",
         label: tNav("announcements"),
         icon: Megaphone,
       },
       { href: "/chat", label: tNav("chat"), icon: MessageSquare },
-      { href: "/files", label: tNav("files"), icon: FolderOpen },
+      ...(hasFilesAccess ? [{ href: "/files", label: tNav("files"), icon: FolderOpen }] : []),
       {
         href: "/guidebooks",
         label: tNav("guidebooks"),
@@ -213,6 +221,12 @@ export function CommandPalette() {
         hidden: guidebooks.length === 0,
       },
       { href: "/directory", label: tNav("directory"), icon: Users },
+      { href: "/suggestions", label: tNav("suggestions"), icon: Lightbulb },
+      { href: "/it-tickets", label: tNav("itTickets"), icon: Wrench },
+      { href: "/fehlermanagement", label: tNav("errorManagement"), icon: AlertTriangle },
+      ...(hasApplicantAccess
+        ? [{ href: "/hr", label: tNav("applicants"), icon: UserRoundSearch }]
+        : []),
       {
         href: "/admin",
         label: tNav("admin"),
@@ -222,7 +236,15 @@ export function CommandPalette() {
       { href: "/settings", label: tNav("settings"), icon: Settings },
     ];
     return all.filter((p) => !p.managerOnly || isManager).filter((p) => !p.hidden);
-  }, [tNav, isManager, guidebooks.length]);
+  }, [
+    tNav,
+    isManager,
+    hasApplicantAccess,
+    hasClockodoTeamAccess,
+    hasFilesAccess,
+    guidebooks.length,
+    user.clockodoUserId,
+  ]);
 
   const actions = useMemo(
     () =>
@@ -246,9 +268,10 @@ export function CommandPalette() {
           label: t("actionUpload"),
           icon: UploadCloud,
           href: "/files",
+          filesOnly: true,
         },
-      ].filter((a) => !a.managerOnly || isManager),
-    [t, isManager],
+      ].filter((a) => (!a.managerOnly || isManager) && (!a.filesOnly || hasFilesAccess)),
+    [t, isManager, hasFilesAccess],
   );
 
   const items: Item[] = useMemo(() => {
@@ -343,33 +366,37 @@ export function CommandPalette() {
         run: () => void openDm(u._id),
       });
     }
-    for (const a of announcements ?? []) {
-      if (a.title.toLowerCase().includes(q)) {
-        list.push({
-          id: `ann:${a._id}`,
-          group: t("announcements"),
-          label: a.title,
-          sublabel: a.authorName,
-          icon: Megaphone,
-          href: "/announcements",
-          run: () => go("/announcements"),
-        });
-      }
+    for (const a of (announcements ?? [])
+      .filter((a) => a.title.toLowerCase().includes(q))
+      .slice(0, 8)) {
+      const href = `/announcements?id=${encodeURIComponent(a._id)}`;
+      list.push({
+        id: `ann:${a._id}`,
+        group: t("announcements"),
+        label: a.title,
+        sublabel: a.authorName,
+        icon: Megaphone,
+        href,
+        run: () => go(href),
+      });
     }
     if (hasApplicantAccess) {
-      for (const ap of applicants ?? []) {
-        const haystack = [ap.name, ap.email, ap.position].filter(Boolean).join(" ").toLowerCase();
-        if (haystack.includes(q)) {
-          list.push({
-            id: `applicant:${ap._id}`,
-            group: t("applicants"),
-            label: ap.name,
-            sublabel: ap.position || ap.email,
-            icon: UserRoundSearch,
-            href: `/hr/${ap._id}/uebersicht`,
-            run: () => go(`/hr/${ap._id}/uebersicht`),
-          });
-        }
+      const matchingApplicants = (applicants ?? [])
+        .filter((ap) =>
+          [ap.name, ap.email, ap.position].filter(Boolean).join(" ").toLowerCase().includes(q),
+        )
+        .slice(0, 8);
+      for (const ap of matchingApplicants) {
+        const href = `/hr/${ap._id}/uebersicht`;
+        list.push({
+          id: `applicant:${ap._id}`,
+          group: t("applicants"),
+          label: ap.name,
+          sublabel: ap.position || ap.email,
+          icon: UserRoundSearch,
+          href,
+          run: () => go(href),
+        });
       }
     }
 
@@ -472,7 +499,7 @@ export function CommandPalette() {
                     inputRef.current?.focus();
                   }}
                   aria-label={t("clearSearch")}
-                  className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 >
                   <X className="size-3.5" />
                 </button>
@@ -502,7 +529,7 @@ export function CommandPalette() {
                           onClick={() => runItem(it)}
                           onMouseMove={() => setActive(idx)}
                           className={cn(
-                            "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors",
+                            "flex min-h-11 w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors",
                             active === idx
                               ? "bg-accent text-foreground"
                               : "text-foreground/90 hover:bg-accent/60",

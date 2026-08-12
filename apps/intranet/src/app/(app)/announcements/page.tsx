@@ -87,7 +87,7 @@ function CollapsibleBody({ html, title }: { html: string; title: string }) {
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-2 flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          className="mt-1 flex min-h-10 items-center gap-1 text-xs font-medium text-primary hover:underline"
         >
           {expanded ? (
             <>
@@ -398,7 +398,7 @@ function AnnouncementCard({
           trigger={
             <button
               type="button"
-              className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="flex size-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-7"
               aria-label={t("actions")}
             >
               <MoreVertical className="h-4 w-4" />
@@ -538,7 +538,7 @@ export default function AnnouncementsPage() {
                 type="button"
                 onClick={() => setFilter(f)}
                 className={cn(
-                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                  "min-h-10 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors md:min-h-0",
                   filter === f
                     ? "border-transparent bg-foreground text-background"
                     : "border-border text-muted-foreground hover:bg-accent",
@@ -551,7 +551,7 @@ export default function AnnouncementsPage() {
           </div>
           {existingCategories.length > 0 && (
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
+              <SelectTrigger className="h-10 w-auto gap-1.5 rounded-full text-xs md:h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -565,7 +565,7 @@ export default function AnnouncementsPage() {
             </Select>
           )}
           <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
-            <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
+            <SelectTrigger className="h-10 w-auto gap-1.5 rounded-full text-xs md:h-8">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

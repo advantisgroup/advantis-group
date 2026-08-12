@@ -27,11 +27,11 @@ const buttonVariants = cva(
       size: {
         // A deliberate range of densities — compact through thick — so toolbars
         // and primary CTAs can sit at different visual weights, Vercel-style.
-        default: "h-9 px-4 text-sm [&_svg]:size-4",
-        sm: "h-8 rounded-md px-3 text-xs [&_svg]:size-3.5",
+        default: "h-10 px-4 text-sm [&_svg]:size-4 md:h-9",
+        sm: "h-10 rounded-md px-3 text-xs [&_svg]:size-3.5 md:h-8",
         lg: "h-11 rounded-md px-6 text-sm [&_svg]:size-4",
-        icon: "h-9 w-9 [&_svg]:size-4",
-        "icon-sm": "h-8 w-8 [&_svg]:size-4",
+        icon: "h-10 w-10 [&_svg]:size-4 md:h-9 md:w-9",
+        "icon-sm": "h-10 w-10 [&_svg]:size-4 md:h-8 md:w-8",
       },
     },
     defaultVariants: {

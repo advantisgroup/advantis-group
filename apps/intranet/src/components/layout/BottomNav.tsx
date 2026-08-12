@@ -46,7 +46,7 @@ export function BottomNav() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] print:hidden md:hidden">
-      <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border/70 bg-background/90 p-1 shadow-lg shadow-black/30 backdrop-blur-xl [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex max-w-full items-center gap-1.5 overflow-x-auto rounded-full border border-border/70 bg-background/90 p-1.5 shadow-lg shadow-black/30 backdrop-blur-xl [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {hasTabs && (
           <>
             {tabs?.map((tab) => {
@@ -58,7 +58,7 @@ export function BottomNav() {
                   href={tab.href}
                   aria-label={tab.label}
                   className={cn(
-                    "relative flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
+                    "relative flex size-10 shrink-0 items-center justify-center rounded-full transition-colors",
                     active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -94,7 +94,7 @@ export function BottomNav() {
           }}
           aria-label={tc("search")}
           className={cn(
-            "flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground",
+            "flex h-10 shrink-0 items-center gap-2 rounded-full px-4 text-sm text-muted-foreground transition-colors hover:text-foreground",
             !hasTabs && "min-w-[10rem]",
           )}
         >
@@ -109,7 +109,7 @@ export function BottomNav() {
             setOpenMobile(true);
           }}
           aria-label={t("more")}
-          className="relative flex size-9 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent"
+          className="relative flex size-10 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent"
         >
           <Menu className="size-5" />
           {unread > 0 && (

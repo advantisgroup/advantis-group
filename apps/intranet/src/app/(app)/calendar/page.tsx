@@ -47,7 +47,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -747,13 +746,13 @@ export default function CalendarPage() {
               onChange={(e) => {
                 if (e.target.value) setCursor(new Date(`${e.target.value}T12:00`));
               }}
-              className="h-8 w-[8.75rem] text-xs"
+              className="hidden h-10 w-[8.75rem] text-xs sm:flex md:h-8"
             />
           </div>
         </div>
 
         {/* View switcher */}
-        <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+        <div className="flex w-full items-center gap-1 rounded-lg border border-border bg-card p-1 sm:w-auto">
           {(
             [
               { key: "month", label: t("viewMonth"), icon: CalendarDays },
@@ -769,7 +768,7 @@ export default function CalendarPage() {
                 onClick={() => setView(v.key)}
                 aria-pressed={view === v.key}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors",
+                  "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors sm:min-h-0 sm:flex-none",
                   view === v.key
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -798,7 +797,7 @@ export default function CalendarPage() {
               aria-pressed={!hidden}
               onClick={() => toggleKind(kind)}
               className={cn(
-                "flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 font-medium transition-colors hover:bg-accent",
+                "flex min-h-10 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 font-medium transition-colors hover:bg-accent md:min-h-0 md:px-2.5 md:py-1",
                 hidden ? "text-muted-foreground/50 line-through" : "text-muted-foreground",
               )}
             >
@@ -818,7 +817,7 @@ export default function CalendarPage() {
           aria-pressed={onlyMyAbsences}
           onClick={() => setOnlyMyAbsences((v) => !v)}
           className={cn(
-            "rounded-full border px-2.5 py-1 font-medium transition-colors",
+            "min-h-10 rounded-full border px-3 py-1.5 font-medium transition-colors md:min-h-0 md:px-2.5 md:py-1",
             onlyMyAbsences
               ? "border-transparent bg-foreground text-background"
               : "border-border text-muted-foreground hover:bg-accent",
@@ -828,7 +827,7 @@ export default function CalendarPage() {
         </button>
         {departments.length > 0 && (
           <Select value={deptFilter} onValueChange={setDeptFilter}>
-            <SelectTrigger className="h-7 w-auto gap-1.5 rounded-full border-border px-2.5 text-xs">
+            <SelectTrigger className="h-10 w-auto gap-1.5 rounded-full border-border px-3 text-xs md:h-7 md:px-2.5">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

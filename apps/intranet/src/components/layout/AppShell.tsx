@@ -118,14 +118,52 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // `useSmoothScroll` for why this can't be marketing's `<ReactLenis root>`).
   const lenisRef = useSmoothScroll(mainRef, mainContentRef, !immersive);
 
-  // The main pane is the scroll container (not the window), so reset it to the
-  // top on navigation — otherwise a new page would open mid-scroll. When Lenis
-  // owns the container it has to do the reset: a bare `scrollTo` leaves its
-  // animated position pointing at the old offset, which it then eases back to.
+  // The main pane is the scroll container (not the window), so browser history
+  // cannot restore its position for us. Keep one position per route for this
+  // session: returning to a long feed, directory, or report should resume
+  // where the person left off, while a first visit still starts at the top.
   useEffect(() => {
-    if (lenisRef.current) lenisRef.current.scrollTo(0, { immediate: true });
-    else mainRef.current?.scrollTo({ top: 0 });
-  }, [pathname, lenisRef]);
+    const main = mainRef.current;
+    if (!main || immersive) return;
+    const storageKey = `intranet:scroll:${pathname}`;
+    let target = 0;
+
+    try {
+      const saved = sessionStorage.getItem(storageKey);
+      if (saved !== null && !window.location.hash) target = Number.parseInt(saved, 10) || 0;
+    } catch {
+      // Private browsing or a full storage quota should not affect navigation.
+    }
+
+    const restore = () => {
+      if (lenisRef.current) lenisRef.current.scrollTo(target, { immediate: true });
+      else main.scrollTo({ top: target });
+    };
+    // Let the new route commit before restoring, so a cached page can restore
+    // its full scroll range instead of being clamped to the outgoing page.
+    const frame = requestAnimationFrame(restore);
+    const content = mainContentRef.current;
+    let observer: ResizeObserver | undefined;
+    if (target > 0 && content) {
+      observer = new ResizeObserver(() => {
+        if (main.scrollHeight - main.clientHeight >= target) {
+          restore();
+          observer?.disconnect();
+        }
+      });
+      observer.observe(content);
+    }
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+      try {
+        sessionStorage.setItem(storageKey, String(main.scrollTop));
+      } catch {
+        // See the read guard above.
+      }
+    };
+  }, [pathname, immersive, lenisRef]);
 
   useEffect(() => {
     const hash = window.location.hash.slice(1);

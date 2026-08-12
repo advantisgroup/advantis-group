@@ -180,7 +180,7 @@ export function MobilePageHeaderActions() {
           disabled={action.disabled}
           onClick={action.onClick}
           data-tour={action.tourTarget}
-          className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+          className="flex size-10 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
         >
           <action.icon className="size-4" />
         </button>

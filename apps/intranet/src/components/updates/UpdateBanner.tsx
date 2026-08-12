@@ -121,7 +121,7 @@ export function UpdateBanner() {
           e.stopPropagation();
           void dismiss({ updateId: top._id });
         }}
-        className="absolute right-2 shrink-0 p-1 opacity-70 transition-opacity hover:opacity-100 md:right-4"
+        className="absolute right-1 flex size-10 shrink-0 items-center justify-center opacity-70 transition-opacity hover:opacity-100 md:right-3 md:size-8"
       >
         <X className="size-4" />
       </button>
