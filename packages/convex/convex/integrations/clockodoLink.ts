@@ -1,6 +1,6 @@
+import { sandboxedMutation as mutation } from "../lib/sandbox";
 import { v } from "convex/values";
 
-import { mutation } from "../_generated/server";
 import { requireCapability, requireUser } from "../lib/auth";
 import { toClockodoIdString } from "../lib/clockodoId";
 import { appError } from "../activity/lib/errors";

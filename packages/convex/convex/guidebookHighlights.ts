@@ -1,6 +1,7 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { v } from "convex/values";
 
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 import { requireCapability, requireUser } from "./lib/auth";
 
 /** Currently highlighted guidebook slugs, most recently featured first. */

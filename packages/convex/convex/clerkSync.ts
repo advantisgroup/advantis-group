@@ -1,6 +1,5 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
-
-import { mutation } from "./_generated/server";
 
 /**
  * Server-key gated mutations invoked by the Elysia API's Clerk webhook handler

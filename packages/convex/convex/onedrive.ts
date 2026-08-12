@@ -1,13 +1,16 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
-import { internalAction, mutation, query } from "./_generated/server";
+import { internalAction, query } from "./_generated/server";
 import {
   effectiveCustomRoleIds,
+  effectiveRole,
   getUserByClerkId,
   hasApplicantAccess,
+  isSandboxed,
   MANAGER_ROLES,
   requireCapability,
   requireUser,
@@ -95,26 +98,30 @@ export const apiUserContext = query({
     assertServerKey(serverKey);
     const user = await getUserByClerkId(ctx, clerkUserId);
     if (!user || user.status !== "active") return null;
-    const customRoles = await Promise.all(
-      effectiveCustomRoleIds(user).map((customRoleId) => ctx.db.get(customRoleId)),
-    );
+    const sandboxed = isSandboxed(user);
+    const role = effectiveRole(user);
+    const customRoles = sandboxed
+      ? []
+      : await Promise.all(
+          effectiveCustomRoleIds(user).map((customRoleId) => ctx.db.get(customRoleId)),
+        );
     return {
       userId: user._id,
-      role: user.role,
+      role,
       name: displayName(user),
       email: user.email,
-      gfAccess: user.gfAccess ?? false,
+      gfAccess: sandboxed ? false : (user.gfAccess ?? false),
       uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
       canAccessFiles:
-        MANAGER_ROLES.includes(user.role) ||
+        MANAGER_ROLES.includes(role) ||
         customRoles.some((customRole) => customRole?.capabilities.includes("access_files")),
       // Indirect permission: anyone who can manage wikis/HR gets write access
       // to that one OneDrive subtree (Team/Wiki, Team/HR) even without full
       // file-browser access — see apps/api's `access.ts` for the scoping.
       canWriteWiki:
-        MANAGER_ROLES.includes(user.role) ||
+        MANAGER_ROLES.includes(role) ||
         customRoles.some((customRole) => customRole?.capabilities.includes("manage_guidebooks")),
-      canWriteHR: hasApplicantAccess(user),
+      canWriteHR: !sandboxed && hasApplicantAccess(user),
     };
   },
 });

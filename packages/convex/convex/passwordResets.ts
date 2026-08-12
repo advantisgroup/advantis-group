@@ -1,12 +1,11 @@
+import { sandboxedAction as action, sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import {
-  action,
   internalMutation,
   internalQuery,
-  mutation,
   query,
   type MutationCtx,
   type QueryCtx,
@@ -20,7 +19,13 @@ import {
 } from "./lib/adminVerification";
 import { hashPassword, randomToken, sha256hex } from "./activity/lib/crypto";
 import { trackEvent } from "./lib/analytics";
-import { getCurrentUser, isApplicantAreaMember, requireAdmin, requireUser } from "./lib/auth";
+import {
+  effectiveRole,
+  getCurrentUser,
+  isApplicantAreaMember,
+  requireAdmin,
+  requireUser,
+} from "./lib/auth";
 import { notifyUsers } from "./lib/notify";
 import { passwordResetScopeValidator } from "./schema";
 
@@ -191,7 +196,10 @@ async function resolveTarget(
       .unique();
     // A vault password only exists for someone who belongs to the area at
     // all — anyone else is "no such account" as far as this flow goes.
-    if (!user || !(opts.bypassFilters || (user.status === "active" && isApplicantAreaMember(user)))) {
+    if (
+      !user ||
+      !(opts.bypassFilters || (user.status === "active" && isApplicantAreaMember(user)))
+    ) {
       return { targetEmail };
     }
     return { targetEmail, targetUserId: user._id, sentToEmail: user.email };
@@ -515,7 +523,8 @@ async function toAdminRow(
     id: request._id,
     scope: request.scope,
     targetEmail: request.targetEmail,
-    targetEmailDisplay: request.scope === "hr" ? request.targetEmail : maskEmail(request.targetEmail),
+    targetEmailDisplay:
+      request.scope === "hr" ? request.targetEmail : maskEmail(request.targetEmail),
     targetName: userLabel(targetUser) ?? targetLogin?.name ?? null,
     targetCompanyName: company?.name ?? null,
     targetExists,
@@ -578,7 +587,7 @@ export const pendingCount = query({
   args: {},
   handler: async (ctx): Promise<number> => {
     const user = await getCurrentUser(ctx);
-    if (!user || user.role !== "admin") return 0;
+    if (!user || effectiveRole(user) !== "admin") return 0;
     const pending = await ctx.db
       .query("passwordResetRequests")
       .withIndex("by_status_createdAt", (q) => q.eq("status", "pending"))
@@ -645,10 +654,7 @@ export const submitVerificationCode = mutation({
  * own kind of damage. */
 export const dismissRequest = mutation({
   args: { requestId: v.id("passwordResetRequests") },
-  handler: async (
-    ctx,
-    { requestId },
-  ): Promise<{ ok: true } | VerificationHint> => {
+  handler: async (ctx, { requestId }): Promise<{ ok: true } | VerificationHint> => {
     const admin = await requireAdmin(ctx);
     const request = await ctx.db.get(requestId);
     if (!request || request.status !== "pending") {
@@ -967,7 +973,9 @@ export const issueResetLink = action({
     }
 
     const resolvedSendTo: SendTo =
-      sendTo === "intranet" && prepared.sentToEmail === prepared.intranetEmail ? "intranet" : "feature";
+      sendTo === "intranet" && prepared.sentToEmail === prepared.intranetEmail
+        ? "intranet"
+        : "feature";
     const token = randomToken();
     const expiresAt = Date.now() + TOKEN_TTL_MS;
     await ctx.runMutation(internal.passwordResets.storeIssuedToken, {
@@ -997,7 +1005,8 @@ export const issueResetLink = action({
     // public) address — the same display rule the admin queue's list uses.
     return {
       ok: true,
-      sentTo: resolvedSendTo === "intranet" ? prepared.sentToEmail : maskEmail(prepared.sentToEmail),
+      sentTo:
+        resolvedSendTo === "intranet" ? prepared.sentToEmail : maskEmail(prepared.sentToEmail),
     };
   },
 });
@@ -1198,9 +1207,7 @@ export const purgeStale = internalMutation({
     // Admin verification codes are one small row per admin at most, so a full
     // scan is cheap — there's no index to range-query expiresAt by.
     const codes = await ctx.db.query("adminVerificationCodes").collect();
-    await Promise.all(
-      codes.filter((c) => c.expiresAt <= now).map((c) => ctx.db.delete(c._id)),
-    );
+    await Promise.all(codes.filter((c) => c.expiresAt <= now).map((c) => ctx.db.delete(c._id)));
 
     const tokenCutoff = now - 7 * 24 * 60 * 60 * 1000;
     const tokens = await ctx.db

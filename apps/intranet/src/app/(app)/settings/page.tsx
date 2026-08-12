@@ -1,23 +1,30 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useClerk } from "@clerk/nextjs";
 import { useAction, useMutation, useQuery } from "convex/react";
 import {
+  Bell,
   Camera,
   Check,
   Circle,
+  CircleHelp,
   ExternalLink,
+  KeyRound,
   Link2,
   Loader2,
   RotateCcw,
   RotateCw,
   ShieldCheck,
   SkipForward,
+  SlidersHorizontal,
   Unlink,
+  UserRound,
+  Waypoints,
+  type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -68,6 +75,81 @@ function CheckpointStatusIcon({ status }: { status: CheckpointStatus }) {
   if (status === "skipped") return <SkipForward className="size-3.5 text-muted-foreground" />;
   if (status === "active") return <Circle className="size-3.5 fill-blue-500 text-blue-500" />;
   return <Circle className="size-3.5 text-muted-foreground/40" />;
+}
+
+type SettingsSectionId = "account" | "workspace" | "security" | "notifications" | "help";
+
+function SettingsNavigation() {
+  const t = useTranslations("Settings");
+  const sections: {
+    id: SettingsSectionId;
+    icon: LucideIcon;
+    title: string;
+    hint: string;
+  }[] = [
+    { id: "account", icon: UserRound, title: t("account"), hint: t("accountHint") },
+    { id: "workspace", icon: SlidersHorizontal, title: t("workspace"), hint: t("workspaceHint") },
+    { id: "security", icon: KeyRound, title: t("passkeys"), hint: t("passkeysHint") },
+    { id: "notifications", icon: Bell, title: t("notifications"), hint: t("notificationsHint") },
+    { id: "help", icon: CircleHelp, title: t("help"), hint: t("helpHint") },
+  ];
+
+  return (
+    <Card>
+      <CardContent className="p-3">
+        <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {t("jumpTo")}
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {sections.map(({ id, icon: Icon, title, hint }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })}
+              className="flex min-w-0 items-center gap-3 rounded-lg border border-border/70 px-3 py-2.5 text-left transition-colors hover:bg-accent"
+            >
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <Icon className="size-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold">{title}</span>
+                <span className="block truncate text-xs text-muted-foreground">{hint}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SettingsSection({
+  id,
+  icon: Icon,
+  title,
+  hint,
+  children,
+}: {
+  id: SettingsSectionId;
+  icon: LucideIcon;
+  title: string;
+  hint: string;
+  children: ReactNode;
+}) {
+  return (
+    <section id={id} className="scroll-mt-24 space-y-3">
+      <div className="flex items-start gap-3 px-1">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+          <Icon className="size-4" />
+        </span>
+        <div>
+          <h2 className="font-display text-lg font-bold tracking-tight">{title}</h2>
+          <p className="text-sm text-muted-foreground">{hint}</p>
+        </div>
+      </div>
+      {children}
+    </section>
+  );
 }
 
 function AppPreferencesCard() {
@@ -347,200 +429,214 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeaderBar title={t("title")} tourCheckpoint="settings" />
-      {/* Personal identity hero */}
-      <Card className="overflow-hidden" data-tour="tour-settings-profile">
-        <div className="app-atmosphere flex items-center gap-4 border-b border-border/60 px-5 py-5">
-          <label className="group relative cursor-pointer">
-            <Avatar className="size-16 ring-2 ring-background">
-              {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-              <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
-                {initials(user.name, user.email)}
-              </AvatarFallback>
-            </Avatar>
-            <span className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors group-hover:bg-accent">
-              <Camera className="size-3.5" />
-            </span>
-            <span className="sr-only">{t("uploadAvatar")}</span>
-            <input type="file" accept="image/*" className="hidden" onChange={onAvatar} />
-          </label>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-              {t("account")}
-            </p>
-            <h2 className="truncate font-display text-xl font-bold tracking-tight">{user.name}</h2>
-            <p className="truncate text-sm text-muted-foreground">{user.email}</p>
-            <Badge variant="muted" className="mt-1.5">
-              {roleLabel(user, tRoles)}
-            </Badge>
-          </div>
-        </div>
+      <SettingsNavigation />
 
-        <CardContent className="space-y-4 pt-5">
-          {completePct < 100 && (
-            <div className="space-y-1.5 rounded-lg border border-border/70 bg-muted/30 p-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium">{t("completeness", { pct: completePct })}</span>
-                <span className="tabular-nums text-muted-foreground">{completePct}%</span>
-              </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-primary transition-[width]"
-                  style={{ width: `${completePct}%` }}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">{t("completenessHint")}</p>
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold">{t("personalInfo")}</p>
-            <span className="h-px flex-1 bg-border/60" />
-          </div>
-          <p className="-mt-2 text-xs text-muted-foreground">{t("accountHint")}</p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label>{t("firstName")}</Label>
-              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>{t("lastName")}</Label>
-              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+      <SettingsSection id="account" icon={UserRound} title={t("account")} hint={t("accountHint")}>
+        <Card className="overflow-hidden" data-tour="tour-settings-profile">
+          <div className="app-atmosphere flex items-center gap-4 border-b border-border/60 px-5 py-5">
+            <label className="group relative cursor-pointer">
+              <Avatar className="size-16 ring-2 ring-background">
+                {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+                  {initials(user.name, user.email)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors group-hover:bg-accent">
+                <Camera className="size-3.5" />
+              </span>
+              <span className="sr-only">{t("uploadAvatar")}</span>
+              <input type="file" accept="image/*" className="hidden" onChange={onAvatar} />
+            </label>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                {t("account")}
+              </p>
+              <h2 className="truncate font-display text-xl font-bold tracking-tight">
+                {user.name}
+              </h2>
+              <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+              <Badge variant="muted" className="mt-1.5">
+                {roleLabel(user, tRoles)}
+              </Badge>
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label>{t("jobTitle")}</Label>
-            <Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label>{t("department")}</Label>
-              <Input value={department} onChange={(e) => setDepartment(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>{t("phone")}</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label>{t("dateOfBirth")}</Label>
-            <div className="flex items-center gap-3">
-              <Input
-                type="date"
-                className="max-w-48"
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-              />
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={showBirthdayPublicly}
-                  onToggle={() => setShowBirthdayPublicly((v) => !v)}
-                  label={t("showBirthdayPublicly")}
-                />
-                <span className="text-sm text-muted-foreground">{t("showBirthdayPublicly")}</span>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">{t("dateOfBirthHint")}</p>
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <Button variant="outline" size="sm" onClick={() => clerk.openUserProfile()}>
-              <ShieldCheck className="size-3.5" />
-              {t("manageAccount")}
-              <ExternalLink className="size-3" />
-            </Button>
-            <Button onClick={save} disabled={busy}>
-              {tc("save")}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardContent className="flex items-center justify-between gap-3 p-5">
-          <div>
-            <p className="font-semibold tracking-tight">{t("preferences")}</p>
-            <p className="text-sm text-muted-foreground">
-              {t("language")} &amp; {t("theme")}
-            </p>
-          </div>
-          <div className="flex items-center gap-1.5 rounded-lg border border-border bg-background p-1">
-            <SettingsMenu />
-          </div>
-        </CardContent>
-      </Card>
-
-      <AppPreferencesCard />
-
-      <PasskeySettingsCard />
-
-      <ConnectionsCard />
-
-      {/* Notification preferences (same controls as the notifications tab) */}
-      <div id="notifications" className="scroll-mt-24" />
-      <Card>
-        <CardContent className="space-y-3 p-5">
-          <div>
-            <p className="font-semibold tracking-tight">{tn("preferences")}</p>
-            <p className="text-sm text-muted-foreground">{tn("preferencesHint")}</p>
-          </div>
-          <NotificationPreferences />
-        </CardContent>
-      </Card>
-
-      {/* Updates email consent — externals only; internal employees are
-          always eligible and get no toggle (see UpdatesEmailConsent). */}
-      {user.external && (
-        <Card>
-          <CardContent className="p-5">
-            <UpdatesEmailConsent />
-          </CardContent>
-        </Card>
-      )}
-
-      <OnboardingRestartCard />
-
-      {/* Onboarding Tour */}
-      {tourState && (
-        <Card>
           <CardContent className="space-y-4 pt-5">
+            {completePct < 100 && (
+              <div className="space-y-1.5 rounded-lg border border-border/70 bg-muted/30 p-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium">{t("completeness", { pct: completePct })}</span>
+                  <span className="tabular-nums text-muted-foreground">{completePct}%</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary transition-[width]"
+                    style={{ width: `${completePct}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">{t("completenessHint")}</p>
+              </div>
+            )}
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold">{tt("chipTitle")}</p>
+              <p className="text-sm font-semibold">{t("personalInfo")}</p>
               <span className="h-px flex-1 bg-border/60" />
             </div>
-            <p className="text-xs text-muted-foreground">{tt("settingsHint")}</p>
-
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={redoTour}>
-              <RotateCw className="size-3.5" />
-              {tt("restartTour")}
-            </Button>
-
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {visibleCheckpoints.map((cp) => {
-                const cpState = tourState.checkpoints[cp.id];
-                const status: CheckpointStatus = cpState?.status ?? "pending";
-                return (
-                  <div
-                    key={cp.id}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-border/70 px-3 py-2"
-                  >
-                    <div className="flex min-w-0 items-center gap-2">
-                      <CheckpointStatusIcon status={status} />
-                      <span className="truncate text-sm">{tt(`checkpoints.${cp.id}`)}</span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 shrink-0 gap-1 px-2 text-xs"
-                      onClick={() => redoCheckpoint(cp.id)}
-                    >
-                      <RotateCcw className="size-3" />
-                      {tt("redo")}
-                    </Button>
-                  </div>
-                );
-              })}
+            <p className="-mt-2 text-xs text-muted-foreground">{t("accountHint")}</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>{t("firstName")}</Label>
+                <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t("lastName")}</Label>
+                <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t("jobTitle")}</Label>
+              <Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>{t("department")}</Label>
+                <Input value={department} onChange={(e) => setDepartment(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t("phone")}</Label>
+                <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t("dateOfBirth")}</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  type="date"
+                  className="max-w-48"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                />
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={showBirthdayPublicly}
+                    onToggle={() => setShowBirthdayPublicly((v) => !v)}
+                    label={t("showBirthdayPublicly")}
+                  />
+                  <span className="text-sm text-muted-foreground">{t("showBirthdayPublicly")}</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">{t("dateOfBirthHint")}</p>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <Button variant="outline" size="sm" onClick={() => clerk.openUserProfile()}>
+                <ShieldCheck className="size-3.5" />
+                {t("manageAccount")}
+                <ExternalLink className="size-3" />
+              </Button>
+              <Button onClick={save} disabled={busy}>
+                {tc("save")}
+              </Button>
             </div>
           </CardContent>
         </Card>
-      )}
+      </SettingsSection>
+
+      <SettingsSection
+        id="workspace"
+        icon={SlidersHorizontal}
+        title={t("workspace")}
+        hint={t("workspaceHint")}
+      >
+        <Card>
+          <CardContent className="flex items-center justify-between gap-3 p-5">
+            <div>
+              <p className="font-semibold tracking-tight">{t("preferences")}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("language")} &amp; {t("theme")}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-lg border border-border bg-background p-1">
+              <SettingsMenu />
+            </div>
+          </CardContent>
+        </Card>
+        <AppPreferencesCard />
+        <ConnectionsCard />
+      </SettingsSection>
+
+      <SettingsSection id="security" icon={KeyRound} title={t("passkeys")} hint={t("passkeysHint")}>
+        <PasskeySettingsCard />
+      </SettingsSection>
+
+      <SettingsSection
+        id="notifications"
+        icon={Bell}
+        title={t("notifications")}
+        hint={t("notificationsHint")}
+      >
+        <Card>
+          <CardContent className="space-y-3 p-5">
+            <div>
+              <p className="font-semibold tracking-tight">{tn("preferences")}</p>
+              <p className="text-sm text-muted-foreground">{tn("preferencesHint")}</p>
+            </div>
+            <NotificationPreferences />
+          </CardContent>
+        </Card>
+        {user.external && (
+          <Card>
+            <CardContent className="p-5">
+              <UpdatesEmailConsent />
+            </CardContent>
+          </Card>
+        )}
+      </SettingsSection>
+
+      <SettingsSection id="help" icon={Waypoints} title={t("help")} hint={t("helpHint")}>
+        <OnboardingRestartCard />
+        {tourState && (
+          <Card>
+            <CardContent className="space-y-4 pt-5">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold">{tt("chipTitle")}</p>
+                <span className="h-px flex-1 bg-border/60" />
+              </div>
+              <p className="text-xs text-muted-foreground">{tt("settingsHint")}</p>
+
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={redoTour}>
+                <RotateCw className="size-3.5" />
+                {tt("restartTour")}
+              </Button>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {visibleCheckpoints.map((cp) => {
+                  const cpState = tourState.checkpoints[cp.id];
+                  const status: CheckpointStatus = cpState?.status ?? "pending";
+                  return (
+                    <div
+                      key={cp.id}
+                      className="flex items-center justify-between gap-2 rounded-lg border border-border/70 px-3 py-2"
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        <CheckpointStatusIcon status={status} />
+                        <span className="truncate text-sm">{tt(`checkpoints.${cp.id}`)}</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 shrink-0 gap-1 px-2 text-xs"
+                        onClick={() => redoCheckpoint(cp.id)}
+                      >
+                        <RotateCcw className="size-3" />
+                        {tt("redo")}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </SettingsSection>
 
       {/* Avatar crop preview */}
       <Dialog open={avatarPreview !== null} onOpenChange={(o) => !o && setAvatarPreview(null)}>

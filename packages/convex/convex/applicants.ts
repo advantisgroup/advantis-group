@@ -1,8 +1,9 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 import {
   ampelValidator,
   emailKategorieValidator,

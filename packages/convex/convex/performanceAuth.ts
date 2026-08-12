@@ -1,12 +1,11 @@
+import { sandboxedAction as action, sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import {
-  action,
   internalMutation,
   internalQuery,
-  mutation,
   query,
   type MutationCtx,
   type QueryCtx,

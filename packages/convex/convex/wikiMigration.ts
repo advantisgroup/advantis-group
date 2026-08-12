@@ -1,4 +1,5 @@
-import { mutation, query } from "./_generated/server";
+import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { query } from "./_generated/server";
 import { requireManager, requireUser } from "./lib/auth";
 
 /** Presence of a row means the one-time `guidebookPages` → `wikiEntries`

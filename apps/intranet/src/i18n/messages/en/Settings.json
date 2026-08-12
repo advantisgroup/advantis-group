@@ -1,6 +1,13 @@
 {
   "title": "Settings",
   "subtitle": "Manage your personal account and preferences",
+  "jumpTo": "Jump to",
+  "workspace": "Workspace",
+  "workspaceHint": "Appearance, app behavior, and connected services.",
+  "notifications": "Notifications",
+  "notificationsHint": "Choose what gets your attention.",
+  "help": "Help and onboarding",
+  "helpHint": "Restart the guided tour whenever you need it.",
   "account": "My account",
   "accountHint": "This information applies to you only and is visible to colleagues.",
   "personalInfo": "Personal information",

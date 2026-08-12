@@ -1,7 +1,8 @@
+import { sandboxedMutation as mutation } from "../lib/sandbox";
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
-import { query, mutation, internalMutation, internalQuery } from "../_generated/server";
+import { query, internalMutation, internalQuery } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { requireManager, requireAdmin } from "../lib/auth";
 import { appError } from "./lib/errors";

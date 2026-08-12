@@ -1,7 +1,8 @@
+import { sandboxedAction as action } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
-import { action, internalMutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
 import { createClerkInvitation, deleteClerkUser } from "./lib/clerk";
 

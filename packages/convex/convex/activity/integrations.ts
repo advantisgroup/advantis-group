@@ -1,6 +1,7 @@
 "use node";
 
-import { action } from "../_generated/server";
+import { sandboxedAction as action } from "../lib/sandbox";
+
 import type { ActionCtx } from "../_generated/server";
 import { api } from "../_generated/api";
 import { gatedInternalAction } from "../lib/featureGate";

@@ -1,10 +1,11 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx } from "./_generated/server";
-import { internalMutation, mutation, query } from "./_generated/server";
-import { requireAdmin, requireUser } from "./lib/auth";
+import { internalMutation, query } from "./_generated/server";
+import { effectiveRole, requireAdmin, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
 import { displayName } from "./lib/users";
@@ -476,7 +477,7 @@ export const list = query({
           .take(args.limit ?? 200);
 
     const search = args.search?.trim().toLowerCase();
-    const isAdmin = user.role === "admin";
+    const isAdmin = effectiveRole(user) === "admin";
     const visible = rows.filter((u) => {
       if (!userMatchesAudience(user, u.audience)) return false;
       if (u.publishedAt > now && u.authorUserId !== user._id && !isAdmin) return false;
@@ -545,7 +546,7 @@ export const get = query({
         return { ...entry, authorName: displayName(entryAuthor) };
       }),
     );
-    const isAdmin = user.role === "admin";
+    const isAdmin = effectiveRole(user) === "admin";
 
     let emailStats: Record<string, number> | null = null;
     let recipients: EmailRecipientRow[] | null = null;

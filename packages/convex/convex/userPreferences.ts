@@ -1,6 +1,7 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { v } from "convex/values";
 
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 import { requireUser } from "./lib/auth";
 
 const preferenceFields = {

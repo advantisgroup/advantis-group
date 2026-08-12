@@ -1,7 +1,8 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { v } from "convex/values";
 
 import { type Doc } from "./_generated/dataModel";
-import { internalQuery, mutation, query } from "./_generated/server";
+import { internalQuery, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { requireAdmin, requireUser } from "./lib/auth";
 import { appendTimeline, insertUpdate } from "./updates";

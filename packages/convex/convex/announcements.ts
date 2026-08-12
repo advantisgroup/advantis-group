@@ -1,9 +1,10 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
-import { internalMutation, mutation, query } from "./_generated/server";
+import { internalMutation, query } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
 import { isOwnerOrAdmin, requireCapability, requireManager, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
@@ -104,10 +105,7 @@ function isVisibleToUser(user: Doc<"users">, a: Doc<"announcements">): boolean {
 }
 
 /** Read-only: works from both query and mutation handlers (MutationCtx is a QueryCtx plus write access). */
-async function resolveAudienceUserIds(
-  ctx: QueryCtx,
-  audience: Audience,
-): Promise<Id<"users">[]> {
+async function resolveAudienceUserIds(ctx: QueryCtx, audience: Audience): Promise<Id<"users">[]> {
   const all = await ctx.db
     .query("users")
     .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -539,7 +537,8 @@ export const unreadCount = query({
       .order("desc")
       .take(100);
     const visible = announcements.filter(
-      (a) => isVisibleToUser(user, a) && a.publishedAt <= now && (!a.expiresAt || a.expiresAt > now),
+      (a) =>
+        isVisibleToUser(user, a) && a.publishedAt <= now && (!a.expiresAt || a.expiresAt > now),
     );
     const myReads = await ctx.db
       .query("announcementReads")

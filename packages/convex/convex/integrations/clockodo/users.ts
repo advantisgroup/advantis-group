@@ -1,9 +1,9 @@
 "use node";
 
+import { sandboxedAction as action } from "../../lib/sandbox";
 import { v } from "convex/values";
 
 import { internal } from "../../_generated/api";
-import { action } from "../../_generated/server";
 import { requireClockodoManagerAction } from "../lib/auth";
 import { clockodoFetch } from "./client";
 
@@ -282,10 +282,7 @@ const FIELD_LABELS: Record<string, string> = {
 /** Builds the History tab's "role: worker -> owner, ..." line — only for
  * fields actually present in the patch, comparing against the fetched
  * pre-patch value so the log reads as a real diff, not just "field set". */
-function describeUserChanges(
-  before: ClockodoUser,
-  patch: Record<string, unknown>,
-): string {
+function describeUserChanges(before: ClockodoUser, patch: Record<string, unknown>): string {
   const parts: string[] = [];
   for (const [field, label] of Object.entries(FIELD_LABELS)) {
     if (!(field in patch)) continue;

@@ -1,7 +1,8 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { type MutationCtx, mutation, query } from "./_generated/server";
+import { type MutationCtx, query } from "./_generated/server";
 import { requireUser } from "./lib/auth";
 
 function toFlowSummary(flow: Doc<"salesCockpitFlows">) {
@@ -76,7 +77,8 @@ export const createFlow = mutation({
   handler: async (ctx, { titel, projectId }) => {
     const user = await requireUser(ctx);
     const trimmed = titel.trim();
-    if (!trimmed) throw new ConvexError({ code: "bad_request", message: "Bitte einen Titel eingeben" });
+    if (!trimmed)
+      throw new ConvexError({ code: "bad_request", message: "Bitte einen Titel eingeben" });
     const now = Date.now();
     const flowId = await ctx.db.insert("salesCockpitFlows", {
       titel: trimmed,
@@ -109,7 +111,8 @@ export const renameFlow = mutation({
   handler: async (ctx, { flowId, titel }) => {
     await requireUser(ctx);
     const trimmed = titel.trim();
-    if (!trimmed) throw new ConvexError({ code: "bad_request", message: "Bitte einen Titel eingeben" });
+    if (!trimmed)
+      throw new ConvexError({ code: "bad_request", message: "Bitte einen Titel eingeben" });
     const flow = await ctx.db.get(flowId);
     if (!flow) throw new ConvexError({ code: "not_found", message: "Flow nicht gefunden" });
     await ctx.db.patch(flowId, { titel: trimmed, updatedAt: Date.now() });

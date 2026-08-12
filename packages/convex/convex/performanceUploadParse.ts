@@ -1,5 +1,7 @@
 "use node";
 
+import { sandboxedAction as action } from "./lib/sandbox";
+
 /**
  * Report-file detection/parsing for the Performance upload pipeline —
  * ported from the reference script's `import_file`. Split into its own
@@ -20,7 +22,7 @@ import * as XLSX from "xlsx";
 
 import { type Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
-import { action, type ActionCtx } from "./_generated/server";
+import { type ActionCtx } from "./_generated/server";
 import {
   cleanAgentName,
   matchEmployee,
@@ -435,7 +437,12 @@ async function processReport(
         uploadedBy,
         replaceLogId,
       });
-      return { status: "ok", rowsImported: result.rowsImported, skipped, flagged: flaggedRows.length };
+      return {
+        status: "ok",
+        rowsImported: result.rowsImported,
+        skipped,
+        flagged: flaggedRows.length,
+      };
     }
 
     const interactionRows = readInteractionsCsv(text);
@@ -543,7 +550,12 @@ async function processReport(
       uploadedBy,
       replaceLogId,
     });
-    return { status: "ok", rowsImported: result.rowsImported, skipped, flagged: flaggedRows.length };
+    return {
+      status: "ok",
+      rowsImported: result.rowsImported,
+      skipped,
+      flagged: flaggedRows.length,
+    };
   }
 
   const template = parseAggregatedTemplate(rows);

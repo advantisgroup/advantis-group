@@ -1,7 +1,8 @@
+import { sandboxedMutation as mutation } from "../lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { type Id } from "../_generated/dataModel";
-import { type MutationCtx, mutation, query } from "../_generated/server";
+import { type MutationCtx, query } from "../_generated/server";
 import { getUserByClerkId } from "../lib/auth";
 import { assertServerKey, requireAdminCaller } from "./lib";
 
@@ -143,7 +144,11 @@ export const adminRoster = query({
     for (const call of calls) {
       const entry = byUser.get(call.clerkUserId) ?? { userName: call.userName, calls: [] };
       entry.userName = call.userName;
-      entry.calls.push({ startedAt: call.startedAt, skillLevel: call.skillLevel, outcome: call.outcome });
+      entry.calls.push({
+        startedAt: call.startedAt,
+        skillLevel: call.skillLevel,
+        outcome: call.outcome,
+      });
       byUser.set(call.clerkUserId, entry);
     }
 
@@ -156,9 +161,10 @@ export const adminRoster = query({
         : 0;
       const appointments = entry.calls.filter((c) => c.outcome === "termin").length;
       const avgOf = (rows: typeof scored) =>
-        rows.length ? Math.round(rows.reduce((sum, c) => sum + (c.skillLevel ?? 0), 0) / rows.length) : 0;
-      const trend =
-        scored.length > 4 ? avgOf(scored.slice(-3)) - avgOf(scored.slice(0, 3)) : 0;
+        rows.length
+          ? Math.round(rows.reduce((sum, c) => sum + (c.skillLevel ?? 0), 0) / rows.length)
+          : 0;
+      const trend = scored.length > 4 ? avgOf(scored.slice(-3)) - avgOf(scored.slice(0, 3)) : 0;
 
       return {
         clerkUserId,

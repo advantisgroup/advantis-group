@@ -1,6 +1,7 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { v } from "convex/values";
 
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 import { requireCapability, requireUser } from "./lib/auth";
 import { profileDisplayName } from "./lib/profile";
 
@@ -53,7 +54,11 @@ export const listConfirmersForSlug = query({
     return rows
       .map((r, i) => {
         const u = users[i];
-        return { userId: r.userId, name: u ? profileDisplayName(u) : "Deleted user", readAt: r.readAt };
+        return {
+          userId: r.userId,
+          name: u ? profileDisplayName(u) : "Deleted user",
+          readAt: r.readAt,
+        };
       })
       .sort((a, b) => b.readAt - a.readAt);
   },

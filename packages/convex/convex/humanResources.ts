@@ -1,12 +1,8 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import {
-  type MutationCtx,
-  type QueryCtx,
-  mutation,
-  query,
-} from "./_generated/server";
+import { type MutationCtx, type QueryCtx, query } from "./_generated/server";
 import { requireApplicantAccess } from "./lib/auth";
 import { partialProfileValidator, profileDisplayName, toPartialProfileOrNull } from "./lib/profile";
 
@@ -15,7 +11,7 @@ const employeeDocumentCategoryValidator = v.union(
   v.literal("legal"),
   v.literal("payroll"),
   v.literal("contract"),
-  v.literal("other")
+  v.literal("other"),
 );
 
 function assertServerKey(serverKey: string): void {
@@ -51,7 +47,7 @@ const employeeProfileValidator = v.object({
 
 async function requireProfile(
   ctx: QueryCtx | MutationCtx,
-  employeeProfileId: Id<"employeeProfiles">
+  employeeProfileId: Id<"employeeProfiles">,
 ): Promise<Doc<"employeeProfiles">> {
   const profile = await ctx.db.get(employeeProfileId);
   if (!profile) {
@@ -74,27 +70,23 @@ export const listProfiles = query({
     employeeProfileValidator.extend({
       linkedProfile: v.union(partialProfileValidator, v.null()),
       documentsCount: v.number(),
-    })
+    }),
   ),
   handler: async (ctx, { includeArchived }) => {
     await requireApplicantAccess(ctx);
     const profiles = includeArchived
-      ? await ctx.db
-          .query("employeeProfiles")
-          .withIndex("by_createdAt")
-          .order("desc")
-          .take(1000)
+      ? await ctx.db.query("employeeProfiles").withIndex("by_createdAt").order("desc").take(1000)
       : await ctx.db
           .query("employeeProfiles")
-          .withIndex("by_status", q => q.eq("status", "active"))
+          .withIndex("by_status", (q) => q.eq("status", "active"))
           .order("desc")
           .take(1000);
 
     return Promise.all(
-      profiles.map(async profile => {
+      profiles.map(async (profile) => {
         const documents = await ctx.db
           .query("employeeDocuments")
-          .withIndex("by_employee", q => q.eq("employeeProfileId", profile._id))
+          .withIndex("by_employee", (q) => q.eq("employeeProfileId", profile._id))
           .collect();
         const user = profile.userId ? await ctx.db.get(profile.userId) : null;
         return {
@@ -102,7 +94,7 @@ export const listProfiles = query({
           linkedProfile: await toPartialProfileOrNull(ctx, user),
           documentsCount: documents.length,
         };
-      })
+      }),
     );
   },
 });
@@ -117,7 +109,7 @@ export const getProfile = query({
         name: v.string(),
         archivedAt: v.union(v.number(), v.null()),
       }),
-      v.null()
+      v.null(),
     ),
   }),
   handler: async (ctx, { employeeProfileId }) => {
@@ -154,12 +146,10 @@ export const createProfile = mutation({
   handler: async (ctx, args) => {
     const user = await requireApplicantAccess(ctx);
     const name = compact(args.name);
-    if (!name)
-      throw new ConvexError({ code: "bad_request", message: "Name required" });
+    if (!name) throw new ConvexError({ code: "bad_request", message: "Name required" });
     if (args.userId) {
       const linked = await ctx.db.get(args.userId);
-      if (!linked)
-        throw new ConvexError({ code: "not_found", message: "User not found" });
+      if (!linked) throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     const now = Date.now();
     return ctx.db.insert("employeeProfiles", {
@@ -194,20 +184,15 @@ export const updateProfile = mutation({
     await requireProfile(ctx, employeeProfileId);
     if (userId) {
       const linked = await ctx.db.get(userId);
-      if (!linked)
-        throw new ConvexError({ code: "not_found", message: "User not found" });
+      if (!linked) throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await ctx.db.patch(employeeProfileId, {
       ...(userId !== undefined ? { userId: userId ?? undefined } : {}),
       ...(patch.name !== undefined ? { name: compact(patch.name) ?? "" } : {}),
       ...(patch.email !== undefined ? { email: compact(patch.email) } : {}),
       ...(patch.phone !== undefined ? { phone: compact(patch.phone) } : {}),
-      ...(patch.jobTitle !== undefined
-        ? { jobTitle: compact(patch.jobTitle) }
-        : {}),
-      ...(patch.department !== undefined
-        ? { department: compact(patch.department) }
-        : {}),
+      ...(patch.jobTitle !== undefined ? { jobTitle: compact(patch.jobTitle) } : {}),
+      ...(patch.department !== undefined ? { department: compact(patch.department) } : {}),
       ...(patch.notes !== undefined ? { notes: compact(patch.notes) } : {}),
       updatedAt: Date.now(),
     });
@@ -244,8 +229,7 @@ export const convertApplicant = mutation({
     }
     if (userId) {
       const linked = await ctx.db.get(userId);
-      if (!linked)
-        throw new ConvexError({ code: "not_found", message: "User not found" });
+      if (!linked) throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     const now = Date.now();
     const employeeProfileId = await ctx.db.insert("employeeProfiles", {
@@ -365,14 +349,12 @@ export const listDocuments = query({
     await requireProfile(ctx, employeeProfileId);
     const documents = await ctx.db
       .query("employeeDocuments")
-      .withIndex("by_employee", q =>
-        q.eq("employeeProfileId", employeeProfileId)
-      )
+      .withIndex("by_employee", (q) => q.eq("employeeProfileId", employeeProfileId))
       .collect();
     return Promise.all(
       documents
         .sort((a, b) => b.createdAt - a.createdAt)
-        .map(async document => {
+        .map(async (document) => {
           const uploader = await ctx.db.get(document.uploadedByUserId);
           return {
             ...document,
@@ -382,7 +364,7 @@ export const listDocuments = query({
             // through apps/api's /onedrive/download|preview endpoints.
             legacyUrl: document.storageId ? await ctx.storage.getUrl(document.storageId) : null,
           };
-        })
+        }),
     );
   },
 });

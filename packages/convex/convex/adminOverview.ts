@@ -4,7 +4,7 @@ import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import type { QueryCtx } from "./_generated/server";
 import { readConfig } from "./activity/settings";
-import { hasCapability, requireManager } from "./lib/auth";
+import { effectiveRole, hasCapability, requireManager } from "./lib/auth";
 import { displayName } from "./lib/users";
 
 /**
@@ -86,7 +86,7 @@ export const queue = query({
   handler: async (ctx) => {
     const me = await requireManager(ctx);
     const now = Date.now();
-    const isAdmin = me.role === "admin";
+    const isAdmin = effectiveRole(me) === "admin";
 
     const [
       accessRequests,
@@ -368,7 +368,7 @@ export const timelines = query({
   args: { days: v.number(), tzOffsetMinutes: v.number() },
   handler: async (ctx, args) => {
     const me = await requireManager(ctx);
-    const isAdmin = me.role === "admin";
+    const isAdmin = effectiveRole(me) === "admin";
     const days = Math.min(Math.max(Math.round(args.days), 7), 180);
     const now = Date.now();
     const tz = args.tzOffsetMinutes;
@@ -550,7 +550,7 @@ export const systems = query({
   handler: async (ctx) => {
     const me = await requireManager(ctx);
     const now = Date.now();
-    const isAdmin = me.role === "admin";
+    const isAdmin = effectiveRole(me) === "admin";
     const canSeeAgents = await hasCapability(ctx, "view_activity_admin");
 
     const [health, flags, publishedUpdates, webhookRows, agents] = await Promise.all([

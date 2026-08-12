@@ -1,6 +1,7 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 import { DEFAULT_THRESHOLDS } from "./errorSettings";
 import { requireManager, requireUser } from "./lib/auth";
 
@@ -15,11 +16,7 @@ const statusValidator = v.union(
   v.literal("in_bearbeitung"),
   v.literal("geschlossen"),
 );
-const feedbackValidator = v.union(
-  v.literal("positiv"),
-  v.literal("neutral"),
-  v.literal("negativ"),
-);
+const feedbackValidator = v.union(v.literal("positiv"), v.literal("neutral"), v.literal("negativ"));
 
 /** Everything, newest first — the list page does its own scope/severity/search filtering. */
 export const list = query({
@@ -34,7 +31,9 @@ export const list = query({
       .map((r) => ({
         _id: r._id,
         categoryId: r.categoryId ?? null,
-        categoryName: r.categoryId ? (categoryName.get(r.categoryId) ?? null) : (r.categoryName ?? null),
+        categoryName: r.categoryId
+          ? (categoryName.get(r.categoryId) ?? null)
+          : (r.categoryName ?? null),
         description: r.description,
         severity: r.severity,
         status: r.status,
@@ -67,7 +66,8 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
     const description = args.description.trim();
-    if (!description) throw new ConvexError({ code: "bad_request", message: "Description required" });
+    if (!description)
+      throw new ConvexError({ code: "bad_request", message: "Description required" });
     const settings = await ctx.db.query("errorSettings").first();
     const dueDays = settings?.defaultDueDays ?? DEFAULT_THRESHOLDS.defaultDueDays;
     const now = Date.now();

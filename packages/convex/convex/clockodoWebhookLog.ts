@@ -1,6 +1,7 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
-import { internalMutation, mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 
 /**
  * Durable record of every inbound Clockodo webhook delivery — see the schema

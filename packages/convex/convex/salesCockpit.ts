@@ -1,7 +1,8 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { type MutationCtx, type QueryCtx, mutation, query } from "./_generated/server";
+import { type MutationCtx, type QueryCtx, query } from "./_generated/server";
 import { requireUser } from "./lib/auth";
 
 const fileInputValidator = v.object({
@@ -94,7 +95,9 @@ async function hydrateProject(ctx: QueryCtx | MutationCtx, project: Doc<"salesCo
           .collect()
       : Promise.resolve(null),
   ]);
-  const flow = flowDoc ? { _id: flowDoc._id, titel: flowDoc.titel, nodeCount: flowNodes?.length ?? 0 } : null;
+  const flow = flowDoc
+    ? { _id: flowDoc._id, titel: flowDoc.titel, nodeCount: flowNodes?.length ?? 0 }
+    : null;
   const byCategory = (cat: FileCategory) =>
     files
       .filter((f) => f.category === cat)
@@ -135,7 +138,9 @@ export const listProjects = query({
   handler: async (ctx) => {
     await requireUser(ctx);
     const projects = await ctx.db.query("salesCockpitProjects").withIndex("by_createdAt").collect();
-    return Promise.all(projects.sort((a, b) => b.createdAt - a.createdAt).map((p) => hydrateProject(ctx, p)));
+    return Promise.all(
+      projects.sort((a, b) => b.createdAt - a.createdAt).map((p) => hydrateProject(ctx, p)),
+    );
   },
 });
 

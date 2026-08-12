@@ -181,6 +181,8 @@ export default defineSchema({
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     role: roleValidator,
+    /** Temporary, read-only role view selected by an administrator. */
+    sandboxRole: v.optional(v.union(v.literal("manager"), v.literal("employee"))),
     /**
      * Legacy free-text department (unvalidated). Superseded by `departmentId`
      * — see `departments` table. Kept only so already-written rows keep
@@ -2501,11 +2503,7 @@ export default defineSchema({
     startedAt: v.number(),
     durationSec: v.number(),
     callerSpeakPct: v.number(),
-    outcome: v.union(
-      v.literal("termin"),
-      v.literal("wiedervorlage"),
-      v.literal("kein_ergebnis"),
-    ),
+    outcome: v.union(v.literal("termin"), v.literal("wiedervorlage"), v.literal("kein_ergebnis")),
     transcriptEnc: v.string(), // ciphertext
     scored: v.boolean(),
     skillLevel: v.optional(v.number()),

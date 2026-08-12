@@ -1,8 +1,9 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc } from "./_generated/dataModel";
-import { type MutationCtx, type QueryCtx, mutation, query } from "./_generated/server";
-import { requireUser } from "./lib/auth";
+import { type MutationCtx, type QueryCtx, query } from "./_generated/server";
+import { effectiveRole, requireUser } from "./lib/auth";
 
 const DEFAULT_PIN = "1234";
 
@@ -39,7 +40,7 @@ export async function requireAcademyAdmin(
   pin: string,
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
-  if (user.role === "admin") return user;
+  if (effectiveRole(user) === "admin") return user;
   const current = await resolveCurrentPin(ctx, academyId);
   if (current !== pin.trim()) {
     throw new ConvexError({

@@ -1,7 +1,8 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { v } from "convex/values";
 
-import { mutation, query } from "./_generated/server";
-import { MANAGER_ROLES, requireUser } from "./lib/auth";
+import { query } from "./_generated/server";
+import { effectiveRole, MANAGER_ROLES, requireUser } from "./lib/auth";
 
 export const getMine = query({
   args: { slug: v.string() },
@@ -43,7 +44,7 @@ export const stats = query({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
     const user = await requireUser(ctx);
-    if (!MANAGER_ROLES.includes(user.role)) return null;
+    if (!MANAGER_ROLES.includes(effectiveRole(user))) return null;
     const rows = await ctx.db
       .query("guidebookFeedback")
       .withIndex("by_slug", (q) => q.eq("slug", slug))

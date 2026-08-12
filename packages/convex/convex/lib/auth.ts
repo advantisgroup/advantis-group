@@ -5,6 +5,17 @@ import { type MutationCtx, type QueryCtx } from "../_generated/server";
 
 export type Role = Doc<"users">["role"];
 export type Capability = Doc<"customRoles">["capabilities"][number];
+export type SandboxRole = Exclude<Role, "admin">;
+
+type RoleView = Pick<Doc<"users">, "role"> & { sandboxRole?: SandboxRole | null };
+
+export function effectiveRole(user: RoleView): Role {
+  return user.sandboxRole ?? user.role;
+}
+
+export function isSandboxed(user: { sandboxRole?: SandboxRole | null }): boolean {
+  return user.sandboxRole != null;
+}
 
 /**
  * A user's effective custom-role ids: the new `customRoleIds` array, falling
@@ -113,7 +124,7 @@ export async function requireRole(
   roles: readonly Role[],
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
-  if (!roles.includes(user.role)) {
+  if (!roles.includes(effectiveRole(user))) {
     throw new ConvexError({
       code: "forbidden",
       message: "You do not have permission to do that",
@@ -132,6 +143,19 @@ export async function requireAdmin(ctx: QueryCtx | MutationCtx): Promise<Doc<"us
   return requireRole(ctx, ["admin"]);
 }
 
+/** Administrator check for the sandbox controls themselves. Unlike normal
+ * role checks, this intentionally sees through the temporary role view. */
+export async function requireRealAdmin(ctx: QueryCtx | MutationCtx): Promise<Doc<"users">> {
+  const user = await requireUser(ctx);
+  if (user.role !== "admin") {
+    throw new ConvexError({
+      code: "forbidden",
+      message: "You do not have permission to do that",
+    });
+  }
+  return user;
+}
+
 /**
  * True when `user` is either `ownerId` themselves or an admin — the
  * "author/creator or admin can edit/delete" rule repeated across
@@ -140,7 +164,7 @@ export async function requireAdmin(ctx: QueryCtx | MutationCtx): Promise<Doc<"us
  * and for filtering a list to what's visible.
  */
 export function isOwnerOrAdmin(user: Doc<"users">, ownerId: Doc<"users">["_id"]): boolean {
-  return ownerId === user._id || user.role === "admin";
+  return ownerId === user._id || effectiveRole(user) === "admin";
 }
 
 /**
@@ -150,7 +174,7 @@ export function isOwnerOrAdmin(user: Doc<"users">, ownerId: Doc<"users">["_id"])
  * rule independently.
  */
 export function canGrantRole(actor: Doc<"users">, role: Role): boolean {
-  return role === "employee" || actor.role === "admin";
+  return role === "employee" || effectiveRole(actor) === "admin";
 }
 
 /**
@@ -164,7 +188,13 @@ export async function requireCapability(
   capability: Capability,
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
-  if (MANAGER_ROLES.includes(user.role)) return user;
+  if (MANAGER_ROLES.includes(effectiveRole(user))) return user;
+  if (isSandboxed(user)) {
+    throw new ConvexError({
+      code: "forbidden",
+      message: "You do not have permission to do that",
+    });
+  }
 
   const customRoles = await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
   const granted = customRoles.some((role) => role?.capabilities.includes(capability));
@@ -191,7 +221,8 @@ export function userHasCapability(
   customRoles: (Doc<"customRoles"> | null)[],
   capability: Capability,
 ): boolean {
-  if (MANAGER_ROLES.includes(user.role)) return true;
+  if (MANAGER_ROLES.includes(effectiveRole(user))) return true;
+  if (isSandboxed(user)) return false;
   return customRoles.some((role) => role?.capabilities.includes(capability) ?? false);
 }
 
@@ -260,8 +291,12 @@ export async function requireVaultUnlocked(
  * needs so it also accepts the curated `users.me` shape, not only a raw
  * `Doc<"users">` — both `setPassword`/`unlock` (actions, round-tripping
  * through `api.users.me`) and direct-db callers can share it. */
-export function hasApplicantAccess(user: Pick<Doc<"users">, "role" | "applicantAccess">): boolean {
-  return user.role === "admin" || user.applicantAccess === true;
+export function hasApplicantAccess(
+  user: Pick<Doc<"users">, "role" | "applicantAccess"> & {
+    sandboxRole?: SandboxRole | null;
+  },
+): boolean {
+  return !isSandboxed(user) && (effectiveRole(user) === "admin" || user.applicantAccess === true);
 }
 
 /** Require the current user to have Applicant Management access (admin bypasses
@@ -286,7 +321,7 @@ export async function requireApplicantDelegateOrAdmin(
   ctx: QueryCtx | MutationCtx,
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
-  if (user.role !== "admin" && !user.applicantAccessDelegate) {
+  if (effectiveRole(user) !== "admin" && (!user.applicantAccessDelegate || isSandboxed(user))) {
     throw new ConvexError({
       code: "forbidden",
       message: "You do not have permission to do that",
@@ -302,12 +337,15 @@ export async function requireApplicantDelegateOrAdmin(
  * shared by direct-db callers and the action call sites round-tripping
  * through `api.users.me`. */
 export function isApplicantAreaMember(
-  user: Pick<Doc<"users">, "role" | "applicantAccess" | "applicantAccessDelegate">,
+  user: Pick<Doc<"users">, "role" | "applicantAccess" | "applicantAccessDelegate"> & {
+    sandboxRole?: SandboxRole | null;
+  },
 ): boolean {
   return (
-    user.role === "admin" ||
-    user.applicantAccess === true ||
-    user.applicantAccessDelegate === true
+    !isSandboxed(user) &&
+    (effectiveRole(user) === "admin" ||
+      user.applicantAccess === true ||
+      user.applicantAccessDelegate === true)
   );
 }
 

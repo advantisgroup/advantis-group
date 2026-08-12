@@ -1,7 +1,8 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { type Id } from "./_generated/dataModel";
-import { type QueryCtx, mutation, query } from "./_generated/server";
+import { type QueryCtx, query } from "./_generated/server";
 import { DEFAULT_THRESHOLDS } from "./errorSettings";
 import { requireManager, requireUser } from "./lib/auth";
 

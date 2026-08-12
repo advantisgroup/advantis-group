@@ -1,7 +1,13 @@
 import { ConvexError, v } from "convex/values";
 
 import { query } from "../_generated/server";
-import { effectiveCustomRoleIds, MANAGER_ROLES, userHasCapability } from "../lib/auth";
+import {
+  effectiveCustomRoleIds,
+  effectiveRole,
+  isSandboxed,
+  MANAGER_ROLES,
+  userHasCapability,
+} from "../lib/auth";
 import { toClockodoIdString } from "../lib/clockodoId";
 
 /**
@@ -62,10 +68,11 @@ export const resolveCaller = query({
     if (!user) return { status: "no_account" as const };
 
     const name = user.firstName ?? user.email;
-    const isManager = MANAGER_ROLES.includes(user.role);
-    const customRoles = await Promise.all(
-      effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)),
-    );
+    const sandboxed = isSandboxed(user);
+    const isManager = MANAGER_ROLES.includes(effectiveRole(user));
+    const customRoles = sandboxed
+      ? []
+      : await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
     const canManageTeam = userHasCapability(user, customRoles, "manage_clockodo_team");
     const canViewTeam = canManageTeam || userHasCapability(user, customRoles, "view_clockodo_team");
     const clockodoUserId =

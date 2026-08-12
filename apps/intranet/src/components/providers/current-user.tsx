@@ -25,6 +25,9 @@ export interface CurrentUser {
   lastName: string | null;
   name: string;
   role: Role;
+  actualRole: Role;
+  sandboxRole: "manager" | "employee" | null;
+  canUseSandbox: boolean;
   department: string | null;
   jobTitle: string | null;
   phone: string | null;

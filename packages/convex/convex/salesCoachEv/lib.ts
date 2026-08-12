@@ -1,6 +1,6 @@
 import { ConvexError } from "convex/values";
 
-import { getUserByClerkId } from "../lib/auth";
+import { effectiveRole, getUserByClerkId } from "../lib/auth";
 import { type QueryCtx, type MutationCtx } from "../_generated/server";
 
 /**
@@ -22,12 +22,9 @@ export function assertServerKey(serverKey: string): void {
  * (the request here is server-key-authenticated, not the caller's own
  * session). Mirrors `resolveCaller` in integrations/clockodoAbsences.ts.
  */
-export async function requireAdminCaller(
-  ctx: QueryCtx | MutationCtx,
-  clerkUserId: string,
-) {
+export async function requireAdminCaller(ctx: QueryCtx | MutationCtx, clerkUserId: string) {
   const user = await getUserByClerkId(ctx, clerkUserId);
-  if (!user || user.role !== "admin") {
+  if (!user || effectiveRole(user) !== "admin") {
     throw new ConvexError({ code: "forbidden", message: "You do not have permission to do that" });
   }
   return user;

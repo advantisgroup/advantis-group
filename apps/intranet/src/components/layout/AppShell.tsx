@@ -14,6 +14,7 @@ import { useSmoothScroll } from "@/components/effects/SmoothScrolling";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider";
 import { AccountMenu } from "@/components/layout/AccountMenu";
+import { SandboxBanner } from "@/components/layout/SandboxBanner";
 import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ClockodoHeaderControl } from "@/components/layout/ClockodoHeaderControl";
@@ -239,6 +240,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           <div className="mx-1 hidden h-6 w-px bg-border/70 md:block" />
           <AccountMenu triggerClassName="hidden md:flex" />
         </header>
+        <SandboxBanner />
         <main
           ref={mainRef}
           className={cn(

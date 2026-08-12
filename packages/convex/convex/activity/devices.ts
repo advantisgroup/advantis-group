@@ -1,6 +1,7 @@
+import { sandboxedMutation as mutation } from "../lib/sandbox";
 import { v } from "convex/values";
 
-import { query, mutation } from "../_generated/server";
+import { query } from "../_generated/server";
 import { requireUser, requireManager, requireAdmin } from "../lib/auth";
 import { gatedMutation } from "../lib/featureGate";
 import { writeAudit } from "./audit";

@@ -1,10 +1,15 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
 import { requireManager, requireUser } from "./lib/auth";
 import { displayName } from "./lib/users";
-import { attachmentValidator, suggestionOutcomeValidator, suggestionStatusValidator } from "./schema";
+import {
+  attachmentValidator,
+  suggestionOutcomeValidator,
+  suggestionStatusValidator,
+} from "./schema";
 
 export const create = mutation({
   args: {
@@ -52,7 +57,11 @@ export const list = query({
   args: {},
   handler: async (ctx) => {
     await requireUser(ctx);
-    const rows = await ctx.db.query("suggestions").withIndex("by_createdAt").order("desc").take(500);
+    const rows = await ctx.db
+      .query("suggestions")
+      .withIndex("by_createdAt")
+      .order("desc")
+      .take(500);
     const categories = await ctx.db.query("suggestionCategories").collect();
     const categoryById = new Map(categories.map((c) => [c._id, c.name]));
     return Promise.all(

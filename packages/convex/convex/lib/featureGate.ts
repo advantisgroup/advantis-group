@@ -1,7 +1,8 @@
+import { sandboxedAction as action, sandboxedMutation as mutation } from "./sandbox";
 import { ConvexError } from "convex/values";
 
 import { internal } from "../_generated/api";
-import { action, internalAction, internalMutation, mutation } from "../_generated/server";
+import { internalAction, internalMutation } from "../_generated/server";
 import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
 import type { FeatureFlagKey } from "../featureFlags";
 import { isFeatureEnabled } from "../featureFlags";

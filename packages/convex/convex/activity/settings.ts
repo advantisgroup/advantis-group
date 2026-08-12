@@ -1,7 +1,8 @@
+import { sandboxedMutation as mutation, sandboxedAction as action } from "../lib/sandbox";
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
-import { query, mutation, internalMutation, internalQuery, action } from "../_generated/server";
+import { query, internalMutation, internalQuery } from "../_generated/server";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { requireUser, requireManager, requireAdmin } from "../lib/auth";
 import { requireAdminAction } from "../integrations/lib/auth";

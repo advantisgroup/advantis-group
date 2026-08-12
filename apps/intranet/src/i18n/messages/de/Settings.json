@@ -1,6 +1,13 @@
 {
   "title": "Einstellungen",
   "subtitle": "Verwalte dein persönliches Konto und deine Vorlieben",
+  "jumpTo": "Direkt zu",
+  "workspace": "Arbeitsbereich",
+  "workspaceHint": "Darstellung, App-Verhalten und verknüpfte Dienste.",
+  "notifications": "Benachrichtigungen",
+  "notificationsHint": "Lege fest, was deine Aufmerksamkeit bekommt.",
+  "help": "Hilfe und Einführung",
+  "helpHint": "Starte die geführte Tour jederzeit erneut.",
   "account": "Mein Konto",
   "accountHint": "Diese Angaben gelten nur für dich und sind für Kolleg:innen sichtbar.",
   "personalInfo": "Persönliche Daten",

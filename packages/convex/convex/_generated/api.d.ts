@@ -93,6 +93,7 @@ import type * as lib_featureGate from "../lib/featureGate.js";
 import type * as lib_notify from "../lib/notify.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_profile from "../lib/profile.js";
+import type * as lib_sandbox from "../lib/sandbox.js";
 import type * as lib_users from "../lib/users.js";
 import type * as members from "../members.js";
 import type * as migrations_backfillCustomRoleIds from "../migrations/backfillCustomRoleIds.js";
@@ -121,12 +122,13 @@ import type * as performanceQueries from "../performanceQueries.js";
 import type * as performanceTopics from "../performanceTopics.js";
 import type * as performanceUploadParse from "../performanceUploadParse.js";
 import type * as presence from "../presence.js";
-import type * as salesCockpit from "../salesCockpit.js";
-import type * as salesCockpitFlows from "../salesCockpitFlows.js";
 import type * as salesCoachEv_calls from "../salesCoachEv/calls.js";
 import type * as salesCoachEv_lib from "../salesCoachEv/lib.js";
 import type * as salesCoachEv_settings from "../salesCoachEv/settings.js";
 import type * as salesCoachEv_wiki from "../salesCoachEv/wiki.js";
+import type * as salesCockpit from "../salesCockpit.js";
+import type * as salesCockpitFlows from "../salesCockpitFlows.js";
+import type * as sandbox from "../sandbox.js";
 import type * as suggestionCategories from "../suggestionCategories.js";
 import type * as suggestions from "../suggestions.js";
 import type * as tourProgress from "../tourProgress.js";
@@ -140,11 +142,7 @@ import type * as wikiChats from "../wikiChats.js";
 import type * as wikiEntries from "../wikiEntries.js";
 import type * as wikiMigration from "../wikiMigration.js";
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
+import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
   academyParticipants: typeof academyParticipants;
@@ -232,6 +230,7 @@ declare const fullApi: ApiFromModules<{
   "lib/notify": typeof lib_notify;
   "lib/permissions": typeof lib_permissions;
   "lib/profile": typeof lib_profile;
+  "lib/sandbox": typeof lib_sandbox;
   "lib/users": typeof lib_users;
   members: typeof members;
   "migrations/backfillCustomRoleIds": typeof migrations_backfillCustomRoleIds;
@@ -260,12 +259,13 @@ declare const fullApi: ApiFromModules<{
   performanceTopics: typeof performanceTopics;
   performanceUploadParse: typeof performanceUploadParse;
   presence: typeof presence;
-  salesCockpit: typeof salesCockpit;
-  salesCockpitFlows: typeof salesCockpitFlows;
   "salesCoachEv/calls": typeof salesCoachEv_calls;
   "salesCoachEv/lib": typeof salesCoachEv_lib;
   "salesCoachEv/settings": typeof salesCoachEv_settings;
   "salesCoachEv/wiki": typeof salesCoachEv_wiki;
+  salesCockpit: typeof salesCockpit;
+  salesCockpitFlows: typeof salesCockpitFlows;
+  sandbox: typeof sandbox;
   suggestionCategories: typeof suggestionCategories;
   suggestions: typeof suggestions;
   tourProgress: typeof tourProgress;
@@ -288,10 +288,7 @@ declare const fullApi: ApiFromModules<{
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-export declare const api: FilterApi<
-  typeof fullApi,
-  FunctionReference<any, "public">
->;
+export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>;
 
 /**
  * A utility for referencing Convex functions in your app's internal API.
@@ -301,9 +298,6 @@ export declare const api: FilterApi<
  * const myFunctionReference = internal.myModule.myFunction;
  * ```
  */
-export declare const internal: FilterApi<
-  typeof fullApi,
-  FunctionReference<any, "internal">
->;
+export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>;
 
 export declare const components: {};

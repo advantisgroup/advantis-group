@@ -3,9 +3,20 @@
 import { useRouter } from "next/navigation";
 
 import { useClerk } from "@clerk/nextjs";
-import { Building2, FileText, LogOut, Settings as SettingsIcon, Shield } from "lucide-react";
+import {
+  Building2,
+  Eye,
+  FileText,
+  LogOut,
+  Settings as SettingsIcon,
+  Shield,
+  UserRound,
+  UsersRound,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
+import { api } from "@advantis/convex/api";
+import { useMutation } from "convex/react";
 
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -42,6 +53,13 @@ export function AccountMenu({
   const router = useRouter();
   const tNav = useTranslations("Nav");
   const tRoles = useTranslations("Roles");
+  const setSandboxRole = useMutation(api.users.setSandboxRole);
+
+  async function enterSandbox(role: "manager" | "employee") {
+    await setSandboxRole({ role });
+    onNavigate?.();
+    router.replace("/");
+  }
 
   return (
     <DropdownMenu>
@@ -98,6 +116,36 @@ export function AccountMenu({
           <Building2 className="mr-2 h-4 w-4" />
           {tNav("imprint")}
         </DropdownMenuItem>
+        {user.canUseSandbox && (
+          <>
+            <DropdownMenuSeparator />
+            {user.sandboxRole ? (
+              <DropdownMenuItem
+                onClick={() => {
+                  onNavigate?.();
+                  void setSandboxRole({ role: null });
+                }}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                {tNav("exitSandbox")}
+              </DropdownMenuItem>
+            ) : (
+              <>
+                <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+                  {tNav("viewAs")}
+                </DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => void enterSandbox("employee")}>
+                  <UserRound className="mr-2 h-4 w-4" />
+                  {tNav("viewAsRole", { role: tRoles("employee") })}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void enterSandbox("manager")}>
+                  <UsersRound className="mr-2 h-4 w-4" />
+                  {tNav("viewAsRole", { role: tRoles("manager") })}
+                </DropdownMenuItem>
+              </>
+            )}
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => {

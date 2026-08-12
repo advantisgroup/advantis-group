@@ -1,7 +1,8 @@
+import { sandboxedAction as action, sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
-import { action, internalMutation, mutation, query } from "./_generated/server";
+import { internalMutation, query } from "./_generated/server";
 import { roleValidator } from "./schema";
 import { canGrantRole, getAllowedDomains, isEmailDomainAllowed, requireManager } from "./lib/auth";
 import { createClerkInvitation, revokeClerkInvitations } from "./lib/clerk";

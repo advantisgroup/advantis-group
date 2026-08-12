@@ -1,6 +1,7 @@
+import { sandboxedMutation as mutation } from "../lib/sandbox";
 import { v } from "convex/values";
 
-import { internalMutation, mutation } from "../_generated/server";
+import { internalMutation } from "../_generated/server";
 import type { MutationCtx } from "../_generated/server";
 import { requireAdmin } from "../lib/auth";
 import { gatedInternalMutation } from "../lib/featureGate";

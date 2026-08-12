@@ -1,3 +1,4 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 /**
  * CRUD for Performance "topics" — admin-set monthly goals/todos for an
  * employee. Ported from the reference script's `topic_save`/`topic_delete`/
@@ -10,7 +11,7 @@
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { mutation, type MutationCtx } from "./_generated/server";
+import { type MutationCtx } from "./_generated/server";
 import {
   requireCanViewEmployee as requireCanView,
   requirePermission,

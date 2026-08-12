@@ -1,3 +1,4 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 /**
  * Database-side half of the Performance feature's report-upload pipeline.
  * Ported from the reference script's application-level import functions
@@ -20,7 +21,6 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import {
   internalMutation,
   internalQuery,
-  mutation,
   query,
   type MutationCtx,
   type QueryCtx,

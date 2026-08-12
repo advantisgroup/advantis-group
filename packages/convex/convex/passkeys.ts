@@ -1,7 +1,8 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { type MutationCtx, internalMutation, mutation, query } from "./_generated/server";
+import { type MutationCtx, internalMutation, query } from "./_generated/server";
 import { getUserByClerkId } from "./lib/auth";
 
 const transportValidator = v.union(

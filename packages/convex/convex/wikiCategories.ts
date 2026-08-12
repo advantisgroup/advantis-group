@@ -1,6 +1,7 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 import { requireManager, requireUser } from "./lib/auth";
 
 export const PALETTE = [
@@ -128,7 +129,11 @@ export const remove = mutation({
       .withIndex("by_category", (q) => q.eq("categoryId", categoryId))
       .collect();
     for (const e of affected) {
-      await ctx.db.patch(e._id, { categoryId: undefined, categoryName: category.name, pinned: false });
+      await ctx.db.patch(e._id, {
+        categoryId: undefined,
+        categoryName: category.name,
+        pinned: false,
+      });
     }
     await ctx.db.delete(categoryId);
     return { ok: true };

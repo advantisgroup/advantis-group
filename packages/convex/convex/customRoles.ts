@@ -1,7 +1,8 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { capabilityValidator } from "./schema";
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 import { effectiveCustomRoleIds, requireManager, type Capability } from "./lib/auth";
 
 /**

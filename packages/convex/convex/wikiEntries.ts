@@ -1,6 +1,7 @@
+import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 import { isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
 
 const MAX_PINS = 5;
@@ -160,7 +161,9 @@ export const togglePin = mutation({
     const entry = await ctx.db.get(entryId);
     if (!entry) throw new ConvexError({ code: "not_found", message: "Not found" });
     if (!entry.pinned) {
-      const pinnedCount = (await ctx.db.query("wikiEntries").collect()).filter((e) => e.pinned).length;
+      const pinnedCount = (await ctx.db.query("wikiEntries").collect()).filter(
+        (e) => e.pinned,
+      ).length;
       if (pinnedCount >= MAX_PINS) {
         throw new ConvexError({
           code: "limit",
