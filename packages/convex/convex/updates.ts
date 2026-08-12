@@ -20,6 +20,8 @@ import { audienceValidator } from "./schema";
 const TERMINAL_STATUSES = new Set(["resolved", "completed", "cancelled"]);
 const CHANGELOG_BANNER_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 const RESOLVED_BANNER_GRACE_MS = 24 * 60 * 60 * 1000;
+const INTRANET_BOT_CLERK_USER_ID = "system:intranet-bot";
+const INTRANET_BOT_EMAIL = "intranet-bot@advantisgroup.de";
 
 const statusValidator = v.union(
   v.literal("investigating"),
@@ -43,6 +45,42 @@ function assertServerKey(serverKey: string) {
   if (!expected || serverKey !== expected) {
     throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
   }
+}
+
+async function resolveMarkdownAuthor(
+  ctx: MutationCtx,
+  authorEmail: string,
+): Promise<Doc<"users"> | null> {
+  if (authorEmail === INTRANET_BOT_EMAIL) {
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", INTRANET_BOT_CLERK_USER_ID))
+      .unique();
+    if (existing) return existing;
+
+    const id = await ctx.db.insert("users", {
+      clerkUserId: INTRANET_BOT_CLERK_USER_ID,
+      email: INTRANET_BOT_EMAIL,
+      firstName: "Intranet",
+      lastName: "Bot",
+      role: "employee",
+      jobTitle: "Automated announcements",
+      status: "suspended",
+      external: false,
+      createdAt: Date.now(),
+    });
+    return await ctx.db.get(id);
+  }
+
+  const authors = await ctx.db
+    .query("users")
+    .withIndex("by_email", (q) => q.eq("email", authorEmail))
+    .collect();
+  return (
+    authors
+      .filter((user) => user.status === "active")
+      .sort((a, b) => b.createdAt - a.createdAt)[0] ?? null
+  );
 }
 
 async function resolveAudienceUserIds(
@@ -230,11 +268,8 @@ export const publishFromMarkdown = mutation({
   },
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
-    const author = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", args.authorEmail.toLowerCase()))
-      .unique();
-    if (!author) {
+    const resolvedAuthor = await resolveMarkdownAuthor(ctx, args.authorEmail.toLowerCase());
+    if (!resolvedAuthor) {
       throw new ConvexError({
         code: "not_found",
         message: `No user found for authorEmail ${args.authorEmail}`,
@@ -249,6 +284,7 @@ export const publishFromMarkdown = mutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, {
+        authorUserId: resolvedAuthor._id,
         title: args.title,
         summary: args.summary,
         body: args.body,
@@ -268,7 +304,7 @@ export const publishFromMarkdown = mutation({
       summary: args.summary,
       bodyFormat: "markdown",
       body: args.body,
-      authorUserId: author._id,
+      authorUserId: resolvedAuthor._id,
       audience: args.audience,
       affectedSystems: args.affectedSystems,
       status: args.status,
