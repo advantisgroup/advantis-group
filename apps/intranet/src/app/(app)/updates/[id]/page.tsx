@@ -9,8 +9,6 @@ import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { AlertTriangle, ArrowLeft, Mail, Sparkles, Trash2, Wrench } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 
 import { Link } from "@/components/Link";
@@ -31,6 +29,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { UpdateArtBanner } from "@/components/updates/UpdateArtBanner";
+import { UpdateMarkdown } from "@/components/updates/UpdateMarkdown";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useNow } from "@/lib/activity/useNow";
 import { formatDateTime, initials } from "@/lib/format";
@@ -320,7 +319,7 @@ export default function UpdateDetailPage() {
             {data.bodyFormat === "richtext" ? (
               <RichText html={data.body} />
             ) : (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.body}</ReactMarkdown>
+              <UpdateMarkdown>{data.body}</UpdateMarkdown>
             )}
           </div>
 

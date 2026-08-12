@@ -67,6 +67,18 @@ without touching the UI.
 Everything after the frontmatter is the body, rendered as GitHub-flavored
 markdown on the detail page.
 
+### Deep links inside the intranet
+
+Use Markdown headings for longer updates. Each heading receives a stable
+anchor from its text, so `## Set up your passkey` can be linked as
+`/updates/<id>#set-up-your-passkey`. Opening an intranet URL with a hash also
+scrolls to the matching element and highlights it briefly; for example,
+`https://intern.advantisgroup.de/settings#passkeys` opens the Passkeys card.
+
+When a full `https://intern.advantisgroup.de/...` URL is used as link text,
+the reader sees a short readable label instead. Hovering it reveals the full
+address, so update bodies stay approachable without hiding the destination.
+
 ### Required environment
 
 Same variables `apps/api`/`packages/convex` already use:

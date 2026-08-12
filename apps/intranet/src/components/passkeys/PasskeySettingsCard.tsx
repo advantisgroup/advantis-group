@@ -160,7 +160,7 @@ export function PasskeySettingsCard() {
         : t("removePasskey");
 
   return (
-    <Card>
+    <Card id="passkeys" data-hash-anchor>
       <CardContent className="space-y-4 p-5">
         <div className="flex items-start justify-between gap-3">
           <div>

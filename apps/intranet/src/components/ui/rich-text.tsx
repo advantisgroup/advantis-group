@@ -12,6 +12,7 @@ import {
   RICH_DATE_ATTRIBUTES,
   type RichDateValue,
 } from "@/lib/rich-date";
+import { headingAnchor, intranetLinkLabel } from "@/lib/intranet-links";
 import { cn } from "@/lib/utils";
 
 const ALLOWED = new Set([
@@ -53,7 +54,7 @@ const REMOVE = new Set([
   "SVG",
 ]);
 
-function cleanInto(node: Node, out: Node, doc: Document) {
+function cleanInto(node: Node, out: Node, doc: Document, headingIds: Set<string>) {
   node.childNodes.forEach((child) => {
     if (child.nodeType === 3 /* text */) {
       out.appendChild(doc.createTextNode(child.textContent ?? ""));
@@ -71,6 +72,11 @@ function cleanInto(node: Node, out: Node, doc: Document) {
           safe.setAttribute("href", href);
           safe.setAttribute("target", "_blank");
           safe.setAttribute("rel", "noreferrer noopener");
+          const label = intranetLinkLabel(href);
+          if (label) {
+            safe.setAttribute("data-intranet-link-url", href);
+            safe.setAttribute("title", href);
+          }
         }
       }
       // @mention chip written by the rich-text editor — only this exact
@@ -84,7 +90,7 @@ function cleanInto(node: Node, out: Node, doc: Document) {
         } else {
           const dateStart = el.getAttribute("data-rich-date-start");
           if (!dateStart?.trim() || !Number.isFinite(Number(dateStart))) {
-            cleanInto(el, safe, doc);
+            cleanInto(el, safe, doc, headingIds);
             out.appendChild(safe);
             return;
           }
@@ -97,11 +103,26 @@ function cleanInto(node: Node, out: Node, doc: Document) {
           safe.setAttribute("tabindex", "0");
         }
       }
-      cleanInto(el, safe, doc);
+      cleanInto(el, safe, doc, headingIds);
+      if (tag === "H1" || tag === "H2" || tag === "H3") {
+        const baseId = headingAnchor(safe.textContent ?? "");
+        let id = baseId;
+        let suffix = 2;
+        while (headingIds.has(id)) id = `${baseId}-${suffix++}`;
+        headingIds.add(id);
+        safe.setAttribute("id", id);
+        safe.setAttribute("data-hash-anchor", "");
+      }
+      if (tag === "A") {
+        const label = intranetLinkLabel(safe.getAttribute("href") ?? "");
+        if (label && safe.textContent?.trim() === safe.getAttribute("href")) {
+          safe.textContent = label;
+        }
+      }
       out.appendChild(safe);
     } else {
       // Unknown tag: drop the wrapper but keep its (cleaned) children.
-      cleanInto(el, out, doc);
+      cleanInto(el, out, doc, headingIds);
     }
   });
 }
@@ -112,7 +133,7 @@ export function sanitizeHtml(html: string): string {
   try {
     const doc = new DOMParser().parseFromString(html, "text/html");
     const container = doc.createElement("div");
-    cleanInto(doc.body, container, doc);
+    cleanInto(doc.body, container, doc, new Set());
     return container.innerHTML;
   } catch {
     return "";

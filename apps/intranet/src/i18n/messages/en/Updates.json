@@ -47,6 +47,7 @@
   "summaryLabel": "Summary",
   "summaryPlaceholder": "One or two sentences — this is what shows in the banner.",
   "bodyLabel": "Details",
+  "deepLinkHint": "Use Markdown headings for linkable sections. Intranet links stay readable and reveal their full address on hover.",
   "switchToMarkdown": "Switch to markdown",
   "switchToRichText": "Switch to rich text",
   "markdownPlaceholder": "Write the full update in markdown…",

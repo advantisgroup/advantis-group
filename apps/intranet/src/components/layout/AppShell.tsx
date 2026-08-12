@@ -126,6 +126,51 @@ function AppShellInner({ children }: { children: ReactNode }) {
     else mainRef.current?.scrollTo({ top: 0 });
   }, [pathname, lenisRef]);
 
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    let clearHighlight: ReturnType<typeof setTimeout> | undefined;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+
+    const focusTarget = () => {
+      let id: string;
+      try {
+        id = decodeURIComponent(hash);
+      } catch {
+        return false;
+      }
+      const target = document.getElementById(id);
+      if (!target) return false;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.setAttribute("data-hash-target-active", "");
+      clearHighlight = setTimeout(() => target.removeAttribute("data-hash-target-active"), 2_500);
+      return true;
+    };
+
+    const onHashChange = () => {
+      if (focusTarget()) {
+        observer.disconnect();
+        return;
+      }
+      retry = setTimeout(focusTarget, 100);
+    };
+
+    const observer = new MutationObserver(() => {
+      if (focusTarget()) observer.disconnect();
+    });
+    if (mainContentRef.current) {
+      observer.observe(mainContentRef.current, { childList: true, subtree: true });
+    }
+    onHashChange();
+    window.addEventListener("hashchange", onHashChange);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("hashchange", onHashChange);
+      if (retry) clearTimeout(retry);
+      if (clearHighlight) clearTimeout(clearHighlight);
+    };
+  }, [pathname]);
+
   // Keep presence fresh while the app is open so chat can show online state.
   // 60s leaves ample margin under the 5-minute online window
   // (UserProfile.ONLINE_WINDOW_MS) while halving the sitewide heartbeat

@@ -174,6 +174,7 @@ export default function NewUpdatePage() {
               {bodyFormat === "richtext" ? t("switchToMarkdown") : t("switchToRichText")}
             </button>
           </div>
+          <p className="mb-2 text-xs text-muted-foreground">{t("deepLinkHint")}</p>
           {bodyFormat === "richtext" ? (
             <RichTextEditor value={body} onChange={setBody} />
           ) : (

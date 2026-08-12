@@ -47,6 +47,7 @@
   "summaryLabel": "Zusammenfassung",
   "summaryPlaceholder": "Ein bis zwei Sätze — das erscheint im Banner.",
   "bodyLabel": "Details",
+  "deepLinkHint": "Verwende Markdown-Überschriften für verlinkbare Abschnitte. Intranet-Links bleiben lesbar und zeigen beim Darüberfahren ihre vollständige Adresse.",
   "switchToMarkdown": "Zu Markdown wechseln",
   "switchToRichText": "Zu Rich Text wechseln",
   "markdownPlaceholder": "Das vollständige Update in Markdown schreiben…",
