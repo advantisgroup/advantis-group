@@ -14,6 +14,8 @@ const transportValidator = v.union(
   v.literal("usb"),
 );
 
+const MAX_PASSKEYS = 10;
+
 const passkeyValidator = v.object({
   _id: v.id("passkeys"),
   name: v.string(),
@@ -233,6 +235,13 @@ export const apiCompleteRegistration = mutation({
       .unique();
     if (existing) {
       throw new ConvexError({ code: "conflict", message: "This passkey is already registered" });
+    }
+    const passkeys = await ctx.db
+      .query("passkeys")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .take(MAX_PASSKEYS);
+    if (passkeys.length >= MAX_PASSKEYS) {
+      throw new ConvexError({ code: "invalid", message: "You can register up to ten passkeys" });
     }
     const now = Date.now();
     const passkeyId = await ctx.db.insert("passkeys", {

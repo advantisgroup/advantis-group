@@ -67,12 +67,8 @@ async function callClaudeJson(system: string, userMsg: string, maxTokens = 1024)
     return JSON.parse(jsonSlice || stripped);
   } catch {
     // A truncated response (hit max_tokens mid-object) is the most likely
-    // cause — logging the raw text and finish reason makes that visible
-    // instead of just "unparsable" with nothing to go on.
-    console.error(
-      `[sales-coach-ev] unparsable AI response (stop_reason=${message.stop_reason}):`,
-      text.slice(0, 2000),
-    );
+    // cause, so retain its stop reason without writing call content to logs.
+    console.error(`[sales-coach-ev] unparsable AI response (stop_reason=${message.stop_reason})`);
     throw Errors.upstream("Coach AI returned an unparsable response");
   }
 }
@@ -183,7 +179,11 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       });
       return { calls: calls.map(decryptCall) };
     },
-    { query: t.Object({ period: t.Optional(t.Union([t.Literal("7"), t.Literal("30"), t.Literal("all")])) }) },
+    {
+      query: t.Object({
+        period: t.Optional(t.Union([t.Literal("7"), t.Literal("30"), t.Literal("all")])),
+      }),
+    },
   )
   .get("/calls/:id", async ({ request, params }) => {
     const { clerkUserId } = await requireAuth(request);
