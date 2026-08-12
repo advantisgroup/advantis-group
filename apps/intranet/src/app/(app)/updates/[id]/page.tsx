@@ -315,7 +315,7 @@ export default function UpdateDetailPage() {
             </div>
           )}
 
-          <div className="mt-8 prose prose-sm max-w-none dark:prose-invert">
+          <div className="update-article mt-8 max-w-2xl">
             {data.bodyFormat === "richtext" ? (
               <RichText html={data.body} />
             ) : (

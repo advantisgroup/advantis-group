@@ -49,16 +49,18 @@ function UpdateHeading({
 
 export function UpdateMarkdown({ children }: { children: string }) {
   return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      components={{
-        a: UpdateLink,
-        h1: (props) => <UpdateHeading {...props} level="h1" />,
-        h2: (props) => <UpdateHeading {...props} level="h2" />,
-        h3: (props) => <UpdateHeading {...props} level="h3" />,
-      }}
-    >
-      {children}
-    </ReactMarkdown>
+    <div className="update-markdown">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a: UpdateLink,
+          h1: (props) => <UpdateHeading {...props} level="h1" />,
+          h2: (props) => <UpdateHeading {...props} level="h2" />,
+          h3: (props) => <UpdateHeading {...props} level="h3" />,
+        }}
+      >
+        {children}
+      </ReactMarkdown>
+    </div>
   );
 }
