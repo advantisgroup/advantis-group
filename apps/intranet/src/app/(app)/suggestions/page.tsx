@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -59,9 +61,11 @@ function monthLabel(key: string, locale: string): string {
 
 const ALL_MONTHS = "all";
 
-export default function SuggestionsPage() {
+function SuggestionsPageContent() {
   const t = useTranslations("Suggestions");
   const locale = useLocale();
+  const router = useRouter();
+  const params = useSearchParams();
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
   const canSplit = useCanSplit();
@@ -74,6 +78,7 @@ export default function SuggestionsPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [splitPct, setSplitPct] = useState(50);
+  const openNewFromUrl = params.get("new") === "1";
 
   const currentMonth = monthKey(Date.now());
   const [monthFilter, setMonthFilter] = useState(currentMonth);
@@ -93,6 +98,12 @@ export default function SuggestionsPage() {
     const raw = Number(localStorage.getItem(SPLIT_KEY));
     if (Number.isFinite(raw) && raw >= 25 && raw <= 75) setSplitPct(raw);
   }, []);
+
+  useEffect(() => {
+    if (!openNewFromUrl) return;
+    setNewOpen(true);
+    router.replace("/suggestions");
+  }, [openNewFromUrl, router]);
 
   function persistSplit(pct: number) {
     setSplitPct(pct);
@@ -226,5 +237,13 @@ export default function SuggestionsPage() {
       <NewSuggestionDialog open={newOpen} onOpenChange={setNewOpen} />
       <CategoryManagerDialog open={categoriesOpen} onOpenChange={setCategoriesOpen} />
     </div>
+  );
+}
+
+export default function SuggestionsPage() {
+  return (
+    <Suspense fallback={null}>
+      <SuggestionsPageContent />
+    </Suspense>
   );
 }

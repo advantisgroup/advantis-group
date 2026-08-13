@@ -13,6 +13,8 @@
   "inOffice": "Im Büro",
   "away": "Abwesend",
   "allDepartments": "Alle Abteilungen",
+  "myTeams": "Meine Teams",
+  "availableNow": "Jetzt verfügbar",
   "noJobTitle": "Keine Position",
   "openProfile": "Profil von {name} öffnen",
   "sendEmail": "E-Mail senden",
@@ -29,5 +31,12 @@
   "columnContact": "Kontakt",
   "countPeople": "{count, plural, =1 {# Person} other {# Personen}}",
   "missingNames": "{count, plural, =1 {# ohne hinterlegten Namen} other {# ohne hinterlegten Namen}}",
-  "clearFilters": "Filter zurücksetzen"
+  "clearFilters": "Filter zurücksetzen",
+  "savedViews": "Gespeicherte Ansichten",
+  "saveView": "Ansicht speichern",
+  "saveViewTitle": "Verzeichnisansicht speichern",
+  "saveViewDescription": "Filter und Layout für später speichern.",
+  "viewName": "Name der Ansicht",
+  "viewNamePlaceholder": "z. B. verfügbarer Kundenservice",
+  "removeSavedView": "{name} entfernen"
 }

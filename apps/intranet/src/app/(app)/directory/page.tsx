@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { LayoutGrid, List, Rows3, Search, Users, X } from "lucide-react";
+import { BookmarkPlus, LayoutGrid, List, Rows3, Search, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import {
@@ -20,10 +20,18 @@ import { PersonCard } from "@/components/directory/PersonCard";
 import { PersonTable, type SortDir, type SortKey } from "@/components/directory/PersonTable";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { UserProfile } from "@/components/profile/UserProfile";
-import { useCurrentUser } from "@/components/providers/current-user";
+import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -41,13 +49,27 @@ import { cn } from "@/lib/utils";
 
 type ViewMode = "list" | "grid";
 
-export default function DirectoryPage() {
+type SavedDirectoryView = {
+  id: string;
+  name: string;
+  department: string;
+  role: string;
+  team: string;
+  myTeamsOnly: boolean;
+  availableNow: boolean;
+  grouped: boolean;
+  view: ViewMode;
+};
+
+function DirectoryPageContent() {
   const t = useTranslations("Directory");
   const tRoles = useTranslations("Roles");
   const tTeams = useTranslations("Teams");
   const tCommon = useTranslations("Common");
   const router = useRouter();
+  const params = useSearchParams();
   const me = useCurrentUser();
+  const isManager = useIsManager();
   const now = useNow();
 
   const [search, setSearch] = useState("");
@@ -55,11 +77,15 @@ export default function DirectoryPage() {
   const [department, setDepartment] = useState<string>("all");
   const [role, setRole] = useState<string>("all");
   const [team, setTeam] = useState<string>("all");
+  const [myTeamsOnly, setMyTeamsOnly] = useState(false);
+  const [availableNow, setAvailableNow] = useState(false);
   const [sort, setSort] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [view, setView] = useState<ViewMode>("list");
   const [grouped, setGrouped] = useState(false);
   const [profileId, setProfileId] = useState<Id<"users"> | null>(null);
+  const [saveViewOpen, setSaveViewOpen] = useState(false);
+  const [viewName, setViewName] = useState("");
 
   // Deep link from a notification/mention: /directory?user=<id> opens their
   // profile dialog directly instead of requiring a click from the list.
@@ -71,6 +97,13 @@ export default function DirectoryPage() {
     if (deepLinkUserId) setProfileId(deepLinkUserId as Id<"users">);
   }, [deepLinkUserId]);
 
+  useEffect(() => {
+    if (params.get("scope") === "my-teams" && me.teams.length > 0) {
+      setMyTeamsOnly(true);
+    }
+    if (params.get("availability") === "now") setAvailableNow(true);
+  }, [me.teams.length, params]);
+
   // Debounced so typing doesn't re-fire the directoryList query on every
   // keystroke — the input stays instantly responsive since it's bound to the
   // undebounced `search` state directly.
@@ -80,11 +113,14 @@ export default function DirectoryPage() {
   }, [search]);
 
   const departments = useQuery(api.users.departments) ?? [];
+  const preferences = useQuery(api.userPreferences.getMine);
   const people = useQuery(api.users.directoryList, {
     search: debouncedSearch || undefined,
     department: department === "all" ? undefined : department,
   });
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
+  const setPreferences = useMutation(api.userPreferences.setMine);
+  const savedDirectoryViews = preferences?.savedDirectoryViews ?? [];
 
   // Device-active + clocked-in via Clockodo — a much more meaningful signal
   // than the old "has an open intranet tab" heuristic, but not everyone is
@@ -117,17 +153,81 @@ export default function DirectoryPage() {
     router.push(`/chat?c=${conversationId}`);
   }
 
+  function applySavedView(savedView: SavedDirectoryView) {
+    setSearch("");
+    setDepartment(departments.includes(savedView.department) ? savedView.department : "all");
+    setRole(
+      ["all", "admin", "manager", "employee"].includes(savedView.role) ? savedView.role : "all",
+    );
+    setTeam(TEAMS.some((candidate) => candidate.id === savedView.team) ? savedView.team : "all");
+    setMyTeamsOnly(savedView.myTeamsOnly && me.teams.length > 0);
+    setAvailableNow(savedView.availableNow && isManager);
+    setGrouped(savedView.grouped);
+    setView(savedView.view);
+  }
+
+  async function saveDirectoryView() {
+    const name = viewName.trim();
+    if (!name) return;
+    const savedView: SavedDirectoryView = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name,
+      department,
+      role,
+      team,
+      myTeamsOnly,
+      availableNow,
+      grouped,
+      view,
+    };
+    await setPreferences({
+      savedDirectoryViews: [...savedDirectoryViews, savedView].slice(-8),
+    });
+    setViewName("");
+    setSaveViewOpen(false);
+  }
+
+  async function removeSavedView(id: string) {
+    await setPreferences({
+      savedDirectoryViews: savedDirectoryViews.filter((savedView) => savedView.id !== id),
+    });
+  }
+
   const filtered = useMemo(() => {
     let rows = people ?? [];
     if (role !== "all") rows = rows.filter((p) => p.role === role);
-    if (team !== "all") rows = rows.filter((p) => p.teams.includes(team));
+    if (myTeamsOnly) rows = rows.filter((p) => p.teams.some((value) => me.teams.includes(value)));
+    else if (team !== "all") rows = rows.filter((p) => p.teams.includes(team));
+    if (availableNow) {
+      rows = rows.filter((person) => {
+        const status = personStatus(
+          person,
+          now,
+          inOfficeByUserId.get(person._id),
+          outUntilByUser.get(person._id),
+        );
+        return status.kind === "inOffice" || status.kind === "online";
+      });
+    }
     const key = (p: Person) =>
       sort === "department" ? (p.department ?? "￿") : sort === "role" ? p.role : p.name;
     const dir = sortDir === "asc" ? 1 : -1;
     return [...rows].sort(
       (a, b) => dir * (key(a).localeCompare(key(b)) || a.name.localeCompare(b.name)),
     );
-  }, [people, role, team, sort, sortDir]);
+  }, [
+    availableNow,
+    inOfficeByUserId,
+    me.teams,
+    myTeamsOnly,
+    now,
+    outUntilByUser,
+    people,
+    role,
+    sort,
+    sortDir,
+    team,
+  ]);
 
   const statuses = useMemo(() => {
     const map = new Map<string, PersonStatus>();
@@ -157,7 +257,13 @@ export default function DirectoryPage() {
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }, [filtered, grouped, t]);
 
-  const filtersActive = role !== "all" || team !== "all" || department !== "all" || search !== "";
+  const filtersActive =
+    role !== "all" ||
+    team !== "all" ||
+    myTeamsOnly ||
+    availableNow ||
+    department !== "all" ||
+    search !== "";
   const missingNames = useMemo(
     () => (people ?? []).filter((p) => !hasRealName(p)).length,
     [people],
@@ -222,6 +328,16 @@ export default function DirectoryPage() {
               ))}
             </SelectContent>
           </Select>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-10 shrink-0 gap-1.5"
+            onClick={() => setSaveViewOpen(true)}
+          >
+            <BookmarkPlus className="size-4" />
+            {t("saveView")}
+          </Button>
           {/* View switch. `list` is the default: at this org's size a table is
               simply the more readable shape, and the grid is for browsing faces. */}
           <div
@@ -271,11 +387,45 @@ export default function DirectoryPage() {
             </button>
           ))}
           <span className="mx-1 h-4 w-px bg-border" />
+          {me.teams.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setMyTeamsOnly((value) => !value);
+                setTeam("all");
+              }}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                myTeamsOnly
+                  ? "border-transparent bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:bg-accent",
+              )}
+            >
+              {t("myTeams")}
+            </button>
+          )}
+          {isManager && (
+            <button
+              type="button"
+              onClick={() => setAvailableNow((value) => !value)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                availableNow
+                  ? "border-transparent bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:bg-accent",
+              )}
+            >
+              {t("availableNow")}
+            </button>
+          )}
           {TEAMS.map((tm) => (
             <button
               key={tm.id}
               type="button"
-              onClick={() => setTeam(team === tm.id ? "all" : tm.id)}
+              onClick={() => {
+                setMyTeamsOnly(false);
+                setTeam(team === tm.id ? "all" : tm.id);
+              }}
               className={cn(
                 "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                 team === tm.id
@@ -302,6 +452,36 @@ export default function DirectoryPage() {
           </button>
         </div>
 
+        {savedDirectoryViews.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5" aria-label={t("savedViews")}>
+            <span className="mr-1 text-xs font-medium text-muted-foreground">
+              {t("savedViews")}
+            </span>
+            {savedDirectoryViews.map((savedView) => (
+              <div
+                key={savedView.id}
+                className="flex items-center overflow-hidden rounded-full border border-border bg-card text-xs"
+              >
+                <button
+                  type="button"
+                  className="px-3 py-1 font-medium text-foreground transition-colors hover:bg-accent"
+                  onClick={() => applySavedView(savedView)}
+                >
+                  {savedView.name}
+                </button>
+                <button
+                  type="button"
+                  className="grid size-6 place-items-center border-l border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  aria-label={t("removeSavedView", { name: savedView.name })}
+                  onClick={() => void removeSavedView(savedView.id)}
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Result count, so a filter that narrows to two people says so rather
             than leaving the reader to count cards. */}
         <div className="flex min-h-6 items-center gap-2 text-xs text-muted-foreground">
@@ -322,6 +502,8 @@ export default function DirectoryPage() {
                     setSearch("");
                     setRole("all");
                     setTeam("all");
+                    setMyTeamsOnly(false);
+                    setAvailableNow(false);
                     setDepartment("all");
                   }}
                 >
@@ -366,6 +548,55 @@ export default function DirectoryPage() {
           if (!o) setProfileId(null);
         }}
       />
+
+      <Dialog open={saveViewOpen} onOpenChange={setSaveViewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("saveViewTitle")}</DialogTitle>
+            <DialogDescription>{t("saveViewDescription")}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(event) => void (event.preventDefault(), saveDirectoryView())}>
+            <label htmlFor="directory-view-name" className="mb-2 block text-sm font-medium">
+              {t("viewName")}
+            </label>
+            <Input
+              id="directory-view-name"
+              value={viewName}
+              onChange={(event) => setViewName(event.target.value)}
+              placeholder={t("viewNamePlaceholder")}
+              autoFocus
+            />
+          </form>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setSaveViewOpen(false)}>
+              {tCommon("cancel")}
+            </Button>
+            <Button
+              type="button"
+              disabled={!viewName.trim()}
+              onClick={() => void saveDirectoryView()}
+            >
+              {t("saveView")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+export default function DirectoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-7xl space-y-3">
+          <Skeleton className="h-8 w-28" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-56 w-full" />
+        </div>
+      }
+    >
+      <DirectoryPageContent />
+    </Suspense>
   );
 }

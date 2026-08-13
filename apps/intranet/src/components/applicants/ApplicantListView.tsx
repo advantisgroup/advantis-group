@@ -10,11 +10,13 @@ import { matchSkills } from "@advantis/types";
 import { useMutation, useQuery } from "convex/react";
 import {
   Archive,
+  BookmarkPlus,
   Briefcase,
   CalendarClock,
   FileText,
   UserCheck,
   UserRoundSearch,
+  X,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -24,7 +26,15 @@ import { today } from "@/components/applicants/applicant-types";
 import { UploadCvButton } from "@/components/applicants/UploadCvButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useConfirm } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  useConfirm,
+} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import {
@@ -49,6 +59,10 @@ import {
   type RatingFilter,
   type StatusFilter,
 } from "@/lib/applicant-list-order";
+import {
+  matchesApplicantPipelineHealth,
+  type ApplicantPipelineHealth,
+} from "@/lib/applicant-pipeline-health";
 import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useErrorHandler } from "@/hooks/use-error-handler";
@@ -59,6 +73,18 @@ type Applicant = FunctionReturnType<typeof api.applicants.list>[number];
 type SkillProfile = FunctionReturnType<typeof api.applicants.listProfiles>[number];
 
 const RATING_OPTIONS: (Ampel | "offen")[] = ["gruen", "blau", "rot", "offen"];
+type HealthFilter = "alle" | ApplicantPipelineHealth;
+type SavedApplicantView = {
+  id: string;
+  name: string;
+  status: StatusFilter;
+  rating: RatingFilter;
+  health: HealthFilter;
+};
+
+function parseHealthFilter(value: string | null): HealthFilter {
+  return value === "uncontacted" || value === "overdue" || value === "stale" ? value : "alle";
+}
 
 function StatTile({
   label,
@@ -148,16 +174,27 @@ export function ApplicantListView() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const applicants = useQuery(api.applicants.list);
+  const preferences = useQuery(api.userPreferences.getMine);
   const profiles = useQuery(api.applicants.listProfiles);
   const convertApplicant = useMutation(api.humanResources.convertApplicant);
   const revertConversion = useMutation(api.humanResources.revertConversion);
   const archiveApplicant = useMutation(api.humanResources.archiveApplicant);
+  const setPreferences = useMutation(api.userPreferences.setMine);
 
   const status = parseStatusFilter(searchParams.get("status"));
   const rating = parseRatingFilter(searchParams.get("rating"));
+  const health = parseHealthFilter(searchParams.get("health"));
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
+  const [saveViewOpen, setSaveViewOpen] = useState(false);
+  const [viewName, setViewName] = useState("");
+  const savedApplicantViews = preferences?.savedApplicantViews ?? [];
 
-  function setParams(next: { status?: StatusFilter; rating?: RatingFilter; q?: string }) {
+  function setParams(next: {
+    status?: StatusFilter;
+    rating?: RatingFilter;
+    health?: HealthFilter;
+    q?: string;
+  }) {
     const p = new URLSearchParams(searchParams.toString());
     const apply = (key: string, value: string | undefined, none: string) => {
       if (value === undefined) return;
@@ -166,8 +203,33 @@ export function ApplicantListView() {
     };
     apply("status", next.status, "alle");
     apply("rating", next.rating, "alle");
+    apply("health", next.health, "alle");
     apply("q", next.q?.trim(), "");
     router.replace(`${pathname}?${p.toString()}`, { scroll: false });
+  }
+
+  function applySavedView(savedView: SavedApplicantView) {
+    setSearch("");
+    setParams({ ...savedView, q: "" });
+  }
+
+  async function saveApplicantView() {
+    const name = viewName.trim();
+    if (!name) return;
+    await setPreferences({
+      savedApplicantViews: [
+        ...savedApplicantViews,
+        {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          name,
+          status,
+          rating,
+          health,
+        },
+      ].slice(-8),
+    });
+    setViewName("");
+    setSaveViewOpen(false);
   }
 
   // Debounced: typing filters the table immediately (local state); the URL
@@ -184,10 +246,12 @@ export function ApplicantListView() {
 
   const profileById = useMemo(() => new Map((profiles ?? []).map((p) => [p._id, p])), [profiles]);
 
-  const list = useMemo(
-    () => filterApplicants(applicants ?? [], { status, rating, search }),
-    [applicants, status, rating, search],
-  );
+  const list = useMemo(() => {
+    const filtered = filterApplicants(applicants ?? [], { status, rating, search });
+    return health === "alle"
+      ? filtered
+      : filtered.filter((applicant) => matchesApplicantPipelineHealth(applicant, health));
+  }, [applicants, health, rating, search, status]);
 
   const counts = useMemo(() => {
     const all = applicants ?? [];
@@ -203,6 +267,7 @@ export function ApplicantListView() {
     const p = new URLSearchParams({ from: "list" });
     if (status !== "alle") p.set("status", status);
     if (rating !== "alle") p.set("rating", rating);
+    if (health !== "alle") p.set("health", health);
     if (search.trim()) p.set("search", search.trim());
     return `/hr/${a._id}/uebersicht?${p.toString()}`;
   }
@@ -278,8 +343,8 @@ export function ApplicantListView() {
         <StatTile
           label={t("statTotal")}
           value={counts.total}
-          active={status === "alle" && rating === "alle"}
-          onClick={() => setParams({ status: "alle", rating: "alle" })}
+          active={status === "alle" && rating === "alle" && health === "alle"}
+          onClick={() => setParams({ status: "alle", rating: "alle", health: "alle" })}
         />
         <StatTile
           label={t("filterNeu")}
@@ -325,7 +390,61 @@ export function ApplicantListView() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={health} onValueChange={(v) => setParams({ health: v as HealthFilter })}>
+          <SelectTrigger className="w-52">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="alle">{t("healthAll")}</SelectItem>
+            <SelectItem value="uncontacted">{t("healthUncontacted")}</SelectItem>
+            <SelectItem value="overdue">{t("healthOverdue")}</SelectItem>
+            <SelectItem value="stale">{t("healthStale")}</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-10 gap-1.5"
+          onClick={() => setSaveViewOpen(true)}
+        >
+          <BookmarkPlus className="size-4" />
+          {t("saveView")}
+        </Button>
       </div>
+
+      {savedApplicantViews.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5" aria-label={t("savedViews")}>
+          <span className="mr-1 text-xs font-medium text-muted-foreground">{t("savedViews")}</span>
+          {savedApplicantViews.map((savedView) => (
+            <div
+              key={savedView.id}
+              className="flex items-center overflow-hidden rounded-full border border-border bg-card text-xs"
+            >
+              <button
+                type="button"
+                className="px-3 py-1 font-medium hover:bg-accent"
+                onClick={() => applySavedView(savedView)}
+              >
+                {savedView.name}
+              </button>
+              <button
+                type="button"
+                className="grid size-6 place-items-center border-l border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                aria-label={t("removeSavedView", { name: savedView.name })}
+                onClick={() =>
+                  void setPreferences({
+                    savedApplicantViews: savedApplicantViews.filter(
+                      (view) => view.id !== savedView.id,
+                    ),
+                  })
+                }
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {list.length === 0 ? (
         <EmptyState
@@ -497,6 +616,34 @@ export function ApplicantListView() {
           </div>
         </>
       )}
+      <Dialog open={saveViewOpen} onOpenChange={setSaveViewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("saveViewTitle")}</DialogTitle>
+            <DialogDescription>{t("saveViewDescription")}</DialogDescription>
+          </DialogHeader>
+          <div>
+            <label htmlFor="applicant-view-name" className="mb-2 block text-sm font-medium">
+              {t("viewName")}
+            </label>
+            <Input
+              id="applicant-view-name"
+              value={viewName}
+              onChange={(event) => setViewName(event.target.value)}
+              placeholder={t("viewNamePlaceholder")}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveViewOpen(false)}>
+              {tc("cancel")}
+            </Button>
+            <Button disabled={!viewName.trim()} onClick={() => void saveApplicantView()}>
+              {t("saveView")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

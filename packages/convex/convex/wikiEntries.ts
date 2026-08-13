@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 
 import { query } from "./_generated/server";
 import { isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
+import { displayName } from "./lib/users";
 
 const MAX_PINS = 5;
 
@@ -15,29 +16,36 @@ export const list = query({
     const rows = await ctx.db.query("wikiEntries").collect();
     const categories = await ctx.db.query("wikiCategories").collect();
     const catById = new Map(categories.map((c) => [c._id, c]));
-    return rows.map((e) => {
-      const cat = e.categoryId ? catById.get(e.categoryId) : undefined;
-      return {
-        _id: e._id,
-        slug: e.slug,
-        categoryId: e.categoryId ?? null,
-        categoryName: cat ? cat.name : (e.categoryName ?? null),
-        categoryColor: cat ? cat.color : null,
-        categoryDeleted: !e.categoryId && !!e.categoryName,
-        thema: e.thema,
-        erklaerung: e.erklaerung,
-        tags: e.tags,
-        link: e.link ?? null,
-        validFrom: e.validFrom,
-        validUntil: e.validUntil,
-        version: e.version,
-        pinned: e.pinned,
-        authorName: e.authorName,
-        authorUserId: e.authorUserId,
-        createdAt: e.createdAt,
-        updatedAt: e.updatedAt,
-      };
-    });
+    return Promise.all(
+      rows.map(async (e) => {
+        const cat = e.categoryId ? catById.get(e.categoryId) : undefined;
+        const ownerUserId = e.ownerUserId ?? e.authorUserId;
+        const owner = await ctx.db.get(ownerUserId);
+        return {
+          _id: e._id,
+          slug: e.slug,
+          categoryId: e.categoryId ?? null,
+          categoryName: cat ? cat.name : (e.categoryName ?? null),
+          categoryColor: cat ? cat.color : null,
+          categoryDeleted: !e.categoryId && !!e.categoryName,
+          thema: e.thema,
+          erklaerung: e.erklaerung,
+          tags: e.tags,
+          link: e.link ?? null,
+          validFrom: e.validFrom,
+          validUntil: e.validUntil,
+          version: e.version,
+          pinned: e.pinned,
+          authorName: e.authorName,
+          authorUserId: e.authorUserId,
+          ownerUserId,
+          ownerName: displayName(owner),
+          ownerAssigned: e.ownerUserId !== undefined,
+          createdAt: e.createdAt,
+          updatedAt: e.updatedAt,
+        };
+      }),
+    );
   },
 });
 
@@ -51,6 +59,8 @@ export const get = query({
       .unique();
     if (!row) return null;
     const category = row.categoryId ? await ctx.db.get(row.categoryId) : null;
+    const ownerUserId = row.ownerUserId ?? row.authorUserId;
+    const owner = await ctx.db.get(ownerUserId);
     return {
       _id: row._id,
       slug: row.slug,
@@ -68,6 +78,9 @@ export const get = query({
       pinned: row.pinned,
       authorName: row.authorName,
       authorUserId: row.authorUserId,
+      ownerUserId,
+      ownerName: displayName(owner),
+      ownerAssigned: row.ownerUserId !== undefined,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };
@@ -82,6 +95,7 @@ const entryFields = {
   link: v.optional(v.string()),
   validFrom: v.number(),
   validUntil: v.number(),
+  ownerUserId: v.optional(v.id("users")),
 };
 
 /** Requires the manage_guidebooks capability — the frontend computes a
@@ -98,6 +112,12 @@ export const create = mutation({
     if (existing) {
       throw new ConvexError({ code: "conflict", message: "That slug is already taken" });
     }
+    if (args.ownerUserId) {
+      const owner = await ctx.db.get(args.ownerUserId);
+      if (!owner || owner.status !== "active") {
+        throw new ConvexError({ code: "bad_request", message: "Owner must be an active user" });
+      }
+    }
     const now = Date.now();
     const id = await ctx.db.insert("wikiEntries", {
       ...args,
@@ -105,6 +125,7 @@ export const create = mutation({
       pinned: false,
       authorUserId: user._id,
       authorName: [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email,
+      ownerUserId: args.ownerUserId ?? user._id,
       createdAt: now,
       updatedAt: now,
     });
@@ -124,6 +145,12 @@ export const update = mutation({
         message: "Only the author or an admin can edit this",
       });
     }
+    if (patch.ownerUserId) {
+      const owner = await ctx.db.get(patch.ownerUserId);
+      if (!owner || owner.status !== "active") {
+        throw new ConvexError({ code: "bad_request", message: "Owner must be an active user" });
+      }
+    }
     // A save always re-selects a real category (or explicitly "none"), so
     // the deleted-category snapshot never survives an edit either way.
     await ctx.db.patch(entryId, {
@@ -132,6 +159,24 @@ export const update = mutation({
       version: entry.version + 1,
       updatedAt: Date.now(),
     });
+    return { ok: true };
+  },
+});
+
+/** Ownership is a narrow management action: a guidebook manager can hand the
+ * upkeep responsibility to an active colleague without gaining permission to
+ * rewrite that colleague's content. */
+export const setOwner = mutation({
+  args: { entryId: v.id("wikiEntries"), ownerUserId: v.id("users") },
+  handler: async (ctx, { entryId, ownerUserId }) => {
+    await requireCapability(ctx, "manage_guidebooks");
+    const entry = await ctx.db.get(entryId);
+    if (!entry) throw new ConvexError({ code: "not_found", message: "Entry not found" });
+    const owner = await ctx.db.get(ownerUserId);
+    if (!owner || owner.status !== "active") {
+      throw new ConvexError({ code: "bad_request", message: "Owner must be an active user" });
+    }
+    await ctx.db.patch(entryId, { ownerUserId, updatedAt: Date.now() });
     return { ok: true };
   },
 });

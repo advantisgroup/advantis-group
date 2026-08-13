@@ -4,24 +4,143 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
   Award,
+  CalendarDays,
   Circle,
+  CircleUserRound,
   Clock,
   Coffee,
   LogOut,
   MessageSquare,
+  Plane,
   TrendingUp,
   Wrench,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
+import type { CurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatIsoDate, formatTime, initials } from "@/lib/format";
+import { useMyAbsences } from "@/lib/absences-api";
+import { formatDateTime, formatIsoDate, formatTime, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { DashCard, Empty, Row, RowSkeletons, StatLine } from "./primitives";
 import { todayLocalDay } from "@/lib/activity/fmt";
 import { useMemo } from "react";
+
+const PROFILE_FIELDS = ["avatar", "jobTitle", "department", "phone"] as const;
+type ProfileField = (typeof PROFILE_FIELDS)[number];
+
+export function missingProfileFields(user: CurrentUser): ProfileField[] {
+  return PROFILE_FIELDS.filter((field) => {
+    if (field === "avatar") return !user.avatar;
+    return !user[field]?.trim();
+  });
+}
+
+export function ProfileCompletionCard({ missingFields }: { missingFields: ProfileField[] }) {
+  const t = useTranslations("Dashboard");
+
+  return (
+    <DashCard
+      icon={<CircleUserRound />}
+      title={t("profileCompletionTitle")}
+      count={missingFields.length}
+    >
+      <Row
+        href="/settings"
+        title={t("profileCompletionAction")}
+        subtitle={missingFields.map((field) => t(`profileField.${field}`)).join(", ")}
+        leading={<CircleUserRound className="size-5 text-primary" />}
+      />
+    </DashCard>
+  );
+}
+
+export function MyWeekCard() {
+  const t = useTranslations("Dashboard");
+  const tAbs = useTranslations("Absences");
+  const locale = useLocale();
+  const period = useMemo(() => {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    end.setHours(23, 59, 59, 999);
+    return {
+      start: start.getTime(),
+      end: end.getTime(),
+      startIso: start.toISOString().slice(0, 10),
+      endIso: end.toISOString().slice(0, 10),
+    };
+  }, []);
+  const events = useQuery(api.events.listForRange, { start: period.start, end: period.end });
+  const { absences } = useMyAbsences();
+
+  const items = useMemo(() => {
+    const eventItems = (events ?? []).map((event) => ({
+      id: `event-${event._id}`,
+      href: `/calendar?event=${event._id}`,
+      title: event.title,
+      subtitle: event.location,
+      time: event.start,
+      type: "event" as const,
+    }));
+    const absenceItems = (absences ?? [])
+      .filter(
+        (absence) =>
+          absence.status === "approved" &&
+          absence.startDate <= period.endIso &&
+          absence.endDate >= period.startIso,
+      )
+      .map((absence) => ({
+        id: `absence-${absence.id}`,
+        href: "/calendar",
+        title: tAbs(absence.type),
+        subtitle:
+          absence.startDate === absence.endDate
+            ? formatIsoDate(absence.startDate, locale)
+            : `${formatIsoDate(absence.startDate, locale)} – ${formatIsoDate(absence.endDate, locale)}`,
+        time: new Date(`${absence.startDate}T00:00:00`).getTime(),
+        type: "absence" as const,
+      }));
+
+    return [...eventItems, ...absenceItems].sort((a, b) => a.time - b.time).slice(0, 5);
+  }, [absences, events, locale, period.endIso, period.startIso, tAbs]);
+
+  return (
+    <DashCard icon={<CalendarDays />} title={t("myWeekTitle")} count={items.length || undefined}>
+      {events === undefined || absences === undefined ? (
+        <RowSkeletons />
+      ) : items.length === 0 ? (
+        <Empty href="/calendar" linkLabel={t("openCalendar")}>
+          {t("myWeekEmpty")}
+        </Empty>
+      ) : (
+        items.map((item) => (
+          <Row
+            key={item.id}
+            href={item.href}
+            title={item.title}
+            subtitle={item.subtitle}
+            leading={
+              item.type === "event" ? (
+                <CalendarDays className="size-4 shrink-0 text-primary" />
+              ) : (
+                <Plane className="size-4 shrink-0 text-sky-600 dark:text-sky-300" />
+              )
+            }
+            trailing={
+              item.type === "event" ? (
+                <span className="whitespace-nowrap">{formatDateTime(item.time, locale)}</span>
+              ) : undefined
+            }
+          />
+        ))
+      )}
+    </DashCard>
+  );
+}
 
 export function ChatsCard() {
   const t = useTranslations("Dashboard");

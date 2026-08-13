@@ -89,6 +89,7 @@ export const list = query({
           attachments,
           status: s.status,
           outcome: s.outcome ?? null,
+          decisionNote: s.decisionNote ?? null,
           createdAt: s.createdAt,
           updatedAt: s.updatedAt ?? null,
         };
@@ -103,16 +104,28 @@ export const update = mutation({
     status: v.optional(suggestionStatusValidator),
     // null clears a previously-set outcome.
     outcome: v.optional(v.union(suggestionOutcomeValidator, v.null())),
+    decisionNote: v.optional(v.union(v.string(), v.null())),
   },
-  handler: async (ctx, { suggestionId, status, outcome }) => {
+  handler: async (ctx, { suggestionId, status, outcome, decisionNote }) => {
     await requireManager(ctx);
     const existing = await ctx.db.get(suggestionId);
     if (!existing) {
       throw new ConvexError({ code: "not_found", message: "Suggestion not found" });
     }
+    const nextDecisionNote =
+      decisionNote === undefined ? existing.decisionNote : decisionNote?.trim() || undefined;
+    const nextStatus = status ?? existing.status;
+    const nextOutcome = outcome === undefined ? existing.outcome : (outcome ?? undefined);
+    if ((nextStatus === "closed" || nextOutcome) && !nextDecisionNote) {
+      throw new ConvexError({
+        code: "bad_request",
+        message: "A decision note is required when closing a suggestion",
+      });
+    }
     await ctx.db.patch(suggestionId, {
       ...(status !== undefined ? { status } : {}),
       ...(outcome !== undefined ? { outcome: outcome ?? undefined } : {}),
+      ...(decisionNote !== undefined ? { decisionNote: nextDecisionNote } : {}),
       updatedAt: Date.now(),
     });
     return { ok: true };

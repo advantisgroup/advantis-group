@@ -6,6 +6,8 @@ import { requireUser } from "./lib/auth";
 
 const preferenceFields = {
   hiddenDashboardCards: v.optional(v.array(v.string())),
+  dashboardCardOrder: v.optional(v.array(v.string())),
+  dashboardDensity: v.optional(v.union(v.literal("comfortable"), v.literal("compact"))),
   defaultCalendarView: v.optional(
     v.union(v.literal("month"), v.literal("week"), v.literal("list")),
   ),
@@ -13,6 +15,60 @@ const preferenceFields = {
   weekStartsOn: v.optional(v.union(v.literal("monday"), v.literal("sunday"))),
   favoriteFolders: v.optional(v.array(v.string())),
   favoriteGuidebooks: v.optional(v.array(v.string())),
+  savedDirectoryViews: v.optional(
+    v.array(
+      v.object({
+        id: v.string(),
+        name: v.string(),
+        department: v.string(),
+        role: v.string(),
+        team: v.string(),
+        myTeamsOnly: v.boolean(),
+        availableNow: v.boolean(),
+        grouped: v.boolean(),
+        view: v.union(v.literal("list"), v.literal("grid")),
+      }),
+    ),
+  ),
+  savedTicketViews: v.optional(
+    v.array(
+      v.object({
+        id: v.string(),
+        name: v.string(),
+        statusFilter: v.union(
+          v.literal("alle"),
+          v.literal("attention"),
+          v.literal("unassigned"),
+          v.literal("offen"),
+          v.literal("bearbeitung"),
+          v.literal("closed"),
+        ),
+        showAll: v.boolean(),
+      }),
+    ),
+  ),
+  savedApplicantViews: v.optional(
+    v.array(
+      v.object({
+        id: v.string(),
+        name: v.string(),
+        status: v.union(v.literal("alle"), v.literal("neu"), v.literal("pool")),
+        rating: v.union(
+          v.literal("alle"),
+          v.literal("gruen"),
+          v.literal("blau"),
+          v.literal("rot"),
+          v.literal("offen"),
+        ),
+        health: v.union(
+          v.literal("alle"),
+          v.literal("uncontacted"),
+          v.literal("overdue"),
+          v.literal("stale"),
+        ),
+      }),
+    ),
+  ),
   lastGuidebookSlug: v.optional(v.string()),
   dismissedWhatsNew: v.optional(v.string()),
   browserPushEnabled: v.optional(v.boolean()),

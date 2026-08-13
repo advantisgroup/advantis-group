@@ -1,9 +1,11 @@
 import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
-import { query } from "./_generated/server";
+import { type Id } from "./_generated/dataModel";
+import { type MutationCtx, query } from "./_generated/server";
 import { autoLockThreadOnTicketClosed } from "./itTicketThreads";
-import { requireUser } from "./lib/auth";
+import { requireManager, requireUser } from "./lib/auth";
+import { displayName } from "./lib/users";
 
 /**
  * IT-Meldesystem: a shared IT issue log. Every active intranet user can file,
@@ -19,6 +21,53 @@ export const statusValidator = v.union(
   v.literal("bearbeitung"),
   v.literal("closed"),
 );
+const relatedLinksValidator = v.array(
+  v.object({
+    type: v.union(
+      v.literal("guidebook"),
+      v.literal("announcement"),
+      v.literal("error_measure"),
+      v.literal("other"),
+    ),
+    label: v.string(),
+    url: v.string(),
+  }),
+);
+
+type TicketStatus = "offen" | "bearbeitung" | "closed";
+
+async function recordStatusChange(
+  ctx: MutationCtx,
+  args: {
+    ticketId: Id<"itTickets">;
+    status: TicketStatus;
+    previousStatus?: TicketStatus;
+    changedByUserId: Id<"users">;
+  },
+) {
+  await ctx.db.insert("itTicketStatusHistory", {
+    ...args,
+    changedAt: Date.now(),
+  });
+}
+
+function validateRelatedLinks(links: Array<{ label: string; url: string }>) {
+  if (links.length > 5) {
+    throw new ConvexError({ code: "bad_request", message: "At most five related links" });
+  }
+  for (const link of links) {
+    if (!link.label.trim() || !link.url.trim()) {
+      throw new ConvexError({ code: "bad_request", message: "Related links need a label and URL" });
+    }
+    if (link.url.startsWith("/")) continue;
+    try {
+      const parsed = new URL(link.url);
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error();
+    } catch {
+      throw new ConvexError({ code: "bad_request", message: "Related link URL is invalid" });
+    }
+  }
+}
 
 // --- Categories --------------------------------------------------------------
 
@@ -119,6 +168,32 @@ export const listMineOpen = query({
   },
 });
 
+export const listStatusHistory = query({
+  args: { ticketId: v.id("itTickets") },
+  handler: async (ctx, { ticketId }) => {
+    await requireUser(ctx);
+    const ticket = await ctx.db.get(ticketId);
+    if (!ticket) throw new ConvexError({ code: "not_found", message: "Ticket not found" });
+    const rows = await ctx.db
+      .query("itTicketStatusHistory")
+      .withIndex("by_ticket_and_changedAt", (q) => q.eq("ticketId", ticketId))
+      .order("desc")
+      .take(50);
+    return Promise.all(
+      rows.map(async (row) => {
+        const user = await ctx.db.get(row.changedByUserId);
+        return {
+          _id: row._id,
+          status: row.status,
+          previousStatus: row.previousStatus ?? null,
+          changedAt: row.changedAt,
+          changedByName: displayName(user),
+        };
+      }),
+    );
+  },
+});
+
 export const create = mutation({
   args: ticketFields,
   handler: async (ctx, args) => {
@@ -129,7 +204,8 @@ export const create = mutation({
     }
     const last = await ctx.db.query("itTickets").withIndex("by_nr").order("desc").first();
     const nr = (last?.nr ?? 0) + 1;
-    return ctx.db.insert("itTickets", {
+    const now = Date.now();
+    const ticketId = await ctx.db.insert("itTickets", {
       nr,
       category: args.category,
       date: args.date,
@@ -140,8 +216,14 @@ export const create = mutation({
       camId: args.camId?.trim() || undefined,
       custNo: args.custNo?.trim() || undefined,
       info: args.info?.trim() || undefined,
-      createdAt: Date.now(),
+      createdAt: now,
     });
+    await recordStatusChange(ctx, {
+      ticketId,
+      status: args.status,
+      changedByUserId: user._id,
+    });
+    return ticketId;
   },
 });
 
@@ -153,6 +235,7 @@ export const update = mutation({
     if (!ticket) {
       throw new ConvexError({ code: "not_found", message: "Ticket not found" });
     }
+    const statusChanged = args.status !== ticket.status;
     await ctx.db.patch(ticketId, {
       category: args.category,
       date: args.date,
@@ -164,6 +247,14 @@ export const update = mutation({
       info: args.info?.trim() || undefined,
       updatedAt: Date.now(),
     });
+    if (statusChanged) {
+      await recordStatusChange(ctx, {
+        ticketId,
+        status: args.status,
+        previousStatus: ticket.status,
+        changedByUserId: user._id,
+      });
+    }
     if (args.status === "closed" && ticket.status !== "closed") {
       await autoLockThreadOnTicketClosed(ctx, ticketId, user._id);
     }
@@ -181,9 +272,62 @@ export const setStatus = mutation({
       throw new ConvexError({ code: "not_found", message: "Ticket not found" });
     }
     await ctx.db.patch(ticketId, { status, updatedAt: Date.now() });
+    if (status !== ticket.status) {
+      await recordStatusChange(ctx, {
+        ticketId,
+        status,
+        previousStatus: ticket.status,
+        changedByUserId: user._id,
+      });
+    }
     if (status === "closed" && ticket.status !== "closed") {
       await autoLockThreadOnTicketClosed(ctx, ticketId, user._id);
     }
+    return { ok: true };
+  },
+});
+
+/** Managers own the queue assignment, while the shared-log status and detail
+ * edits intentionally remain available to every active intranet user. */
+export const setAssignee = mutation({
+  args: {
+    ticketId: v.id("itTickets"),
+    assignedToUserId: v.optional(v.id("users")),
+  },
+  handler: async (ctx, { ticketId, assignedToUserId }) => {
+    await requireManager(ctx);
+    const ticket = await ctx.db.get(ticketId);
+    if (!ticket) {
+      throw new ConvexError({ code: "not_found", message: "Ticket not found" });
+    }
+    if (assignedToUserId) {
+      const assignee = await ctx.db.get(assignedToUserId);
+      if (!assignee || assignee.status !== "active") {
+        throw new ConvexError({ code: "bad_request", message: "Assignee must be active" });
+      }
+    }
+    await ctx.db.patch(ticketId, {
+      assignedToUserId,
+      assignedAt: assignedToUserId ? Date.now() : undefined,
+      updatedAt: Date.now(),
+    });
+    return { ok: true };
+  },
+});
+
+/** Related context stays on the ticket itself rather than becoming a separate
+ * task or relation system. It follows the shared-log access rule above. */
+export const setRelatedLinks = mutation({
+  args: {
+    ticketId: v.id("itTickets"),
+    relatedLinks: relatedLinksValidator,
+  },
+  handler: async (ctx, { ticketId, relatedLinks }) => {
+    await requireUser(ctx);
+    const ticket = await ctx.db.get(ticketId);
+    if (!ticket) throw new ConvexError({ code: "not_found", message: "Ticket not found" });
+    validateRelatedLinks(relatedLinks);
+    await ctx.db.patch(ticketId, { relatedLinks, updatedAt: Date.now() });
     return { ok: true };
   },
 });

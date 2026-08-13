@@ -7,7 +7,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { MessageSquare, MessageSquarePlus, Plus, Settings2, Wrench } from "lucide-react";
+import {
+  BookmarkPlus,
+  MessageSquare,
+  MessageSquarePlus,
+  Plus,
+  Settings2,
+  Wrench,
+  X,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -21,12 +29,22 @@ import {
 import { TicketDialog } from "@/components/it-tickets/TicketDialog";
 import { TicketWorkspace } from "@/components/it-tickets/TicketWorkspace";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
-import { useHasCapability } from "@/components/providers/current-user";
+import { useHasCapability, useIsManager } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useConfirm } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  useConfirm,
+} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -40,6 +58,15 @@ import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const STATUS_FILTERS: ("alle" | Status)[] = ["alle", "offen", "bearbeitung", "closed"];
+type TicketFilter = "alle" | "attention" | "unassigned" | Status;
+type SavedTicketView = {
+  id: string;
+  name: string;
+  statusFilter: TicketFilter;
+  showAll: boolean;
+};
+const ATTENTION_OPEN_AGE_DAYS = 3;
+const ATTENTION_IN_PROGRESS_AGE_DAYS = 7;
 const STATUS_LABEL_KEY: Record<Status, "statusOffen" | "statusBearbeitung" | "statusClosed"> = {
   offen: "statusOffen",
   bearbeitung: "statusBearbeitung",
@@ -48,6 +75,17 @@ const STATUS_LABEL_KEY: Record<Status, "statusOffen" | "statusBearbeitung" | "st
 
 function currentMonth(): string {
   return isoToday().slice(0, 7);
+}
+
+function ticketAttention(ticket: Ticket, now = Date.now()) {
+  const ageDays = Math.floor((now - ticket.createdAt) / (24 * 60 * 60 * 1000));
+  if (ticket.status === "offen" && ageDays >= ATTENTION_OPEN_AGE_DAYS) {
+    return { kind: "open" as const, ageDays };
+  }
+  if (ticket.status === "bearbeitung" && ageDays >= ATTENTION_IN_PROGRESS_AGE_DAYS) {
+    return { kind: "inProgress" as const, ageDays };
+  }
+  return null;
 }
 
 const EMPTY_THREADS: NonNullable<
@@ -151,6 +189,10 @@ function TicketCard({
   onOpenChat,
   hasThread,
   canManageThreads,
+  canAssign,
+  assignees,
+  assigneeName,
+  attention,
 }: {
   ticket: Ticket;
   onEdit: () => void;
@@ -158,11 +200,16 @@ function TicketCard({
   onOpenChat: () => void;
   hasThread: boolean;
   canManageThreads: boolean;
+  canAssign: boolean;
+  assignees: { _id: Id<"users">; name: string }[];
+  assigneeName: string | undefined;
+  attention: ReturnType<typeof ticketAttention>;
 }) {
   const t = useTranslations("ItTickets");
   const tc = useTranslations("Common");
   const locale = useLocale();
   const setStatus = useMutation(api.itTickets.setStatus);
+  const setAssignee = useMutation(api.itTickets.setAssignee);
   const handleError = useErrorHandler();
 
   function changeStatus(status: Status) {
@@ -173,6 +220,21 @@ function TicketCard({
             nr: ticket.nr,
             status: t(STATUS_LABEL_KEY[status]),
           }),
+        ),
+      )
+      .catch(handleError);
+  }
+
+  function changeAssignee(value: string) {
+    const assignedToUserId = value === "unassigned" ? undefined : (value as Id<"users">);
+    setAssignee({ ticketId: ticket._id, assignedToUserId })
+      .then(() =>
+        toast.success(
+          assignedToUserId
+            ? t("assigneeChanged", {
+                name: assignees.find((user) => user._id === assignedToUserId)?.name ?? "—",
+              })
+            : t("assigneeCleared"),
         ),
       )
       .catch(handleError);
@@ -189,6 +251,13 @@ function TicketCard({
           </span>
           <span className="text-sm font-semibold">{ticket.category}</span>
           <StatusBadge status={ticket.status} />
+          {attention && (
+            <Badge variant="warning">
+              {t(attention.kind === "open" ? "attentionOpen" : "attentionInProgress", {
+                days: attention.ageDays,
+              })}
+            </Badge>
+          )}
           <span className="text-xs text-muted-foreground">
             {formatIsoDate(ticket.date, locale)}
           </span>
@@ -206,6 +275,26 @@ function TicketCard({
                 <SelectItem value="closed">{t("statusClosed")}</SelectItem>
               </SelectContent>
             </Select>
+            {canAssign ? (
+              <Select
+                value={ticket.assignedToUserId ?? "unassigned"}
+                onValueChange={changeAssignee}
+              >
+                <SelectTrigger className="h-8 w-auto min-w-[9rem] text-xs">
+                  <SelectValue placeholder={t("unassigned")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">{t("unassigned")}</SelectItem>
+                  {assignees.map((user) => (
+                    <SelectItem key={user._id} value={user._id}>
+                      {user.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : ticket.assignedToUserId ? (
+              <Badge variant="outline">{t("assignedTo", { name: assigneeName ?? "—" })}</Badge>
+            ) : null}
             <Button variant="outline" size="sm" onClick={onEdit}>
               {tc("edit")}
             </Button>
@@ -270,12 +359,16 @@ function ItTicketsPageContent() {
   const router = useRouter();
   const params = useSearchParams();
   const canManageThreads = useHasCapability("manage_it_ticket_threads");
+  const isManager = useIsManager();
 
   const tickets = useQuery(api.itTickets.list);
+  const preferences = useQuery(api.userPreferences.getMine);
+  const users = useQuery(api.users.list, {});
   const categories = useQuery(api.itTickets.listCategories);
   const startedThreads = useQuery(api.itTicketThreads.listStarted) ?? EMPTY_THREADS;
   const ensureDefaultCategories = useMutation(api.itTickets.ensureDefaultCategories);
   const removeTicket = useMutation(api.itTickets.remove);
+  const setPreferences = useMutation(api.userPreferences.setMine);
 
   useEffect(() => {
     if (categories !== undefined && categories.length === 0) {
@@ -284,28 +377,67 @@ function ItTicketsPageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories]);
 
-  const [statusFilter, setStatusFilter] = useState<"alle" | Status>("alle");
+  const [statusFilter, setStatusFilter] = useState<TicketFilter>(() =>
+    params.get("filter") === "unassigned" ? "unassigned" : "alle",
+  );
   const [showAll, setShowAll] = useState(false);
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
   const [editingTicket, setEditingTicket] = useState<Ticket | undefined>(undefined);
   const [categoriesDialogOpen, setCategoriesDialogOpen] = useState(false);
+  const [saveViewOpen, setSaveViewOpen] = useState(false);
+  const [viewName, setViewName] = useState("");
+  const savedTicketViews = preferences?.savedTicketViews ?? [];
 
   const selectedTicketId = params.get("ticket") as Id<"itTickets"> | null;
+  const openNewFromUrl = !selectedTicketId && params.get("new") === "1";
   const threadTicketIds = useMemo(
     () => new Set(startedThreads.map((th) => th.ticketId)),
     [startedThreads],
   );
 
+  const attentionByTicketId = useMemo(() => {
+    const now = Date.now();
+    return new Map((tickets ?? []).map((ticket) => [ticket._id, ticketAttention(ticket, now)]));
+  }, [tickets]);
+  const assignees = useMemo(
+    () =>
+      (users ?? [])
+        .filter((user) => user.status === "active")
+        .map(({ _id, name }) => ({ _id, name })),
+    [users],
+  );
+  const assigneeNameById = useMemo(
+    () => new Map(assignees.map((user) => [String(user._id), user.name])),
+    [assignees],
+  );
+  const unassignedCount = useMemo(
+    () =>
+      (tickets ?? []).filter((ticket) => ticket.status !== "closed" && !ticket.assignedToUserId)
+        .length,
+    [tickets],
+  );
   const filtered = useMemo(() => {
     const rows = tickets ?? [];
+    if (statusFilter === "attention") {
+      return rows.filter((ticket) => attentionByTicketId.get(ticket._id));
+    }
+    if (statusFilter === "unassigned") {
+      return rows.filter((ticket) => ticket.status !== "closed" && !ticket.assignedToUserId);
+    }
     return statusFilter === "alle" ? rows : rows.filter((tk) => tk.status === statusFilter);
-  }, [tickets, statusFilter]);
+  }, [attentionByTicketId, tickets, statusFilter]);
   const visible = showAll ? filtered : filtered.slice(0, 10);
 
   function openCreate() {
     setEditingTicket(undefined);
     setTicketDialogOpen(true);
   }
+
+  useEffect(() => {
+    if (!openNewFromUrl) return;
+    openCreate();
+    router.replace("/it-tickets");
+  }, [openNewFromUrl, router]);
 
   function openEdit(ticket: Ticket) {
     setEditingTicket(ticket);
@@ -342,6 +474,37 @@ function ItTicketsPageContent() {
     router.push("/it-tickets");
   }
 
+  function applySavedView(savedView: SavedTicketView) {
+    setStatusFilter(
+      savedView.statusFilter === "unassigned" && !isManager ? "alle" : savedView.statusFilter,
+    );
+    setShowAll(savedView.showAll);
+  }
+
+  async function saveTicketView() {
+    const name = viewName.trim();
+    if (!name) return;
+    await setPreferences({
+      savedTicketViews: [
+        ...savedTicketViews,
+        {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          name,
+          statusFilter,
+          showAll,
+        },
+      ].slice(-8),
+    });
+    setViewName("");
+    setSaveViewOpen(false);
+  }
+
+  async function removeSavedView(id: string) {
+    await setPreferences({
+      savedTicketViews: savedTicketViews.filter((savedView) => savedView.id !== id),
+    });
+  }
+
   if (selectedTicketId) {
     const selectedTicket = tickets?.find((tk) => tk._id === selectedTicketId);
     if (tickets !== undefined && !selectedTicket) {
@@ -368,6 +531,7 @@ function ItTicketsPageContent() {
           ticket={selectedTicket}
           otherThreads={otherThreadTickets}
           canManageThreads={canManageThreads}
+          assigneeName={assigneeNameById.get(String(selectedTicket.assignedToUserId))}
           onBack={backToList}
           onEdit={() => openEdit(selectedTicket)}
           onDelete={() => void deleteTicket(selectedTicket)}
@@ -414,14 +578,67 @@ function ItTicketsPageContent() {
               {s === "alle" ? t("filterAll") : t(STATUS_LABEL_KEY[s])}
             </Pill>
           ))}
+          <Pill active={statusFilter === "attention"} onClick={() => setStatusFilter("attention")}>
+            {t("filterNeedsAttention", {
+              count: Array.from(attentionByTicketId.values()).filter(Boolean).length,
+            })}
+          </Pill>
+          {isManager && (
+            <Pill
+              active={statusFilter === "unassigned"}
+              onClick={() => setStatusFilter("unassigned")}
+            >
+              {t("filterUnassigned", { count: unassignedCount })}
+            </Pill>
+          )}
           <label className="ml-2 flex items-center gap-1.5 text-xs text-muted-foreground">
             <Checkbox checked={showAll} onCheckedChange={(v) => setShowAll(v === true)} />
             {t("showAll")}
           </label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 px-2 text-xs"
+            onClick={() => setSaveViewOpen(true)}
+          >
+            <BookmarkPlus className="size-3.5" />
+            {t("saveView")}
+          </Button>
           <span className="ml-auto font-mono text-xs text-muted-foreground">
             {t("countLabel", { shown: visible.length, total: filtered.length })}
           </span>
         </div>
+
+        {savedTicketViews.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5" aria-label={t("savedViews")}>
+            <span className="mr-1 text-xs font-medium text-muted-foreground">
+              {t("savedViews")}
+            </span>
+            {savedTicketViews.map((savedView) => (
+              <div
+                key={savedView.id}
+                className="flex items-center overflow-hidden rounded-full border border-border bg-card text-xs"
+              >
+                <button
+                  type="button"
+                  className="px-3 py-1 font-medium text-foreground transition-colors hover:bg-accent"
+                  onClick={() => applySavedView(savedView)}
+                >
+                  {savedView.name}
+                </button>
+                <button
+                  type="button"
+                  className="grid size-6 place-items-center border-l border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  aria-label={t("removeSavedView", { name: savedView.name })}
+                  onClick={() => void removeSavedView(savedView.id)}
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {visible.length === 0 ? (
           <EmptyState
@@ -429,9 +646,13 @@ function ItTicketsPageContent() {
             title={
               statusFilter === "alle"
                 ? t("noTickets")
-                : t("noTicketsFiltered", {
-                    status: t(STATUS_LABEL_KEY[statusFilter as Status]),
-                  })
+                : statusFilter === "attention"
+                  ? t("noTicketsAttention")
+                  : statusFilter === "unassigned"
+                    ? t("noTicketsUnassigned")
+                    : t("noTicketsFiltered", {
+                        status: t(STATUS_LABEL_KEY[statusFilter as Status]),
+                      })
             }
           />
         ) : (
@@ -445,6 +666,10 @@ function ItTicketsPageContent() {
                 onOpenChat={() => openChat(ticket._id)}
                 hasThread={threadTicketIds.has(ticket._id)}
                 canManageThreads={canManageThreads}
+                canAssign={isManager}
+                assignees={assignees}
+                assigneeName={assigneeNameById.get(String(ticket.assignedToUserId))}
+                attention={attentionByTicketId.get(ticket._id) ?? null}
               />
             ))}
           </div>
@@ -465,6 +690,34 @@ function ItTicketsPageContent() {
         categories={categories ?? []}
         tickets={tickets}
       />
+      <Dialog open={saveViewOpen} onOpenChange={setSaveViewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("saveViewTitle")}</DialogTitle>
+            <DialogDescription>{t("saveViewDescription")}</DialogDescription>
+          </DialogHeader>
+          <div>
+            <label htmlFor="ticket-view-name" className="mb-2 block text-sm font-medium">
+              {t("viewName")}
+            </label>
+            <Input
+              id="ticket-view-name"
+              value={viewName}
+              onChange={(event) => setViewName(event.target.value)}
+              placeholder={t("viewNamePlaceholder")}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setSaveViewOpen(false)}>
+              {tc("cancel")}
+            </Button>
+            <Button type="button" disabled={!viewName.trim()} onClick={() => void saveTicketView()}>
+              {t("saveView")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

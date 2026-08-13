@@ -45,6 +45,7 @@ import type * as activity_stats from "../activity/stats.js";
 import type * as adminOverview from "../adminOverview.js";
 import type * as analytics from "../analytics.js";
 import type * as announcements from "../announcements.js";
+import type * as approvalDelegations from "../approvalDelegations.js";
 import type * as applicantVault from "../applicantVault.js";
 import type * as applicants from "../applicants.js";
 import type * as auditLog from "../auditLog.js";
@@ -102,6 +103,7 @@ import type * as migrations_backfillPerformanceCompanyId from "../migrations/bac
 import type * as migrations_dropGuestFields from "../migrations/dropGuestFields.js";
 import type * as notifications from "../notifications.js";
 import type * as onedrive from "../onedrive.js";
+import type * as offboarding from "../offboarding.js";
 import type * as orgData from "../orgData.js";
 import type * as orgDataMigration from "../orgDataMigration.js";
 import type * as outbound from "../outbound.js";
@@ -182,6 +184,7 @@ declare const fullApi: ApiFromModules<{
   adminOverview: typeof adminOverview;
   analytics: typeof analytics;
   announcements: typeof announcements;
+  approvalDelegations: typeof approvalDelegations;
   applicantVault: typeof applicantVault;
   applicants: typeof applicants;
   auditLog: typeof auditLog;
@@ -239,6 +242,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/dropGuestFields": typeof migrations_dropGuestFields;
   notifications: typeof notifications;
   onedrive: typeof onedrive;
+  offboarding: typeof offboarding;
   orgData: typeof orgData;
   orgDataMigration: typeof orgDataMigration;
   outbound: typeof outbound;

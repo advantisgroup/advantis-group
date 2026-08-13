@@ -40,6 +40,45 @@ export const create = mutation({
   },
 });
 
+/** Creates a short, explicit weekly series. Each occurrence stays a normal
+ * event so editing or deleting one never needs recurrence-rule machinery. */
+export const createWeeklySeries = mutation({
+  args: {
+    title: v.string(),
+    description: v.optional(v.string()),
+    location: v.optional(v.string()),
+    start: v.number(),
+    end: v.number(),
+    allDay: v.boolean(),
+    color: v.optional(v.string()),
+    audience: audienceValidator,
+    occurrences: v.number(),
+  },
+  handler: async (ctx, { occurrences, ...event }) => {
+    const user = await requireCapability(ctx, "manage_announcements");
+    if (!Number.isInteger(occurrences) || occurrences < 2 || occurrences > 12) {
+      throw new ConvexError({ code: "bad_request", message: "Choose 2 to 12 occurrences" });
+    }
+    if (event.end < event.start) {
+      throw new ConvexError({ code: "bad_request", message: "End must be after start" });
+    }
+    const now = Date.now();
+    const ids = [];
+    for (let index = 0; index < occurrences; index++) {
+      ids.push(
+        await ctx.db.insert("events", {
+          ...event,
+          start: event.start + index * 7 * 24 * 60 * 60 * 1000,
+          end: event.end + index * 7 * 24 * 60 * 60 * 1000,
+          createdByUserId: user._id,
+          createdAt: now,
+        }),
+      );
+    }
+    return { ids };
+  },
+});
+
 export const addRichDateToMine = mutation({
   args: {
     richDateId: v.string(),

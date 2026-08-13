@@ -8,11 +8,22 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { matchSkills } from "@advantis/types";
 import { useMutation, useQuery } from "convex/react";
-import { Briefcase, Calendar, CalendarClock, Check, Mail, PhoneCall, Users, X } from "lucide-react";
+import {
+  Briefcase,
+  Calendar,
+  CalendarClock,
+  Check,
+  Mail,
+  PhoneCall,
+  Printer,
+  Users,
+  X,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { type ApplicantDetail, ensureRichHtml } from "@/components/applicants/applicant-types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -152,6 +163,10 @@ export function Uebersicht({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [applicant],
   );
+  const latestTouchpoint = timeline[0] ?? null;
+  const nextAppointment = [...applicant.termine]
+    .filter((termin) => !termin.uebernommen && termin.datum >= today())
+    .sort((a, b) => (a.datum + a.uhrzeit).localeCompare(b.datum + b.uhrzeit))[0];
 
   function patch(fields: Parameters<typeof update>[0]) {
     update(fields).catch(handleError);
@@ -159,7 +174,7 @@ export function Uebersicht({
 
   return (
     <div className="space-y-5">
-      <Card>
+      <Card className="print:hidden">
         <CardContent className="space-y-4 p-4">
           <div>
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -292,7 +307,7 @@ export function Uebersicht({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="print:hidden">
         <CardContent className="p-4">
           <p className="mb-3 text-sm font-semibold">{t("timeline")}</p>
           {timeline.length === 0 ? (
@@ -338,6 +353,77 @@ export function Uebersicht({
           )}
         </CardContent>
       </Card>
+
+      <Card className="border-primary/25 bg-primary/[0.03] print:border-0 print:bg-transparent">
+        <CardContent className="space-y-4 p-4 print:p-0">
+          <div className="flex items-start justify-between gap-3 border-b border-border/70 pb-3 print:border-foreground">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("handoffBrief")}
+              </p>
+              <h2 className="mt-1 text-xl font-semibold">{applicant.name}</h2>
+              <p className="text-sm text-muted-foreground">
+                {applicant.position || t("positionUnknown")}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="print:hidden"
+              onClick={() => window.print()}
+            >
+              <Printer className="size-3.5" />
+              {t("printHandoffBrief")}
+            </Button>
+          </div>
+
+          <div className="grid gap-3 text-sm sm:grid-cols-2 print:grid-cols-2">
+            <BriefRow
+              label={t("handoffStatus")}
+              value={t(`status${applicant.status === "neu" ? "Neu" : "Pool"}`)}
+            />
+            <BriefRow label={t("documentsInFile")} value={String(applicant.documents.length)} />
+            <BriefRow label={t("email")} value={applicant.email ?? "—"} />
+            <BriefRow label={t("phone")} value={applicant.telefon ?? "—"} />
+            <BriefRow
+              label={t("handoffLatestTouchpoint")}
+              value={
+                latestTouchpoint
+                  ? `${latestTouchpoint.label} · ${formatIsoDate(latestTouchpoint.date, locale)}`
+                  : t("handoffNoActivity")
+              }
+            />
+            <BriefRow
+              label={t("handoffNextStep")}
+              value={
+                nextAppointment
+                  ? `${t(`terminTyp.${nextAppointment.typ}`)} · ${formatIsoDate(nextAppointment.datum, locale)}${nextAppointment.uhrzeit ? ` · ${nextAppointment.uhrzeit}` : ""}`
+                  : t("noUpcomingTermine")
+              }
+            />
+          </div>
+
+          {latestTouchpoint?.notiz && (
+            <div className="border-t border-border/70 pt-3 print:border-foreground">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("handoffLatestNote")}
+              </p>
+              <p className="mt-1 whitespace-pre-wrap text-sm">{latestTouchpoint.notiz}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function BriefRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-0.5 break-words font-medium">{value}</p>
     </div>
   );
 }

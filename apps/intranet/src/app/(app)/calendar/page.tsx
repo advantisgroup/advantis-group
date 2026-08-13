@@ -22,6 +22,7 @@ import {
   subWeeks,
 } from "date-fns";
 import {
+  AlertTriangle,
   CalendarArrowDown,
   CalendarClock,
   CalendarDays,
@@ -150,14 +151,62 @@ function EventDialog({
   const t = useTranslations("Calendar");
   const tc = useTranslations("Common");
   const create = useMutation(api.events.create);
+  const createWeeklySeries = useMutation(api.events.createWeeklySeries);
   const update = useMutation(api.events.update);
   const handleError = useErrorHandler();
   const departments = useQuery(api.users.departments) ?? [];
   const [form, setForm] = useState<EventDraft>(emptyDraft());
   const [busy, setBusy] = useState(false);
+  const [occurrences, setOccurrences] = useState("1");
+
+  const conflictRange = useMemo(() => {
+    if (!form.start || !form.end) return null;
+    const start = new Date(form.start);
+    const end = new Date(form.end);
+    if (
+      Number.isNaN(start.getTime()) ||
+      Number.isNaN(end.getTime()) ||
+      end.getTime() <= start.getTime()
+    ) {
+      return null;
+    }
+    return {
+      start: start.getTime(),
+      end: end.getTime(),
+      startIso: isoDay(start),
+      endIso: isoDay(end),
+    };
+  }, [form.end, form.start]);
+  const conflictingEvents = useQuery(
+    api.events.listForRange,
+    conflictRange ? { start: conflictRange.start, end: conflictRange.end } : "skip",
+  );
+  const conflictingAbsences = useAbsencesCalendar(
+    conflictRange?.startIso ?? isoDay(new Date()),
+    conflictRange?.endIso ?? isoDay(new Date()),
+    draft !== null && conflictRange !== null,
+  );
+  const conflicts = useMemo(() => {
+    if (!conflictRange) return null;
+    const overlappingEvents = (conflictingEvents ?? []).filter(
+      (event) =>
+        event._id !== form.eventId &&
+        event.start < conflictRange.end &&
+        event.end > conflictRange.start,
+    ).length;
+    const peopleOut = (conflictingAbsences ?? []).filter(
+      (absence) =>
+        absence.type === "vacation" &&
+        (form.audience === "all" || absence.userDepartment === form.audience),
+    ).length;
+    return { overlappingEvents, peopleOut };
+  }, [conflictRange, conflictingAbsences, conflictingEvents, form.audience, form.eventId]);
 
   useEffect(() => {
-    if (draft) setForm(draft);
+    if (draft) {
+      setForm(draft);
+      setOccurrences("1");
+    }
   }, [draft]);
 
   const set = <K extends keyof EventDraft>(key: K, value: EventDraft[K]) =>
@@ -183,8 +232,13 @@ function EventDialog({
         await update({ eventId: form.eventId, ...payload });
         toast.success(t("updated"));
       } else {
-        await create(payload);
-        toast.success(t("addEvent"));
+        if (occurrences === "1") {
+          await create(payload);
+          toast.success(t("addEvent"));
+        } else {
+          await createWeeklySeries({ ...payload, occurrences: Number(occurrences) });
+          toast.success(t("seriesCreated", { count: Number(occurrences) }));
+        }
       }
       onOpenChange(false);
     } catch (e) {
@@ -276,6 +330,42 @@ function EventDialog({
             ))}
           </SelectContent>
         </Select>
+
+        {!form.eventId && (
+          <div>
+            <Label className="mb-1.5 block">{t("repeatWeekly")}</Label>
+            <Select value={occurrences} onValueChange={setOccurrences}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">{t("doesNotRepeat")}</SelectItem>
+                {[2, 3, 4, 6, 8, 12].map((count) => (
+                  <SelectItem key={count} value={String(count)}>
+                    {t("weeklyOccurrences", { count })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {conflicts && (conflicts.peopleOut > 0 || conflicts.overlappingEvents > 0) && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm">
+            <div className="flex items-center gap-2 font-medium text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="size-4 shrink-0" />
+              {t("planningConflictsTitle")}
+            </div>
+            <div className="mt-1 space-y-0.5 pl-6 text-xs text-amber-800/80 dark:text-amber-100/80">
+              {conflicts.peopleOut > 0 && (
+                <p>{t("planningAbsences", { peopleOut: conflicts.peopleOut })}</p>
+              )}
+              {conflicts.overlappingEvents > 0 && (
+                <p>{t("planningEvents", { overlappingEvents: conflicts.overlappingEvents })}</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </ResponsiveDialog>
   );

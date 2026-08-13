@@ -2,6 +2,8 @@
 
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
+import { api } from "@advantis/convex/api";
+import { useQuery } from "convex/react";
 import {
   CalendarArrowDown,
   CalendarDays,
@@ -1265,12 +1267,15 @@ export function ClockodoWorkspace({ section }: { section: ClockodoSection }) {
   const router = useRouter();
   const hasTeamAccess = useHasCapability("view_clockodo_team");
   const canManageClockodo = useHasCapability("manage_clockodo_team");
+  const approvalCover = useQuery(api.approvalDelegations.mine);
+  const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
+  const canReviewAbsences = canManageClockodo || hasApprovalCover;
   const { absences: mine, refresh } = useMyAbsences();
   const calendarStart = addDaysIso(isoToday(), -31);
   const calendarEnd = addDaysIso(isoToday(), 90);
   const calendar = useAbsencesCalendar(calendarStart, calendarEnd);
   const pending = usePendingAbsenceCount(hasTeamAccess);
-  const { approvals, refresh: refreshApprovals } = usePendingApprovals(canManageClockodo);
+  const { approvals, refresh: refreshApprovals } = usePendingApprovals(canReviewAbsences);
 
   function exportIcs() {
     const approved = (mine ?? []).filter((absence) => absence.status === "approved");
@@ -1322,14 +1327,14 @@ export function ClockodoWorkspace({ section }: { section: ClockodoSection }) {
         {isAbsencesSubSection && (
           <AbsencesSubNav
             active={section}
-            canManageClockodo={canManageClockodo}
+            canManageClockodo={canReviewAbsences}
             onNavigate={navigate}
           />
         )}
         {section === "requests" && <Requests mine={mine} onExport={exportIcs} onSaved={refresh} />}
         {section === "planner" && <Planner calendar={calendar} />}
         {section === "approvals" &&
-          (canManageClockodo ? (
+          (canReviewAbsences ? (
             <Approvals approvals={approvals} onDecided={refreshApprovals} />
           ) : (
             <ForbiddenScreen />

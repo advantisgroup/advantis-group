@@ -466,23 +466,84 @@ export default defineSchema({
      * necessarily `createdByUserId`'s own display name. */
     createdByName: v.string(),
     createdByUserId: v.id("users"),
+    /** Optional during rollout: existing shared-log tickets predate ownership. */
+    assignedToUserId: v.optional(v.id("users")),
+    assignedAt: v.optional(v.number()),
     status: v.union(v.literal("offen"), v.literal("bearbeitung"), v.literal("closed")),
     /** Only meaningful for the "SF" category — extra fields the form reveals. */
     topic: v.optional(v.string()),
     camId: v.optional(v.string()),
     custNo: v.optional(v.string()),
     info: v.optional(v.string()),
+    relatedLinks: v.optional(
+      v.array(
+        v.object({
+          type: v.union(
+            v.literal("guidebook"),
+            v.literal("announcement"),
+            v.literal("error_measure"),
+            v.literal("other"),
+          ),
+          label: v.string(),
+          url: v.string(),
+        }),
+      ),
+    ),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
     .index("by_nr", ["nr"])
     .index("by_creator", ["createdByUserId"])
+    .index("by_assignee", ["assignedToUserId"])
     // Both back `/admin`'s throughput timelines: "opened in window" over
     // `createdAt`, "closed in window" over the closing edit's `updatedAt`.
     // Without the second one a ticket opened before the window but closed
     // inside it would be invisible to the closed-per-day series.
     .index("by_createdAt", ["createdAt"])
     .index("by_status_updatedAt", ["status", "updatedAt"]),
+
+  itTicketStatusHistory: defineTable({
+    ticketId: v.id("itTickets"),
+    status: v.union(v.literal("offen"), v.literal("bearbeitung"), v.literal("closed")),
+    previousStatus: v.optional(
+      v.union(v.literal("offen"), v.literal("bearbeitung"), v.literal("closed")),
+    ),
+    changedByUserId: v.id("users"),
+    changedAt: v.number(),
+  }).index("by_ticket_and_changedAt", ["ticketId", "changedAt"]),
+
+  /** A time-boxed, single-purpose cover for Clockodo absence approvals. */
+  approvalDelegations: defineTable({
+    delegatorUserId: v.id("users"),
+    delegateUserId: v.id("users"),
+    scope: v.literal("absence_approvals"),
+    startsAt: v.number(),
+    endsAt: v.number(),
+    revokedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_delegate_and_endsAt", ["delegateUserId", "endsAt"])
+    .index("by_delegator_and_endsAt", ["delegatorUserId", "endsAt"]),
+
+  /** A manager-confirmed handover record; the actions it references stay in
+   * their owning modules instead of being copied into a new task system. */
+  offboardingChecklists: defineTable({
+    userId: v.id("users"),
+    lastWorkingDay: v.optional(v.string()),
+    completedSteps: v.array(
+      v.union(
+        v.literal("handover"),
+        v.literal("tickets"),
+        v.literal("guidebooks"),
+        v.literal("files"),
+        v.literal("devices"),
+        v.literal("access"),
+      ),
+    ),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
 
   // Per-ticket chat thread — opt-in (a ticket has one iff someone with the
   // `manage_it_ticket_threads` capability, or a manager+, started it) rather
@@ -714,6 +775,7 @@ export default defineSchema({
     attachments: v.optional(v.array(attachmentValidator)),
     status: suggestionStatusValidator,
     outcome: v.optional(suggestionOutcomeValidator),
+    decisionNote: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
@@ -1898,6 +1960,7 @@ export default defineSchema({
     pinned: v.boolean(),
     authorUserId: v.id("users"),
     authorName: v.string(),
+    ownerUserId: v.optional(v.id("users")),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -1987,6 +2050,8 @@ export default defineSchema({
   userPreferences: defineTable({
     userId: v.id("users"),
     hiddenDashboardCards: v.optional(v.array(v.string())),
+    dashboardCardOrder: v.optional(v.array(v.string())),
+    dashboardDensity: v.optional(v.union(v.literal("comfortable"), v.literal("compact"))),
     defaultCalendarView: v.optional(
       v.union(v.literal("month"), v.literal("week"), v.literal("list")),
     ),
@@ -1996,6 +2061,60 @@ export default defineSchema({
     /** AG-root-relative OneDrive folder paths pinned in the file browser. */
     favoriteFolders: v.optional(v.array(v.string())),
     favoriteGuidebooks: v.optional(v.array(v.string())),
+    savedDirectoryViews: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          name: v.string(),
+          department: v.string(),
+          role: v.string(),
+          team: v.string(),
+          myTeamsOnly: v.boolean(),
+          availableNow: v.boolean(),
+          grouped: v.boolean(),
+          view: v.union(v.literal("list"), v.literal("grid")),
+        }),
+      ),
+    ),
+    savedTicketViews: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          name: v.string(),
+          statusFilter: v.union(
+            v.literal("alle"),
+            v.literal("attention"),
+            v.literal("unassigned"),
+            v.literal("offen"),
+            v.literal("bearbeitung"),
+            v.literal("closed"),
+          ),
+          showAll: v.boolean(),
+        }),
+      ),
+    ),
+    savedApplicantViews: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          name: v.string(),
+          status: v.union(v.literal("alle"), v.literal("neu"), v.literal("pool")),
+          rating: v.union(
+            v.literal("alle"),
+            v.literal("gruen"),
+            v.literal("blau"),
+            v.literal("rot"),
+            v.literal("offen"),
+          ),
+          health: v.union(
+            v.literal("alle"),
+            v.literal("uncontacted"),
+            v.literal("overdue"),
+            v.literal("stale"),
+          ),
+        }),
+      ),
+    ),
     lastGuidebookSlug: v.optional(v.string()),
     /** Release key of the last dismissed "What's new" dialog. */
     dismissedWhatsNew: v.optional(v.string()),
@@ -2629,6 +2748,21 @@ export default defineSchema({
     ),
     status: v.union(v.literal("offen"), v.literal("erledigt")),
     responsibleName: v.optional(v.string()),
+    ownerUserId: v.optional(v.id("users")),
+    relatedLinks: v.optional(
+      v.array(
+        v.object({
+          type: v.union(
+            v.literal("guidebook"),
+            v.literal("announcement"),
+            v.literal("ticket"),
+            v.literal("other"),
+          ),
+          label: v.string(),
+          url: v.string(),
+        }),
+      ),
+    ),
     dueAt: v.optional(v.number()),
     effectivenessChecked: v.boolean(),
     createdByUserId: v.id("users"),

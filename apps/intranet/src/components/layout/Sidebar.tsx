@@ -122,6 +122,8 @@ export function Sidebar() {
   const hasFilesAccess = useHasCapability("access_files");
   const hasApplicantAccess = useHasApplicantAccess();
   const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
+  const approvalCover = useQuery(api.approvalDelegations.mine);
+  const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
   const { setOpenMobile, state, isMobile } = useSidebar();
   const featureFlags = useFeatureFlags();
   const disabledFeatures = new Set(
@@ -169,7 +171,7 @@ export function Sidebar() {
           icon: Calendar,
           tourAttr: "tour-nav-calendar",
         },
-        ...(user.clockodoUserId || hasClockodoTeamAccess
+        ...(user.clockodoUserId || hasClockodoTeamAccess || hasApprovalCover
           ? [
               {
                 href: "/clockodo",

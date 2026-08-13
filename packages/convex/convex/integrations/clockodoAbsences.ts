@@ -9,6 +9,7 @@ import {
   userHasCapability,
 } from "../lib/auth";
 import { toClockodoIdString } from "../lib/clockodoId";
+import { hasActiveAbsenceApprovalDelegation } from "../approvalDelegations";
 
 /**
  * Server-key gated lookups the Elysia API uses to join live-fetched Clockodo
@@ -74,6 +75,8 @@ export const resolveCaller = query({
       ? []
       : await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
     const canManageTeam = userHasCapability(user, customRoles, "manage_clockodo_team");
+    const hasApprovalCover =
+      !sandboxed && !canManageTeam && (await hasActiveAbsenceApprovalDelegation(ctx, user._id));
     const canViewTeam = canManageTeam || userHasCapability(user, customRoles, "view_clockodo_team");
     const clockodoUserId =
       typeof user.clockodoUserId === "number"
@@ -87,7 +90,7 @@ export const resolveCaller = query({
         name,
         isManager,
         canViewTeam,
-        canManageTeam,
+        canManageTeam: canManageTeam || hasApprovalCover,
       };
     }
     return {
@@ -97,7 +100,7 @@ export const resolveCaller = query({
       clockodoUserId,
       isManager,
       canViewTeam,
-      canManageTeam,
+      canManageTeam: canManageTeam || hasApprovalCover,
     };
   },
 });

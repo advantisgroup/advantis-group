@@ -65,11 +65,19 @@ export function useMyAbsences(): ApiQuery<MyAbsence[]> & { absences: MyAbsence[]
  * (inclusive ISO dates). Privacy-filtered server-side: colleagues only see
  * vacation-type entries, not why someone else is out.
  */
-export function useAbsencesCalendar(start: string, end: string): CalendarAbsence[] | undefined {
-  return useAbsencesCalendarQuery(start, end).data;
+export function useAbsencesCalendar(
+  start: string,
+  end: string,
+  enabled = true,
+): CalendarAbsence[] | undefined {
+  return useAbsencesCalendarQuery(start, end, enabled).data;
 }
 
-export function useAbsencesCalendarQuery(start: string, end: string): ApiQuery<CalendarAbsence[]> {
+export function useAbsencesCalendarQuery(
+  start: string,
+  end: string,
+  enabled = true,
+): ApiQuery<CalendarAbsence[]> {
   const api = useIntranetApiClient();
   return useApiQuery(
     useCallback(async () => {
@@ -78,7 +86,7 @@ export function useAbsencesCalendarQuery(start: string, end: string): ApiQuery<C
       );
       return data.absences;
     }, [api, start, end]),
-    { source: "clockodo.absences.calendar" },
+    { enabled, source: "clockodo.absences.calendar" },
   );
 }
 

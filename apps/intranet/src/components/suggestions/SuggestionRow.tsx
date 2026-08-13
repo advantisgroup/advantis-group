@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime } from "@/lib/format";
 import { formatFileSize } from "@/lib/upload";
@@ -42,6 +43,7 @@ export interface SuggestionListItem {
   }[];
   status: "open" | "in_discussion" | "implementing" | "closed";
   outcome: "withdrawn" | "not_possible" | "implemented" | null;
+  decisionNote: string | null;
   createdAt: number;
   updatedAt: number | null;
 }
@@ -84,6 +86,7 @@ export function SuggestionRow({
   const t = useTranslations("Suggestions");
   const locale = useLocale();
   const [open, setOpen] = useState(false);
+  const [decisionNote, setDecisionNote] = useState(suggestion.decisionNote ?? "");
   const update = useMutation(api.suggestions.update);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
@@ -146,6 +149,16 @@ export function SuggestionRow({
           </p>
           {suggestion.explanation && (
             <p className="whitespace-pre-wrap text-foreground/90">{suggestion.explanation}</p>
+          )}
+          {suggestion.decisionNote && (
+            <div className="rounded-lg border border-border/70 bg-background px-3 py-2.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("decisionNote")}
+              </p>
+              <p className="mt-1 whitespace-pre-wrap text-foreground/90">
+                {suggestion.decisionNote}
+              </p>
+            </div>
           )}
           {suggestion.link && (
             <a
@@ -235,6 +248,27 @@ export function SuggestionRow({
                   </SelectContent>
                 </Select>
               </label>
+              <label className="w-full text-xs text-muted-foreground">
+                {t("fieldDecisionNote")}
+                <Textarea
+                  value={decisionNote}
+                  onChange={(event) => setDecisionNote(event.target.value)}
+                  placeholder={t("decisionNotePlaceholder")}
+                  className="mt-1 min-h-20"
+                />
+              </label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  update({
+                    suggestionId: suggestion._id,
+                    decisionNote: decisionNote.trim() || null,
+                  }).catch(handleError)
+                }
+              >
+                {t("saveDecisionNote")}
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

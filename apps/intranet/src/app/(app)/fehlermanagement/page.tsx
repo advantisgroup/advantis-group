@@ -585,6 +585,10 @@ export default function FehlermanagementPage() {
     setKpiFilter(parseKpiFilter(searchParams.get("kpi")));
   }, [searchParams]);
 
+  useEffect(() => {
+    if (searchParams.get("new") === "1") setNewOpen(true);
+  }, [searchParams]);
+
   const filtered = useMemo(() => {
     if (!reports) return [];
     const query = search.trim().toLowerCase();

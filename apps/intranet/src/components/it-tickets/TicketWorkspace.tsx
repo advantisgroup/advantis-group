@@ -29,6 +29,7 @@ export function TicketWorkspace({
   ticket,
   otherThreads,
   canManageThreads,
+  assigneeName,
   onBack,
   onEdit,
   onDelete,
@@ -37,6 +38,7 @@ export function TicketWorkspace({
   ticket: Ticket;
   otherThreads: OtherThreadTicket[];
   canManageThreads: boolean;
+  assigneeName: string | undefined;
   onBack: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -63,6 +65,7 @@ export function TicketWorkspace({
       thread={thread}
       otherThreads={otherThreads}
       canManageThreads={canManageThreads}
+      assigneeName={assigneeName}
       onBack={onBack}
       onEdit={onEdit}
       onDelete={onDelete}

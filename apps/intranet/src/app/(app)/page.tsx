@@ -1,12 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 import {
   Building2,
+  ChevronDown,
+  ChevronUp,
   CalendarPlus,
   Command,
   Heart,
@@ -21,8 +23,11 @@ import { useLocale, useTranslations } from "next-intl";
 
 import {
   AdminStatsCard,
+  ApplicantPipelineHealthCard,
+  ManagerBriefCard,
   OpenMeasuresCard,
   RecentActivityCard,
+  TeamAvailabilityCard,
   TeamPerformanceCard,
   TeamStatusCard,
 } from "@/components/dashboard/AdminWidgets";
@@ -31,6 +36,9 @@ import {
   MyDayCard,
   MyPerformanceCard,
   MyTicketsCard,
+  MyWeekCard,
+  missingProfileFields,
+  ProfileCompletionCard,
 } from "@/components/dashboard/ForYouWidgets";
 import { GreetingHeader } from "@/components/dashboard/GreetingHeader";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
@@ -43,15 +51,32 @@ import {
 import { useLatestWikiPages, WikiCarousel } from "@/components/dashboard/WikiWidgets";
 import { Link } from "@/components/Link";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
-import { useHasCapability, useIsAdmin, useIsManager } from "@/components/providers/current-user";
+import {
+  useCurrentUser,
+  useHasCapability,
+  useIsAdmin,
+  useIsManager,
+} from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -61,17 +86,22 @@ const startOfToday = new Date(now).setHours(0, 0, 0, 0);
 const CARD_IDS = [
   "chats",
   "myday",
+  "myweek",
   "mytickets",
+  "profilecompletion",
   "myperformance",
   "newwiki",
   "events",
   "announcements",
   "whosout",
   "celebrations",
+  "teamavailability",
   "teamstatus",
   "teamperformance",
+  "managerbrief",
   "errormeasures",
   "adminstats",
+  "applicantpipeline",
   "adminactivity",
 ] as const;
 type CardId = (typeof CARD_IDS)[number];
@@ -86,12 +116,21 @@ function widget(id: CardId, node: ReactNode, wide?: boolean): Widget {
   return { id, node, wide };
 }
 
-function WidgetGrid({ widgets }: { widgets: Widget[] }) {
+function WidgetGrid({
+  widgets,
+  density,
+}: {
+  widgets: Widget[];
+  density: "comfortable" | "compact";
+}) {
   return (
     <div
       className={cn(
-        "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3",
+        "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3",
+        density === "compact" ? "gap-3" : "gap-4",
         "[&>*]:opacity-0 [&>*]:animate-[fadeInUp_0.5s_ease-out_forwards]",
+        density === "compact" &&
+          "[&_[data-dashboard-card-header]]:px-4 [&_[data-dashboard-card-header]]:py-2.5 [&_[data-dashboard-card-content]]:p-1 [&_[data-dashboard-row]]:py-1.5",
       )}
     >
       {widgets.map((w, i) => (
@@ -110,16 +149,19 @@ function WidgetGrid({ widgets }: { widgets: Widget[] }) {
 export default function DashboardPage() {
   const t = useTranslations("Dashboard");
   const locale = useLocale();
+  const user = useCurrentUser();
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
   const hasActivityCapability = useHasCapability("view_activity_admin");
   const { session: performanceSession } = usePerformanceSession();
   const hasMyPerformance = Boolean(performanceSession?.valid && performanceSession.employeeId);
+  const profileGaps = missingProfileFields(user);
   const hasTeamPerformance =
     isManager &&
     Boolean(
       performanceSession?.valid && performanceSession.permissions.includes("view_all_employees"),
     );
+  const hasApplicantPipelineHealth = isManager && (isAdmin || user.applicantAccess);
 
   const events = useQuery(api.events.listForRange, {
     start: startOfToday,
@@ -128,11 +170,23 @@ export default function DashboardPage() {
   const newWikiPages = useLatestWikiPages();
   const prefs = useQuery(api.userPreferences.getMine);
   const setPrefs = useMutation(api.userPreferences.setMine);
+  const [arrangeOpen, setArrangeOpen] = useState(false);
 
   const hiddenCards = useMemo(
     () => new Set((prefs?.hiddenDashboardCards ?? []) as CardId[]),
     [prefs],
   );
+  const dashboardDensity = prefs?.dashboardDensity ?? "comfortable";
+  const savedCardOrder = [...new Set(prefs?.dashboardCardOrder ?? [])].filter((id): id is CardId =>
+    CARD_IDS.includes(id as CardId),
+  );
+  const orderedCardIds = [
+    ...savedCardOrder,
+    ...CARD_IDS.filter((id) => !savedCardOrder.includes(id)),
+  ];
+  const cardRank = new Map(orderedCardIds.map((id, index) => [id, index]));
+  const orderWidgets = (widgets: Widget[]) =>
+    [...widgets].sort((a, b) => (cardRank.get(a.id) ?? 0) - (cardRank.get(b.id) ?? 0));
   const showCard = (id: CardId) => !hiddenCards.has(id);
   async function toggleCard(id: CardId) {
     const next = new Set(hiddenCards);
@@ -155,55 +209,98 @@ export default function DashboardPage() {
   const cardLabels: Record<CardId, string> = {
     chats: t("unreadChats"),
     myday: t("yourDayTitle"),
+    myweek: t("myWeekTitle"),
+    profilecompletion: t("profileCompletionTitle"),
     myperformance: t("myPerformanceTitle"),
     newwiki: t("newWikiTitle"),
     events: t("upcomingEvents"),
     announcements: t("latestAnnouncements"),
     whosout: t("whosOutToday"),
     celebrations: t("celebrationsTitle"),
+    teamavailability: t("teamAvailabilityTitle"),
     teamstatus: t("teamStatusTitle"),
     teamperformance: t("teamPerformanceTitle"),
+    managerbrief: t("managerBriefTitle"),
     errormeasures: t("errorMeasuresTitle"),
     mytickets: t("myTicketsTitle"),
     adminstats: t("adminStatsTitle"),
+    applicantpipeline: t("applicantPipelineHealthTitle"),
     adminactivity: t("recentActivityTitle"),
   };
 
-  const forYouWidgets: Widget[] = [
-    widget("chats", <ChatsCard />),
-    widget("myday", <MyDayCard />),
-    widget("mytickets", <MyTicketsCard />),
-    ...(hasMyPerformance ? [widget("myperformance", <MyPerformanceCard />)] : []),
-  ].filter((w) => showCard(w.id));
+  const forYouWidgets = orderWidgets(
+    [
+      widget("chats", <ChatsCard />),
+      widget("myday", <MyDayCard />),
+      widget("myweek", <MyWeekCard />),
+      widget("mytickets", <MyTicketsCard />),
+      ...(profileGaps.length
+        ? [widget("profilecompletion", <ProfileCompletionCard missingFields={profileGaps} />)]
+        : []),
+      ...(hasMyPerformance ? [widget("myperformance", <MyPerformanceCard />)] : []),
+    ].filter((w) => showCard(w.id)),
+  );
 
   const hasNewWiki = (newWikiPages?.length ?? 0) > 0;
   const showWikiCarousel = hasNewWiki && showCard("newwiki");
 
-  const teamCompanyWidgets: Widget[] = [
-    widget("events", <EventsCard />),
-    widget("announcements", <AnnouncementsCard />),
-    widget("whosout", <WhosOutCard />),
-    widget("celebrations", <CelebrationsCard />, true),
-  ].filter((w) => showCard(w.id));
+  const teamCompanyWidgets = orderWidgets(
+    [
+      widget("events", <EventsCard />),
+      widget("announcements", <AnnouncementsCard />),
+      widget("whosout", <WhosOutCard />),
+      widget("celebrations", <CelebrationsCard />, true),
+    ].filter((w) => showCard(w.id)),
+  );
 
-  const adminWidgets: Widget[] = [
-    ...(hasActivityCapability ? [widget("teamstatus", <TeamStatusCard />)] : []),
-    ...(hasTeamPerformance ? [widget("teamperformance", <TeamPerformanceCard />)] : []),
-    widget("errormeasures", <OpenMeasuresCard />),
-    widget("adminstats", <AdminStatsCard />),
-    ...(isAdmin ? [widget("adminactivity", <RecentActivityCard />)] : []),
-  ].filter((w) => showCard(w.id));
+  const adminWidgets = orderWidgets(
+    [
+      widget("managerbrief", <ManagerBriefCard />),
+      ...(user.teams.length ? [widget("teamavailability", <TeamAvailabilityCard />)] : []),
+      ...(hasActivityCapability ? [widget("teamstatus", <TeamStatusCard />)] : []),
+      ...(hasTeamPerformance ? [widget("teamperformance", <TeamPerformanceCard />)] : []),
+      widget("errormeasures", <OpenMeasuresCard />),
+      widget("adminstats", <AdminStatsCard />),
+      ...(hasApplicantPipelineHealth
+        ? [widget("applicantpipeline", <ApplicantPipelineHealthCard />)]
+        : []),
+      ...(isAdmin ? [widget("adminactivity", <RecentActivityCard />)] : []),
+    ].filter((w) => showCard(w.id)),
+  );
 
   const availableCardIds = CARD_IDS.filter((id) => {
     if (id === "myperformance") return hasMyPerformance;
+    if (id === "profilecompletion") return profileGaps.length > 0;
     if (id === "newwiki") return hasNewWiki;
     if (id === "teamstatus") return hasActivityCapability;
+    if (id === "teamavailability") return isManager && user.teams.length > 0;
     if (id === "teamperformance") return hasTeamPerformance;
+    if (id === "applicantpipeline") return hasApplicantPipelineHealth;
     if (id === "errormeasures" || id === "adminstats" || id === "adminactivity") {
       return isManager;
     }
     return true;
   });
+  const reorderableCardIds = orderedCardIds.filter(
+    (id) => id !== "newwiki" && availableCardIds.includes(id),
+  );
+
+  async function moveCard(id: CardId, direction: -1 | 1) {
+    const currentIndex = orderedCardIds.indexOf(id);
+    const visibleIds = new Set(reorderableCardIds);
+    let targetIndex = currentIndex + direction;
+    while (
+      targetIndex >= 0 &&
+      targetIndex < orderedCardIds.length &&
+      !visibleIds.has(orderedCardIds[targetIndex])
+    ) {
+      targetIndex += direction;
+    }
+    if (targetIndex < 0 || targetIndex >= orderedCardIds.length) return;
+    const next = [...orderedCardIds];
+    [next[currentIndex], next[targetIndex]] = [next[targetIndex], next[currentIndex]];
+    await setPrefs({ dashboardCardOrder: next });
+  }
 
   return (
     <div className="mx-auto max-w-6xl" data-tour="tour-dashboard-main">
@@ -232,6 +329,23 @@ export default function DashboardPage() {
                 {cardLabels[id]}
               </DropdownMenuCheckboxItem>
             ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>{t("cardDensity")}</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={dashboardDensity}
+              onValueChange={(value) =>
+                void setPrefs({ dashboardDensity: value as "comfortable" | "compact" })
+              }
+            >
+              <DropdownMenuRadioItem value="comfortable">
+                {t("densityComfortable")}
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="compact">{t("densityCompact")}</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => setArrangeOpen(true)}>
+              {t("arrangeCards")}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -305,7 +419,7 @@ export default function DashboardPage() {
       {forYouWidgets.length > 0 && (
         <section className="mb-8">
           <SectionHeading icon={<Heart />} title={t("sectionForYou")} />
-          <WidgetGrid widgets={forYouWidgets} />
+          <WidgetGrid widgets={forYouWidgets} density={dashboardDensity} />
         </section>
       )}
 
@@ -327,7 +441,7 @@ export default function DashboardPage() {
             title={t("sectionTeamCompany")}
             tint="bg-sky-500/10 text-sky-600 dark:text-sky-300"
           />
-          <WidgetGrid widgets={teamCompanyWidgets} />
+          <WidgetGrid widgets={teamCompanyWidgets} density={dashboardDensity} />
         </section>
       )}
 
@@ -338,9 +452,52 @@ export default function DashboardPage() {
             title={t("sectionAdmin")}
             tint="bg-amber-500/10 text-amber-600 dark:text-amber-300"
           />
-          <WidgetGrid widgets={adminWidgets} />
+          <WidgetGrid widgets={adminWidgets} density={dashboardDensity} />
         </section>
       )}
+
+      <Dialog open={arrangeOpen} onOpenChange={setArrangeOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("arrangeCards")}</DialogTitle>
+            <DialogDescription>{t("arrangeCardsDescription")}</DialogDescription>
+          </DialogHeader>
+          <div className="divide-y divide-border/60 rounded-lg border border-border/70">
+            {reorderableCardIds.map((id, index) => (
+              <div key={id} className="flex items-center gap-2 px-3 py-2">
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                  {cardLabels[id]}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t("moveCardUp", { name: cardLabels[id] })}
+                  disabled={index === 0}
+                  onClick={() => void moveCard(id, -1)}
+                >
+                  <ChevronUp className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t("moveCardDown", { name: cardLabels[id] })}
+                  disabled={index === reorderableCardIds.length - 1}
+                  onClick={() => void moveCard(id, 1)}
+                >
+                  <ChevronDown className="size-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button type="button" onClick={() => setArrangeOpen(false)}>
+              {t("done")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

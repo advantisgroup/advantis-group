@@ -12,6 +12,7 @@ import { useAttachmentUpload } from "@/components/attachments/useAttachmentUploa
 import { GuidebookAttachments } from "@/components/guidebooks/GuidebookAttachments";
 import { PendingWikiAttachments } from "@/components/guidebooks/PendingWikiAttachments";
 import { staticGuidebookSlugs } from "@/components/guidebooks/registry";
+import { useCurrentUser } from "@/components/providers/current-user";
 import { TagInput, type WikiEntry } from "@/components/guidebooks/WikiEntryDialogs";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -48,6 +49,8 @@ export function useWikiEntryForm({
   const t = useTranslations("Guidebooks");
   const handleError = useErrorHandler();
   const categories = useQuery(api.wikiCategories.list) ?? [];
+  const users = useQuery(api.users.list, {}) ?? [];
+  const currentUser = useCurrentUser();
   const entries = useQuery(api.wikiEntries.list) ?? [];
   const create = useMutation(api.wikiEntries.create);
   const update = useMutation(api.wikiEntries.update);
@@ -66,6 +69,9 @@ export function useWikiEntryForm({
   );
   const [validUntil, setValidUntil] = useState(
     isEditing ? msToDateInput(entry.validUntil) : msToDateInput(addMonths(Date.now(), 3)),
+  );
+  const [ownerUserId, setOwnerUserId] = useState<Id<"users">>(
+    isEditing ? (entry.ownerUserId as Id<"users">) : (currentUser._id as Id<"users">),
   );
   const [busy, setBusy] = useState(false);
 
@@ -87,6 +93,9 @@ export function useWikiEntryForm({
     setValidUntil(
       isEditing ? msToDateInput(entry.validUntil) : msToDateInput(addMonths(Date.now(), 3)),
     );
+    setOwnerUserId(
+      isEditing ? (entry.ownerUserId as Id<"users">) : (currentUser._id as Id<"users">),
+    );
     attachmentUpload.reset();
     createdRef.current = null;
   }
@@ -106,6 +115,7 @@ export function useWikiEntryForm({
         link: link.trim() || undefined,
         validFrom: new Date(`${validFrom}T00:00:00`).getTime(),
         validUntil: new Date(`${validUntil}T00:00:00`).getTime(),
+        ownerUserId,
       };
       if (isEditing) {
         await update({ entryId: entry._id, ...patch });
@@ -195,6 +205,23 @@ export function useWikiEntryForm({
           placeholder={t("fieldErklaerungPlaceholder")}
           minHeight="8rem"
         />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+          {t("fieldOwner")}
+        </label>
+        <Select value={ownerUserId} onValueChange={(value) => setOwnerUserId(value as Id<"users">)}>
+          <SelectTrigger>
+            <SelectValue placeholder={t("fieldOwnerPlaceholder")} />
+          </SelectTrigger>
+          <SelectContent>
+            {users.map((user) => (
+              <SelectItem key={user._id} value={user._id}>
+                {user.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div>
         <label className="mb-1 block text-xs font-medium text-muted-foreground">

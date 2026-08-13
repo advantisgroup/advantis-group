@@ -8,7 +8,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { Bell, Check, ChevronDown, Mail, MailOpen, Trash2 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
@@ -17,7 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useNow } from "@/lib/activity/useNow";
 import { relativeTime } from "@/lib/format";
-import { notificationVisual } from "@/lib/notification-kinds";
+import { bucketFor, notificationVisual } from "@/lib/notification-kinds";
 import { cn } from "@/lib/utils";
 
 type Category = "absence" | "announcement" | "uploads" | "chat" | "system";
@@ -32,6 +32,13 @@ function categoryOf(type: string): Category {
 
 /** Read items older than this collapse behind a "show older" toggle. */
 const OLD_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
+const ACTION_REQUIRED_TYPES = new Set([
+  "absence_request",
+  "upload_request",
+  "access_request",
+  "academy_answer",
+  "password_reset_request",
+]);
 
 interface NotificationDoc {
   _id: Id<"notifications">;
@@ -43,9 +50,12 @@ interface NotificationDoc {
   createdAt: number;
 }
 
+function needsDecision(notification: NotificationDoc): boolean {
+  return !notification.readAt && ACTION_REQUIRED_TYPES.has(notification.type);
+}
+
 export default function NotificationsPage() {
   const t = useTranslations("Notifications");
-  const locale = useLocale();
 
   const notifications = useQuery(api.notifications.list, { limit: 100 });
   const markAllRead = useMutation(api.notifications.markAllRead);
@@ -71,30 +81,23 @@ export default function NotificationsPage() {
       ? filtered
       : filtered.filter((n) => !n.readAt || now - n.createdAt <= OLD_AFTER_MS);
 
-  // Group by calendar day, newest day first (list is already newest-first).
-  const byDay = useMemo(() => {
-    const groups = new Map<string, NotificationDoc[]>();
-    for (const n of visible) {
-      const key = new Date(n.createdAt).toDateString();
-      const list = groups.get(key) ?? [];
-      list.push(n);
-      groups.set(key, list);
-    }
-    return [...groups.entries()];
-  }, [visible]);
+  const sections = useMemo(() => {
+    const actionRequired: NotificationDoc[] = [];
+    const today: NotificationDoc[] = [];
+    const earlier: NotificationDoc[] = [];
 
-  function dayLabel(key: string): string {
-    const date = new Date(key);
-    const today = new Date();
-    const yesterday = new Date(today.getTime() - 86_400_000);
-    if (date.toDateString() === today.toDateString()) return t("today");
-    if (date.toDateString() === yesterday.toDateString()) return t("yesterday");
-    return date.toLocaleDateString(locale, {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-    });
-  }
+    for (const notification of visible) {
+      if (needsDecision(notification)) actionRequired.push(notification);
+      else if (bucketFor(notification.createdAt, now) === "today") today.push(notification);
+      else earlier.push(notification);
+    }
+
+    return [
+      { key: "actionRequired", label: t("needsDecision"), rows: actionRequired },
+      { key: "today", label: t("today"), rows: today },
+      { key: "earlier", label: t("earlier"), rows: earlier },
+    ];
+  }, [now, t, visible]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -178,23 +181,34 @@ export default function NotificationsPage() {
         </div>
       </div>
 
-      {/* Feed grouped by day */}
+      {/* Important unread decisions stay ahead of reference notifications. */}
       <div data-tour="tour-notifications-feed" className="space-y-6">
-        {byDay.length === 0 ? (
+        {sections.every((section) => section.rows.length === 0) ? (
           <EmptyState icon={<Bell />} title={t("allCaughtUp")} description={t("empty")} />
         ) : (
-          byDay.map(([day, rows]) => (
-            <div key={day} className="space-y-2">
-              <p className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {dayLabel(day)}
-              </p>
-              <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)]">
-                {rows.map((n) => (
-                  <NotificationRow key={n._id} n={n} />
-                ))}
-              </div>
-            </div>
-          ))
+          sections.map(
+            (section) =>
+              section.rows.length > 0 && (
+                <div key={section.key} className="space-y-2">
+                  <p
+                    className={cn(
+                      "px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground",
+                      section.key === "actionRequired" && "text-warning",
+                    )}
+                  >
+                    {section.label}
+                    <span className="ml-1.5 tabular-nums text-muted-foreground">
+                      {section.rows.length}
+                    </span>
+                  </p>
+                  <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)]">
+                    {section.rows.map((n) => (
+                      <NotificationRow key={n._id} n={n} />
+                    ))}
+                  </div>
+                </div>
+              ),
+          )
         )}
         {tab === "all" && !showOld && oldCount > 0 && (
           <button

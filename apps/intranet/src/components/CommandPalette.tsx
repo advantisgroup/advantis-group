@@ -264,6 +264,24 @@ export function CommandPalette() {
           managerOnly: true,
         },
         {
+          id: "new-ticket",
+          label: t("actionNewTicket"),
+          icon: Wrench,
+          href: "/it-tickets?new=1",
+        },
+        {
+          id: "new-suggestion",
+          label: t("actionNewSuggestion"),
+          icon: Lightbulb,
+          href: "/suggestions?new=1",
+        },
+        {
+          id: "new-error",
+          label: t("actionNewError"),
+          icon: AlertTriangle,
+          href: "/fehlermanagement?new=1",
+        },
+        {
           id: "upload-file",
           label: t("actionUpload"),
           icon: UploadCloud,

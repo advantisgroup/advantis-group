@@ -5,11 +5,12 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { ClipboardList, FileText, Plus, Trash2, Upload } from "lucide-react";
+import { ClipboardList, ExternalLink, FileText, Link2, Plus, Trash2, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
+import { Link } from "@/components/Link";
 import { useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -41,6 +42,9 @@ import { cn } from "@/lib/utils";
 
 type Measure = NonNullable<ReturnType<typeof useQuery<typeof api.errorMeasures.list>>>[number];
 type Scope = "offen" | "alle" | "erledigt";
+type RelatedLinkType = "guidebook" | "announcement" | "ticket" | "other";
+
+const RELATED_LINK_TYPES: RelatedLinkType[] = ["guidebook", "announcement", "ticket", "other"];
 
 const EMPTY_REPORTS: NonNullable<ReturnType<typeof useQuery<typeof api.errorReports.list>>> = [];
 
@@ -62,12 +66,13 @@ function NewMeasureDialog({
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
   const reports = useQuery(api.errorReports.list) ?? EMPTY_REPORTS;
+  const users = useQuery(api.users.list, {}) ?? [];
   const create = useMutation(api.errorMeasures.create);
 
   const [errorId, setErrorId] = useState(defaultErrorId ?? "");
   const [description, setDescription] = useState("");
   const [phase, setPhase] = useState<MeasurePhase>("d3_sofort");
-  const [responsible, setResponsible] = useState("");
+  const [ownerUserId, setOwnerUserId] = useState("unassigned");
   const [dueDate, setDueDate] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -83,12 +88,12 @@ function NewMeasureDialog({
         errorReportId: errorId as Id<"errorReports">,
         description,
         phase,
-        responsibleName: responsible || undefined,
+        ownerUserId: ownerUserId === "unassigned" ? undefined : (ownerUserId as Id<"users">),
         dueAt: dateInputToMs(dueDate),
       });
       toast.success(t("created"));
       setDescription("");
-      setResponsible("");
+      setOwnerUserId("unassigned");
       setDueDate("");
       onOpenChange(false);
     } catch (e) {
@@ -167,13 +172,21 @@ function NewMeasureDialog({
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              {t("fieldResponsible")}
+              {t("fieldOwner")}
             </label>
-            <Input
-              value={responsible}
-              onChange={(e) => setResponsible(e.target.value)}
-              placeholder={t("fieldResponsiblePlaceholder")}
-            />
+            <Select value={ownerUserId} onValueChange={setOwnerUserId}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">{t("ownerUnassigned")}</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user._id} value={user._id}>
+                    {user.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <div>
@@ -195,6 +208,7 @@ function MeasureCard({ measure, errorLabel }: { measure: Measure; errorLabel: st
   const confirm = useConfirm();
   const handleError = useErrorHandler();
   const { openFileViewer } = useFileViewer();
+  const users = useQuery(api.users.list, {}) ?? [];
   const update = useMutation(api.errorMeasures.update);
   const remove = useMutation(api.errorMeasures.remove);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
@@ -202,6 +216,59 @@ function MeasureCard({ measure, errorLabel }: { measure: Measure; errorLabel: st
   const removeDocument = useMutation(api.errorMeasures.removeDocument);
   const documents = useQuery(api.errorMeasures.listDocuments, { measureId: measure._id });
   const [uploading, setUploading] = useState(false);
+  const [relatedLinkOpen, setRelatedLinkOpen] = useState(false);
+  const [relatedLinkLabel, setRelatedLinkLabel] = useState("");
+  const [relatedLinkUrl, setRelatedLinkUrl] = useState("");
+  const [relatedLinkType, setRelatedLinkType] = useState<RelatedLinkType>("guidebook");
+  const ownerLabel = measure.ownerName ?? measure.responsibleName;
+
+  async function onOwnerChange(ownerUserId: string) {
+    try {
+      await update({
+        measureId: measure._id,
+        patch: {
+          ownerUserId: ownerUserId === "unassigned" ? undefined : (ownerUserId as Id<"users">),
+        },
+      });
+      toast.success(t("updated"));
+    } catch (error) {
+      handleError(error);
+    }
+  }
+
+  async function addRelatedLink() {
+    if (!relatedLinkLabel.trim() || !relatedLinkUrl.trim()) return;
+    try {
+      await update({
+        measureId: measure._id,
+        patch: {
+          relatedLinks: [
+            ...measure.relatedLinks,
+            { type: relatedLinkType, label: relatedLinkLabel.trim(), url: relatedLinkUrl.trim() },
+          ],
+        },
+      });
+      setRelatedLinkLabel("");
+      setRelatedLinkUrl("");
+      setRelatedLinkType("guidebook");
+      setRelatedLinkOpen(false);
+      toast.success(t("updated"));
+    } catch (error) {
+      handleError(error);
+    }
+  }
+
+  async function removeRelatedLink(index: number) {
+    try {
+      await update({
+        measureId: measure._id,
+        patch: { relatedLinks: measure.relatedLinks.filter((_, linkIndex) => linkIndex !== index) },
+      });
+      toast.success(t("updated"));
+    } catch (error) {
+      handleError(error);
+    }
+  }
 
   async function onDelete() {
     const ok = await confirm({
@@ -295,6 +362,7 @@ function MeasureCard({ measure, errorLabel }: { measure: Measure; errorLabel: st
         <p className="text-xs text-muted-foreground">{errorLabel}</p>
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge variant="muted">{t(`phase.${measure.phase}`)}</Badge>
+          {ownerLabel && <Badge variant="outline">{ownerLabel}</Badge>}
           {measure.dueAt && (
             <Badge variant="outline">{formatIsoDate(msToDateInput(measure.dueAt), locale)}</Badge>
           )}
@@ -322,6 +390,73 @@ function MeasureCard({ measure, errorLabel }: { measure: Measure; errorLabel: st
             {t("fieldEffectivenessChecked")}
           </label>
         </div>
+        {isManager && (
+          <Select value={measure.ownerUserId ?? "unassigned"} onValueChange={onOwnerChange}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue placeholder={t("fieldOwner")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unassigned">{t("ownerUnassigned")}</SelectItem>
+              {users.map((user) => (
+                <SelectItem key={user._id} value={user._id}>
+                  {user.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {(measure.relatedLinks.length > 0 || isManager) && (
+          <div className="space-y-1.5 border-t border-border/70 pt-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <Link2 className="size-3.5" />
+                {t("relatedLinks")}
+              </p>
+              {isManager && measure.relatedLinks.length < 5 && (
+                <Button variant="ghost" size="sm" onClick={() => setRelatedLinkOpen(true)}>
+                  <Plus className="size-3.5" />
+                  {t("addRelatedLink")}
+                </Button>
+              )}
+            </div>
+            {measure.relatedLinks.map((link, index) => (
+              <div
+                key={`${link.url}-${link.label}`}
+                className="flex items-center justify-between gap-2 rounded-md bg-muted/45 px-2 py-1.5"
+              >
+                {link.url.startsWith("/") ? (
+                  <Link
+                    href={link.url}
+                    className="flex min-w-0 flex-1 items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                  >
+                    <span className="truncate">{link.label}</span>
+                    <ExternalLink className="size-3 shrink-0" />
+                  </Link>
+                ) : (
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex min-w-0 flex-1 items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                  >
+                    <span className="truncate">{link.label}</span>
+                    <ExternalLink className="size-3 shrink-0" />
+                  </a>
+                )}
+                {isManager && (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={t("removeRelatedLink", { label: link.label })}
+                    onClick={() => void removeRelatedLink(index)}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
         <div className="space-y-2 border-t border-border/70 pt-2">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-medium text-muted-foreground">{t("measureDocuments")}</p>
@@ -391,6 +526,69 @@ function MeasureCard({ measure, errorLabel }: { measure: Measure; errorLabel: st
           )}
         </div>
       </CardContent>
+      <ResponsiveDialog
+        open={relatedLinkOpen}
+        onOpenChange={setRelatedLinkOpen}
+        title={t("addRelatedLink")}
+        contentClassName="max-w-md"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setRelatedLinkOpen(false)}>
+              {tc("cancel")}
+            </Button>
+            <Button
+              onClick={() => void addRelatedLink()}
+              disabled={!relatedLinkLabel.trim() || !relatedLinkUrl.trim()}
+            >
+              {tc("add")}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              {t("fieldRelatedLinkType")}
+            </label>
+            <Select
+              value={relatedLinkType}
+              onValueChange={(value) => setRelatedLinkType(value as RelatedLinkType)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {RELATED_LINK_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {t(`relatedLinkType.${type}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              {t("fieldRelatedLinkLabel")}
+            </label>
+            <Input
+              value={relatedLinkLabel}
+              onChange={(event) => setRelatedLinkLabel(event.target.value)}
+              placeholder={t("fieldRelatedLinkLabelPlaceholder")}
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              {t("fieldRelatedLinkUrl")}
+            </label>
+            <Input
+              value={relatedLinkUrl}
+              onChange={(event) => setRelatedLinkUrl(event.target.value)}
+              placeholder={t("fieldRelatedLinkUrlPlaceholder")}
+            />
+          </div>
+        </div>
+      </ResponsiveDialog>
     </Card>
   );
 }

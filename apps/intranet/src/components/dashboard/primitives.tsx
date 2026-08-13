@@ -19,7 +19,10 @@ export function DashCard({
 }) {
   return (
     <Card className="group/card h-full overflow-hidden transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-18px_rgb(0_0_0/0.18)]">
-      <div className="flex items-center gap-3 border-b border-border/60 px-5 py-3.5">
+      <div
+        data-dashboard-card-header
+        className="flex items-center gap-3 border-b border-border/60 px-5 py-3.5"
+      >
         <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary [&_svg]:size-[18px]">
           {icon}
         </span>
@@ -30,7 +33,9 @@ export function DashCard({
           </span>
         ) : null}
       </div>
-      <div className="p-2">{children}</div>
+      <div data-dashboard-card-content className="p-2">
+        {children}
+      </div>
     </Card>
   );
 }
@@ -92,6 +97,7 @@ export function Row({
   return (
     <Link
       href={href}
+      data-dashboard-row
       className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent"
     >
       {leading}
@@ -133,11 +139,16 @@ export function StatLine({
     return (
       <Link
         href={href}
+        data-dashboard-row
         className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent"
       >
         {content}
       </Link>
     );
   }
-  return <div className="flex items-center gap-3 px-3 py-2">{content}</div>;
+  return (
+    <div data-dashboard-row className="flex items-center gap-3 px-3 py-2">
+      {content}
+    </div>
+  );
 }

@@ -44,6 +44,13 @@ import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { htmlToText } from "@/components/ui/rich-text";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate } from "@/lib/format";
 import {
@@ -80,6 +87,8 @@ interface GridItem {
   reviewDue: boolean;
   validUntil: number | null;
   authorUserId: string;
+  ownerName: string | null;
+  ownerAssigned: boolean;
   updatedAt: number;
   wikiEntry: WikiEntry | null;
 }
@@ -113,6 +122,8 @@ function useGridItems() {
       reviewDue: !inArchive(e) && needsReview(e),
       validUntil: e.validUntil,
       authorUserId: e.authorUserId,
+      ownerName: e.ownerName,
+      ownerAssigned: e.ownerAssigned,
       updatedAt: e.updatedAt,
       wikiEntry: e,
     }));
@@ -138,6 +149,8 @@ function useGridItems() {
         reviewDue: false,
         validUntil: null,
         authorUserId: p.authorUserId,
+        ownerName: null,
+        ownerAssigned: true,
         updatedAt: p.updatedAt,
         wikiEntry: null,
       }));
@@ -254,6 +267,11 @@ function EntryCard({
               {t("versionMeta", { version: item.version })}
             </p>
           )}
+          {item.ownerName && (
+            <p className="text-xs text-muted-foreground">
+              {t("ownerLabel", { name: item.ownerName })}
+            </p>
+          )}
         </CardContent>
       </Link>
       <div className="absolute right-2 top-2 flex items-center gap-0.5">
@@ -304,9 +322,11 @@ export default function GuidebooksPage() {
   const handleError = useErrorHandler();
 
   const items = useGridItems();
+  const users = useQuery(api.users.list, {}) ?? [];
   const wikiCategoriesRaw = useQuery(api.wikiCategories.list);
   const wikiCategories = wikiCategoriesRaw ?? EMPTY_CATEGORIES;
   const extend = useMutation(api.wikiEntries.update);
+  const setOwner = useMutation(api.wikiEntries.setOwner);
   const ensureDefaultCategories = useMutation(api.wikiCategories.ensureDefaults);
 
   // Seed the prototype's default categories the first time anyone loads the
@@ -351,6 +371,13 @@ export default function GuidebooksPage() {
       (items ?? [])
         .filter((i) => i.kind === "wiki" && i.reviewDue)
         .sort((a, b) => (a.validUntil ?? 0) - (b.validUntil ?? 0)),
+    [items],
+  );
+  const ownershipMissing = useMemo(
+    () =>
+      (items ?? [])
+        .filter((item) => item.kind === "wiki" && !item.archived && !item.ownerAssigned)
+        .sort((a, b) => a.updatedAt - b.updatedAt),
     [items],
   );
 
@@ -643,6 +670,49 @@ export default function GuidebooksPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {canManage && !showArchive && ownershipMissing.length > 0 && (
+          <div className="rounded-2xl border border-sky-500/30 bg-sky-500/5 p-4">
+            <p className="mb-1 text-sm font-semibold text-sky-700 dark:text-sky-300">
+              {t("ownershipPanelTitle")}
+            </p>
+            <p className="mb-3 text-xs text-muted-foreground">{t("ownershipPanelBody")}</p>
+            <div className="space-y-2">
+              {ownershipMissing.map((item) => (
+                <div
+                  key={item.key}
+                  className="flex items-center gap-3 rounded-lg bg-card px-3 py-2 text-sm"
+                >
+                  <Link
+                    href={`/guidebooks/${item.slug}`}
+                    className="min-w-0 flex-1 truncate font-medium transition-colors hover:text-primary"
+                  >
+                    {item.title}
+                  </Link>
+                  <Select
+                    onValueChange={(ownerUserId) =>
+                      setOwner({
+                        entryId: item.wikiEntry!._id,
+                        ownerUserId: ownerUserId as Id<"users">,
+                      }).catch(handleError)
+                    }
+                  >
+                    <SelectTrigger className="h-7 w-44 bg-card text-xs">
+                      <SelectValue placeholder={t("ownerMissing")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((user) => (
+                        <SelectItem key={user._id} value={user._id}>
+                          {user.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
             </div>
           </div>
         )}

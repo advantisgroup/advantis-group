@@ -11,6 +11,7 @@ import deAccessDenied from "./messages/de/AccessDenied.json";
 import deActivity from "./messages/de/Activity.json";
 import deAdmin from "./messages/de/Admin.json";
 import deAnnouncements from "./messages/de/Announcements.json";
+import deApprovals from "./messages/de/Approvals.json";
 import deApp from "./messages/de/App.json";
 import deApplicants from "./messages/de/Applicants.json";
 import deCalendar from "./messages/de/Calendar.json";
@@ -56,6 +57,7 @@ import enAccessDenied from "./messages/en/AccessDenied.json";
 import enActivity from "./messages/en/Activity.json";
 import enAdmin from "./messages/en/Admin.json";
 import enAnnouncements from "./messages/en/Announcements.json";
+import enApprovals from "./messages/en/Approvals.json";
 import enApp from "./messages/en/App.json";
 import enApplicants from "./messages/en/Applicants.json";
 import enCalendar from "./messages/en/Calendar.json";
@@ -113,6 +115,7 @@ const messagesByLocale = {
     Calendar: enCalendar,
     Absences: enAbsences,
     Announcements: enAnnouncements,
+    Approvals: enApprovals,
     RichText: enRichText,
     Chat: enChat,
     Directory: enDirectory,
@@ -160,6 +163,7 @@ const messagesByLocale = {
     Calendar: deCalendar,
     Absences: deAbsences,
     Announcements: deAnnouncements,
+    Approvals: deApprovals,
     RichText: deRichText,
     Chat: deChat,
     Directory: deDirectory,

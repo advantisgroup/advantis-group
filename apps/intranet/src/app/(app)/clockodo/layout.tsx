@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { CalendarDays, Clock3, LayoutDashboard, Link2Off, Settings2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -25,6 +25,8 @@ export default function ClockodoLayout({ children }: { children: ReactNode }) {
   const user = useCurrentUser();
   const hasTeamAccess = useHasCapability("view_clockodo_team");
   const canManageClockodo = useHasCapability("manage_clockodo_team");
+  const approvalCover = useQuery(api.approvalDelegations.mine);
+  const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
   const migrateLegacyLink = useMutation(api.integrations.clockodoLink.migrateLegacyClockodoLink);
   const migrationStarted = useRef(false);
   const [migrationPending, setMigrationPending] = useState(!user.clockodoUserId);
@@ -56,6 +58,11 @@ export default function ClockodoLayout({ children }: { children: ReactNode }) {
   ];
 
   useEffect(() => {
+    if (approvalCover === undefined) return;
+    if (hasApprovalCover) {
+      setMigrationPending(false);
+      return;
+    }
     if (user.clockodoUserId) {
       setMigrationPending(false);
       return;
@@ -67,9 +74,13 @@ export default function ClockodoLayout({ children }: { children: ReactNode }) {
         if (result.status !== "migrated") setMigrationPending(false);
       })
       .catch(() => setMigrationPending(false));
-  }, [migrateLegacyLink, user.clockodoUserId]);
+  }, [approvalCover, hasApprovalCover, migrateLegacyLink, user.clockodoUserId]);
 
-  if (!user.clockodoUserId && migrationPending) {
+  if (!user.clockodoUserId && approvalCover === undefined) {
+    return null;
+  }
+
+  if (!user.clockodoUserId && !hasApprovalCover && migrationPending) {
     return (
       <StatusScreen
         icon={Clock3}
@@ -80,7 +91,7 @@ export default function ClockodoLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!user.clockodoUserId && !hasTeamAccess) {
+  if (!user.clockodoUserId && !hasTeamAccess && !hasApprovalCover) {
     return (
       <StatusScreen
         icon={Link2Off}
