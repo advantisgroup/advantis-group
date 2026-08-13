@@ -4,8 +4,10 @@ import * as React from "react";
 import { createContext, type ReactNode, useCallback, useContext, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { AlertTriangle, CheckCircle2, CircleAlert, Lightbulb, X, XCircle } from "lucide-react";
+import { Drawer } from "vaul";
 
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -92,7 +94,7 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground opacity-80 ring-offset-background transition-all hover:bg-accent hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none md:h-9 md:w-9">
+      <DialogPrimitive.Close className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground opacity-80 ring-offset-background transition-all hover:bg-accent hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
@@ -286,6 +288,85 @@ type ConfirmFn = (opts: ConfirmOptions) => Promise<boolean>;
 
 const ConfirmContext = createContext<ConfirmFn | null>(null);
 
+function ConfirmDialogPanel({
+  title,
+  description,
+  mobile,
+  destructive,
+  hasBody,
+  details,
+  items,
+  tip,
+  confirmText,
+  typedConfirm,
+  onTypedConfirmChange,
+  confirmBlocked,
+  cancelLabel,
+  confirmLabel,
+  onCancel,
+  onConfirm,
+}: {
+  title: ReactNode;
+  description?: ReactNode;
+  mobile: boolean;
+  destructive: boolean;
+  hasBody: boolean;
+  details?: DetailRow[];
+  items?: ChecklistItem[];
+  tip?: ReactNode;
+  confirmText?: ConfirmOptions["confirmText"];
+  typedConfirm: string;
+  onTypedConfirmChange: (value: string) => void;
+  confirmBlocked: boolean;
+  cancelLabel: string;
+  confirmLabel: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className={cn("px-5 pb-5 pt-3 sm:px-6 sm:pb-6 sm:pt-6", !mobile && "pr-12")}>
+      <div className="flex items-start gap-3">
+        {destructive && (
+          <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-destructive/10 text-destructive shadow-[0_8px_20px_-12px_color-mix(in_oklch,var(--destructive)_90%,transparent)]">
+            <AlertTriangle className="size-4" />
+          </span>
+        )}
+        <div className="min-w-0 flex-1">{title}</div>
+      </div>
+      {description}
+      {hasBody && (
+        <div className="mt-5 flex flex-col gap-4">
+          {details && details.length > 0 && <DialogDetails rows={details} />}
+          {items && items.length > 0 && <DialogChecklist items={items} />}
+          {tip && <DialogTip>{tip}</DialogTip>}
+          {confirmText && (
+            <Input
+              autoFocus
+              value={typedConfirm}
+              onChange={(e) => onTypedConfirmChange(e.target.value)}
+              placeholder={confirmText.placeholder ?? confirmText.target}
+            />
+          )}
+        </div>
+      )}
+      <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+        <Button variant="ghost" className="sm:min-w-24" onClick={onCancel}>
+          {cancelLabel}
+        </Button>
+        <Button
+          variant={destructive ? "destructive" : "violet"}
+          className="sm:min-w-32"
+          onClick={onConfirm}
+          disabled={confirmBlocked}
+          autoFocus={!confirmText}
+        >
+          {confirmLabel}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [opts, setOpts] = useState<ConfirmOptions | null>(null);
@@ -310,6 +391,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
 
   const confirmBlocked = !!opts?.confirmText && typedConfirm !== opts.confirmText.target;
   const destructive = opts?.destructive !== false;
+  const isMobile = useIsMobile();
   // The description now sits in the header, so the body section is only worth
   // rendering (and only worth its border/padding) when something fills it.
   const hasBody =
@@ -318,59 +400,75 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   return (
     <ConfirmContext.Provider value={confirm}>
       {children}
-      <Dialog
-        open={open}
-        onOpenChange={(o) => {
-          if (!o) settle(false);
-        }}
-      >
-        <DialogContent className="max-w-md gap-0 p-0">
-          <div className="flex items-start gap-3 border-b border-border/70 px-6 pb-4 pr-12 pt-6">
-            {destructive && (
-              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-destructive/10 text-destructive">
-                <AlertTriangle className="size-4" />
-              </span>
-            )}
-            <div className="min-w-0 flex-1">
-              <DialogTitle className="leading-snug">{opts?.title}</DialogTitle>
-              {opts?.description && (
-                <DialogDescription className="mt-1 leading-relaxed">
-                  {opts.description}
-                </DialogDescription>
-              )}
-            </div>
-          </div>
-          {hasBody && (
-            <div className="flex flex-col gap-4 px-6 pb-5 pt-4">
-              {opts?.details && opts.details.length > 0 && <DialogDetails rows={opts.details} />}
-              {opts?.items && opts.items.length > 0 && <DialogChecklist items={opts.items} />}
-              {opts?.tip && <DialogTip>{opts.tip}</DialogTip>}
-              {opts?.confirmText && (
-                <Input
-                  autoFocus
-                  value={typedConfirm}
-                  onChange={(e) => setTypedConfirm(e.target.value)}
-                  placeholder={opts.confirmText.placeholder ?? opts.confirmText.target}
-                />
-              )}
-            </div>
-          )}
-          <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
-            <Button variant="ghost" className="sm:min-w-24" onClick={() => settle(false)}>
-              {opts?.cancelLabel ?? "Cancel"}
-            </Button>
-            <Button
-              variant={destructive ? "destructive" : "default"}
-              className="sm:min-w-32"
-              onClick={() => settle(true)}
-              disabled={confirmBlocked}
-              autoFocus={!opts?.confirmText}
-            >
-              {opts?.confirmLabel ?? "Confirm"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {isMobile ? (
+        <Drawer.Root open={open} onOpenChange={(value) => !value && settle(false)}>
+          <Drawer.Portal>
+            <Drawer.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
+            <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-2xl border-t border-border/60 bg-card shadow-2xl shadow-black/40 outline-none">
+              <div className="flex items-center justify-center pb-1 pt-3">
+                <span className="h-1.5 w-10 rounded-full bg-border" />
+              </div>
+              <ConfirmDialogPanel
+                mobile
+                title={
+                  <Drawer.Title className="font-display text-lg font-semibold leading-snug tracking-tight">
+                    {opts?.title}
+                  </Drawer.Title>
+                }
+                description={
+                  opts?.description && (
+                    <Drawer.Description className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      {opts.description}
+                    </Drawer.Description>
+                  )
+                }
+                destructive={destructive}
+                hasBody={hasBody}
+                details={opts?.details}
+                items={opts?.items}
+                tip={opts?.tip}
+                confirmText={opts?.confirmText}
+                typedConfirm={typedConfirm}
+                onTypedConfirmChange={setTypedConfirm}
+                confirmBlocked={confirmBlocked}
+                cancelLabel={opts?.cancelLabel ?? "Cancel"}
+                confirmLabel={opts?.confirmLabel ?? "Confirm"}
+                onCancel={() => settle(false)}
+                onConfirm={() => settle(true)}
+              />
+            </Drawer.Content>
+          </Drawer.Portal>
+        </Drawer.Root>
+      ) : (
+        <Dialog open={open} onOpenChange={(value) => !value && settle(false)}>
+          <DialogContent className="max-w-md gap-0 rounded-2xl border-border/60 bg-card p-0 shadow-2xl shadow-black/35">
+            <ConfirmDialogPanel
+              mobile={false}
+              title={<DialogTitle className="leading-snug">{opts?.title}</DialogTitle>}
+              description={
+                opts?.description && (
+                  <DialogDescription className="mt-1 leading-relaxed">
+                    {opts.description}
+                  </DialogDescription>
+                )
+              }
+              destructive={destructive}
+              hasBody={hasBody}
+              details={opts?.details}
+              items={opts?.items}
+              tip={opts?.tip}
+              confirmText={opts?.confirmText}
+              typedConfirm={typedConfirm}
+              onTypedConfirmChange={setTypedConfirm}
+              confirmBlocked={confirmBlocked}
+              cancelLabel={opts?.cancelLabel ?? "Cancel"}
+              confirmLabel={opts?.confirmLabel ?? "Confirm"}
+              onCancel={() => settle(false)}
+              onConfirm={() => settle(true)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </ConfirmContext.Provider>
   );
 }

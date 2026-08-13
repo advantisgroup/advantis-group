@@ -34,6 +34,7 @@ import {
   Pencil,
   Plane,
   Plus,
+  SlidersHorizontal,
   Trash2,
   User,
 } from "lucide-react";
@@ -320,6 +321,7 @@ export default function CalendarPage() {
   const [hiddenKinds, setHiddenKinds] = useState<Set<FilterKind>>(new Set());
   const [deptFilter, setDeptFilter] = useState("all");
   const [onlyMyAbsences, setOnlyMyAbsences] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // The dense month grid is hard to read on phones, so default to the agenda
   // (list) view there. Runs once on mount; users can still switch freely.
@@ -746,13 +748,13 @@ export default function CalendarPage() {
               onChange={(e) => {
                 if (e.target.value) setCursor(new Date(`${e.target.value}T12:00`));
               }}
-              className="hidden h-10 w-[8.75rem] text-xs sm:flex md:h-8"
+              className="hidden h-8 w-[8.75rem] text-xs md:flex"
             />
           </div>
         </div>
 
         {/* View switcher */}
-        <div className="flex w-full items-center gap-1 rounded-lg border border-border bg-card p-1 sm:w-auto">
+        <div className="hidden items-center gap-1 rounded-lg border border-border bg-card p-1 md:flex">
           {(
             [
               { key: "month", label: t("viewMonth"), icon: CalendarDays },
@@ -768,7 +770,7 @@ export default function CalendarPage() {
                 onClick={() => setView(v.key)}
                 aria-pressed={view === v.key}
                 className={cn(
-                  "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors sm:min-h-0 sm:flex-none",
+                  "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors",
                   view === v.key
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -780,12 +782,34 @@ export default function CalendarPage() {
             );
           })}
         </div>
+
+        <div className="flex w-full items-center gap-2 md:hidden">
+          <Select value={view} onValueChange={(value) => setView(value as CalendarView)}>
+            <SelectTrigger className="h-9 flex-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="month">{t("viewMonth")}</SelectItem>
+              <SelectItem value="week">{t("viewWeek")}</SelectItem>
+              <SelectItem value="list">{t("viewList")}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="default"
+            onClick={() => setFiltersOpen(true)}
+            aria-haspopup="dialog"
+          >
+            <SlidersHorizontal />
+            {t("filters")}
+          </Button>
+        </div>
       </div>
 
       {/* Interactive legend: click a type to hide/show it, narrow to a
           department, or keep only your own absences. */}
       <div
-        className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs"
+        className="mb-4 hidden flex-wrap items-center gap-x-2 gap-y-2 text-xs md:flex"
         data-tour="tour-calendar-filters"
       >
         {ALL_KINDS.map((kind) => {
@@ -797,7 +821,7 @@ export default function CalendarPage() {
               aria-pressed={!hidden}
               onClick={() => toggleKind(kind)}
               className={cn(
-                "flex min-h-10 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 font-medium transition-colors hover:bg-accent md:min-h-0 md:px-2.5 md:py-1",
+                "flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 font-medium transition-colors hover:bg-accent",
                 hidden ? "text-muted-foreground/50 line-through" : "text-muted-foreground",
               )}
             >
@@ -817,7 +841,7 @@ export default function CalendarPage() {
           aria-pressed={onlyMyAbsences}
           onClick={() => setOnlyMyAbsences((v) => !v)}
           className={cn(
-            "min-h-10 rounded-full border px-3 py-1.5 font-medium transition-colors md:min-h-0 md:px-2.5 md:py-1",
+            "rounded-full border px-2.5 py-1 font-medium transition-colors",
             onlyMyAbsences
               ? "border-transparent bg-foreground text-background"
               : "border-border text-muted-foreground hover:bg-accent",
@@ -827,7 +851,7 @@ export default function CalendarPage() {
         </button>
         {departments.length > 0 && (
           <Select value={deptFilter} onValueChange={setDeptFilter}>
-            <SelectTrigger className="h-10 w-auto gap-1.5 rounded-full border-border px-3 text-xs md:h-7 md:px-2.5">
+            <SelectTrigger className="h-7 w-auto gap-1.5 rounded-full border-border px-2.5 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -842,10 +866,82 @@ export default function CalendarPage() {
         )}
       </div>
 
+      <ResponsiveDialog
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        title={t("filters")}
+        footer={<Button onClick={() => setFiltersOpen(false)}>{tc("done")}</Button>}
+      >
+        <button
+          type="button"
+          aria-pressed={onlyMyAbsences}
+          onClick={() => setOnlyMyAbsences((value) => !value)}
+          className={cn(
+            "flex min-h-11 w-full items-center justify-between rounded-lg border px-3 text-sm font-medium transition-colors",
+            onlyMyAbsences
+              ? "border-transparent bg-foreground text-background"
+              : "border-border text-muted-foreground hover:bg-accent",
+          )}
+        >
+          {t("onlyMyAbsences")}
+        </button>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">{t("legend")}</p>
+          <div className="grid grid-cols-2 gap-2">
+            {ALL_KINDS.map((kind) => {
+              const hidden = hiddenKinds.has(kind);
+              return (
+                <button
+                  key={kind}
+                  type="button"
+                  aria-pressed={!hidden}
+                  onClick={() => toggleKind(kind)}
+                  className={cn(
+                    "flex min-h-11 items-center gap-2 rounded-lg border px-3 text-left text-sm font-medium transition-colors hover:bg-accent",
+                    hidden
+                      ? "border-border text-muted-foreground/50"
+                      : "border-primary/30 bg-primary/5",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "size-2.5 shrink-0 rounded-full",
+                      kind === "event" ? "bg-primary" : ABSENCE_DOTS[kind],
+                      hidden && "opacity-40",
+                    )}
+                  />
+                  {kind === "event" ? t("event") : tAbs(kind)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {departments.length > 0 && (
+          <div className="space-y-2">
+            <Label>{t("allDepartments")}</Label>
+            <Select value={deptFilter} onValueChange={setDeptFilter}>
+              <SelectTrigger className="h-11 w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("allDepartments")}</SelectItem>
+                {departments.map((department) => (
+                  <SelectItem key={department} value={department}>
+                    {department}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </ResponsiveDialog>
+
       {/* Month grid (leading column: ISO week numbers) */}
       {view === "month" && (
-        <div className="grid grid-cols-[1.75rem_repeat(7,minmax(0,1fr))] overflow-hidden rounded-xl border border-border/70 bg-card text-sm shadow-[0_1px_2px_0_rgb(0_0_0/0.04)]">
-          <div className="border-b border-r border-border/60 bg-muted/30 p-2 text-center text-[10px] font-semibold uppercase text-muted-foreground/70">
+        <div className="grid grid-cols-7 overflow-hidden rounded-xl border border-border/70 bg-card text-sm shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] md:grid-cols-[1.75rem_repeat(7,minmax(0,1fr))]">
+          <div className="hidden border-b border-r border-border/60 bg-muted/30 p-2 text-center text-[10px] font-semibold uppercase text-muted-foreground/70 md:block">
             {t("weekShort")}
           </div>
           {weekdays.map((d) => (
@@ -868,7 +964,7 @@ export default function CalendarPage() {
             return (
               <Fragment key={day.toISOString()}>
                 {i % 7 === 0 && (
-                  <div className="flex items-start justify-center border-b border-r border-border/60 bg-muted/20 pt-2 text-[10px] font-medium tabular-nums text-muted-foreground/70">
+                  <div className="hidden items-start justify-center border-b border-r border-border/60 bg-muted/20 pt-2 text-[10px] font-medium tabular-nums text-muted-foreground/70 md:flex">
                     {getISOWeek(day)}
                   </div>
                 )}
@@ -876,7 +972,7 @@ export default function CalendarPage() {
                   type="button"
                   onClick={() => setDetail({ kind: "day", day: isoDay(day) })}
                   className={cn(
-                    "min-h-24 space-y-1 border-b border-r border-border/60 p-1.5 text-left align-top transition-colors last:border-r-0 hover:bg-accent/50",
+                    "min-h-20 space-y-1 border-b border-r border-border/60 p-1 text-left align-top transition-colors last:border-r-0 hover:bg-accent/50 md:min-h-24 md:p-1.5",
                     !inMonth && "bg-muted/20 text-muted-foreground",
                   )}
                 >
@@ -888,22 +984,37 @@ export default function CalendarPage() {
                   >
                     {day.getDate()}
                   </div>
-                  {shownEvents.map((e) => (
-                    <EventChip key={e._id} e={e} day={day} />
-                  ))}
-                  {aggregateAbsences ? (
-                    <div className="flex items-center gap-1 truncate rounded bg-muted px-1 py-0.5 text-[11px] font-medium text-muted-foreground">
-                      <Plane className="size-3 shrink-0 opacity-70" />
-                      {t("outCount", { count: dayAbsences.length })}
-                    </div>
-                  ) : (
-                    dayAbsences.slice(0, absenceSlots).map((a) => <AbsenceChip key={a.id} a={a} />)
-                  )}
-                  {eventOverflow > 0 && (
-                    <div className="px-1 text-[10px] font-medium text-muted-foreground">
-                      +{eventOverflow}
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-1 md:hidden">
+                    {dayEvents.slice(0, 2).map((event) => (
+                      <span key={event._id} className="size-1.5 rounded-full bg-primary" />
+                    ))}
+                    {dayAbsences.slice(0, Math.max(0, 2 - dayEvents.length)).map((absence) => (
+                      <span
+                        key={absence.id}
+                        className={cn("size-1.5 rounded-full", ABSENCE_DOTS[absence.type])}
+                      />
+                    ))}
+                  </div>
+                  <div className="hidden space-y-1 md:block">
+                    {shownEvents.map((e) => (
+                      <EventChip key={e._id} e={e} day={day} />
+                    ))}
+                    {aggregateAbsences ? (
+                      <div className="flex items-center gap-1 truncate rounded bg-muted px-1 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        <Plane className="size-3 shrink-0 opacity-70" />
+                        {t("outCount", { count: dayAbsences.length })}
+                      </div>
+                    ) : (
+                      dayAbsences
+                        .slice(0, absenceSlots)
+                        .map((a) => <AbsenceChip key={a.id} a={a} />)
+                    )}
+                    {eventOverflow > 0 && (
+                      <div className="px-1 text-[10px] font-medium text-muted-foreground">
+                        +{eventOverflow}
+                      </div>
+                    )}
+                  </div>
                 </button>
               </Fragment>
             );

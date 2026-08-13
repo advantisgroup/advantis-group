@@ -81,6 +81,8 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     applicantAccess: sandboxed ? false : (user.applicantAccess ?? false),
     roleLabel: sandboxed ? null : (user.roleLabel ?? null),
     avatar,
+    profileColor: user.profileColor ?? null,
+    profileGradient: user.profileGradient ?? "aurora",
     lastSeenAt: user.lastSeenAt ?? null,
     createdAt: user.createdAt,
     dateOfBirth: user.dateOfBirth ?? null,
@@ -287,6 +289,16 @@ const profileArgs = {
   department: v.optional(v.string()),
   phone: v.optional(v.string()),
   avatarStorageId: v.optional(v.id("_storage")),
+  profileColor: v.optional(v.union(v.string(), v.null())),
+  profileGradient: v.optional(
+    v.union(
+      v.literal("aurora"),
+      v.literal("ocean"),
+      v.literal("sunset"),
+      v.literal("violet"),
+      v.literal("rose"),
+    ),
+  ),
   dateOfBirth: v.optional(v.string()),
   showBirthdayPublicly: v.optional(v.boolean()),
 };
@@ -302,6 +314,13 @@ export const applyProfileUpdate = internalMutation({
     ) {
       await ctx.storage.delete(user.avatarStorageId);
     }
+    if (
+      args.profileColor !== undefined &&
+      args.profileColor !== null &&
+      !/^#[0-9a-f]{6}$/i.test(args.profileColor)
+    ) {
+      throw new ConvexError("profile_color_invalid");
+    }
     await ctx.db.patch(user._id, {
       ...(args.firstName !== undefined ? { firstName: args.firstName } : {}),
       ...(args.lastName !== undefined ? { lastName: args.lastName } : {}),
@@ -309,6 +328,8 @@ export const applyProfileUpdate = internalMutation({
       ...(args.department !== undefined ? { department: args.department } : {}),
       ...(args.phone !== undefined ? { phone: args.phone } : {}),
       ...(args.avatarStorageId ? { avatarStorageId: args.avatarStorageId } : {}),
+      ...(args.profileColor !== undefined ? { profileColor: args.profileColor ?? undefined } : {}),
+      ...(args.profileGradient !== undefined ? { profileGradient: args.profileGradient } : {}),
       ...(args.dateOfBirth !== undefined ? { dateOfBirth: args.dateOfBirth } : {}),
       ...(args.showBirthdayPublicly !== undefined
         ? { showBirthdayPublicly: args.showBirthdayPublicly }

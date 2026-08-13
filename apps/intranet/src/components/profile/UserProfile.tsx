@@ -51,6 +51,7 @@ import { addDaysIso, isoToday } from "@/lib/absences";
 import { useAbsencesCalendar } from "@/lib/absences-api";
 import { useNow } from "@/lib/activity/useNow";
 import { formatIsoDate, initials, roleLabel } from "@/lib/format";
+import { profileColorStyle, profileGradientClass } from "@/lib/profile-gradient";
 import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
@@ -775,7 +776,13 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-start gap-3 border-b border-border/70 p-5">
+      <div
+        className={cn(
+          "flex items-start gap-3 border-b border-white/30 p-5 text-white",
+          profileGradientClass(user.profileGradient),
+        )}
+        style={profileColorStyle(user.profileColor)}
+      >
         <div className="relative shrink-0">
           <Avatar className="size-16">
             {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
@@ -784,15 +791,13 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
           {user.lastActiveAt && now - user.lastActiveAt < ONLINE_WINDOW_MS && (
             <span
               title={t("online")}
-              className="absolute bottom-0.5 right-0.5 size-3.5 rounded-full border-2 border-background bg-success"
+              className="absolute bottom-0.5 right-0.5 size-3.5 rounded-full border-2 border-white bg-success"
             />
           )}
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-lg font-semibold leading-tight">{user.name}</p>
-          {user.jobTitle && (
-            <p className="truncate text-sm text-muted-foreground">{user.jobTitle}</p>
-          )}
+          {user.jobTitle && <p className="truncate text-sm text-white/80">{user.jobTitle}</p>}
           <div className="mt-1.5 flex flex-wrap gap-1">
             <RoleBadge member={user} isAdmin={isAdmin} tRoles={tRoles} onSave={saveRoleLabel} />
             {user.status === "suspended" && (
@@ -806,7 +811,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
       {/* Scrollable body */}
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
         {!isSelf && (
-          <Button className="w-full" onClick={() => void message()}>
+          <Button variant="sky" className="w-full" onClick={() => void message()}>
             <MessageSquare /> {t("message")}
           </Button>
         )}

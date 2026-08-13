@@ -242,7 +242,7 @@ export default function DirectoryPage() {
                 aria-pressed={view === mode}
                 onClick={() => setView(mode)}
                 className={cn(
-                  "grid size-10 place-items-center rounded-md transition-colors md:size-8",
+                  "grid size-8 place-items-center rounded-md transition-colors",
                   view === mode
                     ? "bg-card text-foreground shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
                     : "text-muted-foreground hover:text-foreground",
@@ -261,7 +261,7 @@ export default function DirectoryPage() {
               type="button"
               onClick={() => setRole(r)}
               className={cn(
-                "min-h-9 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors md:min-h-0 md:py-1",
+                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                 role === r
                   ? "border-transparent bg-foreground text-background"
                   : "border-border text-muted-foreground hover:bg-accent",
@@ -277,7 +277,7 @@ export default function DirectoryPage() {
               type="button"
               onClick={() => setTeam(team === tm.id ? "all" : tm.id)}
               className={cn(
-                "flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors md:min-h-0 md:py-1",
+                "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                 team === tm.id
                   ? "border-transparent bg-foreground text-background"
                   : "border-border text-muted-foreground hover:bg-accent",
@@ -291,7 +291,7 @@ export default function DirectoryPage() {
             type="button"
             onClick={() => setGrouped((v) => !v)}
             className={cn(
-              "flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:ml-auto md:min-h-0 md:py-1",
+              "ml-auto flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
               grouped
                 ? "border-transparent bg-foreground text-background"
                 : "border-border text-muted-foreground hover:bg-accent",
@@ -317,7 +317,7 @@ export default function DirectoryPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="ml-auto h-10 px-2 text-xs md:h-6"
+                  className="ml-auto h-6 px-2 text-xs"
                   onClick={() => {
                     setSearch("");
                     setRole("all");

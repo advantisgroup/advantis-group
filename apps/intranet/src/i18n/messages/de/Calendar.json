@@ -30,6 +30,7 @@
   "downloadEventIcs": "Termin herunterladen (.ics)",
   "exported": "Kalenderdatei heruntergeladen",
   "onlyMyAbsences": "Nur meine Abwesenheiten",
+  "filters": "Filter",
   "allDepartments": "Alle Abteilungen",
   "jumpToDate": "Zu Datum springen",
   "outCount": "{count} abwesend",

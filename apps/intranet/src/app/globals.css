@@ -1433,3 +1433,35 @@ input[type="week"] {
   color: var(--shiki-dark) !important;
   background-color: var(--shiki-dark-bg) !important;
 }
+
+.profile-hue-range {
+  background: linear-gradient(
+    to right,
+    hsl(0 100% 50%),
+    hsl(60 100% 50%),
+    hsl(120 100% 50%),
+    hsl(180 100% 50%),
+    hsl(240 100% 50%),
+    hsl(300 100% 50%),
+    hsl(360 100% 50%)
+  );
+}
+
+.profile-hue-range::-webkit-slider-thumb {
+  width: 1.15rem;
+  height: 1.15rem;
+  appearance: none;
+  border: 2px solid white;
+  border-radius: 9999px;
+  background: transparent;
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 55%);
+}
+
+.profile-hue-range::-moz-range-thumb {
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 2px solid white;
+  border-radius: 9999px;
+  background: transparent;
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 55%);
+}

@@ -30,6 +30,7 @@
   "downloadEventIcs": "Download event (.ics)",
   "exported": "Calendar file downloaded",
   "onlyMyAbsences": "Only my absences",
+  "filters": "Filters",
   "allDepartments": "All departments",
   "jumpToDate": "Jump to date",
   "outCount": "{count} out",

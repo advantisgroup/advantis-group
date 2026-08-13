@@ -6,6 +6,8 @@ import { PersonIdentityBadges } from "@/components/people/PersonIdentityBadges";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { initials } from "@/lib/format";
+import { profileColorStyle, profileGradientClass } from "@/lib/profile-gradient";
+import { cn } from "@/lib/utils";
 
 import { ContactActions, CopyableText } from "./ContactActions";
 import { hasRealName, type Person, type PersonStatus } from "./person-status";
@@ -41,6 +43,10 @@ export function PersonCard({
       data-person={person._id}
       className="group scroll-mt-24 overflow-hidden transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-18px_rgb(0_0_0/0.18)]"
     >
+      <div
+        className={cn("h-1.5", profileGradientClass(person.profileGradient))}
+        style={profileColorStyle(person.profileColor)}
+      />
       <button
         type="button"
         onClick={onOpenProfile}

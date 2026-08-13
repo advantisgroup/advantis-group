@@ -104,6 +104,10 @@ export function PageHeaderActions({ actions }: { actions: PageHeaderAction[] }) 
  * never shift with description length) into the Intranet Header. */
 export function PageHeaderBarSlot() {
   const { identity } = usePageHeaderBarState();
+  const [descriptionOpen, setDescriptionOpen] = useState(false);
+
+  useEffect(() => setDescriptionOpen(false), [identity?.description]);
+
   if (!identity) return null;
   return (
     <div className="flex min-w-0 items-center gap-1.5">
@@ -117,11 +121,16 @@ export function PageHeaderBarSlot() {
       </h1>
       {identity.tourCheckpoint && <TourReplayButton checkpointId={identity.tourCheckpoint} />}
       {identity.description && (
-        <Tooltip>
+        <Tooltip open={descriptionOpen} onOpenChange={setDescriptionOpen}>
           <TooltipTrigger asChild>
             <button
               type="button"
               aria-label={identity.description}
+              aria-expanded={descriptionOpen}
+              onClick={(event) => {
+                event.preventDefault();
+                setDescriptionOpen((open) => !open);
+              }}
               className="shrink-0 text-muted-foreground transition-colors hover:text-fg"
             >
               <Info className="size-3.5" />
@@ -180,7 +189,7 @@ export function MobilePageHeaderActions() {
           disabled={action.disabled}
           onClick={action.onClick}
           data-tour={action.tourTarget}
-          className="flex size-10 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
         >
           <action.icon className="size-4" />
         </button>

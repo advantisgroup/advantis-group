@@ -46,6 +46,8 @@ export interface CurrentUser {
   applicantAccess: boolean;
   roleLabel: string | null;
   avatar: string | null;
+  profileColor: string | null;
+  profileGradient: "aurora" | "ocean" | "sunset" | "violet" | "rose";
   lastSeenAt: number | null;
   createdAt: number;
   dateOfBirth: string | null;

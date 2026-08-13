@@ -5,33 +5,40 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium ring-offset-background transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex touch-manipulation items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-transparent font-semibold ring-offset-background transition-[background-color,border-color,box-shadow,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        // Neutral high-contrast primary (Vercel-style): white-on-dark in dark
-        // mode, black-on-light in light mode. Decoupled from the brand `primary`
-        // token so accents/links stay on-brand.
         default:
-          "bg-foreground text-background shadow-sm hover:bg-foreground/90 hover:shadow-[0_0_0_1px_color-mix(in_oklch,var(--foreground)_35%,transparent),0_4px_16px_-4px_color-mix(in_oklch,var(--foreground)_45%,transparent)]",
+          "border-primary bg-primary text-primary-foreground shadow-[0_2px_8px_-3px_color-mix(in_oklch,var(--primary)_60%,transparent)] hover:bg-primary/90 hover:shadow-[0_6px_16px_-5px_color-mix(in_oklch,var(--primary)_85%,transparent)]",
+        sky: "bg-sky-600 text-white shadow-[0_4px_14px_-5px_rgba(2,132,199,0.85)] hover:bg-sky-500 hover:shadow-[0_8px_22px_-6px_rgba(14,165,233,0.9)] dark:bg-sky-500 dark:hover:bg-sky-400",
+        violet:
+          "bg-violet-600 text-white shadow-[0_4px_14px_-5px_rgba(124,58,237,0.85)] hover:bg-violet-500 hover:shadow-[0_8px_22px_-6px_rgba(139,92,246,0.9)] dark:bg-violet-500 dark:hover:bg-violet-400",
+        rose: "bg-rose-600 text-white shadow-[0_4px_14px_-5px_rgba(225,29,72,0.85)] hover:bg-rose-500 hover:shadow-[0_8px_22px_-6px_rgba(244,63,94,0.9)] dark:bg-rose-500 dark:hover:bg-rose-400",
+        emerald:
+          "bg-emerald-600 text-white shadow-[0_4px_14px_-5px_rgba(5,150,105,0.85)] hover:bg-emerald-500 hover:shadow-[0_8px_22px_-6px_rgba(16,185,129,0.9)] dark:bg-emerald-500 dark:hover:bg-emerald-400",
+        prism:
+          "border border-border/80 bg-background text-foreground shadow-[-8px_8px_20px_-12px_rgba(244,63,94,0.9),8px_-8px_20px_-12px_rgba(34,211,238,0.9)] hover:border-violet-400/60 hover:bg-accent hover:shadow-[-10px_10px_24px_-10px_rgba(244,63,94,0.95),10px_-10px_24px_-10px_rgba(34,211,238,0.95)]",
+        premium:
+          "border-violet-400/50 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white shadow-[0_5px_18px_-6px_rgba(192,38,211,0.75)] hover:brightness-110 hover:shadow-[0_9px_24px_-7px_rgba(192,38,211,0.9)]",
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-[0_0_0_1px_color-mix(in_oklch,var(--destructive)_45%,transparent),0_4px_16px_-4px_color-mix(in_oklch,var(--destructive)_55%,transparent)]",
         outline:
-          "border border-border bg-transparent hover:bg-accent hover:text-accent-foreground hover:border-ring/60 hover:shadow-[0_0_12px_-4px_color-mix(in_oklch,var(--ring)_45%,transparent)]",
+          "border-border bg-card/70 text-foreground shadow-[0_1px_2px_color-mix(in_oklch,var(--foreground)_8%,transparent)] hover:border-ring/60 hover:bg-accent hover:text-accent-foreground hover:shadow-[0_4px_12px_-5px_color-mix(in_oklch,var(--ring)_55%,transparent)]",
         secondary:
-          "border border-border bg-secondary text-secondary-foreground hover:bg-accent hover:shadow-[0_0_12px_-4px_color-mix(in_oklch,var(--ring)_35%,transparent)]",
+          "border-secondary bg-secondary text-secondary-foreground shadow-[0_1px_2px_color-mix(in_oklch,var(--foreground)_8%,transparent)] hover:bg-secondary/80 hover:shadow-[0_4px_12px_-5px_color-mix(in_oklch,var(--ring)_35%,transparent)]",
         ghost:
           "hover:bg-accent hover:text-accent-foreground hover:shadow-[0_0_10px_-5px_color-mix(in_oklch,var(--ring)_35%,transparent)]",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        // A deliberate range of densities — compact through thick — so toolbars
-        // and primary CTAs can sit at different visual weights, Vercel-style.
-        default: "h-10 px-4 text-sm [&_svg]:size-4 md:h-9",
-        sm: "h-10 rounded-md px-3 text-xs [&_svg]:size-3.5 md:h-8",
-        lg: "h-11 rounded-md px-6 text-sm [&_svg]:size-4",
-        icon: "h-10 w-10 [&_svg]:size-4 md:h-9 md:w-9",
-        "icon-sm": "h-10 w-10 [&_svg]:size-4 md:h-8 md:w-8",
+        default: "h-10 px-4 text-sm md:h-9 [&_svg]:size-4",
+        sm: "h-9 px-3 text-xs md:h-8 [&_svg]:size-3.5",
+        lg: "h-11 px-6 text-sm [&_svg]:size-4",
+        xl: "h-12 px-7 text-base [&_svg]:size-4.5",
+        xs: "h-8 gap-1 px-2.5 text-xs md:h-7 [&_svg]:size-3",
+        icon: "size-10 md:size-9 [&_svg]:size-4",
+        "icon-sm": "size-9 md:size-8 [&_svg]:size-3.5",
       },
     },
     defaultVariants: {

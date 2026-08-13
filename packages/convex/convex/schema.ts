@@ -204,6 +204,16 @@ export default defineSchema({
     teams: v.optional(v.array(v.string())),
     avatarStorageId: v.optional(v.id("_storage")),
     avatarUrl: v.optional(v.string()),
+    profileColor: v.optional(v.string()),
+    profileGradient: v.optional(
+      v.union(
+        v.literal("aurora"),
+        v.literal("ocean"),
+        v.literal("sunset"),
+        v.literal("violet"),
+        v.literal("rose"),
+      ),
+    ),
     managerId: v.optional(v.id("users")),
     status: v.union(v.literal("active"), v.literal("suspended")),
     /**
