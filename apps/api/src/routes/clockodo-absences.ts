@@ -2,22 +2,10 @@ import { api } from "@advantis/convex/api";
 import { Elysia, t } from "elysia";
 
 import {
-  createAbsence,
-  getRunningClock,
-  getClockOptionsRights,
-  getClockodoUser,
-  getAbsence,
-  listEntries,
-  listCustomers,
-  listServices,
+  clockodo,
   type CoarseAbsenceType,
-  listCurrentAbsences,
   mapAbsenceStatus,
   mapAbsenceType,
-  setAbsenceStatus,
-  startClock,
-  stopClock,
-  updateAbsence,
 } from "../lib/clockodo.js";
 import { resolveClockodoCaller } from "../lib/clockodo-caller.js";
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
@@ -27,7 +15,7 @@ import { requireAuth } from "../lib/middleware.js";
 /**
  * Live Clockodo absence reads — no Convex mirror. Absences change rarely and
  * don't need to be reactive (unlike ActivityTrack's working/break/clocked-out
- * signal), so these fetch straight from Clockodo on every request instead of
+ * signal), so these read Clockodo through the short shared cache instead of
  * syncing a stored copy via webhook + hourly cron. See AGENTS.md's Clockodo
  * section for the fuller rationale.
  */
@@ -64,22 +52,20 @@ interface PendingApprovalDTO extends AbsenceDTO {
  * (e.g. a field getting renamed upstream). */
 function toIsoDate(
   value: unknown,
-  context: { absenceId: number; field: string; raw: unknown }
+  context: { absenceId: number; field: string; raw: unknown },
 ): string {
   const candidate = Array.isArray(value) ? value[0] : value;
   if (typeof candidate !== "string" || candidate.trim() === "") {
     console.error(
       `[clockodo] absence ${context.absenceId} has a bad ${context.field}; full record:`,
-      JSON.stringify(context.raw)
+      JSON.stringify(context.raw),
     );
     return "";
   }
   return candidate.slice(0, 10);
 }
 
-function toDto(
-  a: Awaited<ReturnType<typeof listCurrentAbsences>>[number]
-): AbsenceDTO {
+function toDto(a: Awaited<ReturnType<typeof clockodo.listCurrentAbsences>>[number]): AbsenceDTO {
   return {
     id: String(a.id),
     clockodoUserId: String(a.users_id),
@@ -101,17 +87,12 @@ function toDto(
   };
 }
 
-function rangesOverlap(
-  aStart: string,
-  aEnd: string,
-  bStart: string,
-  bEnd: string
-): boolean {
+function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
   return aStart <= bEnd && bStart <= aEnd;
 }
 
 async function requireOwnAbsence(id: number, clockodoUserId: number) {
-  const absence = await getAbsence(id);
+  const absence = await clockodo.getAbsence(id);
   if (absence.users_id !== clockodoUserId) throw Errors.forbidden();
   return absence;
 }
@@ -126,9 +107,7 @@ function toClockodoTimestamp(date: Date): string {
 function recentWindow() {
   const now = new Date();
   return {
-    timeSince: toClockodoTimestamp(
-      new Date(now.getTime() - 18 * 60 * 60 * 1000)
-    ),
+    timeSince: toClockodoTimestamp(new Date(now.getTime() - 18 * 60 * 60 * 1000)),
     timeUntil: toClockodoTimestamp(now),
   };
 }
@@ -138,14 +117,14 @@ export const clockodoAbsencesRoute = new Elysia()
     const caller = await resolveClockodoCaller(request);
     const [{ timeSince, timeUntil }, account] = [
       recentWindow(),
-      await getClockodoUser(caller.clockodoUserId),
+      await clockodo.getUser(caller.clockodoUserId),
     ];
-    const entries = await listEntries({
+    const entries = await clockodo.listEntries({
       userId: caller.clockodoUserId,
       timeSince,
       timeUntil,
     });
-    const running = entries.find(entry => entry.time_until === null);
+    const running = entries.find((entry) => entry.time_until === null);
     if (running?.time_since) {
       return {
         accountName: account?.name ?? caller.name,
@@ -156,9 +135,7 @@ export const clockodoAbsencesRoute = new Elysia()
     }
 
     const lastEnd = entries
-      .map(entry =>
-        entry.time_until ? Date.parse(entry.time_until) : Number.NaN
-      )
+      .map((entry) => (entry.time_until ? Date.parse(entry.time_until) : Number.NaN))
       .filter(Number.isFinite)
       .reduce((latest, end) => Math.max(latest, end), 0);
     const onBreak = lastEnd > 0 && Date.now() - lastEnd <= 60 * 60 * 1000;
@@ -172,39 +149,32 @@ export const clockodoAbsencesRoute = new Elysia()
   .get("/clockodo/clock/options", async ({ request }) => {
     const caller = await resolveClockodoCaller(request);
     const [customers, services, rights] = await Promise.all([
-      listCustomers(),
-      listServices(),
-      getClockOptionsRights(caller.clockodoUserId),
+      clockodo.listCustomers(),
+      clockodo.listServices(),
+      clockodo.getClockOptionsRights(caller.clockodoUserId),
     ]);
     const canUse = (value: boolean | Record<string, unknown>, id: number) =>
-      value === true ||
-      (typeof value === "object" && value !== null && String(id) in value);
+      value === true || (typeof value === "object" && value !== null && String(id) in value);
     return {
-      customers: customers.filter(customer =>
-        canUse(rights.customers, customer.id)
-      ),
-      services: services.filter(service => canUse(rights.services, service.id)),
+      customers: customers.filter((customer) => canUse(rights.customers, customer.id)),
+      services: services.filter((service) => canUse(rights.services, service.id)),
     };
   })
   .post(
     "/clockodo/clock/me",
     async ({ request, body }) => {
       const caller = await resolveClockodoCaller(request);
-      const rights = await getClockOptionsRights(caller.clockodoUserId);
+      const rights = await clockodo.getClockOptionsRights(caller.clockodoUserId);
       const canUse = (value: boolean | Record<string, unknown>, id: number) =>
-        value === true ||
-        (typeof value === "object" && value !== null && String(id) in value);
-      if (
-        !canUse(rights.customers, body.customerId) ||
-        !canUse(rights.services, body.serviceId)
-      ) {
+        value === true || (typeof value === "object" && value !== null && String(id) in value);
+      if (!canUse(rights.customers, body.customerId) || !canUse(rights.services, body.serviceId)) {
         throw Errors.forbidden();
       }
-      const running = await getRunningClock(caller.clockodoUserId);
+      const running = await clockodo.getRunningClock(caller.clockodoUserId);
       if (running?.users_id === caller.clockodoUserId) {
         throw Errors.badRequest("Clockodo timer is already running");
       }
-      const entry = await startClock({
+      const entry = await clockodo.startClock({
         userId: caller.clockodoUserId,
         customerId: body.customerId,
         serviceId: body.serviceId,
@@ -216,42 +186,34 @@ export const clockodoAbsencesRoute = new Elysia()
         customerId: t.Integer(),
         serviceId: t.Integer(),
       }),
-    }
+    },
   )
   .delete(
     "/clockodo/clock/me/:entryId",
     async ({ request, params }) => {
       const caller = await resolveClockodoCaller(request);
       const entryId = Number(params.entryId);
-      if (!Number.isSafeInteger(entryId))
-        throw Errors.badRequest("Invalid Clockodo entry id");
-      const running = await getRunningClock(caller.clockodoUserId);
-      if (
-        !running ||
-        running.id !== entryId ||
-        running.users_id !== caller.clockodoUserId
-      ) {
+      if (!Number.isSafeInteger(entryId)) throw Errors.badRequest("Invalid Clockodo entry id");
+      const running = await clockodo.getRunningClock(caller.clockodoUserId);
+      if (!running || running.id !== entryId || running.users_id !== caller.clockodoUserId) {
         throw Errors.forbidden();
       }
-      await stopClock(entryId, caller.clockodoUserId);
+      await clockodo.stopClock(entryId, caller.clockodoUserId);
       return { ok: true };
     },
-    { params: t.Object({ entryId: t.String() }) }
+    { params: t.Object({ entryId: t.String() }) },
   )
   .get("/clockodo/absences/me", async ({ request }) => {
     const { clerkUserId } = await requireAuth(request);
-    const caller = await getConvex().query(
-      api.integrations.clockodoAbsences.resolveCaller,
-      {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
-      }
-    );
+    const caller = await getConvex().query(api.integrations.clockodoAbsences.resolveCaller, {
+      serverKey: getConvexServerKey(),
+      clerkUserId,
+    });
     if (caller.status !== "linked") return { absences: [] };
 
-    const all = await listCurrentAbsences();
+    const all = await clockodo.listCurrentAbsences();
     const mine = all
-      .filter(a => String(a.users_id) === caller.clockodoUserId)
+      .filter((a) => String(a.users_id) === caller.clockodoUserId)
       .map(toDto)
       .sort((a, b) => b.startDate.localeCompare(a.startDate));
     return { absences: mine };
@@ -270,21 +232,17 @@ export const clockodoAbsencesRoute = new Elysia()
         }),
       ]);
       const rosterByClockodoId = new Map(
-        roster.filter(r => r.linked).map(r => [r.clockodoUserId, r])
+        roster.filter((r) => r.linked).map((r) => [r.clockodoUserId, r]),
       );
 
-      const all = await listCurrentAbsences();
-      const approved = all.filter(
-        a => mapAbsenceStatus(a.status) === "approved"
-      );
+      const all = await clockodo.listCurrentAbsences();
+      const approved = all.filter((a) => mapAbsenceStatus(a.status) === "approved");
       const overlapping = approved
         .map(toDto)
-        .filter(a =>
-          rangesOverlap(a.startDate, a.endDate, query.start, query.end)
-        );
+        .filter((a) => rangesOverlap(a.startDate, a.endDate, query.start, query.end));
 
       const visible = overlapping
-        .map(a => {
+        .map((a) => {
           const person = rosterByClockodoId.get(a.clockodoUserId);
           if (!person) return null;
           const isSelf = caller.status === "linked" && caller.clockodoUserId === a.clockodoUserId;
@@ -313,24 +271,19 @@ export const clockodoAbsencesRoute = new Elysia()
     },
     {
       query: t.Object({ start: t.String(), end: t.String() }),
-    }
+    },
   )
   /** Admin dashboard quick stat — count only, no identities. */
   .get("/clockodo/absences/pending-count", async ({ request }) => {
     const { clerkUserId } = await requireAuth(request);
-    const caller = await getConvex().query(
-      api.integrations.clockodoAbsences.resolveCaller,
-      {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
-      }
-    );
+    const caller = await getConvex().query(api.integrations.clockodoAbsences.resolveCaller, {
+      serverKey: getConvexServerKey(),
+      clerkUserId,
+    });
     if (caller.status === "no_account" || !caller.canViewTeam) throw Errors.forbidden();
 
-    const all = await listCurrentAbsences();
-    const count = all.filter(
-      a => mapAbsenceStatus(a.status) === "pending"
-    ).length;
+    const all = await clockodo.listCurrentAbsences();
+    const count = all.filter((a) => mapAbsenceStatus(a.status) === "pending").length;
     return { count };
   })
   /** Manager+/canManageTeam-only queue of pending requests to approve or
@@ -351,11 +304,11 @@ export const clockodoAbsencesRoute = new Elysia()
     }
 
     const rosterByClockodoId = new Map(
-      roster.filter(r => r.linked).map(r => [r.clockodoUserId, r])
+      roster.filter((r) => r.linked).map((r) => [r.clockodoUserId, r]),
     );
-    const all = await listCurrentAbsences();
+    const all = await clockodo.listCurrentAbsences();
     const pending = all
-      .filter(a => mapAbsenceStatus(a.status) === "pending")
+      .filter((a) => mapAbsenceStatus(a.status) === "pending")
       .map(toDto)
       .map((dto): PendingApprovalDTO | null => {
         const person = rosterByClockodoId.get(dto.clockodoUserId);
@@ -375,32 +328,25 @@ export const clockodoAbsencesRoute = new Elysia()
     "/clockodo/absences/:id/status",
     async ({ request, params, body }) => {
       const { clerkUserId } = await requireAuth(request);
-      const caller = await getConvex().query(
-        api.integrations.clockodoAbsences.resolveCaller,
-        { serverKey: getConvexServerKey(), clerkUserId }
-      );
+      const caller = await getConvex().query(api.integrations.clockodoAbsences.resolveCaller, {
+        serverKey: getConvexServerKey(),
+        clerkUserId,
+      });
       if (caller.status === "no_account" || !caller.canManageTeam) {
         throw Errors.forbidden();
       }
 
       const id = Number(params.id);
-      if (!Number.isSafeInteger(id))
-        throw Errors.badRequest("Invalid absence id");
+      if (!Number.isSafeInteger(id)) throw Errors.badRequest("Invalid absence id");
 
-      const absence = await getAbsence(id);
+      const absence = await clockodo.getAbsence(id);
       // Self-approval safeguard: an approver can't action their own request
       // — someone else with the permission has to.
-      if (
-        caller.status === "linked" &&
-        String(absence.users_id) === caller.clockodoUserId
-      ) {
+      if (caller.status === "linked" && String(absence.users_id) === caller.clockodoUserId) {
         throw Errors.forbidden("Cannot approve or deny your own absence request");
       }
 
-      const updated = await setAbsenceStatus(
-        id,
-        body.status === "approved" ? 1 : 2
-      );
+      const updated = await clockodo.setAbsenceStatus(id, body.status === "approved" ? 1 : 2);
       return { absence: toDto(updated) };
     },
     {
@@ -408,13 +354,13 @@ export const clockodoAbsencesRoute = new Elysia()
       body: t.Object({
         status: t.Union([t.Literal("approved"), t.Literal("denied")]),
       }),
-    }
+    },
   )
   .post(
     "/clockodo/absences/me",
     async ({ request, body }) => {
       const caller = await resolveClockodoCaller(request);
-      const absence = await createAbsence({
+      const absence = await clockodo.createAbsence({
         users_id: caller.clockodoUserId,
         date_since: body.dateSince,
         date_until: body.dateUntil,
@@ -433,17 +379,16 @@ export const clockodoAbsencesRoute = new Elysia()
         halfDay: t.Boolean(),
         note: t.Optional(t.String()),
       }),
-    }
+    },
   )
   .put(
     "/clockodo/absences/me/:id",
     async ({ request, params, body }) => {
       const caller = await resolveClockodoCaller(request);
       const id = Number(params.id);
-      if (!Number.isSafeInteger(id))
-        throw Errors.badRequest("Invalid absence id");
+      if (!Number.isSafeInteger(id)) throw Errors.badRequest("Invalid absence id");
       await requireOwnAbsence(id, caller.clockodoUserId);
-      const absence = await updateAbsence(id, {
+      const absence = await clockodo.updateAbsence(id, {
         date_since: body.dateSince,
         date_until: body.dateUntil,
         type: body.clockodoType,
@@ -461,5 +406,5 @@ export const clockodoAbsencesRoute = new Elysia()
         halfDay: t.Boolean(),
         note: t.Optional(t.String()),
       }),
-    }
+    },
   );

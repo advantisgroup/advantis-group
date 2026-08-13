@@ -2,7 +2,7 @@ import { Elysia } from "elysia";
 
 import { dynamicCors } from "./lib/cors.js";
 import { PORT } from "./lib/env.js";
-import { ApiError } from "./lib/errors.js";
+import { ApiError, isFeatureDisabledError, reportApiFailure } from "./lib/errors.js";
 import { activityRoute } from "./routes/activity.js";
 import { applicantsRoute } from "./routes/applicants.js";
 import { clockodoAbsencesRoute } from "./routes/clockodo-absences.js";
@@ -24,28 +24,32 @@ import { resendWebhookRoute } from "./routes/webhooks/resend.js";
 
 export const app = new Elysia()
   .use(dynamicCors())
-  .onError(({ error, request, set }) => {
-    if (error instanceof ApiError) {
-      console.error(
-        `[api] ${request.method} ${new URL(request.url).pathname} -> ${error.status} ${error.code}: ${error.message}`
+  .onError(async ({ error, request, set }) => {
+    const requestId = crypto.randomUUID();
+    const path = new URL(request.url).pathname;
+    if (isFeatureDisabledError(error)) {
+      const failure = await reportApiFailure(
+        new ApiError(503, "feature_disabled", "This feature is currently unavailable."),
+        { requestId, method: request.method, path },
       );
-      set.status = error.status;
-      return { error: error.message, code: error.code };
+      set.status = failure.status;
+      return { error: failure.message, code: failure.code, requestId };
     }
-    // Validation errors from Elysia carry their own status.
+
     const status = (error as { status?: number }).status;
-    if (typeof status === "number" && status >= 400 && status < 500) {
-      console.error(
-        `[api] ${request.method} ${new URL(request.url).pathname} -> ${status}: ${(error as Error).message}`
-      );
-      return { error: (error as Error).message, code: "bad_request" };
-    }
-    console.error(
-      `[api] ${request.method} ${new URL(request.url).pathname} -> unhandled error:`,
-      error
+    const failure = await reportApiFailure(
+      typeof status === "number" && status >= 400 && status < 500
+        ? new ApiError(
+            status,
+            "bad_request",
+            "Some of the details look off. Please check and try again.",
+            (error as Error).message,
+          )
+        : error,
+      { requestId, method: request.method, path },
     );
-    set.status = 500;
-    return { error: "Something went wrong", code: "internal" };
+    set.status = failure.status;
+    return { error: failure.message, code: failure.code, requestId };
   })
   .get("/", () => ({ name: "Advantis Intranet API", version: "1.0.0" }))
   .get("/health", () => ({ status: "ok", timestamp: Date.now() }))

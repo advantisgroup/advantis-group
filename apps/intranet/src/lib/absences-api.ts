@@ -7,8 +7,8 @@ import { useEdenApi } from "@/lib/eden";
 /**
  * Live Clockodo absence reads via apps/api — no Convex mirror, no
  * reactivity. Absences change rarely and don't need to be reactive (unlike
- * ActivityTrack's working/break/clocked-out signal), so every call here hits
- * Clockodo fresh through apps/api instead of a synced copy.
+ * ActivityTrack's working/break/clocked-out signal), so every call here goes
+ * through apps/api's short-lived Clockodo cache instead of a synced copy.
  */
 
 export type AbsenceType = "vacation" | "sick" | "personal" | "other";

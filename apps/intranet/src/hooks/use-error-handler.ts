@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { parseError } from "@/lib/errors";
+import { reportClientError } from "@/lib/errors";
 
 /**
  * Returns a `handleError` callback for use in mutation/action catch blocks.
@@ -22,11 +22,8 @@ export function useErrorHandler() {
 
   return useCallback(
     (error: unknown, fallbackMessage?: string) => {
-      // Keep the original error in the console for debugging; users never see it.
-      console.error(error);
-
-      const { code, message } = parseError(error);
-      const text = message ?? (code ? t(code) : (fallbackMessage ?? t("generic")));
+      const { code } = reportClientError(error, "toast");
+      const text = fallbackMessage ?? (code ? t(code) : t("generic"));
 
       toast.error(text);
     },

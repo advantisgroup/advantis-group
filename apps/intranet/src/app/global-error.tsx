@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { reportClientError } from "@/lib/errors";
+
 /**
  * Last-resort boundary that catches errors in the root layout itself. When it
  * renders, the normal layout (and its providers) is gone, so it must supply its
@@ -15,7 +17,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("Global error:", error);
+    reportClientError(error, "global-boundary");
   }, [error]);
 
   return (

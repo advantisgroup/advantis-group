@@ -3,6 +3,7 @@
 import { Component, type ReactNode } from "react";
 
 import { ErrorFallback } from "@/components/ErrorFallback";
+import { getErrorMessage, reportClientError } from "@/lib/errors";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -30,7 +31,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, info: { componentStack?: string | null }) {
-    console.error("ErrorBoundary caught an error:", error, info);
+    reportClientError(error, `error-boundary:${info.componentStack ?? "unknown"}`);
   }
 
   reset = () => {
@@ -43,7 +44,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       if (this.props.fallback) {
         return this.props.fallback({ error, reset: this.reset });
       }
-      return <ErrorFallback description={error.message} onRetry={this.reset} />;
+      return <ErrorFallback description={getErrorMessage(error)} onRetry={this.reset} />;
     }
     return this.props.children;
   }

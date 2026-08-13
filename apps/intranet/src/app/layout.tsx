@@ -7,6 +7,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 
 import ConvexClientProvider from "@/components/ConvexClientProvider";
+import { ClientErrorReporter } from "@/components/ClientErrorReporter";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -77,6 +78,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 enableSystem
                 disableTransitionOnChange
               >
+                <ClientErrorReporter />
                 {children}
                 <Toaster position="bottom-right" />
               </ThemeProvider>

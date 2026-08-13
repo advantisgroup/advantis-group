@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 
-import { listAbsences, listCurrentAbsences } from "../../lib/clockodo.js";
+import { clockodo } from "../../lib/clockodo.js";
 import { requireServerKey } from "../../lib/middleware.js";
 
 /**
@@ -18,7 +18,9 @@ export const internalClockodoRoute = new Elysia().get(
     // Omit `year` for "current" (this year, plus last year's tail in
     // January); pass it for a specific historical day — the admin "Deep
     // sanitize" troubleshooting tool can target any past day.
-    const absences = query.year ? await listAbsences(Number(query.year)) : await listCurrentAbsences();
+    const absences = query.year
+      ? await clockodo.listAbsences(Number(query.year))
+      : await clockodo.listCurrentAbsences();
     return {
       absences: absences.map((a) => ({
         users_id: a.users_id,

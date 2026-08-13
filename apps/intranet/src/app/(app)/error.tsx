@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { ErrorFallback } from "@/components/ErrorFallback";
+import { getErrorMessage, reportClientError } from "@/lib/errors";
 
 /**
  * Segment-level error boundary for the authenticated app. Catches uncaught
@@ -18,8 +19,8 @@ export default function AppError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("App route error:", error);
+    reportClientError(error, "app-route-boundary");
   }, [error]);
 
-  return <ErrorFallback fullScreen description={error.message} onRetry={reset} />;
+  return <ErrorFallback fullScreen description={getErrorMessage(error)} onRetry={reset} />;
 }
