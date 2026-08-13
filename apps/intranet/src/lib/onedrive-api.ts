@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 
 import {
   type DriveQuota,
@@ -9,32 +9,17 @@ import {
   type OneDriveListing,
   type ScanReport,
 } from "@advantis/types";
-import { useAuth } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
 
+import { type IntranetApiClient, useIntranetApiClient } from "@/lib/api-client";
 import { downloadWithProgress, fetchAsFile } from "@/lib/download";
+import { apiBaseUrl } from "@/lib/eden";
 
 /**
  * Typed client for the OneDrive endpoints on the Advantis API. Cross-origin
  * requests can't rely on the Clerk cookie, so every call carries the session
  * token as a Bearer header (same approach as the wiki-chat / chat callers).
  */
-
-const API = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
-
-async function parse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    let message = "Something went wrong";
-    try {
-      const body = (await res.json()) as { error?: string };
-      if (body.error) message = body.error;
-    } catch {
-      // non-JSON error body; keep the generic message
-    }
-    throw new Error(message);
-  }
-  return res.json() as Promise<T>;
-}
 
 export interface UploadResult {
   status: "uploaded" | "pending";
@@ -68,76 +53,31 @@ export interface WikiAttachmentUpload {
 /** Shared XHR upload for the wiki/HR "attach" endpoints (multipart, optional
  * subfolder, real progress via XHR rather than fetch). */
 function uploadToAttachEndpoint(
-  url: string,
+  api: IntranetApiClient,
+  path: string,
   file: File,
-  getToken: () => Promise<string | null>,
   onProgress?: (fraction: number) => void,
   folder?: string,
 ): Promise<WikiAttachmentUpload> {
-  return new Promise<WikiAttachmentUpload>((resolve, reject) => {
-    void (async () => {
-      try {
-        const token = await getToken();
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", url);
-        if (token) xhr.setRequestHeader("authorization", `Bearer ${token}`);
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable && onProgress) {
-            onProgress(e.loaded / e.total);
-          }
-        };
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve(JSON.parse(xhr.responseText) as WikiAttachmentUpload);
-          } else {
-            let message = "Upload failed";
-            try {
-              message = (JSON.parse(xhr.responseText) as { error?: string }).error ?? message;
-            } catch {
-              // keep generic
-            }
-            reject(new Error(message));
-          }
-        };
-        xhr.onerror = () => reject(new Error("Upload failed"));
-        const form = new FormData();
-        form.append("file", file);
-        if (folder) form.append("folder", folder);
-        xhr.send(form);
-      } catch (error) {
-        reject(error instanceof Error ? error : new Error("Upload failed"));
-      }
-    })();
-  });
+  const form = new FormData();
+  form.append("file", file);
+  if (folder) form.append("folder", folder);
+  return api.uploadForm<WikiAttachmentUpload>(path, form, onProgress);
 }
 
 export function useOneDriveApi() {
-  const { getToken } = useAuth();
+  const api = useIntranetApiClient();
   const t = useTranslations("Files");
 
-  const authHeaders = useCallback(
-    async (extra?: Record<string, string>): Promise<Record<string, string>> => {
-      const token = await getToken();
-      return {
-        ...(token ? { authorization: `Bearer ${token}` } : {}),
-        ...extra,
-      };
-    },
-    [getToken],
-  );
-
   return useMemo(() => {
-    const get = async <T>(path: string): Promise<T> =>
-      parse<T>(await fetch(`${API}${path}`, { headers: await authHeaders() }));
+    const get = async <T>(path: string): Promise<T> => api.fetchJson<T>(path);
 
     const send = async <T>(method: string, path: string, body?: unknown): Promise<T> =>
-      parse<T>(
-        await fetch(`${API}${path}`, {
-          method,
-          headers: await authHeaders(body ? { "content-type": "application/json" } : undefined),
-          body: body ? JSON.stringify(body) : undefined,
-        }),
-      );
+      api.fetchJson<T>(path, {
+        method,
+        headers: body ? { "content-type": "application/json" } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
+      });
 
     return {
       status: () => get<{ configured: boolean }>("/onedrive/status"),
@@ -157,10 +97,10 @@ export function useOneDriveApi() {
 
       download: async (id: string, name: string): Promise<void> => {
         await downloadWithProgress(
-          `${API}/onedrive/download/${encodeURIComponent(id)}`,
+          `${apiBaseUrl}/onedrive/download/${encodeURIComponent(id)}`,
           name,
           t("downloading"),
-          { headers: await authHeaders() },
+          { headers: await api.headers() },
         );
       },
 
@@ -175,10 +115,10 @@ export function useOneDriveApi() {
         mimeType?: string;
       }): Promise<File> =>
         fetchAsFile(
-          `${API}/onedrive/download/${encodeURIComponent(item.id)}`,
+          `${apiBaseUrl}/onedrive/download/${encodeURIComponent(item.id)}`,
           item.name,
           item.mimeType,
-          { headers: await authHeaders() },
+          { headers: await api.headers() },
         ),
 
       /**
@@ -194,38 +134,12 @@ export function useOneDriveApi() {
         file: File,
         path: string,
         onProgress?: (fraction: number) => void,
-      ): Promise<UploadResult> =>
-        new Promise<UploadResult>((resolve, reject) => {
-          void (async () => {
-            const token = await getToken();
-            const xhr = new XMLHttpRequest();
-            xhr.open("POST", `${API}/onedrive/uploads`);
-            if (token) xhr.setRequestHeader("authorization", `Bearer ${token}`);
-            xhr.upload.onprogress = (e) => {
-              if (e.lengthComputable && onProgress) {
-                onProgress(e.loaded / e.total);
-              }
-            };
-            xhr.onload = () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                resolve(JSON.parse(xhr.responseText) as UploadResult);
-              } else {
-                let message = "Upload failed";
-                try {
-                  message = (JSON.parse(xhr.responseText) as { error?: string }).error ?? message;
-                } catch {
-                  // keep generic
-                }
-                reject(new Error(message));
-              }
-            };
-            xhr.onerror = () => reject(new Error("Upload failed"));
-            const form = new FormData();
-            form.append("file", file);
-            form.append("path", path);
-            xhr.send(form);
-          })();
-        }),
+      ): Promise<UploadResult> => {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("path", path);
+        return api.uploadForm<UploadResult>("/onedrive/uploads", form, onProgress);
+      },
 
       /**
        * Upload a guidebook (wiki) attachment straight to OneDrive
@@ -242,9 +156,9 @@ export function useOneDriveApi() {
         folder?: string,
       ): Promise<WikiAttachmentUpload> =>
         uploadToAttachEndpoint(
-          `${API}/onedrive/wiki/${encodeURIComponent(slug)}/attach`,
+          api,
+          `/onedrive/wiki/${encodeURIComponent(slug)}/attach`,
           file,
-          getToken,
           onProgress,
           folder,
         ),
@@ -258,9 +172,9 @@ export function useOneDriveApi() {
         folder?: string,
       ): Promise<WikiAttachmentUpload> =>
         uploadToAttachEndpoint(
-          `${API}/onedrive/hr/${encodeURIComponent(employeeProfileId)}/attach`,
+          api,
+          `/onedrive/hr/${encodeURIComponent(employeeProfileId)}/attach`,
           file,
-          getToken,
           onProgress,
           folder,
         ),
@@ -335,7 +249,7 @@ export function useOneDriveApi() {
           "/onedrive/team-access/sync",
         ),
     };
-  }, [authHeaders, getToken, t]);
+  }, [api, t]);
 }
 
 export type OneDriveApi = ReturnType<typeof useOneDriveApi>;

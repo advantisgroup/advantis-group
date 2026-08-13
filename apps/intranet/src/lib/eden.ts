@@ -7,7 +7,8 @@ import { useAuth } from "@clerk/nextjs";
 
 import type { App } from "@advantis/api";
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
+export const apiBaseUrl =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
 
 /**
  * Eden's JSON reviver auto-detects date-like strings (including plain
@@ -22,7 +23,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://
 const edenOptions = { parseDate: false } as const;
 
 /** Typed client for the Advantis API (api.advantisgroup.de) — unauthenticated. */
-export const api = treaty<App>(baseUrl, edenOptions);
+export const api = treaty<App>(apiBaseUrl, edenOptions);
 
 /**
  * Typed client with the Clerk session token attached as a Bearer header on
@@ -35,7 +36,7 @@ export function useEdenApi() {
   const { getToken } = useAuth();
   return useMemo(
     () =>
-      treaty<App>(baseUrl, {
+      treaty<App>(apiBaseUrl, {
         ...edenOptions,
         headers: async () => {
           const token = await getToken();
@@ -45,3 +46,5 @@ export function useEdenApi() {
     [getToken],
   );
 }
+
+export type EdenApiClient = ReturnType<typeof useEdenApi>;

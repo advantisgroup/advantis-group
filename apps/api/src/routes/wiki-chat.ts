@@ -1,11 +1,10 @@
-import { Anthropic } from "@anthropic-ai/sdk";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { Elysia, t } from "elysia";
 
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
+import { anthropic } from "../lib/anthropic.js";
 import { decrypt, encrypt } from "../lib/crypto.js";
-import { requireEnv } from "../lib/env.js";
 import { requireAuth } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
@@ -69,8 +68,6 @@ export const wikiChatRoute = new Elysia()
       set.headers["X-Content-Type-Options"] = "nosniff";
       set.headers["Cache-Control"] = "no-cache";
 
-      const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
-
       // Caching is a prefix match, and the prefix has to clear the model's
       // minimum before anything is stored — 1024 tokens on Sonnet 4.6.
       // WIKI_SYSTEM is only ~400, so a breakpoint on the system block alone
@@ -80,7 +77,7 @@ export const wikiChatRoute = new Elysia()
       // far, which clears the minimum after the first couple of turns and
       // lets every following turn read the history back.
       const lastIndex = body.messages.length - 1;
-      const stream = client.messages.stream({
+      const stream = anthropic.streamMessages({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
         system: [{ type: "text", text: WIKI_SYSTEM }],

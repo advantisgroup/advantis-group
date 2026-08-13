@@ -1,11 +1,10 @@
-import { Anthropic } from "@anthropic-ai/sdk";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { autoProfil } from "../lib/types.js";
 import { Elysia, t } from "elysia";
 
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
-import { requireEnv } from "../lib/env.js";
+import { anthropic } from "../lib/anthropic.js";
 import { Errors } from "../lib/errors.js";
 import { requireAuth } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
@@ -85,8 +84,7 @@ function validatePdf(file: { type: string; size: number }): void {
 /** Runs the PDF through Claude and returns the parsed fields — no persistence. */
 async function runExtraction(bytes: Uint8Array<ArrayBuffer>): Promise<ExtractedApplicant> {
   const base64 = Buffer.from(bytes).toString("base64");
-  const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
-  const response = await client.messages.create({
+  const response = await anthropic.createMessage({
     model: "claude-sonnet-4-6",
     max_tokens: 1000,
     messages: [

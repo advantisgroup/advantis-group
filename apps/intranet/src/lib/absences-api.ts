@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 
-import { useEdenApi } from "@/lib/eden";
+import { unwrapApiResult, useIntranetApiClient } from "@/lib/api-client";
+import { type EdenApiClient } from "@/lib/eden";
+import { type ApiQuery, useApiQuery } from "@/hooks/use-api-query";
 
 /**
  * Live Clockodo absence reads via apps/api — no Convex mirror, no
@@ -46,23 +48,16 @@ export interface PendingApproval extends MyAbsence {
 }
 
 /** The signed-in user's own absences — any status/type, private to them. */
-export function useMyAbsences(): { absences: MyAbsence[] | undefined; refresh: () => void } {
-  const eden = useEdenApi();
-  const [absences, setAbsences] = useState<MyAbsence[] | undefined>(undefined);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const { data } = await eden.clockodo.absences.me.get();
-      if (!cancelled) setAbsences(data?.absences ?? []);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [eden, reloadKey]);
-
-  return { absences, refresh: () => setReloadKey((k) => k + 1) };
+export function useMyAbsences(): ApiQuery<MyAbsence[]> & { absences: MyAbsence[] | undefined } {
+  const api = useIntranetApiClient();
+  const query = useApiQuery(
+    useCallback(async () => {
+      const data = await api.unwrap(api.eden.clockodo.absences.me.get());
+      return data.absences;
+    }, [api]),
+    { source: "clockodo.absences.me" },
+  );
+  return { ...query, absences: query.data };
 }
 
 /**
@@ -71,75 +66,59 @@ export function useMyAbsences(): { absences: MyAbsence[] | undefined; refresh: (
  * vacation-type entries, not why someone else is out.
  */
 export function useAbsencesCalendar(start: string, end: string): CalendarAbsence[] | undefined {
-  const eden = useEdenApi();
-  const [absences, setAbsences] = useState<CalendarAbsence[] | undefined>(undefined);
+  return useAbsencesCalendarQuery(start, end).data;
+}
 
-  useEffect(() => {
-    let cancelled = false;
-    setAbsences(undefined);
-    void (async () => {
-      const { data } = await eden.clockodo.absences.calendar.get({ query: { start, end } });
-      if (!cancelled) setAbsences(data?.absences ?? []);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [eden, start, end]);
-
-  return absences;
+export function useAbsencesCalendarQuery(start: string, end: string): ApiQuery<CalendarAbsence[]> {
+  const api = useIntranetApiClient();
+  return useApiQuery(
+    useCallback(async () => {
+      const data = await api.unwrap(
+        api.eden.clockodo.absences.calendar.get({ query: { start, end } }),
+      );
+      return data.absences;
+    }, [api, start, end]),
+    { source: "clockodo.absences.calendar" },
+  );
 }
 
 /** Manager-only: count of org-wide pending absence requests (admin dashboard stat). */
 export function usePendingAbsenceCount(enabled: boolean): number | undefined {
-  const eden = useEdenApi();
-  const [count, setCount] = useState<number | undefined>(undefined);
+  return usePendingAbsenceCountQuery(enabled).data;
+}
 
-  useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    void (async () => {
-      const { data } = await eden.clockodo.absences["pending-count"].get();
-      if (!cancelled) setCount(data?.count ?? 0);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [eden, enabled]);
-
-  return count;
+export function usePendingAbsenceCountQuery(enabled: boolean): ApiQuery<number> {
+  const api = useIntranetApiClient();
+  return useApiQuery(
+    useCallback(async () => {
+      const data = await api.unwrap(api.eden.clockodo.absences["pending-count"].get());
+      return data.count;
+    }, [api]),
+    { enabled, source: "clockodo.absences.pending-count" },
+  );
 }
 
 /** canManageTeam-only: the full org-wide pending-approval queue. */
-export function usePendingApprovals(enabled: boolean): {
-  approvals: PendingApproval[] | undefined;
-  refresh: () => void;
-} {
-  const eden = useEdenApi();
-  const [approvals, setApprovals] = useState<PendingApproval[] | undefined>(undefined);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    void (async () => {
-      const { data } = await eden.clockodo.absences.pending.get();
-      if (!cancelled) setApprovals(data?.absences ?? []);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [eden, enabled, reloadKey]);
-
-  return { approvals, refresh: () => setReloadKey((k) => k + 1) };
+export function usePendingApprovals(
+  enabled: boolean,
+): ApiQuery<PendingApproval[]> & { approvals: PendingApproval[] | undefined } {
+  const api = useIntranetApiClient();
+  const query = useApiQuery(
+    useCallback(async () => {
+      const data = await api.unwrap(api.eden.clockodo.absences.pending.get());
+      return data.absences;
+    }, [api]),
+    { enabled, source: "clockodo.absences.pending" },
+  );
+  return { ...query, approvals: query.data };
 }
 
 /** Approve or deny a pending absence — a plain async helper (not a hook)
  * since it's called from an event handler, not on render. */
 export async function setAbsenceApprovalStatus(
-  eden: ReturnType<typeof useEdenApi>,
+  eden: EdenApiClient,
   id: string,
   status: "approved" | "denied",
 ): Promise<void> {
-  const { error } = await eden.clockodo.absences({ id }).status.put({ status });
-  if (error) throw error;
+  await unwrapApiResult(eden.clockodo.absences({ id }).status.put({ status }));
 }

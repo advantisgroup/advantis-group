@@ -13,6 +13,8 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "type-check": "turbo run type-check",
+    "check:i18n": "bun scripts/check-i18n.ts",
+    "check:api-boundaries": "bun scripts/check-api-boundaries.ts",
     "format": "turbo run format",
     "format:check": "turbo run format:check",
     "dev:intranet": "turbo run dev --filter=@advantis/intranet",
@@ -50,7 +52,6 @@
     "turbo": "^2.10.7",
     "typescript": "^7.0.2"
   },
-  "//overrides": "Keep vaul on the same @radix-ui/react-dialog the apps use. A second copy nests its own @radix-ui/react-dismissable-layer, and that module tracks the body's original `pointer-events` in a module-level variable — two instances then disagree about what to restore and can leave the page permanently dead to clicks. See docs/radix-vaul-dedupe.md.",
   "overrides": {
     "@radix-ui/react-dialog": "^1.1.23"
   },
@@ -58,6 +59,7 @@
     "node": ">=18"
   },
   "packageManager": "bun@1.3.14",
+  "//overrides": "Keep vaul on the same @radix-ui/react-dialog the apps use. A second copy nests its own @radix-ui/react-dismissable-layer, and that module tracks the body's original `pointer-events` in a module-level variable — two instances then disagree about what to restore and can leave the page permanently dead to clicks. See docs/radix-vaul-dedupe.md.",
   "trustedDependencies": [
     "@parcel/watcher",
     "@swc/core",

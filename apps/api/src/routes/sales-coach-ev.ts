@@ -1,12 +1,11 @@
-import { Anthropic } from "@anthropic-ai/sdk";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { ConvexError } from "convex/values";
 import { Elysia, t } from "elysia";
 
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
+import { anthropic } from "../lib/anthropic.js";
 import { decrypt, encrypt } from "../lib/crypto.js";
-import { requireEnv } from "../lib/env.js";
 import { Errors } from "../lib/errors.js";
 import { requireAuth } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
@@ -51,8 +50,7 @@ interface Scores {
 }
 
 async function callClaudeJson(system: string, userMsg: string, maxTokens = 1024): Promise<unknown> {
-  const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
-  const message = await client.messages.create({
+  const message = await anthropic.createMessage({
     model: "claude-sonnet-4-6",
     max_tokens: maxTokens,
     system,

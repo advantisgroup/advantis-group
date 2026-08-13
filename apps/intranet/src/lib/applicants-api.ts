@@ -1,32 +1,10 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 
 import { type Id } from "@advantis/convex/dataModel";
-import { useAuth } from "@clerk/nextjs";
 
-/**
- * Typed client for the Applicant Management PDF-extraction endpoints on the
- * Advantis API. Cross-origin requests can't rely on the Clerk cookie, so the
- * call carries the session token as a Bearer header (same approach as
- * `useOneDriveApi`).
- */
-
-const API = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
-
-async function parse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    let message = "Something went wrong";
-    try {
-      const body = (await res.json()) as { error?: string };
-      if (body.error) message = body.error;
-    } catch {
-      // non-JSON error body; keep the generic message
-    }
-    throw new Error(message);
-  }
-  return res.json() as Promise<T>;
-}
+import { useIntranetApiClient } from "@/lib/api-client";
 
 export interface ExtractedApplicantFields {
   name: string;
@@ -62,12 +40,7 @@ export interface RescanResult {
 }
 
 export function useApplicantsApi() {
-  const { getToken } = useAuth();
-
-  const authHeaders = useCallback(async (): Promise<Record<string, string>> => {
-    const token = await getToken();
-    return token ? { authorization: `Bearer ${token}` } : {};
-  }, [getToken]);
+  const api = useIntranetApiClient();
 
   return useMemo(
     () => ({
@@ -80,13 +53,7 @@ export function useApplicantsApi() {
         const form = new FormData();
         form.append("file", file);
         if (forceCreate) form.append("forceCreate", "true");
-        return parse(
-          await fetch(`${API}/applicants/extract`, {
-            method: "POST",
-            headers: await authHeaders(),
-            body: form,
-          }),
-        );
+        return api.uploadForm<ExtractResult>("/applicants/extract", form);
       },
 
       /**
@@ -97,15 +64,9 @@ export function useApplicantsApi() {
       rescan: async (file: File): Promise<RescanResult> => {
         const form = new FormData();
         form.append("file", file);
-        return parse(
-          await fetch(`${API}/applicants/rescan`, {
-            method: "POST",
-            headers: await authHeaders(),
-            body: form,
-          }),
-        );
+        return api.uploadForm<RescanResult>("/applicants/rescan", form);
       },
     }),
-    [authHeaders],
+    [api],
   );
 }

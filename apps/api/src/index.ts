@@ -1,8 +1,11 @@
 import { Elysia } from "elysia";
 
+import { type ApiErrorEnvelope } from "@advantis/api-contract";
+
 import { dynamicCors } from "./lib/cors.js";
 import { PORT } from "./lib/env.js";
 import { ApiError, isFeatureDisabledError, reportApiFailure } from "./lib/errors.js";
+import { getRequestContext } from "./lib/request-context.js";
 import { activityRoute } from "./routes/activity.js";
 import { applicantsRoute } from "./routes/applicants.js";
 import { clockodoAbsencesRoute } from "./routes/clockodo-absences.js";
@@ -22,18 +25,21 @@ import { clerkWebhookRoute } from "./routes/webhooks/clerk.js";
 import { onedriveWebhookRoute } from "./routes/webhooks/onedrive.js";
 import { resendWebhookRoute } from "./routes/webhooks/resend.js";
 
+function errorEnvelope(error: ApiError, requestId: string): ApiErrorEnvelope {
+  return { error: error.message, code: error.code, requestId };
+}
+
 export const app = new Elysia()
   .use(dynamicCors())
   .onError(async ({ error, request, set }) => {
-    const requestId = crypto.randomUUID();
-    const path = new URL(request.url).pathname;
+    const context = getRequestContext(request);
     if (isFeatureDisabledError(error)) {
       const failure = await reportApiFailure(
         new ApiError(503, "feature_disabled", "This feature is currently unavailable."),
-        { requestId, method: request.method, path },
+        context,
       );
       set.status = failure.status;
-      return { error: failure.message, code: failure.code, requestId };
+      return errorEnvelope(failure, context.requestId);
     }
 
     const status = (error as { status?: number }).status;
@@ -46,10 +52,10 @@ export const app = new Elysia()
             (error as Error).message,
           )
         : error,
-      { requestId, method: request.method, path },
+      context,
     );
     set.status = failure.status;
-    return { error: failure.message, code: failure.code, requestId };
+    return errorEnvelope(failure, context.requestId);
   })
   .get("/", () => ({ name: "Advantis Intranet API", version: "1.0.0" }))
   .get("/health", () => ({ status: "ok", timestamp: Date.now() }))

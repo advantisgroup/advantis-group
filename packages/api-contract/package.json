@@ -1,0 +1,23 @@
+{
+  "name": "@advantis/api-contract",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "lint": "echo \"@advantis/api-contract: no lint\""
+  },
+  "devDependencies": {
+    "@advantis/config": "workspace:*",
+    "typescript": "^5.9.3"
+  }
+}

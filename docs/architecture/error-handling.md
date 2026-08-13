@@ -19,6 +19,11 @@ Unexpected errors always become `internal` with generic public copy. Do not
 return upstream responses, stack traces, configuration, or provider messages
 to a browser.
 
+The shared `@advantis/api-contract` package owns the public error envelope
+and its stable codes. Provider clients throw `ProviderError`, adding provider,
+operation, retryability, and an upstream request id to the server log without
+exposing any of that diagnostic data to the browser.
+
 ## Convex
 
 Convex functions continue to throw `ConvexError({ code, message })`. The code
@@ -33,6 +38,11 @@ failures.
 which logs the original error and selects localised copy from `Errors.json`.
 `ClientErrorReporter` covers browser errors and unhandled rejections outside
 React boundaries.
+
+`ApiResponseError` retains an API error code and request id for fetch/XHR
+paths. `useApiQuery` reports read failures to the shared error pipeline and
+keeps error state separate from valid empty data. Safe error metadata is also
+captured as the `intranet_error` PostHog event.
 
 Never render `error.message` or a provider response directly. Add a stable
 code plus an English and German `Errors` message when a user needs a distinct

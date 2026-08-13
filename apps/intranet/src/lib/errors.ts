@@ -7,31 +7,12 @@
 // that payload out safely and fall back to a friendly message for anything
 // else (network blips, unexpected exceptions, plain Errors).
 
+import { type ApiErrorCode, isApiErrorCode } from "@advantis/api-contract";
 import { ConvexError } from "convex/values";
+import posthog from "posthog-js";
 
 /** Error codes thrown by the Convex backend. Keep in sync with the backend. */
-export type ErrorCode =
-  | "unauthenticated"
-  | "forbidden"
-  | "not_found"
-  | "bad_request"
-  | "conflict"
-  | "rate_limited"
-  | "upstream"
-  | "internal"
-  | "feature_disabled";
-
-const KNOWN_CODES: readonly ErrorCode[] = [
-  "unauthenticated",
-  "forbidden",
-  "not_found",
-  "bad_request",
-  "conflict",
-  "rate_limited",
-  "upstream",
-  "internal",
-  "feature_disabled",
-];
+export type ErrorCode = "unauthenticated" | ApiErrorCode | "conflict";
 
 export interface ParsedError {
   /** Structured code when the backend provided one, otherwise undefined. */
@@ -55,7 +36,7 @@ interface ApiErrorData {
 }
 
 function isErrorCode(value: unknown): value is ErrorCode {
-  return typeof value === "string" && (KNOWN_CODES as readonly string[]).includes(value);
+  return value === "unauthenticated" || value === "conflict" || isApiErrorCode(value);
 }
 
 function normalizeErrorCode(value: unknown): ErrorCode | undefined {
@@ -145,5 +126,12 @@ export function reportClientError(error: unknown, source: string): ParsedError {
     { source, code: parsed.code ?? "unknown", requestId: parsed.requestId },
     error,
   );
+  if (typeof window !== "undefined") {
+    posthog.capture("intranet_error", {
+      source,
+      error_code: parsed.code ?? "unknown",
+      api_request_id: parsed.requestId,
+    });
+  }
   return parsed;
 }

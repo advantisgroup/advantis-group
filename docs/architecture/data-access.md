@@ -24,9 +24,16 @@ Eden client; routes authenticate the Clerk request and apply the feature's
 authorization before calling an external provider.
 
 Each provider has one owned client object in `apps/api/src/lib`. It owns the
-provider credentials, request format, upstream error translation, and any
-provider-specific caching. Route handlers express product policy and DTOs;
-they do not recreate provider request helpers.
+provider credentials, request surface, and any provider-specific caching.
+Route handlers express product policy and DTOs; they do not recreate provider
+clients or request helpers. The root API error pipeline translates unexpected
+provider failures into safe public responses and retains diagnostics in logs.
+
+The intranet has one `IntranetApiClient` for API operations that cannot use
+the typed Eden JSON surface directly: multipart forms, progress uploads,
+downloads, and streaming. API-backed reads use `useApiQuery`, which preserves
+an explicit loading/error/success state instead of treating an API failure as
+an empty result.
 
 ## Combination flows
 

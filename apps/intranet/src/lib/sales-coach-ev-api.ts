@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 
-import { useEdenApi } from "@/lib/eden";
+import { unwrapApiResult, useIntranetApiClient } from "@/lib/api-client";
+import { type EdenApiClient } from "@/lib/eden";
+import { type ApiQuery, useApiQuery } from "@/hooks/use-api-query";
 
 import {
   type CallRecord,
@@ -18,99 +20,68 @@ import {
  * fresh on mount, same shape as absences-api.ts's hooks.
  */
 
-export function useSalesCoachWiki(): { articles: WikiArticle[] | undefined; refresh: () => void } {
-  const eden = useEdenApi();
-  const [articles, setArticles] = useState<WikiArticle[] | undefined>(undefined);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const { data } = await eden["sales-coach-ev"].wiki.get();
-      if (!cancelled) setArticles((data?.articles as WikiArticle[] | undefined) ?? []);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [eden, reloadKey]);
-
-  return { articles, refresh: () => setReloadKey((k) => k + 1) };
+export function useSalesCoachWiki(): ApiQuery<WikiArticle[]> & {
+  articles: WikiArticle[] | undefined;
+} {
+  const api = useIntranetApiClient();
+  const query = useApiQuery(
+    useCallback(async () => {
+      const data = await api.unwrap(api.eden["sales-coach-ev"].wiki.get());
+      return data.articles as WikiArticle[];
+    }, [api]),
+    { source: "sales-coach.wiki" },
+  );
+  return { ...query, articles: query.data };
 }
 
-export function useSalesCoachCalls(period: "7" | "30" | "all"): {
-  calls: CallRecord[] | undefined;
-  refresh: () => void;
-} {
-  const eden = useEdenApi();
-  const [calls, setCalls] = useState<CallRecord[] | undefined>(undefined);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    setCalls(undefined);
-    void (async () => {
-      const { data } = await eden["sales-coach-ev"].calls.get({ query: { period } });
-      if (!cancelled) setCalls((data?.calls as CallRecord[] | undefined) ?? []);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [eden, period, reloadKey]);
-
-  return { calls, refresh: () => setReloadKey((k) => k + 1) };
+export function useSalesCoachCalls(
+  period: "7" | "30" | "all",
+): ApiQuery<CallRecord[]> & { calls: CallRecord[] | undefined } {
+  const api = useIntranetApiClient();
+  const query = useApiQuery(
+    useCallback(async () => {
+      const data = await api.unwrap(api.eden["sales-coach-ev"].calls.get({ query: { period } }));
+      return data.calls as CallRecord[];
+    }, [api, period]),
+    { source: "sales-coach.calls" },
+  );
+  return { ...query, calls: query.data };
 }
 
-export function useSalesCoachSettings(): {
-  kpiText: string | undefined;
-  refresh: () => void;
-} {
-  const eden = useEdenApi();
-  const [kpiText, setKpiText] = useState<string | undefined>(undefined);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const { data } = await eden["sales-coach-ev"].settings.get();
-      if (!cancelled) setKpiText(data?.kpiText ?? "");
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [eden, reloadKey]);
-
-  return { kpiText, refresh: () => setReloadKey((k) => k + 1) };
+export function useSalesCoachSettings(): ApiQuery<string> & { kpiText: string | undefined } {
+  const api = useIntranetApiClient();
+  const query = useApiQuery(
+    useCallback(async () => {
+      const data = await api.unwrap(api.eden["sales-coach-ev"].settings.get());
+      return data.kpiText;
+    }, [api]),
+    { source: "sales-coach.settings" },
+  );
+  return { ...query, kpiText: query.data };
 }
 
 /** Admin-only: team overview aggregates over a trailing window. */
 export function useSalesCoachRoster(
   enabled: boolean,
   days: number,
-): { roster: RosterEntry[] | undefined; refresh: () => void } {
-  const eden = useEdenApi();
-  const [roster, setRoster] = useState<RosterEntry[] | undefined>(undefined);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    void (async () => {
-      const { data } = await eden["sales-coach-ev"]["admin"].roster.get({ query: { days: String(days) } });
-      if (!cancelled) setRoster((data?.roster as RosterEntry[] | undefined) ?? []);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [eden, enabled, days, reloadKey]);
-
-  return { roster, refresh: () => setReloadKey((k) => k + 1) };
+): ApiQuery<RosterEntry[]> & { roster: RosterEntry[] | undefined } {
+  const api = useIntranetApiClient();
+  const query = useApiQuery(
+    useCallback(async () => {
+      const data = await api.unwrap(
+        api.eden["sales-coach-ev"]["admin"].roster.get({ query: { days: String(days) } }),
+      );
+      return data.roster as RosterEntry[];
+    }, [api, days]),
+    { enabled, source: "sales-coach.roster" },
+  );
+  return { ...query, roster: query.data };
 }
 
-type Eden = ReturnType<typeof useEdenApi>;
+type Eden = EdenApiClient;
 
 export async function saveKpiText(eden: Eden, kpiText: string): Promise<void> {
-  const { error } = await eden["sales-coach-ev"].settings.patch({ kpiText });
-  if (error) throw error;
+  await unwrapApiResult(eden["sales-coach-ev"].settings.patch({ kpiText }));
 }
 
 export interface WikiArticleInput {
@@ -123,8 +94,7 @@ export interface WikiArticleInput {
 }
 
 export async function createWikiArticle(eden: Eden, input: WikiArticleInput): Promise<void> {
-  const { error } = await eden["sales-coach-ev"].wiki.post(input);
-  if (error) throw error;
+  await unwrapApiResult(eden["sales-coach-ev"].wiki.post(input));
 }
 
 export async function updateWikiArticle(
@@ -132,13 +102,11 @@ export async function updateWikiArticle(
   id: string,
   input: Partial<WikiArticleInput>,
 ): Promise<void> {
-  const { error } = await eden["sales-coach-ev"].wiki({ id }).patch(input);
-  if (error) throw error;
+  await unwrapApiResult(eden["sales-coach-ev"].wiki({ id }).patch(input));
 }
 
 export async function deleteWikiArticle(eden: Eden, id: string): Promise<void> {
-  const { error } = await eden["sales-coach-ev"].wiki({ id }).delete();
-  if (error) throw error;
+  await unwrapApiResult(eden["sales-coach-ev"].wiki({ id }).delete());
 }
 
 export async function fetchEodSummary(
@@ -146,7 +114,5 @@ export async function fetchEodSummary(
   strengths: string[],
   improvements: string[],
 ): Promise<{ top3strengths: string[]; top3improvements: string[] }> {
-  const { data, error } = await eden["sales-coach-ev"]["eod-summary"].post({ strengths, improvements });
-  if (error) throw error;
-  return data;
+  return unwrapApiResult(eden["sales-coach-ev"]["eod-summary"].post({ strengths, improvements }));
 }

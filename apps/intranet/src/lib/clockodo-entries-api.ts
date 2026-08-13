@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 
-import { useEdenApi } from "@/lib/eden";
+import { unwrapApiResult, useIntranetApiClient } from "@/lib/api-client";
+import { type EdenApiClient } from "@/lib/eden";
+import { type ApiQuery, useApiQuery } from "@/hooks/use-api-query";
 
 /**
  * Real clocked time entries (start/stop records) — what actually populates
@@ -26,36 +28,31 @@ export function useClockEntries(
   end: string,
   enabled = true,
 ): { entries: ClockEntry[] | undefined; refresh: () => void } {
-  const eden = useEdenApi();
-  const [entries, setEntries] = useState<ClockEntry[] | undefined>(undefined);
-  const [reloadKey, setReloadKey] = useState(0);
+  const query = useClockEntriesQuery(start, end, enabled);
+  return { entries: query.data, refresh: query.refresh };
+}
 
-  useEffect(() => {
-    if (!enabled) {
-      setEntries(undefined);
-      return;
-    }
-    let cancelled = false;
-    setEntries(undefined);
-    void (async () => {
-      const { data } = await eden.clockodo.entries.get({ query: { start, end } });
-      if (!cancelled) setEntries(data?.entries ?? []);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [eden, start, end, enabled, reloadKey]);
-
-  return { entries, refresh: () => setReloadKey((k) => k + 1) };
+export function useClockEntriesQuery(
+  start: string,
+  end: string,
+  enabled = true,
+): ApiQuery<ClockEntry[]> {
+  const api = useIntranetApiClient();
+  return useApiQuery(
+    useCallback(async () => {
+      const data = await api.unwrap(api.eden.clockodo.entries.get({ query: { start, end } }));
+      return data.entries;
+    }, [api, start, end]),
+    { enabled, source: "clockodo.entries" },
+  );
 }
 
 /** Deletes a finished time entry — `date` is the ISO day it falls on, used
  * server-side to scope the ownership check (see clockodo-entries.ts). */
 export async function deleteClockEntry(
-  eden: ReturnType<typeof useEdenApi>,
+  eden: EdenApiClient,
   id: string,
   date: string,
 ): Promise<void> {
-  const { error } = await eden.clockodo.entries({ id }).delete(undefined, { query: { date } });
-  if (error) throw error;
+  await unwrapApiResult(eden.clockodo.entries({ id }).delete(undefined, { query: { date } }));
 }
