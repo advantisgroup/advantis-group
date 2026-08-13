@@ -13,6 +13,10 @@ import { cn } from "@/lib/utils";
 
 const QUICK_COLORS = ["#8ecae6", "#6d6875", "#b7e4c7", "#e9c5b0", "#d6a6df"];
 
+function isHexColor(value: string) {
+  return /^#[0-9a-f]{6}$/i.test(value);
+}
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
@@ -68,8 +72,10 @@ function hexToHsv(hex: string) {
 function ColorControls({ value, onChange }: { value: string; onChange: (color: string) => void }) {
   const t = useTranslations("Settings");
   const [hsv, setHsv] = useState(() => hexToHsv(value));
+  const [draftColor, setDraftColor] = useState(value);
 
   useEffect(() => setHsv(hexToHsv(value)), [value]);
+  useEffect(() => setDraftColor(value), [value]);
 
   function setColor(next: { hue: number; saturation: number; value: number }) {
     setHsv(next);
@@ -143,13 +149,15 @@ function ColorControls({ value, onChange }: { value: string; onChange: (color: s
           style={{ backgroundColor: value }}
         />
         <Input
-          value={value}
+          value={draftColor}
           onChange={(event) => {
             const next = event.target.value;
-            if (/^#[0-9a-f]{6}$/i.test(next)) onChange(next.toLowerCase());
+            setDraftColor(next);
+            if (isHexColor(next)) onChange(next.toLowerCase());
           }}
           className="font-mono uppercase"
           aria-label={t("customColor")}
+          aria-invalid={draftColor.length > 0 && !isHexColor(draftColor)}
         />
       </div>
 

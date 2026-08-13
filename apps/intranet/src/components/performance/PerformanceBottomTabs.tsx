@@ -4,18 +4,16 @@ import { useState } from "react";
 
 import Link from "next/link";
 
-import { motion } from "framer-motion";
 import { ArrowLeft, LogOut, Menu } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
+import { BottomNavTabButtons, useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
 import { usePerformanceCompany } from "@/components/performance/PerformanceCompanyProvider";
 import { type PerformanceHeaderNavItem } from "@/components/performance/PerformanceHeader";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
 
 /**
  * Mobile tab switcher for Performance's RouteTabs pages, plus the mobile
@@ -51,47 +49,11 @@ export function PerformanceBottomTabs({
     <>
       <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] print:hidden md:hidden">
         <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border/70 bg-background/90 p-1 shadow-lg shadow-black/30 backdrop-blur-xl [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {tabs?.map((tab) => {
-            const Icon = tab.icon;
-            const active = tab.value === activeValue;
-            const className = cn(
-              "relative flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
-              active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-            );
-            const content = (
-              <>
-                {active && (
-                  <motion.span
-                    layoutId="performance-bottom-nav-active-tab"
-                    className="absolute inset-0 rounded-full bg-accent"
-                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                  />
-                )}
-                <Icon className="relative z-10 size-4" />
-              </>
-            );
-
-            if (tab.href) {
-              return (
-                <Link key={tab.value} href={tab.href} aria-label={tab.label} className={className}>
-                  {content}
-                </Link>
-              );
-            }
-
-            return (
-              <button
-                key={tab.value}
-                type="button"
-                aria-label={tab.label}
-                aria-pressed={active}
-                onClick={tab.onClick}
-                className={className}
-              >
-                {content}
-              </button>
-            );
-          })}
+          <BottomNavTabButtons
+            tabs={tabs ?? []}
+            activeValue={activeValue}
+            layoutId="performance-bottom-nav-active-tab"
+          />
           {tabs && tabs.length > 0 && (
             <div className="mx-0.5 h-5 w-px shrink-0 bg-border" aria-hidden />
           )}
