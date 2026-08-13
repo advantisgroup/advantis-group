@@ -42,7 +42,9 @@ export function AdminRoster() {
               onClick={() => setDays(w)}
               className={cn(
                 "rounded-full border border-border px-3 py-1 text-xs font-semibold transition-colors",
-                days === w ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground",
+                days === w
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {t("adminWindowDays", { count: w })}
@@ -70,7 +72,12 @@ export function AdminRoster() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className={cn("font-mono text-xl font-extrabold", scoreColorClass(entry.avgScore))}>
+                    <div
+                      className={cn(
+                        "font-mono text-xl font-extrabold",
+                        scoreColorClass(entry.avgScore),
+                      )}
+                    >
                       {entry.avgScore}
                     </div>
                     <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -80,12 +87,16 @@ export function AdminRoster() {
                 </div>
                 <div className="flex gap-4 text-[13px] text-foreground/80">
                   <div>
-                    {t("adminAppointments")}: <strong className="text-primary">{entry.appointments}</strong>
+                    {t("adminAppointments")}:{" "}
+                    <strong className="text-primary">{entry.appointments}</strong>
                   </div>
                   <div>
                     {t("adminRate")}:{" "}
                     <strong>
-                      {entry.callCount ? Math.round((entry.appointments / entry.callCount) * 100) : 0}%
+                      {entry.callCount
+                        ? Math.round((entry.appointments / entry.callCount) * 100)
+                        : 0}
+                      %
                     </strong>
                   </div>
                   <div>
@@ -99,7 +110,11 @@ export function AdminRoster() {
                   <div
                     className={cn(
                       "h-full rounded-full",
-                      entry.avgScore >= 70 ? "bg-emerald-500" : entry.avgScore >= 45 ? "bg-amber-500" : "bg-red-500",
+                      entry.avgScore >= 70
+                        ? "bg-emerald-500"
+                        : entry.avgScore >= 45
+                          ? "bg-amber-500"
+                          : "bg-red-500",
                     )}
                     style={{ width: `${entry.avgScore}%` }}
                   />

@@ -27,7 +27,10 @@ export function ProgressView() {
   const [eodOpen, setEodOpen] = useState(false);
   const { calls: allCalls } = useSalesCoachCalls("all");
 
-  const scored = useMemo(() => (calls ?? []).filter((c) => c.scored && c.skillLevel != null), [calls]);
+  const scored = useMemo(
+    () => (calls ?? []).filter((c) => c.scored && c.skillLevel != null),
+    [calls],
+  );
   const sorted = useMemo(() => [...scored].sort((a, b) => a.startedAt - b.startedAt), [scored]);
 
   const avg = scored.length
@@ -81,9 +84,16 @@ export function ProgressView() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Card>
           <CardContent className="pt-5">
-            <div className={cn("font-mono text-2xl font-extrabold", scoreColorClass(avg))}>{avg}</div>
+            <div className={cn("font-mono text-2xl font-extrabold", scoreColorClass(avg))}>
+              {avg}
+            </div>
             <div className="text-xs text-muted-foreground">{t("statSkillScore")}</div>
-            <div className={cn("mt-1 text-xs font-semibold", trend >= 0 ? "text-emerald-600" : "text-red-600")}>
+            <div
+              className={cn(
+                "mt-1 text-xs font-semibold",
+                trend >= 0 ? "text-emerald-600" : "text-red-600",
+              )}
+            >
               {trend >= 0 ? "↑" : "↓"} {Math.abs(trend)}
             </div>
           </CardContent>
@@ -154,7 +164,9 @@ export function ProgressView() {
         </CardHeader>
         <CardContent className="p-0">
           {!calls?.length ? (
-            <div className="p-6 text-center text-sm italic text-muted-foreground">{t("noCallsYet")}</div>
+            <div className="p-6 text-center text-sm italic text-muted-foreground">
+              {t("noCallsYet")}
+            </div>
           ) : (
             [...calls].reverse().map((c) => (
               <div
@@ -172,7 +184,12 @@ export function ProgressView() {
                 <span className="w-12 shrink-0 font-mono text-xs text-muted-foreground">
                   {fmtDuration(c.durationSec)}
                 </span>
-                <span className={cn("w-10 shrink-0 font-mono text-sm font-bold", scoreColorClass(c.skillLevel))}>
+                <span
+                  className={cn(
+                    "w-10 shrink-0 font-mono text-sm font-bold",
+                    scoreColorClass(c.skillLevel),
+                  )}
+                >
                   {c.skillLevel ?? "-"}
                 </span>
                 <span
@@ -202,7 +219,11 @@ export function ProgressView() {
         </CardContent>
       </Card>
 
-      <ReportModal call={detailCall} open={!!detailCall} onOpenChange={(o) => !o && setDetailCall(null)} />
+      <ReportModal
+        call={detailCall}
+        open={!!detailCall}
+        onOpenChange={(o) => !o && setDetailCall(null)}
+      />
       <EodSummaryDialog open={eodOpen} onOpenChange={setEodOpen} calls={allCalls ?? []} />
     </div>
   );

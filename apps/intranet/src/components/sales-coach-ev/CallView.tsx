@@ -98,7 +98,11 @@ export function CallView() {
             )}
           />
           <span className="text-xs text-muted-foreground">
-            {isLive ? t("statusLive") : call.status === "stopped" ? t("statusStopped") : t("statusReady")}
+            {isLive
+              ? t("statusLive")
+              : call.status === "stopped"
+                ? t("statusStopped")
+                : t("statusReady")}
           </span>
         </div>
         <Button
@@ -111,7 +115,9 @@ export function CallView() {
         >
           {t("openReport")}
         </Button>
-        <div className="ml-auto font-mono text-xs text-muted-foreground">{fmtDuration(call.elapsedSec)}</div>
+        <div className="ml-auto font-mono text-xs text-muted-foreground">
+          {fmtDuration(call.elapsedSec)}
+        </div>
       </div>
 
       {call.error && (
@@ -122,7 +128,11 @@ export function CallView() {
 
       <div className="grid flex-1 grid-cols-1 overflow-hidden md:grid-cols-[1fr_280px_280px]">
         <div className="flex flex-col overflow-hidden border-b border-border md:border-b-0 md:border-r">
-          <TranscriptPanel transcript={call.transcript} interim={call.interim} onWordClick={handleWordClick} />
+          <TranscriptPanel
+            transcript={call.transcript}
+            interim={call.interim}
+            onWordClick={handleWordClick}
+          />
           <div className="flex items-center justify-between border-t border-border px-4 py-2 text-xs text-muted-foreground">
             <span>{t("wordCount", { count: call.wordCount })}</span>
             <span>{t("ramOnly")}</span>
@@ -139,7 +149,11 @@ export function CallView() {
         />
 
         <div className="flex flex-col overflow-hidden bg-card">
-          <Tabs value={assistTab} onValueChange={setAssistTab} className="flex flex-1 flex-col overflow-hidden">
+          <Tabs
+            value={assistTab}
+            onValueChange={setAssistTab}
+            className="flex flex-1 flex-col overflow-hidden"
+          >
             <TabsList className="m-1.5 grid grid-cols-3">
               <TabsTrigger value="script" className="text-xs">
                 {t("tabScript")}

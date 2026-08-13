@@ -13,7 +13,8 @@ export function ScriptTab({ activePath }: { activePath: number }) {
   const [openSections, setOpenSections] = useState<Set<string>>(
     () => new Set(SCRIPT_SECTIONS.map((s) => s.id)),
   );
-  const activeSectionId = activePath === 1 ? "a" : activePath === 2 ? "b" : activePath === 3 ? "c" : null;
+  const activeSectionId =
+    activePath === 1 ? "a" : activePath === 2 ? "b" : activePath === 3 ? "c" : null;
 
   const toggle = (id: string) => {
     setOpenSections((prev) => {
@@ -42,7 +43,12 @@ export function ScriptTab({ activePath }: { activePath: number }) {
               className="flex w-full items-center justify-between px-3 py-2 text-left text-[13px] font-semibold text-foreground/90 hover:bg-muted/40"
             >
               <span className={cn(isActivePath && "text-primary")}>{section.title}</span>
-              <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
+              <ChevronDown
+                className={cn(
+                  "size-3.5 text-muted-foreground transition-transform",
+                  open && "rotate-180",
+                )}
+              />
             </button>
             {open && (
               <div className="space-y-1.5 px-2.5 pb-2.5">

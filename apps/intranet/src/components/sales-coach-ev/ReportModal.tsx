@@ -3,7 +3,13 @@
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 import { SCORE_CATEGORIES, fmtDuration, outcomeLabel, scoreColorClass } from "./constants";
@@ -65,7 +71,11 @@ export function ReportModal({
                       <div
                         className={cn(
                           "h-full rounded",
-                          value >= 70 ? "bg-emerald-500" : value >= 45 ? "bg-amber-500" : "bg-red-500",
+                          value >= 70
+                            ? "bg-emerald-500"
+                            : value >= 45
+                              ? "bg-amber-500"
+                              : "bg-red-500",
                         )}
                         style={{ width: `${value}%` }}
                       />

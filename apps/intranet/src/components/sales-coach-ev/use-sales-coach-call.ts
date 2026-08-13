@@ -97,7 +97,9 @@ export function useSalesCoachCall() {
     lastAnalysisLenRef.current = t.length;
     setThinking(true);
     try {
-      const elapsed = callStartRef.current ? Math.floor((Date.now() - callStartRef.current) / 1000) : 0;
+      const elapsed = callStartRef.current
+        ? Math.floor((Date.now() - callStartRef.current) / 1000)
+        : 0;
       const { data, error: apiError } = await eden["sales-coach-ev"]["live-hint"].post({
         transcriptTail: t.slice(-1800),
         elapsedSec: elapsed,
@@ -108,7 +110,12 @@ export function useSalesCoachCall() {
           ? `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`
           : "00:00";
         setHints((prev) => [
-          ...data.hints.map((h) => ({ type: h.type as Hint["type"], tag: h.tag, text: h.text, time })),
+          ...data.hints.map((h) => ({
+            type: h.type as Hint["type"],
+            tag: h.tag,
+            text: h.text,
+            time,
+          })),
           ...prev,
         ]);
       }
@@ -130,7 +137,9 @@ export function useSalesCoachCall() {
 
   const saveAndAnalyzeCall = useCallback(async () => {
     const finalTranscript = transcriptRef.current;
-    const durationSec = callStartRef.current ? Math.floor((Date.now() - callStartRef.current) / 1000) : 0;
+    const durationSec = callStartRef.current
+      ? Math.floor((Date.now() - callStartRef.current) / 1000)
+      : 0;
     const callerSpeakPct =
       totalMsRef.current > 0 ? Math.round((callerMsRef.current / totalMsRef.current) * 100) : 0;
     const finalOutcome = outcome ?? "kein_ergebnis";
@@ -228,7 +237,8 @@ export function useSalesCoachCall() {
         callStartRef.current = callStartRef.current ?? Date.now();
         setStatus("live");
         timerRef.current = timerRef.current ?? setInterval(updateTimer, 1000);
-        analysisRef.current = analysisRef.current ?? setInterval(runLiveAnalysis, LIVE_ANALYSIS_INTERVAL_MS);
+        analysisRef.current =
+          analysisRef.current ?? setInterval(runLiveAnalysis, LIVE_ANALYSIS_INTERVAL_MS);
       };
       recognition.onresult = (e) => {
         let interimText = "";

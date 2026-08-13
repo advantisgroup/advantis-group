@@ -102,7 +102,9 @@ export function CoachPanel({
               HINT_STYLES[hint.type],
             )}
           >
-            <span className="float-right font-mono text-[10px] text-muted-foreground">{hint.time}</span>
+            <span className="float-right font-mono text-[10px] text-muted-foreground">
+              {hint.time}
+            </span>
             <div
               className={cn(
                 "mb-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide",

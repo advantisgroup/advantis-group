@@ -107,9 +107,18 @@ export const SCRIPT_SECTIONS: ScriptSection[] = [
     id: "a",
     title: "Weg A - Reine EV-Flotte",
     cards: [
-      { label: "Ladekosten", text: "Wie zufrieden sind Sie mit den Ladekosten und dem Aufwand dabei?" },
-      { label: "Standort", text: "Wo stehen die Fahrzeuge nachts - am Standort oder bei den Fahrern zuhause?" },
-      { label: "Gebaeude", text: "Wem gehoert das Gebaeude am Standort - Eigentuemer oder Mieter?" },
+      {
+        label: "Ladekosten",
+        text: "Wie zufrieden sind Sie mit den Ladekosten und dem Aufwand dabei?",
+      },
+      {
+        label: "Standort",
+        text: "Wo stehen die Fahrzeuge nachts - am Standort oder bei den Fahrern zuhause?",
+      },
+      {
+        label: "Gebaeude",
+        text: "Wem gehoert das Gebaeude am Standort - Eigentuemer oder Mieter?",
+      },
       {
         label: "Nutzen-Impuls",
         text: "Eigene Wallboxen senken die Ladekosten deutlich - und die Abrechnung laeuft automatisch auf einer Rechnung zusammen mit Ihren Karten.",
@@ -210,7 +219,8 @@ export const PATH_LABELS: Record<number, string> = {
 
 export function outcomeLabel(outcome: string): string {
   return (
-    { termin: "Termin", wiedervorlage: "Wiedervorlage", kein_ergebnis: "Kein Ergebnis" }[outcome] ?? outcome
+    { termin: "Termin", wiedervorlage: "Wiedervorlage", kein_ergebnis: "Kein Ergebnis" }[outcome] ??
+    outcome
   );
 }
 

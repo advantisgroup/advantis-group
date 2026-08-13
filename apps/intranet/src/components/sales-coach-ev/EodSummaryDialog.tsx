@@ -5,7 +5,13 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useEdenApi } from "@/lib/eden";
 import { fetchEodSummary } from "@/lib/sales-coach-ev-api";
@@ -55,9 +61,10 @@ export function EodSummaryDialog({
   const t = useTranslations("SalesCoachEv");
   const eden = useEdenApi();
   const handleError = useErrorHandler();
-  const [summary, setSummary] = useState<{ top3strengths: string[]; top3improvements: string[] } | null>(
-    null,
-  );
+  const [summary, setSummary] = useState<{
+    top3strengths: string[];
+    top3improvements: string[];
+  } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const scored = calls.filter((c) => c.scored && c.skillLevel != null);
@@ -98,7 +105,9 @@ export function EodSummaryDialog({
         {!ready ? (
           <div className="flex flex-col items-center gap-3 py-4 text-center">
             <div className="text-3xl">🎯</div>
-            <div className="font-semibold">{t("eodMilestoneRemaining", { count: MILESTONE - scored.length })}</div>
+            <div className="font-semibold">
+              {t("eodMilestoneRemaining", { count: MILESTONE - scored.length })}
+            </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-primary"
@@ -110,7 +119,9 @@ export function EodSummaryDialog({
             </div>
           </div>
         ) : loading ? (
-          <div className="py-8 text-center text-sm italic text-muted-foreground">{t("eodLoading")}</div>
+          <div className="py-8 text-center text-sm italic text-muted-foreground">
+            {t("eodLoading")}
+          </div>
         ) : (
           <div className="flex flex-col gap-5">
             <div className="flex flex-wrap items-center justify-center gap-6">
@@ -136,7 +147,10 @@ export function EodSummaryDialog({
                     {t("eodTop3Strengths")}
                   </div>
                   {summary.top3strengths.map((s, i) => (
-                    <div key={i} className="mb-1.5 flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-2.5 text-[13px]">
+                    <div
+                      key={i}
+                      className="mb-1.5 flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-2.5 text-[13px]"
+                    >
                       <span className="grid size-5 shrink-0 place-items-center rounded-full border border-emerald-500 bg-emerald-500/10 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                         {i + 1}
                       </span>
@@ -149,7 +163,10 @@ export function EodSummaryDialog({
                     {t("eodTop3Improvements")}
                   </div>
                   {summary.top3improvements.map((s, i) => (
-                    <div key={i} className="mb-1.5 flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-2.5 text-[13px]">
+                    <div
+                      key={i}
+                      className="mb-1.5 flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-2.5 text-[13px]"
+                    >
                       <span className="grid size-5 shrink-0 place-items-center rounded-full border border-amber-500 bg-amber-500/10 text-[11px] font-bold text-amber-600 dark:text-amber-400">
                         {i + 1}
                       </span>

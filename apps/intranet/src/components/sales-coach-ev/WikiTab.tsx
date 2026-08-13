@@ -10,12 +10,82 @@ import { Input } from "@/components/ui/input";
 import { type WikiArticle } from "./types";
 
 const STOPWORDS = new Set([
-  "und", "die", "der", "das", "ist", "sind", "haben", "hat", "mit", "fuer", "von", "auf", "zu", "in",
-  "an", "bei", "sie", "wir", "ich", "ihr", "nicht", "auch", "noch", "wie", "was", "wann", "wo", "wer",
-  "aber", "oder", "wenn", "dann", "schon", "mal", "denn", "ja", "nein", "bitte", "danke", "okay", "gut",
-  "sehr", "gerne", "klar", "genau", "eben", "doch", "halt", "nur", "bereits", "immer", "alle", "uns",
-  "ihm", "man", "mehr", "sich", "dem", "ein", "eine", "des", "eines", "einer", "einem", "als", "aus",
-  "nach", "vor", "ueber", "unter", "werden", "war", "wird", "werde", "hatten", "hatte",
+  "und",
+  "die",
+  "der",
+  "das",
+  "ist",
+  "sind",
+  "haben",
+  "hat",
+  "mit",
+  "fuer",
+  "von",
+  "auf",
+  "zu",
+  "in",
+  "an",
+  "bei",
+  "sie",
+  "wir",
+  "ich",
+  "ihr",
+  "nicht",
+  "auch",
+  "noch",
+  "wie",
+  "was",
+  "wann",
+  "wo",
+  "wer",
+  "aber",
+  "oder",
+  "wenn",
+  "dann",
+  "schon",
+  "mal",
+  "denn",
+  "ja",
+  "nein",
+  "bitte",
+  "danke",
+  "okay",
+  "gut",
+  "sehr",
+  "gerne",
+  "klar",
+  "genau",
+  "eben",
+  "doch",
+  "halt",
+  "nur",
+  "bereits",
+  "immer",
+  "alle",
+  "uns",
+  "ihm",
+  "man",
+  "mehr",
+  "sich",
+  "dem",
+  "ein",
+  "eine",
+  "des",
+  "eines",
+  "einer",
+  "einem",
+  "als",
+  "aus",
+  "nach",
+  "vor",
+  "ueber",
+  "unter",
+  "werden",
+  "war",
+  "wird",
+  "werde",
+  "hatten",
+  "hatte",
 ]);
 
 function matches(article: WikiArticle, needle: string): boolean {
@@ -37,7 +107,10 @@ function autoScanCandidates(articles: WikiArticle[], transcript: string): WikiAr
     if (STOPWORDS.has(w)) continue;
     freq.set(w, (freq.get(w) ?? 0) + 1);
   }
-  const ranked = [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([w]) => w).slice(0, 8);
+  const ranked = [...freq.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([w]) => w)
+    .slice(0, 8);
 
   const found: WikiArticle[] = [];
   for (const word of ranked) {
@@ -107,7 +180,10 @@ export function WikiTab({
           </div>
         ) : (
           results.map((a) => (
-            <div key={a._id} className="border-b border-border px-2.5 py-2 text-[13px] leading-relaxed">
+            <div
+              key={a._id}
+              className="border-b border-border px-2.5 py-2 text-[13px] leading-relaxed"
+            >
               <div className="flex items-center gap-1.5 font-semibold text-foreground/90">
                 {a.title}
                 {a.url && (

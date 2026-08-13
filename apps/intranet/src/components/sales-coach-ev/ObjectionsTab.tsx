@@ -38,7 +38,9 @@ export function ObjectionsTab({ detectedId }: { detectedId: string | null }) {
               )}
             >
               <div className="text-[13px] font-semibold text-foreground/90">{o.q}</div>
-              {open && <div className="mt-1.5 text-[13px] leading-relaxed text-foreground/80">{o.a}</div>}
+              {open && (
+                <div className="mt-1.5 text-[13px] leading-relaxed text-foreground/80">{o.a}</div>
+              )}
             </div>
           );
         })}

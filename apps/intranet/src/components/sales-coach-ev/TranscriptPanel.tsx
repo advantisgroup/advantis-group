@@ -47,7 +47,8 @@ export function TranscriptPanel({
               onClick={() => word.length >= 3 && onWordClick(word)}
               className={cn(
                 "cursor-pointer rounded-sm transition-colors hover:bg-primary/10",
-                isWeak && "rounded bg-amber-100 px-0.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+                isWeak &&
+                  "rounded bg-amber-100 px-0.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
               )}
             >
               {part}
