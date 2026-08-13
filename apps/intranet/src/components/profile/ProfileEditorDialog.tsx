@@ -127,7 +127,7 @@ export function ProfileEditorDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>
             {tc("cancel")}
           </Button>
-          <Button variant="violet" onClick={() => void save()} disabled={busy}>
+          <Button onClick={() => void save()} disabled={busy}>
             {busy && <Loader2 className="animate-spin" />}
             {tc("save")}
           </Button>

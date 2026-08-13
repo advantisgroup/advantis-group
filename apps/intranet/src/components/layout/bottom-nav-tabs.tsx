@@ -1,14 +1,15 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 
 import type { LucideIcon } from "lucide-react";
 
 export interface BottomNavTab {
   value: string;
-  href: string;
+  href?: string;
   label: string;
   icon: LucideIcon;
+  onClick?: () => void;
 }
 
 interface BottomNavTabsState {
@@ -33,12 +34,16 @@ export function BottomNavTabsProvider({ children }: { children: ReactNode }) {
     tabs: null,
     activeValue: null,
   });
+  const setTabs = useCallback(
+    (tabs: BottomNavTab[] | null, activeValue: string | null) => setState({ tabs, activeValue }),
+    [],
+  );
 
   return (
     <BottomNavTabsContext.Provider
       value={{
         ...state,
-        setTabs: (tabs, activeValue) => setState({ tabs, activeValue }),
+        setTabs,
       }}
     >
       {children}

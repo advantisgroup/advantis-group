@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { ProviderBadge } from "@/components/branding/ProviderMark";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
+import { useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
 import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import { AccountProfileDialog } from "@/components/profile/AccountProfileDialog";
@@ -49,6 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UpdatesEmailConsent } from "@/components/updates/UpdatesEmailConsent";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { initials, roleLabel } from "@/lib/format";
 import { profileColorStyle, profileGradientClass } from "@/lib/profile-gradient";
 import { START_PAGES } from "@/lib/startPages";
@@ -71,17 +73,50 @@ function SettingsNavigation({
   onSectionChange: (section: SettingsSectionId) => void;
 }) {
   const t = useTranslations("Settings");
-  const sections: {
-    id: SettingsSectionId;
-    icon: LucideIcon;
-    title: string;
-    hint: string;
-  }[] = [
-    { id: "account", icon: UserRound, title: t("account"), hint: t("accountHint") },
-    { id: "workspace", icon: SlidersHorizontal, title: t("workspace"), hint: t("workspaceHint") },
-    { id: "notifications", icon: Bell, title: t("notifications"), hint: t("notificationsHint") },
-    { id: "help", icon: CircleHelp, title: t("help"), hint: t("helpHint") },
-  ];
+  const isMobile = useIsMobile();
+  const { setTabs } = useBottomNavTabs();
+  const sections = useMemo<
+    {
+      id: SettingsSectionId;
+      icon: LucideIcon;
+      title: string;
+      hint: string;
+    }[]
+  >(
+    () => [
+      { id: "account", icon: UserRound, title: t("account"), hint: t("accountHint") },
+      {
+        id: "workspace",
+        icon: SlidersHorizontal,
+        title: t("workspace"),
+        hint: t("workspaceHint"),
+      },
+      {
+        id: "notifications",
+        icon: Bell,
+        title: t("notifications"),
+        hint: t("notificationsHint"),
+      },
+      { id: "help", icon: CircleHelp, title: t("help"), hint: t("helpHint") },
+    ],
+    [t],
+  );
+
+  useEffect(() => {
+    if (!isMobile) return;
+
+    setTabs(
+      sections.map(({ id, icon, title }) => ({
+        value: id,
+        label: title,
+        icon,
+        onClick: () => onSectionChange(id),
+      })),
+      activeSection,
+    );
+
+    return () => setTabs(null, null);
+  }, [activeSection, isMobile, onSectionChange, sections, setTabs]);
 
   return (
     <>
@@ -117,22 +152,6 @@ function SettingsNavigation({
           </CardContent>
         </Card>
       </nav>
-
-      <Select
-        value={activeSection}
-        onValueChange={(value) => onSectionChange(value as SettingsSectionId)}
-      >
-        <SelectTrigger className="h-11 md:hidden" aria-label={t("title")}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {sections.map(({ id, title }) => (
-            <SelectItem key={id} value={id}>
-              {title}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
     </>
   );
 }
@@ -379,7 +398,7 @@ export default function SettingsPage() {
   }, []);
 
   return (
-    <div className="mx-auto grid max-w-6xl items-start gap-6 md:grid-cols-[13rem_minmax(0,1fr)]">
+    <div className="mx-auto grid max-w-6xl items-start gap-6 md:grid-cols-[16rem_minmax(0,1fr)]">
       <div className="md:col-span-2">
         <PageHeaderBar title={t("title")} tourCheckpoint="settings" />
       </div>
@@ -407,36 +426,40 @@ export default function SettingsPage() {
               <Pencil className="size-4" />
             </Button>
           </div>
-          <CardContent className="relative -mt-10 space-y-4 pb-5">
-            <Avatar className="size-20 ring-4 ring-card">
-              {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-              <AvatarFallback className="bg-primary/10 text-xl font-semibold text-primary">
-                {initials(user.name, user.email)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <h2 className="truncate font-display text-xl font-bold tracking-tight">
-                {user.name}
-              </h2>
-              <p className="truncate text-sm text-muted-foreground">{user.email}</p>
-              <Badge variant="muted" className="mt-1.5">
-                {roleLabel(user, tRoles)}
-              </Badge>
+          <CardContent className="relative -mt-10 pb-5">
+            <div className="grid gap-5 md:grid-cols-[minmax(13rem,0.8fr)_minmax(0,1.2fr)] md:items-end">
+              <div className="min-w-0">
+                <Avatar className="size-20 ring-4 ring-card">
+                  {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                  <AvatarFallback className="bg-primary/10 text-xl font-semibold text-primary">
+                    {initials(user.name, user.email)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="mt-3 min-w-0">
+                  <h2 className="truncate font-display text-xl font-bold tracking-tight">
+                    {user.name}
+                  </h2>
+                  <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+                  <Badge variant="muted" className="mt-1.5">
+                    {roleLabel(user, tRoles)}
+                  </Badge>
+                </div>
+              </div>
+              <dl className="grid grid-cols-1 gap-3 rounded-xl border border-border/60 bg-muted/25 p-4 text-sm sm:grid-cols-2 md:mb-0">
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground">{t("jobTitle")}</dt>
+                  <dd className="mt-0.5 font-medium">{user.jobTitle || "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground">{t("department")}</dt>
+                  <dd className="mt-0.5 font-medium">{user.department || "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground">{t("phone")}</dt>
+                  <dd className="mt-0.5 font-medium">{user.phone || "—"}</dd>
+                </div>
+              </dl>
             </div>
-            <dl className="grid grid-cols-1 gap-3 border-t border-border/60 pt-4 text-sm sm:grid-cols-2">
-              <div>
-                <dt className="text-xs font-medium text-muted-foreground">{t("jobTitle")}</dt>
-                <dd className="mt-0.5 font-medium">{user.jobTitle || "—"}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-muted-foreground">{t("department")}</dt>
-                <dd className="mt-0.5 font-medium">{user.department || "—"}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-muted-foreground">{t("phone")}</dt>
-                <dd className="mt-0.5 font-medium">{user.phone || "—"}</dd>
-              </div>
-            </dl>
             <div className="flex flex-wrap gap-2 border-t border-border/60 pt-4">
               <Button
                 variant="outline"
@@ -447,7 +470,7 @@ export default function SettingsPage() {
                 <Pencil className="size-3.5" />
                 {t("editProfile")}
               </Button>
-              <Button variant="prism" size="sm" onClick={openAccount}>
+              <Button variant="outline" size="sm" onClick={openAccount}>
                 <ShieldCheck className="size-3.5" />
                 {t("manageAccount")}
               </Button>

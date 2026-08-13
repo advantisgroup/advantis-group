@@ -52,16 +52,12 @@ export function BottomNav() {
             {tabs?.map((tab) => {
               const Icon = tab.icon;
               const active = tab.value === activeValue;
-              return (
-                <Link
-                  key={tab.value}
-                  href={tab.href}
-                  aria-label={tab.label}
-                  className={cn(
-                    "relative flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
-                    active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
+              const className = cn(
+                "relative flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
+                active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+              );
+              const content = (
+                <>
                   {active && (
                     <motion.span
                       layoutId="bottom-nav-active-tab"
@@ -74,7 +70,33 @@ export function BottomNav() {
                     />
                   )}
                   <Icon className="relative z-10 size-4" />
-                </Link>
+                </>
+              );
+
+              if (tab.href) {
+                return (
+                  <Link
+                    key={tab.value}
+                    href={tab.href}
+                    aria-label={tab.label}
+                    className={className}
+                  >
+                    {content}
+                  </Link>
+                );
+              }
+
+              return (
+                <button
+                  key={tab.value}
+                  type="button"
+                  aria-label={tab.label}
+                  aria-pressed={active}
+                  onClick={tab.onClick}
+                  className={className}
+                >
+                  {content}
+                </button>
               );
             })}
             <span className="h-5 w-px shrink-0 bg-border/70" aria-hidden />

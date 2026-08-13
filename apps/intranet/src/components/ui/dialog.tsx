@@ -75,12 +75,16 @@ const DialogOverlay = React.forwardRef<
 });
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+type DialogContentProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+  overlayClassName?: string;
+};
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  DialogContentProps
+>(({ className, children, overlayClassName, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay />
+    <DialogOverlay className={overlayClassName} />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
@@ -354,7 +358,7 @@ function ConfirmDialogPanel({
           {cancelLabel}
         </Button>
         <Button
-          variant={destructive ? "destructive" : "violet"}
+          variant={destructive ? "destructive" : "default"}
           className="sm:min-w-32"
           onClick={onConfirm}
           disabled={confirmBlocked}
@@ -403,8 +407,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       {isMobile ? (
         <Drawer.Root open={open} onOpenChange={(value) => !value && settle(false)}>
           <Drawer.Portal>
-            <Drawer.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-            <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-2xl border-t border-border/60 bg-card shadow-2xl shadow-black/40 outline-none">
+            <Drawer.Overlay className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm" />
+            <Drawer.Content className="fixed inset-x-0 bottom-0 z-[90] max-h-[90dvh] overflow-y-auto rounded-t-2xl border-t border-border/60 bg-card shadow-2xl shadow-black/40 outline-none">
               <div className="flex items-center justify-center pb-1 pt-3">
                 <span className="h-1.5 w-10 rounded-full bg-border" />
               </div>
@@ -441,7 +445,10 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         </Drawer.Root>
       ) : (
         <Dialog open={open} onOpenChange={(value) => !value && settle(false)}>
-          <DialogContent className="max-w-md gap-0 rounded-2xl border-border/60 bg-card p-0 shadow-2xl shadow-black/35">
+          <DialogContent
+            overlayClassName="z-[80]"
+            className="z-[90] max-w-md gap-0 rounded-2xl border-border/60 bg-card p-0 shadow-2xl shadow-black/35"
+          >
             <ConfirmDialogPanel
               mobile={false}
               title={<DialogTitle className="leading-snug">{opts?.title}</DialogTitle>}

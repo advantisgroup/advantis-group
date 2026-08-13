@@ -51,7 +51,7 @@ import { addDaysIso, isoToday } from "@/lib/absences";
 import { useAbsencesCalendar } from "@/lib/absences-api";
 import { useNow } from "@/lib/activity/useNow";
 import { formatIsoDate, initials, roleLabel } from "@/lib/format";
-import { profileColorStyle, profileGradientClass } from "@/lib/profile-gradient";
+import { profileGradientClass, profileHeaderStyle } from "@/lib/profile-gradient";
 import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
@@ -667,11 +667,13 @@ function RoleBadge({
   isAdmin,
   tRoles,
   onSave,
+  className,
 }: {
   member: { role: Role; roleLabel?: string | null };
   isAdmin: boolean;
   tRoles: (role: string) => string;
   onSave: (value: string) => void;
+  className?: string;
 }) {
   const t = useTranslations("Admin");
   const tc = useTranslations("Common");
@@ -679,7 +681,11 @@ function RoleBadge({
   const [value, setValue] = useState(member.roleLabel ?? "");
 
   if (!isAdmin) {
-    return <Badge variant="muted">{roleLabel(member, tRoles)}</Badge>;
+    return (
+      <Badge variant="muted" className={className}>
+        {roleLabel(member, tRoles)}
+      </Badge>
+    );
   }
 
   return (
@@ -692,7 +698,7 @@ function RoleBadge({
     >
       <PopoverTrigger asChild>
         <button type="button">
-          <Badge variant="muted" className="cursor-pointer">
+          <Badge variant="muted" className={cn("cursor-pointer", className)}>
             {roleLabel(member, tRoles)}
           </Badge>
         </button>
@@ -746,6 +752,8 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
   const now = useNow();
 
   const isSelf = user._id === me._id;
+  const headerBadgeClass =
+    "border-[color:var(--profile-badge-border)] bg-[color:var(--profile-badge-surface)] text-[color:var(--profile-badge-foreground)] shadow-sm";
 
   async function message() {
     try {
@@ -781,7 +789,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
           "flex items-start gap-3 border-b border-white/30 p-5 text-white",
           profileGradientClass(user.profileGradient),
         )}
-        style={profileColorStyle(user.profileColor)}
+        style={profileHeaderStyle(user.profileGradient, user.profileColor)}
       >
         <div className="relative shrink-0">
           <Avatar className="size-16">
@@ -791,19 +799,35 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
           {user.lastActiveAt && now - user.lastActiveAt < ONLINE_WINDOW_MS && (
             <span
               title={t("online")}
-              className="absolute bottom-0.5 right-0.5 size-3.5 rounded-full border-2 border-white bg-success"
+              className="absolute bottom-0.5 right-0.5 size-3.5 rounded-full border-2 border-[color:var(--profile-badge-surface)] bg-success"
             />
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-lg font-semibold leading-tight">{user.name}</p>
-          {user.jobTitle && <p className="truncate text-sm text-white/80">{user.jobTitle}</p>}
+          <p className="truncate text-lg font-semibold leading-tight text-[color:var(--profile-foreground)]">
+            {user.name}
+          </p>
+          {user.jobTitle && (
+            <p className="truncate text-sm text-[color:var(--profile-foreground)] opacity-80">
+              {user.jobTitle}
+            </p>
+          )}
           <div className="mt-1.5 flex flex-wrap gap-1">
-            <RoleBadge member={user} isAdmin={isAdmin} tRoles={tRoles} onSave={saveRoleLabel} />
+            <RoleBadge
+              member={user}
+              isAdmin={isAdmin}
+              tRoles={tRoles}
+              onSave={saveRoleLabel}
+              className={headerBadgeClass}
+            />
             {user.status === "suspended" && (
               <Badge variant="destructive">{tAdmin("suspended")}</Badge>
             )}
-            {user.external && <Badge variant="warning">{tAdmin("external")}</Badge>}
+            {user.external && (
+              <Badge variant="warning" className={headerBadgeClass}>
+                {tAdmin("external")}
+              </Badge>
+            )}
           </div>
         </div>
       </div>
@@ -811,7 +835,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
       {/* Scrollable body */}
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
         {!isSelf && (
-          <Button variant="sky" className="w-full" onClick={() => void message()}>
+          <Button className="w-full" onClick={() => void message()}>
             <MessageSquare /> {t("message")}
           </Button>
         )}
