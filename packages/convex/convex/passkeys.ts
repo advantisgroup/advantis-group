@@ -26,6 +26,11 @@ const passkeyValidator = v.object({
   lastUsedAt: v.union(v.number(), v.null()),
 });
 
+const acceptedCredentialsSignalValidator = v.object({
+  userId: v.string(),
+  allAcceptedCredentialIds: v.array(v.string()),
+});
+
 function assertServerKey(serverKey: string): void {
   const expected = process.env.CONVEX_SERVER_KEY;
   if (!expected || serverKey !== expected) {
@@ -140,12 +145,15 @@ export const apiAuthenticationContext = query({
     v.null(),
     v.object({
       challenge: v.string(),
-      credential: v.object({
-        id: v.string(),
-        publicKey: v.string(),
-        counter: v.number(),
-        transports: v.optional(v.array(transportValidator)),
-      }),
+      credential: v.union(
+        v.object({
+          id: v.string(),
+          publicKey: v.string(),
+          counter: v.number(),
+          transports: v.optional(v.array(transportValidator)),
+        }),
+        v.null(),
+      ),
     }),
   ),
   handler: async (ctx, args) => {
@@ -161,7 +169,7 @@ export const apiAuthenticationContext = query({
       .query("passkeys")
       .withIndex("by_credentialId", (q) => q.eq("credentialId", args.credentialId))
       .unique();
-    if (!credential) return null;
+    if (!credential) return { challenge: challenge.challenge, credential: null };
     return {
       challenge: challenge.challenge,
       credential: {
@@ -283,7 +291,10 @@ export const apiCompleteAuthentication = mutation({
     deviceType: v.union(v.literal("singleDevice"), v.literal("multiDevice")),
     backedUp: v.boolean(),
   },
-  returns: v.object({ clerkUserId: v.string() }),
+  returns: v.object({
+    clerkUserId: v.string(),
+    signal: v.optional(acceptedCredentialsSignalValidator),
+  }),
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
     const challenge = await ctx.db
@@ -321,7 +332,21 @@ export const apiCompleteAuthentication = mutation({
       event: "used",
       at: now,
     });
-    return { clerkUserId: user.clerkUserId };
+    const acceptedPasskeys = await ctx.db
+      .query("passkeys")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .take(MAX_PASSKEYS);
+    return {
+      clerkUserId: user.clerkUserId,
+      ...(user.webauthnUserId
+        ? {
+            signal: {
+              userId: user.webauthnUserId,
+              allAcceptedCredentialIds: acceptedPasskeys.map((passkey) => passkey.credentialId),
+            },
+          }
+        : {}),
+    };
   },
 });
 
@@ -368,7 +393,7 @@ export const apiRenameForUser = mutation({
 
 export const apiRemoveForUser = mutation({
   args: { serverKey: v.string(), clerkUserId: v.string(), passkeyId: v.id("passkeys") },
-  returns: v.object({ ok: v.boolean() }),
+  returns: v.object({ ok: v.boolean(), signal: v.optional(acceptedCredentialsSignalValidator) }),
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
@@ -379,7 +404,23 @@ export const apiRemoveForUser = mutation({
       event: "removed",
       at: Date.now(),
     });
-    return { ok: true };
+    const acceptedPasskeys = await ctx.db
+      .query("passkeys")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .take(MAX_PASSKEYS);
+    return {
+      ok: true,
+      ...(user.webauthnUserId
+        ? {
+            signal: {
+              userId: user.webauthnUserId,
+              allAcceptedCredentialIds: acceptedPasskeys.map(
+                (acceptedPasskey) => acceptedPasskey.credentialId,
+              ),
+            },
+          }
+        : {}),
+    };
   },
 });
 

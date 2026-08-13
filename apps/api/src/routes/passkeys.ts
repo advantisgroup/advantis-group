@@ -60,12 +60,7 @@ export const passkeysRoute = new Elysia()
     async ({ request, body }) => {
       requirePasskeyOrigin(request);
       await rateLimit("passkey-authentication", requesterKey(request), 20, "10 m");
-      return {
-        ticket: await finishAuthentication(
-          body.flowId,
-          body.response as AuthenticationResponseJSON,
-        ),
-      };
+      return await finishAuthentication(body.flowId, body.response as AuthenticationResponseJSON);
     },
     { body: t.Object({ flowId: t.String(), response: t.Any() }) },
   )
@@ -81,6 +76,5 @@ export const passkeysRoute = new Elysia()
   .delete("/passkeys/:id", async ({ request, params }) => {
     requirePasskeyOrigin(request);
     const { clerkUserId } = await requireAuth(request);
-    await removePasskey(clerkUserId, params.id);
-    return { ok: true };
+    return { ok: true, signal: await removePasskey(clerkUserId, params.id) };
   });

@@ -12,14 +12,34 @@ import { toast } from "sonner";
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { signalAcceptedPasskeys, signalUnknownPasskey } from "./passkey-signal";
 
-type OptionsResponse = { options: Parameters<typeof startAuthentication>[0]["optionsJSON"] };
+type OptionsResponse = {
+  options: Parameters<typeof startAuthentication>[0]["optionsJSON"];
+  flowId: string;
+  rpId: string;
+};
+
+type AcceptedCredentialsSignal = {
+  rpId: string;
+  userId: string;
+  allAcceptedCredentialIds: string[];
+};
+
+class RequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
 
 async function jsonOrThrow(response: Response) {
   const body = (await response.json()) as { message?: string };
-  if (!response.ok) throw new Error(body.message ?? "Request failed");
+  if (!response.ok) throw new RequestError(body.message ?? "Request failed", response.status);
   return body;
 }
 
@@ -33,22 +53,41 @@ export function PasskeySignIn() {
     if (!signIn || !setActive) return;
     setBusy(true);
     try {
-      const { options, flowId } = (await jsonOrThrow(
+      const { options, flowId, rpId } = (await jsonOrThrow(
         await fetch(`${apiUrl}/passkeys/authentication/options`, { method: "POST" }),
-      )) as OptionsResponse & { flowId: string };
+      )) as OptionsResponse;
       const credential = await startAuthentication({ optionsJSON: options });
-      const { ticket } = (await jsonOrThrow(
-        await fetch(`${apiUrl}/passkeys/authentication/verify`, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ flowId, response: credential }),
-        }),
-      )) as { ticket: string };
-      const completed = await signIn.create({ strategy: "ticket", ticket });
+      let authentication: { ticket: string; signal?: AcceptedCredentialsSignal };
+      try {
+        authentication = (await jsonOrThrow(
+          await fetch(`${apiUrl}/passkeys/authentication/verify`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ flowId, response: credential }),
+          }),
+        )) as { ticket: string; signal?: AcceptedCredentialsSignal };
+      } catch (error) {
+        if (error instanceof RequestError && error.status === 404) {
+          try {
+            await signalUnknownPasskey(rpId, credential.id);
+          } catch (signalError) {
+            console.warn("[passkeys] unknown credential signal failed", signalError);
+          }
+        }
+        throw error;
+      }
+      const completed = await signIn.create({ strategy: "ticket", ticket: authentication.ticket });
       if (completed.status !== "complete" || !completed.createdSessionId) {
         throw new Error("Could not complete sign-in");
       }
       await setActive({ session: completed.createdSessionId });
+      if (authentication.signal) {
+        try {
+          await signalAcceptedPasskeys(authentication.signal);
+        } catch (error) {
+          console.warn("[passkeys] credential sync signal failed", error);
+        }
+      }
       router.replace("/");
     } catch (error) {
       console.error("[passkeys] sign-in failed", error);

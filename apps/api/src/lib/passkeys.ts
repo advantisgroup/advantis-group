@@ -29,6 +29,12 @@ export type Passkey = {
   lastUsedAt: number | null;
 };
 
+type PasskeySignal = {
+  rpId: string;
+  userId: string;
+  allAcceptedCredentialIds: string[];
+};
+
 function config() {
   const rpID = process.env.WEBAUTHN_RP_ID;
   const configuredOrigins = process.env.WEBAUTHN_ALLOWED_ORIGINS;
@@ -142,7 +148,11 @@ export async function finishRegistration(
 export async function beginAuthentication() {
   const { rpID } = config();
   const options = await generateAuthenticationOptions({ rpID, userVerification: "required" });
-  return { options, flowId: await createChallenge("authentication", options.challenge) };
+  return {
+    options,
+    rpId: rpID,
+    flowId: await createChallenge("authentication", options.challenge),
+  };
 }
 
 export async function finishAuthentication(flowId: string, response: AuthenticationResponseJSON) {
@@ -152,6 +162,7 @@ export async function finishAuthentication(flowId: string, response: Authenticat
     credentialId: response.id,
   });
   if (!context) throw Errors.badRequest("This passkey request has expired");
+  if (!context.credential) throw Errors.notFound("Passkey not found");
   const { origins, rpID } = config();
   const verification = await verifyAuthenticationResponse({
     response,
@@ -179,7 +190,17 @@ export async function finishAuthentication(flowId: string, response: Authenticat
     userId: result.clerkUserId,
     expiresInSeconds: 60,
   });
-  return signInToken.token;
+  return {
+    ticket: signInToken.token,
+    ...(result.signal
+      ? {
+          signal: {
+            rpId: rpID,
+            ...result.signal,
+          } satisfies PasskeySignal,
+        }
+      : {}),
+  };
 }
 
 export async function listPasskeys(clerkUserId: string): Promise<Passkey[]> {
@@ -201,12 +222,14 @@ export async function renamePasskey(clerkUserId: string, passkeyId: string, name
 }
 
 export async function removePasskey(clerkUserId: string, passkeyId: string) {
-  await getConvex().mutation(api.passkeys.apiRemoveForUser, {
+  const result = await getConvex().mutation(api.passkeys.apiRemoveForUser, {
     serverKey: serverKey(),
     clerkUserId,
     passkeyId: passkeyId as Id<"passkeys">,
   });
   await syncClerkMetadata(clerkUserId);
+  const { rpID } = config();
+  return result.signal ? { rpId: rpID, ...result.signal } : undefined;
 }
 
 async function syncClerkMetadata(clerkUserId: string): Promise<void> {

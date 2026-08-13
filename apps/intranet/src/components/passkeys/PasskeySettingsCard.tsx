@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signalAcceptedPasskeys } from "./passkey-signal";
 
 type Passkey = {
   _id: string;
@@ -31,6 +32,12 @@ type Passkey = {
 };
 
 type RegistrationOptions = Parameters<typeof startRegistration>[0]["optionsJSON"];
+
+type AcceptedCredentialsSignal = {
+  rpId: string;
+  userId: string;
+  allAcceptedCredentialIds: string[];
+};
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
 
@@ -140,7 +147,16 @@ export function PasskeySettingsCard() {
     if (!selected) return;
     setBusy(true);
     try {
-      await jsonOrThrow(await apiRequest(`/passkeys/${selected._id}`, { method: "DELETE" }));
+      const { signal } = (await jsonOrThrow(
+        await apiRequest(`/passkeys/${selected._id}`, { method: "DELETE" }),
+      )) as { signal?: AcceptedCredentialsSignal };
+      if (signal) {
+        try {
+          await signalAcceptedPasskeys(signal);
+        } catch (error) {
+          console.warn("[passkeys] credential cleanup signal failed", error);
+        }
+      }
       await load();
       setDialog(null);
       toast.success(t("passkeyRemoved"));
