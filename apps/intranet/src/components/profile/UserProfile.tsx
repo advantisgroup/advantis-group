@@ -8,14 +8,18 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { type Role } from "@advantis/types";
 import { useAction, useMutation, useQuery } from "convex/react";
+import { type FunctionReturnType } from "convex/server";
 import {
   Building2,
+  Cake,
   CalendarClock,
+  CalendarDays,
   CheckCircle2,
   Circle,
   Copy,
   Hash,
   Lock,
+  LogOut,
   Mail,
   MessageSquare,
   Phone,
@@ -47,6 +51,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -54,7 +59,7 @@ import { addDaysIso, isoToday } from "@/lib/absences";
 import { useAbsencesCalendar } from "@/lib/absences-api";
 import { useNow } from "@/lib/activity/useNow";
 import { formatIsoDate, initials, roleLabel } from "@/lib/format";
-import { profileGradientClass, profileHeaderStyle } from "@/lib/profile-gradient";
+import { profileColorStyle, profileGradientClass } from "@/lib/profile-gradient";
 import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
@@ -82,6 +87,32 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
         {label}
       </p>
       {children}
+    </div>
+  );
+}
+
+/**
+ * The single body card every profile detail lives in — one inset panel with
+ * hairline-separated `Section`s, rather than each section floating on the
+ * dialog background. Padding is applied to the direct children so the
+ * sections themselves stay layout-agnostic (several of them render `null`
+ * when empty, which the divider handles for free).
+ */
+function InfoPanel({ children }: { children: ReactNode }) {
+  return (
+    <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-panel-2/50 [&>*]:px-4 [&>*]:py-3.5">
+      {children}
+    </div>
+  );
+}
+
+/** One `label: value` line in the profile's details section. */
+function DetailRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-2.5 text-sm">
+      <span className="text-muted-foreground">{icon}</span>
+      <span className="min-w-0 flex-1 truncate text-muted-foreground">{label}</span>
+      <span className="shrink-0 font-medium tabular-nums">{value}</span>
     </div>
   );
 }
@@ -324,16 +355,26 @@ function UpcomingAbsences({ userId }: { userId: Id<"users"> }) {
   );
 }
 
-function StarterChecklist({ user }: { user: ProfileUser }) {
-  const t = useTranslations("Profile");
-  const steps = [
+type StarterStep = { key: string; complete: boolean };
+
+/**
+ * Which "is this account actually set up" details are still missing. Lives
+ * outside the checklist component because the management rail needs the
+ * outstanding count to decide whether the setup tab is worth showing at all.
+ */
+function starterSteps(user: ProfileUser): StarterStep[] {
+  return [
     { key: "photo", complete: Boolean(user.avatar) },
     { key: "contact", complete: Boolean(user.jobTitle && user.phone) },
     { key: "department", complete: Boolean(user.department) },
     { key: "team", complete: user.teams.length > 0 },
     { key: "clockodo", complete: user.clockodoUserId !== null },
     { key: "hireDate", complete: Boolean(user.hireDate) },
-  ] as const;
+  ];
+}
+
+function StarterChecklist({ steps }: { steps: StarterStep[] }) {
+  const t = useTranslations("Profile");
   const completed = steps.filter((step) => step.complete).length;
 
   return (
@@ -362,9 +403,17 @@ function StarterChecklist({ user }: { user: ProfileUser }) {
   );
 }
 
-function OffboardingChecklist({ user }: { user: ProfileUser }) {
+type OffboardingRecord = FunctionReturnType<typeof api.offboarding.get>;
+
+function OffboardingChecklist({
+  user,
+  checklist,
+}: {
+  user: ProfileUser;
+  /** `undefined` while the query is still loading, `null` when none exists. */
+  checklist: OffboardingRecord | undefined;
+}) {
   const t = useTranslations("Profile");
-  const checklist = useQuery(api.offboarding.get, { userId: user._id });
   const setLastWorkingDay = useMutation(api.offboarding.setLastWorkingDay);
   const setStep = useMutation(api.offboarding.setStep);
   const handleError = useErrorHandler();
@@ -546,8 +595,10 @@ function AdminControls({
   const hasNamedPermissions =
     user.gfAccess || user.applicantAccessDelegate || !user.uploadRequestsEnabled;
 
+  // No section heading: this is the management rail's default tab, so the tab
+  // label is already the heading.
   return (
-    <Section label={t("title")}>
+    <div>
       {(hasCustomRoles || hasNamedPermissions) && (
         <div className="mb-3 flex flex-wrap items-center gap-1.5">
           <span className="text-sm text-muted-foreground">{t("permissions")}</span>
@@ -690,7 +741,100 @@ function AdminControls({
         onOpenChange={setStepUpOpen}
         onVerified={doToggleApplicantDelegate}
       />
-    </Section>
+    </div>
+  );
+}
+
+/**
+ * The manager-only right-hand rail. Administration is the landing tab — the
+ * two checklists used to sit stacked above it and pushed the controls that
+ * actually get used off-screen. The setup tab only appears while something is
+ * still missing, and offboarding only once it has been started (or explicitly
+ * opened from the admin tab), so neither is in the way on a normal profile.
+ */
+function ManagementRail({
+  user,
+  isAdmin,
+  onClose,
+}: {
+  user: ProfileUser;
+  isAdmin: boolean;
+  onClose: () => void;
+}) {
+  const t = useTranslations("Profile");
+  const checklist = useQuery(api.offboarding.get, { userId: user._id });
+  const [offboardingOpened, setOffboardingOpened] = useState(false);
+  const [tab, setTab] = useState("manage");
+
+  const steps = starterSteps(user);
+  const outstanding = steps.filter((step) => !step.complete).length;
+  const showSetup = outstanding > 0;
+  const showOffboarding =
+    offboardingOpened ||
+    Boolean(checklist?.lastWorkingDay) ||
+    (checklist?.completedSteps.length ?? 0) > 0;
+
+  // A tab can disappear underneath the selection — completing the last setup
+  // detail while the setup tab is open, say — so fall back to the one tab
+  // that's always there rather than rendering an empty panel.
+  const active =
+    (tab === "setup" && !showSetup) || (tab === "offboarding" && !showOffboarding) ? "manage" : tab;
+
+  return (
+    <Tabs value={active} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col">
+      {/* Text-only triggers: three icon+label pairs don't fit the rail's width
+          at German label lengths, and the bar would scroll sideways. The right
+          padding keeps the last one clear of the dialog's close button. */}
+      <div className="border-b border-border/70 py-2.5 pl-3 pr-12">
+        <TabsList className="h-9 w-full justify-start">
+          <TabsTrigger value="manage" className="px-3">
+            {t("manageTab")}
+          </TabsTrigger>
+          {showSetup && (
+            <TabsTrigger value="setup" className="gap-1.5 px-3">
+              {t("setupTab")}
+              <span className="rounded-full bg-warning/15 px-1.5 text-[11px] font-semibold tabular-nums text-warning">
+                {outstanding}
+              </span>
+            </TabsTrigger>
+          )}
+          {showOffboarding && (
+            <TabsTrigger value="offboarding" className="px-3">
+              {t("offboardingTab")}
+            </TabsTrigger>
+          )}
+        </TabsList>
+      </div>
+      <div className="p-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+        <TabsContent value="manage" className="mt-0 space-y-4">
+          <AdminControls user={user} isAdmin={isAdmin} onClose={onClose} />
+          {!showOffboarding && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-muted-foreground"
+              onClick={() => {
+                setOffboardingOpened(true);
+                setTab("offboarding");
+              }}
+            >
+              <LogOut />
+              {t("startOffboarding")}
+            </Button>
+          )}
+        </TabsContent>
+        {showSetup && (
+          <TabsContent value="setup" className="mt-0">
+            <StarterChecklist steps={steps} />
+          </TabsContent>
+        )}
+        {showOffboarding && (
+          <TabsContent value="offboarding" className="mt-0">
+            <OffboardingChecklist user={user} checklist={checklist} />
+          </TabsContent>
+        )}
+      </div>
+    </Tabs>
   );
 }
 
@@ -839,6 +983,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
   const tRoles = useTranslations("Roles");
   const tAdmin = useTranslations("Admin");
   const tTeams = useTranslations("Teams");
+  const locale = useLocale();
   const router = useRouter();
   const me = useCurrentUser();
   const isAdmin = useIsAdmin();
@@ -849,8 +994,6 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
   const now = useNow();
 
   const isSelf = user._id === me._id;
-  const headerBadgeClass =
-    "border-[color:var(--profile-badge-border)] bg-[color:var(--profile-badge-surface)] text-[color:var(--profile-badge-foreground)] shadow-sm";
 
   async function message() {
     try {
@@ -876,79 +1019,99 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
       .catch(handleError);
   }
 
-  const hasContact = Boolean(user.email || user.phone || user.department);
   const canManage = !isSelf && isManager;
+  const online = Boolean(user.lastActiveAt && now - user.lastActiveAt < ONLINE_WINDOW_MS);
+  // Birthdays are opt-in; a manager viewing someone's profile doesn't override
+  // the person's own "don't show this" choice.
+  const showBirthday = Boolean(user.dateOfBirth && (user.showBirthdayPublicly || isSelf));
+  const subtitle = [user.jobTitle, user.department].filter(Boolean).join(" · ");
 
-  const profileHeader = (
-    <div
-      className={cn(
-        "flex items-start gap-3 border-b border-white/30 p-5 text-white",
-        profileGradientClass(user.profileGradient),
-      )}
-      style={profileHeaderStyle(user.profileGradient, user.profileColor)}
-    >
-      <div className="relative shrink-0">
-        <Avatar className="size-16">
-          {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-          <AvatarFallback className="text-lg">{initials(user.name, user.email)}</AvatarFallback>
-        </Avatar>
-        {user.lastActiveAt && now - user.lastActiveAt < ONLINE_WINDOW_MS && (
-          <span
-            title={t("online")}
-            className="absolute bottom-0.5 right-0.5 size-3.5 rounded-full border-2 border-[color:var(--profile-badge-surface)] bg-success"
-          />
-        )}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-lg font-semibold leading-tight text-[color:var(--profile-foreground)]">
-          {user.name}
-        </p>
-        {user.jobTitle && (
-          <p className="truncate text-sm text-[color:var(--profile-foreground)] opacity-80">
-            {user.jobTitle}
-          </p>
-        )}
-        <div className="mt-1.5 flex flex-wrap gap-1">
-          <RoleBadge
-            member={user}
-            isAdmin={isAdmin}
-            tRoles={tRoles}
-            onSave={saveRoleLabel}
-            className={headerBadgeClass}
-          />
-          {user.status === "suspended" && (
-            <Badge variant="destructive">{tAdmin("suspended")}</Badge>
-          )}
-          {user.external && (
-            <Badge variant="warning" className={headerBadgeClass}>
-              {tAdmin("external")}
-            </Badge>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  const information = (
-    <div className="space-y-5">
-      {hasContact && (
-        <Section label={t("contact")}>
-          <div className="space-y-1">
-            <ContactRow
-              icon={<Mail className="size-4" />}
-              value={user.email}
-              href={`mailto:${user.email}`}
-              onCopy={copyEmail}
-            />
-            {user.phone && (
-              <ContactRow
-                icon={<Phone className="size-4" />}
-                value={user.phone}
-                href={`tel:${user.phone.replace(/\s+/g, "")}`}
+  const identity = (
+    <header>
+      {/* The person's gradient/colour as a banner the avatar breaks out of,
+          instead of a coloured slab with the name written on top of it — the
+          identity copy reads on the card surface, at full contrast, whatever
+          colour was picked. */}
+      <div
+        className={cn("h-28", profileGradientClass(user.profileGradient))}
+        style={profileColorStyle(user.profileColor)}
+      />
+      <div className="relative -mt-10 px-5">
+        <div className="flex items-end justify-between gap-3">
+          <div className="relative shrink-0">
+            <Avatar className="size-20 ring-4 ring-card">
+              {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+              <AvatarFallback className="bg-primary/10 text-xl font-semibold text-primary">
+                {initials(user.name, user.email)}
+              </AvatarFallback>
+            </Avatar>
+            {online && (
+              <span
+                title={t("online")}
+                className="absolute bottom-0.5 right-0.5 size-4 rounded-full border-[3px] border-card bg-success"
               />
             )}
-            {user.department && (
-              <ContactRow icon={<Building2 className="size-4" />} value={user.department} />
+          </div>
+          {!isSelf && (
+            <Button className="mb-1" onClick={() => void message()}>
+              <MessageSquare /> {t("message")}
+            </Button>
+          )}
+        </div>
+        <div className="mt-3 min-w-0">
+          <h2 className="truncate font-display text-xl font-bold tracking-tight">{user.name}</h2>
+          {subtitle && <p className="truncate text-sm text-muted-foreground">{subtitle}</p>}
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <RoleBadge member={user} isAdmin={isAdmin} tRoles={tRoles} onSave={saveRoleLabel} />
+            {user.status === "suspended" && (
+              <Badge variant="destructive">{tAdmin("suspended")}</Badge>
+            )}
+            {user.external && <Badge variant="warning">{tAdmin("external")}</Badge>}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+
+  const details = (
+    <InfoPanel>
+      <Section label={t("contact")}>
+        <div className="space-y-1">
+          <ContactRow
+            icon={<Mail className="size-4" />}
+            value={user.email}
+            href={`mailto:${user.email}`}
+            onCopy={copyEmail}
+          />
+          {user.phone && (
+            <ContactRow
+              icon={<Phone className="size-4" />}
+              value={user.phone}
+              href={`tel:${user.phone.replace(/\s+/g, "")}`}
+            />
+          )}
+          {user.department && (
+            <ContactRow icon={<Building2 className="size-4" />} value={user.department} />
+          )}
+        </div>
+      </Section>
+
+      {(user.hireDate || showBirthday) && (
+        <Section label={t("details")}>
+          <div className="space-y-1.5">
+            {user.hireDate && (
+              <DetailRow
+                icon={<CalendarDays className="size-4" />}
+                label={t("memberSince")}
+                value={formatIsoDate(user.hireDate, locale)}
+              />
+            )}
+            {showBirthday && user.dateOfBirth && (
+              <DetailRow
+                icon={<Cake className="size-4" />}
+                label={t("birthday")}
+                value={formatIsoDate(user.dateOfBirth, locale)}
+              />
             )}
           </div>
         </Section>
@@ -969,48 +1132,26 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
 
       <Organisation userId={user._id} />
       <UpcomingAbsences userId={user._id} />
-    </div>
+      {!isSelf && <MutualConversations userId={user._id} onNavigate={onClose} />}
+    </InfoPanel>
   );
 
-  const centre = (
+  const card = (
     <section className="min-w-0">
-      {profileHeader}
-      <div className="space-y-5 p-5">
-        {!isSelf && (
-          <Button className="w-full" onClick={() => void message()}>
-            <MessageSquare /> {t("message")}
-          </Button>
-        )}
-        {!isSelf && <MutualConversations userId={user._id} onNavigate={onClose} />}
-      </div>
+      {identity}
+      <div className="p-5">{details}</div>
     </section>
   );
 
   if (!canManage) {
-    return (
-      <div className="h-full min-h-0 overflow-y-auto">
-        <div className="mx-auto max-w-md">
-          {centre}
-          <div className="space-y-5 p-5">{information}</div>
-        </div>
-      </div>
-    );
+    return <div className="h-full min-h-0 overflow-y-auto">{card}</div>;
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:grid lg:grid-cols-[minmax(14rem,0.8fr)_minmax(20rem,1.2fr)_minmax(16rem,0.9fr)] lg:overflow-hidden">
-      <aside className="order-2 border-t border-border/70 p-5 lg:order-none lg:col-start-1 lg:row-start-1 lg:min-h-0 lg:overflow-y-auto lg:border-r lg:border-t-0">
-        {information}
-      </aside>
-      <div className="order-1 lg:order-none lg:col-start-2 lg:row-start-1 lg:min-h-0 lg:overflow-y-auto">
-        {centre}
-      </div>
-      <aside className="order-3 border-t border-border/70 p-5 lg:order-none lg:col-start-3 lg:row-start-1 lg:min-h-0 lg:overflow-y-auto lg:border-l lg:border-t-0">
-        <div className="space-y-5">
-          <StarterChecklist user={user} />
-          <OffboardingChecklist user={user} />
-          <AdminControls user={user} isAdmin={isAdmin} onClose={onClose} />
-        </div>
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
+      <div className="min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">{card}</div>
+      <aside className="shrink-0 border-t border-border/70 bg-panel-2/30 lg:flex lg:min-h-0 lg:w-[23rem] lg:flex-col lg:border-l lg:border-t-0">
+        <ManagementRail user={user} isAdmin={isAdmin} onClose={onClose} />
       </aside>
     </div>
   );
@@ -1078,7 +1219,13 @@ export function UserProfile({ userId, open, onOpenChange }: UserProfileProps) {
       <DialogContent
         className={cn(
           "max-h-[85dvh] gap-0 overflow-hidden p-0",
-          canManage ? "h-[85dvh] max-h-[46rem] max-w-6xl" : "max-w-md",
+          // The dialog's own close button lands on the colour banner at every
+          // width except the two-column one, where it lands on the management
+          // rail instead — a translucent chip reads on both.
+          "[&_[data-slot=dialog-close]]:bg-black/25 [&_[data-slot=dialog-close]]:text-white [&_[data-slot=dialog-close]]:opacity-100 [&_[data-slot=dialog-close]]:backdrop-blur-sm [&_[data-slot=dialog-close]]:hover:bg-black/45",
+          // Two columns now instead of three, so the dialog no longer needs to
+          // span the whole screen to fit them.
+          canManage ? "h-[85dvh] max-h-[44rem] max-w-4xl" : "max-w-md",
         )}
       >
         <DialogTitle className="sr-only">{title}</DialogTitle>
