@@ -15,6 +15,7 @@ import { performanceRoute } from "./routes/performance.js";
 import { passkeysRoute } from "./routes/passkeys.js";
 import { salesCoachEvRoute } from "./routes/sales-coach-ev.js";
 import { wikiChatRoute } from "./routes/wiki-chat.js";
+import { wikiImportRoute } from "./routes/wiki-import.js";
 import { internalClockodoRoute } from "./routes/internal/clockodo.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
 import { internalOnedriveRoute } from "./routes/internal/onedrive.js";
@@ -76,6 +77,7 @@ export const app = new Elysia()
   .use(passkeysRoute)
   .use(salesCoachEvRoute)
   .use(wikiChatRoute)
+  .use(wikiImportRoute)
   .use(applicantsRoute);
 
 export type App = typeof app;
