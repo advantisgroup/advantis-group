@@ -28,11 +28,15 @@ export function RoleSelect({
   const options = canElevate ? ALL_ROLES : (["employee"] as const);
 
   return (
-    <div className="inline-flex flex-col items-start gap-1">
+    // `max-w-full` + a wrapping radiogroup: in a narrow container (the profile
+    // popout's management rail) three German role names are wider than the
+    // column, and an `inline-flex` row had no way to do anything but overflow
+    // and get clipped.
+    <div className="flex max-w-full flex-col items-start gap-1">
       <div
         role="radiogroup"
         aria-label={t("label")}
-        className="inline-flex rounded-lg border border-border/70 bg-muted/50 p-0.5"
+        className="flex max-w-full flex-wrap rounded-lg border border-border/70 bg-muted/50 p-0.5"
       >
         {options.map((role) => {
           const Icon = ROLE_ICONS[role];

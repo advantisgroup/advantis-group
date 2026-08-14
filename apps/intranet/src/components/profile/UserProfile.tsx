@@ -106,6 +106,17 @@ function InfoPanel({ children }: { children: ReactNode }) {
   );
 }
 
+/** A labelled control in the management rail — label over control, so the
+ *  control gets the rail's full width rather than whatever the label leaves. */
+function SettingRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      {children}
+    </div>
+  );
+}
+
 /** One `label: value` line in the profile's details section. */
 function DetailRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
@@ -644,24 +655,24 @@ function AdminControls({
           {!user.uploadRequestsEnabled && <Badge variant="warning">{t("uploadsDisabled")}</Badge>}
         </div>
       )}
-      <div className="space-y-3 rounded-lg border border-border/70 p-3">
+      {/* Label above control, not beside it: the rail is a single narrow
+          column, and a `justify-between` row left the role picker (three
+          German role names) no width to live in. */}
+      <div className="space-y-3.5 rounded-lg border border-border/70 p-3">
         {isAdmin && !isSelf && (
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm text-muted-foreground">{t("role")}</span>
+          <SettingRow label={t("role")}>
             <RoleSelect value={user.role} onChange={changeRole} canElevate />
-          </div>
+          </SettingRow>
         )}
         {isAdmin && (
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm text-muted-foreground">{t("teams")}</span>
+          <SettingRow label={t("teams")}>
             <TeamsEditor userId={user._id} teams={user.teams} />
-          </div>
+          </SettingRow>
         )}
         {!isSelf && (
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm text-muted-foreground">{t("hireDate")}</span>
+          <SettingRow label={t("hireDate")}>
             <HireDateEditor userId={user._id} hireDate={user.hireDate} />
-          </div>
+          </SettingRow>
         )}
         {/* Permission grants and lifecycle actions only make sense on
             someone else's account — a member can't grant themselves access
@@ -1150,7 +1161,9 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
       <div className="min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">{card}</div>
-      <aside className="shrink-0 border-t border-border/70 bg-panel-2/30 lg:flex lg:min-h-0 lg:w-[23rem] lg:flex-col lg:border-l lg:border-t-0">
+      {/* 25rem, not less: the role picker's three German labels are the widest
+          thing in the rail and this is what fits them on one line. */}
+      <aside className="shrink-0 border-t border-border/70 bg-panel-2/30 lg:flex lg:min-h-0 lg:w-[25rem] lg:flex-col lg:border-l lg:border-t-0">
         <ManagementRail user={user} isAdmin={isAdmin} onClose={onClose} />
       </aside>
     </div>
