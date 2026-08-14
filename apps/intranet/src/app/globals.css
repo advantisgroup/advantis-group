@@ -1110,6 +1110,31 @@ input[type="week"] {
     outline-offset: 2px;
   }
 
+  .rich-text-table-wrap {
+    margin: 0.75rem 0;
+    overflow-x: auto;
+  }
+
+  .rich-text table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.925em;
+  }
+
+  .rich-text th,
+  .rich-text td {
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .rich-text thead th,
+  .rich-text th {
+    background: var(--muted);
+    font-weight: 600;
+  }
+
   /* .docx preview page in the global file viewer — always a literal white
      sheet of paper regardless of app theme (matches how PdfPreview always
      renders a light page against the dark backdrop), so colors are
