@@ -9,14 +9,18 @@
  * file through a server for the deterministic part.
  */
 
+import { MAX_ATTACHMENT_BYTES } from "@/lib/upload";
+
 export type ImportExt = "docx" | "pdf" | "txt" | "md";
 
 export const SUPPORTED_IMPORT_EXTENSIONS: ImportExt[] = ["docx", "pdf", "txt", "md"];
 export const IMPORT_FILE_ACCEPT = SUPPORTED_IMPORT_EXTENSIONS.map((e) => `.${e}`).join(",");
 
-/** Generous for a policy document, well under what a browser can parse
- *  client-side without trouble. */
-export const MAX_IMPORT_BYTES = 15 * 1024 * 1024;
+/** Matches `MAX_ATTACHMENT_BYTES` deliberately — the source file is staged
+ *  into the same attachment pipeline right after a successful import (see
+ *  `WikiEntryComposer`), which enforces that cap independently. Anything
+ *  bigger would pass this check but then silently fail to attach. */
+export const MAX_IMPORT_BYTES = MAX_ATTACHMENT_BYTES;
 
 export type WikiImportErrorCode =
   | "unsupported-type"
