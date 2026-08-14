@@ -14,4 +14,10 @@ the internal wiki, and guidebooks.
 - **Unified search** — one search surface spanning wiki, guidebooks, and
   updates, exposed through the existing `CommandPalette`.
 - **"Related articles" suggestions** — surface related guidebook/wiki pages
-  using the embeddings/RAG setup already backing `wiki-chat`.
+  by content similarity. `wiki-chat` (`apps/api/src/routes/wiki-chat.ts`)
+  does not actually do this today — it's a fixed system prompt with no
+  embedding lookup or retrieval over wiki/guidebook content. Building and
+  maintaining an embedding index over `wikiEntries`/guidebook content is a
+  prerequisite this item (and the ticket-suggestion item in
+  `07_it-tickets-fehlermanagement.md`) would need, not existing
+  infrastructure to reuse.
