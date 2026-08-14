@@ -45,10 +45,11 @@ export interface GuidebookFormData {
 }
 
 /**
- * Shared form for both /guidebooks/new (create) and /guidebooks/[slug]/edit
- * (update) — the actual persistence differs per caller (create needs a
- * unique slug computed up front; edit already has a pageId), so this only
- * owns the fields + BlockEditor and hands a finished payload to `onSave`.
+ * Shared form for both /guidebooks/new/advanced (create) and
+ * /guidebooks/[slug]/edit (update) — the actual persistence differs per
+ * caller (create needs a unique slug computed up front; edit already has a
+ * pageId), so this only owns the fields + BlockEditor and hands a finished
+ * payload to `onSave`.
  */
 export function GuidebookEditor({
   initial,

@@ -238,7 +238,8 @@
   "createEntry": "New wiki entry",
   "createEntryHint": "Structured fields with a category, tags and a review date.",
   "createPageHint": "Free-form block editor for longer, laid-out guides.",
-  "composerModeLabel": "Entry format",
-  "composerModeEntry": "Simple",
-  "composerModeAdvanced": "Advanced"
+  "composerSwitchToAdvanced": "Advanced editor",
+  "composerSwitchToSimple": "Back to the simple editor",
+  "optionsSheetTitle": "Details & attachments",
+  "detailsSectionTitle": "Details"
 }

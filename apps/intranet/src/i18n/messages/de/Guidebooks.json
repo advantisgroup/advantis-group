@@ -238,7 +238,8 @@
   "createEntry": "Neuer Wiki-Eintrag",
   "createEntryHint": "Strukturierte Felder mit Kategorie, Stichwörtern und Prüfdatum.",
   "createPageHint": "Freier Block-Editor für längere, gestaltete Anleitungen.",
-  "composerModeLabel": "Eintragsformat",
-  "composerModeEntry": "Einfach",
-  "composerModeAdvanced": "Erweitert"
+  "composerSwitchToAdvanced": "Erweiterter Editor",
+  "composerSwitchToSimple": "Zurück zum einfachen Editor",
+  "optionsSheetTitle": "Details & Anhänge",
+  "detailsSectionTitle": "Details"
 }
