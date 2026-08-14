@@ -12,6 +12,7 @@ import {
   Quote,
   RemoveFormatting,
   Strikethrough,
+  Table2,
   Underline,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -419,6 +420,36 @@ export function useRichTextController({
     onChange(`${value}${value && !/\s$/.test(value) ? " " : ""}${span.outerHTML} `);
   }
 
+  /** Appends a basic `rows` × `cols` table skeleton (first row as headers) to
+   *  the end of the content — same append-only reasoning as `insertFileLink`
+   *  above. Row/column *editing* after that (add/remove) has no dedicated
+   *  toolbar of its own yet; cell text itself is directly editable since the
+   *  table lands in a real contentEditable. */
+  function insertTable(rows: number, cols: number) {
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+    for (let c = 0; c < cols; c++) {
+      const th = document.createElement("th");
+      th.textContent = " ";
+      headerRow.appendChild(th);
+    }
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+    const tbody = document.createElement("tbody");
+    for (let r = 0; r < rows - 1; r++) {
+      const row = document.createElement("tr");
+      for (let c = 0; c < cols; c++) {
+        const td = document.createElement("td");
+        td.textContent = " ";
+        row.appendChild(td);
+      }
+      tbody.appendChild(row);
+    }
+    table.appendChild(tbody);
+    onChange(`${value}${value && !/\s$/.test(value) ? " " : ""}${table.outerHTML}<p><br></p>`);
+  }
+
   function openDateEditor(target?: HTMLElement | null) {
     const el = elRef.current;
     if (!el) return;
@@ -583,12 +614,90 @@ export function useRichTextController({
     setDateEditor,
     openDateEditor,
     saveDateEditor,
+    insertTable,
     insertDate,
     insertFileLink,
   };
 }
 
 export type RichTextController = ReturnType<typeof useRichTextController>;
+
+const MAX_TABLE_ROWS = 20;
+const MAX_TABLE_COLS = 10;
+
+/** "Insert table" toolbar button — a rows/cols popover rather than a plain
+ *  command, so it doesn't fit the flat `TOOLS` list above. Always shown
+ *  (not gated behind a prop) since it's generically useful wherever rich
+ *  text is edited, not just guidebooks — same reasoning as "insert date". */
+function TablePicker({ controller }: { controller: RichTextController }) {
+  const t = useTranslations("RichText");
+  const [open, setOpen] = useState(false);
+  const [rows, setRows] = useState(3);
+  const [cols, setCols] = useState(3);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title={t("insertTable")}
+          aria-label={t("insertTable")}
+          onPointerDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => e.preventDefault()}
+          className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&_svg]:size-[17px]"
+        >
+          <Table2 />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56">
+        <p className="mb-2 text-xs font-medium text-muted-foreground">{t("insertTable")}</p>
+        <div className="flex items-end gap-2">
+          <div className="flex-1 space-y-1">
+            <Label htmlFor="rt-table-rows" className="text-xs text-muted-foreground">
+              {t("tableRows")}
+            </Label>
+            <Input
+              id="rt-table-rows"
+              type="number"
+              min={1}
+              max={MAX_TABLE_ROWS}
+              value={rows}
+              onChange={(e) =>
+                setRows(Math.min(MAX_TABLE_ROWS, Math.max(1, Number(e.target.value) || 1)))
+              }
+              className="h-8"
+            />
+          </div>
+          <div className="flex-1 space-y-1">
+            <Label htmlFor="rt-table-cols" className="text-xs text-muted-foreground">
+              {t("tableCols")}
+            </Label>
+            <Input
+              id="rt-table-cols"
+              type="number"
+              min={1}
+              max={MAX_TABLE_COLS}
+              value={cols}
+              onChange={(e) =>
+                setCols(Math.min(MAX_TABLE_COLS, Math.max(1, Number(e.target.value) || 1)))
+              }
+              className="h-8"
+            />
+          </div>
+        </div>
+        <Button
+          size="sm"
+          className="mt-3 w-full"
+          onClick={() => {
+            controller.insertTable(rows, cols);
+            setOpen(false);
+          }}
+        >
+          {t("insertTable")}
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 /** The formatting button row — placeable independently of the editable surface. */
 export function RichTextToolbar({
@@ -627,6 +736,8 @@ export function RichTextToolbar({
           </button>
         ),
       )}
+      <span className="mx-1 h-5 w-px bg-border/70" aria-hidden />
+      <TablePicker controller={controller} />
     </div>
   );
 }

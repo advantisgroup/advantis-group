@@ -1,6 +1,9 @@
 {
   "insertDate": "Datum einfügen",
   "insertFileLink": "Datei verlinken",
+  "insertTable": "Tabelle einfügen",
+  "tableRows": "Zeilen",
+  "tableCols": "Spalten",
   "insertDateDescription": "Mache Text zu einem interaktiven Datum, das Leser ihrem Kalender hinzufügen können.",
   "dateText": "Text",
   "dateTextPlaceholder": "z. B. Team-Workshop",

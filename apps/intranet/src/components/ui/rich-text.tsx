@@ -38,7 +38,23 @@ const ALLOWED = new Set([
   "H3",
   "CODE",
   "PRE",
+  "TABLE",
+  "THEAD",
+  "TBODY",
+  "TFOOT",
+  "TR",
+  "TH",
+  "TD",
 ]);
+
+/** `colspan`/`rowspan` are the only attributes a table cell needs to
+ *  preserve — kept numeric-only rather than passed through verbatim. */
+function setSpanAttributes(safe: Element, el: Element) {
+  for (const attr of ["colspan", "rowspan"]) {
+    const value = el.getAttribute(attr);
+    if (value && /^\d+$/.test(value)) safe.setAttribute(attr, value);
+  }
+}
 
 const REMOVE = new Set([
   "SCRIPT",
@@ -66,6 +82,9 @@ function cleanInto(node: Node, out: Node, doc: Document, headingIds: Set<string>
     if (REMOVE.has(tag)) return;
     if (ALLOWED.has(tag)) {
       const safe = doc.createElement(tag);
+      if (tag === "TH" || tag === "TD") {
+        setSpanAttributes(safe, el);
+      }
       if (tag === "A") {
         const href = el.getAttribute("href") ?? "";
         if (href && !/^\s*javascript:/i.test(href)) {
@@ -125,7 +144,18 @@ function cleanInto(node: Node, out: Node, doc: Document, headingIds: Set<string>
           safe.textContent = label;
         }
       }
-      out.appendChild(safe);
+      if (tag === "TABLE") {
+        // `overflow-x: auto` on the table itself would need `display: block`,
+        // which turns off table layout (columns stop aligning) — wrap it in
+        // a scrolling div instead so a wide table degrades to a horizontal
+        // scroll on mobile rather than squeezing or breaking out of the page.
+        const wrap = doc.createElement("div");
+        wrap.setAttribute("class", "rich-text-table-wrap");
+        wrap.appendChild(safe);
+        out.appendChild(wrap);
+      } else {
+        out.appendChild(safe);
+      }
     } else {
       // Unknown tag: drop the wrapper but keep its (cleaned) children.
       cleanInto(el, out, doc, headingIds);
