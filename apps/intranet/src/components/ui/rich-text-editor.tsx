@@ -8,6 +8,7 @@ import {
   Link2,
   List,
   ListOrdered,
+  Paperclip,
   Quote,
   RemoveFormatting,
   Strikethrough,
@@ -31,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -400,6 +402,23 @@ export function useRichTextController({
     refreshActive();
   }
 
+  /**
+   * Appends a non-editable "linked file" chip to the end of the content
+   * rather than inserting at the live caret — the picker that calls this
+   * lives in a popover, and by the time a candidate is clicked the
+   * contentEditable's selection may already be gone. Simpler and more
+   * robust than trying to preserve an exact mid-text insertion point for
+   * what's fundamentally a "reference this attachment" action.
+   */
+  function insertFileLink(name: string) {
+    const span = document.createElement("span");
+    span.className = "wiki-file-chip";
+    span.setAttribute("contenteditable", "false");
+    span.setAttribute("data-wiki-file-name", name);
+    span.textContent = `\u{1F4CE} ${name}`;
+    onChange(`${value}${value && !/\s$/.test(value) ? " " : ""}${span.outerHTML} `);
+  }
+
   function openDateEditor(target?: HTMLElement | null) {
     const el = elRef.current;
     if (!el) return;
@@ -565,6 +584,7 @@ export function useRichTextController({
     openDateEditor,
     saveDateEditor,
     insertDate,
+    insertFileLink,
   };
 }
 
@@ -863,6 +883,64 @@ export function RichTextSurface({
   );
 }
 
+/** A file the editor can insert as a linked, previewable inline chip. */
+export interface FileLinkCandidate {
+  name: string;
+  kind?: "image" | "file";
+}
+
+/** Toolbar-adjacent "insert file link" button — only rendered when the
+ *  caller passed at least one attachment to link. Kept out of `TOOLS`/
+ *  `RichTextToolbar` since it's opt-in and needs its own picker UI rather
+ *  than a plain command. */
+function FileLinkPicker({
+  candidates,
+  onPick,
+}: {
+  candidates: FileLinkCandidate[];
+  onPick: (name: string) => void;
+}) {
+  const t = useTranslations("RichText");
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title={t("insertFileLink")}
+          aria-label={t("insertFileLink")}
+          onPointerDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => e.preventDefault()}
+          className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&_svg]:size-[17px]"
+        >
+          <Paperclip />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64 p-1">
+        <p className="px-2 pb-1 pt-1.5 text-xs font-medium text-muted-foreground">
+          {t("insertFileLink")}
+        </p>
+        <div className="max-h-56 overflow-y-auto">
+          {candidates.map((c) => (
+            <button
+              key={c.name}
+              type="button"
+              onClick={() => {
+                onPick(c.name);
+                setOpen(false);
+              }}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+            >
+              <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+              <span className="truncate">{c.name}</span>
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function RichTextEditor({
   value,
   onChange,
@@ -872,6 +950,7 @@ export function RichTextEditor({
   className,
   minHeight,
   mentionCandidates,
+  fileLinkCandidates,
 }: {
   value: string;
   onChange: (html: string) => void;
@@ -885,6 +964,10 @@ export function RichTextEditor({
   minHeight?: string;
   /** Enables "@name" autocomplete when provided. */
   mentionCandidates?: MentionCandidate[];
+  /** Enables an "insert file link" toolbar button listing these attached
+   *  files when non-empty. Picking one inserts a special, previewable chip
+   *  (see `.wiki-file-chip` / `WikiFileLinkText`). */
+  fileLinkCandidates?: FileLinkCandidate[];
 }) {
   const controller = useRichTextController({ value, onChange, mentionCandidates });
   const isMobile = useIsMobile();
@@ -904,10 +987,20 @@ export function RichTextEditor({
           className,
         )}
       >
-        <RichTextToolbar
-          controller={controller}
-          className={cn("border-b border-border/70 bg-muted/40 px-1.5 py-1", docked && "invisible")}
-        />
+        <div
+          className={cn(
+            "flex items-center gap-1 border-b border-border/70 bg-muted/40 px-1.5 py-1",
+            docked && "invisible",
+          )}
+        >
+          <RichTextToolbar controller={controller} className="flex-1" />
+          {fileLinkCandidates && fileLinkCandidates.length > 0 && (
+            <FileLinkPicker
+              candidates={fileLinkCandidates}
+              onPick={(name) => controller.insertFileLink(name)}
+            />
+          )}
+        </div>
         <RichTextSurface
           controller={controller}
           placeholder={placeholder}

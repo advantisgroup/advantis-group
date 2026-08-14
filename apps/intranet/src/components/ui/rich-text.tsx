@@ -84,9 +84,15 @@ function cleanInto(node: Node, out: Node, doc: Document, headingIds: Set<string>
       // id string (never arbitrary attributes/classes from pasted HTML).
       if (tag === "SPAN") {
         const mentionUserId = el.getAttribute("data-mention-user-id");
+        const wikiFileName = el.getAttribute("data-wiki-file-name");
         if (mentionUserId) {
           safe.setAttribute("data-mention-user-id", mentionUserId);
           safe.setAttribute("class", "mention");
+        } else if (wikiFileName) {
+          safe.setAttribute("data-wiki-file-name", wikiFileName);
+          safe.setAttribute("class", "wiki-file-chip");
+          safe.setAttribute("role", "button");
+          safe.setAttribute("tabindex", "0");
         } else {
           const dateStart = el.getAttribute("data-rich-date-start");
           if (!dateStart?.trim() || !Number.isFinite(Number(dateStart))) {
