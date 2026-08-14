@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import { Download, FileText, Paperclip, Trash2 } from "lucide-react";
+import { Paperclip, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -13,6 +13,7 @@ import { useHasCapability } from "@/components/providers/current-user";
 import { AttachmentDropZone } from "@/components/attachments/AttachmentDropZone";
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { OneDriveFolderPicker } from "@/components/attachments/OneDriveFolderPicker";
+import { AttachmentThumb } from "@/components/guidebooks/AttachmentThumb";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { Button } from "@/components/ui/button";
 import { useErrorHandler } from "@/hooks/use-error-handler";
@@ -167,15 +168,12 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
           <p className="text-xs text-muted-foreground">{t("noAttachments")}</p>
         ) : null
       ) : (
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {attachments.map((a) => (
             <div
               key={a._id}
-              className="group flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm"
+              className="group relative overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md"
             >
-              <span className="grid size-8 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
-                <FileText className="size-4" />
-              </span>
               <button
                 type="button"
                 onClick={() =>
@@ -194,20 +192,20 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
                     url: a.legacyUrl ?? undefined,
                   })
                 }
-                className="min-w-0 text-left"
+                className="block w-full text-left"
               >
-                <span className="block max-w-[14rem] truncate font-medium">{a.name}</span>
-                <span className="block text-xs text-muted-foreground">
+                <AttachmentThumb attachment={a} className="aspect-square w-full" />
+                <span className="block truncate px-2.5 pt-2 text-xs font-medium">{a.name}</span>
+                <span className="block px-2.5 pb-2.5 text-[11px] text-muted-foreground">
                   {a.size != null ? formatFileSize(a.size) : ""}
                 </span>
               </button>
-              <Download className="size-3.5 shrink-0 text-muted-foreground" />
               {canManage && (
                 <button
                   type="button"
                   onClick={() => void onDelete(a)}
                   aria-label={tc("delete")}
-                  className="ml-1 shrink-0 text-muted-foreground opacity-100 transition-opacity hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
+                  className="absolute right-1.5 top-1.5 grid size-7 place-items-center rounded-full bg-black/60 text-white opacity-100 backdrop-blur transition-opacity hover:bg-destructive md:opacity-0 md:group-hover:opacity-100"
                 >
                   <Trash2 className="size-3.5" />
                 </button>
