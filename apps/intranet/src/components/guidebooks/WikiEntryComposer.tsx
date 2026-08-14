@@ -79,7 +79,7 @@ function OriginalFilePreview({ file, ext }: { file: File; ext: ImportExt }) {
 
   if (!url) return null;
   return (
-    <div className="flex h-[32rem] items-center justify-center overflow-hidden rounded-xl bg-neutral-900 p-4">
+    <div className="flex h-[60vh] max-h-[32rem] items-center justify-center overflow-hidden rounded-xl bg-neutral-900 p-4">
       {ext === "docx" ? <DocxPreview url={url} /> : <PdfPreview url={url} />}
     </div>
   );
@@ -146,19 +146,22 @@ function ChooseSourceStep({
           </span>
           <span className="font-display font-semibold">{t("sourceImportTitle")}</span>
           <span className="text-xs text-muted-foreground">{t("sourceImportHint")}</span>
-          <input
-            ref={inputRef}
-            type="file"
-            accept={IMPORT_FILE_ACCEPT}
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              e.target.value = "";
-              if (file) onFile(file);
-            }}
-          />
         </button>
       </div>
+      {/* Sibling of the trigger button, not nested inside it — a <button>
+          containing an <input> is invalid HTML and unreliable on mobile
+          browsers (same pattern GuidebookAttachments already uses). */}
+      <input
+        ref={inputRef}
+        type="file"
+        accept={IMPORT_FILE_ACCEPT}
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file) onFile(file);
+        }}
+      />
       {importError && (
         <div
           role="alert"

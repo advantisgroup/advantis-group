@@ -1130,9 +1130,15 @@ export function RichTextEditor({
         createPortal(
           <div
             style={{ bottom: keyboardInset }}
-            className="fixed inset-x-0 z-50 border-t border-border/70 bg-card px-2 py-1.5 shadow-[0_-4px_16px_-6px_rgb(0_0_0/0.25)]"
+            className="fixed inset-x-0 z-50 flex items-center justify-center gap-1 border-t border-border/70 bg-card px-2 py-1.5 shadow-[0_-4px_16px_-6px_rgb(0_0_0/0.25)]"
           >
-            <RichTextToolbar controller={controller} className="justify-center" />
+            <RichTextToolbar controller={controller} />
+            {fileLinkCandidates && fileLinkCandidates.length > 0 && (
+              <FileLinkPicker
+                candidates={fileLinkCandidates}
+                onPick={(name) => controller.insertFileLink(name)}
+              />
+            )}
           </div>,
           document.body,
         )}
