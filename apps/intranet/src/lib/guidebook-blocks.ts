@@ -1,5 +1,5 @@
 /**
- * The block model behind the guidebook page editor (`/guidebooks/new`) — a
+ * The block model behind the guidebook page editor (`/guidebooks/new/advanced`) — a
  * Notion-style page is just an ordered list of these, stored as one JSON
  * string (`guidebookPages.blocks`) rather than a modeled Convex union, so a
  * new block type is a client-only change.

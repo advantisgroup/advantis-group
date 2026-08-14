@@ -1087,6 +1087,29 @@ input[type="week"] {
     outline-offset: 2px;
   }
 
+  .rich-text .wiki-file-chip {
+    display: inline;
+    border: 1px solid var(--border);
+    border-radius: 0.35rem;
+    background: var(--muted);
+    padding: 0.05rem 0.4rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease;
+  }
+
+  .rich-text .wiki-file-chip:hover {
+    border-color: color-mix(in oklch, var(--primary) 45%, var(--border));
+    background: color-mix(in oklch, var(--primary) 10%, var(--muted));
+  }
+
+  .rich-text .wiki-file-chip:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
   /* .docx preview page in the global file viewer — always a literal white
      sheet of paper regardless of app theme (matches how PdfPreview always
      renders a light page against the dark backdrop), so colors are

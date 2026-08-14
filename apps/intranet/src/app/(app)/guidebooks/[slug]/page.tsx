@@ -6,7 +6,18 @@ import { useParams, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, BookOpen, Check, Megaphone, Pencil, Printer, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  Calendar,
+  Check,
+  Hash,
+  Megaphone,
+  Pencil,
+  Printer,
+  Trash2,
+  User,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -27,6 +38,7 @@ import {
 } from "@/components/guidebooks/registry";
 import { GuidebookPager, GuidebookSwitcher } from "@/components/guidebooks/switcher";
 import { EntryDialog } from "@/components/guidebooks/WikiEntryDialogs";
+import { WikiFileLinkText } from "@/components/guidebooks/WikiFileLinkText";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
 import {
@@ -39,12 +51,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
-import { RichText } from "@/components/ui/rich-text";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { parseBlocks } from "@/lib/guidebook-blocks";
 import { formatDateTime, formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { msToDateInput } from "@/lib/wiki";
+import { isExpired, msToDateInput, needsReview } from "@/lib/wiki";
 
 const EMPTY_SLUGS: string[] = [];
 
@@ -148,6 +159,13 @@ export default function GuidebookPage() {
   const legacyPage = useQuery(
     api.guidebookPages.get,
     staticGuidebook || entry ? "skip" : { slug: params.slug },
+  );
+  // Loaded here (not just inside `GuidebookAttachments`) so `WikiFileLinkText`
+  // can resolve inline file-link chips in the body — Convex dedupes this
+  // against the identical query that component runs itself.
+  const attachments = useQuery(
+    api.guidebookAttachments.list,
+    entry ? { slug: entry.slug } : "skip",
   );
   const removeEntry = useMutation(api.wikiEntries.remove);
   const removePage = useMutation(api.guidebookPages.remove);
@@ -356,36 +374,71 @@ export default function GuidebookPage() {
             {Component ? (
               <Component />
             ) : entry ? (
-              <div className="space-y-4">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {entry.tags.map((tag) => (
-                    <Badge key={tag} variant="muted" className="font-normal">
-                      #{tag}
-                    </Badge>
-                  ))}
-                </div>
-                <RichText html={entry.erklaerung} className="text-sm leading-relaxed" />
-                {entry.link && (
-                  <a
-                    href={entry.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-block break-all text-sm font-medium text-primary hover:underline"
-                  >
-                    {entry.link}
-                  </a>
+              <div className="space-y-5">
+                {entry.tags.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {entry.tags.map((tag) => (
+                      <Badge key={tag} variant="muted" className="font-normal">
+                        #{tag}
+                      </Badge>
+                    ))}
+                  </div>
                 )}
-                <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 rounded-lg bg-muted/50 p-3.5 text-xs">
-                  <dt className="text-muted-foreground">{t("fieldValidFrom")}</dt>
-                  <dd className="font-medium">
-                    {formatIsoDate(msToDateInput(entry.validFrom), locale)} –{" "}
-                    {formatIsoDate(msToDateInput(entry.validUntil), locale)}
-                  </dd>
-                  <dt className="text-muted-foreground">
-                    {t("versionMeta", { version: entry.version })}
-                  </dt>
-                  <dd className="font-medium">{entry.authorName}</dd>
-                </dl>
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_15rem]">
+                  <div className="min-w-0 space-y-4">
+                    <WikiFileLinkText
+                      html={entry.erklaerung}
+                      attachments={attachments}
+                      className="text-sm leading-relaxed"
+                    />
+                    {entry.link && (
+                      <a
+                        href={entry.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-block break-all text-sm font-medium text-primary hover:underline"
+                      >
+                        {entry.link}
+                      </a>
+                    )}
+                  </div>
+                  <aside className="space-y-3 rounded-xl border border-border/70 bg-muted/30 p-4 text-sm lg:sticky lg:top-20 lg:self-start">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {t("detailsSectionTitle")}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="size-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: entry.categoryColor ?? "#77808A" }}
+                      />
+                      <span className="min-w-0 truncate font-medium">
+                        {entry.categoryName ?? t("archiveChip")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <User className="size-4 shrink-0" />
+                      <span className="min-w-0 truncate">
+                        {entry.ownerName ?? entry.authorName}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="size-4 shrink-0" />
+                      <span>
+                        {formatIsoDate(msToDateInput(entry.validFrom), locale)} –{" "}
+                        {formatIsoDate(msToDateInput(entry.validUntil), locale)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Hash className="size-4 shrink-0" />
+                      <span>{t("versionMeta", { version: entry.version })}</span>
+                    </div>
+                    {isExpired(entry) ? (
+                      <Badge variant="muted">{t("expiredBadge")}</Badge>
+                    ) : (
+                      needsReview(entry) && <Badge variant="warning">{t("reviewDueBadge")}</Badge>
+                    )}
+                  </aside>
+                </div>
               </div>
             ) : legacyPage ? (
               <GuidebookPageView blocks={parseBlocks(legacyPage.blocks)} />

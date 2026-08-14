@@ -92,11 +92,15 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // needs the full viewport, not viewport-minus-bottom-nav.
   const isFlowComposer =
     pathname.startsWith("/sales-cockpit/flows/") && pathname !== "/sales-cockpit/flows/";
+  // The "New wiki entry" composer, same deal — but not `/guidebooks/new/advanced`
+  // (the block editor), which keeps normal page chrome.
+  const isWikiComposer = pathname === "/guidebooks/new";
   const immersive =
     pathname.startsWith("/chat") ||
     pathname.startsWith("/wiki-chat") ||
     isAnnouncementComposer ||
-    isFlowComposer;
+    isFlowComposer ||
+    isWikiComposer;
 
   // The Updates section reads like a blog (Anthropic/GitHub-changelog style)
   // rather than an app surface — the nav sidebar, bottom nav and the sitewide
