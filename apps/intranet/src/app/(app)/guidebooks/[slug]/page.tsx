@@ -55,7 +55,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { parseBlocks } from "@/lib/guidebook-blocks";
 import { formatDateTime, formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { inArchive, msToDateInput, needsReview } from "@/lib/wiki";
+import { isExpired, msToDateInput, needsReview } from "@/lib/wiki";
 
 const EMPTY_SLUGS: string[] = [];
 
@@ -432,7 +432,7 @@ export default function GuidebookPage() {
                       <Hash className="size-4 shrink-0" />
                       <span>{t("versionMeta", { version: entry.version })}</span>
                     </div>
-                    {inArchive(entry) ? (
+                    {isExpired(entry) ? (
                       <Badge variant="muted">{t("expiredBadge")}</Badge>
                     ) : (
                       needsReview(entry) && <Badge variant="warning">{t("reviewDueBadge")}</Badge>

@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 
 import { createPortal } from "react-dom";
 
@@ -73,13 +80,15 @@ export function WikiFileLinkText({
     closeTimer.current = setTimeout(() => setHover(null), 100);
   }
 
-  function onClick(e: ReactMouseEvent<HTMLDivElement>) {
-    const chip = chipTarget(e.target as HTMLElement);
-    if (!chip) return;
+  /** Shared by mouse click and keyboard activation (Enter/Space) — the
+   *  sanitizer marks each chip `role="button" tabindex="0"`, so it must be
+   *  operable from the keyboard too, not just clickable. */
+  function activateChip(target: HTMLElement): boolean {
+    const chip = chipTarget(target);
+    if (!chip) return false;
     const name = chip.getAttribute("data-wiki-file-name");
     const attachment = name ? byName.get(name) : undefined;
-    if (!attachment) return;
-    e.preventDefault();
+    if (!attachment) return false;
     openFileViewer({
       oneDriveItemId: attachment.oneDriveItemId ?? undefined,
       name: attachment.name,
@@ -88,12 +97,22 @@ export function WikiFileLinkText({
       modifiedAt: attachment.createdAt,
       url: attachment.legacyUrl ?? undefined,
     });
+    return true;
+  }
+
+  function onClick(e: ReactMouseEvent<HTMLDivElement>) {
+    if (activateChip(e.target as HTMLElement)) e.preventDefault();
+  }
+
+  function onKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    if (activateChip(e.target as HTMLElement)) e.preventDefault();
   }
 
   const hoverAttachment = hover ? byName.get(hover.name) : null;
 
   return (
-    <div onMouseOver={onMouseOver} onMouseOut={onMouseOut} onClick={onClick}>
+    <div onMouseOver={onMouseOver} onMouseOut={onMouseOut} onClick={onClick} onKeyDown={onKeyDown}>
       <RichText html={html} className={className} />
       {hover &&
         hoverAttachment &&

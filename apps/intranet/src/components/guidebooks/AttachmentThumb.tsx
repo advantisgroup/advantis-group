@@ -46,9 +46,31 @@ function KindIcon({ kind, className }: { kind: FileKind; className?: string }) {
 
 // Module-level so a thumbnail already resolved for a given OneDrive item
 // doesn't get re-fetched every time its tile remounts (list re-sort, hover
-// preview mounting a second copy of the same file, …). `null` is cached too
-// (a permanently-failed lookup) to avoid hammering the endpoint on repeats.
-const thumbCache = new Map<string, string | null>();
+// preview mounting a second copy of the same file, …). Entries expire,
+// though — `/onedrive/preview/:id` hands back short-lived signed URLs, so a
+// stale cache hit would render a dead image forever. Failures get a much
+// shorter TTL than successes so a transient network/Graph error doesn't
+// permanently suppress a thumbnail for the rest of the session.
+const THUMB_TTL_MS = 5 * 60 * 1000;
+const THUMB_FAILURE_TTL_MS = 30 * 1000;
+
+interface CachedThumb {
+  url: string | null;
+  expiresAt: number;
+}
+const thumbCache = new Map<string, CachedThumb>();
+
+/** `undefined` = no (unexpired) cache entry; `null` is a valid cached value
+ *  (a resolved-but-preview-less or failed lookup). */
+function cachedThumbUrl(oneDriveItemId: string): string | null | undefined {
+  const hit = thumbCache.get(oneDriveItemId);
+  if (!hit) return undefined;
+  if (Date.now() > hit.expiresAt) {
+    thumbCache.delete(oneDriveItemId);
+    return undefined;
+  }
+  return hit.url;
+}
 
 /** Resolves an image attachment's preview URL — Convex-storage `legacyUrl`
  *  directly, or a fetched-and-cached OneDrive thumbnail. Returns `null` for
@@ -59,13 +81,14 @@ function useImageThumbnailUrl(
 ): string | null {
   const od = useOneDriveApi();
   const [url, setUrl] = useState<string | null>(
-    legacyUrl ? legacyUrl : oneDriveItemId ? (thumbCache.get(oneDriveItemId) ?? null) : null,
+    legacyUrl ? legacyUrl : oneDriveItemId ? (cachedThumbUrl(oneDriveItemId) ?? null) : null,
   );
 
   useEffect(() => {
     if (legacyUrl || !oneDriveItemId) return;
-    if (thumbCache.has(oneDriveItemId)) {
-      setUrl(thumbCache.get(oneDriveItemId) ?? null);
+    const cached = cachedThumbUrl(oneDriveItemId);
+    if (cached !== undefined) {
+      setUrl(cached);
       return;
     }
     let cancelled = false;
@@ -73,11 +96,14 @@ function useImageThumbnailUrl(
       .preview(oneDriveItemId)
       .then((r) => {
         const resolved = r.thumbnailUrl ?? r.previewUrl ?? null;
-        thumbCache.set(oneDriveItemId, resolved);
+        thumbCache.set(oneDriveItemId, { url: resolved, expiresAt: Date.now() + THUMB_TTL_MS });
         if (!cancelled) setUrl(resolved);
       })
       .catch(() => {
-        thumbCache.set(oneDriveItemId, null);
+        thumbCache.set(oneDriveItemId, {
+          url: null,
+          expiresAt: Date.now() + THUMB_FAILURE_TTL_MS,
+        });
         if (!cancelled) setUrl(null);
       });
     return () => {

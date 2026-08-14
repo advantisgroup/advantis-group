@@ -39,6 +39,17 @@ export function WikiEntryComposer() {
     <div className="space-y-4">
       {entryForm.optionsFields}
       <div className="border-t border-border/60 pt-4">{entryForm.attachmentsSlot}</div>
+      {/* Same link as the header's, repeated here — the header's is
+          desktop-only (`hidden sm:inline`), so this is the only way a mobile
+          visitor can reach the advanced editor at all. */}
+      <div className="border-t border-border/60 pt-4">
+        <Link
+          href="/guidebooks/new/advanced"
+          className="text-xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
+        >
+          {t("composerSwitchToAdvanced")}
+        </Link>
+      </div>
     </div>
   );
 
