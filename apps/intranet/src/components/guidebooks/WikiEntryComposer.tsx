@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
-import { ArrowLeft, FileUp, Loader2, PenLine, Settings, Sparkles } from "lucide-react";
+import { ArrowLeft, Eye, FileUp, Loader2, PenLine, Settings, Sparkles } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -79,7 +79,7 @@ function OriginalFilePreview({ file, ext }: { file: File; ext: ImportExt }) {
 
   if (!url) return null;
   return (
-    <div className="flex h-[32rem] items-center justify-center overflow-hidden rounded-xl bg-neutral-900 p-4">
+    <div className="flex h-[60vh] max-h-[32rem] items-center justify-center overflow-hidden rounded-xl bg-neutral-900 p-4">
       {ext === "docx" ? <DocxPreview url={url} /> : <PdfPreview url={url} />}
     </div>
   );
@@ -146,19 +146,22 @@ function ChooseSourceStep({
           </span>
           <span className="font-display font-semibold">{t("sourceImportTitle")}</span>
           <span className="text-xs text-muted-foreground">{t("sourceImportHint")}</span>
-          <input
-            ref={inputRef}
-            type="file"
-            accept={IMPORT_FILE_ACCEPT}
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              e.target.value = "";
-              if (file) onFile(file);
-            }}
-          />
         </button>
       </div>
+      {/* Sibling of the trigger button, not nested inside it — a <button>
+          containing an <input> is invalid HTML and unreliable on mobile
+          browsers (same pattern GuidebookAttachments already uses). */}
+      <input
+        ref={inputRef}
+        type="file"
+        accept={IMPORT_FILE_ACCEPT}
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file) onFile(file);
+        }}
+      />
       {importError && (
         <div
           role="alert"
@@ -372,24 +375,24 @@ export function WikiEntryComposer() {
 
         {stage === "compose" && (
           <>
+            {/* A two-segment text pill ("Schreiben"/"Vorschau") plus the gear
+                and save button next to it doesn't fit a narrow phone screen
+                alongside the title — a single toggle button showing what
+                tapping switches *to* covers the same job in a third of the
+                width. */}
             {isMobile && (
-              <div className="mr-1 flex items-center gap-1 rounded-full border border-border bg-muted/40 p-0.5">
-                {(["write", "preview"] as const).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => setMobileView(v)}
-                    className={cn(
-                      "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                      mobileView === v
-                        ? "bg-foreground text-background"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {v === "write" ? t("write") : t("preview")}
-                  </button>
-                ))}
-              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={mobileView === "write" ? t("preview") : t("write")}
+                onClick={() => setMobileView((v) => (v === "write" ? "preview" : "write"))}
+              >
+                {mobileView === "write" ? (
+                  <Eye className="size-4" />
+                ) : (
+                  <PenLine className="size-4" />
+                )}
+              </Button>
             )}
             <Link
               href="/guidebooks/new/advanced"

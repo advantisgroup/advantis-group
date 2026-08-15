@@ -703,9 +703,17 @@ function TablePicker({ controller }: { controller: RichTextController }) {
 export function RichTextToolbar({
   controller,
   className,
+  fileLinkCandidates,
 }: {
   controller: RichTextController;
   className?: string;
+  /** Enables an "insert file link" button, listed right after "insert
+   *  table". Rendered *inside* this same flex-wrap row (not as an external
+   *  sibling) so it wraps onto a second line along with everything else on
+   *  a narrow screen instead of getting stranded — a `flex-wrap` container
+   *  only reflows its own direct children, not a sibling element sitting
+   *  outside it. */
+  fileLinkCandidates?: FileLinkCandidate[];
 }) {
   const t = useTranslations("RichText");
   return (
@@ -738,6 +746,12 @@ export function RichTextToolbar({
       )}
       <span className="mx-1 h-5 w-px bg-border/70" aria-hidden />
       <TablePicker controller={controller} />
+      {fileLinkCandidates && fileLinkCandidates.length > 0 && (
+        <FileLinkPicker
+          candidates={fileLinkCandidates}
+          onPick={(name) => controller.insertFileLink(name)}
+        />
+      )}
     </div>
   );
 }
@@ -1098,20 +1112,11 @@ export function RichTextEditor({
           className,
         )}
       >
-        <div
-          className={cn(
-            "flex items-center gap-1 border-b border-border/70 bg-muted/40 px-1.5 py-1",
-            docked && "invisible",
-          )}
-        >
-          <RichTextToolbar controller={controller} className="flex-1" />
-          {fileLinkCandidates && fileLinkCandidates.length > 0 && (
-            <FileLinkPicker
-              candidates={fileLinkCandidates}
-              onPick={(name) => controller.insertFileLink(name)}
-            />
-          )}
-        </div>
+        <RichTextToolbar
+          controller={controller}
+          fileLinkCandidates={fileLinkCandidates}
+          className={cn("border-b border-border/70 bg-muted/40 px-1.5 py-1", docked && "invisible")}
+        />
         <RichTextSurface
           controller={controller}
           placeholder={placeholder}
@@ -1132,7 +1137,11 @@ export function RichTextEditor({
             style={{ bottom: keyboardInset }}
             className="fixed inset-x-0 z-50 border-t border-border/70 bg-card px-2 py-1.5 shadow-[0_-4px_16px_-6px_rgb(0_0_0/0.25)]"
           >
-            <RichTextToolbar controller={controller} className="justify-center" />
+            <RichTextToolbar
+              controller={controller}
+              fileLinkCandidates={fileLinkCandidates}
+              className="justify-center"
+            />
           </div>,
           document.body,
         )}
