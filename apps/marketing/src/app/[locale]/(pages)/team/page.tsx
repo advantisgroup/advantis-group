@@ -14,7 +14,13 @@ import { SectionDivider } from "@/components/layout/SectionDivider";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
-const OFFICE_PHOTOS: { src: string; alt: string; size?: "sm" | "lg" }[] = [];
+const OFFICE_PHOTOS: { src: string; alt: string; size?: "sm" | "lg" }[] = [
+  { src: "/office/office-teamwork.png", alt: "Team ADVANTIS GROUP", size: "lg" },
+  { src: "/office/office-andrea-reichl.png", alt: "Team ADVANTIS GROUP" },
+  { src: "/office/office-whiteboard.png", alt: "Team ADVANTIS GROUP" },
+  { src: "/office/office-andrea-lautenbacher.png", alt: "Team ADVANTIS GROUP" },
+  { src: "/office/office-morena-azzuro.png", alt: "Team ADVANTIS GROUP" },
+];
 
 function ParallaxPhoto({
   src,
@@ -99,43 +105,40 @@ export default function Team() {
       initials: "AR",
       bio: t("founder.bio"),
       email: `${process.env.NEXT_PUBLIC_EMAIL_ADRESS}`,
-      photo: "/team/andrea-reichl.jpg",
     },
     {
       name: "Andrea Lautenbacher",
       role: t("roles.inbound"),
       initials: "AL",
-      photo: "/team/andrea-lautenbacher.jpg",
     },
     {
       name: "Jessica Blume",
       role: t("roles.outbound"),
       initials: "JB",
-      photo: "/team/jessica-blume.jpg",
+      photo: "/team/jessica-blume.png",
     },
     {
       name: "Morena Azzuro",
       role: t("roles.hr"),
       initials: "MA",
-      photo: "/team/morena-azzuro.jpg",
     },
     {
       name: "Adam Kämpfer",
       role: t("roles.marketing"),
       initials: "AK",
-      photo: "/team/adam-kaempfer.jpg",
+      photo: "/team/adam-kaempfer.png",
     },
     {
       name: "Sabine Sagasser",
       role: t("roles.coach"),
       initials: "SS",
-      photo: "/team/sabine-sagasser.jpg",
+      photo: "/team/sabine-sagasser.png",
     },
     {
       name: "Martin Bergmüller",
       role: t("roles.quality"),
       initials: "MB",
-      photo: "/team/martin-bergmueller.jpg",
+      photo: "/team/martin-bergmueller.png",
     },
   ];
 
