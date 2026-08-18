@@ -1,6 +1,11 @@
 "use client";
 
+import { useRef, useState } from "react";
+
+import Image from "next/image";
+
 import { Mail, ArrowRight } from "lucide-react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useTranslations } from "next-intl";
 
 import { ScrollReveal } from "@/components/effects/ScrollReveal";
@@ -8,6 +13,88 @@ import { ShapeParticles } from "@/components/effects/ShapeParticles";
 import { SectionDivider } from "@/components/layout/SectionDivider";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+
+const OFFICE_PHOTOS: { src: string; alt: string; size?: "sm" | "lg" }[] = [
+  { src: "/office/office-teamwork.png", alt: "Team ADVANTIS GROUP", size: "lg" },
+  { src: "/office/office-andrea-reichl.png", alt: "Team ADVANTIS GROUP" },
+  { src: "/office/office-whiteboard.png", alt: "Team ADVANTIS GROUP" },
+  { src: "/office/office-andrea-lautenbacher.png", alt: "Team ADVANTIS GROUP" },
+  { src: "/office/office-morena-azzuro.png", alt: "Team ADVANTIS GROUP" },
+];
+
+function ParallaxPhoto({
+  src,
+  alt,
+  className,
+  speed,
+}: {
+  src: string;
+  alt: string;
+  className: string;
+  speed: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+  const y = useTransform(scrollYProgress, [0, 1], [`-${speed}%`, `${speed}%`]);
+
+  return (
+    <div ref={ref} className={`${className} relative overflow-hidden rounded-2xl`}>
+      <motion.div style={{ y }} className="absolute inset-[-15%]">
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes="(min-width: 768px) 33vw, 50vw"
+          className="object-cover"
+        />
+      </motion.div>
+    </div>
+  );
+}
+
+// Falls back to initials when the photo file doesn't exist yet (placeholders
+// not generated) or fails to load.
+function Avatar({
+  photo,
+  name,
+  initials,
+  className,
+  fontSizeClassName,
+}: {
+  photo?: string;
+  name: string;
+  initials: string;
+  className: string;
+  fontSizeClassName: string;
+}) {
+  const [errored, setErrored] = useState(false);
+
+  if (!photo || errored) {
+    return (
+      <div
+        className={`${className} flex items-center justify-center font-bold ${fontSizeClassName}`}
+      >
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${className} relative overflow-hidden`}>
+      <Image
+        src={photo}
+        alt={name}
+        fill
+        sizes="200px"
+        className="object-cover"
+        onError={() => setErrored(true)}
+      />
+    </div>
+  );
+}
 
 export default function Team() {
   const t = useTranslations("team");
@@ -28,11 +115,7 @@ export default function Team() {
       name: "Jessica Blume",
       role: t("roles.outbound"),
       initials: "JB",
-    },
-    {
-      name: "Kaleb Daniel",
-      role: t("roles.it"),
-      initials: "KD",
+      photo: "/team/jessica-blume.png",
     },
     {
       name: "Morena Azzuro",
@@ -43,16 +126,19 @@ export default function Team() {
       name: "Adam Kämpfer",
       role: t("roles.marketing"),
       initials: "AK",
+      photo: "/team/adam-kaempfer.png",
     },
     {
       name: "Sabine Sagasser",
       role: t("roles.coach"),
       initials: "SS",
+      photo: "/team/sabine-sagasser.png",
     },
     {
       name: "Martin Bergmüller",
       role: t("roles.quality"),
       initials: "MB",
+      photo: "/team/martin-bergmueller.png",
     },
   ];
 
@@ -104,9 +190,13 @@ export default function Team() {
                 <div className="grid md:grid-cols-12 gap-12 items-center">
                   <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left">
                     <div className="relative mb-6">
-                      <div className="w-40 h-40 md:w-48 md:h-48 rounded-full bg-linear-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-4xl md:text-5xl font-bold text-primary border-4 border-background shadow-2xl relative z-10 group-hover:scale-105 transition-transform duration-500">
-                        {teamMembers[0].initials}
-                      </div>
+                      <Avatar
+                        photo={teamMembers[0].photo}
+                        name={teamMembers[0].name}
+                        initials={teamMembers[0].initials}
+                        fontSizeClassName="text-4xl md:text-5xl"
+                        className="w-40 h-40 md:w-48 md:h-48 rounded-full bg-linear-to-br from-primary/20 to-secondary/20 text-primary border-4 border-background shadow-2xl relative z-10 group-hover:scale-105 transition-transform duration-500"
+                      />
                       {/* Orbiting particles or rings could go here */}
                       <div className="absolute inset-0 border border-primary/20 rounded-full scale-110 animate-pulse-slow" />
                       <div className="absolute inset-0 border border-dashed border-primary/20 rounded-full scale-125 animate-spin-slow" />
@@ -168,9 +258,13 @@ export default function Team() {
 
                     <div className="relative z-10 flex flex-col items-center text-center h-full">
                       <div className="mb-6 relative">
-                        <div className="w-24 h-24 rounded-2xl bg-linear-to-br from-background to-muted flex items-center justify-center text-2xl font-bold text-muted-foreground group-hover:text-primary group-hover:from-primary/10 group-hover:to-primary/5 transition-all duration-300 shadow-inner">
-                          {member.initials}
-                        </div>
+                        <Avatar
+                          photo={member.photo}
+                          name={member.name}
+                          initials={member.initials}
+                          fontSizeClassName="text-2xl"
+                          className="w-24 h-24 rounded-2xl bg-linear-to-br from-background to-muted text-muted-foreground group-hover:text-primary group-hover:from-primary/10 group-hover:to-primary/5 transition-all duration-300 shadow-inner"
+                        />
                         <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-background rounded-full flex items-center justify-center border border-border opacity-0 group-hover:opacity-100 transition-all duration-300 delay-100 scale-0 group-hover:scale-100">
                           <ArrowRight className="w-4 h-4 text-primary -rotate-45" />
                         </div>
@@ -192,6 +286,33 @@ export default function Team() {
               ))}
             </div>
           </section>
+
+          {/* Office Life */}
+          {OFFICE_PHOTOS.length > 0 && (
+            <section className="mt-32">
+              <ScrollReveal delay={100} className="mb-12 text-center md:text-left">
+                <h2 className="text-3xl md:text-4xl font-bold">{t("office.title")}</h2>
+                <p className="text-muted-foreground mt-2">{t("office.subtitle")}</p>
+              </ScrollReveal>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6 auto-rows-[10rem] md:auto-rows-[12rem]">
+                {OFFICE_PHOTOS.map((photo, index) => (
+                  <ScrollReveal
+                    key={photo.src}
+                    delay={index * 100}
+                    className={photo.size === "lg" ? "col-span-2 row-span-2" : "row-span-2"}
+                  >
+                    <ParallaxPhoto
+                      src={photo.src}
+                      alt={photo.alt}
+                      speed={8 + (index % 3) * 4}
+                      className="h-full w-full border border-border/50 shadow-lg"
+                    />
+                  </ScrollReveal>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </main>
     </div>
