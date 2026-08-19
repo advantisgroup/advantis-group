@@ -8,19 +8,26 @@ import { ConvexHttpClient } from "convex/browser";
 // Convex; there's no fetch cache layer here to invalidate.
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
-export interface BlogPost {
+/** Shape returned by the list query — no `body`, which the grid never renders. */
+export interface BlogPostSummary {
   _id: string;
   title: string;
   slug: string;
   language: "de" | "en";
   excerpt: string;
-  body: string;
+  category: string | null;
   mainImageUrl: string | null;
   author: string;
+  authorAvatarUrl: string | null;
+  readingMinutes: number | null;
   publishedAt: number;
 }
 
-export function getPosts(language: "de" | "en"): Promise<BlogPost[]> {
+export interface BlogPost extends BlogPostSummary {
+  body: string;
+}
+
+export function getPosts(language: "de" | "en"): Promise<BlogPostSummary[]> {
   return convex.query(api.blogPosts.getAll, { language });
 }
 

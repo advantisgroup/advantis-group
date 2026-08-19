@@ -468,8 +468,20 @@
     "empty": "De nouveaux articles arrivent bientôt.",
     "emptySubtitle": "Nous préparons les premiers articles. Repassez bientôt.",
     "emptyCta": "Nous contacter",
+    "emptyFiltered": "Aucun article dans cette catégorie.",
+    "emptyFilteredSubtitle": "Rien n'a encore été publié ici. Consultez les autres articles en attendant.",
     "readMore": "Lire la suite",
-    "back": "Retour au blog"
+    "back": "Retour au blog",
+    "readingTime": "{minutes} min de lecture",
+    "filterLabel": "Filtrer par catégorie",
+    "filterAll": "Tous",
+    "categories": {
+      "unternehmen": "Entreprise",
+      "vertrieb": "Ventes",
+      "ki": "IA",
+      "karriere": "Carrières",
+      "events": "Événements"
+    }
   },
   "email": {
     "greeting": "Bonjour {firstName} {lastName},",

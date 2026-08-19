@@ -22,6 +22,17 @@
   "fieldTranslationKeyHint": "Gleicher Wert bei der de- und en-Version eines Beitrags, damit sie später verknüpft werden können.",
   "fieldExcerpt": "Kurzbeschreibung",
   "fieldExcerptPlaceholder": "Eine kurze Zusammenfassung für die Blog-Übersicht.",
+  "fieldCategory": "Kategorie",
+  "fieldCategoryPlaceholder": "Kategorie wählen",
+  "fieldCategoryNone": "Keine Kategorie",
+  "fieldCategoryHint": "Wird als Label über dem Titel angezeigt und dient auf der Website als Filter.",
+  "categories": {
+    "unternehmen": "Unternehmen",
+    "vertrieb": "Vertrieb",
+    "ki": "KI",
+    "karriere": "Karriere",
+    "events": "Events"
+  },
   "fieldCoverImage": "Titelbild",
   "fieldCoverImageHint": "Zum Hochladen klicken",
   "fieldPublished": "Status",

@@ -8,7 +8,11 @@ import { ArrowLeft, Eye, ImagePlus, Loader2, PenLine, Settings, X } from "lucide
 import { useTranslations } from "next-intl";
 
 import { BlogPostPreview } from "@/components/blog/BlogPostPreview";
-import { type BlogPostEntry, useBlogPostForm } from "@/components/blog/useBlogPostForm";
+import {
+  BLOG_CATEGORIES,
+  type BlogPostEntry,
+  useBlogPostForm,
+} from "@/components/blog/useBlogPostForm";
 import { Link } from "@/components/Link";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
@@ -28,6 +32,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 const SPLIT_KEY = "blog:composerSplit";
+
+// Radix Select has no empty-string value, so "no category" needs a sentinel.
+const NO_CATEGORY = "__none__";
 
 /**
  * Full-screen blog post composer — same shell pattern as WikiEntryComposer
@@ -85,6 +92,28 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
             <SelectItem value="en">{t("languageEn")}</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+          {t("fieldCategory")}
+        </label>
+        <Select
+          value={form.category || NO_CATEGORY}
+          onValueChange={(v) => form.setCategory(v === NO_CATEGORY ? "" : v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={t("fieldCategoryPlaceholder")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_CATEGORY}>{t("fieldCategoryNone")}</SelectItem>
+            {BLOG_CATEGORIES.map((category) => (
+              <SelectItem key={category} value={category}>
+                {t(`categories.${category}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="mt-1 text-[11px] text-muted-foreground">{t("fieldCategoryHint")}</p>
       </div>
       <div>
         <label className="mb-1 block text-xs font-medium text-muted-foreground">

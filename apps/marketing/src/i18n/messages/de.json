@@ -468,8 +468,20 @@
     "empty": "Hier gibt es bald neue Beiträge.",
     "emptySubtitle": "Wir arbeiten an den ersten Artikeln. Schau bald wieder vorbei.",
     "emptyCta": "Kontakt aufnehmen",
+    "emptyFiltered": "Keine Beiträge in dieser Kategorie.",
+    "emptyFilteredSubtitle": "In dieser Kategorie ist noch nichts erschienen. Schau dir solange die anderen Beiträge an.",
     "readMore": "Weiterlesen",
-    "back": "Zurück zum Blog"
+    "back": "Zurück zum Blog",
+    "readingTime": "{minutes} Min. Lesezeit",
+    "filterLabel": "Nach Kategorie filtern",
+    "filterAll": "Alle",
+    "categories": {
+      "unternehmen": "Unternehmen",
+      "vertrieb": "Vertrieb",
+      "ki": "KI",
+      "karriere": "Karriere",
+      "events": "Events"
+    }
   },
   "email": {
     "greeting": "Hallo {firstName} {lastName},",

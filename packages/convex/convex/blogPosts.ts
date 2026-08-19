@@ -30,9 +30,24 @@ const postFields = {
   translationKey: v.optional(v.string()),
   title: v.string(),
   excerpt: v.string(),
+  category: v.optional(v.string()),
   body: v.string(),
   mainImageStorageId: v.optional(v.id("_storage")),
 };
+
+const WORDS_PER_MINUTE = 200;
+
+/** Rough read-time estimate from the stored HTML body. Tags are stripped
+ * rather than parsed — an approximate word count is all a "5 min read" label
+ * needs, and this runs in a mutation, not a render. */
+function estimateReadingMinutes(html: string): number {
+  const words = html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+  return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
+}
 
 async function assertSlugAvailable(
   ctx: Parameters<typeof requireCapability>[0],
@@ -96,10 +111,16 @@ export const publish = mutation({
     const mainImageUrl = post.mainImageStorageId
       ? await ctx.storage.getUrl(post.mainImageStorageId)
       : undefined;
+    const author = await ctx.db.get(post.authorUserId);
+    const authorAvatarUrl = author?.avatarStorageId
+      ? await ctx.storage.getUrl(author.avatarStorageId)
+      : undefined;
     await ctx.db.patch(postId, {
       status: "published",
       publishedAt: post.publishedAt ?? Date.now(),
       mainImageUrl: mainImageUrl ?? undefined,
+      authorAvatarUrl: authorAvatarUrl ?? undefined,
+      readingMinutes: estimateReadingMinutes(post.body),
       updatedAt: Date.now(),
     });
     return { ok: true };
@@ -131,26 +152,40 @@ export const remove = mutation({
   },
 });
 
-const PUBLIC_FIELDS = (post: {
+interface PublicPostRow {
   _id: string;
   title: string;
   slug: string;
   language: "de" | "en";
   excerpt: string;
+  category?: string;
   body: string;
   mainImageUrl?: string;
   authorName: string;
+  authorAvatarUrl?: string;
+  readingMinutes?: number;
   publishedAt?: number;
-}) => ({
+}
+
+/** Everything the list page needs — deliberately without `body`, which would
+ * otherwise ship every post's full HTML to render a grid of excerpts. */
+const PUBLIC_SUMMARY = (post: PublicPostRow) => ({
   _id: post._id,
   title: post.title,
   slug: post.slug,
   language: post.language,
   excerpt: post.excerpt,
-  body: post.body,
+  category: post.category ?? null,
   mainImageUrl: post.mainImageUrl ?? null,
   author: post.authorName,
+  authorAvatarUrl: post.authorAvatarUrl ?? null,
+  readingMinutes: post.readingMinutes ?? null,
   publishedAt: post.publishedAt ?? 0,
+});
+
+const PUBLIC_DETAIL = (post: PublicPostRow) => ({
+  ...PUBLIC_SUMMARY(post),
+  body: post.body,
 });
 
 /** Public — no auth guard. Called from apps/marketing via a plain
@@ -166,7 +201,7 @@ export const getAll = query({
       )
       .order("desc")
       .collect();
-    return rows.map(PUBLIC_FIELDS);
+    return rows.map(PUBLIC_SUMMARY);
   },
 });
 
@@ -178,6 +213,6 @@ export const getBySlug = query({
       .withIndex("by_slug_language", (q) => q.eq("slug", slug).eq("language", language))
       .unique();
     if (!post || post.status !== "published") return null;
-    return PUBLIC_FIELDS(post);
+    return PUBLIC_DETAIL(post);
   },
 });

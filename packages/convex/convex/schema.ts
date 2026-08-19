@@ -1987,6 +1987,10 @@ export default defineSchema({
     translationKey: v.optional(v.string()),
     title: v.string(),
     excerpt: v.string(),
+    // Free-text rather than a union so adding a category is a code change in
+    // the two apps' category tables, not a Convex schema push. The composer
+    // only ever writes slugs from that fixed list, so typos can't creep in.
+    category: v.optional(v.string()),
     // Sanitized HTML from RichTextEditor, same storage shape as
     // wikiEntries.erklaerung — apps/marketing sanitizes again on render
     // since this is a raw mutation arg with no server-side sanitization in
@@ -1998,6 +2002,12 @@ export default defineSchema({
     mainImageUrl: v.optional(v.string()),
     authorUserId: v.id("users"),
     authorName: v.string(),
+    // Both snapshotted at publish time, for the same reason as mainImageUrl —
+    // the public marketing read is unauthenticated and can't resolve a
+    // storage id or join the users table itself.
+    authorAvatarUrl: v.optional(v.string()),
+    /** Estimated read time in minutes, derived from the body on publish. */
+    readingMinutes: v.optional(v.number()),
     status: v.union(v.literal("draft"), v.literal("published")),
     publishedAt: v.optional(v.number()),
     version: v.number(),

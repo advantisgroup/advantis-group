@@ -468,8 +468,20 @@
     "empty": "New posts are coming soon.",
     "emptySubtitle": "We're working on the first articles. Check back soon.",
     "emptyCta": "Get in touch",
+    "emptyFiltered": "No posts in this category.",
+    "emptyFilteredSubtitle": "Nothing has been published here yet. Have a look at the other posts in the meantime.",
     "readMore": "Read more",
-    "back": "Back to blog"
+    "back": "Back to blog",
+    "readingTime": "{minutes} min read",
+    "filterLabel": "Filter by category",
+    "filterAll": "All",
+    "categories": {
+      "unternehmen": "Company",
+      "vertrieb": "Sales",
+      "ki": "AI",
+      "karriere": "Careers",
+      "events": "Events"
+    }
   },
   "email": {
     "greeting": "Hello {firstName} {lastName},",

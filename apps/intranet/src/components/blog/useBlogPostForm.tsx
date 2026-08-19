@@ -12,6 +12,11 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { slugify } from "@/lib/guidebook-blocks";
 import { uploadToConvex } from "@/lib/upload";
 
+/** Mirrors `BLOG_CATEGORIES` in apps/marketing's `lib/blog-categories.ts` —
+ *  the marketing site owns the labels and styling, this side only needs the
+ *  slugs to write. Keep the two lists in sync when adding a category. */
+export const BLOG_CATEGORIES = ["unternehmen", "vertrieb", "ki", "karriere", "events"] as const;
+
 export interface BlogPostEntry {
   _id: Id<"blogPosts">;
   slug: string;
@@ -19,6 +24,7 @@ export interface BlogPostEntry {
   translationKey?: string;
   title: string;
   excerpt: string;
+  category?: string;
   body: string;
   mainImageStorageId?: Id<"_storage">;
   mainImageUrl?: string;
@@ -58,6 +64,7 @@ export function useBlogPostForm({
     isEditing ? (entry.translationKey ?? "") : "",
   );
   const [excerpt, setExcerpt] = useState(isEditing ? entry.excerpt : "");
+  const [category, setCategory] = useState(isEditing ? (entry.category ?? "") : "");
   const [body, setBody] = useState(isEditing ? entry.body : "");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(
@@ -111,6 +118,7 @@ export function useBlogPostForm({
         translationKey: translationKey.trim() || undefined,
         title: title.trim(),
         excerpt: excerpt.trim(),
+        category: category || undefined,
         body,
         mainImageStorageId,
       };
@@ -151,6 +159,8 @@ export function useBlogPostForm({
     setTranslationKey,
     excerpt,
     setExcerpt,
+    category,
+    setCategory,
     body,
     setBody,
     coverPreviewUrl,

@@ -6,8 +6,10 @@ import { ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import sanitizeHtml from "sanitize-html";
 
+import { CategoryEyebrow, PostMeta } from "@/components/blog/PostMeta";
 import { Link } from "@/i18n/navigation";
 import { type Locale } from "@/i18n/request";
+import { isBlogCategory } from "@/lib/blog-categories";
 import { getPost } from "@/lib/blog";
 
 // Re-fetch from Convex periodically instead of freezing the post at build time.
@@ -45,8 +47,19 @@ export async function generateMetadata({
     title: post.title,
     description: post.excerpt,
     openGraph: {
+      type: "article",
       title: post.title,
       description: post.excerpt,
+      publishedTime: new Date(post.publishedAt).toISOString(),
+      authors: post.author ? [post.author] : undefined,
+      // Without this a shared link renders as a bare text card everywhere.
+      images: post.mainImageUrl ? [{ url: post.mainImageUrl }] : undefined,
+    },
+    twitter: {
+      card: post.mainImageUrl ? "summary_large_image" : "summary",
+      title: post.title,
+      description: post.excerpt,
+      images: post.mainImageUrl ? [post.mainImageUrl] : undefined,
     },
   };
 }
@@ -66,33 +79,52 @@ export default async function BlogPostPage({
     notFound();
   }
 
+  const category = isBlogCategory(post.category) ? t(`categories.${post.category}`) : null;
+
   return (
     <div className="min-h-screen">
-      <main className="container mx-auto px-4 pt-24 pb-24">
-        <article className="max-w-3xl mx-auto space-y-8">
-          <Link
-            href="/blog"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {t("back")}
-          </Link>
+      <main className="container mx-auto max-w-3xl px-4 pt-28 pb-24">
+        <Link
+          href="/blog"
+          className="group inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+          {t("back")}
+        </Link>
 
-          <div className="space-y-4">
-            <h1 className="text-4xl md:text-6xl font-bold">{post.title}</h1>
-            <p className="text-sm text-muted-foreground">
-              {new Date(post.publishedAt).toLocaleDateString(locale)}
-              {post.author ? ` — ${post.author}` : ""}
+        <article className="mt-10">
+          <header className="space-y-5 border-b border-border pb-8">
+            {category ? <CategoryEyebrow label={category} /> : null}
+            <h1 className="font-[family-name:var(--font-outfit)] text-4xl font-bold leading-[1.05] tracking-tight md:text-5xl">
+              {post.title}
+            </h1>
+            {/* The excerpt doubles as the article's lede — it's already written
+                as a standalone summary for the list, so repeating it here at
+                display scale costs the author nothing. */}
+            <p className="text-lg leading-relaxed text-muted-foreground md:text-xl">
+              {post.excerpt}
             </p>
-          </div>
+            <PostMeta
+              author={post.author}
+              authorAvatarUrl={post.authorAvatarUrl}
+              publishedAt={post.publishedAt}
+              readingMinutes={post.readingMinutes}
+              readingLabel={
+                post.readingMinutes ? t("readingTime", { minutes: post.readingMinutes }) : null
+              }
+              locale={locale}
+              size="md"
+              className="pt-1"
+            />
+          </header>
 
           {post.mainImageUrl ? (
-            <div className="relative aspect-video rounded-md overflow-hidden">
+            <div className="relative mt-10 aspect-[16/9] overflow-hidden rounded-xl border border-border/60">
               <Image
                 src={post.mainImageUrl}
-                alt={post.title}
+                alt=""
                 fill
-                sizes="(min-width: 768px) 768px, 100vw"
+                sizes="(min-width: 768px) 48rem, 100vw"
                 className="object-cover"
                 priority
               />
@@ -101,7 +133,7 @@ export default async function BlogPostPage({
 
           {post.body ? (
             <div
-              className="prose prose-neutral dark:prose-invert max-w-none"
+              className="prose prose-neutral mt-10 max-w-none dark:prose-invert prose-headings:font-[family-name:var(--font-outfit)] prose-headings:tracking-tight prose-a:text-primary prose-img:rounded-lg md:prose-lg"
               // The composer's RichTextEditor only ever produces constrained
               // HTML through normal use, but the stored string is a raw
               // Convex mutation arg with no server-side sanitization in

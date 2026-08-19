@@ -51,6 +51,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
         translationKey: post.translationKey,
         title: post.title,
         excerpt: post.excerpt,
+        category: post.category,
         body: post.body,
         mainImageStorageId: post.mainImageStorageId,
         mainImageUrl: post.mainImageUrl,
