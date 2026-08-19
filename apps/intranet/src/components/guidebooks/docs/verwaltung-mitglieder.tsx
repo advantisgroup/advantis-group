@@ -37,16 +37,62 @@ const DOC: DocContent = {
         },
         {
           kind: "text",
-          body: "E-Mail-Adresse eingeben, Rolle wählen, auf **„Einladung senden“** klicken (Briefumschlag-Icon). Firmen-E-Mail-Adressen funktionieren direkt.",
+          body: "E-Mail-Adresse eingeben, Rolle wählen, auf **„Einladung senden“** klicken (Briefumschlag-Icon).",
         },
         {
           kind: "callout",
-          tone: "warning",
-          body: "Externe E-Mail-Adressen (andere Domain als die Firma) könnt ihr als Führungskraft nicht einladen — nur Admins dürfen das, nach einer zusätzlichen Bestätigung.",
+          tone: "tip",
+          body: "Für die private E-Mail-Adresse der neuen Person einladen, nicht auf eine Firmenadresse warten. Für den Intranet-Zugang macht das keinen Unterschied — die Person meldet sich einfach mit der eingeladenen Adresse an. Damit könnt ihr sofort loslegen, statt erst mit IT eine Firmen-Mailbox einzurichten. Eine Firmenadresse kann später jederzeit ergänzt werden, falls gewünscht.",
+        },
+        {
+          kind: "text",
+          body: "Bei einer externen Adresse (andere Domain als die Firma — was bei einer privaten E-Mail immer der Fall ist) fragt das System nochmal extra nach, bevor die Einladung rausgeht. Das gilt für Führungskräfte genauso wie für Admins.",
         },
         {
           kind: "text",
           body: "Offene Einladungen lassen sich per **„Erneut senden“** nochmal zustellen oder per **„Widerrufen“** zurückziehen.",
+        },
+      ],
+    },
+    {
+      id: "danach",
+      title: "Danach: was die neue Person selbst erledigt",
+      blocks: [
+        {
+          kind: "text",
+          body: "Abteilung, Team und Jobtitel trägt sich jede:r beim ersten Login selbst im eigenen Profil ein — dafür braucht es keinen Eingriff von euch. Die vollständige Checkliste für den ersten Tag steht im Guidebook **„Onboarding“**.",
+        },
+        {
+          kind: "links",
+          items: [{ label: "Onboarding-Guidebook öffnen", href: "/guidebooks/onboarding" }],
+        },
+      ],
+    },
+    {
+      id: "clockodo",
+      title: "Externes System: Clockodo-Zugang einrichten",
+      blocks: [
+        {
+          kind: "callout",
+          tone: "info",
+          body: "Clockodo (Zeiterfassung) ist ein eigenständiges System, unabhängig vom Intranet-Login. Das muss zusätzlich angelegt werden — ist aber der einzige Zugang, der wirklich extern eingerichtet werden muss; eine Firmen-Mailbox ist wie oben beschrieben nicht nötig.",
+        },
+        {
+          kind: "links",
+          items: [{ label: "Clockodo-Verwaltung öffnen", href: "/clockodo/admin" }],
+        },
+        {
+          kind: "steps",
+          items: [
+            "Auf „Clockodo-Benutzer anlegen“ klicken.",
+            "Name, E-Mail-Adresse (am besten dieselbe wie bei der Intranet-Einladung — die Verknüpfung läuft über den Abgleich der Adresse) und optional Urlaubstage/Jahr eintragen.",
+            "Speichern.",
+          ],
+        },
+        {
+          kind: "callout",
+          tone: "warning",
+          body: "Die Verknüpfung zwischen Intranet-Konto und Clockodo-Konto läuft automatisch über eine übereinstimmende E-Mail-Adresse — bei Tippfehlern oder unterschiedlichen Adressen bleibt die Person „nicht verknüpft“. Der Filter „Nicht verknüpft“ in der Clockodo-Verwaltung zeigt das an.",
         },
       ],
     },

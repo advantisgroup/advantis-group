@@ -65,13 +65,10 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
     const trimmed = email.trim();
     if (!trimmed) return;
 
-    // Emails outside the company domains are admin-only and need an explicit
-    // confirmation before Clerk sends the invitation.
+    // Emails outside the company domains need an explicit confirmation
+    // before Clerk sends the invitation — a personal address works just as
+    // well as a company one, this is just a heads-up, not a restriction.
     if (isExternalEmail(trimmed, allowedDomains)) {
-      if (!isAdmin) {
-        toast.error(t("inviteExternalForbidden"));
-        return;
-      }
       const ok = await confirm({
         title: t("inviteExternalTitle"),
         description: t("inviteExternalBody", { email: trimmed }),
@@ -111,11 +108,7 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
         onOpenChange={setInviteOpen}
         title={t("sendInvite")}
         footer={
-          <Button
-            onClick={send}
-            disabled={busy || !email.trim() || (enteredExternal && !isAdmin)}
-            className="w-full sm:w-auto"
-          >
+          <Button onClick={send} disabled={busy || !email.trim()} className="w-full sm:w-auto">
             <Mail className="mr-2 h-4 w-4" />
             {t("sendInvite")}
           </Button>
@@ -132,7 +125,7 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
         </div>
         {enteredExternal && (
           <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
-            {isAdmin ? t("inviteExternalHint") : t("inviteExternalForbidden")}
+            {t("inviteExternalHint")}
           </p>
         )}
       </ResponsiveDialog>

@@ -36,15 +36,12 @@ export const createInviteRecord = internalMutation({
         message: "Only admins can invite admins or managers",
       });
     }
-    // Emails outside the company domains can still be invited, but only by an
-    // admin (the UI also asks for an explicit confirmation before sending).
+    // Emails outside the company domains are invited the same way as
+    // company ones — a personal address works just as well for the intranet
+    // account itself (Clerk auth doesn't care), and skips needing IT to
+    // provision a company mailbox first. The UI still asks for an explicit
+    // confirmation before sending, for both managers and admins.
     const external = !isEmailDomainAllowed(email);
-    if (external && inviter.role !== "admin") {
-      throw new ConvexError({
-        code: "forbidden",
-        message: "Only admins can invite external email addresses",
-      });
-    }
 
     const existingUser = await ctx.db
       .query("users")
