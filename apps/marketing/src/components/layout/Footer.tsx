@@ -65,6 +65,10 @@ export const Footer = () => {
       path: "/brands",
     },
     {
+      label: t("nav.blog"),
+      path: "/blog",
+    },
+    {
       label: t("nav.team"),
       path: "/team",
     },

@@ -2,6 +2,7 @@
   "nav": {
     "home": "主页",
     "brands": "我们的品牌",
+    "blog": "博客",
     "about": "关于我们",
     "team": "团队",
     "contact": "联系方式",
@@ -460,6 +461,13 @@
         "title": "根据§ 55第2款RStV负责内容："
       }
     }
+  },
+  "blog": {
+    "title": "博客",
+    "subtitle": "来自 ADVANTIS GROUP 的新闻与见解。",
+    "empty": "新文章即将上线。",
+    "readMore": "阅读更多",
+    "back": "返回博客"
   },
   "email": {
     "greeting": "你好 {firstName} {lastName}，",
