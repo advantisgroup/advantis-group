@@ -20,6 +20,8 @@
   "capability_manage_announcements_desc": "Create, pin, edit and delete company announcements and calendar events",
   "capability_manage_guidebooks": "Manage guidebooks",
   "capability_manage_guidebooks_desc": "Create and edit guidebook pages, attachments and highlights",
+  "capability_manage_blog": "Manage blog",
+  "capability_manage_blog_desc": "Create, edit and publish posts on advantisgroup.de/blog",
   "capability_manage_it_ticket_threads": "Manage IT ticket threads",
   "capability_manage_it_ticket_threads_desc": "Start, post in, and lock/unlock chat threads on IT tickets — filing and editing tickets themselves stays open to everyone",
   "capability_view_clockodo_team": "View team Clockodo data",

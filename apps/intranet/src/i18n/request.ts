@@ -14,6 +14,7 @@ import deAnnouncements from "./messages/de/Announcements.json";
 import deApprovals from "./messages/de/Approvals.json";
 import deApp from "./messages/de/App.json";
 import deApplicants from "./messages/de/Applicants.json";
+import deBlog from "./messages/de/Blog.json";
 import deCalendar from "./messages/de/Calendar.json";
 import deCaseSearch from "./messages/de/CaseSearch.json";
 import deChat from "./messages/de/Chat.json";
@@ -60,6 +61,7 @@ import enAnnouncements from "./messages/en/Announcements.json";
 import enApprovals from "./messages/en/Approvals.json";
 import enApp from "./messages/en/App.json";
 import enApplicants from "./messages/en/Applicants.json";
+import enBlog from "./messages/en/Blog.json";
 import enCalendar from "./messages/en/Calendar.json";
 import enCaseSearch from "./messages/en/CaseSearch.json";
 import enChat from "./messages/en/Chat.json";
@@ -127,6 +129,7 @@ const messagesByLocale = {
     Teams: enTeams,
     CustomRoles: enCustomRoles,
     Guidebooks: enGuidebooks,
+    Blog: enBlog,
     CaseSearch: enCaseSearch,
     Settings: enSettings,
     Roles: enRoles,
@@ -175,6 +178,7 @@ const messagesByLocale = {
     Teams: deTeams,
     CustomRoles: deCustomRoles,
     Guidebooks: deGuidebooks,
+    Blog: deBlog,
     CaseSearch: deCaseSearch,
     Settings: deSettings,
     Roles: deRoles,

@@ -13,6 +13,7 @@ export type Capability =
   | "view_activity_admin"
   | "manage_announcements"
   | "manage_guidebooks"
+  | "manage_blog"
   | "manage_it_ticket_threads"
   | "view_clockodo_team"
   | "manage_clockodo_team";
