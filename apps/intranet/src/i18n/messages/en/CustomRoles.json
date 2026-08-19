@@ -6,6 +6,8 @@
   "name": "Name",
   "namePlaceholder": "e.g. Team Lead",
   "capabilities": "Capabilities",
+  "capabilitySearchPlaceholder": "Search capabilities…",
+  "capabilitySearchEmpty": "No capabilities match your search.",
   "capability_manage_members": "Manage members",
   "capability_manage_members_desc": "Invite, suspend, edit roles",
   "capability_access_integrations": "Access integrations",
