@@ -49,6 +49,7 @@ import type * as approvalDelegations from "../approvalDelegations.js";
 import type * as applicantVault from "../applicantVault.js";
 import type * as applicants from "../applicants.js";
 import type * as auditLog from "../auditLog.js";
+import type * as blogPosts from "../blogPosts.js";
 import type * as chat from "../chat.js";
 import type * as clerkSync from "../clerkSync.js";
 import type * as clockodoWebhookLog from "../clockodoWebhookLog.js";
@@ -188,6 +189,7 @@ declare const fullApi: ApiFromModules<{
   applicantVault: typeof applicantVault;
   applicants: typeof applicants;
   auditLog: typeof auditLog;
+  blogPosts: typeof blogPosts;
   chat: typeof chat;
   clerkSync: typeof clerkSync;
   clockodoWebhookLog: typeof clockodoWebhookLog;

@@ -22,6 +22,7 @@ export const capabilityValidator = v.union(
   v.literal("view_activity_admin"),
   v.literal("manage_announcements"),
   v.literal("manage_guidebooks"),
+  v.literal("manage_blog"),
   v.literal("manage_it_ticket_threads"),
   v.literal("view_clockodo_team"),
   v.literal("manage_clockodo_team"),
@@ -1966,6 +1967,36 @@ export default defineSchema({
   })
     .index("by_slug", ["slug"])
     .index("by_category", ["categoryId"]),
+
+  // The public marketing-site blog. Authored from apps/intranet (gated by
+  // the manage_blog capability), read publicly (no auth) from apps/marketing
+  // via a plain ConvexHttpClient — see blogPosts.ts's getAll/getBySlug.
+  blogPosts: defineTable({
+    slug: v.string(),
+    language: v.union(v.literal("de"), v.literal("en")),
+    // Same value on a post's de and en version, so they can be linked later.
+    translationKey: v.optional(v.string()),
+    title: v.string(),
+    excerpt: v.string(),
+    // Sanitized HTML from RichTextEditor, same storage shape as
+    // wikiEntries.erklaerung — apps/marketing sanitizes again on render
+    // since this is a raw mutation arg with no server-side sanitization in
+    // front of it, and it renders on the public site.
+    body: v.string(),
+    mainImageStorageId: v.optional(v.id("_storage")),
+    // Resolved from mainImageStorageId at publish time so an unauthenticated
+    // marketing-site read never needs to call the auth-gated files.getUrl.
+    mainImageUrl: v.optional(v.string()),
+    authorUserId: v.id("users"),
+    authorName: v.string(),
+    status: v.union(v.literal("draft"), v.literal("published")),
+    publishedAt: v.optional(v.number()),
+    version: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_slug_language", ["slug", "language"])
+    .index("by_language_status_publishedAt", ["language", "status", "publishedAt"]),
 
   // Singleton marker — presence of a row means the one-time migration from
   // `guidebookPages` into `wikiEntries` has run. The wiki list page shows a
