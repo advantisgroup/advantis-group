@@ -10,6 +10,9 @@ import { Link } from "@/i18n/navigation";
 import { type Locale } from "@/i18n/request";
 import { getPost } from "@/lib/blog";
 
+// Re-fetch from Convex periodically instead of freezing the post at build time.
+export const revalidate = 60;
+
 function blogLanguage(locale: Locale): "de" | "en" {
   return locale === "de" ? "de" : "en";
 }

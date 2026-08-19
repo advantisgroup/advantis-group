@@ -200,9 +200,17 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
           <p className="truncate text-sm font-semibold leading-tight">
             {form.isEditing ? t("editPost") : t("createPost")}
           </p>
-          <p className="truncate text-[11px] text-muted-foreground">
+          <button
+            type="button"
+            onClick={() => form.setPublished(!form.published)}
+            title={t("fieldPublished")}
+            className={cn(
+              "truncate text-[11px] font-medium underline-offset-2 hover:underline",
+              form.published ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+            )}
+          >
             {form.published ? t("statusPublished") : t("statusDraft")}
-          </p>
+          </button>
         </div>
         {isMobile && (
           <Button
