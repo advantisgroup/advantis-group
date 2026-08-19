@@ -79,7 +79,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
 
         if (response.status === 500) {
           setButtonState("error");
-          showErrorToast("Falls das Problem anhält versuchen sie es später nochmal");
+          showErrorToast("Falls das Problem anhält, versuch es später nochmal");
           resetButtonState();
           onError?.(new Error("Server error"));
           return false;
@@ -88,7 +88,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
         if (response.status === 429) {
           setButtonState("error");
           toast.error("Rate Limit", {
-            description: "Sie haben zu viele Anfragen geschickt. Versuchen sie es später nochmal",
+            description: "Du hast zu viele Anfragen geschickt. Versuch es später nochmal",
             icon: <X />,
           });
           resetButtonState();

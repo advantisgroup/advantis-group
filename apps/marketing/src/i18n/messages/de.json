@@ -2,6 +2,7 @@
   "nav": {
     "home": "Startseite",
     "brands": "Unsere Marken",
+    "blog": "Blog",
     "about": "Über Uns",
     "team": "Team",
     "contact": "Kontakt",
@@ -460,6 +461,13 @@
         "title": "Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:"
       }
     }
+  },
+  "blog": {
+    "title": "Blog",
+    "subtitle": "Neuigkeiten und Einblicke von ADVANTIS GROUP.",
+    "empty": "Hier gibt es bald neue Beiträge.",
+    "readMore": "Weiterlesen",
+    "back": "Zurück zum Blog"
   },
   "email": {
     "greeting": "Hallo {firstName} {lastName},",

@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
     globalNotFound: true,
     useTypeScriptCli: true
   },
+  serverExternalPackages: ["sanity", "@sanity/vision"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.sanity.io",
+      },
+    ],
+  },
   async rewrites() {
     return [
       {
@@ -31,6 +40,11 @@ const nextConfig: NextConfig = {
       {
         source: "/content/:path*",
         destination: "/content/:path*",
+        locale: false,
+      },
+      {
+        source: "/studio/:path*",
+        destination: "/studio/:path*",
         locale: false,
       },
     ];
