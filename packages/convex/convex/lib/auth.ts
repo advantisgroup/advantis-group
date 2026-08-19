@@ -445,7 +445,16 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
         external,
         createdAt: now,
         lastSeenAt: now,
+        // Pre-filled by an inviter via the /admin/onboard personal-email
+        // flow — a plain email+role invite (/admin/invites) leaves these
+        // unset, and the employee fills them in themselves on first login.
+        ...(invite.departmentId ? { departmentId: invite.departmentId } : {}),
+        ...(invite.jobTitle ? { jobTitle: invite.jobTitle } : {}),
+        ...(invite.phone ? { phone: invite.phone } : {}),
       });
+      for (const teamId of invite.teamIds ?? []) {
+        await ctx.db.insert("userTeams", { userId, teamId });
+      }
       await ctx.db.patch(invite._id, {
         status: "accepted",
         acceptedAt: now,
