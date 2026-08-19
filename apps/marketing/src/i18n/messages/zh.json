@@ -468,8 +468,20 @@
     "empty": "新文章即将上线。",
     "emptySubtitle": "我们正在准备第一批文章,请稍后再来看看。",
     "emptyCta": "联系我们",
+    "emptyFiltered": "该分类下暂无文章。",
+    "emptyFilteredSubtitle": "这个分类还没有发布内容,先看看其他文章吧。",
     "readMore": "阅读更多",
-    "back": "返回博客"
+    "back": "返回博客",
+    "readingTime": "阅读时长 {minutes} 分钟",
+    "filterLabel": "按分类筛选",
+    "filterAll": "全部",
+    "categories": {
+      "unternehmen": "公司",
+      "vertrieb": "销售",
+      "ki": "人工智能",
+      "karriere": "招聘",
+      "events": "活动"
+    }
   },
   "email": {
     "greeting": "你好 {firstName} {lastName}，",

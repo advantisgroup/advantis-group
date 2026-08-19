@@ -22,6 +22,17 @@
   "fieldTranslationKeyHint": "Same value on the de and en version of one post, so they can be linked later.",
   "fieldExcerpt": "Excerpt",
   "fieldExcerptPlaceholder": "A short summary shown on the blog list page.",
+  "fieldCategory": "Category",
+  "fieldCategoryPlaceholder": "Choose a category",
+  "fieldCategoryNone": "No category",
+  "fieldCategoryHint": "Shown as a label above the title, and used as a filter on the website.",
+  "categories": {
+    "unternehmen": "Company",
+    "vertrieb": "Sales",
+    "ki": "AI",
+    "karriere": "Careers",
+    "events": "Events"
+  },
   "fieldCoverImage": "Cover image",
   "fieldCoverImageHint": "Click to upload",
   "fieldPublished": "Status",
