@@ -233,7 +233,9 @@ function DashboardChrome({
             },
           ]
         : []),
-    ...(viaClerk ? [] : [{ href: "/performance/upload", label: t("uploadLink"), icon: Upload }]),
+    ...(permissions.includes("upload_reports")
+      ? [{ href: "/performance/upload", label: t("uploadLink"), icon: Upload }]
+      : []),
     ...(viaClerk ? [] : [{ href: "/performance/passwort", label: t("passwordLink") }]),
   ];
 

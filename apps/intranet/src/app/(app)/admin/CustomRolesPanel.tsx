@@ -5,7 +5,7 @@ import { useState, type ReactNode } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Check, Info, Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, Info, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Drawer } from "vaul";
@@ -55,6 +55,32 @@ interface CustomRoleFormState {
   capabilities: Capability[];
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Highlights every occurrence of `query` inside `text`, case-insensitive —
+ *  used by the capability search below so a match is obvious at a glance
+ *  instead of having to re-read each card's full title/description. */
+function HighlightText({ text, query }: { text: string; query: string }) {
+  const trimmed = query.trim();
+  if (!trimmed) return <>{text}</>;
+  const parts = text.split(new RegExp(`(${escapeRegExp(trimmed)})`, "gi"));
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === trimmed.toLowerCase() ? (
+          <mark key={i} className="rounded-sm bg-primary/25 text-inherit">
+            {part}
+          </mark>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
 function RoleForm({
   role,
   onCancel,
@@ -67,6 +93,16 @@ function RoleForm({
   const t = useTranslations("CustomRoles");
   const [name, setName] = useState(role.name);
   const [capabilities, setCapabilities] = useState<Capability[]>(role.capabilities);
+  const [capabilityQuery, setCapabilityQuery] = useState("");
+
+  const visibleCapabilities = CAPABILITIES.filter((cap) => {
+    const query = capabilityQuery.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      t(`capability_${cap}`).toLowerCase().includes(query) ||
+      t(`capability_${cap}_desc`).toLowerCase().includes(query)
+    );
+  });
 
   function toggle(cap: Capability) {
     setCapabilities((prev) => {
@@ -97,51 +133,68 @@ function RoleForm({
         </div>
         <div className="space-y-2">
           <p className="text-xs font-medium text-muted-foreground">{t("capabilities")}</p>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={capabilityQuery}
+              onChange={(e) => setCapabilityQuery(e.target.value)}
+              placeholder={t("capabilitySearchPlaceholder")}
+              className="h-9 pl-8"
+            />
+          </div>
           <div className="grid max-h-80 grid-cols-1 gap-2 overflow-y-auto pr-1">
-            {CAPABILITIES.map((cap) => {
-              const checked = capabilities.includes(cap);
-              const impliedBy = capabilities.find((c) => CAPABILITY_IMPLIES[c]?.includes(cap));
-              const Icon = CAPABILITY_ICONS[cap];
-              return (
-                <button
-                  key={cap}
-                  type="button"
-                  aria-pressed={checked}
-                  disabled={!!impliedBy}
-                  onClick={() => toggle(cap)}
-                  className={cn(
-                    "flex items-start gap-2 rounded-lg border p-3 text-left transition-colors",
-                    checked
-                      ? "border-primary bg-primary/5"
-                      : "border-border/70 hover:border-border",
-                    impliedBy && "cursor-not-allowed opacity-80",
-                  )}
-                >
-                  <div
+            {visibleCapabilities.length === 0 ? (
+              <p className="px-1 py-3 text-center text-xs text-muted-foreground">
+                {t("capabilitySearchEmpty")}
+              </p>
+            ) : (
+              visibleCapabilities.map((cap) => {
+                const checked = capabilities.includes(cap);
+                const impliedBy = capabilities.find((c) => CAPABILITY_IMPLIES[c]?.includes(cap));
+                const Icon = CAPABILITY_ICONS[cap];
+                return (
+                  <button
+                    key={cap}
+                    type="button"
+                    aria-pressed={checked}
+                    disabled={!!impliedBy}
+                    onClick={() => toggle(cap)}
                     className={cn(
-                      "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm border",
+                      "flex items-start gap-2 rounded-lg border p-3 text-left transition-colors",
                       checked
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-muted-foreground/40",
+                        ? "border-primary bg-primary/5"
+                        : "border-border/70 hover:border-border",
+                      impliedBy && "cursor-not-allowed opacity-80",
                     )}
                   >
-                    {checked && <Check className="size-3" />}
-                  </div>
-                  <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium leading-snug">{t(`capability_${cap}`)}</p>
-                    <p className="text-xs leading-snug text-muted-foreground">
-                      {t(`capability_${cap}_desc`)}
-                    </p>
-                    {impliedBy && (
-                      <p className="text-xs leading-snug text-muted-foreground">
-                        {t("impliedBy", { by: t(`capability_${impliedBy}`) })}
+                    <div
+                      className={cn(
+                        "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm border",
+                        checked
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-muted-foreground/40",
+                      )}
+                    >
+                      {checked && <Check className="size-3" />}
+                    </div>
+                    <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium leading-snug">
+                        <HighlightText text={t(`capability_${cap}`)} query={capabilityQuery} />
                       </p>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
+                      <p className="text-xs leading-snug text-muted-foreground">
+                        <HighlightText text={t(`capability_${cap}_desc`)} query={capabilityQuery} />
+                      </p>
+                      {impliedBy && (
+                        <p className="text-xs leading-snug text-muted-foreground">
+                          {t("impliedBy", { by: t(`capability_${impliedBy}`) })}
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
       </div>

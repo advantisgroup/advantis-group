@@ -6,6 +6,8 @@
   "name": "Name",
   "namePlaceholder": "z. B. Teamleiter",
   "capabilities": "Berechtigungen",
+  "capabilitySearchPlaceholder": "Berechtigungen durchsuchen…",
+  "capabilitySearchEmpty": "Keine Berechtigungen gefunden.",
   "capability_manage_members": "Mitglieder verwalten",
   "capability_manage_members_desc": "Einladen, sperren, Rollen ändern",
   "capability_access_integrations": "Zugriff auf Integrationen",
