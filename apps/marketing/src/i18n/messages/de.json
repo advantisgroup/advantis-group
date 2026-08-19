@@ -466,6 +466,8 @@
     "title": "Blog",
     "subtitle": "Neuigkeiten und Einblicke von ADVANTIS GROUP.",
     "empty": "Hier gibt es bald neue Beiträge.",
+    "emptySubtitle": "Wir arbeiten an den ersten Artikeln. Schau bald wieder vorbei.",
+    "emptyCta": "Kontakt aufnehmen",
     "readMore": "Weiterlesen",
     "back": "Zurück zum Blog"
   },
