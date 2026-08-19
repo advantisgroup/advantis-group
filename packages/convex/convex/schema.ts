@@ -622,6 +622,15 @@ export default defineSchema({
     expiresAt: v.number(),
     createdAt: v.number(),
     acceptedAt: v.optional(v.number()),
+    // Optional pre-filled profile fields set by the inviter (the
+    // personal-email onboarding flow at /admin/onboard) — applied to the
+    // new `users` row and `userTeams` in `ensureUser`'s invite branch once
+    // the invite is accepted. Left unset by the plain email+role invite
+    // path (/admin/invites), where these stay self-service on first login.
+    departmentId: v.optional(v.id("departments")),
+    teamIds: v.optional(v.array(v.id("teams"))),
+    jobTitle: v.optional(v.string()),
+    phone: v.optional(v.string()),
   })
     .index("by_token", ["token"])
     .index("by_email", ["email"])

@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 
 import { ActionQueue } from "@/components/admin/overview/ActionQueue";
 import { AuditFeed, JumpTo } from "@/components/admin/overview/AuditFeed";
+import { NewEmployeeBanner } from "@/components/admin/overview/NewEmployeeBanner";
 import { AccountsRadar, OrgComposition } from "@/components/admin/overview/PeoplePanels";
 import { SystemsPanel } from "@/components/admin/overview/SystemsPanel";
 import { ThroughputPanel } from "@/components/admin/overview/ThroughputPanel";
@@ -48,6 +49,8 @@ export default function AdminOverviewPage() {
         description={t("organizationSubtitle")}
         icon={<ShieldCheck />}
       />
+
+      <NewEmployeeBanner />
 
       <Vitals tzOffsetMinutes={tzOffsetMinutes} />
 

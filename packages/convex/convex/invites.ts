@@ -21,7 +21,14 @@ function newToken(): string {
  * from the action, so `requireManager` resolves the calling admin/manager.
  */
 export const createInviteRecord = internalMutation({
-  args: { email: v.string(), role: roleArg },
+  args: {
+    email: v.string(),
+    role: roleArg,
+    departmentId: v.optional(v.id("departments")),
+    teamIds: v.optional(v.array(v.id("teams"))),
+    jobTitle: v.optional(v.string()),
+    phone: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const inviter = await requireManager(ctx);
     const email = args.email.trim().toLowerCase();
@@ -63,6 +70,13 @@ export const createInviteRecord = internalMutation({
       .filter((q) => q.eq(q.field("status"), "pending"))
       .first();
 
+    const pendingProfile = {
+      departmentId: args.departmentId,
+      teamIds: args.teamIds,
+      jobTitle: args.jobTitle,
+      phone: args.phone,
+    };
+
     let inviteId;
     if (existingInvite) {
       await ctx.db.patch(existingInvite._id, {
@@ -73,6 +87,7 @@ export const createInviteRecord = internalMutation({
         status: "pending",
         expiresAt: now + INVITE_TTL_MS,
         createdAt: now,
+        ...pendingProfile,
       });
       inviteId = existingInvite._id;
     } else {
@@ -85,6 +100,7 @@ export const createInviteRecord = internalMutation({
         status: "pending",
         expiresAt: now + INVITE_TTL_MS,
         createdAt: now,
+        ...pendingProfile,
       });
     }
 
@@ -102,7 +118,14 @@ export const createInviteRecord = internalMutation({
  * rather than disappearing into a background job.
  */
 export const create = action({
-  args: { email: v.string(), role: roleArg },
+  args: {
+    email: v.string(),
+    role: roleArg,
+    departmentId: v.optional(v.id("departments")),
+    teamIds: v.optional(v.array(v.id("teams"))),
+    jobTitle: v.optional(v.string()),
+    phone: v.optional(v.string()),
+  },
   handler: async (ctx, args): Promise<{ inviteId: string; token: string }> => {
     const rec = await ctx.runMutation(internal.invites.createInviteRecord, args);
     await createClerkInvitation({
