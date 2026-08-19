@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
+export { metadata, viewport } from "next-sanity/studio";
+
 export default async function StudioLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();
 

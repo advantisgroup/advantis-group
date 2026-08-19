@@ -466,6 +466,8 @@
     "title": "博客",
     "subtitle": "来自 ADVANTIS GROUP 的新闻与见解。",
     "empty": "新文章即将上线。",
+    "emptySubtitle": "我们正在准备第一批文章,请稍后再来看看。",
+    "emptyCta": "联系我们",
     "readMore": "阅读更多",
     "back": "返回博客"
   },

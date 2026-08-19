@@ -466,6 +466,8 @@
     "title": "Blog",
     "subtitle": "News and insights from ADVANTIS GROUP.",
     "empty": "New posts are coming soon.",
+    "emptySubtitle": "We're working on the first articles. Check back soon.",
+    "emptyCta": "Get in touch",
     "readMore": "Read more",
     "back": "Back to blog"
   },
