@@ -2,9 +2,9 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 
 import { type Metadata } from "next";
-import DOMPurify from "isomorphic-dompurify";
 import { ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import sanitizeHtml from "sanitize-html";
 
 import { Link } from "@/i18n/navigation";
 import { type Locale } from "@/i18n/request";
@@ -12,6 +12,19 @@ import { getPost } from "@/lib/blog";
 
 // Re-fetch from Convex periodically instead of freezing the post at build time.
 export const revalidate = 60;
+
+// sanitize-html has no DOM dependency (unlike isomorphic-dompurify's jsdom,
+// which doesn't bundle reliably for the Vercel Node runtime), so it's the
+// safe choice for sanitizing server-rendered HTML here.
+const sanitizeOptions: sanitizeHtml.IOptions = {
+  allowedTags: sanitizeHtml.defaults.allowedTags.concat(["kbd"]),
+  allowedAttributes: {
+    ...sanitizeHtml.defaults.allowedAttributes,
+    "*": ["class"],
+    a: ["href", "target", "rel"],
+  },
+  allowedSchemes: ["http", "https", "mailto", "tel"],
+};
 
 function blogLanguage(locale: Locale): "de" | "en" {
   return locale === "de" ? "de" : "en";
@@ -94,7 +107,7 @@ export default async function BlogPostPage({
               // Convex mutation arg with no server-side sanitization in
               // front of it, and this renders on the public site —
               // sanitizing again here is defense in depth, not scope creep.
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.body) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.body, sanitizeOptions) }}
             />
           ) : null}
         </article>
