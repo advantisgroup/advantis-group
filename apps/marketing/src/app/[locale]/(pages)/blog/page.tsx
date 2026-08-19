@@ -7,13 +7,13 @@ import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { type Locale } from "@/i18n/request";
-import { getPosts, urlForImage, type BlogPost } from "@/lib/sanity";
+import { getPosts, type BlogPost } from "@/lib/blog";
 
 function blogLanguage(locale: Locale): "de" | "en" {
   return locale === "de" ? "de" : "en";
 }
 
-function formatDate(date: string, locale: Locale) {
+function formatDate(date: number, locale: Locale) {
   return new Date(date).toLocaleDateString(locale, {
     day: "numeric",
     month: "long",
@@ -40,10 +40,10 @@ function PostCard({ post, locale }: { post: BlogPost; locale: Locale }) {
   return (
     <Link href={`/blog/${post.slug}`} className="group block h-full">
       <article className="flex h-full flex-col overflow-hidden rounded-md border border-border bg-card transition-colors hover:border-primary/40">
-        {post.mainImage ? (
+        {post.mainImageUrl ? (
           <div className="relative aspect-video">
             <Image
-              src={urlForImage(post.mainImage).width(600).height(340).url()}
+              src={post.mainImageUrl}
               alt={post.title}
               fill
               sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"

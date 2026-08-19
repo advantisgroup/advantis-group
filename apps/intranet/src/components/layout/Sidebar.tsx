@@ -22,6 +22,7 @@ import {
   LineChart,
   Megaphone,
   MessageSquare,
+  Newspaper,
   PhoneCall,
   Rss,
   Settings,
@@ -120,6 +121,7 @@ export function Sidebar() {
   const isAdmin = useIsAdmin();
   const user = useCurrentUser();
   const hasFilesAccess = useHasCapability("access_files");
+  const hasBlogAccess = useHasCapability("manage_blog");
   const hasApplicantAccess = useHasApplicantAccess();
   const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
   const approvalCover = useQuery(api.approvalDelegations.mine);
@@ -207,6 +209,15 @@ export function Sidebar() {
                 labelKey: "guidebooks",
                 icon: BookOpen,
                 tourAttr: "tour-nav-guidebooks",
+              },
+            ]
+          : []),
+        ...(hasBlogAccess
+          ? [
+              {
+                href: "/blog",
+                labelKey: "blog",
+                icon: Newspaper,
               },
             ]
           : []),

@@ -2,7 +2,6 @@ import { Elysia, t } from "elysia";
 
 import { email } from "@/app/api/[[...slugs]]/email";
 import { notify } from "@/app/api/[[...slugs]]/notify";
-import { revalidate } from "@/app/api/[[...slugs]]/revalidate";
 import { submissions } from "@/app/api/[[...slugs]]/submissions";
 
 const app = new Elysia({ prefix: "/api" })
@@ -14,7 +13,6 @@ const app = new Elysia({ prefix: "/api" })
   })
   .use(email)
   .use(notify)
-  .use(revalidate)
   .use(submissions);
 
 export type App = typeof app;

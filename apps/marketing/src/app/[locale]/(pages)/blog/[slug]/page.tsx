@@ -2,13 +2,13 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 
 import { type Metadata } from "next";
+import DOMPurify from "isomorphic-dompurify";
 import { ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { PortableText } from "@portabletext/react";
 
 import { Link } from "@/i18n/navigation";
 import { type Locale } from "@/i18n/request";
-import { getPost, urlForImage } from "@/lib/sanity";
+import { getPost } from "@/lib/blog";
 
 function blogLanguage(locale: Locale): "de" | "en" {
   return locale === "de" ? "de" : "en";
@@ -70,10 +70,10 @@ export default async function BlogPostPage({
             </p>
           </div>
 
-          {post.mainImage ? (
+          {post.mainImageUrl ? (
             <div className="relative aspect-video rounded-md overflow-hidden">
               <Image
-                src={urlForImage(post.mainImage).width(1200).height(675).url()}
+                src={post.mainImageUrl}
                 alt={post.title}
                 fill
                 sizes="(min-width: 768px) 768px, 100vw"
@@ -84,9 +84,15 @@ export default async function BlogPostPage({
           ) : null}
 
           {post.body ? (
-            <div className="prose prose-neutral dark:prose-invert max-w-none">
-              <PortableText value={post.body} />
-            </div>
+            <div
+              className="prose prose-neutral dark:prose-invert max-w-none"
+              // The composer's RichTextEditor only ever produces constrained
+              // HTML through normal use, but the stored string is a raw
+              // Convex mutation arg with no server-side sanitization in
+              // front of it, and this renders on the public site —
+              // sanitizing again here is defense in depth, not scope creep.
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.body) }}
+            />
           ) : null}
         </article>
       </main>
