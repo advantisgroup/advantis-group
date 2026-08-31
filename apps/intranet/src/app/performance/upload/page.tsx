@@ -352,11 +352,6 @@ export default function PerformanceUploadPage() {
       router.replace("/performance");
       return;
     }
-    // Uploads go through apps/api, which authenticates the bearer token
-    // directly against a Performance session — it has no notion of the
-    // caller's Clerk identity, so a Clerk-linked (passwordless) account
-    // can't use this page.
-    if (session.viaClerk) router.replace("/performance");
   }, [session, router]);
 
   const isAdmin = session?.valid && session.permissions.includes("upload_reports");
@@ -497,8 +492,7 @@ export default function PerformanceUploadPage() {
   }, [log]);
 
   if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid || !session.permissions.includes("upload_reports") || session.viaClerk)
-    return null;
+  if (!session.valid || !session.permissions.includes("upload_reports")) return null;
 
   const navItems = [{ href: "/performance", label: t("backToDashboard") }];
   const exit = () => {

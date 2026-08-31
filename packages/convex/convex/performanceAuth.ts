@@ -390,6 +390,24 @@ async function resolveClerkLinkedLogin(
   return { session: null, login };
 }
 
+/** Promotes a Clerk-linked visitor into a real password-session token, the
+ * same kind `login` mints. Needed for `apps/api`'s upload endpoint, which
+ * authenticates a bearer token directly against `performanceSessions` and
+ * has no way to see the caller's Clerk identity (see
+ * `requirePerformanceAdmin`'s doc comment) — so a Clerk-linked login with no
+ * password session could never get past it. Returns null when there's no
+ * Clerk identity or linked login, same as `resolveClerkLinkedLogin`. */
+export const createSessionForLinkedAccount = mutation({
+  args: {},
+  handler: async (ctx): Promise<{ token: string; expiresAt: number } | null> => {
+    const resolved = await resolveClerkLinkedLogin(ctx);
+    if (!resolved) return null;
+    return await ctx.runMutation(internal.performanceAuth.createSession, {
+      loginId: resolved.login._id,
+    });
+  },
+});
+
 export async function resolveActiveSession(
   ctx: QueryCtx | MutationCtx,
   token: string,
