@@ -23,7 +23,6 @@ import {
   Megaphone,
   MessageSquare,
   Newspaper,
-  PhoneCall,
   Rss,
   Settings,
   ShieldCheck,
@@ -250,11 +249,6 @@ export function Sidebar() {
           managerOnly: true,
           featureKey: "activitytrack",
           external: true,
-        },
-        {
-          href: "/sales-cockpit",
-          labelKey: "salesCockpit",
-          icon: PhoneCall,
         },
         {
           href: "/sales-coach-ev",
