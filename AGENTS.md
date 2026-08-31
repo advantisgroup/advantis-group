@@ -237,6 +237,19 @@ than `apps/intranet`'s — session tokens issued by one are invalid on the
 other, which surfaces as every Performance report upload failing with
 `Forbidden` on preview regardless of file content.
 
+`packages/convex/convex/crons.ts` deploys unchanged to every deployment —
+prod, `npx convex dev`, and every branch's preview — so scheduled jobs are
+gated behind a `DISABLE_CRONS` env var (see the comment at the top of that
+file) rather than being allowed to run on all of them. Preview and dev
+deployment *types* should have `DISABLE_CRONS=true` as a project default
+(`npx convex env default set DISABLE_CRONS true --type preview` / `--type
+dev`); production is deliberately left unset so the schedule keeps running
+there without needing prod's own env vars touched. Defaults only seed *new*
+deployments, so any preview deployment that already exists needs the var set
+directly (`npx convex env set DISABLE_CRONS true --preview-name <branch>`) —
+otherwise it keeps running the old (cron-enabled) code until its next deploy
+picks up this guard, and still needs the var set even then.
+
 ## House style
 
 - No comments explaining _what_ code does — only _why_, for non-obvious
