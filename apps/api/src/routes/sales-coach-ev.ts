@@ -436,4 +436,26 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       }
     },
     { query: t.Object({ days: t.Optional(t.String()) }) },
+  )
+  // Team tab's detail view: one rep's own call history/score breakdown over
+  // the same trailing window as the roster, never the transcript/feedback
+  // ciphertext (see adminUserDetail's own comment).
+  .get(
+    "/admin/user/:clerkUserId",
+    async ({ request, params, query }) => {
+      const { clerkUserId } = await requireAuth(request);
+      const days = query.days ? Number(query.days) : 30;
+      try {
+        const detail = await getConvex().query(api.salesCoachEv.calls.adminUserDetail, {
+          serverKey: getConvexServerKey(),
+          clerkUserId,
+          targetClerkUserId: params.clerkUserId,
+          sinceMs: Date.now() - days * 86_400_000,
+        });
+        return { detail };
+      } catch (err) {
+        throw mapConvexError(err);
+      }
+    },
+    { query: t.Object({ days: t.Optional(t.String()) }) },
   );

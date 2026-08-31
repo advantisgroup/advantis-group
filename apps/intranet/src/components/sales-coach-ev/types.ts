@@ -72,3 +72,21 @@ export interface RosterEntry {
   appointments: number;
   trend: number;
 }
+
+/** One call row in the Team tab's per-rep detail view — scores/outcome
+ * only, never the transcript/feedback ciphertext (see `adminUserDetail`
+ * in packages/convex/convex/salesCoachEv/calls.ts). */
+export interface AdminUserCall {
+  id: string;
+  startedAt: number;
+  durationSec: number;
+  outcome: Outcome;
+  scored: boolean;
+  skillLevel: number | null;
+  scores: Scores | null;
+}
+
+export interface AdminUserDetail {
+  userName: string | null;
+  calls: AdminUserCall[];
+}

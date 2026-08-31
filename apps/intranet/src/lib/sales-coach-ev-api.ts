@@ -7,6 +7,7 @@ import { type EdenApiClient } from "@/lib/eden";
 import { type ApiQuery, useApiQuery } from "@/hooks/use-api-query";
 
 import {
+  type AdminUserDetail,
   type CallRecord,
   type RosterEntry,
   type WikiArticle,
@@ -76,6 +77,28 @@ export function useSalesCoachRoster(
     { enabled, source: "sales-coach.roster" },
   );
   return { ...query, roster: query.data };
+}
+
+/** Admin-only: one rep's own call history/score breakdown for the Team tab's
+ * detail view. `clerkUserId` is the roster entry clicked, `null` while no
+ * entry is selected (the dialog is closed). */
+export function useSalesCoachAdminUserDetail(
+  clerkUserId: string | null,
+  days: number,
+): ApiQuery<AdminUserDetail> & { detail: AdminUserDetail | undefined } {
+  const api = useIntranetApiClient();
+  const query = useApiQuery(
+    useCallback(async () => {
+      const data = await api.unwrap(
+        api.eden["sales-coach-ev"]["admin"]
+          .user({ clerkUserId: clerkUserId as string })
+          .get({ query: { days: String(days) } }),
+      );
+      return data.detail as AdminUserDetail;
+    }, [api, clerkUserId, days]),
+    { enabled: clerkUserId !== null, source: "sales-coach.adminUserDetail" },
+  );
+  return { ...query, detail: query.data };
 }
 
 type Eden = EdenApiClient;

@@ -9,7 +9,9 @@ import { useIsAdmin } from "@/components/providers/current-user";
 import { useSalesCoachRoster } from "@/lib/sales-coach-ev-api";
 import { cn } from "@/lib/utils";
 
+import { AdminUserDetailDialog } from "./AdminUserDetailDialog";
 import { scoreColorClass } from "./constants";
+import { type RosterEntry } from "./types";
 
 const WINDOWS = [7, 30, 90] as const;
 
@@ -18,6 +20,7 @@ export function AdminRoster() {
   const isAdmin = useIsAdmin();
   const [days, setDays] = useState<(typeof WINDOWS)[number]>(30);
   const { roster } = useSalesCoachRoster(isAdmin, days);
+  const [selected, setSelected] = useState<RosterEntry | null>(null);
 
   if (!isAdmin) {
     return (
@@ -62,7 +65,19 @@ export function AdminRoster() {
       ) : (
         <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           {roster.map((entry) => (
-            <Card key={entry.clerkUserId}>
+            <Card
+              key={entry.clerkUserId}
+              role="button"
+              tabIndex={0}
+              onClick={() => setSelected(entry)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSelected(entry);
+                }
+              }}
+              className="cursor-pointer transition-colors hover:bg-muted/40"
+            >
               <CardContent className="pt-5">
                 <div className="mb-3 flex items-start justify-between">
                   <div>
@@ -124,6 +139,15 @@ export function AdminRoster() {
           ))}
         </div>
       )}
+
+      <AdminUserDetailDialog
+        entry={selected}
+        days={days}
+        open={selected !== null}
+        onOpenChange={(o) => {
+          if (!o) setSelected(null);
+        }}
+      />
     </div>
   );
 }
