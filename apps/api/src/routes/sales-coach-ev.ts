@@ -29,6 +29,100 @@ function mapConvexError(err: unknown) {
   return Errors.forbidden();
 }
 
+const WIKI_CAT_VALUES = [
+  "Produktdaten",
+  "Preisliste",
+  "Technik",
+  "Argumente",
+  "Rechtliches",
+  "Intern",
+  "Links",
+] as const;
+type WikiCat = (typeof WIKI_CAT_VALUES)[number];
+
+// Spelled out literal-by-literal (rather than mapped from WIKI_CAT_VALUES)
+// so Elysia/Eden can infer the precise union — a `.map()`-built t.Union
+// loses the literal types and infers `never` on the client side.
+const wikiCatSchema = t.Union([
+  t.Literal("Produktdaten"),
+  t.Literal("Preisliste"),
+  t.Literal("Technik"),
+  t.Literal("Argumente"),
+  t.Literal("Rechtliches"),
+  t.Literal("Intern"),
+  t.Literal("Links"),
+]);
+
+interface ExtractedWikiFields {
+  title: string;
+  cat: WikiCat;
+  tags: string;
+  body: string;
+}
+
+const MAX_WIKI_DOC_BYTES = 8 * 1024 * 1024;
+const MAX_WIKI_EXTRACT_TEXT_CHARS = 60_000;
+
+const WIKI_EXTRACTION_PROMPT = `Du befuellst die Wissensdatenbank (Wiki) fuer Sales Coach EV - Vertrieb von Wallboxen/Ladeloesungen und Elektromobilitaet fuer Firmenkunden.
+Lies das folgende Dokument und fasse es zu einem Wiki-Artikel zusammen.
+
+Antworte AUSSCHLIESSLICH mit einem JSON-Objekt, ohne Markdown, ohne Erklaerung:
+{"title":"Kurzer, praegnanter Titel (max. 80 Zeichen)","cat":"Produktdaten|Preisliste|Technik|Argumente|Rechtliches|Intern|Links","tags":"3-6 kommagetrennte Schlagwoerter","body":"Gut strukturierte, praegnante Zusammenfassung des Dokumentinhalts fuer Vertriebsmitarbeiter, auf Deutsch"}
+Waehle "cat" so passend wie moeglich zum Inhalt.`;
+
+function parseWikiExtraction(text: string): ExtractedWikiFields {
+  const clean = text.replace(/```json|```/g, "").trim();
+  const start = clean.indexOf("{");
+  const end = clean.lastIndexOf("}");
+  if (start === -1 || end === -1) {
+    throw Errors.upstream("Keine auswertbaren Daten im Dokument gefunden");
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(clean.slice(start, end + 1));
+  } catch {
+    throw Errors.upstream("Antwort des Modells konnte nicht gelesen werden");
+  }
+  if (typeof parsed !== "object" || parsed === null) {
+    throw Errors.upstream("Antwort des Modells hatte ein unerwartetes Format");
+  }
+  const data = parsed as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  const cat = WIKI_CAT_VALUES.includes(data.cat as WikiCat) ? (data.cat as WikiCat) : "Intern";
+  return { title: str(data.title).slice(0, 200), cat, tags: str(data.tags), body: str(data.body) };
+}
+
+/** Runs a wiki source document (PDF bytes, or already-extracted plain text
+ * from a .docx/.txt/.md) through Claude and returns autofill suggestions —
+ * no persistence, the client still saves through the normal wiki
+ * create/update endpoints once the rep/admin reviews the fields. */
+async function runWikiExtraction(
+  input: { kind: "pdf"; base64: string } | { kind: "text"; text: string },
+): Promise<ExtractedWikiFields> {
+  const content =
+    input.kind === "pdf"
+      ? [
+          {
+            type: "document" as const,
+            source: {
+              type: "base64" as const,
+              media_type: "application/pdf" as const,
+              data: input.base64,
+            },
+          },
+          { type: "text" as const, text: WIKI_EXTRACTION_PROMPT },
+        ]
+      : [{ type: "text" as const, text: `${WIKI_EXTRACTION_PROMPT}\n\nDOKUMENT:\n${input.text}` }];
+
+  const response = await anthropic.createMessage({
+    model: "claude-sonnet-4-6",
+    max_tokens: 1200,
+    messages: [{ role: "user", content }],
+  });
+  const raw = response.content.map((b) => (b.type === "text" ? b.text : "")).join("\n");
+  return parseWikiExtraction(raw);
+}
+
 interface Feedback {
   comments: Record<string, string>;
   missingInfos: string[];
@@ -322,6 +416,7 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
           serverKey: getConvexServerKey(),
           clerkUserId,
           ...body,
+          storageId: body.storageId as Id<"_storage"> | undefined,
         });
         return { id };
       } catch (err) {
@@ -331,19 +426,15 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
     {
       body: t.Object({
         title: t.String(),
-        cat: t.Union([
-          t.Literal("Produktdaten"),
-          t.Literal("Preisliste"),
-          t.Literal("Technik"),
-          t.Literal("Argumente"),
-          t.Literal("Rechtliches"),
-          t.Literal("Intern"),
-          t.Literal("Links"),
-        ]),
+        cat: wikiCatSchema,
         tags: t.String(),
         body: t.String(),
         url: t.Optional(t.String()),
         isLink: t.Optional(t.Boolean()),
+        storageId: t.Optional(t.String()),
+        fileName: t.Optional(t.String()),
+        fileContentType: t.Optional(t.String()),
+        fileSize: t.Optional(t.Number()),
       }),
     },
   )
@@ -357,6 +448,7 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
           clerkUserId,
           id: params.id as Id<"salesCoachEvWiki">,
           ...body,
+          storageId: body.storageId as Id<"_storage"> | undefined,
         });
         return { updated: true };
       } catch (err) {
@@ -366,20 +458,15 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
     {
       body: t.Object({
         title: t.Optional(t.String()),
-        cat: t.Optional(
-          t.Union([
-            t.Literal("Produktdaten"),
-            t.Literal("Preisliste"),
-            t.Literal("Technik"),
-            t.Literal("Argumente"),
-            t.Literal("Rechtliches"),
-            t.Literal("Intern"),
-            t.Literal("Links"),
-          ]),
-        ),
+        cat: t.Optional(wikiCatSchema),
         tags: t.Optional(t.String()),
         body: t.Optional(t.String()),
         url: t.Optional(t.String()),
+        storageId: t.Optional(t.String()),
+        fileName: t.Optional(t.String()),
+        fileContentType: t.Optional(t.String()),
+        fileSize: t.Optional(t.Number()),
+        removeFile: t.Optional(t.Boolean()),
       }),
     },
   )
@@ -396,6 +483,47 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       throw mapConvexError(err);
     }
   })
+  // Reads a source document (PDF sent as a file; .docx/.txt/.md sent as
+  // already-extracted plain text, since the client already has mammoth for
+  // that) and returns wiki-field suggestions — admin-gated same as every
+  // other wiki write, since only admins can save the result anyway.
+  .post(
+    "/wiki/extract",
+    async ({ request, body }) => {
+      const { clerkUserId } = await requireAuth(request);
+      await rateLimit("salesCoachEv.wikiExtract", clerkUserId, 15, "1 m");
+      const isAdmin = await getConvex().query(api.salesCoachEv.wiki.isAdmin, {
+        serverKey: getConvexServerKey(),
+        clerkUserId,
+      });
+      if (!isAdmin) throw Errors.forbidden();
+
+      const { file, text } = body;
+      let extracted: ExtractedWikiFields;
+      if (file) {
+        if (file.type !== "application/pdf") {
+          throw Errors.badRequest(
+            "Bitte eine PDF-Datei hochladen (Word/Text werden bereits als Text gesendet)",
+          );
+        }
+        if (file.size > MAX_WIKI_DOC_BYTES) {
+          throw Errors.badRequest(`Datei groesser als ${MAX_WIKI_DOC_BYTES / (1024 * 1024)} MB`);
+        }
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const base64 = Buffer.from(bytes).toString("base64");
+        extracted = await runWikiExtraction({ kind: "pdf", base64 });
+      } else if (text?.trim()) {
+        extracted = await runWikiExtraction({
+          kind: "text",
+          text: text.slice(0, MAX_WIKI_EXTRACT_TEXT_CHARS),
+        });
+      } else {
+        throw Errors.badRequest("Keine Datei oder Text uebergeben");
+      }
+      return { extracted };
+    },
+    { body: t.Object({ file: t.Optional(t.File()), text: t.Optional(t.String()) }) },
+  )
   // --- Settings ----------------------------------------------------------
   .get("/settings", async ({ request }) => {
     const { clerkUserId } = await requireAuth(request);
@@ -431,6 +559,28 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
           sinceMs: Date.now() - days * 86_400_000,
         });
         return { roster };
+      } catch (err) {
+        throw mapConvexError(err);
+      }
+    },
+    { query: t.Object({ days: t.Optional(t.String()) }) },
+  )
+  // Team tab's detail view: one rep's own call history/score breakdown over
+  // the same trailing window as the roster, never the transcript/feedback
+  // ciphertext (see adminUserDetail's own comment).
+  .get(
+    "/admin/user/:clerkUserId",
+    async ({ request, params, query }) => {
+      const { clerkUserId } = await requireAuth(request);
+      const days = query.days ? Number(query.days) : 30;
+      try {
+        const detail = await getConvex().query(api.salesCoachEv.calls.adminUserDetail, {
+          serverKey: getConvexServerKey(),
+          clerkUserId,
+          targetClerkUserId: params.clerkUserId,
+          sinceMs: Date.now() - days * 86_400_000,
+        });
+        return { detail };
       } catch (err) {
         throw mapConvexError(err);
       }

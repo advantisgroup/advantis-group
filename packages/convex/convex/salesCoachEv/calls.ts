@@ -177,3 +177,45 @@ export const adminRoster = query({
     });
   },
 });
+
+/**
+ * Admin-only drill-down for a single team member, backing the Team tab's
+ * detail view — same bounded window as `adminRoster`, but per-call rows
+ * (date, duration, outcome, score breakdown) instead of aggregates only.
+ * Still never returns `transcriptEnc`/`feedbackEnc`: the coaching detail
+ * view surfaces scores and outcomes, not the rep's raw call content, same
+ * privacy line `adminRoster` already draws.
+ */
+export const adminUserDetail = query({
+  args: {
+    serverKey: v.string(),
+    clerkUserId: v.string(),
+    targetClerkUserId: v.string(),
+    sinceMs: v.number(),
+  },
+  handler: async (ctx, args) => {
+    assertServerKey(args.serverKey);
+    await requireAdminCaller(ctx, args.clerkUserId);
+
+    const calls = await ctx.db
+      .query("salesCoachEvCalls")
+      .withIndex("by_user_time", (q) =>
+        q.eq("clerkUserId", args.targetClerkUserId).gte("startedAt", args.sinceMs),
+      )
+      .order("desc")
+      .take(500);
+
+    return {
+      userName: calls[0]?.userName ?? null,
+      calls: calls.map((c) => ({
+        id: c._id,
+        startedAt: c.startedAt,
+        durationSec: c.durationSec,
+        outcome: c.outcome,
+        scored: c.scored,
+        skillLevel: c.skillLevel ?? null,
+        scores: c.scores ?? null,
+      })),
+    };
+  },
+});

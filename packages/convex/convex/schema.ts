@@ -2722,6 +2722,14 @@ export default defineSchema({
     body: v.string(),
     url: v.optional(v.string()),
     isLink: v.optional(v.boolean()),
+    // Optional attached source document (spec sheet, price list, ...) an
+    // article was generated/enriched from — Convex-storage-backed, read
+    // through the same `files.getUrl`/global file viewer as chat and
+    // guidebook attachments.
+    storageId: v.optional(v.id("_storage")),
+    fileName: v.optional(v.string()),
+    fileContentType: v.optional(v.string()),
+    fileSize: v.optional(v.number()),
     authorClerkUserId: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
