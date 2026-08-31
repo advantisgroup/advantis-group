@@ -127,7 +127,7 @@ export function TourProgressChip() {
         type="button"
         onClick={() => {
           setOpen(false);
-          router.push("/settings");
+          router.push("/settings/account");
         }}
         className="flex w-full items-center justify-between rounded-md border-t border-border/60 px-2 pb-1 pt-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
       >

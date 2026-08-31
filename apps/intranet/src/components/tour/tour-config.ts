@@ -265,32 +265,32 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
   },
   {
     id: "settings",
-    route: "/settings",
+    route: "/settings/account",
     steps: [
       {
         id: "settings.nav",
         targetAttr: "tour-nav-settings",
         popoutSide: "right",
-        route: "/settings",
+        route: "/settings/account",
         skipOnMobile: true,
       },
       {
         id: "settings.profile",
         targetAttr: "tour-settings-profile",
         popoutSide: "bottom",
-        route: "/settings",
+        route: "/settings/account",
       },
       {
         id: "settings.prefs",
         targetAttr: "tour-settings-app-prefs",
         popoutSide: "top",
-        route: "/settings",
+        route: "/settings/workspace",
       },
       {
         id: "settings.connections",
         targetAttr: "tour-settings-connections",
         popoutSide: "top",
-        route: "/settings",
+        route: "/settings/workspace",
       },
     ],
   },

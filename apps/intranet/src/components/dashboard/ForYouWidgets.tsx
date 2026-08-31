@@ -48,7 +48,7 @@ export function ProfileCompletionCard({ missingFields }: { missingFields: Profil
       count={missingFields.length}
     >
       <Row
-        href="/settings"
+        href="/settings/account"
         title={t("profileCompletionAction")}
         subtitle={missingFields.map((field) => t(`profileField.${field}`)).join(", ")}
         leading={<CircleUserRound className="size-5 text-primary" />}
@@ -259,7 +259,7 @@ export function MyDayCard() {
       {statesRaw === null ? (
         <RowSkeletons />
       ) : statesRaw === undefined || states.length === 0 ? (
-        <Empty href="/settings" linkLabel={t("openSettings")}>
+        <Empty href="/settings/workspace" linkLabel={t("openSettings")}>
           {t("clockodoNotLinked")}
         </Empty>
       ) : (

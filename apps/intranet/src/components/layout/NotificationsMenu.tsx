@@ -85,7 +85,7 @@ export function NotificationsMenu() {
           </button>
         )}
         <Link
-          href="/settings#notifications"
+          href="/settings/notifications"
           aria-label={t("preferences")}
           title={t("preferences")}
           onClick={() => setMobileOpen(false)}
