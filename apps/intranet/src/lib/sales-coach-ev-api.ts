@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 
-import { unwrapApiResult, useIntranetApiClient } from "@/lib/api-client";
+import { type IntranetApiClient, unwrapApiResult, useIntranetApiClient } from "@/lib/api-client";
 import { type EdenApiClient } from "@/lib/eden";
 import { type ApiQuery, useApiQuery } from "@/hooks/use-api-query";
 
@@ -114,6 +114,11 @@ export interface WikiArticleInput {
   body: string;
   url?: string;
   isLink?: boolean;
+  storageId?: string;
+  fileName?: string;
+  fileContentType?: string;
+  fileSize?: number;
+  removeFile?: boolean;
 }
 
 export async function createWikiArticle(eden: Eden, input: WikiArticleInput): Promise<void> {
@@ -130,6 +135,32 @@ export async function updateWikiArticle(
 
 export async function deleteWikiArticle(eden: Eden, id: string): Promise<void> {
   await unwrapApiResult(eden["sales-coach-ev"].wiki({ id }).delete());
+}
+
+export interface WikiDocumentExtraction {
+  title: string;
+  cat: WikiCategory;
+  tags: string;
+  body: string;
+}
+
+/** AI-reads an uploaded wiki source document and returns autofill
+ * suggestions for the article form — nothing is saved here, the editor
+ * dialog still calls `createWikiArticle`/`updateWikiArticle` itself. A PDF
+ * is sent as the raw file (Claude reads it natively); a .docx/.txt/.md is
+ * sent as `text` since the client already extracts that locally. */
+export async function analyzeWikiDocument(
+  api: IntranetApiClient,
+  input: { file: File } | { text: string },
+): Promise<WikiDocumentExtraction> {
+  const form = new FormData();
+  if ("file" in input) form.append("file", input.file);
+  else form.append("text", input.text);
+  const { extracted } = await api.uploadForm<{ extracted: WikiDocumentExtraction }>(
+    "/sales-coach-ev/wiki/extract",
+    form,
+  );
+  return extracted;
 }
 
 export async function fetchEodSummary(

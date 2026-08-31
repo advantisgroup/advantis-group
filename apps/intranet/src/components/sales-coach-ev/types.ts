@@ -59,6 +59,10 @@ export interface WikiArticle {
   body: string;
   url?: string;
   isLink?: boolean;
+  storageId?: string;
+  fileName?: string;
+  fileContentType?: string;
+  fileSize?: number;
   authorClerkUserId: string;
   createdAt: number;
   updatedAt: number;
