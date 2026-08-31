@@ -255,6 +255,36 @@ export async function sendNotificationEmail(
   if (error) throw Errors.upstream(`Resend error: ${error.message}`);
 }
 
+/**
+ * Delivers an email Clerk already rendered (subject/body from its
+ * `email.created` webhook payload) via Resend instead of Clerk's own
+ * SendGrid pool. Used for any template with "Delivered by Clerk" switched
+ * off in the Clerk Dashboard. Never logs the body — it's the actual OTP
+ * code / reset link for auth emails.
+ */
+export async function sendClerkEmail(params: {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string | null;
+  slug?: string | null;
+}): Promise<void> {
+  const { to, subject, html, text, slug } = params;
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to,
+    subject,
+    html,
+    ...(text ? { text } : {}),
+    ...(slug ? { tags: [{ name: "clerk_template", value: slug }] } : {}),
+  });
+  const [local, domain] = to.split("@");
+  console.log(
+    `[clerkEmail] slug=${slug ?? "unknown"} to=${local?.slice(0, 1)}***@${domain} ok=${!error}`,
+  );
+  if (error) throw Errors.upstream(`Resend error: ${error.message}`);
+}
+
 const UPDATE_SUBJECT_PREFIX: Record<"incident" | "maintenance" | "changelog", string> = {
   incident: "Incident",
   maintenance: "Scheduled maintenance",

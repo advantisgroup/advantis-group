@@ -5,6 +5,7 @@ import { api } from "@advantis/convex/api";
 
 import { getConvex, getConvexServerKey } from "../../lib/convex.js";
 import { Errors } from "../../lib/errors.js";
+import { sendClerkEmail } from "../../lib/resend.js";
 
 interface ClerkEmail {
   id: string;
@@ -18,9 +19,19 @@ interface ClerkUserData {
   last_name?: string | null;
   image_url?: string | null;
 }
+// Matches @clerk/backend's EmailJSON — sent only for templates where
+// "Delivered by Clerk" has been turned off in the Clerk Dashboard.
+interface ClerkEmailData {
+  slug?: string | null;
+  to_email_address?: string;
+  subject?: string;
+  body?: string;
+  body_plain?: string | null;
+  delivered_by_clerk: boolean;
+}
 interface ClerkEvent {
   type: string;
-  data: ClerkUserData;
+  data: unknown;
 }
 
 function primaryEmail(data: ClerkUserData): string | undefined {
@@ -31,7 +42,11 @@ function primaryEmail(data: ClerkUserData): string | undefined {
 
 /**
  * POST /webhooks/clerk — svix-verified Clerk lifecycle events from the shared
- * Clerk instance. Keeps the Convex `users` mirror fresh; never creates members.
+ * Clerk instance. Keeps the Convex `users` mirror fresh (never creates
+ * members) and, for any template with "Delivered by Clerk" switched off in
+ * the Dashboard, delivers `email.created` events ourselves via Resend —
+ * Clerk's shared SendGrid pool gets throttled by some German ISPs (1&1/GMX),
+ * Resend's advantisgroup.de sending domain does not.
  */
 export const clerkWebhookRoute = new Elysia().post("/webhooks/clerk", async ({ request, set }) => {
   const secret = process.env.CLERK_WEBHOOK_SECRET;
@@ -56,18 +71,33 @@ export const clerkWebhookRoute = new Elysia().post("/webhooks/clerk", async ({ r
   const serverKey = getConvexServerKey();
 
   if (event.type === "user.created" || event.type === "user.updated") {
+    const user = event.data as ClerkUserData;
     await convex.mutation(api.clerkSync.syncFromClerk, {
       serverKey,
-      clerkUserId: event.data.id,
-      email: primaryEmail(event.data),
-      firstName: event.data.first_name ?? undefined,
-      lastName: event.data.last_name ?? undefined,
-      avatarUrl: event.data.image_url ?? undefined,
+      clerkUserId: user.id,
+      email: primaryEmail(user),
+      firstName: user.first_name ?? undefined,
+      lastName: user.last_name ?? undefined,
+      avatarUrl: user.image_url ?? undefined,
     });
   } else if (event.type === "user.deleted") {
+    const user = event.data as ClerkUserData;
     await convex.mutation(api.clerkSync.deactivateFromClerk, {
       serverKey,
-      clerkUserId: event.data.id,
+      clerkUserId: user.id,
+    });
+  } else if (event.type === "email.created") {
+    const email = event.data as ClerkEmailData;
+    // Already delivered by Clerk — nothing to do. Shouldn't happen once a
+    // template's toggle is off, but never double-send if it does.
+    if (email.delivered_by_clerk) return { ok: true };
+    if (!email.to_email_address || !email.subject || !email.body) return { ok: true };
+    await sendClerkEmail({
+      to: email.to_email_address,
+      subject: email.subject,
+      html: email.body,
+      text: email.body_plain,
+      slug: email.slug,
     });
   }
 
