@@ -411,6 +411,35 @@ export default defineSchema({
     .index("by_user_at", ["userId", "at"])
     .index("by_passkey", ["passkeyId"]),
 
+  totpCredentials: defineTable({
+    userId: v.id("users"),
+    /** AES-256-GCM ciphertext of the base32 secret — only the API service holds the key, Convex never decrypts it. */
+    secretCiphertext: v.string(),
+    /** Set once the user proves possession during enrollment; an unverified row is a pending setup that hasn't been confirmed yet. */
+    verifiedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    lastUsedAt: v.optional(v.number()),
+  }).index("by_user", ["userId"]),
+
+  totpRecoveryCodes: defineTable({
+    userId: v.id("users"),
+    codeHash: v.string(),
+    usedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  totpAuditLog: defineTable({
+    userId: v.id("users"),
+    event: v.union(
+      v.literal("enrolled"),
+      v.literal("verified"),
+      v.literal("failed"),
+      v.literal("recovery_used"),
+      v.literal("removed"),
+    ),
+    at: v.number(),
+  }).index("by_user_at", ["userId", "at"]),
+
   /**
    * Canonical org departments. Replaces the free-text `users.department` —
    * see the org-data migration (`orgDataMigration.ts`) that backfills

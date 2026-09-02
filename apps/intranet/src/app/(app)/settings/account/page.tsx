@@ -6,6 +6,7 @@ import { useClerk } from "@clerk/nextjs";
 import { Pencil, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { TotpSettingsCard } from "@/components/mfa/TotpSettingsCard";
 import { PasskeySettingsCard } from "@/components/passkeys/PasskeySettingsCard";
 import { ProfileEditorDialog } from "@/components/profile/ProfileEditorDialog";
 import { useCurrentUser } from "@/components/providers/current-user";
@@ -94,6 +95,8 @@ export default function SettingsAccountPage() {
       </Card>
 
       <PasskeySettingsCard />
+
+      <TotpSettingsCard />
 
       <ProfileEditorDialog
         user={user}

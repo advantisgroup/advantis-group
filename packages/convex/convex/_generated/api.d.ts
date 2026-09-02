@@ -45,9 +45,9 @@ import type * as activity_stats from "../activity/stats.js";
 import type * as adminOverview from "../adminOverview.js";
 import type * as analytics from "../analytics.js";
 import type * as announcements from "../announcements.js";
-import type * as approvalDelegations from "../approvalDelegations.js";
 import type * as applicantVault from "../applicantVault.js";
 import type * as applicants from "../applicants.js";
+import type * as approvalDelegations from "../approvalDelegations.js";
 import type * as auditLog from "../auditLog.js";
 import type * as blogPosts from "../blogPosts.js";
 import type * as chat from "../chat.js";
@@ -103,8 +103,8 @@ import type * as migrations_backfillManageClockodoTeam from "../migrations/backf
 import type * as migrations_backfillPerformanceCompanyId from "../migrations/backfillPerformanceCompanyId.js";
 import type * as migrations_dropGuestFields from "../migrations/dropGuestFields.js";
 import type * as notifications from "../notifications.js";
-import type * as onedrive from "../onedrive.js";
 import type * as offboarding from "../offboarding.js";
+import type * as onedrive from "../onedrive.js";
 import type * as orgData from "../orgData.js";
 import type * as orgDataMigration from "../orgDataMigration.js";
 import type * as outbound from "../outbound.js";
@@ -134,6 +134,7 @@ import type * as salesCockpitFlows from "../salesCockpitFlows.js";
 import type * as sandbox from "../sandbox.js";
 import type * as suggestionCategories from "../suggestionCategories.js";
 import type * as suggestions from "../suggestions.js";
+import type * as totp from "../totp.js";
 import type * as tourProgress from "../tourProgress.js";
 import type * as updates from "../updates.js";
 import type * as updatesEmail from "../updatesEmail.js";
@@ -146,7 +147,11 @@ import type * as wikiChats from "../wikiChats.js";
 import type * as wikiEntries from "../wikiEntries.js";
 import type * as wikiMigration from "../wikiMigration.js";
 
-import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 
 declare const fullApi: ApiFromModules<{
   academyParticipants: typeof academyParticipants;
@@ -186,9 +191,9 @@ declare const fullApi: ApiFromModules<{
   adminOverview: typeof adminOverview;
   analytics: typeof analytics;
   announcements: typeof announcements;
-  approvalDelegations: typeof approvalDelegations;
   applicantVault: typeof applicantVault;
   applicants: typeof applicants;
+  approvalDelegations: typeof approvalDelegations;
   auditLog: typeof auditLog;
   blogPosts: typeof blogPosts;
   chat: typeof chat;
@@ -244,8 +249,8 @@ declare const fullApi: ApiFromModules<{
   "migrations/backfillPerformanceCompanyId": typeof migrations_backfillPerformanceCompanyId;
   "migrations/dropGuestFields": typeof migrations_dropGuestFields;
   notifications: typeof notifications;
-  onedrive: typeof onedrive;
   offboarding: typeof offboarding;
+  onedrive: typeof onedrive;
   orgData: typeof orgData;
   orgDataMigration: typeof orgDataMigration;
   outbound: typeof outbound;
@@ -275,6 +280,7 @@ declare const fullApi: ApiFromModules<{
   sandbox: typeof sandbox;
   suggestionCategories: typeof suggestionCategories;
   suggestions: typeof suggestions;
+  totp: typeof totp;
   tourProgress: typeof tourProgress;
   updates: typeof updates;
   updatesEmail: typeof updatesEmail;
@@ -296,7 +302,10 @@ declare const fullApi: ApiFromModules<{
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>;
+export declare const api: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "public">
+>;
 
 /**
  * A utility for referencing Convex functions in your app's internal API.
@@ -306,6 +315,9 @@ export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "publ
  * const myFunctionReference = internal.myModule.myFunction;
  * ```
  */
-export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>;
+export declare const internal: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "internal">
+>;
 
 export declare const components: {};

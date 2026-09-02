@@ -14,6 +14,7 @@ import { onedriveRoute } from "./routes/onedrive.js";
 import { performanceRoute } from "./routes/performance.js";
 import { passkeysRoute } from "./routes/passkeys.js";
 import { salesCoachEvRoute } from "./routes/sales-coach-ev.js";
+import { totpRoute } from "./routes/totp.js";
 import { wikiChatRoute } from "./routes/wiki-chat.js";
 import { wikiImportRoute } from "./routes/wiki-import.js";
 import { internalClockodoRoute } from "./routes/internal/clockodo.js";
@@ -76,6 +77,7 @@ export const app = new Elysia()
   .use(performanceRoute)
   .use(passkeysRoute)
   .use(salesCoachEvRoute)
+  .use(totpRoute)
   .use(wikiChatRoute)
   .use(wikiImportRoute)
   .use(applicantsRoute);
