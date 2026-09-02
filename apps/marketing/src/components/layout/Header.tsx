@@ -134,7 +134,7 @@ export const Header = () => {
       }`}
     >
       <motion.nav
-        className="container mx-auto flex items-center justify-between px-4"
+        className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-5 md:px-10"
         animate={{ height: isScrolled ? 48 : 64 }}
         transition={transition}
       >
@@ -342,7 +342,7 @@ export const Header = () => {
             transition={{ duration: 0.22, ease: "easeOut" }}
             className="md:hidden border-t border-border bg-background"
           >
-            <div className="container mx-auto px-4 py-4 space-y-4">
+            <div className="mx-auto w-full max-w-[1440px] space-y-4 px-5 py-4 md:px-10">
               <ul className="space-y-4">
                 {navLinks.map((link, i) => (
                   <li

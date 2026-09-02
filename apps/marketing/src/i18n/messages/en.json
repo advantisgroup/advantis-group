@@ -1072,7 +1072,14 @@
     "empty": "No matching licenses found.",
     "filterAll": "All",
     "filterOther": "Other",
-    "filterLabel": "Filter by license"
+    "filterLabel": "Filter by license",
+    "details": "Details",
+    "npm": "View on npm",
+    "homepage": "Website",
+    "version": "Version",
+    "publisher": "Publisher",
+    "license": "License",
+    "noLinks": "No further links recorded."
   },
   "whitepaper": {
     "meta": {

@@ -1072,7 +1072,14 @@
     "empty": "未找到匹配的许可证。",
     "filterAll": "全部",
     "filterOther": "其他",
-    "filterLabel": "按许可证筛选"
+    "filterLabel": "按许可证筛选",
+    "details": "详情",
+    "npm": "在 npm 查看",
+    "homepage": "网站",
+    "version": "版本",
+    "publisher": "发布者",
+    "license": "许可证",
+    "noLinks": "暂无其他链接。"
   },
   "whitepaper": {
     "meta": {
