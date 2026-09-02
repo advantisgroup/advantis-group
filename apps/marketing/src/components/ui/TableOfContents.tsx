@@ -16,7 +16,7 @@ export const TableOfContents = ({
   activeSection: string;
   onSectionClick: (id: string) => void;
 }) => (
-  <nav className="space-y-2">
+  <nav className="border-t border-rule">
     {sections.map((section) => {
       const Icon = section.icon;
       return (
@@ -24,15 +24,15 @@ export const TableOfContents = ({
           key={section.id}
           onClick={() => onSectionClick(section.id)}
           className={cn(
-            "w-full text-left px-4 py-3 rounded-lg transition-all flex items-center gap-3 group",
+            "group flex w-full items-center gap-3 border-b border-rule py-3 text-left text-sm transition-colors",
             activeSection === section.id
-              ? "bg-primary/10 text-primary font-medium"
-              : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground",
           )}
         >
           <Icon
             className={cn(
-              "w-4 h-4 shrink-0",
+              "size-4 shrink-0",
               activeSection === section.id
                 ? "text-primary"
                 : "text-muted-foreground group-hover:text-foreground",

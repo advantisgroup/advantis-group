@@ -6,6 +6,7 @@ import { CheckCircle2, Mail, MapPin, Phone, Sparkles } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { CallbackForm } from "@/components/contact/CallbackForm";
+import { Display, PageField } from "@/components/frame";
 import { ContactInfoDesktop, ContactInfoMobile } from "@/components/contact/ContactInfo";
 import { MessageForm } from "@/components/contact/MessageForm";
 import { NotifyModal } from "@/components/contact/NotifyModal";
@@ -163,16 +164,20 @@ export default function Kontakt() {
   };
 
   return (
-    <div className="min-h-screen">
-      <main className="container mx-auto space-y-16 px-4 pb-24 pt-24 md:space-y-24">
-        <section className="mx-auto max-w-4xl space-y-6 text-center md:space-y-8">
-          <h1 className="text-4xl font-bold md:text-5xl lg:text-7xl">{t("title")}</h1>
-          <p className="mx-auto max-w-2xl text-lg text-muted-foreground md:text-xl">
+    <div className="relative min-h-screen bg-background">
+      <PageField />
+
+      <main className="relative mx-auto w-full max-w-[1440px] space-y-16 px-5 pb-24 pt-32 md:space-y-20 md:px-10 md:pt-44">
+        <section className="max-w-4xl">
+          <Display as="h1" size="xl" className="max-w-[14ch]">
+            {t("title")}
+          </Display>
+          <p className="mt-8 max-w-2xl text-lg text-muted-foreground md:text-2xl">
             {t("subtitle")}
           </p>
         </section>
 
-        <section className="mx-auto max-w-6xl space-y-8 md:space-y-12">
+        <section className="space-y-8 md:space-y-12">
           <div className="md:hidden">
             <ContactInfoMobile items={contactInfoData} />
           </div>
@@ -186,14 +191,14 @@ export default function Kontakt() {
 
           <section
             ref={formSectionRef}
-            className="overflow-hidden rounded-4xl border border-border/70 bg-background/70 shadow-xl shadow-black/5"
+            className="tick-frame overflow-hidden border border-rule bg-card/30"
           >
             <TabNavigation contactMode={contactMode} onModeChange={setContactMode} />
 
             <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
               <div className="space-y-6 p-6 md:p-8">
                 <div className="space-y-2">
-                  <h2 className="text-2xl font-semibold text-foreground md:text-3xl">
+                  <h2 className="font-[family-name:var(--font-outfit)] text-2xl font-bold tracking-[-0.025em] text-foreground md:text-3xl">
                     {getFormTitle()}
                   </h2>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -239,7 +244,7 @@ export default function Kontakt() {
                 {renderForm()}
               </div>
 
-              <div className="border-t border-border/70 md:border-l md:border-t-0">
+              <div className="border-t border-rule md:border-l md:border-t-0">
                 <WhyAdvantisSidebar contactMode={contactMode} />
               </div>
             </div>

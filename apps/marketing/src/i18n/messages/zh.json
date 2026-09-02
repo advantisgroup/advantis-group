@@ -21,12 +21,20 @@
       "dark": "深色",
       "system": "系统",
       "auto": "自动"
+    },
+    "menuLabel": "菜单",
+    "descriptions": {
+      "about": "我们是谁，以及我们的理念",
+      "brands": "四个品牌，一个共同目标",
+      "team": "集团背后的团队",
+      "blog": "来自一线的销售洞察与实践",
+      "whitepaper": "免费下载：面向未来的销售",
+      "contact": "聊聊你的销售目标"
     }
   },
   "hero": {
     "title": "不仅仅是一家公司，完整的",
     "titleHighlight": "销售力量",
-    "subtitle": "我们将您的销售提升到新的水平！",
     "ctaPrimary": "立即联系我们",
     "ctaSecondary": "探索我们的品牌"
   },
@@ -34,9 +42,35 @@
     "eyebrow": "营收与客户互动合作伙伴",
     "text": "ADVANTIS GROUP 帮助企业建立现代化的客户关怀（Customer Care）和内部销售（Inside Sales）组织。我们的专家负责客户服务、潜在客户开发、电话销售、新客户获取和销售外包。我们还通过人工智能驱动的流程自动化、CRM 咨询和销售培训来完善我们的产品组合。"
   },
+  "pipeline": {
+    "caption": "运作流程 — 从线索到成交",
+    "legend": "四个阶段",
+    "altText": "示意图：线索依次经过四个阶段——捕获信号、AI 资格评估、优先级分配与分派，以及由销售团队完成的成交。",
+    "stages": {
+      "signal": {
+        "code": "信号",
+        "title": "捕获信号",
+        "rows": ["入站咨询", "外呼电话", "营销活动回复"]
+      },
+      "qualify": {
+        "code": "AI 评估",
+        "title": "AI 资格评估",
+        "rows": ["补全客户资料", "判断真实需求", "剔除重复线索"]
+      },
+      "route": {
+        "code": "分派",
+        "title": "优先级与分派",
+        "rows": ["匹配的品牌", "匹配的团队", "明确的下一步"]
+      },
+      "close": {
+        "code": "成交",
+        "title": "由人完成成交",
+        "rows": ["真实的对话沟通", "移交至 CRM 系统", "有计划地跟进"]
+      }
+    }
+  },
   "features": {
     "badge": "我们的优势",
-    "eyebrow": "咨询引擎",
     "title": "为什么选择",
     "titleBrand": "ADVANTIS GROUP",
     "subtitle": "我们将超过15年的销售经验与创新的销售方法和人工智能工具相结合，将您的销售提升到新的水平。",
@@ -60,7 +94,6 @@
     }
   },
   "brands": {
-    "eyebrow": "品牌架构",
     "title": "我们的",
     "titleHighlight": "品牌",
     "subtitle": "四个强大的品牌，一个共同的目标：您的销售成功",
@@ -281,13 +314,11 @@
   },
   "team": {
     "hero": {
-      "badge": "团队",
       "titlePart1": "背后的面孔",
       "subtitle": "专家、远见者和实干家。因对卓越销售的热情而团结在一起。"
     },
     "founder": {
       "role": "首席执行官 / 总经理",
-      "badge": "领导层",
       "quote": "“销售不仅仅是一份工作，更是一种态度。”",
       "bio": "销售爱好者、战略家和实干家。凭借超过 15 年的销售、辅导和公司建设经验，Andrea 以热情、务实以及对成功和人性的清晰关注领导着 ADVANTIS GROUP。",
       "contactBtn": "联系"
@@ -303,8 +334,7 @@
     },
     "grid": {
       "title": "我们的团队",
-      "subtitle": "您身边的专家",
-      "cardFooter": "Advantis 团队"
+      "subtitle": "您身边的专家"
     },
     "office": {
       "title": "走进我们的日常",
@@ -561,7 +591,6 @@
     }
   },
   "services": {
-    "eyebrow": "我们的服务",
     "title": "助力您销售成功的一切",
     "subtitle": "从客户关怀到人工智能自动化——了解我们如何全方位支持您的销售。",
     "common": {
@@ -1034,7 +1063,6 @@
     "dsgvo": "符合 GDPR 合规"
   },
   "licenses": {
-    "eyebrow": "开源软件",
     "title": "许可证",
     "description": "本网站基于开源软件构建。你可以在此查看所使用的软件包及其许可证。",
     "searchPlaceholder": "搜索软件包、许可证或发布者…",
@@ -1044,7 +1072,14 @@
     "empty": "未找到匹配的许可证。",
     "filterAll": "全部",
     "filterOther": "其他",
-    "filterLabel": "按许可证筛选"
+    "filterLabel": "按许可证筛选",
+    "details": "详情",
+    "npm": "在 npm 查看",
+    "homepage": "网站",
+    "version": "版本",
+    "publisher": "发布者",
+    "license": "许可证",
+    "noLinks": "暂无其他链接。"
   },
   "whitepaper": {
     "meta": {

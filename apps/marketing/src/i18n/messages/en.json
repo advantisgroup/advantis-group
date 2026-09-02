@@ -21,12 +21,20 @@
       "dark": "Dark",
       "system": "System",
       "auto": "Auto"
+    },
+    "menuLabel": "Menu",
+    "descriptions": {
+      "about": "Who we are and what we stand for",
+      "brands": "Four brands, one shared goal",
+      "team": "The people behind the group",
+      "blog": "Insight and practice from the sales floor",
+      "whitepaper": "A free download on the sales floor of tomorrow",
+      "contact": "Talk to us about your sales goal"
     }
   },
   "hero": {
     "title": "More than a company, complete",
     "titleHighlight": "Sales Power",
-    "subtitle": "We take your sales to the next level!",
     "ctaPrimary": "Contact Us Now",
     "ctaSecondary": "Discover Our Brands"
   },
@@ -34,9 +42,35 @@
     "eyebrow": "Revenue & Customer Engagement Partner",
     "text": "ADVANTIS GROUP helps companies build modern customer care and inside sales organizations. Our experts take care of customer service, lead generation, telesales, new customer acquisition, and sales outsourcing. Our portfolio is rounded out with AI-powered process automation, CRM consulting, and sales training."
   },
+  "pipeline": {
+    "caption": "How it works — from signal to close",
+    "legend": "Four stages",
+    "altText": "Schematic: a lead passes through four stages – capturing the signal, AI qualification, prioritising and assigning, and a close handled by the sales team.",
+    "stages": {
+      "signal": {
+        "code": "SIGNAL",
+        "title": "Capture the signal",
+        "rows": ["Inbound enquiries", "Outbound calling", "Campaign responses"]
+      },
+      "qualify": {
+        "code": "AI CHECK",
+        "title": "AI qualification",
+        "rows": ["Enrich the record", "Read the intent", "Filter duplicates"]
+      },
+      "route": {
+        "code": "ROUTING",
+        "title": "Prioritise & assign",
+        "rows": ["The right brand", "The right team", "The next step"]
+      },
+      "close": {
+        "code": "CLOSE",
+        "title": "Close it, human to human",
+        "rows": ["A real conversation", "Handover into the CRM", "Follow-up with a plan"]
+      }
+    }
+  },
   "features": {
     "badge": "Our Strengths",
-    "eyebrow": "Advisory Engine",
     "title": "Why",
     "titleBrand": "ADVANTIS GROUP",
     "subtitle": "We combine over 15 years of sales experience with innovative sales approaches and AI tools to take your sales to the next level.",
@@ -60,7 +94,6 @@
     }
   },
   "brands": {
-    "eyebrow": "Brand Architecture",
     "title": "Our",
     "titleHighlight": "Brands",
     "subtitle": "Four strong brands, one common goal: Your sales success",
@@ -281,13 +314,11 @@
   },
   "team": {
     "hero": {
-      "badge": "The Team",
       "titlePart1": "The Faces Behind",
       "subtitle": "Experts, visionaries, and doers. United by the passion for excellent sales."
     },
     "founder": {
       "role": "CEO / Managing Director",
-      "badge": "Leadership",
       "quote": "\"Sales is not just a job, it's an attitude.\"",
       "bio": "Sales enthusiast, strategist, and doer. With over 15 years of experience in sales, coaching, and company building, Andrea leads the ADVANTIS GROUP with passion, pragmatism, and a clear focus on success and humanity.",
       "contactBtn": "Contact"
@@ -303,8 +334,7 @@
     },
     "grid": {
       "title": "Our Team",
-      "subtitle": "The experts by your side",
-      "cardFooter": "Advantis Team"
+      "subtitle": "The experts by your side"
     },
     "office": {
       "title": "A Glimpse Into Our Everyday",
@@ -561,7 +591,6 @@
     }
   },
   "services": {
-    "eyebrow": "Our Services",
     "title": "Everything for Your Sales Success",
     "subtitle": "From customer care to AI automation — discover how we support your sales holistically.",
     "common": {
@@ -1034,7 +1063,6 @@
     "dsgvo": "GDPR Compliant"
   },
   "licenses": {
-    "eyebrow": "Open source",
     "title": "Licenses",
     "description": "This website is built with open-source software. Browse the packages used and their respective licenses.",
     "searchPlaceholder": "Search package, license, or publisher…",
@@ -1044,7 +1072,14 @@
     "empty": "No matching licenses found.",
     "filterAll": "All",
     "filterOther": "Other",
-    "filterLabel": "Filter by license"
+    "filterLabel": "Filter by license",
+    "details": "Details",
+    "npm": "View on npm",
+    "homepage": "Website",
+    "version": "Version",
+    "publisher": "Publisher",
+    "license": "License",
+    "noLinks": "No further links recorded."
   },
   "whitepaper": {
     "meta": {

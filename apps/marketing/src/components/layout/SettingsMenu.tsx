@@ -37,9 +37,19 @@ const languages = [
 interface SettingsMenuProps {
   isMobile?: boolean;
   onMobileNavigate?: () => void;
+  /**
+   * Render the controls directly rather than behind a trigger. The header's
+   * card menu is already a popover, and nesting a second one inside it to
+   * reach two short lists is more chrome than the choices are worth.
+   */
+  inline?: boolean;
 }
 
-export const SettingsMenu = ({ isMobile = false, onMobileNavigate }: SettingsMenuProps) => {
+export const SettingsMenu = ({
+  isMobile = false,
+  onMobileNavigate,
+  inline = false,
+}: SettingsMenuProps) => {
   const locale = useLocale();
   const t = useTranslations("nav.settingsMenu");
   const router = useRouter();
@@ -59,6 +69,69 @@ export const SettingsMenu = ({ isMobile = false, onMobileNavigate }: SettingsMen
     onMobileNavigate?.();
     router.replace(pathname, { locale: newLocale });
   };
+
+  if (inline) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+            {t("language")}
+          </span>
+          <div className="mt-3 grid grid-cols-4 gap-px bg-rule">
+            {languages.map((language) => (
+              <button
+                type="button"
+                key={language.code}
+                onClick={() => switchLanguage(language.code)}
+                aria-current={language.code === locale}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 py-2.5 text-sm transition-colors",
+                  language.code === locale
+                    ? "bg-primary/10 text-primary"
+                    : "bg-popover text-muted-foreground hover:bg-card hover:text-foreground",
+                )}
+              >
+                <span className="text-base">{language.flag}</span>
+                <span className="font-mono text-[11px]">{language.code.toUpperCase()}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+            {t("appearance")}
+          </span>
+          <div className="mt-3 grid grid-cols-3 gap-px bg-rule">
+            {["light", "dark", "system"].map((mode) => {
+              const Icon = mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+              const label =
+                mode === "light" ? t("light") : mode === "dark" ? t("dark") : t("system");
+              const isActive = mounted && theme === mode;
+
+              return (
+                <button
+                  type="button"
+                  key={mode}
+                  onClick={() => setTheme(mode)}
+                  aria-current={isActive}
+                  className={cn(
+                    "flex items-center justify-center gap-2 py-2.5 text-sm transition-colors",
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "bg-popover text-muted-foreground hover:bg-card hover:text-foreground",
+                  )}
+                >
+                  <Icon className="size-4" />
+                  <span>{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isMobile) {
     return (

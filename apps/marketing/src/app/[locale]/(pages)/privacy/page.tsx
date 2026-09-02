@@ -6,7 +6,7 @@ import { Shield, Lock, User, Database, Mail, FileText, Menu, X } from "lucide-re
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Display, PageField } from "@/components/frame";
 import { TableOfContents } from "@/components/ui/TableOfContents";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { COMPANY_ADDRESS } from "@/lib/company";
@@ -174,12 +174,14 @@ export default function Datenschutz() {
   }, [sections]);
 
   return (
-    <div className="min-h-screen">
+    <div className="relative min-h-screen bg-background">
+      <PageField />
+
       {/* Mobile TOC Button */}
       {isMobile && (
         <Button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="fixed bottom-6 right-6 z-50 rounded-full w-14 h-14 shadow-lg"
+          className="fixed bottom-6 right-6 z-50 size-14 rounded-none shadow-lg"
           size="icon"
         >
           {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -194,29 +196,31 @@ export default function Datenschutz() {
         />
       )}
 
-      <main className="container mx-auto px-4 pt-24 pb-24">
-        <section className="max-w-7xl mx-auto space-y-12">
-          <div className="text-center space-y-6">
-            <h1 className="text-4xl md:text-6xl font-bold">{t("title")}</h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{t("subtitle")}</p>
+      <main className="relative mx-auto w-full max-w-[1440px] px-5 pt-32 pb-24 md:px-10 md:pt-44">
+        <section className="space-y-12">
+          <div>
+            <Display as="h1" size="xl" className="max-w-[14ch]">
+              {t("title")}
+            </Display>
+            <p className="mt-8 max-w-2xl text-lg text-muted-foreground md:text-2xl">
+              {t("subtitle")}
+            </p>
           </div>
 
           <div className="flex gap-8 relative">
             {/* Desktop Sidebar */}
             {!isMobile && (
-              <aside className="w-72 shrink-0 sticky top-24 self-start">
-                <Card className="border border-border">
-                  <CardHeader>
-                    <CardTitle className="text-lg">{t("tableOfContents")}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <TableOfContents
-                      sections={sections}
-                      activeSection={activeSection}
-                      onSectionClick={scrollToSection}
-                    />
-                  </CardContent>
-                </Card>
+              <aside className="sticky top-28 w-72 shrink-0 self-start">
+                <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                  {t("tableOfContents")}
+                </p>
+                <div className="mt-5">
+                  <TableOfContents
+                    sections={sections}
+                    activeSection={activeSection}
+                    onSectionClick={scrollToSection}
+                  />
+                </div>
               </aside>
             )}
 
@@ -224,22 +228,20 @@ export default function Datenschutz() {
             {isMobile && (
               <aside
                 className={cn(
-                  "fixed top-24 right-0 w-80 max-w-[85vw] h-[calc(100vh-6rem)] bg-background border-l border-border z-50 transition-transform duration-300 overflow-y-auto",
+                  "fixed top-24 right-0 z-50 h-[calc(100vh-6rem)] w-80 max-w-[85vw] overflow-y-auto border-l border-rule bg-background p-6 transition-transform duration-300",
                   sidebarOpen ? "translate-x-0" : "translate-x-full",
                 )}
               >
-                <Card className="border-0 rounded-none h-full">
-                  <CardHeader>
-                    <CardTitle className="text-lg">{t("tableOfContents")}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <TableOfContents
-                      sections={sections}
-                      activeSection={activeSection}
-                      onSectionClick={scrollToSection}
-                    />
-                  </CardContent>
-                </Card>
+                <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                  {t("tableOfContents")}
+                </p>
+                <div className="mt-5">
+                  <TableOfContents
+                    sections={sections}
+                    activeSection={activeSection}
+                    onSectionClick={scrollToSection}
+                  />
+                </div>
               </aside>
             )}
 
@@ -247,15 +249,17 @@ export default function Datenschutz() {
             <div className="flex-1 space-y-12">
               {sections.map((section) => {
                 return (
-                  <section key={section.id} id={section.id} className="scroll-mt-24">
-                    <Card className="border border-border">
-                      <CardHeader>
-                        <div className="flex items-center gap-4">
-                          <CardTitle className="text-2xl">{section.title}</CardTitle>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-2">{section.content}</CardContent>
-                    </Card>
+                  <section
+                    key={section.id}
+                    id={section.id}
+                    className="scroll-mt-28 border-t border-rule pt-8 first:border-t-0 first:pt-0"
+                  >
+                    <h2 className="font-[family-name:var(--font-outfit)] text-2xl font-bold tracking-[-0.025em]">
+                      {section.title}
+                    </h2>
+                    <div className="mt-5 leading-relaxed text-muted-foreground">
+                      {section.content}
+                    </div>
                   </section>
                 );
               })}

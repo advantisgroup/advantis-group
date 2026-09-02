@@ -1,73 +1,88 @@
 "use client";
 
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Display, Marquee } from "@/components/frame";
+import { PipelineSchematic } from "@/components/frame/PipelineSchematic";
 import { Link } from "@/i18n/navigation";
+import { BRANDS } from "@/lib/brands";
 
 import { BrandText } from "../../effects/BrandText";
 import { Button } from "../../ui/button";
 
+/**
+ * One column, one reading order: what the company is called, what it actually
+ * does, the pitch, the ask, then the diagram of how the work runs.
+ *
+ * The figures that used to sit opposite the headline are gone — 15+ / 150+ / 4
+ * are already the "why us" grid further down and GDPR is already in the proof
+ * bar, so the hero was competing with itself for attention while repeating
+ * numbers the reader would meet again in a minute.
+ */
 export const Hero = () => {
   const t = useTranslations("hero");
+  const positioning = useTranslations("homeIntro");
 
   return (
-    <section className="relative h-screen flex items-center">
-      {/* Decorative floating elements - static, no animation to avoid GPU overhead */}
-      <div className="hidden md:block absolute top-[20%] left-[15%] w-96 h-96 bg-primary/6 rounded-full blur-2xl" />
-      <div className="hidden md:block absolute top-[30%] right-[10%] w-[500px] h-[500px] bg-secondary/6 rounded-full blur-2xl" />
+    <section className="relative pt-28 md:pt-36">
+      <div className="relative mx-auto w-full max-w-[1440px] px-5 md:px-10">
+        <div className="max-w-4xl">
+          <Display as="h1" size="xl" className="max-w-[15ch] text-pretty">
+            {t("title")} <span className="md:hidden">{t("titleHighlight")}</span>
+            <span className="hidden md:inline">
+              <BrandText brand="advantis" hoverable>
+                {t("titleHighlight")}
+              </BrandText>
+            </span>
+          </Display>
 
-      {/* Bottom fade overlay */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-32 bg-background/90 pointer-events-none"
-        style={{
-          maskImage: "linear-gradient(to top, black 0%, transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to top, black 0%, transparent 100%)",
-        }}
-      />
+          {/* The line that answers "what is this company". */}
+          <p className="mt-8 max-w-2xl text-xl leading-[1.5] text-foreground/85 md:text-2xl">
+            {positioning("eyebrow")}
+          </p>
 
-      <div className="container mx-auto px-4 w-full relative z-10 -top-[3vh]">
-        <div className="md:max-w-7xl max-w-full mx-auto text-center space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-4xl group font-bold leading-tight md:text-6xl lg:text-8xl">
-              {t("title")} <span className="md:hidden">{t("titleHighlight")}</span>
-              <span className="hidden md:inline">
-                <BrandText hoverable groupHover>
-                  {t("titleHighlight")}
-                </BrandText>
-              </span>
-            </h1>
+          {/*
+           * The detail behind it, which used to be a standalone band under the
+           * hero. On its own it was a centred paragraph in a screenful of
+           * whitespace saying what the line above already said; here it earns
+           * its place by naming the actual services.
+           */}
+          <p className="mt-6 max-w-2xl text-base leading-[1.7] text-muted-foreground md:text-lg">
+            {positioning("text")}
+          </p>
 
-            <p className="hidden text-lg text-muted-foreground font-medium md:block md:text-2xl lg:text-3xl">
-              {t("subtitle")}
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 md:pt-1">
-            <Button asChild size="lg">
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+            <Button asChild size="lg" className="rounded-none">
               <Link href="/contact">
                 {t("ctaPrimary")}
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="size-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="rounded-none border-rule-strong bg-background/40 backdrop-blur-sm"
+            >
               <Link href="/brands">{t("ctaSecondary")}</Link>
             </Button>
           </div>
         </div>
+
+        <PipelineSchematic className="mt-16 md:mt-24" />
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 animate-bounce">
-        <div className="flex flex-col items-center gap-2 text-muted-foreground">
-          <ChevronDown className="w-5 h-5" />
-        </div>
-      </div>
-
-      {/* Section divider at bottom */}
-      {/* <div className="absolute bottom-0 left-0 right-0 z-10">
-                <SectionDivider variant="dots" opacity={0.3} />
-            </div> */}
+      <Marquee className="mt-16 border-y border-rule py-4 md:mt-24" durationSeconds={45}>
+        {BRANDS.map((brand) => (
+          <span key={brand.key} className="flex items-center">
+            <span className="px-6 font-[family-name:var(--font-outfit)] text-lg font-semibold tracking-[-0.02em] text-muted-foreground/45 md:px-10 md:text-2xl">
+              {brand.name}
+            </span>
+            <span aria-hidden className="size-1 rotate-45 bg-primary/60" />
+          </span>
+        ))}
+      </Marquee>
     </section>
   );
 };

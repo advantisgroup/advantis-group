@@ -21,12 +21,20 @@
       "dark": "Dunkel",
       "system": "System",
       "auto": "Automatisch"
+    },
+    "menuLabel": "Menü",
+    "descriptions": {
+      "about": "Wer wir sind und wofür wir stehen",
+      "brands": "Vier Marken, ein gemeinsames Ziel",
+      "team": "Die Menschen hinter der Gruppe",
+      "blog": "Einblicke und Praxis aus dem Vertrieb",
+      "whitepaper": "Kostenloser Download zum Vertrieb von morgen",
+      "contact": "Sprich mit uns über dein Vertriebsziel"
     }
   },
   "hero": {
     "title": "Mehr als ein Unternehmen, komplette",
     "titleHighlight": "Sales Power",
-    "subtitle": "Wir bringen deinen Vertrieb auf das nächste Level!",
     "ctaPrimary": "Jetzt Kontakt aufnehmen",
     "ctaSecondary": "Unsere Marken entdecken"
   },
@@ -34,9 +42,35 @@
     "eyebrow": "Revenue- und Customer-Engagement-Partner",
     "text": "Die ADVANTIS GROUP unterstützt Unternehmen beim Aufbau moderner Customer-Care- und Inside-Sales-Organisationen. Unsere Experten übernehmen Customer Service, Leadgenerierung, Telesales, Neukundengewinnung und Vertriebsoutsourcing. Ergänzt wird unser Portfolio durch KI-gestützte Prozessautomatisierung, CRM-Beratung und Sales-Trainings."
   },
+  "pipeline": {
+    "caption": "Ablauf — vom Signal zum Abschluss",
+    "legend": "Vier Stufen",
+    "altText": "Schema: Ein Lead durchläuft vier Stufen – Signale erfassen, KI-Qualifizierung, Priorisieren und Zuordnen sowie den menschlichen Abschluss durch das Vertriebsteam.",
+    "stages": {
+      "signal": {
+        "code": "SIGNAL",
+        "title": "Signale erfassen",
+        "rows": ["Inbound-Anfragen", "Outbound-Telefonie", "Kampagnen-Rückläufer"]
+      },
+      "qualify": {
+        "code": "KI-CHECK",
+        "title": "KI-Qualifizierung",
+        "rows": ["Daten anreichern", "Bedarf einordnen", "Dubletten aussortieren"]
+      },
+      "route": {
+        "code": "ROUTING",
+        "title": "Priorisieren & zuordnen",
+        "rows": ["Passende Marke", "Richtiges Team", "Nächster Schritt"]
+      },
+      "close": {
+        "code": "ABSCHLUSS",
+        "title": "Menschlich abschließen",
+        "rows": ["Beratung im Gespräch", "Übergabe ins CRM", "Nachfassen mit Plan"]
+      }
+    }
+  },
   "features": {
     "badge": "Unsere Stärken",
-    "eyebrow": "Beratungs-Engine",
     "title": "Warum",
     "titleBrand": "ADVANTIS GROUP",
     "subtitle": "Wir kombinieren über 15 Jahre Vertriebserfahrung mit innovativen Sales-Ansätzen und KI-Tools, um deinen Vertrieb auf das nächste Level zu bringen.",
@@ -60,7 +94,6 @@
     }
   },
   "brands": {
-    "eyebrow": "Markenarchitektur",
     "title": "Unsere",
     "titleHighlight": "Marken",
     "subtitle": "Vier starke Marken, ein gemeinsames Ziel: dein Vertriebserfolg",
@@ -281,13 +314,11 @@
   },
   "team": {
     "hero": {
-      "badge": "Das Team",
       "titlePart1": "Die Gesichter hinter",
       "subtitle": "Experten, Visionäre und Macher. Vereint durch die Leidenschaft für exzellenten Vertrieb."
     },
     "founder": {
       "role": "Geschäftsführerin",
-      "badge": "Leadership",
       "quote": "\"Sales ist nicht nur ein Job, es ist eine Haltung.\"",
       "bio": "Sales-Enthusiastin, Strategin und Macherin. Mit über 15 Jahren Erfahrung im Vertrieb, Coaching und Unternehmensaufbau führt Andrea die ADVANTIS GROUP mit Leidenschaft, Pragmatismus und einem klaren Fokus auf Erfolg und Menschlichkeit.",
       "contactBtn": "Kontaktieren"
@@ -303,8 +334,7 @@
     },
     "grid": {
       "title": "Unser Team",
-      "subtitle": "Die Experten an deiner Seite",
-      "cardFooter": "Advantis Team"
+      "subtitle": "Die Experten an deiner Seite"
     },
     "office": {
       "title": "Einblicke in unseren Alltag",
@@ -561,7 +591,6 @@
     }
   },
   "services": {
-    "eyebrow": "Unsere Leistungen",
     "title": "Alles für Deinen Vertriebserfolg",
     "subtitle": "Von Customer Care bis KI-Automatisierung – entdecke, wie wir Deinen Vertrieb ganzheitlich unterstützen.",
     "common": {
@@ -1034,7 +1063,6 @@
     "dsgvo": "DSGVO-konform"
   },
   "licenses": {
-    "eyebrow": "Open Source",
     "title": "Lizenzen",
     "description": "Diese Website baut auf Open-Source-Software auf. Hier findest du die verwendeten Pakete und ihre jeweiligen Lizenzen.",
     "searchPlaceholder": "Paket, Lizenz oder Herausgeber suchen …",
@@ -1044,7 +1072,14 @@
     "empty": "Keine passenden Lizenzen gefunden.",
     "filterAll": "Alle",
     "filterOther": "Sonstige",
-    "filterLabel": "Nach Lizenz filtern"
+    "filterLabel": "Nach Lizenz filtern",
+    "details": "Details",
+    "npm": "Auf npm ansehen",
+    "homepage": "Website",
+    "version": "Version",
+    "publisher": "Herausgeber",
+    "license": "Lizenz",
+    "noLinks": "Keine weiterführenden Links hinterlegt."
   },
   "whitepaper": {
     "meta": {
