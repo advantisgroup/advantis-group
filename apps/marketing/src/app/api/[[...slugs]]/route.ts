@@ -3,6 +3,7 @@ import { Elysia, t } from "elysia";
 import { email } from "@/app/api/[[...slugs]]/email";
 import { notify } from "@/app/api/[[...slugs]]/notify";
 import { submissions } from "@/app/api/[[...slugs]]/submissions";
+import { whitepaper } from "@/app/api/[[...slugs]]/whitepaper";
 
 const app = new Elysia({ prefix: "/api" })
   .get("/", "Hello Nextjs")
@@ -13,7 +14,8 @@ const app = new Elysia({ prefix: "/api" })
   })
   .use(email)
   .use(notify)
-  .use(submissions);
+  .use(submissions)
+  .use(whitepaper);
 
 export type App = typeof app;
 

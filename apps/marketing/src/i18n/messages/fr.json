@@ -6,6 +6,7 @@
     "about": "À Propos",
     "team": "Équipe",
     "contact": "Contact",
+    "whitepaper": "Livre blanc",
     "intranet": "Accéder à l'Intranet",
     "privacy": "Politique de Confidentialité",
     "imprint": "Mentions Légales",
@@ -1044,5 +1045,124 @@
     "filterAll": "Toutes",
     "filterOther": "Autres",
     "filterLabel": "Filtrer par licence"
+  },
+  "whitepaper": {
+    "meta": {
+      "title": "Livre blanc : les outils IA dans la vente",
+      "description": "Le livre blanc gratuit d'ADVANTIS GROUP sur l'utilisation des outils IA dans la vente — demandez votre exemplaire."
+    },
+    "hero": {
+      "badge": "Livre blanc gratuit",
+      "title": "Les outils IA dans la vente",
+      "subtitle": "Vous souhaitez en savoir plus sur l'utilisation des outils IA dans la vente ? Téléchargez ici notre livre blanc gratuit.",
+      "intro": "Nous vous montrons où l'IA fait vraiment gagner du temps au quotidien, ce qui compte dans le choix des outils et comment les déployer dans votre équipe."
+    },
+    "highlights": {
+      "title": "Au sommaire",
+      "item1": {
+        "title": "Là où l'IA fait la différence",
+        "description": "Des cas d'usage concrets, de la recherche de leads à la relance en passant par la prise de contact."
+      },
+      "item2": {
+        "title": "Les outils comparés",
+        "description": "Ce qu'il faut regarder avant de choisir et les questions à trancher en amont."
+      },
+      "item3": {
+        "title": "Le déploiement en équipe",
+        "description": "Comment introduire les outils IA sans surcharger votre équipe ni casser vos processus."
+      }
+    },
+    "contact": {
+      "title": "Vos interlocuteurs",
+      "description": "Des questions sur le livre blanc, ou envie d'échanger directement ? Écrivez-nous.",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "address": "Adresse"
+    },
+    "form": {
+      "title": "Demander le livre blanc",
+      "description": "Renseignez vos coordonnées — dès que votre adresse e-mail est confirmée, nous vous envoyons le livre blanc.",
+      "company": "Nom de l'entreprise",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "phonePlaceholder": "+49 123 456789",
+      "consent": "J'accepte qu'advantis GmbH enregistre et traite les données que je fournis ici afin de m'envoyer le livre blanc et de me contacter à ce sujet. Je peux retirer ce consentement à tout moment, sans formalité.",
+      "consentSuffix": "Vous trouverez plus d'informations dans notre",
+      "consentLink": "politique de confidentialité",
+      "doubleOptIn": "Double opt-in : vous recevez d'abord un e-mail contenant un lien de confirmation. Le livre blanc n'est envoyé qu'ensuite.",
+      "submit": "Demander le livre blanc",
+      "errors": {
+        "required": "Veuillez remplir ce champ.",
+        "email": "Veuillez saisir une adresse e-mail valide.",
+        "consent": "Veuillez accepter le traitement de vos données.",
+        "generic": "Une erreur est survenue. Veuillez réessayer.",
+        "network": "Erreur réseau. Vérifiez votre connexion et réessayez.",
+        "unavailable": "Le livre blanc n'est pas encore disponible. Veuillez réessayer plus tard."
+      }
+    },
+    "success": {
+      "title": "Presque terminé !",
+      "description": "Nous avons envoyé un e-mail à {email}. Confirmez le lien qu'il contient et le livre blanc arrive aussitôt dans votre boîte de réception.",
+      "spamHint": "Rien reçu ? Pensez à consulter votre dossier de spam.",
+      "again": "Utiliser une autre adresse e-mail"
+    },
+    "unavailable": {
+      "title": "Le livre blanc arrive bientôt",
+      "description": "Nous y apportons les dernières touches. Dès qu'il sera prêt, vous pourrez le demander ici — d'ici là, contactez-nous directement.",
+      "cta": "Nous contacter"
+    },
+    "confirm": {
+      "title": "Confirmer votre e-mail",
+      "description": "Encore un clic — nous vous envoyons ensuite le livre blanc.",
+      "cta": "Confirmer et recevoir le livre blanc",
+      "requestCta": "Demander à nouveau le livre blanc",
+      "missingToken": {
+        "title": "Lien incomplet",
+        "description": "Il manque le jeton à ce lien de confirmation. Ouvrez à nouveau le lien de notre e-mail."
+      },
+      "success": {
+        "title": "Confirmé !",
+        "description": "Le livre blanc est en route vers {email}."
+      },
+      "alreadyDelivered": {
+        "title": "Déjà confirmé",
+        "description": "Nous vous avons déjà envoyé le livre blanc à {email}."
+      },
+      "invalid": {
+        "title": "Lien non valide",
+        "description": "Ce lien de confirmation nous est inconnu. Veuillez demander à nouveau le livre blanc."
+      },
+      "expired": {
+        "title": "Lien expiré",
+        "description": "Ce lien de confirmation n'est plus valable. Veuillez demander à nouveau le livre blanc."
+      },
+      "error": {
+        "title": "Une erreur est survenue",
+        "description": "Nous n'avons pas pu traiter votre confirmation. Veuillez réessayer plus tard."
+      }
+    },
+    "email": {
+      "greeting": "Bonjour {firstName} {lastName},",
+      "badge": "Livre blanc",
+      "rightsReserved": "Tous droits réservés.",
+      "privacyLink": "Politique de confidentialité",
+      "confirm": {
+        "title": "Encore une étape",
+        "body": "vous avez demandé notre livre blanc gratuit sur l'utilisation des outils IA dans la vente. Confirmez votre adresse e-mail — nous vous enverrons le document juste après.",
+        "cta": "Confirmer l'e-mail et recevoir le livre blanc",
+        "expiry": "Le lien de confirmation est valable 48 heures.",
+        "fallback": "Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :",
+        "disclaimer": "Vous n'avez rien demandé ? Ignorez simplement cet e-mail. Sans votre confirmation, nous n'envoyons rien."
+      },
+      "delivery": {
+        "title": "Votre livre blanc est là",
+        "body": "merci pour votre confirmation. Vous trouverez le livre blanc en pièce jointe de cet e-mail.",
+        "outro": "Des questions, ou envie d'un échange sans engagement ? Répondez simplement à cet e-mail ou appelez-nous.",
+        "contactEmail": "E-mail",
+        "contactPhone": "Téléphone"
+      }
+    }
   }
 }
