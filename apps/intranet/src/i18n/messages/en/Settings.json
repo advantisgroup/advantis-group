@@ -122,5 +122,11 @@
   "copyRecoveryCodes": "Copy codes",
   "copied": "Copied",
   "totpRecoveryCodesDone": "I've saved these",
+  "securityAlwaysMfa": "Always require MFA at sign-in",
+  "securityAlwaysMfaHint": "Ask for a verification code every time you sign in, on top of your usual sign-in method. Off by default — most people don't need this.",
+  "securityAlwaysMfaPasskeyWarning": "You already have a passkey, which is already very strong on its own. Turning this on will ask for a code every time you sign in, even with your passkey — most people don't need this.",
+  "securityAlwaysMfaEnabled": "MFA will now be required at every sign-in",
+  "securityAlwaysMfaDisabled": "MFA is no longer required at every sign-in",
+  "securityPreferenceError": "Could not save this preference",
   "cancel": "Cancel"
 }

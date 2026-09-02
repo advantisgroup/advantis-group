@@ -440,6 +440,121 @@ export default defineSchema({
     at: v.number(),
   }).index("by_user_at", ["userId", "at"]),
 
+  // --- Centralized step-up / reverification --------------------------------
+  // One engine behind every "prove it's really you" moment: signing in under
+  // an org/personal MFA requirement, an admin reverifying before a sensitive
+  // action, a destructive action that wants a fresher check. See lib/stepUp.ts.
+
+  /** Org-wide policy. Singleton — at most one row; an absent row means every
+   * requirement is off. */
+  authPolicy: defineTable({
+    requireMfaScope: v.union(v.literal("off"), v.literal("all"), v.literal("managers_and_up")),
+    requireMfaRetroactive: v.boolean(),
+    /** Bumped only when the requireMfa* fields above change — not on every
+     * save — so "does this account predate the policy" stays accurate even
+     * if an unrelated field (like the destructive-action TTL) is edited. */
+    mfaPolicySetAt: v.number(),
+    requireMfaForDestructive: v.boolean(),
+    destructiveActionTtlMinutes: v.number(),
+    minDestructiveLevel: v.number(),
+    requirePasskeyScope: v.union(v.literal("off"), v.literal("all"), v.literal("managers_and_up")),
+    requirePasskeyRetroactive: v.boolean(),
+    passkeyPolicySetAt: v.number(),
+    gracePeriodDays: v.number(),
+    exemptUserIds: v.array(v.id("users")),
+    updatedAt: v.number(),
+    updatedByUserId: v.id("users"),
+  }),
+
+  /** Per-user sign-in preference — same upsert shape as notificationPreferences. */
+  securityPreferences: defineTable({
+    userId: v.id("users"),
+    alwaysRequireMfaAtSignIn: v.boolean(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  /** An issued email code, scoped per (user, Clerk session) — replaces
+   * adminVerificationCodes, which was scoped per-admin only. */
+  stepUpChallenges: defineTable({
+    userId: v.id("users"),
+    sessionId: v.string(),
+    codeHash: v.string(),
+    attempts: v.number(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+    verifiedAt: v.optional(v.number()),
+  }).index("by_user_session", ["userId", "sessionId"]),
+
+  /** The "cleared" ledger — one row per method satisfied this (user, session).
+   * A session can accumulate more than one, e.g. email code now, TOTP later
+   * if a destructive action demands a higher level. */
+  stepUpVerifications: defineTable({
+    userId: v.id("users"),
+    sessionId: v.string(),
+    method: v.union(
+      v.literal("email_code"),
+      v.literal("totp"),
+      v.literal("recovery_code"),
+      v.literal("passkey"),
+    ),
+    level: v.number(),
+    context: v.union(v.literal("sign_in"), v.literal("destructive"), v.literal("admin_reverify")),
+    verifiedAt: v.number(),
+  }).index("by_user_session", ["userId", "sessionId"]),
+
+  /** Single-use proof that `finishAuthentication` (apps/api passkeys.ts)
+   * really did complete a WebAuthn check, handed to the client alongside the
+   * Clerk sign-in ticket and redeemed once the new Clerk session exists —
+   * stops a signed-in client from just claiming "I used a passkey". */
+  stepUpPasskeyTickets: defineTable({
+    userId: v.id("users"),
+    tokenHash: v.string(),
+    expiresAt: v.number(),
+    usedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_tokenHash", ["tokenHash"])
+    .index("by_user", ["userId"]),
+
+  /** Minimal "new device" risk signal — a hash of a coarse IP network prefix
+   * + normalized user-agent, never the raw IP. Purged periodically (see
+   * crons.ts) — this is a rolling recognition list, not a permanent log. */
+  knownDevices: defineTable({
+    userId: v.id("users"),
+    deviceHash: v.string(),
+    firstSeenAt: v.number(),
+    lastSeenAt: v.number(),
+  })
+    .index("by_user_hash", ["userId", "deviceHash"])
+    .index("by_lastSeenAt", ["lastSeenAt"]),
+
+  /** One-shot result of the device check for a given session, written by
+   * apps/api (the one place that sees real request headers) and read by
+   * `resolveSignInRequirement`. */
+  sessionRiskSignals: defineTable({
+    userId: v.id("users"),
+    sessionId: v.string(),
+    newDevice: v.boolean(),
+    evaluatedAt: v.number(),
+  }).index("by_user_session", ["userId", "sessionId"]),
+
+  stepUpAuditLog: defineTable({
+    userId: v.id("users"),
+    event: v.union(
+      v.literal("challenge_issued"),
+      v.literal("verified"), // detail carries the method (email_code|totp|recovery_code|passkey)
+      v.literal("failed"), // detail carries method + reason
+      v.literal("enrollment_prompted"),
+      v.literal("policy_changed"),
+      v.literal("new_device_detected"),
+    ),
+    context: v.optional(
+      v.union(v.literal("sign_in"), v.literal("destructive"), v.literal("admin_reverify")),
+    ),
+    detail: v.optional(v.string()),
+    at: v.number(),
+  }).index("by_user_at", ["userId", "at"]),
+
   /**
    * Canonical org departments. Replaces the free-text `users.department` —
    * see the org-data migration (`orgDataMigration.ts`) that backfills
@@ -2722,16 +2837,6 @@ export default defineSchema({
    * expires or is replaced, so one code can clear several admin actions
    * within the verification window.
    */
-  adminVerificationCodes: defineTable({
-    adminUserId: v.id("users"),
-    /** sha256 of the 6-digit code — the plaintext is never stored. */
-    codeHash: v.string(),
-    attempts: v.number(),
-    expiresAt: v.number(),
-    createdAt: v.number(),
-    verifiedAt: v.optional(v.number()),
-  }).index("by_admin", ["adminUserId"]),
-
   // --- Wiki Chat (AI assistant history) ------------------------------------
   // Per-user chat history for the Wiki AI assistant. Title and message blobs
   // are stored as AES-256-GCM ciphertext (encrypted in the Elysia API with a

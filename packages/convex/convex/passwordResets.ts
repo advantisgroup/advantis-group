@@ -11,12 +11,12 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import {
-  isRecentlyVerified,
-  issueCode,
-  needsVerificationHint,
-  verifyCode,
-  type VerificationHint,
-} from "./lib/adminVerification";
+  checkSatisfied,
+  needsStepUpHint,
+  ORG_REVERIFY_LEVEL,
+  REVERIFY_FRESHNESS_MS,
+  type StepUpHint,
+} from "./lib/stepUp";
 import { hashPassword, randomToken, sha256hex } from "./activity/lib/crypto";
 import { trackEvent } from "./lib/analytics";
 import {
@@ -598,70 +598,33 @@ export const pendingCount = query({
   },
 });
 
-// ------------------------------------------------------- admin step-up code
-
-/** Mails a fresh 6-digit code to the calling admin's own address, gating the
- * two actions below. Cooldown-limited by `issueCode` itself. Not tied to any
- * one request/scope, so it logs to the console rather than
- * `passwordResetAuditLog` — the per-action `reverification_failed`/`*_issued`/
- * `request_dismissed` entries there already capture the outcome of the action
- * a code unlocked. */
-export const requestVerificationCode = mutation({
-  args: {},
-  handler: async (ctx): Promise<{ ok: true }> => {
-    const admin = await requireAdmin(ctx);
-    const code = await issueCode(ctx, admin);
-    await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
-      kind: "admin-verification-code",
-      to: admin.email,
-      data: { code, expiresInMinutes: 10 },
-    });
-    console.log(`[adminVerification] code sent admin=${admin._id} to=${maskEmail(admin.email)}`);
-    return { ok: true };
-  },
-});
-
-/** Redeems a code mailed by `requestVerificationCode`. Success marks the
- * admin "recently verified" for `REVERIFICATION_MAX_AGE_MINUTES`, which
- * `isRecentlyVerified` reads from the same row. */
-export const submitVerificationCode = mutation({
-  args: { code: v.string() },
-  handler: async (ctx, { code }): Promise<{ ok: true }> => {
-    const admin = await requireAdmin(ctx);
-    const result = await verifyCode(ctx, admin._id, code);
-    if (!result.ok) {
-      console.log(`[adminVerification] code rejected admin=${admin._id} reason=${result.reason}`);
-      const message =
-        result.reason === "wrong_code"
-          ? `Incorrect code. ${result.attemptsLeft} attempt${result.attemptsLeft === 1 ? "" : "s"} left.`
-          : result.reason === "expired"
-            ? "This code has expired. Request a new one."
-            : result.reason === "too_many_attempts"
-              ? "Too many incorrect attempts. Request a new code."
-              : "No code is waiting. Request one first.";
-      throw new ConvexError({ code: result.reason, message });
-    }
-    console.log(`[adminVerification] code verified admin=${admin._id}`);
-    return { ok: true };
-  },
-});
-
 // ------------------------------------------------------------- admin review
+//
+// Reverification for the two actions below now goes through the shared
+// step-up engine (`lib/stepUp.ts`) — `api.stepUp.requestEmailCode`/
+// `submitEmailCode` with `context: "admin_reverify"`, driven from
+// `<StepUpDialog>` on the frontend instead of a page-local dialog.
 
 /** Dismiss without issuing anything — the right answer for a probe, or for a
  * request an admin has resolved out-of-band. Step-up gated like issuing is:
  * silently burying "someone is trying to get into the CFO's account" is its
  * own kind of damage. */
 export const dismissRequest = mutation({
-  args: { requestId: v.id("passwordResetRequests") },
-  handler: async (ctx, { requestId }): Promise<{ ok: true } | VerificationHint> => {
+  args: { requestId: v.id("passwordResetRequests"), sessionId: v.string() },
+  handler: async (ctx, { requestId, sessionId }): Promise<{ ok: true } | StepUpHint> => {
     const admin = await requireAdmin(ctx);
     const request = await ctx.db.get(requestId);
     if (!request || request.status !== "pending") {
       throw new ConvexError({ code: "not_found", message: "No pending request." });
     }
 
-    if (!(await isRecentlyVerified(ctx, admin._id))) {
+    const satisfied = await checkSatisfied(ctx, {
+      userId: admin._id,
+      sessionId,
+      requiredLevel: ORG_REVERIFY_LEVEL,
+      freshnessMs: REVERIFY_FRESHNESS_MS,
+    });
+    if (!satisfied) {
       await audit(ctx, {
         event: "reverification_failed",
         scope: request.scope,
@@ -677,7 +640,7 @@ export const dismissRequest = mutation({
         distinctId: admin.clerkUserId,
         properties: { scope: request.scope, action: "dismiss" },
       });
-      return needsVerificationHint();
+      return needsStepUpHint(ORG_REVERIFY_LEVEL, ["email_code", "totp", "recovery_code"]);
     }
 
     await ctx.db.patch(requestId, {
@@ -750,12 +713,13 @@ function sendToMatchesExpected(
 export const prepareIssue = internalQuery({
   args: {
     requestId: v.id("passwordResetRequests"),
+    sessionId: v.string(),
     sendTo: v.optional(sendToValidator),
     expectedEmail: v.optional(v.string()),
   },
   handler: async (
     ctx,
-    { requestId, sendTo, expectedEmail },
+    { requestId, sessionId, sendTo, expectedEmail },
   ): Promise<{
     admin: Doc<"users">;
     reverified: boolean;
@@ -772,7 +736,12 @@ export const prepareIssue = internalQuery({
     createdAt: number;
   }> => {
     const admin = await requireAdmin(ctx);
-    const reverified = await isRecentlyVerified(ctx, admin._id);
+    const reverified = await checkSatisfied(ctx, {
+      userId: admin._id,
+      sessionId,
+      requiredLevel: ORG_REVERIFY_LEVEL,
+      freshnessMs: REVERIFY_FRESHNESS_MS,
+    });
     const request = await ctx.db.get(requestId);
     if (!request || request.status !== "pending") {
       throw new ConvexError({ code: "not_found", message: "No pending request." });
@@ -924,19 +893,21 @@ export const storeIssuedToken = internalMutation({
 export const issueResetLink = action({
   args: {
     requestId: v.id("passwordResetRequests"),
+    sessionId: v.string(),
     sendTo: v.optional(sendToValidator),
     expectedEmail: v.optional(v.string()),
   },
   handler: async (
     ctx,
-    { requestId, sendTo, expectedEmail },
+    { requestId, sessionId, sendTo, expectedEmail },
   ): Promise<
     | { ok: true; sentTo: string }
     | { needsEmailChoice: true; feature: string; intranet: string }
-    | VerificationHint
+    | StepUpHint
   > => {
     const prepared = await ctx.runQuery(internal.passwordResets.prepareIssue, {
       requestId,
+      sessionId,
       sendTo,
       expectedEmail,
     });
@@ -952,7 +923,7 @@ export const issueResetLink = action({
         targetEmail: prepared.targetEmail,
         detail: "action=issue",
       });
-      return needsVerificationHint();
+      return needsStepUpHint(ORG_REVERIFY_LEVEL, ["email_code", "totp", "recovery_code"]);
     }
     if (prepared.needsEmailChoice) {
       // Both possible addresses, masked/public exactly as the admin UI would
@@ -1198,15 +1169,15 @@ export const completeReset = action({
 // -------------------------------------------------------------- housekeeping
 
 /** Drops spent/expired tokens, request rows old enough to have stopped being
- * useful evidence, and expired admin verification codes. The audit trail
+ * useful evidence, and expired step-up email codes. The audit trail
  * outlives all three. Scheduled from `crons.ts`. */
 export const purgeStale = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ tokens: number; requests: number }> => {
     const now = Date.now();
-    // Admin verification codes are one small row per admin at most, so a full
-    // scan is cheap — there's no index to range-query expiresAt by.
-    const codes = await ctx.db.query("adminVerificationCodes").collect();
+    // One small row per (user, session) at most, so a full scan is cheap —
+    // there's no index to range-query expiresAt by.
+    const codes = await ctx.db.query("stepUpChallenges").collect();
     await Promise.all(codes.filter((c) => c.expiresAt <= now).map((c) => ctx.db.delete(c._id)));
 
     const tokenCutoff = now - 7 * 24 * 60 * 60 * 1000;

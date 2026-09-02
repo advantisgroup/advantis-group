@@ -117,6 +117,13 @@ if (process.env.DISABLE_CRONS !== "true") {
     {},
   );
 
+  crons.daily(
+    "step-up: purge stale known-device rows",
+    { hourUTC: 4, minuteUTC: 10 },
+    internal.stepUp.purgeStaleDevices,
+    {},
+  );
+
   // Keep the OneDrive change-notification subscription fresh (renew well within
   // its expiry) so the file-listing cache invalidates promptly on changes.
   crons.daily(

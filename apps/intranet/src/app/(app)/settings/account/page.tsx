@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { TotpSettingsCard } from "@/components/mfa/TotpSettingsCard";
 import { PasskeySettingsCard } from "@/components/passkeys/PasskeySettingsCard";
 import { ProfileEditorDialog } from "@/components/profile/ProfileEditorDialog";
+import { SecurityPreferencesCard } from "@/components/security/SecurityPreferencesCard";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +98,8 @@ export default function SettingsAccountPage() {
       <PasskeySettingsCard />
 
       <TotpSettingsCard />
+
+      <SecurityPreferencesCard />
 
       <ProfileEditorDialog
         user={user}

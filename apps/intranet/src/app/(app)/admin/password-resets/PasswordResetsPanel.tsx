@@ -1,18 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
+import { useAuth } from "@clerk/nextjs";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { ConvexError } from "convex/values";
 import { KeyRound, ShieldAlert, TriangleAlert } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import posthog from "posthog-js";
 import { toast } from "sonner";
 
+import { StepUpDialog } from "@/components/auth/StepUpDialog";
+import { type StepMethod } from "@/components/auth/StepUpForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +26,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -36,25 +37,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type RequestId = Id<"passwordResetRequests">;
 
-/** How long a "resend" click stays disabled, mirroring the server-side
- * cooldown in `packages/convex/convex/lib/adminVerification.ts`'s
- * `REQUEST_COOLDOWN_MS`. Purely cosmetic — the server enforces the real
- * limit — so a mismatch here is never a security issue, only a UX one. */
-const RESEND_COOLDOWN_MS = 60_000;
-
-/** Structurally matches `VerificationHint` from
- * `packages/convex/convex/lib/adminVerification.ts` — not imported directly
- * since that module lives on the Convex build, not this package's client
- * surface. */
-interface VerificationHintShape {
-  needsVerification: true;
+/** Structurally matches `StepUpHint` from `packages/convex/convex/lib/stepUp.ts`
+ * — not imported directly since that module lives on the Convex build, not
+ * this package's client surface. */
+interface StepUpHintShape {
+  needsStepUp: true;
+  requiredLevel: number;
+  availableMethods: StepMethod[];
 }
 
-function isVerificationHint(value: unknown): value is VerificationHintShape {
+function isStepUpHint(value: unknown): value is StepUpHintShape {
   return (
-    typeof value === "object" &&
-    value !== null &&
-    (value as VerificationHintShape).needsVerification === true
+    typeof value === "object" && value !== null && (value as StepUpHintShape).needsStepUp === true
   );
 }
 
@@ -73,14 +67,6 @@ function isEmailChoiceHint(value: unknown): value is EmailChoiceHintShape {
     value !== null &&
     (value as EmailChoiceHintShape).needsEmailChoice === true
   );
-}
-
-function errorMessage(error: unknown): string {
-  if (error instanceof ConvexError && typeof error.data === "object" && error.data !== null) {
-    const message = (error.data as { message?: unknown }).message;
-    if (typeof message === "string") return message;
-  }
-  return "Something went wrong.";
 }
 
 function RequestHistory({ requestId }: { requestId: RequestId }) {
@@ -119,134 +105,6 @@ function RequestHistory({ requestId }: { requestId: RequestId }) {
         </li>
       ))}
     </ol>
-  );
-}
-
-/**
- * A code-entry step-up, replacing Clerk's `useReverification` modal. Opens
- * already sending: mounting it fires `requestVerificationCode`, which mails a
- * 6-digit code to the *admin's own* address (never anything client-supplied —
- * see `passwordResets.ts`'s `requestVerificationCode`). Resolves `onVerified`
- * once `submitVerificationCode` accepts the code the admin types back in.
- */
-function VerificationDialog({
-  open,
-  onVerified,
-  onCancel,
-}: {
-  open: boolean;
-  onVerified: () => void;
-  onCancel: () => void;
-}) {
-  const t = useTranslations("PasswordReset");
-  const requestCode = useMutation(api.passwordResets.requestVerificationCode);
-  const submitCode = useMutation(api.passwordResets.submitVerificationCode);
-  const [code, setCode] = useState("");
-  const [sending, setSending] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [cooldownUntil, setCooldownUntil] = useState(0);
-  const [now, setNow] = useState(() => Date.now());
-  const sentOnce = useRef(false);
-
-  async function sendCode() {
-    setSending(true);
-    setError(null);
-    try {
-      await requestCode({});
-      setCooldownUntil(Date.now() + RESEND_COOLDOWN_MS);
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setSending(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!open) {
-      sentOnce.current = false;
-      setCode("");
-      setError(null);
-      return;
-    }
-    if (sentOnce.current) return;
-    sentOnce.current = true;
-    void sendCode();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || cooldownUntil <= Date.now()) return;
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [open, cooldownUntil]);
-
-  async function submit() {
-    setSubmitting(true);
-    setError(null);
-    try {
-      await submitCode({ code });
-      onVerified();
-    } catch (err) {
-      setError(errorMessage(err));
-      setCode("");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  const cooldownLeft = Math.max(0, Math.ceil((cooldownUntil - now) / 1000));
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        if (!o) onCancel();
-      }}
-    >
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>{t("adminVerifyTitle")}</DialogTitle>
-          <DialogDescription>{t("adminVerifyBody")}</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <Input
-            autoFocus
-            inputMode="numeric"
-            maxLength={6}
-            placeholder="123456"
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && code.length === 6 && !submitting) void submit();
-            }}
-            className="text-center font-mono text-lg tracking-[0.3em]"
-          />
-          {error && <p className="text-xs text-destructive">{error}</p>}
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={sending || cooldownLeft > 0}
-            onClick={() => void sendCode()}
-          >
-            {cooldownLeft > 0
-              ? t("adminVerifyResendIn", { seconds: cooldownLeft })
-              : sending
-                ? t("adminVerifySending")
-                : t("adminVerifyResend")}
-          </Button>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onCancel()}>
-            {t("adminVerifyCancel")}
-          </Button>
-          <Button disabled={code.length !== 6 || submitting} onClick={() => void submit()}>
-            {submitting ? t("adminVerifySubmitting") : t("adminVerifySubmit")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -327,9 +185,11 @@ function RequestCard({
 }) {
   const t = useTranslations("PasswordReset");
   const format = useFormatter();
+  const { sessionId } = useAuth();
   const [busy, setBusy] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
+  const [verifyMethods, setVerifyMethods] = useState<StepMethod[]>(["email_code"]);
   const verifyResolver = useRef<((verified: boolean) => void) | null>(null);
   const [emailChoiceOpen, setEmailChoiceOpen] = useState(false);
   const [emailChoiceOptions, setEmailChoiceOptions] = useState<{
@@ -341,9 +201,9 @@ function RequestCard({
   );
 
   // Both admin actions are wrapped: the Convex function returns a
-  // `{ needsVerification: true }` hint instead of acting when the admin
-  // hasn't entered an email code recently enough — see `run` below, which
-  // opens `VerificationDialog` and retries exactly once.
+  // `{ needsStepUp: true }` hint instead of acting when the admin hasn't
+  // stepped up recently enough — see `run` below, which opens `StepUpDialog`
+  // and retries exactly once.
   const issue = useAction(api.passwordResets.issueResetLink);
   const dismiss = useMutation(api.passwordResets.dismissRequest);
 
@@ -355,7 +215,8 @@ function RequestCard({
       minute: "2-digit",
     });
 
-  function openVerification(): Promise<boolean> {
+  function openVerification(availableMethods: StepMethod[]): Promise<boolean> {
+    setVerifyMethods(availableMethods);
     setVerifyOpen(true);
     return new Promise((resolve) => {
       verifyResolver.current = resolve;
@@ -386,6 +247,7 @@ function RequestCard({
   }
 
   async function run(action: "issue" | "dismiss") {
+    if (!sessionId) return;
     setBusy(true);
     try {
       if (action === "issue") {
@@ -410,12 +272,12 @@ function RequestCard({
             choice === "feature" ? request.emailChoice.feature : request.emailChoice.intranet;
         }
 
-        let result = await issue({ requestId: request.id, sendTo, expectedEmail });
-        if (isVerificationHint(result)) {
-          if (!(await openVerification())) return;
-          result = await issue({ requestId: request.id, sendTo, expectedEmail });
+        let result = await issue({ requestId: request.id, sessionId, sendTo, expectedEmail });
+        if (isStepUpHint(result)) {
+          if (!(await openVerification(result.availableMethods))) return;
+          result = await issue({ requestId: request.id, sessionId, sendTo, expectedEmail });
         }
-        if (isVerificationHint(result)) {
+        if (isStepUpHint(result)) {
           toast.error(t("adminVerifyStale"));
           posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
           return;
@@ -429,14 +291,15 @@ function RequestCard({
           posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
           return;
         }
+        if (!("ok" in result)) return; // exhausted every hint branch above
         toast.success(t("adminIssued", { email: result.sentTo }));
       } else {
-        let result = await dismiss({ requestId: request.id });
-        if (isVerificationHint(result)) {
-          if (!(await openVerification())) return;
-          result = await dismiss({ requestId: request.id });
+        let result = await dismiss({ requestId: request.id, sessionId });
+        if (isStepUpHint(result)) {
+          if (!(await openVerification(result.availableMethods))) return;
+          result = await dismiss({ requestId: request.id, sessionId });
         }
-        if (isVerificationHint(result)) {
+        if (isStepUpHint(result)) {
           toast.error(t("adminVerifyStale"));
           posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
           return;
@@ -551,10 +414,14 @@ function RequestCard({
 
       {showHistory && <RequestHistory requestId={request.id} />}
 
-      <VerificationDialog
+      <StepUpDialog
         open={verifyOpen}
+        availableMethods={verifyMethods}
+        context="admin_reverify"
         onVerified={() => settleVerification(true)}
-        onCancel={() => settleVerification(false)}
+        onOpenChange={(open) => {
+          if (!open) settleVerification(false);
+        }}
       />
       <EmailChoiceDialog
         open={emailChoiceOpen}
