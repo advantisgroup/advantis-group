@@ -3,7 +3,7 @@
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
@@ -79,10 +79,7 @@ export default function BlogListPage() {
           {posts.map((post) => (
             <div key={post._id} className="flex items-center gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">
-                <Link
-                  href={`/blog/${post._id}/edit`}
-                  className="truncate font-medium hover:underline"
-                >
+                <Link href={`/blog/${post._id}`} className="truncate font-medium hover:underline">
                   {post.title || t("untitled")}
                 </Link>
                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -92,6 +89,11 @@ export default function BlogListPage() {
               <Badge variant={post.status === "published" ? "default" : "muted"}>
                 {post.status === "published" ? t("statusPublished") : t("statusDraft")}
               </Badge>
+              <Button variant="ghost" size="icon" aria-label={t("editPost")} asChild>
+                <Link href={`/blog/${post._id}/edit`}>
+                  <Pencil className="size-4 text-muted-foreground" />
+                </Link>
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"

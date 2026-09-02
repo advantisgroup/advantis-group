@@ -3,6 +3,7 @@
 import {
   Bold,
   CalendarPlus,
+  Heading2,
   Italic,
   Keyboard,
   Link2,
@@ -78,6 +79,7 @@ const TOOLS: (Cmd | "divider")[] = [
   { icon: Strikethrough, label: "Strikethrough", command: "strikeThrough" },
   { icon: Keyboard, label: "Keyboard key", action: "kbd" },
   "divider",
+  { icon: Heading2, label: "Heading", command: "formatBlock", value: "h2" },
   { icon: List, label: "Bulleted list", command: "insertUnorderedList" },
   { icon: ListOrdered, label: "Numbered list", command: "insertOrderedList" },
   {

@@ -41,6 +41,21 @@ export async function requireClockodoManagerAction(ctx: ActionCtx) {
 }
 
 /**
+ * Manager+ (or `manage_blog` custom-role) check for Convex actions — same
+ * "no ctx.db" round-trip as `requireManagerAction` above. Used by the blog
+ * analytics action, which needs the same access as `blogPosts.ts`'s
+ * `requireCapability(ctx, "manage_blog")` but can't call that directly
+ * (no `ctx.db` in an action).
+ */
+export async function requireBlogManageAction(ctx: ActionCtx) {
+  const me = await ctx.runQuery(api.users.me, {});
+  if (!me || (!MANAGER_ROLES.includes(me.role) && !me.capabilities.includes("manage_blog"))) {
+    throw appError("auth.forbidden", "Forbidden: requires blog management access");
+  }
+  return me;
+}
+
+/**
  * Admin-only check for Convex actions — same "no ctx.db" round-trip as
  * `requireManagerAction` above, for the handful of action-context mutations
  * that are admin-only rather than manager+.
