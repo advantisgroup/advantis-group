@@ -1057,6 +1057,11 @@
       "subtitle": "Vous souhaitez en savoir plus sur l'utilisation des outils IA dans la vente ? Téléchargez ici notre livre blanc gratuit.",
       "intro": "Nous vous montrons où l'IA fait vraiment gagner du temps au quotidien, ce qui compte dans le choix des outils et comment les déployer dans votre équipe."
     },
+    "homeCta": {
+      "title": "Le livre blanc sur les outils IA dans la vente",
+      "description": "Là où l'IA fait vraiment gagner du temps au quotidien, quels outils en valent la peine et comment les déployer dans votre équipe — l'essentiel, en bref. Gratuit, en PDF.",
+      "cta": "Télécharger le livre blanc"
+    },
     "highlights": {
       "title": "Au sommaire",
       "item1": {

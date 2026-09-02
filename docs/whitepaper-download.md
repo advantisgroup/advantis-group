@@ -11,7 +11,8 @@ confirmation mail, and the whitepaper itself is sent once that link is opened.
 1. `GET /{locale}/whitepaper` — `app/[locale]/(pages)/whitepaper/page.tsx`
    checks `whitepaperExists()` on the server and renders either the form or a
    "coming soon" notice, so the form can never take an address for a document
-   that isn't there.
+   that isn't there. The homepage CTA band is gated on the same check, and the
+   header and footer carry a permanent `/whitepaper` link.
 2. `POST /api/whitepaper/request` — validates consent, mints a 32-byte token,
    stores its sha256 on the lead (`whitepaperLeads.saveRequest`) and mails the
    confirmation link. The plaintext token exists only in that mail.
@@ -34,6 +35,10 @@ Both mails go out through Resend from `NEXT_PUBLIC_EMAIL_ADRESS`
   the consent version, the token TTL (48 h).
 - `apps/marketing/src/app/api/[[...slugs]]/whitepaper/` — the two routes.
 - `apps/marketing/src/components/whitepaper/` — landing, form, confirm UI.
+- `apps/marketing/src/components/sections/home/HomeWhitepaper.tsx` — the
+  homepage CTA band. `app/[locale]/page.tsx` is a server component so it can
+  gate that band on `whitepaperExists()` too: the homepage never advertises a
+  download the repo cannot serve.
 - `apps/marketing/src/components/email/whitepaper-emails.tsx` — both mails,
   localized from `i18n/messages/{de,en,fr,zh}.json` under `whitepaper.email`.
 - `packages/convex/convex/whitepaperLeads.ts` — the four mutations.
