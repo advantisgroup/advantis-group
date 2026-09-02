@@ -276,6 +276,12 @@ export const Header = () => {
                   ))}
                 </ul>
 
+                {/* Language and appearance sit here as plain rows rather than
+                    behind a second popover opened from inside this one. */}
+                <div className="border-t border-rule p-4">
+                  <SettingsMenu inline />
+                </div>
+
                 <div className="flex items-center justify-between gap-3 border-t border-rule p-3">
                   {intranetUrl ? (
                     <Link
@@ -290,10 +296,7 @@ export const Header = () => {
                     <span />
                   )}
 
-                  <div className="flex items-center gap-2">
-                    <AccountMenu />
-                    <SettingsMenu />
-                  </div>
+                  <AccountMenu />
                 </div>
               </motion.div>
             )}

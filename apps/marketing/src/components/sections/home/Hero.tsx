@@ -42,8 +42,14 @@ export const Hero = () => {
             {positioning("eyebrow")}
           </p>
 
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-            {t("subtitle")}
+          {/*
+           * The detail behind it, which used to be a standalone band under the
+           * hero. On its own it was a centred paragraph in a screenful of
+           * whitespace saying what the line above already said; here it earns
+           * its place by naming the actual services.
+           */}
+          <p className="mt-6 max-w-2xl text-base leading-[1.7] text-muted-foreground md:text-lg">
+            {positioning("text")}
           </p>
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
