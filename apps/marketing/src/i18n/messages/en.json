@@ -27,11 +27,64 @@
     "titleHighlight": "Sales Power",
     "subtitle": "We take your sales to the next level!",
     "ctaPrimary": "Contact Us Now",
-    "ctaSecondary": "Discover Our Brands"
+    "ctaSecondary": "Discover Our Brands",
+    "specs": [
+      {
+        "value": "15+",
+        "label": "Years of experience"
+      },
+      {
+        "value": "150+",
+        "label": "Successful projects"
+      },
+      {
+        "value": "4",
+        "label": "Brands"
+      },
+      {
+        "value": "GDPR",
+        "label": "Compliant"
+      }
+    ]
   },
   "homeIntro": {
     "eyebrow": "Revenue & Customer Engagement Partner",
     "text": "ADVANTIS GROUP helps companies build modern customer care and inside sales organizations. Our experts take care of customer service, lead generation, telesales, new customer acquisition, and sales outsourcing. Our portfolio is rounded out with AI-powered process automation, CRM consulting, and sales training."
+  },
+  "pipeline": {
+    "caption": "How it works — from signal to close",
+    "legend": "Four stages",
+    "altText": "Schematic: a lead passes through four stages – capturing the signal, AI qualification, prioritising and assigning, and a close handled by the sales team.",
+    "stages": {
+      "signal": {
+        "code": "SIGNAL",
+        "title": "Capture the signal",
+        "rows": ["Inbound enquiries", "Outbound calling", "Campaign responses"]
+      },
+      "qualify": {
+        "code": "AI CHECK",
+        "title": "AI qualification",
+        "rows": ["Enrich the record", "Read the intent", "Filter duplicates"]
+      },
+      "route": {
+        "code": "ROUTING",
+        "title": "Prioritise & assign",
+        "rows": ["The right brand", "The right team", "The next step"]
+      },
+      "close": {
+        "code": "CLOSE",
+        "title": "Close it, human to human",
+        "rows": ["A real conversation", "Handover into the CRM", "Follow-up with a plan"]
+      }
+    }
+  },
+  "sectionLabels": {
+    "overview": "Overview",
+    "capabilities": "Capabilities",
+    "approach": "Approach",
+    "brands": "Brands",
+    "proof": "Proof",
+    "contact": "Contact"
   },
   "features": {
     "badge": "Our Strengths",

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Outfit, Manrope } from "next/font/google";
+import { JetBrains_Mono, Outfit, Manrope } from "next/font/google";
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { type Metadata } from "next";
@@ -20,6 +20,17 @@ const outfit = Outfit({
 const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-manrope",
+  display: "swap",
+});
+
+/**
+ * The technical micro-labels (section indices, schematic node names, spec
+ * rows) are set in mono. It is load-bearing for the layout language, not
+ * decoration — the grid reads as a technical drawing because of it.
+ */
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
   display: "swap",
 });
 
@@ -91,7 +102,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html suppressHydrationWarning>
       <body
-        className={`bg-background antialiased scroll-smooth ${manrope.variable} ${outfit.variable}`}
+        className={`bg-background antialiased scroll-smooth ${manrope.variable} ${outfit.variable} ${jetbrainsMono.variable}`}
       >
         <ClerkProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

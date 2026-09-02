@@ -27,11 +27,64 @@
     "titleHighlight": "Puissance Commerciale",
     "subtitle": "Nous portons vos ventes au niveau supérieur !",
     "ctaPrimary": "Contactez-nous Maintenant",
-    "ctaSecondary": "Découvrir Nos Marques"
+    "ctaSecondary": "Découvrir Nos Marques",
+    "specs": [
+      {
+        "value": "15+",
+        "label": "Ans d'expérience"
+      },
+      {
+        "value": "150+",
+        "label": "Projets réussis"
+      },
+      {
+        "value": "4",
+        "label": "Marques"
+      },
+      {
+        "value": "RGPD",
+        "label": "Conforme"
+      }
+    ]
   },
   "homeIntro": {
     "eyebrow": "Partenaire Revenue & Customer Engagement",
     "text": "ADVANTIS GROUP accompagne les entreprises dans la mise en place d'organisations modernes de Customer Care et d'Inside Sales. Nos experts prennent en charge le service client, la génération de leads, la télévente, l'acquisition de nouveaux clients et l'externalisation commerciale. Notre offre est complétée par l'automatisation des processus par IA, le conseil CRM et les formations commerciales."
+  },
+  "pipeline": {
+    "caption": "Le parcours — du signal à la signature",
+    "legend": "Quatre étapes",
+    "altText": "Schéma : un lead traverse quatre étapes – captation du signal, qualification par IA, priorisation et affectation, puis conclusion par l'équipe commerciale.",
+    "stages": {
+      "signal": {
+        "code": "SIGNAL",
+        "title": "Capter le signal",
+        "rows": ["Demandes entrantes", "Appels sortants", "Retours de campagne"]
+      },
+      "qualify": {
+        "code": "IA",
+        "title": "Qualification par IA",
+        "rows": ["Enrichir la fiche", "Évaluer le besoin", "Écarter les doublons"]
+      },
+      "route": {
+        "code": "ROUTAGE",
+        "title": "Prioriser et affecter",
+        "rows": ["La bonne marque", "La bonne équipe", "La prochaine étape"]
+      },
+      "close": {
+        "code": "CLÔTURE",
+        "title": "Conclure, d'humain à humain",
+        "rows": ["Un véritable échange", "Transfert vers le CRM", "Relance planifiée"]
+      }
+    }
+  },
+  "sectionLabels": {
+    "overview": "Aperçu",
+    "capabilities": "Prestations",
+    "approach": "Approche",
+    "brands": "Marques",
+    "proof": "Références",
+    "contact": "Contact"
   },
   "features": {
     "badge": "Nos Forces",

@@ -27,11 +27,64 @@
     "titleHighlight": "Sales Power",
     "subtitle": "Wir bringen deinen Vertrieb auf das nächste Level!",
     "ctaPrimary": "Jetzt Kontakt aufnehmen",
-    "ctaSecondary": "Unsere Marken entdecken"
+    "ctaSecondary": "Unsere Marken entdecken",
+    "specs": [
+      {
+        "value": "15+",
+        "label": "Jahre Erfahrung"
+      },
+      {
+        "value": "150+",
+        "label": "Erfolgreiche Projekte"
+      },
+      {
+        "value": "4",
+        "label": "Marken"
+      },
+      {
+        "value": "DSGVO",
+        "label": "Konform"
+      }
+    ]
   },
   "homeIntro": {
     "eyebrow": "Revenue- und Customer-Engagement-Partner",
     "text": "Die ADVANTIS GROUP unterstützt Unternehmen beim Aufbau moderner Customer-Care- und Inside-Sales-Organisationen. Unsere Experten übernehmen Customer Service, Leadgenerierung, Telesales, Neukundengewinnung und Vertriebsoutsourcing. Ergänzt wird unser Portfolio durch KI-gestützte Prozessautomatisierung, CRM-Beratung und Sales-Trainings."
+  },
+  "pipeline": {
+    "caption": "Ablauf — vom Signal zum Abschluss",
+    "legend": "Vier Stufen",
+    "altText": "Schema: Ein Lead durchläuft vier Stufen – Signale erfassen, KI-Qualifizierung, Priorisieren und Zuordnen sowie den menschlichen Abschluss durch das Vertriebsteam.",
+    "stages": {
+      "signal": {
+        "code": "SIGNAL",
+        "title": "Signale erfassen",
+        "rows": ["Inbound-Anfragen", "Outbound-Telefonie", "Kampagnen-Rückläufer"]
+      },
+      "qualify": {
+        "code": "KI-CHECK",
+        "title": "KI-Qualifizierung",
+        "rows": ["Daten anreichern", "Bedarf einordnen", "Dubletten aussortieren"]
+      },
+      "route": {
+        "code": "ROUTING",
+        "title": "Priorisieren & zuordnen",
+        "rows": ["Passende Marke", "Richtiges Team", "Nächster Schritt"]
+      },
+      "close": {
+        "code": "ABSCHLUSS",
+        "title": "Menschlich abschließen",
+        "rows": ["Beratung im Gespräch", "Übergabe ins CRM", "Nachfassen mit Plan"]
+      }
+    }
+  },
+  "sectionLabels": {
+    "overview": "Überblick",
+    "capabilities": "Leistungen",
+    "approach": "Ansatz",
+    "brands": "Marken",
+    "proof": "Nachweise",
+    "contact": "Kontakt"
   },
   "features": {
     "badge": "Unsere Stärken",

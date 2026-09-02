@@ -27,11 +27,64 @@
     "titleHighlight": "销售力量",
     "subtitle": "我们将您的销售提升到新的水平！",
     "ctaPrimary": "立即联系我们",
-    "ctaSecondary": "探索我们的品牌"
+    "ctaSecondary": "探索我们的品牌",
+    "specs": [
+      {
+        "value": "15+",
+        "label": "年行业经验"
+      },
+      {
+        "value": "150+",
+        "label": "成功项目"
+      },
+      {
+        "value": "4",
+        "label": "品牌"
+      },
+      {
+        "value": "GDPR",
+        "label": "合规"
+      }
+    ]
   },
   "homeIntro": {
     "eyebrow": "营收与客户互动合作伙伴",
     "text": "ADVANTIS GROUP 帮助企业建立现代化的客户关怀（Customer Care）和内部销售（Inside Sales）组织。我们的专家负责客户服务、潜在客户开发、电话销售、新客户获取和销售外包。我们还通过人工智能驱动的流程自动化、CRM 咨询和销售培训来完善我们的产品组合。"
+  },
+  "pipeline": {
+    "caption": "运作流程 — 从线索到成交",
+    "legend": "四个阶段",
+    "altText": "示意图：线索依次经过四个阶段——捕获信号、AI 资格评估、优先级分配与分派，以及由销售团队完成的成交。",
+    "stages": {
+      "signal": {
+        "code": "信号",
+        "title": "捕获信号",
+        "rows": ["入站咨询", "外呼电话", "营销活动回复"]
+      },
+      "qualify": {
+        "code": "AI 评估",
+        "title": "AI 资格评估",
+        "rows": ["补全客户资料", "判断真实需求", "剔除重复线索"]
+      },
+      "route": {
+        "code": "分派",
+        "title": "优先级与分派",
+        "rows": ["匹配的品牌", "匹配的团队", "明确的下一步"]
+      },
+      "close": {
+        "code": "成交",
+        "title": "由人完成成交",
+        "rows": ["真实的对话沟通", "移交至 CRM 系统", "有计划地跟进"]
+      }
+    }
+  },
+  "sectionLabels": {
+    "overview": "概览",
+    "capabilities": "服务能力",
+    "approach": "方法",
+    "brands": "品牌",
+    "proof": "资质",
+    "contact": "联系"
   },
   "features": {
     "badge": "我们的优势",
