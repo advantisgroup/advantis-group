@@ -1,22 +1,31 @@
 import { cn } from "@/lib/utils";
 
 /**
- * The page's background field, rendered once behind every section rather than
- * per-section.
+ * The page's background field, rendered once behind every section.
  *
- * Two jobs. The column rules run the full height of the document, so the
- * sections read as bands of one continuous grid instead of separate slabs
- * stacked on each other. And the hero wash is deliberately much taller than
- * the hero — it bleeds down through the sections beneath it and fades out
- * around the second screenful, so the top of the page resolves gradually
- * instead of ending at a hard edge.
+ * It deliberately does *not* draw a full column grid any more. Rules running
+ * the width of the page cut straight through headlines and body copy, which
+ * reads as damage rather than structure. Hairlines belong against UI — panel
+ * edges, grid cells, table rows — where they border something; those live on
+ * the components themselves.
+ *
+ * What is left here is the pair of boundary rules marking the content
+ * measure, which text never touches because it sits inside the container's
+ * padding, and the hero wash: much taller than the hero so it bleeds down
+ * through the sections beneath and fades out around the second screenful,
+ * rather than ending at a hard edge.
  */
 export const PageField = ({ className }: { className?: string }) => (
   <div
     aria-hidden
     className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}
   >
-    <div className="field-rules absolute inset-0 opacity-55" />
+    <div className="mx-auto h-full w-full max-w-[1440px]">
+      <div className="flex h-full justify-between">
+        <span className="h-full w-px bg-rule" />
+        <span className="h-full w-px bg-rule" />
+      </div>
+    </div>
 
     <div
       className="absolute inset-x-0 top-0 h-[190vh]"

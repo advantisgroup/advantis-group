@@ -4,13 +4,11 @@ import { useRef, useState } from "react";
 
 import Image from "next/image";
 
-import { Mail, ArrowRight } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { ScrollReveal } from "@/components/effects/ScrollReveal";
-import { ShapeParticles } from "@/components/effects/ShapeParticles";
-import { SectionDivider } from "@/components/layout/SectionDivider";
+import { Display, PageField, Section } from "@/components/frame";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
@@ -34,14 +32,11 @@ function ParallaxPhoto({
   speed: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"],
-  });
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], [`-${speed}%`, `${speed}%`]);
 
   return (
-    <div ref={ref} className={`${className} relative overflow-hidden rounded-2xl`}>
+    <div ref={ref} className={`${className} relative overflow-hidden`}>
       <motion.div style={{ y }} className="absolute inset-[-15%]">
         <Image
           src={src}
@@ -75,7 +70,7 @@ function Avatar({
   if (!photo || errored) {
     return (
       <div
-        className={`${className} flex items-center justify-center font-bold ${fontSizeClassName}`}
+        className={`${className} flex items-center justify-center font-[family-name:var(--font-outfit)] font-bold tracking-[-0.02em] ${fontSizeClassName}`}
       >
         {initials}
       </div>
@@ -98,6 +93,7 @@ function Avatar({
 
 export default function Team() {
   const t = useTranslations("team");
+
   const teamMembers = [
     {
       name: "Andrea Reichl",
@@ -106,22 +102,14 @@ export default function Team() {
       bio: t("founder.bio"),
       email: `${process.env.NEXT_PUBLIC_EMAIL_ADRESS}`,
     },
-    {
-      name: "Andrea Lautenbacher",
-      role: t("roles.inbound"),
-      initials: "AL",
-    },
+    { name: "Andrea Lautenbacher", role: t("roles.inbound"), initials: "AL" },
     {
       name: "Jessica Blume",
       role: t("roles.outbound"),
       initials: "JB",
       photo: "/team/jessica-blume.png",
     },
-    {
-      name: "Morena Azzuro",
-      role: t("roles.hr"),
-      initials: "MA",
-    },
+    { name: "Morena Azzuro", role: t("roles.hr"), initials: "MA" },
     {
       name: "Adam Kämpfer",
       role: t("roles.marketing"),
@@ -142,179 +130,120 @@ export default function Team() {
     },
   ];
 
-  return (
-    <div className="min-h-screen relative overflow-hidden bg-background">
-      <main className="relative z-30">
-        {/* Hero Section */}
-        <section className="relative h-screen flex items-center justify-center pt-32 pb-20 overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none">
-            <ShapeParticles particleCount={40} className="opacity-30" />
-          </div>
+  const founder = teamMembers[0];
 
-          <div className="container mx-auto px-4 md:px-6 relative -top-[10vh]">
-            <ScrollReveal>
-              <div className="max-w-4xl mx-auto text-center space-y-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium backdrop-blur-sm">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                  </span>
-                  {t("hero.badge")}
-                </div>
-                <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight">
-                  {t("hero.titlePart1")} <br />
-                  <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-primary/60">
-                    ADVANTIS GROUP
-                  </span>
-                </h1>
-                <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                  {t("hero.subtitle")}
-                </p>
-              </div>
-            </ScrollReveal>
+  return (
+    <div className="relative min-h-screen bg-background">
+      <PageField />
+
+      <div className="relative">
+        <section className="relative pt-32 pb-20 md:pt-44 md:pb-28">
+          <div className="mx-auto w-full max-w-[1440px] px-5 md:px-10">
+            <Display as="h1" size="xl" className="max-w-[14ch]">
+              {t("hero.titlePart1")} <span className="text-primary">ADVANTIS GROUP</span>
+            </Display>
+            <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-2xl">
+              {t("hero.subtitle")}
+            </p>
           </div>
         </section>
 
-        <SectionDivider variant="dots" opacity={0.3} className="mb-20" />
+        <Section>
+          <div className="tick-frame border border-rule bg-card/30 p-6 md:p-10">
+            <div className="grid gap-10 md:grid-cols-[auto_minmax(0,1fr)] md:gap-14">
+              <div>
+                <Avatar
+                  photo={founder.photo}
+                  name={founder.name}
+                  initials={founder.initials}
+                  fontSizeClassName="text-4xl md:text-5xl"
+                  className="size-40 bg-primary/10 text-primary md:size-48"
+                />
+                <h2 className="mt-6 font-[family-name:var(--font-outfit)] text-2xl font-bold tracking-[-0.025em]">
+                  {founder.name}
+                </h2>
+                <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
+                  {founder.role}
+                </p>
 
-        <div className="container mx-auto px-4 md:px-6 pb-32 max-w-7xl">
-          {/* Founder Section */}
-          <ScrollReveal delay={200}>
-            <section className="mb-32 relative">
-              <div className="absolute inset-0 bg-linear-to-r from-primary/5 via-transparent to-secondary/5 rounded-3xl blur-3xl -z-10" />
+                {founder.email ? (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="mt-6 rounded-none border-rule-strong"
+                  >
+                    <Link href={`mailto:${founder.email}`}>
+                      <Mail className="size-4" />
+                      {t("founder.contactBtn")}
+                    </Link>
+                  </Button>
+                ) : null}
+              </div>
 
-              <div className="bg-card/30 backdrop-blur-md border border-white/10 rounded-3xl p-8 md:p-12 overflow-hidden relative group">
-                {/* Decorative glow */}
-                <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/20 transition-colors duration-700" />
+              <div className="md:border-l md:border-rule md:pl-14">
+                <Display size="md" as="p">
+                  {t("founder.quote")}
+                </Display>
+                <p className="mt-8 text-base leading-[1.75] text-muted-foreground md:text-lg">
+                  {founder.bio}
+                </p>
+              </div>
+            </div>
+          </div>
+        </Section>
 
-                <div className="grid md:grid-cols-12 gap-12 items-center">
-                  <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left">
-                    <div className="relative mb-6">
-                      <Avatar
-                        photo={teamMembers[0].photo}
-                        name={teamMembers[0].name}
-                        initials={teamMembers[0].initials}
-                        fontSizeClassName="text-4xl md:text-5xl"
-                        className="w-40 h-40 md:w-48 md:h-48 rounded-full bg-linear-to-br from-primary/20 to-secondary/20 text-primary border-4 border-background shadow-2xl relative z-10 group-hover:scale-105 transition-transform duration-500"
-                      />
-                      {/* Orbiting particles or rings could go here */}
-                      <div className="absolute inset-0 border border-primary/20 rounded-full scale-110 animate-pulse-slow" />
-                      <div className="absolute inset-0 border border-dashed border-primary/20 rounded-full scale-125 animate-spin-slow" />
-                    </div>
+        <Section>
+          <Display size="md">{t("grid.title")}</Display>
+          <p className="mt-4 text-lg text-muted-foreground">{t("grid.subtitle")}</p>
 
-                    <div className="space-y-1">
-                      <h2 className="text-3xl font-bold">{teamMembers[0].name}</h2>
-                      <p className="text-lg text-primary font-medium">{teamMembers[0].role}</p>
-                    </div>
-
-                    {teamMembers[0].email && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="mt-4 -ml-2 text-muted-foreground hover:text-primary"
-                        asChild
-                      >
-                        <Link href={`mailto:${teamMembers[0].email}`}>
-                          <Mail className="w-4 h-4 mr-2" />
-                          {t("founder.contactBtn")}
-                        </Link>
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="md:col-span-8 space-y-6">
-                    <div className="inline-block px-3 py-1 rounded-md bg-primary/10 text-xs font-semibold tracking-wider uppercase text-primary mb-2">
-                      {t("founder.badge")}
-                    </div>
-                    <h3 className="text-2xl md:text-4xl font-bold leading-tight">
-                      {t("founder.quote")}
-                    </h3>
-                    <p className="text-lg text-muted-foreground leading-relaxed">
-                      {teamMembers[0].bio}
-                    </p>
-
-                    <div className="pt-6 flex gap-4">
-                      {/* Social links or extra info could go here */}
-                    </div>
-                  </div>
+          <div className="mt-12 grid gap-px bg-rule sm:grid-cols-2 lg:grid-cols-3">
+            {teamMembers.slice(1).map((member, index) => (
+              <div
+                key={member.name}
+                className="group flex items-center gap-5 bg-background p-6 transition-colors duration-300 hover:bg-card/60"
+              >
+                <Avatar
+                  photo={member.photo}
+                  name={member.name}
+                  initials={member.initials}
+                  fontSizeClassName="text-xl"
+                  className="size-20 shrink-0 bg-muted/10 text-muted-foreground transition-colors duration-300 group-hover:text-primary"
+                />
+                <div className="min-w-0">
+                  <span className="font-mono text-[11px] tracking-[0.24em] text-muted-foreground/40">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="mt-2 font-[family-name:var(--font-outfit)] text-lg font-bold tracking-[-0.02em]">
+                    {member.name}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{member.role}</p>
                 </div>
               </div>
-            </section>
-          </ScrollReveal>
+            ))}
+          </div>
+        </Section>
 
-          {/* Team Grid */}
-          <section>
-            <ScrollReveal delay={100} className="mb-12 text-center md:text-left">
-              <h2 className="text-3xl md:text-4xl font-bold">{t("grid.title")}</h2>
-              <p className="text-muted-foreground mt-2">{t("grid.subtitle")}</p>
-            </ScrollReveal>
+        {OFFICE_PHOTOS.length > 0 ? (
+          <Section size="loose">
+            <div className="mx-auto max-w-2xl text-center">
+              <Display size="md">{t("office.title")}</Display>
+              <p className="mt-4 text-lg text-muted-foreground">{t("office.subtitle")}</p>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {teamMembers.slice(1).map((member, index) => (
-                <ScrollReveal key={member.name || index} delay={index * 100} className="h-full">
-                  <div className="group h-full relative bg-card/40 hover:bg-card/60 backdrop-blur-sm border border-border/50 hover:border-primary/30 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/5 overflow-hidden">
-                    {/* Hover Gradient */}
-                    <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                    <div className="relative z-10 flex flex-col items-center text-center h-full">
-                      <div className="mb-6 relative">
-                        <Avatar
-                          photo={member.photo}
-                          name={member.name}
-                          initials={member.initials}
-                          fontSizeClassName="text-2xl"
-                          className="w-24 h-24 rounded-2xl bg-linear-to-br from-background to-muted text-muted-foreground group-hover:text-primary group-hover:from-primary/10 group-hover:to-primary/5 transition-all duration-300 shadow-inner"
-                        />
-                        <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-background rounded-full flex items-center justify-center border border-border opacity-0 group-hover:opacity-100 transition-all duration-300 delay-100 scale-0 group-hover:scale-100">
-                          <ArrowRight className="w-4 h-4 text-primary -rotate-45" />
-                        </div>
-                      </div>
-
-                      <h3 className="text-lg font-bold mb-1 group-hover:text-primary transition-colors">
-                        {member.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4">{member.role}</p>
-
-                      <div className="mt-auto pt-4 border-t border-border/50 w-full opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0">
-                        <span className="text-xs font-medium text-primary uppercase tracking-wider">
-                          {t("grid.cardFooter")}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </ScrollReveal>
+            <div className="mt-14 grid auto-rows-[10rem] grid-cols-2 gap-px bg-rule md:auto-rows-[12rem] md:grid-cols-3">
+              {OFFICE_PHOTOS.map((photo, index) => (
+                <ParallaxPhoto
+                  key={photo.src}
+                  src={photo.src}
+                  alt={photo.alt}
+                  speed={8 + (index % 3) * 4}
+                  className={photo.size === "lg" ? "col-span-2 row-span-2" : "row-span-2"}
+                />
               ))}
             </div>
-          </section>
-
-          {/* Office Life */}
-          {OFFICE_PHOTOS.length > 0 && (
-            <section className="mt-32">
-              <ScrollReveal delay={100} className="mb-12 text-center md:text-left">
-                <h2 className="text-3xl md:text-4xl font-bold">{t("office.title")}</h2>
-                <p className="text-muted-foreground mt-2">{t("office.subtitle")}</p>
-              </ScrollReveal>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6 auto-rows-[10rem] md:auto-rows-[12rem]">
-                {OFFICE_PHOTOS.map((photo, index) => (
-                  <ScrollReveal
-                    key={photo.src}
-                    delay={index * 100}
-                    className={photo.size === "lg" ? "col-span-2 row-span-2" : "row-span-2"}
-                  >
-                    <ParallaxPhoto
-                      src={photo.src}
-                      alt={photo.alt}
-                      speed={8 + (index % 3) * 4}
-                      className="h-full w-full border border-border/50 shadow-lg"
-                    />
-                  </ScrollReveal>
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-      </main>
+          </Section>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -14,11 +14,7 @@ export const HomeBrands = () => {
 
   return (
     <Section size="loose">
-      {/*
-       * Indented a column rather than flush left, so this heading sits on a
-       * different axis from the ones above and below it.
-       */}
-      <div className="max-w-4xl lg:ml-[16.666%]">
+      <div className="max-w-4xl">
         <Display size="lg">
           {t("title")} <span className="text-primary">{t("titleHighlight")}</span>
         </Display>

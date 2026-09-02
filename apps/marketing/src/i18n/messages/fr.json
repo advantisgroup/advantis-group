@@ -20,6 +20,14 @@
       "dark": "Sombre",
       "system": "Système",
       "auto": "Auto"
+    },
+    "menuLabel": "Menu",
+    "descriptions": {
+      "about": "Qui nous sommes et ce que nous défendons",
+      "brands": "Quatre marques, un objectif commun",
+      "team": "Les personnes derrière le groupe",
+      "blog": "Analyses et pratiques de la vente",
+      "contact": "Parlons de vos objectifs commerciaux"
     }
   },
   "hero": {
@@ -27,25 +35,7 @@
     "titleHighlight": "Puissance Commerciale",
     "subtitle": "Nous portons vos ventes au niveau supérieur !",
     "ctaPrimary": "Contactez-nous Maintenant",
-    "ctaSecondary": "Découvrir Nos Marques",
-    "specs": [
-      {
-        "value": "15+",
-        "label": "Ans d'expérience"
-      },
-      {
-        "value": "150+",
-        "label": "Projets réussis"
-      },
-      {
-        "value": "4",
-        "label": "Marques"
-      },
-      {
-        "value": "RGPD",
-        "label": "Conforme"
-      }
-    ]
+    "ctaSecondary": "Découvrir Nos Marques"
   },
   "homeIntro": {
     "eyebrow": "Partenaire Revenue & Customer Engagement",
@@ -80,7 +70,6 @@
   },
   "features": {
     "badge": "Nos Forces",
-    "eyebrow": "Moteur Conseil",
     "title": "Pourquoi",
     "titleBrand": "ADVANTIS GROUP",
     "subtitle": "Nous combinons plus de 15 ans d'expérience commerciale avec des approches de vente innovantes et des outils d'IA pour porter vos ventes au niveau supérieur.",
@@ -104,7 +93,6 @@
     }
   },
   "brands": {
-    "eyebrow": "Architecture de Marque",
     "title": "Nos",
     "titleHighlight": "Marques",
     "subtitle": "Quatre marques fortes, un objectif commun : Votre succès commercial",
@@ -325,13 +313,11 @@
   },
   "team": {
     "hero": {
-      "badge": "L'Équipe",
       "titlePart1": "Les visages derrière",
       "subtitle": "Experts, visionnaires et faiseurs. Unis par la passion de l'excellence commerciale."
     },
     "founder": {
       "role": "PDG / Directrice Générale",
-      "badge": "Leadership",
       "quote": "« La vente n'est pas seulement un travail, c'est une attitude. »",
       "bio": "Passionnée de vente, stratège et faiseuse. Avec plus de 15 ans d'expérience dans la vente, le coaching et la création d'entreprise, Andrea dirige l'ADVANTIS GROUP avec passion, pragmatisme et un accent clair sur le succès et l'humain.",
       "contactBtn": "Contacter"
@@ -347,8 +333,7 @@
     },
     "grid": {
       "title": "Notre Équipe",
-      "subtitle": "Les experts à vos côtés",
-      "cardFooter": "Équipe Advantis"
+      "subtitle": "Les experts à vos côtés"
     },
     "office": {
       "title": "Un Aperçu de Notre Quotidien",
@@ -605,7 +590,6 @@
     }
   },
   "services": {
-    "eyebrow": "Nos Prestations",
     "title": "Tout pour Votre Réussite Commerciale",
     "subtitle": "Du Customer Care à l'automatisation IA — découvrez comment nous soutenons votre vente de façon globale.",
     "common": {
@@ -1078,7 +1062,6 @@
     "dsgvo": "Conforme RGPD"
   },
   "licenses": {
-    "eyebrow": "Open source",
     "title": "Licences",
     "description": "Ce site utilise des logiciels open source. Découvrez les paquets utilisés et leurs licences respectives.",
     "searchPlaceholder": "Rechercher un paquet, une licence ou un éditeur…",

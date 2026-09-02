@@ -2,11 +2,12 @@
 
 import { useTranslations } from "next-intl";
 
-import { Display, Section } from "@/components/frame";
+import { Section } from "@/components/frame";
 
 /**
- * The positioning statement, set centred — the one place on the page the eye
- * comes to rest on the axis rather than at a margin.
+ * The detail behind the hero's positioning line. Set as one large centred
+ * statement — the hero already carries the heading, so repeating it here
+ * would just be the same sentence twice at two sizes.
  */
 export const HomeIntro = () => {
   const t = useTranslations("homeIntro");
@@ -16,11 +17,7 @@ export const HomeIntro = () => {
       <div className="mx-auto max-w-4xl text-center">
         <span aria-hidden className="hatch mx-auto block h-6 w-24 opacity-70" />
 
-        <Display size="md" className="mt-10">
-          {t("eyebrow")}
-        </Display>
-
-        <p className="mx-auto mt-8 max-w-3xl text-lg leading-[1.75] text-muted-foreground md:text-xl">
+        <p className="mt-10 text-xl leading-[1.55] text-foreground/85 md:text-3xl md:leading-[1.45]">
           {t("text")}
         </p>
       </div>

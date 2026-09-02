@@ -504,47 +504,17 @@ html.lenis body {
 /* ------------------------------------------------------------------------
  * Technical layout system
  *
- * The marketing site is laid out like a technical drawing: a fixed column
- * field, visible hairlines, mono micro-labels, and a schematic that shows the
- * actual mechanism. These are the shared primitives that language is built
- * from — see `src/components/frame/` for the React side.
+ * The marketing site is laid out like a technical drawing: hairlines that
+ * border real UI (panel edges, grid cells, table rows), mono micro-labels,
+ * hatched joints between bands, and a schematic that shows the actual
+ * mechanism. See `src/components/frame/` for the React side.
+ *
+ * Note there is no page-wide column grid: hairlines drawn behind arbitrary
+ * content sliced through headlines and body copy. They only ever border
+ * something now.
  * ---------------------------------------------------------------------- */
 
 @layer components {
-  /*
-   * The column field. Draws the vertical hairlines that every section aligns
-   * to, so the page reads as one continuous grid instead of a stack of
-   * unrelated bands. Column count steps up with the viewport because 12
-   * hairlines on a phone is just noise.
-   */
-  .field-rules {
-    background-image: repeating-linear-gradient(
-      to right,
-      var(--rule) 0 1px,
-      transparent 1px var(--field-step, 50%)
-    );
-    --field-step: 50%;
-  }
-
-  @media (min-width: 768px) {
-    .field-rules {
-      --field-step: 25%;
-    }
-  }
-
-  @media (min-width: 1280px) {
-    .field-rules {
-      --field-step: 16.666%;
-    }
-  }
-
-  /* Horizontal companion, used sparingly behind schematics. */
-  .field-grid {
-    background-image:
-      repeating-linear-gradient(to right, var(--rule) 0 1px, transparent 1px 64px),
-      repeating-linear-gradient(to bottom, var(--rule) 0 1px, transparent 1px 64px);
-  }
-
   /*
    * Film grain. Sits over flat dark fills at very low opacity so large areas
    * of background have some tooth instead of reading as dead space.

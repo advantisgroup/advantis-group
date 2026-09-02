@@ -20,6 +20,14 @@
       "dark": "Dark",
       "system": "System",
       "auto": "Auto"
+    },
+    "menuLabel": "Menu",
+    "descriptions": {
+      "about": "Who we are and what we stand for",
+      "brands": "Four brands, one shared goal",
+      "team": "The people behind the group",
+      "blog": "Insight and practice from the sales floor",
+      "contact": "Talk to us about your sales goal"
     }
   },
   "hero": {
@@ -27,25 +35,7 @@
     "titleHighlight": "Sales Power",
     "subtitle": "We take your sales to the next level!",
     "ctaPrimary": "Contact Us Now",
-    "ctaSecondary": "Discover Our Brands",
-    "specs": [
-      {
-        "value": "15+",
-        "label": "Years of experience"
-      },
-      {
-        "value": "150+",
-        "label": "Successful projects"
-      },
-      {
-        "value": "4",
-        "label": "Brands"
-      },
-      {
-        "value": "GDPR",
-        "label": "Compliant"
-      }
-    ]
+    "ctaSecondary": "Discover Our Brands"
   },
   "homeIntro": {
     "eyebrow": "Revenue & Customer Engagement Partner",
@@ -80,7 +70,6 @@
   },
   "features": {
     "badge": "Our Strengths",
-    "eyebrow": "Advisory Engine",
     "title": "Why",
     "titleBrand": "ADVANTIS GROUP",
     "subtitle": "We combine over 15 years of sales experience with innovative sales approaches and AI tools to take your sales to the next level.",
@@ -104,7 +93,6 @@
     }
   },
   "brands": {
-    "eyebrow": "Brand Architecture",
     "title": "Our",
     "titleHighlight": "Brands",
     "subtitle": "Four strong brands, one common goal: Your sales success",
@@ -325,13 +313,11 @@
   },
   "team": {
     "hero": {
-      "badge": "The Team",
       "titlePart1": "The Faces Behind",
       "subtitle": "Experts, visionaries, and doers. United by the passion for excellent sales."
     },
     "founder": {
       "role": "CEO / Managing Director",
-      "badge": "Leadership",
       "quote": "\"Sales is not just a job, it's an attitude.\"",
       "bio": "Sales enthusiast, strategist, and doer. With over 15 years of experience in sales, coaching, and company building, Andrea leads the ADVANTIS GROUP with passion, pragmatism, and a clear focus on success and humanity.",
       "contactBtn": "Contact"
@@ -347,8 +333,7 @@
     },
     "grid": {
       "title": "Our Team",
-      "subtitle": "The experts by your side",
-      "cardFooter": "Advantis Team"
+      "subtitle": "The experts by your side"
     },
     "office": {
       "title": "A Glimpse Into Our Everyday",
@@ -605,7 +590,6 @@
     }
   },
   "services": {
-    "eyebrow": "Our Services",
     "title": "Everything for Your Sales Success",
     "subtitle": "From customer care to AI automation — discover how we support your sales holistically.",
     "common": {
@@ -1078,7 +1062,6 @@
     "dsgvo": "GDPR Compliant"
   },
   "licenses": {
-    "eyebrow": "Open source",
     "title": "Licenses",
     "description": "This website is built with open-source software. Browse the packages used and their respective licenses.",
     "searchPlaceholder": "Search package, license, or publisher…",

@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { CategoryEyebrow, PostMeta } from "@/components/blog/PostMeta";
+import { Display, PageField } from "@/components/frame";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { type Locale } from "@/i18n/request";
@@ -242,12 +243,14 @@ export default async function BlogPage({
   const [hero, ...rest] = posts;
 
   return (
-    <div className="min-h-screen">
-      <main className="container mx-auto max-w-5xl px-4 pt-28 pb-24">
-        <header className="space-y-4 border-b border-border pb-10">
-          <h1 className="font-[family-name:var(--font-outfit)] text-5xl font-bold leading-none tracking-tight md:text-6xl">
+    <div className="relative min-h-screen bg-background">
+      <PageField />
+
+      <main className="relative mx-auto w-full max-w-5xl px-5 pt-32 pb-24 md:px-10 md:pt-40">
+        <header className="space-y-4 border-b border-rule pb-10">
+          <Display as="h1" size="lg">
             {t("title")}
-          </h1>
+          </Display>
           <p className="max-w-2xl text-lg text-muted-foreground">{t("subtitle")}</p>
           {usedCategories.length > 1 ? (
             <div className="pt-2">
@@ -265,7 +268,7 @@ export default async function BlogPage({
             </section>
 
             {rest.length > 0 ? (
-              <section className="divide-y divide-border border-t border-border">
+              <section className="divide-y divide-rule border-t border-rule">
                 {rest.map((post) => (
                   <PostRow key={post._id} post={post} locale={locale} t={t} />
                 ))}

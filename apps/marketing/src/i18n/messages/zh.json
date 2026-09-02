@@ -20,6 +20,14 @@
       "dark": "深色",
       "system": "系统",
       "auto": "自动"
+    },
+    "menuLabel": "菜单",
+    "descriptions": {
+      "about": "我们是谁，以及我们的理念",
+      "brands": "四个品牌，一个共同目标",
+      "team": "集团背后的团队",
+      "blog": "来自一线的销售洞察与实践",
+      "contact": "聊聊你的销售目标"
     }
   },
   "hero": {
@@ -27,25 +35,7 @@
     "titleHighlight": "销售力量",
     "subtitle": "我们将您的销售提升到新的水平！",
     "ctaPrimary": "立即联系我们",
-    "ctaSecondary": "探索我们的品牌",
-    "specs": [
-      {
-        "value": "15+",
-        "label": "年行业经验"
-      },
-      {
-        "value": "150+",
-        "label": "成功项目"
-      },
-      {
-        "value": "4",
-        "label": "品牌"
-      },
-      {
-        "value": "GDPR",
-        "label": "合规"
-      }
-    ]
+    "ctaSecondary": "探索我们的品牌"
   },
   "homeIntro": {
     "eyebrow": "营收与客户互动合作伙伴",
@@ -80,7 +70,6 @@
   },
   "features": {
     "badge": "我们的优势",
-    "eyebrow": "咨询引擎",
     "title": "为什么选择",
     "titleBrand": "ADVANTIS GROUP",
     "subtitle": "我们将超过15年的销售经验与创新的销售方法和人工智能工具相结合，将您的销售提升到新的水平。",
@@ -104,7 +93,6 @@
     }
   },
   "brands": {
-    "eyebrow": "品牌架构",
     "title": "我们的",
     "titleHighlight": "品牌",
     "subtitle": "四个强大的品牌，一个共同的目标：您的销售成功",
@@ -325,13 +313,11 @@
   },
   "team": {
     "hero": {
-      "badge": "团队",
       "titlePart1": "背后的面孔",
       "subtitle": "专家、远见者和实干家。因对卓越销售的热情而团结在一起。"
     },
     "founder": {
       "role": "首席执行官 / 总经理",
-      "badge": "领导层",
       "quote": "“销售不仅仅是一份工作，更是一种态度。”",
       "bio": "销售爱好者、战略家和实干家。凭借超过 15 年的销售、辅导和公司建设经验，Andrea 以热情、务实以及对成功和人性的清晰关注领导着 ADVANTIS GROUP。",
       "contactBtn": "联系"
@@ -347,8 +333,7 @@
     },
     "grid": {
       "title": "我们的团队",
-      "subtitle": "您身边的专家",
-      "cardFooter": "Advantis 团队"
+      "subtitle": "您身边的专家"
     },
     "office": {
       "title": "走进我们的日常",
@@ -605,7 +590,6 @@
     }
   },
   "services": {
-    "eyebrow": "我们的服务",
     "title": "助力您销售成功的一切",
     "subtitle": "从客户关怀到人工智能自动化——了解我们如何全方位支持您的销售。",
     "common": {
@@ -1078,7 +1062,6 @@
     "dsgvo": "符合 GDPR 合规"
   },
   "licenses": {
-    "eyebrow": "开源软件",
     "title": "许可证",
     "description": "本网站基于开源软件构建。你可以在此查看所使用的软件包及其许可证。",
     "searchPlaceholder": "搜索软件包、许可证或发布者…",

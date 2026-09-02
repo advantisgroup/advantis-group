@@ -3,9 +3,8 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * The mono micro-label used for eyebrows, spec rows, and schematic captions.
- * Replaces the old `text-xs uppercase tracking-[0.35em]` string that was
- * copy-pasted into every section with slightly different values each time.
+ * The mono micro-label used for spec rows and schematic captions. Not for
+ * section kickers — those are gone; a heading identifies its own section.
  */
 export const MonoLabel = ({
   children,

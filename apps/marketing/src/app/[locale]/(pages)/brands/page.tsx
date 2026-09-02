@@ -4,7 +4,7 @@ import { ArrowRight, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { BrandText } from "@/components/effects/BrandText";
-import { Display, FieldRules, PageField } from "@/components/frame";
+import { Display, PageField } from "@/components/frame";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { BRANDS } from "@/lib/brands";
@@ -116,7 +116,6 @@ export default function UnsereMarken() {
         ))}
 
         <section className="grain relative overflow-hidden border-t border-rule py-24 md:py-36">
-          <FieldRules />
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"

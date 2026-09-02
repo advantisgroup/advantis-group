@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { Display, FieldRules, PageField } from "@/components/frame";
+import { Display, PageField } from "@/components/frame";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { SERVICE_ICONS, SERVICE_SLUGS, type ServiceSlug } from "@/lib/services";
@@ -221,7 +221,6 @@ export const ServiceLandingPage = ({ slug }: { slug: ServiceSlug }) => {
         </div>
 
         <section className="grain relative overflow-hidden border-t border-rule py-24 md:py-32">
-          <FieldRules />
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"

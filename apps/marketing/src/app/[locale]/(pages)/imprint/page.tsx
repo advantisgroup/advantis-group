@@ -4,7 +4,7 @@ import { Building2, Mail, FileText } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { BrandText } from "@/components/effects/BrandText";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Display, PageField } from "@/components/frame";
 import { COMPANY_ADDRESS } from "@/lib/company";
 
 export default function Impressum() {
@@ -52,59 +52,54 @@ export default function Impressum() {
   ];
 
   return (
-    <div className="min-h-screen">
-      <main className="container mx-auto px-4 pt-24 pb-24 space-y-24">
-        <section className="max-w-4xl mx-auto space-y-8 text-center">
-          <h1 className="text-5xl md:text-7xl font-bold">{t("title")}</h1>
-        </section>
+    <div className="relative min-h-screen bg-background">
+      <PageField />
 
-        <section className="max-w-6xl mx-auto space-y-12">
-          {/* Top Info Grid */}
-          <div className="border border-border">
-            <div className="grid md:grid-cols-3 divide-x divide-border">
-              {sections.map((section) => {
-                const Icon = section.icon;
-                return (
-                  <Card key={section.title} className="border-0 rounded-none">
-                    <CardHeader>
-                      <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center mb-4">
-                        <Icon className="w-6 h-6 text-primary" />
-                      </div>
-                      <CardTitle className="text-xl">{section.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>{section.content}</CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
+      <main className="relative mx-auto w-full max-w-[1440px] px-5 pt-32 pb-24 md:px-10 md:pt-44">
+        <Display as="h1" size="xl">
+          {t("title")}
+        </Display>
 
-          {/* Register Section */}
-          <Card className="border border-border">
-            <CardHeader>
-              <CardTitle className="text-2xl">{t("sections.register.title")}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-muted-foreground">
+        <div className="mt-16 grid gap-px bg-rule md:grid-cols-3">
+          {sections.map((section) => {
+            const Icon = section.icon;
+            return (
+              <div key={section.title} className="bg-background p-6 md:p-8">
+                <Icon className="size-6 text-primary" strokeWidth={1.5} />
+                <h2 className="mt-6 font-[family-name:var(--font-outfit)] text-xl font-bold tracking-[-0.02em]">
+                  {section.title}
+                </h2>
+                <div className="mt-4 text-sm leading-relaxed md:text-base">{section.content}</div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-px grid gap-px bg-rule md:grid-cols-2">
+          <div className="bg-background p-6 md:p-8">
+            <h2 className="font-[family-name:var(--font-outfit)] text-xl font-bold tracking-[-0.02em]">
+              {t("sections.register.title")}
+            </h2>
+            <div className="mt-4 space-y-2 text-sm text-muted-foreground md:text-base">
               <p>{t("sections.register.intro")}</p>
               <p>{t("sections.register.court")} Amtsgericht Nürnberg</p>
               <p>{t("sections.register.number")} HRB 46148</p>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Responsible Section */}
-          <Card className="border border-border">
-            <CardHeader>
-              <CardTitle className="text-2xl">{t("sections.responsible.title")}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-muted-foreground">
+          <div className="bg-background p-6 md:p-8">
+            <h2 className="font-[family-name:var(--font-outfit)] text-xl font-bold tracking-[-0.02em]">
+              {t("sections.responsible.title")}
+            </h2>
+            <div className="mt-4 space-y-2 text-sm text-muted-foreground md:text-base">
               <p>Andrea Reichl</p>
               <p>
                 <BrandText brand="advantis">advantis GmbH</BrandText>
               </p>
               <p>{COMPANY_ADDRESS}</p>
-            </CardContent>
-          </Card>
-        </section>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );
