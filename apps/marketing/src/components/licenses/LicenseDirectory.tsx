@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from "react";
 
-import { Code2, ExternalLink, Globe, Mail, Package, Search } from "lucide-react";
+import { ExternalLink, Mail, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
+
+import { BrandIcon, NpmMark } from "@/components/licenses/BrandMarks";
 
 import {
   Dialog,
@@ -13,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { faviconUrl, packageIconUrl, repositoryHostLabel } from "@/lib/licenses";
 import { cn } from "@/lib/utils";
 
 type LicenseRecord = {
@@ -165,7 +168,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
               return (
                 <article key={record.name} className="flex h-full flex-col bg-background p-5">
                   <div className="flex items-start justify-between gap-3">
-                    <Package className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                    <BrandIcon src={packageIconUrl(record.repository)} alt="" className="size-6" />
                     <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-primary">
                       {record.license}
                     </span>
@@ -234,16 +237,46 @@ function PackageDetailsDialog({
   if (!record) return null;
 
   const { packageName, version } = splitPackageName(record.name);
+  const hostLabel = repositoryHostLabel(record.repository);
+
   const links = [
     record.repository
-      ? { key: "repository", href: record.repository, label: t("repository"), icon: Code2 }
+      ? {
+          key: "repository",
+          href: record.repository,
+          // "GitHub" says more than "Open repository" when we know the host.
+          label: hostLabel ?? t("repository"),
+          mark: <BrandIcon src={packageIconUrl(record.repository)} alt="" className="size-4" />,
+        }
       : null,
-    { key: "npm", href: npmUrl(packageName), label: t("npm"), icon: Package },
+    {
+      key: "npm",
+      href: npmUrl(packageName),
+      label: t("npm"),
+      mark: <NpmMark className="size-4" />,
+    },
     record.homepage
-      ? { key: "homepage", href: record.homepage, label: t("homepage"), icon: Globe }
+      ? {
+          key: "homepage",
+          href: record.homepage,
+          label: t("homepage"),
+          mark: (
+            <BrandIcon
+              src={faviconUrl(record.homepage)}
+              alt=""
+              fallback="globe"
+              className="size-4 border-0"
+            />
+          ),
+        }
       : null,
     record.email
-      ? { key: "email", href: `mailto:${record.email}`, label: record.email, icon: Mail }
+      ? {
+          key: "email",
+          href: `mailto:${record.email}`,
+          label: record.email,
+          mark: <Mail className="size-4 shrink-0" />,
+        }
       : null,
   ].filter((link) => link !== null);
 
@@ -257,7 +290,10 @@ function PackageDetailsDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg rounded-none border-rule">
         <DialogHeader>
-          <DialogTitle className="break-all text-xl leading-snug">{packageName}</DialogTitle>
+          <div className="flex items-center gap-3">
+            <BrandIcon src={packageIconUrl(record.repository)} alt="" className="size-10" />
+            <DialogTitle className="break-all text-xl leading-snug">{packageName}</DialogTitle>
+          </div>
           <DialogDescription className="sr-only">{t("details")}</DialogDescription>
         </DialogHeader>
 
@@ -281,7 +317,7 @@ function PackageDetailsDialog({
               rel="noreferrer"
               className="flex items-center gap-2 bg-background px-4 py-3 text-sm transition-colors hover:bg-card hover:text-primary"
             >
-              <link.icon className="size-4 shrink-0" />
+              {link.mark}
               <span className="truncate">{link.label}</span>
             </a>
           ))}
