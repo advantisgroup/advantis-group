@@ -95,12 +95,19 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // The "New wiki entry" composer, same deal — but not `/guidebooks/new/advanced`
   // (the block editor), which keeps normal page chrome.
   const isWikiComposer = pathname === "/guidebooks/new";
+  // Blog's composer (BlogPostComposer) is built the same full-screen way as
+  // the announcement composer, but this route was never opted into
+  // `immersive` — without it, <main>'s padding wrapper caps the composer's
+  // `h-full` chain and it renders cut off instead of filling the viewport.
+  const isBlogComposer =
+    pathname === "/blog/new" || (pathname.startsWith("/blog/") && pathname.endsWith("/edit"));
   const immersive =
     pathname.startsWith("/chat") ||
     pathname.startsWith("/wiki-chat") ||
     isAnnouncementComposer ||
     isFlowComposer ||
-    isWikiComposer;
+    isWikiComposer ||
+    isBlogComposer;
 
   // The Updates section reads like a blog (Anthropic/GitHub-changelog style)
   // rather than an app surface — the nav sidebar, bottom nav and the sitewide
