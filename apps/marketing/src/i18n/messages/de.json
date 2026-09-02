@@ -6,6 +6,7 @@
     "about": "Über Uns",
     "team": "Team",
     "contact": "Kontakt",
+    "whitepaper": "Whitepaper",
     "intranet": "Zum Intranet",
     "privacy": "Datenschutz",
     "imprint": "Impressum",
@@ -1044,5 +1045,145 @@
     "filterAll": "Alle",
     "filterOther": "Sonstige",
     "filterLabel": "Nach Lizenz filtern"
+  },
+  "whitepaper": {
+    "meta": {
+      "title": "Whitepaper: KI-Tools im Vertrieb",
+      "description": "Kostenfreies Whitepaper der ADVANTIS GROUP zum Einsatz von KI-Tools im Sales — jetzt anfordern."
+    },
+    "hero": {
+      "badge": "Kostenfreies Whitepaper",
+      "title": "KI-Tools im Vertrieb",
+      "subtitle": "Möchtest du mehr über den Einsatz von KI-Tools im Sales erfahren? Dann lade dir hier unser kostenfreies Whitepaper herunter.",
+      "intro": "Wir zeigen dir, wo KI im Vertriebsalltag heute wirklich Zeit spart, worauf es bei der Auswahl der Tools ankommt und wie du sie in dein Team bringst."
+    },
+    "homeCta": {
+      "title": "Das Whitepaper zu KI-Tools im Vertrieb",
+      "description": "Wo KI im Vertriebsalltag wirklich Zeit spart, welche Tools sich lohnen und wie du sie ins Team bringst — kompakt auf den Punkt gebracht. Kostenfrei als PDF.",
+      "cta": "Whitepaper herunterladen"
+    },
+    "highlights": {
+      "title": "Das steckt drin",
+      "item1": {
+        "title": "Wo KI im Sales wirkt",
+        "description": "Konkrete Einsatzfelder von der Leadrecherche über die Ansprache bis zur Nachbereitung."
+      },
+      "item2": {
+        "title": "Tools im Vergleich",
+        "description": "Worauf es bei der Auswahl ankommt und welche Fragen du vorher klären solltest."
+      },
+      "item3": {
+        "title": "Einführung im Team",
+        "description": "Wie du KI-Tools einführst, ohne dein Team zu überfordern oder Prozesse zu zerschlagen."
+      }
+    },
+    "steps": {
+      "title": "So funktioniert's",
+      "step1": {
+        "title": "Formular ausfüllen",
+        "description": "Deine Kontaktdaten, einmal."
+      },
+      "step2": {
+        "title": "E-Mail bestätigen",
+        "description": "Ein Klick im Bestätigungslink."
+      },
+      "step3": {
+        "title": "Whitepaper erhalten",
+        "description": "Sofort als PDF im Postfach."
+      }
+    },
+    "contact": {
+      "title": "Deine Ansprechpartner",
+      "description": "Fragen zum Whitepaper oder direkt Lust auf ein Gespräch? Melde dich einfach bei uns.",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "address": "Adresse"
+    },
+    "form": {
+      "title": "Whitepaper anfordern",
+      "description": "Trag deine Kontaktdaten ein — nach der Bestätigung deiner E-Mail-Adresse schicken wir dir das Whitepaper sofort zu.",
+      "company": "Firmenname",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "phonePlaceholder": "+49 123 456789",
+      "consent": "Ich willige ein, dass die advantis GmbH meine hier angegebenen Daten speichert und verarbeitet, um mir das Whitepaper zuzusenden und mich zu diesem Thema zu kontaktieren. Diese Einwilligung kann ich jederzeit formlos widerrufen.",
+      "consentSuffix": "Weitere Informationen findest du in unserer",
+      "consentLink": "Datenschutzerklärung",
+      "doubleOptIn": "Doppelte Bestätigung: Du bekommst zuerst eine E-Mail mit einem Bestätigungslink. Erst danach versenden wir das Whitepaper.",
+      "noThirdParty": "Wir geben deine Daten nicht an Dritte weiter.",
+      "submit": "Whitepaper anfordern",
+      "errors": {
+        "required": "Bitte fülle dieses Feld aus.",
+        "email": "Bitte gib eine gültige E-Mail-Adresse ein.",
+        "consent": "Bitte stimme der Verarbeitung deiner Daten zu.",
+        "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+        "network": "Netzwerkfehler. Bitte überprüfe deine Verbindung und versuche es erneut.",
+        "unavailable": "Das Whitepaper ist noch nicht verfügbar. Bitte versuche es später erneut."
+      }
+    },
+    "success": {
+      "title": "Fast geschafft!",
+      "description": "Wir haben dir eine E-Mail an <b>{email}</b> geschickt. Bestätige den Link darin — danach landet das Whitepaper sofort in deinem Postfach.",
+      "spamHint": "Nichts angekommen? Wirf bitte auch einen Blick in deinen Spam-Ordner.",
+      "again": "Andere E-Mail-Adresse verwenden"
+    },
+    "unavailable": {
+      "title": "Das Whitepaper erscheint in Kürze",
+      "description": "Wir legen gerade die letzte Hand an. Sobald es fertig ist, kannst du es hier anfordern — melde dich bis dahin gerne direkt bei uns.",
+      "cta": "Kontakt aufnehmen"
+    },
+    "confirm": {
+      "title": "E-Mail bestätigen",
+      "description": "Ein Klick noch — danach schicken wir dir das Whitepaper sofort zu.",
+      "cta": "Bestätigen & Whitepaper erhalten",
+      "requestCta": "Whitepaper neu anfordern",
+      "missingToken": {
+        "title": "Link unvollständig",
+        "description": "Diesem Bestätigungslink fehlt der Token. Öffne bitte den Link aus unserer E-Mail noch einmal."
+      },
+      "success": {
+        "title": "Bestätigt!",
+        "description": "Das Whitepaper ist auf dem Weg an <b>{email}</b>."
+      },
+      "alreadyDelivered": {
+        "title": "Bereits bestätigt",
+        "description": "Wir haben dir das Whitepaper bereits an <b>{email}</b> gesendet."
+      },
+      "invalid": {
+        "title": "Link ungültig",
+        "description": "Dieser Bestätigungslink ist uns nicht bekannt. Fordere das Whitepaper bitte noch einmal an."
+      },
+      "expired": {
+        "title": "Link abgelaufen",
+        "description": "Dieser Bestätigungslink ist nicht mehr gültig. Fordere das Whitepaper bitte noch einmal an."
+      },
+      "error": {
+        "title": "Etwas ist schiefgelaufen",
+        "description": "Wir konnten deine Bestätigung gerade nicht verarbeiten. Bitte versuche es später noch einmal."
+      }
+    },
+    "email": {
+      "greeting": "Hallo {firstName} {lastName},",
+      "badge": "Whitepaper",
+      "rightsReserved": "Alle Rechte vorbehalten.",
+      "privacyLink": "Datenschutzerklärung",
+      "confirm": {
+        "title": "Nur noch ein Schritt",
+        "body": "du hast unser kostenfreies Whitepaper zum Einsatz von KI-Tools im Vertrieb angefordert. Bestätige bitte kurz deine E-Mail-Adresse — danach schicken wir dir das Dokument sofort zu.",
+        "cta": "E-Mail bestätigen & Whitepaper erhalten",
+        "expiry": "Der Bestätigungslink ist 48 Stunden gültig.",
+        "fallback": "Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:",
+        "disclaimer": "Du hast kein Whitepaper angefordert? Dann ignoriere diese E-Mail einfach. Ohne deine Bestätigung senden wir dir nichts zu."
+      },
+      "delivery": {
+        "title": "Dein Whitepaper ist da",
+        "body": "vielen Dank für deine Bestätigung. Das Whitepaper findest du im Anhang dieser E-Mail.",
+        "outro": "Fragen dazu, oder Lust auf ein unverbindliches Gespräch? Antworte einfach auf diese E-Mail oder ruf uns an.",
+        "contactEmail": "E-Mail",
+        "contactPhone": "Telefon"
+      }
+    }
   }
 }

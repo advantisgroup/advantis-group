@@ -88,6 +88,7 @@ export const Header = () => {
     { label: t("brands"), path: "/brands" },
     { label: t("team"), path: "/team" },
     { label: t("blog"), path: "/blog" },
+    { label: t("whitepaper"), path: "/whitepaper" },
     { label: t("contact"), path: "/contact" },
   ];
 

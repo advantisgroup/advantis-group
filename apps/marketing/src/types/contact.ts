@@ -7,11 +7,13 @@ import {
   type FormDataSchema,
   type OtherFormDataSchema,
   type CallbackFormDataSchema,
+  type WhitepaperFormDataSchema,
 } from "@/lib/schema";
 
 export type FormData = z.infer<typeof FormDataSchema>;
 export type OtherFormData = z.infer<typeof OtherFormDataSchema>;
 export type CallbackFormData = z.infer<typeof CallbackFormDataSchema>;
+export type WhitepaperFormData = z.infer<typeof WhitepaperFormDataSchema>;
 
 export type ContactMode = "message" | "callback" | "other";
 export type ButtonState = "idle" | "loading" | "success" | "error";
@@ -60,6 +62,7 @@ export interface AnimatedButtonProps {
   idleIcon: LucideIcon;
   type?: "submit" | "button";
   disabled?: boolean;
+  className?: string;
 }
 
 export interface FormProps<T> {
