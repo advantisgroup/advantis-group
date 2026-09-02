@@ -58,7 +58,7 @@ async function runPostHogQuery(
   if (!res.ok) {
     throw new Error(`PostHog query failed: ${res.status} ${await res.text()}`);
   }
-  return res.json();
+  return res.json() as Promise<{ results?: unknown[] }>;
 }
 
 /** WebOverviewQuery returns `{ key, value, kind }` rows - "visitors",
