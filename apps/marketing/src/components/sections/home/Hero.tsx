@@ -1,73 +1,97 @@
 "use client";
 
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Display, Marquee } from "@/components/frame";
+import { PipelineSchematic } from "@/components/frame/PipelineSchematic";
 import { Link } from "@/i18n/navigation";
 
 import { BrandText } from "../../effects/BrandText";
 import { Button } from "../../ui/button";
 
+const BRAND_NAMES = [
+  "Salespirates",
+  "Rodeo-Consulting",
+  "Oldschool-train",
+  "Sales-AI-Germany",
+] as const;
+
 export const Hero = () => {
   const t = useTranslations("hero");
+  const specs = t.raw("specs") as { value: string; label: string }[];
 
   return (
-    <section className="relative h-screen flex items-center">
-      {/* Decorative floating elements - static, no animation to avoid GPU overhead */}
-      <div className="hidden md:block absolute top-[20%] left-[15%] w-96 h-96 bg-primary/6 rounded-full blur-2xl" />
-      <div className="hidden md:block absolute top-[30%] right-[10%] w-[500px] h-[500px] bg-secondary/6 rounded-full blur-2xl" />
-
-      {/* Bottom fade overlay */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-32 bg-background/90 pointer-events-none"
-        style={{
-          maskImage: "linear-gradient(to top, black 0%, transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to top, black 0%, transparent 100%)",
-        }}
-      />
-
-      <div className="container mx-auto px-4 w-full relative z-10 -top-[3vh]">
-        <div className="md:max-w-7xl max-w-full mx-auto text-center space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-4xl group font-bold leading-tight md:text-6xl lg:text-8xl">
+    <section className="relative pt-28 md:pt-36">
+      <div className="relative mx-auto w-full max-w-[1440px] px-5 md:px-10">
+        {/*
+         * Headline left, figures right. The schematic then runs the full
+         * container width below both — in a side column its four stages were
+         * squeezed to about 140px each and the last one clipped.
+         */}
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:items-end lg:gap-16">
+          <div>
+            <Display as="h1" size="xl" className="max-w-[15ch] text-pretty">
               {t("title")} <span className="md:hidden">{t("titleHighlight")}</span>
               <span className="hidden md:inline">
-                <BrandText hoverable groupHover>
+                <BrandText brand="advantis" hoverable>
                   {t("titleHighlight")}
                 </BrandText>
               </span>
-            </h1>
+            </Display>
 
-            <p className="hidden text-lg text-muted-foreground font-medium md:block md:text-2xl lg:text-3xl">
+            <p className="mt-7 max-w-xl text-lg leading-relaxed text-muted-foreground md:text-xl">
               {t("subtitle")}
             </p>
+
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg" className="rounded-none">
+                <Link href="/contact">
+                  {t("ctaPrimary")}
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="rounded-none border-rule-strong bg-background/40 backdrop-blur-sm"
+              >
+                <Link href="/brands">{t("ctaSecondary")}</Link>
+              </Button>
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 md:pt-1">
-            <Button asChild size="lg">
-              <Link href="/contact">
-                {t("ctaPrimary")}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/brands">{t("ctaSecondary")}</Link>
-            </Button>
-          </div>
+          <dl className="border-t border-rule lg:pb-2">
+            {specs.map((spec) => (
+              <div
+                key={spec.label}
+                className="flex items-baseline justify-between gap-4 border-b border-rule py-3.5"
+              >
+                <dt className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground/80">
+                  {spec.label}
+                </dt>
+                <dd className="font-[family-name:var(--font-outfit)] text-2xl font-bold tabular-nums tracking-[-0.03em] md:text-3xl">
+                  {spec.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </div>
+
+        <PipelineSchematic className="mt-16 md:mt-20" />
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 animate-bounce">
-        <div className="flex flex-col items-center gap-2 text-muted-foreground">
-          <ChevronDown className="w-5 h-5" />
-        </div>
-      </div>
-
-      {/* Section divider at bottom */}
-      {/* <div className="absolute bottom-0 left-0 right-0 z-10">
-                <SectionDivider variant="dots" opacity={0.3} />
-            </div> */}
+      <Marquee className="mt-16 border-y border-rule py-4 md:mt-24" durationSeconds={45}>
+        {BRAND_NAMES.map((name) => (
+          <span key={name} className="flex items-center">
+            <span className="px-6 font-[family-name:var(--font-outfit)] text-lg font-semibold tracking-[-0.02em] text-muted-foreground/45 md:px-10 md:text-2xl">
+              {name}
+            </span>
+            <span aria-hidden className="size-1 rotate-45 bg-primary/60" />
+          </span>
+        ))}
+      </Marquee>
     </section>
   );
 };

@@ -59,32 +59,40 @@
       "signal": {
         "code": "SIGNAL",
         "title": "Capter le signal",
-        "rows": ["Demandes entrantes", "Appels sortants", "Retours de campagne"]
+        "rows": [
+          "Demandes entrantes",
+          "Appels sortants",
+          "Retours de campagne"
+        ]
       },
       "qualify": {
         "code": "IA",
         "title": "Qualification par IA",
-        "rows": ["Enrichir la fiche", "Évaluer le besoin", "Écarter les doublons"]
+        "rows": [
+          "Enrichir la fiche",
+          "Évaluer le besoin",
+          "Écarter les doublons"
+        ]
       },
       "route": {
         "code": "ROUTAGE",
         "title": "Prioriser et affecter",
-        "rows": ["La bonne marque", "La bonne équipe", "La prochaine étape"]
+        "rows": [
+          "La bonne marque",
+          "La bonne équipe",
+          "La prochaine étape"
+        ]
       },
       "close": {
         "code": "CLÔTURE",
         "title": "Conclure, d'humain à humain",
-        "rows": ["Un véritable échange", "Transfert vers le CRM", "Relance planifiée"]
+        "rows": [
+          "Un véritable échange",
+          "Transfert vers le CRM",
+          "Relance planifiée"
+        ]
       }
     }
-  },
-  "sectionLabels": {
-    "overview": "Aperçu",
-    "capabilities": "Prestations",
-    "approach": "Approche",
-    "brands": "Marques",
-    "proof": "Références",
-    "contact": "Contact"
   },
   "features": {
     "badge": "Nos Forces",

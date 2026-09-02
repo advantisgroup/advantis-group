@@ -5,158 +5,98 @@ import { useEffect, useRef } from "react";
 import { motion, useInView, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useTranslations } from "next-intl";
 
-function CountUp({
-  to,
-  suffix = "",
-  className,
-}: {
-  to: number;
-  suffix?: string;
-  className?: string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-100px" });
-  const value = useMotionValue(0);
-  const springValue = useSpring(value, {
-    stiffness: 55,
-    damping: 18,
-    restDelta: 0.001,
-    duration: 2.5,
-  });
+import { Section } from "@/components/frame";
+import { Display } from "@/components/frame/Display";
 
-  const displayValue = useTransform(springValue, (current) => {
-    const val = Math.round(current);
-    return val.toString().padStart(3, "0");
-  });
+function CountUp({ to, suffix = "" }: { to: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const value = useMotionValue(0);
+  const springValue = useSpring(value, { stiffness: 55, damping: 18, restDelta: 0.001 });
+  const displayValue = useTransform(springValue, (current) => Math.round(current).toString());
 
   useEffect(() => {
-    if (inView) {
-      value.set(to);
-    }
+    if (inView) value.set(to);
   }, [inView, to, value]);
 
   return (
-    <span ref={ref} className={className}>
+    <span ref={ref}>
       <motion.span>{displayValue}</motion.span>
       {suffix}
     </span>
   );
 }
 
+/**
+ * The bento. Three principles and four figures share one hairline grid at
+ * different weights, so the eye gets a route through the section instead of
+ * three identical cards in a row.
+ *
+ * The heading cell is parked in the grid's right half rather than at the top
+ * left, so the section's centre of gravity differs from its neighbours. The
+ * type inside it still sets flush left — ragged-left headings read as broken.
+ *
+ * Cells are separated by `gap-px` over a rule-coloured background, which keeps
+ * every divider exactly one pixel and perfectly aligned.
+ */
 export const HomeFeatures = () => {
   const t = useTranslations("features");
-  const sectionRef = useRef<HTMLElement>(null);
-  const isVisible = useInView(sectionRef, { once: true, margin: "-100px" });
 
   const principles = [
-    {
-      id: "01",
-      title: t("feature1.title"),
-      description: t("feature1.description"),
-    },
-    {
-      id: "02",
-      title: t("feature2.title"),
-      description: t("feature2.description"),
-    },
-    {
-      id: "03",
-      title: t("feature3.title"),
-      description: t("feature3.description"),
-    },
+    { id: "01", title: t("feature1.title"), description: t("feature1.description") },
+    { id: "02", title: t("feature2.title"), description: t("feature2.description") },
+    { id: "03", title: t("feature3.title"), description: t("feature3.description") },
+  ];
+
+  const stats = [
+    { value: 15, suffix: "+", label: t("stats.experience") },
+    { value: 150, suffix: "+", label: t("stats.projects") },
+    { value: 4, suffix: "", label: t("stats.brands") },
+    { value: 100, suffix: "%", label: t("stats.passion") },
   ];
 
   return (
-    <section ref={sectionRef} className="relative overflow-hidden py-16 md:py-20">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,oklch(0.64_0.2_14_/_0.2),transparent_40%),radial-gradient(circle_at_85%_0%,oklch(0.76_0.16_68_/_0.12),transparent_45%)]" />
-      <div className="absolute inset-0 bg-linear-to-b from-background via-background/95 to-background" />
-
-      <div className="container relative z-10 mx-auto px-4">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-16 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
-            <div
-              className={`space-y-8 transition-[transform,opacity] duration-1000 ${
-                isVisible ? "translate-y-0 opacity-100" : "-translate-y-8 opacity-0"
-              }`}
-              style={{ willChange: isVisible ? "auto" : "transform, opacity" }}
-            >
-              <p className="font-[family-name:var(--font-outfit)] text-xs uppercase tracking-[0.35em] text-primary/80">
-                {t("eyebrow")}
-              </p>
-              <h2 className="font-[family-name:var(--font-outfit)] text-4xl leading-[1.05] md:text-6xl lg:text-7xl">
-                {t("title")} <span className="whitespace-nowrap">{t("titleBrand")}?</span>
-              </h2>
-              <p className="max-w-xl text-lg leading-relaxed text-muted-foreground md:text-xl">
-                {t("subtitle")}
-              </p>
-
-              <div className="grid grid-cols-2 gap-x-8 gap-y-6 border-l border-primary/30 pl-6">
-                <div>
-                  <p className="text-4xl font-semibold tabular-nums text-primary md:text-5xl">
-                    <CountUp to={15} suffix="+" />
-                  </p>
-                  <p className="mt-1 text-sm uppercase tracking-wider text-muted-foreground">
-                    {t("stats.experience")}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-4xl font-semibold tabular-nums text-primary md:text-5xl">
-                    <CountUp to={150} suffix="+" />
-                  </p>
-                  <p className="mt-1 text-sm uppercase tracking-wider text-muted-foreground">
-                    {t("stats.projects")}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-4xl font-semibold tabular-nums text-primary md:text-5xl">
-                    <CountUp to={4} />
-                  </p>
-                  <p className="mt-1 text-sm uppercase tracking-wider text-muted-foreground">
-                    {t("stats.brands")}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-4xl font-semibold tabular-nums text-primary md:text-5xl">
-                    <CountUp to={100} suffix="%" />
-                  </p>
-                  <p className="mt-1 text-sm uppercase tracking-wider text-muted-foreground">
-                    {t("stats.passion")}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div
-              className={`transition-[transform,opacity] duration-1000 delay-150 ${
-                isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-              }`}
-              style={{ willChange: isVisible ? "auto" : "transform, opacity" }}
-            >
-              <ul className="divide-y divide-border/60 rounded-[2rem] border border-border/60 bg-card/50">
-                {principles.map((principle) => {
-                  return (
-                    <li key={principle.id} className="group px-6 py-7 md:px-10 md:py-9">
-                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-8">
-                        <span className="font-[family-name:var(--font-outfit)] text-sm tracking-[0.3em] text-primary/70 transition-colors group-hover:text-primary">
-                          {principle.id}
-                        </span>
-                        <div className="space-y-2">
-                          <h3 className="font-[family-name:var(--font-outfit)] text-2xl md:text-3xl">
-                            {principle.title}
-                          </h3>
-                          <p className="text-base leading-relaxed text-muted-foreground md:text-lg">
-                            {principle.description}
-                          </p>
-                        </div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+    <Section>
+      <div className="grid gap-px bg-rule lg:grid-cols-4">
+        {principles.map((principle, index) => (
+          <div
+            key={principle.id}
+            className={`group bg-background p-6 transition-colors duration-300 hover:bg-card/60 md:p-8 ${
+              index === 0 ? "lg:col-span-2" : ""
+            }`}
+          >
+            <span className="font-mono text-[11px] tracking-[0.28em] text-primary/70 transition-colors duration-300 group-hover:text-primary">
+              {principle.id}
+            </span>
+            <h3 className="mt-4 font-[family-name:var(--font-outfit)] text-xl font-bold tracking-[-0.02em] md:text-2xl">
+              {principle.title}
+            </h3>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground md:text-base">
+              {principle.description}
+            </p>
           </div>
+        ))}
+
+        <div className="bg-background p-6 md:p-10 lg:col-span-2 lg:row-span-2 lg:col-start-3 lg:row-start-1 lg:flex lg:flex-col lg:justify-between">
+          <Display size="lg">
+            {t("title")} <span className="whitespace-nowrap">{t("titleBrand")}?</span>
+          </Display>
+          <p className="mt-6 text-lg leading-relaxed text-muted-foreground lg:mt-10">
+            {t("subtitle")}
+          </p>
         </div>
+
+        {stats.map((stat) => (
+          <div key={stat.label} className="bg-background p-6 md:p-8">
+            <p className="font-[family-name:var(--font-outfit)] text-4xl font-bold tabular-nums tracking-[-0.03em] text-primary md:text-5xl">
+              <CountUp to={stat.value} suffix={stat.suffix} />
+            </p>
+            <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+              {stat.label}
+            </p>
+          </div>
+        ))}
       </div>
-    </section>
+    </Section>
   );
 };

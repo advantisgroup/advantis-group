@@ -198,8 +198,15 @@
     --salespirates: oklch(75% 0.15 85);
     --advantis: oklch(0.6441 0.2026 14);
     --rodeo: oklch(65% 0.2 240);
-    --sales-ai: oklch(45% 0.9 240);
-    --oldschool: oklch(25% 0.5 10);
+    /*
+     * These two were specified with a chroma no display can render (0.9 and
+     * 0.5), so the browser gamut-mapped them into something unintended:
+     * `--oldschool` landed at 1.49:1 against this background, i.e. the
+     * "Oldschool-train" wordmark was effectively invisible, and `--sales-ai`
+     * at 2.59:1. Same hues, brought into gamut and above 4.3:1.
+     */
+    --sales-ai: oklch(74% 0.11 240);
+    --oldschool: oklch(78% 0.06 10);
 
     --radius: 0.5rem;
 
@@ -252,8 +259,8 @@
     --salespirates: oklch(70% 0.13 85);
     --advantis: oklch(60% 0.2 14);
     --rodeo: oklch(62% 0.18 240);
-    --sales-ai: oklch(48% 0.9 240);
-    --oldschool: oklch(32% 0.5 10);
+    --sales-ai: oklch(48% 0.1 240);
+    --oldschool: oklch(45% 0.17 10);
     --radius: 0.5rem;
     --clerk-color-primary: var(--primary);
     --clerk-color-primary-foreground: var(--primary-foreground);
@@ -635,8 +642,24 @@ html.lenis body {
   animation: node-pulse 2.4s ease-in-out infinite;
 }
 
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-caret {
   animation: caret-blink 1.1s step-end infinite;
+}
+
+.animate-panel-in {
+  animation: panel-in 0.32s ease-out both;
 }
 
 /*
@@ -648,5 +671,24 @@ html.lenis body {
 @media (prefers-reduced-motion: reduce) {
   .animate-dash-flow {
     stroke-dasharray: none !important;
+  }
+}
+
+@layer components {
+  /*
+   * Diagonal hatch. Used as accent fill on panels and as the connective
+   * banding between sections — the striped areas that tie one band of the
+   * page to the next instead of leaving flat dead space between them.
+   */
+  .hatch {
+    background-image: repeating-linear-gradient(-45deg, var(--rule) 0 1px, transparent 1px 7px);
+  }
+
+  .hatch-strong {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      color-mix(in oklch, var(--primary) 40%, transparent) 0 1px,
+      transparent 1px 7px
+    );
   }
 }

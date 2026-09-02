@@ -59,32 +59,40 @@
       "signal": {
         "code": "SIGNAL",
         "title": "Capture the signal",
-        "rows": ["Inbound enquiries", "Outbound calling", "Campaign responses"]
+        "rows": [
+          "Inbound enquiries",
+          "Outbound calling",
+          "Campaign responses"
+        ]
       },
       "qualify": {
         "code": "AI CHECK",
         "title": "AI qualification",
-        "rows": ["Enrich the record", "Read the intent", "Filter duplicates"]
+        "rows": [
+          "Enrich the record",
+          "Read the intent",
+          "Filter duplicates"
+        ]
       },
       "route": {
         "code": "ROUTING",
         "title": "Prioritise & assign",
-        "rows": ["The right brand", "The right team", "The next step"]
+        "rows": [
+          "The right brand",
+          "The right team",
+          "The next step"
+        ]
       },
       "close": {
         "code": "CLOSE",
         "title": "Close it, human to human",
-        "rows": ["A real conversation", "Handover into the CRM", "Follow-up with a plan"]
+        "rows": [
+          "A real conversation",
+          "Handover into the CRM",
+          "Follow-up with a plan"
+        ]
       }
     }
-  },
-  "sectionLabels": {
-    "overview": "Overview",
-    "capabilities": "Capabilities",
-    "approach": "Approach",
-    "brands": "Brands",
-    "proof": "Proof",
-    "contact": "Contact"
   },
   "features": {
     "badge": "Our Strengths",

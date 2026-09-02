@@ -59,32 +59,40 @@
       "signal": {
         "code": "SIGNAL",
         "title": "Signale erfassen",
-        "rows": ["Inbound-Anfragen", "Outbound-Telefonie", "Kampagnen-Rückläufer"]
+        "rows": [
+          "Inbound-Anfragen",
+          "Outbound-Telefonie",
+          "Kampagnen-Rückläufer"
+        ]
       },
       "qualify": {
         "code": "KI-CHECK",
         "title": "KI-Qualifizierung",
-        "rows": ["Daten anreichern", "Bedarf einordnen", "Dubletten aussortieren"]
+        "rows": [
+          "Daten anreichern",
+          "Bedarf einordnen",
+          "Dubletten aussortieren"
+        ]
       },
       "route": {
         "code": "ROUTING",
         "title": "Priorisieren & zuordnen",
-        "rows": ["Passende Marke", "Richtiges Team", "Nächster Schritt"]
+        "rows": [
+          "Passende Marke",
+          "Richtiges Team",
+          "Nächster Schritt"
+        ]
       },
       "close": {
         "code": "ABSCHLUSS",
         "title": "Menschlich abschließen",
-        "rows": ["Beratung im Gespräch", "Übergabe ins CRM", "Nachfassen mit Plan"]
+        "rows": [
+          "Beratung im Gespräch",
+          "Übergabe ins CRM",
+          "Nachfassen mit Plan"
+        ]
       }
     }
-  },
-  "sectionLabels": {
-    "overview": "Überblick",
-    "capabilities": "Leistungen",
-    "approach": "Ansatz",
-    "brands": "Marken",
-    "proof": "Nachweise",
-    "contact": "Kontakt"
   },
   "features": {
     "badge": "Unsere Stärken",
