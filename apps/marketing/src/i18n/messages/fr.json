@@ -1072,6 +1072,21 @@
         "description": "Comment introduire les outils IA sans surcharger votre équipe ni casser vos processus."
       }
     },
+    "steps": {
+      "title": "Comment ça marche",
+      "step1": {
+        "title": "Remplir le formulaire",
+        "description": "Vos coordonnées, une seule fois."
+      },
+      "step2": {
+        "title": "Confirmer votre e-mail",
+        "description": "Un clic sur le lien de confirmation."
+      },
+      "step3": {
+        "title": "Recevoir le livre blanc",
+        "description": "Directement en PDF dans votre boîte."
+      }
+    },
     "contact": {
       "title": "Vos interlocuteurs",
       "description": "Des questions sur le livre blanc, ou envie d'échanger directement ? Écrivez-nous.",
@@ -1092,6 +1107,7 @@
       "consentSuffix": "Vous trouverez plus d'informations dans notre",
       "consentLink": "politique de confidentialité",
       "doubleOptIn": "Double opt-in : vous recevez d'abord un e-mail contenant un lien de confirmation. Le livre blanc n'est envoyé qu'ensuite.",
+      "noThirdParty": "Nous ne transmettons jamais vos données à des tiers.",
       "submit": "Demander le livre blanc",
       "errors": {
         "required": "Veuillez remplir ce champ.",
@@ -1104,7 +1120,7 @@
     },
     "success": {
       "title": "Presque terminé !",
-      "description": "Nous avons envoyé un e-mail à {email}. Confirmez le lien qu'il contient et le livre blanc arrive aussitôt dans votre boîte de réception.",
+      "description": "Nous avons envoyé un e-mail à <b>{email}</b>. Confirmez le lien qu'il contient et le livre blanc arrive aussitôt dans votre boîte de réception.",
       "spamHint": "Rien reçu ? Pensez à consulter votre dossier de spam.",
       "again": "Utiliser une autre adresse e-mail"
     },
@@ -1124,11 +1140,11 @@
       },
       "success": {
         "title": "Confirmé !",
-        "description": "Le livre blanc est en route vers {email}."
+        "description": "Le livre blanc est en route vers <b>{email}</b>."
       },
       "alreadyDelivered": {
         "title": "Déjà confirmé",
-        "description": "Nous vous avons déjà envoyé le livre blanc à {email}."
+        "description": "Nous vous avons déjà envoyé le livre blanc à <b>{email}</b>."
       },
       "invalid": {
         "title": "Lien non valide",

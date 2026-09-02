@@ -1,17 +1,19 @@
 "use client";
 
-import { CheckCircle2, Download, Info, MailCheck } from "lucide-react";
+import { ArrowRight, Download, MailCheck, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { BrandText } from "@/components/effects/BrandText";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { Button } from "@/components/ui/button";
 import { useWhitepaperRequest } from "@/hooks/use-whitepaper-request";
 import { Link } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
 import { type WhitepaperFormData } from "@/types/contact";
 
 const FIELD_CLASS =
-  "w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base";
+  "h-11 w-full rounded-xl border border-border/80 bg-background px-4 text-base transition-[border-color,box-shadow] placeholder:text-muted-foreground/50 focus:border-advantis/50 focus:outline-none focus:ring-4 focus:ring-advantis/10";
+
+const LABEL_CLASS = "mb-2 block text-sm font-medium text-foreground";
 
 export function WhitepaperForm() {
   const t = useTranslations("whitepaper.form");
@@ -28,21 +30,32 @@ export function WhitepaperForm() {
   } = useWhitepaperRequest();
 
   const update = (patch: Partial<WhitepaperFormData>) => setFormData({ ...formData, ...patch });
-  const fieldError = (field: keyof WhitepaperFormData) =>
-    errors[field] ? t(field === "email" ? "errors.email" : "errors.required") : null;
+  const errorFor = (field: keyof WhitepaperFormData) => {
+    if (!errors[field]) return null;
+    // An empty address is a blank field, not a malformed one.
+    if (field === "email" && formData.email.trim()) return t("errors.email");
+    return t("errors.required");
+  };
 
   if (submittedEmail) {
     return (
-      <div className="space-y-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-6">
-        <div className="flex items-center gap-3">
-          <MailCheck className="h-6 w-6 shrink-0 text-emerald-600 dark:text-emerald-400" />
-          <h3 className="text-xl font-semibold text-foreground">{tSuccess("title")}</h3>
+      <div className="space-y-5 text-center">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 ring-8 ring-emerald-500/5">
+          <MailCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+        </span>
+        <div className="space-y-2">
+          <h3 className="font-[family-name:var(--font-outfit)] text-2xl">{tSuccess("title")}</h3>
+          <p className="text-base leading-relaxed text-muted-foreground">
+            {tSuccess.rich("description", {
+              email: submittedEmail,
+              b: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
+            })}
+          </p>
         </div>
-        <p className="text-base text-muted-foreground">
-          {tSuccess("description", { email: submittedEmail })}
+        <p className="rounded-xl border border-border/60 bg-muted/40 p-3 text-sm text-muted-foreground">
+          {tSuccess("spamHint")}
         </p>
-        <p className="text-sm text-muted-foreground">{tSuccess("spamHint")}</p>
-        <Button type="button" variant="outline" onClick={reset}>
+        <Button type="button" variant="ghost" onClick={reset} className="text-muted-foreground">
           {tSuccess("again")}
         </Button>
       </div>
@@ -50,131 +63,139 @@ export function WhitepaperForm() {
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-      <div>
-        <label htmlFor="wp-company" className="mb-2 block text-sm font-medium">
-          {t("company")} <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          id="wp-company"
-          autoComplete="organization"
-          value={formData.company}
-          onChange={(e) => update({ company: e.target.value })}
-          className={FIELD_CLASS}
+    <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+      <Field
+        id="wp-company"
+        label={t("company")}
+        error={errorFor("company")}
+        autoComplete="organization"
+        value={formData.company}
+        onChange={(value) => update({ company: value })}
+      />
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field
+          id="wp-firstName"
+          label={t("firstName")}
+          error={errorFor("firstName")}
+          autoComplete="given-name"
+          value={formData.firstName}
+          onChange={(value) => update({ firstName: value })}
         />
-        {fieldError("company") && (
-          <p className="mt-1 text-sm text-red-500">{fieldError("company")}</p>
+        <Field
+          id="wp-lastName"
+          label={t("lastName")}
+          error={errorFor("lastName")}
+          autoComplete="family-name"
+          value={formData.lastName}
+          onChange={(value) => update({ lastName: value })}
+        />
+      </div>
+
+      <Field
+        id="wp-email"
+        type="email"
+        label={t("email")}
+        error={errorFor("email")}
+        autoComplete="email"
+        value={formData.email}
+        onChange={(value) => update({ email: value })}
+      />
+
+      <Field
+        id="wp-phone"
+        type="tel"
+        label={t("phone")}
+        error={errorFor("phone")}
+        autoComplete="tel"
+        placeholder={t("phonePlaceholder")}
+        value={formData.phone}
+        onChange={(value) => update({ phone: value })}
+      />
+
+      <div
+        className={cn(
+          "rounded-xl border p-4 transition-colors",
+          errors.consent ? "border-red-500/50 bg-red-500/5" : "border-border/70 bg-muted/30",
         )}
-      </div>
-
-      <div className="flex flex-col gap-4 md:flex-row">
-        <div className="w-full md:w-1/2">
-          <label htmlFor="wp-firstName" className="mb-2 block text-sm font-medium">
-            {t("firstName")} <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="wp-firstName"
-            autoComplete="given-name"
-            value={formData.firstName}
-            onChange={(e) => update({ firstName: e.target.value })}
-            className={FIELD_CLASS}
-          />
-          {fieldError("firstName") && (
-            <p className="mt-1 text-sm text-red-500">{fieldError("firstName")}</p>
-          )}
-        </div>
-        <div className="w-full md:w-1/2">
-          <label htmlFor="wp-lastName" className="mb-2 block text-sm font-medium">
-            {t("lastName")} <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="wp-lastName"
-            autoComplete="family-name"
-            value={formData.lastName}
-            onChange={(e) => update({ lastName: e.target.value })}
-            className={FIELD_CLASS}
-          />
-          {fieldError("lastName") && (
-            <p className="mt-1 text-sm text-red-500">{fieldError("lastName")}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4 md:flex-row">
-        <div className="w-full md:w-1/2">
-          <label htmlFor="wp-email" className="mb-2 block text-sm font-medium">
-            {t("email")} <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="email"
-            id="wp-email"
-            autoComplete="email"
-            value={formData.email}
-            onChange={(e) => update({ email: e.target.value })}
-            className={FIELD_CLASS}
-          />
-          {fieldError("email") && (
-            <p className="mt-1 text-sm text-red-500">{fieldError("email")}</p>
-          )}
-        </div>
-        <div className="w-full md:w-1/2">
-          <label htmlFor="wp-phone" className="mb-2 block text-sm font-medium">
-            {t("phone")} <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="tel"
-            id="wp-phone"
-            autoComplete="tel"
-            placeholder={t("phonePlaceholder")}
-            value={formData.phone}
-            onChange={(e) => update({ phone: e.target.value })}
-            className={FIELD_CLASS}
-          />
-          {fieldError("phone") && (
-            <p className="mt-1 text-sm text-red-500">{fieldError("phone")}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-2">
+      >
         <label htmlFor="wp-consent" className="flex cursor-pointer items-start gap-3">
           <input
             type="checkbox"
             id="wp-consent"
             checked={formData.consent}
-            onChange={(e) => update({ consent: e.target.checked })}
-            className="mt-1 h-4 w-4 shrink-0 accent-advantis"
+            onChange={(event) => update({ consent: event.target.checked })}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-advantis"
           />
           <span className="text-xs leading-relaxed text-muted-foreground">
             {t("consent")} {t("consentSuffix")}{" "}
-            <Link href="/privacy" className="underline hover:text-foreground">
+            <Link href="/privacy" className="text-advantis underline-offset-2 hover:underline">
               {t("consentLink")}
             </Link>
+            .
           </span>
         </label>
-        {errors.consent && <p className="text-sm text-red-500">{t("errors.consent")}</p>}
+        {errors.consent && <p className="mt-2 text-sm text-red-500">{t("errors.consent")}</p>}
       </div>
 
-      <div className="flex items-start gap-2 rounded-lg border border-border/70 bg-muted/40 p-3">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-        <p className="text-xs text-muted-foreground">{t("doubleOptIn")}</p>
-      </div>
-
-      {formError && <p className="text-sm text-red-500">{formError}</p>}
-
-      <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          <BrandText brand="advantis">advantis GmbH</BrandText> &middot;{" "}
-          <Link href="/privacy" className="underline hover:text-foreground">
-            {t("consentLink")}
-          </Link>
+      {formError && (
+        <p className="rounded-xl border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-500">
+          {formError}
         </p>
-        <AnimatedButton buttonState={buttonState} idleText={t("submit")} idleIcon={Download} />
+      )}
+
+      <div className="space-y-3 pt-1">
+        <AnimatedButton
+          buttonState={buttonState}
+          idleText={t("submit")}
+          idleIcon={Download}
+          className="h-12 text-base"
+        />
+        <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
+          <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+          {t("noThirdParty")}
+        </p>
       </div>
     </form>
+  );
+}
+
+function Field({
+  id,
+  label,
+  error,
+  type = "text",
+  value,
+  onChange,
+  autoComplete,
+  placeholder,
+}: {
+  id: string;
+  label: string;
+  error: string | null;
+  type?: "text" | "email" | "tel";
+  value: string;
+  onChange: (value: string) => void;
+  autoComplete: string;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className={LABEL_CLASS}>
+        {label} <span className="text-advantis">*</span>
+      </label>
+      <input
+        id={id}
+        type={type}
+        autoComplete={autoComplete}
+        placeholder={placeholder}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        aria-invalid={Boolean(error)}
+        className={cn(FIELD_CLASS, error && "border-red-500/60 focus:ring-red-500/10")}
+      />
+      {error && <p className="mt-1.5 text-sm text-red-500">{error}</p>}
+    </div>
   );
 }
 
@@ -182,14 +203,19 @@ export function WhitepaperUnavailable() {
   const t = useTranslations("whitepaper.unavailable");
 
   return (
-    <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/30 p-6">
-      <div className="flex items-center gap-3">
-        <CheckCircle2 className="h-6 w-6 shrink-0 text-advantis" />
-        <h3 className="text-xl font-semibold text-foreground">{t("title")}</h3>
+    <div className="space-y-5 text-center">
+      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-advantis/10 ring-8 ring-advantis/5">
+        <Download className="h-6 w-6 text-advantis" />
+      </span>
+      <div className="space-y-2">
+        <h3 className="font-[family-name:var(--font-outfit)] text-2xl">{t("title")}</h3>
+        <p className="text-base leading-relaxed text-muted-foreground">{t("description")}</p>
       </div>
-      <p className="text-base text-muted-foreground">{t("description")}</p>
-      <Button asChild variant="outline">
-        <Link href="/contact">{t("cta")}</Link>
+      <Button asChild variant="outline" className="group">
+        <Link href="/contact">
+          {t("cta")}
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </Button>
     </div>
   );

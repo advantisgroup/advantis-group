@@ -1072,6 +1072,21 @@
         "description": "如何引入 AI 工具，而不会让团队不堪重负或打乱既有流程。"
       }
     },
+    "steps": {
+      "title": "流程说明",
+      "step1": {
+        "title": "填写表单",
+        "description": "只需填一次联系方式。"
+      },
+      "step2": {
+        "title": "确认电子邮箱",
+        "description": "点击确认链接即可。"
+      },
+      "step3": {
+        "title": "获取白皮书",
+        "description": "PDF 立即送达收件箱。"
+      }
+    },
     "contact": {
       "title": "你的联系人",
       "description": "对白皮书有疑问，或者想直接聊一聊？欢迎随时联系我们。",
@@ -1092,6 +1107,7 @@
       "consentSuffix": "更多信息请参阅我们的",
       "consentLink": "隐私政策",
       "doubleOptIn": "双重确认：你会先收到一封带确认链接的邮件，确认之后我们才会发送白皮书。",
+      "noThirdParty": "我们绝不会将你的数据转交给第三方。",
       "submit": "索取白皮书",
       "errors": {
         "required": "请填写此字段。",
@@ -1104,7 +1120,7 @@
     },
     "success": {
       "title": "就差一步！",
-      "description": "我们已向 {email} 发送了一封邮件。点击其中的确认链接，白皮书会立刻送达你的收件箱。",
+      "description": "我们已向 <b>{email}</b> 发送了一封邮件。点击其中的确认链接，白皮书会立刻送达你的收件箱。",
       "spamHint": "没有收到？也请查看一下垃圾邮件文件夹。",
       "again": "使用其他邮箱地址"
     },
@@ -1124,11 +1140,11 @@
       },
       "success": {
         "title": "已确认！",
-        "description": "白皮书正在发往 {email}。"
+        "description": "白皮书正在发往 <b>{email}</b>。"
       },
       "alreadyDelivered": {
         "title": "已经确认过",
-        "description": "我们已经把白皮书发送到 {email}。"
+        "description": "我们已经把白皮书发送到 <b>{email}</b>。"
       },
       "invalid": {
         "title": "链接无效",

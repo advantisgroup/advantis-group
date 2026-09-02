@@ -62,6 +62,7 @@ export interface AnimatedButtonProps {
   idleIcon: LucideIcon;
   type?: "submit" | "button";
   disabled?: boolean;
+  className?: string;
 }
 
 export interface FormProps<T> {

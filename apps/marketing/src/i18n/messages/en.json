@@ -1072,6 +1072,21 @@
         "description": "How to introduce AI tools without overwhelming your team or breaking your process."
       }
     },
+    "steps": {
+      "title": "How it works",
+      "step1": {
+        "title": "Fill in the form",
+        "description": "Your contact details, once."
+      },
+      "step2": {
+        "title": "Confirm your email",
+        "description": "One click in the confirmation link."
+      },
+      "step3": {
+        "title": "Get the whitepaper",
+        "description": "Straight to your inbox as a PDF."
+      }
+    },
     "contact": {
       "title": "Your contacts",
       "description": "Questions about the whitepaper, or ready for a conversation? Just get in touch.",
@@ -1092,6 +1107,7 @@
       "consentSuffix": "You'll find more information in our",
       "consentLink": "privacy policy",
       "doubleOptIn": "Double opt-in: you'll first receive an email with a confirmation link. Only then do we send the whitepaper.",
+      "noThirdParty": "We never pass your details on to third parties.",
       "submit": "Request the whitepaper",
       "errors": {
         "required": "Please fill in this field.",
@@ -1104,7 +1120,7 @@
     },
     "success": {
       "title": "Almost there!",
-      "description": "We've sent an email to {email}. Confirm the link inside it and the whitepaper lands in your inbox right away.",
+      "description": "We've sent an email to <b>{email}</b>. Confirm the link inside it and the whitepaper lands in your inbox right away.",
       "spamHint": "Nothing arrived? Please check your spam folder too.",
       "again": "Use a different email address"
     },
@@ -1124,11 +1140,11 @@
       },
       "success": {
         "title": "Confirmed!",
-        "description": "The whitepaper is on its way to {email}."
+        "description": "The whitepaper is on its way to <b>{email}</b>."
       },
       "alreadyDelivered": {
         "title": "Already confirmed",
-        "description": "We've already sent the whitepaper to {email}."
+        "description": "We've already sent the whitepaper to <b>{email}</b>."
       },
       "invalid": {
         "title": "Invalid link",

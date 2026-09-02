@@ -1072,6 +1072,21 @@
         "description": "Wie du KI-Tools einführst, ohne dein Team zu überfordern oder Prozesse zu zerschlagen."
       }
     },
+    "steps": {
+      "title": "So funktioniert's",
+      "step1": {
+        "title": "Formular ausfüllen",
+        "description": "Deine Kontaktdaten, einmal."
+      },
+      "step2": {
+        "title": "E-Mail bestätigen",
+        "description": "Ein Klick im Bestätigungslink."
+      },
+      "step3": {
+        "title": "Whitepaper erhalten",
+        "description": "Sofort als PDF im Postfach."
+      }
+    },
     "contact": {
       "title": "Deine Ansprechpartner",
       "description": "Fragen zum Whitepaper oder direkt Lust auf ein Gespräch? Melde dich einfach bei uns.",
@@ -1092,6 +1107,7 @@
       "consentSuffix": "Weitere Informationen findest du in unserer",
       "consentLink": "Datenschutzerklärung",
       "doubleOptIn": "Doppelte Bestätigung: Du bekommst zuerst eine E-Mail mit einem Bestätigungslink. Erst danach versenden wir das Whitepaper.",
+      "noThirdParty": "Wir geben deine Daten nicht an Dritte weiter.",
       "submit": "Whitepaper anfordern",
       "errors": {
         "required": "Bitte fülle dieses Feld aus.",
@@ -1104,7 +1120,7 @@
     },
     "success": {
       "title": "Fast geschafft!",
-      "description": "Wir haben dir eine E-Mail an {email} geschickt. Bestätige den Link darin — danach landet das Whitepaper sofort in deinem Postfach.",
+      "description": "Wir haben dir eine E-Mail an <b>{email}</b> geschickt. Bestätige den Link darin — danach landet das Whitepaper sofort in deinem Postfach.",
       "spamHint": "Nichts angekommen? Wirf bitte auch einen Blick in deinen Spam-Ordner.",
       "again": "Andere E-Mail-Adresse verwenden"
     },
@@ -1124,11 +1140,11 @@
       },
       "success": {
         "title": "Bestätigt!",
-        "description": "Das Whitepaper ist auf dem Weg an {email}."
+        "description": "Das Whitepaper ist auf dem Weg an <b>{email}</b>."
       },
       "alreadyDelivered": {
         "title": "Bereits bestätigt",
-        "description": "Wir haben dir das Whitepaper bereits an {email} gesendet."
+        "description": "Wir haben dir das Whitepaper bereits an <b>{email}</b> gesendet."
       },
       "invalid": {
         "title": "Link ungültig",

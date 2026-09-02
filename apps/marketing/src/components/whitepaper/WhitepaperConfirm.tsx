@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 
 import { useSearchParams } from "next/navigation";
 
-import { AlertCircle, Check, Loader2, MailCheck } from "lucide-react";
+import { AlertCircle, ArrowRight, Check, Loader2, MailCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
 
@@ -19,6 +19,24 @@ const STATUS_BY_CODE: Record<number, Outcome> = {
   404: "invalid",
   410: "expired",
 };
+
+const TONE = {
+  neutral: {
+    icon: MailCheck,
+    ring: "bg-advantis/10 ring-advantis/5",
+    accent: "text-advantis",
+  },
+  success: {
+    icon: Check,
+    ring: "bg-emerald-500/10 ring-emerald-500/5",
+    accent: "text-emerald-600 dark:text-emerald-400",
+  },
+  error: {
+    icon: AlertCircle,
+    ring: "bg-red-500/10 ring-red-500/5",
+    accent: "text-red-500",
+  },
+} as const;
 
 export function WhitepaperConfirm() {
   const t = useTranslations("whitepaper.confirm");
@@ -50,22 +68,37 @@ export function WhitepaperConfirm() {
     }
   }, [token]);
 
+  const retry = (
+    <Button asChild variant="outline" className="group">
+      <Link href="/whitepaper">
+        {t("requestCta")}
+        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+      </Link>
+    </Button>
+  );
+
   return (
-    <div className="min-h-screen">
-      <main className="container mx-auto max-w-2xl px-4 pb-24 pt-32">
+    <div className="relative min-h-screen overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,oklch(0.64_0.2_14_/_0.14),transparent_50%)]" />
+      <div className="absolute inset-0 bg-linear-to-b from-transparent to-background" />
+
+      <main className="container relative z-10 mx-auto max-w-xl px-4 pb-24 pt-36">
         {!token ? (
           <Panel
             tone="error"
             title={t("missingToken.title")}
             description={t("missingToken.description")}
           >
-            <Button asChild variant="outline">
-              <Link href="/whitepaper">{t("requestCta")}</Link>
-            </Button>
+            {retry}
           </Panel>
         ) : outcome === null ? (
           <Panel tone="neutral" title={t("title")} description={t("description")}>
-            <Button type="button" onClick={confirm} disabled={pending}>
+            <Button
+              type="button"
+              onClick={confirm}
+              disabled={pending}
+              className="h-12 px-8 text-base shadow-xl shadow-advantis/15"
+            >
               {pending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -78,7 +111,10 @@ export function WhitepaperConfirm() {
           <Panel
             tone="success"
             title={t(`${outcome}.title`)}
-            description={t(`${outcome}.description`, { email })}
+            description={t.rich(`${outcome}.description`, {
+              email,
+              b: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
+            })}
           />
         ) : (
           <Panel
@@ -86,29 +122,13 @@ export function WhitepaperConfirm() {
             title={t(`${outcome}.title`)}
             description={t(`${outcome}.description`)}
           >
-            <Button asChild variant="outline">
-              <Link href="/whitepaper">{t("requestCta")}</Link>
-            </Button>
+            {retry}
           </Panel>
         )}
       </main>
     </div>
   );
 }
-
-const TONE = {
-  neutral: {
-    icon: MailCheck,
-    wrapper: "border-border/70 bg-background/70",
-    accent: "text-advantis",
-  },
-  success: {
-    icon: Check,
-    wrapper: "border-emerald-500/25 bg-emerald-500/5",
-    accent: "text-emerald-600 dark:text-emerald-400",
-  },
-  error: { icon: AlertCircle, wrapper: "border-red-500/25 bg-red-500/5", accent: "text-red-500" },
-} as const;
 
 function Panel({
   tone,
@@ -118,16 +138,24 @@ function Panel({
 }: {
   tone: keyof typeof TONE;
   title: string;
-  description: string;
+  description: React.ReactNode;
   children?: React.ReactNode;
 }) {
-  const { icon: Icon, wrapper, accent } = TONE[tone];
+  const { icon: Icon, ring, accent } = TONE[tone];
 
   return (
-    <div className={`space-y-4 rounded-4xl border p-8 text-center ${wrapper}`}>
-      <Icon className={`mx-auto h-10 w-10 ${accent}`} />
-      <h1 className="text-3xl font-bold md:text-4xl">{title}</h1>
-      <p className="text-base text-muted-foreground">{description}</p>
+    <div className="space-y-6 rounded-[2rem] border border-border/60 bg-card/70 p-8 text-center shadow-2xl shadow-black/5 backdrop-blur-sm md:p-12">
+      <span
+        className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ring-8 ${ring}`}
+      >
+        <Icon className={`h-7 w-7 ${accent}`} />
+      </span>
+      <div className="space-y-3">
+        <h1 className="font-[family-name:var(--font-outfit)] text-3xl leading-tight md:text-4xl">
+          {title}
+        </h1>
+        <p className="text-base leading-relaxed text-muted-foreground">{description}</p>
+      </div>
       {children}
     </div>
   );
