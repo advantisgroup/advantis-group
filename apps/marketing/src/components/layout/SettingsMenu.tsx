@@ -87,7 +87,7 @@ export const SettingsMenu = ({
                 className={cn(
                   "flex items-center justify-center gap-1.5 py-2.5 text-sm transition-colors",
                   language.code === locale
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-popover text-muted-foreground hover:bg-card hover:text-foreground",
                 )}
               >
@@ -118,7 +118,7 @@ export const SettingsMenu = ({
                   className={cn(
                     "flex items-center justify-center gap-2 py-2.5 text-sm transition-colors",
                     isActive
-                      ? "bg-primary/10 text-primary"
+                      ? "bg-primary text-primary-foreground"
                       : "bg-popover text-muted-foreground hover:bg-card hover:text-foreground",
                   )}
                 >

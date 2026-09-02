@@ -287,7 +287,7 @@ export const Header = () => {
                     <Link
                       href={intranetUrl}
                       onClick={() => setNavMenuOpen(false)}
-                      className="inline-flex items-center gap-1.5 border border-advantis/30 bg-advantis/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-advantis transition-colors hover:bg-advantis/20"
+                      className="inline-flex items-center gap-1.5 border border-advantis bg-advantis px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:bg-advantis/90"
                     >
                       <Building2 className="size-3.5" />
                       <span>{t("intranet")}</span>
@@ -373,7 +373,7 @@ export const Header = () => {
                   <Link
                     href={intranetUrl}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-center gap-1.5 rounded-full border border-advantis/30 bg-advantis/10 px-3 py-2 text-sm font-medium text-advantis transition-colors hover:bg-advantis/20"
+                    className="flex items-center justify-center gap-1.5 rounded-full border border-advantis bg-advantis px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-advantis/90"
                   >
                     <Building2 className="h-4 w-4" />
                     <span>{t("intranet")}</span>
