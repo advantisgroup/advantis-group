@@ -113,6 +113,7 @@ export const Header = () => {
     { key: "brands", label: t("brands"), path: "/brands" },
     { key: "team", label: t("team"), path: "/team" },
     { key: "blog", label: t("blog"), path: "/blog" },
+    { key: "whitepaper", label: t("whitepaper"), path: "/whitepaper" },
     { key: "contact", label: t("contact"), path: "/contact" },
   ];
 
@@ -253,7 +254,10 @@ export const Header = () => {
                 {/* One card per destination: label plus what is actually there. */}
                 <ul className="grid grid-cols-2 gap-px bg-rule">
                   {navLinks.map((link) => (
-                    <li key={link.key} className="bg-popover last:col-span-2">
+                    <li
+                      key={link.key}
+                      className={`bg-popover ${navLinks.length % 2 === 1 ? "last:col-span-2" : ""}`}
+                    >
                       <Link
                         href={link.path}
                         onClick={() => setNavMenuOpen(false)}

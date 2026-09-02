@@ -32,3 +32,12 @@ export const CallbackFormDataSchema = z.object({
   dateTime: z.string().min(1, "Date/time is required"),
   notes: z.string().optional(),
 });
+
+export const WhitepaperFormDataSchema = z.object({
+  company: z.string().min(1, "Company is required"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.email("Invalid email address"),
+  phone: z.string().min(1, "Phone is required"),
+  consent: z.boolean().refine((value) => value, "Consent is required"),
+});

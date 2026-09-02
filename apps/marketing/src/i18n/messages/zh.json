@@ -6,6 +6,7 @@
     "about": "关于我们",
     "team": "团队",
     "contact": "联系方式",
+    "whitepaper": "白皮书",
     "intranet": "前往内网",
     "privacy": "隐私政策",
     "imprint": "版权信息",
@@ -27,6 +28,7 @@
       "brands": "四个品牌，一个共同目标",
       "team": "集团背后的团队",
       "blog": "来自一线的销售洞察与实践",
+      "whitepaper": "免费下载：面向未来的销售",
       "contact": "聊聊你的销售目标"
     }
   },
@@ -1072,5 +1074,145 @@
     "filterAll": "全部",
     "filterOther": "其他",
     "filterLabel": "按许可证筛选"
+  },
+  "whitepaper": {
+    "meta": {
+      "title": "白皮书：销售中的 AI 工具",
+      "description": "ADVANTIS GROUP 关于在销售中使用 AI 工具的免费白皮书 — 立即索取。"
+    },
+    "hero": {
+      "badge": "免费白皮书",
+      "title": "销售中的 AI 工具",
+      "subtitle": "想进一步了解 AI 工具在销售中的应用吗？在这里免费下载我们的白皮书。",
+      "intro": "我们会告诉你 AI 在日常销售工作中真正能省下多少时间、选择工具时该看什么，以及如何把它们落地到团队里。"
+    },
+    "homeCta": {
+      "title": "关于销售中 AI 工具的白皮书",
+      "description": "AI 在日常销售工作中真正能省下多少时间、哪些工具值得投入、如何在团队中落地 — 简明扼要。免费 PDF。",
+      "cta": "下载白皮书"
+    },
+    "highlights": {
+      "title": "内容概览",
+      "item1": {
+        "title": "AI 在销售中的着力点",
+        "description": "从线索调研、首次触达到后续跟进的具体应用场景。"
+      },
+      "item2": {
+        "title": "工具对比",
+        "description": "选型时需要关注的重点，以及事先必须厘清的问题。"
+      },
+      "item3": {
+        "title": "在团队中落地",
+        "description": "如何引入 AI 工具，而不会让团队不堪重负或打乱既有流程。"
+      }
+    },
+    "steps": {
+      "title": "流程说明",
+      "step1": {
+        "title": "填写表单",
+        "description": "只需填一次联系方式。"
+      },
+      "step2": {
+        "title": "确认电子邮箱",
+        "description": "点击确认链接即可。"
+      },
+      "step3": {
+        "title": "获取白皮书",
+        "description": "PDF 立即送达收件箱。"
+      }
+    },
+    "contact": {
+      "title": "你的联系人",
+      "description": "对白皮书有疑问，或者想直接聊一聊？欢迎随时联系我们。",
+      "email": "电子邮箱",
+      "phone": "电话",
+      "address": "地址"
+    },
+    "form": {
+      "title": "索取白皮书",
+      "description": "填写你的联系方式 — 确认电子邮箱后，我们会立即把白皮书发给你。",
+      "company": "公司名称",
+      "firstName": "名字",
+      "lastName": "姓氏",
+      "email": "电子邮箱",
+      "phone": "电话",
+      "phonePlaceholder": "+49 123 456789",
+      "consent": "我同意 advantis GmbH 存储并处理我在此填写的数据，用于向我发送白皮书并就该主题与我联系。我可以随时以任何形式撤回此同意。",
+      "consentSuffix": "更多信息请参阅我们的",
+      "consentLink": "隐私政策",
+      "doubleOptIn": "双重确认：你会先收到一封带确认链接的邮件，确认之后我们才会发送白皮书。",
+      "noThirdParty": "我们绝不会将你的数据转交给第三方。",
+      "submit": "索取白皮书",
+      "errors": {
+        "required": "请填写此字段。",
+        "email": "请输入有效的电子邮箱地址。",
+        "consent": "请同意我们处理你的数据。",
+        "generic": "出了点问题，请重试。",
+        "network": "网络错误。请检查网络连接后重试。",
+        "unavailable": "白皮书尚未发布，请稍后再试。"
+      }
+    },
+    "success": {
+      "title": "就差一步！",
+      "description": "我们已向 <b>{email}</b> 发送了一封邮件。点击其中的确认链接，白皮书会立刻送达你的收件箱。",
+      "spamHint": "没有收到？也请查看一下垃圾邮件文件夹。",
+      "again": "使用其他邮箱地址"
+    },
+    "unavailable": {
+      "title": "白皮书即将发布",
+      "description": "我们正在做最后的润色。发布后你就可以在这里索取 — 在此之前，欢迎直接联系我们。",
+      "cta": "联系我们"
+    },
+    "confirm": {
+      "title": "确认你的电子邮箱",
+      "description": "再点一下 — 我们就把白皮书发给你。",
+      "cta": "确认并获取白皮书",
+      "requestCta": "重新索取白皮书",
+      "missingToken": {
+        "title": "链接不完整",
+        "description": "该确认链接缺少令牌。请重新打开我们邮件中的链接。"
+      },
+      "success": {
+        "title": "已确认！",
+        "description": "白皮书正在发往 <b>{email}</b>。"
+      },
+      "alreadyDelivered": {
+        "title": "已经确认过",
+        "description": "我们已经把白皮书发送到 <b>{email}</b>。"
+      },
+      "invalid": {
+        "title": "链接无效",
+        "description": "我们无法识别该确认链接。请重新索取白皮书。"
+      },
+      "expired": {
+        "title": "链接已过期",
+        "description": "该确认链接已失效。请重新索取白皮书。"
+      },
+      "error": {
+        "title": "出了点问题",
+        "description": "我们暂时无法处理你的确认。请稍后再试。"
+      }
+    },
+    "email": {
+      "greeting": "你好 {firstName} {lastName}，",
+      "badge": "白皮书",
+      "rightsReserved": "保留所有权利。",
+      "privacyLink": "隐私政策",
+      "confirm": {
+        "title": "还差一步",
+        "body": "你索取了我们关于在销售中使用 AI 工具的免费白皮书。请先确认你的电子邮箱地址 — 之后我们会立即把文档发给你。",
+        "cta": "确认邮箱并获取白皮书",
+        "expiry": "确认链接的有效期为 48 小时。",
+        "fallback": "如果按钮无法使用，请把此链接复制到浏览器中打开：",
+        "disclaimer": "并没有索取白皮书？直接忽略这封邮件即可。未经你的确认，我们不会发送任何内容。"
+      },
+      "delivery": {
+        "title": "你的白皮书到了",
+        "body": "感谢你的确认。白皮书就在这封邮件的附件中。",
+        "outro": "有任何疑问，或者想进行一次无约束的交流？直接回复这封邮件或给我们打电话。",
+        "contactEmail": "电子邮箱",
+        "contactPhone": "电话"
+      }
+    }
   }
 }

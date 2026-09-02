@@ -140,6 +140,7 @@ import type * as updatesEmail from "../updatesEmail.js";
 import type * as updatesInternal from "../updatesInternal.js";
 import type * as userPreferences from "../userPreferences.js";
 import type * as users from "../users.js";
+import type * as whitepaperLeads from "../whitepaperLeads.js";
 import type * as wikiCategories from "../wikiCategories.js";
 import type * as wikiChats from "../wikiChats.js";
 import type * as wikiEntries from "../wikiEntries.js";
@@ -280,6 +281,7 @@ declare const fullApi: ApiFromModules<{
   updatesInternal: typeof updatesInternal;
   userPreferences: typeof userPreferences;
   users: typeof users;
+  whitepaperLeads: typeof whitepaperLeads;
   wikiCategories: typeof wikiCategories;
   wikiChats: typeof wikiChats;
   wikiEntries: typeof wikiEntries;

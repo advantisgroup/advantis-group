@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   typedRoutes: false,
+  // The whitepaper PDF is read from disk at runtime (see src/lib/whitepaper.ts),
+  // so it has to be traced into the server bundle explicitly — nothing imports it.
+  outputFileTracingIncludes: {
+    "/api/[[...slugs]]": ["./private/**"],
+    "/[locale]/whitepaper": ["./private/**"],
+  },
   experimental: {
     globalNotFound: true,
     useTypeScriptCli: true

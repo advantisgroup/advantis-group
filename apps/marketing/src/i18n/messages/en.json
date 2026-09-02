@@ -6,6 +6,7 @@
     "about": "About Us",
     "team": "Team",
     "contact": "Contact",
+    "whitepaper": "Whitepaper",
     "intranet": "Go to Intranet",
     "privacy": "Privacy Policy",
     "imprint": "Imprint",
@@ -27,6 +28,7 @@
       "brands": "Four brands, one shared goal",
       "team": "The people behind the group",
       "blog": "Insight and practice from the sales floor",
+      "whitepaper": "A free download on the sales floor of tomorrow",
       "contact": "Talk to us about your sales goal"
     }
   },
@@ -1072,5 +1074,145 @@
     "filterAll": "All",
     "filterOther": "Other",
     "filterLabel": "Filter by license"
+  },
+  "whitepaper": {
+    "meta": {
+      "title": "Whitepaper: AI tools in sales",
+      "description": "ADVANTIS GROUP's free whitepaper on using AI tools in sales — request your copy."
+    },
+    "hero": {
+      "badge": "Free whitepaper",
+      "title": "AI tools in sales",
+      "subtitle": "Want to learn more about using AI tools in sales? Download our free whitepaper here.",
+      "intro": "We show you where AI genuinely saves time in day-to-day sales work, what matters when picking tools, and how to roll them out across your team."
+    },
+    "homeCta": {
+      "title": "The whitepaper on AI tools in sales",
+      "description": "Where AI genuinely saves time in day-to-day sales, which tools are worth it, and how to roll them out across your team — kept short and to the point. Free, as a PDF.",
+      "cta": "Get the whitepaper"
+    },
+    "highlights": {
+      "title": "What's inside",
+      "item1": {
+        "title": "Where AI moves the needle",
+        "description": "Concrete use cases from lead research through outreach to follow-up."
+      },
+      "item2": {
+        "title": "Tools compared",
+        "description": "What to look for when choosing, and the questions to settle up front."
+      },
+      "item3": {
+        "title": "Rolling it out",
+        "description": "How to introduce AI tools without overwhelming your team or breaking your process."
+      }
+    },
+    "steps": {
+      "title": "How it works",
+      "step1": {
+        "title": "Fill in the form",
+        "description": "Your contact details, once."
+      },
+      "step2": {
+        "title": "Confirm your email",
+        "description": "One click in the confirmation link."
+      },
+      "step3": {
+        "title": "Get the whitepaper",
+        "description": "Straight to your inbox as a PDF."
+      }
+    },
+    "contact": {
+      "title": "Your contacts",
+      "description": "Questions about the whitepaper, or ready for a conversation? Just get in touch.",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address"
+    },
+    "form": {
+      "title": "Request the whitepaper",
+      "description": "Enter your contact details — once you confirm your email address we'll send the whitepaper straight over.",
+      "company": "Company name",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "phone": "Phone",
+      "phonePlaceholder": "+49 123 456789",
+      "consent": "I consent to advantis GmbH storing and processing the details I provide here in order to send me the whitepaper and to contact me about this topic. I can withdraw this consent at any time, informally.",
+      "consentSuffix": "You'll find more information in our",
+      "consentLink": "privacy policy",
+      "doubleOptIn": "Double opt-in: you'll first receive an email with a confirmation link. Only then do we send the whitepaper.",
+      "noThirdParty": "We never pass your details on to third parties.",
+      "submit": "Request the whitepaper",
+      "errors": {
+        "required": "Please fill in this field.",
+        "email": "Please enter a valid email address.",
+        "consent": "Please agree to the processing of your data.",
+        "generic": "Something went wrong. Please try again.",
+        "network": "Network error. Please check your connection and try again.",
+        "unavailable": "The whitepaper isn't available yet. Please try again later."
+      }
+    },
+    "success": {
+      "title": "Almost there!",
+      "description": "We've sent an email to <b>{email}</b>. Confirm the link inside it and the whitepaper lands in your inbox right away.",
+      "spamHint": "Nothing arrived? Please check your spam folder too.",
+      "again": "Use a different email address"
+    },
+    "unavailable": {
+      "title": "The whitepaper is coming shortly",
+      "description": "We're putting the finishing touches on it. You'll be able to request it here as soon as it's ready — until then, feel free to reach out directly.",
+      "cta": "Get in touch"
+    },
+    "confirm": {
+      "title": "Confirm your email",
+      "description": "One more click — then the whitepaper is on its way.",
+      "cta": "Confirm & get the whitepaper",
+      "requestCta": "Request the whitepaper again",
+      "missingToken": {
+        "title": "Incomplete link",
+        "description": "This confirmation link is missing its token. Please open the link from our email again."
+      },
+      "success": {
+        "title": "Confirmed!",
+        "description": "The whitepaper is on its way to <b>{email}</b>."
+      },
+      "alreadyDelivered": {
+        "title": "Already confirmed",
+        "description": "We've already sent the whitepaper to <b>{email}</b>."
+      },
+      "invalid": {
+        "title": "Invalid link",
+        "description": "We don't recognise this confirmation link. Please request the whitepaper again."
+      },
+      "expired": {
+        "title": "Link expired",
+        "description": "This confirmation link is no longer valid. Please request the whitepaper again."
+      },
+      "error": {
+        "title": "Something went wrong",
+        "description": "We couldn't process your confirmation just now. Please try again later."
+      }
+    },
+    "email": {
+      "greeting": "Hello {firstName} {lastName},",
+      "badge": "Whitepaper",
+      "rightsReserved": "All rights reserved.",
+      "privacyLink": "Privacy policy",
+      "confirm": {
+        "title": "One step to go",
+        "body": "you requested our free whitepaper on using AI tools in sales. Please confirm your email address — we'll send the document straight after.",
+        "cta": "Confirm email & get the whitepaper",
+        "expiry": "The confirmation link is valid for 48 hours.",
+        "fallback": "If the button doesn't work, copy this link into your browser:",
+        "disclaimer": "Didn't request a whitepaper? Then simply ignore this email. We send nothing without your confirmation."
+      },
+      "delivery": {
+        "title": "Your whitepaper is here",
+        "body": "thank you for confirming. You'll find the whitepaper attached to this email.",
+        "outro": "Questions about it, or up for a no-obligation conversation? Just reply to this email or give us a call.",
+        "contactEmail": "Email",
+        "contactPhone": "Phone"
+      }
+    }
   }
 }
