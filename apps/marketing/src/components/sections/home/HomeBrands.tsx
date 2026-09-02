@@ -7,35 +7,7 @@ import { BrandText } from "@/components/effects/BrandText";
 import { Display, Section } from "@/components/frame";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
-
-/**
- * Each brand carries its own accent, exposed as a CSS variable on the row so
- * the hover state, the index number, and the left rule all recolour together.
- * The tokens already exist (`--salespirates`, `--rodeo`, …) — previously only
- * the wordmark used them, which wasted the one place the group's four brands
- * could actually feel like four different things.
- */
-const BRANDS = [
-  {
-    name: "Salespirates",
-    brand: "salespirates" as const,
-    key: "salespirates",
-    accent: "var(--salespirates)",
-  },
-  { name: "Rodeo-Consulting", brand: "rodeo" as const, key: "rodeo", accent: "var(--rodeo)" },
-  {
-    name: "Oldschool-train",
-    brand: "oldschool-train" as const,
-    key: "oldschool",
-    accent: "var(--oldschool)",
-  },
-  {
-    name: "Sales-AI-Germany",
-    brand: "sales-ai-germany" as const,
-    key: "salesai",
-    accent: "var(--sales-ai)",
-  },
-];
+import { BRANDS } from "@/lib/brands";
 
 export const HomeBrands = () => {
   const t = useTranslations("brands");
@@ -57,7 +29,7 @@ export const HomeBrands = () => {
         {BRANDS.map((brand, index) => (
           <Link
             key={brand.key}
-            href={`/brands#${brand.brand}`}
+            href={`/brands#${brand.brandText}`}
             className="group relative block border-b border-rule"
             style={{ "--brand-accent": brand.accent } as React.CSSProperties}
           >
@@ -87,7 +59,7 @@ export const HomeBrands = () => {
                   {t(`${brand.key}.tagline`)}
                 </span>
                 <h3 className="mt-3 font-[family-name:var(--font-outfit)] text-3xl font-bold leading-none tracking-[-0.035em] transition-transform duration-500 group-hover:translate-x-1 md:text-5xl lg:text-6xl">
-                  <BrandText brand={brand.brand} hoverable={false}>
+                  <BrandText brand={brand.brandText} hoverable={false}>
                     {brand.name}
                   </BrandText>
                 </h3>
