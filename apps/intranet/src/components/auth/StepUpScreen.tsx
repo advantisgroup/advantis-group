@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Moon, Sun } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/components/Link";
 import { BrandLogo } from "@/components/Logo";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { TotpSettingsCard } from "@/components/mfa/TotpSettingsCard";
+import { PasskeySettingsCard } from "@/components/passkeys/PasskeySettingsCard";
+import { useTheme } from "@/components/theme/theme-provider";
 
 import { StepUpForm, type StepMethod } from "./StepUpForm";
 
@@ -23,6 +23,24 @@ export type StepUpStatus =
  * `stepUp.status` query catches up to "satisfied" almost instantly. */
 const SUCCESS_HOLD_MS = 2500;
 const FADE_MS = 400;
+
+/** Icon-only, no card/border/fill — a screen someone can get stuck on for a
+ * while shouldn't strand them on the wrong theme just because every other
+ * toggle in the app lives inside the (currently unreachable) app shell. */
+function RawThemeToggle() {
+  const { theme, resolvedTheme, setTheme } = useTheme();
+  const Icon = resolvedTheme === "dark" ? Moon : Sun;
+  return (
+    <button
+      type="button"
+      aria-label="Toggle theme"
+      onClick={() => setTheme(theme === "dark" ? "light" : theme === "light" ? "system" : "dark")}
+      className="fixed bottom-4 right-4 z-10 text-muted-foreground/60 transition-colors hover:text-foreground"
+    >
+      <Icon className="size-4" />
+    </button>
+  );
+}
 
 /** Full-screen, non-dismissible gate — mounted by `AppGate` in place of the
  * app whenever the current session hasn't cleared what sign-in policy
@@ -69,14 +87,19 @@ export function StepUpScreen({
   }
 
   const showingSuccess = phase !== "active";
+  // Enrollment embeds the real TotpSettingsCard/PasskeySettingsCard forms
+  // right here rather than linking to /settings/account — that page is
+  // behind this same gate, so a link to it would just loop back to this
+  // screen. Needs more room than the plain verify-code case.
+  const isEnrolling = !showingSuccess && status.state === "needs_enrollment";
 
   return (
     <div
-      className="flex min-h-screen items-center justify-center bg-muted/30 p-4 transition-opacity ease-out"
+      className="app-atmosphere relative flex min-h-screen items-center justify-center p-4 transition-opacity ease-out"
       style={{ transitionDuration: `${FADE_MS}ms`, opacity: phase === "fading" ? 0 : 1 }}
     >
-      <Card className="w-full max-w-sm">
-        <CardContent className="space-y-4 p-6">
+      <div className={isEnrolling ? "w-full max-w-md space-y-6" : "w-full max-w-sm space-y-5"}>
+        <div className="space-y-4 text-center">
           <div className="flex justify-center">
             {showingSuccess ? (
               <CheckCircle2 className="size-10 animate-in fade-in-0 zoom-in-50 text-success duration-300" />
@@ -85,42 +108,43 @@ export function StepUpScreen({
             )}
           </div>
           {showingSuccess ? (
-            <div className="text-center">
-              <h1 className="text-lg font-semibold tracking-tight">{t("gateVerifiedTitle")}</h1>
-            </div>
+            <h1 className="text-lg font-semibold tracking-tight">{t("gateVerifiedTitle")}</h1>
           ) : status.state === "needs_verification" ? (
-            <>
-              <div className="text-center">
-                <h1 className="text-lg font-semibold tracking-tight">{t("gateVerifyTitle")}</h1>
-                <p className="mt-1 text-sm text-muted-foreground">{t("gateVerifyBody")}</p>
-              </div>
-              <StepUpForm
-                availableMethods={status.availableMethods}
-                context="sign_in"
-                onVerified={markVerifiedOptimistically}
-              />
-            </>
+            <div>
+              <h1 className="text-lg font-semibold tracking-tight">{t("gateVerifyTitle")}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">{t("gateVerifyBody")}</p>
+            </div>
           ) : status.state === "needs_enrollment" ? (
-            <>
-              <div className="text-center">
-                <h1 className="text-lg font-semibold tracking-tight">{t("gateEnrollTitle")}</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {status.needsMfa && status.needsPasskey
-                    ? t("gateEnrollBodyBoth")
-                    : status.needsMfa
-                      ? t("gateEnrollBodyMfa")
-                      : t("gateEnrollBodyPasskey")}
-                </p>
-              </div>
-              <Button asChild className="w-full">
-                <Link href={status.needsPasskey ? "/settings/account#passkeys" : "/settings/account#totp"}>
-                  {t("gateEnrollCta")}
-                </Link>
-              </Button>
-            </>
+            <div>
+              <h1 className="text-lg font-semibold tracking-tight">{t("gateEnrollTitle")}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {status.needsMfa && status.needsPasskey
+                  ? t("gateEnrollBodyBoth")
+                  : status.needsMfa
+                    ? t("gateEnrollBodyMfa")
+                    : t("gateEnrollBodyPasskey")}
+              </p>
+            </div>
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
+
+        {!showingSuccess && status.state === "needs_verification" && (
+          <StepUpForm
+            availableMethods={status.availableMethods}
+            context="sign_in"
+            onVerified={markVerifiedOptimistically}
+          />
+        )}
+
+        {isEnrolling && status.state === "needs_enrollment" && (
+          <div className="space-y-4">
+            {status.needsMfa && <TotpSettingsCard />}
+            {status.needsPasskey && <PasskeySettingsCard />}
+          </div>
+        )}
+      </div>
+
+      <RawThemeToggle />
     </div>
   );
 }
