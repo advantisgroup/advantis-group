@@ -4,6 +4,8 @@
   "gateVerifyTitle": "Identität bestätigen",
   "gateVerifyBody": "Gib einen Bestätigungscode ein, um fortzufahren.",
   "gateVerifiedTitle": "Bestätigt",
+  "graceBannerBody": "Für dein Konto ist bis zum {date} zusätzliche Sicherheit erforderlich.",
+  "graceBannerCta": "Jetzt einrichten",
   "gateEnrollTitle": "Zusätzliche Sicherheit erforderlich",
   "gateEnrollBodyBoth": "Für dein Konto müssen eine Authentifizierungs-App und ein Passkey eingerichtet werden, bevor du fortfahren kannst.",
   "gateEnrollBodyMfa": "Für dein Konto muss eine Authentifizierungs-App eingerichtet werden, bevor du fortfahren kannst.",

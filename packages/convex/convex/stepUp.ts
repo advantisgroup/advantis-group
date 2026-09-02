@@ -379,7 +379,7 @@ export const status = query({
       return {
         state: "warning" as const,
         graceDeadline: Math.min(...graceDeadlines),
-        needsPasskeyEnrollment: false,
+        needsPasskeyEnrollment: req.passkeyGraceDeadline !== null,
       };
     }
 

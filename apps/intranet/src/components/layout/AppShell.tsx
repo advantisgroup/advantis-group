@@ -14,6 +14,7 @@ import { useSmoothScroll } from "@/components/effects/SmoothScrolling";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider";
 import { AccountMenu } from "@/components/layout/AccountMenu";
+import { GracePeriodBanner } from "@/components/layout/GracePeriodBanner";
 import { SandboxBanner } from "@/components/layout/SandboxBanner";
 import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -283,6 +284,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           <AccountMenu triggerClassName="hidden md:flex" />
         </header>
         <SandboxBanner />
+        <GracePeriodBanner />
         <main
           ref={mainRef}
           className={cn(
