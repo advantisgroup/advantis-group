@@ -506,6 +506,7 @@
     "readingTime": "阅读时长 {minutes} 分钟",
     "filterLabel": "按分类筛选",
     "filterAll": "全部",
+    "otherLanguages": "其他语言版本",
     "categories": {
       "unternehmen": "公司",
       "vertrieb": "销售",

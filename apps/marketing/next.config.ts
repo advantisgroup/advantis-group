@@ -23,6 +23,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "*.convex.cloud",
       },
+      // Prod Convex sits behind this custom domain instead of *.convex.cloud.
+      {
+        protocol: "https",
+        hostname: "backend.advantisgroup.de",
+      },
     ],
   },
   async rewrites() {

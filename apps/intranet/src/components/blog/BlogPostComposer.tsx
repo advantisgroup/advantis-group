@@ -11,6 +11,7 @@ import { BlogPostPreview } from "@/components/blog/BlogPostPreview";
 import {
   BLOG_CATEGORIES,
   type BlogPostEntry,
+  EXCERPT_MAX_LENGTH,
   useBlogPostForm,
 } from "@/components/blog/useBlogPostForm";
 import { Link } from "@/components/Link";
@@ -134,9 +135,13 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
           value={form.excerpt}
           onChange={(e) => form.setExcerpt(e.target.value)}
           rows={3}
+          maxLength={EXCERPT_MAX_LENGTH}
           placeholder={t("fieldExcerptPlaceholder")}
           className="flex w-full rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground hover:border-border focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
         />
+        <p className="mt-1 text-right text-[11px] text-muted-foreground">
+          {form.excerpt.length}/{EXCERPT_MAX_LENGTH}
+        </p>
       </div>
       <div>
         <label className="mb-1 block text-xs font-medium text-muted-foreground">

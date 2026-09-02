@@ -191,6 +191,52 @@ function CategoryFilter({
   );
 }
 
+const OTHER_LANGUAGE_LABELS: Record<"de" | "en", { flag: string; code: string }> = {
+  de: { flag: "🇩🇪", code: "DE" },
+  en: { flag: "🇬🇧", code: "EN" },
+};
+
+/** Cross-language discovery footer — posts only exist in whichever single
+ * language they were authored in (see blogLanguage), so without this a post
+ * published only in German is invisible to an English-site visitor. Kept
+ * small and separate from the main list so it reads as a pointer elsewhere,
+ * not a second feed. */
+function OtherLanguagePosts({
+  posts,
+  language,
+  t,
+}: {
+  posts: BlogPostSummary[];
+  language: "de" | "en";
+  t: Translator;
+}) {
+  if (posts.length === 0) return null;
+  const { flag, code } = OTHER_LANGUAGE_LABELS[language];
+
+  return (
+    <section className="mt-16 border-t border-rule pt-6">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {t("otherLanguages")}
+      </p>
+      <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+        {posts.map((post) => (
+          <li key={post._id}>
+            <Link
+              href={`/blog/${post.slug}`}
+              locale={language}
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <span aria-hidden>{flag}</span>
+              <span className="text-xs font-medium">{code}</span>
+              <span>{post.title}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function EmptyState({ t, filtered }: { t: Translator; filtered: boolean }) {
   return (
     <div className="border-t border-border py-24 text-center">
@@ -224,9 +270,12 @@ export default async function BlogPage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const [{ locale }, { category }] = await Promise.all([params, searchParams]);
-  const [t, allPosts] = await Promise.all([
+  const language = blogLanguage(locale);
+  const otherLanguage = language === "de" ? "en" : "de";
+  const [t, allPosts, otherLanguagePosts] = await Promise.all([
     getTranslations({ locale, namespace: "blog" }),
-    getPosts(blogLanguage(locale)),
+    getPosts(language),
+    getPosts(otherLanguage),
   ]);
 
   const activeCategory = isBlogCategory(category) ? category : null;
@@ -276,6 +325,8 @@ export default async function BlogPage({
             ) : null}
           </>
         )}
+
+        <OtherLanguagePosts posts={otherLanguagePosts} language={otherLanguage} t={t} />
       </main>
     </div>
   );

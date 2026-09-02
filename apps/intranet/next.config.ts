@@ -24,6 +24,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       // Convex file storage (avatars, chat images, announcement attachments)
       { protocol: "https", hostname: "*.convex.cloud" },
+      // Prod Convex sits behind this custom domain instead of *.convex.cloud.
+      { protocol: "https", hostname: "backend.advantisgroup.de" },
       { protocol: "https", hostname: "img.clerk.com" },
     ],
   },

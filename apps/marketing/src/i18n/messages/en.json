@@ -506,6 +506,7 @@
     "readingTime": "{minutes} min read",
     "filterLabel": "Filter by category",
     "filterAll": "All",
+    "otherLanguages": "Also available in",
     "categories": {
       "unternehmen": "Company",
       "vertrieb": "Sales",

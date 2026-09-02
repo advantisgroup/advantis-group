@@ -6,6 +6,10 @@ import { requireCapability } from "./lib/auth";
 
 const languageValidator = v.union(v.literal("de"), v.literal("en"));
 
+// Keeps excerpts skimmable on the list page and usable as a lede — a
+// paragraph-length excerpt defeats the point of both.
+const EXCERPT_MAX_LENGTH = 200;
+
 /** Everything (incl. drafts) — the intranet blog list page manages
  * filtering/sorting itself. Mirrors wikiEntries.list. */
 export const list = query({
@@ -49,6 +53,15 @@ function estimateReadingMinutes(html: string): number {
   return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
 }
 
+function assertExcerptLength(excerpt: string) {
+  if (excerpt.length > EXCERPT_MAX_LENGTH) {
+    throw new ConvexError({
+      code: "invalid_argument",
+      message: `Excerpt must be ${EXCERPT_MAX_LENGTH} characters or fewer`,
+    });
+  }
+}
+
 async function assertSlugAvailable(
   ctx: Parameters<typeof requireCapability>[0],
   slug: string,
@@ -68,6 +81,7 @@ export const create = mutation({
   args: postFields,
   handler: async (ctx, args) => {
     const user = await requireCapability(ctx, "manage_blog");
+    assertExcerptLength(args.excerpt);
     await assertSlugAvailable(ctx, args.slug, args.language);
     const now = Date.now();
     const id = await ctx.db.insert("blogPosts", {
@@ -89,6 +103,7 @@ export const update = mutation({
     await requireCapability(ctx, "manage_blog");
     const post = await ctx.db.get(postId);
     if (!post) throw new ConvexError({ code: "not_found", message: "Not found" });
+    assertExcerptLength(patch.excerpt);
     await assertSlugAvailable(ctx, patch.slug, patch.language, postId);
     await ctx.db.patch(postId, {
       ...patch,

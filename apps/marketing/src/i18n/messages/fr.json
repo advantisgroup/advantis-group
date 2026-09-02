@@ -506,6 +506,7 @@
     "readingTime": "{minutes} min de lecture",
     "filterLabel": "Filtrer par catégorie",
     "filterAll": "Tous",
+    "otherLanguages": "Également disponible en",
     "categories": {
       "unternehmen": "Entreprise",
       "vertrieb": "Ventes",

@@ -17,6 +17,9 @@ import { uploadToConvex } from "@/lib/upload";
  *  slugs to write. Keep the two lists in sync when adding a category. */
 export const BLOG_CATEGORIES = ["unternehmen", "vertrieb", "ki", "karriere", "events"] as const;
 
+// Mirrors EXCERPT_MAX_LENGTH in packages/convex/convex/blogPosts.ts.
+export const EXCERPT_MAX_LENGTH = 200;
+
 export interface BlogPostEntry {
   _id: Id<"blogPosts">;
   slug: string;
