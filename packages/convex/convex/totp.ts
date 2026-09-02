@@ -5,6 +5,7 @@ import { safeEqual, sha256hex } from "./activity/lib/crypto";
 import { type Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { getUserByClerkId } from "./lib/auth";
+import { trackEvent } from "./lib/analytics";
 
 const RECOVERY_CODE_COUNT = 8;
 // Avoids 0/O/1/I/L so a printed code isn't ambiguous to read back.
@@ -85,6 +86,7 @@ export const apiBeginEnrollment = mutation({
       secretCiphertext: args.secretCiphertext,
       createdAt: Date.now(),
     });
+    await trackEvent(ctx, { event: "mfa_enrollment_started", distinctId: user.clerkUserId, properties: {} });
     return { ok: true };
   },
 });
@@ -137,6 +139,11 @@ export const apiFinishEnrollment = mutation({
       });
     }
     await ctx.db.insert("totpAuditLog", { userId: user._id, event: "enrolled", at: now });
+    await trackEvent(ctx, {
+      event: "mfa_enrollment_completed",
+      distinctId: user.clerkUserId,
+      properties: {},
+    });
     return { recoveryCodes };
   },
 });

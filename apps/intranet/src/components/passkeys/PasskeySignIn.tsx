@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { startAuthentication } from "@simplewebauthn/browser";
+import { useAuth } from "@clerk/nextjs";
 import { useSignIn } from "@clerk/nextjs/legacy";
 import { KeyRound, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -18,6 +19,12 @@ type OptionsResponse = {
   options: Parameters<typeof startAuthentication>[0]["optionsJSON"];
   flowId: string;
   rpId: string;
+};
+
+type AuthenticationResult = {
+  ticket: string;
+  stepUpTicket?: string;
+  signal?: AcceptedCredentialsSignal;
 };
 
 type AcceptedCredentialsSignal = {
@@ -46,6 +53,7 @@ async function jsonOrThrow(response: Response) {
 export function PasskeySignIn() {
   const t = useTranslations("Settings");
   const { isLoaded, signIn, setActive } = useSignIn();
+  const { getToken } = useAuth();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -57,7 +65,7 @@ export function PasskeySignIn() {
         await fetch(`${apiUrl}/passkeys/authentication/options`, { method: "POST" }),
       )) as OptionsResponse;
       const credential = await startAuthentication({ optionsJSON: options });
-      let authentication: { ticket: string; signal?: AcceptedCredentialsSignal };
+      let authentication: AuthenticationResult;
       try {
         authentication = (await jsonOrThrow(
           await fetch(`${apiUrl}/passkeys/authentication/verify`, {
@@ -65,7 +73,7 @@ export function PasskeySignIn() {
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ flowId, response: credential }),
           }),
-        )) as { ticket: string; signal?: AcceptedCredentialsSignal };
+        )) as AuthenticationResult;
       } catch (error) {
         if (error instanceof RequestError && error.status === 404) {
           try {
@@ -81,6 +89,26 @@ export function PasskeySignIn() {
         throw new Error("Could not complete sign-in");
       }
       await setActive({ session: completed.createdSessionId });
+      // Records that this session used a passkey, so the step-up gate never
+      // re-prompts for MFA it's already just as strong as — must happen
+      // before the redirect, or AppGate's first status check races it.
+      if (authentication.stepUpTicket) {
+        try {
+          const token = await getToken({ skipCache: true });
+          await jsonOrThrow(
+            await fetch(`${apiUrl}/auth/step-up/claim-passkey`, {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                ...(token ? { authorization: `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify({ ticket: authentication.stepUpTicket }),
+            }),
+          );
+        } catch (error) {
+          console.warn("[passkeys] step-up ticket claim failed", error);
+        }
+      }
       if (authentication.signal) {
         try {
           await signalAcceptedPasskeys(authentication.signal);

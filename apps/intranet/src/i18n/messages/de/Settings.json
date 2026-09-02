@@ -122,5 +122,11 @@
   "copyRecoveryCodes": "Codes kopieren",
   "copied": "Kopiert",
   "totpRecoveryCodesDone": "Gespeichert",
+  "securityAlwaysMfa": "Bei jeder Anmeldung MFA verlangen",
+  "securityAlwaysMfaHint": "Frag bei jeder Anmeldung zusätzlich zu deiner üblichen Anmeldemethode einen Bestätigungscode ab. Standardmäßig aus — die meisten Personen brauchen das nicht.",
+  "securityAlwaysMfaPasskeyWarning": "Du hast bereits einen Passkey, der für sich genommen schon sehr sicher ist. Wenn du dies aktivierst, wirst du bei jeder Anmeldung nach einem Code gefragt — auch mit Passkey. Die meisten Personen brauchen das nicht.",
+  "securityAlwaysMfaEnabled": "MFA ist jetzt bei jeder Anmeldung erforderlich",
+  "securityAlwaysMfaDisabled": "MFA ist nicht mehr bei jeder Anmeldung erforderlich",
+  "securityPreferenceError": "Diese Einstellung konnte nicht gespeichert werden",
   "cancel": "Abbrechen"
 }

@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, internalMutation, query } from "./_generated/server";
 import { getUserByClerkId } from "./lib/auth";
+import { trackEvent } from "./lib/analytics";
 
 const transportValidator = v.union(
   v.literal("ble"),
@@ -270,6 +271,11 @@ export const apiCompleteRegistration = mutation({
       passkeyId,
       event: "created",
       at: now,
+    });
+    await trackEvent(ctx, {
+      event: "passkey_enrollment_completed",
+      distinctId: user.clerkUserId,
+      properties: {},
     });
     return {
       _id: passkeyId,

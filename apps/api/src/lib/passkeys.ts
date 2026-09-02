@@ -14,6 +14,7 @@ import type { Id } from "@advantis/convex/dataModel";
 import { getClerkClient } from "./clerk.js";
 import { getConvex, getConvexServerKey } from "./convex.js";
 import { Errors } from "./errors.js";
+import { issuePasskeyStepUpTicket } from "./stepUp.js";
 
 const FLOW_TTL_MS = 5 * 60 * 1000;
 const MAX_PASSKEYS = 10;
@@ -190,8 +191,10 @@ export async function finishAuthentication(flowId: string, response: Authenticat
     userId: result.clerkUserId,
     expiresInSeconds: 60,
   });
+  const stepUpTicket = await issuePasskeyStepUpTicket(result.clerkUserId);
   return {
     ticket: signInToken.token,
+    stepUpTicket,
     ...(result.signal
       ? {
           signal: {

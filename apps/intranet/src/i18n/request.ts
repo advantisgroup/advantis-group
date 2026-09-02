@@ -47,6 +47,7 @@ import deRichText from "./messages/de/RichText.json";
 import deSalesCoachEv from "./messages/de/SalesCoachEv.json";
 import deSalesCockpit from "./messages/de/SalesCockpit.json";
 import deSettings from "./messages/de/Settings.json";
+import deStepUp from "./messages/de/StepUp.json";
 import deSuggestions from "./messages/de/Suggestions.json";
 import deTeams from "./messages/de/Teams.json";
 import determs from "./messages/de/terms.json";
@@ -94,6 +95,7 @@ import enRichText from "./messages/en/RichText.json";
 import enSalesCoachEv from "./messages/en/SalesCoachEv.json";
 import enSalesCockpit from "./messages/en/SalesCockpit.json";
 import enSettings from "./messages/en/Settings.json";
+import enStepUp from "./messages/en/StepUp.json";
 import enSuggestions from "./messages/en/Suggestions.json";
 import enTeams from "./messages/en/Teams.json";
 import enterms from "./messages/en/terms.json";
@@ -156,6 +158,7 @@ const messagesByLocale = {
     ItTickets: enItTickets,
     SalesCockpit: enSalesCockpit,
     SalesCoachEv: enSalesCoachEv,
+    StepUp: enStepUp,
   },
   de: {
     App: deApp,
@@ -205,6 +208,7 @@ const messagesByLocale = {
     ItTickets: deItTickets,
     SalesCockpit: deSalesCockpit,
     SalesCoachEv: deSalesCoachEv,
+    StepUp: deStepUp,
   },
 } satisfies Record<Locale, Record<string, unknown>>;
 

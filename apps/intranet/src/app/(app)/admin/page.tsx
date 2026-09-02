@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 
 import { ActionQueue } from "@/components/admin/overview/ActionQueue";
 import { AuditFeed, JumpTo } from "@/components/admin/overview/AuditFeed";
+import { AuthenticationBanner } from "@/components/admin/overview/AuthenticationBanner";
 import { NewEmployeeBanner } from "@/components/admin/overview/NewEmployeeBanner";
 import { AccountsRadar, OrgComposition } from "@/components/admin/overview/PeoplePanels";
 import { SystemsPanel } from "@/components/admin/overview/SystemsPanel";
@@ -51,6 +52,8 @@ export default function AdminOverviewPage() {
       />
 
       <NewEmployeeBanner />
+
+      {isAdmin && <AuthenticationBanner />}
 
       <Vitals tzOffsetMinutes={tzOffsetMinutes} />
 
