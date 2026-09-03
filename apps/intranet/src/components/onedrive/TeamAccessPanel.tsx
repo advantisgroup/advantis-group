@@ -103,14 +103,14 @@ export function TeamAccessPanel() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">{t("teamAccessDescription")}</p>
         <Button
           size="sm"
           variant="outline"
           onClick={() => void onSyncAll()}
           disabled={syncing || rows === null}
-          className="shrink-0"
+          className="w-full sm:w-auto sm:shrink-0"
         >
           {t("teamAccessSyncAll")}
         </Button>

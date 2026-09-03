@@ -356,7 +356,7 @@ export function Uebersicht({
 
       <Card className="border-primary/25 bg-primary/[0.03] print:border-0 print:bg-transparent">
         <CardContent className="space-y-4 p-4 print:p-0">
-          <div className="flex items-start justify-between gap-3 border-b border-border/70 pb-3 print:border-foreground">
+          <div className="flex flex-col items-stretch gap-3 border-b border-border/70 pb-3 print:border-foreground sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("handoffBrief")}
@@ -369,7 +369,7 @@ export function Uebersicht({
             <Button
               variant="outline"
               size="sm"
-              className="print:hidden"
+              className="w-full print:hidden sm:w-auto"
               onClick={() => window.print()}
             >
               <Printer className="size-3.5" />

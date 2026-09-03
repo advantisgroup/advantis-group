@@ -99,7 +99,7 @@ export default function ApprovalsPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         {canReviewAbsences && (
           <Card className="overflow-hidden">
-            <CardHeader className="flex-row items-start justify-between gap-4 border-b border-border/70">
+            <CardHeader className="flex-col items-stretch gap-4 border-b border-border/70 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Plane className="size-4 text-primary" />
@@ -107,7 +107,7 @@ export default function ApprovalsPage() {
                 </CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">{t("absenceApprovalsHint")}</p>
               </div>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                 <Link href="/clockodo/approvals">{t("reviewAll")}</Link>
               </Button>
             </CardHeader>
@@ -137,7 +137,7 @@ export default function ApprovalsPage() {
 
         {isManager && (
           <Card className="overflow-hidden">
-            <CardHeader className="flex-row items-start justify-between gap-4 border-b border-border/70">
+            <CardHeader className="flex-col items-stretch gap-4 border-b border-border/70 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <ShieldCheck className="size-4 text-primary" />
@@ -145,7 +145,7 @@ export default function ApprovalsPage() {
                 </CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">{t("accessRequestsHint")}</p>
               </div>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                 <Link href="/admin/requests">{t("reviewAll")}</Link>
               </Button>
             </CardHeader>
@@ -174,7 +174,7 @@ export default function ApprovalsPage() {
 
         {isManager && (
           <Card className="overflow-hidden">
-            <CardHeader className="flex-row items-start justify-between gap-4 border-b border-border/70">
+            <CardHeader className="flex-col items-stretch gap-4 border-b border-border/70 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <ClipboardList className="size-4 text-primary" />
@@ -182,7 +182,7 @@ export default function ApprovalsPage() {
                 </CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">{t("openMeasuresHint")}</p>
               </div>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                 <Link href="/fehlermanagement/measures">{t("reviewAll")}</Link>
               </Button>
             </CardHeader>
@@ -263,7 +263,7 @@ function ApprovalCoverManagement() {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="flex-row items-start justify-between gap-4 border-b border-border/70">
+      <CardHeader className="flex-col items-stretch gap-4 border-b border-border/70 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <CardTitle className="flex items-center gap-2 text-base">
             <UserRoundCheck className="size-4 text-primary" />
@@ -271,7 +271,7 @@ function ApprovalCoverManagement() {
           </CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">{t("approvalCoverHint")}</p>
         </div>
-        <Button size="sm" onClick={() => setOpen(true)}>
+        <Button size="sm" className="w-full sm:w-auto" onClick={() => setOpen(true)}>
           <Plus className="size-4" />
           {t("addApprovalCover")}
         </Button>

@@ -143,7 +143,7 @@ export function TotpSettingsCard() {
   return (
     <Card id="totp" data-hash-anchor>
       <CardContent className="space-y-4 p-5">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="font-semibold tracking-tight">{t("totp")}</p>
             <p className="text-sm text-muted-foreground">{t("totpHint")}</p>
@@ -152,14 +152,19 @@ export function TotpSettingsCard() {
             <Button
               size="sm"
               variant="outline"
-              className="text-destructive hover:text-destructive"
+              className="w-full text-destructive hover:text-destructive sm:w-auto"
               onClick={() => setDialog("remove")}
             >
               <Trash2 className="size-3.5" />
               {t("removeTotp")}
             </Button>
           ) : (
-            <Button size="sm" onClick={() => void openSetup()} disabled={enrolled === null || busy}>
+            <Button
+              size="sm"
+              className="w-full sm:w-auto"
+              onClick={() => void openSetup()}
+              disabled={enrolled === null || busy}
+            >
               <Plus className="size-3.5" />
               {t("setUpTotp")}
             </Button>

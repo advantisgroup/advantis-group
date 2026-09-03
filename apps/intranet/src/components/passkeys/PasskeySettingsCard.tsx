@@ -179,12 +179,17 @@ export function PasskeySettingsCard() {
   return (
     <Card id="passkeys" data-hash-anchor>
       <CardContent className="space-y-4 p-5">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="font-semibold tracking-tight">{t("passkeys")}</p>
             <p className="text-sm text-muted-foreground">{t("passkeysHint")}</p>
           </div>
-          <Button size="sm" onClick={openAdd} disabled={passkeys === null}>
+          <Button
+            size="sm"
+            className="w-full sm:w-auto"
+            onClick={openAdd}
+            disabled={passkeys === null}
+          >
             <Plus className="size-3.5" />
             {t("addPasskey")}
           </Button>

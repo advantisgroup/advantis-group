@@ -55,7 +55,7 @@ export function Overview({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Deine Lernübersicht</h2>
           <p className="text-sm text-muted-foreground">
@@ -64,7 +64,7 @@ export function Overview({
             alle Versuche bleiben für den Trainer sichtbar.
           </p>
         </div>
-        <Button onClick={() => onOpenChapter(nextChapter)}>
+        <Button className="w-full sm:w-auto" onClick={() => onOpenChapter(nextChapter)}>
           Weiterlernen: Kapitel {nextChapter + 1}
         </Button>
       </div>

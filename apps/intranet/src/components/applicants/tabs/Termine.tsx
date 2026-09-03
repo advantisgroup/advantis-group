@@ -24,12 +24,12 @@ export function Termine({ applicant }: { applicant: ApplicantDetail }) {
   return (
     <div className="space-y-5">
       <Card className="overflow-hidden border-primary/30">
-        <div className="flex items-center justify-between gap-3 border-b border-border/70 bg-primary/[0.03] p-4">
+        <div className="flex flex-col items-stretch gap-3 border-b border-border/70 bg-primary/[0.03] p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-semibold">
             {t("upcomingTermine")}
             <span className="ml-1.5 text-muted-foreground">({kommend.length})</span>
           </p>
-          <Button size="sm" onClick={() => setPlanOpen(true)}>
+          <Button size="sm" className="w-full sm:w-auto" onClick={() => setPlanOpen(true)}>
             <CalendarPlus className="size-4" />
             {t("planTermin")}
           </Button>

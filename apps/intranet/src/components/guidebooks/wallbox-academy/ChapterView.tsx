@@ -53,7 +53,7 @@ export function ChapterView({
     <div className="space-y-4">
       <Card>
         <CardContent className="p-5">
-          <div className="mb-2 flex flex-wrap items-start justify-between gap-3">
+          <div className="mb-2 flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <Badge variant="secondary">{SEG[chapter.segment]}</Badge>
               <h2 className="mt-2 text-lg font-semibold">
@@ -63,6 +63,7 @@ export function ChapterView({
             <Button
               size="sm"
               variant="outline"
+              className="w-full sm:w-auto"
               disabled={pdfBusy}
               onClick={async () => {
                 setPdfBusy(true);
