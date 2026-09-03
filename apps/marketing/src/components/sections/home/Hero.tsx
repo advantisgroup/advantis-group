@@ -8,7 +8,6 @@ import { PipelineSchematic } from "@/components/frame/PipelineSchematic";
 import { Link } from "@/i18n/navigation";
 import { BRANDS } from "@/lib/brands";
 
-import { BrandText } from "../../effects/BrandText";
 import { Button } from "../../ui/button";
 
 /**
@@ -25,20 +24,22 @@ export const Hero = () => {
   const positioning = useTranslations("homeIntro");
 
   return (
-    <section className="relative pt-28 md:pt-36">
+    <section className="relative pt-24 md:pt-36">
       <div className="relative mx-auto w-full max-w-[1440px] px-5 md:px-10">
         <div className="max-w-4xl">
+          {/*
+           * The highlight is coloured directly rather than through BrandText.
+           * That component splits on a brand name, and `titleHighlight` is
+           * "Sales Power" — no match, so its advantis branch fell back to the
+           * literal string "Advantis" and the headline rendered the wrong
+           * word. Mobile dodged it only by rendering an unstyled copy.
+           */}
           <Display as="h1" size="xl" className="max-w-[15ch] text-pretty">
-            {t("title")} <span className="md:hidden">{t("titleHighlight")}</span>
-            <span className="hidden md:inline">
-              <BrandText brand="advantis" hoverable>
-                {t("titleHighlight")}
-              </BrandText>
-            </span>
+            {t("title")} <span className="text-primary">{t("titleHighlight")}</span>
           </Display>
 
           {/* The line that answers "what is this company". */}
-          <p className="mt-8 max-w-2xl text-xl leading-[1.5] text-foreground/85 md:text-2xl">
+          <p className="mt-6 max-w-2xl text-lg leading-[1.4] text-foreground/85 md:mt-8 md:text-2xl md:leading-[1.5]">
             {positioning("eyebrow")}
           </p>
 
@@ -48,7 +49,7 @@ export const Hero = () => {
            * whitespace saying what the line above already said; here it earns
            * its place by naming the actual services.
            */}
-          <p className="mt-6 max-w-2xl text-base leading-[1.7] text-muted-foreground md:text-lg">
+          <p className="mt-5 max-w-2xl text-base leading-[1.6] text-muted-foreground md:mt-6 md:text-lg md:leading-[1.7]">
             {positioning("text")}
           </p>
 
@@ -70,10 +71,10 @@ export const Hero = () => {
           </div>
         </div>
 
-        <PipelineSchematic className="mt-16 md:mt-24" />
+        <PipelineSchematic className="mt-12 md:mt-24" />
       </div>
 
-      <Marquee className="mt-16 border-y border-rule py-4 md:mt-24" durationSeconds={45}>
+      <Marquee className="mt-12 border-y border-rule py-4 md:mt-24" durationSeconds={45}>
         {BRANDS.map((brand) => (
           <span key={brand.key} className="flex items-center">
             <span className="px-6 font-[family-name:var(--font-outfit)] text-lg font-semibold tracking-[-0.02em] text-muted-foreground/45 md:px-10 md:text-2xl">

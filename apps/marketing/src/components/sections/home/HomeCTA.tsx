@@ -20,7 +20,7 @@ export const HomeCTA = () => {
     .filter(Boolean);
 
   return (
-    <section className="grain relative overflow-hidden border-t border-rule py-24 md:py-36">
+    <section className="grain relative overflow-hidden border-t border-rule py-16 md:py-36">
       {/* Wash rising from the foot of the page, mirroring the hero's. */}
       <div
         aria-hidden
@@ -37,11 +37,11 @@ export const HomeCTA = () => {
             {t("title")} <span className="text-primary">{t("titleHighlight")}</span>
           </Display>
 
-          <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground md:mt-8 md:text-xl">
             {t("subtitle")}
           </p>
 
-          <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row md:mt-10">
             <Button asChild size="lg" className="rounded-none">
               <Link href="/contact">
                 {t("primary")}
@@ -62,13 +62,13 @@ export const HomeCTA = () => {
           </div>
         </div>
 
-        <ul className="mt-20 grid border-t border-rule sm:grid-cols-3 md:mt-28">
+        <ul className="mt-12 grid border-t border-rule sm:grid-cols-3 md:mt-28">
           {benefits.map((benefit) => (
             <li
               key={benefit}
               className="border-b border-rule py-5 text-center sm:border-b-0 sm:border-l sm:px-6 sm:first:border-l-0"
             >
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground/80">
+              <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground/80">
                 {benefit}
               </span>
             </li>

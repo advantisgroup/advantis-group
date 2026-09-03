@@ -74,7 +74,7 @@ export const SettingsMenu = ({
     return (
       <div className="space-y-5">
         <div>
-          <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+          <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
             {t("language")}
           </span>
           <div className="mt-3 grid grid-cols-4 gap-px bg-rule">
@@ -99,7 +99,7 @@ export const SettingsMenu = ({
         </div>
 
         <div>
-          <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+          <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
             {t("appearance")}
           </span>
           <div className="mt-3 grid grid-cols-3 gap-px bg-rule">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { ExternalLink, Mail, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -44,11 +44,21 @@ function npmUrl(packageName: string) {
 
 const MAX_LICENSE_FILTERS = 6;
 
+/**
+ * How many packages to render at once. There are 400+; the list used to live
+ * in a capped, inner-scrolling panel, which traps the swipe gesture on a phone
+ * — but simply letting it flow produced a page over a hundred screens long.
+ * Rendering in batches keeps the page a sane length on every viewport without
+ * a nested scroll area.
+ */
+const PAGE_SIZE = 24;
+
 export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
   const t = useTranslations("licenses");
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [detailsFor, setDetailsFor] = useState<LicenseRecord | null>(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const licenseFilters = useMemo(() => {
     const counts = new Map<string, number>();
@@ -65,6 +75,10 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
     () => new Set(licenseFilters.map((filter) => filter.license)),
     [licenseFilters],
   );
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [query, activeFilter]);
 
   const filteredLicenses = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase();
@@ -107,7 +121,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
             onClick={() => setActiveFilter(null)}
             aria-pressed={activeFilter === null}
             className={cn(
-              "border px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors",
+              "inline-flex min-h-11 items-center border px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:min-h-0 md:py-1.5",
               activeFilter === null
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-rule bg-card text-muted-foreground hover:text-foreground",
@@ -122,7 +136,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
               onClick={() => setActiveFilter((current) => (current === license ? null : license))}
               aria-pressed={activeFilter === license}
               className={cn(
-                "border px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors",
+                "inline-flex min-h-11 items-center border px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:min-h-0 md:py-1.5",
                 activeFilter === license
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-card text-muted-foreground hover:text-foreground",
@@ -138,7 +152,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
             }
             aria-pressed={activeFilter === "__other__"}
             className={cn(
-              "border px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors",
+              "inline-flex min-h-11 items-center border px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:min-h-0 md:py-1.5",
               activeFilter === "__other__"
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-rule bg-card text-muted-foreground hover:text-foreground",
@@ -154,14 +168,14 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
       </div>
 
       {filteredLicenses.length > 0 ? (
-        <div className="scroll-panel max-h-[65vh] overflow-y-auto border border-rule">
+        <div className="border border-rule">
           {/*
            * `auto-rows-fr` plus `h-full` on the card keeps every tile in a row
            * the same height regardless of how long a package name runs, which
            * is why the name is clamped and the overflow lives in the dialog.
            */}
           <div className="grid auto-rows-fr gap-px bg-rule md:grid-cols-2 xl:grid-cols-3">
-            {filteredLicenses.map((record) => {
+            {filteredLicenses.slice(0, visibleCount).map((record) => {
               const { packageName, version } = splitPackageName(record.name);
               const sourceUrl = record.repository ?? npmUrl(packageName);
 
@@ -169,7 +183,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
                 <article key={record.name} className="flex h-full flex-col bg-background p-5">
                   <div className="flex items-start justify-between gap-3">
                     <BrandIcon src={packageIconUrl(record.repository)} alt="" className="size-6" />
-                    <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-primary">
+                    <span className="shrink-0 font-mono text-[11px] uppercase tracking-[0.14em] text-primary">
                       {record.license}
                     </span>
                   </div>
@@ -199,7 +213,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
                   <button
                     type="button"
                     onClick={() => setDetailsFor(record)}
-                    className="mt-auto flex items-center gap-1.5 pt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-primary"
+                    className="mt-auto flex min-h-11 items-center gap-1.5 pt-4 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-primary md:min-h-0"
                   >
                     {t("details")}
                     <ExternalLink className="size-3" />
@@ -208,6 +222,16 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
               );
             })}
           </div>
+
+          {visibleCount < filteredLicenses.length ? (
+            <button
+              type="button"
+              onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+              className="flex min-h-14 w-full items-center justify-center gap-2 border-t border-rule bg-background font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+            >
+              {t("showMore", { count: filteredLicenses.length - visibleCount })}
+            </button>
+          ) : null}
         </div>
       ) : (
         <div className="border border-dashed border-rule py-16 text-center text-muted-foreground">
@@ -300,7 +324,7 @@ function PackageDetailsDialog({
         <dl className="border-t border-rule">
           {rows.map((row) => (
             <div key={row.label} className="flex items-baseline gap-4 border-b border-rule py-2.5">
-              <dt className="w-28 shrink-0 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              <dt className="w-28 shrink-0 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                 {row.label}
               </dt>
               <dd className="min-w-0 break-words text-sm">{row.value}</dd>

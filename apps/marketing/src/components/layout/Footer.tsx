@@ -112,8 +112,19 @@ export const Footer = () => {
     return -liftAmount; // Negative to lift up
   };
 
-  const companyName = "ADVANTIS GROUP";
-  const letters = companyName.split("");
+  /*
+   * Split per word first, then per letter. The lift effect needs individual
+   * letters, but letting them wrap freely broke the wordmark mid-word on a
+   * phone — "ADVANTIS GROU / P". Each word is now its own nowrap group, so it
+   * can only ever break at the space. Offsets are precomputed so each letter
+   * still knows its position in the whole wordmark.
+   */
+  const companyWords = "ADVANTIS GROUP".split(" ");
+  const totalLetters = companyWords.join("").length;
+  const wordOffsets = companyWords.reduce<number[]>(
+    (acc, word, index) => [...acc, (acc[index] ?? 0) + word.length],
+    [0],
+  );
 
   return (
     <>
@@ -130,16 +141,24 @@ export const Footer = () => {
             <div className="text-center mb-4">
               <p className="text-sm text-muted-foreground">{t("footer.description")}</p>
             </div>
-            <h2 className="text-[11vw] md:text-[12vw] lg:text-[8rem] font-bold leading-none tracking-tighter text-center">
-              {letters.map((letter, index) => (
-                <span
-                  key={index}
-                  className="inline-block transition-transform duration-300 ease-out"
-                  style={{
-                    transform: `translateY(${getLiftAmount(index, letters.length)}px)`,
-                  }}
-                >
-                  {letter === " " ? "\u00A0" : letter}
+            <h2 className="text-center text-[13vw] font-bold leading-none tracking-tighter md:text-[12vw] lg:text-[8rem]">
+              {companyWords.map((word, wordIndex) => (
+                <span key={word} className="inline-block whitespace-nowrap">
+                  {word.split("").map((letter, index) => (
+                    <span
+                      key={`${word}_${index}`}
+                      className="inline-block transition-transform duration-300 ease-out"
+                      style={{
+                        transform: `translateY(${getLiftAmount(
+                          wordOffsets[wordIndex] + index,
+                          totalLetters,
+                        )}px)`,
+                      }}
+                    >
+                      {letter}
+                    </span>
+                  ))}
+                  {wordIndex < companyWords.length - 1 ? "\u00A0" : null}
                 </span>
               ))}
             </h2>
@@ -162,7 +181,7 @@ export const Footer = () => {
                   <li key={`${link.label}_${i}`}>
                     <Link
                       href={link.path}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      className="block py-2 text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {link.label}
                     </Link>
@@ -172,7 +191,7 @@ export const Footer = () => {
                   <li>
                     <Link
                       href={intranetUrl}
-                      className="group/intranet relative inline-flex items-center gap-1.5 overflow-hidden border border-advantis/30 bg-advantis/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-advantis transition-colors hover:bg-advantis/20"
+                      className="group/intranet relative inline-flex items-center gap-1.5 overflow-hidden border border-advantis/30 bg-advantis/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-advantis transition-colors hover:bg-advantis/20"
                     >
                       <Building2 className="h-3.5 w-3.5" />
                       <span>{t("nav.intranet")}</span>
@@ -190,7 +209,7 @@ export const Footer = () => {
                   <li key={`${brand.name}_${i}`}>
                     <Link
                       href={brand.url}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      className="block py-2 text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {brand.name}
                     </Link>
@@ -205,7 +224,7 @@ export const Footer = () => {
                 <li>
                   <Link
                     href={`tel:${process.env.NEXT_PUBLIC_PHONE_NUMBER}`}
-                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-2 py-2 text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <Phone className="w-4 h-4" />
                     <span>{process.env.NEXT_PUBLIC_PHONE_NUMBER}</span>
@@ -214,7 +233,7 @@ export const Footer = () => {
                 <li>
                   <Link
                     href={`mailto:${process.env.NEXT_PUBLIC_EMAIL_ADRESS}`}
-                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-2 py-2 text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <Mail className="w-4 h-4" />
                     <span>{process.env.NEXT_PUBLIC_EMAIL_ADRESS}</span>
@@ -237,19 +256,19 @@ export const Footer = () => {
               <div className="flex items-center gap-6">
                 <Link
                   href="/imprint"
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="inline-block py-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {t("nav.imprint")}
                 </Link>
                 <Link
                   href="/privacy"
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="inline-block py-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {t("nav.privacy")}
                 </Link>
                 <Link
                   href="/licenses"
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="inline-block py-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {t("nav.licenses")}
                 </Link>

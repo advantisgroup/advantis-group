@@ -107,11 +107,11 @@ export const ServiceLandingPage = ({ slug }: { slug: ServiceSlug }) => {
       <PageField />
 
       <div className="relative">
-        <section className="relative pt-32 pb-16 md:pt-40 md:pb-24">
+        <section className="relative pt-24 pb-10 md:pt-40 md:pb-24">
           <div className="mx-auto w-full max-w-[1440px] px-5 md:px-10">
             <Link
               href="/#leistungen"
-              className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground transition-colors hover:text-foreground"
+              className="-my-2 inline-flex min-h-11 items-center gap-2 py-2 font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground transition-colors hover:text-foreground"
             >
               <ArrowLeft className="size-3.5" />
               {common("backLabel")}
@@ -134,7 +134,7 @@ export const ServiceLandingPage = ({ slug }: { slug: ServiceSlug }) => {
 
         <div className="border-t border-rule">
           <div className="mx-auto w-full max-w-[1440px] px-5 md:px-10">
-            <div className="grid gap-12 py-16 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:gap-20 md:py-24">
+            <div className="grid gap-10 py-12 md:py-24 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:gap-20">
               <nav aria-label={common("seoLabel")} className="lg:sticky lg:top-28 lg:self-start">
                 <ol className="border-t border-rule">
                   {railEntries.map((entry, index) => (
@@ -220,7 +220,7 @@ export const ServiceLandingPage = ({ slug }: { slug: ServiceSlug }) => {
           </div>
         </div>
 
-        <section className="grain relative overflow-hidden border-t border-rule py-24 md:py-32">
+        <section className="grain relative overflow-hidden border-t border-rule py-16 md:py-32">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
@@ -247,7 +247,7 @@ export const ServiceLandingPage = ({ slug }: { slug: ServiceSlug }) => {
           </div>
         </section>
 
-        <section className="border-t border-rule py-16 md:py-20">
+        <section className="border-t border-rule py-12 md:py-20">
           <div className="mx-auto w-full max-w-[1440px] px-5 md:px-10">
             <h2 className="font-[family-name:var(--font-outfit)] text-xl font-bold tracking-[-0.02em] md:text-2xl">
               {common("relatedTitle")}

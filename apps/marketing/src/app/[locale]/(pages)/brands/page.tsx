@@ -17,7 +17,7 @@ export default function UnsereMarken() {
       <PageField />
 
       <div className="relative">
-        <section className="relative pt-32 pb-20 md:pt-44 md:pb-28">
+        <section className="relative pt-24 pb-12 md:pt-44 md:pb-28">
           <div className="mx-auto w-full max-w-[1440px] px-5 md:px-10">
             <Display as="h1" size="xl" className="max-w-[12ch]">
               {t("hero.titlePrefix")} <span className="text-primary">{t("hero.titleSuffix")}</span>
@@ -38,7 +38,7 @@ export default function UnsereMarken() {
           <section
             key={brand.key}
             id={brand.brandText}
-            className="relative overflow-hidden border-t border-rule py-16 md:py-24"
+            className="relative overflow-hidden border-t border-rule py-10 md:py-24"
             style={{ "--brand-accent": brand.accent } as React.CSSProperties}
           >
             <div
@@ -115,7 +115,7 @@ export default function UnsereMarken() {
           </section>
         ))}
 
-        <section className="grain relative overflow-hidden border-t border-rule py-24 md:py-36">
+        <section className="grain relative overflow-hidden border-t border-rule py-16 md:py-36">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"

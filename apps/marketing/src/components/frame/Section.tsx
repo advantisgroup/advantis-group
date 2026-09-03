@@ -23,10 +23,12 @@ export const Section = ({
   bordered?: boolean;
   size?: "tight" | "normal" | "loose";
 }) => {
+  // Mobile gets noticeably less air: at 390px wide, desktop's padding put
+  // roughly a third of a screen of nothing between every pair of sections.
   const padding = {
-    tight: "py-14 md:py-20",
-    normal: "py-20 md:py-28",
-    loose: "py-24 md:py-36",
+    tight: "py-10 md:py-20",
+    normal: "py-14 md:py-28",
+    loose: "py-16 md:py-36",
   }[size];
 
   return (

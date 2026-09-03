@@ -1081,7 +1081,8 @@
     "version": "版本",
     "publisher": "发布者",
     "license": "许可证",
-    "noLinks": "暂无其他链接。"
+    "noLinks": "暂无其他链接。",
+    "showMore": "显示更多（还有 {count} 个）"
   },
   "whitepaper": {
     "meta": {
