@@ -319,7 +319,7 @@ export function CustomRolesPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
           {t("description")}
           <Tooltip>
@@ -337,7 +337,11 @@ export function CustomRolesPanel() {
             </TooltipContent>
           </Tooltip>
         </p>
-        <Button size="sm" onClick={() => setEditing({ name: "", capabilities: [] })}>
+        <Button
+          size="sm"
+          className="w-full sm:w-auto"
+          onClick={() => setEditing({ name: "", capabilities: [] })}
+        >
           <Plus className="size-4" />
           {t("newRole")}
         </Button>

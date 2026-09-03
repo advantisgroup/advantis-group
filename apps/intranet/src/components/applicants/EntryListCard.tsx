@@ -50,12 +50,12 @@ export function EntryListCard({
     <div className="space-y-5">
       {hint}
       <Card className="overflow-hidden">
-        <div className="flex items-center justify-between gap-3 border-b border-border/70 p-4">
+        <div className="flex flex-col items-stretch gap-3 border-b border-border/70 p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-semibold">
             {historyLabel}
             <span className="ml-1.5 text-muted-foreground">({rows.length})</span>
           </p>
-          <Button size="sm" onClick={onLog}>
+          <Button size="sm" className="w-full sm:w-auto" onClick={onLog}>
             <Plus className="size-4" />
             {logLabel}
           </Button>

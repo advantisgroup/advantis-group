@@ -144,12 +144,17 @@ export function RescanOlderUploads({ token }: { token: string }) {
   return (
     <>
       <Card className="border-dashed">
-        <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+        <CardContent className="flex flex-col items-stretch gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <SearchCheck className="h-4 w-4 shrink-0" />
             {t("rescanBannerBody", { count: unscanned.length })}
           </div>
-          <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto"
+            onClick={() => setOpen(true)}
+          >
             {t("rescanReview")}
           </Button>
         </CardContent>

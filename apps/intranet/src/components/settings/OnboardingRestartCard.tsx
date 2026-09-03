@@ -18,12 +18,7 @@ export function OnboardingRestartCard() {
           <p className="font-semibold tracking-tight">{t("settingsCardTitle")}</p>
           <p className="text-sm text-muted-foreground">{t("restartOnboardingHint")}</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full gap-1.5 sm:w-auto"
-          onClick={restart}
-        >
+        <Button variant="outline" size="sm" className="w-full gap-1.5 sm:w-auto" onClick={restart}>
           <RotateCw className="size-3.5" />
           {t("restartOnboarding")}
         </Button>
