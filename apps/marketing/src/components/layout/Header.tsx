@@ -64,9 +64,10 @@ export const Header = () => {
     };
   }, [navMenuOpen]);
 
-  // Route changes should not leave the panel hanging open.
+  // Route changes should not leave either menu hanging open.
   React.useEffect(() => {
     setNavMenuOpen(false);
+    setMobileMenuOpen(false);
   }, [pathname]);
 
   React.useEffect(() => {
@@ -142,7 +143,7 @@ export const Header = () => {
         {!isMobile ? (
           <Link
             href="/"
-            className="group relative flex items-center font-bold text-lg font-sans"
+            className="group relative -my-1 flex items-center py-1 font-sans text-lg font-bold"
             onMouseMove={handleMouseMove}
             onMouseLeave={() => setMousePosition({ x: 0, y: 0 })}
             style={{
@@ -184,7 +185,7 @@ export const Header = () => {
         ) : (
           <Link
             href="/"
-            className="group relative flex items-center gap-1 font-bold text-lg font-sans"
+            className="group relative -my-1 flex items-center gap-1 py-1 font-sans text-lg font-bold"
             onMouseMove={handleMouseMove}
             onMouseLeave={() => setMousePosition({ x: 0, y: 0 })}
             style={{
@@ -287,7 +288,7 @@ export const Header = () => {
                     <Link
                       href={intranetUrl}
                       onClick={() => setNavMenuOpen(false)}
-                      className="inline-flex items-center gap-1.5 border border-advantis bg-advantis px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:bg-advantis/90"
+                      className="inline-flex items-center gap-1.5 border border-advantis bg-advantis px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:bg-advantis/90"
                     >
                       <Building2 className="size-3.5" />
                       <span>{t("intranet")}</span>
@@ -340,47 +341,53 @@ export const Header = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="md:hidden border-t border-border bg-background"
+            className="border-t border-rule bg-background md:hidden"
           >
-            <div className="mx-auto w-full max-w-[1440px] space-y-4 px-5 py-4 md:px-10">
-              <ul className="space-y-4">
-                {navLinks.map((link, i) => (
-                  <li
-                    key={`mobile_${link.label}_${i}`}
-                    className="animate-in slide-in-from-left-2 duration-300"
-                    style={{ animationDelay: `${i * 50}ms` }}
-                  >
+            <div className="mx-auto w-full max-w-[1440px] px-5 py-4">
+              {/*
+               * The same destination cards as the desktop menu, at full width.
+               * Previously these were 20px-tall text links — well under a
+               * comfortable touch target — with no indication of what each
+               * page held.
+               */}
+              <ul className="grid gap-px border-y border-rule bg-rule">
+                {navLinks.map((link) => (
+                  <li key={`mobile_${link.key}`} className="bg-background">
                     <Link
                       href={link.path}
-                      className={`block text-sm hover:text-foreground hover:translate-x-1 transition-all duration-200 ${
-                        pathname === link.path
-                          ? "text-foreground font-medium translate-x-1"
-                          : "text-muted-foreground"
-                      }`}
                       onClick={() => setMobileMenuOpen(false)}
+                      className={`block px-1 py-3.5 transition-colors ${
+                        pathname === link.path ? "text-foreground" : ""
+                      }`}
                     >
-                      {link.label}
+                      <span className="block font-[family-name:var(--font-outfit)] text-base font-semibold tracking-[-0.02em]">
+                        {link.label}
+                      </span>
+                      <span className="mt-0.5 block text-sm leading-snug text-muted-foreground">
+                        {t(`descriptions.${link.key}`)}
+                      </span>
                     </Link>
                   </li>
                 ))}
               </ul>
 
-              <div
-                className="pt-4 border-t border-border animate-in slide-in-from-left-2 duration-300 space-y-3"
-                style={{ animationDelay: `${navLinks.length * 50}ms` }}
-              >
+              {/* Language and appearance inline, as on desktop — not behind a drawer. */}
+              <div className="border-b border-rule py-5">
+                <SettingsMenu inline onMobileNavigate={() => setMobileMenuOpen(false)} />
+              </div>
+
+              <div className="flex flex-col gap-3 pt-5">
                 {intranetUrl && (
                   <Link
                     href={intranetUrl}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-center gap-1.5 rounded-full border border-advantis bg-advantis px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-advantis/90"
+                    className="flex min-h-11 items-center justify-center gap-1.5 border border-advantis bg-advantis px-3 font-mono text-[11px] uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:bg-advantis/90"
                   >
-                    <Building2 className="h-4 w-4" />
+                    <Building2 className="size-4" />
                     <span>{t("intranet")}</span>
                   </Link>
                 )}
                 <AccountMenu isMobile onMobileNavigate={() => setMobileMenuOpen(false)} />
-                <SettingsMenu isMobile onMobileNavigate={() => setMobileMenuOpen(false)} />
               </div>
             </div>
           </motion.div>

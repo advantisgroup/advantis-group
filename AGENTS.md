@@ -37,6 +37,49 @@ Run from repo root unless noted; Turborepo filters by workspace name.
 Always type-check and lint/format touched packages before calling a change
 done.
 
+## Previewing the marketing site locally (Clerk bypass)
+
+`apps/marketing/src/proxy.ts` wraps the next-intl middleware in
+`clerkMiddleware`, so every request does a Clerk handshake before a page
+renders. Without real Clerk credentials that handshake 400s and *every* route
+serves Clerk's JSON error (`"Invalid host"` / `host_invalid`) instead of the
+site — so a sandbox with no keys can't render a single page, let alone
+screenshot one.
+
+For **visual and layout work only**, stub the middleware locally: keep a copy
+of `src/proxy.ts`, then drop the `clerkMiddleware` import and export the
+plain next-intl middleware directly, keeping the same early return for
+`/api`, `/trpc`, `/ingest` and `/content` and the same `config.matcher`. Pair
+it with a gitignored `apps/marketing/.env.local` holding throwaway values for
+`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`,
+`NEXT_PUBLIC_CONVEX_URL` and `NEXT_PUBLIC_EMAIL_ADRESS` — the publishable key
+has to be `pk_test_` + base64 of a host ending in `$` or Clerk's client
+rejects it before the page mounts.
+
+**`src/proxy.ts` is tracked.** Committing the stub ships a marketing site with
+no auth middleware, so restore the original before staging anything and check
+it does not appear in `git status`. A running dev server hot-reloads that
+restore and immediately goes back to 400ing every route, so expect to
+re-apply the stub if you still need to preview, and to restore it again
+before the next commit.
+
+**Do not use it for anything auth-shaped.** Sign-in/up, `/account`, the
+account menu, and the contact form's "use my account details" prefill all
+depend on a real Clerk session; under the bypass they are either dead or
+misleading, and a green result means nothing. Those need real keys.
+
+Known local-only symptoms under the bypass, none of which are bugs to chase:
+`/blog` returns 500 because `getPosts` queries the fake Convex URL; PostHog
+logs "initialized without a token"; ClerkJS logs a development-mode init
+error in the console.
+
+Headless Chromium in the Claude Code web sandbox cannot reach `localhost`
+through the agent HTTPS proxy — it fails with `ERR_CONNECTION_RESET`. Launch
+it with `--proxy-server=direct://` to screenshot the dev server. That also
+cuts off external hosts, so anything that loads remote images (the GitHub
+owner avatars on `/licenses`) will show its fallback rather than the real
+asset.
+
 ## Asking questions
 
 The user (Kaleb) does not mind being asked clarifying questions, and does not

@@ -1081,7 +1081,8 @@
     "version": "Version",
     "publisher": "Éditeur",
     "license": "Licence",
-    "noLinks": "Aucun lien complémentaire enregistré."
+    "noLinks": "Aucun lien complémentaire enregistré.",
+    "showMore": "Afficher plus ({count} restants)"
   },
   "whitepaper": {
     "meta": {

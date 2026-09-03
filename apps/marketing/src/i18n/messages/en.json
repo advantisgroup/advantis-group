@@ -1081,7 +1081,8 @@
     "version": "Version",
     "publisher": "Publisher",
     "license": "License",
-    "noLinks": "No further links recorded."
+    "noLinks": "No further links recorded.",
+    "showMore": "Show more ({count} remaining)"
   },
   "whitepaper": {
     "meta": {

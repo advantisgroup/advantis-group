@@ -132,7 +132,7 @@ export default function UberUns() {
                   <CountUp value={stat.value} />
                   {stat.suffix}
                 </dd>
-                <dt className="mt-4 font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+                <dt className="mt-4 font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
                   {stat.label}
                 </dt>
               </div>

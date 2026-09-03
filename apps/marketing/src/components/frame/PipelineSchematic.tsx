@@ -57,13 +57,23 @@ export const PipelineSchematic = ({ className }: { className?: string }) => {
       )}
     >
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-rule pb-4">
-        <MonoLabel marker className="text-foreground/80">
+        <MonoLabel marker className="tracking-[0.16em] text-foreground/80 md:tracking-[0.28em]">
           {t("caption")}
         </MonoLabel>
-        <MonoLabel className="text-muted-foreground/70">{t("legend")}</MonoLabel>
+        {/* The stage count is obvious once the cards are in view; on a phone it
+            only pushed the caption onto a second line. */}
+        <MonoLabel className="hidden text-muted-foreground/70 md:inline-flex">
+          {t("legend")}
+        </MonoLabel>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-stretch">
+      {/*
+       * Stacked, the four stages ran to ~880px on a phone — over a screenful
+       * for one diagram. Below `md` they become a snap rail instead: still
+       * read left to right like the drawing they are, but one card tall and
+       * swipeable, which is how a sequence wants to work on a touch screen.
+       */}
+      <div className="scroll-panel -mx-4 flex snap-x snap-mandatory items-stretch overflow-x-auto px-4 pb-3 md:mx-0 md:snap-none md:overflow-visible md:px-0 md:pb-0">
         {stages.map((stage, index) => (
           <div key={stage.key} className="contents">
             {index > 0 ? <Connector active={activeStage === index} /> : null}
@@ -98,7 +108,7 @@ const StageNode = ({
 }) => (
   <div
     className={cn(
-      "relative flex-1 border p-4 transition-colors duration-500 md:p-5",
+      "relative w-[78vw] shrink-0 snap-start border p-4 transition-colors duration-500 sm:w-[60vw] md:w-auto md:flex-1 md:shrink md:p-5",
       active ? "border-primary/50 bg-primary/[0.06]" : "border-rule/70 bg-transparent",
     )}
   >
@@ -149,13 +159,13 @@ const Connector = ({ active }: { active: boolean }) => {
   const stroke = active ? "var(--primary)" : "var(--rule-strong)";
 
   return (
-    <div aria-hidden className="flex shrink-0 items-center justify-center md:w-8">
-      <svg className="h-6 w-px md:hidden" viewBox="0 0 1 24" preserveAspectRatio="none">
+    <div aria-hidden className="flex w-5 shrink-0 items-center justify-center md:w-8">
+      <svg className="h-px w-5 md:hidden" viewBox="0 0 20 1" preserveAspectRatio="none">
         <line
-          x1="0.5"
-          y1="0"
-          x2="0.5"
-          y2="24"
+          x1="0"
+          y1="0.5"
+          x2="20"
+          y2="0.5"
           stroke={stroke}
           strokeWidth="1"
           strokeDasharray="3 3"

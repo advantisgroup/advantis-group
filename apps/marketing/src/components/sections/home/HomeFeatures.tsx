@@ -10,7 +10,13 @@ import { Display } from "@/components/frame/Display";
 
 function CountUp({ to, suffix = "" }: { to: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
+  /*
+   * Vertical margin only. A bare "-80px" shrinks the observation box on all
+   * four sides, and on a 390px-wide phone the left column's number sits at
+   * x≈20-80px — outside the horizontally-shrunk root, so it never registered
+   * as visible and the counter stayed on 0 while the right column animated.
+   */
+  const inView = useInView(ref, { once: true, margin: "0px 0px -80px 0px" });
   const value = useMotionValue(0);
   const springValue = useSpring(value, { stiffness: 55, damping: 18, restDelta: 0.001 });
   const displayValue = useTransform(springValue, (current) => Math.round(current).toString());
@@ -57,12 +63,12 @@ export const HomeFeatures = () => {
 
   return (
     <Section>
-      <div className="grid gap-px bg-rule lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px bg-rule lg:grid-cols-4">
         {principles.map((principle, index) => (
           <div
             key={principle.id}
-            className={`group bg-background p-6 transition-colors duration-300 hover:bg-card/60 md:p-8 ${
-              index === 0 ? "lg:col-span-2" : ""
+            className={`group col-span-2 bg-background p-6 transition-colors duration-300 hover:bg-card/60 md:p-8 ${
+              index === 0 ? "lg:col-span-2" : "lg:col-span-1"
             }`}
           >
             <span className="font-mono text-[11px] tracking-[0.28em] text-primary/70 transition-colors duration-300 group-hover:text-primary">
@@ -77,7 +83,7 @@ export const HomeFeatures = () => {
           </div>
         ))}
 
-        <div className="bg-background p-6 md:p-10 lg:col-span-2 lg:row-span-2 lg:col-start-3 lg:row-start-1 lg:flex lg:flex-col lg:justify-between">
+        <div className="col-span-2 bg-background p-6 md:p-10 lg:col-span-2 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:flex lg:flex-col lg:justify-between">
           <Display size="lg">
             {t("title")} <span className="whitespace-nowrap">{t("titleBrand")}?</span>
           </Display>
@@ -87,11 +93,11 @@ export const HomeFeatures = () => {
         </div>
 
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-background p-6 md:p-8">
+          <div key={stat.label} className="col-span-1 bg-background p-5 md:p-8">
             <p className="font-[family-name:var(--font-outfit)] text-4xl font-bold tabular-nums tracking-[-0.03em] text-primary md:text-5xl">
               <CountUp to={stat.value} suffix={stat.suffix} />
             </p>
-            <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+            <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
               {stat.label}
             </p>
           </div>
