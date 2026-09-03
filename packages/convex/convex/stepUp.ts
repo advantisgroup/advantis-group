@@ -300,12 +300,33 @@ export const apiEvaluateDevice = mutation({
       flagAsNew = priorDevices.length > 1;
     }
 
-    await ctx.db.insert("sessionRiskSignals", {
-      userId: user._id,
-      sessionId: args.sessionId,
-      newDevice: flagAsNew,
-      evaluatedAt: now,
-    });
+    // Upsert: AppGate re-fires this once per Clerk session, but "once per
+    // session" only holds per browser tab/mount — a page refresh resets the
+    // guarding ref and re-triggers the same (user, session) call. A blind
+    // insert here left a second row behind every time, which made the
+    // `by_user_session` read in `resolveSignInRequirement` throw and crash
+    // the whole app. `.collect()` (not `.unique()`) so an account that
+    // already accumulated duplicate rows before this fix self-heals here
+    // instead of needing them deleted by hand — keep the newest, drop the
+    // rest.
+    const existingSignals = await ctx.db
+      .query("sessionRiskSignals")
+      .withIndex("by_user_session", (q) =>
+        q.eq("userId", user._id).eq("sessionId", args.sessionId),
+      )
+      .collect();
+    const [keep, ...duplicates] = existingSignals;
+    for (const dup of duplicates) await ctx.db.delete(dup._id);
+    if (keep) {
+      await ctx.db.patch(keep._id, { newDevice: flagAsNew, evaluatedAt: now });
+    } else {
+      await ctx.db.insert("sessionRiskSignals", {
+        userId: user._id,
+        sessionId: args.sessionId,
+        newDevice: flagAsNew,
+        evaluatedAt: now,
+      });
+    }
     if (flagAsNew) {
       await ctx.db.insert("stepUpAuditLog", {
         userId: user._id,

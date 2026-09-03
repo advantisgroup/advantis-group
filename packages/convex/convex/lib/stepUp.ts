@@ -398,10 +398,15 @@ export async function resolveSignInRequirement(
     .query("securityPreferences")
     .withIndex("by_user", (q) => q.eq("userId", user._id))
     .unique();
+  // `.first()` off a descending scan, not `.unique()`: `apiEvaluateDevice`
+  // upserts going forward, but this read must stay crash-proof against any
+  // row this account already accumulated before that fix existed — take the
+  // most recently evaluated signal rather than throwing on more than one.
   const riskSignal = await ctx.db
     .query("sessionRiskSignals")
     .withIndex("by_user_session", (q) => q.eq("userId", user._id).eq("sessionId", sessionId))
-    .unique();
+    .order("desc")
+    .first();
 
   let requiredLevel = 0;
   if (mfaApplies && !needsMfaEnrollment) requiredLevel = Math.max(requiredLevel, ORG_MFA_LEVEL);
@@ -411,9 +416,14 @@ export async function resolveSignInRequirement(
     requiredLevel,
     requireNonPasskeyFactor: pref?.alwaysRequireMfaAtSignIn === true,
     needsMfaEnrollment,
-    mfaGraceDeadline: inMfaGrace ? mfaGraceDeadline : null,
+    // `inMfaGrace`/`inPasskeyGrace` are purely time-windowed — they don't
+    // know whether the user already enrolled. Without the credential check
+    // here too, the grace-period banner (and its "which policy is this
+    // about" flag in `stepUp.status`) kept nagging about a requirement the
+    // user had already fulfilled, for as long as the grace window lasted.
+    mfaGraceDeadline: inMfaGrace && !hasQualifyingMfaCredential ? mfaGraceDeadline : null,
     needsPasskeyEnrollment,
-    passkeyGraceDeadline: inPasskeyGrace ? passkeyGraceDeadline : null,
+    passkeyGraceDeadline: inPasskeyGrace && !hasPasskeyCred ? passkeyGraceDeadline : null,
   };
 }
 
