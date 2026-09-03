@@ -13,12 +13,17 @@ export function OnboardingRestartCard() {
 
   return (
     <Card data-tour="tour-settings-onboarding">
-      <CardContent className="flex items-center justify-between gap-3 p-5">
+      <CardContent className="flex flex-col items-stretch gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-semibold tracking-tight">{t("settingsCardTitle")}</p>
           <p className="text-sm text-muted-foreground">{t("restartOnboardingHint")}</p>
         </div>
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={restart}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full gap-1.5 sm:w-auto"
+          onClick={restart}
+        >
           <RotateCw className="size-3.5" />
           {t("restartOnboarding")}
         </Button>
