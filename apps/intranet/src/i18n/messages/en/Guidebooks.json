@@ -175,6 +175,10 @@
     "title": "Managing Passwords in Chrome & Edge",
     "description": "View and change saved passwords, generate strong ones, and check for data breaches."
   },
+  "sicherheitsanmeldung": {
+    "title": "Setting Up a Passkey / Authenticator App",
+    "description": "Windows Hello on your PC, adding your iPhone as a second device, the authenticator-app fallback, and troubleshooting."
+  },
   "wallboxSalesAcademy": {
     "title": "Wallbox Sales Academy",
     "description": "B2B sales training for EV charging infrastructure — chapters with knowledge checks, research tasks and a warm-lead call simulator. German-language content."

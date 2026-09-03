@@ -175,6 +175,10 @@
     "title": "Passwörter in Chrome & Edge verwalten",
     "description": "Gespeicherte Passwörter anzeigen, ändern, sichere Passwörter generieren und auf Datenlecks prüfen."
   },
+  "sicherheitsanmeldung": {
+    "title": "Passkey / Authenticator-App einrichten",
+    "description": "Windows Hello am PC, das iPhone als zweites Gerät hinzufügen, Authenticator-App als Alternative und Problembehandlung."
+  },
   "wallboxSalesAcademy": {
     "title": "Wallbox Sales Academy",
     "description": "B2B-Vertriebstraining Ladeinfrastruktur: Kapitel mit Wissens-Checks, Rechercheaufgaben und Call-Simulator für Warm Leads."

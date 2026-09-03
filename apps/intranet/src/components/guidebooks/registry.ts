@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Clock,
   Cloud,
+  Fingerprint,
   FileSearch,
   KeyRound,
   ListChecks,
@@ -35,6 +36,7 @@ import { OneDriveSchulungGuidebook } from "./docs/onedrive-schulung";
 import { PasswoerterBrowserGuidebook } from "./docs/passwoerter-browser";
 import { ProblembehandlungenGuidebook } from "./docs/problembehandlungen";
 import { ProfilKontoGuidebook } from "./docs/profil-konto";
+import { SicherheitsanmeldungGuidebook } from "./docs/sicherheitsanmeldung";
 import { UploadsGenehmigenGuidebook } from "./docs/uploads-genehmigen";
 import { VerwaltungMitgliederGuidebook } from "./docs/verwaltung-mitglieder";
 
@@ -161,6 +163,16 @@ export const GUIDEBOOKS: Guidebook[] = [
     topic: "it-workplace",
     teams: [],
     Component: PasswoerterBrowserGuidebook,
+  },
+  {
+    slug: "sicherheitsanmeldung",
+    titleKey: "sicherheitsanmeldung.title",
+    descriptionKey: "sicherheitsanmeldung.description",
+    icon: Fingerprint,
+    category: "guide",
+    topic: "it-workplace",
+    teams: [],
+    Component: SicherheitsanmeldungGuidebook,
   },
   {
     slug: "email-signaturen",

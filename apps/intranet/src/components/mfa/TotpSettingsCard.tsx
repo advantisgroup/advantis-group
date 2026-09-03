@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Link } from "@/components/Link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -164,6 +165,25 @@ export function TotpSettingsCard() {
             </Button>
           )}
         </div>
+
+        <p className="text-xs text-muted-foreground">
+          {t("totpHelpIntro")}{" "}
+          <a
+            href="https://support.microsoft.com/en-us/authenticator/download-microsoft-authenticator"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+          >
+            {t("totpHelpDownload")}
+          </a>{" "}
+          ·{" "}
+          <Link
+            href="/guidebooks/sicherheitsanmeldung"
+            className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+          >
+            {t("totpHelpGuide")}
+          </Link>
+        </p>
 
         {enrolled === null ? (
           <div className="flex justify-center py-3 text-muted-foreground">

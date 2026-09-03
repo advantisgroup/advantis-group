@@ -28,14 +28,31 @@ export function GracePeriodBanner() {
       <AlertDescription className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-3">
         <span className="text-sm font-medium">
           {t("graceBannerBody", {
-            date: format.dateTime(new Date(status.graceDeadline), { day: "2-digit", month: "short" }),
+            date: format.dateTime(new Date(status.graceDeadline), {
+              day: "2-digit",
+              month: "short",
+            }),
           })}
         </span>
-        <Button asChild size="sm" variant="outline">
-          <Link href={status.needsPasskeyEnrollment ? "/settings/account#passkeys" : "/settings/account#totp"}>
-            {t("graceBannerCta")}
+        <span className="flex shrink-0 items-center gap-3">
+          <Link
+            href="/guidebooks/sicherheitsanmeldung"
+            className="text-sm font-medium text-amber-700 underline underline-offset-2 hover:opacity-80 dark:text-amber-400"
+          >
+            {t("graceBannerHelp")}
           </Link>
-        </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link
+              href={
+                status.needsPasskeyEnrollment
+                  ? "/settings/account#passkeys"
+                  : "/settings/account#totp"
+              }
+            >
+              {t("graceBannerCta")}
+            </Link>
+          </Button>
+        </span>
       </AlertDescription>
     </Alert>
   );

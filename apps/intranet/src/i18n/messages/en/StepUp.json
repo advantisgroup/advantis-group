@@ -6,6 +6,7 @@
   "gateVerifiedTitle": "Verified",
   "graceBannerBody": "Extra security is required for your account by {date}.",
   "graceBannerCta": "Set it up",
+  "graceBannerHelp": "Need help?",
   "gateEnrollTitle": "Extra security required",
   "gateEnrollBodyBoth": "Your account needs an authenticator app and a passkey set up before you can continue.",
   "gateEnrollBodyMfa": "Your account needs an authenticator app set up before you can continue.",

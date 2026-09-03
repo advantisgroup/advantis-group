@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Link } from "@/components/Link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signalAcceptedPasskeys } from "./passkey-signal";
@@ -188,6 +189,34 @@ export function PasskeySettingsCard() {
             {t("addPasskey")}
           </Button>
         </div>
+
+        <p className="text-xs text-muted-foreground">
+          {t("passkeyHelpIntro")}{" "}
+          <a
+            href="https://support.microsoft.com/en-us/windows/learn-about-windows-hello-and-set-it-up-dae28983-8242-bb2a-d3d1-87c9d265a5f0"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+          >
+            {t("passkeyHelpWindows")}
+          </a>{" "}
+          ·{" "}
+          <a
+            href="https://support.apple.com/guide/iphone/use-passkeys-to-sign-in-to-websites-and-apps-iphf538ea8d0/ios"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+          >
+            {t("passkeyHelpIphone")}
+          </a>{" "}
+          ·{" "}
+          <Link
+            href="/guidebooks/sicherheitsanmeldung"
+            className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+          >
+            {t("passkeyHelpGuide")}
+          </Link>
+        </p>
 
         {passkeys === null ? (
           <div className="flex justify-center py-3 text-muted-foreground">
