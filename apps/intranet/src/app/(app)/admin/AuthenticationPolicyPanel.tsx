@@ -64,16 +64,18 @@ function ScopeSection({
         <p className="font-medium">{title}</p>
         <p className="text-sm text-muted-foreground">{hint}</p>
       </div>
-      <RadioGroup value={scope} onValueChange={(v) => onScopeChange(v as Scope)} className="gap-2.5">
+      <RadioGroup
+        value={scope}
+        onValueChange={(v) => onScopeChange(v as Scope)}
+        className="gap-2.5"
+      >
         {(["off", "managers_and_up", "all"] as const).map((value) => (
           <label
             key={value}
             className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border/70 p-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
           >
             <RadioGroupItem value={value} className="mt-0.5" />
-            <span className="text-sm">
-              {t(`authenticationScope_${value}`)}
-            </span>
+            <span className="text-sm">{t(`authenticationScope_${value}`)}</span>
           </label>
         ))}
       </RadioGroup>
@@ -192,7 +194,13 @@ function ExemptUsersPicker({
   );
 }
 
-function AdoptionBar({ label, pct, count, total, icon: Icon }: {
+function AdoptionBar({
+  label,
+  pct,
+  count,
+  total,
+  icon: Icon,
+}: {
   label: string;
   pct: number;
   count: number;
@@ -418,9 +426,7 @@ export function AuthenticationPolicyPanel() {
           <label className="flex cursor-pointer items-start gap-2.5 text-sm">
             <Checkbox
               checked={form.requireMfaForDestructive}
-              onCheckedChange={(v) =>
-                setForm({ ...form, requireMfaForDestructive: v === true })
-              }
+              onCheckedChange={(v) => setForm({ ...form, requireMfaForDestructive: v === true })}
               className="mt-0.5"
             />
             {t("authenticationDestructiveEnable")}

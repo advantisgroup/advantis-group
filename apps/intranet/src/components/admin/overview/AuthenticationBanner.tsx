@@ -50,7 +50,9 @@ export function AuthenticationBanner() {
         </span>
         <div className="min-w-0">
           <h2 className="text-sm font-semibold tracking-tight">{t("authenticationBannerTitle")}</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">{summary ?? t("authenticationBannerLoading")}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {summary ?? t("authenticationBannerLoading")}
+          </p>
         </div>
       </div>
       <Button asChild size="sm" variant="outline" className="w-full shrink-0 sm:w-auto">

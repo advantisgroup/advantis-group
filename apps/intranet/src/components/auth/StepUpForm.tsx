@@ -187,7 +187,11 @@ export function StepUpForm({
         )}
       </div>
 
-      <Button className="w-full" disabled={code.length === 0 || submitting} onClick={() => void submit()}>
+      <Button
+        className="w-full"
+        disabled={code.length === 0 || submitting}
+        onClick={() => void submit()}
+      >
         {submitting && <Loader2 className="size-4 animate-spin" />}
         {submitting ? t("submitting") : t("submit")}
       </Button>
