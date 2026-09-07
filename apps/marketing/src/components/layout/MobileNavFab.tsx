@@ -183,7 +183,7 @@ export const MobileNavFab = ({ navLinks }: { navLinks: NavLink[] }) => {
                       <Link
                         href={intranetUrl}
                         onClick={close}
-                        className="flex min-h-11 items-center justify-center gap-1.5 border border-advantis bg-advantis px-3 font-mono text-[11px] uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:bg-advantis/90"
+                        className="flex min-h-11 items-center justify-center gap-1.5 border border-rule-strong px-3 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:border-foreground hover:bg-card"
                       >
                         <Building2 className="size-4" />
                         <span>{t("intranet")}</span>

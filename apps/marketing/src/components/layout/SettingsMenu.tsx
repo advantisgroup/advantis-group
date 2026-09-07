@@ -87,7 +87,7 @@ export const SettingsMenu = ({
                 className={cn(
                   "flex flex-1 items-center justify-center gap-1.5 rounded-md border py-2.5 text-sm transition-colors",
                   language.code === locale
-                    ? "border-primary bg-primary text-primary-foreground"
+                    ? "border-foreground bg-foreground text-background"
                     : "border-rule text-muted-foreground hover:border-rule-strong hover:text-foreground",
                 )}
               >
@@ -118,7 +118,7 @@ export const SettingsMenu = ({
                   className={cn(
                     "flex flex-1 items-center justify-center gap-2 rounded-md border py-2.5 text-sm transition-colors",
                     isActive
-                      ? "border-primary bg-primary text-primary-foreground"
+                      ? "border-foreground bg-foreground text-background"
                       : "border-rule text-muted-foreground hover:border-rule-strong hover:text-foreground",
                   )}
                 >

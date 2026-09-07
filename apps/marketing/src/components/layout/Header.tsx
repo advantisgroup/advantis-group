@@ -237,7 +237,7 @@ export const Header = () => {
                       <Link
                         href={intranetUrl}
                         onClick={() => setNavMenuOpen(false)}
-                        className="inline-flex items-center gap-1.5 border border-advantis bg-advantis px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:bg-advantis/90"
+                        className="inline-flex items-center gap-1.5 border border-rule-strong px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:border-foreground hover:bg-card"
                       >
                         <Building2 className="size-3.5" />
                         <span>{t("intranet")}</span>
