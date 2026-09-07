@@ -121,10 +121,10 @@ export const MobileNavFab = ({ navLinks }: { navLinks: NavLink[] }) => {
             damping: stage === "open" ? 28 : 20,
             mass: 0.6,
           }}
-          className={`pointer-events-auto overflow-hidden border border-rule bg-background/85 shadow-2xl shadow-black/20 backdrop-blur-xl ${
+          className={`pointer-events-auto overflow-hidden border border-rule shadow-2xl shadow-black/20 ${
             stage === "open"
-              ? "flex w-full max-w-[26rem] flex-col rounded-t-2xl"
-              : "h-14 w-14 rounded-full"
+              ? "flex w-full max-w-[26rem] flex-col rounded-t-2xl bg-background"
+              : "h-14 w-14 rounded-full bg-background/85 backdrop-blur-xl"
           }`}
           style={stage === "open" ? { maxHeight: "80vh" } : undefined}
         >
@@ -153,13 +153,13 @@ export const MobileNavFab = ({ navLinks }: { navLinks: NavLink[] }) => {
                 </div>
 
                 <div className="px-5 py-4">
-                  <ul className="grid gap-px border-y border-rule bg-rule">
+                  <ul className="divide-y divide-rule">
                     {navLinks.map((link) => (
-                      <li key={`fab_${link.key}`} className="bg-background">
+                      <li key={`fab_${link.key}`}>
                         <Link
                           href={link.path}
                           onClick={close}
-                          className={`block px-1 py-3.5 transition-colors ${
+                          className={`block py-3.5 transition-colors ${
                             pathname === link.path ? "text-foreground" : ""
                           }`}
                         >
@@ -174,11 +174,11 @@ export const MobileNavFab = ({ navLinks }: { navLinks: NavLink[] }) => {
                     ))}
                   </ul>
 
-                  <div className="border-b border-rule py-5">
+                  <div className="border-t border-rule py-5">
                     <SettingsMenu inline onMobileNavigate={close} />
                   </div>
 
-                  <div className="flex flex-col gap-3 pt-5 pb-1">
+                  <div className="flex flex-col gap-3 border-t border-rule pt-5 pb-1">
                     {intranetUrl && (
                       <Link
                         href={intranetUrl}
