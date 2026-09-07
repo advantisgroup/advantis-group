@@ -14,7 +14,7 @@
     "essential": {
       "title": "Erforderlich",
       "always": "Immer aktiv",
-      "description": "Diese halten dich angemeldet und dein Konto sicher. Sie merken sich außerdem deine Sprache, dein Design und deine Auswahl auf dieser Seite. Ohne sie funktioniert die Website nicht – es gibt hier also nichts abzuschalten.",
+      "description": "Diese halten dich angemeldet, sichern dein Konto und speichern deine Auswahl auf dieser Seite, damit wir sie einhalten können. Ohne sie funktioniert die Website nicht – es gibt hier also nichts abzuschalten.",
       "uses": {
         "auth": "Anmelden und angemeldet bleiben",
         "account": "Kontoverwaltung",
@@ -42,6 +42,7 @@
       "denied": "Du hast Analyse-Cookies abgelehnt. Es werden keine Daten erfasst.",
       "pending": "Du hast noch keine Auswahl getroffen. Bis dahin werden keine Daten erfasst."
     },
+    "localOnly": "Design und Sprache gehören nicht dazu. Sie bleiben in deinem Browser und werden nie an uns übertragen.",
     "privacyHint": "Alle Details dazu, was wir speichern und wie lange, findest du in der",
     "privacyLink": "Datenschutzerklärung"
   },

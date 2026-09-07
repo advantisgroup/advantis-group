@@ -14,7 +14,7 @@
     "essential": {
       "title": "Nécessaires",
       "always": "Toujours actifs",
-      "description": "Ils vous gardent connecté et sécurisent votre compte. Ils retiennent aussi votre langue, votre thème et le choix que vous faites sur cette page. Le site ne peut pas fonctionner sans eux, il n'y a donc rien à désactiver.",
+      "description": "Ils vous gardent connecté, sécurisent votre compte et enregistrent le choix que vous faites sur cette page afin que nous puissions le respecter. Le site ne peut pas fonctionner sans eux, il n'y a donc rien à désactiver.",
       "uses": {
         "auth": "Connexion et maintien de la session",
         "account": "Gestion du compte",
@@ -42,6 +42,7 @@
       "denied": "Vous avez refusé les cookies d'analyse. Rien n'est collecté.",
       "pending": "Vous n'avez pas encore choisi. Rien n'est collecté d'ici là."
     },
+    "localOnly": "Votre thème et votre langue n'en font pas partie. Ils restent dans votre navigateur et ne nous sont jamais transmis.",
     "privacyHint": "Pour le détail complet de ce que nous stockons et pendant combien de temps, consultez la",
     "privacyLink": "politique de confidentialité"
   },

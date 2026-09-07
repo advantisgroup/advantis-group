@@ -123,7 +123,11 @@ export const CookiePreferences = () => {
         </div>
       </div>
 
-      <p className="px-1 pt-2 text-sm text-muted-foreground">
+      {/* Theme is next-themes → localStorage, language is in the URL path.
+          Neither is a cookie, so neither belongs in a category above. */}
+      <p className="px-1 pt-2 text-sm text-muted-foreground">{t("localOnly")}</p>
+
+      <p className="px-1 pt-1 text-sm text-muted-foreground">
         {mounted && decided
           ? analytics
             ? t("status.granted")

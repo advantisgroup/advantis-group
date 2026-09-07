@@ -14,7 +14,7 @@
     "essential": {
       "title": "Required",
       "always": "Always on",
-      "description": "These keep you signed in and your account secure. They also remember your language, your theme, and the choice you make on this page. The site cannot work without them, so there is nothing to switch off.",
+      "description": "These keep you signed in and your account secure, and they record the choice you make on this page so we can honour it. The site cannot work without them, so there is nothing to switch off.",
       "uses": {
         "auth": "Signing in and staying signed in",
         "account": "Account management",
@@ -42,6 +42,7 @@
       "denied": "You have declined analytics cookies. Nothing is being collected.",
       "pending": "You have not made a choice yet. Nothing is being collected until you do."
     },
+    "localOnly": "Your theme and language are not part of this. They stay in your browser and are never sent to us.",
     "privacyHint": "For the full detail on what we store and for how long, see the",
     "privacyLink": "privacy policy"
   },
