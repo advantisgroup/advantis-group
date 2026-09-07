@@ -247,7 +247,8 @@ export const Footer = () => {
               <p className="text-xs text-muted-foreground">
                 © {new Date().getFullYear().toString()} ADVANTIS GROUP. {t("footer.copyright")}
               </p>
-              <div className="flex items-center gap-6">
+              {/* Wraps: four links at 375px overflowed the row. */}
+              <div className="flex flex-wrap items-center justify-center gap-x-6">
                 <Link
                   href="/imprint"
                   className="inline-block py-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
@@ -265,6 +266,12 @@ export const Footer = () => {
                   className="inline-block py-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {t("nav.licenses")}
+                </Link>
+                <Link
+                  href="/cookies"
+                  className="inline-block py-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {t("nav.cookies")}
                 </Link>
               </div>
             </div>

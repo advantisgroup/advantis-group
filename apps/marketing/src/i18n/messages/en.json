@@ -4,7 +4,30 @@
     "description": "We use analytics cookies to understand how visitors use this site. You can accept or decline — either way, the site works the same.",
     "accept": "Accept",
     "reject": "Reject",
-    "privacyLink": "Privacy policy"
+    "privacyLink": "Privacy policy",
+    "manage": "Manage preferences"
+  },
+  "cookiePreferences": {
+    "title": "Cookie preferences",
+    "description": "Choose what this site is allowed to measure. You can change this at any time — nothing here affects how the site works.",
+    "essential": {
+      "title": "Essential",
+      "always": "Always on",
+      "description": "Keeps you signed in, remembers your language and theme, and stores the choice you make on this page. The site cannot work without these."
+    },
+    "analytics": {
+      "title": "Analytics",
+      "description": "Anonymous usage statistics via PostHog — which pages get visited and where people drop off. We use it to improve the site, not to profile you.",
+      "enabled": "Analytics enabled",
+      "disabled": "Analytics disabled"
+    },
+    "status": {
+      "granted": "You have accepted analytics cookies.",
+      "denied": "You have declined analytics cookies. Nothing is being collected.",
+      "pending": "You have not made a choice yet. Nothing is being collected until you do."
+    },
+    "privacyHint": "For the full detail on what we store and for how long, see the",
+    "privacyLink": "privacy policy"
   },
   "nav": {
     "home": "Home",
@@ -18,6 +41,7 @@
     "privacy": "Privacy Policy",
     "imprint": "Imprint",
     "licenses": "Licenses",
+    "cookies": "Cookie preferences",
     "settings": "Settings",
     "toggleMenu": "Toggle menu",
     "closeMenu": "Close menu",

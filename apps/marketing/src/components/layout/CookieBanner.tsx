@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Cookie } from "lucide-react";
 import { useTranslations } from "next-intl";
-import posthog from "posthog-js";
 
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import { getConsent, setConsent } from "@/lib/consent";
 import { isAuthRoute } from "@/lib/utils";
 
 /**
@@ -25,17 +25,13 @@ export const CookieBanner = () => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!posthog.has_opted_in_capturing() && !posthog.has_opted_out_capturing()) {
+    if (getConsent() === "pending") {
       setVisible(true);
     }
   }, []);
 
   const decide = (accepted: boolean) => {
-    if (accepted) {
-      posthog.opt_in_capturing();
-    } else {
-      posthog.opt_out_capturing();
-    }
+    setConsent(accepted);
     setVisible(false);
   };
 
@@ -87,6 +83,15 @@ export const CookieBanner = () => {
               {t("reject")}
             </Button>
           </div>
+
+          {/* Leaves the choice pending on purpose — the banner is still there
+              when they come back, and /cookies is where they actually pick. */}
+          <Link
+            href="/cookies"
+            className="mt-3 block text-center text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          >
+            {t("manage")}
+          </Link>
         </motion.div>
       ) : null}
     </AnimatePresence>

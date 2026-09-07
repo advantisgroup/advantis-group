@@ -6,6 +6,7 @@ import { SignInButton, SignOutButton, SignUpButton, useClerk, useUser } from "@c
 import {
   Building2,
   ChevronRight,
+  Cookie,
   LogIn,
   LogOut,
   ReceiptText,
@@ -244,6 +245,13 @@ export const AccountMenu = ({
         <div className="px-3 py-3">
           <SettingsMenu inline />
         </div>
+
+        <DropdownMenuItem asChild className="rounded-xl px-3 py-3">
+          <Link href="/cookies" locale={locale}>
+            <Cookie className="h-4 w-4" />
+            <span>{tNav("cookies")}</span>
+          </Link>
+        </DropdownMenuItem>
 
         {intranetUrl ? (
           <>

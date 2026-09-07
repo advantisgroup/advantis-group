@@ -5,7 +5,7 @@ import React from "react";
 import { usePathname } from "next/navigation";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Building2, Menu, X } from "lucide-react";
+import { Building2, Cookie, Menu, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
@@ -174,8 +174,18 @@ export const MobileNavFab = ({ navLinks }: { navLinks: NavLink[] }) => {
                     ))}
                   </ul>
 
-                  <div className="border-t border-rule py-5">
+                  <div className="space-y-4 border-t border-rule py-5">
                     <SettingsMenu inline onMobileNavigate={close} />
+                    {/* Sits with language and appearance rather than with the
+                        nav links — it's a preference, not a destination. */}
+                    <Link
+                      href="/cookies"
+                      onClick={close}
+                      className="flex min-h-11 items-center gap-2.5 rounded-md border border-rule px-3 text-sm text-muted-foreground transition-colors hover:border-rule-strong hover:text-foreground"
+                    >
+                      <Cookie className="size-4" />
+                      <span>{t("cookies")}</span>
+                    </Link>
                   </div>
 
                   <div className="flex flex-col gap-3 border-t border-rule pt-5 pb-1">

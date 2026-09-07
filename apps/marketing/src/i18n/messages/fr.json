@@ -4,7 +4,30 @@
     "description": "Nous utilisons des cookies d'analyse pour comprendre comment les visiteurs utilisent ce site. Vous pouvez accepter ou refuser — le site fonctionne de la même manière dans les deux cas.",
     "accept": "Accepter",
     "reject": "Refuser",
-    "privacyLink": "Politique de confidentialité"
+    "privacyLink": "Politique de confidentialité",
+    "manage": "Gérer les préférences"
+  },
+  "cookiePreferences": {
+    "title": "Préférences de cookies",
+    "description": "Choisissez ce que ce site est autorisé à mesurer. Vous pouvez le modifier à tout moment — rien ici n'affecte le fonctionnement du site.",
+    "essential": {
+      "title": "Essentiels",
+      "always": "Toujours actifs",
+      "description": "Vous gardent connecté, retiennent votre langue et votre thème, et enregistrent le choix que vous faites sur cette page. Le site ne peut pas fonctionner sans eux."
+    },
+    "analytics": {
+      "title": "Analyse",
+      "description": "Statistiques d'usage anonymes via PostHog — quelles pages sont visitées et où les visiteurs s'arrêtent. Nous les utilisons pour améliorer le site, pas pour vous profiler.",
+      "enabled": "Analyse activée",
+      "disabled": "Analyse désactivée"
+    },
+    "status": {
+      "granted": "Vous avez accepté les cookies d'analyse.",
+      "denied": "Vous avez refusé les cookies d'analyse. Rien n'est collecté.",
+      "pending": "Vous n'avez pas encore choisi. Rien n'est collecté d'ici là."
+    },
+    "privacyHint": "Pour le détail complet de ce que nous stockons et pendant combien de temps, consultez la",
+    "privacyLink": "politique de confidentialité"
   },
   "nav": {
     "home": "Accueil",
@@ -18,6 +41,7 @@
     "privacy": "Politique de Confidentialité",
     "imprint": "Mentions Légales",
     "licenses": "Licences",
+    "cookies": "Préférences de cookies",
     "settings": "Paramètres",
     "toggleMenu": "Basculer le menu",
     "closeMenu": "Fermer le menu",

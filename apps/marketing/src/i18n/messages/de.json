@@ -4,6 +4,29 @@
     "description": "Wir verwenden Analyse-Cookies, um zu verstehen, wie Besucher diese Website nutzen. Du kannst zustimmen oder ablehnen – die Seite funktioniert in beiden Fällen gleich.",
     "accept": "Akzeptieren",
     "reject": "Ablehnen",
+    "privacyLink": "Datenschutzerklärung",
+    "manage": "Einstellungen verwalten"
+  },
+  "cookiePreferences": {
+    "title": "Cookie-Einstellungen",
+    "description": "Entscheide, was diese Website messen darf. Du kannst das jederzeit ändern – nichts davon beeinflusst die Funktion der Seite.",
+    "essential": {
+      "title": "Notwendig",
+      "always": "Immer aktiv",
+      "description": "Hält dich angemeldet, merkt sich Sprache und Design und speichert deine Auswahl auf dieser Seite. Ohne diese funktioniert die Website nicht."
+    },
+    "analytics": {
+      "title": "Analyse",
+      "description": "Anonyme Nutzungsstatistiken über PostHog – welche Seiten besucht werden und wo Besucher abspringen. Wir nutzen das zur Verbesserung der Seite, nicht zur Profilbildung.",
+      "enabled": "Analyse aktiviert",
+      "disabled": "Analyse deaktiviert"
+    },
+    "status": {
+      "granted": "Du hast Analyse-Cookies akzeptiert.",
+      "denied": "Du hast Analyse-Cookies abgelehnt. Es werden keine Daten erfasst.",
+      "pending": "Du hast noch keine Auswahl getroffen. Bis dahin werden keine Daten erfasst."
+    },
+    "privacyHint": "Alle Details dazu, was wir speichern und wie lange, findest du in der",
     "privacyLink": "Datenschutzerklärung"
   },
   "nav": {
@@ -18,6 +41,7 @@
     "privacy": "Datenschutz",
     "imprint": "Impressum",
     "licenses": "Lizenzen",
+    "cookies": "Cookie-Einstellungen",
     "settings": "Einstellungen",
     "toggleMenu": "Menü umschalten",
     "closeMenu": "Menü schließen",
