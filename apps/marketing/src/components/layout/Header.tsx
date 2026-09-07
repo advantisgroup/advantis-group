@@ -5,12 +5,7 @@ import React from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
-import {
-  AnimatePresence,
-  motion,
-  useMotionValueEvent,
-  useScroll,
-} from "framer-motion";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
 import { Building2, ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -38,7 +33,7 @@ export const Header = () => {
   const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
   const [isScrolled, setIsScrolled] = React.useState(false);
 
-  useMotionValueEvent(scrollY, "change", latest => {
+  useMotionValueEvent(scrollY, "change", (latest) => {
     setIsScrolled(latest > SCROLL_THRESHOLD);
   });
 
@@ -46,8 +41,7 @@ export const Header = () => {
     if (!navMenuOpen) return;
 
     const onPointerDown = (event: PointerEvent) => {
-      if (!navMenuRef.current?.contains(event.target as Node))
-        setNavMenuOpen(false);
+      if (!navMenuRef.current?.contains(event.target as Node)) setNavMenuOpen(false);
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setNavMenuOpen(false);
@@ -138,13 +132,7 @@ export const Header = () => {
               }}
               transition={transition}
             >
-              <Image
-                src={logo}
-                alt="Advantis Logo"
-                fill
-                className="object-contain"
-                sizes="36px"
-              />
+              <Image src={logo} alt="Advantis Logo" fill className="object-contain" sizes="36px" />
             </motion.div>
 
             {/* Wordmark — collapses into the logo on scroll */}
@@ -170,7 +158,7 @@ export const Header = () => {
           <div ref={navMenuRef} className="relative hidden md:block">
             <button
               type="button"
-              onClick={() => setNavMenuOpen(open => !open)}
+              onClick={() => setNavMenuOpen((open) => !open)}
               aria-expanded={navMenuOpen}
               aria-haspopup="true"
               className={`group/trigger inline-flex items-center border py-2 text-sm transition-colors duration-300 ${
@@ -215,7 +203,7 @@ export const Header = () => {
                 >
                   {/* One card per destination: label plus what is actually there. */}
                   <ul className="grid grid-cols-2 gap-px bg-rule">
-                    {navLinks.map(link => (
+                    {navLinks.map((link) => (
                       <li
                         key={link.key}
                         className={`bg-popover ${navLinks.length % 2 === 1 ? "last:col-span-2" : ""}`}

@@ -154,7 +154,7 @@ export const MobileNavFab = ({ navLinks }: { navLinks: NavLink[] }) => {
 
                 <div className="px-5 py-4">
                   <ul className="grid gap-px border-y border-rule bg-rule">
-                    {navLinks.map(link => (
+                    {navLinks.map((link) => (
                       <li key={`fab_${link.key}`} className="bg-background">
                         <Link
                           href={link.path}
