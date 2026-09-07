@@ -13,6 +13,7 @@
     "licenses": "许可证",
     "settings": "设置",
     "toggleMenu": "切换菜单",
+    "closeMenu": "关闭菜单",
     "settingsMenu": {
       "label": "设置",
       "language": "语言",
