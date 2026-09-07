@@ -10,16 +10,32 @@
   "cookiePreferences": {
     "title": "Cookie 偏好设置",
     "description": "选择本网站可以收集哪些信息。您可以随时更改——这些设置不会影响网站的正常使用。",
+    "usedFor": "用途",
     "essential": {
       "title": "必要 Cookie",
       "always": "始终启用",
-      "description": "用于保持登录状态、记住您的语言与主题，并保存您在本页所做的选择。没有这些，网站无法正常运行。"
+      "description": "用于保持登录状态并保障账户安全，同时记住您的语言、主题以及您在本页所做的选择。没有这些，网站无法运行，因此没有可关闭的选项。",
+      "uses": {
+        "auth": "登录与保持登录状态",
+        "account": "账户管理",
+        "safety": "账户安全与滥用防护"
+      }
     },
     "analytics": {
-      "title": "分析 Cookie",
-      "description": "通过 PostHog 收集匿名使用统计——哪些页面被访问、访问者在哪里离开。我们用它改进网站，不用于分析个人。",
+      "title": "分析与跟踪",
+      "description": "通过 PostHog 收集匿名使用统计——哪些页面被访问、访问者在哪里离开。关闭它不会有任何影响：网站的所有功能都照常运行。",
+      "uses": {
+        "usage": "哪些页面被访问",
+        "improve": "找出需要改进的地方"
+      },
       "enabled": "已启用分析",
       "disabled": "已停用分析"
+    },
+    "commitments": {
+      "title": "我们绝不会做的事",
+      "sell": "我们不出售您的数据，也不会将其提供给数据经纪商。",
+      "train": "我们不会用它来训练 AI 模型。",
+      "ads": "我们不投放个性化广告，也不建立广告画像。"
     },
     "status": {
       "granted": "您已接受分析 Cookie。",

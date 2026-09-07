@@ -10,16 +10,32 @@
   "cookiePreferences": {
     "title": "Préférences de cookies",
     "description": "Choisissez ce que ce site est autorisé à mesurer. Vous pouvez le modifier à tout moment — rien ici n'affecte le fonctionnement du site.",
+    "usedFor": "Utilisés pour",
     "essential": {
-      "title": "Essentiels",
+      "title": "Nécessaires",
       "always": "Toujours actifs",
-      "description": "Vous gardent connecté, retiennent votre langue et votre thème, et enregistrent le choix que vous faites sur cette page. Le site ne peut pas fonctionner sans eux."
+      "description": "Ils vous gardent connecté et sécurisent votre compte. Ils retiennent aussi votre langue, votre thème et le choix que vous faites sur cette page. Le site ne peut pas fonctionner sans eux, il n'y a donc rien à désactiver.",
+      "uses": {
+        "auth": "Connexion et maintien de la session",
+        "account": "Gestion du compte",
+        "safety": "Sécurité du compte et prévention des abus"
+      }
     },
     "analytics": {
-      "title": "Analyse",
-      "description": "Statistiques d'usage anonymes via PostHog — quelles pages sont visitées et où les visiteurs s'arrêtent. Nous les utilisons pour améliorer le site, pas pour vous profiler.",
+      "title": "Analyse et suivi",
+      "description": "Statistiques d'usage anonymes via PostHog — quelles pages sont visitées et où les visiteurs s'arrêtent. Les désactiver ne vous coûte rien : le site continue de fonctionner à l'identique.",
+      "uses": {
+        "usage": "Quelles pages sont visitées",
+        "improve": "Repérer ce qu'il faut améliorer"
+      },
       "enabled": "Analyse activée",
       "disabled": "Analyse désactivée"
+    },
+    "commitments": {
+      "title": "Ce que nous n'en faisons jamais",
+      "sell": "Nous ne vendons pas vos données et ne les transmettons pas à des courtiers en données.",
+      "train": "Nous ne les utilisons pas pour entraîner des modèles d'IA.",
+      "ads": "Nous ne diffusons pas de publicité personnalisée et ne créons pas de profils publicitaires."
     },
     "status": {
       "granted": "Vous avez accepté les cookies d'analyse.",

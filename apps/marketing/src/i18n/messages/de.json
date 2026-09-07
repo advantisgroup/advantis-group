@@ -10,16 +10,32 @@
   "cookiePreferences": {
     "title": "Cookie-Einstellungen",
     "description": "Entscheide, was diese Website messen darf. Du kannst das jederzeit ändern – nichts davon beeinflusst die Funktion der Seite.",
+    "usedFor": "Wird verwendet für",
     "essential": {
-      "title": "Notwendig",
+      "title": "Erforderlich",
       "always": "Immer aktiv",
-      "description": "Hält dich angemeldet, merkt sich Sprache und Design und speichert deine Auswahl auf dieser Seite. Ohne diese funktioniert die Website nicht."
+      "description": "Diese halten dich angemeldet und dein Konto sicher. Sie merken sich außerdem deine Sprache, dein Design und deine Auswahl auf dieser Seite. Ohne sie funktioniert die Website nicht – es gibt hier also nichts abzuschalten.",
+      "uses": {
+        "auth": "Anmelden und angemeldet bleiben",
+        "account": "Kontoverwaltung",
+        "safety": "Kontosicherheit und Missbrauchsschutz"
+      }
     },
     "analytics": {
-      "title": "Analyse",
-      "description": "Anonyme Nutzungsstatistiken über PostHog – welche Seiten besucht werden und wo Besucher abspringen. Wir nutzen das zur Verbesserung der Seite, nicht zur Profilbildung.",
+      "title": "Analyse und Tracking",
+      "description": "Anonyme Nutzungsstatistiken über PostHog – welche Seiten besucht werden und wo Besucher abspringen. Das Abschalten kostet dich nichts: Die Website funktioniert vollständig weiter.",
+      "uses": {
+        "usage": "Welche Seiten besucht werden",
+        "improve": "Erkennen, was verbessert werden muss"
+      },
       "enabled": "Analyse aktiviert",
       "disabled": "Analyse deaktiviert"
+    },
+    "commitments": {
+      "title": "Was wir damit niemals tun",
+      "sell": "Wir verkaufen deine Daten nicht und geben sie nicht an Datenhändler weiter.",
+      "train": "Wir nutzen sie nicht zum Trainieren von KI-Modellen.",
+      "ads": "Wir schalten keine personalisierte Werbung und erstellen keine Werbeprofile."
     },
     "status": {
       "granted": "Du hast Analyse-Cookies akzeptiert.",

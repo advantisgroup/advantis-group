@@ -2,20 +2,42 @@
 
 import { useEffect, useState } from "react";
 
-import { BarChart3, Lock } from "lucide-react";
+import { BarChart3, Lock, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Switch } from "@/components/ui/switch";
 import { getConsent, setConsent } from "@/lib/consent";
 
+const ESSENTIAL_USES = ["essential.uses.auth", "essential.uses.account", "essential.uses.safety"];
+const ANALYTICS_USES = ["analytics.uses.usage", "analytics.uses.improve"];
+const COMMITMENTS = ["commitments.sell", "commitments.train", "commitments.ads"];
+
+const UsedFor = ({ label, items }: { label: string; items: string[] }) => (
+  <div className="mt-4">
+    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+      {label}
+    </span>
+    <ul className="mt-2 flex flex-wrap gap-1.5">
+      {items.map((item) => (
+        <li
+          key={item}
+          className="rounded-md border border-rule px-2 py-1 text-xs text-muted-foreground"
+        >
+          {item}
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
 /**
  * The one place a visitor can change their mind after the banner is gone.
  *
- * Two categories, not the usual four: essential cookies (auth session,
- * language, this choice itself) and analytics (PostHog). Listing "Marketing"
- * and "Personalisation" rows that toggle nothing would be theatre — we don't
- * set those cookies.
+ * Two categories, not the usual four. Required: sign-in, account management
+ * and account safety — the site genuinely can't work without them. Optional:
+ * analytics (PostHog). Listing "Advertising" and "Personalisation" rows that
+ * toggle nothing would be theatre — we don't set those cookies at all.
  *
  * Changes apply the moment the switch flips. A settings page with a Save
  * button that people forget to press is the classic way consent silently
@@ -60,6 +82,7 @@ export const CookiePreferences = () => {
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               {t("essential.description")}
             </p>
+            <UsedFor label={t("usedFor")} items={ESSENTIAL_USES.map((key) => t(key))} />
           </div>
         </div>
       </div>
@@ -95,6 +118,7 @@ export const CookiePreferences = () => {
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               {t("analytics.description")}
             </p>
+            <UsedFor label={t("usedFor")} items={ANALYTICS_USES.map((key) => t(key))} />
           </div>
         </div>
       </div>
@@ -106,6 +130,25 @@ export const CookiePreferences = () => {
             : t("status.denied")
           : t("status.pending")}
       </p>
+
+      {/*
+       * The reason most people hesitate over an analytics toggle isn't the
+       * measuring, it's what happens to the data afterwards. Saying so plainly
+       * is worth more here than another category row.
+       */}
+      <div className="mt-6 rounded-xl border border-rule bg-background/40 p-5 sm:p-6">
+        <h2 className="font-[family-name:var(--font-outfit)] text-base font-semibold tracking-[-0.01em]">
+          {t("commitments.title")}
+        </h2>
+        <ul className="mt-3 space-y-2">
+          {COMMITMENTS.map((key) => (
+            <li key={key} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+              <X className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/70" strokeWidth={2.5} />
+              <span className="leading-relaxed">{t(key)}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };

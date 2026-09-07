@@ -10,16 +10,32 @@
   "cookiePreferences": {
     "title": "Cookie preferences",
     "description": "Choose what this site is allowed to measure. You can change this at any time — nothing here affects how the site works.",
+    "usedFor": "Used for",
     "essential": {
-      "title": "Essential",
+      "title": "Required",
       "always": "Always on",
-      "description": "Keeps you signed in, remembers your language and theme, and stores the choice you make on this page. The site cannot work without these."
+      "description": "These keep you signed in and your account secure. They also remember your language, your theme, and the choice you make on this page. The site cannot work without them, so there is nothing to switch off.",
+      "uses": {
+        "auth": "Signing in and staying signed in",
+        "account": "Account management",
+        "safety": "Account safety and abuse prevention"
+      }
     },
     "analytics": {
-      "title": "Analytics",
-      "description": "Anonymous usage statistics via PostHog — which pages get visited and where people drop off. We use it to improve the site, not to profile you.",
+      "title": "Analytics and tracking",
+      "description": "Anonymous usage statistics via PostHog — which pages get visited and where people drop off. Turning this off costs you nothing: every part of the site keeps working exactly the same.",
+      "uses": {
+        "usage": "Which pages get visited",
+        "improve": "Finding what to fix and improve"
+      },
       "enabled": "Analytics enabled",
       "disabled": "Analytics disabled"
+    },
+    "commitments": {
+      "title": "What we never do with it",
+      "sell": "We do not sell your data, or share it with data brokers.",
+      "train": "We do not use it to train AI models.",
+      "ads": "We do not run personalised advertising or build ad profiles."
     },
     "status": {
       "granted": "You have accepted analytics cookies.",
