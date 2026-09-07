@@ -6,16 +6,14 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { Building2, ChevronDown } from "lucide-react";
+import { Building2, ChevronDown, FileText, Info, Mail, Newspaper, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
 import { useSingleLetterLogo } from "@/hooks/use-logo";
 import { Link } from "@/i18n/navigation";
 import { isAuthRoute } from "@/lib/utils";
 
 import { MobileNavFab } from "./MobileNavFab";
-import { SettingsMenu } from "./SettingsMenu";
 import { AccountMenu } from "../auth/AccountMenu";
 
 const SCROLL_THRESHOLD = 60;
@@ -26,7 +24,6 @@ export const Header = () => {
   const logo = useSingleLetterLogo();
   const t = useTranslations("nav");
   const { scrollY } = useScroll();
-  const intranetUrl = useCompanyIntranetUrl();
 
   const [navMenuOpen, setNavMenuOpen] = React.useState(false);
   const navMenuRef = React.useRef<HTMLDivElement>(null);
@@ -47,10 +44,13 @@ export const Header = () => {
       if (event.key === "Escape") setNavMenuOpen(false);
     };
 
-    document.addEventListener("pointerdown", onPointerDown);
+    // Capture phase: the account menu's Radix trigger stops propagation on
+    // pointerdown, so a bubble-phase listener never sees the click and this
+    // menu stays open behind it — two overlapping popovers.
+    document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("keydown", onKeyDown);
     return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("pointerdown", onPointerDown, true);
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [navMenuOpen]);
@@ -74,12 +74,12 @@ export const Header = () => {
   };
 
   const navLinks = [
-    { key: "about", label: t("about"), path: "/about" },
-    { key: "brands", label: t("brands"), path: "/brands" },
-    { key: "team", label: t("team"), path: "/team" },
-    { key: "blog", label: t("blog"), path: "/blog" },
-    { key: "whitepaper", label: t("whitepaper"), path: "/whitepaper" },
-    { key: "contact", label: t("contact"), path: "/contact" },
+    { key: "about", label: t("about"), path: "/about", icon: Info },
+    { key: "brands", label: t("brands"), path: "/brands", icon: Building2 },
+    { key: "team", label: t("team"), path: "/team", icon: Users },
+    { key: "blog", label: t("blog"), path: "/blog", icon: Newspaper },
+    { key: "whitepaper", label: t("whitepaper"), path: "/whitepaper", icon: FileText },
+    { key: "contact", label: t("contact"), path: "/contact", icon: Mail },
   ];
 
   const transition = { duration: 0.4, ease: EASE };
@@ -154,103 +154,94 @@ export const Header = () => {
             </motion.div>
           </Link>
 
-          {/* ── RIGHT: one menu ── */}
-          <div ref={navMenuRef} className="relative hidden md:block">
-            <button
-              type="button"
-              onClick={() => setNavMenuOpen((open) => !open)}
-              aria-expanded={navMenuOpen}
-              aria-haspopup="true"
-              className={`group/trigger inline-flex items-center border py-2 text-sm transition-colors duration-300 ${
-                isScrolled ? "px-2.5" : "px-4"
-              } ${
-                navMenuOpen
-                  ? "border-rule-strong bg-card text-foreground"
-                  : "border-transparent text-muted-foreground hover:border-rule hover:text-foreground"
-              }`}
-            >
-              {/*
-               * The label collapses into the chevron on scroll, mirroring the
-               * wordmark collapsing into the logo mark on the left — so scrolling
-               * makes both ends of the bar smaller rather than just re-packing
-               * the same items into a tighter capsule.
-               */}
-              <motion.span
-                className="overflow-hidden whitespace-nowrap"
-                animate={{
-                  maxWidth: isScrolled && !navMenuOpen ? 0 : 90,
-                  opacity: isScrolled && !navMenuOpen ? 0 : 1,
-                  marginRight: isScrolled && !navMenuOpen ? 0 : 8,
-                }}
-                transition={transition}
+          {/* ── RIGHT: navigation, then you ── */}
+          <div className="hidden items-center gap-2 md:flex">
+            <div ref={navMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setNavMenuOpen((open) => !open)}
+                aria-expanded={navMenuOpen}
+                aria-haspopup="true"
+                className={`group/trigger inline-flex items-center rounded-lg border py-2 text-sm transition-colors duration-300 ${
+                  isScrolled ? "px-2.5" : "px-4"
+                } ${
+                  navMenuOpen
+                    ? "border-rule-strong bg-card text-foreground"
+                    : "border-transparent text-muted-foreground hover:border-rule hover:text-foreground"
+                }`}
               >
-                {t("menuLabel")}
-              </motion.span>
-              <ChevronDown
-                className={`size-4 shrink-0 transition-transform duration-300 ${navMenuOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-
-            <AnimatePresence initial={false}>
-              {navMenuOpen && (
-                <motion.div
-                  key="nav-menu"
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="absolute right-0 top-[calc(100%+0.75rem)] w-[34rem] overflow-hidden rounded-xl border border-rule bg-popover shadow-2xl shadow-black/20"
+                {/*
+                 * The label collapses into the chevron on scroll, mirroring the
+                 * wordmark collapsing into the logo mark on the left — so scrolling
+                 * makes both ends of the bar smaller rather than just re-packing
+                 * the same items into a tighter capsule.
+                 */}
+                <motion.span
+                  className="overflow-hidden whitespace-nowrap"
+                  animate={{
+                    maxWidth: isScrolled && !navMenuOpen ? 0 : 90,
+                    opacity: isScrolled && !navMenuOpen ? 0 : 1,
+                    marginRight: isScrolled && !navMenuOpen ? 0 : 8,
+                  }}
+                  transition={transition}
                 >
-                  {/* One card per destination: label plus what is actually there. */}
-                  <ul className="grid grid-cols-2 gap-px bg-rule">
-                    {navLinks.map((link) => (
-                      <li
-                        key={link.key}
-                        className={`bg-popover ${navLinks.length % 2 === 1 ? "last:col-span-2" : ""}`}
-                      >
-                        <Link
-                          href={link.path}
-                          onClick={() => setNavMenuOpen(false)}
-                          className={`block h-full p-4 transition-colors duration-200 hover:bg-card ${
-                            pathname === link.path ? "bg-card" : ""
-                          }`}
-                        >
-                          <span className="block font-[family-name:var(--font-outfit)] text-base font-semibold tracking-[-0.02em]">
-                            {link.label}
-                          </span>
-                          <span className="mt-1 block text-sm leading-snug text-muted-foreground">
-                            {t(`descriptions.${link.key}`)}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                  {t("menuLabel")}
+                </motion.span>
+                <ChevronDown
+                  className={`size-4 shrink-0 transition-transform duration-300 ${navMenuOpen ? "rotate-180" : ""}`}
+                />
+              </button>
 
-                  {/* Language and appearance sit here as plain rows rather than
-                    behind a second popover opened from inside this one. */}
-                  <div className="border-t border-rule p-4">
-                    <SettingsMenu inline />
-                  </div>
+              <AnimatePresence initial={false}>
+                {navMenuOpen && (
+                  <motion.div
+                    key="nav-menu"
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="absolute right-0 top-[calc(100%+0.75rem)] w-[32rem] rounded-xl border border-rule bg-popover p-2 shadow-2xl shadow-black/20"
+                  >
+                    {/*
+                     * Destinations only. Language, appearance and the account
+                     * live in the avatar menu next door — one dropdown doing
+                     * three unrelated jobs was the reason this one felt like a
+                     * settings panel with links bolted on.
+                     */}
+                    <ul className="grid grid-cols-2 gap-1">
+                      {navLinks.map((link) => (
+                        <li key={link.key}>
+                          <Link
+                            href={link.path}
+                            onClick={() => setNavMenuOpen(false)}
+                            className={`group flex h-full items-start gap-3 rounded-lg p-3 transition-colors duration-200 hover:bg-card ${
+                              pathname === link.path ? "bg-card" : ""
+                            }`}
+                          >
+                            {/* Neutral, not primary: six red icons in one panel
+                              re-spends the accent this site reserves for the
+                              one real CTA. */}
+                            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-rule bg-background/60 text-muted-foreground transition-colors group-hover:text-foreground">
+                              <link.icon className="size-4" strokeWidth={1.75} />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block font-[family-name:var(--font-outfit)] text-base font-semibold tracking-[-0.02em]">
+                                {link.label}
+                              </span>
+                              <span className="mt-0.5 block text-sm leading-snug text-muted-foreground">
+                                {t(`descriptions.${link.key}`)}
+                              </span>
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-                  <div className="flex items-center justify-between gap-3 border-t border-rule p-3">
-                    {intranetUrl ? (
-                      <Link
-                        href={intranetUrl}
-                        onClick={() => setNavMenuOpen(false)}
-                        className="inline-flex items-center gap-1.5 border border-rule-strong px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:border-foreground hover:bg-card"
-                      >
-                        <Building2 className="size-3.5" />
-                        <span>{t("intranet")}</span>
-                      </Link>
-                    ) : (
-                      <span />
-                    )}
-
-                    <AccountMenu />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <AccountMenu />
           </div>
         </motion.nav>
       </header>

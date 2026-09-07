@@ -3,9 +3,18 @@
 import { useMemo } from "react";
 
 import { SignInButton, SignOutButton, SignUpButton, useClerk, useUser } from "@clerk/nextjs";
-import { ChevronRight, LogIn, LogOut, ReceiptText, Settings2, UserRound } from "lucide-react";
+import {
+  Building2,
+  ChevronRight,
+  LogIn,
+  LogOut,
+  ReceiptText,
+  Settings2,
+  UserRound,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
 import { Link } from "@/i18n/navigation";
 
 const getInitials = (fullName: string, email?: string | null) => {
@@ -36,8 +46,10 @@ export const AccountMenu = ({
 }) => {
   const locale = useLocale();
   const t = useTranslations("auth");
+  const tNav = useTranslations("nav");
   const { openUserProfile } = useClerk();
   const { user, isSignedIn } = useUser();
+  const intranetUrl = useCompanyIntranetUrl();
 
   const displayName = useMemo(() => {
     const nameFromParts = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
@@ -222,6 +234,28 @@ export const AccountMenu = ({
             </div>
           </div>
         )}
+
+        {/*
+         * Language, appearance and the intranet link live here rather than in
+         * the navigation dropdown: that one is for destinations, this one is
+         * for you and how the site is set up.
+         */}
+        <DropdownMenuSeparator />
+        <div className="px-3 py-3">
+          <SettingsMenu inline />
+        </div>
+
+        {intranetUrl ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild className="rounded-xl px-3 py-3">
+              <Link href={intranetUrl}>
+                <Building2 className="h-4 w-4" />
+                <span>{tNav("intranet")}</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
