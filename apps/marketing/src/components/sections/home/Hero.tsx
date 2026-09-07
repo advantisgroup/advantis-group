@@ -44,12 +44,13 @@ export const Hero = () => {
           </p>
 
           {/*
-           * The detail behind it, which used to be a standalone band under the
-           * hero. On its own it was a centred paragraph in a screenful of
-           * whitespace saying what the line above already said; here it earns
-           * its place by naming the actual services.
+           * One line on how, not a rundown of every service — the full list
+           * already has its own section (HomeServices) further down the
+           * page, so naming each one here just made the hero the longest
+           * thing to read before the reader hit a button, worst of all on
+           * mobile where every extra line costs a screen.
            */}
-          <p className="mt-5 max-w-2xl text-base leading-[1.6] text-muted-foreground md:mt-6 md:text-lg md:leading-[1.7]">
+          <p className="mt-4 max-w-xl text-base leading-[1.5] text-muted-foreground md:mt-5 md:text-lg md:leading-[1.6]">
             {positioning("text")}
           </p>
 
