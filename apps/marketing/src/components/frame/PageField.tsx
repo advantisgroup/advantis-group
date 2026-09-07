@@ -15,7 +15,20 @@ import { cn } from "@/lib/utils";
  * through the sections beneath and fades out around the second screenful,
  * rather than ending at a hard edge.
  */
-export const PageField = ({ className }: { className?: string }) => (
+export const PageField = ({
+  className,
+  animated = false,
+}: {
+  className?: string;
+  /**
+   * Slowly pans the wash across an oversized canvas instead of holding it
+   * still — reserved for the homepage, where it plays behind every section
+   * under the hero. Everywhere else keeps the static wash: a page you're
+   * reading (privacy, a blog post, a service page) doesn't want the
+   * background moving under the text.
+   */
+  animated?: boolean;
+}) => (
   <div
     aria-hidden
     className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}
@@ -28,13 +41,14 @@ export const PageField = ({ className }: { className?: string }) => (
     </div>
 
     <div
-      className="absolute inset-x-0 top-0 h-[190vh]"
+      className={cn("absolute inset-x-0 top-0 h-[190vh]", animated && "animate-gradient-x")}
       style={{
         background: [
           "radial-gradient(70% 55% at 18% 2%, color-mix(in oklch, var(--primary) 26%, transparent), transparent 68%)",
           "radial-gradient(65% 50% at 88% 0%, color-mix(in oklch, var(--secondary) 20%, transparent), transparent 70%)",
           "radial-gradient(90% 40% at 50% 32%, color-mix(in oklch, var(--primary) 10%, transparent), transparent 75%)",
         ].join(","),
+        backgroundSize: animated ? "200% 200%" : undefined,
         maskImage: "linear-gradient(to bottom, black 0%, black 38%, transparent 96%)",
         WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 38%, transparent 96%)",
       }}

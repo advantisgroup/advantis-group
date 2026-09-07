@@ -1,4 +1,11 @@
 {
+  "cookieBanner": {
+    "title": "Nous utilisons des cookies",
+    "description": "Nous utilisons des cookies d'analyse pour comprendre comment les visiteurs utilisent ce site. Vous pouvez accepter ou refuser — le site fonctionne de la même manière dans les deux cas.",
+    "accept": "Accepter",
+    "reject": "Refuser",
+    "privacyLink": "Politique de confidentialité"
+  },
   "nav": {
     "home": "Accueil",
     "brands": "Nos Marques",
@@ -604,6 +611,7 @@
       "relatedTitle": "Cela Pourrait Aussi Vous Intéresser",
       "backLabel": "Retour à l'Aperçu",
       "seoLabel": "Thèmes",
+      "learnMore": "En savoir plus",
       "vertriebstrainingTile": {
         "title": "Formation Commerciale",
         "description": "Du traitement des objections à la conduite d'entretien jusqu'au closing — nos formations commerciales transmettent des connaissances directement applicables pour l'inside sales, le terrain et les équipes Customer Care."

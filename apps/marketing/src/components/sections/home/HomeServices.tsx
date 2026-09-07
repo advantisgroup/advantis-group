@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 
 import { Display } from "@/components/frame";
 import { Section } from "@/components/frame/Section";
+import { Carousel, CarouselContent, CarouselDots, CarouselItem } from "@/components/ui/carousel";
 import { Link } from "@/i18n/navigation";
 import { SERVICE_ICONS, SERVICE_SLUGS, VERTRIEBSTRAINING_TILE } from "@/lib/services";
 
@@ -61,7 +62,9 @@ export const HomeServices = () => {
         </p>
       </div>
 
-      <div className="mt-14 grid gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-x-16 md:mt-16">
+      {/* lg+: a two-dimensional index beside a panel that resolves whichever
+          cell the pointer or keyboard is on — hovering costs nothing here. */}
+      <div className="mt-14 hidden gap-12 lg:mt-16 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-x-16">
         <div className="grid gap-px self-start overflow-hidden rounded-xl bg-rule sm:grid-cols-2">
           {entries.map((entry, index) => (
             <Link
@@ -97,12 +100,11 @@ export const HomeServices = () => {
         {/*
          * Mirrors whichever cell the pointer or keyboard is on. It duplicates
          * text already reachable in the index, so it is hidden from assistive
-         * tech, and it is dropped below `lg` where the cells link straight
-         * through instead.
+         * tech.
          */}
         <div
           aria-hidden
-          className="hidden self-start rounded-xl border border-rule bg-card/40 p-8 lg:sticky lg:top-28 lg:block"
+          className="self-start rounded-xl border border-rule bg-card/40 p-8 lg:sticky lg:top-28"
         >
           <div key={active.key} className="animate-panel-in">
             <div className="flex items-start justify-between gap-6">
@@ -124,6 +126,44 @@ export const HomeServices = () => {
           <div className="hatch mt-8 h-8 border-t border-rule opacity-60" />
         </div>
       </div>
+
+      {/*
+       * Below `lg` there's no room for an index-plus-panel, and the old
+       * fallback (a flat list that just linked through) dropped the detail
+       * entirely — a phone got a worse version of the section, not a
+       * different one. A swipeable carousel keeps the same icon, title, and
+       * description the desktop panel shows, one card at a time.
+       */}
+      <Carousel opts={{ align: "start", dragFree: true }} className="mt-14 lg:hidden">
+        <CarouselContent>
+          {entries.map((entry, index) => (
+            <CarouselItem key={entry.key} className="basis-[82%] sm:basis-[45%]">
+              <Link
+                href={entry.href}
+                className="group flex h-full flex-col rounded-xl border border-rule bg-card/40 p-6 transition-colors hover:bg-card/60"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <span className="font-mono text-[11px] tracking-[0.2em] text-primary/60">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <entry.icon className="size-7 text-primary" strokeWidth={1.25} />
+                </div>
+                <h3 className="mt-6 font-[family-name:var(--font-outfit)] text-lg font-bold tracking-[-0.02em]">
+                  {entry.title}
+                </h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+                  {entry.description}
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
+                  {t("common.learnMore")}
+                  <ArrowUpRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselDots />
+      </Carousel>
     </Section>
   );
 };

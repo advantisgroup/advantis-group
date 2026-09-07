@@ -24,7 +24,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
    */
   return (
     <div className="relative min-h-screen bg-background">
-      <PageField />
+      <PageField animated />
       <RememberLocale locale={locale} />
 
       <div className="relative">

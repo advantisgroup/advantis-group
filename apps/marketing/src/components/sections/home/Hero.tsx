@@ -8,6 +8,7 @@ import { PipelineSchematic } from "@/components/frame/PipelineSchematic";
 import { Link } from "@/i18n/navigation";
 import { BRANDS } from "@/lib/brands";
 
+import { HeroSignal } from "./HeroSignal";
 import { Button } from "../../ui/button";
 
 /**
@@ -26,49 +27,58 @@ export const Hero = () => {
   return (
     <section className="relative pt-24 md:pt-36">
       <div className="relative mx-auto w-full max-w-[1440px] px-5 md:px-10">
-        <div className="max-w-4xl">
-          {/*
-           * The highlight is coloured directly rather than through BrandText.
-           * That component splits on a brand name, and `titleHighlight` is
-           * "Sales Power" — no match, so its advantis branch fell back to the
-           * literal string "Advantis" and the headline rendered the wrong
-           * word. Mobile dodged it only by rendering an unstyled copy.
-           */}
-          <Display as="h1" size="xl" className="max-w-[15ch] text-pretty">
-            {t("title")} <span className="text-primary">{t("titleHighlight")}</span>
-          </Display>
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-center lg:gap-10">
+          <div className="max-w-4xl">
+            {/*
+             * The highlight is coloured directly rather than through BrandText.
+             * That component splits on a brand name, and `titleHighlight` is
+             * "Sales Power" — no match, so its advantis branch fell back to the
+             * literal string "Advantis" and the headline rendered the wrong
+             * word. Mobile dodged it only by rendering an unstyled copy.
+             */}
+            <Display as="h1" size="xl" className="max-w-[15ch] text-pretty">
+              {t("title")} <span className="text-primary">{t("titleHighlight")}</span>
+            </Display>
 
-          {/* The line that answers "what is this company". */}
-          <p className="mt-6 max-w-2xl text-lg leading-[1.4] text-foreground/85 md:mt-8 md:text-2xl md:leading-[1.5]">
-            {positioning("eyebrow")}
-          </p>
+            {/* The line that answers "what is this company". */}
+            <p className="mt-6 max-w-2xl text-lg leading-[1.4] text-foreground/85 md:mt-8 md:text-2xl md:leading-[1.5]">
+              {positioning("eyebrow")}
+            </p>
 
-          {/*
-           * One line on how, not a rundown of every service — the full list
-           * already has its own section (HomeServices) further down the
-           * page, so naming each one here just made the hero the longest
-           * thing to read before the reader hit a button, worst of all on
-           * mobile where every extra line costs a screen.
-           */}
-          <p className="mt-4 max-w-xl text-base leading-[1.5] text-muted-foreground md:mt-5 md:text-lg md:leading-[1.6]">
-            {positioning("text")}
-          </p>
+            {/*
+             * One line on how, not a rundown of every service — the full list
+             * already has its own section (HomeServices) further down the
+             * page, so naming each one here just made the hero the longest
+             * thing to read before the reader hit a button, worst of all on
+             * mobile where every extra line costs a screen.
+             */}
+            <p className="mt-4 max-w-xl text-base leading-[1.5] text-muted-foreground md:mt-5 md:text-lg md:leading-[1.6]">
+              {positioning("text")}
+            </p>
 
-          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg" className="rounded-lg">
-              <Link href="/contact">
-                {t("ctaPrimary")}
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="rounded-lg border-rule-strong bg-background/40 backdrop-blur-sm"
-            >
-              <Link href="/brands">{t("ctaSecondary")}</Link>
-            </Button>
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg" className="rounded-lg">
+                <Link href="/contact">
+                  {t("ctaPrimary")}
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="rounded-lg border-rule-strong bg-background/40 backdrop-blur-sm"
+              >
+                <Link href="/brands">{t("ctaSecondary")}</Link>
+              </Button>
+            </div>
+          </div>
+
+          {/* Not a product screenshot — see HeroSignal's own note on why. */}
+          <div className="hidden lg:block">
+            <div className="rounded-2xl border border-rule bg-card/30 p-8 backdrop-blur-sm">
+              <HeroSignal />
+            </div>
           </div>
         </div>
 

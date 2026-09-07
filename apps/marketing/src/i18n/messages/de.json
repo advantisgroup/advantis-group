@@ -1,4 +1,11 @@
 {
+  "cookieBanner": {
+    "title": "Wir verwenden Cookies",
+    "description": "Wir verwenden Analyse-Cookies, um zu verstehen, wie Besucher diese Website nutzen. Du kannst zustimmen oder ablehnen – die Seite funktioniert in beiden Fällen gleich.",
+    "accept": "Akzeptieren",
+    "reject": "Ablehnen",
+    "privacyLink": "Datenschutzerklärung"
+  },
   "nav": {
     "home": "Startseite",
     "brands": "Unsere Marken",
@@ -604,6 +611,7 @@
       "relatedTitle": "Das könnte Dich auch interessieren",
       "backLabel": "Zurück zur Übersicht",
       "seoLabel": "Themen",
+      "learnMore": "Mehr erfahren",
       "vertriebstrainingTile": {
         "title": "Vertriebstraining",
         "description": "Von Einwandbehandlung über Gesprächsführung bis Closing – unsere Vertriebstrainings vermitteln direkt anwendbares Wissen für Innen- und Außendienst sowie Customer-Care-Teams."

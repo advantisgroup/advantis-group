@@ -1,4 +1,11 @@
 {
+  "cookieBanner": {
+    "title": "我们使用 Cookie",
+    "description": "我们使用分析 Cookie 来了解访问者如何使用本网站。您可以接受或拒绝——无论哪种方式，网站功能都不受影响。",
+    "accept": "接受",
+    "reject": "拒绝",
+    "privacyLink": "隐私政策"
+  },
   "nav": {
     "home": "主页",
     "brands": "我们的品牌",
@@ -604,6 +611,7 @@
       "relatedTitle": "您可能还感兴趣",
       "backLabel": "返回总览",
       "seoLabel": "相关主题",
+      "learnMore": "了解更多",
       "vertriebstrainingTile": {
         "title": "销售培训",
         "description": "从异议处理、沟通技巧到成交话术——我们的销售培训为内部销售、外勤销售及客户关怀团队提供可直接应用的实战知识。"

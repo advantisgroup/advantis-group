@@ -1,4 +1,11 @@
 {
+  "cookieBanner": {
+    "title": "We use cookies",
+    "description": "We use analytics cookies to understand how visitors use this site. You can accept or decline — either way, the site works the same.",
+    "accept": "Accept",
+    "reject": "Reject",
+    "privacyLink": "Privacy policy"
+  },
   "nav": {
     "home": "Home",
     "brands": "Our Brands",
@@ -604,6 +611,7 @@
       "relatedTitle": "You Might Also Be Interested In",
       "backLabel": "Back to Overview",
       "seoLabel": "Topics",
+      "learnMore": "Learn more",
       "vertriebstrainingTile": {
         "title": "Sales Training",
         "description": "From objection handling to conversation techniques to closing — our sales training delivers directly applicable knowledge for inside sales, field sales, and customer care teams."

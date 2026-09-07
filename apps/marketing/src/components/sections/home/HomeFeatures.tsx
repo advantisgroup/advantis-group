@@ -64,6 +64,21 @@ export const HomeFeatures = () => {
   return (
     <Section>
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-rule lg:grid-cols-4">
+        {/*
+         * DOM-first so mobile reads title → principles → stats in order.
+         * `lg:col-start-3 lg:row-start-1` is explicit grid placement, which
+         * overrides source order for *visual* position on `lg`, so moving
+         * this earlier fixes mobile without touching the desktop layout.
+         */}
+        <div className="col-span-2 bg-background p-6 md:p-10 lg:col-span-2 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:flex lg:flex-col lg:justify-between">
+          <Display size="lg">
+            {t("title")} <span className="whitespace-nowrap">{t("titleBrand")}?</span>
+          </Display>
+          <p className="mt-6 text-lg leading-relaxed text-muted-foreground lg:mt-10">
+            {t("subtitle")}
+          </p>
+        </div>
+
         {principles.map((principle, index) => (
           <div
             key={principle.id}
@@ -82,15 +97,6 @@ export const HomeFeatures = () => {
             </p>
           </div>
         ))}
-
-        <div className="col-span-2 bg-background p-6 md:p-10 lg:col-span-2 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:flex lg:flex-col lg:justify-between">
-          <Display size="lg">
-            {t("title")} <span className="whitespace-nowrap">{t("titleBrand")}?</span>
-          </Display>
-          <p className="mt-6 text-lg leading-relaxed text-muted-foreground lg:mt-10">
-            {t("subtitle")}
-          </p>
-        </div>
 
         {stats.map((stat) => (
           <div key={stat.label} className="col-span-1 bg-background p-5 md:p-8">
