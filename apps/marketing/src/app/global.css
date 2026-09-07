@@ -164,7 +164,7 @@
     --popover: oklch(13.613% 0.00152 16.294);
     --popover-foreground: oklch(96% 0.005 80);
 
-    --primary: oklch(0.6441 0.2026 14);
+    --primary: oklch(0.6296 0.155 14);
     --primary-foreground: oklch(98% 0.003 80);
 
     --secondary: oklch(76.51% 0.16454 68.86);
@@ -193,10 +193,10 @@
      */
     --rule: oklch(34% 0.008 60);
     --rule-strong: oklch(44% 0.012 60);
-    --ring: oklch(0.6441 0.2026 14);
+    --ring: oklch(0.6296 0.155 14);
 
     --salespirates: oklch(75% 0.15 85);
-    --advantis: oklch(0.6441 0.2026 14);
+    --advantis: oklch(0.6296 0.155 14);
     --rodeo: oklch(65% 0.2 240);
     /*
      * These two were specified with a chroma no display can render (0.9 and
@@ -237,7 +237,7 @@
     --card-border: oklch(88% 0.022 82);
     --popover: oklch(99% 0.012 88);
     --popover-foreground: oklch(26% 0.022 62);
-    --primary: oklch(0.6441 0.2026 14);
+    --primary: oklch(0.6 0.15 14);
     --primary-foreground: oklch(99% 0.002 95);
     --secondary: oklch(91% 0.055 78);
     --secondary-foreground: oklch(27% 0.025 62);
@@ -255,9 +255,9 @@
     --input: oklch(95% 0.016 86);
     --rule: oklch(89% 0.016 82);
     --rule-strong: oklch(80% 0.022 82);
-    --ring: oklch(0.6441 0.2026 14);
+    --ring: oklch(0.6 0.15 14);
     --salespirates: oklch(70% 0.13 85);
-    --advantis: oklch(60% 0.2 14);
+    --advantis: oklch(0.6 0.15 14);
     --rodeo: oklch(62% 0.18 240);
     --sales-ai: oklch(48% 0.1 240);
     --oldschool: oklch(45% 0.17 10);

@@ -77,7 +77,7 @@ export const SettingsMenu = ({
           <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
             {t("language")}
           </span>
-          <div className="mt-3 grid grid-cols-4 gap-px bg-rule">
+          <div className="mt-3 flex gap-2">
             {languages.map((language) => (
               <button
                 type="button"
@@ -85,10 +85,10 @@ export const SettingsMenu = ({
                 onClick={() => switchLanguage(language.code)}
                 aria-current={language.code === locale}
                 className={cn(
-                  "flex items-center justify-center gap-1.5 py-2.5 text-sm transition-colors",
+                  "flex flex-1 items-center justify-center gap-1.5 rounded-md border py-2.5 text-sm transition-colors",
                   language.code === locale
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-popover text-muted-foreground hover:bg-card hover:text-foreground",
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-rule text-muted-foreground hover:border-rule-strong hover:text-foreground",
                 )}
               >
                 <span className="text-base">{language.flag}</span>
@@ -102,7 +102,7 @@ export const SettingsMenu = ({
           <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
             {t("appearance")}
           </span>
-          <div className="mt-3 grid grid-cols-3 gap-px bg-rule">
+          <div className="mt-3 flex gap-2">
             {["light", "dark", "system"].map((mode) => {
               const Icon = mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
               const label =
@@ -116,10 +116,10 @@ export const SettingsMenu = ({
                   onClick={() => setTheme(mode)}
                   aria-current={isActive}
                   className={cn(
-                    "flex items-center justify-center gap-2 py-2.5 text-sm transition-colors",
+                    "flex flex-1 items-center justify-center gap-2 rounded-md border py-2.5 text-sm transition-colors",
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-popover text-muted-foreground hover:bg-card hover:text-foreground",
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-rule text-muted-foreground hover:border-rule-strong hover:text-foreground",
                   )}
                 >
                   <Icon className="size-4" />
