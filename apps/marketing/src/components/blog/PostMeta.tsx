@@ -1,6 +1,14 @@
-import Image from "next/image";
-
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+
+function authorInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
 
 /**
  * The byline row: avatar, author, date, read time — separated by middots.
@@ -42,14 +50,13 @@ export function PostMeta({
         className,
       )}
     >
-      {authorAvatarUrl ? (
-        <Image
-          src={authorAvatarUrl}
-          alt=""
-          width={avatarPx}
-          height={avatarPx}
-          className="rounded-full object-cover"
-        />
+      {author ? (
+        <Avatar style={{ width: avatarPx, height: avatarPx }} className="border-0 bg-primary/10">
+          {authorAvatarUrl ? <AvatarImage src={authorAvatarUrl} alt="" /> : null}
+          <AvatarFallback className="bg-transparent text-[10px] font-semibold text-primary">
+            {authorInitials(author)}
+          </AvatarFallback>
+        </Avatar>
       ) : null}
       {author ? <span className="font-medium text-foreground/80">{author}</span> : null}
       {author ? <span aria-hidden>·</span> : null}

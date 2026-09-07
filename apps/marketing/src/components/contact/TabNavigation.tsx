@@ -1,64 +1,38 @@
 import { HelpCircle, MessageSquare, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { cn } from "@/lib/utils";
-import { type TabNavigationProps } from "@/types/contact";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { type ContactMode, type TabNavigationProps } from "@/types/contact";
+
+const TAB_TRIGGER_CLASSNAME =
+  "relative flex-1 gap-2 rounded-none border-l border-border px-4 py-4 text-sm font-medium first:border-l-0 md:px-6 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-none [&[data-state=active]]:after:absolute [&[data-state=active]]:after:inset-x-0 [&[data-state=active]]:after:bottom-0 [&[data-state=active]]:after:h-0.5 [&[data-state=active]]:after:bg-primary";
 
 export function TabNavigation({ contactMode, onModeChange }: TabNavigationProps) {
   const t = useTranslations("contact.tabs");
 
   return (
-    <div className="border-b border-border bg-muted/30">
-      <div className="flex">
-        <button
-          onClick={() => onModeChange("message")}
-          className={cn(
-            "flex-1 flex items-center justify-center gap-2 px-4 md:px-6 py-4 text-sm font-medium transition-all relative",
-            contactMode === "message"
-              ? "text-foreground bg-card"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-          )}
-        >
-          <MessageSquare className="w-4 h-4" />
+    <Tabs
+      value={contactMode}
+      onValueChange={(value) => onModeChange(value as ContactMode)}
+      className="border-b border-border bg-muted/30"
+    >
+      <TabsList className="h-auto w-full justify-start rounded-none bg-transparent p-0">
+        <TabsTrigger value="message" className={TAB_TRIGGER_CLASSNAME}>
+          <MessageSquare className="h-4 w-4" />
           <span className="hidden sm:inline">{t("writeMessage")}</span>
           <span className="sm:hidden">{t("writeMessageShort")}</span>
-          {contactMode === "message" && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-          )}
-        </button>
-        <button
-          onClick={() => onModeChange("callback")}
-          className={cn(
-            "flex-1 flex items-center justify-center gap-2 px-4 md:px-6 py-4 text-sm font-medium transition-all relative border-l border-border",
-            contactMode === "callback"
-              ? "text-foreground bg-card"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-          )}
-        >
-          <Phone className="w-4 h-4" />
+        </TabsTrigger>
+        <TabsTrigger value="callback" className={TAB_TRIGGER_CLASSNAME}>
+          <Phone className="h-4 w-4" />
           <span className="hidden sm:inline">{t("requestCallback")}</span>
           <span className="sm:hidden">{t("requestCallbackShort")}</span>
-          {contactMode === "callback" && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-          )}
-        </button>
-        <button
-          onClick={() => onModeChange("other")}
-          className={cn(
-            "flex-1 flex items-center justify-center gap-2 px-4 md:px-6 py-4 text-sm font-medium transition-all relative border-l border-border",
-            contactMode === "other"
-              ? "text-foreground bg-card"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-          )}
-        >
-          <HelpCircle className="w-4 h-4" />
+        </TabsTrigger>
+        <TabsTrigger value="other" className={TAB_TRIGGER_CLASSNAME}>
+          <HelpCircle className="h-4 w-4" />
           <span className="hidden sm:inline">{t("otherInquiries")}</span>
           <span className="sm:hidden">{t("otherInquiriesShort")}</span>
-          {contactMode === "other" && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-          )}
-        </button>
-      </div>
-    </div>
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
   );
 }

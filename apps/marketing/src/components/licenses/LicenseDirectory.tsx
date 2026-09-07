@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { faviconUrl, packageIconUrl, repositoryHostLabel } from "@/lib/licenses";
 import { cn } from "@/lib/utils";
@@ -121,7 +122,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
             onClick={() => setActiveFilter(null)}
             aria-pressed={activeFilter === null}
             className={cn(
-              "inline-flex min-h-11 items-center border px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:min-h-0 md:py-1.5",
+              "inline-flex min-h-11 items-center rounded-full border px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:min-h-0 md:py-1.5",
               activeFilter === null
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-rule bg-card text-muted-foreground hover:text-foreground",
@@ -136,7 +137,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
               onClick={() => setActiveFilter((current) => (current === license ? null : license))}
               aria-pressed={activeFilter === license}
               className={cn(
-                "inline-flex min-h-11 items-center border px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:min-h-0 md:py-1.5",
+                "inline-flex min-h-11 items-center rounded-full border px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:min-h-0 md:py-1.5",
                 activeFilter === license
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-card text-muted-foreground hover:text-foreground",
@@ -152,7 +153,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
             }
             aria-pressed={activeFilter === "__other__"}
             className={cn(
-              "inline-flex min-h-11 items-center border px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:min-h-0 md:py-1.5",
+              "inline-flex min-h-11 items-center rounded-full border px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:min-h-0 md:py-1.5",
               activeFilter === "__other__"
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-rule bg-card text-muted-foreground hover:text-foreground",
@@ -168,7 +169,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
       </div>
 
       {filteredLicenses.length > 0 ? (
-        <div className="border border-rule">
+        <div className="overflow-hidden rounded-xl border border-rule">
           {/*
            * `auto-rows-fr` plus `h-full` on the card keeps every tile in a row
            * the same height regardless of how long a package name runs, which
@@ -183,9 +184,12 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
                 <article key={record.name} className="flex h-full flex-col bg-background p-5">
                   <div className="flex items-start justify-between gap-3">
                     <BrandIcon src={packageIconUrl(record.repository)} alt="" className="size-6" />
-                    <span className="shrink-0 font-mono text-[11px] uppercase tracking-[0.14em] text-primary">
+                    <Badge
+                      variant="outline"
+                      className="shrink-0 font-mono text-[11px] uppercase tracking-[0.14em] text-primary"
+                    >
                       {record.license}
-                    </span>
+                    </Badge>
                   </div>
 
                   <h2 className="mt-3 text-base font-semibold leading-snug">
@@ -234,7 +238,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
           ) : null}
         </div>
       ) : (
-        <div className="border border-dashed border-rule py-16 text-center text-muted-foreground">
+        <div className="rounded-xl border border-dashed border-rule py-16 text-center text-muted-foreground">
           {t("empty")}
         </div>
       )}
@@ -312,7 +316,7 @@ function PackageDetailsDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg rounded-none border-rule">
+      <DialogContent className="max-w-lg rounded-xl border-rule">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <BrandIcon src={packageIconUrl(record.repository)} alt="" className="size-10" />
@@ -332,7 +336,7 @@ function PackageDetailsDialog({
           ))}
         </dl>
 
-        <div className="mt-2 grid gap-px bg-rule sm:grid-cols-2">
+        <div className="mt-2 grid gap-px overflow-hidden rounded-lg bg-rule sm:grid-cols-2">
           {links.map((link) => (
             <a
               key={link.key}
