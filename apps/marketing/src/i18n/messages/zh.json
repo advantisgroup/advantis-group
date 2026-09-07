@@ -44,7 +44,20 @@
     "title": "不仅仅是一家公司，完整的",
     "titleHighlight": "销售力量",
     "ctaPrimary": "立即联系我们",
-    "ctaSecondary": "探索我们的品牌"
+    "ctaSecondary": "探索我们的品牌",
+    "signal": {
+      "label": "线索流转",
+      "live": "实时",
+      "from": "信号",
+      "to": "成交",
+      "events": {
+        "enquiry": { "title": "收到询盘", "detail": "Musterfirma GmbH · 网站表单" },
+        "qualified": { "title": "AI 已筛选", "detail": "意向高 · 已通过重复校验" },
+        "routed": { "title": "已分配", "detail": "Andrea R. · 内部销售" },
+        "call": { "title": "通话中", "detail": "4:12 · 需求沟通" },
+        "closed": { "title": "已成交", "detail": "已移交至 CRM" }
+      }
+    }
   },
   "homeIntro": {
     "eyebrow": "营收与客户互动合作伙伴",

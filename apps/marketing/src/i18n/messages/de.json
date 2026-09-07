@@ -44,7 +44,26 @@
     "title": "Mehr als ein Unternehmen, komplette",
     "titleHighlight": "Sales Power",
     "ctaPrimary": "Jetzt Kontakt aufnehmen",
-    "ctaSecondary": "Unsere Marken entdecken"
+    "ctaSecondary": "Unsere Marken entdecken",
+    "signal": {
+      "label": "Lead-Fluss",
+      "live": "Live",
+      "from": "Signal",
+      "to": "Abschluss",
+      "events": {
+        "enquiry": {
+          "title": "Eingehende Anfrage",
+          "detail": "Musterfirma GmbH · Website-Formular"
+        },
+        "qualified": {
+          "title": "KI-qualifiziert",
+          "detail": "Hohe Kaufabsicht · Dublettenprüfung bestanden"
+        },
+        "routed": { "title": "Zugewiesen", "detail": "Andrea R. · Inbound Sales" },
+        "call": { "title": "Im Gespräch", "detail": "4:12 · Erstgespräch" },
+        "closed": { "title": "Abgeschlossen", "detail": "Übergabe ins CRM" }
+      }
+    }
   },
   "homeIntro": {
     "eyebrow": "Revenue- und Customer-Engagement-Partner",

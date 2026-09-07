@@ -44,7 +44,26 @@
     "title": "Plus qu'une entreprise, une",
     "titleHighlight": "Puissance Commerciale",
     "ctaPrimary": "Contactez-nous Maintenant",
-    "ctaSecondary": "Découvrir Nos Marques"
+    "ctaSecondary": "Découvrir Nos Marques",
+    "signal": {
+      "label": "Flux de leads",
+      "live": "En direct",
+      "from": "Signal",
+      "to": "Conclusion",
+      "events": {
+        "enquiry": {
+          "title": "Demande entrante",
+          "detail": "Musterfirma GmbH · formulaire du site"
+        },
+        "qualified": {
+          "title": "Qualifié par l'IA",
+          "detail": "Intention élevée · doublons écartés"
+        },
+        "routed": { "title": "Attribué", "detail": "Andrea R. · vente interne" },
+        "call": { "title": "En appel", "detail": "4:12 · découverte" },
+        "closed": { "title": "Conclu", "detail": "Transmis au CRM" }
+      }
+    }
   },
   "homeIntro": {
     "eyebrow": "Partenaire Revenue & Customer Engagement",

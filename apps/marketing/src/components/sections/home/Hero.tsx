@@ -27,7 +27,7 @@ export const Hero = () => {
   return (
     <section className="relative pt-24 md:pt-36">
       <div className="relative mx-auto w-full max-w-[1440px] px-5 md:px-10">
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-center lg:gap-10">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:items-center lg:gap-10">
           <div className="max-w-4xl">
             {/*
              * The highlight is coloured directly rather than through BrandText.
@@ -76,9 +76,7 @@ export const Hero = () => {
 
           {/* Not a product screenshot — see HeroSignal's own note on why. */}
           <div className="hidden lg:block">
-            <div className="rounded-2xl border border-rule bg-card/30 p-8 backdrop-blur-sm">
-              <HeroSignal />
-            </div>
+            <HeroSignal />
           </div>
         </div>
 

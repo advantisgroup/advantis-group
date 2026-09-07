@@ -44,7 +44,23 @@
     "title": "More than a company, complete",
     "titleHighlight": "Sales Power",
     "ctaPrimary": "Contact Us Now",
-    "ctaSecondary": "Discover Our Brands"
+    "ctaSecondary": "Discover Our Brands",
+    "signal": {
+      "label": "Lead flow",
+      "live": "Live",
+      "from": "Signal",
+      "to": "Close",
+      "events": {
+        "enquiry": { "title": "Inbound enquiry", "detail": "Musterfirma GmbH · website form" },
+        "qualified": {
+          "title": "AI qualified",
+          "detail": "High intent · duplicate check passed"
+        },
+        "routed": { "title": "Routed", "detail": "Andrea R. · inbound sales" },
+        "call": { "title": "In call", "detail": "4:12 · discovery" },
+        "closed": { "title": "Closed", "detail": "Handed over to the CRM" }
+      }
+    }
   },
   "homeIntro": {
     "eyebrow": "Revenue & Customer Engagement Partner",
