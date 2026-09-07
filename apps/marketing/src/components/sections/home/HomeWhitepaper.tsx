@@ -13,7 +13,7 @@ export const HomeWhitepaper = () => {
 
   return (
     <Section>
-      <div className="tick-frame relative overflow-hidden border border-rule bg-card/40">
+      <div className="relative overflow-hidden rounded-xxl border border-rule bg-card/40">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
@@ -31,7 +31,7 @@ export const HomeWhitepaper = () => {
             <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
               {t("homeCta.description")}
             </p>
-            <Button asChild size="lg" className="mt-8 rounded-none">
+            <Button asChild size="lg" className="mt-8 rounded-lg">
               <Link href="/whitepaper">
                 {t("homeCta.cta")}
                 <ArrowRight className="size-4" />

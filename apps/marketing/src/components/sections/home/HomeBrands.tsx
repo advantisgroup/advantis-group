@@ -67,7 +67,7 @@ export const HomeBrands = () => {
 
               <span
                 aria-hidden
-                className="hidden size-11 items-center justify-center border border-rule-strong transition-colors duration-500 group-hover:border-(--brand-accent) group-focus-visible:border-(--brand-accent) md:inline-flex"
+                className="hidden size-11 items-center justify-center rounded-full border border-rule-strong transition-colors duration-500 group-hover:border-(--brand-accent) group-focus-visible:border-(--brand-accent) md:inline-flex"
               >
                 <ArrowRight className="size-5 transition-transform duration-500 group-hover:translate-x-1" />
               </span>
@@ -77,7 +77,7 @@ export const HomeBrands = () => {
       </div>
 
       <div className="mt-12">
-        <Button asChild size="lg" variant="outline" className="rounded-none border-rule-strong">
+        <Button asChild size="lg" variant="outline" className="rounded-lg border-rule-strong">
           <Link href="/brands">
             {t("cta")}
             <ArrowRight className="ml-2 size-4" />

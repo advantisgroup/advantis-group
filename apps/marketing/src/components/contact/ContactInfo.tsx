@@ -30,7 +30,7 @@ export function ContactInfoMobile({ items }: { items: ContactInfoItem[] }) {
 
 export function ContactInfoDesktop({ items }: { items: ContactInfoItem[] }) {
   return (
-    <div className="border border-border overflow-hidden rounded-t-lg">
+    <div className="border border-border overflow-hidden rounded-lg">
       <div className="grid md:grid-cols-3 divide-x divide-border">
         {items.map((info) => {
           const Icon = info.icon;

@@ -78,7 +78,7 @@ export default function UnsereMarken() {
                   <Button
                     asChild
                     variant="outline"
-                    className="group mt-9 rounded-none border-rule-strong"
+                    className="group mt-9 rounded-lg border-rule-strong"
                   >
                     <Link href={brand.url} target="_blank" rel="noopener noreferrer">
                       {t("learnMore")}
@@ -133,7 +133,7 @@ export default function UnsereMarken() {
               <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
                 {t("cta.description")}
               </p>
-              <Button asChild size="lg" className="mt-10 rounded-none">
+              <Button asChild size="lg" className="mt-10 rounded-lg">
                 <Link href="/contact">
                   {t("cta.button")}
                   <ArrowRight className="size-4" />

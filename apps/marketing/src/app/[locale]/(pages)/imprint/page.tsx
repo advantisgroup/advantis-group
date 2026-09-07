@@ -60,7 +60,7 @@ export default function Impressum() {
           {t("title")}
         </Display>
 
-        <div className="mt-16 grid gap-px bg-rule md:grid-cols-3">
+        <div className="mt-16 grid gap-px overflow-hidden rounded-t-xl bg-rule md:grid-cols-3">
           {sections.map((section) => {
             const Icon = section.icon;
             return (
@@ -75,7 +75,7 @@ export default function Impressum() {
           })}
         </div>
 
-        <div className="mt-px grid gap-px bg-rule md:grid-cols-2">
+        <div className="mt-px grid gap-px overflow-hidden rounded-b-xl bg-rule md:grid-cols-2">
           <div className="bg-background p-6 md:p-8">
             <h2 className="font-[family-name:var(--font-outfit)] text-xl font-bold tracking-[-0.02em]">
               {t("sections.register.title")}

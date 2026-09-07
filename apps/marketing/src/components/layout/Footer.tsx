@@ -128,12 +128,6 @@ export const Footer = () => {
 
   return (
     <>
-      {/*
-       * The old curved divider was a soft pink arc, which fought the square
-       * hairline language everywhere above it. A hatched band joins the page
-       * to the footer instead.
-       */}
-      <div aria-hidden className="hatch h-10 border-t border-rule opacity-70" />
       <footer ref={footerRef} className="relative overflow-hidden border-t border-rule bg-card">
         <div className="relative z-20 mx-auto w-full max-w-[1440px] px-5 py-24 md:px-10">
           {/* Large animated company name */}
@@ -191,7 +185,7 @@ export const Footer = () => {
                   <li>
                     <Link
                       href={intranetUrl}
-                      className="group/intranet relative inline-flex items-center gap-1.5 overflow-hidden border border-advantis/30 bg-advantis/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-advantis transition-colors hover:bg-advantis/20"
+                      className="group/intranet relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border border-advantis/30 bg-advantis/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-advantis transition-colors hover:bg-advantis/20"
                     >
                       <Building2 className="h-3.5 w-3.5" />
                       <span>{t("nav.intranet")}</span>

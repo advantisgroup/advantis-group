@@ -52,7 +52,7 @@ export const PipelineSchematic = ({ className }: { className?: string }) => {
   return (
     <figure
       className={cn(
-        "tick-frame relative border border-rule bg-card/30 p-4 backdrop-blur-sm md:p-6",
+        "relative rounded-xl border border-rule bg-card/30 p-4 backdrop-blur-sm md:p-6",
         className,
       )}
     >
@@ -108,7 +108,7 @@ const StageNode = ({
 }) => (
   <div
     className={cn(
-      "relative w-[78vw] shrink-0 snap-start border p-4 transition-colors duration-500 sm:w-[60vw] md:w-auto md:flex-1 md:shrink md:p-5",
+      "relative w-[78vw] shrink-0 snap-start rounded-lg border p-4 transition-colors duration-500 sm:w-[60vw] md:w-auto md:flex-1 md:shrink md:p-5",
       active ? "border-primary/50 bg-primary/[0.06]" : "border-rule/70 bg-transparent",
     )}
   >

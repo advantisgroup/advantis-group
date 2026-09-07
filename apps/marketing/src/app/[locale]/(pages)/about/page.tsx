@@ -47,7 +47,7 @@ export default function UberUns() {
 
         {/* Mission and vision, as two cells of one grid rather than two floating cards. */}
         <Section>
-          <div className="grid gap-px bg-rule md:grid-cols-2">
+          <div className="grid gap-px overflow-hidden rounded-xl bg-rule md:grid-cols-2">
             {[
               {
                 badge: t("mission.badge"),
@@ -125,7 +125,7 @@ export default function UberUns() {
         </Section>
 
         <Section size="tight">
-          <dl className="grid gap-px bg-rule md:grid-cols-3">
+          <dl className="grid gap-px overflow-hidden rounded-xl bg-rule md:grid-cols-3">
             {stats.map((stat) => (
               <div key={stat.label} className="bg-background p-8 md:p-10">
                 <dd className="font-[family-name:var(--font-outfit)] text-5xl font-bold tabular-nums tracking-[-0.03em] text-primary md:text-6xl">
@@ -146,7 +146,7 @@ export default function UberUns() {
             {t("values.badge")}
           </Display>
 
-          <div className="mt-14 grid gap-px bg-rule md:grid-cols-3">
+          <div className="mt-14 grid gap-px overflow-hidden rounded-xl bg-rule md:grid-cols-3">
             {values.map((value, index) => (
               <div key={value.title} className="bg-background p-8">
                 <div className="flex items-center justify-between">
@@ -178,7 +178,7 @@ export default function UberUns() {
               <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-primary-foreground/80 md:text-xl">
                 {t("cta.description")}
               </p>
-              <Button asChild size="lg" variant="secondary" className="mt-10 rounded-none">
+              <Button asChild size="lg" variant="secondary" className="mt-10 rounded-lg">
                 <Link href="/contact">
                   {t("cta.button")}
                   <ArrowRight className="size-4" />

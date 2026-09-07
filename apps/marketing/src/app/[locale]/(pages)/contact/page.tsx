@@ -191,7 +191,7 @@ export default function Kontakt() {
 
           <section
             ref={formSectionRef}
-            className="tick-frame overflow-hidden border border-rule bg-card/30"
+            className="overflow-hidden rounded-xl border border-rule bg-card/30"
           >
             <TabNavigation contactMode={contactMode} onModeChange={setContactMode} />
 

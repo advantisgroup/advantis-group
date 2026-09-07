@@ -63,7 +63,7 @@ export const HomeFeatures = () => {
 
   return (
     <Section>
-      <div className="grid grid-cols-2 gap-px bg-rule lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-rule lg:grid-cols-4">
         {principles.map((principle, index) => (
           <div
             key={principle.id}

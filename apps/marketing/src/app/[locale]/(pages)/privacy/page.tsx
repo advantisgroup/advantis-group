@@ -181,7 +181,7 @@ export default function Datenschutz() {
       {isMobile && (
         <Button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="fixed bottom-6 right-6 z-50 size-14 rounded-none shadow-lg"
+          className="fixed bottom-6 right-6 z-50 size-14 rounded-full shadow-lg"
           size="icon"
         >
           {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

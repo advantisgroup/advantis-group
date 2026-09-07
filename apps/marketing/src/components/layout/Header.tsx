@@ -199,7 +199,7 @@ export const Header = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="absolute right-0 top-[calc(100%+0.75rem)] w-[34rem] border border-rule bg-popover shadow-2xl shadow-black/20"
+                  className="absolute right-0 top-[calc(100%+0.75rem)] w-[34rem] overflow-hidden rounded-xl border border-rule bg-popover shadow-2xl shadow-black/20"
                 >
                   {/* One card per destination: label plus what is actually there. */}
                   <ul className="grid grid-cols-2 gap-px bg-rule">

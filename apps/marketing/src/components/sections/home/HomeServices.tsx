@@ -62,7 +62,7 @@ export const HomeServices = () => {
       </div>
 
       <div className="mt-14 grid gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-x-16 md:mt-16">
-        <div className="grid gap-px self-start bg-rule sm:grid-cols-2">
+        <div className="grid gap-px self-start overflow-hidden rounded-xl bg-rule sm:grid-cols-2">
           {entries.map((entry, index) => (
             <Link
               key={entry.key}
@@ -102,7 +102,7 @@ export const HomeServices = () => {
          */}
         <div
           aria-hidden
-          className="tick-frame hidden self-start border border-rule bg-card/40 p-8 lg:sticky lg:top-28 lg:block"
+          className="hidden self-start rounded-xl border border-rule bg-card/40 p-8 lg:sticky lg:top-28 lg:block"
         >
           <div key={active.key} className="animate-panel-in">
             <div className="flex items-start justify-between gap-6">

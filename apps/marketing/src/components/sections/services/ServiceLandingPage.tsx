@@ -178,7 +178,7 @@ export const ServiceLandingPage = ({ slug }: { slug: ServiceSlug }) => {
                   <h2 className="font-[family-name:var(--font-outfit)] text-2xl font-bold tracking-[-0.025em] md:text-3xl">
                     {t("aiTitle")}
                   </h2>
-                  <ul className="mt-6 grid gap-px bg-rule sm:grid-cols-2">
+                  <ul className="mt-6 grid gap-px overflow-hidden rounded-xl bg-rule sm:grid-cols-2">
                     {aiItems.map((item, index) => (
                       <li
                         key={item}
@@ -237,7 +237,7 @@ export const ServiceLandingPage = ({ slug }: { slug: ServiceSlug }) => {
               <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-muted-foreground">
                 {t("ctaText")}
               </p>
-              <Button asChild size="lg" className="mt-9 rounded-none">
+              <Button asChild size="lg" className="mt-9 rounded-lg">
                 <Link href="/contact">
                   {common("ctaButton")}
                   <ArrowRight className="size-4" />

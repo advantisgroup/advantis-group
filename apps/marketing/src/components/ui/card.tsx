@@ -12,7 +12,7 @@ function Card({ className, nested = false, ...props }: CardProps) {
       data-slot="card"
       className={cn(
         "bg-card text-card-foreground flex flex-col",
-        nested ? "rounded-md border border-border" : "rounded-none",
+        nested ? "rounded-lg border border-border" : "rounded-xl border border-border",
         className,
       )}
       {...props}

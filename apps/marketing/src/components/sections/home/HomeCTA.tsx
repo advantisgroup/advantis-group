@@ -42,7 +42,7 @@ export const HomeCTA = () => {
           </p>
 
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row md:mt-10">
-            <Button asChild size="lg" className="rounded-none">
+            <Button asChild size="lg" className="rounded-lg">
               <Link href="/contact">
                 {t("primary")}
                 <ArrowRight className="size-4" />
@@ -52,7 +52,7 @@ export const HomeCTA = () => {
               asChild
               size="lg"
               variant="outline"
-              className="rounded-none border-rule-strong bg-background/40 backdrop-blur-sm"
+              className="rounded-lg border-rule-strong bg-background/40 backdrop-blur-sm"
             >
               <Link href={`mailto:${process.env.NEXT_PUBLIC_EMAIL_ADRESS}`}>
                 <Mail className="size-4" />

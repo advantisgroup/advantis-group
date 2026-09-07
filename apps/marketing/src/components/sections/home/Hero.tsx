@@ -55,7 +55,7 @@ export const Hero = () => {
           </p>
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg" className="rounded-none">
+            <Button asChild size="lg" className="rounded-lg">
               <Link href="/contact">
                 {t("ctaPrimary")}
                 <ArrowRight className="size-4" />
@@ -65,7 +65,7 @@ export const Hero = () => {
               asChild
               size="lg"
               variant="outline"
-              className="rounded-none border-rule-strong bg-background/40 backdrop-blur-sm"
+              className="rounded-lg border-rule-strong bg-background/40 backdrop-blur-sm"
             >
               <Link href="/brands">{t("ctaSecondary")}</Link>
             </Button>

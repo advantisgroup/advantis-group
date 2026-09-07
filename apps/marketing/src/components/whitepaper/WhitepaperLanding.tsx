@@ -63,7 +63,7 @@ export function WhitepaperLanding({ available }: { available: boolean }) {
             </div>
 
             <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-              <div className="tick-frame overflow-hidden border border-rule bg-card/50 backdrop-blur-sm lg:sticky lg:top-28">
+              <div className="overflow-hidden rounded-xl border border-rule bg-card/50 backdrop-blur-sm lg:sticky lg:top-28">
                 <div className="flex flex-col items-start gap-4 border-b border-rule bg-linear-to-br from-advantis/8 to-transparent p-6 sm:flex-row sm:items-center sm:gap-6 md:p-8">
                   <WhitepaperCover
                     title={t("hero.title")}
@@ -116,7 +116,7 @@ export function WhitepaperLanding({ available }: { available: boolean }) {
                 <ol className="grid gap-6 sm:grid-cols-3">
                   {STEPS.map((step, index) => (
                     <li key={step} className="space-y-2">
-                      <span className="flex size-8 items-center justify-center border border-advantis/30 bg-advantis/8 font-mono text-[11px] font-semibold text-advantis">
+                      <span className="flex size-8 items-center justify-center rounded-full border border-advantis/30 bg-advantis/8 font-mono text-[11px] font-semibold text-advantis">
                         {index + 1}
                       </span>
                       <p className="text-sm font-medium text-foreground">
@@ -144,7 +144,7 @@ export function WhitepaperLanding({ available }: { available: boolean }) {
               <p className="max-w-2xl text-base text-muted-foreground">{tContact("description")}</p>
             </div>
 
-            <dl className="mt-10 grid gap-px bg-rule sm:grid-cols-3">
+            <dl className="mt-10 grid gap-px overflow-hidden rounded-xl bg-rule sm:grid-cols-3">
               {contactItems.map((item) => {
                 const Icon = item.icon;
                 const body = (
