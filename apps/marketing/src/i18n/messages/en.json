@@ -13,6 +13,7 @@
     "licenses": "Licenses",
     "settings": "Settings",
     "toggleMenu": "Toggle menu",
+    "closeMenu": "Close menu",
     "settingsMenu": {
       "label": "Settings",
       "language": "Language",

@@ -13,6 +13,7 @@
     "licenses": "许可证",
     "settings": "设置",
     "toggleMenu": "切换菜单",
+    "closeMenu": "关闭菜单",
     "settingsMenu": {
       "label": "设置",
       "language": "语言",
@@ -540,11 +541,7 @@
     "menuLabel": "账户",
     "guest": "访客",
     "providerHint": "可通过 Clerk Google 登录，也可以使用邮箱创建账户。",
-    "authShellHighlights": [
-      "随时跟踪你的请求状态",
-      "在一处管理你的个人资料",
-      "由 Clerk 提供安全保障"
-    ],
+    "authShellHighlights": ["随时跟踪你的请求状态", "在一处管理你的个人资料", "由 Clerk 提供安全保障"],
     "signInPageCta": "打开登录页",
     "signUpPageCta": "打开注册页",
     "signIn": "登录",
