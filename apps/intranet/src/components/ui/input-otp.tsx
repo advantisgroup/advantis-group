@@ -16,7 +16,17 @@ function InputOTP({
     <OTPInput
       data-slot="input-otp"
       containerClassName={cn("flex items-center gap-2 has-disabled:opacity-50", containerClassName)}
-      className={cn("disabled:cursor-not-allowed", className)}
+      className={cn(
+        // The library sets `user-select: none` on the *container* and only
+        // re-enables `pointer-events` on this input — so the field inherits
+        // an unselectable state. Desktop Ctrl+V survives that, but iOS and
+        // Android refuse to show long-press "Paste" or the keyboard's
+        // clipboard suggestion on a field that can't be selected, which is
+        // what made pasting a mailed code impossible on a phone.
+        "select-text [-webkit-user-select:text]",
+        "disabled:cursor-not-allowed",
+        className,
+      )}
       {...props}
     />
   );

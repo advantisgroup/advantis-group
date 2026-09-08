@@ -48,6 +48,29 @@ const METHOD_PRIORITY: Record<StepMethod, number> = {
   recovery_code: 3,
 };
 
+/**
+ * Cleans up a pasted string before the slots try to consume it.
+ *
+ * Whatever the user pastes arrives verbatim, and any character the input
+ * rejects makes the whole paste fail silently — no error, nothing appears.
+ * Real pastes are messy: mail clients render the code as "123 456", people
+ * double-tap and grab a trailing space, and selecting the sentence in the
+ * email body yields something like "Your code is 200530".
+ */
+function transformPastedCode(pasted: string): string {
+  // First run of 6+ digits wins. Codes are always at least six, so a run that
+  // long is the code and nothing else — no need to reason about the words
+  // around it, which modern "copy code" buttons and clipboard suggestions
+  // don't hand over anyway.
+  const run = pasted.match(/\d{6,}/);
+  if (run) return run[0].slice(0, 6);
+
+  // Nothing that long: the code was split by a separator ("200 530",
+  // "200-530"), so drop everything that isn't a digit and let the slots take
+  // what fits.
+  return pasted.replace(/\D/g, "");
+}
+
 /** Masks the local part but keeps enough to recognise which account this is:
  * `kaleb.daniel@gmail.com` → `ka•••••@gmail.com`. Showing the address in full
  * on a shared or over-the-shoulder screen leaks more than it helps; a blind
@@ -239,6 +262,7 @@ export function StepUpForm({
               maxLength={6}
               value={code}
               onChange={handleOtpChange}
+              pasteTransformer={transformPastedCode}
               disabled={busy}
               autoFocus
               containerClassName="w-full justify-center"
@@ -270,7 +294,10 @@ export function StepUpForm({
               aria-invalid={!!error}
               value={code}
               onChange={(e) => {
-                setCode(e.target.value.toUpperCase());
+                // Trimmed because a pasted recovery code usually drags
+                // whitespace along with it, and there's never a legitimate
+                // space to type inside one.
+                setCode(e.target.value.trim().toUpperCase());
                 setError(null);
               }}
               onKeyDown={(e) => {
