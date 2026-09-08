@@ -33,16 +33,6 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/ingest/static/:path*",
-        destination: "https://eu-assets.i.posthog.com/static/:path*",
-        locale: false,
-      },
-      {
-        source: "/ingest/:path*",
-        destination: "https://eu.i.posthog.com/:path*",
-        locale: false,
-      },
-      {
         source: "/api/:path*",
         destination: "/api/:path*",
         locale: false,
@@ -54,7 +44,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  // This is required to support PostHog trailing slash API requests
+  // Was here to let PostHog's trailing-slash API calls through the proxy.
+  // PostHog is gone, but flipping this back now would start redirecting
+  // every trailing-slash URL on a live site — left alone deliberately.
   skipTrailingSlashRedirect: true,
 };
 

@@ -1,20 +1,12 @@
 {
-  "cookieBanner": {
-    "title": "Nous utilisons des cookies",
-    "description": "Nous utilisons des cookies d'analyse pour comprendre comment les visiteurs utilisent ce site. Vous pouvez accepter ou refuser — le site fonctionne de la même manière dans les deux cas.",
-    "accept": "Accepter",
-    "reject": "Refuser",
-    "privacyLink": "Politique de confidentialité",
-    "manage": "Gérer les préférences"
-  },
   "cookiePreferences": {
-    "title": "Préférences de cookies",
-    "description": "Choisissez ce que ce site est autorisé à mesurer. Vous pouvez le modifier à tout moment — rien ici n'affecte le fonctionnement du site.",
+    "title": "Cookies et suivi",
+    "description": "Il n'y a pas de bandeau de consentement sur ce site, parce qu'il n'y a rien à accepter. Nous ne déposons aucun cookie de suivi — cette page explique exactement ce qui se passe, et ce qui ne se passe pas, lors de votre visite.",
     "usedFor": "Utilisés pour",
     "essential": {
       "title": "Nécessaires",
       "always": "Toujours actifs",
-      "description": "Ils vous gardent connecté, sécurisent votre compte et enregistrent le choix que vous faites sur cette page afin que nous puissions le respecter. Le site ne peut pas fonctionner sans eux, il n'y a donc rien à désactiver.",
+      "description": "Ils vous gardent connecté et sécurisent votre compte. Le site ne peut pas fonctionner sans eux, il n'y a donc rien à désactiver.",
       "uses": {
         "auth": "Connexion et maintien de la session",
         "account": "Gestion du compte",
@@ -22,14 +14,13 @@
       }
     },
     "analytics": {
-      "title": "Analyse et suivi",
-      "description": "Statistiques d'usage anonymes via PostHog — quelles pages sont visitées et où les visiteurs s'arrêtent. Les désactiver ne vous coûte rien : le site continue de fonctionner à l'identique.",
+      "title": "Analyse",
+      "badge": "Sans cookies",
+      "description": "Nous comptons les visites sur nos propres serveurs plutôt que de les envoyer à une société d'analyse. Aucun cookie, aucune adresse IP, aucun profil — juste un identifiant aléatoire qui vit dans votre onglet et disparaît dès que vous le fermez. Nous distinguons ainsi les visites sans jamais savoir que c'était vous.",
       "uses": {
         "usage": "Quelles pages sont visitées",
         "improve": "Repérer ce qu'il faut améliorer"
-      },
-      "enabled": "Analyse activée",
-      "disabled": "Analyse désactivée"
+      }
     },
     "commitments": {
       "title": "Ce que nous n'en faisons jamais",
@@ -37,12 +28,7 @@
       "train": "Nous ne les utilisons pas pour entraîner des modèles d'IA.",
       "ads": "Nous ne diffusons pas de publicité personnalisée et ne créons pas de profils publicitaires."
     },
-    "status": {
-      "granted": "Vous avez accepté les cookies d'analyse.",
-      "denied": "Vous avez refusé les cookies d'analyse. Rien n'est collecté.",
-      "pending": "Vous n'avez pas encore choisi. Rien n'est collecté d'ici là."
-    },
-    "localOnly": "Votre thème et votre langue n'en font pas partie. Ils restent dans votre navigateur et ne nous sont jamais transmis.",
+    "localOnly": "Votre thème et votre langue n'en font pas partie non plus. Ils restent dans votre navigateur et ne nous sont jamais transmis.",
     "privacyHint": "Pour le détail complet de ce que nous stockons et pendant combien de temps, consultez la",
     "privacyLink": "politique de confidentialité"
   },
@@ -58,7 +44,7 @@
     "privacy": "Politique de Confidentialité",
     "imprint": "Mentions Légales",
     "licenses": "Licences",
-    "cookies": "Préférences de cookies",
+    "cookies": "Cookies",
     "settings": "Paramètres",
     "toggleMenu": "Basculer le menu",
     "closeMenu": "Fermer le menu",

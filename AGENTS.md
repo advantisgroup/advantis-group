@@ -69,9 +69,10 @@ depend on a real Clerk session; under the bypass they are either dead or
 misleading, and a green result means nothing. Those need real keys.
 
 Known local-only symptoms under the bypass, none of which are bugs to chase:
-`/blog` returns 500 because `getPosts` queries the fake Convex URL; PostHog
-logs "initialized without a token"; ClerkJS logs a development-mode init
-error in the console.
+`/blog` returns 500 because `getPosts` queries the fake Convex URL; pageview
+tracking silently records nothing for the same reason (see
+`AnalyticsTracker.tsx`); ClerkJS logs a development-mode init error in the
+console.
 
 Headless Chromium in the Claude Code web sandbox cannot reach `localhost`
 through the agent HTTPS proxy — it fails with `ERR_CONNECTION_RESET`. Launch

@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 
-import { CookieBanner } from "@/components/layout/CookieBanner";
+import { AnalyticsTracker } from "@/components/analytics/AnalyticsTracker";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { type Locale, locales } from "@/i18n/request";
@@ -35,7 +35,7 @@ export default async function LocaleLayout({
       <Header />
       {children}
       <Footer />
-      <CookieBanner />
+      <AnalyticsTracker />
     </NextIntlClientProvider>
   );
 }

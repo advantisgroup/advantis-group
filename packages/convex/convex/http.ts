@@ -4,6 +4,7 @@ import { ConvexError } from "convex/values";
 import { httpAction } from "./_generated/server";
 import type { ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { ingestPayloadSchema, type ActivitySample } from "./activity/lib/contracts";
 import { z } from "zod";
 import { verifyPassword } from "./activity/lib/crypto";
@@ -213,6 +214,37 @@ http.route({
 
     const passwordOk = await verifyPassword(body.password, row.value);
     return jsonResponse(passwordOk ? 200 : 401, { ok: passwordOk });
+  }),
+});
+
+const durationBeaconSchema = z.object({
+  pageviewId: z.string().min(1).max(64),
+  durationMs: z.number(),
+});
+
+/**
+ * POST /analytics/duration — a `navigator.sendBeacon` from `pagehide` on the
+ * marketing site, filling in how long the visit lasted. Unauthenticated by
+ * design (anonymous visitor, no Clerk session): validated and bounds-checked
+ * instead, same as everywhere else public input reaches this file. No CORS
+ * headers because `sendBeacon` doesn't read the response — it only needs the
+ * request to land.
+ */
+http.route({
+  path: "/analytics/duration",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await readJson(request);
+    if (body === undefined) return badRequest();
+    const parsed = durationBeaconSchema.safeParse(body);
+    if (!parsed.success) return badRequest();
+
+    await ctx.runMutation(internal.marketingAnalytics.applyDuration, {
+      pageviewId: parsed.data.pageviewId as Id<"analyticsPageviews">,
+      durationMs: parsed.data.durationMs,
+    });
+
+    return jsonResponse(200, { ok: true });
   }),
 });
 

@@ -98,6 +98,7 @@ import type * as lib_profile from "../lib/profile.js";
 import type * as lib_sandbox from "../lib/sandbox.js";
 import type * as lib_stepUp from "../lib/stepUp.js";
 import type * as lib_users from "../lib/users.js";
+import type * as marketingAnalytics from "../marketingAnalytics.js";
 import type * as members from "../members.js";
 import type * as migrations_backfillCustomRoleIds from "../migrations/backfillCustomRoleIds.js";
 import type * as migrations_backfillManageClockodoTeam from "../migrations/backfillManageClockodoTeam.js";
@@ -246,6 +247,7 @@ declare const fullApi: ApiFromModules<{
   "lib/sandbox": typeof lib_sandbox;
   "lib/stepUp": typeof lib_stepUp;
   "lib/users": typeof lib_users;
+  marketingAnalytics: typeof marketingAnalytics;
   members: typeof members;
   "migrations/backfillCustomRoleIds": typeof migrations_backfillCustomRoleIds;
   "migrations/backfillManageClockodoTeam": typeof migrations_backfillManageClockodoTeam;

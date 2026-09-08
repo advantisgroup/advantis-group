@@ -2206,6 +2206,42 @@ export default defineSchema({
     .index("by_slug_language", ["slug", "language"])
     .index("by_language_status_publishedAt", ["language", "status", "publishedAt"]),
 
+  /**
+   * First-party pageview log for the marketing site — replaces PostHog.
+   * `sessionId` is a random id the client mints into `sessionStorage` (never
+   * `localStorage`, never a cookie), so it dies with the tab and never
+   * identifies a return visitor. No IP, no persistent id: nothing here needs
+   * cookie consent.
+   *
+   * `postId` is set (from the page component's own props, not string
+   * matching) only when the path is a blog post — a direct reference instead
+   * of re-deriving `/${language}/blog/${slug}` and hoping it's exact, which
+   * is what broke the old PostHog-backed panel.
+   */
+  analyticsPageviews: defineTable({
+    path: v.string(),
+    postId: v.optional(v.id("blogPosts")),
+    locale: v.string(),
+    sessionId: v.string(),
+    /** Hostname only (e.g. "google.com"), never the full referrer URL. */
+    referrerDomain: v.optional(v.string()),
+    /** Filled in later by a sendBeacon on pagehide; absent if that never fires. */
+    durationMs: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_postId_createdAt", ["postId", "createdAt"])
+    .index("by_sessionId_createdAt", ["sessionId", "createdAt"]),
+
+  /** Named conversion events (whitepaper requested, contact form submitted,
+   * ...) — the marketing-site equivalent of a PostHog custom event, minus
+   * the property bag: none of the current events need one. */
+  analyticsEvents: defineTable({
+    name: v.string(),
+    sessionId: v.string(),
+    locale: v.string(),
+    createdAt: v.number(),
+  }).index("by_name_createdAt", ["name", "createdAt"]),
+
   // Singleton marker — presence of a row means the one-time migration from
   // `guidebookPages` into `wikiEntries` has run. The wiki list page shows a
   // full-screen "migrate now" gate (manager-triggered) until this exists.

@@ -1,20 +1,12 @@
 {
-  "cookieBanner": {
-    "title": "我们使用 Cookie",
-    "description": "我们使用分析 Cookie 来了解访问者如何使用本网站。您可以接受或拒绝——无论哪种方式，网站功能都不受影响。",
-    "accept": "接受",
-    "reject": "拒绝",
-    "privacyLink": "隐私政策",
-    "manage": "管理偏好设置"
-  },
   "cookiePreferences": {
-    "title": "Cookie 偏好设置",
-    "description": "选择本网站可以收集哪些信息。您可以随时更改——这些设置不会影响网站的正常使用。",
+    "title": "Cookie 与跟踪",
+    "description": "本网站没有 Cookie 同意横幅，因为这里没有需要您同意的内容。我们完全不使用跟踪 Cookie——本页会准确说明您访问时会发生什么、不会发生什么。",
     "usedFor": "用途",
     "essential": {
       "title": "必要 Cookie",
       "always": "始终启用",
-      "description": "用于保持登录状态、保障账户安全，并记录您在本页所做的选择以便我们遵守。没有这些，网站无法运行，因此没有可关闭的选项。",
+      "description": "用于保持登录状态并保障账户安全。没有这些，网站无法运行，因此没有可关闭的选项。",
       "uses": {
         "auth": "登录与保持登录状态",
         "account": "账户管理",
@@ -22,14 +14,13 @@
       }
     },
     "analytics": {
-      "title": "分析与跟踪",
-      "description": "通过 PostHog 收集匿名使用统计——哪些页面被访问、访问者在哪里离开。关闭它不会有任何影响：网站的所有功能都照常运行。",
+      "title": "分析",
+      "badge": "无 Cookie",
+      "description": "我们在自己的服务器上统计页面访问量，而不是把数据发送给分析公司。没有 Cookie、没有 IP 地址、没有用户画像——只有一个存在于浏览器标签页中的随机标识，标签页一关就消失。这样我们能区分不同的访问，却始终不知道那是您。",
       "uses": {
         "usage": "哪些页面被访问",
         "improve": "找出需要改进的地方"
-      },
-      "enabled": "已启用分析",
-      "disabled": "已停用分析"
+      }
     },
     "commitments": {
       "title": "我们绝不会做的事",
@@ -37,12 +28,7 @@
       "train": "我们不会用它来训练 AI 模型。",
       "ads": "我们不投放个性化广告，也不建立广告画像。"
     },
-    "status": {
-      "granted": "您已接受分析 Cookie。",
-      "denied": "您已拒绝分析 Cookie，我们不会收集任何数据。",
-      "pending": "您尚未做出选择。在此之前不会收集任何数据。"
-    },
-    "localOnly": "主题和语言不在此列。它们只保存在您的浏览器中，绝不会发送给我们。",
+    "localOnly": "主题和语言同样不在此列。它们只保存在您的浏览器中，绝不会发送给我们。",
     "privacyHint": "有关我们存储哪些数据及保留多久的完整说明，请参阅",
     "privacyLink": "隐私政策"
   },
@@ -58,7 +44,7 @@
     "privacy": "隐私政策",
     "imprint": "版权信息",
     "licenses": "许可证",
-    "cookies": "Cookie 偏好设置",
+    "cookies": "Cookie",
     "settings": "设置",
     "toggleMenu": "切换菜单",
     "closeMenu": "关闭菜单",

@@ -1,20 +1,12 @@
 {
-  "cookieBanner": {
-    "title": "Wir verwenden Cookies",
-    "description": "Wir verwenden Analyse-Cookies, um zu verstehen, wie Besucher diese Website nutzen. Du kannst zustimmen oder ablehnen – die Seite funktioniert in beiden Fällen gleich.",
-    "accept": "Akzeptieren",
-    "reject": "Ablehnen",
-    "privacyLink": "Datenschutzerklärung",
-    "manage": "Einstellungen verwalten"
-  },
   "cookiePreferences": {
-    "title": "Cookie-Einstellungen",
-    "description": "Entscheide, was diese Website messen darf. Du kannst das jederzeit ändern – nichts davon beeinflusst die Funktion der Seite.",
+    "title": "Cookies und Tracking",
+    "description": "Auf dieser Website gibt es kein Cookie-Banner, weil es hier nichts zuzustimmen gibt. Wir setzen überhaupt keine Tracking-Cookies – diese Seite erklärt genau, was bei deinem Besuch passiert und was nicht.",
     "usedFor": "Wird verwendet für",
     "essential": {
       "title": "Erforderlich",
       "always": "Immer aktiv",
-      "description": "Diese halten dich angemeldet, sichern dein Konto und speichern deine Auswahl auf dieser Seite, damit wir sie einhalten können. Ohne sie funktioniert die Website nicht – es gibt hier also nichts abzuschalten.",
+      "description": "Diese halten dich angemeldet und sichern dein Konto. Ohne sie funktioniert die Website nicht – es gibt hier also nichts abzuschalten.",
       "uses": {
         "auth": "Anmelden und angemeldet bleiben",
         "account": "Kontoverwaltung",
@@ -22,14 +14,13 @@
       }
     },
     "analytics": {
-      "title": "Analyse und Tracking",
-      "description": "Anonyme Nutzungsstatistiken über PostHog – welche Seiten besucht werden und wo Besucher abspringen. Das Abschalten kostet dich nichts: Die Website funktioniert vollständig weiter.",
+      "title": "Analyse",
+      "badge": "Ohne Cookies",
+      "description": "Wir zählen Seitenaufrufe auf unseren eigenen Servern, statt sie an ein Analyse-Unternehmen zu schicken. Kein Cookie, keine IP-Adresse, kein Profil – nur eine zufällige ID, die in deinem Browser-Tab lebt und verschwindet, sobald du ihn schließt. So können wir Besuche unterscheiden, ohne je zu wissen, dass du es warst.",
       "uses": {
         "usage": "Welche Seiten besucht werden",
         "improve": "Erkennen, was verbessert werden muss"
-      },
-      "enabled": "Analyse aktiviert",
-      "disabled": "Analyse deaktiviert"
+      }
     },
     "commitments": {
       "title": "Was wir damit niemals tun",
@@ -37,12 +28,7 @@
       "train": "Wir nutzen sie nicht zum Trainieren von KI-Modellen.",
       "ads": "Wir schalten keine personalisierte Werbung und erstellen keine Werbeprofile."
     },
-    "status": {
-      "granted": "Du hast Analyse-Cookies akzeptiert.",
-      "denied": "Du hast Analyse-Cookies abgelehnt. Es werden keine Daten erfasst.",
-      "pending": "Du hast noch keine Auswahl getroffen. Bis dahin werden keine Daten erfasst."
-    },
-    "localOnly": "Design und Sprache gehören nicht dazu. Sie bleiben in deinem Browser und werden nie an uns übertragen.",
+    "localOnly": "Design und Sprache gehören ebenfalls nicht dazu. Sie bleiben in deinem Browser und werden nie an uns übertragen.",
     "privacyHint": "Alle Details dazu, was wir speichern und wie lange, findest du in der",
     "privacyLink": "Datenschutzerklärung"
   },
@@ -58,7 +44,7 @@
     "privacy": "Datenschutz",
     "imprint": "Impressum",
     "licenses": "Lizenzen",
-    "cookies": "Cookie-Einstellungen",
+    "cookies": "Cookies",
     "settings": "Einstellungen",
     "toggleMenu": "Menü umschalten",
     "closeMenu": "Menü schließen",

@@ -2,9 +2,9 @@
 import { type FormEvent, useCallback, useState } from "react";
 
 import { useLocale, useTranslations } from "next-intl";
-import posthog from "posthog-js";
 import { type z } from "zod";
 
+import { useTrackEvent } from "@/lib/analytics";
 import { api } from "@/lib/eden";
 import { WhitepaperFormDataSchema } from "@/lib/schema";
 import { type ButtonState, type WhitepaperFormData } from "@/types/contact";
@@ -26,6 +26,7 @@ const initialFormData: WhitepaperFormData = {
 export function useWhitepaperRequest() {
   const t = useTranslations("whitepaper.form");
   const locale = useLocale();
+  const trackEvent = useTrackEvent();
 
   const [formData, setFormData] = useState<WhitepaperFormData>(initialFormData);
   const [errors, setErrors] = useState<z.ZodFlattenedError<WhitepaperFormData>["fieldErrors"]>({});
@@ -57,7 +58,7 @@ export function useWhitepaperRequest() {
 
       setErrors({});
       setButtonState("loading");
-      posthog.capture("Whitepaper - Requested");
+      trackEvent("Whitepaper - Requested");
 
       try {
         const response = await api.whitepaper.request.post({
@@ -85,7 +86,7 @@ export function useWhitepaperRequest() {
         setTimeout(() => setButtonState("idle"), 3000);
       }
     },
-    [formData, locale, t],
+    [formData, locale, t, trackEvent],
   );
 
   return {

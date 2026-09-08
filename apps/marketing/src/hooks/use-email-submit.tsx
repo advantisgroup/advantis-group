@@ -5,9 +5,9 @@ import { useState, useCallback } from "react";
 import { useUser } from "@clerk/nextjs";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import posthog from "posthog-js";
 import { toast } from "sonner";
 
+import { useTrackEvent } from "@/lib/analytics";
 import { api } from "@/lib/eden";
 import { type ButtonState } from "@/types/contact";
 
@@ -36,6 +36,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
   const [buttonState, setButtonState] = useState<ButtonState>("idle");
   const tMessages = useTranslations("contact.messages");
   const { user } = useUser();
+  const trackEvent = useTrackEvent();
 
   const showErrorToast = useCallback(
     (description: string) => {
@@ -56,7 +57,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
   const sendEmail = useCallback(
     async (payload: EmailPayload, trackingEvent: string) => {
       setButtonState("loading");
-      posthog.capture(trackingEvent);
+      trackEvent(trackingEvent);
       const locale = window.localStorage.getItem("NEXT_LOCALE");
       try {
         const response = await api.send.post({
@@ -112,7 +113,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
         return false;
       }
     },
-    [onSuccess, onError, resetButtonState, showErrorToast, tMessages, user],
+    [onSuccess, onError, resetButtonState, showErrorToast, tMessages, trackEvent, user],
   );
 
   return {

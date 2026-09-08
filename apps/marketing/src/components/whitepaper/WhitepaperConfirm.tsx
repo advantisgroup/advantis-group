@@ -7,10 +7,10 @@ import { useSearchParams } from "next/navigation";
 
 import { AlertCircle, ArrowRight, Check, Loader2, MailCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
-import posthog from "posthog-js";
 
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import { useTrackEvent } from "@/lib/analytics";
 import { api } from "@/lib/eden";
 
 type Outcome = "success" | "alreadyDelivered" | "invalid" | "expired" | "error";
@@ -41,6 +41,7 @@ const TONE = {
 export function WhitepaperConfirm() {
   const t = useTranslations("whitepaper.confirm");
   const token = useSearchParams().get("token");
+  const trackEvent = useTrackEvent();
 
   const [pending, setPending] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
@@ -60,13 +61,13 @@ export function WhitepaperConfirm() {
 
       setEmail(response.data.email);
       setOutcome(response.data.alreadyDelivered ? "alreadyDelivered" : "success");
-      posthog.capture("Whitepaper - Confirmed");
+      trackEvent("Whitepaper - Confirmed");
     } catch {
       setOutcome("error");
     } finally {
       setPending(false);
     }
-  }, [token]);
+  }, [token, trackEvent]);
 
   const retry = (
     <Button asChild variant="outline" className="group">

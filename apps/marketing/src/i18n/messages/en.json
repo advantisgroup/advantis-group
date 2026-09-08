@@ -1,20 +1,12 @@
 {
-  "cookieBanner": {
-    "title": "We use cookies",
-    "description": "We use analytics cookies to understand how visitors use this site. You can accept or decline — either way, the site works the same.",
-    "accept": "Accept",
-    "reject": "Reject",
-    "privacyLink": "Privacy policy",
-    "manage": "Manage preferences"
-  },
   "cookiePreferences": {
-    "title": "Cookie preferences",
-    "description": "Choose what this site is allowed to measure. You can change this at any time — nothing here affects how the site works.",
+    "title": "Cookies and tracking",
+    "description": "There is no consent banner on this site, because there is nothing here to consent to. We set no tracking cookies at all — this page explains exactly what does and doesn't happen when you visit.",
     "usedFor": "Used for",
     "essential": {
       "title": "Required",
       "always": "Always on",
-      "description": "These keep you signed in and your account secure, and they record the choice you make on this page so we can honour it. The site cannot work without them, so there is nothing to switch off.",
+      "description": "These keep you signed in and your account secure. The site cannot work without them, so there is nothing to switch off.",
       "uses": {
         "auth": "Signing in and staying signed in",
         "account": "Account management",
@@ -22,14 +14,13 @@
       }
     },
     "analytics": {
-      "title": "Analytics and tracking",
-      "description": "Anonymous usage statistics via PostHog — which pages get visited and where people drop off. Turning this off costs you nothing: every part of the site keeps working exactly the same.",
+      "title": "Analytics",
+      "badge": "No cookies",
+      "description": "We count page visits on our own servers rather than sending them to an analytics company. No cookie, no IP address, no profile — just a random id that lives in your browser tab and is gone the moment you close it, so we can tell one visit from another without ever knowing it was you.",
       "uses": {
         "usage": "Which pages get visited",
         "improve": "Finding what to fix and improve"
-      },
-      "enabled": "Analytics enabled",
-      "disabled": "Analytics disabled"
+      }
     },
     "commitments": {
       "title": "What we never do with it",
@@ -37,12 +28,7 @@
       "train": "We do not use it to train AI models.",
       "ads": "We do not run personalised advertising or build ad profiles."
     },
-    "status": {
-      "granted": "You have accepted analytics cookies.",
-      "denied": "You have declined analytics cookies. Nothing is being collected.",
-      "pending": "You have not made a choice yet. Nothing is being collected until you do."
-    },
-    "localOnly": "Your theme and language are not part of this. They stay in your browser and are never sent to us.",
+    "localOnly": "Your theme and language are not part of this either. They stay in your browser and are never sent to us.",
     "privacyHint": "For the full detail on what we store and for how long, see the",
     "privacyLink": "privacy policy"
   },
@@ -58,7 +44,7 @@
     "privacy": "Privacy Policy",
     "imprint": "Imprint",
     "licenses": "Licenses",
-    "cookies": "Cookie preferences",
+    "cookies": "Cookies",
     "settings": "Settings",
     "toggleMenu": "Toggle menu",
     "closeMenu": "Close menu",
