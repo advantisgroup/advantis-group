@@ -35,14 +35,15 @@ export function SharePost({ shareCode, longPath }: { shareCode: string | null; l
   const t = useTranslations("blog.share");
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [origin, setOrigin] = useState("");
+
+  // Read straight from the browser rather than via an effect: the dialog's
+  // contents only mount once it's opened, long after hydration, so there's no
+  // server/client mismatch to worry about — and no frame where the URL renders
+  // as a bare path.
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
 
   const referral = useQuery(api.sharing.myReferralState, {});
   const setReferralSharing = useMutation(api.sharing.setReferralSharing);
-
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
 
   // Default-on only becomes real the first time someone opens the sheet —
   // that's when the code gets minted, so nobody who never shares ends up
@@ -85,34 +86,38 @@ export function SharePost({ shareCode, longPath }: { shareCode: string | null; l
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center gap-2">
-          <input
-            readOnly
-            value={shareUrl}
-            onFocus={(event) => event.currentTarget.select()}
+        <div className="space-y-3">
+          {/* A wrapping block, not an <input>: a single-line field silently
+              clips the end of the URL, which is the one thing this dialog
+              exists to show. `break-all` keeps even the long fallback URL
+              fully visible. */}
+          <p
             aria-label={t("linkLabel")}
-            className="min-w-0 flex-1 rounded-lg border border-rule bg-background px-3 py-2 font-mono text-sm text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-          <Button type="button" size="sm" className="shrink-0 gap-1.5 rounded-lg" onClick={copy}>
+            className="select-all break-all rounded-lg border border-rule bg-card px-3.5 py-3 font-mono text-[13px] leading-relaxed text-foreground"
+          >
+            {shareUrl || " "}
+          </p>
+          <Button type="button" className="w-full gap-2 rounded-lg" onClick={copy}>
             {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
             {copied ? t("copied") : t("copy")}
           </Button>
         </div>
 
         {referral?.available ? (
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-rule bg-card p-3">
+          <label className="flex cursor-pointer items-start gap-3 border-t border-rule pt-5">
             <Switch
               checked={referral.enabled}
               onCheckedChange={(enabled) => {
                 void setReferralSharing({ enabled }).catch(() => {});
               }}
               aria-label={t("referral.label")}
+              className="mt-0.5 shrink-0"
             />
             <span className="min-w-0">
               <span className="block text-sm font-medium text-foreground">
                 {t("referral.label")}
               </span>
-              <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+              <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
                 {t("referral.hint")}
               </span>
             </span>
