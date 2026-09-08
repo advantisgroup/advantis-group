@@ -558,6 +558,18 @@
     "readMore": "Weiterlesen",
     "back": "Zurück zum Blog",
     "readingTime": "{minutes} Min. Lesezeit",
+    "share": {
+      "action": "Teilen",
+      "title": "Beitrag teilen",
+      "description": "Ein kurzer Link, der überall trotzdem den vollständigen Titel anzeigt.",
+      "linkLabel": "Link zum Teilen",
+      "copy": "Kopieren",
+      "copied": "Kopiert",
+      "referral": {
+        "label": "Mich als Empfehlung vermerken",
+        "hint": "Fügt deinem Link einen Code hinzu, damit wir sehen, wie viele Leser du gebracht hast. Ist das aus, wird dem Link nichts hinzugefügt."
+      }
+    },
     "tableOfContents": "Auf dieser Seite",
     "filterLabel": "Nach Kategorie filtern",
     "filterAll": "Alle",

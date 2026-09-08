@@ -34,12 +34,25 @@ async function resolvePostId(ctx: MutationCtx, path: string) {
   return post?._id;
 }
 
+/** Resolves the `?r=` code from a share link back to the colleague who made
+ * it. An unknown code just means no attribution — a stale or hand-typed link
+ * shouldn't stop the visit being counted. */
+async function resolveReferrer(ctx: MutationCtx, code: string) {
+  if (code.length > 32) return undefined;
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_referralCode", (q) => q.eq("referralCode", code))
+    .first();
+  return user?._id;
+}
+
 export const recordPageview = sandboxedMutation({
   args: {
     path: v.string(),
     locale: v.string(),
     sessionId: v.string(),
     referrerDomain: v.optional(v.string()),
+    ref: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Drop malformed/oversized payloads rather than throw — a visitor should
@@ -58,6 +71,7 @@ export const recordPageview = sandboxedMutation({
       locale: args.locale,
       sessionId: args.sessionId,
       referrerDomain: args.referrerDomain,
+      referrerUserId: args.ref ? await resolveReferrer(ctx, args.ref) : undefined,
       createdAt: Date.now(),
     });
   },

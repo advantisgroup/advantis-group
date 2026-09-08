@@ -15,7 +15,10 @@ export default clerkMiddleware((_auth, req) => {
   if (
     pathname.startsWith("/api") ||
     pathname.startsWith("/trpc") ||
-    pathname.startsWith("/content")
+    pathname.startsWith("/content") ||
+    // Short share links carry no locale segment — the post's own language
+    // decides where the redirect lands (see app/share/blog/[code]/route.ts).
+    pathname.startsWith("/share")
   ) {
     return;
   }

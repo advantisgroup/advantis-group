@@ -134,6 +134,7 @@ import type * as salesCoachEv_wiki from "../salesCoachEv/wiki.js";
 import type * as salesCockpit from "../salesCockpit.js";
 import type * as salesCockpitFlows from "../salesCockpitFlows.js";
 import type * as sandbox from "../sandbox.js";
+import type * as sharing from "../sharing.js";
 import type * as stepUp from "../stepUp.js";
 import type * as suggestionCategories from "../suggestionCategories.js";
 import type * as suggestions from "../suggestions.js";
@@ -283,6 +284,7 @@ declare const fullApi: ApiFromModules<{
   salesCockpit: typeof salesCockpit;
   salesCockpitFlows: typeof salesCockpitFlows;
   sandbox: typeof sandbox;
+  sharing: typeof sharing;
   stepUp: typeof stepUp;
   suggestionCategories: typeof suggestionCategories;
   suggestions: typeof suggestions;

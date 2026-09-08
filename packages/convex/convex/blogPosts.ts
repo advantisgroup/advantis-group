@@ -1,8 +1,9 @@
 import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
-import { query } from "./_generated/server";
+import { internalMutation, query } from "./_generated/server";
 import { requireCapability } from "./lib/auth";
+import { ensureShareCode } from "./sharing";
 
 const languageValidator = v.union(v.literal("de"), v.literal("en"));
 
@@ -138,6 +139,9 @@ export const publish = mutation({
       readingMinutes: estimateReadingMinutes(post.body),
       updatedAt: Date.now(),
     });
+    // A published post is a shareable post, so the short link exists from the
+    // moment there's something to share. No-ops if it already has one.
+    await ensureShareCode(ctx, postId);
     return { ok: true };
   },
 });
@@ -180,6 +184,7 @@ interface PublicPostRow {
   authorAvatarUrl?: string;
   readingMinutes?: number;
   publishedAt?: number;
+  shareCode?: string;
 }
 
 /** Everything the list page needs — deliberately without `body`, which would
@@ -196,6 +201,7 @@ const PUBLIC_SUMMARY = (post: PublicPostRow) => ({
   authorAvatarUrl: post.authorAvatarUrl ?? null,
   readingMinutes: post.readingMinutes ?? null,
   publishedAt: post.publishedAt ?? 0,
+  shareCode: post.shareCode ?? null,
 });
 
 const PUBLIC_DETAIL = (post: PublicPostRow) => ({
@@ -229,5 +235,21 @@ export const getBySlug = query({
       .unique();
     if (!post || post.status !== "published") return null;
     return PUBLIC_DETAIL(post);
+  },
+});
+
+/** One-off for posts published before share codes existed. Safe to re-run —
+ * `ensureShareCode` leaves posts that already have one alone. */
+export const backfillShareCodes = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const posts = await ctx.db
+      .query("blogPosts")
+      .filter((q) => q.eq(q.field("shareCode"), undefined))
+      .collect();
+    for (const post of posts) {
+      await ensureShareCode(ctx, post._id);
+    }
+    return { filled: posts.length };
   },
 });

@@ -21,6 +21,9 @@ export interface BlogPostSummary {
   authorAvatarUrl: string | null;
   readingMinutes: number | null;
   publishedAt: number;
+  /** Null only for posts published before share links existed and not yet
+   * backfilled — the share button falls back to the long URL. */
+  shareCode: string | null;
 }
 
 export interface BlogPost extends BlogPostSummary {

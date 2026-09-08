@@ -555,6 +555,18 @@
     "readMore": "Read more",
     "back": "Back to blog",
     "readingTime": "{minutes} min read",
+    "share": {
+      "action": "Share",
+      "title": "Share this post",
+      "description": "A short link that still shows the full title wherever you paste it.",
+      "linkLabel": "Share link",
+      "copy": "Copy",
+      "copied": "Copied",
+      "referral": {
+        "label": "Credit me as the referrer",
+        "hint": "Adds a code to your link so we can see how many readers you brought in. Nothing is added to the link when this is off."
+      }
+    },
     "tableOfContents": "On this page",
     "filterLabel": "Filter by category",
     "filterAll": "All",

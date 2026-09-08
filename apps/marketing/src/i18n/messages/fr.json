@@ -558,6 +558,18 @@
     "readMore": "Lire la suite",
     "back": "Retour au blog",
     "readingTime": "{minutes} min de lecture",
+    "share": {
+      "action": "Partager",
+      "title": "Partager cet article",
+      "description": "Un lien court qui affiche quand même le titre complet partout où vous le collez.",
+      "linkLabel": "Lien de partage",
+      "copy": "Copier",
+      "copied": "Copié",
+      "referral": {
+        "label": "Me créditer comme référent",
+        "hint": "Ajoute un code à votre lien pour que nous puissions voir combien de lecteurs vous avez amenés. Rien n'est ajouté au lien lorsque c'est désactivé."
+      }
+    },
     "tableOfContents": "Sur cette page",
     "filterLabel": "Filtrer par catégorie",
     "filterAll": "Tous",

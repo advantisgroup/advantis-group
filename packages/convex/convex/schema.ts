@@ -347,6 +347,21 @@ export default defineSchema({
      * drives the overview's work-anniversary shoutouts.
      */
     hireDate: v.optional(v.string()),
+    /**
+     * Opaque code identifying this person as the source of a share link
+     * (`/share/blog/x?r=<code>`). Deliberately not the Clerk id or anything
+     * else guessable — a share link gets pasted into group chats and public
+     * posts, so what travels in it should mean nothing to anyone but us.
+     * Minted on first use, not at signup.
+     */
+    referralCode: v.optional(v.string()),
+    /**
+     * Whether new share links this person creates carry their `referralCode`.
+     * Set from the toggle in the share sheet, remembered so the choice is
+     * made once rather than every time. Undefined = on, matching the toggle's
+     * default for a signed-in colleague sharing company content.
+     */
+    referralSharingEnabled: v.optional(v.boolean()),
     createdAt: v.number(),
     lastSeenAt: v.optional(v.number()),
   })
@@ -357,6 +372,7 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_clockodoUserId", ["clockodoUserId"])
     .index("by_avatarStorageId", ["avatarStorageId"])
+    .index("by_referralCode", ["referralCode"])
     .index("by_managerId", ["managerId"]),
 
   passkeys: defineTable({
@@ -2199,11 +2215,20 @@ export default defineSchema({
     readingMinutes: v.optional(v.number()),
     status: v.union(v.literal("draft"), v.literal("published")),
     publishedAt: v.optional(v.number()),
+    /**
+     * Short base62 code behind `/share/blog/{code}`. Titles here run long
+     * enough that the slug alone makes an unwieldy link to paste anywhere —
+     * this is the shareable form. Minted at publish (and backfilled for
+     * posts published before it existed); never regenerated, because links
+     * already out in the world have to keep resolving.
+     */
+    shareCode: v.optional(v.string()),
     version: v.number(),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_slug_language", ["slug", "language"])
+    .index("by_shareCode", ["shareCode"])
     .index("by_language_status_publishedAt", ["language", "status", "publishedAt"]),
 
   /**
@@ -2225,6 +2250,13 @@ export default defineSchema({
     sessionId: v.string(),
     /** Hostname only (e.g. "google.com"), never the full referrer URL. */
     referrerDomain: v.optional(v.string()),
+    /**
+     * The colleague whose share link brought this visit in, resolved from the
+     * `?r=` code. Unlike everything else in this table this *is* tied to a
+     * named person — which is exactly why it only ever gets set when that
+     * person opted in while creating the link.
+     */
+    referrerUserId: v.optional(v.id("users")),
     /** Filled in later by a sendBeacon on pagehide; absent if that never fires. */
     durationMs: v.optional(v.number()),
     createdAt: v.number(),

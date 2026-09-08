@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 
 import { notFound } from "next/navigation";
 
@@ -35,7 +35,11 @@ export default async function LocaleLayout({
       <Header />
       {children}
       <Footer />
-      <AnalyticsTracker />
+      {/* Suspense because the tracker reads `?r=` via useSearchParams, which
+          would otherwise opt every static page out of prerendering. */}
+      <Suspense fallback={null}>
+        <AnalyticsTracker />
+      </Suspense>
     </NextIntlClientProvider>
   );
 }

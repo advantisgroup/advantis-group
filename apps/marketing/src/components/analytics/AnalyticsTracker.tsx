@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -25,8 +25,14 @@ import { CONVEX_SITE_URL, getSessionId } from "@/lib/analytics";
 
 export function AnalyticsTracker() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const locale = useLocale();
   const recordPageview = useMutation(api.marketingAnalytics.recordPageview);
+
+  // Only the landing hit of a share link is attributed. Carrying `?r=` into
+  // every later pageview would credit the sharer for the whole visit, which
+  // isn't what "they brought this person here" means.
+  const ref = searchParams.get("r") ?? undefined;
 
   const referrerDomainRef = useRef<string | undefined>(undefined);
   const referrerCapturedRef = useRef(false);
@@ -67,6 +73,7 @@ export function AnalyticsTracker() {
       locale,
       sessionId: getSessionId(),
       referrerDomain: referrerDomainRef.current,
+      ref,
     }).then((id) => {
       if (!cancelled && id) currentRef.current = { id, start: Date.now() };
     });
@@ -75,7 +82,7 @@ export function AnalyticsTracker() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- recordPageview is a fresh function identity every render
-  }, [pathname, locale]);
+  }, [pathname, locale, ref]);
 
   useEffect(() => {
     const onVisibilityChange = () => {

@@ -8,6 +8,7 @@ import sanitizeHtml from "sanitize-html";
 
 import { BlogTableOfContents } from "@/components/blog/BlogTableOfContents";
 import { CategoryEyebrow, PostMeta } from "@/components/blog/PostMeta";
+import { SharePost } from "@/components/blog/SharePost";
 import { Link } from "@/i18n/navigation";
 import { type Locale } from "@/i18n/request";
 import { addHeadingIds } from "@/lib/blog-headings";
@@ -113,18 +114,20 @@ export default async function BlogPostPage({
             <p className="text-lg leading-relaxed text-muted-foreground md:text-xl">
               {post.excerpt}
             </p>
-            <PostMeta
-              author={post.author}
-              authorAvatarUrl={post.authorAvatarUrl}
-              publishedAt={post.publishedAt}
-              readingMinutes={post.readingMinutes}
-              readingLabel={
-                post.readingMinutes ? t("readingTime", { minutes: post.readingMinutes }) : null
-              }
-              locale={locale}
-              size="md"
-              className="pt-1"
-            />
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
+              <PostMeta
+                author={post.author}
+                authorAvatarUrl={post.authorAvatarUrl}
+                publishedAt={post.publishedAt}
+                readingMinutes={post.readingMinutes}
+                readingLabel={
+                  post.readingMinutes ? t("readingTime", { minutes: post.readingMinutes }) : null
+                }
+                locale={locale}
+                size="md"
+              />
+              <SharePost shareCode={post.shareCode} longPath={`/${locale}/blog/${post.slug}`} />
+            </div>
           </header>
 
           {post.mainImageUrl ? (

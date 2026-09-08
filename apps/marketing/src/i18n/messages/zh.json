@@ -552,6 +552,18 @@
     "readMore": "阅读更多",
     "back": "返回博客",
     "readingTime": "阅读时长 {minutes} 分钟",
+    "share": {
+      "action": "分享",
+      "title": "分享这篇文章",
+      "description": "一个简短的链接，粘贴到任何地方仍会显示完整标题。",
+      "linkLabel": "分享链接",
+      "copy": "复制",
+      "copied": "已复制",
+      "referral": {
+        "label": "将我记为推荐人",
+        "hint": "在你的链接中加入一个代码，让我们知道你带来了多少读者。关闭时，链接中不会添加任何内容。"
+      }
+    },
     "tableOfContents": "本页内容",
     "filterLabel": "按分类筛选",
     "filterAll": "全部",
