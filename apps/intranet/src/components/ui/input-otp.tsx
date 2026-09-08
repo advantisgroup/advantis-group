@@ -15,6 +15,12 @@ function InputOTP({
   return (
     <OTPInput
       data-slot="input-otp"
+      // Default "increase-width" reserves room for a password-manager badge by
+      // widening the input past the slots and clipping it back — which on a
+      // narrow screen eats into the last slot. Nothing offers to fill a
+      // one-time code anyway, so the reserved space is pure cost. Before the
+      // spread, so a caller can still opt back in.
+      pushPasswordManagerStrategy="none"
       containerClassName={cn("flex items-center gap-2 has-disabled:opacity-50", containerClassName)}
       className={cn(
         // The library sets `user-select: none` on the *container* and only
