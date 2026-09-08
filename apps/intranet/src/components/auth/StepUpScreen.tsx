@@ -30,17 +30,6 @@ const FADE_MS = 400;
 
 const EASE = [0.23, 1, 0.32, 1] as const;
 
-/** Masks the local part but keeps enough to recognise which account this is:
- * `kaleb.daniel@advantis.de` → `ka•••••@advantis.de`. Showing the address in
- * full on a shared or over-the-shoulder screen leaks more than it helps; a
- * blind "we sent you a code" helps less than it should. */
-function maskEmail(email: string) {
-  const [local, domain] = email.split("@");
-  if (!local || !domain) return email;
-  const head = local.slice(0, Math.min(2, local.length));
-  return `${head}${"•".repeat(Math.max(3, Math.min(local.length - head.length, 5)))}@${domain}`;
-}
-
 /** Icon-only, no card/border/fill — a screen someone can get stuck on for a
  * while shouldn't strand them on the wrong theme just because every other
  * toggle in the app lives inside the (currently unreachable) app shell. */
@@ -215,25 +204,14 @@ export function StepUpScreen({
                 <h1 className="text-xl font-semibold tracking-tight text-balance">
                   {t("gateVerifyTitle")}
                 </h1>
-                {/* The old copy said only "Enter a verification code to
-                    continue" — it never said where the code actually went,
-                    which is the first thing you need in order to go find it. */}
-                <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
-                  {t.rich("gateVerifySentTo", {
-                    email: maskEmail(user.email),
-                    strong: (chunks) => (
-                      // `break-all` on the address itself: a long address on a
-                      // 320px screen has no space to break at, and would
-                      // otherwise push the column wider than the viewport.
-                      <span className="font-medium break-all text-foreground">{chunks}</span>
-                    ),
-                  })}
-                </p>
               </div>
 
+              {/* The "what do I enter" line lives in the form, which is what
+                  actually knows the selected method. */}
               <StepUpForm
                 availableMethods={status.availableMethods}
                 context="sign_in"
+                email={user.email}
                 onVerified={markVerifiedOptimistically}
               />
 

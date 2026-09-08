@@ -37,6 +37,51 @@ const METHOD_ICON = {
  * field — six fixed slots is the wrong shape for them. */
 const isOtpMethod = (method: StepMethod) => method === "totp" || method === "email_code";
 
+/** Lowest number wins the default slot. A recovery code is a one-shot,
+ * burn-it-and-print-a-new-one credential — offering it first (which the raw
+ * server order did) invites people to spend one when their authenticator was
+ * sitting in their pocket. */
+const METHOD_PRIORITY: Record<StepMethod, number> = {
+  totp: 0,
+  email_code: 1,
+  passkey: 2,
+  recovery_code: 3,
+};
+
+/**
+ * Cleans up a pasted string before the slots try to consume it.
+ *
+ * Whatever the user pastes arrives verbatim, and any character the input
+ * rejects makes the whole paste fail silently — no error, nothing appears.
+ * Real pastes are messy: mail clients render the code as "123 456", people
+ * double-tap and grab a trailing space, and selecting the sentence in the
+ * email body yields something like "Your code is 200530".
+ */
+function transformPastedCode(pasted: string): string {
+  // First run of 6+ digits wins. Codes are always at least six, so a run that
+  // long is the code and nothing else — no need to reason about the words
+  // around it, which modern "copy code" buttons and clipboard suggestions
+  // don't hand over anyway.
+  const run = pasted.match(/\d{6,}/);
+  if (run) return run[0].slice(0, 6);
+
+  // Nothing that long: the code was split by a separator ("200 530",
+  // "200-530"), so drop everything that isn't a digit and let the slots take
+  // what fits.
+  return pasted.replace(/\D/g, "");
+}
+
+/** Masks the local part but keeps enough to recognise which account this is:
+ * `kaleb.daniel@gmail.com` → `ka•••••@gmail.com`. Showing the address in full
+ * on a shared or over-the-shoulder screen leaks more than it helps; a blind
+ * "we sent you a code" helps less than it should. */
+function maskEmail(email: string) {
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return email;
+  const head = local.slice(0, Math.min(2, local.length));
+  return `${head}${"•".repeat(Math.max(3, Math.min(local.length - head.length, 5)))}@${domain}`;
+}
+
 async function jsonOrThrow(response: Response) {
   const body = (await response.json()) as { message?: string };
   if (!response.ok) throw new Error(body.message ?? "Request failed");
@@ -46,17 +91,23 @@ async function jsonOrThrow(response: Response) {
 export function StepUpForm({
   availableMethods,
   context,
+  email,
   onVerified,
 }: {
   availableMethods: StepMethod[];
   context: StepUpContext;
+  /** Only shown (masked) on the email path — the other methods never mention
+   * an address, so passing it is harmless when it goes unused. */
+  email?: string;
   onVerified: () => void;
 }) {
   const t = useTranslations("StepUp");
   const { getToken } = useAuth();
   const methods = (
     availableMethods.length > 0 ? availableMethods : (["email_code"] as StepMethod[])
-  ).filter((candidate) => candidate !== "passkey");
+  )
+    .filter((candidate) => candidate !== "passkey")
+    .sort((a, b) => METHOD_PRIORITY[a] - METHOD_PRIORITY[b]);
   const [method, setMethod] = useState<StepMethod>(methods[0] ?? "email_code");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -171,6 +222,31 @@ export function StepUpForm({
 
   return (
     <div className="space-y-5">
+      {/*
+       * Lives here rather than on the screen because it has to track `method`
+       * — the screen used to render "we sent a code to <address>" statically,
+       * so switching to the authenticator app left it claiming an email was
+       * sent that never was.
+       */}
+      <div className="space-y-1 text-center">
+        <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
+          {method === "email_code"
+            ? t("promptEmail")
+            : method === "totp"
+              ? t("promptTotp")
+              : t("promptRecovery")}
+        </p>
+        {method === "email_code" && email ? (
+          // Its own line, not inlined into the sentence: an address inside a
+          // centred paragraph wraps mid-token ("…@gmail.co / m"). Alone on a
+          // line it only breaks when it genuinely cannot fit, and
+          // `overflow-wrap: anywhere` prefers a real break opportunity first.
+          <p className="text-sm font-medium text-foreground [overflow-wrap:anywhere]">
+            {maskEmail(email)}
+          </p>
+        ) : null}
+      </div>
+
       <div className="space-y-3">
         {isOtpMethod(method) ? (
           <motion.div
@@ -186,6 +262,7 @@ export function StepUpForm({
               maxLength={6}
               value={code}
               onChange={handleOtpChange}
+              pasteTransformer={transformPastedCode}
               disabled={busy}
               autoFocus
               containerClassName="w-full justify-center"
@@ -217,7 +294,10 @@ export function StepUpForm({
               aria-invalid={!!error}
               value={code}
               onChange={(e) => {
-                setCode(e.target.value.toUpperCase());
+                // Trimmed because a pasted recovery code usually drags
+                // whitespace along with it, and there's never a legitimate
+                // space to type inside one.
+                setCode(e.target.value.trim().toUpperCase());
                 setError(null);
               }}
               onKeyDown={(e) => {
