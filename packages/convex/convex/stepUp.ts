@@ -318,7 +318,20 @@ export const apiEvaluateDevice = mutation({
     const [keep, ...duplicates] = existingSignals;
     for (const dup of duplicates) await ctx.db.delete(dup._id);
     if (keep) {
-      await ctx.db.patch(keep._id, { newDevice: flagAsNew, evaluatedAt: now });
+      // Write-once per session: a re-evaluation must never *clear* a flag an
+      // earlier one raised. The first call for a new device inserts it into
+      // `knownDevices` above, so every later call in the same session sees a
+      // familiar device and computes `flagAsNew: false` — and since a page
+      // refresh re-fires this route (AppGate's guarding ref is per-mount),
+      // reloading the step-up screen used to downgrade the signal, drop
+      // `requiredLevel` back to 0 and let the gate disappear unverified.
+      // Only a genuinely new Clerk session (new sessionId → new row) gets a
+      // fresh verdict; clearing this one happens by passing the gate, which
+      // records a verification that satisfies the level.
+      await ctx.db.patch(keep._id, {
+        newDevice: keep.newDevice || flagAsNew,
+        evaluatedAt: now,
+      });
     } else {
       await ctx.db.insert("sessionRiskSignals", {
         userId: user._id,

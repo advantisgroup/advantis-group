@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from "react";
 
-import { CheckCircle2, Moon, Sun } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Check, KeyRound, Moon, ShieldCheck, Smartphone, Sun } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { BrandLogo } from "@/components/Logo";
 import { TotpSettingsCard } from "@/components/mfa/TotpSettingsCard";
 import { PasskeySettingsCard } from "@/components/passkeys/PasskeySettingsCard";
+import { useCurrentUser } from "@/components/providers/current-user";
 import { useTheme } from "@/components/theme/theme-provider";
+import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
+import { cn } from "@/lib/utils";
 
 import { StepUpForm, type StepMethod } from "./StepUpForm";
 
@@ -24,6 +28,19 @@ export type StepUpStatus =
 const SUCCESS_HOLD_MS = 2500;
 const FADE_MS = 400;
 
+const EASE = [0.23, 1, 0.32, 1] as const;
+
+/** Masks the local part but keeps enough to recognise which account this is:
+ * `kaleb.daniel@advantis.de` → `ka•••••@advantis.de`. Showing the address in
+ * full on a shared or over-the-shoulder screen leaks more than it helps; a
+ * blind "we sent you a code" helps less than it should. */
+function maskEmail(email: string) {
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return email;
+  const head = local.slice(0, Math.min(2, local.length));
+  return `${head}${"•".repeat(Math.max(3, Math.min(local.length - head.length, 5)))}@${domain}`;
+}
+
 /** Icon-only, no card/border/fill — a screen someone can get stuck on for a
  * while shouldn't strand them on the wrong theme just because every other
  * toggle in the app lives inside the (currently unreachable) app shell. */
@@ -35,10 +52,49 @@ function RawThemeToggle() {
       type="button"
       aria-label="Toggle theme"
       onClick={() => setTheme(theme === "dark" ? "light" : theme === "light" ? "system" : "dark")}
-      className="fixed bottom-4 right-4 z-10 text-muted-foreground/60 transition-colors hover:text-foreground"
+      className="fixed bottom-4 right-4 z-10 p-2 text-muted-foreground/60 transition-colors hover:text-foreground"
     >
       <Icon className="size-4" />
     </button>
+  );
+}
+
+/** One row of the enrollment checklist. Kept flat (no nested card chrome
+ * around the settings card it reveals) — stacking a bordered box inside a
+ * bordered box inside the screen's own panel was three frames deep. */
+function EnrollStep({
+  index,
+  total,
+  icon: Icon,
+  title,
+  body,
+  children,
+}: {
+  index: number;
+  total: number;
+  icon: typeof Smartphone;
+  title: string;
+  body: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start gap-3">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground">
+          <Icon className="size-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <h2 className="text-sm font-semibold text-balance">{title}</h2>
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground/70">
+              {index}/{total}
+            </span>
+          </div>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">{body}</p>
+        </div>
+      </div>
+      <div className="sm:pl-11">{children}</div>
+    </div>
   );
 }
 
@@ -59,6 +115,9 @@ export function StepUpScreen({
   onDismiss: () => void;
 }) {
   const t = useTranslations("StepUp");
+  const user = useCurrentUser();
+  const keyboardInset = useKeyboardInset();
+  const prefersReducedMotion = useReducedMotion();
   const [phase, setPhase] = useState<"active" | "success" | "fading">("active");
 
   // Two paths land here: the form's own onVerified fires the instant the API
@@ -92,56 +151,169 @@ export function StepUpScreen({
   // behind this same gate, so a link to it would just loop back to this
   // screen. Needs more room than the plain verify-code case.
   const isEnrolling = !showingSuccess && status.state === "needs_enrollment";
+  const enrollTotal =
+    status.state === "needs_enrollment" ? Number(status.needsMfa) + Number(status.needsPasskey) : 0;
+
+  const transition = prefersReducedMotion ? { duration: 0 } : { duration: 0.3, ease: EASE };
 
   return (
     <div
-      className="app-atmosphere relative flex min-h-screen items-center justify-center p-4 transition-opacity ease-out"
-      style={{ transitionDuration: `${FADE_MS}ms`, opacity: phase === "fading" ? 0 : 1 }}
+      // `overflow-y-auto` + `m-auto` on the child rather than `justify-center`:
+      // a centred flex child taller than its container gets clipped at the top
+      // with no way to scroll back to it, which is exactly what the enrollment
+      // path does on a phone once a QR code is on screen.
+      className="app-atmosphere relative flex min-h-[100dvh] flex-col overflow-y-auto px-4 py-8 transition-opacity ease-out sm:px-6"
+      style={{
+        transitionDuration: `${FADE_MS}ms`,
+        opacity: phase === "fading" ? 0 : 1,
+        // The layout viewport doesn't shrink for the on-screen keyboard, so a
+        // vertically-centred column ends up centred behind it. Shifting by the
+        // measured inset keeps the slots and the resend link in view.
+        paddingBottom: keyboardInset ? keyboardInset : undefined,
+      }}
     >
-      <div className={isEnrolling ? "w-full max-w-md space-y-6" : "w-full max-w-sm space-y-5"}>
-        <div className="space-y-4 text-center">
-          <div className="flex justify-center">
-            {showingSuccess ? (
-              <CheckCircle2 className="size-10 animate-in fade-in-0 zoom-in-50 text-success duration-300" />
-            ) : (
-              <BrandLogo />
-            )}
-          </div>
+      <div className={cn("m-auto w-full", isEnrolling ? "max-w-lg" : "max-w-sm")}>
+        <AnimatePresence mode="wait" initial={false}>
           {showingSuccess ? (
-            <h1 className="text-lg font-semibold tracking-tight">{t("gateVerifiedTitle")}</h1>
+            <motion.div
+              key="success"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={transition}
+              className="flex flex-col items-center gap-4 text-center"
+            >
+              <motion.span
+                initial={prefersReducedMotion ? false : { scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : { type: "spring", stiffness: 420, damping: 22 }
+                }
+                className="flex size-14 items-center justify-center rounded-full bg-success/12 text-success"
+              >
+                <Check className="size-7" strokeWidth={2.5} />
+              </motion.span>
+              <h1 className="text-lg font-semibold tracking-tight text-balance">
+                {t("gateVerifiedTitle")}
+              </h1>
+              <p className="text-sm text-muted-foreground text-pretty">{t("gateVerifiedBody")}</p>
+            </motion.div>
           ) : status.state === "needs_verification" ? (
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight">{t("gateVerifyTitle")}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">{t("gateVerifyBody")}</p>
-            </div>
+            <motion.div
+              key="verify"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={transition}
+              className="space-y-7"
+            >
+              <div className="space-y-3 text-center">
+                <div className="flex justify-center">
+                  <BrandLogo />
+                </div>
+                <h1 className="text-xl font-semibold tracking-tight text-balance">
+                  {t("gateVerifyTitle")}
+                </h1>
+                {/* The old copy said only "Enter a verification code to
+                    continue" — it never said where the code actually went,
+                    which is the first thing you need in order to go find it. */}
+                <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
+                  {t.rich("gateVerifySentTo", {
+                    email: maskEmail(user.email),
+                    strong: (chunks) => (
+                      // `break-all` on the address itself: a long address on a
+                      // 320px screen has no space to break at, and would
+                      // otherwise push the column wider than the viewport.
+                      <span className="font-medium break-all text-foreground">{chunks}</span>
+                    ),
+                  })}
+                </p>
+              </div>
+
+              <StepUpForm
+                availableMethods={status.availableMethods}
+                context="sign_in"
+                onVerified={markVerifiedOptimistically}
+              />
+
+              {/*
+               * Why this screen appeared, parked deliberately quietly: small,
+               * dimmed, below the fold of attention, and worded so it never
+               * names the actual signal that fired. Someone who wants the
+               * reason can find it; it doesn't tell an attacker holding a
+               * stolen session which heuristic they tripped, and it doesn't
+               * make an ordinary sign-in feel accused of something.
+               */}
+              <div className="space-y-1.5 border-t border-border/50 pt-4 text-center">
+                <p className="text-xs leading-relaxed text-muted-foreground/60 text-pretty">
+                  {t("gateVerifyWhy")}
+                </p>
+                <p className="text-xs leading-relaxed text-muted-foreground/60 text-pretty">
+                  {t("gateVerifyHelp")}
+                </p>
+              </div>
+            </motion.div>
           ) : status.state === "needs_enrollment" ? (
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight">{t("gateEnrollTitle")}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {status.needsMfa && status.needsPasskey
-                  ? t("gateEnrollBodyBoth")
-                  : status.needsMfa
-                    ? t("gateEnrollBodyMfa")
-                    : t("gateEnrollBodyPasskey")}
+            <motion.div
+              key="enroll"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={transition}
+              className="space-y-6 py-2"
+            >
+              <div className="space-y-3 text-center">
+                <div className="flex justify-center">
+                  <BrandLogo />
+                </div>
+                <h1 className="text-xl font-semibold tracking-tight text-balance">
+                  {t("gateEnrollTitle")}
+                </h1>
+                <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
+                  {status.needsMfa && status.needsPasskey
+                    ? t("gateEnrollBodyBoth")
+                    : status.needsMfa
+                      ? t("gateEnrollBodyMfa")
+                      : t("gateEnrollBodyPasskey")}
+                </p>
+                <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
+                  {t("gateEnrollWhy")}
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                {status.needsMfa && (
+                  <EnrollStep
+                    index={1}
+                    total={enrollTotal}
+                    icon={Smartphone}
+                    title={t("enrollTotpTitle")}
+                    body={t("enrollTotpBody")}
+                  >
+                    <TotpSettingsCard />
+                  </EnrollStep>
+                )}
+                {status.needsPasskey && (
+                  <EnrollStep
+                    index={status.needsMfa ? 2 : 1}
+                    total={enrollTotal}
+                    icon={KeyRound}
+                    title={t("enrollPasskeyTitle")}
+                    body={t("enrollPasskeyBody")}
+                  >
+                    <PasskeySettingsCard />
+                  </EnrollStep>
+                )}
+              </div>
+
+              <p className="flex items-start gap-2 border-t border-border/60 pt-4 text-xs leading-relaxed text-muted-foreground/80 text-pretty">
+                <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+                <span>{t("gateEnrollHelp")}</span>
               </p>
-            </div>
+            </motion.div>
           ) : null}
-        </div>
-
-        {!showingSuccess && status.state === "needs_verification" && (
-          <StepUpForm
-            availableMethods={status.availableMethods}
-            context="sign_in"
-            onVerified={markVerifiedOptimistically}
-          />
-        )}
-
-        {isEnrolling && status.state === "needs_enrollment" && (
-          <div className="space-y-4">
-            {status.needsMfa && <TotpSettingsCard />}
-            {status.needsPasskey && <PasskeySettingsCard />}
-          </div>
-        )}
+        </AnimatePresence>
       </div>
 
       <RawThemeToggle />
