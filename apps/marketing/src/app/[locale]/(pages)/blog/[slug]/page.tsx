@@ -103,17 +103,20 @@ export default async function BlogPostPage({
         </Link>
 
         <article className="mt-10">
-          <header className="space-y-5 border-b border-border pb-8">
+          <header className="space-y-6 border-b border-border pb-10">
             {category ? <CategoryEyebrow label={category} /> : null}
-            <h1 className="font-[family-name:var(--font-outfit)] text-4xl font-bold leading-[1.05] tracking-tight md:text-5xl">
+            <h1 className="font-[family-name:var(--font-outfit)] text-4xl font-bold leading-[1.1] tracking-tight md:text-5xl">
               {post.title}
             </h1>
-            {/* The excerpt doubles as the article's lede — it's already written
-                as a standalone summary for the list, so repeating it here at
-                display scale costs the author nothing. */}
-            <p className="text-lg leading-relaxed text-muted-foreground md:text-xl">
-              {post.excerpt}
-            </p>
+            {/*
+             * The excerpt doubles as the article's lede. It's written for the
+             * list card, so it can run long — the live post opens with 724
+             * characters of it. At display size in muted grey that reads as a
+             * wall before the reader has started: hence body-size type, near
+             * full-strength colour, and the same measure as the article
+             * itself, so it reads as a first paragraph rather than a banner.
+             */}
+            <p className="max-w-[50ch] text-lg leading-[1.75] text-foreground/75">{post.excerpt}</p>
             <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
               <PostMeta
                 author={post.author}
@@ -131,7 +134,7 @@ export default async function BlogPostPage({
           </header>
 
           {post.mainImageUrl ? (
-            <div className="relative mt-10 aspect-[16/9] overflow-hidden rounded-xl border border-border/60">
+            <div className="relative mt-12 aspect-[16/9] overflow-hidden rounded-xl border border-border/60">
               <Image
                 src={post.mainImageUrl}
                 alt=""
@@ -144,8 +147,18 @@ export default async function BlogPostPage({
           ) : null}
 
           {bodyHtml ? (
+            /*
+             * `max-w-[50ch]` rather than the old `max-w-none`. Unconstrained,
+             * the body filled the full 736px container — which in this font
+             * measures 99 characters a line, way past the ~75 where the eye
+             * starts losing its place on the return sweep. (Note `ch` is the
+             * width of "0", not of an average letter: 50ch lands at ~74 real
+             * characters here, not 50.) The container stays wide, so the
+             * heading and hero image still use all of it; only the reading
+             * column narrows.
+             */
             <div
-              className="prose prose-neutral mt-10 max-w-none scroll-mt-24 dark:prose-invert prose-headings:font-[family-name:var(--font-outfit)] prose-headings:tracking-tight prose-a:text-primary prose-img:rounded-lg md:prose-lg [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24"
+              className="prose prose-neutral mt-12 max-w-[50ch] scroll-mt-24 dark:prose-invert prose-headings:font-[family-name:var(--font-outfit)] prose-headings:tracking-tight prose-h2:mt-14 prose-h2:mb-4 prose-h3:mt-10 prose-h3:mb-3 prose-p:leading-[1.75] prose-a:text-primary prose-img:rounded-lg md:prose-lg [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24"
               // The composer's RichTextEditor only ever produces constrained
               // HTML through normal use, but the stored string is a raw
               // Convex mutation arg with no server-side sanitization in
