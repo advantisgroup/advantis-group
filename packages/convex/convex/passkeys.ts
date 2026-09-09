@@ -5,6 +5,7 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, internalMutation, query } from "./_generated/server";
 import { getUserByClerkId } from "./lib/auth";
 import { trackEvent } from "./lib/analytics";
+import { notifySecurityChange } from "./lib/stepUp";
 
 const transportValidator = v.union(
   v.literal("ble"),
@@ -277,6 +278,12 @@ export const apiCompleteRegistration = mutation({
       distinctId: user.clerkUserId,
       properties: {},
     });
+    await notifySecurityChange(
+      ctx,
+      user,
+      "A passkey was added to your account",
+      `A new passkey named "${name}" can now sign in to the Advantis intranet as you.`,
+    );
     return {
       _id: passkeyId,
       name,
@@ -410,6 +417,12 @@ export const apiRemoveForUser = mutation({
       event: "removed",
       at: Date.now(),
     });
+    await notifySecurityChange(
+      ctx,
+      user,
+      "A passkey was removed from your account",
+      `The passkey named "${passkey.name}" can no longer sign in to the Advantis intranet.`,
+    );
     const acceptedPasskeys = await ctx.db
       .query("passkeys")
       .withIndex("by_user", (q) => q.eq("userId", user._id))

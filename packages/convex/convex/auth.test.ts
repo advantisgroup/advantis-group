@@ -705,7 +705,162 @@ describe("recovery codes", () => {
     expect(status).toEqual({ state: "needs_enrollment", needsMfa: true, needsPasskey: false });
 
     const totpStatus = await t.query(api.totp.apiStatus, { serverKey, clerkUserId: "user_alice" });
-    expect(totpStatus).toEqual({ enrolled: true, needsRotation: true });
+    expect(totpStatus).toMatchObject({ enrolled: true, needsRotation: true });
+  });
+
+  test("the remaining count drops as codes are spent", async () => {
+    const t = setup();
+    const userId = await seedUser(t);
+    await seedTotp(t, userId);
+    await seedRecoveryCodes(t, userId, ["ABCDE-FGHJK", "KLMNP-QRSTU", "VWXYZ-23456"]);
+
+    const before = await t.query(api.totp.apiStatus, { serverKey, clerkUserId: "user_alice" });
+    await t.mutation(api.totp.apiVerifyRecoveryCode, {
+      serverKey,
+      clerkUserId: "user_alice",
+      code: "ABCDE-FGHJK",
+    });
+    const after = await t.query(api.totp.apiStatus, { serverKey, clerkUserId: "user_alice" });
+
+    expect(before).toMatchObject({ recoveryCodesRemaining: 3, recoveryCodesTotal: 3 });
+    expect(after).toMatchObject({ recoveryCodesRemaining: 2, recoveryCodesTotal: 3 });
+  });
+
+  test("regenerating issues a full fresh set and voids every old code", async () => {
+    const t = setup();
+    const userId = await seedUser(t);
+    await seedTotp(t, userId);
+    await seedRecoveryCodes(t, userId, ["ABCDE-FGHJK"]);
+
+    const { recoveryCodes } = await t.mutation(api.totp.apiRegenerateRecoveryCodes, {
+      serverKey,
+      clerkUserId: "user_alice",
+    });
+    const old = await t.mutation(api.totp.apiVerifyRecoveryCode, {
+      serverKey,
+      clerkUserId: "user_alice",
+      code: "ABCDE-FGHJK",
+    });
+    const fresh = await t.mutation(api.totp.apiVerifyRecoveryCode, {
+      serverKey,
+      clerkUserId: "user_alice",
+      code: recoveryCodes[0]!,
+    });
+
+    expect(recoveryCodes).toHaveLength(8);
+    expect(old.ok).toBe(false);
+    expect(fresh.ok).toBe(true);
+  });
+
+  test("regenerating needs an authenticator to regenerate for", async () => {
+    const t = setup();
+    await seedUser(t);
+
+    await expect(
+      t.mutation(api.totp.apiRegenerateRecoveryCodes, { serverKey, clerkUserId: "user_alice" }),
+    ).rejects.toThrow();
+  });
+});
+
+describe("security activity", () => {
+  test("merges all three audit trails, newest first", async () => {
+    const t = setup();
+    const userId = await seedUser(t);
+    await seedTotp(t, userId);
+    await seedRecoveryCodes(t, userId, ["ABCDE-FGHJK"]);
+
+    // One event into each table, in a known order.
+    await t.mutation(api.stepUp.apiRecordVerification, {
+      serverKey,
+      clerkUserId: "user_alice",
+      sessionId: SESSION,
+      method: "totp",
+      ok: true,
+      context: "sign_in",
+    });
+    await t.mutation(api.totp.apiVerifyRecoveryCode, {
+      serverKey,
+      clerkUserId: "user_alice",
+      code: "ABCDE-FGHJK",
+    });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("passkeyAuditLog", {
+        userId,
+        event: "created",
+        at: Date.now() + 1000,
+      });
+    });
+
+    const activity = await asUser(t, "user_alice").query(api.stepUp.securityActivity, {});
+
+    expect(activity[0]).toMatchObject({ source: "passkey", event: "created" });
+    expect(activity.map((entry) => entry.source)).toEqual(
+      expect.arrayContaining(["passkey", "totp", "step_up"]),
+    );
+    for (let i = 1; i < activity.length; i++) {
+      expect(activity[i]!.at).toBeLessThanOrEqual(activity[i - 1]!.at);
+    }
+  });
+
+  test("a verification carries the method that satisfied it", async () => {
+    const t = setup();
+    const userId = await seedUser(t);
+    await seedTotp(t, userId);
+    await t.mutation(api.stepUp.apiRecordVerification, {
+      serverKey,
+      clerkUserId: "user_alice",
+      sessionId: SESSION,
+      method: "totp",
+      ok: true,
+      context: "sign_in",
+    });
+
+    const activity = await asUser(t, "user_alice").query(api.stepUp.securityActivity, {});
+    const stepUp = activity.find((entry) => entry.source === "step_up");
+
+    expect(stepUp).toMatchObject({ event: "verified", detail: "totp" });
+  });
+
+  test("housekeeping rows stay out of it", async () => {
+    const t = setup();
+    const userId = await seedUser(t);
+    await t.mutation(api.stepUp.apiRequestEmailCode, {
+      serverKey,
+      clerkUserId: "user_alice",
+      sessionId: SESSION,
+      context: "sign_in",
+    });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("stepUpAuditLog", {
+        userId,
+        event: "policy_changed",
+        detail: "mfa=all",
+        at: Date.now(),
+      });
+    });
+
+    const activity = await asUser(t, "user_alice").query(api.stepUp.securityActivity, {});
+
+    // `challenge_issued` is the system talking to itself, and a policy change
+    // is about the org, not this account.
+    expect(activity.map((entry) => entry.event)).not.toContain("challenge_issued");
+    expect(activity.map((entry) => entry.event)).not.toContain("policy_changed");
+  });
+
+  test("one account never sees another's history", async () => {
+    const t = setup();
+    await seedUser(t, { clerkUserId: "user_alice" });
+    const malloryId = await seedUser(t, { clerkUserId: "user_mallory" });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("passkeyAuditLog", {
+        userId: malloryId,
+        event: "created",
+        at: Date.now(),
+      });
+    });
+
+    const activity = await asUser(t, "user_alice").query(api.stepUp.securityActivity, {});
+    expect(activity).toHaveLength(0);
   });
 
   test("a retired authenticator lets enrollment start again without a removal first", async () => {

@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
 import { startRegistration } from "@simplewebauthn/browser";
-import { useAuth } from "@clerk/nextjs";
-import { KeyRound, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { CloudCheck, KeyRound, Loader2, Pencil, Plus, Smartphone, Trash2 } from "lucide-react";
+import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { MOTION } from "@/components/activity/motion/motion-tokens";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -22,19 +24,15 @@ import { Link } from "@/components/Link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  jsonOrThrow,
+  useSecurityState,
+  type Passkey,
+} from "@/components/security/security-state";
+import {
   useDestructiveStepUp,
   type StepUpHintShape,
 } from "@/components/auth/useDestructiveStepUp";
 import { signalAcceptedPasskeys } from "./passkey-signal";
-
-type Passkey = {
-  _id: string;
-  name: string;
-  deviceType: "singleDevice" | "multiDevice";
-  backedUp: boolean;
-  createdAt: number;
-  lastUsedAt: number | null;
-};
 
 type RegistrationOptions = Parameters<typeof startRegistration>[0]["optionsJSON"];
 
@@ -44,51 +42,16 @@ type AcceptedCredentialsSignal = {
   allAcceptedCredentialIds: string[];
 };
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
-
-async function jsonOrThrow(response: Response) {
-  const body = (await response.json()) as { message?: string };
-  if (!response.ok) throw new Error(body.message ?? "Request failed");
-  return body;
-}
-
 export function PasskeySettingsCard() {
   const t = useTranslations("Settings");
-  const { getToken } = useAuth();
-  const [passkeys, setPasskeys] = useState<Passkey[] | null>(null);
+  const format = useFormatter();
+  const prefersReducedMotion = useReducedMotion();
+  const { passkeys, refresh, apiRequest } = useSecurityState();
   const [dialog, setDialog] = useState<"add" | "rename" | "remove" | null>(null);
   const [selected, setSelected] = useState<Passkey | null>(null);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const { runGuarded, dialog: stepUpDialog } = useDestructiveStepUp();
-
-  const apiRequest = useCallback(
-    async (path: string, init?: RequestInit): Promise<Response> => {
-      const token = await getToken();
-      return await fetch(`${apiUrl}${path}`, {
-        ...init,
-        headers: {
-          ...init?.headers,
-          ...(token ? { authorization: `Bearer ${token}` } : {}),
-        },
-      });
-    },
-    [getToken],
-  );
-
-  const load = useCallback(async () => {
-    try {
-      const body = (await jsonOrThrow(await apiRequest("/passkeys"))) as { passkeys: Passkey[] };
-      setPasskeys(body.passkeys);
-    } catch (error) {
-      console.error("[passkeys] list failed", error);
-      toast.error(t("passkeyLoadError"));
-    }
-  }, [apiRequest, t]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
 
   function openAdd() {
     setName(t("passkeyDefaultName"));
@@ -116,7 +79,7 @@ export function PasskeySettingsCard() {
           body: JSON.stringify({ flowId, name, response }),
         }),
       );
-      await load();
+      await refresh();
       setDialog(null);
       toast.success(t("passkeyAdded"));
     } catch (error) {
@@ -138,7 +101,7 @@ export function PasskeySettingsCard() {
           body: JSON.stringify({ name }),
         }),
       );
-      await load();
+      await refresh();
       setDialog(null);
       toast.success(t("passkeyRenamed"));
     } catch (error) {
@@ -163,15 +126,14 @@ export function PasskeySettingsCard() {
           )) as { ok: true; signal?: AcceptedCredentialsSignal } | StepUpHintShape,
       );
       if (!result) return;
-      const { signal } = result;
-      if (signal) {
+      if (result.signal) {
         try {
-          await signalAcceptedPasskeys(signal);
+          await signalAcceptedPasskeys(result.signal);
         } catch (error) {
           console.warn("[passkeys] credential cleanup signal failed", error);
         }
       }
-      await load();
+      await refresh();
       setDialog(null);
       toast.success(t("passkeyRemoved"));
     } catch (error) {
@@ -246,46 +208,71 @@ export function PasskeySettingsCard() {
           </p>
         ) : (
           <div className="space-y-2">
-            {passkeys.map((passkey) => (
-              <div
-                key={passkey._id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border/70 px-3 py-2.5"
-              >
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <KeyRound className="size-4 shrink-0 text-primary" />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{passkey.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {passkey.lastUsedAt
-                        ? t("passkeyLastUsed", {
-                            date: new Intl.DateTimeFormat(undefined, {
-                              dateStyle: "medium",
-                            }).format(passkey.lastUsedAt),
-                          })
-                        : t("passkeyNotUsed")}
-                    </p>
+            <AnimatePresence initial={false}>
+              {passkeys.map((passkey) => (
+                <motion.div
+                  key={passkey._id}
+                  layout={!prefersReducedMotion}
+                  initial={prefersReducedMotion ? false : { opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                  transition={{ duration: MOTION.base, ease: MOTION.ease }}
+                  className="flex items-center justify-between gap-3 overflow-hidden rounded-lg border border-border/70 px-3 py-2.5"
+                >
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <KeyRound className="size-4 shrink-0 text-primary" />
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                        <p className="truncate text-sm font-medium">{passkey.name}</p>
+                        {/* Whether losing this device loses the key is the one
+                            thing a passkey list has to say, and the data was
+                            already stored — just never rendered. */}
+                        <Badge variant="muted" className="gap-1 text-[10px]">
+                          {passkey.backedUp || passkey.deviceType === "multiDevice" ? (
+                            <>
+                              <CloudCheck className="size-3" />
+                              {t("passkeySynced")}
+                            </>
+                          ) : (
+                            <>
+                              <Smartphone className="size-3" />
+                              {t("passkeyDeviceBound")}
+                            </>
+                          )}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {passkey.lastUsedAt
+                          ? t("passkeyLastUsed", {
+                              date: format.dateTime(new Date(passkey.lastUsedAt), {
+                                dateStyle: "medium",
+                              }),
+                            })
+                          : t("passkeyNotUsed")}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex shrink-0 gap-1">
-                  <Button size="icon-sm" variant="ghost" onClick={() => openRename(passkey)}>
-                    <Pencil className="size-3.5" />
-                    <span className="sr-only">{t("renamePasskey")}</span>
-                  </Button>
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => {
-                      setSelected(passkey);
-                      setDialog("remove");
-                    }}
-                  >
-                    <Trash2 className="size-3.5" />
-                    <span className="sr-only">{t("removePasskey")}</span>
-                  </Button>
-                </div>
-              </div>
-            ))}
+                  <div className="flex shrink-0 gap-1">
+                    <Button size="icon-sm" variant="ghost" onClick={() => openRename(passkey)}>
+                      <Pencil className="size-3.5" />
+                      <span className="sr-only">{t("renamePasskey")}</span>
+                    </Button>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => {
+                        setSelected(passkey);
+                        setDialog("remove");
+                      }}
+                    >
+                      <Trash2 className="size-3.5" />
+                      <span className="sr-only">{t("removePasskey")}</span>
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
 

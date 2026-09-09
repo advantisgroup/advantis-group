@@ -114,9 +114,22 @@ export async function verifyRecoveryCode(clerkUserId: string, code: string): Pro
   return result.ok;
 }
 
-export async function getStatus(
+/** Replaces the whole set — the old codes stop working immediately. */
+export async function regenerateRecoveryCodes(
   clerkUserId: string,
-): Promise<{ enrolled: boolean; needsRotation: boolean }> {
+): Promise<{ recoveryCodes: string[] }> {
+  return await getConvex().mutation(api.totp.apiRegenerateRecoveryCodes, {
+    serverKey: serverKey(),
+    clerkUserId,
+  });
+}
+
+export async function getStatus(clerkUserId: string): Promise<{
+  enrolled: boolean;
+  needsRotation: boolean;
+  recoveryCodesRemaining: number;
+  recoveryCodesTotal: number;
+}> {
   return await getConvex().query(api.totp.apiStatus, { serverKey: serverKey(), clerkUserId });
 }
 

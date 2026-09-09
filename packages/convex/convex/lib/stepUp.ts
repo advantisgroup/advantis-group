@@ -1,5 +1,6 @@
 import { ConvexError } from "convex/values";
 
+import { internal } from "../_generated/api";
 import { safeEqual, sha256hex } from "../activity/lib/crypto";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
@@ -50,6 +51,31 @@ export interface StepUpHint {
 
 export function needsStepUpHint(requiredLevel: number, availableMethods: StepMethod[]): StepUpHint {
   return { needsStepUp: true, requiredLevel, availableMethods };
+}
+
+/**
+ * Tell the account's owner that one of their sign-in credentials changed.
+ *
+ * Only for the events Clerk can't see: passkeys and the authenticator app
+ * live in Convex, so Clerk's own security mail never fires for them. Clerk
+ * still owns password changes and new-sign-in notices — those stay a Clerk
+ * Dashboard setting rather than something duplicated here.
+ *
+ * Scheduled, never awaited into the caller's success path: an unreachable
+ * mail service must not roll back a credential change the user asked for.
+ */
+export async function notifySecurityChange(
+  ctx: MutationCtx,
+  user: Doc<"users">,
+  headline: string,
+  detail: string,
+): Promise<void> {
+  const base = process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de";
+  await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
+    kind: "security-alert",
+    to: user.email,
+    data: { headline, detail, url: `${base}/settings/account#security-activity` },
+  });
 }
 
 function generateCode(): string {

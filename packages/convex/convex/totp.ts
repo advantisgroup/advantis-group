@@ -6,6 +6,7 @@ import { type Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { getUserByClerkId } from "./lib/auth";
 import { trackEvent } from "./lib/analytics";
+import { notifySecurityChange } from "./lib/stepUp";
 
 const RECOVERY_CODE_COUNT = 8;
 // Avoids 0/O/1/I/L so a printed code isn't ambiguous to read back.
@@ -37,7 +38,12 @@ function randomRecoveryCode(): string {
 
 export const apiStatus = query({
   args: { serverKey: v.string(), clerkUserId: v.string() },
-  returns: v.object({ enrolled: v.boolean(), needsRotation: v.boolean() }),
+  returns: v.object({
+    enrolled: v.boolean(),
+    needsRotation: v.boolean(),
+    recoveryCodesRemaining: v.number(),
+    recoveryCodesTotal: v.number(),
+  }),
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
@@ -45,10 +51,66 @@ export const apiStatus = query({
       .query("totpCredentials")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
+    // Bounded by RECOVERY_CODE_COUNT per user, so collecting is safe here.
+    const codes = await ctx.db
+      .query("totpRecoveryCodes")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
     return {
       enrolled: Boolean(credential?.verifiedAt),
       needsRotation: Boolean(credential?.verifiedAt && credential.recoveryUsedAt),
+      recoveryCodesRemaining: codes.filter((code) => code.usedAt === undefined).length,
+      recoveryCodesTotal: codes.length,
     };
+  },
+});
+
+/** Burns every existing code and issues a fresh set. Used both for "I've
+ * spent a few and want a clean sheet" and for "I'm not sure where that
+ * printout ended up" — which is why it replaces rather than tops up. */
+export const apiRegenerateRecoveryCodes = mutation({
+  args: { serverKey: v.string(), clerkUserId: v.string() },
+  returns: v.object({ recoveryCodes: v.array(v.string()) }),
+  handler: async (ctx, args) => {
+    assertServerKey(args.serverKey);
+    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const credential = await ctx.db
+      .query("totpCredentials")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .unique();
+    if (!credential?.verifiedAt) {
+      throw new ConvexError({ code: "invalid", message: "No authenticator app is set up" });
+    }
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("totpRecoveryCodes")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    await Promise.all(existing.map((code) => ctx.db.delete(code._id)));
+
+    const recoveryCodes: string[] = [];
+    for (let i = 0; i < RECOVERY_CODE_COUNT; i++) {
+      const code = randomRecoveryCode();
+      recoveryCodes.push(code);
+      await ctx.db.insert("totpRecoveryCodes", {
+        userId: user._id,
+        codeHash: await sha256hex(code),
+        createdAt: now,
+      });
+    }
+    await ctx.db.insert("totpAuditLog", { userId: user._id, event: "recovery_regenerated", at: now });
+    await notifySecurityChange(
+      ctx,
+      user,
+      "Your recovery codes were replaced",
+      "A new set of recovery codes was generated for your Advantis intranet account. Any codes you had written down no longer work.",
+    );
+    await trackEvent(ctx, {
+      event: "mfa_recovery_codes_regenerated",
+      distinctId: user.clerkUserId,
+      properties: {},
+    });
+    return { recoveryCodes };
   },
 });
 
@@ -251,6 +313,12 @@ export const apiVerifyRecoveryCode = mutation({
     if (credential && !credential.recoveryUsedAt) {
       await ctx.db.patch(credential._id, { recoveryUsedAt: now });
     }
+    await notifySecurityChange(
+      ctx,
+      user,
+      "A recovery code was used on your account",
+      "Someone signed in to the Advantis intranet with one of your recovery codes. Your authenticator app is now marked as lost and has to be set up again.",
+    );
     return { ok: true };
   },
 });
@@ -272,6 +340,12 @@ export const apiRemove = mutation({
       .collect();
     await Promise.all(codes.map((code) => ctx.db.delete(code._id)));
     await ctx.db.insert("totpAuditLog", { userId: user._id, event: "removed", at: Date.now() });
+    await notifySecurityChange(
+      ctx,
+      user,
+      "Your authenticator app was removed",
+      "The authenticator app for your Advantis intranet account was removed, along with its recovery codes.",
+    );
     return { ok: true };
   },
 });

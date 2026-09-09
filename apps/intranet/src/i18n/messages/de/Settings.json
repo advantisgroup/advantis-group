@@ -1,4 +1,79 @@
 {
+  "recoveryCodesRemaining": "{remaining} von {total} Wiederherstellungscodes übrig",
+  "recoveryCodesLowHint": "Es werden knapp. Erzeuge neue Codes, damit du dich nicht aussperrst.",
+  "regenerateRecoveryCodes": "Neue Codes",
+  "recoveryCodesError": "Neue Wiederherstellungscodes konnten nicht erzeugt werden. Versuche es erneut.",
+  "sessions": {
+    "title": "Wo du angemeldet bist",
+    "hint": "Alle Browser und Geräte mit einer aktiven Sitzung für dieses Konto.",
+    "thisDevice": "Dieses Gerät",
+    "lastActive": "Zuletzt aktiv {when}",
+    "unknownDevice": "Unbekanntes Gerät",
+    "loadError": "Deine Sitzungen konnten nicht geladen werden.",
+    "revokeAll": "Überall sonst abmelden",
+    "revokeTitle": "Dieses Gerät abmelden?",
+    "revokeBody": "Dieser Browser muss sich neu anmelden. Am Konto selbst ändert sich nichts.",
+    "revokeConfirm": "Abmelden",
+    "revokeAllTitle": "Überall sonst abmelden?",
+    "revokeAllBody": "Damit werden {count} andere Sitzungen beendet. Hier bleibst du angemeldet.",
+    "revokeAllConfirm": "Andere abmelden",
+    "revoked": "Die Sitzung wurde abgemeldet.",
+    "revokedAll": "Alle anderen Sitzungen wurden abgemeldet.",
+    "revokeError": "Die Sitzung konnte nicht abgemeldet werden. Versuche es erneut."
+  },
+  "activity": {
+    "title": "Sicherheitsaktivität",
+    "hint": "Letzte Änderungen und Prüfungen an diesem Konto.",
+    "empty": "Noch nichts aufgezeichnet.",
+    "showMore": "{count} weitere anzeigen",
+    "showLess": "Weniger anzeigen",
+    "stepUpVerifiedWith": "Identität bestätigt mit {method}",
+    "method": {
+      "email_code": "einem E-Mail-Code",
+      "totp": "deiner Authentifizierungs-App",
+      "recovery_code": "einem Wiederherstellungscode",
+      "passkey": "einem Passkey"
+    },
+    "passkey": {
+      "created": "Passkey hinzugefügt",
+      "used": "Mit Passkey angemeldet",
+      "renamed": "Passkey umbenannt",
+      "removed": "Passkey entfernt"
+    },
+    "totp": {
+      "enrolled": "Authentifizierungs-App eingerichtet",
+      "verified": "Code der Authentifizierungs-App akzeptiert",
+      "failed": "Code der Authentifizierungs-App abgelehnt",
+      "recovery_used": "Wiederherstellungscode benutzt",
+      "recovery_regenerated": "Neue Wiederherstellungscodes erzeugt",
+      "removed": "Authentifizierungs-App entfernt"
+    },
+    "step_up": {
+      "verified": "Identität bestätigt",
+      "failed": "Identitätsprüfung fehlgeschlagen",
+      "enrollment_prompted": "Zur Einrichtung eines zweiten Schritts aufgefordert",
+      "new_device_detected": "Von einem neuen Gerät angemeldet"
+    }
+  },
+  "posture": {
+    "regionLabel": "Übersicht zur Kontosicherheit",
+    "eyebrow": "Kontosicherheit",
+    "exposedTitle": "Nur dein Passwort schützt dieses Konto",
+    "exposedBody": "Wer es kennt, kommt rein. Ein zweiter Schritt dauert etwa zwei Minuten und verhindert genau das.",
+    "basicTitle": "Durch einen zweiten Schritt geschützt",
+    "basicBody": "Mit einem gestohlenen Passwort allein kommt niemand rein. Ein Passkey blockiert zusätzlich gefälschte Anmeldeseiten, gegen die Codes nichts ausrichten.",
+    "strongTitle": "Durch einen Passkey geschützt",
+    "strongBody": "Was man nicht eintippt, kann auch nicht abgefischt werden. Eine Authentifizierungs-App als Reserve hilft, wenn dein Gerät gerade nicht da ist.",
+    "maximumTitle": "Vollständig geschützt",
+    "maximumBody": "Ein Passkey für den Alltag und eine Authentifizierungs-App als Rückfallebene. Hier ist nichts mehr zu tun.",
+    "factorPasskey": "Passkey",
+    "factorTotp": "Authentifizierungs-App",
+    "nextPasskey": "Passkey hinzufügen",
+    "nextTotp": "Authentifizierungs-App hinzufügen",
+    "nextRotate": "Neue App einrichten"
+  },
+  "passkeySynced": "Synchronisiert",
+  "passkeyDeviceBound": "Nur dieses Gerät",
   "title": "Einstellungen",
   "subtitle": "Verwalte dein persönliches Konto und deine Vorlieben",
   "jumpTo": "Direkt zu",

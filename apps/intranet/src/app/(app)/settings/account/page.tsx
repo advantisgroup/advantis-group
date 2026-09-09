@@ -9,7 +9,11 @@ import { useTranslations } from "next-intl";
 import { TotpSettingsCard } from "@/components/mfa/TotpSettingsCard";
 import { PasskeySettingsCard } from "@/components/passkeys/PasskeySettingsCard";
 import { ProfileEditorDialog } from "@/components/profile/ProfileEditorDialog";
+import { ActiveSessionsCard } from "@/components/security/ActiveSessionsCard";
+import { SecurityActivityCard } from "@/components/security/SecurityActivityCard";
+import { SecurityPosture } from "@/components/security/SecurityPosture";
 import { SecurityPreferencesCard } from "@/components/security/SecurityPreferencesCard";
+import { SecurityStateProvider } from "@/components/security/security-state";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -95,11 +99,20 @@ export default function SettingsAccountPage() {
         </CardContent>
       </Card>
 
-      <PasskeySettingsCard />
+      {/* One provider around all four so the posture header and the cards
+          under it can never describe different accounts. */}
+      <SecurityStateProvider>
+        <SecurityPosture />
+        <PasskeySettingsCard />
+        <TotpSettingsCard />
+        <SecurityPreferencesCard />
+      </SecurityStateProvider>
 
-      <TotpSettingsCard />
+      {/* Outside the provider: both read from Clerk and Convex directly, not
+          from the credential state the cards above share. */}
+      <ActiveSessionsCard />
 
-      <SecurityPreferencesCard />
+      <SecurityActivityCard />
 
       <ProfileEditorDialog
         user={user}

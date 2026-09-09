@@ -194,6 +194,27 @@ function render(
         ),
       };
     }
+    // Clerk sends its own security mail for the things Clerk owns — password
+    // changes, new sign-ins. It knows nothing about this app's passkeys or
+    // authenticator app, which live in Convex, so those events are ours to
+    // report. Deliberately notification-only: there is no "manage
+    // preferences" link, because the one person who must never be able to
+    // switch these off is whoever just took the credential away.
+    case "security-alert": {
+      const headline = str(data, "headline");
+      const detail = typeof data.detail === "string" ? data.detail : "";
+      const url = typeof data.url === "string" ? data.url : "";
+      return {
+        subject: `Security alert: ${headline}`,
+        html: layout(
+          headline,
+          `<p style="margin:0 0 16px;line-height:1.6">${esc(detail)}</p>
+           <p style="margin:0 0 24px;line-height:1.6">If this was you, nothing more to do.</p>
+           ${url ? button(url, "Review account security") : ""}
+           <p style="margin:24px 0 0;line-height:1.6;color:#b91c1c;font-size:13px">If it wasn't you, someone else may be signed in as you. Sign out everywhere from the security page and tell IT straight away.</p>`,
+        ),
+      };
+    }
     case "admin-verification-code": {
       const code = str(data, "code");
       const expiresInMinutes =

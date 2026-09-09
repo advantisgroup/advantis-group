@@ -510,6 +510,86 @@ export const setSecurityPreference = mutation({
   },
 });
 
+// --- Personal security activity ------------------------------------------------
+
+/**
+ * The user's own security history, merged from the three audit tables that
+ * have been collecting it since each feature shipped without anything ever
+ * showing it to them.
+ *
+ * Lives here rather than in its own module purely because this repo can't run
+ * `convex codegen` without a deployment, so a new file wouldn't be typed in
+ * `_generated/api.d.ts`. Reads are per-user and indexed; the tables grow
+ * without bound, so this takes a bounded slice of each rather than collecting.
+ */
+export const securityActivity = query({
+  args: { limit: v.optional(v.number()) },
+  returns: v.array(
+    v.object({
+      id: v.string(),
+      source: v.union(v.literal("passkey"), v.literal("totp"), v.literal("step_up")),
+      event: v.string(),
+      detail: v.optional(v.string()),
+      at: v.number(),
+    }),
+  ),
+  handler: async (ctx, { limit }) => {
+    const user = await requireUser(ctx);
+    const take = Math.min(Math.max(limit ?? 20, 1), 50);
+
+    // Each table is read newest-first on its own index, then the three are
+    // merged — taking `take` from each guarantees the merged top `take` is
+    // correct however lopsided the distribution is.
+    const [passkeyRows, totpRows, stepUpRows] = await Promise.all([
+      ctx.db
+        .query("passkeyAuditLog")
+        .withIndex("by_user_at", (q) => q.eq("userId", user._id))
+        .order("desc")
+        .take(take),
+      ctx.db
+        .query("totpAuditLog")
+        .withIndex("by_user_at", (q) => q.eq("userId", user._id))
+        .order("desc")
+        .take(take),
+      ctx.db
+        .query("stepUpAuditLog")
+        .withIndex("by_user_at", (q) => q.eq("userId", user._id))
+        .order("desc")
+        .take(take),
+    ]);
+
+    const merged = [
+      ...passkeyRows.map((row) => ({
+        id: row._id as string,
+        source: "passkey" as const,
+        event: row.event as string,
+        at: row.at,
+      })),
+      ...totpRows.map((row) => ({
+        id: row._id as string,
+        source: "totp" as const,
+        event: row.event as string,
+        at: row.at,
+      })),
+      ...stepUpRows
+        // Noise, not history: a code being issued is the system talking to
+        // itself, and the verification that follows already says what
+        // happened. Policy changes are an admin action about the org, not an
+        // event on this account.
+        .filter((row) => row.event !== "challenge_issued" && row.event !== "policy_changed")
+        .map((row) => ({
+          id: row._id as string,
+          source: "step_up" as const,
+          event: row.event as string,
+          ...(row.detail !== undefined ? { detail: row.detail } : {}),
+          at: row.at,
+        })),
+    ];
+
+    return merged.sort((a, b) => b.at - a.at).slice(0, take);
+  },
+});
+
 // --- Security standard (admin only) -------------------------------------------
 
 /** Exact, DB-backed adoption numbers and a list of accounts that don't yet

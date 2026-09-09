@@ -1,9 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
-import { useAuth } from "@clerk/nextjs";
-import { Check, Copy, Loader2, Plus, ShieldAlert, ShieldCheck, Trash2 } from "lucide-react";
+import {
+  Check,
+  Copy,
+  LifeBuoy,
+  Loader2,
+  Plus,
+  RefreshCw,
+  ShieldAlert,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -24,25 +33,20 @@ import {
   useDestructiveStepUp,
   type StepUpHintShape,
 } from "@/components/auth/useDestructiveStepUp";
+import { jsonOrThrow, useSecurityState } from "@/components/security/security-state";
+import { cn } from "@/lib/utils";
 
 type Enrollment = { secret: string; otpauthUrl: string; qrCodeDataUrl: string };
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
-
-async function jsonOrThrow(response: Response) {
-  const body = (await response.json()) as { message?: string };
-  if (!response.ok) throw new Error(body.message ?? "Request failed");
-  return body;
-}
-
 export function TotpSettingsCard() {
   const t = useTranslations("Settings");
-  const { getToken } = useAuth();
-  const [enrolled, setEnrolled] = useState<boolean | null>(null);
+  const { totp, refresh, apiRequest } = useSecurityState();
+  const enrolled = totp === null ? null : totp.enrolled;
   // Enrolled, but the authenticator behind it is presumed gone — a recovery
   // code was spent. Behaves like "not set up" for the purposes of the buttons
   // so the sign-in gate's re-enrollment step has something to click.
-  const [needsRotation, setNeedsRotation] = useState(false);
+  const needsRotation = totp?.needsRotation === true;
+  const recoveryLow = (totp?.recoveryCodesRemaining ?? 0) <= 2;
   const [dialog, setDialog] = useState<"setup" | "codes" | "remove" | null>(null);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [code, setCode] = useState("");
@@ -50,38 +54,6 @@ export function TotpSettingsCard() {
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const { runGuarded, dialog: stepUpDialog } = useDestructiveStepUp();
-
-  const apiRequest = useCallback(
-    async (path: string, init?: RequestInit): Promise<Response> => {
-      const token = await getToken();
-      return await fetch(`${apiUrl}${path}`, {
-        ...init,
-        headers: {
-          ...init?.headers,
-          ...(token ? { authorization: `Bearer ${token}` } : {}),
-        },
-      });
-    },
-    [getToken],
-  );
-
-  const load = useCallback(async () => {
-    try {
-      const body = (await jsonOrThrow(await apiRequest("/mfa/totp/status"))) as {
-        enrolled: boolean;
-        needsRotation: boolean;
-      };
-      setEnrolled(body.enrolled);
-      setNeedsRotation(body.needsRotation);
-    } catch (error) {
-      console.error("[totp] status failed", error);
-      toast.error(t("totpLoadError"));
-    }
-  }, [apiRequest, t]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
 
   function closeDialog() {
     if (busy) return;
@@ -120,8 +92,7 @@ export function TotpSettingsCard() {
       )) as { recoveryCodes: string[] };
       setRecoveryCodes(body.recoveryCodes);
       setDialog("codes");
-      setEnrolled(true);
-      setNeedsRotation(false);
+      await refresh();
       toast.success(t("totpEnabled"));
     } catch (error) {
       console.error("[totp] enroll verify failed", error);
@@ -144,13 +115,36 @@ export function TotpSettingsCard() {
             | StepUpHintShape,
       );
       if (!result) return;
-      setEnrolled(false);
-      setNeedsRotation(false);
+      await refresh();
       setDialog(null);
       toast.success(t("totpRemoved"));
     } catch (error) {
       console.error("[totp] removal failed", error);
       toast.error(t("totpRemoveError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function regenerateCodes() {
+    setBusy(true);
+    try {
+      // Gated exactly like a removal — fresh codes void whatever the user
+      // wrote down, so it needs the same proof of presence.
+      const result = await runGuarded(
+        async () =>
+          (await jsonOrThrow(
+            await apiRequest("/mfa/totp/recovery-codes", { method: "POST" }),
+          )) as { recoveryCodes: string[] } | StepUpHintShape,
+      );
+      if (!result) return;
+      setRecoveryCodes(result.recoveryCodes);
+      setCopied(false);
+      setDialog("codes");
+      await refresh();
+    } catch (error) {
+      console.error("[totp] recovery code regeneration failed", error);
+      toast.error(t("recoveryCodesError"));
     } finally {
       setBusy(false);
     }
@@ -222,10 +216,43 @@ export function TotpSettingsCard() {
             {t("totpNeedsRotation")}
           </p>
         ) : enrolled ? (
-          <p className="flex items-center gap-2 rounded-lg border border-border/70 px-3 py-2.5 text-sm">
-            <ShieldCheck className="size-4 shrink-0 text-primary" />
-            {t("totpEnabledHint")}
-          </p>
+          <div className="space-y-2">
+            <p className="flex items-center gap-2 rounded-lg border border-border/70 px-3 py-2.5 text-sm">
+              <ShieldCheck className="size-4 shrink-0 text-primary" />
+              {t("totpEnabledHint")}
+            </p>
+            {/* Recovery codes were shown once at enrollment and never again —
+                no way to tell how many were left, and no way to get a fresh
+                set short of tearing the authenticator down and starting over. */}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 px-3 py-2.5">
+              <div className="flex items-center gap-2 text-sm">
+                <LifeBuoy
+                  className={cn(
+                    "size-4 shrink-0",
+                    recoveryLow ? "text-warning" : "text-muted-foreground",
+                  )}
+                />
+                <span className={cn(recoveryLow && "font-medium")}>
+                  {t("recoveryCodesRemaining", {
+                    remaining: totp?.recoveryCodesRemaining ?? 0,
+                    total: totp?.recoveryCodesTotal ?? 0,
+                  })}
+                </span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() => void regenerateCodes()}
+              >
+                <RefreshCw className="size-3.5" />
+                {t("regenerateRecoveryCodes")}
+              </Button>
+            </div>
+            {recoveryLow && (
+              <p className="text-xs text-warning">{t("recoveryCodesLowHint")}</p>
+            )}
+          </div>
         ) : (
           <p className="rounded-lg border border-dashed border-border/70 px-3 py-4 text-sm text-muted-foreground">
             {t("totpNotEnabled")}

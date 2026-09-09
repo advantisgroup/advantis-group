@@ -1,6 +1,12 @@
 import { Elysia, t } from "elysia";
 
-import { beginEnrollment, finishEnrollment, getStatus, removeMfa } from "../lib/totp.js";
+import {
+  beginEnrollment,
+  finishEnrollment,
+  getStatus,
+  regenerateRecoveryCodes,
+  removeMfa,
+} from "../lib/totp.js";
 import { destructiveStepUpHint } from "../lib/stepUp.js";
 import { Errors } from "../lib/errors.js";
 import { rateLimit } from "../lib/rate-limit.js";
@@ -28,6 +34,18 @@ export const totpRoute = new Elysia()
     },
     { body: t.Object({ code: t.String() }) },
   )
+  // Gated like a removal: new codes silently void whatever the user has
+  // written down, so an attacker could use this to strip the recovery path
+  // without ever touching the authenticator itself.
+  .post("/mfa/totp/recovery-codes", async ({ request }) => {
+    requireFirstPartyOrigin(request);
+    const { clerkUserId, sessionId } = await requireAuth(request);
+    if (!sessionId) throw Errors.badRequest("No active session");
+    await rateLimit("totp-recovery", clerkUserId, 5, "1 h");
+    const hint = await destructiveStepUpHint(clerkUserId, sessionId);
+    if (hint) return hint;
+    return await regenerateRecoveryCodes(clerkUserId);
+  })
   // Taking the second factor away is the one thing a stolen session most
   // wants to do, so it costs a fresh check — see `destructiveRequirement`.
   .delete("/mfa/totp", async ({ request }) => {

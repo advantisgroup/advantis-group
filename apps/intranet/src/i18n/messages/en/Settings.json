@@ -1,4 +1,79 @@
 {
+  "recoveryCodesRemaining": "{remaining} of {total} recovery codes left",
+  "recoveryCodesLowHint": "Running low. Generate a new set so you don't get locked out.",
+  "regenerateRecoveryCodes": "New codes",
+  "recoveryCodesError": "Could not generate new recovery codes. Try again.",
+  "sessions": {
+    "title": "Where you're signed in",
+    "hint": "Every browser and device with an active session on this account.",
+    "thisDevice": "This device",
+    "lastActive": "Last active {when}",
+    "unknownDevice": "Unknown device",
+    "loadError": "Could not load your sessions.",
+    "revokeAll": "Sign out everywhere else",
+    "revokeTitle": "Sign this device out?",
+    "revokeBody": "That browser will need to sign in again. Nothing else about the account changes.",
+    "revokeConfirm": "Sign out",
+    "revokeAllTitle": "Sign out everywhere else?",
+    "revokeAllBody": "This ends {count} other sessions. You'll stay signed in here.",
+    "revokeAllConfirm": "Sign the others out",
+    "revoked": "That session was signed out.",
+    "revokedAll": "Every other session was signed out.",
+    "revokeError": "Could not sign that session out. Try again."
+  },
+  "activity": {
+    "title": "Security activity",
+    "hint": "Recent changes and checks on this account.",
+    "empty": "Nothing recorded yet.",
+    "showMore": "Show {count} more",
+    "showLess": "Show less",
+    "stepUpVerifiedWith": "Identity confirmed with {method}",
+    "method": {
+      "email_code": "an email code",
+      "totp": "your authenticator app",
+      "recovery_code": "a recovery code",
+      "passkey": "a passkey"
+    },
+    "passkey": {
+      "created": "Passkey added",
+      "used": "Signed in with a passkey",
+      "renamed": "Passkey renamed",
+      "removed": "Passkey removed"
+    },
+    "totp": {
+      "enrolled": "Authenticator app set up",
+      "verified": "Authenticator code accepted",
+      "failed": "Authenticator code rejected",
+      "recovery_used": "Recovery code used",
+      "recovery_regenerated": "New recovery codes generated",
+      "removed": "Authenticator app removed"
+    },
+    "step_up": {
+      "verified": "Identity confirmed",
+      "failed": "Identity check failed",
+      "enrollment_prompted": "Asked to add a second step",
+      "new_device_detected": "Signed in from a new device"
+    }
+  },
+  "posture": {
+    "regionLabel": "Account security overview",
+    "eyebrow": "Account security",
+    "exposedTitle": "Your password is the only thing protecting this account",
+    "exposedBody": "Anyone who learns it is in. Adding a second step takes about two minutes and stops that outright.",
+    "basicTitle": "Protected by a second step",
+    "basicBody": "A stolen password alone won't get anyone in. A passkey would also block the fake login pages that codes can't.",
+    "strongTitle": "Protected by a passkey",
+    "strongBody": "Nothing to type means nothing to phish. Add an authenticator app as a backup for when your device isn't to hand.",
+    "maximumTitle": "Fully protected",
+    "maximumBody": "A passkey for everyday sign-in and an authenticator app to fall back on. Nothing more to do here.",
+    "factorPasskey": "Passkey",
+    "factorTotp": "Authenticator app",
+    "nextPasskey": "Add a passkey",
+    "nextTotp": "Add an authenticator app",
+    "nextRotate": "Set up a new app"
+  },
+  "passkeySynced": "Synced",
+  "passkeyDeviceBound": "This device only",
   "title": "Settings",
   "subtitle": "Manage your personal account and preferences",
   "jumpTo": "Jump to",

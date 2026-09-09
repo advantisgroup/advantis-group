@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
-import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -12,42 +11,17 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
+import { useSecurityState } from "./security-state";
 
 export function SecurityPreferencesCard() {
   const t = useTranslations("Settings");
-  const { getToken } = useAuth();
   const preference = useQuery(api.stepUp.securityPreference);
   const setPreference = useMutation(api.stepUp.setSecurityPreference);
-  const [hasPasskey, setHasPasskey] = useState<boolean | null>(null);
+  // Shared with the posture header and the passkey card — this used to run
+  // its own `/passkeys` request purely to decide whether to show the warning
+  // below, and could contradict the list rendered a few hundred pixels up.
+  const { passkeys } = useSecurityState();
   const [saving, setSaving] = useState(false);
-
-  const apiRequest = useCallback(
-    async (path: string): Promise<Response> => {
-      const token = await getToken();
-      return await fetch(`${apiUrl}${path}`, {
-        headers: token ? { authorization: `Bearer ${token}` } : {},
-      });
-    },
-    [getToken],
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const response = await apiRequest("/passkeys");
-        if (!response.ok) return;
-        const body = (await response.json()) as { passkeys: unknown[] };
-        if (!cancelled) setHasPasskey(body.passkeys.length > 0);
-      } catch {
-        // Best-effort — the warning just stays hidden if this fails.
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [apiRequest]);
 
   async function toggle(checked: boolean) {
     setSaving(true);
@@ -62,6 +36,7 @@ export function SecurityPreferencesCard() {
   }
 
   const checked = preference?.alwaysRequireMfaAtSignIn === true;
+  const hasPasskey = (passkeys?.length ?? 0) > 0;
 
   return (
     <Card id="security-preferences" data-hash-anchor>

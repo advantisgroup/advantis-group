@@ -23,6 +23,7 @@ export const sendNotificationEmail = internalAction({
       v.literal("password-reset-request"),
       v.literal("password-reset-link"),
       v.literal("admin-verification-code"),
+      v.literal("security-alert"),
     ),
     to: v.string(),
     data: v.any(),

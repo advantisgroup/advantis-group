@@ -459,6 +459,7 @@ export default defineSchema({
       v.literal("verified"),
       v.literal("failed"),
       v.literal("recovery_used"),
+      v.literal("recovery_regenerated"),
       v.literal("removed"),
     ),
     at: v.number(),
