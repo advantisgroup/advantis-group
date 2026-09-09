@@ -12,7 +12,8 @@ import { useAttachmentUpload } from "@/components/attachments/useAttachmentUploa
 import { GuidebookAttachments } from "@/components/guidebooks/GuidebookAttachments";
 import { PendingWikiAttachments } from "@/components/guidebooks/PendingWikiAttachments";
 import { staticGuidebookSlugs } from "@/components/guidebooks/registry";
-import { useCurrentUser } from "@/components/providers/current-user";
+import { WikiAiFormatAssist } from "@/components/guidebooks/WikiAiFormatAssist";
+import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
 import { TagInput, type WikiEntry } from "@/components/guidebooks/WikiEntryDialogs";
 import { Input } from "@/components/ui/input";
 import { type FileLinkCandidate, RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -178,6 +179,7 @@ export function useWikiEntryForm({
   const categories = useQuery(api.wikiCategories.list) ?? [];
   const users = useQuery(api.users.list, {}) ?? [];
   const currentUser = useCurrentUser();
+  const canFormatWithAi = useHasCapability("manage_guidebooks");
   const entries = useQuery(api.wikiEntries.list) ?? [];
   const create = useMutation(api.wikiEntries.create);
   const update = useMutation(api.wikiEntries.update);
@@ -357,6 +359,13 @@ export function useWikiEntryForm({
           placeholder={t("fieldErklaerungPlaceholder")}
           minHeight="8rem"
           fileLinkCandidates={fileLinkCandidates}
+          aiFormatSlot={
+            canFormatWithAi
+              ? ({ inline }) => (
+                  <WikiAiFormatAssist html={erklaerung} onApply={setErklaerung} inline={inline} />
+                )
+              : undefined
+          }
         />
       </div>
       {optionsFields}

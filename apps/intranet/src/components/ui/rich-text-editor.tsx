@@ -17,7 +17,7 @@ import {
   Underline,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -1078,6 +1078,7 @@ export function RichTextEditor({
   minHeight,
   mentionCandidates,
   fileLinkCandidates,
+  aiFormatSlot,
 }: {
   value: string;
   onChange: (html: string) => void;
@@ -1095,6 +1096,13 @@ export function RichTextEditor({
    *  files when non-empty. Picking one inserts a special, previewable chip
    *  (see `.wiki-file-chip` / `WikiFileLinkText`). */
   fileLinkCandidates?: FileLinkCandidate[];
+  /** Opt-in extra action rendered as a floating button over the editor (or,
+   *  once the mobile keyboard docks the toolbar, as one more icon inside
+   *  that docked bar — `inline: true` tells the slot to switch its own look
+   *  accordingly). Kept as a render prop rather than a feature-specific
+   *  import so this generic component doesn't need to know what it renders
+   *  (currently only the wiki "format with AI" assist uses this). */
+  aiFormatSlot?: (opts: { inline: boolean }) => ReactNode;
 }) {
   const controller = useRichTextController({ value, onChange, mentionCandidates });
   const isMobile = useIsMobile();
@@ -1110,7 +1118,7 @@ export function RichTextEditor({
     <>
       <div
         className={cn(
-          "overflow-hidden rounded-lg border border-border bg-background shadow-sm focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40",
+          "relative overflow-hidden rounded-lg border border-border bg-background shadow-sm focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40",
           className,
         )}
       >
@@ -1132,18 +1140,20 @@ export function RichTextEditor({
           }}
           className={cn("max-h-[28rem] overflow-y-auto", minHeight ?? "min-h-[14rem]")}
         />
+        {aiFormatSlot && !docked && aiFormatSlot({ inline: false })}
       </div>
       {docked &&
         createPortal(
           <div
             style={{ bottom: keyboardInset }}
-            className="fixed inset-x-0 z-50 border-t border-border/70 bg-card px-2 py-1.5 shadow-[0_-4px_16px_-6px_rgb(0_0_0/0.25)]"
+            className="fixed inset-x-0 z-50 flex items-center gap-1 border-t border-border/70 bg-card px-2 py-1.5 shadow-[0_-4px_16px_-6px_rgb(0_0_0/0.25)]"
           >
             <RichTextToolbar
               controller={controller}
               fileLinkCandidates={fileLinkCandidates}
-              className="justify-center"
+              className="flex-1 justify-center"
             />
+            {aiFormatSlot?.({ inline: true })}
           </div>,
           document.body,
         )}

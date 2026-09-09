@@ -2190,6 +2190,16 @@ export default defineSchema({
     .index("by_slug", ["slug"])
     .index("by_category", ["categoryId"]),
 
+  // Org-wide default instructions for the "format with AI" wiki-entry
+  // assist (apps/api's /wiki/format-assist) — singleton-by-key, same shape
+  // as activitySettings. Only ever one row (key "default") for now.
+  wikiFormatSettings: defineTable({
+    key: v.string(),
+    value: v.string(),
+    updatedByUserId: v.id("users"),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
+
   // The public marketing-site blog. Authored from apps/intranet (gated by
   // the manage_blog capability), read publicly (no auth) from apps/marketing
   // via a plain ConvexHttpClient — see blogPosts.ts's getAll/getBySlug.

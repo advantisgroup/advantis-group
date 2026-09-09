@@ -149,6 +149,7 @@ import type * as whitepaperLeads from "../whitepaperLeads.js";
 import type * as wikiCategories from "../wikiCategories.js";
 import type * as wikiChats from "../wikiChats.js";
 import type * as wikiEntries from "../wikiEntries.js";
+import type * as wikiFormatSettings from "../wikiFormatSettings.js";
 import type * as wikiMigration from "../wikiMigration.js";
 
 import type {
@@ -299,6 +300,7 @@ declare const fullApi: ApiFromModules<{
   wikiCategories: typeof wikiCategories;
   wikiChats: typeof wikiChats;
   wikiEntries: typeof wikiEntries;
+  wikiFormatSettings: typeof wikiFormatSettings;
   wikiMigration: typeof wikiMigration;
 }>;
 
