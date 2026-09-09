@@ -17,6 +17,7 @@ import { displayName } from "./lib/users";
 import {
   availableMethodsFor,
   checkSatisfied,
+  destructiveRequirement,
   getOrDefaultPolicy,
   hasNonPasskeyVerification,
   issueEmailCode,
@@ -259,6 +260,38 @@ export const apiClaimPasskeyTicket = mutation({
     await ctx.db.patch(row._id, { usedAt: Date.now() });
     await recordPasskeyVerification(ctx, user, args.sessionId);
     return { ok: true };
+  },
+});
+
+// --- Destructive-action gate (see apps/api's totp/passkey removal routes) ----
+
+/** Asked by apps/api immediately before it removes an authenticator app or a
+ * passkey. Returns the hint shape the frontend already knows from
+ * `passwordResets.ts` rather than throwing, so the caller can put a
+ * `<StepUpDialog>` in front of the action and retry it. */
+export const apiDestructiveGate = query({
+  args: { serverKey: v.string(), clerkUserId: v.string(), sessionId: v.string() },
+  returns: v.object({
+    satisfied: v.boolean(),
+    requiredLevel: v.number(),
+    availableMethods: v.array(stepMethodValidator),
+  }),
+  handler: async (ctx, args) => {
+    assertServerKey(args.serverKey);
+    const user = await getUserByClerkId(ctx, args.clerkUserId);
+    if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
+    const { requiredLevel, freshnessMs } = await destructiveRequirement(ctx, user);
+    const satisfied = await checkSatisfied(ctx, {
+      userId: user._id,
+      sessionId: args.sessionId,
+      requiredLevel,
+      freshnessMs,
+    });
+    return {
+      satisfied,
+      requiredLevel,
+      availableMethods: satisfied ? [] : await availableMethodsFor(ctx, user._id, requiredLevel),
+    };
   },
 });
 

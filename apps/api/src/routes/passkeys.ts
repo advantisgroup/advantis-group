@@ -15,6 +15,8 @@ import {
   requirePasskeyOrigin,
 } from "../lib/passkeys.js";
 import { clientIp } from "../lib/client-ip.js";
+import { destructiveStepUpHint } from "../lib/stepUp.js";
+import { Errors } from "../lib/errors.js";
 import { rateLimit } from "../lib/rate-limit.js";
 import { requireAuth } from "../lib/middleware.js";
 
@@ -70,8 +72,15 @@ export const passkeysRoute = new Elysia()
     },
     { params: t.Object({ id: t.String() }), body: t.Object({ name: t.String() }) },
   )
+  // Adding a passkey is deliberately not gated: it never weakens the
+  // account, and the sign-in gate's enrollment step would deadlock against a
+  // check the user has no credential to pass yet. Removal is the direction
+  // that costs something.
   .delete("/passkeys/:id", async ({ request, params }) => {
     requirePasskeyOrigin(request);
-    const { clerkUserId } = await requireAuth(request);
+    const { clerkUserId, sessionId } = await requireAuth(request);
+    if (!sessionId) throw Errors.badRequest("No active session");
+    const hint = await destructiveStepUpHint(clerkUserId, sessionId);
+    if (hint) return hint;
     return { ok: true, signal: await removePasskey(clerkUserId, params.id) };
   });

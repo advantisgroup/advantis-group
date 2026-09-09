@@ -1,6 +1,8 @@
 import { Elysia, t } from "elysia";
 
 import { beginEnrollment, finishEnrollment, getStatus, removeMfa } from "../lib/totp.js";
+import { destructiveStepUpHint } from "../lib/stepUp.js";
+import { Errors } from "../lib/errors.js";
 import { rateLimit } from "../lib/rate-limit.js";
 import { requireAuth, requireFirstPartyOrigin } from "../lib/middleware.js";
 
@@ -26,9 +28,14 @@ export const totpRoute = new Elysia()
     },
     { body: t.Object({ code: t.String() }) },
   )
+  // Taking the second factor away is the one thing a stolen session most
+  // wants to do, so it costs a fresh check — see `destructiveRequirement`.
   .delete("/mfa/totp", async ({ request }) => {
     requireFirstPartyOrigin(request);
-    const { clerkUserId } = await requireAuth(request);
+    const { clerkUserId, sessionId } = await requireAuth(request);
+    if (!sessionId) throw Errors.badRequest("No active session");
+    const hint = await destructiveStepUpHint(clerkUserId, sessionId);
+    if (hint) return hint;
     await removeMfa(clerkUserId);
     return { ok: true };
   });

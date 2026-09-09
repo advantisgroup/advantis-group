@@ -121,6 +121,37 @@ export async function claimPasskeyTicket(
   return ok;
 }
 
+export type StepMethod = VerifyMethod | "passkey";
+
+/** The `{ needsStepUp: true }` shape `packages/convex/convex/lib/stepUp.ts`
+ * returns from admin actions, reused here so removal endpoints answer the
+ * frontend in a shape it already handles. */
+export interface StepUpHint {
+  needsStepUp: true;
+  requiredLevel: number;
+  availableMethods: StepMethod[];
+}
+
+/** Checked immediately before a security credential is removed. Returns a
+ * hint to hand straight back to the caller when the session hasn't proved
+ * itself recently enough, or null when it's clear to proceed. */
+export async function destructiveStepUpHint(
+  clerkUserId: string,
+  sessionId: string,
+): Promise<StepUpHint | null> {
+  const gate = await getConvex().query(api.stepUp.apiDestructiveGate, {
+    serverKey: serverKey(),
+    clerkUserId,
+    sessionId,
+  });
+  if (gate.satisfied) return null;
+  return {
+    needsStepUp: true,
+    requiredLevel: gate.requiredLevel,
+    availableMethods: gate.availableMethods,
+  };
+}
+
 export async function evaluateDevice(
   clerkUserId: string,
   sessionId: string,

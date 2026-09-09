@@ -21,6 +21,10 @@ import {
 import { Link } from "@/components/Link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  useDestructiveStepUp,
+  type StepUpHintShape,
+} from "@/components/auth/useDestructiveStepUp";
 import { signalAcceptedPasskeys } from "./passkey-signal";
 
 type Passkey = {
@@ -56,6 +60,7 @@ export function PasskeySettingsCard() {
   const [selected, setSelected] = useState<Passkey | null>(null);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const { runGuarded, dialog: stepUpDialog } = useDestructiveStepUp();
 
   const apiRequest = useCallback(
     async (path: string, init?: RequestInit): Promise<Response> => {
@@ -148,9 +153,17 @@ export function PasskeySettingsCard() {
     if (!selected) return;
     setBusy(true);
     try {
-      const { signal } = (await jsonOrThrow(
-        await apiRequest(`/passkeys/${selected._id}`, { method: "DELETE" }),
-      )) as { signal?: AcceptedCredentialsSignal };
+      // Removal is gated server-side — see `destructiveRequirement`. A hint
+      // comes back instead of a deletion when this session needs to prove
+      // itself first; `runGuarded` handles that round trip.
+      const result = await runGuarded(
+        async () =>
+          (await jsonOrThrow(
+            await apiRequest(`/passkeys/${selected._id}`, { method: "DELETE" }),
+          )) as { ok: true; signal?: AcceptedCredentialsSignal } | StepUpHintShape,
+      );
+      if (!result) return;
+      const { signal } = result;
       if (signal) {
         try {
           await signalAcceptedPasskeys(signal);
@@ -322,6 +335,8 @@ export function PasskeySettingsCard() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {stepUpDialog}
       </CardContent>
     </Card>
   );

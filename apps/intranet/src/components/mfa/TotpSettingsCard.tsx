@@ -20,6 +20,10 @@ import {
 import { Link } from "@/components/Link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  useDestructiveStepUp,
+  type StepUpHintShape,
+} from "@/components/auth/useDestructiveStepUp";
 
 type Enrollment = { secret: string; otpauthUrl: string; qrCodeDataUrl: string };
 
@@ -45,6 +49,7 @@ export function TotpSettingsCard() {
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
+  const { runGuarded, dialog: stepUpDialog } = useDestructiveStepUp();
 
   const apiRequest = useCallback(
     async (path: string, init?: RequestInit): Promise<Response> => {
@@ -129,8 +134,18 @@ export function TotpSettingsCard() {
   async function removeTotp() {
     setBusy(true);
     try {
-      await jsonOrThrow(await apiRequest("/mfa/totp", { method: "DELETE" }));
+      // The server hands back a step-up hint instead of removing anything
+      // when this session hasn't verified recently enough; `runGuarded` puts
+      // the dialog in front of it and returns null if the user backs out.
+      const result = await runGuarded(
+        async () =>
+          (await jsonOrThrow(await apiRequest("/mfa/totp", { method: "DELETE" }))) as
+            | { ok: true }
+            | StepUpHintShape,
+      );
+      if (!result) return;
       setEnrolled(false);
+      setNeedsRotation(false);
       setDialog(null);
       toast.success(t("totpRemoved"));
     } catch (error) {
@@ -305,6 +320,8 @@ export function TotpSettingsCard() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {stepUpDialog}
       </CardContent>
     </Card>
   );
