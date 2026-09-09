@@ -263,5 +263,17 @@
   "importAssistRunning": "Analyzing…",
   "importAssistHint": "Suggests a title, tags and category from the imported text — the content itself is never changed.",
   "importAssistApplied": "Suggestions applied",
-  "importAssistCategoryHint": "Category suggestion: \"{hint}\" — no matching category found, please choose one manually."
+  "importAssistCategoryHint": "Category suggestion: \"{hint}\" — no matching category found, please choose one manually.",
+  "formatAssistCta": "Format with AI",
+  "formatAssistRunning": "Formatting…",
+  "formatAssistInstructions": "Formatting instructions",
+  "formatAssistInstructionsPlaceholder": "e.g. use ## for section headers, bold key terms, numbered steps for procedures…",
+  "formatAssistSaveDefault": "Save as default",
+  "formatAssistDefaultSaved": "Saved as the default instructions",
+  "formatAssistNeedsInstructions": "Add formatting instructions first",
+  "formatAssistCopy": "Copy",
+  "formatAssistRevert": "Revert to original",
+  "formatAssistEdit": "Edit",
+  "formatAssistDiscard": "Discard",
+  "formatAssistApply": "Apply"
 }

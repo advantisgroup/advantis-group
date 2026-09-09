@@ -10,9 +10,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { useWikiEntryForm } from "@/components/guidebooks/useWikiEntryForm";
+import { WikiAiFormatAssist } from "@/components/guidebooks/WikiAiFormatAssist";
 import { WikiEntryPreview } from "@/components/guidebooks/WikiEntryPreview";
 import { Link } from "@/components/Link";
-import { useCurrentUser } from "@/components/providers/current-user";
+import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import { htmlToText } from "@/components/ui/rich-text";
@@ -198,6 +199,7 @@ export function WikiEntryComposer() {
   const locale = useLocale();
   const router = useRouter();
   const me = useCurrentUser();
+  const canFormatWithAi = useHasCapability("manage_guidebooks");
   const isMobile = useIsMobile();
   const handleError = useErrorHandler();
   const importApi = useWikiImportApi();
@@ -446,6 +448,17 @@ export function WikiEntryComposer() {
                     placeholder={t("fieldErklaerungPlaceholder")}
                     minHeight="40vh"
                     fileLinkCandidates={entryForm.fileLinkCandidates}
+                    aiFormatSlot={
+                      canFormatWithAi
+                        ? ({ inline }) => (
+                            <WikiAiFormatAssist
+                              html={entryForm.erklaerung}
+                              onApply={entryForm.setErklaerung}
+                              inline={inline}
+                            />
+                          )
+                        : undefined
+                    }
                   />
                 </div>
               </div>

@@ -17,6 +17,7 @@ import { salesCoachEvRoute } from "./routes/sales-coach-ev.js";
 import { stepUpRoute } from "./routes/stepUp.js";
 import { totpRoute } from "./routes/totp.js";
 import { wikiChatRoute } from "./routes/wiki-chat.js";
+import { wikiFormatAssistRoute } from "./routes/wiki-format-assist.js";
 import { wikiImportRoute } from "./routes/wiki-import.js";
 import { internalClockodoRoute } from "./routes/internal/clockodo.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
@@ -81,6 +82,7 @@ export const app = new Elysia()
   .use(stepUpRoute)
   .use(totpRoute)
   .use(wikiChatRoute)
+  .use(wikiFormatAssistRoute)
   .use(wikiImportRoute)
   .use(applicantsRoute);
 

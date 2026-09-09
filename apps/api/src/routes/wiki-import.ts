@@ -4,6 +4,7 @@ import { anthropic } from "../lib/anthropic.js";
 import { Errors } from "../lib/errors.js";
 import { resolveOneDriveUser } from "../lib/onedrive/context.js";
 import { rateLimit } from "../lib/rate-limit.js";
+import { requireWikiManageAccess } from "../lib/wiki-access.js";
 
 const MAX_TEXT_CHARS = 20_000;
 
@@ -60,14 +61,6 @@ function parseAssist(text: string): AssistResult {
       : [],
     categoryHint: str(data.categoryHint).slice(0, 100),
   };
-}
-
-/** Same authorization shape as OneDrive's wiki-attach endpoint: manager rank
- *  or the standalone `manage_guidebooks` capability (`canWriteWiki`). */
-function requireWikiManageAccess(user: { role: string; canWriteWiki?: boolean }): void {
-  if (user.role !== "admin" && user.role !== "manager" && !user.canWriteWiki) {
-    throw Errors.forbidden("Wiki management access required");
-  }
 }
 
 export const wikiImportRoute = new Elysia().post(

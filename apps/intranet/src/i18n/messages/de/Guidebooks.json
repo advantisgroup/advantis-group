@@ -263,5 +263,17 @@
   "importAssistRunning": "Wird analysiert…",
   "importAssistHint": "Schlägt Titel, Stichwörter und Kategorie anhand des importierten Texts vor — der Inhalt selbst wird nie verändert.",
   "importAssistApplied": "Vorschläge übernommen",
-  "importAssistCategoryHint": "Vorschlag für die Kategorie: „{hint}“ — keine passende Kategorie gefunden, bitte manuell wählen."
+  "importAssistCategoryHint": "Vorschlag für die Kategorie: „{hint}“ — keine passende Kategorie gefunden, bitte manuell wählen.",
+  "formatAssistCta": "Mit KI formatieren",
+  "formatAssistRunning": "Wird formatiert…",
+  "formatAssistInstructions": "Formatierungsanweisungen",
+  "formatAssistInstructionsPlaceholder": "z. B. ## für Abschnittsüberschriften, wichtige Begriffe fett, nummerierte Schritte für Abläufe…",
+  "formatAssistSaveDefault": "Als Standard speichern",
+  "formatAssistDefaultSaved": "Als Standardanweisungen gespeichert",
+  "formatAssistNeedsInstructions": "Bitte zuerst Formatierungsanweisungen eingeben",
+  "formatAssistCopy": "Kopieren",
+  "formatAssistRevert": "Original wiederherstellen",
+  "formatAssistEdit": "Bearbeiten",
+  "formatAssistDiscard": "Verwerfen",
+  "formatAssistApply": "Übernehmen"
 }
