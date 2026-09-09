@@ -33,9 +33,34 @@ Run from repo root unless noted; Turborepo filters by workspace name.
   (each has a `:intranet` / `:marketing` / `:api` filtered variant)
 - Convex package specifically: `cd packages/convex && npx tsc --noEmit` for a
   fast type-check; `npx convex dev` / `npx convex deploy` for the backend.
+- `bun run test` — the whole suite; `bun run test:convex` for just the Convex
+  package. See "Tests" below.
 
 Always type-check and lint/format touched packages before calling a change
 done.
+
+## Tests
+
+`packages/convex` is currently the only package with tests. They run on
+[`convex-test`](https://docs.convex.dev/testing/convex-test) under Vitest:
+the real Convex functions execute against an in-memory backend, so a test
+seeds rows, calls `api.*` exactly the way apps/api or the browser would, and
+asserts on what landed in the database.
+
+- `convex/auth.test.ts` covers the step-up engine — which level each
+  verification method banks, and which (policy, credential, risk) combination
+  opens the sign-in gate or the destructive-action gate.
+- Config lives in `packages/convex/vitest.config.ts`. It needs the
+  `edge-runtime` environment (Convex handlers get `crypto.subtle`, which plain
+  Node's test environment doesn't provide the same way) and sets
+  `CONVEX_SERVER_KEY`, which every `api*` function checks.
+- **`convex-test` must stay version-matched to `convex`.** Its peer range is
+  narrow and a mismatch fails at the syscall layer with an unhelpful
+  `Right-hand side of 'instanceof' is not an object`, not a version warning.
+  If you bump `convex`, bump `convex-test` with it.
+- Test files live in `convex/` next to the functions so `import.meta.glob` can
+  build the module map convex-test needs. Anything named `*.test.ts` is
+  excluded from both that map and the Convex deploy bundle.
 
 ## Previewing the marketing site locally (Clerk bypass)
 

@@ -69,6 +69,11 @@
     "type-check": {
       "dependsOn": ["^build"]
     },
+    "test": {},
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    },
     "format": {
       "cache": false
     },

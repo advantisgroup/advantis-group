@@ -37,6 +37,8 @@
     "dev": "convex dev",
     "convex:deploy": "convex deploy",
     "codegen": "convex codegen",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "type-check": "tsc --noEmit",
     "lint": "echo \"@advantis/convex: no lint\""
   },
@@ -47,6 +49,9 @@
     "zod": "^4.3.0"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "@edge-runtime/vm": "^5.0.0",
+    "convex-test": "0.0.54",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.0"
   }
 }

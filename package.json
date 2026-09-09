@@ -13,6 +13,8 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "test:convex": "turbo run test --filter=@advantis/convex",
     "check:i18n": "bun scripts/check-i18n.ts",
     "check:api-boundaries": "bun scripts/check-api-boundaries.ts",
     "format": "turbo run format",
