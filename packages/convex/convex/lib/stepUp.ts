@@ -338,6 +338,35 @@ export async function getOrDefaultPolicy(
   return (await ctx.db.query("authPolicy").first()) ?? DEFAULT_POLICY;
 }
 
+/**
+ * What has to be true before a security credential can be taken away.
+ *
+ * There is always a floor, whatever the org policy says: removing a factor
+ * is the single thing an attacker holding a stolen session most wants to do,
+ * and a session that signed in this morning is no evidence its owner is at
+ * the keyboard now. The floor is level 1 with the reverification window,
+ * which an email code always satisfies — deliberately something every
+ * account can produce, so this can never become its own lockout.
+ *
+ * `requireMfaForDestructive` and its two settings only ever raise that bar.
+ * Until this existed they were collected by the admin panel, stored, read
+ * back into the form, and enforced by nothing at all.
+ */
+export async function destructiveRequirement(
+  ctx: QueryCtx | MutationCtx,
+  user: Doc<"users">,
+): Promise<{ requiredLevel: number; freshnessMs: number }> {
+  const policy = await getOrDefaultPolicy(ctx);
+  const enforced = policy.requireMfaForDestructive && !policy.exemptUserIds.includes(user._id);
+  if (!enforced) {
+    return { requiredLevel: LEVEL.email_code, freshnessMs: REVERIFY_FRESHNESS_MS };
+  }
+  return {
+    requiredLevel: Math.max(LEVEL.email_code, policy.minDestructiveLevel),
+    freshnessMs: Math.max(1, policy.destructiveActionTtlMinutes) * 60_000,
+  };
+}
+
 function graceDeadlineFor(
   policySetAt: number,
   retroactive: boolean,
@@ -441,7 +470,16 @@ export async function resolveSignInRequirement(
     .first();
 
   let requiredLevel = 0;
-  if (mfaApplies && !needsMfaEnrollment) requiredLevel = Math.max(requiredLevel, ORG_MFA_LEVEL);
+  // Only demand the org's level once the policy is genuinely in force and
+  // the user owns something that can reach it. During a grace period it is
+  // by definition not in force yet — raising the bar there asked an account
+  // with no second factor for a level 2 it had no way to produce, and the
+  // "you have until <date>" banner never got a chance to render because the
+  // gate blocked first. Someone with no credential and no route to one is
+  // stuck, which is the exact opposite of what a grace period is for.
+  if (mfaApplies && !inMfaGrace && hasQualifyingMfaCredential) {
+    requiredLevel = Math.max(requiredLevel, ORG_MFA_LEVEL);
+  }
   if (riskSignal?.newDevice) requiredLevel = Math.max(requiredLevel, LEVEL.email_code);
 
   return {
