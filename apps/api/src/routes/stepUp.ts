@@ -1,9 +1,10 @@
 import { Elysia, t } from "elysia";
 
 import { claimPasskeyTicket, evaluateDevice, requestStepUpCode, verifyStepUp } from "../lib/stepUp.js";
+import { clientIp } from "../lib/client-ip.js";
 import { Errors } from "../lib/errors.js";
 import { rateLimit } from "../lib/rate-limit.js";
-import { requireAuth } from "../lib/middleware.js";
+import { requireAuth, requireFirstPartyOrigin } from "../lib/middleware.js";
 
 const contextSchema = t.Union([
   t.Literal("sign_in"),
@@ -11,14 +12,11 @@ const contextSchema = t.Union([
   t.Literal("admin_reverify"),
 ]);
 
-function clientIp(request: Request): string {
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-}
-
 export const stepUpRoute = new Elysia()
   .post(
     "/auth/step-up/request-code",
     async ({ request, body }) => {
+      requireFirstPartyOrigin(request);
       const { clerkUserId, sessionId } = await requireAuth(request);
       if (!sessionId) throw Errors.badRequest("No active session");
       await rateLimit("step-up-request", clerkUserId, 5, "10 m");
@@ -30,6 +28,7 @@ export const stepUpRoute = new Elysia()
   .post(
     "/auth/step-up/verify",
     async ({ request, body }) => {
+      requireFirstPartyOrigin(request);
       const { clerkUserId, sessionId } = await requireAuth(request);
       if (!sessionId) throw Errors.badRequest("No active session");
       await rateLimit("step-up-verify", clerkUserId, 20, "10 m");
@@ -46,6 +45,7 @@ export const stepUpRoute = new Elysia()
   .post(
     "/auth/step-up/claim-passkey",
     async ({ request, body }) => {
+      requireFirstPartyOrigin(request);
       const { clerkUserId, sessionId } = await requireAuth(request);
       if (!sessionId) throw Errors.badRequest("No active session");
       return { ok: await claimPasskeyTicket(clerkUserId, sessionId, body.ticket) };
@@ -53,6 +53,7 @@ export const stepUpRoute = new Elysia()
     { body: t.Object({ ticket: t.String() }) },
   )
   .get("/auth/step-up/evaluate-device", async ({ request }) => {
+    requireFirstPartyOrigin(request);
     const { clerkUserId, sessionId } = await requireAuth(request);
     if (!sessionId) throw Errors.badRequest("No active session");
     const userAgent = request.headers.get("user-agent") ?? "unknown";

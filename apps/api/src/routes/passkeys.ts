@@ -14,12 +14,9 @@ import {
   renamePasskey,
   requirePasskeyOrigin,
 } from "../lib/passkeys.js";
+import { clientIp } from "../lib/client-ip.js";
 import { rateLimit } from "../lib/rate-limit.js";
 import { requireAuth } from "../lib/middleware.js";
-
-function requesterKey(request: Request): string {
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-}
 
 export const passkeysRoute = new Elysia()
   .get("/passkeys", async ({ request }) => {
@@ -52,14 +49,14 @@ export const passkeysRoute = new Elysia()
   )
   .post("/passkeys/authentication/options", async ({ request }) => {
     requirePasskeyOrigin(request);
-    await rateLimit("passkey-authentication", requesterKey(request), 20, "10 m");
+    await rateLimit("passkey-authentication", clientIp(request), 20, "10 m");
     return await beginAuthentication();
   })
   .post(
     "/passkeys/authentication/verify",
     async ({ request, body }) => {
       requirePasskeyOrigin(request);
-      await rateLimit("passkey-authentication", requesterKey(request), 20, "10 m");
+      await rateLimit("passkey-authentication", clientIp(request), 20, "10 m");
       return await finishAuthentication(body.flowId, body.response as AuthenticationResponseJSON);
     },
     { body: t.Object({ flowId: t.String(), response: t.Any() }) },
