@@ -37,7 +37,7 @@ function randomRecoveryCode(): string {
 
 export const apiStatus = query({
   args: { serverKey: v.string(), clerkUserId: v.string() },
-  returns: v.object({ enrolled: v.boolean() }),
+  returns: v.object({ enrolled: v.boolean(), needsRotation: v.boolean() }),
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
@@ -45,7 +45,10 @@ export const apiStatus = query({
       .query("totpCredentials")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
-    return { enrolled: Boolean(credential?.verifiedAt) };
+    return {
+      enrolled: Boolean(credential?.verifiedAt),
+      needsRotation: Boolean(credential?.verifiedAt && credential.recoveryUsedAt),
+    };
   },
 });
 
@@ -60,7 +63,13 @@ export const apiEnrollmentContext = query({
       .query("totpCredentials")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
-    return { email: user.email, hasVerified: Boolean(credential?.verifiedAt) };
+    // A credential whose recovery code has been spent counts as absent here,
+    // so "remove the old one first" doesn't block the very re-enrollment the
+    // gate is asking for.
+    return {
+      email: user.email,
+      hasVerified: Boolean(credential?.verifiedAt) && !credential?.recoveryUsedAt,
+    };
   },
 });
 
@@ -74,12 +83,16 @@ export const apiBeginEnrollment = mutation({
       .query("totpCredentials")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
-    if (existing?.verifiedAt) {
+    if (existing?.verifiedAt && !existing.recoveryUsedAt) {
       throw new ConvexError({
         code: "conflict",
         message: "Remove your existing authenticator app before adding a new one",
       });
     }
+    // Dropping a verified-but-spent row is the point: the authenticator it
+    // describes is gone, and the new secret replaces it. The recovery codes
+    // survive until `apiFinishEnrollment` reissues them, so an abandoned
+    // re-setup doesn't strand the account.
     if (existing) await ctx.db.delete(existing._id);
     await ctx.db.insert("totpCredentials", {
       userId: user._id,
@@ -225,7 +238,19 @@ export const apiVerifyRecoveryCode = mutation({
       at: Date.now(),
     });
     if (!match) return { ok: false };
-    await ctx.db.patch(match._id, { usedAt: Date.now() });
+    const now = Date.now();
+    await ctx.db.patch(match._id, { usedAt: now });
+    // Nobody reaches for a recovery code while their authenticator still
+    // works. Flagging the credential is what makes the sign-in gate ask for a
+    // new one on the way in, rather than letting the account coast on an
+    // authenticator its owner no longer has.
+    const credential = await ctx.db
+      .query("totpCredentials")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .unique();
+    if (credential && !credential.recoveryUsedAt) {
+      await ctx.db.patch(credential._id, { recoveryUsedAt: now });
+    }
     return { ok: true };
   },
 });

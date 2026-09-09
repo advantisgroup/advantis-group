@@ -439,6 +439,10 @@ export default defineSchema({
      * cryptographically valid across the whole drift window, so without this
      * the same six digits pass again for up to ~90 seconds. */
     lastUsedStep: v.optional(v.number()),
+    /** Set when a recovery code was spent, which only happens because the
+     * authenticator is gone. The row stops counting as a qualifying factor
+     * until the user sets a new authenticator up. */
+    recoveryUsedAt: v.optional(v.number()),
   }).index("by_user", ["userId"]),
 
   totpRecoveryCodes: defineTable({

@@ -114,7 +114,9 @@ export async function verifyRecoveryCode(clerkUserId: string, code: string): Pro
   return result.ok;
 }
 
-export async function getStatus(clerkUserId: string): Promise<{ enrolled: boolean }> {
+export async function getStatus(
+  clerkUserId: string,
+): Promise<{ enrolled: boolean; needsRotation: boolean }> {
   return await getConvex().query(api.totp.apiStatus, { serverKey: serverKey(), clerkUserId });
 }
 

@@ -11,7 +11,12 @@ export type StepUpContext = "sign_in" | "destructive" | "admin_reverify";
 
 export const LEVEL: Record<StepMethod, number> = {
   email_code: 1,
-  recovery_code: 1,
+  // Same level as the authenticator it stands in for. A recovery code is the
+  // lost-phone escape hatch, so ranking it below an org MFA requirement made
+  // it unable to satisfy the one situation it exists for — the code verified,
+  // burned itself, and left the user exactly as locked out as before. It
+  // costs a re-enrollment instead: see `recoveryUsedAt` on totpCredentials.
+  recovery_code: 2,
   totp: 2,
   passkey: 3,
 };
@@ -132,10 +137,16 @@ export async function checkSatisfied(
 
 /** Which methods a user could actually use right now, for the frontend's
  * method switcher — email code is always available, TOTP/recovery only once
- * enrolled. */
+ * enrolled.
+ *
+ * `minLevel` filters out anything that would verify successfully and still
+ * leave the requirement unmet. Offering such a method is worse than offering
+ * nothing: the server says `ok: true`, the screen congratulates the user, and
+ * the gate never opens. Nothing in this list is a dead end. */
 export async function availableMethodsFor(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
+  minLevel = 0,
 ): Promise<StepMethod[]> {
   const methods: StepMethod[] = ["email_code"];
   const totp = await ctx.db
@@ -143,7 +154,7 @@ export async function availableMethodsFor(
     .withIndex("by_user", (q) => q.eq("userId", userId))
     .unique();
   if (totp?.verifiedAt) {
-    methods.push("totp");
+    if (!totp.recoveryUsedAt) methods.push("totp");
     const hasUnusedRecovery = await ctx.db
       .query("totpRecoveryCodes")
       .withIndex("by_user", (q) => q.eq("userId", userId))
@@ -151,7 +162,24 @@ export async function availableMethodsFor(
       .first();
     if (hasUnusedRecovery) methods.push("recovery_code");
   }
-  return methods;
+  return methods.filter((method) => LEVEL[method] >= minLevel);
+}
+
+/** Whether signing in again with a passkey would clear this requirement —
+ * the escape hatch for someone whose only strong credential is a passkey and
+ * who therefore has no code they can type. */
+export async function passkeyWouldSatisfy(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+  requirement: Pick<SignInRequirement, "requiredLevel" | "requireNonPasskeyFactor">,
+): Promise<boolean> {
+  if (requirement.requireNonPasskeyFactor) return false;
+  if (LEVEL.passkey < requirement.requiredLevel) return false;
+  const passkey = await ctx.db
+    .query("passkeys")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .first();
+  return !!passkey;
 }
 
 /** Mints and stores a fresh email code for (user, session), mailing the
@@ -389,7 +417,11 @@ export async function resolveSignInRequirement(
     .query("passkeys")
     .withIndex("by_user", (q) => q.eq("userId", user._id))
     .first();
-  const hasQualifyingMfaCredential = !!totp?.verifiedAt || !!hasPasskeyCred;
+  // A TOTP row whose recovery code has been spent is a credential the user
+  // told us they've lost — it keeps working for this session's sign-in, but
+  // it no longer counts as "this account has MFA", which is what pushes them
+  // into re-enrollment on the way in.
+  const hasQualifyingMfaCredential = (!!totp?.verifiedAt && !totp.recoveryUsedAt) || !!hasPasskeyCred;
 
   const needsMfaEnrollment = mfaApplies && !inMfaGrace && !hasQualifyingMfaCredential;
   const needsPasskeyEnrollment = passkeyApplies && !inPasskeyGrace && !hasPasskeyCred;

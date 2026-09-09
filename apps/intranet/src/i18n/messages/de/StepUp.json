@@ -1,4 +1,7 @@
 {
+  "usePasskeyInstead": "Mit Passkey anmelden",
+  "passkeyOnlyBody": "Für diese Anmeldung ist eine stärkere Bestätigung nötig, als ein Code sie geben kann. Melde dich mit deinem Passkey an, um fortzufahren.",
+  "noMethodBody": "Für dieses Konto gibt es hier keine passende Bestätigungsmethode. Wende dich an die IT, damit sie dir wieder Zugang verschafft.",
   "dialogTitle": "Identität bestätigen",
   "dialogBody": "Für diese Aktion ist ein aktueller Bestätigungscode erforderlich.",
   "gateVerifyTitle": "Identität bestätigen",

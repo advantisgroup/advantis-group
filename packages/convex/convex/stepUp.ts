@@ -21,6 +21,7 @@ import {
   hasNonPasskeyVerification,
   issueEmailCode,
   LEVEL,
+  passkeyWouldSatisfy,
   recordExternalVerification,
   recordPasskeyVerification,
   resolveSignInRequirement,
@@ -372,6 +373,10 @@ export const status = query({
       state: v.literal("needs_verification"),
       requiredLevel: v.number(),
       availableMethods: v.array(stepMethodValidator),
+      /** True when signing in again with a passkey would clear this — the
+       * only route left for someone whose sole strong factor is a passkey,
+       * since there's no code they can type in. */
+      passkeyFallback: v.boolean(),
     }),
     v.object({
       state: v.literal("needs_enrollment"),
@@ -399,10 +404,19 @@ export const status = query({
     const nonPasskeySatisfied =
       !req.requireNonPasskeyFactor || (await hasNonPasskeyVerification(ctx, user._id, sessionId));
     if (!levelSatisfied || !nonPasskeySatisfied) {
+      const requiredLevel = Math.max(
+        req.requiredLevel,
+        req.requireNonPasskeyFactor ? LEVEL.email_code : 0,
+      );
       return {
         state: "needs_verification" as const,
-        requiredLevel: Math.max(req.requiredLevel, req.requireNonPasskeyFactor ? LEVEL.email_code : 0),
-        availableMethods: await availableMethodsFor(ctx, user._id),
+        requiredLevel,
+        // Only methods that would actually clear `requiredLevel` — see
+        // `availableMethodsFor`. An empty list plus no passkey fallback is a
+        // real state, not a bug: the screen says so instead of rendering a
+        // form that can't succeed.
+        availableMethods: await availableMethodsFor(ctx, user._id, requiredLevel),
+        passkeyFallback: await passkeyWouldSatisfy(ctx, user._id, req),
       };
     }
 

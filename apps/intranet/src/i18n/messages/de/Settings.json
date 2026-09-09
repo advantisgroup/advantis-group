@@ -106,6 +106,8 @@
   "totp": "Authentifizierungs-App",
   "totpHint": "Nutze eine App wie Google Authenticator oder 1Password, um Anmeldecodes zu erzeugen.",
   "setUpTotp": "Authentifizierungs-App einrichten",
+  "replaceTotp": "Neue Authentifizierungs-App einrichten",
+  "totpNeedsRotation": "Du hast einen Wiederherstellungscode benutzt — diese Authentifizierungs-App gilt damit als verloren. Richte eine neue ein, um deinen zweiten Faktor zurückzubekommen.",
   "setUpTotpHint": "Scanne den Code mit deiner Authentifizierungs-App und gib anschließend den 6-stelligen Code ein.",
   "totpQrAlt": "QR-Code zur Einrichtung der Authentifizierungs-App",
   "totpManualEntry": "Oder gib diesen Schlüssel manuell ein",

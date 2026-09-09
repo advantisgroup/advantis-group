@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@clerk/nextjs";
-import { Check, Copy, Loader2, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { Check, Copy, Loader2, Plus, ShieldAlert, ShieldCheck, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -35,6 +35,10 @@ export function TotpSettingsCard() {
   const t = useTranslations("Settings");
   const { getToken } = useAuth();
   const [enrolled, setEnrolled] = useState<boolean | null>(null);
+  // Enrolled, but the authenticator behind it is presumed gone — a recovery
+  // code was spent. Behaves like "not set up" for the purposes of the buttons
+  // so the sign-in gate's re-enrollment step has something to click.
+  const [needsRotation, setNeedsRotation] = useState(false);
   const [dialog, setDialog] = useState<"setup" | "codes" | "remove" | null>(null);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [code, setCode] = useState("");
@@ -60,8 +64,10 @@ export function TotpSettingsCard() {
     try {
       const body = (await jsonOrThrow(await apiRequest("/mfa/totp/status"))) as {
         enrolled: boolean;
+        needsRotation: boolean;
       };
       setEnrolled(body.enrolled);
+      setNeedsRotation(body.needsRotation);
     } catch (error) {
       console.error("[totp] status failed", error);
       toast.error(t("totpLoadError"));
@@ -110,6 +116,7 @@ export function TotpSettingsCard() {
       setRecoveryCodes(body.recoveryCodes);
       setDialog("codes");
       setEnrolled(true);
+      setNeedsRotation(false);
       toast.success(t("totpEnabled"));
     } catch (error) {
       console.error("[totp] enroll verify failed", error);
@@ -148,7 +155,7 @@ export function TotpSettingsCard() {
             <p className="font-semibold tracking-tight">{t("totp")}</p>
             <p className="text-sm text-muted-foreground">{t("totpHint")}</p>
           </div>
-          {enrolled ? (
+          {enrolled && !needsRotation ? (
             <Button
               size="sm"
               variant="outline"
@@ -166,7 +173,7 @@ export function TotpSettingsCard() {
               disabled={enrolled === null || busy}
             >
               <Plus className="size-3.5" />
-              {t("setUpTotp")}
+              {needsRotation ? t("replaceTotp") : t("setUpTotp")}
             </Button>
           )}
         </div>
@@ -194,6 +201,11 @@ export function TotpSettingsCard() {
           <div className="flex justify-center py-3 text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
           </div>
+        ) : needsRotation ? (
+          <p className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2.5 text-sm">
+            <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warning" />
+            {t("totpNeedsRotation")}
+          </p>
         ) : enrolled ? (
           <p className="flex items-center gap-2 rounded-lg border border-border/70 px-3 py-2.5 text-sm">
             <ShieldCheck className="size-4 shrink-0 text-primary" />

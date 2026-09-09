@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { useClerk } from "@clerk/nextjs";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check, KeyRound, Moon, ShieldCheck, Smartphone, Sun } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -11,6 +12,7 @@ import { TotpSettingsCard } from "@/components/mfa/TotpSettingsCard";
 import { PasskeySettingsCard } from "@/components/passkeys/PasskeySettingsCard";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { useTheme } from "@/components/theme/theme-provider";
+import { Button } from "@/components/ui/button";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +21,12 @@ import { StepUpForm, type StepMethod } from "./StepUpForm";
 export type StepUpStatus =
   | { state: "satisfied" }
   | { state: "warning"; graceDeadline: number; needsPasskeyEnrollment: boolean }
-  | { state: "needs_verification"; requiredLevel: number; availableMethods: StepMethod[] }
+  | {
+      state: "needs_verification";
+      requiredLevel: number;
+      availableMethods: StepMethod[];
+      passkeyFallback: boolean;
+    }
   | { state: "needs_enrollment"; needsMfa: boolean; needsPasskey: boolean };
 
 /** How long the checkmark sits before fading — long enough to read as a
@@ -27,6 +34,13 @@ export type StepUpStatus =
  * `stepUp.status` query catches up to "satisfied" almost instantly. */
 const SUCCESS_HOLD_MS = 2500;
 const FADE_MS = 400;
+/** How long an optimistic checkmark waits for the server to agree before it
+ * gives up and re-renders whatever the status actually says. The form fires
+ * `onVerified` on any `ok: true`, which isn't the same as "the gate opened" —
+ * a recovery code clears sign-in and immediately raises a re-enrollment
+ * requirement, and without this the screen would sit on a green tick with
+ * nothing behind it. */
+const OPTIMISTIC_GRACE_MS = 2500;
 
 const EASE = [0.23, 1, 0.32, 1] as const;
 
@@ -105,6 +119,7 @@ export function StepUpScreen({
 }) {
   const t = useTranslations("StepUp");
   const user = useCurrentUser();
+  const clerk = useClerk();
   const keyboardInset = useKeyboardInset();
   const prefersReducedMotion = useReducedMotion();
   const [phase, setPhase] = useState<"active" | "success" | "fading">("active");
@@ -129,6 +144,13 @@ export function StepUpScreen({
     const fadeTimer = setTimeout(onDismiss, FADE_MS);
     return () => clearTimeout(fadeTimer);
   }, [phase, onDismiss]);
+
+  // The escape hatch for an optimistic success the server never confirms.
+  useEffect(() => {
+    if (phase !== "success" || status.state === "satisfied") return;
+    const giveUp = setTimeout(() => setPhase("active"), OPTIMISTIC_GRACE_MS);
+    return () => clearTimeout(giveUp);
+  }, [phase, status.state]);
 
   function markVerifiedOptimistically() {
     setPhase((current) => (current === "active" ? "success" : current));
@@ -207,13 +229,33 @@ export function StepUpScreen({
               </div>
 
               {/* The "what do I enter" line lives in the form, which is what
-                  actually knows the selected method. */}
-              <StepUpForm
-                availableMethods={status.availableMethods}
-                context="sign_in"
-                email={user.email}
-                onVerified={markVerifiedOptimistically}
-              />
+                  actually knows the selected method. The server only lists
+                  methods that would actually clear the bar, so an empty list
+                  means there is genuinely nothing to type — show the way out
+                  instead of a form that cannot succeed. */}
+              {status.availableMethods.length > 0 ? (
+                <StepUpForm
+                  availableMethods={status.availableMethods}
+                  context="sign_in"
+                  email={user.email}
+                  onVerified={markVerifiedOptimistically}
+                />
+              ) : (
+                <p className="text-center text-sm leading-relaxed text-muted-foreground text-pretty">
+                  {status.passkeyFallback ? t("passkeyOnlyBody") : t("noMethodBody")}
+                </p>
+              )}
+
+              {status.passkeyFallback && (
+                <Button
+                  variant={status.availableMethods.length > 0 ? "outline" : "default"}
+                  className="w-full"
+                  onClick={() => void clerk.signOut({ redirectUrl: "/sign-in/passkey" })}
+                >
+                  <KeyRound className="size-4" />
+                  {t("usePasskeyInstead")}
+                </Button>
+              )}
 
               {/*
                * Why this screen appeared, parked deliberately quietly: small,

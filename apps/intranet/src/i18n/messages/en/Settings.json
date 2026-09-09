@@ -106,6 +106,8 @@
   "totp": "Authenticator app",
   "totpHint": "Use an app like Google Authenticator or 1Password to generate sign-in codes.",
   "setUpTotp": "Set up authenticator app",
+  "replaceTotp": "Set up a new authenticator app",
+  "totpNeedsRotation": "You used a recovery code, so this authenticator counts as lost. Set up a new one to get your second factor back.",
   "setUpTotpHint": "Scan the code with your authenticator app, then enter the 6-digit code it shows.",
   "totpQrAlt": "QR code for authenticator app setup",
   "totpManualEntry": "Or enter this key manually",

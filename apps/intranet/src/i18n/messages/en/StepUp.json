@@ -1,4 +1,7 @@
 {
+  "usePasskeyInstead": "Sign in with your passkey",
+  "passkeyOnlyBody": "This sign-in needs a stronger check than a code can give. Sign in with your passkey to continue.",
+  "noMethodBody": "There's no verification method available for this account here. Contact IT and they'll get you back in.",
   "dialogTitle": "Verify it's you",
   "dialogBody": "This action needs a fresh verification code before it can go through.",
   "gateVerifyTitle": "Verify it's you",
