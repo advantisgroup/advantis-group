@@ -10,6 +10,14 @@ const ISSUER = "Advantis Group";
 const ENC_KEY_ENV = "TOTP_ENC_KEY";
 // One step either side of "now" absorbs normal clock drift on the user's device.
 const VERIFY_WINDOW = 1;
+const PERIOD_SECONDS = 30;
+
+/** Which 30-second slot a code belonged to. `validate` hands back the offset
+ * in periods from now, so adding it to the current slot gives the absolute
+ * step — the thing we store to stop the same code being accepted twice. */
+function stepFromDelta(delta: number): number {
+  return Math.floor(Date.now() / 1000 / PERIOD_SECONDS) + delta;
+}
 
 function serverKey(): string {
   return getConvexServerKey();
@@ -21,7 +29,7 @@ function totpFor(secretBase32: string, label: string): OTPAuth.TOTP {
     label,
     algorithm: "SHA1",
     digits: 6,
-    period: 30,
+    period: PERIOD_SECONDS,
     secret: OTPAuth.Secret.fromBase32(secretBase32),
   });
 }
@@ -67,19 +75,33 @@ export async function finishEnrollment(
   return await getConvex().mutation(api.totp.apiFinishEnrollment, {
     serverKey: serverKey(),
     clerkUserId,
+    usedStep: stepFromDelta(delta),
   });
 }
 
 /** Returns false on a wrong/expired code rather than throwing — mistyped 6-digit codes are the normal case, not an error. */
 export async function verifyCode(clerkUserId: string, code: string): Promise<boolean> {
-  const ciphertext = await getConvex().query(api.totp.apiSecretForVerification, {
+  const credential = await getConvex().query(api.totp.apiSecretForVerification, {
     serverKey: serverKey(),
     clerkUserId,
   });
-  if (!ciphertext) throw Errors.badRequest("No authenticator app is set up for this account");
-  const secret = decrypt(ciphertext, ENC_KEY_ENV);
-  const ok = totpFor(secret, clerkUserId).validate({ token: code.trim(), window: VERIFY_WINDOW }) !== null;
-  await getConvex().mutation(api.totp.apiRecordVerification, { serverKey: serverKey(), clerkUserId, ok });
+  if (!credential) throw Errors.badRequest("No authenticator app is set up for this account");
+  const secret = decrypt(credential.secretCiphertext, ENC_KEY_ENV);
+  const delta = totpFor(secret, clerkUserId).validate({
+    token: code.trim(),
+    window: VERIFY_WINDOW,
+  });
+  // A valid signature isn't enough — the drift window keeps one code usable
+  // across three steps, so a code from a step we've already accepted is a
+  // replay, not a fresh proof of possession.
+  const step = delta === null ? null : stepFromDelta(delta);
+  const ok = step !== null && (credential.lastUsedStep === null || step > credential.lastUsedStep);
+  await getConvex().mutation(api.totp.apiRecordVerification, {
+    serverKey: serverKey(),
+    clerkUserId,
+    ok,
+    ...(ok && step !== null ? { usedStep: step } : {}),
+  });
   return ok;
 }
 

@@ -107,7 +107,7 @@ export const apiPendingSecret = query({
 });
 
 export const apiFinishEnrollment = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+  args: { serverKey: v.string(), clerkUserId: v.string(), usedStep: v.optional(v.number()) },
   returns: v.object({ recoveryCodes: v.array(v.string()) }),
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
@@ -120,7 +120,12 @@ export const apiFinishEnrollment = mutation({
       throw new ConvexError({ code: "invalid", message: "Start authenticator setup again" });
     }
     const now = Date.now();
-    await ctx.db.patch(credential._id, { verifiedAt: now });
+    // The enrollment code counts as spent too — otherwise the digits the user
+    // just typed into setup would still clear a step-up prompt seconds later.
+    await ctx.db.patch(credential._id, {
+      verifiedAt: now,
+      ...(args.usedStep !== undefined ? { lastUsedStep: args.usedStep } : {}),
+    });
 
     const existingCodes = await ctx.db
       .query("totpRecoveryCodes")
@@ -150,7 +155,10 @@ export const apiFinishEnrollment = mutation({
 
 export const apiSecretForVerification = query({
   args: { serverKey: v.string(), clerkUserId: v.string() },
-  returns: v.union(v.null(), v.string()),
+  returns: v.union(
+    v.null(),
+    v.object({ secretCiphertext: v.string(), lastUsedStep: v.union(v.number(), v.null()) }),
+  ),
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
@@ -159,12 +167,22 @@ export const apiSecretForVerification = query({
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     if (!credential?.verifiedAt) return null;
-    return credential.secretCiphertext;
+    return {
+      secretCiphertext: credential.secretCiphertext,
+      lastUsedStep: credential.lastUsedStep ?? null,
+    };
   },
 });
 
 export const apiRecordVerification = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string(), ok: v.boolean() },
+  args: {
+    serverKey: v.string(),
+    clerkUserId: v.string(),
+    ok: v.boolean(),
+    /** The TOTP step the accepted code belonged to — burns that step so the
+     * same digits can't be replayed for the rest of the drift window. */
+    usedStep: v.optional(v.number()),
+  },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
@@ -174,7 +192,10 @@ export const apiRecordVerification = mutation({
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     if (credential?.verifiedAt && args.ok) {
-      await ctx.db.patch(credential._id, { lastUsedAt: Date.now() });
+      await ctx.db.patch(credential._id, {
+        lastUsedAt: Date.now(),
+        ...(args.usedStep !== undefined ? { lastUsedStep: args.usedStep } : {}),
+      });
     }
     await ctx.db.insert("totpAuditLog", {
       userId: user._id,

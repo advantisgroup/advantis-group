@@ -435,6 +435,10 @@ export default defineSchema({
     verifiedAt: v.optional(v.number()),
     createdAt: v.number(),
     lastUsedAt: v.optional(v.number()),
+    /** The 30-second TOTP step of the last accepted code. A code stays
+     * cryptographically valid across the whole drift window, so without this
+     * the same six digits pass again for up to ~90 seconds. */
+    lastUsedStep: v.optional(v.number()),
   }).index("by_user", ["userId"]),
 
   totpRecoveryCodes: defineTable({
