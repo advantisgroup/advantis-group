@@ -53,9 +53,19 @@ export function useDestructiveStepUp(): {
 
   const runGuarded = useCallback(
     async <T,>(action: () => Promise<T | StepUpHintShape>): Promise<T | null> => {
-      // TODO(human)
-      const result = await action();
-      return isStepUpHint(result) ? null : result;
+      const first = await action();
+      if (!isStepUpHint(first)) return first;
+
+      const verified = await openVerification(first.availableMethods);
+      if (!verified) return null;
+
+      // Exactly one retry, the same as `PasswordResetsPanel`. A second hint
+      // after a successful verification means the requirement itself moved
+      // (a policy change, an expired window) — prompting again would just
+      // loop the user through the same dialog, so return null and let the
+      // caller stay quiet rather than claim a success that didn't happen.
+      const second = await action();
+      return isStepUpHint(second) ? null : second;
     },
     [openVerification],
   );
