@@ -9,18 +9,17 @@ import { cn } from "@/lib/utils";
 
 /**
  * The "dialog on desktop, bottom sheet on mobile" shell AGENTS.md documents
- * as the house convention (see components/applicants/EntryDialogs.tsx's
- * EntryDialogShell, the original of this pattern). Extracted so every
- * primary-action dialog shares one implementation instead of each hand-
- * rolling its own `useIsMobile() ? Drawer : Dialog` branch — six-plus copies
- * of the same ~40 lines had already drifted (some missing safe-area padding
- * on the mobile sheet).
+ * as the house convention for small create/edit forms. Anything that needs
+ * real room (editors, reviews, reports) gets its own page instead.
  *
  * `children` is the scrollable body only; `title`/`description` render in a
  * shared header (Drawer.Title/Drawer.Description on mobile so the sheet
  * stays accessible, DialogTitle/DialogDescription on desktop), and `footer`
  * is free-form so callers keep control of their own action buttons instead
  * of being locked into a fixed cancel/save pair.
+ *
+ * No rules between header, body and footer: the header and footer stay put
+ * while the body scrolls, and spacing — not a line — separates them.
  */
 export function ResponsiveDialog({
   open,
@@ -46,20 +45,20 @@ export function ResponsiveDialog({
     return (
       <Drawer.Root open={open} onOpenChange={onOpenChange}>
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
+          <Drawer.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[8px]" />
           <Drawer.Content
             aria-describedby={description ? undefined : ""}
-            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-2xl border-t border-border/70 bg-card shadow-2xl shadow-black/40 outline-none"
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-2xl bg-card shadow-overlay outline-none"
           >
             <div className="flex shrink-0 items-center justify-center pb-1 pt-3">
               <span className="h-1.5 w-10 rounded-full bg-border" />
             </div>
-            <div className="shrink-0 border-b border-border/70 px-5 pb-3">
-              <Drawer.Title className="font-display text-lg font-semibold leading-tight tracking-tight">
+            <div className="shrink-0 px-5 pb-1 pt-2">
+              <Drawer.Title className="font-display text-xl font-bold leading-snug tracking-tight">
                 {title}
               </Drawer.Title>
               {description && (
-                <Drawer.Description className="mt-1 text-sm text-muted-foreground">
+                <Drawer.Description className="mt-1 text-[0.9375rem] leading-relaxed text-foreground/70">
                   {description}
                 </Drawer.Description>
               )}
@@ -69,8 +68,8 @@ export function ResponsiveDialog({
             </div>
             {footer && (
               <div
-                className="flex shrink-0 gap-2 border-t border-border/70 px-5 pt-3"
-                style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
+                className="flex shrink-0 gap-2 px-5 pt-2"
+                style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
               >
                 {footer}
               </div>
@@ -84,29 +83,20 @@ export function ResponsiveDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Column layout, not the base grid: the header and footer stay put and
-          only the body scrolls. The whole box scrolling instead is what put a
-          stray divider above the buttons and left a scrollbar on dialogs that
-          very nearly fit. */}
+          only the body scrolls. */}
       <DialogContent
-        className={cn(
-          "flex max-w-md flex-col gap-0 overflow-hidden overflow-y-hidden p-0",
-          contentClassName,
-        )}
+        className={cn("flex max-w-md flex-col gap-0 overflow-hidden p-0", contentClassName)}
       >
-        <div className="shrink-0 border-b border-border/70 px-6 pb-4 pr-12 pt-6">
-          <DialogTitle className="leading-snug">{title}</DialogTitle>
-          {description && (
-            <DialogDescription className="mt-1 leading-relaxed">{description}</DialogDescription>
-          )}
+        <div className="shrink-0 px-7 pb-2 pr-14 pt-7">
+          <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription className="mt-1.5">{description}</DialogDescription>}
         </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 pb-5 pt-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-7 py-4">
           {children}
         </div>
-        {/* No negative margins here: DialogContent is p-0 in this shell, so
-            the -mx-6/-mb-6 breakout the padded DialogFooter uses would push
-            this 1.5rem outside the box on every side. */}
+        {/* No negative margins here: DialogContent is p-0 in this shell. */}
         {footer && (
-          <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border/70 px-6 pb-5 pt-4 sm:flex-row sm:items-center sm:justify-end">
+          <div className="flex shrink-0 flex-row items-center justify-end gap-2 px-7 pb-7 pt-3">
             {footer}
           </div>
         )}

@@ -67,6 +67,12 @@
   "schedule": "Planen",
   "published": "Veröffentlicht",
   "fillRequiredFields": "Bitte Titel, Zusammenfassung und Details ausfüllen.",
+  "readyToPublish": "Bereit zum Veröffentlichen",
+  "readyToSchedule": "Bereit zum Planen",
+  "checkTitle": "Titel",
+  "checkSummary": "Zusammenfassung",
+  "checkBody": "Details",
+  "checkSystems": "Betroffene Systeme",
   "type": {
     "incident": "Störung",
     "maintenance": "Wartung",

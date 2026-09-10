@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { useLocale, useTranslations } from "next-intl";
 
+import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSalesCoachCalls } from "@/lib/sales-coach-ev-api";
@@ -11,8 +12,6 @@ import { cn } from "@/lib/utils";
 
 import { CategoryRadarChart } from "./CategoryRadarChart";
 import { SCORE_CATEGORIES, fmtDuration, outcomeLabel, scoreColorClass } from "./constants";
-import { EodSummaryDialog } from "./EodSummaryDialog";
-import { ReportModal } from "./ReportModal";
 import { SkillLineChart } from "./SkillLineChart";
 import { type CallRecord } from "./types";
 
@@ -23,9 +22,6 @@ export function ProgressView() {
   const locale = useLocale();
   const [period, setPeriod] = useState<Period>("7");
   const { calls } = useSalesCoachCalls(period);
-  const [detailCall, setDetailCall] = useState<CallRecord | null>(null);
-  const [eodOpen, setEodOpen] = useState(false);
-  const { calls: allCalls } = useSalesCoachCalls("all");
 
   const scored = useMemo(
     () => (calls ?? []).filter((c) => c.scored && c.skillLevel != null),
@@ -76,8 +72,8 @@ export function ProgressView() {
             </Button>
           ))}
         </div>
-        <Button size="sm" variant="outline" onClick={() => setEodOpen(true)}>
-          {t("endTraining")}
+        <Button size="sm" variant="outline" asChild>
+          <Link href="/sales-coach-ev/progress/summary">{t("endTraining")}</Link>
         </Button>
       </div>
 
@@ -204,27 +200,15 @@ export function ProgressView() {
                 >
                   {outcomeLabel(c.outcome)}
                 </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="ml-auto text-xs"
-                  disabled={!c.scored}
-                  onClick={() => setDetailCall(c)}
-                >
-                  {t("details")}
+                {/* Unscored calls link too — the report page can score them. */}
+                <Button size="sm" variant="ghost" className="ml-auto text-xs" asChild>
+                  <Link href={`/sales-coach-ev/progress/${c.id}`}>{t("details")}</Link>
                 </Button>
               </div>
             ))
           )}
         </CardContent>
       </Card>
-
-      <ReportModal
-        call={detailCall}
-        open={!!detailCall}
-        onOpenChange={(o) => !o && setDetailCall(null)}
-      />
-      <EodSummaryDialog open={eodOpen} onOpenChange={setEodOpen} calls={allCalls ?? []} />
     </div>
   );
 }

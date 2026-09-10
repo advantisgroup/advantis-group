@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 
+import { AiDock } from "@/components/ai/AiDock";
 import { PostHogIdentify } from "@/components/analytics/PostHogIdentify";
 import { CommandPalette } from "@/components/CommandPalette";
 import { useSmoothScroll } from "@/components/effects/SmoothScrolling";
@@ -95,7 +96,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
     pathname.startsWith("/sales-cockpit/flows/") && pathname !== "/sales-cockpit/flows/";
   // The "New wiki entry" composer, same deal — but not `/guidebooks/new/advanced`
   // (the block editor), which keeps normal page chrome.
-  const isWikiComposer = pathname === "/guidebooks/new";
+  const isWikiComposer =
+    pathname === "/guidebooks/new" ||
+    (pathname.startsWith("/guidebooks/") && pathname.endsWith("/compose"));
   // Blog's composer (BlogPostComposer) is built the same full-screen way as
   // the announcement composer, but this route was never opted into
   // `immersive` — without it, <main>'s padding wrapper caps the composer's
@@ -326,6 +329,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
       {/* Native browser notifications for background tabs (opt-in). */}
       <BrowserNotificationBridge />
+      <AiDock />
       <StartPageRedirect />
 
       {/* Tour UI layers (portal-based, fixed position) */}

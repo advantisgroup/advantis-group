@@ -67,6 +67,12 @@
   "schedule": "Schedule",
   "published": "Published",
   "fillRequiredFields": "Please fill in the title, summary and body.",
+  "readyToPublish": "Ready to publish",
+  "readyToSchedule": "Ready to schedule",
+  "checkTitle": "Title",
+  "checkSummary": "Summary",
+  "checkBody": "Details",
+  "checkSystems": "Affected systems",
   "type": {
     "incident": "Incident",
     "maintenance": "Maintenance",

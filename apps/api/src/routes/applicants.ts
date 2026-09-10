@@ -1,13 +1,25 @@
+import { randomUUID } from "node:crypto";
+
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { autoProfil } from "../lib/types.js";
 import { Elysia, t } from "elysia";
 
+import {
+  AiRunError,
+  parseModelJson,
+  runEncryptionKey,
+  runModelText,
+  startAiRun,
+  str,
+  strList,
+  type AiRunContext,
+} from "../lib/ai.js";
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
-import { anthropic } from "../lib/anthropic.js";
+import { decrypt } from "../lib/crypto.js";
 import { Errors } from "../lib/errors.js";
 import { requireAuth } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
+import { autoProfil } from "../lib/types.js";
 
 const MAX_CV_BYTES = 3.5 * 1024 * 1024;
 
@@ -40,37 +52,23 @@ interface ExtractedApplicant {
   zusammenfassung: string;
 }
 
-function parseExtraction(text: string): ExtractedApplicant {
-  const clean = text.replace(/```json|```/g, "").trim();
-  const start = clean.indexOf("{");
-  const end = clean.lastIndexOf("}");
-  if (start === -1 || end === -1) {
-    throw Errors.upstream("Keine auswertbaren Daten im PDF gefunden");
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(clean.slice(start, end + 1));
-  } catch {
-    throw Errors.upstream("Antwort des Modells konnte nicht gelesen werden");
-  }
-  if (typeof parsed !== "object" || parsed === null) {
-    throw Errors.upstream("Antwort des Modells hatte ein unerwartetes Format");
-  }
-  const data = parsed as Record<string, unknown>;
-  const str = (v: unknown) => (typeof v === "string" ? v : "");
-  return {
-    name: str(data.name),
-    email: str(data.email),
-    telefon: str(data.telefon),
-    adresse: str(data.adresse),
-    geburtsdatum: str(data.geburtsdatum),
-    position: str(data.position),
-    skills: Array.isArray(data.skills) ? data.skills.filter((s) => typeof s === "string") : [],
-    ausbildung: str(data.ausbildung),
-    berufserfahrung: str(data.berufserfahrung),
-    zusammenfassung: str(data.zusammenfassung),
-  };
+interface DuplicateMatch {
+  applicantId: Id<"applicants">;
+  name: string;
+  matchedOn: "email" | "telefon";
 }
+
+/** What a finished cvExtract run holds. The duplicate branch keeps the
+ * extracted fields so "create anyway" never has to read the PDF twice. */
+type CvExtractOutput =
+  | { kind: "created"; applicantId: Id<"applicants">; name: string; fileName: string }
+  | {
+      kind: "duplicate";
+      duplicate: DuplicateMatch;
+      pendingStorageId: Id<"_storage">;
+      extractedFields: ExtractedApplicant;
+      fileName: string;
+    };
 
 function validatePdf(file: { type: string; size: number }): void {
   if (file.type !== "application/pdf") {
@@ -81,34 +79,46 @@ function validatePdf(file: { type: string; size: number }): void {
   }
 }
 
-/** Runs the PDF through Claude and returns the parsed fields — no persistence. */
-async function runExtraction(bytes: Uint8Array<ArrayBuffer>): Promise<ExtractedApplicant> {
-  const base64 = Buffer.from(bytes).toString("base64");
-  const response = await anthropic.createMessage({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1000,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "document",
-            source: {
-              type: "base64",
-              media_type: "application/pdf",
-              data: base64,
+async function runExtraction(
+  run: AiRunContext,
+  bytes: Uint8Array<ArrayBuffer>,
+): Promise<ExtractedApplicant> {
+  const data = parseModelJson(
+    await runModelText(run, {
+      max_tokens: 1000,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "document",
+              source: {
+                type: "base64",
+                media_type: "application/pdf",
+                data: Buffer.from(bytes).toString("base64"),
+              },
             },
-          },
-          { type: "text", text: EXTRACTION_PROMPT },
-        ],
-      },
-    ],
-  });
-  const text = response.content.map((block) => ("text" in block ? block.text : "")).join("\n");
-  const extracted = parseExtraction(text);
-  if (!extracted.name) {
-    throw Errors.upstream("Im PDF konnte kein Name gefunden werden");
-  }
+            { type: "text", text: EXTRACTION_PROMPT },
+          ],
+        },
+      ],
+    }),
+  );
+  const extracted = {
+    name: str(data.name),
+    email: str(data.email),
+    telefon: str(data.telefon),
+    adresse: str(data.adresse),
+    geburtsdatum: str(data.geburtsdatum),
+    position: str(data.position),
+    skills: strList(data.skills),
+    ausbildung: str(data.ausbildung),
+    berufserfahrung: str(data.berufserfahrung),
+    zusammenfassung: str(data.zusammenfassung),
+  };
+  // A CV the model couldn't find a name in is almost always a scan with no
+  // text layer — a retry won't help, manual entry will.
+  if (!extracted.name) throw new AiRunError("no_content", false);
   return extracted;
 }
 
@@ -130,83 +140,123 @@ async function stageBytes(bytes: Uint8Array<ArrayBuffer>): Promise<Id<"_storage"
   return storageId;
 }
 
-async function resolveProfilId(
-  position: string,
-): Promise<Id<"applicantSkillProfiles"> | undefined> {
+async function createFromExtraction(
+  createdByUserId: Id<"users">,
+  extracted: ExtractedApplicant,
+  storageId: Id<"_storage">,
+  fileName: string,
+): Promise<Id<"applicants">> {
   const profiles = await getConvex().query(api.applicants.apiListProfiles, {
     serverKey: getConvexServerKey(),
   });
   const profilId = autoProfil(
     profiles.map((p) => ({ id: p._id, name: p.name, skills: p.skills })),
-    position,
+    extracted.position,
   );
-  return profilId ? (profilId as Id<"applicantSkillProfiles">) : undefined;
+  const { applicantId } = await getConvex().mutation(api.applicants.apiCreateFromExtraction, {
+    serverKey: getConvexServerKey(),
+    createdByUserId,
+    name: extracted.name,
+    email: extracted.email || undefined,
+    telefon: extracted.telefon || undefined,
+    adresse: extracted.adresse || undefined,
+    geburtsdatum: extracted.geburtsdatum || undefined,
+    position: extracted.position || undefined,
+    skills: extracted.skills,
+    ausbildung: extracted.ausbildung || undefined,
+    berufserfahrung: extracted.berufserfahrung || undefined,
+    zusammenfassung: extracted.zusammenfassung || undefined,
+    profilId: profilId ? (profilId as Id<"applicantSkillProfiles">) : undefined,
+    storageId,
+    fileName,
+  });
+  return applicantId;
+}
+
+async function requireApplicantAccess(clerkUserId: string) {
+  const access = await getConvex().query(api.applicants.apiCheckAccess, {
+    serverKey: getConvexServerKey(),
+    clerkUserId,
+  });
+  if (!access?.hasAccess) throw Errors.forbidden();
+  return access;
 }
 
 export const applicantsRoute = new Elysia()
+  /** One run per PDF, so a batch can be dropped in and left alone — each
+   * file lands in the import tray on its own as it finishes. */
   .post(
     "/applicants/extract",
     async ({ request, body }) => {
       const { clerkUserId } = await requireAuth(request);
       await rateLimit("applicants.extract", clerkUserId, 20, "1 m");
+      const access = await requireApplicantAccess(clerkUserId);
 
-      const access = await getConvex().query(api.applicants.apiCheckAccess, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
-      });
-      if (!access?.hasAccess) throw Errors.forbidden();
-
-      const { file, forceCreate } = body;
+      const { file } = body;
       validatePdf(file);
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const extracted = await runExtraction(bytes);
+      const fileName = file.name;
 
-      if (!forceCreate) {
-        const duplicate = await getConvex().query(api.applicants.apiFindDuplicateByContact, {
-          serverKey: getConvexServerKey(),
-          email: extracted.email || undefined,
-          telefon: extracted.telefon || undefined,
-        });
-        if (duplicate) {
-          const pendingStorageId = await stageBytes(bytes);
-          return {
-            kind: "duplicate" as const,
-            duplicate,
-            pendingStorageId,
-            extractedFields: extracted,
-          };
-        }
-      }
+      return await startAiRun(
+        { clerkUserId, kind: "cvExtract", subjectKey: `cvExtract:${randomUUID()}`, href: "/hr" },
+        async (run) => {
+          const extracted = await runExtraction(run, bytes);
+          run.phase("finishing");
 
-      const profilId = await resolveProfilId(extracted.position);
-      const storageId = await stageBytes(bytes);
-      const { applicantId } = await getConvex().mutation(api.applicants.apiCreateFromExtraction, {
-        serverKey: getConvexServerKey(),
-        createdByUserId: access.userId,
-        name: extracted.name,
-        email: extracted.email || undefined,
-        telefon: extracted.telefon || undefined,
-        adresse: extracted.adresse || undefined,
-        geburtsdatum: extracted.geburtsdatum || undefined,
-        position: extracted.position || undefined,
-        skills: extracted.skills,
-        ausbildung: extracted.ausbildung || undefined,
-        berufserfahrung: extracted.berufserfahrung || undefined,
-        zusammenfassung: extracted.zusammenfassung || undefined,
-        profilId,
-        storageId,
-        fileName: file.name,
-      });
-
-      return { kind: "created" as const, applicantId };
+          const duplicate = await getConvex().query(api.applicants.apiFindDuplicateByContact, {
+            serverKey: getConvexServerKey(),
+            email: extracted.email || undefined,
+            telefon: extracted.telefon || undefined,
+          });
+          const storageId = await stageBytes(bytes);
+          const output: CvExtractOutput = duplicate
+            ? {
+                kind: "duplicate",
+                duplicate,
+                pendingStorageId: storageId,
+                extractedFields: extracted,
+                fileName,
+              }
+            : {
+                kind: "created",
+                applicantId: await createFromExtraction(
+                  access.userId,
+                  extracted,
+                  storageId,
+                  fileName,
+                ),
+                name: extracted.name,
+                fileName,
+              };
+          return JSON.stringify(output);
+        },
+      );
     },
-    {
-      body: t.Object({
-        file: t.File(),
-        forceCreate: t.Optional(t.Boolean()),
-      }),
-    },
+    { body: t.Object({ file: t.File() }) },
   )
+  /** The "not the same person, create a new record" answer to a duplicate —
+   * reuses what the run already read instead of paying for it again. */
+  .post("/applicants/extract/:runId/create", async ({ request, params }) => {
+    const { clerkUserId } = await requireAuth(request);
+    const access = await requireApplicantAccess(clerkUserId);
+    const run = await getConvex().query(api.aiRuns.apiGet, {
+      serverKey: getConvexServerKey(),
+      clerkUserId,
+      runId: params.runId,
+    });
+    if (!run || run.kind !== "cvExtract" || run.status !== "done" || !run.output) {
+      throw Errors.notFound("Import not found");
+    }
+    const result = JSON.parse(decrypt(run.output, runEncryptionKey("cvExtract"))) as CvExtractOutput;
+    if (result.kind !== "duplicate") throw Errors.badRequest("Already created");
+    const applicantId = await createFromExtraction(
+      access.userId,
+      result.extractedFields,
+      result.pendingStorageId,
+      result.fileName,
+    );
+    return { applicantId };
+  })
   /**
    * Re-runs extraction against a CV for an EXISTING applicant, without
    * persisting anything — the client reviews the result (merged with the
@@ -219,24 +269,27 @@ export const applicantsRoute = new Elysia()
     async ({ request, body }) => {
       const { clerkUserId } = await requireAuth(request);
       await rateLimit("applicants.rescan", clerkUserId, 20, "1 m");
+      await requireApplicantAccess(clerkUserId);
 
-      const access = await getConvex().query(api.applicants.apiCheckAccess, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
-      });
-      if (!access?.hasAccess) throw Errors.forbidden();
-
-      const { file } = body;
+      const { file, applicantId } = body;
       validatePdf(file);
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const extracted = await runExtraction(bytes);
-      const storageId = await stageBytes(bytes);
+      const fileName = file.name;
 
-      return { extractedFields: extracted, storageId };
+      return await startAiRun(
+        {
+          clerkUserId,
+          kind: "cvRescan",
+          subjectKey: `cvRescan:${applicantId}`,
+          href: `/hr/${applicantId}/dokumente`,
+        },
+        async (run) => {
+          const extractedFields = await runExtraction(run, bytes);
+          run.phase("finishing");
+          const storageId = await stageBytes(bytes);
+          return JSON.stringify({ extractedFields, storageId, fileName });
+        },
+      );
     },
-    {
-      body: t.Object({
-        file: t.File(),
-      }),
-    },
+    { body: t.Object({ file: t.File(), applicantId: t.String({ maxLength: 64 }) }) },
   );

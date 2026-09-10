@@ -10,6 +10,7 @@ import deAccess from "./messages/de/Access.json";
 import deAccessDenied from "./messages/de/AccessDenied.json";
 import deActivity from "./messages/de/Activity.json";
 import deAdmin from "./messages/de/Admin.json";
+import deAi from "./messages/de/Ai.json";
 import deAnnouncements from "./messages/de/Announcements.json";
 import deApprovals from "./messages/de/Approvals.json";
 import deApp from "./messages/de/App.json";

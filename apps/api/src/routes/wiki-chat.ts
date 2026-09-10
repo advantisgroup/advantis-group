@@ -2,9 +2,10 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { Elysia, t } from "elysia";
 
+import { runModelText, startAiRun } from "../lib/ai.js";
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
-import { anthropic } from "../lib/anthropic.js";
 import { decrypt, encrypt } from "../lib/crypto.js";
+import { Errors } from "../lib/errors.js";
 import { requireAuth } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
@@ -31,22 +32,39 @@ Antwortregeln:
 - Bei Kundenproblemen immer auf konkrete nächste Schritte hinweisen
 - Interne Durchwahlen nur nennen, wenn sie zur Frage passen`;
 
-const messageSchema = t.Object({
-  role: t.Union([t.Literal("user"), t.Literal("assistant")]),
-  content: t.String(),
-});
-
-// Stored messages may additionally carry a client-side error flag.
-const storedMessageSchema = t.Object({
-  role: t.Union([t.Literal("user"), t.Literal("assistant")]),
-  content: t.String(),
-  error: t.Optional(t.Boolean()),
-});
-
 interface StoredMessage {
   role: "user" | "assistant";
   content: string;
+  // Set by the old client on its canned error lines; those were never real
+  // turns, so they're dropped on read.
   error?: boolean;
+}
+
+function readMessages(ciphertext: string): StoredMessage[] {
+  return (JSON.parse(decrypt(ciphertext)) as StoredMessage[]).filter((m) => !m.error);
+}
+
+function deriveTitle(text: string): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  return clean.length > 42 ? `${clean.slice(0, 42)}…` : clean;
+}
+
+/**
+ * Caching is a prefix match, and the prefix has to clear the model's minimum
+ * before anything is stored — 1024 tokens on Sonnet 4.6. WIKI_SYSTEM is only
+ * ~400, so a breakpoint on the system block alone never cached. Marking the
+ * last message instead makes the cached prefix system + the whole conversation
+ * so far, which clears the minimum after the first couple of turns.
+ */
+function toModelMessages(history: StoredMessage[]) {
+  const lastIndex = history.length - 1;
+  return history.map((m, i) => ({
+    role: m.role,
+    content:
+      i === lastIndex
+        ? [{ type: "text" as const, text: m.content, cache_control: { type: "ephemeral" as const } }]
+        : m.content,
+  }));
 }
 
 interface ChatDTO {
@@ -58,58 +76,104 @@ interface ChatDTO {
 }
 
 export const wikiChatRoute = new Elysia()
+  /**
+   * Asks (or, without `message`, re-asks the unanswered last question). The
+   * question is written to the chat before the run starts, so a refresh a
+   * second later still shows it; the answer is spliced in right after it when
+   * the run finishes, which leaves anything asked in the meantime in place.
+   */
   .post(
     "/wiki-chat",
-    async function* ({ request, body, set }) {
+    async ({ request, body }) => {
       const { clerkUserId } = await requireAuth(request);
       await rateLimit("wikiChat.ask", clerkUserId, 20, "1 m");
+      const convex = getConvex();
+      const serverKey = getConvexServerKey();
+      const message = body.message?.trim() ?? "";
 
-      set.headers["Content-Type"] = "text/plain; charset=utf-8";
-      set.headers["X-Content-Type-Options"] = "nosniff";
-      set.headers["Cache-Control"] = "no-cache";
-
-      // Caching is a prefix match, and the prefix has to clear the model's
-      // minimum before anything is stored — 1024 tokens on Sonnet 4.6.
-      // WIKI_SYSTEM is only ~400, so a breakpoint on the system block alone
-      // never cached: the marker is ignored silently, no error, and
-      // cache_creation_input_tokens just stays 0. Marking the last message
-      // instead makes the cached prefix system + the whole conversation so
-      // far, which clears the minimum after the first couple of turns and
-      // lets every following turn read the history back.
-      const lastIndex = body.messages.length - 1;
-      const stream = anthropic.streamMessages({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1024,
-        system: [{ type: "text", text: WIKI_SYSTEM }],
-        messages: body.messages.map((m, i) => ({
-          role: m.role,
-          content:
-            i === lastIndex
-              ? [
-                  {
-                    type: "text" as const,
-                    text: m.content,
-                    cache_control: { type: "ephemeral" as const },
-                  },
-                ]
-              : m.content,
-        })),
-      });
-
-      for await (const event of stream) {
-        if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-          yield event.delta.text;
+      let chatId: Id<"wikiChats">;
+      let title: string;
+      let history: StoredMessage[];
+      if (body.chatId) {
+        const chat = await convex.query(api.wikiChats.get, {
+          serverKey,
+          clerkUserId,
+          id: body.chatId,
+        });
+        if (!chat) throw Errors.notFound("Chat not found");
+        chatId = chat.id;
+        title = decrypt(chat.title);
+        history = readMessages(chat.messages);
+        if (message) {
+          history = [...history, { role: "user", content: message }];
+          await convex.mutation(api.wikiChats.update, {
+            serverKey,
+            clerkUserId,
+            id: chatId,
+            messages: encrypt(JSON.stringify(history)),
+          });
         }
+      } else {
+        if (!message) throw Errors.badRequest("Empty message");
+        title = deriveTitle(message);
+        history = [{ role: "user", content: message }];
+        ({ id: chatId } = await convex.mutation(api.wikiChats.create, {
+          serverKey,
+          clerkUserId,
+          title: encrypt(title),
+          messages: encrypt(JSON.stringify(history)),
+        }));
       }
+      if (history.at(-1)?.role !== "user") throw Errors.badRequest("Nothing to answer");
 
-      const { usage } = await stream.finalMessage();
-      console.log(
-        `[wiki-chat] cache write=${usage.cache_creation_input_tokens ?? 0} read=${usage.cache_read_input_tokens ?? 0} uncached=${usage.input_tokens}`,
+      const asked = history;
+      const { runId } = await startAiRun(
+        {
+          clerkUserId,
+          kind: "wikiChat",
+          subjectKey: `wikiChat:${chatId}`,
+          href: `/wiki-chat?chat=${chatId}`,
+        },
+        async (run) => {
+          const answer = await runModelText(
+            run,
+            {
+              max_tokens: 1024,
+              system: [{ type: "text", text: WIKI_SYSTEM }],
+              messages: toModelMessages(asked),
+            },
+            { acceptTruncated: true },
+          );
+          run.phase("finishing");
+          const current = await convex.query(api.wikiChats.get, {
+            serverKey,
+            clerkUserId,
+            id: chatId,
+          });
+          if (current) {
+            const stored = readMessages(current.messages);
+            const next = [
+              ...stored.slice(0, asked.length),
+              { role: "assistant" as const, content: answer },
+              ...stored.slice(asked.length),
+            ];
+            await convex.mutation(api.wikiChats.update, {
+              serverKey,
+              clerkUserId,
+              id: chatId,
+              messages: encrypt(JSON.stringify(next)),
+            });
+          }
+          return answer;
+        },
       );
+
+      return { chatId, title, runId };
     },
     {
       body: t.Object({
-        messages: t.Array(messageSchema, { minItems: 1 }),
+        chatId: t.Optional(t.String()),
+        message: t.Optional(t.String({ maxLength: 8000 })),
       }),
     },
   )
@@ -126,7 +190,7 @@ export const wikiChatRoute = new Elysia()
         chats.push({
           id: row.id,
           title: decrypt(row.title),
-          messages: JSON.parse(decrypt(row.messages)) as StoredMessage[],
+          messages: readMessages(row.messages),
           createdAt: row.createdAt,
           updatedAt: row.updatedAt,
         });
@@ -136,25 +200,6 @@ export const wikiChatRoute = new Elysia()
     }
     return { chats };
   })
-  .post(
-    "/wiki-chat/chats",
-    async ({ request, body }) => {
-      const { clerkUserId } = await requireAuth(request);
-      const { id } = await getConvex().mutation(api.wikiChats.create, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
-        title: encrypt(body.title),
-        messages: encrypt(JSON.stringify(body.messages)),
-      });
-      return { id };
-    },
-    {
-      body: t.Object({
-        title: t.String(),
-        messages: t.Array(storedMessageSchema),
-      }),
-    },
-  )
   .patch(
     "/wiki-chat/chats/:id",
     async ({ request, params, body }) => {
@@ -163,19 +208,11 @@ export const wikiChatRoute = new Elysia()
         serverKey: getConvexServerKey(),
         clerkUserId,
         id: params.id as Id<"wikiChats">,
-        ...(body.title !== undefined ? { title: encrypt(body.title) } : {}),
-        ...(body.messages !== undefined
-          ? { messages: encrypt(JSON.stringify(body.messages)) }
-          : {}),
+        title: encrypt(body.title),
       });
       return { updated: true };
     },
-    {
-      body: t.Object({
-        title: t.Optional(t.String()),
-        messages: t.Optional(t.Array(storedMessageSchema)),
-      }),
-    },
+    { body: t.Object({ title: t.String({ minLength: 1, maxLength: 120 }) }) },
   )
   .delete("/wiki-chat/chats/:id", async ({ request, params }) => {
     const { clerkUserId } = await requireAuth(request);

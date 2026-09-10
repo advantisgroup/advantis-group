@@ -3,8 +3,18 @@ import { type Id } from "@advantis/convex/dataModel";
 import { ConvexError } from "convex/values";
 import { Elysia, t } from "elysia";
 
-import { getConvex, getConvexServerKey } from "../lib/convex.js";
+import {
+  AI_MODEL,
+  AiRunError,
+  parseModelJson,
+  runModelText,
+  startAiRun,
+  str,
+  strList,
+  type AiRunContext,
+} from "../lib/ai.js";
 import { anthropic } from "../lib/anthropic.js";
+import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { decrypt, encrypt } from "../lib/crypto.js";
 import { Errors } from "../lib/errors.js";
 import { requireAuth } from "../lib/middleware.js";
@@ -70,33 +80,12 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Objekt, ohne Markdown, ohne Erklaerung:
 {"title":"Kurzer, praegnanter Titel (max. 80 Zeichen)","cat":"Produktdaten|Preisliste|Technik|Argumente|Rechtliches|Intern|Links","tags":"3-6 kommagetrennte Schlagwoerter","body":"Gut strukturierte, praegnante Zusammenfassung des Dokumentinhalts fuer Vertriebsmitarbeiter, auf Deutsch"}
 Waehle "cat" so passend wie moeglich zum Inhalt.`;
 
-function parseWikiExtraction(text: string): ExtractedWikiFields {
-  const clean = text.replace(/```json|```/g, "").trim();
-  const start = clean.indexOf("{");
-  const end = clean.lastIndexOf("}");
-  if (start === -1 || end === -1) {
-    throw Errors.upstream("Keine auswertbaren Daten im Dokument gefunden");
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(clean.slice(start, end + 1));
-  } catch {
-    throw Errors.upstream("Antwort des Modells konnte nicht gelesen werden");
-  }
-  if (typeof parsed !== "object" || parsed === null) {
-    throw Errors.upstream("Antwort des Modells hatte ein unerwartetes Format");
-  }
-  const data = parsed as Record<string, unknown>;
-  const str = (v: unknown) => (typeof v === "string" ? v : "");
-  const cat = WIKI_CAT_VALUES.includes(data.cat as WikiCat) ? (data.cat as WikiCat) : "Intern";
-  return { title: str(data.title).slice(0, 200), cat, tags: str(data.tags), body: str(data.body) };
-}
-
-/** Runs a wiki source document (PDF bytes, or already-extracted plain text
- * from a .docx/.txt/.md) through Claude and returns autofill suggestions —
- * no persistence, the client still saves through the normal wiki
- * create/update endpoints once the rep/admin reviews the fields. */
+/** Reads a wiki source document (PDF bytes, or already-extracted plain text
+ * from a .docx/.txt/.md) and returns autofill suggestions — no persistence,
+ * the editor shows them for review and saves through the normal wiki
+ * create/update endpoints. */
 async function runWikiExtraction(
+  run: AiRunContext,
   input: { kind: "pdf"; base64: string } | { kind: "text"; text: string },
 ): Promise<ExtractedWikiFields> {
   const content =
@@ -114,13 +103,11 @@ async function runWikiExtraction(
         ]
       : [{ type: "text" as const, text: `${WIKI_EXTRACTION_PROMPT}\n\nDOKUMENT:\n${input.text}` }];
 
-  const response = await anthropic.createMessage({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1200,
-    messages: [{ role: "user", content }],
-  });
-  const raw = response.content.map((b) => (b.type === "text" ? b.text : "")).join("\n");
-  return parseWikiExtraction(raw);
+  const data = parseModelJson(
+    await runModelText(run, { max_tokens: 1200, messages: [{ role: "user", content }] }),
+  );
+  const cat = WIKI_CAT_VALUES.includes(data.cat as WikiCat) ? (data.cat as WikiCat) : "Intern";
+  return { title: str(data.title).slice(0, 200), cat, tags: str(data.tags), body: str(data.body) };
 }
 
 interface Feedback {
@@ -132,34 +119,62 @@ interface Feedback {
   nextSteps: string[];
 }
 
-interface Scores {
-  zufriedenheit: number;
-  ev_schwenk: number;
-  informationen: number;
-  offene_fragen: number;
-  sprache: number;
-  quittung: number;
-  abschluss: number;
-  skript: number;
+const SCORE_KEYS = [
+  "zufriedenheit",
+  "ev_schwenk",
+  "informationen",
+  "offene_fragen",
+  "sprache",
+  "quittung",
+  "abschluss",
+  "skript",
+] as const;
+
+type Scores = Record<(typeof SCORE_KEYS)[number], number>;
+
+/** A report missing any score can't be charted or averaged, so it counts as
+ * unreadable rather than being saved with holes. */
+function readScores(value: unknown): Scores {
+  const source = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  const scores = {} as Scores;
+  for (const key of SCORE_KEYS) {
+    const n = Number(source[key]);
+    if (!Number.isFinite(n)) throw new AiRunError("unparsable");
+    scores[key] = Math.max(0, Math.min(100, Math.round(n)));
+  }
+  return scores;
 }
 
-async function callClaudeJson(system: string, userMsg: string, maxTokens = 1024): Promise<unknown> {
+function readFeedback(raw: Record<string, unknown>): Feedback {
+  const comments: Record<string, string> = {};
+  if (raw.comments && typeof raw.comments === "object") {
+    for (const [key, value] of Object.entries(raw.comments)) {
+      if (typeof value === "string") comments[key] = value;
+    }
+  }
+  return {
+    comments,
+    missingInfos: strList(raw.missingInfos),
+    weakFormulations: strList(raw.weakFormulations),
+    strengths: strList(raw.strengths),
+    improvements: strList(raw.improvements),
+    nextSteps: strList(raw.nextSteps),
+  };
+}
+
+/** Live hints stay a plain request: they fire every 35s mid-call, go stale
+ * almost immediately, and missing one costs nothing — nothing to keep. */
+async function callClaudeJson(system: string, userMsg: string): Promise<Record<string, unknown>> {
   const message = await anthropic.createMessage({
-    model: "claude-sonnet-4-6",
-    max_tokens: maxTokens,
+    model: AI_MODEL,
+    max_tokens: 1024,
     system,
     messages: [{ role: "user", content: userMsg }],
   });
   const text = message.content.map((b) => (b.type === "text" ? b.text : "")).join("");
-  // Strip markdown fences and any stray prose the model adds around the JSON
-  // object despite being told to answer with JSON only.
-  const stripped = text.replace(/```json|```/g, "").trim();
-  const jsonSlice = stripped.slice(stripped.indexOf("{"), stripped.lastIndexOf("}") + 1);
   try {
-    return JSON.parse(jsonSlice || stripped);
+    return parseModelJson(text);
   } catch {
-    // A truncated response (hit max_tokens mid-object) is the most likely
-    // cause, so retain its stop reason without writing call content to logs.
     console.error(`[sales-coach-ev] unparsable AI response (stop_reason=${message.stop_reason})`);
     throw Errors.upstream("Coach AI returned an unparsable response");
   }
@@ -312,6 +327,8 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       }),
     },
   )
+  /** Scores a saved call. The call itself is already stored, so the report
+   * attaches to it when the run finishes whether or not anyone is watching. */
   .post(
     "/report",
     async ({ request, body }) => {
@@ -319,38 +336,42 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       await rateLimit("salesCoachEv.report", clerkUserId, 10, "1 m");
       const kpiText = await getKpiText(clerkUserId);
       const userMsg = `Dauer: ${fmt(body.durationSec)}, Anrufer: ${body.callerSpeakPct}%, Ergebnis: ${body.outcome}\n\nTranskript:\n${body.transcript}`;
-      // Larger budget than the default: 8 scores + 8 written comments + several
-      // arrays comfortably exceeds 1024 tokens and was getting truncated
-      // mid-JSON, which surfaced as a generic "unparsable response" 502.
-      const raw = (await callClaudeJson(reportSystemPrompt(kpiText), userMsg, 2048)) as {
-        scores: Scores;
-        comments: Record<string, string>;
-        missingInfos?: string[];
-        weakFormulations?: string[];
-        strengths?: string[];
-        improvements?: string[];
-        nextSteps?: string[];
-      };
-      const skillLevel = Math.round(
-        Object.values(raw.scores).reduce((sum, v) => sum + v, 0) / Object.keys(raw.scores).length,
+
+      return await startAiRun(
+        {
+          clerkUserId,
+          kind: "coachReport",
+          subjectKey: `coachReport:${body.callId}`,
+          href: `/sales-coach-ev/progress/${body.callId}`,
+        },
+        async (run) => {
+          // Larger budget than the default: 8 scores + 8 written comments +
+          // several arrays comfortably exceeds 1024 tokens and was getting
+          // truncated mid-JSON.
+          const raw = parseModelJson(
+            await runModelText(run, {
+              max_tokens: 2048,
+              system: reportSystemPrompt(kpiText),
+              messages: [{ role: "user", content: userMsg }],
+            }),
+          );
+          const scores = readScores(raw.scores);
+          const skillLevel = Math.round(
+            SCORE_KEYS.reduce((sum, key) => sum + scores[key], 0) / SCORE_KEYS.length,
+          );
+          const feedback = readFeedback(raw);
+          run.phase("finishing");
+          await getConvex().mutation(api.salesCoachEv.calls.attachReport, {
+            serverKey: getConvexServerKey(),
+            clerkUserId,
+            id: body.callId as Id<"salesCoachEvCalls">,
+            scores,
+            skillLevel,
+            feedbackEnc: encrypt(JSON.stringify(feedback), ENC_KEY),
+          });
+          return JSON.stringify({ scores, skillLevel, feedback });
+        },
       );
-      const feedback: Feedback = {
-        comments: raw.comments ?? {},
-        missingInfos: raw.missingInfos ?? [],
-        weakFormulations: raw.weakFormulations ?? [],
-        strengths: raw.strengths ?? [],
-        improvements: raw.improvements ?? [],
-        nextSteps: raw.nextSteps ?? [],
-      };
-      await getConvex().mutation(api.salesCoachEv.calls.attachReport, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
-        id: body.callId as Id<"salesCoachEvCalls">,
-        scores: raw.scores,
-        skillLevel,
-        feedbackEnc: encrypt(JSON.stringify(feedback), ENC_KEY),
-      });
-      return { scores: raw.scores, skillLevel, feedback };
     },
     {
       body: t.Object({
@@ -369,35 +390,59 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       await rateLimit("salesCoachEv.liveHint", clerkUserId, 6, "1 m");
       const kpiText = await getKpiText(clerkUserId);
       const userMsg = `Gespraechszeit: ${fmt(body.elapsedSec)}\n\n${body.transcriptTail}`;
-      const raw = (await callClaudeJson(liveSystemPrompt(kpiText), userMsg)) as {
-        hints?: { type: string; tag: string; text: string }[];
-        evChecks?: boolean[];
-        detectedPath?: number;
-      };
-      return {
-        hints: raw.hints ?? [],
-        evChecks: raw.evChecks ?? [false, false, false, false, false],
-        detectedPath: raw.detectedPath ?? 0,
-      };
+      const raw = await callClaudeJson(liveSystemPrompt(kpiText), userMsg);
+      const hints = Array.isArray(raw.hints)
+        ? raw.hints
+            .filter((h): h is Record<string, unknown> => !!h && typeof h === "object")
+            .map((h) => ({ type: str(h.type), tag: str(h.tag), text: str(h.text) }))
+            .filter((h) => h.text)
+        : [];
+      const evChecks =
+        Array.isArray(raw.evChecks) && raw.evChecks.length === 5
+          ? raw.evChecks.map((c) => c === true)
+          : [false, false, false, false, false];
+      return { hints, evChecks, detectedPath: Number(raw.detectedPath) || 0 };
     },
     { body: t.Object({ transcriptTail: t.String(), elapsedSec: t.Number() }) },
   )
+  /** `key` names the set of calls being summarised, so reopening the dialog
+   * on the same day and call count shows the summary already written. */
   .post(
     "/eod-summary",
     async ({ request, body }) => {
       const { clerkUserId } = await requireAuth(request);
       await rateLimit("salesCoachEv.eodSummary", clerkUserId, 5, "1 m");
       const userMsg = `Staerken:\n${body.strengths.slice(0, 15).join("\n")}\n\nVerbesserungen:\n${body.improvements.slice(0, 15).join("\n")}`;
-      const raw = (await callClaudeJson(EOD_SYSTEM, userMsg)) as {
-        top3strengths?: string[];
-        top3improvements?: string[];
-      };
-      return {
-        top3strengths: raw.top3strengths ?? [],
-        top3improvements: raw.top3improvements ?? [],
-      };
+
+      return await startAiRun(
+        {
+          clerkUserId,
+          kind: "coachEod",
+          subjectKey: `coachEod:${body.key}`,
+          href: "/sales-coach-ev/progress/summary",
+        },
+        async (run) => {
+          const raw = parseModelJson(
+            await runModelText(run, {
+              max_tokens: 1024,
+              system: EOD_SYSTEM,
+              messages: [{ role: "user", content: userMsg }],
+            }),
+          );
+          return JSON.stringify({
+            top3strengths: strList(raw.top3strengths).slice(0, 3),
+            top3improvements: strList(raw.top3improvements).slice(0, 3),
+          });
+        },
+      );
     },
-    { body: t.Object({ strengths: t.Array(t.String()), improvements: t.Array(t.String()) }) },
+    {
+      body: t.Object({
+        strengths: t.Array(t.String()),
+        improvements: t.Array(t.String()),
+        key: t.String({ minLength: 1, maxLength: 64 }),
+      }),
+    },
   )
   // --- Wiki ------------------------------------------------------------------
   .get("/wiki", async ({ request }) => {
@@ -499,7 +544,7 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       if (!isAdmin) throw Errors.forbidden();
 
       const { file, text } = body;
-      let extracted: ExtractedWikiFields;
+      let input: { kind: "pdf"; base64: string } | { kind: "text"; text: string };
       if (file) {
         if (file.type !== "application/pdf") {
           throw Errors.badRequest(
@@ -509,20 +554,32 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
         if (file.size > MAX_WIKI_DOC_BYTES) {
           throw Errors.badRequest(`Datei groesser als ${MAX_WIKI_DOC_BYTES / (1024 * 1024)} MB`);
         }
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        const base64 = Buffer.from(bytes).toString("base64");
-        extracted = await runWikiExtraction({ kind: "pdf", base64 });
+        input = { kind: "pdf", base64: Buffer.from(await file.arrayBuffer()).toString("base64") };
       } else if (text?.trim()) {
-        extracted = await runWikiExtraction({
-          kind: "text",
-          text: text.slice(0, MAX_WIKI_EXTRACT_TEXT_CHARS),
-        });
+        input = { kind: "text", text: text.slice(0, MAX_WIKI_EXTRACT_TEXT_CHARS) };
       } else {
         throw Errors.badRequest("Keine Datei oder Text uebergeben");
       }
-      return { extracted };
+      const fileName = file?.name ?? body.fileName ?? "";
+
+      return await startAiRun(
+        {
+          clerkUserId,
+          kind: "coachWikiExtract",
+          subjectKey: `coachWikiExtract:${body.subjectKey ?? "new"}`,
+          href: "/sales-coach-ev/wiki",
+        },
+        async (run) => JSON.stringify({ ...(await runWikiExtraction(run, input)), fileName }),
+      );
     },
-    { body: t.Object({ file: t.Optional(t.File()), text: t.Optional(t.String()) }) },
+    {
+      body: t.Object({
+        file: t.Optional(t.File()),
+        text: t.Optional(t.String()),
+        fileName: t.Optional(t.String({ maxLength: 260 })),
+        subjectKey: t.Optional(t.String({ maxLength: 64 })),
+      }),
+    },
   )
   // --- Settings ----------------------------------------------------------
   .get("/settings", async ({ request }) => {

@@ -11,35 +11,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-/**
- * True when the current client looks resource-constrained — few logical CPU
- * cores, little memory, or an explicit reduced-motion preference. The dialog
- * uses this to drop the decorative dotted-grid animation on low-end devices so
- * it never spends frames on something purely cosmetic.
- */
-function useLowEndDevice() {
-  const [lowEnd, setLowEnd] = React.useState(false);
-
-  React.useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-    const evaluate = () => {
-      const cores = navigator.hardwareConcurrency ?? 8;
-      const memory =
-        typeof (navigator as Navigator & { deviceMemory?: number }).deviceMemory === "number"
-          ? (navigator as Navigator & { deviceMemory?: number }).deviceMemory!
-          : 8;
-      setLowEnd(reduceMotion.matches || cores <= 4 || memory <= 4);
-    };
-
-    evaluate();
-    reduceMotion.addEventListener("change", evaluate);
-    return () => reduceMotion.removeEventListener("change", evaluate);
-  }, []);
-
-  return lowEnd;
-}
-
 const Dialog = DialogPrimitive.Root;
 
 const DialogTrigger = DialogPrimitive.Trigger;
@@ -48,41 +19,41 @@ const DialogPortal = DialogPrimitive.Portal;
 
 const DialogClose = DialogPrimitive.Close;
 
+/**
+ * The page behind a dialog is blurred and dimmed hard enough that it stops
+ * competing — a dialog is a question, and nothing else on screen should look
+ * answerable while it's open.
+ */
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
->(({ className, ...props }, ref) => {
-  const lowEnd = useLowEndDevice();
-
-  return (
-    <DialogPrimitive.Overlay
-      ref={ref}
-      className={cn(
-        "fixed inset-0 z-50 bg-background/40 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        className,
-      )}
-      {...props}
-    >
-      {/* Decorative dotted grid drifting toward the top-left. Disabled on
-          low-end devices via data-animated to save resources. */}
-      <span
-        aria-hidden
-        data-animated={lowEnd ? "false" : "true"}
-        className="dialog-dot-grid pointer-events-none absolute inset-0 opacity-70"
-      />
-    </DialogPrimitive.Overlay>
-  );
-});
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      "fixed inset-0 z-50 bg-black/45 backdrop-blur-[8px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className,
+    )}
+    {...props}
+  />
+));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 type DialogContentProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
   overlayClassName?: string;
+  /** Confirmations have a Cancel button already; a second way out is noise. */
+  hideClose?: boolean;
 };
 
+/**
+ * One quiet surface: generous padding, no rules between header, body and
+ * footer — spacing does that job. The close button is a bare icon in the
+ * corner, not another bordered control.
+ */
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, overlayClassName, ...props }, ref) => (
+>(({ className, children, overlayClassName, hideClose, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay className={overlayClassName} />
     <DialogPrimitive.Content
@@ -92,7 +63,7 @@ const DialogContent = React.forwardRef<
         // unbroken string stretches the whole dialog past max-w-lg and the
         // page scrolls sideways. `min-w-0` lets them shrink instead; the
         // overflow-x guard catches anything that still can't.
-        "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] max-w-lg max-h-[calc(100dvh-2rem)] translate-x-[-50%] translate-y-[-50%] gap-5 overflow-y-auto overflow-x-hidden overscroll-contain break-words [&>*]:min-w-0 border border-border/70 bg-card p-6 shadow-2xl shadow-black/30 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-[calc(var(--radius)+0.25rem)]",
+        "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] max-w-lg max-h-[calc(100dvh-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto overflow-x-hidden overscroll-contain break-words rounded-2xl border border-border/60 bg-card p-7 shadow-overlay duration-200 [&>*]:min-w-0 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-[0.97] data-[state=open]:zoom-in-[0.97]",
         className,
       )}
       {...props}
@@ -101,41 +72,33 @@ const DialogContent = React.forwardRef<
       {/* `data-slot` so a dialog whose top edge isn't the plain card surface
           (the profile's colour banner, say) can restyle the close button for
           contrast without re-implementing it. */}
-      <DialogPrimitive.Close
-        data-slot="dialog-close"
-        className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground opacity-80 ring-offset-background transition-all hover:bg-accent hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
-      >
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
+      {!hideClose && (
+        <DialogPrimitive.Close
+          data-slot="dialog-close"
+          className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
+        >
+          <X className="size-[18px]" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      )}
     </DialogPrimitive.Content>
   </DialogPortal>
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
-/**
- * Section 1 of the canonical dialog layout: the header. Holds the
- * `DialogTitle` (and optionally an icon).
- */
+/** Title and description. Right padding keeps a long title clear of the
+ * corner close button. */
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "-mx-6 -mt-6 flex flex-col space-y-1 border-b border-border/70 px-6 pb-4 pt-5 text-left",
-      className,
-    )}
-    {...props}
-  />
+  <div className={cn("flex flex-col gap-1.5 pr-8 text-left", className)} {...props} />
 );
 DialogHeader.displayName = "DialogHeader";
 
-/**
- * Section 3 of the canonical dialog layout: the interactive footer where the
- * action buttons live.
- */
+/** Actions, bottom-right. Put a secondary action (e.g. "Add folder") first
+ * with `mr-auto` to pin it bottom-left. */
 const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "-mx-6 -mb-6 mt-1 flex flex-col-reverse gap-2 border-t border-border/70 px-6 pb-5 pt-4 sm:flex-row sm:items-center sm:justify-end",
+      "mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end",
       className,
     )}
     {...props}
@@ -149,7 +112,10 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("font-display text-lg font-semibold leading-tight tracking-tight", className)}
+    className={cn(
+      "font-display text-xl font-bold leading-snug tracking-tight text-balance",
+      className,
+    )}
     {...props}
   />
 ));
@@ -161,7 +127,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-[0.9375rem] leading-relaxed text-foreground/70 text-pretty", className)}
     {...props}
   />
 ));
@@ -177,7 +143,7 @@ const DialogTip = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivE
     <div
       ref={ref}
       className={cn(
-        "flex items-start gap-2 rounded-md border border-border/60 bg-muted/50 px-3 py-2 text-xs text-muted-foreground",
+        "flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground",
         className,
       )}
       {...props}
@@ -252,14 +218,12 @@ export interface DetailRow {
  */
 export function DialogDetails({ rows, className }: { rows: DetailRow[]; className?: string }) {
   return (
-    <dl
-      className={cn(
-        "divide-y divide-border/60 overflow-hidden rounded-lg border border-border/60 bg-muted/30 text-sm",
-        className,
-      )}
-    >
+    <dl className={cn("overflow-hidden rounded-lg bg-muted/50 text-sm", className)}>
       {rows.map((row, i) => (
-        <div key={i} className="flex items-start justify-between gap-4 px-3 py-2">
+        <div
+          key={i}
+          className="flex items-start justify-between gap-4 px-3.5 py-2.5 [&+&]:border-t [&+&]:border-border/50"
+        >
           <dt className="shrink-0 text-muted-foreground">{row.label}</dt>
           <dd className="min-w-0 break-words text-right font-medium">{row.value}</dd>
         </div>
@@ -334,18 +298,20 @@ function ConfirmDialogPanel({
   onConfirm: () => void;
 }) {
   return (
-    <div className={cn("px-5 pb-5 pt-3 sm:px-6 sm:pb-6 sm:pt-6", !mobile && "pr-12")}>
+    <div className={cn(mobile ? "px-5 pb-5 pt-2" : "p-6")}>
       <div className="flex items-start gap-3">
         {destructive && (
-          <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-destructive/10 text-destructive shadow-[0_8px_20px_-12px_color-mix(in_oklch,var(--destructive)_90%,transparent)]">
+          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-destructive/12 text-destructive">
             <AlertTriangle className="size-4" />
           </span>
         )}
-        <div className="min-w-0 flex-1">{title}</div>
+        <div className="min-w-0 flex-1 pt-0.5">
+          {title}
+          {description}
+        </div>
       </div>
-      {description}
       {hasBody && (
-        <div className="mt-5 flex flex-col gap-4">
+        <div className="mt-4 flex flex-col gap-3">
           {details && details.length > 0 && <DialogDetails rows={details} />}
           {items && items.length > 0 && <DialogChecklist items={items} />}
           {tip && <DialogTip>{tip}</DialogTip>}
@@ -359,13 +325,18 @@ function ConfirmDialogPanel({
           )}
         </div>
       )}
-      <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
-        <Button variant="ghost" className="sm:min-w-24" onClick={onCancel}>
+      <div
+        className={cn(
+          "mt-5 flex gap-2",
+          mobile ? "flex-col-reverse" : "flex-row items-center justify-end",
+        )}
+      >
+        <Button variant="secondary" size={mobile ? "default" : "sm"} onClick={onCancel}>
           {cancelLabel}
         </Button>
         <Button
           variant={destructive ? "destructive" : "default"}
-          className="sm:min-w-32"
+          size={mobile ? "default" : "sm"}
           onClick={onConfirm}
           disabled={confirmBlocked}
           autoFocus={!confirmText}
@@ -402,8 +373,6 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const confirmBlocked = !!opts?.confirmText && typedConfirm !== opts.confirmText.target;
   const destructive = opts?.destructive !== false;
   const isMobile = useIsMobile();
-  // The description now sits in the header, so the body section is only worth
-  // rendering (and only worth its border/padding) when something fills it.
   const hasBody =
     !!opts?.confirmText || !!opts?.tip || !!opts?.details?.length || !!opts?.items?.length;
 
@@ -413,8 +382,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       {isMobile ? (
         <Drawer.Root open={open} onOpenChange={(value) => !value && settle(false)}>
           <Drawer.Portal>
-            <Drawer.Overlay className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm" />
-            <Drawer.Content className="fixed inset-x-0 bottom-0 z-[90] max-h-[90dvh] overflow-y-auto rounded-t-2xl border-t border-border/60 bg-card shadow-2xl shadow-black/40 outline-none">
+            <Drawer.Overlay className="fixed inset-0 z-[80] bg-black/45 backdrop-blur-[8px]" />
+            <Drawer.Content className="fixed inset-x-0 bottom-0 z-[90] max-h-[90dvh] overflow-y-auto rounded-t-2xl bg-card pb-[env(safe-area-inset-bottom)] shadow-overlay outline-none">
               <div className="flex items-center justify-center pb-1 pt-3">
                 <span className="h-1.5 w-10 rounded-full bg-border" />
               </div>
@@ -427,7 +396,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                 }
                 description={
                   opts?.description && (
-                    <Drawer.Description className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    <Drawer.Description className="mt-1 text-[0.9375rem] leading-relaxed text-foreground/70">
                       {opts.description}
                     </Drawer.Description>
                   )
@@ -452,17 +421,16 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       ) : (
         <Dialog open={open} onOpenChange={(value) => !value && settle(false)}>
           <DialogContent
+            hideClose
             overlayClassName="z-[80]"
-            className="z-[90] max-w-md gap-0 rounded-2xl border-border/60 bg-card p-0 shadow-2xl shadow-black/35"
+            className="z-[90] max-w-md gap-0 p-0"
           >
             <ConfirmDialogPanel
               mobile={false}
-              title={<DialogTitle className="leading-snug">{opts?.title}</DialogTitle>}
+              title={<DialogTitle className="text-lg font-semibold">{opts?.title}</DialogTitle>}
               description={
                 opts?.description && (
-                  <DialogDescription className="mt-1 leading-relaxed">
-                    {opts.description}
-                  </DialogDescription>
+                  <DialogDescription className="mt-1">{opts.description}</DialogDescription>
                 )
               }
               destructive={destructive}

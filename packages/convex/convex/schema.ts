@@ -1,6 +1,9 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+import { aiRunKind, aiRunPhase, aiRunStatus } from "./lib/aiRuns";
+import { draftSurface } from "./lib/drafts";
+
 // Shared validators -----------------------------------------------------------
 
 export const roleValidator = v.union(
@@ -2848,6 +2851,46 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_user", ["clerkUserId"]),
+
+  // --- AI runs ---------------------------------------------------------------
+  // Every AI call in the intranet, tracked so the answer survives a closed
+  // dialog or a refresh (see aiRuns.ts). `output` is ciphertext from apps/api,
+  // same as wikiChats; the browser only ever reads the metadata from here.
+  aiRuns: defineTable({
+    clerkUserId: v.string(),
+    kind: aiRunKind,
+    // What the run is about, e.g. "wikiChat:<chatId>" — one live run per key.
+    subjectKey: v.string(),
+    // Where the dock sends someone to see the result.
+    href: v.optional(v.string()),
+    status: aiRunStatus,
+    phase: aiRunPhase,
+    output: v.optional(v.string()), // ciphertext, partial while running
+    outputChars: v.number(),
+    errorCode: v.optional(v.string()),
+    retryable: v.optional(v.boolean()),
+    startedAt: v.number(),
+    heartbeatAt: v.number(),
+    finishedAt: v.optional(v.number()),
+    seenAt: v.optional(v.number()),
+  })
+    .index("by_user", ["clerkUserId", "startedAt"])
+    .index("by_user_subject", ["clerkUserId", "subjectKey", "startedAt"])
+    .index("by_user_kind", ["clerkUserId", "kind", "startedAt"])
+    .index("by_started", ["startedAt"]),
+
+  // --- Drafts ----------------------------------------------------------------
+  // Unsent composer/dialog state per person, so a refresh or a closed sheet
+  // never costs anyone their text (see drafts.ts).
+  drafts: defineTable({
+    userId: v.id("users"),
+    surface: draftSurface,
+    subjectKey: v.string(), // "new", or the id of the thing being edited
+    data: v.string(), // JSON the form restores from
+    updatedAt: v.number(),
+  })
+    .index("by_user_subject", ["userId", "surface", "subjectKey"])
+    .index("by_updated", ["updatedAt"]),
 
   // --- Sales Coach EV (live call-coaching for Projekt Elektromobilitaet) ------
   // Transcript and feedback text may contain real customer conversations, so

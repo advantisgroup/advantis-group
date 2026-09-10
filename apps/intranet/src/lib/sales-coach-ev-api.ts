@@ -9,6 +9,7 @@ import { type ApiQuery, useApiQuery } from "@/hooks/use-api-query";
 import {
   type AdminUserDetail,
   type CallRecord,
+  type Outcome,
   type RosterEntry,
   type WikiArticle,
   type WikiCategory,
@@ -18,7 +19,9 @@ import {
  * Reads for Sales Coach EV via apps/api — no Convex mirror on the client
  * (all Convex access goes through the server-key-gated functions in
  * packages/convex/convex/salesCoachEv/), so every read here hits apps/api
- * fresh on mount, same shape as absences-api.ts's hooks.
+ * fresh on mount, same shape as absences-api.ts's hooks. The AI calls
+ * (report, daily summary, document import) start runs and return a runId;
+ * their results arrive through `useAiRun`.
  */
 
 export function useSalesCoachWiki(): ApiQuery<WikiArticle[]> & {
@@ -47,6 +50,17 @@ export function useSalesCoachCalls(
     { source: "sales-coach.calls" },
   );
   return { ...query, calls: query.data };
+}
+
+export function useSalesCoachCallRecord(id: string): ApiQuery<CallRecord> {
+  const api = useIntranetApiClient();
+  return useApiQuery(
+    useCallback(async () => {
+      const data = await api.unwrap(api.eden["sales-coach-ev"].calls({ id }).get());
+      return data.call as CallRecord;
+    }, [api, id]),
+    { source: "sales-coach.call" },
+  );
 }
 
 export function useSalesCoachSettings(): ApiQuery<string> & { kpiText: string | undefined } {
@@ -142,31 +156,59 @@ export interface WikiDocumentExtraction {
   cat: WikiCategory;
   tags: string;
   body: string;
+  fileName: string;
 }
 
-/** AI-reads an uploaded wiki source document and returns autofill
- * suggestions for the article form — nothing is saved here, the editor
- * dialog still calls `createWikiArticle`/`updateWikiArticle` itself. A PDF
- * is sent as the raw file (Claude reads it natively); a .docx/.txt/.md is
- * sent as `text` since the client already extracts that locally. */
-export async function analyzeWikiDocument(
+/** Starts reading a wiki source document. A PDF is sent as the raw file
+ * (Claude reads it natively); a .docx/.txt/.md is sent as `text` since the
+ * client already extracts that locally. `subjectKey` is the article id, or
+ * "new" — one import at a time per article. */
+export function startWikiExtraction(
   api: IntranetApiClient,
-  input: { file: File } | { text: string },
-): Promise<WikiDocumentExtraction> {
+  input: { file: File } | { text: string; fileName: string },
+  subjectKey: string,
+): Promise<{ runId: string }> {
   const form = new FormData();
   if ("file" in input) form.append("file", input.file);
-  else form.append("text", input.text);
-  const { extracted } = await api.uploadForm<{ extracted: WikiDocumentExtraction }>(
-    "/sales-coach-ev/wiki/extract",
-    form,
-  );
-  return extracted;
+  else {
+    form.append("text", input.text);
+    form.append("fileName", input.fileName);
+  }
+  form.append("subjectKey", subjectKey);
+  return api.uploadForm<{ runId: string }>("/sales-coach-ev/wiki/extract", form);
 }
 
-export async function fetchEodSummary(
-  eden: Eden,
-  strengths: string[],
-  improvements: string[],
-): Promise<{ top3strengths: string[]; top3improvements: string[] }> {
-  return unwrapApiResult(eden["sales-coach-ev"]["eod-summary"].post({ strengths, improvements }));
+export function startCallReport(
+  api: IntranetApiClient,
+  input: {
+    callId: string;
+    transcript: string;
+    durationSec: number;
+    callerSpeakPct: number;
+    outcome: Outcome;
+  },
+): Promise<{ runId: string }> {
+  return api.fetchJson<{ runId: string }>("/sales-coach-ev/report", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input),
+  });
+}
+
+export interface EodSummary {
+  top3strengths: string[];
+  top3improvements: string[];
+}
+
+/** `key` names the set of calls summarised — the same key reopens the same
+ * summary instead of paying for a new one. */
+export function startEodSummary(
+  api: IntranetApiClient,
+  input: { strengths: string[]; improvements: string[]; key: string },
+): Promise<{ runId: string }> {
+  return api.fetchJson<{ runId: string }>("/sales-coach-ev/eod-summary", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input),
+  });
 }
