@@ -1,6 +1,6 @@
 "use client";
 
-import { type ComponentProps, type ReactNode, useState } from "react";
+import { type ComponentProps, type ReactNode, useRef, useState } from "react";
 
 import { Loader2 } from "lucide-react";
 
@@ -37,18 +37,31 @@ export function ReadinessSubmit({
 }) {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
+  const pendingFix = useRef<(() => void) | null>(null);
   const { canSubmit } = scoreReadiness(checks);
-  const fixable = checks.map((check) =>
-    check.onFix
-      ? {
-          ...check,
-          onFix: () => {
-            setOpen(false);
-            check.onFix?.();
-          },
-        }
-      : check,
-  );
+
+  // A chip's fix runs once the card has fully closed. Run it any sooner and
+  // the closing popover/sheet hands focus straight back to this button, so
+  // the field it meant to focus never gets it (and a phone keyboard never
+  // opens).
+  const fixable = checks.map((check) => {
+    const fix = check.onFix;
+    if (!fix) return check;
+    return {
+      ...check,
+      onFix: () => {
+        pendingFix.current = fix;
+        setOpen(false);
+      },
+    };
+  });
+  const runPendingFix = (event: Event) => {
+    const fix = pendingFix.current;
+    if (!fix) return;
+    pendingFix.current = null;
+    event.preventDefault();
+    fix();
+  };
 
   const label = busy ? <Loader2 className="animate-spin" /> : children;
 
@@ -67,6 +80,7 @@ export function ReadinessSubmit({
           open={open}
           onOpenChange={setOpen}
           ariaLabel={readyTitle}
+          onCloseAutoFocus={runPendingFix}
           className="h-auto max-h-[88dvh]"
         >
           <div className="min-h-0 overflow-y-auto px-4 pb-4 pt-1">
@@ -95,7 +109,11 @@ export function ReadinessSubmit({
           {label}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[22rem] border-0 bg-transparent p-0 shadow-none">
+      <PopoverContent
+        align="end"
+        onCloseAutoFocus={runPendingFix}
+        className="w-[22rem] border-0 bg-transparent p-0 shadow-none"
+      >
         <ReadinessCard checks={fixable} readyTitle={readyTitle} className="shadow-overlay" />
       </PopoverContent>
     </Popover>

@@ -22,6 +22,7 @@ export function MobileDrawer({
   children,
   className,
   ariaLabel,
+  onCloseAutoFocus,
   "data-tour": dataTour,
 }: {
   open: boolean;
@@ -29,6 +30,8 @@ export function MobileDrawer({
   children: React.ReactNode;
   className?: string;
   ariaLabel?: string;
+  /** Call `preventDefault()` to keep focus from returning to the opener. */
+  onCloseAutoFocus?: (event: Event) => void;
   "data-tour"?: string;
 }) {
   return (
@@ -37,6 +40,7 @@ export function MobileDrawer({
         <Drawer.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
         <Drawer.Content
           aria-label={ariaLabel}
+          onCloseAutoFocus={onCloseAutoFocus}
           data-tour={dataTour}
           className={cn(
             "fixed inset-x-0 bottom-0 z-50 flex h-[88dvh] flex-col rounded-t-2xl border-t border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl shadow-black/40 outline-none",
