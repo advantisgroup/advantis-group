@@ -35,7 +35,7 @@ export function BlogPostPreview({
         </div>
       ) : null}
       <div className="px-5 py-4">
-        <p className="font-display text-xl font-bold tracking-tight">
+        <p className="font-display text-xl font-bold tracking-tight refreshed:font-semibold">
           {title.trim() || t("fieldTitlePlaceholder")}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">{authorName}</p>
