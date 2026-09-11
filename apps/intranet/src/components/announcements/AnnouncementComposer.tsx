@@ -1100,6 +1100,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
                   <DraftRestoredNote
                     draft={serverDraft}
                     onStartOver={discardDraft}
+                    filesNotKept
                     className="mb-4"
                   />
                   <input

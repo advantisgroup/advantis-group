@@ -174,7 +174,11 @@ export function GuidebookEditor({
   return (
     <div className="space-y-6">
       <DraftOfferBanner draft={draft} />
-      <DraftRestoredNote draft={draft} onStartOver={discardChanges} />
+      <DraftRestoredNote
+        draft={draft}
+        onStartOver={discardChanges}
+        filesNotKept={!!attachmentsSlot}
+      />
 
       <div className="space-y-4 rounded-lg border border-border/70 bg-muted/30 p-4">
         <div className="space-y-1.5">
