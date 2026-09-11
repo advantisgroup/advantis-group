@@ -8,7 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 
-import { AiDock } from "@/components/ai/AiDock";
+import { AiDock, AiDockButton } from "@/components/ai/AiDock";
 import { PostHogIdentify } from "@/components/analytics/PostHogIdentify";
 import { CommandPalette } from "@/components/CommandPalette";
 import { useSmoothScroll } from "@/components/effects/SmoothScrolling";
@@ -285,6 +285,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           {/* Tour progress — compact checkmark chip; self-hides when finished. */}
           {!isUpdatesReading && <TourProgressChip />}
           {!isUpdatesReading && <OnboardingTrigger />}
+          <AiDockButton />
           <div data-tour="tour-notifications-btn" className="flex items-center">
             <NotificationsMenu />
           </div>
