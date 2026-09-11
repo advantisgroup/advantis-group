@@ -5,23 +5,37 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
-import { ArrowLeft, Eye, FileUp, Loader2, PenLine, Settings, Sparkles } from "lucide-react";
+import { ArrowLeft, Eye, FileUp, Loader2, PenLine, Settings } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { AiGlyph } from "@/components/ai/AiGlyph";
+import {
+  DraftIndicator,
+  DraftOfferBanner,
+  DraftRestoredNote,
+} from "@/components/compose/DraftIndicator";
+import { ReadinessCard } from "@/components/compose/Readiness";
 import { useWikiEntryForm } from "@/components/guidebooks/useWikiEntryForm";
-import { WikiAiFormatAssist } from "@/components/guidebooks/WikiAiFormatAssist";
+import {
+  formatRunNeedsPane,
+  useWikiFormatRun,
+  WikiFormatReview,
+  WikiFormatTrigger,
+} from "@/components/guidebooks/WikiAiFormatAssist";
+import { type WikiEntry } from "@/components/guidebooks/WikiEntryDialogs";
 import { WikiEntryPreview } from "@/components/guidebooks/WikiEntryPreview";
+import { WikiMetaAssist } from "@/components/guidebooks/WikiMetaAssist";
 import { Link } from "@/components/Link";
 import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
-import { htmlToText } from "@/components/ui/rich-text";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SplitDivider } from "@/components/ui/split-divider";
-import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 import {
   type ImportExt,
   IMPORT_FILE_ACCEPT,
@@ -29,8 +43,6 @@ import {
   WikiImportError,
   type WikiImportErrorCode,
 } from "@/lib/wiki-import";
-import { useWikiImportApi } from "@/lib/wiki-import-api";
-import { cn } from "@/lib/utils";
 
 const PdfPreview = dynamic(
   () => import("@/components/file-viewer/PdfPreview").then((mod) => mod.PdfPreview),
@@ -42,6 +54,8 @@ const DocxPreview = dynamic(
 );
 
 const SPLIT_KEY = "guidebooks:composerSplit";
+
+type PreviewTab = "live" | "original" | "ai";
 
 /** Read-only rendering of the file the entry was imported from — reusing
  *  the same PdfPreview/DocxPreview the global file viewer uses, wrapped in
@@ -99,10 +113,9 @@ function importErrorMessageKey(code: WikiImportErrorCode): string {
   }
 }
 
-/** The very first decision — write from scratch, or import a document and
- *  start from its extracted text. A one-way fork: once either path is
- *  chosen the composer proper takes over, rather than offering to switch
- *  mid-draft and risk clobbering work already typed. */
+/** The very first decision for a new entry — write from scratch, or import a
+ *  document and start from its extracted text. Skipped entirely when there's
+ *  a draft to pick back up. */
 function ChooseSourceStep({
   onManual,
   onFile,
@@ -176,50 +189,48 @@ function ChooseSourceStep({
 }
 
 /**
- * Full-screen "New wiki entry" composer — same shell pattern as
- * `AnnouncementComposer` (sticky header, own scroll region, an Options sheet
- * for everything that isn't the headline content) so creating a guidebook
- * entry and creating an announcement feel like the same app. Editing an
- * existing entry still goes through the compact `EntryDialog` — this is
- * create-only, matching how it's linked to from the guidebooks list.
+ * The one place a wiki entry is written or edited — full screen, because an
+ * entry is a rich body plus a stack of details, and that never fit a dialog.
  *
- * Starts on a "manual vs. import a document" fork (`ChooseSourceStep`).
- * Importing runs the deterministic client-side extraction in
- * `lib/wiki-import.ts` (no model involved) and prefills thema/erklaerung;
- * the source file itself is staged as a normal pending attachment (visible,
- * removable in the Options sheet — that visibility *is* the confirmation
- * before it's actually attached on save, no separate dialog needed) and
- * unlocks the split-pane's "original file" preview alongside the usual
- * live wiki preview. The optional "improve with AI" action in the Options
- * sheet only ever touches thema/tags/category — never body content.
+ * Left: the headline and body. Right: live preview, the imported original,
+ * or — when formatting with AI — the review of what it changed. Everything
+ * that isn't the headline content sits in the Options sheet, opened by the
+ * readiness verdict when something required is still missing. The draft
+ * keeps all of it across refreshes and devices.
  */
-export function WikiEntryComposer() {
+export function WikiEntryComposer({ entry }: { entry: WikiEntry | "new" }) {
   const t = useTranslations("Guidebooks");
   const tc = useTranslations("Common");
   const locale = useLocale();
   const router = useRouter();
   const me = useCurrentUser();
-  const canFormatWithAi = useHasCapability("manage_guidebooks");
+  const canUseAi = useHasCapability("manage_guidebooks");
   const isMobile = useIsMobile();
-  const handleError = useErrorHandler();
-  const importApi = useWikiImportApi();
 
-  const [stage, setStage] = useState<"choose" | "compose">("choose");
+  const entryForm = useWikiEntryForm({
+    entry,
+    onDone: (slug) => router.push(`/guidebooks/${slug}`),
+  });
+  const { isEditing, entryKey, draft, readiness } = entryForm;
+  const composeHref = entry === "new" ? "/guidebooks/new" : `/guidebooks/${entry.slug}/compose`;
+  const backHref = entry === "new" ? "/guidebooks" : `/guidebooks/${entry.slug}`;
+
+  const [stage, setStage] = useState<"choose" | "compose">(isEditing ? "compose" : "choose");
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<WikiImportErrorCode | null>(null);
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [sourceExt, setSourceExt] = useState<ImportExt | null>(null);
-  const [assisting, setAssisting] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [submitOpen, setSubmitOpen] = useState(false);
   const [mobileView, setMobileView] = useState<"write" | "preview">("write");
-  const [previewTab, setPreviewTab] = useState<"live" | "original">("live");
+  const [previewTab, setPreviewTab] = useState<PreviewTab>("live");
   const [splitPct, setSplitPct] = useState(50);
   const splitRef = useRef<HTMLDivElement>(null);
+  const themaRef = useRef<HTMLInputElement>(null);
 
-  const entryForm = useWikiEntryForm({
-    entry: "new",
-    onDone: (slug) => router.push(`/guidebooks/${slug}`),
-  });
+  useEffect(() => {
+    if (draft.restoredAt) setStage("compose");
+  }, [draft.restoredAt]);
 
   useEffect(() => {
     const raw = Number(localStorage.getItem(SPLIT_KEY));
@@ -233,6 +244,17 @@ export function WikiEntryComposer() {
     } catch {
       // Storage unavailable — the split just isn't remembered.
     }
+  }
+
+  const formatRun = useWikiFormatRun(entryKey);
+  const showAiPane = formatRunNeedsPane(formatRun);
+  useEffect(() => {
+    setPreviewTab((tab) => (showAiPane ? "ai" : tab === "ai" ? "live" : tab));
+  }, [showAiPane]);
+
+  function showReview() {
+    setPreviewTab("ai");
+    if (isMobile) setMobileView("preview");
   }
 
   // The source file stays the "original" preview's subject only as long as
@@ -264,86 +286,100 @@ export function WikiEntryComposer() {
     }
   }
 
-  async function onImproveWithAI() {
-    setAssisting(true);
-    try {
-      const plainText = htmlToText(entryForm.erklaerung);
-      const result = await importApi.assist(plainText);
-      if (result.thema) entryForm.setThema(result.thema);
-      if (result.tags.length > 0) entryForm.setTags(result.tags);
-      if (result.categoryHint) {
-        const hint = result.categoryHint.toLowerCase();
-        const match = entryForm.categories.find(
-          (c) =>
-            c.name.toLowerCase() === hint ||
-            c.name.toLowerCase().includes(hint) ||
-            hint.includes(c.name.toLowerCase()),
-        );
-        if (match) entryForm.setCategoryId(match._id);
-        else toast.info(t("importAssistCategoryHint", { hint: result.categoryHint }));
-      }
-      toast.success(t("importAssistApplied"));
-    } catch (e) {
-      handleError(e);
-    } finally {
-      setAssisting(false);
-    }
-  }
+  const checks = entryForm.checks.map((check) => ({
+    ...check,
+    onFix:
+      check.key === "thema"
+        ? () => {
+            setSubmitOpen(false);
+            setMobileView("write");
+            requestAnimationFrame(() => themaRef.current?.focus());
+          }
+        : check.key === "erklaerung"
+          ? undefined
+          : () => {
+              setSubmitOpen(false);
+              setOptionsOpen(true);
+            },
+  }));
+  const readyTitle = isEditing ? t("readyToSave") : t("readyToCreate");
+  const optionsNeedAttention = readiness.missing.some((c) => c.key !== "thema");
 
   const category = entryForm.categories.find((c) => c._id === entryForm.categoryId);
   const owner = entryForm.users.find((u) => u._id === entryForm.ownerUserId);
 
   const optionsBody = (
     <div className="space-y-4">
-      {hasSourceFile && (
-        <div className="rounded-lg border border-dashed border-border p-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void onImproveWithAI()}
-            disabled={assisting}
-          >
-            <Sparkles className="mr-1.5 size-3.5" />
-            {assisting ? t("importAssistRunning") : t("importAssistCta")}
-          </Button>
-          <p className="mt-1.5 text-[11px] text-muted-foreground">{t("importAssistHint")}</p>
-        </div>
+      <ReadinessCard checks={checks} readyTitle={readyTitle} />
+      {canUseAi && (
+        <WikiMetaAssist
+          entryKey={entryKey}
+          href={composeHref}
+          erklaerung={entryForm.erklaerung}
+          thema={entryForm.thema}
+          tags={entryForm.tags}
+          categoryId={entryForm.categoryId}
+          categories={entryForm.categories}
+          onApply={(patch) => {
+            if (patch.thema !== undefined) entryForm.setThema(patch.thema);
+            if (patch.tags) entryForm.setTags(patch.tags);
+            if (patch.categoryId) entryForm.setCategoryId(patch.categoryId);
+          }}
+        />
       )}
       {entryForm.optionsFields}
       <div className="border-t border-border/60 pt-4">{entryForm.attachmentsSlot}</div>
-      <div className="border-t border-border/60 pt-4">
-        <Link
-          href="/guidebooks/new/advanced"
-          className="text-xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
-        >
-          {t("composerSwitchToAdvanced")}
-        </Link>
-      </div>
+      {!isEditing && (
+        <div className="border-t border-border/60 pt-4">
+          <Link
+            href="/guidebooks/new/advanced"
+            className="text-xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
+          >
+            {t("composerSwitchToAdvanced")}
+          </Link>
+        </div>
+      )}
     </div>
   );
 
+  const tabs: { key: PreviewTab; label: string }[] = [
+    { key: "live", label: t("previewLive") },
+    ...(hasSourceFile ? [{ key: "original" as const, label: t("previewOriginal") }] : []),
+    ...(showAiPane ? [{ key: "ai" as const, label: t("previewAi") }] : []),
+  ];
+
   const previewPane = (
     <>
-      {hasSourceFile && (
-        <div className="mb-3 inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 p-0.5">
-          {(["live", "original"] as const).map((v) => (
+      {tabs.length > 1 && (
+        <div className="mb-4 inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 p-0.5">
+          {tabs.map((tab) => (
             <button
-              key={v}
+              key={tab.key}
               type="button"
-              onClick={() => setPreviewTab(v)}
+              onClick={() => setPreviewTab(tab.key)}
               className={cn(
-                "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                previewTab === v
+                "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                previewTab === tab.key
                   ? "bg-foreground text-background"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {v === "live" ? t("previewLive") : t("previewOriginal")}
+              {tab.key === "ai" && (
+                <AiGlyph working={formatRun.state === "working"} className="size-3" />
+              )}
+              {tab.label}
             </button>
           ))}
         </div>
       )}
-      {previewTab === "original" && sourceFile && sourceExt ? (
+      {previewTab === "ai" ? (
+        <WikiFormatReview
+          html={entryForm.erklaerung}
+          entryKey={entryKey}
+          href={composeHref}
+          onApply={entryForm.setErklaerung}
+        />
+      ) : previewTab === "original" && sourceFile && sourceExt ? (
         <OriginalFilePreview file={sourceFile} ext={sourceExt} />
       ) : (
         <WikiEntryPreview
@@ -362,26 +398,34 @@ export function WikiEntryComposer() {
     </>
   );
 
+  const showDraftLine = stage === "compose" && (draft.savedAt !== null || draft.status !== "idle");
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <header className="flex h-14 shrink-0 items-center gap-1.5 border-b border-border/70 px-3 md:px-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/guidebooks" aria-label={tc("back")}>
+          <Link href={backHref} aria-label={tc("back")}>
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold leading-tight">{t("createEntry")}</p>
-          <p className="truncate text-[11px] text-muted-foreground">{t("createEntryHint")}</p>
+          <p className="truncate text-sm font-semibold leading-tight">
+            {isEditing ? t("editEntryTitle") : t("createEntry")}
+          </p>
+          {showDraftLine ? (
+            <DraftIndicator draft={draft} onDiscard={entryForm.discardChanges} />
+          ) : (
+            <p className="truncate text-[11px] text-muted-foreground">
+              {isEditing ? t("editEntryHint") : t("createEntryHint")}
+            </p>
+          )}
         </div>
 
         {stage === "compose" && (
           <>
-            {/* A two-segment text pill ("Schreiben"/"Vorschau") plus the gear
-                and save button next to it doesn't fit a narrow phone screen
-                alongside the title — a single toggle button showing what
-                tapping switches *to* covers the same job in a third of the
-                width. */}
+            {/* A two-segment text pill plus the gear and save button doesn't
+                fit a narrow phone screen alongside the title — one toggle
+                showing what tapping switches *to* does the same job. */}
             {isMobile && (
               <Button
                 variant="ghost"
@@ -396,23 +440,55 @@ export function WikiEntryComposer() {
                 )}
               </Button>
             )}
-            <Link
-              href="/guidebooks/new/advanced"
-              className="hidden shrink-0 text-xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline sm:inline"
-            >
-              {t("composerSwitchToAdvanced")}
-            </Link>
+            {!isEditing && (
+              <Link
+                href="/guidebooks/new/advanced"
+                className="hidden shrink-0 text-xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline sm:inline"
+              >
+                {t("composerSwitchToAdvanced")}
+              </Link>
+            )}
             <Button
               variant="ghost"
               size="icon"
               aria-label={t("optionsSheetTitle")}
               onClick={() => setOptionsOpen(true)}
+              className="relative"
             >
               <Settings className="size-4" />
+              {optionsNeedAttention && (
+                <span className="absolute right-2 top-2 size-1.5 rounded-full bg-warning" />
+              )}
             </Button>
-            <Button onClick={() => void entryForm.submit()} disabled={entryForm.busy}>
-              {tc("create")}
-            </Button>
+            <Popover open={submitOpen} onOpenChange={setSubmitOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  disabled={entryForm.busy}
+                  onClick={(e) => {
+                    // Ready: just save. Not ready: let the popover open and
+                    // say what's missing instead of a silent grey button.
+                    if (readiness.canSubmit) {
+                      e.preventDefault();
+                      void entryForm.submit();
+                    }
+                  }}
+                >
+                  {entryForm.busy ? (
+                    <Loader2 className="animate-spin" />
+                  ) : isEditing ? (
+                    tc("save")
+                  ) : (
+                    tc("create")
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="w-[22rem] border-0 bg-transparent p-0 shadow-none"
+              >
+                <ReadinessCard checks={checks} readyTitle={readyTitle} className="shadow-overlay" />
+              </PopoverContent>
+            </Popover>
           </>
         )}
       </header>
@@ -434,11 +510,18 @@ export function WikiEntryComposer() {
               <div className="flex-1 overflow-y-auto px-4 py-4">{previewPane}</div>
             ) : (
               <div className="mx-auto w-full max-w-2xl px-4 py-5 md:px-10 md:py-8">
+                <DraftOfferBanner draft={draft} className="mb-4" />
+                <DraftRestoredNote
+                  draft={draft}
+                  onStartOver={entryForm.discardChanges}
+                  className="mb-4"
+                />
                 <input
+                  ref={themaRef}
                   value={entryForm.thema}
                   onChange={(e) => entryForm.setThema(e.target.value)}
                   placeholder={t("fieldThemaPlaceholder")}
-                  autoFocus
+                  autoFocus={!isEditing}
                   className="w-full border-0 border-b border-transparent bg-transparent pb-2 font-display text-2xl font-semibold tracking-tight text-foreground placeholder:text-muted-foreground/50 focus:border-border focus:outline-none md:text-3xl"
                 />
                 <div className="mt-4">
@@ -449,12 +532,14 @@ export function WikiEntryComposer() {
                     minHeight="40vh"
                     fileLinkCandidates={entryForm.fileLinkCandidates}
                     aiFormatSlot={
-                      canFormatWithAi
+                      canUseAi
                         ? ({ inline }) => (
-                            <WikiAiFormatAssist
+                            <WikiFormatTrigger
                               html={entryForm.erklaerung}
-                              onApply={entryForm.setErklaerung}
+                              entryKey={entryKey}
+                              href={composeHref}
                               inline={inline}
+                              onShowReview={showReview}
                             />
                           )
                         : undefined

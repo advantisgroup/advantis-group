@@ -22,5 +22,5 @@ export default function NewGuidebookPage() {
     );
   }
 
-  return <WikiEntryComposer />;
+  return <WikiEntryComposer entry="new" />;
 }

@@ -25,11 +25,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { accessibleGuidebooks, guidebookTitle } from "@/components/guidebooks/registry";
-import {
-  CategoryManagerDialog,
-  EntryDialog,
-  type WikiEntry,
-} from "@/components/guidebooks/WikiEntryDialogs";
+import { CategoryManagerDialog, type WikiEntry } from "@/components/guidebooks/WikiEntryDialogs";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
 import {
@@ -341,7 +337,6 @@ export default function GuidebooksPage() {
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
   const [showArchive, setShowArchive] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
-  const [editing, setEditing] = useState<WikiEntry | "new" | null>(null);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
 
@@ -731,8 +726,9 @@ export default function GuidebooksPage() {
                   item={i}
                   canManage={canManage}
                   onEdit={() => {
-                    if (i.kind === "wiki" && i.wikiEntry) setEditing(i.wikiEntry);
-                    else router.push(`/guidebooks/${i.slug}/edit`);
+                    if (i.kind === "wiki" && i.wikiEntry) {
+                      router.push(`/guidebooks/${i.wikiEntry.slug}/compose`);
+                    } else router.push(`/guidebooks/${i.slug}/edit`);
                   }}
                 />
               ))}
@@ -766,7 +762,6 @@ export default function GuidebooksPage() {
         )}
       </div>
 
-      <EntryDialog entry={editing} onOpenChange={() => setEditing(null)} />
       <CategoryManagerDialog open={categoryManagerOpen} onOpenChange={setCategoryManagerOpen} />
     </div>
   );

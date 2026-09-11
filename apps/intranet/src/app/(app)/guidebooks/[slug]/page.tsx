@@ -37,7 +37,6 @@ import {
   type Guidebook,
 } from "@/components/guidebooks/registry";
 import { GuidebookPager, GuidebookSwitcher } from "@/components/guidebooks/switcher";
-import { EntryDialog } from "@/components/guidebooks/WikiEntryDialogs";
 import { WikiFileLinkText } from "@/components/guidebooks/WikiFileLinkText";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
@@ -147,7 +146,6 @@ export default function GuidebookPage() {
   const canManageWiki = useHasCapability("manage_guidebooks");
   const confirm = useConfirm();
   const handleError = useErrorHandler();
-  const [editing, setEditing] = useState(false);
 
   const staticGuidebook = getGuidebook(params.slug);
   // Only look up wiki/legacy content when the slug isn't one of the
@@ -303,9 +301,11 @@ export default function GuidebookPage() {
                   size="icon-sm"
                   aria-label={tc("edit")}
                   className="text-muted-foreground"
-                  onClick={() => setEditing(true)}
+                  asChild
                 >
-                  <Pencil />
+                  <Link href={`/guidebooks/${entry!.slug}/compose`}>
+                    <Pencil />
+                  </Link>
                 </Button>
                 <Button
                   variant="ghost"
@@ -464,9 +464,6 @@ export default function GuidebookPage() {
             </>
           )}
         </>
-      )}
-      {entry && (
-        <EntryDialog entry={editing ? entry : null} onOpenChange={() => setEditing(false)} />
       )}
     </div>
   );
