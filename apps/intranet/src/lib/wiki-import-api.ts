@@ -11,21 +11,20 @@ export interface WikiImportAssist {
 }
 
 /**
- * The opt-in "improve with AI" pass for an imported wiki entry — suggests
- * thema/tags/category from the already-extracted plain text. Deliberately
- * the only thing this hits the network for: the deterministic docx/pdf/txt
- * extraction itself runs entirely client-side (see `lib/wiki-import.ts`).
+ * The opt-in "suggest topic & tags" pass for a wiki entry — reads the plain
+ * text and suggests thema/tags/category, never body changes. Starting
+ * returns a run; the suggestions arrive through `useAiRun`.
  */
 export function useWikiImportApi() {
   const api = useIntranetApiClient();
 
   return useMemo(
     () => ({
-      assist: (text: string): Promise<WikiImportAssist> =>
-        api.fetchJson<WikiImportAssist>("/wiki/import-assist", {
+      start: (input: { text: string; subjectKey: string; href?: string }) =>
+        api.fetchJson<{ runId: string }>("/wiki/import-assist", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify(input),
         }),
     }),
     [api],

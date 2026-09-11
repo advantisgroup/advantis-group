@@ -56,6 +56,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
         mainImageStorageId: post.mainImageStorageId,
         mainImageUrl: post.mainImageUrl,
         status: post.status,
+        updatedAt: post.updatedAt,
       }}
     />
   );

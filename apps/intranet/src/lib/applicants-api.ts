@@ -25,18 +25,23 @@ export interface DuplicateMatch {
   matchedOn: "email" | "telefon";
 }
 
-export type ExtractResult =
-  | { kind: "created"; applicantId: Id<"applicants"> }
+/** What a finished `cvExtract` run holds (see apps/api routes/applicants.ts). */
+export type CvExtractOutput =
+  | { kind: "created"; applicantId: Id<"applicants">; name: string; fileName: string }
   | {
       kind: "duplicate";
       duplicate: DuplicateMatch;
       pendingStorageId: Id<"_storage">;
       extractedFields: ExtractedApplicantFields;
+      fileName: string;
     };
 
-export interface RescanResult {
+/** What a finished `cvRescan` run holds — nothing is persisted until the
+ *  caller drives `applicants.update` + `applicants.addDocument` itself. */
+export interface CvRescanOutput {
   extractedFields: ExtractedApplicantFields;
   storageId: Id<"_storage">;
+  fileName: string;
 }
 
 export function useApplicantsApi() {
@@ -44,27 +49,27 @@ export function useApplicantsApi() {
 
   return useMemo(
     () => ({
-      /**
-       * Uploads a CV PDF for AI extraction. Returns either a newly created
-       * applicant, or a duplicate-conflict result (pass `forceCreate: true`
-       * to create anyway once the caller has confirmed with the user).
-       */
-      extract: async (file: File, forceCreate = false): Promise<ExtractResult> => {
+      /** Starts reading one CV. The run creates the applicant itself, or
+       *  reports a duplicate for someone to decide on — see CvImportTray. */
+      startExtract: (file: File) => {
         const form = new FormData();
         form.append("file", file);
-        if (forceCreate) form.append("forceCreate", "true");
-        return api.uploadForm<ExtractResult>("/applicants/extract", form);
+        return api.uploadForm<{ runId: string }>("/applicants/extract", form);
       },
 
-      /**
-       * Re-runs extraction against a CV for an existing applicant. Returns
-       * the parsed fields plus a staged storageId — nothing is persisted
-       * until the caller drives `applicants.update` + `applicants.addDocument`.
-       */
-      rescan: async (file: File): Promise<RescanResult> => {
+      /** "Not the same person" for a duplicate: creates the applicant from
+       *  what the run already read, without reading the PDF again. */
+      createAnyway: (runId: string) =>
+        api.fetchJson<{ applicantId: Id<"applicants"> }>(`/applicants/extract/${runId}/create`, {
+          method: "POST",
+        }),
+
+      /** Starts re-reading a CV for an existing applicant. */
+      startRescan: (file: File, applicantId: Id<"applicants">) => {
         const form = new FormData();
         form.append("file", file);
-        return api.uploadForm<RescanResult>("/applicants/rescan", form);
+        form.append("applicantId", applicantId);
+        return api.uploadForm<{ runId: string }>("/applicants/rescan", form);
       },
     }),
     [api],

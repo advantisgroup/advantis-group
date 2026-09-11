@@ -12,7 +12,6 @@ import {
   Building2,
   CalendarDays,
   CalendarPlus,
-  Check,
   Cloud,
   Paperclip,
   Search,
@@ -26,6 +25,14 @@ import { toast } from "sonner";
 import { InfoTip } from "@/components/activity/InfoTip";
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
+import {
+  DraftIndicator,
+  DraftOfferBanner,
+  DraftRestoredNote,
+} from "@/components/compose/DraftIndicator";
+import { type ReadinessCheck, ReadinessCard, scoreReadiness } from "@/components/compose/Readiness";
+import { MobileActionBar } from "@/components/compose/MobileActionBar";
+import { useDraft } from "@/components/compose/use-draft";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
 import { Link } from "@/components/Link";
 import { useCurrentUser } from "@/components/providers/current-user";
@@ -55,7 +62,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { initials, relativeTime } from "@/lib/format";
+import { initials } from "@/lib/format";
 import {
   type Announcement,
   audienceValueOf,
@@ -82,8 +89,38 @@ import { cn } from "@/lib/utils";
 
 import { AnnouncementPreview } from "./AnnouncementPreview";
 
-const DRAFT_SAVED_AT_KEY = "announcements:draftSavedAt";
+// Where drafts lived before they moved to the server — read once, then removed.
+const LEGACY_DRAFT_SAVED_AT_KEY = "announcements:draftSavedAt";
 const SPLIT_KEY = "announcements:composerSplit";
+
+/** Every legacy exclusive audience kind (single department, or a plain user
+ *  list) folds into the additive "mixed" model — saving afterwards naturally
+ *  migrates the announcement to the new shape. */
+function draftFromAnnouncement(editing: Announcement): Draft {
+  const audience = editing.audience;
+  return {
+    title: editing.title,
+    body: editing.body,
+    pinned: editing.pinned,
+    category: editing.category ?? "",
+    audienceKind: audience.kind === "all" ? "all" : "mixed",
+    audienceDepartments:
+      audience.kind === "department"
+        ? [audience.department]
+        : audience.kind === "mixed"
+          ? audience.departments
+          : [],
+    audienceUserIds:
+      audience.kind === "users"
+        ? audience.userIds
+        : audience.kind === "mixed"
+          ? audience.userIds
+          : [],
+    publishAt: "",
+    expiresAt: editing.expiresAt ? msToLocalInput(editing.expiresAt) : "",
+    relevantDate: editing.relevantDate ? draftRelevantDateOf(editing.relevantDate) : null,
+  };
+}
 
 /** Pin + audience readout shown right before an announcement actually goes out. */
 function QuickSendFields({
@@ -631,9 +668,13 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
     return [...set].sort((a, b) => a.localeCompare(b));
   }, [announcementsQuery]);
 
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  // Seeded synchronously, not in an effect: the draft hook compares against
+  // whatever the form holds when its stored copy arrives, and an effect-set
+  // value could land a render late and be saved straight back as a "change".
+  const [draft, setDraft] = useState<Draft>(() =>
+    editing ? draftFromAnnouncement(editing) : EMPTY_DRAFT,
+  );
   const [busy, setBusy] = useState(false);
-  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [oneDrivePickerOpen, setOneDrivePickerOpen] = useState(false);
   const [peopleSearch, setPeopleSearch] = useState("");
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -641,91 +682,57 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
   const [mobileView, setMobileView] = useState<"write" | "preview">("write");
   const [splitPct, setSplitPct] = useState(50);
   const splitRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
 
   // Whether the audience control was actually touched this session. An
   // existing "departmentId" audience (pre-dates this editor's picker, so it
   // can't be represented/re-selected here) must otherwise be left untouched —
   // saving an unrelated field change would silently replace it with `all`.
   const [audienceTouched, setAudienceTouched] = useState(false);
-  const originalAudienceRef = useRef<Announcement["audience"] | null>(null);
+  const originalAudienceRef = useRef<Announcement["audience"] | null>(editing?.audience ?? null);
 
-  // Hydrate once on mount: edit mode from the announcement passed in, create
-  // mode from the autosaved draft — `editing` is fixed for the life of this
-  // route (a new id means a fresh navigation, which remounts this component).
+  const serverDraft = useDraft<Draft>({
+    surface: "announcement",
+    subjectKey: editing?._id ?? "new",
+    value: draft,
+    restore: editing ? "offer" : "auto",
+    entitySavedAt: editing?.updatedAt ?? undefined,
+    isEmpty: (d) =>
+      !editing &&
+      !d.title.trim() &&
+      !htmlToText(d.body).trim() &&
+      !d.category.trim() &&
+      !d.relevantDate &&
+      !d.publishAt &&
+      !d.expiresAt,
+    onRestore: (stored) => {
+      setDraft({ ...EMPTY_DRAFT, ...migrateStoredDraft(stored) });
+      if (editing) setAudienceTouched(true);
+    },
+  });
+
+  // One-time move of a draft left in localStorage by the old composer.
   useEffect(() => {
-    if (editing) {
-      const audience = editing.audience;
-      originalAudienceRef.current = audience;
-      // Every legacy exclusive kind (single department, or a plain user
-      // list) folds into the additive "mixed" model — saving the draft
-      // afterwards naturally migrates the announcement to the new shape.
-      setDraft({
-        title: editing.title,
-        body: editing.body,
-        pinned: editing.pinned,
-        category: editing.category ?? "",
-        audienceKind: audience.kind === "all" ? "all" : "mixed",
-        audienceDepartments:
-          audience.kind === "department"
-            ? [audience.department]
-            : audience.kind === "mixed"
-              ? audience.departments
-              : [],
-        audienceUserIds:
-          audience.kind === "users"
-            ? audience.userIds
-            : audience.kind === "mixed"
-              ? audience.userIds
-              : [],
-        publishAt: "",
-        expiresAt: editing.expiresAt ? msToLocalInput(editing.expiresAt) : "",
-        relevantDate: editing.relevantDate ? draftRelevantDateOf(editing.relevantDate) : null,
-      });
-    } else {
-      try {
-        const raw = localStorage.getItem(DRAFT_KEY);
-        if (raw) {
-          setDraft({ ...EMPTY_DRAFT, ...migrateStoredDraft(JSON.parse(raw)) });
-          const savedAt = Number(localStorage.getItem(DRAFT_SAVED_AT_KEY));
-          if (Number.isFinite(savedAt)) setLastSavedAt(savedAt);
-        }
-      } catch {
-        setDraft(EMPTY_DRAFT);
+    if (editing || !serverDraft.hydrated) return;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw && !serverDraft.restoredAt) {
+        setDraft({ ...EMPTY_DRAFT, ...migrateStoredDraft(JSON.parse(raw)) });
       }
+      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(LEGACY_DRAFT_SAVED_AT_KEY);
+    } catch {
+      // An unreadable legacy draft isn't worth keeping.
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverDraft.hydrated]);
+
+  useEffect(() => {
     const rawSplit = Number(localStorage.getItem(SPLIT_KEY));
     if (Number.isFinite(rawSplit) && rawSplit >= 25 && rawSplit <= 75) setSplitPct(rawSplit);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hasBody = htmlToText(draft.body).trim().length > 0;
-  const hasDraftContent = draft.title.trim().length > 0 || hasBody;
-
-  // Autosave create-mode drafts. Always persists the full draft (not just
-  // while title/body are non-empty) — otherwise clearing the body would skip
-  // the write and leave a stale, already-deleted copy in storage, and an
-  // audience/category/scheduling choice made before any text is typed would
-  // never get saved at all.
-  useEffect(() => {
-    if (editing) return;
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-      const now = Date.now();
-      localStorage.setItem(DRAFT_SAVED_AT_KEY, String(now));
-      setLastSavedAt(now);
-    } catch {
-      // Storage full/unavailable — the draft just isn't kept.
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft, editing]);
-
-  // Keep the "saved Xm ago" label fresh.
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    if (editing) return;
-    const id = setInterval(() => setTick((n) => n + 1), 30_000);
-    return () => clearInterval(id);
-  }, [editing]);
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
     if (key === "audienceKind" || key === "audienceDepartments" || key === "audienceUserIds") {
@@ -751,15 +758,11 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
   }
 
   function discardDraft() {
-    try {
-      localStorage.removeItem(DRAFT_KEY);
-      localStorage.removeItem(DRAFT_SAVED_AT_KEY);
-    } catch {
-      // Storage unavailable — nothing to clean up.
-    }
-    setDraft(EMPTY_DRAFT);
-    setLastSavedAt(null);
+    const fresh = editing ? draftFromAnnouncement(editing) : EMPTY_DRAFT;
+    setDraft(fresh);
+    setAudienceTouched(false);
     attachmentUpload.reset();
+    void serverDraft.clear(fresh);
   }
 
   function persistSplit(pct: number) {
@@ -802,10 +805,8 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
   }
 
   const audienceValue = useMemo(() => audienceValueOf(draft), [draft]);
-  // A "users" audience with nothing picked yet reaches nobody — skip the
-  // (misleading) "reaches 0" preview until at least one person is selected.
   // A "mixed" audience with nothing picked yet (no department, no person)
-  // reaches nobody — treat it the same as "all" being unset.
+  // reaches nobody — skip the misleading "reaches 0" preview until it does.
   const audienceHasTarget =
     draft.audienceKind === "all" ||
     draft.audienceDepartments.length > 0 ||
@@ -854,11 +855,44 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
     }));
   }
 
-  const canSend =
-    draft.title.trim().length > 0 &&
-    hasBody &&
-    audienceHasTarget &&
-    relevantDateHasValidRange(draft.relevantDate);
+  const openOptions = () => {
+    setSendPromptOpen(false);
+    setOptionsOpen(true);
+  };
+  const checks: ReadinessCheck[] = [
+    {
+      key: "title",
+      label: t("checkTitle"),
+      done: draft.title.trim().length > 0,
+      onFix: () => {
+        setSendPromptOpen(false);
+        setMobileView("write");
+        requestAnimationFrame(() => titleRef.current?.focus());
+      },
+    },
+    { key: "body", label: t("checkBody"), done: hasBody },
+    { key: "audience", label: t("audience"), done: audienceHasTarget, onFix: openOptions },
+    ...(draft.relevantDate
+      ? [
+          {
+            key: "date",
+            label: t("checkDate"),
+            done: relevantDateHasValidRange(draft.relevantDate),
+            onFix: openOptions,
+          },
+        ]
+      : []),
+    {
+      key: "category",
+      label: t("checkCategory"),
+      done: !!draft.category.trim(),
+      optional: true,
+      onFix: openOptions,
+    },
+  ];
+  const readiness = scoreReadiness(checks);
+  const canSend = readiness.canSubmit;
+  const readyTitle = editing ? t("readyToSave") : t("readyToSend");
 
   const files = useMemo(
     () => attachmentUpload.entries.map((e) => e.file),
@@ -903,6 +937,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
           expiresAt: draft.expiresAt ? new Date(draft.expiresAt).getTime() : null,
           relevantDate: relevantDateValueOf(draft.relevantDate) ?? null,
         });
+        await serverDraft.clear();
         toast.success(t("updated"));
         router.push(`/announcements?id=${editing._id}`);
       } else {
@@ -925,17 +960,12 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
           await attachmentUpload.rollback(attachments);
           throw e;
         }
+        await serverDraft.clear();
         toast.success(
           draft.publishAt && new Date(draft.publishAt).getTime() > Date.now()
             ? t("scheduledToast")
             : t("new"),
         );
-        try {
-          localStorage.removeItem(DRAFT_KEY);
-          localStorage.removeItem(DRAFT_SAVED_AT_KEY);
-        } catch {
-          // Storage unavailable — nothing to clean up.
-        }
         router.push(`/announcements?id=${createdId}`);
       }
       setSendPromptOpen(false);
@@ -949,6 +979,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
   const backHref = editing ? `/announcements?id=${editing._id}` : "/announcements";
   const sendLabel = editing ? tc("save") : tc("send");
   const showingPreview = isMobile && mobileView === "preview";
+  const showDraftLine = serverDraft.savedAt !== null || serverDraft.status !== "idle";
 
   const optionsFields = (
     <ComposerOptionsFields
@@ -971,7 +1002,9 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
     />
   );
 
-  const quickSendFields = (
+  // Ready: the last-look send prompt (pin, who it reaches). Not ready: the
+  // verdict, with every missing item a tap away from its field.
+  const sendPrompt = canSend ? (
     <QuickSendFields
       draft={draft}
       set={set}
@@ -979,6 +1012,36 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
       editing={!!editing}
       busy={busy}
       onConfirm={() => void submit()}
+    />
+  ) : (
+    <ReadinessCard checks={checks} readyTitle={readyTitle} className="shadow-overlay" />
+  );
+
+  const optionsButton = (
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-label={t("options")}
+      onClick={() => setOptionsOpen(true)}
+      className="relative"
+    >
+      <Settings className="size-4" />
+      {readiness.missing.some((c) => c.key === "audience" || c.key === "date") && (
+        <span className="absolute right-2 top-2 size-1.5 rounded-full bg-warning" />
+      )}
+    </Button>
+  );
+
+  const preview = (
+    <AnnouncementPreview
+      title={draft.title}
+      body={draft.body}
+      pinned={draft.pinned}
+      authorName={me.name}
+      authorAvatar={me.avatar}
+      locale={locale}
+      previews={previews}
+      relevantDate={relevantDateValueOf(draft.relevantDate) ?? null}
     />
   );
 
@@ -994,67 +1057,26 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
           <p className="truncate text-sm font-semibold leading-tight">
             {editing ? t("edit") : t("new")}
           </p>
-          {!editing && hasDraftContent && (
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <Check className="size-3" />
-              <span>
-                {lastSavedAt
-                  ? t("draftSaved", { time: relativeTime(lastSavedAt) })
-                  : t("draftSaving")}
-              </span>
-              <button
-                type="button"
-                onClick={discardDraft}
-                className="underline-offset-2 hover:text-foreground hover:underline"
-              >
-                {t("discardDraft")}
-              </button>
-            </div>
-          )}
+          {showDraftLine && <DraftIndicator draft={serverDraft} onDiscard={discardDraft} />}
         </div>
 
-        {isMobile && (
-          <div className="mr-1 flex items-center gap-1 rounded-full border border-border bg-muted/40 p-0.5">
-            {(["write", "preview"] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => setMobileView(v)}
+        {!isMobile && (
+          <>
+            {optionsButton}
+            <Popover open={sendPromptOpen} onOpenChange={setSendPromptOpen}>
+              <PopoverTrigger asChild>
+                <Button disabled={busy}>{sendLabel}</Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
                 className={cn(
-                  "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                  mobileView === v
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground",
+                  canSend ? "w-72" : "w-[22rem] border-0 bg-transparent p-0 shadow-none",
                 )}
               >
-                {v === "write" ? t("write") : t("preview")}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t("options")}
-          onClick={() => setOptionsOpen(true)}
-        >
-          <Settings className="size-4" />
-        </Button>
-
-        {isMobile ? (
-          <Button disabled={!canSend || busy} onClick={() => setSendPromptOpen(true)}>
-            {sendLabel}
-          </Button>
-        ) : (
-          <Popover open={sendPromptOpen} onOpenChange={setSendPromptOpen}>
-            <PopoverTrigger asChild>
-              <Button disabled={!canSend || busy}>{sendLabel}</Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-72">
-              {quickSendFields}
-            </PopoverContent>
-          </Popover>
+                {sendPrompt}
+              </PopoverContent>
+            </Popover>
+          </>
         )}
       </header>
 
@@ -1064,18 +1086,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
           style={!isMobile ? { width: `${splitPct}%` } : undefined}
         >
           {showingPreview ? (
-            <div className="flex-1 overflow-y-auto px-4 py-4">
-              <AnnouncementPreview
-                title={draft.title}
-                body={draft.body}
-                pinned={draft.pinned}
-                authorName={me.name}
-                authorAvatar={me.avatar}
-                locale={locale}
-                previews={previews}
-                relevantDate={relevantDateValueOf(draft.relevantDate) ?? null}
-              />
-            </div>
+            <div className="flex-1 overflow-y-auto px-4 py-4">{preview}</div>
           ) : (
             <>
               <div className="flex-1 overflow-y-auto">
@@ -1085,7 +1096,14 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
                     !isMobile && "max-w-2xl",
                   )}
                 >
+                  <DraftOfferBanner draft={serverDraft} className="mb-4" />
+                  <DraftRestoredNote
+                    draft={serverDraft}
+                    onStartOver={discardDraft}
+                    className="mb-4"
+                  />
                   <input
+                    ref={titleRef}
                     value={draft.title}
                     onChange={(e) => set("title", e.target.value)}
                     placeholder={t("titlePlaceholder")}
@@ -1112,7 +1130,6 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
                     // sitting at the bottom of the column puts this bar behind
                     // it. Lift it by however much the keyboard covers.
                     marginBottom: keyboardInset,
-                    paddingBottom: keyboardInset ? 0 : "env(safe-area-inset-bottom)",
                   }}
                 >
                   <RichTextToolbar
@@ -1139,21 +1156,37 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
             className="hidden min-h-0 flex-col overflow-y-auto border-l border-border/60 bg-muted/10 md:flex"
             style={{ width: `${100 - splitPct}%` }}
           >
-            <div className="mx-auto w-full max-w-2xl px-6 py-8">
-              <AnnouncementPreview
-                title={draft.title}
-                body={draft.body}
-                pinned={draft.pinned}
-                authorName={me.name}
-                authorAvatar={me.avatar}
-                locale={locale}
-                previews={previews}
-                relevantDate={relevantDateValueOf(draft.relevantDate) ?? null}
-              />
-            </div>
+            <div className="mx-auto w-full max-w-2xl px-6 py-8">{preview}</div>
           </div>
         )}
       </div>
+
+      {isMobile && (
+        <MobileActionBar inline>
+          <div className="flex items-center gap-1 rounded-full border border-border bg-muted/40 p-0.5">
+            {(["write", "preview"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setMobileView(v)}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                  mobileView === v
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {v === "write" ? t("write") : t("preview")}
+              </button>
+            ))}
+          </div>
+          {optionsButton}
+          <span className="flex-1" />
+          <Button disabled={busy} onClick={() => setSendPromptOpen(true)}>
+            {sendLabel}
+          </Button>
+        </MobileActionBar>
+      )}
 
       {isMobile ? (
         <MobileDrawer open={optionsOpen} onOpenChange={setOptionsOpen} ariaLabel={t("options")}>
@@ -1162,7 +1195,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
               {t("options")}
             </p>
           </div>
-          <div className="px-5 py-4">{optionsFields}</div>
+          <div className="overflow-y-auto px-5 py-4">{optionsFields}</div>
         </MobileDrawer>
       ) : (
         <Sheet open={optionsOpen} onOpenChange={setOptionsOpen}>
@@ -1180,7 +1213,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
 
       {isMobile && (
         <MobileDrawer open={sendPromptOpen} onOpenChange={setSendPromptOpen} ariaLabel={sendLabel}>
-          <div className="px-5 pb-4">{quickSendFields}</div>
+          <div className="px-5 pb-4">{sendPrompt}</div>
         </MobileDrawer>
       )}
 

@@ -7,7 +7,6 @@ import { type Id } from "@advantis/convex/dataModel";
 import { useMutation } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Drawer } from "vaul";
 
 import {
   EMAIL_KATEGORIEN,
@@ -16,15 +15,9 @@ import {
   TERMIN_TYPEN,
   today,
 } from "@/components/applicants/applicant-types";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogTip,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { FormDialog } from "@/components/compose/FormDialog";
+import { useDraft } from "@/components/compose/use-draft";
+import { DialogTip } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -35,119 +28,19 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { formatIsoDate } from "@/lib/format";
 
 /**
- * The "log an entry into the Akte" dialogs — Kontakt, E-Mail, Interview.
- * These used to be always-visible inline form cards on the detail tabs;
- * as dialogs the tabs stay pure overviews and the same actions are also
- * reachable from the detail header's quick-add menu. The Termin equivalent
- * (`TerminDialog`) lives in `TerminCalendar.tsx` because it shares its form
- * with the calendar page.
+ * The "log an entry into the Akte" dialogs — Kontakt, E-Mail, Interview,
+ * Termin. Small, quick forms, so they stay dialogs (a bottom sheet on
+ * mobile); each note is kept as a draft per applicant, so closing the sheet
+ * mid-sentence doesn't lose it.
  */
 
 interface EntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   applicantId: Id<"applicants">;
-}
-
-function EntryDialogShell({
-  open,
-  onOpenChange,
-  title,
-  description,
-  tip,
-  saveLabel,
-  saveDisabled,
-  onSave,
-  children,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  description?: string;
-  tip?: ReactNode;
-  saveLabel: string;
-  saveDisabled?: boolean;
-  onSave: () => void;
-  children: ReactNode;
-}) {
-  const tc = useTranslations("Common");
-  const isMobile = useIsMobile();
-
-  // Mobile gets a real bottom sheet (thumb-reach footer, drag-to-dismiss)
-  // instead of a shrunken centered modal.
-  if (isMobile) {
-    return (
-      <Drawer.Root open={open} onOpenChange={onOpenChange}>
-        <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-          <Drawer.Content
-            aria-label={title}
-            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-2xl border-t border-border/70 bg-card shadow-2xl shadow-black/40 outline-none"
-          >
-            <div className="flex shrink-0 items-center justify-center pb-1 pt-3">
-              <span className="h-1.5 w-10 rounded-full bg-border" />
-            </div>
-            <div className="shrink-0 border-b border-border/70 px-5 pb-3">
-              <Drawer.Title className="font-display text-lg font-semibold leading-tight tracking-tight">
-                {title}
-              </Drawer.Title>
-              {description && (
-                <Drawer.Description className="mt-1 text-sm text-muted-foreground">
-                  {description}
-                </Drawer.Description>
-              )}
-            </div>
-            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 py-4">
-              {children}
-              {tip && <DialogTip>{tip}</DialogTip>}
-            </div>
-            <div
-              className="flex shrink-0 gap-2 border-t border-border/70 px-5 pt-3"
-              style={{
-                paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)",
-              }}
-            >
-              <Button variant="ghost" className="flex-1" onClick={() => onOpenChange(false)}>
-                {tc("cancel")}
-              </Button>
-              <Button className="flex-1" disabled={saveDisabled} onClick={onSave}>
-                {saveLabel}
-              </Button>
-            </div>
-          </Drawer.Content>
-        </Drawer.Portal>
-      </Drawer.Root>
-    );
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md gap-0 p-0">
-        <div className="border-b border-border/70 px-6 pb-4 pr-12 pt-6">
-          <DialogTitle className="leading-snug">{title}</DialogTitle>
-          {description && (
-            <DialogDescription className="mt-1 leading-relaxed">{description}</DialogDescription>
-          )}
-        </div>
-        <div className="flex flex-col gap-4 px-6 pb-5 pt-4">
-          {children}
-          {tip && <DialogTip>{tip}</DialogTip>}
-        </div>
-        <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {tc("cancel")}
-          </Button>
-          <Button disabled={saveDisabled} onClick={onSave}>
-            {saveLabel}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 function FieldLabel({ children }: { children: ReactNode }) {
@@ -160,6 +53,12 @@ function FieldLabel({ children }: { children: ReactNode }) {
 
 /* ── Kontakt ─────────────────────────────────────────────────────────────── */
 
+interface KontaktValues {
+  datum: string;
+  art: (typeof KONTAKT_ARTEN)[number];
+  notiz: string;
+}
+
 function KontaktForm({
   open,
   onOpenChange,
@@ -169,41 +68,70 @@ function KontaktForm({
   const t = useTranslations("Applicants");
   const addKontakt = useMutation(api.applicants.addKontakt);
   const handleError = useErrorHandler();
-  const [datum, setDatum] = useState(today());
-  const [art, setArt] = useState<(typeof KONTAKT_ARTEN)[number]>("telefon");
-  const [notiz, setNotiz] = useState("");
+  const fresh = (): KontaktValues => ({ datum: today(), art: "telefon", notiz: "" });
+  const [values, setValues] = useState<KontaktValues>(fresh);
+  const [busy, setBusy] = useState(false);
+  const draft = useDraft<KontaktValues>({
+    surface: "applicantContact",
+    subjectKey: applicantId,
+    value: values,
+    isEmpty: (v) => !v.notiz.trim(),
+    onRestore: (stored) => setValues((prev) => ({ ...prev, ...stored })),
+  });
 
-  function save() {
-    addKontakt({
-      applicantId,
-      datum,
-      art,
-      notiz: notiz.trim() || undefined,
-    })
-      .then(() => {
-        toast.success(t("kontaktSaved"));
-        onOpenChange(false);
-      })
-      .catch(handleError);
+  async function save() {
+    setBusy(true);
+    try {
+      await addKontakt({
+        applicantId,
+        datum: values.datum,
+        art: values.art,
+        notiz: values.notiz.trim() || undefined,
+      });
+      await draft.clear();
+      toast.success(t("kontaktSaved"));
+      onOpenChange(false);
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
-    <EntryDialogShell
+    <FormDialog
       open={open}
       onOpenChange={onOpenChange}
       title={t("logContact")}
-      tip={showFirstContactHint ? t("firstContactHint") : undefined}
-      saveLabel={t("saveContact")}
-      onSave={save}
+      draft={draft}
+      onStartOver={() => {
+        const next = fresh();
+        setValues(next);
+        void draft.clear(next);
+      }}
+      checks={[
+        { key: "date", label: t("date"), done: !!values.datum },
+        { key: "note", label: t("note"), done: !!values.notiz.trim(), optional: true },
+      ]}
+      submitLabel={t("saveContact")}
+      onSubmit={() => void save()}
+      busy={busy}
     >
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1.5">
           <FieldLabel>{t("date")}</FieldLabel>
-          <Input type="date" value={datum} onChange={(e) => setDatum(e.target.value)} />
+          <Input
+            type="date"
+            value={values.datum}
+            onChange={(e) => setValues((v) => ({ ...v, datum: e.target.value }))}
+          />
         </label>
         <div className="space-y-1.5">
           <FieldLabel>{t("entryKind")}</FieldLabel>
-          <Select value={art} onValueChange={(v) => setArt(v as typeof art)}>
+          <Select
+            value={values.art}
+            onValueChange={(art) => setValues((v) => ({ ...v, art: art as KontaktValues["art"] }))}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -220,62 +148,101 @@ function KontaktForm({
       <label className="space-y-1.5">
         <FieldLabel>{t("note")}</FieldLabel>
         <Textarea
-          value={notiz}
-          onChange={(e) => setNotiz(e.target.value)}
+          value={values.notiz}
+          onChange={(e) => setValues((v) => ({ ...v, notiz: e.target.value }))}
           placeholder={t("contactNotePlaceholder")}
         />
       </label>
-    </EntryDialogShell>
+      {showFirstContactHint && <DialogTip>{t("firstContactHint")}</DialogTip>}
+    </FormDialog>
   );
 }
 
 export function KontaktDialog(props: EntryDialogProps & { showFirstContactHint?: boolean }) {
-  // Mounted only while open so each opening starts from a blank form.
+  // Mounted only while open, so each opening starts from the stored draft or
+  // a blank form rather than stale local state.
   if (!props.open) return null;
   return <KontaktForm {...props} />;
 }
 
 /* ── E-Mail ──────────────────────────────────────────────────────────────── */
 
+interface EmailValues {
+  datum: string;
+  kategorie: (typeof EMAIL_KATEGORIEN)[number];
+  notiz: string;
+}
+
 function EmailForm({ open, onOpenChange, applicantId }: EntryDialogProps) {
   const t = useTranslations("Applicants");
   const addEmail = useMutation(api.applicants.addEmail);
   const handleError = useErrorHandler();
-  const [datum, setDatum] = useState(today());
-  const [kategorie, setKategorie] = useState<(typeof EMAIL_KATEGORIEN)[number]>("sonstiges");
-  const [notiz, setNotiz] = useState("");
+  const fresh = (): EmailValues => ({ datum: today(), kategorie: "sonstiges", notiz: "" });
+  const [values, setValues] = useState<EmailValues>(fresh);
+  const [busy, setBusy] = useState(false);
+  const draft = useDraft<EmailValues>({
+    surface: "applicantEmail",
+    subjectKey: applicantId,
+    value: values,
+    isEmpty: (v) => !v.notiz.trim(),
+    onRestore: (stored) => setValues((prev) => ({ ...prev, ...stored })),
+  });
 
-  function save() {
-    addEmail({
-      applicantId,
-      datum,
-      kategorie,
-      notiz: notiz.trim() || undefined,
-    })
-      .then(() => {
-        toast.success(t("emailSaved"));
-        onOpenChange(false);
-      })
-      .catch(handleError);
+  async function save() {
+    setBusy(true);
+    try {
+      await addEmail({
+        applicantId,
+        datum: values.datum,
+        kategorie: values.kategorie,
+        notiz: values.notiz.trim() || undefined,
+      });
+      await draft.clear();
+      toast.success(t("emailSaved"));
+      onOpenChange(false);
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
-    <EntryDialogShell
+    <FormDialog
       open={open}
       onOpenChange={onOpenChange}
       title={t("logEmail")}
-      tip={t("emailDoesNotCountHint")}
-      saveLabel={t("saveEmail")}
-      onSave={save}
+      draft={draft}
+      onStartOver={() => {
+        const next = fresh();
+        setValues(next);
+        void draft.clear(next);
+      }}
+      checks={[
+        { key: "date", label: t("date"), done: !!values.datum },
+        { key: "note", label: t("note"), done: !!values.notiz.trim(), optional: true },
+      ]}
+      submitLabel={t("saveEmail")}
+      onSubmit={() => void save()}
+      busy={busy}
     >
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1.5">
           <FieldLabel>{t("date")}</FieldLabel>
-          <Input type="date" value={datum} onChange={(e) => setDatum(e.target.value)} />
+          <Input
+            type="date"
+            value={values.datum}
+            onChange={(e) => setValues((v) => ({ ...v, datum: e.target.value }))}
+          />
         </label>
         <div className="space-y-1.5">
           <FieldLabel>{t("entryKind")}</FieldLabel>
-          <Select value={kategorie} onValueChange={(v) => setKategorie(v as typeof kategorie)}>
+          <Select
+            value={values.kategorie}
+            onValueChange={(kategorie) =>
+              setValues((v) => ({ ...v, kategorie: kategorie as EmailValues["kategorie"] }))
+            }
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -292,12 +259,13 @@ function EmailForm({ open, onOpenChange, applicantId }: EntryDialogProps) {
       <label className="space-y-1.5">
         <FieldLabel>{t("note")}</FieldLabel>
         <Input
-          value={notiz}
-          onChange={(e) => setNotiz(e.target.value)}
+          value={values.notiz}
+          onChange={(e) => setValues((v) => ({ ...v, notiz: e.target.value }))}
           placeholder={t("emailNotePlaceholder")}
         />
       </label>
-    </EntryDialogShell>
+      <DialogTip>{t("emailDoesNotCountHint")}</DialogTip>
+    </FormDialog>
   );
 }
 
@@ -308,46 +276,85 @@ export function EmailDialog(props: EntryDialogProps) {
 
 /* ── Interview ───────────────────────────────────────────────────────────── */
 
+interface InterviewValues {
+  datum: string;
+  interviewer: string;
+  notiz: string;
+}
+
 function InterviewForm({ open, onOpenChange, applicantId }: EntryDialogProps) {
   const t = useTranslations("Applicants");
   const addInterview = useMutation(api.applicants.addInterview);
   const handleError = useErrorHandler();
-  const [datum, setDatum] = useState(today());
-  const [interviewer, setInterviewer] = useState("");
-  const [notiz, setNotiz] = useState("");
+  const fresh = (): InterviewValues => ({ datum: today(), interviewer: "", notiz: "" });
+  const [values, setValues] = useState<InterviewValues>(fresh);
+  const [busy, setBusy] = useState(false);
+  const draft = useDraft<InterviewValues>({
+    surface: "applicantInterview",
+    subjectKey: applicantId,
+    value: values,
+    isEmpty: (v) => !v.notiz.trim() && !v.interviewer.trim(),
+    onRestore: (stored) => setValues((prev) => ({ ...prev, ...stored })),
+  });
 
-  function save() {
-    addInterview({
-      applicantId,
-      datum,
-      interviewer,
-      notiz: notiz.trim() || undefined,
-    })
-      .then(() => {
-        toast.success(t("interviewSaved"));
-        onOpenChange(false);
-      })
-      .catch(handleError);
+  async function save() {
+    setBusy(true);
+    try {
+      await addInterview({
+        applicantId,
+        datum: values.datum,
+        interviewer: values.interviewer,
+        notiz: values.notiz.trim() || undefined,
+      });
+      await draft.clear();
+      toast.success(t("interviewSaved"));
+      onOpenChange(false);
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
-    <EntryDialogShell
+    <FormDialog
       open={open}
       onOpenChange={onOpenChange}
       title={t("logInterview")}
-      saveLabel={t("saveInterview")}
-      onSave={save}
+      draft={draft}
+      onStartOver={() => {
+        const next = fresh();
+        setValues(next);
+        void draft.clear(next);
+      }}
+      checks={[
+        { key: "date", label: t("date"), done: !!values.datum },
+        {
+          key: "interviewer",
+          label: t("interviewer"),
+          done: !!values.interviewer.trim(),
+          optional: true,
+        },
+        { key: "note", label: t("note"), done: !!values.notiz.trim(), optional: true },
+      ]}
+      submitLabel={t("saveInterview")}
+      onSubmit={() => void save()}
+      busy={busy}
     >
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1.5">
           <FieldLabel>{t("date")}</FieldLabel>
-          <Input type="date" value={datum} onChange={(e) => setDatum(e.target.value)} />
+          <Input
+            type="date"
+            value={values.datum}
+            onChange={(e) => setValues((v) => ({ ...v, datum: e.target.value }))}
+          />
         </label>
         <label className="space-y-1.5">
           <FieldLabel>{t("interviewer")}</FieldLabel>
           <Input
-            value={interviewer}
-            onChange={(e) => setInterviewer(e.target.value)}
+            value={values.interviewer}
+            onChange={(e) => setValues((v) => ({ ...v, interviewer: e.target.value }))}
             placeholder={t("interviewerPlaceholder")}
           />
         </label>
@@ -355,12 +362,12 @@ function InterviewForm({ open, onOpenChange, applicantId }: EntryDialogProps) {
       <label className="space-y-1.5">
         <FieldLabel>{t("note")}</FieldLabel>
         <Textarea
-          value={notiz}
-          onChange={(e) => setNotiz(e.target.value)}
+          value={values.notiz}
+          onChange={(e) => setValues((v) => ({ ...v, notiz: e.target.value }))}
           placeholder={t("interviewNotePlaceholder")}
         />
       </label>
-    </EntryDialogShell>
+    </FormDialog>
   );
 }
 
@@ -412,46 +419,47 @@ function TerminForm({ open, onOpenChange, applicants = [], fixedApplicantId }: T
   const [art, setArt] = useState<(typeof TERMIN_ARTEN)[number]>("telefon");
   const [typ, setTypRaw] = useState<(typeof TERMIN_TYPEN)[number]>("interview");
   const [notiz, setNotiz] = useState("");
+  const [busy, setBusy] = useState(false);
 
   function setTyp(next: (typeof TERMIN_TYPEN)[number]) {
     setTypRaw(next);
     if (next === "wiedervorlage") setDatum(addWorkdays(3));
   }
 
-  function save() {
-    if (!applicantId) {
-      toast.error(t("selectApplicantFirst"));
-      return;
+  async function save() {
+    setBusy(true);
+    try {
+      await createTermin({
+        applicantId: applicantId as Id<"applicants">,
+        datum,
+        uhrzeit,
+        art,
+        typ,
+        notiz: notiz.trim() || undefined,
+      });
+      toast.success(t("terminSaved"));
+      onOpenChange(false);
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setBusy(false);
     }
-    createTermin({
-      applicantId: applicantId as Id<"applicants">,
-      datum,
-      uhrzeit,
-      art,
-      typ,
-      notiz: notiz.trim() || undefined,
-    })
-      .then(() => {
-        toast.success(t("terminSaved"));
-        onOpenChange(false);
-      })
-      .catch(handleError);
   }
 
   return (
-    <EntryDialogShell
+    <FormDialog
       open={open}
       onOpenChange={onOpenChange}
       title={t("planTermin")}
       description={t("calendarDescription")}
-      tip={
-        typ === "wiedervorlage"
-          ? t("wiedervorlageHint", { date: formatIsoDate(datum, locale) })
-          : undefined
-      }
-      saveLabel={t("saveTermin")}
-      saveDisabled={!applicantId}
-      onSave={save}
+      checks={[
+        { key: "applicant", label: t("applicant"), done: !!applicantId },
+        { key: "date", label: t("date"), done: !!datum },
+        { key: "time", label: t("time"), done: !!uhrzeit },
+      ]}
+      submitLabel={t("saveTermin")}
+      onSubmit={() => void save()}
+      busy={busy}
     >
       {!fixedApplicantId && (
         <div className="space-y-1.5">
@@ -519,7 +527,10 @@ function TerminForm({ open, onOpenChange, applicants = [], fixedApplicantId }: T
           onChange={(e) => setNotiz(e.target.value)}
         />
       </label>
-    </EntryDialogShell>
+      {typ === "wiedervorlage" && (
+        <DialogTip>{t("wiedervorlageHint", { date: formatIsoDate(datum, locale) })}</DialogTip>
+      )}
+    </FormDialog>
   );
 }
 

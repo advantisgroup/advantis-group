@@ -2,28 +2,28 @@
 
 import { useMemo, useState } from "react";
 
+import { useRouter } from "next/navigation";
+
 import { Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Link } from "@/components/Link";
+import { useIsAdmin } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useIsAdmin } from "@/components/providers/current-user";
 import { useSalesCoachWiki } from "@/lib/sales-coach-ev-api";
 import { cn } from "@/lib/utils";
 
 import { WIKI_CATEGORIES } from "./constants";
-import { type WikiArticle } from "./types";
 import { WikiArticleCard } from "./WikiArticleCard";
-import { WikiEditorDialog } from "./WikiEditorDialog";
 
 export function WikiView() {
   const t = useTranslations("SalesCoachEv");
+  const router = useRouter();
   const isAdmin = useIsAdmin();
-  const { articles, refresh } = useSalesCoachWiki();
+  const { articles } = useSalesCoachWiki();
   const [category, setCategory] = useState<string>("alle");
   const [query, setQuery] = useState("");
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editingArticle, setEditingArticle] = useState<WikiArticle | null>(null);
 
   const filtered = useMemo(() => {
     let items = articles ?? [];
@@ -51,16 +51,11 @@ export function WikiView() {
           <p className="text-xs text-muted-foreground">{t("wikiPageSubtitle")}</p>
         </div>
         {isAdmin && (
-          <Button
-            size="sm"
-            className="w-full sm:w-auto"
-            onClick={() => {
-              setEditingArticle(null);
-              setEditorOpen(true);
-            }}
-          >
-            <Plus className="size-3.5" />
-            {t("wikiNewArticle")}
+          <Button size="sm" className="w-full sm:w-auto" asChild>
+            <Link href="/sales-coach-ev/wiki/new">
+              <Plus className="size-3.5" />
+              {t("wikiNewArticle")}
+            </Link>
           </Button>
         )}
       </div>
@@ -113,23 +108,13 @@ export function WikiView() {
                   key={a._id}
                   article={a}
                   isAdmin={isAdmin}
-                  onEdit={() => {
-                    setEditingArticle(a);
-                    setEditorOpen(true);
-                  }}
+                  onEdit={() => router.push(`/sales-coach-ev/wiki/${a._id}`)}
                 />
               ))}
             </div>
           )}
         </div>
       </div>
-
-      <WikiEditorDialog
-        open={editorOpen}
-        onOpenChange={setEditorOpen}
-        article={editingArticle}
-        onSaved={refresh}
-      />
     </div>
   );
 }

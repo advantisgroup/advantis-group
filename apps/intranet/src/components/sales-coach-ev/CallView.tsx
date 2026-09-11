@@ -5,6 +5,9 @@ import { useEffect, useState } from "react";
 import { Play, Square } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { AiRunCard } from "@/components/ai/AiRunCard";
+import { useAiRun } from "@/components/ai/use-ai-run";
+import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -20,11 +23,33 @@ import { cn } from "@/lib/utils";
 import { CoachPanel } from "./CoachPanel";
 import { fmtDuration } from "./constants";
 import { ObjectionsTab } from "./ObjectionsTab";
-import { ReportModal } from "./ReportModal";
 import { ScriptTab } from "./ScriptTab";
 import { TranscriptPanel } from "./TranscriptPanel";
 import { useSalesCoachCall } from "./use-sales-coach-call";
 import { WikiTab } from "./WikiTab";
+
+/** The report for the call that just ended, scored in the background — the
+ * rep can start the next call while it's written, and open it when it lands. */
+function LastCallReport({ callId }: { callId: string }) {
+  const t = useTranslations("SalesCoachEv");
+  const view = useAiRun({ subjectKey: `coachReport:${callId}` });
+  if (!view.run) return null;
+  return (
+    <div className="border-b border-border px-3.5 py-2.5">
+      <AiRunCard
+        view={view}
+        titles={{ working: t("reportWaitingTitle"), done: t("reportReady") }}
+        className="p-3"
+      >
+        <Button size="sm" asChild>
+          <Link href={`/sales-coach-ev/progress/${callId}`} onClick={view.markSeen}>
+            {t("reportOpen")}
+          </Link>
+        </Button>
+      </AiRunCard>
+    </div>
+  );
+}
 
 export function CallView() {
   const t = useTranslations("SalesCoachEv");
@@ -33,7 +58,6 @@ export function CallView() {
   const [lang, setLang] = useState("de-DE");
   const [assistTab, setAssistTab] = useState("script");
   const [wikiQuery, setWikiQuery] = useState("");
-  const [reportOpen, setReportOpen] = useState(false);
 
   const isLive = call.status === "live";
 
@@ -48,12 +72,6 @@ export function CallView() {
     if (call.detectedObjectionId) setAssistTab("objections");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [call.detectedObjectionId]);
-
-  // Open the score report automatically as soon as it's ready, same as the
-  // original (no extra click needed after a scored call finishes analysis).
-  useEffect(() => {
-    if (call.lastCall?.scored) setReportOpen(true);
-  }, [call.lastCall]);
 
   return (
     <div className="flex h-[calc(100vh-14rem)] min-h-[560px] flex-col overflow-hidden rounded-xl border border-border">
@@ -105,16 +123,15 @@ export function CallView() {
                 : t("statusReady")}
           </span>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={!call.lastCall}
-          onClick={() => setReportOpen(true)}
-          className="ml-1 text-xs"
-        >
-          {t("openReport")}
-        </Button>
+        {call.lastCallId ? (
+          <Button type="button" size="sm" variant="outline" asChild className="ml-1 text-xs">
+            <Link href={`/sales-coach-ev/progress/${call.lastCallId}`}>{t("openReport")}</Link>
+          </Button>
+        ) : (
+          <Button type="button" size="sm" variant="outline" disabled className="ml-1 text-xs">
+            {t("openReport")}
+          </Button>
+        )}
         <div className="ml-auto font-mono text-xs text-muted-foreground">
           {fmtDuration(call.elapsedSec)}
         </div>
@@ -125,6 +142,8 @@ export function CallView() {
           {call.error}
         </div>
       )}
+
+      {call.lastCallId && !isLive && <LastCallReport callId={call.lastCallId} />}
 
       <div className="grid flex-1 grid-cols-1 overflow-hidden md:grid-cols-[1fr_280px_280px]">
         <div className="flex flex-col overflow-hidden border-b border-border md:border-b-0 md:border-r">
@@ -182,8 +201,6 @@ export function CallView() {
           </Tabs>
         </div>
       </div>
-
-      <ReportModal call={call.lastCall} open={reportOpen} onOpenChange={setReportOpen} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -9,14 +9,16 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
+import { type ReadinessCheck, scoreReadiness } from "@/components/compose/Readiness";
+import { useDraft } from "@/components/compose/use-draft";
 import { GuidebookAttachments } from "@/components/guidebooks/GuidebookAttachments";
 import { PendingWikiAttachments } from "@/components/guidebooks/PendingWikiAttachments";
 import { staticGuidebookSlugs } from "@/components/guidebooks/registry";
-import { WikiAiFormatAssist } from "@/components/guidebooks/WikiAiFormatAssist";
-import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
 import { TagInput, type WikiEntry } from "@/components/guidebooks/WikiEntryDialogs";
+import { useCurrentUser } from "@/components/providers/current-user";
 import { Input } from "@/components/ui/input";
-import { type FileLinkCandidate, RichTextEditor } from "@/components/ui/rich-text-editor";
+import { htmlToText } from "@/components/ui/rich-text";
+import { type FileLinkCandidate } from "@/components/ui/rich-text-editor";
 import {
   Select,
   SelectContent,
@@ -34,9 +36,8 @@ import { attachPendingFiles } from "@/lib/wiki-attachments";
 
 /**
  * The "Details" fields shared by every wiki entry — everything except the
- * headline thema/erklaerung pair and the attachments picker, which their
- * callers place differently (inline in the edit dialog vs. tucked into the
- * full-screen composer's Options sheet).
+ * headline thema/erklaerung pair and the attachments picker, which the
+ * composer places itself.
  */
 function WikiEntryDetailFields({
   categoryId,
@@ -57,8 +58,8 @@ function WikiEntryDetailFields({
   categoryId: string;
   setCategoryId: (v: string) => void;
   categories: { _id: Id<"wikiCategories">; name: string; color: string }[];
-  ownerUserId: Id<"users">;
-  setOwnerUserId: (v: Id<"users">) => void;
+  ownerUserId: string;
+  setOwnerUserId: (v: string) => void;
   users: { _id: Id<"users">; name: string }[];
   tags: string[];
   setTags: (v: string[]) => void;
@@ -96,7 +97,7 @@ function WikiEntryDetailFields({
         <label className="mb-1 block text-xs font-medium text-muted-foreground">
           {t("fieldOwner")}
         </label>
-        <Select value={ownerUserId} onValueChange={(value) => setOwnerUserId(value as Id<"users">)}>
+        <Select value={ownerUserId} onValueChange={setOwnerUserId}>
           <SelectTrigger>
             <SelectValue placeholder={t("fieldOwnerPlaceholder")} />
           </SelectTrigger>
@@ -156,14 +157,48 @@ function WikiEntryDetailFields({
   );
 }
 
+export interface WikiEntryValues {
+  thema: string;
+  erklaerung: string;
+  categoryId: string;
+  tags: string[];
+  link: string;
+  validFrom: string;
+  validUntil: string;
+  ownerUserId: string;
+}
+
+function initialValues(entry: WikiEntry | "new", currentUserId: string): WikiEntryValues {
+  if (entry === "new") {
+    const now = Date.now();
+    return {
+      thema: "",
+      erklaerung: "",
+      categoryId: "",
+      tags: [],
+      link: "",
+      validFrom: msToDateInput(now),
+      validUntil: msToDateInput(addMonths(now, 3)),
+      ownerUserId: currentUserId,
+    };
+  }
+  return {
+    thema: entry.thema,
+    erklaerung: entry.erklaerung,
+    categoryId: entry.categoryId ?? "",
+    tags: entry.tags,
+    link: entry.link ?? "",
+    validFrom: msToDateInput(entry.validFrom),
+    validUntil: msToDateInput(entry.validUntil),
+    ownerUserId: entry.ownerUserId,
+  };
+}
+
 /**
- * The structured ("v2") wiki entry form — state, validation and submit, plus
- * ready-to-place field bundles for the two shells that host it: the compact
- * edit dialog (`fields`, unchanged single stack) and the full-screen
- * composer (`optionsFields`/`attachmentsSlot` placed in its Options sheet,
- * the raw `thema`/`erklaerung` state driving its own headline layout).
- * Kept in one hook so neither shell's copy of this logic can drift from the
- * other's.
+ * State, draft, readiness and submit for a wiki entry, new or existing — the
+ * full-page composer is the only shell now, so this owns everything but the
+ * layout. The draft is keyed per entry ("new" for a fresh one), restored
+ * silently for a new entry and offered as a question for an existing one.
  */
 export function useWikiEntryForm({
   entry,
@@ -179,7 +214,6 @@ export function useWikiEntryForm({
   const categories = useQuery(api.wikiCategories.list) ?? [];
   const users = useQuery(api.users.list, {}) ?? [];
   const currentUser = useCurrentUser();
-  const canFormatWithAi = useHasCapability("manage_guidebooks");
   const entries = useQuery(api.wikiEntries.list) ?? [];
   const create = useMutation(api.wikiEntries.create);
   const update = useMutation(api.wikiEntries.update);
@@ -187,24 +221,14 @@ export function useWikiEntryForm({
   const oneDriveApi = useOneDriveApi();
   const attachmentUpload = useAttachmentUpload();
   const isEditing = entry !== "new";
+  const entryKey: string = isEditing ? entry._id : "new";
   const existingAttachments = useQuery(
     api.guidebookAttachments.list,
     isEditing ? { slug: entry.slug } : "skip",
   );
 
-  const [thema, setThema] = useState(isEditing ? entry.thema : "");
-  const [erklaerung, setErklaerung] = useState(isEditing ? entry.erklaerung : "");
-  const [categoryId, setCategoryId] = useState(isEditing ? (entry.categoryId ?? "") : "");
-  const [tags, setTags] = useState<string[]>(isEditing ? entry.tags : []);
-  const [link, setLink] = useState(isEditing ? (entry.link ?? "") : "");
-  const [validFrom, setValidFrom] = useState(
-    isEditing ? msToDateInput(entry.validFrom) : msToDateInput(Date.now()),
-  );
-  const [validUntil, setValidUntil] = useState(
-    isEditing ? msToDateInput(entry.validUntil) : msToDateInput(addMonths(Date.now(), 3)),
-  );
-  const [ownerUserId, setOwnerUserId] = useState<Id<"users">>(
-    isEditing ? (entry.ownerUserId as Id<"users">) : (currentUser._id as Id<"users">),
+  const [values, setValues] = useState<WikiEntryValues>(() =>
+    initialValues(entry, currentUser._id),
   );
   const [busy, setBusy] = useState(false);
 
@@ -213,24 +237,59 @@ export function useWikiEntryForm({
   // creating a second one under a suffixed slug.
   const createdRef = useRef<{ id: Id<"wikiEntries">; slug: string } | null>(null);
 
-  // Re-seed whenever a different entry (or "new") is passed in.
-  const [seededFor, setSeededFor] = useState(entry);
-  if (entry !== seededFor) {
-    setSeededFor(entry);
-    setThema(isEditing ? entry.thema : "");
-    setErklaerung(isEditing ? entry.erklaerung : "");
-    setCategoryId(isEditing ? (entry.categoryId ?? "") : "");
-    setTags(isEditing ? entry.tags : []);
-    setLink(isEditing ? (entry.link ?? "") : "");
-    setValidFrom(isEditing ? msToDateInput(entry.validFrom) : msToDateInput(Date.now()));
-    setValidUntil(
-      isEditing ? msToDateInput(entry.validUntil) : msToDateInput(addMonths(Date.now(), 3)),
-    );
-    setOwnerUserId(
-      isEditing ? (entry.ownerUserId as Id<"users">) : (currentUser._id as Id<"users">),
-    );
+  const setters = useMemo(() => {
+    const field =
+      <K extends keyof WikiEntryValues>(key: K) =>
+      (value: WikiEntryValues[K]) =>
+        setValues((prev) => ({ ...prev, [key]: value }));
+    return {
+      setThema: field("thema"),
+      setErklaerung: field("erklaerung"),
+      setCategoryId: field("categoryId"),
+      setTags: field("tags"),
+      setLink: field("link"),
+      setValidFrom: field("validFrom"),
+      setValidUntil: field("validUntil"),
+      setOwnerUserId: field("ownerUserId"),
+    };
+  }, []);
+
+  const draft = useDraft<WikiEntryValues>({
+    surface: "wikiEntry",
+    subjectKey: entryKey,
+    value: values,
+    restore: isEditing ? "offer" : "auto",
+    entitySavedAt: isEditing ? entry.updatedAt : undefined,
+    isEmpty: (v) =>
+      !isEditing &&
+      !v.thema.trim() &&
+      !htmlToText(v.erklaerung).trim() &&
+      !v.categoryId &&
+      v.tags.length === 0 &&
+      !v.link.trim(),
+    onRestore: (stored) => setValues((prev) => ({ ...prev, ...stored })),
+  });
+
+  const checks: ReadinessCheck[] = [
+    { key: "thema", label: t("fieldThema"), done: !!values.thema.trim() },
+    { key: "category", label: t("fieldCategory"), done: !!values.categoryId },
+    { key: "validUntil", label: t("fieldValidUntil"), done: !!values.validUntil },
+    {
+      key: "erklaerung",
+      label: t("fieldErklaerung"),
+      done: htmlToText(values.erklaerung).trim().length > 0,
+      optional: true,
+    },
+    { key: "tags", label: t("tagsFilterLabel"), done: values.tags.length > 0, optional: true },
+  ];
+  const readiness = scoreReadiness(checks);
+
+  /** Back to the saved entry (or a blank one), and no draft left behind. */
+  function discardChanges() {
+    const fresh = initialValues(entry, currentUser._id);
+    setValues(fresh);
     attachmentUpload.reset();
-    createdRef.current = null;
+    void draft.clear(fresh);
   }
 
   // Files that can be linked into the body text right now — already-uploaded
@@ -245,24 +304,25 @@ export function useWikiEntryForm({
       }));
 
   async function submit() {
-    if (!thema.trim() || !categoryId || !validUntil) {
+    if (!readiness.canSubmit) {
       toast.error(t("entryFormIncomplete"));
       return;
     }
     setBusy(true);
     try {
       const patch = {
-        categoryId: categoryId as Id<"wikiCategories">,
-        thema: thema.trim(),
-        erklaerung: erklaerung.trim(),
-        tags,
-        link: link.trim() || undefined,
-        validFrom: new Date(`${validFrom}T00:00:00`).getTime(),
-        validUntil: new Date(`${validUntil}T00:00:00`).getTime(),
-        ownerUserId,
+        categoryId: values.categoryId as Id<"wikiCategories">,
+        thema: values.thema.trim(),
+        erklaerung: values.erklaerung.trim(),
+        tags: values.tags,
+        link: values.link.trim() || undefined,
+        validFrom: new Date(`${values.validFrom}T00:00:00`).getTime(),
+        validUntil: new Date(`${values.validUntil}T00:00:00`).getTime(),
+        ownerUserId: values.ownerUserId as Id<"users">,
       };
       if (isEditing) {
         await update({ entryId: entry._id, ...patch });
+        await draft.clear();
         toast.success(t("entryUpdated"));
         onDone(entry.slug);
         return;
@@ -273,10 +333,10 @@ export function useWikiEntryForm({
         await update({ entryId: createdRef.current.id, ...patch });
       } else {
         const taken = new Set([...entries.map((e) => e.slug), ...staticGuidebookSlugs()]);
-        slug = slugify(thema);
+        slug = slugify(values.thema);
         let suffix = 2;
         while (taken.has(slug)) {
-          slug = `${slugify(thema)}-${suffix}`;
+          slug = `${slugify(values.thema)}-${suffix}`;
           suffix++;
         }
         const created = await create({ slug, ...patch });
@@ -298,6 +358,7 @@ export function useWikiEntryForm({
           attachmentUpload.setUploading(false);
         }
       }
+      await draft.clear();
       toast.success(t("entryCreated"));
       onDone(slug);
     } catch (e) {
@@ -309,20 +370,20 @@ export function useWikiEntryForm({
 
   const optionsFields = (
     <WikiEntryDetailFields
-      categoryId={categoryId}
-      setCategoryId={setCategoryId}
+      categoryId={values.categoryId}
+      setCategoryId={setters.setCategoryId}
       categories={categories}
-      ownerUserId={ownerUserId}
-      setOwnerUserId={setOwnerUserId}
+      ownerUserId={values.ownerUserId}
+      setOwnerUserId={setters.setOwnerUserId}
       users={users}
-      tags={tags}
-      setTags={setTags}
-      link={link}
-      setLink={setLink}
-      validFrom={validFrom}
-      setValidFrom={setValidFrom}
-      validUntil={validUntil}
-      setValidUntil={setValidUntil}
+      tags={values.tags}
+      setTags={setters.setTags}
+      link={values.link}
+      setLink={setters.setLink}
+      validFrom={values.validFrom}
+      setValidFrom={setters.setValidFrom}
+      validUntil={values.validUntil}
+      setValidUntil={setters.setValidUntil}
     />
   );
 
@@ -332,69 +393,26 @@ export function useWikiEntryForm({
     <PendingWikiAttachments
       attachmentUpload={attachmentUpload}
       busy={busy}
-      slugPreview={thema ? slugify(thema) : undefined}
+      slugPreview={values.thema ? slugify(values.thema) : undefined}
     />
   );
 
-  const fields = (
-    <div className="space-y-3">
-      <div>
-        <label className="mb-1 block text-xs font-medium text-muted-foreground">
-          {t("fieldThema")}
-        </label>
-        <Input
-          value={thema}
-          onChange={(e) => setThema(e.target.value)}
-          placeholder={t("fieldThemaPlaceholder")}
-          autoFocus
-        />
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-medium text-muted-foreground">
-          {t("fieldErklaerung")}
-        </label>
-        <RichTextEditor
-          value={erklaerung}
-          onChange={setErklaerung}
-          placeholder={t("fieldErklaerungPlaceholder")}
-          minHeight="8rem"
-          fileLinkCandidates={fileLinkCandidates}
-          aiFormatSlot={
-            canFormatWithAi
-              ? ({ inline }) => (
-                  <WikiAiFormatAssist html={erklaerung} onApply={setErklaerung} inline={inline} />
-                )
-              : undefined
-          }
-        />
-      </div>
-      {optionsFields}
-      {attachmentsSlot}
-    </div>
-  );
-
   return {
-    thema,
-    setThema,
-    erklaerung,
-    setErklaerung,
-    categoryId,
-    setCategoryId,
-    tags,
-    setTags,
-    link,
-    validFrom,
-    validUntil,
-    ownerUserId,
+    ...values,
+    ...setters,
     categories,
     users,
     attachmentUpload,
     fileLinkCandidates,
     isEditing,
+    entryKey,
     optionsFields,
     attachmentsSlot,
-    fields,
     submit,
     busy,
+    draft,
+    checks,
+    readiness,
+    discardChanges,
   };
 }

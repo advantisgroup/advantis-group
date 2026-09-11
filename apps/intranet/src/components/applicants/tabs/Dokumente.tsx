@@ -7,95 +7,64 @@ import Link from "next/link";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation } from "convex/react";
-import { Download, Eye, FileText, RefreshCw, Trash2, UploadCloud } from "lucide-react";
+import { Download, Eye, FileText, Trash2, UploadCloud } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import {
-  type ApplicantDetail,
-  ensureRichHtml,
-  RICH_CV_FIELDS,
-  textToHtml,
-} from "@/components/applicants/applicant-types";
-import { CvFallbackModal, type CvFallbackFormState } from "@/components/applicants/CvFallbackModal";
+import { AiButton } from "@/components/ai/AiButton";
+import { AiRunCard } from "@/components/ai/AiRunCard";
+import { parseJson, useAiRun } from "@/components/ai/use-ai-run";
+import { type ApplicantDetail } from "@/components/applicants/applicant-types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { useApplicantsApi } from "@/lib/applicants-api";
-
-export function applicantToFormState(applicant: ApplicantDetail): CvFallbackFormState {
-  return {
-    name: applicant.name,
-    email: applicant.email ?? "",
-    telefon: applicant.telefon ?? "",
-    adresse: applicant.adresse ?? "",
-    geburtsdatum: applicant.geburtsdatum ?? "",
-    position: applicant.position ?? "",
-    ausbildung: ensureRichHtml(applicant.ausbildung ?? ""),
-    berufserfahrung: ensureRichHtml(applicant.berufserfahrung ?? ""),
-    zusammenfassung: ensureRichHtml(applicant.zusammenfassung ?? ""),
-    skills: applicant.skills,
-  };
-}
+import { type CvRescanOutput, useApplicantsApi } from "@/lib/applicants-api";
+import { cvImportFiles } from "@/lib/cv-import-files";
 
 export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
   const t = useTranslations("Applicants");
+  const tc = useTranslations("Common");
   const applicantsApi = useApplicantsApi();
   const generateUploadUrl = useMutation(api.applicants.generateUploadUrl);
   const addDocument = useMutation(api.applicants.addDocument);
   const removeDocument = useMutation(api.applicants.removeDocument);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
-  const tc = useTranslations("Common");
   const rescanInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
 
-  const [rescanFile, setRescanFile] = useState<File | null>(null);
-  const [rescanInitialValues, setRescanInitialValues] = useState<CvFallbackFormState | null>(null);
-  const [rescanFromPdfFields, setRescanFromPdfFields] = useState<(keyof CvFallbackFormState)[]>([]);
-  const [rescanStorageId, setRescanStorageId] = useState<Id<"_storage"> | undefined>(undefined);
+  // The latest re-read of this applicant's CV. Followed by subject rather
+  // than by the run started here, so leaving the tab mid-read and coming
+  // back still finds it — and so does the AI dock.
+  const rescan = useAiRun<CvRescanOutput>({ subjectKey: `cvRescan:${applicant._id}` }, parseJson);
+  const rescanUnseen = !!rescan.run && !rescan.run.seenAt;
+  const rescanFile = rescan.run ? cvImportFiles.get(rescan.run._id) : null;
+  const reviewHref = rescan.run
+    ? `/hr/cv-review?applicant=${applicant._id}&run=${rescan.run._id}`
+    : null;
+  const [starting, setStarting] = useState(false);
 
-  async function handleRescan(files: FileList | null) {
+  async function startRescan(file: File) {
+    setStarting(true);
+    try {
+      const { runId } = await applicantsApi.startRescan(file, applicant._id);
+      cvImportFiles.set(runId, file);
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setStarting(false);
+    }
+  }
+
+  function handleRescan(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
     if (file.type !== "application/pdf") {
       toast.error(t("uploadPdfOnly"));
       return;
     }
-    const current = applicantToFormState(applicant);
-    try {
-      const result = await applicantsApi.rescan(file);
-      const merged = { ...current };
-      const fromPdf: (keyof CvFallbackFormState)[] = [];
-      for (const key of Object.keys(current) as (keyof CvFallbackFormState)[]) {
-        if (key === "skills") continue;
-        const value = result.extractedFields[key];
-        if (typeof value === "string" && value.trim()) {
-          merged[key] = (RICH_CV_FIELDS as readonly string[]).includes(key)
-            ? textToHtml(value)
-            : value;
-          fromPdf.push(key);
-        }
-      }
-      if (result.extractedFields.skills.length > 0) {
-        merged.skills = result.extractedFields.skills;
-        fromPdf.push("skills");
-      }
-      setRescanInitialValues(merged);
-      setRescanFromPdfFields(fromPdf);
-      setRescanStorageId(result.storageId);
-    } catch (e) {
-      handleError(e);
-      setRescanInitialValues(current);
-      setRescanFromPdfFields([]);
-      setRescanStorageId(undefined);
-    }
-    setRescanFile(file);
-  }
-
-  function openRescan(input: HTMLInputElement | null) {
-    input?.click();
+    void startRescan(file);
   }
 
   async function handleUpload(files: FileList | null) {
@@ -136,6 +105,10 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
     removeDocument({ documentId }).catch(handleError);
   }
 
+  const rescanWorking = rescan.state === "working" || starting;
+  const rescanFailed =
+    rescan.state === "error" || rescan.state === "interrupted" || rescan.state === "cancelled";
+
   return (
     <Card className="overflow-hidden">
       <div className="flex items-center justify-between gap-3 border-b border-border/70 p-4">
@@ -143,26 +116,44 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
           {t("documentsInFile")}
           <span className="ml-1.5 text-muted-foreground">({applicant.documents.length})</span>
         </p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => openRescan(rescanInputRef.current)}
+        <AiButton
+          working={rescanWorking}
+          disabled={rescanWorking}
+          onClick={() => rescanInputRef.current?.click()}
           aria-label={t("rescanCv")}
         >
-          <RefreshCw className="size-4" />
-          <span className="hidden md:inline">{t("rescanCv")}</span>
-        </Button>
+          {t("rescanCv")}
+        </AiButton>
         <input
           ref={rescanInputRef}
           type="file"
           accept="application/pdf"
           className="hidden"
           onChange={(e) => {
-            void handleRescan(e.target.files);
+            handleRescan(e.target.files);
             e.target.value = "";
           }}
         />
       </div>
+      {rescanUnseen && reviewHref && (
+        <div className="border-b border-border/70 p-4">
+          <AiRunCard
+            view={rescan}
+            titles={{ done: t("rescanReady") }}
+            onRetry={rescanFile ? () => void startRescan(rescanFile) : undefined}
+            onDismiss={rescan.markSeen}
+          >
+            <Button size="sm" asChild>
+              <Link href={reviewHref}>{t("rescanReview")}</Link>
+            </Button>
+          </AiRunCard>
+          {rescanFailed && rescanFile && (
+            <Button size="sm" variant="outline" className="mt-2" asChild>
+              <Link href={reviewHref}>{t("fillManually")}</Link>
+            </Button>
+          )}
+        </div>
+      )}
       <CardContent className="space-y-3 p-4">
         <div className="grid gap-2.5 sm:grid-cols-2">
           {applicant.documents.map((d) => (
@@ -232,31 +223,6 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
         </div>
         <p className="text-xs text-muted-foreground">{t("maxFileSizeHint")}</p>
       </CardContent>
-      {rescanFile && rescanInitialValues && (
-        <CvFallbackModal
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              setRescanFile(null);
-              setRescanInitialValues(null);
-              setRescanFromPdfFields([]);
-              setRescanStorageId(undefined);
-            }
-          }}
-          mode="update"
-          applicantId={applicant._id}
-          file={rescanFile}
-          initialValues={rescanInitialValues}
-          initialFromPdfFields={rescanFromPdfFields}
-          pendingStorageId={rescanStorageId}
-          onSaved={() => {
-            setRescanFile(null);
-            setRescanInitialValues(null);
-            setRescanFromPdfFields([]);
-            setRescanStorageId(undefined);
-          }}
-        />
-      )}
     </Card>
   );
 }

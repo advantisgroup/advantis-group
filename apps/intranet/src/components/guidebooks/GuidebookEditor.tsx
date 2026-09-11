@@ -1,10 +1,23 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import {
+  DraftIndicator,
+  DraftOfferBanner,
+  DraftRestoredNote,
+} from "@/components/compose/DraftIndicator";
+import {
+  type ReadinessCheck,
+  ReadinessMeter,
+  scoreReadiness,
+} from "@/components/compose/Readiness";
+import { MobileActionBar } from "@/components/compose/MobileActionBar";
+import { ReadinessSubmit } from "@/components/compose/ReadinessSubmit";
+import { useDraft } from "@/components/compose/use-draft";
 import { type GuidebookTopic } from "@/components/guidebooks/registry";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -44,6 +57,15 @@ export interface GuidebookFormData {
   blocks: Block[];
 }
 
+const BLANK_PAGE: GuidebookFormData = {
+  title: "",
+  description: "",
+  topic: "it-workplace",
+  teams: [],
+  minRole: null,
+  blocks: [],
+};
+
 /**
  * Shared form for both /guidebooks/new/advanced (create) and
  * /guidebooks/[slug]/edit (update) — the actual persistence differs per
@@ -53,12 +75,18 @@ export interface GuidebookFormData {
  */
 export function GuidebookEditor({
   initial,
+  draftKey,
+  entitySavedAt,
   onSave,
   saving,
   submitLabel,
   attachmentsSlot,
 }: {
   initial?: GuidebookFormData;
+  /** "new", or the page's id — where unsaved work waits between visits. */
+  draftKey: string;
+  /** When the page was last saved, so an older draft isn't offered over it. */
+  entitySavedAt?: number;
   onSave: (data: GuidebookFormData) => Promise<void>;
   saving: boolean;
   submitLabel: string;
@@ -70,16 +98,58 @@ export function GuidebookEditor({
   const t = useTranslations("Guidebooks");
   const tTeams = useTranslations("Teams");
   const handleError = useErrorHandler();
+  const start = initial ?? BLANK_PAGE;
 
-  const [title, setTitle] = useState(initial?.title ?? "");
-  const [description, setDescription] = useState(initial?.description ?? "");
-  const [topic, setTopic] = useState<GuidebookTopic>(initial?.topic ?? "it-workplace");
-  const [teams, setTeams] = useState<string[]>(initial?.teams ?? []);
-  const [minRole, setMinRole] = useState<"manager" | "admin" | "all">(initial?.minRole ?? "all");
-  const [blocks, setBlocks] = useState<Block[]>(initial?.blocks ?? []);
+  const [title, setTitle] = useState(start.title);
+  const [description, setDescription] = useState(start.description);
+  const [topic, setTopic] = useState<GuidebookTopic>(start.topic);
+  const [teams, setTeams] = useState<string[]>(start.teams);
+  const [minRole, setMinRole] = useState<"manager" | "admin" | "all">(start.minRole ?? "all");
+  const [blocks, setBlocks] = useState<Block[]>(start.blocks);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
-  const canSave = title.trim().length > 0 && description.trim().length > 0;
+  const value = useMemo<GuidebookFormData>(
+    () => ({
+      title,
+      description,
+      topic,
+      teams,
+      minRole: minRole === "all" ? null : minRole,
+      blocks,
+    }),
+    [title, description, topic, teams, minRole, blocks],
+  );
+
+  function fill(data: GuidebookFormData) {
+    setTitle(data.title);
+    setDescription(data.description);
+    setTopic(data.topic);
+    setTeams(data.teams);
+    setMinRole(data.minRole ?? "all");
+    setBlocks(data.blocks);
+  }
+
+  const draft = useDraft<GuidebookFormData>({
+    surface: "guidebookPage",
+    subjectKey: draftKey,
+    value,
+    restore: initial ? "offer" : "auto",
+    entitySavedAt,
+    isEmpty: (v) => !initial && !v.title.trim() && !v.description.trim() && v.blocks.length === 0,
+    onRestore: fill,
+  });
+
+  function discardChanges() {
+    fill(start);
+    void draft.clear(start);
+  }
+
+  const checks: ReadinessCheck[] = [
+    { key: "title", label: t("pageTitleLabel"), done: title.trim().length > 0 },
+    { key: "description", label: t("pageDescriptionLabel"), done: description.trim().length > 0 },
+    { key: "content", label: t("pageContentLabel"), done: blocks.length > 0, optional: true },
+  ];
+  const canSave = scoreReadiness(checks).canSubmit;
 
   function toggleTeam(id: string) {
     setTeams((prev) => (prev.includes(id) ? prev.filter((t2) => t2 !== id) : [...prev, id]));
@@ -94,14 +164,8 @@ export function GuidebookEditor({
       return;
     }
     try {
-      await onSave({
-        title: title.trim(),
-        description: description.trim(),
-        topic,
-        teams,
-        minRole: minRole === "all" ? null : minRole,
-        blocks,
-      });
+      await onSave({ ...value, title: title.trim(), description: description.trim() });
+      await draft.clear();
     } catch (e) {
       handleError(e);
     }
@@ -109,6 +173,9 @@ export function GuidebookEditor({
 
   return (
     <div className="space-y-6">
+      <DraftOfferBanner draft={draft} />
+      <DraftRestoredNote draft={draft} onStartOver={discardChanges} />
+
       <div className="space-y-4 rounded-lg border border-border/70 bg-muted/30 p-4">
         <div className="space-y-1.5">
           <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -202,7 +269,20 @@ export function GuidebookEditor({
 
       {attachmentsSlot}
 
-      <div className="flex justify-end">
+      <MobileActionBar>
+        <div className="mr-auto flex min-w-0 flex-col gap-0.5">
+          <ReadinessMeter checks={checks} />
+          <DraftIndicator draft={draft} onDiscard={discardChanges} />
+        </div>
+        <ReadinessSubmit checks={checks} busy={saving} onSubmit={() => void submit()}>
+          {submitLabel}
+        </ReadinessSubmit>
+      </MobileActionBar>
+      <div className="hidden flex-wrap items-center justify-end gap-x-4 gap-y-2 md:flex">
+        <div className="mr-auto flex min-w-0 flex-col gap-1">
+          <ReadinessMeter checks={checks} />
+          <DraftIndicator draft={draft} onDiscard={discardChanges} />
+        </div>
         <Button onClick={() => void submit()} disabled={!canSave || saving}>
           {submitLabel}
         </Button>

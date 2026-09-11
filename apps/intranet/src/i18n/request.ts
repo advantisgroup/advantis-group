@@ -10,6 +10,7 @@ import deAccess from "./messages/de/Access.json";
 import deAccessDenied from "./messages/de/AccessDenied.json";
 import deActivity from "./messages/de/Activity.json";
 import deAdmin from "./messages/de/Admin.json";
+import deAi from "./messages/de/Ai.json";
 import deAnnouncements from "./messages/de/Announcements.json";
 import deApprovals from "./messages/de/Approvals.json";
 import deApp from "./messages/de/App.json";
@@ -20,6 +21,7 @@ import deCaseSearch from "./messages/de/CaseSearch.json";
 import deChat from "./messages/de/Chat.json";
 import deCommand from "./messages/de/Command.json";
 import deCommon from "./messages/de/Common.json";
+import deCompose from "./messages/de/Compose.json";
 import deCustomRoles from "./messages/de/CustomRoles.json";
 import deDashboard from "./messages/de/Dashboard.json";
 import deDirectory from "./messages/de/Directory.json";
@@ -58,6 +60,7 @@ import enAccess from "./messages/en/Access.json";
 import enAccessDenied from "./messages/en/AccessDenied.json";
 import enActivity from "./messages/en/Activity.json";
 import enAdmin from "./messages/en/Admin.json";
+import enAi from "./messages/en/Ai.json";
 import enAnnouncements from "./messages/en/Announcements.json";
 import enApprovals from "./messages/en/Approvals.json";
 import enApp from "./messages/en/App.json";
@@ -68,6 +71,7 @@ import enCaseSearch from "./messages/en/CaseSearch.json";
 import enChat from "./messages/en/Chat.json";
 import enCommand from "./messages/en/Command.json";
 import enCommon from "./messages/en/Common.json";
+import enCompose from "./messages/en/Compose.json";
 import enCustomRoles from "./messages/en/CustomRoles.json";
 import enDashboard from "./messages/en/Dashboard.json";
 import enDirectory from "./messages/en/Directory.json";
@@ -159,6 +163,8 @@ const messagesByLocale = {
     SalesCockpit: enSalesCockpit,
     SalesCoachEv: enSalesCoachEv,
     StepUp: enStepUp,
+    Ai: enAi,
+    Compose: enCompose,
   },
   de: {
     App: deApp,
@@ -209,6 +215,8 @@ const messagesByLocale = {
     SalesCockpit: deSalesCockpit,
     SalesCoachEv: deSalesCoachEv,
     StepUp: deStepUp,
+    Ai: deAi,
+    Compose: deCompose,
   },
 } satisfies Record<Locale, Record<string, unknown>>;
 

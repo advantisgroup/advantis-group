@@ -73,7 +73,7 @@ function EmployeeStats({ row }: { row: LastDayInteractionRow }) {
  * employee view (rows never carry `employeeName` there).
  *
  * Team view: a scroll-snap carousel of up to `SLIDE_SIZE` employee cards per
- * slide (same native-scroll pattern as `CvFallbackModal`'s mobile carousel —
+ * slide (same native-scroll pattern as `CvReviewForm`'s mobile carousel —
  * no carousel library needed), with a name-chip row below to jump straight
  * to any employee's slide. */
 export function LastDayInteractions({

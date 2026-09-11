@@ -1,0 +1,50 @@
+{
+  "eyebrow": "KI",
+  "kind": {
+    "wikiChat": "Wiki-Assistent",
+    "wikiFormat": "Mit KI formatieren",
+    "wikiMeta": "Titel & Stichwörter",
+    "coachReport": "Gesprächsauswertung",
+    "coachEod": "Tageszusammenfassung",
+    "coachWikiExtract": "Dokument-Import",
+    "cvExtract": "Lebenslauf-Import",
+    "cvRescan": "Lebenslauf-Update"
+  },
+  "phase": {
+    "reading": "Liest",
+    "writing": "Schreibt",
+    "finishing": "Schließt ab"
+  },
+  "state": {
+    "working": "Wird bearbeitet",
+    "done": "Fertig",
+    "error": "Nicht abgeschlossen",
+    "interrupted": "Unterbrochen",
+    "cancelled": "Gestoppt"
+  },
+  "elapsed": "{seconds} s",
+  "chars": "{count, number} Zeichen",
+  "keepsRunning": "Du kannst das schließen oder die Seite verlassen – es läuft weiter und wartet im KI-Dock auf dich.",
+  "interruptedBody": "Die Verbindung zur KI ist abgebrochen, bevor sie fertig war. Es wurde nichts geändert.",
+  "cancelledBody": "Vor dem Ende gestoppt. Es wurde nichts geändert.",
+  "stop": "Stoppen",
+  "retry": "Erneut versuchen",
+  "open": "Öffnen",
+  "dismiss": "Ausblenden",
+  "review": "Prüfen",
+  "apply": "Übernehmen",
+  "discard": "Verwerfen",
+  "dockLabel": "KI-Aktivität",
+  "dockWorking": "{count} in Arbeit",
+  "dockReady": "{count, plural, one {# Ergebnis bereit} other {# Ergebnisse bereit}}",
+  "dockFinishedAgo": "Fertig · {minutes, plural, =0 {gerade eben} other {vor # Min.}}",
+  "errors": {
+    "rate_limited": "Gerade zu viele Anfragen – warte kurz und versuch es dann noch mal.",
+    "upstream": "Der KI-Dienst hat nicht geantwortet. Versuch es gleich noch einmal.",
+    "unparsable": "Die Antwort kam unleserlich zurück. Ein neuer Versuch hilft meistens.",
+    "no_content": "Die KI hat hier nichts gefunden, womit sie arbeiten kann.",
+    "truncated": "Die Antwort war zu lang und wurde abgeschnitten.",
+    "interrupted": "Die Verbindung ist abgebrochen, bevor es fertig war.",
+    "internal": "Bei uns ist etwas schiefgelaufen."
+  }
+}

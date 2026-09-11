@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import { ArrowLeft, Eye, ImagePlus, Loader2, PenLine, Settings, X } from "lucide-react";
+import { ArrowLeft, Eye, ImagePlus, PenLine, Settings, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { BlogPostPreview } from "@/components/blog/BlogPostPreview";
@@ -14,6 +14,14 @@ import {
   EXCERPT_MAX_LENGTH,
   useBlogPostForm,
 } from "@/components/blog/useBlogPostForm";
+import {
+  DraftIndicator,
+  DraftOfferBanner,
+  DraftRestoredNote,
+} from "@/components/compose/DraftIndicator";
+import { MobileActionBar } from "@/components/compose/MobileActionBar";
+import { ReadinessCard } from "@/components/compose/Readiness";
+import { ReadinessSubmit } from "@/components/compose/ReadinessSubmit";
 import { Link } from "@/components/Link";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
@@ -38,12 +46,10 @@ const SPLIT_KEY = "blog:composerSplit";
 const NO_CATEGORY = "__none__";
 
 /**
- * Full-screen blog post composer — same shell pattern as WikiEntryComposer
- * (sticky header, split-pane write/preview, Options sheet for everything
- * that isn't the headline content, mobile write/preview toggle) so authoring
- * a blog post feels like the rest of the app instead of a generic CMS form.
- * Deliberately skips WikiEntryComposer's document-import/AI-assist machinery
- * — a blog post doesn't need it, and it isn't part of what was asked for.
+ * Full-screen blog post composer — same shell as the wiki composer (sticky
+ * header, split write/preview, Options sheet, mobile write/preview toggle),
+ * with the same draft and readiness behaviour: work is kept as it's typed,
+ * and the save button says what's missing instead of refusing silently.
  */
 export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
   const t = useTranslations("Blog");
@@ -52,6 +58,7 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
   const me = useCurrentUser();
   const isMobile = useIsMobile();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
 
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [mobileView, setMobileView] = useState<"write" | "preview">("write");
@@ -62,6 +69,12 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
     entry,
     onDone: () => router.push("/blog"),
   });
+  const { draft, readiness } = form;
+
+  useEffect(() => {
+    const raw = Number(localStorage.getItem(SPLIT_KEY));
+    if (Number.isFinite(raw) && raw >= 25 && raw <= 75) setSplitPct(raw);
+  }, []);
 
   function persistSplit(pct: number) {
     setSplitPct(pct);
@@ -72,8 +85,28 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
     }
   }
 
+  const checks = form.checks.map((check) => ({
+    ...check,
+    onFix:
+      check.key === "title"
+        ? () => {
+            setMobileView("write");
+            requestAnimationFrame(() => titleRef.current?.focus());
+          }
+        : check.key === "body"
+          ? undefined
+          : () => setOptionsOpen(true),
+  }));
+  const readyTitle = form.published
+    ? t("readyToPublish")
+    : form.isEditing
+      ? t("readyToSave")
+      : t("readyToSaveDraft");
+  const optionsNeedAttention = readiness.missing.some((c) => c.key !== "title" && c.key !== "body");
+
   const optionsBody = (
     <div className="space-y-4">
+      <ReadinessCard checks={checks} readyTitle={readyTitle} />
       <div>
         <label className="mb-1 block text-xs font-medium text-muted-foreground">
           {t("fieldSlug")}
@@ -222,6 +255,33 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
     />
   );
 
+  const optionsButton = (
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-label={t("optionsSheetTitle")}
+      onClick={() => setOptionsOpen(true)}
+      className="relative"
+    >
+      <Settings className="size-4" />
+      {optionsNeedAttention && (
+        <span className="absolute right-2 top-2 size-1.5 rounded-full bg-warning" />
+      )}
+    </Button>
+  );
+  const submitButton = (
+    <ReadinessSubmit
+      checks={checks}
+      readyTitle={readyTitle}
+      busy={form.busy}
+      onSubmit={() => void form.submit()}
+    >
+      {form.isEditing ? tc("save") : tc("create")}
+    </ReadinessSubmit>
+  );
+
+  const showDraftLine = draft.savedAt !== null || draft.status !== "idle";
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <header className="flex h-14 shrink-0 items-center gap-1.5 border-b border-border/70 px-3 md:px-4">
@@ -234,45 +294,32 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
           <p className="truncate text-sm font-semibold leading-tight">
             {form.isEditing ? t("editPost") : t("createPost")}
           </p>
-          <button
-            type="button"
-            onClick={() => form.setPublished(!form.published)}
-            title={t("fieldPublished")}
-            className={cn(
-              "truncate text-[11px] font-medium underline-offset-2 hover:underline",
-              form.published ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+          <div className="flex min-w-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => form.setPublished(!form.published)}
+              title={t("fieldPublished")}
+              className={cn(
+                "shrink-0 text-[11px] font-medium underline-offset-2 hover:underline",
+                form.published ? "text-success" : "text-muted-foreground",
+              )}
+            >
+              {form.published ? t("statusPublished") : t("statusDraft")}
+            </button>
+            {showDraftLine && (
+              <>
+                <span className="text-[11px] text-muted-foreground/50">·</span>
+                <DraftIndicator draft={draft} onDiscard={form.discardChanges} />
+              </>
             )}
-          >
-            {form.published ? t("statusPublished") : t("statusDraft")}
-          </button>
+          </div>
         </div>
-        {isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={mobileView === "write" ? t("preview") : t("write")}
-            onClick={() => setMobileView((v) => (v === "write" ? "preview" : "write"))}
-          >
-            {mobileView === "write" ? <Eye className="size-4" /> : <PenLine className="size-4" />}
-          </Button>
+        {!isMobile && (
+          <>
+            {optionsButton}
+            {submitButton}
+          </>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t("optionsSheetTitle")}
-          onClick={() => setOptionsOpen(true)}
-        >
-          <Settings className="size-4" />
-        </Button>
-        <Button onClick={() => void form.submit()} disabled={form.busy}>
-          {form.uploadingCover ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : form.isEditing ? (
-            tc("save")
-          ) : (
-            tc("create")
-          )}
-        </Button>
       </header>
 
       <div ref={splitRef} className="flex min-h-0 flex-1">
@@ -284,11 +331,14 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
             <div className="flex-1 overflow-y-auto px-4 py-4">{previewPane}</div>
           ) : (
             <div className="mx-auto w-full max-w-2xl px-4 py-5 md:px-10 md:py-8">
+              <DraftOfferBanner draft={draft} className="mb-4" />
+              <DraftRestoredNote draft={draft} onStartOver={form.discardChanges} className="mb-4" />
               <input
+                ref={titleRef}
                 value={form.title}
                 onChange={(e) => form.setTitle(e.target.value)}
                 placeholder={t("fieldTitlePlaceholder")}
-                autoFocus
+                autoFocus={!form.isEditing}
                 className="w-full border-0 border-b border-transparent bg-transparent pb-2 font-display text-2xl font-semibold tracking-tight text-foreground placeholder:text-muted-foreground/50 focus:border-border focus:outline-none md:text-3xl"
               />
               <div className="mt-4">
@@ -322,6 +372,22 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
         )}
       </div>
 
+      {isMobile && (
+        <MobileActionBar inline>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={mobileView === "write" ? t("preview") : t("write")}
+            onClick={() => setMobileView((v) => (v === "write" ? "preview" : "write"))}
+          >
+            {mobileView === "write" ? <Eye className="size-4" /> : <PenLine className="size-4" />}
+          </Button>
+          {optionsButton}
+          <span className="flex-1" />
+          {submitButton}
+        </MobileActionBar>
+      )}
+
       {isMobile ? (
         <MobileDrawer
           open={optionsOpen}
@@ -333,7 +399,7 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
               {t("optionsSheetTitle")}
             </p>
           </div>
-          <div className="px-5 py-4">{optionsBody}</div>
+          <div className="overflow-y-auto px-5 py-4">{optionsBody}</div>
         </MobileDrawer>
       ) : (
         <Sheet open={optionsOpen} onOpenChange={setOptionsOpen}>

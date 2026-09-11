@@ -7,6 +7,7 @@ import { PORT } from "./lib/env.js";
 import { ApiError, isFeatureDisabledError, reportApiFailure } from "./lib/errors.js";
 import { getRequestContext } from "./lib/request-context.js";
 import { activityRoute } from "./routes/activity.js";
+import { aiRunsRoute } from "./routes/ai-runs.js";
 import { applicantsRoute } from "./routes/applicants.js";
 import { clockodoAbsencesRoute } from "./routes/clockodo-absences.js";
 import { clockodoEntriesRoute } from "./routes/clockodo-entries.js";
@@ -73,6 +74,7 @@ export const app = new Elysia()
   .use(internalOnedriveRoute)
   .use(internalUpdatesRoute)
   .use(activityRoute)
+  .use(aiRunsRoute)
   .use(clockodoAbsencesRoute)
   .use(clockodoEntriesRoute)
   .use(onedriveRoute)

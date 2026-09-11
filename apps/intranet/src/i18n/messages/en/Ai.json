@@ -1,0 +1,50 @@
+{
+  "eyebrow": "AI",
+  "kind": {
+    "wikiChat": "Wiki assistant",
+    "wikiFormat": "Format with AI",
+    "wikiMeta": "Title & tags",
+    "coachReport": "Call report",
+    "coachEod": "Daily summary",
+    "coachWikiExtract": "Document import",
+    "cvExtract": "CV import",
+    "cvRescan": "CV update"
+  },
+  "phase": {
+    "reading": "Reading",
+    "writing": "Writing",
+    "finishing": "Finishing up"
+  },
+  "state": {
+    "working": "Working on it",
+    "done": "Ready",
+    "error": "Couldn't finish",
+    "interrupted": "Interrupted",
+    "cancelled": "Stopped"
+  },
+  "elapsed": "{seconds}s",
+  "chars": "{count, number} characters",
+  "keepsRunning": "You can close this or leave the page — it keeps going and waits for you in the AI dock.",
+  "interruptedBody": "The connection to the AI dropped before it finished. Nothing was changed.",
+  "cancelledBody": "Stopped before it finished. Nothing was changed.",
+  "stop": "Stop",
+  "retry": "Try again",
+  "open": "Open",
+  "dismiss": "Dismiss",
+  "review": "Review",
+  "apply": "Apply",
+  "discard": "Discard",
+  "dockLabel": "AI activity",
+  "dockWorking": "{count} working",
+  "dockReady": "{count, plural, one {# result ready} other {# results ready}}",
+  "dockFinishedAgo": "Ready · {minutes, plural, =0 {just now} one {# min ago} other {# min ago}}",
+  "errors": {
+    "rate_limited": "Too many requests right now — give it a minute, then try again.",
+    "upstream": "The AI service didn't respond. Try again in a moment.",
+    "unparsable": "The answer came back garbled. Trying again usually fixes it.",
+    "no_content": "The AI couldn't find anything to work with here.",
+    "truncated": "The answer ran too long and got cut off.",
+    "interrupted": "The connection dropped before it finished.",
+    "internal": "Something went wrong on our side."
+  }
+}

@@ -8,7 +8,6 @@ import { useMutation, useQuery } from "convex/react";
 import { Archive, Plus, Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { useWikiEntryForm } from "@/components/guidebooks/useWikiEntryForm";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -182,57 +181,6 @@ export function CategoryManagerDialog({
           </Button>
         </div>
       </div>
-    </ResponsiveDialog>
-  );
-}
-
-// --- Create / edit entry dialog -----------------------------------------------
-
-export function EntryDialog({
-  entry,
-  onOpenChange,
-}: {
-  entry: WikiEntry | null | "new";
-  onOpenChange: (o: false) => void;
-}) {
-  // The dialog is only the shell now — the form itself is shared with the
-  // full-screen composer at /guidebooks/new so the two can't drift.
-  if (entry === null) return null;
-  return <EntryDialogInner entry={entry} onOpenChange={onOpenChange} />;
-}
-
-function EntryDialogInner({
-  entry,
-  onOpenChange,
-}: {
-  entry: WikiEntry | "new";
-  onOpenChange: (o: false) => void;
-}) {
-  const t = useTranslations("Guidebooks");
-  const tc = useTranslations("Common");
-  const { fields, submit, busy } = useWikiEntryForm({
-    entry,
-    onDone: () => onOpenChange(false),
-  });
-
-  return (
-    <ResponsiveDialog
-      open
-      onOpenChange={(o) => !o && onOpenChange(false)}
-      title={entry === "new" ? t("newEntryTitle") : t("editEntryTitle")}
-      contentClassName="max-w-2xl"
-      footer={
-        <>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {tc("cancel")}
-          </Button>
-          <Button onClick={() => void submit()} disabled={busy}>
-            {tc("save")}
-          </Button>
-        </>
-      }
-    >
-      {fields}
     </ResponsiveDialog>
   );
 }

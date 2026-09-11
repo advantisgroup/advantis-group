@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 
-import { anthropic } from "../lib/anthropic.js";
+import { parseModelJson, runModelText, startAiRun, str, strList } from "../lib/ai.js";
 import { Errors } from "../lib/errors.js";
 import { resolveOneDriveUser } from "../lib/onedrive/context.js";
 import { rateLimit } from "../lib/rate-limit.js";
@@ -27,42 +27,6 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Objekt, ohne Markdown, ohne Erklärung:
 }
 Maximal 6 Stichwörter. Wenn du dir bei einem Feld nicht sicher bist, lass es leer (Titel: leerer String, Stichwörter: leeres Array, categoryHint: leerer String).`;
 
-interface AssistResult {
-  thema: string;
-  tags: string[];
-  categoryHint: string;
-}
-
-function parseAssist(text: string): AssistResult {
-  const clean = text.replace(/```json|```/g, "").trim();
-  const start = clean.indexOf("{");
-  const end = clean.lastIndexOf("}");
-  if (start === -1 || end === -1) {
-    throw Errors.upstream("No parseable response from the model");
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(clean.slice(start, end + 1));
-  } catch {
-    throw Errors.upstream("Could not read the model's response");
-  }
-  if (typeof parsed !== "object" || parsed === null) {
-    throw Errors.upstream("The model's response had an unexpected shape");
-  }
-  const data = parsed as Record<string, unknown>;
-  const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
-  return {
-    thema: str(data.thema).slice(0, 200),
-    tags: Array.isArray(data.tags)
-      ? data.tags
-          .filter((tag): tag is string => typeof tag === "string" && tag.trim().length > 0)
-          .map((tag) => tag.trim())
-          .slice(0, 6)
-      : [],
-    categoryHint: str(data.categoryHint).slice(0, 100),
-  };
-}
-
 export const wikiImportRoute = new Elysia().post(
   "/wiki/import-assist",
   async ({ request, body }) => {
@@ -73,24 +37,43 @@ export const wikiImportRoute = new Elysia().post(
     const text = body.text.trim();
     if (!text) throw Errors.badRequest("No text to analyze");
 
-    const response = await anthropic.createMessage({
-      model: "claude-sonnet-4-6",
-      max_tokens: 400,
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: `${ASSIST_PROMPT}\n\n---\n\n${text.slice(0, MAX_TEXT_CHARS)}` },
-          ],
-        },
-      ],
-    });
-    const responseText = response.content
-      .map((block) => ("text" in block ? block.text : ""))
-      .join("\n");
-    return parseAssist(responseText);
+    return await startAiRun(
+      {
+        clerkUserId: user.clerkUserId,
+        kind: "wikiMeta",
+        subjectKey: `wikiMeta:${body.subjectKey}`,
+        href: body.href,
+      },
+      async (run) => {
+        const data = parseModelJson(
+          await runModelText(run, {
+            max_tokens: 400,
+            messages: [
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: `${ASSIST_PROMPT}\n\n---\n\n${text.slice(0, MAX_TEXT_CHARS)}`,
+                  },
+                ],
+              },
+            ],
+          }),
+        );
+        return JSON.stringify({
+          thema: str(data.thema).slice(0, 200),
+          tags: strList(data.tags).slice(0, 6),
+          categoryHint: str(data.categoryHint).slice(0, 100),
+        });
+      },
+    );
   },
   {
-    body: t.Object({ text: t.String({ maxLength: MAX_TEXT_CHARS + 1000 }) }),
+    body: t.Object({
+      text: t.String({ maxLength: MAX_TEXT_CHARS + 1000 }),
+      subjectKey: t.String({ minLength: 1, maxLength: 200 }),
+      href: t.Optional(t.String({ maxLength: 300 })),
+    }),
   },
 );
