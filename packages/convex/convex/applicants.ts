@@ -467,6 +467,16 @@ export const generateUploadUrl = mutation({
   },
 });
 
+/** The CV a rescan run staged, so its review can show the PDF again after a
+ * refresh — by then the File picked in the browser is gone. */
+export const stagedFileUrl = query({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, { storageId }) => {
+    await requireApplicantAccess(ctx);
+    return await ctx.storage.getUrl(storageId);
+  },
+});
+
 export const addDocument = mutation({
   args: {
     applicantId: v.id("applicants"),

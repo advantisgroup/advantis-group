@@ -110,6 +110,20 @@ if (process.env.DISABLE_CRONS !== "true") {
     {},
   );
 
+  crons.daily(
+    "ai runs: prune runs older than 30 days",
+    { hourUTC: 4, minuteUTC: 20 },
+    internal.aiRuns.pruneOld,
+    {},
+  );
+
+  crons.daily(
+    "drafts: prune drafts untouched for 60 days",
+    { hourUTC: 4, minuteUTC: 25 },
+    internal.drafts.pruneOld,
+    {},
+  );
+
   crons.hourly(
     "passkeys: purge expired challenges",
     { minuteUTC: 55 },

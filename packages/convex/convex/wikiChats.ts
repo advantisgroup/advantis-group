@@ -49,6 +49,17 @@ export const list = query({
   },
 });
 
+export const get = query({
+  args: { serverKey: v.string(), clerkUserId: v.string(), id: v.string() },
+  handler: async (ctx, args) => {
+    assertServerKey(args.serverKey);
+    const id = ctx.db.normalizeId("wikiChats", args.id);
+    const chat = id ? await ctx.db.get(id) : null;
+    if (!chat || chat.clerkUserId !== args.clerkUserId) return null;
+    return { id: chat._id, title: chat.title, messages: chat.messages };
+  },
+});
+
 export const create = mutation({
   args: {
     serverKey: v.string(),

@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 
-import { anthropic } from "../lib/anthropic.js";
+import { AiRunError, runModelText, startAiRun } from "../lib/ai.js";
 import { Errors } from "../lib/errors.js";
 import { resolveOneDriveUser } from "../lib/onedrive/context.js";
 import { rateLimit } from "../lib/rate-limit.js";
@@ -43,32 +43,40 @@ export const wikiFormatAssistRoute = new Elysia().post(
     if (!html) throw Errors.badRequest("No content to format");
     if (!instructions) throw Errors.badRequest("No formatting instructions given");
 
-    const response = await anthropic.createMessage({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8_000,
-      messages: [
-        {
-          role: "user",
-          content: [
+    return await startAiRun(
+      {
+        clerkUserId: user.clerkUserId,
+        kind: "wikiFormat",
+        subjectKey: `wikiFormat:${body.subjectKey}`,
+        href: body.href,
+      },
+      async (run) => {
+        const text = await runModelText(run, {
+          max_tokens: 8_000,
+          messages: [
             {
-              type: "text",
-              text: `${buildPrompt(instructions.slice(0, MAX_INSTRUCTIONS_CHARS))}\n\n---\n\n${html.slice(0, MAX_HTML_CHARS)}`,
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: `${buildPrompt(instructions.slice(0, MAX_INSTRUCTIONS_CHARS))}\n\n---\n\n${html.slice(0, MAX_HTML_CHARS)}`,
+                },
+              ],
             },
           ],
-        },
-      ],
-    });
-    const responseText = response.content
-      .map((block) => ("text" in block ? block.text : ""))
-      .join("\n");
-    const formattedHtml = stripFences(responseText);
-    if (!formattedHtml) throw Errors.upstream("No parseable response from the model");
-    return { formattedHtml };
+        });
+        const formattedHtml = stripFences(text);
+        if (!formattedHtml) throw new AiRunError("no_content");
+        return formattedHtml;
+      },
+    );
   },
   {
     body: t.Object({
       html: t.String({ maxLength: MAX_HTML_CHARS + 1000 }),
       instructions: t.String({ maxLength: MAX_INSTRUCTIONS_CHARS + 500 }),
+      subjectKey: t.String({ minLength: 1, maxLength: 200 }),
+      href: t.Optional(t.String({ maxLength: 300 })),
     }),
   },
 );
