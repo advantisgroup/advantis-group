@@ -92,7 +92,9 @@ export function ChatClient() {
         )}
       >
         <div className="flex items-center justify-between gap-2 border-b border-border/70 px-4 py-3">
-          <h2 className="font-display text-lg font-semibold tracking-tight">{t("title")}</h2>
+          <h2 className="font-display text-lg font-semibold tracking-tight refreshed:text-base">
+            {t("title")}
+          </h2>
           <div className="flex items-center gap-1">
             {permission === "default" && (
               <Button
@@ -111,8 +113,8 @@ export function ChatClient() {
 
         {/* Re-invite acceptance banner */}
         {rejoinId && (
-          <div className="m-2 flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-2.5">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-500">
+          <div className="m-2 flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-2.5 refreshed:border-border/70 refreshed:bg-card">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-500 refreshed:bg-info/10 refreshed:text-info">
               <UserPlus className="h-4 w-4" />
             </span>
             <p className="min-w-0 flex-1 text-xs text-foreground">{t("rejoinPrompt")}</p>
@@ -146,8 +148,8 @@ export function ChatClient() {
 
         <ScrollArea className="flex-1">
           {conversations && conversations.length === 0 && (
-            <div className="mx-3 mt-6 flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-blue-500/30 bg-blue-500/5 px-6 py-12 text-center">
-              <span className="flex size-12 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-500">
+            <div className="mx-3 mt-6 flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-blue-500/30 bg-blue-500/5 px-6 py-12 text-center refreshed:border-border refreshed:bg-transparent">
+              <span className="flex size-12 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-500 refreshed:bg-muted refreshed:text-muted-foreground">
                 <MessageSquare className="h-6 w-6" />
               </span>
               <div>
@@ -172,7 +174,7 @@ export function ChatClient() {
               <>
                 <button
                   onClick={() => setShowArchived((v) => !v)}
-                  className="mt-2 flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent"
+                  className="mt-2 flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal transition-colors hover:bg-accent"
                 >
                   <ChevronDown
                     className={cn(
@@ -203,7 +205,7 @@ export function ChatClient() {
           <ConversationView conversationId={selected} onBack={() => router.push("/chat")} />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
-            <span className="flex size-16 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-500">
+            <span className="flex size-16 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-500 refreshed:bg-muted refreshed:text-muted-foreground">
               <MessageSquare className="h-8 w-8" />
             </span>
             <div className="max-w-xs">
@@ -220,7 +222,7 @@ export function ChatClient() {
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <p className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
       {children}
     </p>
   );
@@ -299,7 +301,7 @@ function ConversationRow({
               </p>
             )}
             {c.unread > 0 && !c.muted && (
-              <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
+              <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground refreshed:bg-foreground refreshed:text-background">
                 {c.unread}
               </span>
             )}
