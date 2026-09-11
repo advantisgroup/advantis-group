@@ -1,6 +1,6 @@
 "use client";
 
-import { type UIEvent, useRef, useState } from "react";
+import { type UIEvent, useEffect, useRef, useState } from "react";
 
 import dynamic from "next/dynamic";
 
@@ -11,6 +11,9 @@ import { FileText, Pencil, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { AiButton } from "@/components/ai/AiButton";
+import { aiErrorKey } from "@/components/ai/AiRunCard";
+import { parseJson, useAiRun } from "@/components/ai/use-ai-run";
 import { RICH_CV_FIELDS, textToHtml } from "@/components/applicants/applicant-types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +23,13 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { type ExtractedApplicantFields, useApplicantsApi } from "@/lib/applicants-api";
+import {
+  type CvExtractOutput,
+  type CvRescanOutput,
+  type ExtractedApplicantFields,
+  useApplicantsApi,
+} from "@/lib/applicants-api";
+import { cvImportFiles } from "@/lib/cv-import-files";
 import { uploadToConvex } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -190,6 +199,7 @@ export function CvFallbackModal({
 }: CvFallbackModalProps) {
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
+  const ta = useTranslations("Ai");
   const isMobile = useIsMobile();
   const applicantsApi = useApplicantsApi();
   const handleError = useErrorHandler();
@@ -209,12 +219,16 @@ export function CvFallbackModal({
   const [pendingStorageId, setPendingStorageId] = useState<Id<"_storage"> | undefined>(
     initialPendingStorageId,
   );
-  const [retrying, setRetrying] = useState(false);
+  const [retryRunId, setRetryRunId] = useState<Id<"aiRuns"> | null>(null);
+  const [startingRetry, setStartingRetry] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pageHasNoText, setPageHasNoText] = useState(false);
   const [selectionHintShown, setSelectionHintShown] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
   const [mobilePage, setMobilePage] = useState<0 | 1>(0);
+
+  const retryRun = useAiRun<CvExtractOutput | CvRescanOutput>({ runId: retryRunId }, parseJson);
+  const retrying = startingRetry || retryRun.state === "working";
 
   function scrollToPage(page: 0 | 1) {
     const el = carouselRef.current;
@@ -276,10 +290,31 @@ export function CvFallbackModal({
   }
 
   async function handleRetry() {
-    setRetrying(true);
+    setStartingRetry(true);
     try {
-      if (mode === "create") {
-        const result = await applicantsApi.extract(file);
+      const { runId } =
+        mode === "create"
+          ? await applicantsApi.startExtract(file)
+          : await applicantsApi.startRescan(file, applicantId as Id<"applicants">);
+      cvImportFiles.set(runId, file);
+      setRetryRunId(runId as Id<"aiRuns">);
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setStartingRetry(false);
+    }
+  }
+
+  // The retry is a run like any other; this form just waits on it and folds
+  // what it read back in. In create mode a clean read creates the applicant
+  // server-side, so there's nothing left to fill in.
+  useEffect(() => {
+    if (!retryRunId) return;
+    if (retryRun.state === "done" && retryRun.result) {
+      const result = retryRun.result;
+      retryRun.markSeen();
+      setRetryRunId(null);
+      if ("kind" in result) {
         if (result.kind === "created") {
           toast.success(t("uploadSuccess", { name: file.name }));
           onSaved(result.applicantId);
@@ -288,16 +323,20 @@ export function CvFallbackModal({
         applyExtracted(result.extractedFields);
         setPendingStorageId(result.pendingStorageId);
       } else {
-        const result = await applicantsApi.rescan(file);
         applyExtracted(result.extractedFields);
         setPendingStorageId(result.storageId);
       }
-    } catch (e) {
-      handleError(e);
-    } finally {
-      setRetrying(false);
+    } else if (
+      retryRun.state === "error" ||
+      retryRun.state === "interrupted" ||
+      retryRun.state === "cancelled"
+    ) {
+      toast.error(ta(aiErrorKey(retryRun.run?.errorCode ?? null)));
+      retryRun.markSeen();
+      setRetryRunId(null);
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [retryRunId, retryRun.state, retryRun.result]);
 
   async function handleSave() {
     setSaving(true);
@@ -342,9 +381,9 @@ export function CvFallbackModal({
   function renderFormFields() {
     return (
       <div className="space-y-4">
-        <Button variant="outline" size="sm" onClick={() => void handleRetry()} disabled={retrying}>
+        <AiButton working={retrying} disabled={retrying} onClick={() => void handleRetry()}>
           {retrying ? t("retrying") : t("retryExtraction")}
-        </Button>
+        </AiButton>
 
         {pageHasNoText && (
           <p className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
@@ -517,7 +556,7 @@ export function CvFallbackModal({
           </div>
 
           <div className="flex items-center justify-end gap-2 border-t border-border/70 px-4 py-3">
-            <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+            <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
               {tc("cancel")}
             </Button>
             <Button
@@ -558,10 +597,14 @@ export function CvFallbackModal({
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-border/70 px-6 py-4">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
             {tc("cancel")}
           </Button>
-          <Button onClick={() => void handleSave()} disabled={saving || !form.name.trim()}>
+          <Button
+            size="sm"
+            onClick={() => void handleSave()}
+            disabled={saving || !form.name.trim()}
+          >
             {saving ? t("uploading") : t("saveManualEntry")}
           </Button>
         </div>

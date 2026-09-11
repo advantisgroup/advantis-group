@@ -23,6 +23,7 @@ import { toast } from "sonner";
 
 import { AmpelDot, type Ampel } from "@/components/applicants/AmpelBadge";
 import { today } from "@/components/applicants/applicant-types";
+import { CvImportTray } from "@/components/applicants/CvImportTray";
 import { UploadCvButton } from "@/components/applicants/UploadCvButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -318,12 +319,15 @@ export function ApplicantListView() {
 
   if (applicants.length === 0) {
     return (
-      <EmptyState
-        icon={<UserRoundSearch />}
-        title={t("listEmpty")}
-        description={t("listEmptyDescription")}
-        action={<UploadCvButton />}
-      />
+      <div className="space-y-4">
+        <CvImportTray />
+        <EmptyState
+          icon={<UserRoundSearch />}
+          title={t("listEmpty")}
+          description={t("listEmptyDescription")}
+          action={<UploadCvButton />}
+        />
+      </div>
     );
   }
 
@@ -338,6 +342,8 @@ export function ApplicantListView() {
         </div>
         <UploadCvButton />
       </div>
+
+      <CvImportTray />
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatTile
