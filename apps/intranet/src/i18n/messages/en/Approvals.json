@@ -26,5 +26,16 @@
   "approvalCoverEnds": "Until",
   "coverDatesRequired": "Choose a colleague and both dates.",
   "saveApprovalCover": "Save cover",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "waitingOnYou": "Waiting on you",
+  "allClear": "Nothing waiting — all clear",
+  "oldestFirst": "Soonest and oldest first in each queue",
+  "startingSoon": "{count, plural, one {# starts within 3 days} other {# start within 3 days}}",
+  "overdueCount": "{count} overdue",
+  "startsIn": "Starts in {days}d",
+  "startsToday": "Starts today",
+  "started": "Already started",
+  "halfDay": "½ day",
+  "requestedAgo": "{age} ago",
+  "overdue": "Overdue"
 }
