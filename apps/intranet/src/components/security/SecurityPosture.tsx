@@ -5,6 +5,7 @@ import { ArrowRight, Check, Fingerprint, Minus, ShieldAlert, Smartphone } from "
 import { useTranslations } from "next-intl";
 
 import { MOTION } from "@/components/activity/motion/motion-tokens";
+import { SettingsSection } from "@/components/ui/settings-rows";
 import { useDesignPreview } from "@/lib/design-preview";
 import { cn } from "@/lib/utils";
 
@@ -153,71 +154,78 @@ export function SecurityPosture() {
         ? t("posture.nextTotp")
         : t("posture.nextRotate");
 
+  const content = (
+    <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+      <div className="min-w-0 flex-1">
+        <p
+          className="text-[0.7rem] font-medium uppercase tracking-[0.16em] refreshed:hidden"
+          style={{ color: accent }}
+        >
+          {t("posture.eyebrow")}
+        </p>
+        <h2 className="mt-1 font-display text-xl font-bold tracking-tight text-balance refreshed:mt-0 refreshed:text-lg refreshed:font-semibold">
+          {title}
+        </h2>
+        <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground text-pretty">
+          {body}
+        </p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <FactorChip
+            icon={Fingerprint}
+            label={t("posture.factorPasskey")}
+            active={posture.hasPasskey}
+          />
+          <FactorChip
+            icon={Smartphone}
+            label={t("posture.factorTotp")}
+            active={posture.hasTotp || posture.totpNeedsRotation}
+            warn={posture.totpNeedsRotation}
+          />
+        </div>
+      </div>
+
+      <div className="flex shrink-0 flex-col items-end gap-3">
+        <Meter posture={posture} animate={animate} />
+        {posture.nextStep && (
+          <a
+            href={nextHref}
+            className="group inline-flex items-center gap-1.5 rounded-lg border border-border/70 bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:border-border hover:bg-muted/50"
+          >
+            {nextLabel}
+            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+          </a>
+        )}
+      </div>
+    </div>
+  );
+
+  if (refreshed) {
+    return (
+      <SettingsSection title={t("posture.eyebrow")}>
+        <div className="border-t-[3px] p-5" style={{ borderTopColor: accent }}>
+          {content}
+        </div>
+      </SettingsSection>
+    );
+  }
+
   return (
     <motion.section
       initial={animate ? { opacity: 0, y: 8 } : false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: MOTION.base, ease: MOTION.ease }}
       aria-label={t("posture.regionLabel")}
-      className={cn(
-        "relative overflow-hidden rounded-2xl border border-border/60 p-5",
-        refreshed && "rounded-xl border-t-[3px] border-border/70",
-      )}
-      style={
-        refreshed
-          ? { backgroundColor: "var(--card)", borderTopColor: accent }
-          : {
-              // A wash of the tier colour rather than a solid fill — enough to read
-              // the state peripherally without turning the top of the page into a
-              // banner that has to be dismissed.
-              backgroundImage: `radial-gradient(32rem 14rem at 0% 0%, color-mix(in oklch, ${accent} 16%, transparent), transparent 70%)`,
-              backgroundColor: "var(--card)",
-            }
-      }
+      className="relative overflow-hidden rounded-2xl border border-border/60 p-5"
+      style={{
+        // A wash of the tier colour rather than a solid fill — enough to read
+        // the state peripherally without turning the top of the page into a
+        // banner that has to be dismissed.
+        backgroundImage: `radial-gradient(32rem 14rem at 0% 0%, color-mix(in oklch, ${accent} 16%, transparent), transparent 70%)`,
+        backgroundColor: "var(--card)",
+      }}
     >
-      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
-        <div className="min-w-0 flex-1">
-          <p
-            className="text-[0.7rem] font-medium uppercase tracking-[0.16em] refreshed:text-xs refreshed:normal-case refreshed:tracking-normal"
-            style={{ color: accent }}
-          >
-            {t("posture.eyebrow")}
-          </p>
-          <h2 className="mt-1 font-display text-xl font-bold tracking-tight text-balance refreshed:text-lg refreshed:font-semibold">
-            {title}
-          </h2>
-          <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground text-pretty">
-            {body}
-          </p>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <FactorChip
-              icon={Fingerprint}
-              label={t("posture.factorPasskey")}
-              active={posture.hasPasskey}
-            />
-            <FactorChip
-              icon={Smartphone}
-              label={t("posture.factorTotp")}
-              active={posture.hasTotp || posture.totpNeedsRotation}
-              warn={posture.totpNeedsRotation}
-            />
-          </div>
-        </div>
-
-        <div className="flex shrink-0 flex-col items-end gap-3">
-          <Meter posture={posture} animate={animate} />
-          {posture.nextStep && (
-            <a
-              href={nextHref}
-              className="group inline-flex items-center gap-1.5 rounded-lg border border-border/70 bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:border-border hover:bg-muted/50"
-            >
-              {nextLabel}
-              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-            </a>
-          )}
-        </div>
-      </div>
+      {content}
     </motion.section>
   );
 }

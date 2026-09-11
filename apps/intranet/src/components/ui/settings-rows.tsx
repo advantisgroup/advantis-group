@@ -19,11 +19,16 @@ export function SettingsSection({
   className?: string;
 }) {
   return (
-    <section className={cn("grid gap-x-6 gap-y-3 md:grid-cols-[15rem_minmax(0,1fr)]", className)}>
+    <section
+      className={cn(
+        "grid gap-x-10 gap-y-3 md:grid-cols-[14rem_minmax(0,1fr)] lg:grid-cols-[18rem_minmax(0,1fr)]",
+        className,
+      )}
+    >
       <header className="md:pt-3">
         <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
         {description && (
-          <p className="mt-1 max-w-[28ch] text-[13px] text-muted-foreground text-pretty">
+          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground text-pretty">
             {description}
           </p>
         )}

@@ -163,14 +163,14 @@ export function TotpSettingsCard() {
         href="https://support.microsoft.com/en-us/authenticator/download-microsoft-authenticator"
         target="_blank"
         rel="noopener noreferrer"
-        className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+        className="font-medium text-primary underline underline-offset-2 hover:opacity-80 refreshed:text-foreground refreshed:decoration-muted-foreground/50"
       >
         {t("totpHelpDownload")}
       </a>{" "}
       ·{" "}
       <Link
         href="/guidebooks/sicherheitsanmeldung"
-        className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+        className="font-medium text-primary underline underline-offset-2 hover:opacity-80 refreshed:text-foreground refreshed:decoration-muted-foreground/50"
       >
         {t("totpHelpGuide")}
       </Link>
@@ -311,13 +311,13 @@ export function TotpSettingsCard() {
                 }
                 control={
                   <Button
-                    size="sm"
+                    size="icon-sm"
                     variant="ghost"
                     className="text-destructive hover:text-destructive"
                     onClick={() => setDialog("remove")}
                   >
-                    <Trash2 />
-                    {t("removeTotp")}
+                    <Trash2 className="size-3.5" />
+                    <span className="sr-only">{t("removeTotp")}</span>
                   </Button>
                 }
               />

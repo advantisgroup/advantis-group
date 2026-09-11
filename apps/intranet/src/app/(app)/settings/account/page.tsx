@@ -48,7 +48,7 @@ export default function SettingsAccountPage() {
                   {initials(user.name, user.email)}
                 </AvatarFallback>
               </Avatar>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-[12rem] flex-1">
                 <p className="truncate text-sm font-semibold">{user.name}</p>
                 <p className="truncate text-xs text-muted-foreground">
                   {user.email} · {roleLabel(user, tRoles)}
