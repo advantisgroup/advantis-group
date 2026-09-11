@@ -11,4 +11,5 @@ export const draftSurface = v.union(
   v.literal("applicantContact"),
   v.literal("applicantEmail"),
   v.literal("applicantInterview"),
+  v.literal("cvReview"),
 );

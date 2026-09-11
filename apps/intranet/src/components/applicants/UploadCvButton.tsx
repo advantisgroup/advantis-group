@@ -8,7 +8,6 @@ import { Loader2, PenLine, UploadCloud } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { blankCvFallbackForm, CvFallbackModal } from "@/components/applicants/CvFallbackModal";
 import { Button } from "@/components/ui/button";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useApplicantsApi } from "@/lib/applicants-api";
@@ -24,7 +23,6 @@ export function UploadCvButton() {
   const inputRef = useRef<HTMLInputElement>(null);
   const manualInputRef = useRef<HTMLInputElement>(null);
   const [starting, setStarting] = useState(false);
-  const [fallbackFile, setFallbackFile] = useState<File | null>(null);
 
   async function handleFiles(files: FileList | null) {
     const pdfs = Array.from(files ?? []).filter((f) => f.type === "application/pdf");
@@ -88,24 +86,12 @@ export function UploadCvButton() {
         onChange={(e) => {
           const file = e.target.files?.[0];
           e.target.value = "";
-          if (file) setFallbackFile(file);
+          if (!file) return;
+          const key = crypto.randomUUID();
+          cvImportFiles.set(key, file);
+          router.push(`/hr/cv-review?file=${key}`);
         }}
       />
-      {fallbackFile && (
-        <CvFallbackModal
-          open
-          onOpenChange={(open) => {
-            if (!open) setFallbackFile(null);
-          }}
-          mode="create"
-          file={fallbackFile}
-          initialValues={blankCvFallbackForm()}
-          onSaved={(applicantId) => {
-            setFallbackFile(null);
-            router.push(`/hr/${applicantId}/uebersicht`);
-          }}
-        />
-      )}
     </>
   );
 }

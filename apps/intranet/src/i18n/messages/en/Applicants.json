@@ -15,6 +15,8 @@
   "fallbackModalDescriptionMobile": "Automatic extraction wasn't possible. Tap a field, swipe to the PDF view and select text — or type the details directly.",
   "fallbackPageForm": "Form",
   "fallbackPagePdf": "PDF",
+  "cvReviewFileMissing": "This PDF isn't open in this tab anymore. Upload it again to fill in the details.",
+  "cvReviewApplicantMissing": "This applicant doesn't exist anymore.",
   "retryExtraction": "Retry automatic extraction",
   "retrying": "Reading…",
   "selectFieldFirstHint": "Click a field on the left first, then select text in the PDF.",

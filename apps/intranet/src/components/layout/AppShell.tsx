@@ -108,6 +108,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const immersive =
     pathname.startsWith("/chat") ||
     pathname.startsWith("/wiki-chat") ||
+    pathname === "/hr/cv-review" ||
     isAnnouncementComposer ||
     isFlowComposer ||
     isWikiComposer ||

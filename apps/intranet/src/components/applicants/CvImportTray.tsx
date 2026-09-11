@@ -15,7 +15,6 @@ import { AiGlyph } from "@/components/ai/AiGlyph";
 import { aiErrorKey } from "@/components/ai/AiRunCard";
 import { AiThinking } from "@/components/ai/AiThinking";
 import { aiRunState, parseJson, useAiRun } from "@/components/ai/use-ai-run";
-import { blankCvFallbackForm, CvFallbackModal } from "@/components/applicants/CvFallbackModal";
 import { Button } from "@/components/ui/button";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useNow } from "@/hooks/use-now";
@@ -33,7 +32,6 @@ function CvImportRow({ runId, index }: { runId: Id<"aiRuns">; index: number }) {
   const handleError = useErrorHandler();
   const view = useAiRun<CvExtractOutput>({ runId }, parseJson);
   const [busy, setBusy] = useState(false);
-  const [manualFile, setManualFile] = useState<File | null>(null);
 
   const file = cvImportFiles.get(runId);
   const result = view.state === "done" ? view.result : null;
@@ -130,7 +128,11 @@ function CvImportRow({ runId, index }: { runId: Id<"aiRuns">; index: number }) {
           </>
         )}
         {failed && file && (
-          <Button size="xs" variant="outline" onClick={() => setManualFile(file)}>
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={() => router.push(`/hr/cv-review?run=${runId}`)}
+          >
             {t("fillManually")}
           </Button>
         )}
@@ -145,22 +147,6 @@ function CvImportRow({ runId, index }: { runId: Id<"aiRuns">; index: number }) {
           </button>
         )}
       </div>
-      {manualFile && (
-        <CvFallbackModal
-          open
-          onOpenChange={(open) => {
-            if (!open) setManualFile(null);
-          }}
-          mode="create"
-          file={manualFile}
-          initialValues={blankCvFallbackForm()}
-          onSaved={(applicantId) => {
-            setManualFile(null);
-            view.markSeen();
-            router.push(`/hr/${applicantId}/uebersicht`);
-          }}
-        />
-      )}
     </li>
   );
 }

@@ -1,23 +1,30 @@
 "use client";
 
-import { type UIEvent, useEffect, useRef, useState } from "react";
+import { type UIEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation } from "convex/react";
-import { FileText, Pencil, Sparkles } from "lucide-react";
+import { ArrowLeft, FileText, Loader2, Pencil, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { AiButton } from "@/components/ai/AiButton";
 import { aiErrorKey } from "@/components/ai/AiRunCard";
 import { parseJson, useAiRun } from "@/components/ai/use-ai-run";
-import { RICH_CV_FIELDS, textToHtml } from "@/components/applicants/applicant-types";
+import {
+  type ApplicantDetail,
+  ensureRichHtml,
+  RICH_CV_FIELDS,
+  textToHtml,
+} from "@/components/applicants/applicant-types";
+import { DraftIndicator } from "@/components/compose/DraftIndicator";
+import { useDraft } from "@/components/compose/use-draft";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Textarea } from "@/components/ui/textarea";
@@ -69,13 +76,13 @@ const FIELD_LABEL_KEY: Record<FieldKey, string> = {
   zusammenfassung: "summary",
 };
 
-export type CvFallbackFormState = Record<FieldKey, string> & {
+export type CvReviewValues = Record<FieldKey, string> & {
   skills: string[];
 };
-type FormState = CvFallbackFormState;
 type Origin = "pdf" | "manual";
+export type CvReviewOrigins = Partial<Record<FieldKey | "skills", Origin>>;
 
-export function blankCvFallbackForm(): FormState {
+export function blankCvReviewValues(): CvReviewValues {
   return {
     name: "",
     email: "",
@@ -90,15 +97,49 @@ export function blankCvFallbackForm(): FormState {
   };
 }
 
-export interface CvFallbackModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+export function applicantToCvValues(applicant: ApplicantDetail): CvReviewValues {
+  return {
+    name: applicant.name,
+    email: applicant.email ?? "",
+    telefon: applicant.telefon ?? "",
+    adresse: applicant.adresse ?? "",
+    geburtsdatum: applicant.geburtsdatum ?? "",
+    position: applicant.position ?? "",
+    ausbildung: ensureRichHtml(applicant.ausbildung ?? ""),
+    berufserfahrung: ensureRichHtml(applicant.berufserfahrung ?? ""),
+    zusammenfassung: ensureRichHtml(applicant.zusammenfassung ?? ""),
+    skills: applicant.skills,
+  };
+}
+
+/** Lays what a CV read found over `base`, marking which fields came from the PDF. */
+export function withExtracted(base: CvReviewValues, extracted: ExtractedApplicantFields) {
+  const values = { ...base };
+  const origins: CvReviewOrigins = {};
+  for (const key of TEXT_FIELDS.concat(TEXTAREA_FIELDS, RICH_FIELDS)) {
+    const value = extracted[key];
+    if (typeof value === "string" && value.trim()) {
+      values[key] = RICH_FIELDS.includes(key) ? textToHtml(value) : value;
+      origins[key] = "pdf";
+    }
+  }
+  if (extracted.skills.length > 0) {
+    values.skills = extracted.skills;
+    origins.skills = "pdf";
+  }
+  return { values, origins };
+}
+
+export interface CvReviewFormProps {
   mode: "create" | "update";
   applicantId?: Id<"applicants">;
   file: File;
-  initialValues: FormState;
-  initialFromPdfFields?: (FieldKey | "skills")[];
+  initialValues: CvReviewValues;
+  initialOrigins?: CvReviewOrigins;
   pendingStorageId?: Id<"_storage">;
+  /** Keeps typed-in work across a refresh — only worth it when the PDF can come back too. */
+  draftKey?: string;
+  backHref: string;
   onSaved: (applicantId: Id<"applicants">) => void;
 }
 
@@ -186,17 +227,19 @@ function FillableRichField({
   );
 }
 
-export function CvFallbackModal({
-  open,
-  onOpenChange,
+/** The CV on one side, the applicant's details on the other — select text in
+ * the PDF to fill whichever field has focus. */
+export function CvReviewForm({
   mode,
   applicantId,
   file,
   initialValues,
-  initialFromPdfFields,
+  initialOrigins,
   pendingStorageId: initialPendingStorageId,
+  draftKey,
+  backHref,
   onSaved,
-}: CvFallbackModalProps) {
+}: CvReviewFormProps) {
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
   const ta = useTranslations("Ai");
@@ -208,12 +251,8 @@ export function CvFallbackModal({
   const addDocument = useMutation(api.applicants.addDocument);
   const generateUploadUrl = useMutation(api.applicants.generateUploadUrl);
 
-  const [form, setForm] = useState<FormState>(initialValues);
-  const [origins, setOrigins] = useState<Partial<Record<FieldKey | "skills", Origin>>>(() => {
-    const initial: Partial<Record<FieldKey | "skills", Origin>> = {};
-    for (const key of initialFromPdfFields ?? []) initial[key] = "pdf";
-    return initial;
-  });
+  const [form, setForm] = useState<CvReviewValues>(initialValues);
+  const [origins, setOrigins] = useState<CvReviewOrigins>(initialOrigins ?? {});
   const [focusedField, setFocusedField] = useState<FieldKey | "skills" | null>(null);
   const [skillInput, setSkillInput] = useState("");
   const [pendingStorageId, setPendingStorageId] = useState<Id<"_storage"> | undefined>(
@@ -226,6 +265,18 @@ export function CvFallbackModal({
   const [selectionHintShown, setSelectionHintShown] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
   const [mobilePage, setMobilePage] = useState<0 | 1>(0);
+
+  const draftValue = useMemo(() => ({ form, origins }), [form, origins]);
+  const draft = useDraft({
+    surface: "cvReview",
+    subjectKey: draftKey ?? "",
+    enabled: !!draftKey,
+    value: draftValue,
+    onRestore: (stored) => {
+      setForm(stored.form);
+      setOrigins(stored.origins);
+    },
+  });
 
   const retryRun = useAiRun<CvExtractOutput | CvRescanOutput>({ runId: retryRunId }, parseJson);
   const retrying = startingRetry || retryRun.state === "working";
@@ -270,23 +321,16 @@ export function CvFallbackModal({
   }
 
   function applyExtracted(extracted: ExtractedApplicantFields) {
-    setForm((prev) => {
-      const next = { ...prev };
-      const newOrigins: Partial<Record<FieldKey | "skills", Origin>> = {};
-      for (const key of TEXT_FIELDS.concat(TEXTAREA_FIELDS, RICH_FIELDS)) {
-        const value = extracted[key as keyof ExtractedApplicantFields];
-        if (typeof value === "string" && value.trim()) {
-          next[key] = RICH_FIELDS.includes(key) ? textToHtml(value) : value;
-          newOrigins[key] = "pdf";
-        }
-      }
-      if (extracted.skills.length > 0) {
-        next.skills = extracted.skills;
-        newOrigins.skills = "pdf";
-      }
-      setOrigins((o) => ({ ...o, ...newOrigins }));
-      return next;
-    });
+    const next = withExtracted(form, extracted);
+    setForm(next.values);
+    setOrigins((prev) => ({ ...prev, ...next.origins }));
+  }
+
+  function discardChanges() {
+    const baseline = { form: initialValues, origins: initialOrigins ?? {} };
+    setForm(baseline.form);
+    setOrigins(baseline.origins);
+    void draft.clear(baseline);
   }
 
   async function handleRetry() {
@@ -316,6 +360,7 @@ export function CvFallbackModal({
       setRetryRunId(null);
       if ("kind" in result) {
         if (result.kind === "created") {
+          void draft.clear();
           toast.success(t("uploadSuccess", { name: file.name }));
           onSaved(result.applicantId);
           return;
@@ -362,12 +407,14 @@ export function CvFallbackModal({
           storageId,
           fileName: file.name,
         });
+        await draft.clear();
         toast.success(t("applicantCreatedManually"));
         onSaved(newApplicantId);
       } else {
         if (!applicantId) return;
         await updateApplicant({ applicantId, ...fields });
         await addDocument({ applicantId, storageId, fileName: file.name });
+        await draft.clear();
         toast.success(t("applicantUpdatedFromRescan"));
         onSaved(applicantId);
       }
@@ -381,6 +428,9 @@ export function CvFallbackModal({
   function renderFormFields() {
     return (
       <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          {isMobile ? t("fallbackModalDescriptionMobile") : t("fallbackModalDescription")}
+        </p>
         <AiButton working={retrying} disabled={retrying} onClick={() => void handleRetry()}>
           {retrying ? t("retrying") : t("retryExtraction")}
         </AiButton>
@@ -407,18 +457,7 @@ export function CvFallbackModal({
         ))}
 
         <div className="space-y-1.5">
-          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("skills")}
-            {origins.skills === "pdf" && (
-              <span
-                title={t("filledFromPdf")}
-                className="inline-flex items-center gap-0.5 rounded-full bg-info/15 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-info"
-              >
-                <Sparkles className="size-2.5" />
-                {t("filledFromPdf")}
-              </span>
-            )}
-          </span>
+          <FillableFieldLabel label={t("skills")} origin={origins.skills} />
           <div
             className={cn(
               "flex gap-2 rounded-md",
@@ -500,19 +539,36 @@ export function CvFallbackModal({
     );
   }
 
-  if (isMobile) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex h-[92vh] w-[95vw] max-w-md flex-col gap-0 p-0">
-          <div className="border-b border-border/70 px-4 pb-3 pt-5 pr-12">
-            <DialogTitle className="text-base leading-snug">
-              {mode === "create" ? t("fallbackModalTitle") : t("fallbackModalTitleUpdate")}
-            </DialogTitle>
-            <DialogDescription className="mt-1 text-xs">
-              {t("fallbackModalDescriptionMobile")}
-            </DialogDescription>
-          </div>
+  const pdf = (
+    <PdfViewer file={file} onTextSelected={handleTextSelected} onPageHasNoText={setPageHasNoText} />
+  );
 
+  return (
+    <div className="flex h-full flex-col overflow-hidden">
+      <header className="flex h-14 shrink-0 items-center gap-1.5 border-b border-border/70 px-3 md:px-4">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href={backHref} aria-label={tc("back")}>
+            <ArrowLeft className="size-4" />
+          </Link>
+        </Button>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold leading-tight">
+            {mode === "create" ? t("fallbackModalTitle") : t("fallbackModalTitleUpdate")}
+          </p>
+          {draft.savedAt !== null || draft.status !== "idle" ? (
+            <DraftIndicator draft={draft} onDiscard={discardChanges} />
+          ) : (
+            <p className="truncate text-[11px] text-muted-foreground">{file.name}</p>
+          )}
+        </div>
+        <Button size="sm" onClick={() => void handleSave()} disabled={saving || !form.name.trim()}>
+          {saving && <Loader2 className="animate-spin" />}
+          {saving ? t("uploading") : t("saveManualEntry")}
+        </Button>
+      </header>
+
+      {isMobile ? (
+        <>
           <div className="flex items-center justify-center gap-1 border-b border-border/70 p-2">
             <button
               type="button"
@@ -537,7 +593,6 @@ export function CvFallbackModal({
               {t("fallbackPagePdf")}
             </button>
           </div>
-
           <div
             ref={carouselRef}
             onScroll={handleCarouselScroll}
@@ -546,69 +601,17 @@ export function CvFallbackModal({
             <div className="h-full w-full shrink-0 snap-center overflow-y-auto p-4">
               {renderFormFields()}
             </div>
-            <div className="h-full w-full shrink-0 snap-center">
-              <PdfViewer
-                file={file}
-                onTextSelected={handleTextSelected}
-                onPageHasNoText={setPageHasNoText}
-              />
-            </div>
+            <div className="h-full w-full shrink-0 snap-center">{pdf}</div>
           </div>
-
-          <div className="flex items-center justify-end gap-2 border-t border-border/70 px-4 py-3">
-            <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
-              {tc("cancel")}
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => void handleSave()}
-              disabled={saving || !form.name.trim()}
-            >
-              {saving ? t("uploading") : t("saveManualEntry")}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[88vh] w-[92vw] max-w-[1400px] flex-col gap-0 p-0">
-        <div className="border-b border-border/70 px-6 pb-4 pt-6 pr-12">
-          <DialogTitle>
-            {mode === "create" ? t("fallbackModalTitle") : t("fallbackModalTitleUpdate")}
-          </DialogTitle>
-          <DialogDescription className="mt-1">{t("fallbackModalDescription")}</DialogDescription>
-        </div>
-
-        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(320px,420px)_1fr]">
-          <div className="min-h-0 overflow-y-auto border-b border-border/70 p-5 lg:border-b-0 lg:border-r">
+        </>
+      ) : (
+        <div className="grid min-h-0 flex-1 grid-cols-[minmax(300px,440px)_1fr]">
+          <div className="min-h-0 overflow-y-auto border-r border-border/70 p-5">
             {renderFormFields()}
           </div>
-
-          <div className="min-h-0">
-            <PdfViewer
-              file={file}
-              onTextSelected={handleTextSelected}
-              onPageHasNoText={setPageHasNoText}
-            />
-          </div>
+          <div className="min-h-0">{pdf}</div>
         </div>
-
-        <div className="flex items-center justify-end gap-2 border-t border-border/70 px-6 py-4">
-          <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
-            {tc("cancel")}
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => void handleSave()}
-            disabled={saving || !form.name.trim()}
-          >
-            {saving ? t("uploading") : t("saveManualEntry")}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      )}
+    </div>
   );
 }
