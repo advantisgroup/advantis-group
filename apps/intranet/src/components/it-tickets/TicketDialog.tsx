@@ -105,6 +105,7 @@ function TicketForm({ open, onOpenChange, categories, ticket }: TicketDialogProp
     subjectKey: ticket?._id ?? "new",
     value: values,
     restore: ticket ? "offer" : "auto",
+    entitySavedAt: ticket?.updatedAt,
     isEmpty: (v) =>
       !ticket &&
       !v.createdByName.trim() &&

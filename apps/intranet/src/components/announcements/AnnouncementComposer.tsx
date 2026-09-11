@@ -695,6 +695,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
     subjectKey: editing?._id ?? "new",
     value: draft,
     restore: editing ? "offer" : "auto",
+    entitySavedAt: editing?.updatedAt ?? undefined,
     isEmpty: (d) =>
       !editing &&
       !d.title.trim() &&

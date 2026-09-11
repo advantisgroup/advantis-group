@@ -147,6 +147,7 @@ export function WikiArticleEditor({ article }: { article: WikiArticle | "new" })
     subjectKey,
     value: values,
     restore: isEditing ? "offer" : "auto",
+    entitySavedAt: isEditing ? article.updatedAt : undefined,
     isEmpty: (v) =>
       !isEditing && !v.title.trim() && !v.body.trim() && !v.tags.trim() && !v.url.trim() && !v.doc,
     onRestore: (stored) => setValues((prev) => ({ ...prev, ...stored })),

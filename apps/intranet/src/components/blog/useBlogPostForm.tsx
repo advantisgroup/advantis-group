@@ -35,6 +35,7 @@ export interface BlogPostEntry {
   mainImageStorageId?: Id<"_storage">;
   mainImageUrl?: string;
   status: "draft" | "published";
+  updatedAt: number;
 }
 
 /** Everything the draft keeps. A freshly picked cover file isn't in here —
@@ -139,6 +140,7 @@ export function useBlogPostForm({
     subjectKey: isEditing ? entry._id : "new",
     value: values,
     restore: isEditing ? "offer" : "auto",
+    entitySavedAt: isEditing ? entry.updatedAt : undefined,
     isEmpty: (v) =>
       !isEditing &&
       !v.title.trim() &&

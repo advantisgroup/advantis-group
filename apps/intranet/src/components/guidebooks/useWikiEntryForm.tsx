@@ -259,6 +259,7 @@ export function useWikiEntryForm({
     subjectKey: entryKey,
     value: values,
     restore: isEditing ? "offer" : "auto",
+    entitySavedAt: isEditing ? entry.updatedAt : undefined,
     isEmpty: (v) =>
       !isEditing &&
       !v.thema.trim() &&

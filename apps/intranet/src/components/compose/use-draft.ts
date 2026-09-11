@@ -10,6 +10,8 @@ export type DraftSurface = FunctionArgs<typeof api.drafts.get>["surface"];
 export type DraftSaveStatus = "idle" | "pending" | "saving" | "saved" | "error";
 
 const SAVE_DELAY_MS = 800;
+// A save and its last draft write can land a few seconds apart, in either order.
+const SAVE_RACE_MS = 10_000;
 
 export interface Draft {
   status: DraftSaveStatus;
@@ -24,6 +26,17 @@ export interface Draft {
    * Pass the value the form is being reset to, if it is. */
   clear(baseline?: unknown): Promise<void>;
   hydrated: boolean;
+}
+
+/**
+ * Whether an unsaved draft for something that already exists is still worth
+ * offering back. `draftSavedAt` is when the draft was last written;
+ * `entitySavedAt` is when the real record was last saved — by anyone, so it
+ * can be newer than the draft if a colleague edited it in the meantime.
+ */
+export function shouldOfferDraft(draftSavedAt: number, entitySavedAt: number | undefined): boolean {
+  if (entitySavedAt === undefined) return true;
+  return draftSavedAt + SAVE_RACE_MS >= entitySavedAt;
 }
 
 /**
@@ -42,6 +55,7 @@ export function useDraft<T>({
   onRestore,
   isEmpty,
   restore = "auto",
+  entitySavedAt,
   enabled = true,
 }: {
   surface: DraftSurface;
@@ -51,6 +65,8 @@ export function useDraft<T>({
   /** An empty form deletes its draft instead of saving a blank one. */
   isEmpty?: (value: T) => boolean;
   restore?: "auto" | "offer";
+  /** When the record being edited was last saved — see `shouldOfferDraft`. */
+  entitySavedAt?: number;
   enabled?: boolean;
 }): Draft {
   const stored = useQuery(api.drafts.get, enabled ? { surface, subjectKey } : "skip");
@@ -64,8 +80,8 @@ export function useDraft<T>({
   const [offer, setOffer] = useState<{ data: string; savedAt: number } | null>(null);
 
   const serialized = useMemo(() => JSON.stringify(value), [value]);
-  const latest = useRef({ serialized, value, surface, subjectKey, isEmpty });
-  latest.current = { serialized, value, surface, subjectKey, isEmpty };
+  const latest = useRef({ serialized, value, surface, subjectKey, isEmpty, entitySavedAt });
+  latest.current = { serialized, value, surface, subjectKey, isEmpty, entitySavedAt };
   const onRestoreRef = useRef(onRestore);
   onRestoreRef.current = onRestore;
   const lastSaved = useRef<string | null>(null);
@@ -89,12 +105,20 @@ export function useDraft<T>({
     if (!enabled || hydratedRef.current || stored === undefined) return;
     lastSaved.current = latest.current.serialized;
     if (stored) {
-      if (restore === "offer") setOffer({ data: stored.data, savedAt: stored.updatedAt });
-      else apply(stored.data, stored.updatedAt);
+      if (restore === "auto") {
+        apply(stored.data, stored.updatedAt);
+      } else if (shouldOfferDraft(stored.updatedAt, latest.current.entitySavedAt)) {
+        setOffer({ data: stored.data, savedAt: stored.updatedAt });
+      } else {
+        void discardDraft({
+          surface: latest.current.surface,
+          subjectKey: latest.current.subjectKey,
+        });
+      }
     }
     hydratedRef.current = true;
     setHydrated(true);
-  }, [enabled, stored, restore, apply]);
+  }, [enabled, stored, restore, apply, discardDraft]);
 
   const flush = useCallback(async () => {
     if (timer.current) {
@@ -152,7 +176,7 @@ export function useDraft<T>({
   }, [unsaved]);
 
   const clear = useCallback(
-    async (baseline?: T) => {
+    async (baseline?: unknown) => {
       if (timer.current) clearTimeout(timer.current);
       timer.current = null;
       // When the form is being reset in the same breath, the value it's reset
