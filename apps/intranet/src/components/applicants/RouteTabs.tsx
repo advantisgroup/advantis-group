@@ -7,7 +7,9 @@ import Link from "next/link";
 import { type LucideIcon } from "lucide-react";
 
 import { useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
+import { useSetPageHeaderTabs } from "@/components/layout/PageHeaderBar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useDesignPreview } from "@/lib/design-preview";
 import { cn } from "@/lib/utils";
 
 export interface RouteTab {
@@ -31,6 +33,15 @@ export interface RouteTab {
 export function RouteTabs({ tabs, activeValue }: { tabs: RouteTab[]; activeValue: string }) {
   const isMobile = useIsMobile();
   const { setTabs } = useBottomNavTabs();
+  const setHeaderTabs = useSetPageHeaderTabs();
+  const inHeader = useDesignPreview() === "refreshed" && !isMobile;
+
+  // Refreshed design: on desktop the tabs sit as pills beside the page title.
+  useEffect(() => {
+    if (!inHeader) return;
+    setHeaderTabs({ tabs, activeValue });
+    return () => setHeaderTabs(null);
+  }, [inHeader, setHeaderTabs, tabs, activeValue]);
 
   useEffect(() => {
     if (!isMobile) return;
@@ -46,7 +57,7 @@ export function RouteTabs({ tabs, activeValue }: { tabs: RouteTab[]; activeValue
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile, tabs, activeValue]);
 
-  if (isMobile) {
+  if (isMobile || inHeader) {
     return null;
   }
 

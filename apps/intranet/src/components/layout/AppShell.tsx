@@ -27,6 +27,7 @@ import {
   PageHeaderActionsSlot,
   PageHeaderBarProvider,
   PageHeaderBarSlot,
+  PageHeaderTabsSlot,
   usePageHeaderBarState,
 } from "@/components/layout/PageHeaderBar";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
@@ -270,6 +271,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
               desktop, an empty flex spacer on mobile. */}
           <div className="flex min-w-0 flex-1 items-center justify-start gap-2">
             {!isUpdatesReading && <PageHeaderBarSlot />}
+            {!isUpdatesReading && <PageHeaderTabsSlot />}
             <div className={pageHeaderBar ? "hidden" : "hidden w-full md:flex"}>
               <CommandPalette />
             </div>

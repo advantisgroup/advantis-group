@@ -2,11 +2,15 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
+import Link from "next/link";
+
 import { Info, type LucideIcon } from "lucide-react";
 
+import type { RouteTab } from "@/components/applicants/RouteTabs";
 import { TourReplayButton, type CheckpointId } from "@/components/tour";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export interface PageHeaderIdentity {
   title: string;
@@ -30,14 +34,25 @@ export interface PageHeaderAction {
   tourTarget?: string;
 }
 
+export interface PageHeaderTabs {
+  tabs: RouteTab[];
+  activeValue: string;
+}
+
 interface PageHeaderBarState {
   identity: PageHeaderIdentity | null;
   actions: PageHeaderAction[] | null;
+  tabs: PageHeaderTabs | null;
 }
 
-const PageHeaderBarContext = createContext<PageHeaderBarState>({ identity: null, actions: null });
+const PageHeaderBarContext = createContext<PageHeaderBarState>({
+  identity: null,
+  actions: null,
+  tabs: null,
+});
 const SetIdentityContext = createContext<(identity: PageHeaderIdentity | null) => void>(() => {});
 const SetActionsContext = createContext<(actions: PageHeaderAction[] | null) => void>(() => {});
+const SetTabsContext = createContext<(tabs: PageHeaderTabs | null) => void>(() => {});
 
 /**
  * Two independent state slots (not one merged object) because a section's
@@ -49,12 +64,15 @@ const SetActionsContext = createContext<(actions: PageHeaderAction[] | null) => 
 export function PageHeaderBarProvider({ children }: { children: ReactNode }) {
   const [identity, setIdentity] = useState<PageHeaderIdentity | null>(null);
   const [actions, setActions] = useState<PageHeaderAction[] | null>(null);
+  const [tabs, setTabs] = useState<PageHeaderTabs | null>(null);
   return (
     <SetIdentityContext.Provider value={setIdentity}>
       <SetActionsContext.Provider value={setActions}>
-        <PageHeaderBarContext.Provider value={{ identity, actions }}>
-          {children}
-        </PageHeaderBarContext.Provider>
+        <SetTabsContext.Provider value={setTabs}>
+          <PageHeaderBarContext.Provider value={{ identity, actions, tabs }}>
+            {children}
+          </PageHeaderBarContext.Provider>
+        </SetTabsContext.Provider>
       </SetActionsContext.Provider>
     </SetIdentityContext.Provider>
   );
@@ -62,6 +80,50 @@ export function PageHeaderBarProvider({ children }: { children: ReactNode }) {
 
 export function usePageHeaderBarState() {
   return useContext(PageHeaderBarContext);
+}
+
+/** Lets `RouteTabs` move its tabs up next to the page title (refreshed design). */
+export function useSetPageHeaderTabs() {
+  return useContext(SetTabsContext);
+}
+
+/** The section's route tabs as small pills beside the title in the Intranet
+ * Header — desktop only; phones keep them in the bottom nav. */
+export function PageHeaderTabsSlot() {
+  const { tabs } = usePageHeaderBarState();
+  if (!tabs) return null;
+  return (
+    <nav className="ml-3 hidden min-w-0 items-center gap-0.5 overflow-x-auto [scrollbar-width:none] md:flex">
+      {tabs.tabs.map((tab) => {
+        const active = tab.value === tabs.activeValue;
+        return (
+          <Link
+            key={tab.value}
+            href={tab.href}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              active
+                ? "bg-accent font-medium text-foreground"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}
+          >
+            {tab.label}
+            {tab.count !== undefined && (
+              <span
+                className={cn(
+                  "rounded-full px-1.5 text-[11px] tabular-nums",
+                  active ? "bg-foreground text-background" : "bg-muted text-muted-foreground",
+                )}
+              >
+                {tab.count}
+              </span>
+            )}
+          </Link>
+        );
+      })}
+    </nav>
+  );
 }
 
 /**
@@ -116,7 +178,7 @@ export function PageHeaderBarSlot() {
           {identity.icon}
         </span>
       )}
-      <h1 className="min-w-0 truncate font-display text-sm font-semibold tracking-tight md:text-base">
+      <h1 className="min-w-0 truncate font-display text-sm font-semibold tracking-tight md:text-base refreshed:md:text-[15px]">
         {identity.title}
       </h1>
       {identity.tourCheckpoint && <TourReplayButton checkpointId={identity.tourCheckpoint} />}
