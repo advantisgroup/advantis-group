@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useQuery } from "convex/react";
 import { ArrowDown, ArrowUp, Download, Plus, Search, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -12,6 +13,7 @@ import { toast } from "sonner";
 
 import { TrademarkNotice } from "@/components/branding/TrademarkNotice";
 import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
+import { PersonLink } from "@/components/profile/PersonLink";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { TogglePill } from "@/components/ui/filter-pill";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,6 +39,7 @@ import {
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useSlashFocus } from "@/lib/activity/useSlashFocus";
+import { useDesignPreview } from "@/lib/design-preview";
 import { cn } from "@/lib/utils";
 
 const WEEKDAYS = [
@@ -239,6 +243,7 @@ export function ClockodoAdminPanel() {
   const t = useTranslations("Integrations");
   const router = useRouter();
   const handleError = useErrorHandler();
+  const refreshed = useDesignPreview() === "refreshed";
 
   const listClockodoUsers = useAction(api.integrations.clockodo.users.listClockodoUsers);
   const getClockodoUserDetail = useAction(api.integrations.clockodo.users.getClockodoUserDetail);
@@ -563,7 +568,7 @@ export function ClockodoAdminPanel() {
         </div>
       </ResponsiveDialog>
 
-      {gaps.length > 0 && (
+      {!refreshed && gaps.length > 0 && (
         <div className="flex flex-col gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
           {gaps.map((gap) => (
             <button
@@ -587,15 +592,32 @@ export function ClockodoAdminPanel() {
 
       {rows !== null && !loadError && rows.length > 0 && (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative sm:max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-8 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              ref={searchRef}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("searchPlaceholder")}
-              className="pl-9"
-            />
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative sm:max-w-xs refreshed:sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-8 -translate-y-1/2 text-muted-foreground refreshed:size-3.5" />
+              <Input
+                ref={searchRef}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("searchPlaceholder")}
+                className="pl-9 refreshed:h-9 refreshed:rounded-full refreshed:pl-8 refreshed:text-sm md:refreshed:h-7 md:refreshed:text-xs"
+              />
+            </div>
+            {refreshed && gaps.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                {gaps.map((gap) => (
+                  <TogglePill
+                    key={gap.key}
+                    active={gap.active}
+                    onClick={gap.toggle}
+                    count={gap.count}
+                    dotClassName="bg-warn"
+                  >
+                    {gap.label}
+                  </TogglePill>
+                ))}
+              </div>
+            )}
           </div>
           {selectedIds.size > 0 && (
             <div className="flex flex-wrap items-center gap-2">
@@ -755,15 +777,23 @@ export function ClockodoAdminPanel() {
                               aria-label={row.name}
                             />
                           </TableCell>
-                          <TableCell className="text-fg">
+                          <TableCell className="text-fg refreshed:font-medium">
                             <div className="flex items-center gap-2">
                               {row.name}
-                              <Badge
-                                variant={row.active === false ? "muted" : "success"}
-                                className="text-[10px]"
-                              >
-                                {row.active === false ? t("inactive") : t("active")}
-                              </Badge>
+                              {refreshed ? (
+                                row.active === false && (
+                                  <span className="text-xs font-normal text-muted-foreground">
+                                    {t("inactive")}
+                                  </span>
+                                )
+                              ) : (
+                                <Badge
+                                  variant={row.active === false ? "muted" : "success"}
+                                  className="text-[10px]"
+                                >
+                                  {row.active === false ? t("inactive") : t("active")}
+                                </Badge>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">{row.email}</TableCell>
@@ -787,7 +817,16 @@ export function ClockodoAdminPanel() {
                               : "—"}
                           </TableCell>
                           <TableCell className="text-muted-foreground">
-                            {row.linkedUserName ?? t("notLinked")}
+                            {refreshed && row.linkedUserId ? (
+                              <PersonLink
+                                userId={row.linkedUserId as Id<"users">}
+                                className="text-foreground"
+                              >
+                                {row.linkedUserName}
+                              </PersonLink>
+                            ) : (
+                              (row.linkedUserName ?? t("notLinked"))
+                            )}
                           </TableCell>
                         </TableRow>
                       );
