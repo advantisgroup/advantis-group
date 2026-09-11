@@ -3,6 +3,7 @@
 import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { AiThinking } from "@/components/ai/AiThinking";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -81,16 +82,7 @@ export function CoachPanel({
       )}
 
       <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto p-2.5">
-        {thinking && (
-          <div className="flex items-center gap-2 px-2 py-1.5 text-xs italic text-muted-foreground">
-            <span className="flex gap-0.5">
-              <span className="size-1 animate-bounce rounded-full bg-amber-500 [animation-delay:0ms]" />
-              <span className="size-1 animate-bounce rounded-full bg-amber-500 [animation-delay:180ms]" />
-              <span className="size-1 animate-bounce rounded-full bg-amber-500 [animation-delay:360ms]" />
-            </span>
-            {t("aiAnalyzing")}
-          </div>
-        )}
+        {thinking && <AiThinking label={t("aiAnalyzing")} className="px-2 py-1.5 text-xs" />}
         {hints.length === 0 && !thinking && (
           <div className="p-2.5 text-xs italic text-muted-foreground">{t("hintsEmpty")}</div>
         )}

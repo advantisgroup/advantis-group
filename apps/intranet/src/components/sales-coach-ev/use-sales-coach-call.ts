@@ -2,13 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useIntranetApiClient } from "@/lib/api-client";
 import { useEdenApi } from "@/lib/eden";
+import { startCallReport } from "@/lib/sales-coach-ev-api";
 
 import { OBJECTIONS } from "./constants";
-import { type CallRecord, type Hint, type Outcome } from "./types";
+import { type Hint, type Outcome } from "./types";
 
 // The Web Speech API has no official TS lib entry — this is the minimal
 // surface this hook actually uses, backed by Chrome/Edge's implementation.
@@ -62,7 +65,9 @@ function detectObjection(tailText: string): string | null {
 }
 
 export function useSalesCoachCall() {
+  const t = useTranslations("SalesCoachEv");
   const eden = useEdenApi();
+  const apiClient = useIntranetApiClient();
   const handleError = useErrorHandler();
 
   const [status, setStatus] = useState<"idle" | "live" | "stopped">("idle");
@@ -76,7 +81,8 @@ export function useSalesCoachCall() {
   const [detectedObjectionId, setDetectedObjectionId] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [lastCall, setLastCall] = useState<CallRecord | null>(null);
+  /** The call just saved — its report runs on its own, see CallView. */
+  const [lastCallId, setLastCallId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
@@ -92,16 +98,16 @@ export function useSalesCoachCall() {
   const browserSupported = getSpeechRecognitionCtor() !== null;
 
   const runLiveAnalysis = useCallback(async () => {
-    const t = transcriptRef.current.trim();
-    if (!t || t.length < 80 || t.length - lastAnalysisLenRef.current < 60) return;
-    lastAnalysisLenRef.current = t.length;
+    const text = transcriptRef.current.trim();
+    if (!text || text.length < 80 || text.length - lastAnalysisLenRef.current < 60) return;
+    lastAnalysisLenRef.current = text.length;
     setThinking(true);
     try {
       const elapsed = callStartRef.current
         ? Math.floor((Date.now() - callStartRef.current) / 1000)
         : 0;
       const { data, error: apiError } = await eden["sales-coach-ev"]["live-hint"].post({
-        transcriptTail: t.slice(-1800),
+        transcriptTail: text.slice(-1800),
         elapsedSec: elapsed,
       });
       if (apiError) throw apiError;
@@ -135,6 +141,8 @@ export function useSalesCoachCall() {
     setElapsedSec(sec);
   }, []);
 
+  /** Saves the call, then hands scoring to a run — the report finishes and
+   * attaches to the call whether or not this page is still open. */
   const saveAndAnalyzeCall = useCallback(async () => {
     const finalTranscript = transcriptRef.current;
     const durationSec = callStartRef.current
@@ -152,40 +160,25 @@ export function useSalesCoachCall() {
         outcome: finalOutcome,
       });
       if (createError) throw createError;
+      setLastCallId(created.id);
 
       if (durationSec < MIN_SCORED_DURATION_SEC) {
-        toast.info("Call gespeichert (unter 1 Min) — keine Auswertung.");
+        toast.info(t("reportSavedShort"));
         return;
       }
-
-      toast.info("Call gespeichert — Analyse laeuft...");
-      const { data: report, error: reportError } = await eden["sales-coach-ev"].report.post({
+      await startCallReport(apiClient, {
         callId: created.id,
         transcript: finalTranscript,
         durationSec,
         callerSpeakPct,
         outcome: finalOutcome,
       });
-      if (reportError) throw reportError;
-
-      setLastCall({
-        id: created.id,
-        startedAt: Date.now() - durationSec * 1000,
-        durationSec,
-        callerSpeakPct,
-        outcome: finalOutcome,
-        transcript: finalTranscript,
-        scored: true,
-        skillLevel: report.skillLevel,
-        scores: report.scores,
-        feedback: report.feedback,
-      });
     } catch (err) {
-      handleError(err, "Auswertung fehlgeschlagen");
+      handleError(err, t("reportStartFailed"));
     } finally {
       setSaving(false);
     }
-  }, [eden, outcome, handleError]);
+  }, [eden, apiClient, outcome, handleError, t]);
 
   const stop = useCallback(() => {
     runningRef.current = false;
@@ -219,7 +212,7 @@ export function useSalesCoachCall() {
       setDetectedPath(0);
       setDetectedObjectionId(null);
       setOutcome(null);
-      setLastCall(null);
+      setLastCallId(null);
       setElapsedSec(0);
       callerMsRef.current = 0;
       totalMsRef.current = 0;
@@ -315,7 +308,7 @@ export function useSalesCoachCall() {
     outcome,
     setOutcome,
     error,
-    lastCall,
+    lastCallId,
     wordCount,
     browserSupported,
     start,
