@@ -314,10 +314,11 @@ export function CvReviewForm({
         setForm((prev) => ({ ...prev, skills: items }));
         setOrigins((prev) => ({ ...prev, skills: "pdf" }));
       }
-      return;
+    } else {
+      const value = RICH_FIELDS.includes(focusedField) ? textToHtml(text) : text;
+      setField(focusedField, value, "pdf");
     }
-    const value = RICH_FIELDS.includes(focusedField) ? textToHtml(text) : text;
-    setField(focusedField, value, "pdf");
+    if (isMobile) scrollToPage(0);
   }
 
   function applyExtracted(extracted: ExtractedApplicantFields) {
@@ -601,7 +602,18 @@ export function CvReviewForm({
             <div className="h-full w-full shrink-0 snap-center overflow-y-auto p-4">
               {renderFormFields()}
             </div>
-            <div className="h-full w-full shrink-0 snap-center">{pdf}</div>
+            <div className="flex h-full w-full shrink-0 snap-center flex-col">
+              <p className="shrink-0 truncate border-b border-border/70 px-4 py-2 text-center text-xs font-medium text-muted-foreground">
+                {focusedField
+                  ? t("cvReviewTapToFill", {
+                      field: t(
+                        focusedField === "skills" ? "skills" : FIELD_LABEL_KEY[focusedField],
+                      ),
+                    })
+                  : t("selectFieldFirstHint")}
+              </p>
+              <div className="min-h-0 flex-1">{pdf}</div>
+            </div>
           </div>
         </>
       ) : (

@@ -17,6 +17,7 @@
   "fallbackPagePdf": "PDF",
   "cvReviewFileMissing": "This PDF isn't open in this tab anymore. Upload it again to fill in the details.",
   "cvReviewApplicantMissing": "This applicant doesn't exist anymore.",
+  "cvReviewTapToFill": "Tap a line to fill “{field}”",
   "retryExtraction": "Retry automatic extraction",
   "retrying": "Reading…",
   "selectFieldFirstHint": "Click a field on the left first, then select text in the PDF.",
