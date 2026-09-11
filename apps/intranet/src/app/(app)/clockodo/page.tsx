@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
 import {
   CalendarArrowDown,
@@ -14,6 +15,7 @@ import {
   Clock3,
   Coffee,
   Link2Off,
+  Pencil,
   Plane,
   Plus,
   Play,
@@ -36,6 +38,7 @@ import { DateBadge } from "@/components/clockodo/DateBadge";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ErrorFallback } from "@/components/ErrorFallback";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
+import { PersonLink } from "@/components/profile/PersonLink";
 import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,7 +51,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FilterPill } from "@/components/ui/filter-pill";
 import { Input } from "@/components/ui/input";
+import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
 import {
   Select,
   SelectContent,
@@ -57,6 +63,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { addDaysIso, isoToday, mondayOfWeek, rangesOverlap, workingDays } from "@/lib/absences";
 import {
@@ -78,6 +93,7 @@ import {
   useClockodoClock,
 } from "@/lib/clockodo-clock";
 import { deleteClockEntry, type ClockEntry, useClockEntries } from "@/lib/clockodo-entries-api";
+import { useDesignPreview } from "@/lib/design-preview";
 import { formatIsoDate } from "@/lib/format";
 import { buildIcs, downloadIcs } from "@/lib/ics";
 import { useEdenApi } from "@/lib/eden";
@@ -108,21 +124,37 @@ function AbsencesSubNav({
   onNavigate: (section: ClockodoSection) => void;
 }) {
   const t = useTranslations("Absences");
+  const refreshed = useDesignPreview() === "refreshed";
+  const items = ABSENCE_SUB_SECTIONS.filter(
+    (item) => item.value !== "approvals" || canManageClockodo,
+  );
+
+  if (refreshed) {
+    return (
+      <Segmented
+        value={active}
+        onChange={onNavigate}
+        options={items.map((item) => ({
+          value: item.value,
+          label: t(`section.${item.labelKey}`),
+        }))}
+      />
+    );
+  }
+
   return (
     <div className="flex items-center gap-1 overflow-x-auto">
-      {ABSENCE_SUB_SECTIONS.filter((item) => item.value !== "approvals" || canManageClockodo).map(
-        (item) => (
-          <Button
-            key={item.value}
-            variant={active === item.value ? "default" : "ghost"}
-            size="sm"
-            className="shrink-0"
-            onClick={() => onNavigate(item.value)}
-          >
-            {t(`section.${item.labelKey}`)}
-          </Button>
-        ),
-      )}
+      {items.map((item) => (
+        <Button
+          key={item.value}
+          variant={active === item.value ? "default" : "ghost"}
+          size="sm"
+          className="shrink-0"
+          onClick={() => onNavigate(item.value)}
+        >
+          {t(`section.${item.labelKey}`)}
+        </Button>
+      ))}
     </div>
   );
 }
@@ -155,32 +187,43 @@ function SectionBoundary({ title, children }: { title: string; children: ReactNo
  * depth instead of reading as solid color swatches. */
 const TYPE_STYLE: Record<
   AbsenceType,
-  { icon: typeof Plane; className: string; barClassName: string }
+  { icon: typeof Plane; className: string; barClassName: string; accent: string }
 > = {
   vacation: {
     icon: Plane,
     className:
-      "bg-gradient-to-br from-emerald-400/30 to-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-    barClassName: "bg-gradient-to-r from-emerald-500 to-emerald-500/70",
+      "bg-gradient-to-br from-emerald-400/30 to-emerald-500/10 text-emerald-700 dark:text-emerald-300 refreshed:bg-none refreshed:bg-emerald-500/15",
+    barClassName:
+      "bg-gradient-to-r from-emerald-500 to-emerald-500/70 refreshed:bg-none refreshed:bg-emerald-500",
+    accent: "var(--color-emerald-500)",
   },
   sick: {
     icon: Thermometer,
-    className: "bg-gradient-to-br from-sky-400/30 to-sky-500/10 text-sky-700 dark:text-sky-300",
-    barClassName: "bg-gradient-to-r from-sky-500 to-sky-500/70",
+    className:
+      "bg-gradient-to-br from-sky-400/30 to-sky-500/10 text-sky-700 dark:text-sky-300 refreshed:bg-none refreshed:bg-sky-500/15",
+    barClassName:
+      "bg-gradient-to-r from-sky-500 to-sky-500/70 refreshed:bg-none refreshed:bg-sky-500",
+    accent: "var(--color-sky-500)",
   },
   personal: {
     icon: CircleDashed,
     className:
-      "bg-gradient-to-br from-violet-400/30 to-violet-500/10 text-violet-700 dark:text-violet-300",
-    barClassName: "bg-gradient-to-r from-violet-500 to-violet-500/70",
+      "bg-gradient-to-br from-violet-400/30 to-violet-500/10 text-violet-700 dark:text-violet-300 refreshed:bg-none refreshed:bg-violet-500/15",
+    barClassName:
+      "bg-gradient-to-r from-violet-500 to-violet-500/70 refreshed:bg-none refreshed:bg-violet-500",
+    accent: "var(--color-violet-500)",
   },
   other: {
     icon: CircleDashed,
     className:
-      "bg-gradient-to-br from-amber-400/30 to-amber-500/10 text-amber-700 dark:text-amber-300",
-    barClassName: "bg-gradient-to-r from-amber-500 to-amber-500/70",
+      "bg-gradient-to-br from-amber-400/30 to-amber-500/10 text-amber-700 dark:text-amber-300 refreshed:bg-none refreshed:bg-amber-500/15",
+    barClassName:
+      "bg-gradient-to-r from-amber-500 to-amber-500/70 refreshed:bg-none refreshed:bg-amber-500",
+    accent: "var(--color-amber-500)",
   },
 };
+
+const ABSENCE_TYPES = Object.keys(TYPE_STYLE) as AbsenceType[];
 
 const CLOCKODO_ABSENCE_GROUPS = [
   { key: "timeOff", types: [1, 2, 3, 10] },
@@ -220,6 +263,79 @@ function statusVariant(status: AbsenceStatus): "warning" | "success" | "destruct
     cancelled: "muted",
   };
   return variants[status];
+}
+
+const STATUS_ACCENT: Record<AbsenceStatus, string> = {
+  pending: "var(--warn)",
+  approved: "var(--ok)",
+  denied: "var(--destructive)",
+  cancelled: "var(--muted-foreground)",
+};
+
+const ABSENCE_STATUSES = Object.keys(STATUS_ACCENT) as AbsenceStatus[];
+
+function AbsenceStatusBadge({ status }: { status: AbsenceStatus }) {
+  const t = useTranslations("Absences");
+  const refreshed = useDesignPreview() === "refreshed";
+  if (!refreshed) return <Badge variant={statusVariant(status)}>{t(status)}</Badge>;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium",
+        status === "cancelled" && "text-muted-foreground",
+      )}
+    >
+      <span
+        className="size-2 shrink-0 rounded-full"
+        style={{ background: STATUS_ACCENT[status] }}
+      />
+      {t(status)}
+    </span>
+  );
+}
+
+function AbsenceTypeLabel({ type }: { type: AbsenceType }) {
+  const t = useTranslations("Absences");
+  return (
+    <span className="inline-flex min-w-0 items-center gap-2">
+      <span
+        className="size-2 shrink-0 rounded-full"
+        style={{ background: TYPE_STYLE[type].accent }}
+      />
+      <span className="truncate">{t(type)}</span>
+    </span>
+  );
+}
+
+function Segmented<T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (value: T) => void;
+}) {
+  return (
+    <div className="inline-flex max-w-full shrink-0 overflow-x-auto rounded-lg border border-border/70 bg-muted/40 p-0.5">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={value === option.value}
+          onClick={() => onChange(option.value)}
+          className={cn(
+            "shrink-0 rounded-md px-3 py-1 text-sm font-medium transition-colors",
+            value === option.value
+              ? "bg-card text-foreground shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 function CalendarBar({
@@ -303,7 +419,7 @@ function AbsencePill({ absence }: { absence: MyAbsence }) {
           </p>
         </div>
       </div>
-      <Badge variant={statusVariant(absence.status)}>{t(absence.status)}</Badge>
+      <AbsenceStatusBadge status={absence.status} />
     </div>
   );
 }
@@ -334,6 +450,7 @@ function ClockControl() {
   const user = useCurrentUser();
   const { state: clock, now, refresh } = useClockodoClock(!!user.clockodoUserId);
   const actions = useClockodoActions(clock, refresh);
+  const refreshed = useDesignPreview() === "refreshed";
 
   if (!user.clockodoUserId) {
     return <NoPersonalClockodoAccount hint={t("noPersonalAccountClockHint")} />;
@@ -352,7 +469,7 @@ function ClockControl() {
   return (
     <>
       <Card className="relative overflow-hidden border-border/70 shadow-none">
-        <ClockStatusGradient status={clock?.status ?? null} />
+        {!refreshed && <ClockStatusGradient status={clock?.status ?? null} />}
         <CardContent className="relative z-10 flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <span
@@ -424,6 +541,7 @@ function Dashboard({
 }) {
   const t = useTranslations("Absences");
   const user = useCurrentUser();
+  const refreshed = useDesignPreview() === "refreshed";
   const [now, setNow] = useState(() => Date.now());
   const weekStart = mondayOfWeek(isoToday());
   const { entries: weekEntries } = useClockEntries(weekStart, isoToday(), !!user.clockodoUserId);
@@ -470,35 +588,58 @@ function Dashboard({
       <SectionBoundary title={t("clockUnavailable")}>
         <ClockControl />
       </SectionBoundary>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <Stat
-          label={t("statsHoursToday")}
-          value={user.clockodoUserId ? hours.today : "-"}
-          icon={Clock3}
-          accent="bg-gradient-to-br from-emerald-400/30 to-emerald-500/10 text-emerald-700"
-        />
-        <Stat
-          label={t("statsHoursWeek")}
-          value={user.clockodoUserId ? hours.week : "-"}
-          icon={CalendarDays}
-          accent="bg-gradient-to-br from-sky-400/30 to-sky-500/10 text-sky-700"
-        />
-        <Stat
-          label={t("statsPending")}
-          value={pending ?? "-"}
-          icon={Plane}
-          accent="bg-gradient-to-br from-amber-400/30 to-amber-500/10 text-amber-700"
-        />
-        <Stat
-          label={t("teamOutToday")}
-          value={
-            calendar?.filter((a) => a.startDate <= isoToday() && a.endDate >= isoToday()).length ??
-            "-"
-          }
-          icon={Users}
-          accent="bg-gradient-to-br from-indigo-400/30 to-indigo-500/10 text-indigo-700"
-        />
-      </div>
+      {refreshed ? (
+        <KpiStrip>
+          <Kpi
+            featured
+            label={t("statsHoursToday")}
+            value={user.clockodoUserId ? hours.today : "-"}
+          />
+          <Kpi label={t("statsHoursWeek")} value={user.clockodoUserId ? hours.week : "-"} />
+          <Kpi
+            label={t("statsPending")}
+            value={pending ?? "-"}
+            tone={pending ? "warn" : "neutral"}
+          />
+          <Kpi
+            label={t("teamOutToday")}
+            value={
+              calendar?.filter((a) => a.startDate <= isoToday() && a.endDate >= isoToday())
+                .length ?? "-"
+            }
+          />
+        </KpiStrip>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <Stat
+            label={t("statsHoursToday")}
+            value={user.clockodoUserId ? hours.today : "-"}
+            icon={Clock3}
+            accent="bg-gradient-to-br from-emerald-400/30 to-emerald-500/10 text-emerald-700"
+          />
+          <Stat
+            label={t("statsHoursWeek")}
+            value={user.clockodoUserId ? hours.week : "-"}
+            icon={CalendarDays}
+            accent="bg-gradient-to-br from-sky-400/30 to-sky-500/10 text-sky-700"
+          />
+          <Stat
+            label={t("statsPending")}
+            value={pending ?? "-"}
+            icon={Plane}
+            accent="bg-gradient-to-br from-amber-400/30 to-amber-500/10 text-amber-700"
+          />
+          <Stat
+            label={t("teamOutToday")}
+            value={
+              calendar?.filter((a) => a.startDate <= isoToday() && a.endDate >= isoToday())
+                .length ?? "-"
+            }
+            icon={Users}
+            accent="bg-gradient-to-br from-indigo-400/30 to-indigo-500/10 text-indigo-700"
+          />
+        </div>
+      )}
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)]">
         <Card>
           <CardHeader className="flex-row items-center justify-between">
@@ -534,15 +675,30 @@ function Dashboard({
                           {absence.userName.slice(0, 2).toUpperCase()}
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">{absence.userName}</p>
+                          {refreshed ? (
+                            <PersonLink
+                              userId={absence.userId as Id<"users">}
+                              className="block max-w-full text-sm font-medium"
+                            >
+                              {absence.userName}
+                            </PersonLink>
+                          ) : (
+                            <p className="truncate text-sm font-medium">{absence.userName}</p>
+                          )}
                           <p className="truncate text-xs text-muted-foreground">
                             {absence.userDepartment ?? t("noDepartment")}
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className={TYPE_STYLE[absence.type].className}>
-                        {t(absence.type)}
-                      </Badge>
+                      {refreshed ? (
+                        <span className="shrink-0 text-xs font-medium">
+                          <AbsenceTypeLabel type={absence.type} />
+                        </span>
+                      ) : (
+                        <Badge variant="outline" className={TYPE_STYLE[absence.type].className}>
+                          {t(absence.type)}
+                        </Badge>
+                      )}
                     </div>
                   ))}
               </div>
@@ -640,7 +796,7 @@ function Timetable() {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="flex-row items-center justify-between border-b border-border/70 bg-gradient-to-r from-muted/60 to-muted/10">
+      <CardHeader className="flex-row items-center justify-between border-b border-border/70 bg-gradient-to-r from-muted/60 to-muted/10 refreshed:bg-none">
         <div>
           <CardTitle className="text-base">{t("yourTimetable")}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -734,7 +890,7 @@ function Timetable() {
                     {t("breakDuration", { duration: breakLabel })}
                   </div>
                 )}
-                <div className="flex items-center justify-between gap-3 rounded-md border border-border/70 border-l-2 border-l-primary/60 bg-card px-3 py-2.5 shadow-sm">
+                <div className="flex items-center justify-between gap-3 rounded-md border border-border/70 border-l-2 border-l-primary/60 bg-card px-3 py-2.5 shadow-sm refreshed:shadow-none">
                   <div className="min-w-0">
                     <p className="text-sm font-medium tabular-nums">
                       {formatClockTime(entry.startTime, locale)} –{" "}
@@ -923,12 +1079,215 @@ function Requests({
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<MyAbsence | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  const refreshed = useDesignPreview() === "refreshed";
+  const [statuses, setStatuses] = useState<string[]>([]);
+  const [types, setTypes] = useState<string[]>([]);
   const visible = (mine ?? []).filter((absence) =>
     `${absence.type} ${absence.reason ?? ""}`.toLowerCase().includes(query.toLowerCase()),
   );
+
+  const dialogs = (
+    <>
+      <ClockodoAbsenceDialog
+        absence={null}
+        open={newOpen}
+        onOpenChange={setNewOpen}
+        onSaved={onSaved}
+      />
+      <ClockodoAbsenceDialog
+        absence={editing}
+        open={editing !== null}
+        onOpenChange={(open) => !open && setEditing(null)}
+        onSaved={onSaved}
+      />
+    </>
+  );
+
+  if (refreshed) {
+    const search = query.trim().toLowerCase();
+    const rows = (mine ?? [])
+      .filter(
+        (absence) =>
+          (!search ||
+            `${t(absence.type)} ${absence.reason ?? ""}`.toLowerCase().includes(search)) &&
+          (statuses.length === 0 || statuses.includes(absence.status)) &&
+          (types.length === 0 || types.includes(absence.type)),
+      )
+      .sort((a, b) => b.startDate.localeCompare(a.startDate));
+    const range = (absence: MyAbsence) =>
+      `${formatIsoDate(absence.startDate, locale)} – ${formatIsoDate(absence.endDate, locale)}`;
+
+    return (
+      <div className="space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="relative w-full sm:w-64" data-tour="tour-absences-search">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("searchRequests")}
+              aria-label={t("searchRequests")}
+              className="h-9 rounded-full pl-8 text-sm md:h-7 md:text-xs"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2 sm:flex-1">
+            <FilterPill
+              label={t("status")}
+              options={ABSENCE_STATUSES.map((status) => ({
+                value: status,
+                label: t(status),
+                count: (mine ?? []).filter((absence) => absence.status === status).length,
+                leading: (
+                  <span
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ background: STATUS_ACCENT[status] }}
+                  />
+                ),
+              }))}
+              selected={statuses}
+              onChange={setStatuses}
+              clearLabel={t("clearFilter", { label: t("status") })}
+            />
+            <FilterPill
+              label={t("type")}
+              options={ABSENCE_TYPES.map((type) => ({
+                value: type,
+                label: t(type),
+                leading: (
+                  <span
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ background: TYPE_STYLE[type].accent }}
+                  />
+                ),
+              }))}
+              selected={types}
+              onChange={setTypes}
+              clearLabel={t("clearFilter", { label: t("type") })}
+            />
+            <div className="ml-auto flex items-center gap-2" data-tour="tour-absences-new">
+              <Button variant="ghost" size="sm" onClick={onExport}>
+                <CalendarArrowDown />
+                {t("exportIcs")}
+              </Button>
+              <Button size="sm" onClick={() => setNewOpen(true)}>
+                <Plus />
+                {t("newAbsence")}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div data-tour="tour-absences-list">
+          {mine === undefined ? (
+            <div className="space-y-2">
+              {[0, 1, 2].map((index) => (
+                <Skeleton key={index} className="h-12 rounded-lg" />
+              ))}
+            </div>
+          ) : rows.length === 0 ? (
+            <EmptyState
+              icon={<Plane />}
+              title={mine.length === 0 ? t("noAbsences") : t("noRequestsFiltered")}
+            />
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+              <Table className="hidden md:table">
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead>{t("type")}</TableHead>
+                    <TableHead className="w-60">{t("period")}</TableHead>
+                    <TableHead className="w-20 text-right">{t("absenceDays")}</TableHead>
+                    <TableHead className="w-32">{t("status")}</TableHead>
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((absence) => {
+                    const editable = absence.status === "pending";
+                    return (
+                      <TableRow
+                        key={absence.id}
+                        tabIndex={editable ? 0 : undefined}
+                        title={editable ? t("editAbsence") : undefined}
+                        onClick={editable ? () => setEditing(absence) : undefined}
+                        onKeyDown={(event) => {
+                          if (editable && event.key === "Enter") setEditing(absence);
+                        }}
+                        className={
+                          editable
+                            ? "cursor-pointer focus-visible:bg-muted/40 focus-visible:outline-none"
+                            : "hover:bg-transparent"
+                        }
+                      >
+                        <TableCell className="w-full max-w-0">
+                          <span className="flex min-w-0 items-center gap-3">
+                            <span className="shrink-0 font-medium">
+                              <AbsenceTypeLabel type={absence.type} />
+                            </span>
+                            {absence.reason && (
+                              <span className="truncate text-muted-foreground">
+                                {absence.reason}
+                              </span>
+                            )}
+                          </span>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">{range(absence)}</TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
+                          {workingDays(absence.startDate, absence.endDate, absence.halfDay)}
+                        </TableCell>
+                        <TableCell>
+                          <AbsenceStatusBadge status={absence.status} />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {editable && (
+                            <Pencil
+                              aria-hidden
+                              className="ml-auto size-3.5 text-muted-foreground"
+                            />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+
+              <ul className="divide-y divide-border/60 md:hidden">
+                {rows.map((absence) => (
+                  <li key={absence.id}>
+                    <button
+                      type="button"
+                      disabled={absence.status !== "pending"}
+                      onClick={() => setEditing(absence)}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left disabled:cursor-default"
+                    >
+                      <span className="min-w-0 flex-1 space-y-1">
+                        <span className="block text-sm font-medium">
+                          <AbsenceTypeLabel type={absence.type} />
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {range(absence)} ·{" "}
+                          {t("workingDaysLabel", {
+                            count: workingDays(absence.startDate, absence.endDate, absence.halfDay),
+                          })}
+                        </span>
+                      </span>
+                      <AbsenceStatusBadge status={absence.status} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+        {dialogs}
+      </div>
+    );
+  }
+
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="flex-row items-center justify-between gap-4 border-b border-border/70 bg-gradient-to-r from-muted/60 to-muted/10">
+      <CardHeader className="flex-row items-center justify-between gap-4 border-b border-border/70 bg-gradient-to-r from-muted/60 to-muted/10 refreshed:bg-none">
         <div>
           <CardTitle className="text-base">{t("yourRequests")}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">{t("yourRequestsHint")}</p>
@@ -979,7 +1338,7 @@ function Requests({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={statusVariant(absence.status)}>{t(absence.status)}</Badge>
+                  <AbsenceStatusBadge status={absence.status} />
                   {absence.status === "pending" && (
                     <Button size="sm" variant="outline" onClick={() => setEditing(absence)}>
                       {t("editAbsence")}
@@ -996,18 +1355,7 @@ function Requests({
           )}
         </div>
       </CardContent>
-      <ClockodoAbsenceDialog
-        absence={null}
-        open={newOpen}
-        onOpenChange={setNewOpen}
-        onSaved={onSaved}
-      />
-      <ClockodoAbsenceDialog
-        absence={editing}
-        open={editing !== null}
-        onOpenChange={(open) => !open && setEditing(null)}
-        onSaved={onSaved}
-      />
+      {dialogs}
     </Card>
   );
 }
@@ -1037,9 +1385,117 @@ function Approvals({
     }
   }
 
+  const refreshed = useDesignPreview() === "refreshed";
+
+  if (refreshed) {
+    if (approvals === undefined) {
+      return (
+        <div className="space-y-2">
+          {[0, 1, 2].map((index) => (
+            <Skeleton key={index} className="h-12 rounded-lg" />
+          ))}
+        </div>
+      );
+    }
+    if (approvals.length === 0) return <EmptyState icon={<Check />} title={t("noApprovals")} />;
+
+    const range = (approval: PendingApproval) =>
+      `${formatIsoDate(approval.startDate, locale)} – ${formatIsoDate(approval.endDate, locale)}`;
+    const days = (approval: PendingApproval) =>
+      workingDays(approval.startDate, approval.endDate, approval.halfDay);
+    const actions = (approval: PendingApproval) => (
+      <>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={actingOn === approval.id}
+          onClick={() => void decide(approval, "denied")}
+        >
+          <X />
+          {t("deny")}
+        </Button>
+        <Button
+          size="sm"
+          disabled={actingOn === approval.id}
+          onClick={() => void decide(approval, "approved")}
+        >
+          <Check />
+          {t("approve")}
+        </Button>
+      </>
+    );
+
+    return (
+      <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+        <Table className="hidden md:table">
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead>{t("employee")}</TableHead>
+              <TableHead className="w-36">{t("type")}</TableHead>
+              <TableHead className="w-56">{t("period")}</TableHead>
+              <TableHead className="w-20 text-right">{t("absenceDays")}</TableHead>
+              <TableHead className="w-52" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {approvals.map((approval) => {
+              const detail = [approval.userDepartment, approval.reason].filter(Boolean).join(" · ");
+              return (
+                <TableRow key={approval.id} className="hover:bg-transparent">
+                  <TableCell className="w-full max-w-0">
+                    <PersonLink
+                      userId={approval.userId as Id<"users">}
+                      className="block max-w-full font-medium"
+                    >
+                      {approval.userName}
+                    </PersonLink>
+                    {detail && <p className="truncate text-xs text-muted-foreground">{detail}</p>}
+                  </TableCell>
+                  <TableCell>
+                    <AbsenceTypeLabel type={approval.type} />
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">{range(approval)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{days(approval)}</TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-1.5">{actions(approval)}</div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+
+        <ul className="divide-y divide-border/60 md:hidden">
+          {approvals.map((approval) => (
+            <li key={approval.id} className="space-y-2.5 px-4 py-3">
+              <div className="min-w-0 space-y-1">
+                <PersonLink
+                  userId={approval.userId as Id<"users">}
+                  className="block max-w-full text-sm font-medium"
+                >
+                  {approval.userName}
+                </PersonLink>
+                <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                  <AbsenceTypeLabel type={approval.type} />
+                  <span>
+                    {range(approval)} · {t("workingDaysLabel", { count: days(approval) })}
+                  </span>
+                </p>
+                {approval.reason && (
+                  <p className="text-xs text-muted-foreground">{approval.reason}</p>
+                )}
+              </div>
+              <div className="flex justify-end gap-1.5">{actions(approval)}</div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="border-b border-border/70 bg-gradient-to-r from-muted/60 to-muted/10">
+      <CardHeader className="border-b border-border/70 bg-gradient-to-r from-muted/60 to-muted/10 refreshed:bg-none">
         <CardTitle className="text-base">{t("pendingApprovals")}</CardTitle>
         <p className="mt-1 text-sm text-muted-foreground">{t("pendingApprovalsHint")}</p>
       </CardHeader>
@@ -1111,6 +1567,7 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
   const t = useTranslations("Absences");
   const locale = useLocale();
   const hasTeamAccess = useHasCapability("view_clockodo_team");
+  const refreshed = useDesignPreview() === "refreshed";
   const [view, setView] = useState<"calendar" | "summary">("calendar");
   const [start, setStart] = useState(isoToday());
   const end = addDaysIso(start, 27);
@@ -1145,7 +1602,7 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="flex-row items-center justify-between border-b border-border/70 bg-gradient-to-r from-muted/60 to-muted/10">
+      <CardHeader className="flex-row items-center justify-between border-b border-border/70 bg-gradient-to-r from-muted/60 to-muted/10 refreshed:bg-none">
         <div>
           <CardTitle className="text-base">
             {view === "calendar" ? t("absencePlanner") : t("teamReport", { year })}
@@ -1157,7 +1614,17 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {hasTeamAccess && (
+          {hasTeamAccess && refreshed && (
+            <Segmented
+              value={view}
+              onChange={setView}
+              options={[
+                { value: "calendar", label: t("viewCalendar") },
+                { value: "summary", label: t("viewSummary") },
+              ]}
+            />
+          )}
+          {hasTeamAccess && !refreshed && (
             <div className="flex items-center gap-0.5 rounded-md border border-border/70 p-0.5">
               <Button
                 variant={view === "calendar" ? "default" : "ghost"}
@@ -1202,7 +1669,7 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
           <AbsenceTypeLegend className="border-b border-border/70 px-4 py-2.5" />
           <div className="min-w-[58rem]">
             <div className="grid grid-cols-[13rem_repeat(28,minmax(0,1fr))] border-b border-border/70">
-              <div className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
                 {t("employee")}
               </div>
               {days.map((day) => (
@@ -1236,7 +1703,7 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[38rem] text-sm">
-              <thead className="border-b border-border/70 bg-muted/35 text-left text-xs uppercase tracking-wider text-muted-foreground">
+              <thead className="border-b border-border/70 bg-muted/35 text-left text-xs uppercase tracking-wider text-muted-foreground refreshed:bg-muted/40 refreshed:normal-case refreshed:tracking-normal [&_th]:refreshed:font-medium">
                 <tr>
                   <th className="px-5 py-3 font-semibold">{t("employee")}</th>
                   <th className="px-5 py-3 font-semibold">{t("department")}</th>

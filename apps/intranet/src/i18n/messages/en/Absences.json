@@ -144,5 +144,9 @@
     "quarantine": "Quarantine",
     "military": "Military / alternative service",
     "sicknessBenefit": "Sick day (sickness benefit)"
-  }
+  },
+  "type": "Type",
+  "period": "Period",
+  "clearFilter": "Clear {label}",
+  "noRequestsFiltered": "No requests match these filters."
 }
