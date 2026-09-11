@@ -45,6 +45,7 @@ import { TourProvider, useTour } from "@/components/tour/TourProvider";
 import { TourSpotlight } from "@/components/tour/TourSpotlight";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { UpdateBanner } from "@/components/updates/UpdateBanner";
+import { DesignAttribute } from "@/lib/design-preview";
 import { cn } from "@/lib/utils";
 
 /**
@@ -335,6 +336,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
       {/* Native browser notifications for background tabs (opt-in). */}
       <BrowserNotificationBridge />
       <AiDock />
+      <DesignAttribute />
       <DesignFeedbackPrompt />
       <StartPageRedirect />
 

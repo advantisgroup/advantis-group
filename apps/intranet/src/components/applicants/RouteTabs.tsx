@@ -69,7 +69,9 @@ export function RouteTabs({ tabs, activeValue }: { tabs: RouteTab[]; activeValue
               <span
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none tabular-nums",
-                  active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+                  active
+                    ? "bg-primary/10 text-primary refreshed:bg-foreground refreshed:text-background"
+                    : "bg-muted text-muted-foreground",
                 )}
               >
                 {tab.count}
@@ -78,7 +80,7 @@ export function RouteTabs({ tabs, activeValue }: { tabs: RouteTab[]; activeValue
             <span
               className={cn(
                 "absolute inset-x-3 -bottom-px h-0.5 rounded-full transition-colors",
-                active ? "bg-primary" : "bg-transparent",
+                active ? "bg-primary refreshed:bg-foreground" : "bg-transparent",
               )}
             />
           </Link>

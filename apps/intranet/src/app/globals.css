@@ -10,6 +10,11 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* `refreshed:` utilities only apply while the person has opted into the
+   refreshed design (see `DesignAttribute` in lib/design-preview.tsx), so
+   shared components can match it without changing the classic look. */
+@custom-variant refreshed (&:where([data-design="refreshed"], [data-design="refreshed"] *));
+
 @keyframes pulse-slow {
   0% {
     opacity: 0.4;

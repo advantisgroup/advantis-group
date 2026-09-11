@@ -43,7 +43,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   return (
     <th
       className={cn(
-        "h-10 px-3 text-left align-middle text-xs font-semibold uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        "h-10 px-3 text-left align-middle text-xs font-semibold uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0 refreshed:h-9 refreshed:bg-muted/40 refreshed:px-3.5 refreshed:font-medium refreshed:normal-case refreshed:tracking-normal",
         className,
       )}
       {...props}
@@ -53,7 +53,13 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
 
 function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   return (
-    <td className={cn("p-3 align-middle [&:has([role=checkbox])]:pr-0", className)} {...props} />
+    <td
+      className={cn(
+        "p-3 align-middle [&:has([role=checkbox])]:pr-0 refreshed:px-3.5 refreshed:py-2.5",
+        className,
+      )}
+      {...props}
+    />
   );
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
@@ -18,4 +18,23 @@ export function DesignSwitch({ refreshed, classic }: { refreshed: ReactNode; cla
   const design = useDesignPreview();
   if (design === undefined) return null;
   return <>{design === "refreshed" ? refreshed : classic}</>;
+}
+
+/**
+ * Mirrors the preview choice onto `<html data-design>` for the `refreshed:`
+ * CSS variant. On the root element rather than the shell, so dialogs, panels
+ * and menus portalled out to `<body>` pick it up too.
+ */
+export function DesignAttribute() {
+  const design = useDesignPreview();
+
+  useEffect(() => {
+    if (!design) return;
+    document.documentElement.dataset.design = design;
+    return () => {
+      delete document.documentElement.dataset.design;
+    };
+  }, [design]);
+
+  return null;
 }
