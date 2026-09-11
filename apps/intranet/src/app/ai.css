@@ -1,0 +1,204 @@
+/* ── AI · Aurora ────────────────────────────────────────────────────────────
+   One gradient reserved for anything a model did or is doing, so AI reads as
+   AI at a glance anywhere in the app. Nothing else should borrow these —
+   the moment a normal button is violet-blue too, the signal is gone. */
+
+:root {
+  --ai-1: oklch(72% 0.16 300);
+  --ai-2: oklch(70% 0.15 262);
+  --ai-3: oklch(80% 0.11 200);
+}
+
+:root.light {
+  --ai-1: oklch(54% 0.19 300);
+  --ai-2: oklch(54% 0.17 262);
+  --ai-3: oklch(60% 0.11 212);
+}
+
+@theme {
+  --color-ai-1: var(--ai-1);
+  --color-ai-2: var(--ai-2);
+  --color-ai-3: var(--ai-3);
+}
+
+@property --ai-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.ai-text {
+  background-image: linear-gradient(100deg, var(--ai-1), var(--ai-2) 50%, var(--ai-3));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* The "Thinking" look: muted text with a bright band sweeping through it. */
+.ai-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    var(--muted-foreground) 0%,
+    var(--muted-foreground) 38%,
+    var(--ai-1) 45%,
+    var(--foreground) 50%,
+    var(--ai-3) 55%,
+    var(--muted-foreground) 62%,
+    var(--muted-foreground) 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: ai-shimmer 2.4s linear infinite;
+}
+
+/* A thin gradient border that keeps whatever ground it sits on. */
+.ai-edge {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--ai-ground, var(--card)), var(--ai-ground, var(--card))) padding-box,
+    linear-gradient(
+        100deg,
+        color-mix(in oklch, var(--ai-1) 70%, transparent),
+        color-mix(in oklch, var(--ai-2) 45%, transparent),
+        color-mix(in oklch, var(--ai-3) 70%, transparent)
+      )
+      border-box;
+}
+
+/* While a surface is working, light travels around its edge and it breathes
+   a soft glow — enough to see from across the screen, never a spinner. */
+.ai-orbit {
+  position: relative;
+  isolation: isolate;
+}
+
+.ai-orbit[data-working="true"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--ai-angle),
+    transparent 0deg,
+    var(--ai-1) 70deg,
+    var(--ai-2) 130deg,
+    var(--ai-3) 190deg,
+    transparent 250deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  animation: ai-orbit 2.8s linear infinite;
+}
+
+.ai-orbit[data-working="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 36px -10px color-mix(in oklch, var(--ai-2) 60%, transparent);
+  animation: ai-breathe 2.8s ease-in-out infinite;
+}
+
+.ai-glyph[data-working="true"] {
+  transform-origin: center;
+  animation: ai-glyph 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+/* Streamed words arrive soft and settle — each span animates once, on mount. */
+.ai-word {
+  animation: ai-word 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Finished structured results (list items, suggestion rows) rise in order;
+   set --i on each item for the stagger. */
+.ai-rise {
+  animation: ai-rise 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+@keyframes ai-shimmer {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -30% 0;
+  }
+}
+
+@keyframes ai-orbit {
+  to {
+    --ai-angle: 360deg;
+  }
+}
+
+@keyframes ai-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes ai-glyph {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(0.8) rotate(45deg);
+  }
+}
+
+@keyframes ai-word {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(0.15em);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+@keyframes ai-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-shimmer,
+  .ai-orbit[data-working="true"]::before,
+  .ai-orbit[data-working="true"]::after,
+  .ai-glyph[data-working="true"],
+  .ai-word,
+  .ai-rise {
+    animation: none;
+  }
+
+  .ai-shimmer {
+    background: none;
+    color: var(--muted-foreground);
+  }
+}

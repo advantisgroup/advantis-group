@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./ai.css";
 
 /* Tailwind v4 does not auto-load `tailwind.config.ts`, so register the
    animation plugin here. Without this the `animate-in` / `slide-in-from-*` /
@@ -67,18 +68,6 @@
 
   100% {
     background-position: 0% 50%;
-  }
-}
-
-/* Drift the dotted backdrop by exactly one tile so the loop is seamless.
-   Negative offsets move the dots toward the top-left. */
-@keyframes dialog-dot-drift {
-  from {
-    background-position: 0 0;
-  }
-
-  to {
-    background-position: -24px -24px;
   }
 }
 
@@ -796,30 +785,6 @@ input[type="week"] {
         transparent 1px
       );
     background-size: 32px 32px;
-  }
-
-  /* Dotted grid used behind the Dialog backdrop. The dots slowly drift toward
-     the top-left. `data-animated="false"` is set by the dialog on low-end
-     devices (few CPU cores / little memory) or when reduced motion is
-     requested, so the decorative loop never costs those clients any frames. */
-  .dialog-dot-grid {
-    background-image: radial-gradient(
-      circle at 1px 1px,
-      color-mix(in oklch, var(--foreground) 14%, transparent) 1px,
-      transparent 0
-    );
-    background-size: 24px 24px;
-    will-change: background-position;
-  }
-
-  .dialog-dot-grid[data-animated="true"] {
-    animation: dialog-dot-drift 9s linear infinite;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .dialog-dot-grid[data-animated="true"] {
-      animation: none;
-    }
   }
 
   /* Rich-text content (announcements, etc.) — typography plugin isn't installed */
