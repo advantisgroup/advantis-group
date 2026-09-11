@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Link } from "@/components/Link";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeader } from "@/components/PageHeader";
+import { PersonLink } from "@/components/profile/PersonLink";
 import { useHasCapability } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,9 +28,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useDesignPreview } from "@/lib/design-preview";
 
 const WEEKDAYS = [
   "monday",
@@ -73,6 +77,12 @@ const STATUS_STYLE: Record<string, string> = {
   clockedOut: "bg-muted text-muted-foreground",
 };
 
+const STATUS_ACCENT: Record<string, string> = {
+  working: "var(--ok)",
+  break: "var(--warn)",
+  clockedOut: "var(--muted-foreground)",
+};
+
 /** A labelled read-only row — the default state of every field on this
  * page. Edit mode swaps this out for the real input, per section. */
 function ViewRow({ label, value }: { label: string; value: ReactNode }) {
@@ -87,7 +97,7 @@ function ViewRow({ label, value }: { label: string; value: ReactNode }) {
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-3">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground refreshed:text-xs refreshed:normal-case refreshed:tracking-normal">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
       {children}
@@ -101,6 +111,15 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
       <label className="mb-1 block text-xs text-muted-foreground">{label}</label>
       {children}
     </div>
+  );
+}
+
+function StatusDot({ color, children }: { color: string; children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="size-2 rounded-full" style={{ background: color }} />
+      {children}
+    </span>
   );
 }
 
@@ -211,6 +230,7 @@ export default function ClockodoEmployeeDetailPage() {
   const router = useRouter();
   const handleError = useErrorHandler();
   const confirm = useConfirm();
+  const refreshed = useDesignPreview() === "refreshed";
   const params = useParams<{ id: string }>();
   const clockodoUserId = Number(params.id);
 
@@ -346,17 +366,385 @@ export default function ClockodoEmployeeDetailPage() {
   const latestVacation = holidaysQuota.at(-1);
   const status = liveStatus?.[0]?.status ?? null;
 
+  const roleLabel = user.role === "owner" ? t("roleOwner") : t("roleWorker");
+  const languageLabel = user.language === "en" ? "English" : "Deutsch";
+  const bossLabel =
+    user.boss !== null
+      ? (managers.find((m) => m.id === user.boss)?.name ?? t("notSet"))
+      : t("noManager");
+  const weeklyHoursLabel = latestTargetHours ? `${latestTargetHours.weeklyTotal}h` : t("notSet");
+  const vacationLabel = latestVacation ? `${latestVacation.daysPerYear} ${t("days")}` : t("notSet");
+
+  const editToggle = (
+    <Button
+      variant={mode === "edit" ? "default" : "outline"}
+      size="sm"
+      onClick={() => setMode((m) => (m === "edit" ? "view" : "edit"))}
+    >
+      {mode === "edit" ? (
+        <>
+          <Check className="h-4 w-4" />
+          {t("doneEditing")}
+        </>
+      ) : (
+        <>
+          <Pencil className="h-4 w-4" />
+          {t("edit")}
+        </>
+      )}
+    </Button>
+  );
+
+  const backButton = (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="-ml-2"
+      onClick={() => router.push("/clockodo/admin")}
+    >
+      <ArrowLeft className="h-4 w-4" />
+      {t("backToRoster")}
+    </Button>
+  );
+
+  const tabNav = (
+    <>
+      {/* A full-width horizontal strip here would be a second control
+          competing with the mobile bottom nav's thumb-zone space, so below
+          md this collapses to a single compact Select instead. */}
+      <TabsList className="hidden md:inline-flex">
+        <TabsTrigger value="profile">{t("tabProfile")}</TabsTrigger>
+        <TabsTrigger value="permissions">{t("tabPermissions")}</TabsTrigger>
+        <TabsTrigger value="hours">{t("tabHoursVacation")}</TabsTrigger>
+        <TabsTrigger value="history">{t("tabHistory")}</TabsTrigger>
+      </TabsList>
+      <Select value={tab} onValueChange={setTab}>
+        <SelectTrigger className="md:hidden">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="profile">{t("tabProfile")}</SelectItem>
+          <SelectItem value="permissions">{t("tabPermissions")}</SelectItem>
+          <SelectItem value="hours">{t("tabHoursVacation")}</SelectItem>
+          <SelectItem value="history">{t("tabHistory")}</SelectItem>
+        </SelectContent>
+      </Select>
+    </>
+  );
+
+  const linkSelect = (className: string) => (
+    <Select
+      value={link?.userId ?? "none"}
+      onValueChange={async (v) => {
+        if (v === "none") {
+          const ok = await confirm({
+            title: t("confirmUnlinkTitle"),
+            description: t("confirmUnlinkBody"),
+            confirmLabel: t("notLinked"),
+            cancelLabel: tc("cancel"),
+          });
+          if (!ok) return;
+          void unlinkClockodoUser({ userId: link!.userId });
+        } else {
+          void linkClockodoUser({ userId: v as Id<"users">, clockodoUserId });
+        }
+      }}
+    >
+      <SelectTrigger className={className}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">{t("notLinked")}</SelectItem>
+        {linkableUsers.map((u) => (
+          <SelectItem key={u._id} value={u._id}>
+            {u.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
+  const activityLink = link?.deviceId && (
+    <Link
+      href={`/activity/timeline/${encodeURIComponent(link.deviceId)}`}
+      className="shrink-0 text-muted-foreground hover:text-fg"
+      title={t("activityTrackLink")}
+    >
+      <ExternalLink className="h-4 w-4" />
+    </Link>
+  );
+
+  const roleSelect = (className: string) => (
+    <Select value={user.role ?? "worker"} onValueChange={(v) => onUpdateUser({ role: v })}>
+      <SelectTrigger className={className}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="worker">{t("roleWorker")}</SelectItem>
+        <SelectItem value="owner">{t("roleOwner")}</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+
+  const languageSelect = (className: string) => (
+    <Select value={user.language ?? "de"} onValueChange={(v) => onUpdateUser({ language: v })}>
+      <SelectTrigger className={className}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="de">Deutsch</SelectItem>
+        <SelectItem value="en">English</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+
+  const startDateInput = (className: string) => (
+    <Input
+      type="date"
+      value={user.startDate ?? ""}
+      onChange={(e) => onUpdateUser({ startDate: e.target.value })}
+      className={className}
+    />
+  );
+
+  const exitDateInput = (className: string) => (
+    <Input
+      type="date"
+      value={user.exitDate ?? ""}
+      onChange={(e) => onUpdateUser({ exitDate: e.target.value || null })}
+      className={className}
+    />
+  );
+
+  const bossSelect = (className: string) => (
+    <Select
+      value={user.boss !== null ? String(user.boss) : "none"}
+      onValueChange={(v) => onUpdateUser({ boss: v === "none" ? null : Number(v) })}
+    >
+      <SelectTrigger className={className}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">{t("noManager")}</SelectItem>
+        {managers.map((m) => (
+          <SelectItem key={m.id} value={String(m.id)}>
+            {m.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
+  const permissionChecked = (field: (typeof PERMISSION_ITEMS)[number]["field"]) =>
+    Boolean((user as unknown as Record<string, boolean | undefined>)[field]);
+
+  const targetHistory = (
+    <HistoryList
+      entries={targetHoursDesc}
+      render={(e) => (
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">
+              {t("since")} {e.dateSince}
+              {e.dateUntil ? ` · ${t("until")} ${e.dateUntil}` : ` · ${t("ongoing")}`}
+            </span>
+            <span className="font-medium text-fg">{e.weeklyTotal}h</span>
+          </div>
+          <span className="text-[10px] text-muted-foreground">
+            {WEEKDAYS.map((day) => `${t(day)} ${e.days[day]}`).join(" · ")}
+          </span>
+        </div>
+      )}
+    />
+  );
+
+  const vacationHistory = (
+    <HistoryList
+      entries={vacationDesc}
+      render={(e) => (
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground">
+            {t("year")} {e.yearSince}
+            {e.yearUntil && e.yearUntil !== e.yearSince ? `–${e.yearUntil}` : ""}
+          </span>
+          <span className="font-medium text-fg">
+            {e.daysPerYear} {t("days")}
+          </span>
+        </div>
+      )}
+    />
+  );
+
+  const targetHoursForm = (
+    <TargetHoursForm
+      key={targetHours.length}
+      latestDays={latestTargetHours?.days}
+      onSave={onSetTargetHours}
+    />
+  );
+
+  const vacationInput = (
+    <EditableNumber
+      initial={latestVacation?.daysPerYear ?? null}
+      placeholder={t("vacationDaysPerYear")}
+      onSave={onSetVacation}
+    />
+  );
+
+  if (refreshed) {
+    const editing = mode === "edit";
+    const value = (text: ReactNode) => (
+      <span className="text-sm text-muted-foreground">{text}</span>
+    );
+    const control = "h-8 w-44 text-sm";
+
+    return (
+      <section className="mx-auto max-w-4xl space-y-6">
+        {backButton}
+
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-semibold tracking-tight">{user.name}</h1>
+            <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+              <span className="truncate">{user.email}</span>
+              <StatusDot color={user.active === false ? "var(--muted-foreground)" : "var(--ok)"}>
+                {user.active === false ? t("inactive") : t("active")}
+              </StatusDot>
+              {status && (
+                <StatusDot color={STATUS_ACCENT[status]}>{t(`liveStatus.${status}`)}</StatusDot>
+              )}
+              {hoursThisWeek !== null && (
+                <span>{t("hoursThisWeek", { hours: hoursThisWeek })}</span>
+              )}
+            </p>
+          </div>
+          {editToggle}
+        </div>
+
+        <Tabs value={tab} onValueChange={setTab}>
+          {tabNav}
+
+          <TabsContent value="profile" className="mt-6">
+            <SettingsSection title={t("employment")}>
+              <SettingsRow
+                title={t("linkedEmployee")}
+                control={
+                  editing ? (
+                    <div className="flex items-center gap-2">
+                      {linkSelect(control)}
+                      {activityLink}
+                    </div>
+                  ) : link ? (
+                    <PersonLink userId={link.userId} className="text-sm">
+                      {link.name}
+                    </PersonLink>
+                  ) : (
+                    value(t("notLinked"))
+                  )
+                }
+              />
+              <SettingsRow
+                title={t("role")}
+                control={editing ? roleSelect(control) : value(roleLabel)}
+              />
+              <SettingsRow
+                title={t("language")}
+                control={editing ? languageSelect(control) : value(languageLabel)}
+              />
+              <SettingsRow
+                title={t("startDate")}
+                control={editing ? startDateInput(control) : value(user.startDate ?? t("notSet"))}
+              />
+              <SettingsRow
+                title={t("exitDate")}
+                control={editing ? exitDateInput(control) : value(user.exitDate ?? t("notSet"))}
+              />
+              <SettingsRow
+                title={t("reportsTo")}
+                control={editing ? bossSelect(control) : value(bossLabel)}
+              />
+            </SettingsSection>
+          </TabsContent>
+
+          <TabsContent value="permissions" className="mt-6">
+            <SettingsSection title={t("permissions")}>
+              {PERMISSION_ITEMS.map((item) => {
+                const checked = permissionChecked(item.field);
+                return (
+                  <SettingsRow
+                    key={item.field}
+                    title={t(item.labelKey)}
+                    description={t(item.descKey)}
+                    control={
+                      editing ? (
+                        <Switch
+                          checked={checked}
+                          aria-label={t(item.labelKey)}
+                          onCheckedChange={(c) => onUpdateUser({ [item.field]: c })}
+                        />
+                      ) : checked ? (
+                        <Check className="size-4 text-ok" />
+                      ) : (
+                        <X className="size-4 text-muted-foreground" />
+                      )
+                    }
+                  />
+                );
+              })}
+            </SettingsSection>
+          </TabsContent>
+
+          <TabsContent value="hours" className="mt-6">
+            <SettingsSection title={t("tabHoursVacation")}>
+              <SettingsRow
+                title={t("weeklyHours")}
+                control={editing ? undefined : value(weeklyHoursLabel)}
+              >
+                {editing && <div className="mt-3">{targetHoursForm}</div>}
+              </SettingsRow>
+              <div className="px-4 py-3">{targetHistory}</div>
+              <SettingsRow
+                title={t("vacationDaysPerYear")}
+                control={
+                  editing ? <div className="w-32">{vacationInput}</div> : value(vacationLabel)
+                }
+              />
+              <div className="px-4 py-3">{vacationHistory}</div>
+            </SettingsSection>
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-6">
+            <SettingsSection title={t("tabHistory")}>
+              {auditHistory === undefined ? (
+                <div className="p-4">
+                  <Skeleton className="h-24 w-full" />
+                </div>
+              ) : auditHistory.length === 0 ? (
+                <p className="px-4 py-3.5 text-sm text-muted-foreground">{t("noHistory")}</p>
+              ) : (
+                auditHistory.map((entry) => (
+                  <SettingsRow
+                    key={entry._id}
+                    title={entry.actor?.name ?? t("unknownActor")}
+                    description={`${t(`auditAction.${entry.action}`)}${entry.detail ? ` — ${entry.detail}` : ""}`}
+                    control={
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(entry.at).toLocaleString()}
+                      </span>
+                    }
+                  />
+                ))
+              )}
+            </SettingsSection>
+          </TabsContent>
+        </Tabs>
+      </section>
+    );
+  }
+
   return (
     <section className="mx-auto max-w-4xl space-y-6">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-2"
-        onClick={() => router.push("/clockodo/admin")}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {t("backToRoster")}
-      </Button>
+      {backButton}
 
       <PageHeader
         title={user.name}
@@ -374,91 +762,20 @@ export default function ClockodoEmployeeDetailPage() {
             {hoursThisWeek !== null && (
               <Badge variant="muted">{t("hoursThisWeek", { hours: hoursThisWeek })}</Badge>
             )}
-            <Button
-              variant={mode === "edit" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMode((m) => (m === "edit" ? "view" : "edit"))}
-            >
-              {mode === "edit" ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  {t("doneEditing")}
-                </>
-              ) : (
-                <>
-                  <Pencil className="h-4 w-4" />
-                  {t("edit")}
-                </>
-              )}
-            </Button>
+            {editToggle}
           </div>
         }
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        {/* A full-width horizontal strip here would be a second control
-            competing with the mobile bottom nav's thumb-zone space, so below
-            md this collapses to a single compact Select instead. */}
-        <TabsList className="hidden md:inline-flex">
-          <TabsTrigger value="profile">{t("tabProfile")}</TabsTrigger>
-          <TabsTrigger value="permissions">{t("tabPermissions")}</TabsTrigger>
-          <TabsTrigger value="hours">{t("tabHoursVacation")}</TabsTrigger>
-          <TabsTrigger value="history">{t("tabHistory")}</TabsTrigger>
-        </TabsList>
-        <Select value={tab} onValueChange={setTab}>
-          <SelectTrigger className="md:hidden">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="profile">{t("tabProfile")}</SelectItem>
-            <SelectItem value="permissions">{t("tabPermissions")}</SelectItem>
-            <SelectItem value="hours">{t("tabHoursVacation")}</SelectItem>
-            <SelectItem value="history">{t("tabHistory")}</SelectItem>
-          </SelectContent>
-        </Select>
+        {tabNav}
 
         <TabsContent value="profile" className="space-y-5">
           <Section label={t("linkedEmployee")}>
             {mode === "edit" ? (
               <div className="flex items-center gap-2">
-                <Select
-                  value={link?.userId ?? "none"}
-                  onValueChange={async (v) => {
-                    if (v === "none") {
-                      const ok = await confirm({
-                        title: t("confirmUnlinkTitle"),
-                        description: t("confirmUnlinkBody"),
-                        confirmLabel: t("notLinked"),
-                        cancelLabel: tc("cancel"),
-                      });
-                      if (!ok) return;
-                      void unlinkClockodoUser({ userId: link!.userId });
-                    } else {
-                      void linkClockodoUser({ userId: v as Id<"users">, clockodoUserId });
-                    }
-                  }}
-                >
-                  <SelectTrigger className="h-9 flex-1 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">{t("notLinked")}</SelectItem>
-                    {linkableUsers.map((u) => (
-                      <SelectItem key={u._id} value={u._id}>
-                        {u.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {link?.deviceId && (
-                  <Link
-                    href={`/activity/timeline/${encodeURIComponent(link.deviceId)}`}
-                    className="shrink-0 text-muted-foreground hover:text-fg"
-                    title={t("activityTrackLink")}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Link>
-                )}
+                {linkSelect("h-9 flex-1 text-sm")}
+                {activityLink}
               </div>
             ) : (
               <ViewRow label={t("linkedEmployee")} value={link?.name ?? t("notLinked")} />
@@ -468,89 +785,19 @@ export default function ClockodoEmployeeDetailPage() {
           <Section label={t("employment")}>
             {mode === "edit" ? (
               <div className="grid grid-cols-2 gap-3">
-                <Field label={t("role")}>
-                  <Select
-                    value={user.role ?? "worker"}
-                    onValueChange={(v) => onUpdateUser({ role: v })}
-                  >
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="worker">{t("roleWorker")}</SelectItem>
-                      <SelectItem value="owner">{t("roleOwner")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label={t("language")}>
-                  <Select
-                    value={user.language ?? "de"}
-                    onValueChange={(v) => onUpdateUser({ language: v })}
-                  >
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="de">Deutsch</SelectItem>
-                      <SelectItem value="en">English</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label={t("startDate")}>
-                  <Input
-                    type="date"
-                    value={user.startDate ?? ""}
-                    onChange={(e) => onUpdateUser({ startDate: e.target.value })}
-                    className="h-9 text-sm"
-                  />
-                </Field>
-                <Field label={t("exitDate")}>
-                  <Input
-                    type="date"
-                    value={user.exitDate ?? ""}
-                    onChange={(e) => onUpdateUser({ exitDate: e.target.value || null })}
-                    className="h-9 text-sm"
-                  />
-                </Field>
-                <Field label={t("reportsTo")}>
-                  <Select
-                    value={user.boss !== null ? String(user.boss) : "none"}
-                    onValueChange={(v) => onUpdateUser({ boss: v === "none" ? null : Number(v) })}
-                  >
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">{t("noManager")}</SelectItem>
-                      {managers.map((m) => (
-                        <SelectItem key={m.id} value={String(m.id)}>
-                          {m.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
+                <Field label={t("role")}>{roleSelect("h-9 text-sm")}</Field>
+                <Field label={t("language")}>{languageSelect("h-9 text-sm")}</Field>
+                <Field label={t("startDate")}>{startDateInput("h-9 text-sm")}</Field>
+                <Field label={t("exitDate")}>{exitDateInput("h-9 text-sm")}</Field>
+                <Field label={t("reportsTo")}>{bossSelect("h-9 text-sm")}</Field>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
-                <ViewRow
-                  label={t("role")}
-                  value={user.role === "owner" ? t("roleOwner") : t("roleWorker")}
-                />
-                <ViewRow
-                  label={t("language")}
-                  value={user.language === "en" ? "English" : "Deutsch"}
-                />
+                <ViewRow label={t("role")} value={roleLabel} />
+                <ViewRow label={t("language")} value={languageLabel} />
                 <ViewRow label={t("startDate")} value={user.startDate ?? t("notSet")} />
                 <ViewRow label={t("exitDate")} value={user.exitDate ?? t("notSet")} />
-                <ViewRow
-                  label={t("reportsTo")}
-                  value={
-                    user.boss !== null
-                      ? (managers.find((m) => m.id === user.boss)?.name ?? t("notSet"))
-                      : t("noManager")
-                  }
-                />
+                <ViewRow label={t("reportsTo")} value={bossLabel} />
               </div>
             )}
           </Section>
@@ -560,9 +807,7 @@ export default function ClockodoEmployeeDetailPage() {
           <Section label={t("permissions")}>
             <div className="space-y-2">
               {PERMISSION_ITEMS.map((item) => {
-                const checked = Boolean(
-                  (user as unknown as Record<string, boolean | undefined>)[item.field],
-                );
+                const checked = permissionChecked(item.field);
                 return mode === "edit" ? (
                   <label
                     key={item.field}
@@ -606,63 +851,20 @@ export default function ClockodoEmployeeDetailPage() {
         <TabsContent value="hours" className="space-y-5">
           <Section label={t("weeklyHours")}>
             {mode === "view" ? (
-              <ViewRow
-                label={t("weeklyHours")}
-                value={latestTargetHours ? `${latestTargetHours.weeklyTotal}h` : t("notSet")}
-              />
+              <ViewRow label={t("weeklyHours")} value={weeklyHoursLabel} />
             ) : (
-              <TargetHoursForm
-                key={targetHours.length}
-                latestDays={latestTargetHours?.days}
-                onSave={onSetTargetHours}
-              />
+              targetHoursForm
             )}
-            <HistoryList
-              entries={targetHoursDesc}
-              render={(e) => (
-                <div className="flex flex-col gap-0.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">
-                      {t("since")} {e.dateSince}
-                      {e.dateUntil ? ` · ${t("until")} ${e.dateUntil}` : ` · ${t("ongoing")}`}
-                    </span>
-                    <span className="font-medium text-fg">{e.weeklyTotal}h</span>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground">
-                    {WEEKDAYS.map((day) => `${t(day)} ${e.days[day]}`).join(" · ")}
-                  </span>
-                </div>
-              )}
-            />
+            {targetHistory}
           </Section>
 
           <Section label={t("vacationDaysPerYear")}>
             {mode === "view" ? (
-              <ViewRow
-                label={t("vacationDaysPerYear")}
-                value={latestVacation ? `${latestVacation.daysPerYear} ${t("days")}` : t("notSet")}
-              />
+              <ViewRow label={t("vacationDaysPerYear")} value={vacationLabel} />
             ) : (
-              <EditableNumber
-                initial={latestVacation?.daysPerYear ?? null}
-                placeholder={t("vacationDaysPerYear")}
-                onSave={onSetVacation}
-              />
+              vacationInput
             )}
-            <HistoryList
-              entries={vacationDesc}
-              render={(e) => (
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">
-                    {t("year")} {e.yearSince}
-                    {e.yearUntil && e.yearUntil !== e.yearSince ? `–${e.yearUntil}` : ""}
-                  </span>
-                  <span className="font-medium text-fg">
-                    {e.daysPerYear} {t("days")}
-                  </span>
-                </div>
-              )}
-            />
+            {vacationHistory}
           </Section>
         </TabsContent>
 
