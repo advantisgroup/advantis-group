@@ -149,11 +149,11 @@ export function WikiMetaAssist({
             <AiGlyph className="size-4" />
           </span>
           <div className="min-w-0">
-            <p className="text-[0.7rem] font-medium uppercase tracking-[0.16em]">
+            <p className="text-[0.7rem] font-medium uppercase tracking-[0.16em] refreshed:text-xs refreshed:normal-case refreshed:tracking-normal">
               <span className="ai-text">{ta("eyebrow")}</span>
               <span className="text-muted-foreground"> · {ta("kind.wikiMeta")}</span>
             </p>
-            <h3 className="font-display text-base font-bold tracking-tight">
+            <h3 className="font-display text-base font-bold tracking-tight refreshed:font-semibold">
               {t("metaAssistReady")}
             </h3>
           </div>

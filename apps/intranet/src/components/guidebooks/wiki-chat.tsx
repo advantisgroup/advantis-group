@@ -273,7 +273,7 @@ export function WikiChat({ className }: { className?: string } = {}) {
       >
         <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-muted/30 sm:flex">
           <div className="flex items-center justify-between gap-2 px-3 pb-1.5 pt-3">
-            <span className="text-[0.7rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            <span className="text-[0.7rem] font-medium uppercase tracking-[0.16em] text-muted-foreground refreshed:text-xs refreshed:normal-case refreshed:tracking-normal">
               {t("wikiChat.chats")}
             </span>
             <Tooltip>
@@ -390,7 +390,7 @@ export function WikiChat({ className }: { className?: string } = {}) {
                   <AiGlyph className="size-7" />
                 </span>
                 <div>
-                  <h2 className="font-display text-2xl font-bold tracking-tight">
+                  <h2 className="font-display text-2xl font-bold tracking-tight refreshed:text-xl refreshed:font-semibold">
                     {t("wikiChat.emptyTitle")}
                   </h2>
                   <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">

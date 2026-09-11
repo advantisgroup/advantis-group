@@ -117,7 +117,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
     >
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
             {t("attachmentsTitle")}
           </p>
           {canManage && (
@@ -172,7 +172,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
           {attachments.map((a) => (
             <div
               key={a._id}
-              className="group relative overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md"
+              className="group relative overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md refreshed:transition-colors refreshed:hover:border-foreground/20 refreshed:hover:shadow-none"
             >
               <button
                 type="button"

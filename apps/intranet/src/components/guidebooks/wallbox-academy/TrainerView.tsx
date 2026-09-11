@@ -177,7 +177,7 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
               />
             </div>
             {matchedUser ? (
-              <div className="flex items-center justify-between gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
+              <div className="flex items-center justify-between gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm refreshed:border-border refreshed:bg-muted/40">
                 <span>
                   Diese E-Mail gehört zum Intranet-Konto <b>{userDisplayName(matchedUser)}</b>.
                 </span>

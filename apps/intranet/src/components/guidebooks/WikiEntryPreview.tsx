@@ -45,12 +45,12 @@ export function WikiEntryPreview({
   return (
     <div className="rounded-xl border border-border/70 bg-card px-5 py-4">
       <p
-        className="text-xs font-semibold uppercase tracking-wider"
+        className="text-xs font-semibold uppercase tracking-wider refreshed:font-medium refreshed:normal-case refreshed:tracking-normal"
         style={{ color: categoryColor || "var(--muted-foreground)" }}
       >
         {categoryName || t("fieldCategoryPlaceholder")}
       </p>
-      <p className="mt-0.5 font-display text-xl font-bold tracking-tight">
+      <p className="mt-0.5 font-display text-xl font-bold tracking-tight refreshed:font-semibold">
         {thema.trim() || t("fieldThemaPlaceholder")}
       </p>
       <p className="mt-1 text-xs text-muted-foreground">

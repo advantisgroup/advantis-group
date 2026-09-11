@@ -225,7 +225,7 @@ function EntryCard({
 
   return (
     <Card
-      className="group relative h-full overflow-hidden transition-shadow hover:shadow-md"
+      className="group relative h-full overflow-hidden transition-shadow hover:shadow-md refreshed:transition-colors refreshed:hover:border-foreground/20 refreshed:hover:shadow-none"
       style={{ borderLeft: `4px solid ${color}` }}
     >
       <Link href={`/guidebooks/${item.slug}`} className="block h-full">
@@ -233,7 +233,7 @@ function EntryCard({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <p
-                className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider"
+                className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider refreshed:font-medium refreshed:normal-case refreshed:tracking-normal"
                 style={{ color }}
               >
                 {item.kind === "legacy" && <FileText className="size-3" />}
@@ -509,7 +509,7 @@ export default function GuidebooksPage() {
           open={toolsOpen}
           onToggle={(e) => setToolsOpen(e.currentTarget.open)}
         >
-          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
             <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
             <Sparkles className="size-3.5" />
             {t("interactiveToolsTitle")}
@@ -810,7 +810,7 @@ export default function GuidebooksPage() {
                 searchable and filterable, just not competing for attention. */}
             {legacyEntries.length > 0 && (
               <details className="group mt-4">
-                <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
                   <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
                   <FileText className="size-3.5" />
                   {t("legacySectionTitle")}
