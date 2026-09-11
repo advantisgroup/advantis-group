@@ -40,7 +40,8 @@ export function SettingsRow({
   control,
   children,
 }: {
-  title: string;
+  /** Usually text; a provider logo where the setting is about that service. */
+  title: ReactNode;
   description?: string;
   control?: ReactNode;
   /** Shown under the row, e.g. a warning about the setting's current state. */
@@ -50,7 +51,7 @@ export function SettingsRow({
     <div className="px-4 py-3.5">
       <div className="flex items-center gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">{title}</p>
+          <div className="text-sm font-medium">{title}</div>
           {description && (
             <p className="mt-0.5 text-xs text-muted-foreground text-pretty">{description}</p>
           )}
