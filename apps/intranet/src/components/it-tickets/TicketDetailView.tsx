@@ -5,27 +5,19 @@ import { useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { type FunctionReturnType } from "convex/server";
-import { useMutation, useQuery } from "convex/react";
-import {
-  ArrowLeft,
-  Clock3,
-  ExternalLink,
-  Link2,
-  MessageSquarePlus,
-  Pencil,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { useMutation } from "convex/react";
+import { ArrowLeft, ExternalLink, MessageSquarePlus, Pencil, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import {
   STATUS_BORDER,
-  STATUS_LABEL_KEY,
   StatusBadge,
+  ticketNumber,
   type Status,
   type Ticket,
 } from "@/components/it-tickets/shared";
+import { TicketStatusHistory } from "@/components/it-tickets/TicketStatusHistory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
@@ -36,8 +28,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TimelineOrder } from "@/components/ui/timeline";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { formatDateTime, formatIsoDate } from "@/lib/format";
+import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 // `| undefined` on top of the query's own `| null` — undefined while the
@@ -85,7 +78,6 @@ export function TicketDetailView({
   const t = useTranslations("ItTickets");
   const tc = useTranslations("Common");
   const locale = useLocale();
-  const statusHistory = useQuery(api.itTickets.listStatusHistory, { ticketId: ticket._id });
 
   const hasSfDetails = ticket.category === "SF" && (ticket.topic || ticket.camId || ticket.custNo);
 
@@ -109,9 +101,7 @@ export function TicketDetailView({
         )}
       >
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-xs font-bold text-primary">
-            #{String(ticket.nr).padStart(3, "0")}
-          </span>
+          <span className="font-mono text-xs text-muted-foreground">{ticketNumber(ticket.nr)}</span>
           <span className="text-sm font-semibold">{ticket.category}</span>
           <StatusBadge status={ticket.status} />
         </div>
@@ -175,35 +165,12 @@ export function TicketDetailView({
         )}
       </div>
 
-      <div className="space-y-2 border-b border-border/70 px-4 py-3">
-        <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          <Clock3 className="size-3.5" />
-          {t("statusHistory")}
-        </p>
-        {statusHistory === undefined ? (
-          <p className="text-xs text-muted-foreground">{t("statusHistoryLoading")}</p>
-        ) : statusHistory.length === 0 ? (
-          <StatusHistoryRow
-            label={t("statusHistoryCreated")}
-            name={ticket.createdByName}
-            at={ticket.createdAt}
-            locale={locale}
-          />
-        ) : (
-          statusHistory.map((entry) => (
-            <StatusHistoryRow
-              key={entry._id}
-              label={
-                entry.previousStatus
-                  ? t("statusHistoryChanged", { status: t(STATUS_LABEL_KEY[entry.status]) })
-                  : t("statusHistoryCreated")
-              }
-              name={entry.changedByName}
-              at={entry.changedAt}
-              locale={locale}
-            />
-          ))
-        )}
+      <div className="border-b border-border/70 px-4 py-3">
+        <div className="mb-3 flex min-h-6 items-center justify-between gap-2">
+          <h3 className="text-xs font-semibold text-muted-foreground">{t("statusHistory")}</h3>
+          <TimelineOrder label={tc("newestFirst")} />
+        </div>
+        <TicketStatusHistory ticket={ticket} />
       </div>
 
       {otherThreads.length > 0 && (
@@ -218,8 +185,8 @@ export function TicketDetailView({
               onClick={() => onSelectTicket(other.ticketId)}
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent"
             >
-              <span className="font-mono text-xs font-bold text-primary">
-                #{String(other.nr).padStart(3, "0")}
+              <span className="font-mono text-xs text-muted-foreground">
+                {ticketNumber(other.nr)}
               </span>
               <span className="min-w-0 flex-1 truncate">{other.category}</span>
               <StatusBadge status={other.status} />
@@ -231,7 +198,7 @@ export function TicketDetailView({
   );
 }
 
-function TicketRelatedLinks({ ticket }: { ticket: Ticket }) {
+export function TicketRelatedLinks({ ticket, className }: { ticket: Ticket; className?: string }) {
   const t = useTranslations("ItTickets");
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
@@ -270,12 +237,9 @@ function TicketRelatedLinks({ ticket }: { ticket: Ticket }) {
   }
 
   return (
-    <div className="space-y-1.5 border-t border-border/70 pt-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          <Link2 className="size-3.5" />
-          {t("relatedLinks")}
-        </p>
+    <div className={cn("space-y-1.5 border-t border-border/70 pt-3", className)}>
+      <div className="flex min-h-6 items-center justify-between gap-2">
+        <h3 className="text-xs font-semibold text-muted-foreground">{t("relatedLinks")}</h3>
         {relatedLinks.length < 5 && (
           <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
             <Plus className="size-3.5" />
@@ -374,31 +338,6 @@ function TicketRelatedLinks({ ticket }: { ticket: Ticket }) {
           </div>
         </div>
       </ResponsiveDialog>
-    </div>
-  );
-}
-
-function StatusHistoryRow({
-  label,
-  name,
-  at,
-  locale,
-}: {
-  label: string;
-  name: string;
-  at: number;
-  locale: string;
-}) {
-  const t = useTranslations("ItTickets");
-  return (
-    <div className="flex gap-2 text-xs">
-      <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
-      <div className="min-w-0">
-        <p className="font-medium">{label}</p>
-        <p className="text-muted-foreground">
-          {t("statusHistoryBy", { name })} · {formatDateTime(at, locale)}
-        </p>
-      </div>
     </div>
   );
 }
