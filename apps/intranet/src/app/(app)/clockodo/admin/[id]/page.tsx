@@ -87,7 +87,7 @@ function ViewRow({ label, value }: { label: string; value: ReactNode }) {
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-3">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground refreshed:text-xs refreshed:normal-case refreshed:tracking-normal">
         {label}
       </p>
       {children}
