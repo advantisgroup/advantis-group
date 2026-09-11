@@ -1009,6 +1009,18 @@ export default defineSchema({
     .index("by_createdAt", ["createdAt"])
     .index("by_outcome", ["outcome"]),
 
+  // --- Refreshed design preview feedback ------------------------------------
+  /** What people think of the refreshed page designs while they're opt-in;
+   * read by managers at /admin/design-feedback. Append-only. */
+  designFeedback: defineTable({
+    userId: v.id("users"),
+    sentiment: v.union(v.literal("positive"), v.literal("neutral"), v.literal("negative")),
+    message: v.string(),
+    /** The page the person was on when they sent it. */
+    path: v.string(),
+    createdAt: v.number(),
+  }).index("by_createdAt", ["createdAt"]),
+
   // --- Updates (incidents / maintenance / changelog) ------------------------
   updates: defineTable({
     type: v.union(v.literal("incident"), v.literal("maintenance"), v.literal("changelog")),
@@ -2458,6 +2470,12 @@ export default defineSchema({
     onboardingStep: v.optional(v.number()),
     /** JSON-encoded Record<OnboardingStepId, "pending"|"completed"|"skipped">. */
     onboardingStepStatuses: v.optional(v.string()),
+    /** Opt-in for the refreshed page designs while they're in preview. Unset
+     * means the person hasn't answered the banner yet. */
+    designPreview: v.optional(v.union(v.literal("refreshed"), v.literal("classic"))),
+    /** Set the moment the one-off "how's the new design?" prompt shows, so it
+     * never shows again whether it was answered, dismissed or ignored. */
+    designFeedbackPromptedAt: v.optional(v.number()),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
 

@@ -32,5 +32,6 @@
   "fieldCategory": "Category",
   "fieldStatus": "Status",
   "fieldDate": "Date",
-  "fieldNumber": "No."
+  "fieldNumber": "No.",
+  "newestFirst": "Newest first"
 }

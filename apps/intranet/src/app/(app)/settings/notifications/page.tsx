@@ -2,12 +2,14 @@
 
 import { useTranslations } from "next-intl";
 
+import { ClassicNotificationPreferences } from "@/components/notifications/ClassicNotificationPreferences";
 import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Card, CardContent } from "@/components/ui/card";
 import { UpdatesEmailConsent } from "@/components/updates/UpdatesEmailConsent";
+import { DesignSwitch } from "@/lib/design-preview";
 
-export default function SettingsNotificationsPage() {
+function ClassicSettingsNotifications() {
   const tn = useTranslations("Notifications");
   const user = useCurrentUser();
 
@@ -19,7 +21,7 @@ export default function SettingsNotificationsPage() {
             <p className="font-semibold tracking-tight">{tn("preferences")}</p>
             <p className="text-sm text-muted-foreground">{tn("preferencesHint")}</p>
           </div>
-          <NotificationPreferences />
+          <ClassicNotificationPreferences />
         </CardContent>
       </Card>
       {user.external && (
@@ -30,5 +32,14 @@ export default function SettingsNotificationsPage() {
         </Card>
       )}
     </>
+  );
+}
+
+export default function SettingsNotificationsPage() {
+  return (
+    <DesignSwitch
+      refreshed={<NotificationPreferences deliveryExtra={<UpdatesEmailConsent />} />}
+      classic={<ClassicSettingsNotifications />}
+    />
   );
 }

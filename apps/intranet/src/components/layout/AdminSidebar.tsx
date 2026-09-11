@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   type LucideIcon,
   Mail,
+  MessageSquareHeart,
   Plug,
   PowerOff,
   ScrollText,
@@ -63,7 +64,15 @@ export interface AdminNavGroup {
 export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     labelKey: "nav.groupGeneral",
-    items: [{ href: "/admin", labelKey: "nav.overview", icon: LayoutDashboard }],
+    items: [
+      { href: "/admin", labelKey: "nav.overview", icon: LayoutDashboard },
+      {
+        href: "/admin/design-feedback",
+        labelKey: "nav.designFeedback",
+        icon: MessageSquareHeart,
+        managerOnly: true,
+      },
+    ],
   },
   {
     labelKey: "nav.groupAccess",

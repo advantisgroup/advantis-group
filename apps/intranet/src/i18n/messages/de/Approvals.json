@@ -26,5 +26,16 @@
   "approvalCoverEnds": "Bis",
   "coverDatesRequired": "Wähle eine Person und beide Daten aus.",
   "saveApprovalCover": "Vertretung speichern",
-  "cancel": "Abbrechen"
+  "cancel": "Abbrechen",
+  "waitingOnYou": "Wartet auf dich",
+  "allClear": "Nichts offen — alles erledigt",
+  "oldestFirst": "Dringendstes und Ältestes zuerst in jeder Liste",
+  "startingSoon": "{count, plural, one {# beginnt in den nächsten 3 Tagen} other {# beginnen in den nächsten 3 Tagen}}",
+  "overdueCount": "{count} überfällig",
+  "startsIn": "Beginnt in {days} T.",
+  "startsToday": "Beginnt heute",
+  "started": "Bereits begonnen",
+  "halfDay": "½ Tag",
+  "requestedAgo": "vor {age}",
+  "overdue": "Überfällig"
 }

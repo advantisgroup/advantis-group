@@ -608,6 +608,15 @@ html.lenis body {
   pointer-events: none;
 }
 
+/* Collapsed sidebar rail: group labels are hidden there, so a hairline marks
+   where one group ends instead of a label-sized gap of empty space.
+   Un-layered so it beats the group's own padding utility. */
+[data-state="collapsed"] [data-slot="sidebar-group"] + [data-slot="sidebar-group"] {
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--sidebar-border);
+}
+
 /* The app shell pins itself to the viewport and makes <main> the scroll
    container, so the document itself must never scroll. Without this the mobile
    browser still treats <html> as scrollable: a swipe past the end of <main>
