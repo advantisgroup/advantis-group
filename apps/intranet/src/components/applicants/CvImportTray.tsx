@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -32,6 +32,7 @@ function CvImportRow({ runId, index }: { runId: Id<"aiRuns">; index: number }) {
   const handleError = useErrorHandler();
   const view = useAiRun<CvExtractOutput>({ runId }, parseJson);
   const [busy, setBusy] = useState(false);
+  const reuploadRef = useRef<HTMLInputElement>(null);
 
   const file = cvImportFiles.get(runId);
   const result = view.state === "done" ? view.result : null;
@@ -46,6 +47,21 @@ function CvImportRow({ runId, index }: { runId: Id<"aiRuns">; index: number }) {
       const applicantId = await run();
       view.markSeen();
       router.push(`/hr/${applicantId}/uebersicht`);
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** After a refresh the original PDF is gone from this tab, so a failed read
+   *  can only go again with the file picked a second time. */
+  async function uploadAgain(next: File) {
+    setBusy(true);
+    try {
+      const { runId: nextRunId } = await applicantsApi.startExtract(next);
+      cvImportFiles.set(nextRunId, next);
+      view.markSeen();
     } catch (e) {
       handleError(e);
     } finally {
@@ -135,6 +151,29 @@ function CvImportRow({ runId, index }: { runId: Id<"aiRuns">; index: number }) {
           >
             {t("fillManually")}
           </Button>
+        )}
+        {failed && !file && (
+          <>
+            <Button
+              size="xs"
+              variant="outline"
+              disabled={busy}
+              onClick={() => reuploadRef.current?.click()}
+            >
+              {t("cvImportUploadAgain")}
+            </Button>
+            <input
+              ref={reuploadRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                const next = e.target.files?.[0];
+                e.target.value = "";
+                if (next) void uploadAgain(next);
+              }}
+            />
+          </>
         )}
         {view.state !== "working" && (
           <button
