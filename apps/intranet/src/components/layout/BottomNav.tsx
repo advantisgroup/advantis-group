@@ -6,6 +6,7 @@ import { Menu, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
 
+import { AiDockButton } from "@/components/ai/AiDock";
 import { BottomNavTabButtons, useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
 import { MobilePageHeaderActions, usePageHeaderBarState } from "@/components/layout/PageHeaderBar";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -77,6 +78,7 @@ export function BottomNav() {
           {!hasTabs && <span>{tc("search")}</span>}
         </button>
         <span className="h-5 w-px shrink-0 bg-border/70" aria-hidden />
+        <AiDockButton placement="bottom" className="size-9 rounded-full" />
         <button
           type="button"
           onClick={() => {

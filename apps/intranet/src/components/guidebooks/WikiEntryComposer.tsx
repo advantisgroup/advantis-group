@@ -15,6 +15,7 @@ import {
   DraftOfferBanner,
   DraftRestoredNote,
 } from "@/components/compose/DraftIndicator";
+import { MobileActionBar } from "@/components/compose/MobileActionBar";
 import { ReadinessCard } from "@/components/compose/Readiness";
 import { ReadinessSubmit } from "@/components/compose/ReadinessSubmit";
 import { useWikiEntryForm } from "@/components/guidebooks/useWikiEntryForm";
@@ -393,6 +394,31 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | "new" }) {
     </>
   );
 
+  const optionsButton = (
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-label={t("optionsSheetTitle")}
+      onClick={() => setOptionsOpen(true)}
+      className="relative"
+    >
+      <Settings className="size-4" />
+      {optionsNeedAttention && (
+        <span className="absolute right-2 top-2 size-1.5 rounded-full bg-warning" />
+      )}
+    </Button>
+  );
+  const submitButton = (
+    <ReadinessSubmit
+      checks={checks}
+      readyTitle={readyTitle}
+      busy={entryForm.busy}
+      onSubmit={() => void entryForm.submit()}
+    >
+      {isEditing ? tc("save") : tc("create")}
+    </ReadinessSubmit>
+  );
+
   const showDraftLine = stage === "compose" && (draft.savedAt !== null || draft.status !== "idle");
 
   return (
@@ -416,25 +442,8 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | "new" }) {
           )}
         </div>
 
-        {stage === "compose" && (
+        {stage === "compose" && !isMobile && (
           <>
-            {/* A two-segment text pill plus the gear and save button doesn't
-                fit a narrow phone screen alongside the title — one toggle
-                showing what tapping switches *to* does the same job. */}
-            {isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={mobileView === "write" ? t("preview") : t("write")}
-                onClick={() => setMobileView((v) => (v === "write" ? "preview" : "write"))}
-              >
-                {mobileView === "write" ? (
-                  <Eye className="size-4" />
-                ) : (
-                  <PenLine className="size-4" />
-                )}
-              </Button>
-            )}
             {!isEditing && (
               <Link
                 href="/guidebooks/new/advanced"
@@ -443,26 +452,8 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | "new" }) {
                 {t("composerSwitchToAdvanced")}
               </Link>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t("optionsSheetTitle")}
-              onClick={() => setOptionsOpen(true)}
-              className="relative"
-            >
-              <Settings className="size-4" />
-              {optionsNeedAttention && (
-                <span className="absolute right-2 top-2 size-1.5 rounded-full bg-warning" />
-              )}
-            </Button>
-            <ReadinessSubmit
-              checks={checks}
-              readyTitle={readyTitle}
-              busy={entryForm.busy}
-              onSubmit={() => void entryForm.submit()}
-            >
-              {isEditing ? tc("save") : tc("create")}
-            </ReadinessSubmit>
+            {optionsButton}
+            {submitButton}
           </>
         )}
       </header>
@@ -542,6 +533,22 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | "new" }) {
             </div>
           )}
         </div>
+      )}
+
+      {stage === "compose" && isMobile && (
+        <MobileActionBar inline>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={mobileView === "write" ? t("preview") : t("write")}
+            onClick={() => setMobileView((v) => (v === "write" ? "preview" : "write"))}
+          >
+            {mobileView === "write" ? <Eye className="size-4" /> : <PenLine className="size-4" />}
+          </Button>
+          {optionsButton}
+          <span className="flex-1" />
+          {submitButton}
+        </MobileActionBar>
       )}
 
       {isMobile ? (

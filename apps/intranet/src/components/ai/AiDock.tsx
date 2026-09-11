@@ -175,10 +175,18 @@ export function AiDock() {
 }
 
 /**
- * The same dock on a phone, as a header button and a sheet — a floating pill
- * there would sit on top of composer toolbars and form save bars.
+ * The same dock on a phone: a button and a sheet, living in whatever bar is at
+ * the bottom of the screen — the nav pill, a form's action bar, a composer's
+ * bar. The `top` copy in the header is only the fallback for full-screen pages
+ * with no bottom bar, and hides itself whenever a bottom one is on the page.
  */
-export function AiDockButton() {
+export function AiDockButton({
+  placement,
+  className,
+}: {
+  placement: "top" | "bottom";
+  className?: string;
+}) {
   const t = useTranslations("Ai");
   const { visible, now, working, waiting } = useDockRuns();
   const [open, setOpen] = useState(false);
@@ -191,7 +199,12 @@ export function AiDockButton() {
         variant="ghost"
         size="icon"
         aria-label={t("dockLabel")}
-        className="relative md:hidden"
+        data-ai-dock-slot={placement === "bottom" ? "" : undefined}
+        className={cn(
+          "relative shrink-0 md:hidden",
+          placement === "top" && "[body:has([data-ai-dock-slot])_&]:hidden",
+          className,
+        )}
         onClick={() => setOpen(true)}
       >
         <AiGlyph working={working > 0} className="size-5" />

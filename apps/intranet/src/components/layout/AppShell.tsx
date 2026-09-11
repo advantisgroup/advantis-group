@@ -285,7 +285,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           {/* Tour progress — compact checkmark chip; self-hides when finished. */}
           {!isUpdatesReading && <TourProgressChip />}
           {!isUpdatesReading && <OnboardingTrigger />}
-          <AiDockButton />
+          <AiDockButton placement="top" />
           <div data-tour="tour-notifications-btn" className="flex items-center">
             <NotificationsMenu />
           </div>

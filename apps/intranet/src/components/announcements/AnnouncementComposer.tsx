@@ -31,6 +31,7 @@ import {
   DraftRestoredNote,
 } from "@/components/compose/DraftIndicator";
 import { type ReadinessCheck, ReadinessCard, scoreReadiness } from "@/components/compose/Readiness";
+import { MobileActionBar } from "@/components/compose/MobileActionBar";
 import { useDraft } from "@/components/compose/use-draft";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
 import { Link } from "@/components/Link";
@@ -1016,6 +1017,21 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
     <ReadinessCard checks={checks} readyTitle={readyTitle} className="shadow-overlay" />
   );
 
+  const optionsButton = (
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-label={t("options")}
+      onClick={() => setOptionsOpen(true)}
+      className="relative"
+    >
+      <Settings className="size-4" />
+      {readiness.missing.some((c) => c.key === "audience" || c.key === "date") && (
+        <span className="absolute right-2 top-2 size-1.5 rounded-full bg-warning" />
+      )}
+    </Button>
+  );
+
   const preview = (
     <AnnouncementPreview
       title={draft.title}
@@ -1044,55 +1060,23 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
           {showDraftLine && <DraftIndicator draft={serverDraft} onDiscard={discardDraft} />}
         </div>
 
-        {isMobile && (
-          <div className="mr-1 flex items-center gap-1 rounded-full border border-border bg-muted/40 p-0.5">
-            {(["write", "preview"] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => setMobileView(v)}
+        {!isMobile && (
+          <>
+            {optionsButton}
+            <Popover open={sendPromptOpen} onOpenChange={setSendPromptOpen}>
+              <PopoverTrigger asChild>
+                <Button disabled={busy}>{sendLabel}</Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
                 className={cn(
-                  "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                  mobileView === v
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground",
+                  canSend ? "w-72" : "w-[22rem] border-0 bg-transparent p-0 shadow-none",
                 )}
               >
-                {v === "write" ? t("write") : t("preview")}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t("options")}
-          onClick={() => setOptionsOpen(true)}
-          className="relative"
-        >
-          <Settings className="size-4" />
-          {readiness.missing.some((c) => c.key === "audience" || c.key === "date") && (
-            <span className="absolute right-2 top-2 size-1.5 rounded-full bg-warning" />
-          )}
-        </Button>
-
-        {isMobile ? (
-          <Button disabled={busy} onClick={() => setSendPromptOpen(true)}>
-            {sendLabel}
-          </Button>
-        ) : (
-          <Popover open={sendPromptOpen} onOpenChange={setSendPromptOpen}>
-            <PopoverTrigger asChild>
-              <Button disabled={busy}>{sendLabel}</Button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              className={cn(canSend ? "w-72" : "w-[22rem] border-0 bg-transparent p-0 shadow-none")}
-            >
-              {sendPrompt}
-            </PopoverContent>
-          </Popover>
+                {sendPrompt}
+              </PopoverContent>
+            </Popover>
+          </>
         )}
       </header>
 
@@ -1146,7 +1130,6 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
                     // sitting at the bottom of the column puts this bar behind
                     // it. Lift it by however much the keyboard covers.
                     marginBottom: keyboardInset,
-                    paddingBottom: keyboardInset ? 0 : "env(safe-area-inset-bottom)",
                   }}
                 >
                   <RichTextToolbar
@@ -1177,6 +1160,33 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
           </div>
         )}
       </div>
+
+      {isMobile && (
+        <MobileActionBar inline>
+          <div className="flex items-center gap-1 rounded-full border border-border bg-muted/40 p-0.5">
+            {(["write", "preview"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setMobileView(v)}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                  mobileView === v
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {v === "write" ? t("write") : t("preview")}
+              </button>
+            ))}
+          </div>
+          {optionsButton}
+          <span className="flex-1" />
+          <Button disabled={busy} onClick={() => setSendPromptOpen(true)}>
+            {sendLabel}
+          </Button>
+        </MobileActionBar>
+      )}
 
       {isMobile ? (
         <MobileDrawer open={optionsOpen} onOpenChange={setOptionsOpen} ariaLabel={t("options")}>

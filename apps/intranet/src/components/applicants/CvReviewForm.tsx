@@ -22,6 +22,8 @@ import {
   textToHtml,
 } from "@/components/applicants/applicant-types";
 import { DraftIndicator } from "@/components/compose/DraftIndicator";
+import { MobileActionBar } from "@/components/compose/MobileActionBar";
+import { ReadinessSubmit } from "@/components/compose/ReadinessSubmit";
 import { useDraft } from "@/components/compose/use-draft";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -562,38 +564,20 @@ export function CvReviewForm({
             <p className="truncate text-[11px] text-muted-foreground">{file.name}</p>
           )}
         </div>
-        <Button size="sm" onClick={() => void handleSave()} disabled={saving || !form.name.trim()}>
-          {saving && <Loader2 className="animate-spin" />}
-          {saving ? t("uploading") : t("saveManualEntry")}
-        </Button>
+        {!isMobile && (
+          <Button
+            size="sm"
+            onClick={() => void handleSave()}
+            disabled={saving || !form.name.trim()}
+          >
+            {saving && <Loader2 className="animate-spin" />}
+            {saving ? t("uploading") : t("saveManualEntry")}
+          </Button>
+        )}
       </header>
 
       {isMobile ? (
         <>
-          <div className="flex items-center justify-center gap-1 border-b border-border/70 p-2">
-            <button
-              type="button"
-              onClick={() => scrollToPage(0)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                mobilePage === 0 ? "bg-accent text-foreground" : "text-muted-foreground",
-              )}
-            >
-              <Pencil className="size-3.5" />
-              {t("fallbackPageForm")}
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollToPage(1)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                mobilePage === 1 ? "bg-accent text-foreground" : "text-muted-foreground",
-              )}
-            >
-              <FileText className="size-3.5" />
-              {t("fallbackPagePdf")}
-            </button>
-          </div>
           <div
             ref={carouselRef}
             onScroll={handleCarouselScroll}
@@ -615,6 +599,32 @@ export function CvReviewForm({
               <div className="min-h-0 flex-1">{pdf}</div>
             </div>
           </div>
+          <MobileActionBar inline>
+            <div className="flex items-center gap-1 rounded-full border border-border bg-muted/40 p-0.5">
+              {([0, 1] as const).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => scrollToPage(page)}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                    mobilePage === page ? "bg-foreground text-background" : "text-muted-foreground",
+                  )}
+                >
+                  {page === 0 ? <Pencil className="size-3.5" /> : <FileText className="size-3.5" />}
+                  {page === 0 ? t("fallbackPageForm") : t("fallbackPagePdf")}
+                </button>
+              ))}
+            </div>
+            <span className="flex-1" />
+            <ReadinessSubmit
+              checks={[{ key: "name", label: t("name"), done: !!form.name.trim() }]}
+              busy={saving}
+              onSubmit={() => void handleSave()}
+            >
+              {t("saveManualEntry")}
+            </ReadinessSubmit>
+          </MobileActionBar>
         </>
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-[minmax(300px,440px)_1fr]">

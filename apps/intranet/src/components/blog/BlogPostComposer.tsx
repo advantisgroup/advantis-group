@@ -19,6 +19,7 @@ import {
   DraftOfferBanner,
   DraftRestoredNote,
 } from "@/components/compose/DraftIndicator";
+import { MobileActionBar } from "@/components/compose/MobileActionBar";
 import { ReadinessCard } from "@/components/compose/Readiness";
 import { ReadinessSubmit } from "@/components/compose/ReadinessSubmit";
 import { Link } from "@/components/Link";
@@ -254,6 +255,31 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
     />
   );
 
+  const optionsButton = (
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-label={t("optionsSheetTitle")}
+      onClick={() => setOptionsOpen(true)}
+      className="relative"
+    >
+      <Settings className="size-4" />
+      {optionsNeedAttention && (
+        <span className="absolute right-2 top-2 size-1.5 rounded-full bg-warning" />
+      )}
+    </Button>
+  );
+  const submitButton = (
+    <ReadinessSubmit
+      checks={checks}
+      readyTitle={readyTitle}
+      busy={form.busy}
+      onSubmit={() => void form.submit()}
+    >
+      {form.isEditing ? tc("save") : tc("create")}
+    </ReadinessSubmit>
+  );
+
   const showDraftLine = draft.savedAt !== null || draft.status !== "idle";
 
   return (
@@ -288,36 +314,12 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
             )}
           </div>
         </div>
-        {isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={mobileView === "write" ? t("preview") : t("write")}
-            onClick={() => setMobileView((v) => (v === "write" ? "preview" : "write"))}
-          >
-            {mobileView === "write" ? <Eye className="size-4" /> : <PenLine className="size-4" />}
-          </Button>
+        {!isMobile && (
+          <>
+            {optionsButton}
+            {submitButton}
+          </>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t("optionsSheetTitle")}
-          onClick={() => setOptionsOpen(true)}
-          className="relative"
-        >
-          <Settings className="size-4" />
-          {optionsNeedAttention && (
-            <span className="absolute right-2 top-2 size-1.5 rounded-full bg-warning" />
-          )}
-        </Button>
-        <ReadinessSubmit
-          checks={checks}
-          readyTitle={readyTitle}
-          busy={form.busy}
-          onSubmit={() => void form.submit()}
-        >
-          {form.isEditing ? tc("save") : tc("create")}
-        </ReadinessSubmit>
       </header>
 
       <div ref={splitRef} className="flex min-h-0 flex-1">
@@ -369,6 +371,22 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
           </div>
         )}
       </div>
+
+      {isMobile && (
+        <MobileActionBar inline>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={mobileView === "write" ? t("preview") : t("write")}
+            onClick={() => setMobileView((v) => (v === "write" ? "preview" : "write"))}
+          >
+            {mobileView === "write" ? <Eye className="size-4" /> : <PenLine className="size-4" />}
+          </Button>
+          {optionsButton}
+          <span className="flex-1" />
+          {submitButton}
+        </MobileActionBar>
+      )}
 
       {isMobile ? (
         <MobileDrawer
