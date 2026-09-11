@@ -1,26 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import { BellRing } from "lucide-react";
+import { Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useIsManager } from "@/components/providers/current-user";
+import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 import { notificationVisual } from "@/lib/notification-kinds";
 import { cn } from "@/lib/utils";
 
 import type { LucideIcon } from "lucide-react";
 
 /**
- * Every mutable notification type with its icon/tint. `access_request`
- * (system) is deliberately absent — admins must not mute access requests.
- */
-/**
  * The subset of notification types a user is allowed to silence, in display
  * order. Icons/tints come from the shared registry so this list and the
- * notification feed can't drift apart.
+ * notification feed can't drift apart. `access_request` is deliberately
+ * absent — managers must not mute access requests.
  */
 export const MUTABLE_TYPES: { type: string; icon: LucideIcon; tint: string }[] = [
   "chat-message",
@@ -31,6 +30,13 @@ export const MUTABLE_TYPES: { type: string; icon: LucideIcon; tint: string }[] =
   "upload_request",
   "upload_decision",
 ].map((type) => ({ type, ...notificationVisual(type) }));
+
+const SECTIONS = [
+  { key: "chat", types: ["chat-message", "chat-mention"] },
+  { key: "absence", types: ["absence_request", "absence_decision"] },
+  { key: "uploads", types: ["upload_request", "upload_decision"] },
+  { key: "announcement", types: ["announcement"] },
+] as const;
 
 export function Switch({
   checked,
@@ -68,8 +74,9 @@ export function Switch({
  * between the notifications tab and the settings page so preferences live in
  * both places without divergence.
  */
-export function NotificationPreferences() {
+export function NotificationPreferences({ deliveryExtra }: { deliveryExtra?: ReactNode }) {
   const t = useTranslations("Notifications");
+  const isManager = useIsManager();
   const prefs = useQuery(api.notifications.getPreferences);
   const setPreferences = useMutation(api.notifications.setPreferences);
   const userPrefs = useQuery(api.userPreferences.getMine);
@@ -111,52 +118,59 @@ export function NotificationPreferences() {
   }
 
   return (
-    <div className="space-y-1">
-      <div className="border-b border-border/60 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-300">
-              <BellRing className="size-[18px]" />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm font-medium">{t("browserTitle")}</span>
-              <span className="block text-xs text-muted-foreground">{t("browserHint")}</span>
-            </span>
-          </div>
-          <Switch
-            checked={browserEnabled}
-            onToggle={() => void toggleBrowser()}
-            label={t("browserTitle")}
-          />
-        </div>
-        {permission === "denied" && (
-          <p className="ml-12 mt-2 text-xs text-amber-600 dark:text-amber-400">
-            {t("browserDeniedHint")}
-          </p>
-        )}
-      </div>
-      {MUTABLE_TYPES.map(({ type, icon: Icon, tint }) => (
-        <div
-          key={type}
-          className="flex items-center justify-between gap-3 border-b border-border/60 py-3 last:border-b-0"
+    <div className="space-y-8">
+      <SettingsSection title={t("sectionDelivery")} description={t("sectionDeliveryHint")}>
+        <SettingsRow
+          title={t("browserTitle")}
+          description={t("browserHint")}
+          control={
+            <Switch
+              checked={browserEnabled}
+              onToggle={() => void toggleBrowser()}
+              label={t("browserTitle")}
+            />
+          }
         >
-          <div className="flex items-center gap-3">
-            <span
-              className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", tint)}
-            >
-              <Icon className="size-[18px]" />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm font-medium">{t(`type_${type}`)}</span>
-              <span className="block text-xs text-muted-foreground">{t(`desc_${type}`)}</span>
-            </span>
-          </div>
-          <Switch
-            checked={!muted.includes(type)}
-            onToggle={() => toggleType(type)}
-            label={t(`type_${type}`)}
+          {permission === "denied" && (
+            <p className="mt-2 text-xs text-warn">{t("browserDeniedHint")}</p>
+          )}
+        </SettingsRow>
+        {deliveryExtra}
+        {isManager && (
+          <SettingsRow
+            title={t("accessRequestsTitle")}
+            description={t("accessRequestsHint")}
+            control={
+              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Lock className="size-3.5" />
+                {t("alwaysOn")}
+              </span>
+            }
           />
-        </div>
+        )}
+      </SettingsSection>
+
+      {SECTIONS.map((section) => (
+        <SettingsSection
+          key={section.key}
+          title={t(`cat_${section.key}`)}
+          description={t(`section_${section.key}Hint`)}
+        >
+          {section.types.map((type) => (
+            <SettingsRow
+              key={type}
+              title={t(`type_${type}`)}
+              description={t(`desc_${type}`)}
+              control={
+                <Switch
+                  checked={!muted.includes(type)}
+                  onToggle={() => toggleType(type)}
+                  label={t(`type_${type}`)}
+                />
+              }
+            />
+          ))}
+        </SettingsSection>
       ))}
     </div>
   );

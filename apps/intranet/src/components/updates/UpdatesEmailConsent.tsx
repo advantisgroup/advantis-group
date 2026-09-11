@@ -2,11 +2,11 @@
 
 import { api } from "@advantis/convex/api";
 import { useMutation } from "convex/react";
-import { Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Switch } from "@/components/notifications/NotificationPreferences";
 import { useCurrentUser } from "@/components/providers/current-user";
+import { SettingsRow } from "@/components/ui/settings-rows";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 /**
@@ -31,21 +31,16 @@ export function UpdatesEmailConsent() {
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 py-3">
-      <div className="flex items-center gap-3">
-        <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Mail className="size-[18px]" />
-        </span>
-        <span className="min-w-0">
-          <span className="block text-sm font-medium">{t("emailConsentTitle")}</span>
-          <span className="block text-xs text-muted-foreground">{t("emailConsentHint")}</span>
-        </span>
-      </div>
-      <Switch
-        checked={user.updatesEmailConsent}
-        onToggle={() => void toggle()}
-        label={t("emailConsentTitle")}
-      />
-    </div>
+    <SettingsRow
+      title={t("emailConsentTitle")}
+      description={t("emailConsentHint")}
+      control={
+        <Switch
+          checked={user.updatesEmailConsent}
+          onToggle={() => void toggle()}
+          label={t("emailConsentTitle")}
+        />
+      }
+    />
   );
 }
