@@ -564,7 +564,7 @@ export default function GuidebooksPage() {
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t("searchPlaceholder")}
                   aria-label={t("searchPlaceholder")}
-                  className="h-9 rounded-full pl-8 text-sm md:h-7 md:text-xs"
+                  className="h-9 pl-8 text-sm md:h-8 md:text-[13px]"
                 />
               </div>
               <div className="flex flex-wrap items-center gap-2">

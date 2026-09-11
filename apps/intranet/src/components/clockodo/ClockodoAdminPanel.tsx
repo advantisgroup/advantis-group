@@ -600,7 +600,7 @@ export function ClockodoAdminPanel() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t("searchPlaceholder")}
-                className="pl-9 refreshed:h-9 refreshed:rounded-full refreshed:pl-8 refreshed:text-sm md:refreshed:h-7 md:refreshed:text-xs"
+                className="pl-9 refreshed:h-9 refreshed:pl-8 refreshed:text-sm md:refreshed:h-8 md:refreshed:text-[13px]"
               />
             </div>
             {refreshed && gaps.length > 0 && (

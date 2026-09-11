@@ -393,7 +393,7 @@ function DirectoryPageContent() {
                 aria-label={t("searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-9 rounded-full pl-8 text-sm md:h-7 md:text-xs"
+                className="h-9 pl-8 text-sm md:h-8 md:text-[13px]"
               />
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:flex-1">

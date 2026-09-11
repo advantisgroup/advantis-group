@@ -55,7 +55,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   return (
     <td
       className={cn(
-        "p-3 align-middle [&:has([role=checkbox])]:pr-0 refreshed:px-3.5 refreshed:py-2.5",
+        "p-3 align-middle [&:has([role=checkbox])]:pr-0 refreshed:px-3.5 refreshed:py-[11px] refreshed:text-[13px]",
         className,
       )}
       {...props}

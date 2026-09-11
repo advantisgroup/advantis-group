@@ -55,14 +55,16 @@ export function Switch({
       aria-label={label}
       onClick={onToggle}
       className={cn(
-        "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-        checked ? "bg-primary refreshed:bg-ok" : "bg-muted",
+        "relative h-6 w-11 shrink-0 rounded-full transition-colors refreshed:h-[22px] refreshed:w-[38px] refreshed:border",
+        checked
+          ? "bg-primary refreshed:border-ok refreshed:bg-ok"
+          : "bg-muted refreshed:border-border",
       )}
     >
       <span
         className={cn(
-          "absolute top-0.5 size-5 rounded-full bg-background shadow transition-all",
-          checked ? "left-[1.375rem]" : "left-0.5",
+          "absolute top-0.5 size-5 rounded-full bg-background shadow transition-all refreshed:size-4 refreshed:bg-card",
+          checked ? "left-[1.375rem] refreshed:left-[18px]" : "left-0.5",
         )}
       />
     </button>

@@ -44,7 +44,7 @@ export function FilterPill({
       <PopoverAnchor asChild>
         <span
           className={cn(
-            "inline-flex h-8 shrink-0 items-center rounded-full border text-xs font-medium transition-colors md:h-7",
+            "inline-flex h-8 shrink-0 items-center rounded-full border text-[12.5px] font-medium transition-colors md:h-7",
             active
               ? "border-border bg-card text-foreground"
               : "border-dashed border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
@@ -92,7 +92,7 @@ export function FilterPill({
               role="menuitemcheckbox"
               aria-checked={on}
               onClick={() => toggle(option.value)}
-              className="flex min-h-9 w-full items-center gap-2.5 rounded-md px-2 text-left text-sm transition-colors hover:bg-accent md:min-h-8"
+              className="flex min-h-9 w-full items-center gap-2.5 rounded-md px-2 text-left text-[13px] transition-colors hover:bg-accent md:min-h-8"
             >
               <span
                 className={cn(
@@ -136,7 +136,7 @@ export function TogglePill({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors md:h-7",
+        "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-medium transition-colors md:h-7",
         active
           ? "border-foreground/25 bg-foreground/[0.07] text-foreground"
           : "border-dashed border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
