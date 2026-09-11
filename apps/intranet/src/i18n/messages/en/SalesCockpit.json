@@ -45,6 +45,7 @@
   "projektLoeschenTitel": "Delete project?",
   "projektLoeschenBeschreibung": "\"{titel}\" will be permanently deleted, including all paths and documents.",
   "projektGeloescht": "Project deleted",
+  "projektZwischenzeitlichGeloescht": "This project was deleted in the meantime.",
   "projektGespeichert": "Project saved ✓",
 
   "titelPlaceholder": "e.g. Fiber campaign Northern Bavaria",

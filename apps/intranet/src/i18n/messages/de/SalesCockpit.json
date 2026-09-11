@@ -45,6 +45,7 @@
   "projektLoeschenTitel": "Projekt löschen?",
   "projektLoeschenBeschreibung": "„{titel}\" wird endgültig gelöscht, inklusive aller Wege und Unterlagen.",
   "projektGeloescht": "Projekt gelöscht",
+  "projektZwischenzeitlichGeloescht": "Dieses Projekt wurde in der Zwischenzeit gelöscht.",
   "projektGespeichert": "Projekt gespeichert ✓",
 
   "titelPlaceholder": "z. B. Glasfaser-Kampagne Nordbayern",
