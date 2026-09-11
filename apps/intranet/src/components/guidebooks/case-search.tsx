@@ -2580,7 +2580,7 @@ function CaseSearchTab() {
               className={cn(
                 "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
                 active
-                  ? "border-primary/40 bg-primary/10 text-primary"
+                  ? "border-primary/40 bg-primary/10 text-primary refreshed:border-foreground/25 refreshed:bg-foreground/[0.07] refreshed:text-foreground"
                   : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
@@ -2621,7 +2621,7 @@ function CaseSearchTab() {
               return (
                 <div
                   key={`${c.recordType}-${c.category}-${c.subcategory}-${c.subcategoryDetail}-${i}`}
-                  className="relative overflow-hidden rounded-xl border border-border/70 bg-card p-4 pl-5 shadow-[0_1px_2px_0_rgb(0_0_0/0.04)]"
+                  className="relative overflow-hidden rounded-xl border border-border/70 bg-card p-4 pl-5 shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] refreshed:shadow-none"
                 >
                   <span className={cn("absolute inset-y-0 left-0 w-1", style.accent)} />
                   <div className="mb-3">
@@ -2652,7 +2652,7 @@ function CaseSearchTab() {
                   </div>
                   {c.description && (
                     <div className="mt-3 rounded-lg bg-muted/50 px-3 py-2 text-sm leading-relaxed text-foreground">
-                      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
                         {t("whenToUse")}{" "}
                       </span>
                       {highlight(c.description, q)}
@@ -2671,7 +2671,7 @@ function CaseSearchTab() {
 function Field({ label, value, query }: { label: string; value: string; query: string }) {
   return (
     <div>
-      <div className="mb-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+      <div className="mb-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
         {label}
       </div>
       <div className="text-sm font-medium leading-snug">{highlight(value, query)}</div>
@@ -2730,7 +2730,7 @@ export function CaseSearchGuidebook() {
             </div>
             <Link
               href="/wiki-chat"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 refreshed:bg-foreground refreshed:text-background refreshed:hover:bg-foreground/88"
             >
               {t("wikiChat.openFull")}
             </Link>

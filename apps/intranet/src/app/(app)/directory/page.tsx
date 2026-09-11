@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { BookmarkPlus, LayoutGrid, List, Rows3, Search, Users, X } from "lucide-react";
+import { Bookmark, BookmarkPlus, LayoutGrid, List, Rows3, Search, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import {
@@ -23,6 +23,7 @@ import { UserProfile } from "@/components/profile/UserProfile";
 import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterPill, TogglePill } from "@/components/ui/filter-pill";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -32,6 +33,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -44,6 +53,7 @@ import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { isoToday } from "@/lib/absences";
 import { useAbsencesCalendar } from "@/lib/absences-api";
 import { useNow } from "@/lib/activity/useNow";
+import { useDesignPreview } from "@/lib/design-preview";
 import { TEAMS, teamColor } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +81,7 @@ function DirectoryPageContent() {
   const me = useCurrentUser();
   const isManager = useIsManager();
   const now = useNow();
+  const refreshed = useDesignPreview() === "refreshed";
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -300,221 +311,353 @@ function DirectoryPageContent() {
       </div>
     );
 
+  // View switch. `list` is the default: at this org's size a table is
+  // simply the more readable shape, and the grid is for browsing faces.
+  const viewSwitch = (
+    <div
+      className="flex shrink-0 items-center gap-0.5 rounded-lg border border-border/70 bg-panel-2 p-0.5 refreshed:bg-muted/40"
+      role="group"
+      aria-label={t("view")}
+    >
+      {(
+        [
+          ["list", List, t("viewList")],
+          ["grid", LayoutGrid, t("viewGrid")],
+        ] as const
+      ).map(([mode, Icon, label]) => (
+        <button
+          key={mode}
+          type="button"
+          aria-label={label}
+          aria-pressed={view === mode}
+          onClick={() => setView(mode)}
+          className={cn(
+            "grid size-8 place-items-center rounded-md transition-colors refreshed:size-7",
+            view === mode
+              ? "bg-card text-foreground shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Icon className="size-4" />
+        </button>
+      ))}
+    </div>
+  );
+
+  // Result count, so a filter that narrows to two people says so rather
+  // than leaving the reader to count cards.
+  const countRow = (
+    <div className="flex min-h-6 items-center gap-2 text-xs text-muted-foreground">
+      {people === undefined ? (
+        <Skeleton className="h-3 w-24" />
+      ) : (
+        <>
+          <span>{t("countPeople", { count: filtered.length })}</span>
+          {missingNames > 0 && (
+            <span className="text-warn">· {t("missingNames", { count: missingNames })}</span>
+          )}
+          {filtersActive && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto h-6 px-2 text-xs"
+              onClick={() => {
+                setSearch("");
+                setRole("all");
+                setTeam("all");
+                setMyTeamsOnly(false);
+                setAvailableNow(false);
+                setDepartment("all");
+              }}
+            >
+              <X className="size-3" />
+              {t("clearFilters")}
+            </Button>
+          )}
+        </>
+      )}
+    </div>
+  );
+
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeaderBar title={t("title")} tourCheckpoint="directory" />
 
-      <div className="mb-4 space-y-2.5" data-tour="tour-directory-filters">
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder={t("searchPlaceholder")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Select value={department} onValueChange={setDepartment}>
-            <SelectTrigger className="sm:w-44">
-              <SelectValue placeholder={t("department")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allDepartments")}</SelectItem>
-              {departments.map((d) => (
-                <SelectItem key={d} value={d}>
-                  {d}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-10 shrink-0 gap-1.5"
-            onClick={() => setSaveViewOpen(true)}
-          >
-            <BookmarkPlus className="size-4" />
-            {t("saveView")}
-          </Button>
-          {/* View switch. `list` is the default: at this org's size a table is
-              simply the more readable shape, and the grid is for browsing faces. */}
-          <div
-            className="flex shrink-0 items-center gap-0.5 rounded-lg border border-border/70 bg-panel-2 p-0.5"
-            role="group"
-            aria-label={t("view")}
-          >
-            {(
-              [
-                ["list", List, t("viewList")],
-                ["grid", LayoutGrid, t("viewGrid")],
-              ] as const
-            ).map(([mode, Icon, label]) => (
-              <button
-                key={mode}
-                type="button"
-                aria-label={label}
-                aria-pressed={view === mode}
-                onClick={() => setView(mode)}
-                className={cn(
-                  "grid size-8 place-items-center rounded-md transition-colors",
-                  view === mode
-                    ? "bg-card text-foreground shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Icon className="size-4" />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          {(["all", "admin", "manager", "employee"] as const).map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setRole(r)}
-              className={cn(
-                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                role === r
-                  ? "border-transparent bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:bg-accent",
+      {refreshed ? (
+        <div className="mb-4 space-y-2" data-tour="tour-directory-filters">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative w-full sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder={t("searchPlaceholder")}
+                aria-label={t("searchPlaceholder")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-9 pl-8 text-sm md:h-8 md:text-[13px]"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2 sm:flex-1">
+              {departments.length > 0 && (
+                <FilterPill
+                  label={t("department")}
+                  options={departments.map((d) => ({ value: d, label: d }))}
+                  selected={department === "all" ? [] : [department]}
+                  onChange={(next) => setDepartment(next.find((d) => d !== department) ?? "all")}
+                  clearLabel={t("clearFilter", { label: t("department") })}
+                />
               )}
-            >
-              {r === "all" ? tCommon("all") : tRoles(r)}
-            </button>
-          ))}
-          <span className="mx-1 h-4 w-px bg-border" />
-          {me.teams.length > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                setMyTeamsOnly((value) => !value);
-                setTeam("all");
-              }}
-              className={cn(
-                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                myTeamsOnly
-                  ? "border-transparent bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:bg-accent",
-              )}
-            >
-              {t("myTeams")}
-            </button>
-          )}
-          {isManager && (
-            <button
-              type="button"
-              onClick={() => setAvailableNow((value) => !value)}
-              className={cn(
-                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                availableNow
-                  ? "border-transparent bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:bg-accent",
-              )}
-            >
-              {t("availableNow")}
-            </button>
-          )}
-          {TEAMS.map((tm) => (
-            <button
-              key={tm.id}
-              type="button"
-              onClick={() => {
-                setMyTeamsOnly(false);
-                setTeam(team === tm.id ? "all" : tm.id);
-              }}
-              className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                team === tm.id
-                  ? "border-transparent bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:bg-accent",
-              )}
-            >
-              <span className={cn("size-1.5 rounded-full", teamColor(tm.id))} />
-              {tTeams(tm.labelKey)}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setGrouped((v) => !v)}
-            className={cn(
-              "ml-auto flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-              grouped
-                ? "border-transparent bg-foreground text-background"
-                : "border-border text-muted-foreground hover:bg-accent",
-            )}
-          >
-            <Rows3 className="size-3" />
-            {t("groupByDept")}
-          </button>
-        </div>
-
-        {savedDirectoryViews.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5" aria-label={t("savedViews")}>
-            <span className="mr-1 text-xs font-medium text-muted-foreground">
-              {t("savedViews")}
-            </span>
-            {savedDirectoryViews.map((savedView) => (
-              <div
-                key={savedView.id}
-                className="flex items-center overflow-hidden rounded-full border border-border bg-card text-xs"
-              >
-                <button
-                  type="button"
-                  className="px-3 py-1 font-medium text-foreground transition-colors hover:bg-accent"
-                  onClick={() => applySavedView(savedView)}
-                >
-                  {savedView.name}
-                </button>
-                <button
-                  type="button"
-                  className="grid size-6 place-items-center border-l border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                  aria-label={t("removeSavedView", { name: savedView.name })}
-                  onClick={() => void removeSavedView(savedView.id)}
-                >
-                  <X className="size-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Result count, so a filter that narrows to two people says so rather
-            than leaving the reader to count cards. */}
-        <div className="flex min-h-6 items-center gap-2 text-xs text-muted-foreground">
-          {people === undefined ? (
-            <Skeleton className="h-3 w-24" />
-          ) : (
-            <>
-              <span>{t("countPeople", { count: filtered.length })}</span>
-              {missingNames > 0 && (
-                <span className="text-warn">· {t("missingNames", { count: missingNames })}</span>
-              )}
-              {filtersActive && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-auto h-6 px-2 text-xs"
+              <FilterPill
+                label={t("role")}
+                options={(["admin", "manager", "employee"] as const).map((r) => ({
+                  value: r,
+                  label: tRoles(r),
+                }))}
+                selected={role === "all" ? [] : [role]}
+                onChange={(next) => setRole(next.find((r) => r !== role) ?? "all")}
+                clearLabel={t("clearFilter", { label: t("role") })}
+              />
+              <FilterPill
+                label={t("team")}
+                options={TEAMS.map((tm) => ({
+                  value: tm.id,
+                  label: tTeams(tm.labelKey),
+                  leading: (
+                    <span className={cn("size-2 shrink-0 rounded-full", teamColor(tm.id))} />
+                  ),
+                }))}
+                selected={team === "all" ? [] : [team]}
+                onChange={(next) => {
+                  setMyTeamsOnly(false);
+                  setTeam(next.find((id) => id !== team) ?? "all");
+                }}
+                clearLabel={t("clearFilter", { label: t("team") })}
+              />
+              {me.teams.length > 0 && (
+                <TogglePill
+                  active={myTeamsOnly}
                   onClick={() => {
-                    setSearch("");
-                    setRole("all");
+                    setMyTeamsOnly((value) => !value);
                     setTeam("all");
-                    setMyTeamsOnly(false);
-                    setAvailableNow(false);
-                    setDepartment("all");
                   }}
                 >
-                  <X className="size-3" />
-                  {t("clearFilters")}
-                </Button>
+                  {t("myTeams")}
+                </TogglePill>
               )}
-            </>
-          )}
+              {isManager && (
+                <TogglePill
+                  active={availableNow}
+                  onClick={() => setAvailableNow((value) => !value)}
+                  dotClassName="bg-ok"
+                >
+                  {t("availableNow")}
+                </TogglePill>
+              )}
+              <div className="ml-auto flex items-center gap-1.5">
+                <TogglePill active={grouped} onClick={() => setGrouped((v) => !v)}>
+                  <Rows3 className="size-3" />
+                  {t("groupByDept")}
+                </TogglePill>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="xs" className="shrink-0">
+                      <Bookmark />
+                      {t("views")}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel>{t("savedViews")}</DropdownMenuLabel>
+                    {savedDirectoryViews.length === 0 ? (
+                      <p className="px-2 pb-2 text-xs text-muted-foreground">{t("noViews")}</p>
+                    ) : (
+                      savedDirectoryViews.map((savedView) => (
+                        <DropdownMenuItem
+                          key={savedView.id}
+                          onClick={() => applySavedView(savedView)}
+                          className="group justify-between gap-2"
+                        >
+                          <span className="truncate">{savedView.name}</span>
+                          <span
+                            role="button"
+                            tabIndex={-1}
+                            aria-label={t("removeSavedView", { name: savedView.name })}
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void removeSavedView(savedView.id);
+                            }}
+                            className="grid size-6 shrink-0 place-items-center rounded text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover:opacity-100 group-focus:opacity-100 max-md:opacity-100"
+                          >
+                            <X className="size-3.5" />
+                          </span>
+                        </DropdownMenuItem>
+                      ))
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setSaveViewOpen(true)}>
+                      <BookmarkPlus />
+                      {t("saveView")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {viewSwitch}
+              </div>
+            </div>
+          </div>
+          {countRow}
         </div>
-      </div>
+      ) : (
+        <div className="mb-4 space-y-2.5" data-tour="tour-directory-filters">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder={t("searchPlaceholder")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={department} onValueChange={setDepartment}>
+              <SelectTrigger className="sm:w-44">
+                <SelectValue placeholder={t("department")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("allDepartments")}</SelectItem>
+                {departments.map((d) => (
+                  <SelectItem key={d} value={d}>
+                    {d}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-10 shrink-0 gap-1.5"
+              onClick={() => setSaveViewOpen(true)}
+            >
+              <BookmarkPlus className="size-4" />
+              {t("saveView")}
+            </Button>
+            {viewSwitch}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {(["all", "admin", "manager", "employee"] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRole(r)}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                  role === r
+                    ? "border-transparent bg-foreground text-background"
+                    : "border-border text-muted-foreground hover:bg-accent",
+                )}
+              >
+                {r === "all" ? tCommon("all") : tRoles(r)}
+              </button>
+            ))}
+            <span className="mx-1 h-4 w-px bg-border" />
+            {me.teams.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMyTeamsOnly((value) => !value);
+                  setTeam("all");
+                }}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                  myTeamsOnly
+                    ? "border-transparent bg-foreground text-background"
+                    : "border-border text-muted-foreground hover:bg-accent",
+                )}
+              >
+                {t("myTeams")}
+              </button>
+            )}
+            {isManager && (
+              <button
+                type="button"
+                onClick={() => setAvailableNow((value) => !value)}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                  availableNow
+                    ? "border-transparent bg-foreground text-background"
+                    : "border-border text-muted-foreground hover:bg-accent",
+                )}
+              >
+                {t("availableNow")}
+              </button>
+            )}
+            {TEAMS.map((tm) => (
+              <button
+                key={tm.id}
+                type="button"
+                onClick={() => {
+                  setMyTeamsOnly(false);
+                  setTeam(team === tm.id ? "all" : tm.id);
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                  team === tm.id
+                    ? "border-transparent bg-foreground text-background"
+                    : "border-border text-muted-foreground hover:bg-accent",
+                )}
+              >
+                <span className={cn("size-1.5 rounded-full", teamColor(tm.id))} />
+                {tTeams(tm.labelKey)}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setGrouped((v) => !v)}
+              className={cn(
+                "ml-auto flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                grouped
+                  ? "border-transparent bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:bg-accent",
+              )}
+            >
+              <Rows3 className="size-3" />
+              {t("groupByDept")}
+            </button>
+          </div>
+
+          {savedDirectoryViews.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5" aria-label={t("savedViews")}>
+              <span className="mr-1 text-xs font-medium text-muted-foreground">
+                {t("savedViews")}
+              </span>
+              {savedDirectoryViews.map((savedView) => (
+                <div
+                  key={savedView.id}
+                  className="flex items-center overflow-hidden rounded-full border border-border bg-card text-xs"
+                >
+                  <button
+                    type="button"
+                    className="px-3 py-1 font-medium text-foreground transition-colors hover:bg-accent"
+                    onClick={() => applySavedView(savedView)}
+                  >
+                    {savedView.name}
+                  </button>
+                  <button
+                    type="button"
+                    className="grid size-6 place-items-center border-l border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    aria-label={t("removeSavedView", { name: savedView.name })}
+                    onClick={() => void removeSavedView(savedView.id)}
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {countRow}
+        </div>
+      )}
 
       <div data-tour="tour-directory-grid">
         {people === undefined ? (

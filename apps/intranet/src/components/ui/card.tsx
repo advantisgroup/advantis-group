@@ -17,6 +17,9 @@ function Card({ className, nested = false, ...props }: CardProps) {
         nested
           ? "shadow-none"
           : "shadow-[0_1px_2px_0_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.10)]",
+        // The refreshed design keeps surfaces flat — the border separates,
+        // shadow and sheen are saved for things that float (panels, menus).
+        "refreshed:bg-none refreshed:shadow-none",
         className,
       )}
       {...props}

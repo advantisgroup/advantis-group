@@ -182,7 +182,7 @@ export function GuidebookEditor({
 
       <div className="space-y-4 rounded-lg border border-border/70 bg-muted/30 p-4">
         <div className="space-y-1.5">
-          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
             {t("pageTitleLabel")}
           </Label>
           <Input
@@ -193,7 +193,7 @@ export function GuidebookEditor({
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
             {t("pageDescriptionLabel")}
           </Label>
           <Textarea
@@ -205,7 +205,7 @@ export function GuidebookEditor({
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
               {t("pageTopicLabel")}
             </Label>
             <Select value={topic} onValueChange={(v) => setTopic(v as GuidebookTopic)}>
@@ -222,7 +222,7 @@ export function GuidebookEditor({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
               {t("pageMinRoleLabel")}
             </Label>
             <Select value={minRole} onValueChange={(v) => setMinRole(v as typeof minRole)}>
@@ -238,7 +238,7 @@ export function GuidebookEditor({
           </div>
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
             {t("pageTeamsLabel")}
           </Label>
           <p className="text-xs text-muted-foreground">{t("pageTeamsHint")}</p>
@@ -260,7 +260,7 @@ export function GuidebookEditor({
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
           {t("pageContentLabel")}
         </Label>
         <BlockEditor

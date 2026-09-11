@@ -140,7 +140,7 @@ function ChooseSourceStep({
           disabled={importing}
           className="flex flex-col items-start gap-2 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/40 hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
         >
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary refreshed:bg-muted refreshed:text-foreground">
             <PenLine className="size-4" />
           </span>
           <span className="font-display font-semibold">{t("sourceManualTitle")}</span>
@@ -152,7 +152,7 @@ function ChooseSourceStep({
           disabled={importing}
           className="flex flex-col items-start gap-2 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/40 hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
         >
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary refreshed:bg-muted refreshed:text-foreground">
             {importing ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (

@@ -42,5 +42,11 @@
   "jumpToDate": "Jump to date",
   "outCount": "{count} out",
   "addEventOn": "Add event on this day",
-  "weekShort": "Wk"
+  "weekShort": "Wk",
+  "type": "Type",
+  "department": "Department",
+  "period": "Period",
+  "audience": "Audience",
+  "actions": "Actions",
+  "clearFilter": "Clear {label}"
 }

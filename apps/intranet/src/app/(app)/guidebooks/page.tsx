@@ -36,8 +36,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { CountTabs } from "@/components/ui/count-tabs";
 import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterPill } from "@/components/ui/filter-pill";
 import { Input } from "@/components/ui/input";
 import { htmlToText } from "@/components/ui/rich-text";
 import {
@@ -48,6 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useDesignPreview } from "@/lib/design-preview";
 import { formatIsoDate } from "@/lib/format";
 import {
   addMonths,
@@ -222,7 +225,7 @@ function EntryCard({
 
   return (
     <Card
-      className="group relative h-full overflow-hidden transition-shadow hover:shadow-md"
+      className="group relative h-full overflow-hidden transition-shadow hover:shadow-md refreshed:transition-colors refreshed:hover:border-foreground/20 refreshed:hover:shadow-none"
       style={{ borderLeft: `4px solid ${color}` }}
     >
       <Link href={`/guidebooks/${item.slug}`} className="block h-full">
@@ -230,7 +233,7 @@ function EntryCard({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <p
-                className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider"
+                className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider refreshed:font-medium refreshed:normal-case refreshed:tracking-normal"
                 style={{ color }}
               >
                 {item.kind === "legacy" && <FileText className="size-3" />}
@@ -316,6 +319,7 @@ export default function GuidebooksPage() {
   const user = useCurrentUser();
   const canManage = useHasCapability("manage_guidebooks");
   const handleError = useErrorHandler();
+  const design = useDesignPreview();
 
   const items = useGridItems();
   const users = useQuery(api.users.list, {}) ?? [];
@@ -486,7 +490,9 @@ export default function GuidebooksPage() {
         }
       />
 
-      {canManage && (
+      {/* The header already carries "Browse files"; the refreshed design
+          doesn't repeat it in the page. */}
+      {canManage && design !== "refreshed" && (
         <div className="mb-4 flex justify-end">
           <Button variant="outline" size="sm" asChild>
             <Link href="/guidebooks/files">
@@ -503,7 +509,7 @@ export default function GuidebooksPage() {
           open={toolsOpen}
           onToggle={(e) => setToolsOpen(e.currentTarget.open)}
         >
-          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
             <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
             <Sparkles className="size-3.5" />
             {t("interactiveToolsTitle")}
@@ -532,112 +538,176 @@ export default function GuidebooksPage() {
       )}
 
       <div className="space-y-4">
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <div className="relative mb-3">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("searchPlaceholder")}
-              className="pl-9"
+        {design === "refreshed" ? (
+          <div>
+            <CountTabs
+              value={showArchive ? "archive" : "current"}
+              onChange={(value) => setShowArchive(value === "archive")}
+              tabs={[
+                {
+                  value: "current",
+                  label: t("currentTab"),
+                  count: (items ?? []).filter((i) => !i.archived).length,
+                },
+                {
+                  value: "archive",
+                  label: t("archiveChip"),
+                  count: (items ?? []).filter((i) => i.archived).length,
+                },
+              ]}
             />
-          </div>
-          <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {categoryChips.map((c) => (
-              <button
-                key={c.key}
-                type="button"
-                disabled={showArchive}
-                onClick={() => toggleCategory(c.key)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-40",
-                  activeCategoryKeys.has(c.key) && !showArchive
-                    ? "border-transparent text-white"
-                    : "border-border text-muted-foreground hover:bg-accent",
-                )}
-                style={
-                  activeCategoryKeys.has(c.key) && !showArchive
-                    ? { backgroundColor: c.color }
-                    : undefined
-                }
-              >
-                <span
-                  className="size-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: c.color }}
+            <div className="flex flex-col gap-2 pt-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="relative w-full sm:w-72">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t("searchPlaceholder")}
+                  aria-label={t("searchPlaceholder")}
+                  className="h-9 pl-8 text-sm md:h-8 md:text-[13px]"
                 />
-                <span className="whitespace-nowrap">{c.label}</span>
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setShowArchive((v) => !v)}
-              className={cn(
-                "ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                showArchive
-                  ? "border-muted-foreground/40 bg-muted-foreground/10 text-foreground"
-                  : "border-dashed border-border text-muted-foreground hover:bg-accent",
-              )}
-            >
-              <Archive className="size-3.5" />
-              {t("archiveChip")}
-            </button>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {!showArchive && categoryChips.length > 0 && (
+                  <FilterPill
+                    label={t("fieldCategory")}
+                    options={categoryChips.map((c) => ({
+                      value: c.key,
+                      label: c.label,
+                      count: (items ?? []).filter((i) => !i.archived && i.categoryKey === c.key)
+                        .length,
+                      leading: (
+                        <span
+                          className="size-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: c.color }}
+                        />
+                      ),
+                    }))}
+                    selected={[...activeCategoryKeys]}
+                    onChange={(next) => setActiveCategoryKeys(new Set(next))}
+                    clearLabel={t("clearFilter", { label: t("fieldCategory") })}
+                  />
+                )}
+                {availableTags.length > 0 && (
+                  <FilterPill
+                    label={t("tagsFilterLabel")}
+                    options={availableTags.map((tag) => ({ value: tag, label: `#${tag}` }))}
+                    selected={[...activeTags]}
+                    onChange={(next) => setActiveTags(new Set(next))}
+                    clearLabel={t("clearFilter", { label: t("tagsFilterLabel") })}
+                  />
+                )}
+              </div>
+            </div>
           </div>
-          {availableTags.length > 0 && (
-            <div className="mt-2.5 border-t border-dashed border-border pt-2.5">
-              {/* Every tag as a permanent chip buried the actual entries on a
+        ) : (
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <div className="relative mb-3">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("searchPlaceholder")}
+                className="pl-9"
+              />
+            </div>
+            <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {categoryChips.map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  disabled={showArchive}
+                  onClick={() => toggleCategory(c.key)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-40",
+                    activeCategoryKeys.has(c.key) && !showArchive
+                      ? "border-transparent text-white"
+                      : "border-border text-muted-foreground hover:bg-accent",
+                  )}
+                  style={
+                    activeCategoryKeys.has(c.key) && !showArchive
+                      ? { backgroundColor: c.color }
+                      : undefined
+                  }
+                >
+                  <span
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: c.color }}
+                  />
+                  <span className="whitespace-nowrap">{c.label}</span>
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setShowArchive((v) => !v)}
+                className={cn(
+                  "ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                  showArchive
+                    ? "border-muted-foreground/40 bg-muted-foreground/10 text-foreground"
+                    : "border-dashed border-border text-muted-foreground hover:bg-accent",
+                )}
+              >
+                <Archive className="size-3.5" />
+                {t("archiveChip")}
+              </button>
+            </div>
+            {availableTags.length > 0 && (
+              <div className="mt-2.5 border-t border-dashed border-border pt-2.5">
+                {/* Every tag as a permanent chip buried the actual entries on a
                   phone — this list runs to twenty-plus. Collapsed by default;
                   whatever is currently filtering stays visible either way. */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setTagsOpen((v) => !v)}
-                  aria-expanded={tagsOpen}
-                  className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-                >
-                  <ChevronRight
-                    className={cn("size-3 transition-transform", tagsOpen && "rotate-90")}
-                  />
-                  {t("tagsFilterLabel")}
-                  <span className="tabular-nums">{availableTags.length}</span>
-                </button>
-                {!tagsOpen &&
-                  [...activeTags].map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleTag(tag)}
-                      className="rounded-full border border-foreground bg-foreground px-2.5 py-1 text-xs font-medium text-background"
-                    >
-                      #{tag}
-                    </button>
-                  ))}
-              </div>
-              {tagsOpen && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {availableTags.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleTag(tag)}
-                      className={cn(
-                        "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                        activeTags.has(tag)
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border text-muted-foreground hover:bg-accent",
-                      )}
-                    >
-                      #{tag}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setTagsOpen((v) => !v)}
+                    aria-expanded={tagsOpen}
+                    className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+                  >
+                    <ChevronRight
+                      className={cn("size-3 transition-transform", tagsOpen && "rotate-90")}
+                    />
+                    {t("tagsFilterLabel")}
+                    <span className="tabular-nums">{availableTags.length}</span>
+                  </button>
+                  {!tagsOpen &&
+                    [...activeTags].map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        className="rounded-full border border-foreground bg-foreground px-2.5 py-1 text-xs font-medium text-background"
+                      >
+                        #{tag}
+                      </button>
+                    ))}
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+                {tagsOpen && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {availableTags.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        className={cn(
+                          "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                          activeTags.has(tag)
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border text-muted-foreground hover:bg-accent",
+                        )}
+                      >
+                        #{tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {!showArchive && reviewDue.length > 0 && (
-          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
-            <p className="mb-1 text-sm font-semibold text-amber-700 dark:text-amber-400">
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 refreshed:rounded-xl refreshed:border-border/70 refreshed:border-l-2 refreshed:border-l-warn refreshed:bg-card">
+            <p className="mb-1 text-sm font-semibold text-amber-700 dark:text-amber-400 refreshed:text-warn">
               {t("reviewPanelTitle")}
             </p>
             <p className="mb-3 text-xs text-muted-foreground">{t("reviewPanelBody")}</p>
@@ -650,7 +720,7 @@ export default function GuidebooksPage() {
                     className="flex flex-wrap items-center gap-2 rounded-lg bg-card px-3 py-2 text-sm"
                   >
                     <span className="min-w-0 flex-1 truncate font-medium">{i.title}</span>
-                    <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                    <span className="text-xs font-medium text-amber-700 dark:text-amber-400 refreshed:text-warn">
                       {days < 0
                         ? t("expiredSince", {
                             date: formatIsoDate(msToDateInput(i.validUntil ?? 0), locale),
@@ -670,8 +740,8 @@ export default function GuidebooksPage() {
         )}
 
         {canManage && !showArchive && ownershipMissing.length > 0 && (
-          <div className="rounded-2xl border border-sky-500/30 bg-sky-500/5 p-4">
-            <p className="mb-1 text-sm font-semibold text-sky-700 dark:text-sky-300">
+          <div className="rounded-2xl border border-sky-500/30 bg-sky-500/5 p-4 refreshed:rounded-xl refreshed:border-border/70 refreshed:border-l-2 refreshed:border-l-info refreshed:bg-card">
+            <p className="mb-1 text-sm font-semibold text-sky-700 dark:text-sky-300 refreshed:text-info">
               {t("ownershipPanelTitle")}
             </p>
             <p className="mb-3 text-xs text-muted-foreground">{t("ownershipPanelBody")}</p>
@@ -740,7 +810,7 @@ export default function GuidebooksPage() {
                 searchable and filterable, just not competing for attention. */}
             {legacyEntries.length > 0 && (
               <details className="group mt-4">
-                <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
                   <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
                   <FileText className="size-3.5" />
                   {t("legacySectionTitle")}

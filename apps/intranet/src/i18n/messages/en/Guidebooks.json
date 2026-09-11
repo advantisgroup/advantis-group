@@ -245,6 +245,8 @@
     "openFullHint": "More room to breathe — its own page, like a real chat app."
   },
   "tagsFilterLabel": "Tags",
+  "currentTab": "Current",
+  "clearFilter": "Clear {label}",
   "legacySectionTitle": "Older pages",
   "createEntry": "New wiki entry",
   "createEntryHint": "Structured fields with a category, tags and a review date.",

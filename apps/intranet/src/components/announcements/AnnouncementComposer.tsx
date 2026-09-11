@@ -168,7 +168,7 @@ function QuickSendFields({
 function OptionsSection({ label, children }: { label: string; children: ReactNode }) {
   return (
     <section className="space-y-2.5 border-b border-border/60 pb-4 last:border-b-0 last:pb-0">
-      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
         {label}
       </Label>
       {children}

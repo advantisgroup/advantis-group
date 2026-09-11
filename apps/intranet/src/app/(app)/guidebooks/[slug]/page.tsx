@@ -403,7 +403,7 @@ export default function GuidebookPage() {
                     )}
                   </div>
                   <aside className="space-y-3 rounded-xl border border-border/70 bg-muted/30 p-4 text-sm lg:sticky lg:top-20 lg:self-start">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
                       {t("detailsSectionTitle")}
                     </p>
                     <div className="flex items-center gap-2">

@@ -395,8 +395,8 @@ export default function DashboardPage() {
 
       {/* Today's schedule */}
       {todaysEvents.length > 0 && (
-        <div className="mb-6 rounded-xl border border-border/70 bg-muted/30 px-4 py-3">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="mb-6 rounded-xl border border-border/70 bg-muted/30 px-4 py-3 refreshed:bg-card">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
             {t("todaysSchedule")}
           </p>
           <div className="flex flex-wrap gap-1.5">

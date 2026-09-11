@@ -19,6 +19,8 @@ import { useFormatter, useTranslations } from "next-intl";
 import { MOTION } from "@/components/activity/motion/motion-tokens";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SettingsSection } from "@/components/ui/settings-rows";
+import { useDesignPreview } from "@/lib/design-preview";
 import { cn } from "@/lib/utils";
 
 type Entry = {
@@ -63,6 +65,7 @@ export function SecurityActivityCard() {
   const t = useTranslations("Settings");
   const format = useFormatter();
   const prefersReducedMotion = useReducedMotion();
+  const refreshed = useDesignPreview() === "refreshed";
   const [expanded, setExpanded] = useState(false);
   const entries = useQuery(api.stepUp.securityActivity, { limit: 20 }) as Entry[] | undefined;
 
@@ -73,6 +76,60 @@ export function SecurityActivityCard() {
       return t("activity.stepUpVerifiedWith", { method: t(`activity.method.${method}`) });
     }
     return t(`activity.${entry.source}.${entry.event}`);
+  }
+
+  const toggleMore = entries && entries.length > COLLAPSED && (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="w-full"
+      onClick={() => setExpanded((open) => !open)}
+    >
+      {expanded
+        ? t("activity.showLess")
+        : t("activity.showMore", { count: entries.length - COLLAPSED })}
+    </Button>
+  );
+
+  if (refreshed) {
+    return (
+      <div id="security-activity" data-hash-anchor>
+        <SettingsSection title={t("activity.title")} description={t("activity.hint")}>
+          {entries === undefined ? (
+            <div className="flex justify-center px-4 py-5 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+            </div>
+          ) : entries.length === 0 ? (
+            <p className="px-4 py-3.5 text-sm text-muted-foreground">{t("activity.empty")}</p>
+          ) : (
+            <>
+              {entries.slice(0, expanded ? undefined : COLLAPSED).map((entry) => {
+                const Icon = iconFor(entry);
+                return (
+                  <div key={entry.id} className="flex items-center gap-3 px-4 py-3">
+                    <Icon
+                      className={cn(
+                        "size-4 shrink-0",
+                        isFailure(entry)
+                          ? "text-destructive"
+                          : isNotable(entry)
+                            ? "text-warn"
+                            : "text-muted-foreground",
+                      )}
+                    />
+                    <p className="min-w-0 flex-1 text-sm text-pretty">{label(entry)}</p>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {format.relativeTime(new Date(entry.at))}
+                    </span>
+                  </div>
+                );
+              })}
+              {toggleMore && <div className="px-2 py-1.5">{toggleMore}</div>}
+            </>
+          )}
+        </SettingsSection>
+      </div>
+    );
   }
 
   return (
@@ -109,9 +166,7 @@ export function SecurityActivityCard() {
                     <motion.li
                       key={entry.id}
                       initial={
-                        prefersReducedMotion || index < COLLAPSED
-                          ? false
-                          : { opacity: 0, y: -4 }
+                        prefersReducedMotion || index < COLLAPSED ? false : { opacity: 0, y: -4 }
                       }
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, height: 0 }}
@@ -142,18 +197,7 @@ export function SecurityActivityCard() {
               </AnimatePresence>
             </ol>
 
-            {entries.length > COLLAPSED && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full"
-                onClick={() => setExpanded((open) => !open)}
-              >
-                {expanded
-                  ? t("activity.showLess")
-                  : t("activity.showMore", { count: entries.length - COLLAPSED })}
-              </Button>
-            )}
+            {toggleMore}
           </>
         )}
       </CardContent>

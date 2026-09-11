@@ -39,8 +39,10 @@ import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CountTabs } from "@/components/ui/count-tabs";
 import { Dialog, DialogContent, useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterPill } from "@/components/ui/filter-pill";
 import { Input } from "@/components/ui/input";
 import { ReactionPicker } from "@/components/ui/reactions";
 import { htmlToText } from "@/components/ui/rich-text";
@@ -53,6 +55,7 @@ import {
 } from "@/components/ui/select";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useDesignPreview } from "@/lib/design-preview";
 import { formatDateTime, initials } from "@/lib/format";
 import { pathToUrl } from "@/lib/onedrive-path";
 import { formatFileSize } from "@/lib/upload";
@@ -80,7 +83,7 @@ function CollapsibleBody({ html, title }: { html: string; title: string }) {
       >
         <MentionRichText html={html} sourcedDateSummary={title} />
         {overflowing && !expanded && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent refreshed:from-background" />
         )}
       </div>
       {overflowing && (
@@ -197,6 +200,8 @@ function AnnouncementCard({
       ref={articleRef}
       className={cn(
         "group relative -mx-2 flex gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-accent/40",
+        // Refreshed: posts read as text split by hairlines, not rows of cards.
+        "refreshed:mx-0 refreshed:gap-3.5 refreshed:rounded-none refreshed:px-0 refreshed:py-5 refreshed:hover:bg-transparent",
         (a.scheduled || a.expired) && "opacity-70",
         highlighted && "deeplink-hl",
       )}
@@ -255,15 +260,17 @@ function AnnouncementCard({
           {a.expired && <Badge variant="muted">{t("expired")}</Badge>}
         </div>
 
-        <div className="mt-1 min-w-0 overflow-hidden rounded-lg border border-border/60 bg-card px-3.5 py-3">
+        <div className="mt-1 min-w-0 overflow-hidden rounded-lg border border-border/60 bg-card px-3.5 py-3 refreshed:mt-2 refreshed:rounded-none refreshed:border-0 refreshed:bg-transparent refreshed:p-0">
           {a.relevantDate && (
             <RelevantDateCallout
               value={a.relevantDate}
               summary={a.title}
-              className="-mx-3.5 -mt-3 mb-3 border-t-0"
+              className="-mx-3.5 -mt-3 mb-3 border-t-0 refreshed:mx-0 refreshed:mt-0 refreshed:rounded-lg refreshed:border"
             />
           )}
-          <h2 className="font-display text-base font-semibold leading-tight">{a.title}</h2>
+          <h2 className="font-display text-base font-semibold leading-tight refreshed:text-lg refreshed:tracking-tight">
+            {a.title}
+          </h2>
           <div className="mt-1">
             <CollapsibleBody html={a.body} title={a.title} />
           </div>
@@ -423,6 +430,7 @@ export default function AnnouncementsPage() {
   const remove = useMutation(api.announcements.remove);
   const markAllRead = useMutation(api.announcements.markAllRead);
   const handleError = useErrorHandler();
+  const design = useDesignPreview();
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -517,75 +525,154 @@ export default function AnnouncementsPage() {
         }
       />
 
-      {/* Search gets its own full-width row — sharing one line with the
-          filter pills/selects left it squeezed down to a sliver on mobile,
-          with the rest of the toolbar wrapping unpredictably around it. */}
-      <div className="mb-4 space-y-2.5" data-tour="tour-announcements-toolbar">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={tc("search")}
-            className="pl-9"
+      {design === "refreshed" ? (
+        <div className="mb-1" data-tour="tour-announcements-toolbar">
+          <CountTabs
+            value={filter}
+            onChange={setFilter}
+            tabs={[
+              { value: "all", label: t("filter_all"), count: announcements?.length },
+              { value: "unread", label: t("filter_unread"), count: unreadCount },
+              {
+                value: "pinned",
+                label: t("filter_pinned"),
+                count: (announcements ?? []).filter((a) => a.pinned).length,
+              },
+            ]}
           />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {(["all", "unread", "pinned"] as const).map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilter(f)}
-                className={cn(
-                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                  filter === f
-                    ? "border-transparent bg-foreground text-background"
-                    : "border-border text-muted-foreground hover:bg-accent",
-                )}
-              >
-                {t(`filter_${f}`)}
-                {f === "unread" && unreadCount > 0 ? ` (${unreadCount})` : ""}
-              </button>
-            ))}
+          <div className="flex flex-col gap-2 py-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative w-full sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={tc("search")}
+                aria-label={tc("search")}
+                className="h-9 pl-8 text-sm md:h-8 md:text-[13px]"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2 sm:flex-1">
+              {existingCategories.length > 0 && (
+                <FilterPill
+                  label={t("categoryFilter")}
+                  options={existingCategories.map((c) => ({
+                    value: c,
+                    label: c,
+                    count: (announcements ?? []).filter((a) => a.category === c).length,
+                  }))}
+                  selected={categoryFilter === ALL_CATEGORIES_VALUE ? [] : [categoryFilter]}
+                  // One category at a time: picking another replaces the current one.
+                  onChange={(next) =>
+                    setCategoryFilter(
+                      next.find((c) => c !== categoryFilter) ?? ALL_CATEGORIES_VALUE,
+                    )
+                  }
+                  clearLabel={t("clearFilter", { label: t("categoryFilter") })}
+                />
+              )}
+              <div className="inline-flex rounded-lg border border-border/70 bg-muted/40 p-0.5">
+                {(["newest", "reactions"] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={sort === value}
+                    onClick={() => setSort(value)}
+                    className={cn(
+                      "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                      sort === value
+                        ? "bg-card text-foreground shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {value === "newest" ? t("sortNewest") : t("sortReactions")}
+                  </button>
+                ))}
+              </div>
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  className="ml-auto text-muted-foreground"
+                  onClick={() => void markAllRead({})}
+                >
+                  <CheckCheck />
+                  {t("markAllRead")}
+                </Button>
+              )}
+            </div>
           </div>
-          {existingCategories.length > 0 && (
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+        </div>
+      ) : (
+        /* Search gets its own full-width row — sharing one line with the
+          filter pills/selects left it squeezed down to a sliver on mobile,
+          with the rest of the toolbar wrapping unpredictably around it. */
+        <div className="mb-4 space-y-2.5" data-tour="tour-announcements-toolbar">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={tc("search")}
+              className="pl-9"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {(["all", "unread", "pinned"] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFilter(f)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                    filter === f
+                      ? "border-transparent bg-foreground text-background"
+                      : "border-border text-muted-foreground hover:bg-accent",
+                  )}
+                >
+                  {t(`filter_${f}`)}
+                  {f === "unread" && unreadCount > 0 ? ` (${unreadCount})` : ""}
+                </button>
+              ))}
+            </div>
+            {existingCategories.length > 0 && (
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_CATEGORIES_VALUE}>{t("allCategories")}</SelectItem>
+                  {existingCategories.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
               <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL_CATEGORIES_VALUE}>{t("allCategories")}</SelectItem>
-                {existingCategories.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
+                <SelectItem value="newest">{t("sortNewest")}</SelectItem>
+                <SelectItem value="reactions">{t("sortReactions")}</SelectItem>
               </SelectContent>
             </Select>
-          )}
-          <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
-            <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">{t("sortNewest")}</SelectItem>
-              <SelectItem value="reactions">{t("sortReactions")}</SelectItem>
-            </SelectContent>
-          </Select>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-auto text-muted-foreground"
-              onClick={() => void markAllRead({})}
-            >
-              <CheckCheck className="mr-1.5 size-3.5" />
-              {t("markAllRead")}
-            </Button>
-          )}
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto text-muted-foreground"
+                onClick={() => void markAllRead({})}
+              >
+                <CheckCheck className="mr-1.5 size-3.5" />
+                {t("markAllRead")}
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {announcements && announcements.length === 0 && (
         <EmptyState icon={<Megaphone />} title={t("empty")} />
@@ -597,13 +684,13 @@ export default function AnnouncementsPage() {
       <div className="space-y-6">
         {pinnedRows.length > 0 && otherRows.length > 0 ? (
           <>
-            <section className="space-y-4">
+            <section className="space-y-4 refreshed:space-y-0 refreshed:divide-y refreshed:divide-border/60">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("pinnedSection")}
               </h2>
               {pinnedRows.map(renderCard)}
             </section>
-            <section className="space-y-4">
+            <section className="space-y-4 refreshed:space-y-0 refreshed:divide-y refreshed:divide-border/60">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("latestSection")}
               </h2>
@@ -611,7 +698,9 @@ export default function AnnouncementsPage() {
             </section>
           </>
         ) : (
-          <div className="space-y-4">{filtered.map(renderCard)}</div>
+          <div className="space-y-4 refreshed:space-y-0 refreshed:divide-y refreshed:divide-border/60">
+            {filtered.map(renderCard)}
+          </div>
         )}
       </div>
 

@@ -38,5 +38,9 @@
   "saveViewDescription": "Filter und Layout für später speichern.",
   "viewName": "Name der Ansicht",
   "viewNamePlaceholder": "z. B. verfügbarer Kundenservice",
-  "removeSavedView": "{name} entfernen"
+  "removeSavedView": "{name} entfernen",
+  "team": "Team",
+  "views": "Ansichten",
+  "noViews": "Noch keine gespeicherten Ansichten.",
+  "clearFilter": "{label} zurücksetzen"
 }

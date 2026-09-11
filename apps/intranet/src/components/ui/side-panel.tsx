@@ -76,7 +76,7 @@ export function SidePanel({
         <DialogPrimitive.Content
           aria-describedby={undefined}
           style={edge}
-          className="fixed inset-y-2 right-2 z-50 flex w-[min(32rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-t-[3px] border-border/70 bg-card text-card-foreground shadow-overlay outline-none duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-right-8 data-[state=open]:slide-in-from-right-8"
+          className="fixed inset-y-2 right-2 z-50 flex w-[min(31rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-t-[3px] border-border/70 bg-card text-card-foreground shadow-overlay outline-none duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-right-8 data-[state=open]:slide-in-from-right-8"
         >
           <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>
           <div className="relative shrink-0 border-b border-border/60 px-5 pb-4 pt-4">
@@ -120,7 +120,7 @@ export function SidePanelSection({
 /** Label/value rows. Values may be controls — they should look like text until hovered. */
 export function SidePanelProperties({ rows }: { rows: { label: string; value: ReactNode }[] }) {
   return (
-    <dl className="grid grid-cols-[7rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2.5 text-sm sm:grid-cols-[8.5rem_minmax(0,1fr)]">
+    <dl className="grid grid-cols-[7rem_minmax(0,1fr)] items-center gap-x-3 gap-y-[9px] text-[13px] sm:grid-cols-[8.5rem_minmax(0,1fr)]">
       {rows.map((row) => (
         <div key={row.label} className="contents">
           <dt className="text-muted-foreground">{row.label}</dt>
@@ -166,7 +166,7 @@ export const StatusChip = forwardRef<
       borderColor: `color-mix(in oklch, ${accent} 32%, transparent)`,
     }}
     className={cn(
-      "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-[filter] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:brightness-100 md:h-7",
+      "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] font-semibold transition-[filter] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:brightness-100 md:h-[30px]",
       className,
     )}
     {...props}

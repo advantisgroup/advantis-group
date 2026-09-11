@@ -91,7 +91,7 @@ export function ReactionsSummary({
             className={cn(
               "flex h-6 items-center gap-1.5 rounded-full border pl-1.5 pr-2 text-xs tabular-nums transition-colors",
               r.mine
-                ? "border-primary/40 bg-primary/10 text-primary"
+                ? "border-primary/40 bg-primary/10 text-primary refreshed:border-foreground/25 refreshed:bg-foreground/[0.07] refreshed:text-foreground"
                 : "border-border bg-card text-muted-foreground hover:bg-accent",
             )}
           >
@@ -130,7 +130,7 @@ export function ReactionsSummary({
                     className={cn(
                       "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
                       drawerEmoji === r.emoji
-                        ? "border-primary/50 bg-primary/10 text-primary"
+                        ? "border-primary/50 bg-primary/10 text-primary refreshed:border-foreground/25 refreshed:bg-foreground/[0.07] refreshed:text-foreground"
                         : "border-border text-muted-foreground",
                     )}
                   >

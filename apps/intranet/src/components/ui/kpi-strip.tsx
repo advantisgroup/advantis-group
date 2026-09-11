@@ -51,7 +51,7 @@ export function Kpi({
     <>
       <span
         className={cn(
-          "flex items-center justify-between gap-2 text-xs font-medium",
+          "flex items-center justify-between gap-2 text-[12.5px] font-medium",
           featured ? "text-background/70" : "text-muted-foreground",
         )}
       >
@@ -82,7 +82,7 @@ export function Kpi({
   );
 
   const className = cn(
-    "relative flex min-w-0 flex-col gap-2.5 px-4 py-4 transition-colors",
+    "relative flex min-w-0 flex-col gap-1.5 px-[18px] pb-3.5 pt-4 transition-colors",
     featured ? "bg-foreground text-background" : "bg-card",
     !featured &&
       tone !== "neutral" &&

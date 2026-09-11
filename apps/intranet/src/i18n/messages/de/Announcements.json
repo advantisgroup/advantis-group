@@ -10,6 +10,8 @@
   "category": "Kategorie (optional)",
   "categoryPlaceholder": "z. B. Onboarding, Kundenservice",
   "allCategories": "Alle Kategorien",
+  "categoryFilter": "Kategorie",
+  "clearFilter": "{label} zurücksetzen",
   "options": "Optionen",
   "scheduling": "Zeitplanung",
   "relevantDate": "Relevantes Datum",

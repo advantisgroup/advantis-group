@@ -13,6 +13,8 @@ import { useBlogPostAnalytics } from "@/components/blog/useBlogPostAnalytics";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
+import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
+import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { exportBlogPostAsHtml, exportBlogPostAsMarkdown } from "@/lib/blog-export";
+import { useDesignPreview } from "@/lib/design-preview";
 import { formatDateTime } from "@/lib/format";
 
 const SITE_ORIGIN = "https://advantisgroup.de";
@@ -61,6 +64,7 @@ export function BlogPostInfo({ post }: { post: Doc<"blogPosts"> }) {
   const locale = useLocale();
   const confirm = useConfirm();
   const handleError = useErrorHandler();
+  const refreshed = useDesignPreview() === "refreshed";
 
   const publishMutation = useMutation(api.blogPosts.publish);
   const unpublishMutation = useMutation(api.blogPosts.unpublish);
@@ -121,6 +125,35 @@ export function BlogPostInfo({ post }: { post: Doc<"blogPosts"> }) {
     publishedAt: post.publishedAt,
   };
 
+  const details = [
+    { label: t("fieldSlug"), value: post.slug },
+    {
+      label: t("fieldLanguage"),
+      value: post.language === "de" ? t("languageDe") : t("languageEn"),
+    },
+    {
+      label: t("fieldCategory"),
+      value: post.category ? t(`categories.${post.category}`) : t("fieldCategoryNone"),
+    },
+    ...(post.translationKey
+      ? [{ label: t("fieldTranslationKey"), value: post.translationKey }]
+      : []),
+    { label: t("fieldAuthor"), value: post.authorName },
+    { label: t("fieldCreated"), value: formatDateTime(post.createdAt, locale) },
+    { label: t("fieldUpdated"), value: formatDateTime(post.updatedAt, locale) },
+    ...(post.publishedAt
+      ? [{ label: t("fieldPublishedAt"), value: formatDateTime(post.publishedAt, locale) }]
+      : []),
+    ...(post.readingMinutes
+      ? [
+          {
+            label: t("fieldReadingTime"),
+            value: t("readingTimeValue", { minutes: post.readingMinutes }),
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4 md:p-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -132,12 +165,22 @@ export function BlogPostInfo({ post }: { post: Doc<"blogPosts"> }) {
             ← {tc("back")}
           </Link>
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="font-display text-2xl font-bold tracking-tight">
+            <h1 className="font-display text-2xl font-bold tracking-tight refreshed:text-xl refreshed:font-semibold">
               {post.title || t("untitled")}
             </h1>
-            <Badge variant={isPublished ? "default" : "muted"}>
-              {isPublished ? t("statusPublished") : t("statusDraft")}
-            </Badge>
+            {refreshed ? (
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+                <span
+                  className="size-2 rounded-full"
+                  style={{ background: isPublished ? "var(--ok)" : "var(--muted-foreground)" }}
+                />
+                {isPublished ? t("statusPublished") : t("statusDraft")}
+              </span>
+            ) : (
+              <Badge variant={isPublished ? "default" : "muted"}>
+                {isPublished ? t("statusPublished") : t("statusDraft")}
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -201,15 +244,27 @@ export function BlogPostInfo({ post }: { post: Doc<"blogPosts"> }) {
           <p className="text-sm text-muted-foreground">{t("postHogNotConfigured")}</p>
         ) : (
           <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <StatTile label={t("statViews")} value={analytics.views} />
-              <StatTile label={t("statUniqueVisitors")} value={analytics.uniqueVisitors} />
-              <StatTile
-                label={t("statAvgTime")}
-                value={formatSeconds(analytics.avgTimeOnPageSeconds)}
-              />
-              <StatTile label={t("statBounceRate")} value={formatPercent(analytics.bounceRate)} />
-            </div>
+            {refreshed ? (
+              <KpiStrip>
+                <Kpi featured label={t("statViews")} value={analytics.views} />
+                <Kpi label={t("statUniqueVisitors")} value={analytics.uniqueVisitors} />
+                <Kpi
+                  label={t("statAvgTime")}
+                  value={formatSeconds(analytics.avgTimeOnPageSeconds)}
+                />
+                <Kpi label={t("statBounceRate")} value={formatPercent(analytics.bounceRate)} />
+              </KpiStrip>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <StatTile label={t("statViews")} value={analytics.views} />
+                <StatTile label={t("statUniqueVisitors")} value={analytics.uniqueVisitors} />
+                <StatTile
+                  label={t("statAvgTime")}
+                  value={formatSeconds(analytics.avgTimeOnPageSeconds)}
+                />
+                <StatTile label={t("statBounceRate")} value={formatPercent(analytics.bounceRate)} />
+              </div>
+            )}
             {analytics.views === 0 ? (
               <p className="text-sm text-muted-foreground">{t("noVisitsYet")}</p>
             ) : (
@@ -232,37 +287,29 @@ export function BlogPostInfo({ post }: { post: Doc<"blogPosts"> }) {
         )}
       </Panel>
 
-      <Panel title={t("settingsTitle")}>
-        <div>
-          <DetailRow label={t("fieldSlug")} value={post.slug} />
-          <DetailRow
-            label={t("fieldLanguage")}
-            value={post.language === "de" ? t("languageDe") : t("languageEn")}
-          />
-          <DetailRow
-            label={t("fieldCategory")}
-            value={post.category ? t(`categories.${post.category}`) : t("fieldCategoryNone")}
-          />
-          {post.translationKey && (
-            <DetailRow label={t("fieldTranslationKey")} value={post.translationKey} />
-          )}
-          <DetailRow label={t("fieldAuthor")} value={post.authorName} />
-          <DetailRow label={t("fieldCreated")} value={formatDateTime(post.createdAt, locale)} />
-          <DetailRow label={t("fieldUpdated")} value={formatDateTime(post.updatedAt, locale)} />
-          {post.publishedAt && (
-            <DetailRow
-              label={t("fieldPublishedAt")}
-              value={formatDateTime(post.publishedAt, locale)}
+      {refreshed ? (
+        <SettingsSection title={t("settingsTitle")}>
+          {details.map((detail) => (
+            <SettingsRow
+              key={detail.label}
+              title={detail.label}
+              control={
+                <span className="block max-w-64 truncate text-sm text-muted-foreground">
+                  {detail.value}
+                </span>
+              }
             />
-          )}
-          {post.readingMinutes && (
-            <DetailRow
-              label={t("fieldReadingTime")}
-              value={t("readingTimeValue", { minutes: post.readingMinutes })}
-            />
-          )}
-        </div>
-      </Panel>
+          ))}
+        </SettingsSection>
+      ) : (
+        <Panel title={t("settingsTitle")}>
+          <div>
+            {details.map((detail) => (
+              <DetailRow key={detail.label} label={detail.label} value={detail.value} />
+            ))}
+          </div>
+        </Panel>
+      )}
     </div>
   );
 }

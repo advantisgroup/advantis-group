@@ -245,6 +245,8 @@
     "openFullHint": "Mehr Platz zum Atmen — eigene Seite, wie ein echter Chat."
   },
   "tagsFilterLabel": "Stichwörter",
+  "currentTab": "Aktuell",
+  "clearFilter": "{label} zurücksetzen",
   "legacySectionTitle": "Ältere Seiten",
   "createEntry": "Neuer Wiki-Eintrag",
   "createEntryHint": "Strukturierte Felder mit Kategorie, Stichwörtern und Prüfdatum.",

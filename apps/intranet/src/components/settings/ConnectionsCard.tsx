@@ -12,8 +12,28 @@ import { ProviderBadge } from "@/components/branding/ProviderMark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 
-export function ConnectionsCard() {
+function LinkState({ linked }: { linked: boolean }) {
+  const t = useTranslations("Settings");
+  return (
+    <span
+      className={
+        linked
+          ? "inline-flex items-center gap-1.5 text-xs font-medium"
+          : "inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
+      }
+    >
+      <span
+        className="size-2 rounded-full"
+        style={{ background: linked ? "var(--ok)" : "var(--muted-foreground)" }}
+      />
+      {linked ? t("linked") : t("notLinked")}
+    </span>
+  );
+}
+
+export function ConnectionsCard({ refreshed = false }: { refreshed?: boolean }) {
   const t = useTranslations("Settings");
   const connections = useQuery(api.users.myConnections);
   const migrateLegacyLink = useMutation(api.integrations.clockodoLink.migrateLegacyClockodoLink);
@@ -22,6 +42,58 @@ export function ConnectionsCard() {
 
   const clockodoLinked =
     connections.clockodoDirect || (connections.personLinked && connections.personHasClockodo);
+  const clockodoHint = clockodoLinked
+    ? connections.clockodoDirect
+      ? t("clockodoDirect")
+      : t("clockodoViaPerson")
+    : t("clockodoUnlinkedHint");
+  const canMigrate = !connections.clockodoDirect && connections.personHasClockodo;
+
+  const migrateButton = canMigrate && (
+    <Button
+      size="sm"
+      variant="outline"
+      disabled={migrating}
+      onClick={() => {
+        setMigrating(true);
+        void migrateLegacyLink({})
+          .then(() => toast.success(t("clockodoMigrationSuccess")))
+          .catch(() => toast.error(t("clockodoMigrationError")))
+          .finally(() => setMigrating(false));
+      }}
+    >
+      {migrating && <Loader2 className="size-3.5 animate-spin" />}
+      {t("clockodoMigrate")}
+    </Button>
+  );
+
+  if (refreshed) {
+    return (
+      <div data-tour="tour-settings-connections">
+        <SettingsSection title={t("connections")} description={t("connectionsHint")}>
+          <SettingsRow
+            title={<ProviderBadge provider="clockodo" />}
+            description={clockodoHint}
+            control={
+              <span className="flex items-center gap-3">
+                {migrateButton}
+                <LinkState linked={clockodoLinked} />
+              </span>
+            }
+          />
+          <SettingsRow
+            title={t("activityTrack")}
+            description={
+              connections.personLinked
+                ? (connections.personName ?? undefined)
+                : t("personUnlinkedHint")
+            }
+            control={<LinkState linked={connections.personLinked} />}
+          />
+        </SettingsSection>
+      </div>
+    );
+  }
 
   return (
     <Card data-tour="tour-settings-connections">
@@ -34,32 +106,10 @@ export function ConnectionsCard() {
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border/70 px-3 py-2.5">
             <div className="flex min-w-0 items-center gap-2.5">
               <ProviderBadge provider="clockodo" />
-              <span className="hidden text-xs text-muted-foreground sm:block">
-                {clockodoLinked
-                  ? connections.clockodoDirect
-                    ? t("clockodoDirect")
-                    : t("clockodoViaPerson")
-                  : t("clockodoUnlinkedHint")}
-              </span>
+              <span className="hidden text-xs text-muted-foreground sm:block">{clockodoHint}</span>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              {!connections.clockodoDirect && connections.personHasClockodo && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={migrating}
-                  onClick={() => {
-                    setMigrating(true);
-                    void migrateLegacyLink({})
-                      .then(() => toast.success(t("clockodoMigrationSuccess")))
-                      .catch(() => toast.error(t("clockodoMigrationError")))
-                      .finally(() => setMigrating(false));
-                  }}
-                >
-                  {migrating && <Loader2 className="size-3.5 animate-spin" />}
-                  {t("clockodoMigrate")}
-                </Button>
-              )}
+              {migrateButton}
               <Badge variant={clockodoLinked ? "success" : "muted"} className="gap-1">
                 {clockodoLinked ? <Link2 className="size-3" /> : <Unlink className="size-3" />}
                 {clockodoLinked ? t("linked") : t("notLinked")}

@@ -82,7 +82,7 @@ export function RelevantDateCallout({
           className,
         )}
       >
-        <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+        <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary/10 text-primary refreshed:bg-muted refreshed:text-foreground">
           <CalendarDays className="size-3.5" />
         </span>
         <div className="min-w-0 flex-1">

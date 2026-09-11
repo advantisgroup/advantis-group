@@ -144,5 +144,9 @@
     "quarantine": "Quarantäne",
     "military": "Wehr-/Ersatzdienst",
     "sicknessBenefit": "Krankheitstag (Krankengeld)"
-  }
+  },
+  "type": "Art",
+  "period": "Zeitraum",
+  "clearFilter": "{label} zurücksetzen",
+  "noRequestsFiltered": "Keine Anträge passen zu diesen Filtern."
 }

@@ -111,7 +111,7 @@ export function MessageComposer({
       }}
     >
       {above}
-      <div className="relative flex items-end gap-2 rounded-xl border border-border bg-background p-1.5 shadow-sm transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40">
+      <div className="relative flex items-end gap-2 rounded-xl border border-border bg-background p-1.5 shadow-sm transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40 refreshed:bg-card refreshed:shadow-none refreshed:focus-within:ring-0">
         {overlay}
 
         {onPickFiles && (

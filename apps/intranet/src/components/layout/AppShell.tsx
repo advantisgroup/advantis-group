@@ -27,6 +27,7 @@ import {
   PageHeaderActionsSlot,
   PageHeaderBarProvider,
   PageHeaderBarSlot,
+  PageHeaderTabsSlot,
   usePageHeaderBarState,
 } from "@/components/layout/PageHeaderBar";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
@@ -45,6 +46,7 @@ import { TourProvider, useTour } from "@/components/tour/TourProvider";
 import { TourSpotlight } from "@/components/tour/TourSpotlight";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { UpdateBanner } from "@/components/updates/UpdateBanner";
+import { DesignAttribute } from "@/lib/design-preview";
 import { cn } from "@/lib/utils";
 
 /**
@@ -269,6 +271,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
               desktop, an empty flex spacer on mobile. */}
           <div className="flex min-w-0 flex-1 items-center justify-start gap-2">
             {!isUpdatesReading && <PageHeaderBarSlot />}
+            {!isUpdatesReading && <PageHeaderTabsSlot />}
             <div className={pageHeaderBar ? "hidden" : "hidden w-full md:flex"}>
               <CommandPalette />
             </div>
@@ -335,6 +338,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
       {/* Native browser notifications for background tabs (opt-in). */}
       <BrowserNotificationBridge />
       <AiDock />
+      <DesignAttribute />
       <DesignFeedbackPrompt />
       <StartPageRedirect />
 

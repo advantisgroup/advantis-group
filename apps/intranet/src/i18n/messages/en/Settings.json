@@ -212,5 +212,6 @@
   "securityAlwaysMfaEnabled": "MFA will now be required at every sign-in",
   "securityAlwaysMfaDisabled": "MFA is no longer required at every sign-in",
   "securityPreferenceError": "Could not save this preference",
+  "securitySignIn": "Sign-in",
   "cancel": "Cancel"
 }

@@ -10,6 +10,8 @@
   "category": "Category (optional)",
   "categoryPlaceholder": "e.g. Onboarding, Customer Care",
   "allCategories": "All categories",
+  "categoryFilter": "Category",
+  "clearFilter": "Clear {label}",
   "options": "Options",
   "scheduling": "Scheduling",
   "relevantDate": "Relevant date",

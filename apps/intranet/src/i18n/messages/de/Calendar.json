@@ -42,5 +42,11 @@
   "jumpToDate": "Zu Datum springen",
   "outCount": "{count} abwesend",
   "addEventOn": "Termin an diesem Tag anlegen",
-  "weekShort": "KW"
+  "weekShort": "KW",
+  "type": "Art",
+  "department": "Abteilung",
+  "period": "Zeitraum",
+  "audience": "Zielgruppe",
+  "actions": "Aktionen",
+  "clearFilter": "{label} zurücksetzen"
 }

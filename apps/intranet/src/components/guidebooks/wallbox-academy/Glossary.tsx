@@ -27,7 +27,8 @@ export function Glossary({ terms }: { terms: [string, string][] }) {
             onClick={() => toggle(term)}
             className={cn(
               "rounded-lg border border-border bg-card px-3 py-2.5 text-left transition-colors hover:border-ring/50",
-              open.has(term) && "border-primary/50 bg-primary/5",
+              open.has(term) &&
+                "border-primary/50 bg-primary/5 refreshed:border-foreground/25 refreshed:bg-muted/40",
             )}
           >
             <span className="text-sm font-semibold">{term}</span>

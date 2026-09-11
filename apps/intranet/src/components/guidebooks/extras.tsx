@@ -88,7 +88,7 @@ export function GuidebookToc({ containerId = "guidebook-content" }: { containerI
     // Shows from 2xl, not xl: the content column is centred in the full
     // viewport and doesn't know this is here, so at ~1280px the two overlap.
     <nav aria-label={t("toc")} className="fixed right-6 top-36 hidden w-72 print:hidden 2xl:block">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
         {t("toc")}
       </p>
       <ul className="space-y-1 border-l border-border text-sm">
@@ -202,7 +202,7 @@ export function RelatedGuidebooks({ current }: { current: Guidebook }) {
   if (others.length === 0) return null;
   return (
     <div className="mt-6 print:hidden">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
         {t("related")}
       </p>
       <div className="flex flex-wrap gap-1.5">

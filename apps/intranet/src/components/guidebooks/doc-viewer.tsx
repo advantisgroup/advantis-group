@@ -108,17 +108,17 @@ function renderInline(text: string): ReactNode {
 const CALLOUT_STYLES = {
   info: {
     container:
-      "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300",
+      "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300 refreshed:border-info/30 refreshed:bg-info/10 refreshed:text-foreground",
     Icon: Info,
   },
   warning: {
     container:
-      "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300",
+      "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300 refreshed:border-warn/30 refreshed:bg-warn/10 refreshed:text-foreground",
     Icon: TriangleAlert,
   },
   tip: {
     container:
-      "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300",
+      "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300 refreshed:border-ok/30 refreshed:bg-ok/10 refreshed:text-foreground",
     Icon: Lightbulb,
   },
 } as const;
@@ -177,7 +177,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
   switch (block.kind) {
     case "subheading":
       return (
-        <h3 className="mt-6 flex items-center gap-2 text-sm font-bold uppercase tracking-wide">
+        <h3 className="mt-6 flex items-center gap-2 text-sm font-bold uppercase tracking-wide refreshed:font-semibold refreshed:normal-case refreshed:tracking-normal">
           <span className="h-4 w-1 rounded-full bg-primary" />
           {block.text}
         </h3>
@@ -193,7 +193,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
         <ol className="space-y-2">
           {block.items.map((item, i) => (
             <li key={i} className="flex items-start gap-3">
-              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-[11px] font-bold text-primary">
+              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-[11px] font-bold text-primary refreshed:bg-muted refreshed:font-medium refreshed:text-foreground">
                 {i + 1}
               </span>
               <span className="text-sm leading-relaxed text-muted-foreground">
@@ -293,7 +293,7 @@ export function DocViewer({
         {downloadable && doc.download && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
             <div className="flex min-w-0 items-center gap-3">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary refreshed:bg-muted refreshed:text-foreground">
                 <FileText className="size-4" />
               </span>
               <div className="min-w-0">
@@ -317,7 +317,9 @@ export function DocViewer({
               <span className="font-mono text-sm font-bold text-primary">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <h2 className="font-display text-xl font-bold tracking-tight">{section.title}</h2>
+              <h2 className="font-display text-xl font-bold tracking-tight refreshed:font-semibold">
+                {section.title}
+              </h2>
             </div>
             <div className="space-y-4">
               {section.blocks.map((block, j) => (

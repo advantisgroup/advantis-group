@@ -106,7 +106,7 @@ export function ViewersSummary({
         </div>
       )}
       {!canManage && (
-        <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
           {t("viewedBy", { count })}
         </p>
       )}
@@ -196,7 +196,7 @@ export function ViewersSummary({
         <PopoverPrimitive.Content
           align="end"
           sideOffset={6}
-          className="z-50 max-h-80 w-64 overflow-y-auto rounded-lg border border-border/70 bg-popover p-1.5 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
+          className="z-50 max-h-80 w-64 overflow-y-auto rounded-lg border border-border/70 bg-popover p-1.5 text-popover-foreground shadow-lg refreshed:rounded-[10px] refreshed:bg-card refreshed:shadow-overlay data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
         >
           {panel}
         </PopoverPrimitive.Content>
