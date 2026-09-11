@@ -38,5 +38,9 @@
   "saveViewDescription": "Keep these filters and this layout for later.",
   "viewName": "View name",
   "viewNamePlaceholder": "e.g. Available Customer Care",
-  "removeSavedView": "Remove {name}"
+  "removeSavedView": "Remove {name}",
+  "team": "Team",
+  "views": "Views",
+  "noViews": "No saved views yet.",
+  "clearFilter": "Clear {label}"
 }
