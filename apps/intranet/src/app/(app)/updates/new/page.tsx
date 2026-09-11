@@ -11,7 +11,14 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { DraftIndicator, DraftRestoredNote } from "@/components/compose/DraftIndicator";
-import { type ReadinessCheck, ReadinessCard, scoreReadiness } from "@/components/compose/Readiness";
+import { MobileActionBar } from "@/components/compose/MobileActionBar";
+import {
+  type ReadinessCheck,
+  ReadinessCard,
+  ReadinessMeter,
+  scoreReadiness,
+} from "@/components/compose/Readiness";
+import { ReadinessSubmit } from "@/components/compose/ReadinessSubmit";
 import { useDraft } from "@/components/compose/use-draft";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
@@ -433,7 +440,7 @@ export default function NewUpdatePage() {
           <div className="flex min-h-4 items-center px-1">
             <DraftIndicator draft={draft} onDiscard={discard} />
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 max-md:hidden">
             <Button variant="secondary" className="flex-1" onClick={() => router.push("/updates")}>
               {tc("cancel")}
             </Button>
@@ -447,6 +454,18 @@ export default function NewUpdatePage() {
           </div>
         </aside>
       </div>
+
+      <MobileActionBar>
+        <ReadinessMeter checks={checks} className="mr-auto" />
+        <ReadinessSubmit
+          checks={checks}
+          readyTitle={scheduled ? t("readyToSchedule") : t("readyToPublish")}
+          busy={submitting}
+          onSubmit={() => void onSubmit()}
+        >
+          {scheduled ? t("schedule") : t("publish")}
+        </ReadinessSubmit>
+      </MobileActionBar>
     </div>
   );
 }

@@ -21,6 +21,8 @@ import {
   ReadinessMeter,
   scoreReadiness,
 } from "@/components/compose/Readiness";
+import { MobileActionBar } from "@/components/compose/MobileActionBar";
+import { ReadinessSubmit } from "@/components/compose/ReadinessSubmit";
 import { useDraft } from "@/components/compose/use-draft";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -526,7 +528,18 @@ export function ProjectForm({
         </CardContent>
       </Card>
 
-      <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+      <MobileActionBar>
+        <ReadinessMeter checks={checks} className="mr-auto" />
+        <ReadinessSubmit
+          checks={checks}
+          busy={saving}
+          disabled={uploading}
+          onSubmit={() => void submit()}
+        >
+          {t("projektSpeichern")}
+        </ReadinessSubmit>
+      </MobileActionBar>
+      <div className="hidden flex-wrap items-center justify-end gap-x-4 gap-y-2 md:flex">
         <ReadinessMeter checks={checks} className="mr-auto" />
         <Button variant="secondary" asChild>
           <Link href={PROJECTS_HREF}>{tc("cancel")}</Link>

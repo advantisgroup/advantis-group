@@ -15,6 +15,8 @@ import {
   ReadinessMeter,
   scoreReadiness,
 } from "@/components/compose/Readiness";
+import { MobileActionBar } from "@/components/compose/MobileActionBar";
+import { ReadinessSubmit } from "@/components/compose/ReadinessSubmit";
 import { useDraft } from "@/components/compose/use-draft";
 import { type GuidebookTopic } from "@/components/guidebooks/registry";
 import { Button } from "@/components/ui/button";
@@ -267,7 +269,16 @@ export function GuidebookEditor({
 
       {attachmentsSlot}
 
-      <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+      <MobileActionBar>
+        <div className="mr-auto flex min-w-0 flex-col gap-0.5">
+          <ReadinessMeter checks={checks} />
+          <DraftIndicator draft={draft} onDiscard={discardChanges} />
+        </div>
+        <ReadinessSubmit checks={checks} busy={saving} onSubmit={() => void submit()}>
+          {submitLabel}
+        </ReadinessSubmit>
+      </MobileActionBar>
+      <div className="hidden flex-wrap items-center justify-end gap-x-4 gap-y-2 md:flex">
         <div className="mr-auto flex min-w-0 flex-col gap-1">
           <ReadinessMeter checks={checks} />
           <DraftIndicator draft={draft} onDiscard={discardChanges} />

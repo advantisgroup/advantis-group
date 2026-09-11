@@ -41,8 +41,9 @@ export function BottomNav() {
   const { actions: pageActions } = usePageHeaderBarState();
   const hasActions = pageActions !== null && pageActions.length > 0;
 
+  // Steps aside while a form's MobileActionBar is on screen — it takes this spot.
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] print:hidden md:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] print:hidden md:hidden [body:has([data-mobile-action-bar])_&]:hidden">
       <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border/70 bg-background/90 p-1 shadow-lg shadow-black/30 backdrop-blur-xl [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {hasTabs && (
           <>

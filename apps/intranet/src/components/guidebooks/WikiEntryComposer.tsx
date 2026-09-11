@@ -16,6 +16,7 @@ import {
   DraftRestoredNote,
 } from "@/components/compose/DraftIndicator";
 import { ReadinessCard } from "@/components/compose/Readiness";
+import { ReadinessSubmit } from "@/components/compose/ReadinessSubmit";
 import { useWikiEntryForm } from "@/components/guidebooks/useWikiEntryForm";
 import {
   formatRunNeedsPane,
@@ -30,7 +31,6 @@ import { Link } from "@/components/Link";
 import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SplitDivider } from "@/components/ui/split-divider";
@@ -221,7 +221,6 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | "new" }) {
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [sourceExt, setSourceExt] = useState<ImportExt | null>(null);
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [submitOpen, setSubmitOpen] = useState(false);
   const [mobileView, setMobileView] = useState<"write" | "preview">("write");
   const [previewTab, setPreviewTab] = useState<PreviewTab>("live");
   const [splitPct, setSplitPct] = useState(50);
@@ -291,16 +290,12 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | "new" }) {
     onFix:
       check.key === "thema"
         ? () => {
-            setSubmitOpen(false);
             setMobileView("write");
             requestAnimationFrame(() => themaRef.current?.focus());
           }
         : check.key === "erklaerung"
           ? undefined
-          : () => {
-              setSubmitOpen(false);
-              setOptionsOpen(true);
-            },
+          : () => setOptionsOpen(true),
   }));
   const readyTitle = isEditing ? t("readyToSave") : t("readyToCreate");
   const optionsNeedAttention = readiness.missing.some((c) => c.key !== "thema");
@@ -460,35 +455,14 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | "new" }) {
                 <span className="absolute right-2 top-2 size-1.5 rounded-full bg-warning" />
               )}
             </Button>
-            <Popover open={submitOpen} onOpenChange={setSubmitOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  disabled={entryForm.busy}
-                  onClick={(e) => {
-                    // Ready: just save. Not ready: let the popover open and
-                    // say what's missing instead of a silent grey button.
-                    if (readiness.canSubmit) {
-                      e.preventDefault();
-                      void entryForm.submit();
-                    }
-                  }}
-                >
-                  {entryForm.busy ? (
-                    <Loader2 className="animate-spin" />
-                  ) : isEditing ? (
-                    tc("save")
-                  ) : (
-                    tc("create")
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                align="end"
-                className="w-[22rem] border-0 bg-transparent p-0 shadow-none"
-              >
-                <ReadinessCard checks={checks} readyTitle={readyTitle} className="shadow-overlay" />
-              </PopoverContent>
-            </Popover>
+            <ReadinessSubmit
+              checks={checks}
+              readyTitle={readyTitle}
+              busy={entryForm.busy}
+              onSubmit={() => void entryForm.submit()}
+            >
+              {isEditing ? tc("save") : tc("create")}
+            </ReadinessSubmit>
           </>
         )}
       </header>

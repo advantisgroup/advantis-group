@@ -19,14 +19,15 @@ import {
   DraftOfferBanner,
   DraftRestoredNote,
 } from "@/components/compose/DraftIndicator";
-import { type ReadinessCheck, ReadinessCard, scoreReadiness } from "@/components/compose/Readiness";
+import { MobileActionBar } from "@/components/compose/MobileActionBar";
+import { type ReadinessCheck, ReadinessCard, ReadinessMeter } from "@/components/compose/Readiness";
+import { ReadinessSubmit } from "@/components/compose/ReadinessSubmit";
 import { useDraft } from "@/components/compose/use-draft";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -133,7 +134,6 @@ export function WikiArticleEditor({ article }: { article: WikiArticle | "new" })
   const [values, setValues] = useState<ArticleValues>(() => initialValues(article));
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [submitOpen, setSubmitOpen] = useState(false);
   const lastFileRef = useRef<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
@@ -234,24 +234,17 @@ export function WikiArticleEditor({ article }: { article: WikiArticle | "new" })
       key: "title",
       label: t("wikiFieldTitle"),
       done: !!values.title.trim(),
-      onFix: () => {
-        setSubmitOpen(false);
-        titleRef.current?.focus();
-      },
+      onFix: () => titleRef.current?.focus(),
     },
     {
       key: "body",
       label: t("wikiFieldBody"),
       done: !!values.body.trim(),
-      onFix: () => {
-        setSubmitOpen(false);
-        bodyRef.current?.focus();
-      },
+      onFix: () => bodyRef.current?.focus(),
     },
     { key: "tags", label: t("wikiFieldTags"), done: !!values.tags.trim(), optional: true },
     { key: "doc", label: t("wikiFieldDocument"), done: !!values.doc, optional: true },
   ];
-  const readiness = scoreReadiness(checks);
 
   async function save() {
     setSaving(true);
@@ -368,32 +361,17 @@ export function WikiArticleEditor({ article }: { article: WikiArticle | "new" })
               {t("wikiDelete")}
             </Button>
           )}
-          <Popover open={submitOpen} onOpenChange={setSubmitOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                size="sm"
-                disabled={saving || uploading}
-                onClick={(e) => {
-                  if (readiness.canSubmit) {
-                    e.preventDefault();
-                    void save();
-                  }
-                }}
-              >
-                {saving ? <Loader2 className="animate-spin" /> : t("save")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              className="w-[22rem] border-0 bg-transparent p-0 shadow-none"
-            >
-              <ReadinessCard
-                checks={checks}
-                readyTitle={t("wikiReadyToSave")}
-                className="shadow-overlay"
-              />
-            </PopoverContent>
-          </Popover>
+          <ReadinessSubmit
+            size="sm"
+            className="max-md:hidden"
+            checks={checks}
+            readyTitle={t("wikiReadyToSave")}
+            busy={saving}
+            disabled={uploading}
+            onSubmit={() => void save()}
+          >
+            {t("save")}
+          </ReadinessSubmit>
         </div>
       </div>
 
@@ -595,6 +573,19 @@ export function WikiArticleEditor({ article }: { article: WikiArticle | "new" })
           )}
         </aside>
       </div>
+
+      <MobileActionBar>
+        <ReadinessMeter checks={checks} className="mr-auto" />
+        <ReadinessSubmit
+          checks={checks}
+          readyTitle={t("wikiReadyToSave")}
+          busy={saving}
+          disabled={uploading}
+          onSubmit={() => void save()}
+        >
+          {t("save")}
+        </ReadinessSubmit>
+      </MobileActionBar>
     </div>
   );
 }

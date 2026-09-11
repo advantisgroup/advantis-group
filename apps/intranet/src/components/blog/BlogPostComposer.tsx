@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import { ArrowLeft, Eye, ImagePlus, Loader2, PenLine, Settings, X } from "lucide-react";
+import { ArrowLeft, Eye, ImagePlus, PenLine, Settings, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { BlogPostPreview } from "@/components/blog/BlogPostPreview";
@@ -20,12 +20,12 @@ import {
   DraftRestoredNote,
 } from "@/components/compose/DraftIndicator";
 import { ReadinessCard } from "@/components/compose/Readiness";
+import { ReadinessSubmit } from "@/components/compose/ReadinessSubmit";
 import { Link } from "@/components/Link";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   Select,
@@ -60,7 +60,6 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
   const titleRef = useRef<HTMLInputElement>(null);
 
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [submitOpen, setSubmitOpen] = useState(false);
   const [mobileView, setMobileView] = useState<"write" | "preview">("write");
   const [splitPct, setSplitPct] = useState(50);
   const splitRef = useRef<HTMLDivElement>(null);
@@ -90,16 +89,12 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
     onFix:
       check.key === "title"
         ? () => {
-            setSubmitOpen(false);
             setMobileView("write");
             requestAnimationFrame(() => titleRef.current?.focus());
           }
         : check.key === "body"
           ? undefined
-          : () => {
-              setSubmitOpen(false);
-              setOptionsOpen(true);
-            },
+          : () => setOptionsOpen(true),
   }));
   const readyTitle = form.published
     ? t("readyToPublish")
@@ -315,30 +310,14 @@ export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
             <span className="absolute right-2 top-2 size-1.5 rounded-full bg-warning" />
           )}
         </Button>
-        <Popover open={submitOpen} onOpenChange={setSubmitOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              disabled={form.busy}
-              onClick={(e) => {
-                if (readiness.canSubmit) {
-                  e.preventDefault();
-                  void form.submit();
-                }
-              }}
-            >
-              {form.busy ? (
-                <Loader2 className="animate-spin" />
-              ) : form.isEditing ? (
-                tc("save")
-              ) : (
-                tc("create")
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-[22rem] border-0 bg-transparent p-0 shadow-none">
-            <ReadinessCard checks={checks} readyTitle={readyTitle} className="shadow-overlay" />
-          </PopoverContent>
-        </Popover>
+        <ReadinessSubmit
+          checks={checks}
+          readyTitle={readyTitle}
+          busy={form.busy}
+          onSubmit={() => void form.submit()}
+        >
+          {form.isEditing ? tc("save") : tc("create")}
+        </ReadinessSubmit>
       </header>
 
       <div ref={splitRef} className="flex min-h-0 flex-1">
