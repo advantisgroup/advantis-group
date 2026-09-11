@@ -230,7 +230,8 @@
     "audit": "Audit log",
     "featureFlags": "Feature flags",
     "passwordResets": "Password resets",
-    "authentication": "Authentication"
+    "authentication": "Authentication",
+    "designFeedback": "Design feedback"
   },
   "orgEntity": {
     "departmentsTitle": "Departments",

@@ -230,7 +230,8 @@
     "audit": "Audit-Log",
     "featureFlags": "Feature-Flags",
     "passwordResets": "Passwort-Resets",
-    "authentication": "Authentifizierung"
+    "authentication": "Authentifizierung",
+    "designFeedback": "Design-Feedback"
   },
   "orgEntity": {
     "departmentsTitle": "Abteilungen",

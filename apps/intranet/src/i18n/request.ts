@@ -24,6 +24,7 @@ import deCommon from "./messages/de/Common.json";
 import deCompose from "./messages/de/Compose.json";
 import deCustomRoles from "./messages/de/CustomRoles.json";
 import deDashboard from "./messages/de/Dashboard.json";
+import deDesign from "./messages/de/Design.json";
 import deDirectory from "./messages/de/Directory.json";
 import deErrorManagement from "./messages/de/ErrorManagement.json";
 import deErrors from "./messages/de/Errors.json";
@@ -74,6 +75,7 @@ import enCommon from "./messages/en/Common.json";
 import enCompose from "./messages/en/Compose.json";
 import enCustomRoles from "./messages/en/CustomRoles.json";
 import enDashboard from "./messages/en/Dashboard.json";
+import enDesign from "./messages/en/Design.json";
 import enDirectory from "./messages/en/Directory.json";
 import enErrorManagement from "./messages/en/ErrorManagement.json";
 import enErrors from "./messages/en/Errors.json";
@@ -120,6 +122,7 @@ const messagesByLocale = {
     Common: enCommon,
     Access: enAccess,
     Dashboard: enDashboard,
+    Design: enDesign,
     Calendar: enCalendar,
     Absences: enAbsences,
     Announcements: enAnnouncements,
@@ -172,6 +175,7 @@ const messagesByLocale = {
     Common: deCommon,
     Access: deAccess,
     Dashboard: deDashboard,
+    Design: deDesign,
     Calendar: deCalendar,
     Absences: deAbsences,
     Announcements: deAnnouncements,

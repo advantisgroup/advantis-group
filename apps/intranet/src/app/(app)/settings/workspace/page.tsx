@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
+import { DesignPreviewSettings } from "@/components/design/DesignPreviewSettings";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { AppPreferencesCard } from "@/components/settings/AppPreferencesCard";
 import { ConnectionsCard } from "@/components/settings/ConnectionsCard";
@@ -12,6 +13,7 @@ export default function SettingsWorkspacePage() {
 
   return (
     <>
+      <DesignPreviewSettings />
       <Card>
         <CardContent className="flex items-center justify-between gap-3 p-5">
           <div>

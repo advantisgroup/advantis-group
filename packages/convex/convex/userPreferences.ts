@@ -77,6 +77,8 @@ const preferenceFields = {
   onboardingDismissedAt: v.optional(v.number()),
   onboardingStep: v.optional(v.number()),
   onboardingStepStatuses: v.optional(v.string()),
+  designPreview: v.optional(v.union(v.literal("refreshed"), v.literal("classic"))),
+  designFeedbackPromptedAt: v.optional(v.number()),
 };
 
 export const getMine = query({
