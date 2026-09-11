@@ -70,6 +70,9 @@ export default function EditGuidebookPage() {
       </Link>
       <PageHeaderBar title={t("editPage")} />
       <GuidebookEditor
+        key={page._id}
+        draftKey={page._id}
+        entitySavedAt={page.updatedAt ?? page.createdAt}
         initial={{
           title: page.title,
           description: page.description,

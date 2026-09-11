@@ -132,6 +132,7 @@ export default function NewGuidebookAdvancedPage() {
       </Link>
       <PageHeaderBar title={t("createPage")} description={t("createPageHint")} />
       <GuidebookEditor
+        draftKey="new"
         onSave={handleSave}
         saving={submitting}
         submitLabel={tc("create")}
