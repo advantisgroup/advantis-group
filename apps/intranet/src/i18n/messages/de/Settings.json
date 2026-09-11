@@ -212,5 +212,6 @@
   "securityAlwaysMfaEnabled": "MFA ist jetzt bei jeder Anmeldung erforderlich",
   "securityAlwaysMfaDisabled": "MFA ist nicht mehr bei jeder Anmeldung erforderlich",
   "securityPreferenceError": "Diese Einstellung konnte nicht gespeichert werden",
+  "securitySignIn": "Anmeldung",
   "cancel": "Abbrechen"
 }

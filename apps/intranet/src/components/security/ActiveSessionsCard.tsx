@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
+import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
+import { useDesignPreview } from "@/lib/design-preview";
 
 /**
  * Where this account is signed in, straight from Clerk.
@@ -31,6 +33,7 @@ export function ActiveSessionsCard() {
   const { user } = useUser();
   const { sessionId } = useAuth();
   const prefersReducedMotion = useReducedMotion();
+  const refreshed = useDesignPreview() === "refreshed";
   const [sessions, setSessions] = useState<SessionWithActivitiesResource[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -109,6 +112,72 @@ export function ActiveSessionsCard() {
   }
 
   const otherCount = sessions?.filter((session) => session.id !== sessionId).length ?? 0;
+
+  if (refreshed) {
+    return (
+      <div id="sessions" data-hash-anchor>
+        <SettingsSection title={t("sessions.title")} description={t("sessions.hint")}>
+          {sessions === null ? (
+            <div className="flex justify-center px-4 py-5 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+            </div>
+          ) : (
+            sessions.map((session) => {
+              const current = session.id === sessionId;
+              const Icon = session.latestActivity?.isMobile ? Smartphone : Monitor;
+              return (
+                <SettingsRow
+                  key={session.id}
+                  title={
+                    <span className="flex min-w-0 items-center gap-2">
+                      <Icon className="size-3.5 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{describe(session)}</span>
+                      {current && (
+                        <span className="shrink-0 text-xs font-normal text-ok">
+                          {t("sessions.thisDevice")}
+                        </span>
+                      )}
+                    </span>
+                  }
+                  description={t("sessions.lastActive", {
+                    when: format.relativeTime(new Date(session.lastActiveAt)),
+                  })}
+                  control={
+                    !current && (
+                      <Button
+                        size="icon-sm"
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-destructive"
+                        disabled={busyId !== null}
+                        aria-label={t("sessions.revokeConfirm")}
+                        onClick={() => void revoke(session)}
+                      >
+                        {busyId === session.id ? <Loader2 className="animate-spin" /> : <LogOut />}
+                      </Button>
+                    )
+                  }
+                />
+              );
+            })
+          )}
+          {otherCount > 0 && (
+            <div className="flex justify-end px-4 py-2.5">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:text-destructive"
+                disabled={busyId !== null}
+                onClick={() => void revokeOthers()}
+              >
+                {busyId === "all" ? <Loader2 className="animate-spin" /> : <LogOut />}
+                {t("sessions.revokeAll")}
+              </Button>
+            </div>
+          )}
+        </SettingsSection>
+      </div>
+    );
+  }
 
   return (
     <Card id="sessions" data-hash-anchor>
