@@ -45,7 +45,15 @@ export function BottomNav() {
   // Steps aside while a form's MobileActionBar is on screen — it takes this spot.
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] print:hidden md:hidden [body:has([data-mobile-action-bar])_&]:hidden">
-      <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border/70 bg-background/90 p-1 shadow-lg shadow-black/30 backdrop-blur-xl [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* With a page's tabs in the pill every item is an icon, packed a little
+          tighter — five HR tabs plus search, the AI dock and the menu need to
+          fit a 360px phone without scrolling sideways. */}
+      <div
+        className={cn(
+          "flex max-w-full items-center overflow-x-auto rounded-full border border-border/70 bg-background/90 p-1 shadow-lg shadow-black/30 backdrop-blur-xl [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          hasTabs ? "gap-0.5" : "gap-1",
+        )}
+      >
         {hasTabs && (
           <>
             <BottomNavTabButtons
@@ -70,8 +78,8 @@ export function BottomNav() {
           }}
           aria-label={tc("search")}
           className={cn(
-            "flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground",
-            !hasTabs && "min-w-[10rem]",
+            "flex shrink-0 items-center gap-2 rounded-full text-sm text-muted-foreground transition-colors hover:text-foreground",
+            hasTabs ? "size-9 justify-center" : "min-w-[10rem] px-4 py-2",
           )}
         >
           <Search className="size-4 shrink-0" />
