@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -8,6 +8,9 @@ import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { type ReadinessCheck, scoreReadiness } from "@/components/compose/Readiness";
+import { useDraft } from "@/components/compose/use-draft";
+import { htmlToText } from "@/components/ui/rich-text";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { slugify } from "@/lib/guidebook-blocks";
 import { uploadToConvex } from "@/lib/upload";
@@ -34,13 +37,57 @@ export interface BlogPostEntry {
   status: "draft" | "published";
 }
 
+/** Everything the draft keeps. A freshly picked cover file isn't in here —
+ *  a File can't be stored — only a cover that's already uploaded is. */
+interface BlogPostValues {
+  title: string;
+  slug: string;
+  slugEdited: boolean;
+  language: "de" | "en";
+  translationKey: string;
+  excerpt: string;
+  category: string;
+  body: string;
+  coverStorageId: string | null;
+  coverUrl: string | null;
+  published: boolean;
+}
+
+function initialValues(entry: BlogPostEntry | "new"): BlogPostValues {
+  if (entry === "new") {
+    return {
+      title: "",
+      slug: "",
+      slugEdited: false,
+      language: "de",
+      translationKey: "",
+      excerpt: "",
+      category: "",
+      body: "",
+      coverStorageId: null,
+      coverUrl: null,
+      published: false,
+    };
+  }
+  return {
+    title: entry.title,
+    slug: entry.slug,
+    slugEdited: true,
+    language: entry.language,
+    translationKey: entry.translationKey ?? "",
+    excerpt: entry.excerpt,
+    category: entry.category ?? "",
+    body: entry.body,
+    coverStorageId: entry.mainImageStorageId ?? null,
+    coverUrl: entry.mainImageUrl ?? null,
+    published: entry.status === "published",
+  };
+}
+
 /**
- * State, validation and submit for the blog composer — mirrors
- * useWikiEntryForm's shape (state + submit() + ready-to-place field slots)
- * but with blog fields instead of wiki fields. The cover image uses a
- * single-file uploadToConvex call directly rather than the multi-file
- * useAttachmentUpload hook, since there's only ever one cover image, not a
- * batch of attachments.
+ * State, draft, readiness and submit for the blog composer. The draft is per
+ * post ("new" for a fresh one): restored silently for a new post, offered as
+ * a question when editing one that's already saved.
  */
 export function useBlogPostForm({
   entry,
@@ -59,70 +106,104 @@ export function useBlogPostForm({
   const unpublishMutation = useMutation(api.blogPosts.unpublish);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
-  const [title, setTitleRaw] = useState(isEditing ? entry.title : "");
-  const [slug, setSlugRaw] = useState(isEditing ? entry.slug : "");
-  const [slugEdited, setSlugEdited] = useState(isEditing);
-  const [language, setLanguage] = useState<"de" | "en">(isEditing ? entry.language : "de");
-  const [translationKey, setTranslationKey] = useState(
-    isEditing ? (entry.translationKey ?? "") : "",
-  );
-  const [excerpt, setExcerpt] = useState(isEditing ? entry.excerpt : "");
-  const [category, setCategory] = useState(isEditing ? (entry.category ?? "") : "");
-  const [body, setBody] = useState(isEditing ? entry.body : "");
+  const [values, setValues] = useState<BlogPostValues>(() => initialValues(entry));
   const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(
-    isEditing ? (entry.mainImageUrl ?? null) : null,
-  );
-  const [coverStorageId, setCoverStorageId] = useState<Id<"_storage"> | null>(
-    isEditing ? (entry.mainImageStorageId ?? null) : null,
-  );
+  const [coverBlobUrl, setCoverBlobUrl] = useState<string | null>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
-  const [published, setPublished] = useState(isEditing ? entry.status === "published" : false);
   const [busy, setBusy] = useState(false);
 
-  function setTitle(value: string) {
-    setTitleRaw(value);
-    if (!slugEdited) setSlugRaw(slugify(value));
-  }
+  const setters = useMemo(() => {
+    const field =
+      <K extends keyof BlogPostValues>(key: K) =>
+      (value: BlogPostValues[K]) =>
+        setValues((prev) => ({ ...prev, [key]: value }));
+    return {
+      setTitle: (title: string) =>
+        setValues((prev) => ({
+          ...prev,
+          title,
+          slug: prev.slugEdited ? prev.slug : slugify(title),
+        })),
+      setSlug: (slug: string) => setValues((prev) => ({ ...prev, slug, slugEdited: true })),
+      setLanguage: field("language"),
+      setTranslationKey: field("translationKey"),
+      setExcerpt: field("excerpt"),
+      setCategory: field("category"),
+      setBody: field("body"),
+      setPublished: field("published"),
+    };
+  }, []);
 
-  function setSlug(value: string) {
-    setSlugEdited(true);
-    setSlugRaw(value);
-  }
+  const draft = useDraft<BlogPostValues>({
+    surface: "blogPost",
+    subjectKey: isEditing ? entry._id : "new",
+    value: values,
+    restore: isEditing ? "offer" : "auto",
+    isEmpty: (v) =>
+      !isEditing &&
+      !v.title.trim() &&
+      !v.excerpt.trim() &&
+      !htmlToText(v.body).trim() &&
+      !v.coverStorageId,
+    onRestore: (stored) => setValues((prev) => ({ ...prev, ...stored })),
+  });
 
   function pickCoverFile(file: File) {
     setCoverFile(file);
-    setCoverPreviewUrl(URL.createObjectURL(file));
-    setCoverStorageId(null);
+    setCoverBlobUrl(URL.createObjectURL(file));
+    setValues((prev) => ({ ...prev, coverStorageId: null, coverUrl: null }));
   }
 
   function removeCover() {
     setCoverFile(null);
-    setCoverPreviewUrl(null);
-    setCoverStorageId(null);
+    setCoverBlobUrl(null);
+    setValues((prev) => ({ ...prev, coverStorageId: null, coverUrl: null }));
   }
 
+  function discardChanges() {
+    const fresh = initialValues(entry);
+    setValues(fresh);
+    setCoverFile(null);
+    setCoverBlobUrl(null);
+    void draft.clear(fresh);
+  }
+
+  const checks: ReadinessCheck[] = [
+    { key: "title", label: t("fieldTitle"), done: !!values.title.trim() },
+    { key: "body", label: t("fieldBody"), done: htmlToText(values.body).trim().length > 0 },
+    { key: "excerpt", label: t("fieldExcerpt"), done: !!values.excerpt.trim() },
+    { key: "slug", label: t("fieldSlug"), done: !!values.slug.trim() },
+    {
+      key: "cover",
+      label: t("fieldCoverImage"),
+      done: !!coverFile || !!values.coverStorageId,
+      optional: true,
+    },
+    { key: "category", label: t("fieldCategory"), done: !!values.category, optional: true },
+  ];
+  const readiness = scoreReadiness(checks);
+
   async function submit() {
-    if (!title.trim() || !slug.trim() || !excerpt.trim()) {
+    if (!readiness.canSubmit) {
       toast.error(t("formIncomplete"));
       return;
     }
     setBusy(true);
     try {
-      let mainImageStorageId = coverStorageId ?? undefined;
+      let mainImageStorageId = (values.coverStorageId ?? undefined) as Id<"_storage"> | undefined;
       if (coverFile) {
         setUploadingCover(true);
         mainImageStorageId = await uploadToConvex(() => generateUploadUrl({}), coverFile);
         setUploadingCover(false);
       }
       const patch = {
-        slug: slug.trim(),
-        language,
-        translationKey: translationKey.trim() || undefined,
-        title: title.trim(),
-        excerpt: excerpt.trim(),
-        category: category || undefined,
-        body,
+        slug: values.slug.trim(),
+        language: values.language,
+        translationKey: values.translationKey.trim() || undefined,
+        title: values.title.trim(),
+        excerpt: values.excerpt.trim(),
+        category: values.category || undefined,
+        body: values.body,
         mainImageStorageId,
       };
 
@@ -135,12 +216,13 @@ export function useBlogPostForm({
         postId = created.id;
       }
 
-      if (published) {
+      if (values.published) {
         await publishMutation({ postId });
       } else if (isEditing && entry.status === "published") {
         await unpublishMutation({ postId });
       }
 
+      await draft.clear();
       toast.success(isEditing ? t("postUpdated") : t("postCreated"));
       onDone(postId);
     } catch (e) {
@@ -152,29 +234,19 @@ export function useBlogPostForm({
   }
 
   return {
-    title,
-    setTitle,
-    slug,
-    setSlug,
-    language,
-    setLanguage,
-    translationKey,
-    setTranslationKey,
-    excerpt,
-    setExcerpt,
-    category,
-    setCategory,
-    body,
-    setBody,
-    coverPreviewUrl,
+    ...values,
+    ...setters,
+    coverPreviewUrl: coverBlobUrl ?? values.coverUrl,
     pickCoverFile,
     removeCover,
     uploadingCover,
-    published,
-    setPublished,
     isEditing,
     submit,
     busy,
+    draft,
+    checks,
+    readiness,
+    discardChanges,
   };
 }
 
