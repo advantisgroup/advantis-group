@@ -18,7 +18,7 @@ export function DashCard({
   children: ReactNode;
 }) {
   return (
-    <Card className="group/card h-full overflow-hidden transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-18px_rgb(0_0_0/0.18)]">
+    <Card className="group/card h-full overflow-hidden transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-18px_rgb(0_0_0/0.18)] refreshed:hover:shadow-none">
       <div
         data-dashboard-card-header
         className="flex items-center gap-3 border-b border-border/60 px-5 py-3.5"

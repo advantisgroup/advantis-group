@@ -19,6 +19,7 @@ export function SectionHeading({
         className={cn(
           "flex size-7 shrink-0 items-center justify-center rounded-lg [&_svg]:size-4",
           tint ?? "bg-primary/10 text-primary",
+          "refreshed:size-auto refreshed:bg-transparent refreshed:text-muted-foreground",
         )}
       >
         {icon}
