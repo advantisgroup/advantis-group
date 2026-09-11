@@ -11,21 +11,16 @@ import { Bell, Check, ChevronDown, Mail, MailOpen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
-import { ClassicNotificationsPage } from "@/components/notifications/ClassicNotificationsPage";
-import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
+import { ClassicNotificationPreferences as NotificationPreferences } from "@/components/notifications/ClassicNotificationPreferences";
 import { Button } from "@/components/ui/button";
-import { CountTabs } from "@/components/ui/count-tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { FilterPill } from "@/components/ui/filter-pill";
 import { useNow } from "@/lib/activity/useNow";
-import { DesignSwitch } from "@/lib/design-preview";
 import { relativeTime } from "@/lib/format";
 import { bucketFor, notificationVisual } from "@/lib/notification-kinds";
 import { cn } from "@/lib/utils";
 
 type Category = "absence" | "announcement" | "uploads" | "chat" | "system";
-
-const CATEGORIES: Category[] = ["chat", "absence", "announcement", "uploads", "system"];
 
 function categoryOf(type: string): Category {
   if (type.startsWith("absence")) return "absence";
@@ -59,23 +54,15 @@ function needsDecision(notification: NotificationDoc): boolean {
   return !notification.readAt && ACTION_REQUIRED_TYPES.has(notification.type);
 }
 
-export default function NotificationsPage() {
-  return (
-    <DesignSwitch
-      refreshed={<RefreshedNotificationsPage />}
-      classic={<ClassicNotificationsPage />}
-    />
-  );
-}
-
-function RefreshedNotificationsPage() {
+/** The notifications page as it was before the refreshed design, for people who haven't opted in. */
+export function ClassicNotificationsPage() {
   const t = useTranslations("Notifications");
 
   const notifications = useQuery(api.notifications.list, { limit: 100 });
   const markAllRead = useMutation(api.notifications.markAllRead);
 
   const [tab, setTab] = useState<"unread" | "all">("unread");
-  const [types, setTypes] = useState<Category[]>([]);
+  const [filter, setFilter] = useState<"all" | Category>("all");
   const [showOld, setShowOld] = useState(false);
 
   const unreadCount = notifications?.filter((n) => !n.readAt).length ?? 0;
@@ -84,8 +71,8 @@ function RefreshedNotificationsPage() {
     () =>
       (notifications ?? [])
         .filter((n) => (tab === "unread" ? !n.readAt : true))
-        .filter((n) => types.length === 0 || types.includes(categoryOf(n.type))),
-    [notifications, tab, types],
+        .filter((n) => (filter === "all" ? true : categoryOf(n.type) === filter)),
+    [notifications, tab, filter],
   );
 
   const now = useNow();
@@ -137,26 +124,62 @@ function RefreshedNotificationsPage() {
         }
       />
 
-      <div className="space-y-3">
-        <CountTabs
-          value={tab}
-          onChange={setTab}
-          tabs={[
-            { value: "unread", label: t("unread"), count: unreadCount },
-            { value: "all", label: t("all"), count: notifications?.length },
-          ]}
-        />
-        <FilterPill
-          label={t("typeFilter")}
-          options={CATEGORIES.map((key) => ({
-            value: key,
-            label: t(`cat_${key}`),
-            count: (notifications ?? []).filter((n) => categoryOf(n.type) === key).length,
-          }))}
-          selected={types}
-          onChange={(next) => setTypes(next as Category[])}
-          clearLabel={t("clearFilter", { label: t("typeFilter") })}
-        />
+      {/* Tabs + type filter */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+          {(
+            [
+              { key: "unread", label: t("unread") },
+              { key: "all", label: t("all") },
+            ] as const
+          ).map((s) => (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => setTab(s.key)}
+              aria-pressed={tab === s.key}
+              className={cn(
+                "rounded-md px-3 py-1 text-sm font-medium transition-colors",
+                tab === s.key
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
+              )}
+            >
+              {s.label}
+              {s.key === "unread" && unreadCount > 0 && (
+                <span className="ml-1.5 tabular-nums">{unreadCount}</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1">
+          {(
+            [
+              { key: "all", label: t("all") },
+              { key: "chat", label: t("cat_chat") },
+              { key: "absence", label: t("cat_absence") },
+              { key: "announcement", label: t("cat_announcement") },
+              { key: "uploads", label: t("cat_uploads") },
+              { key: "system", label: t("cat_system") },
+            ] as const
+          ).map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setFilter(f.key)}
+              aria-pressed={filter === f.key}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                filter === f.key
+                  ? "border-primary/40 bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Important unread decisions stay ahead of reference notifications. */}
@@ -200,16 +223,16 @@ function RefreshedNotificationsPage() {
         )}
       </div>
 
-      <section
-        data-tour="tour-notifications-prefs"
-        className="space-y-5 border-t border-border/70 pt-8"
-      >
-        <div>
-          <h2 className="text-base font-semibold tracking-tight">{t("preferences")}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{t("preferencesHint")}</p>
-        </div>
-        <NotificationPreferences />
-      </section>
+      {/* Preferences */}
+      <Card data-tour="tour-notifications-prefs">
+        <CardContent className="space-y-3 p-5">
+          <div>
+            <p className="font-semibold tracking-tight">{t("preferences")}</p>
+            <p className="text-sm text-muted-foreground">{t("preferencesHint")}</p>
+          </div>
+          <NotificationPreferences />
+        </CardContent>
+      </Card>
     </div>
   );
 }

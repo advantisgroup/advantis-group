@@ -14,6 +14,7 @@ import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeader
 import { PersonLink } from "@/components/profile/PersonLink";
 import { useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { CategoryManagerDialog } from "@/components/suggestions/CategoryManagerDialog";
+import { ClassicSuggestionsPage } from "@/components/suggestions/ClassicSuggestionsPage";
 import { NewSuggestionDialog } from "@/components/suggestions/NewSuggestionDialog";
 import {
   SUGGESTION_STATUSES,
@@ -38,6 +39,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { DesignSwitch } from "@/lib/design-preview";
 import { formatDateTime } from "@/lib/format";
 
 type StatusTab = "all" | SuggestionStatus;
@@ -383,7 +385,7 @@ function SuggestionsPageContent() {
 export default function SuggestionsPage() {
   return (
     <Suspense fallback={null}>
-      <SuggestionsPageContent />
+      <DesignSwitch refreshed={<SuggestionsPageContent />} classic={<ClassicSuggestionsPage />} />
     </Suspense>
   );
 }
