@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -17,9 +17,27 @@ export type AiRunState = "working" | "done" | "error" | "interrupted" | "cancell
 
 /** Mirrors AI_RUN_STALE_MS in packages/convex/convex/lib/aiRuns.ts. */
 const STALE_MS = 20_000;
+/** How far off this device's clock may be before an old heartbeat reads as
+ *  dead on its own — see `aiRunState`. */
+const CLOCK_SLACK_MS = 5 * 60_000;
+const TEXT_RETRY_MAX_MS = 15_000;
+
+const heartbeatSeenAt = new Map<string, { beat: number; at: number }>();
 
 export function aiRunState(run: AiRunMeta, now: number): AiRunState {
-  if (run.status === "running") return now - run.heartbeatAt > STALE_MS ? "interrupted" : "working";
+  if (run.status === "running") {
+    // Judged by when this device last saw the heartbeat move, not by holding
+    // the server's timestamp against this device's clock — a laptop running a
+    // minute fast would otherwise call every live run interrupted. A heartbeat
+    // that's far in the past by any clock still counts straight away.
+    let seen = heartbeatSeenAt.get(run._id);
+    if (!seen || seen.beat !== run.heartbeatAt) {
+      seen = { beat: run.heartbeatAt, at: Date.now() };
+      heartbeatSeenAt.set(run._id, seen);
+    }
+    const stale = now - seen.at > STALE_MS || now - run.heartbeatAt > STALE_MS + CLOCK_SLACK_MS;
+    return stale ? "interrupted" : "working";
+  }
   if (run.status === "error" && run.errorCode === "interrupted") return "interrupted";
   return run.status;
 }
@@ -32,6 +50,9 @@ export interface AiRunView<T> {
   text: string | null;
   /** The parsed final output, once the run is done. */
   result: T | null;
+  /** Fetching the text keeps failing (it's still retrying in the background). */
+  textFailed: boolean;
+  retryText: () => void;
   elapsedSec: number;
   cancel: () => void;
   markSeen: () => void;
@@ -69,12 +90,23 @@ export function useAiRun<T = string>(
   const cancelRun = useMutation(api.aiRuns.cancel);
   const markRunSeen = useMutation(api.aiRuns.markSeen);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [textFailed, setTextFailed] = useState(false);
+  const failures = useRef(0);
 
   const id = run?._id;
   const chars = run?.outputChars ?? 0;
   const status = run?.status;
+
+  useEffect(() => {
+    failures.current = 0;
+    setTextFailed(false);
+  }, [id]);
+
   useEffect(() => {
     if (!id || (chars === 0 && status !== "done")) return;
+    let active = true;
+    let retry: ReturnType<typeof setTimeout> | undefined;
     // Not cancelled when a newer tick comes in: snapshots arrive every few
     // hundred ms, and dropping every in-flight fetch would starve the view
     // on a slow connection. Instead a response only wins if it's newer.
@@ -82,6 +114,8 @@ export function useAiRun<T = string>(
       .fetchJson<{ status: string; outputChars: number; output: string | null }>(`/ai/runs/${id}`)
       .then(
         (res) => {
+          failures.current = 0;
+          setTextFailed(false);
           const final = res.status === "done";
           setSnapshot((prev) =>
             prev?.runId === id && (prev.final || (!final && prev.chars > res.outputChars))
@@ -89,9 +123,23 @@ export function useAiRun<T = string>(
               : { runId: id, chars: res.outputChars, final, text: res.output },
           );
         },
-        () => {},
+        () => {
+          // A finished run never ticks again, so nothing else would ever ask
+          // for the text a second time — retry here, backing off.
+          if (!active) return;
+          failures.current += 1;
+          if (failures.current >= 3) setTextFailed(true);
+          retry = setTimeout(
+            () => setAttempt((n) => n + 1),
+            Math.min(TEXT_RETRY_MAX_MS, 1000 * 2 ** failures.current),
+          );
+        },
       );
-  }, [apiClient, id, chars, status]);
+    return () => {
+      active = false;
+      if (retry) clearTimeout(retry);
+    };
+  }, [apiClient, id, chars, status, attempt]);
 
   const current = snapshot && snapshot.runId === id ? snapshot : null;
   const text = current?.text ?? null;
@@ -120,6 +168,12 @@ export function useAiRun<T = string>(
     state,
     text,
     result,
+    textFailed,
+    retryText: () => {
+      failures.current = 0;
+      setTextFailed(false);
+      setAttempt((n) => n + 1);
+    },
     elapsedSec,
     cancel: () => {
       if (id) void cancelRun({ runId: id });
