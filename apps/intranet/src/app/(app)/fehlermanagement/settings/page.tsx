@@ -13,7 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useDesignPreview } from "@/lib/design-preview";
 
 function ThresholdField({
   label,
@@ -38,10 +40,14 @@ function ThresholdField({
   );
 }
 
+const quietInput =
+  "h-8 border-transparent bg-transparent shadow-none hover:border-border focus-visible:border-border";
+
 export default function ErrorManagementSettingsPage() {
   const t = useTranslations("ErrorManagement");
   const tc = useTranslations("Common");
   const isManager = useIsManager();
+  const refreshed = useDesignPreview() === "refreshed";
   const confirm = useConfirm();
   const handleError = useErrorHandler();
 
@@ -112,6 +118,91 @@ export default function ErrorManagementSettingsPage() {
     } catch (e) {
       handleError(e);
     }
+  }
+
+  if (refreshed) {
+    const thresholds = [
+      ["targetResponseDays", targetResponseDays, setTargetResponseDays],
+      ["warnResponseDays", warnResponseDays, setWarnResponseDays],
+      ["defaultDueDays", defaultDueDays, setDefaultDueDays],
+      ["defaultMeasureDueDays", defaultMeasureDueDays, setDefaultMeasureDueDays],
+    ] as const;
+    const thresholdsChanged =
+      !!settings &&
+      (targetResponseDays !== settings.targetResponseDays ||
+        warnResponseDays !== settings.warnResponseDays ||
+        defaultDueDays !== settings.defaultDueDays ||
+        defaultMeasureDueDays !== settings.defaultMeasureDueDays);
+
+    return (
+      <div className="space-y-8" data-tour="tour-fehlermanagement-settings">
+        <SettingsSection title={t("categoriesTitle")}>
+          {categories.map((c) => (
+            <div key={c._id} className="flex items-center gap-2 px-2 py-1.5">
+              <Input
+                defaultValue={c.name}
+                aria-label={tc("fieldName")}
+                onBlur={(e) => {
+                  const value = e.target.value.trim();
+                  if (value && value !== c.name) {
+                    renameCategory({ categoryId: c._id, name: value }).catch(handleError);
+                  }
+                }}
+                className={quietInput}
+              />
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={tc("delete")}
+                className="text-muted-foreground hover:text-destructive"
+                onClick={() => void onDeleteCategory(c._id, c.name)}
+              >
+                <Trash2 />
+              </Button>
+            </div>
+          ))}
+          <div className="flex items-center gap-2 px-2 py-1.5">
+            <Input
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder={t("categoryNamePlaceholder")}
+              onKeyDown={(e) => e.key === "Enter" && void onAddCategory()}
+              className={quietInput}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!newCategory.trim()}
+              onClick={() => void onAddCategory()}
+            >
+              <Plus />
+              {t("addCategory")}
+            </Button>
+          </div>
+        </SettingsSection>
+
+        <SettingsSection title={t("thresholdsTitle")}>
+          {thresholds.map(([key, value, onChange]) => (
+            <SettingsRow
+              key={key}
+              title={t(key)}
+              control={
+                <Input
+                  type="number"
+                  min={0}
+                  value={value}
+                  onChange={(e) => onChange(Number(e.target.value))}
+                  onBlur={() => {
+                    if (thresholdsChanged) void onSaveThresholds();
+                  }}
+                  className="h-8 w-20 text-right tabular-nums"
+                />
+              }
+            />
+          ))}
+        </SettingsSection>
+      </div>
+    );
   }
 
   return (
