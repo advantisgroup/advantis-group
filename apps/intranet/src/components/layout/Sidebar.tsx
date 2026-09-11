@@ -500,35 +500,40 @@ export function Sidebar() {
             to the footer branding, rather than competing for space in the
             main tabs. Covers mobile too: this footer is shared by the
             desktop rail and the mobile drawer opened from BottomNav. */}
-        {(() => {
-          const updatesLink = (
-            <Link
-              href="/updates"
-              onClick={close}
-              className="flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0 md:h-auto md:rounded-md md:px-2 md:py-1.5 md:text-xs"
-            >
-              <div className="relative shrink-0">
-                <Rss className="size-4 md:size-3.5" />
+        {/* Its own icon button on the collapsed rail rather than the expanded
+            link with collapsed overrides — the `md:` padding/size utilities
+            outranked those overrides and shrank it to a faint 14px glyph. */}
+        {!isMobile && state === "collapsed" ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/updates"
+                aria-label={t("updates")}
+                className="relative grid size-9 place-items-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              >
+                <Rss className="size-[18px]" />
                 {activeUpdate?.top ? (
-                  <span className="absolute -right-0.5 -top-0.5 hidden size-1.5 rounded-full bg-primary ring-1 ring-sidebar group-data-[state=collapsed]/sidebar:block" />
+                  <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-primary ring-2 ring-sidebar" />
                 ) : null}
-              </div>
-              <SidebarLabel>{t("updates")}</SidebarLabel>
-              {activeUpdate?.top ? (
-                <span className="size-1.5 shrink-0 rounded-full bg-primary group-data-[state=collapsed]/sidebar:hidden" />
-              ) : null}
-            </Link>
-          );
-          if (isMobile || state !== "collapsed") return updatesLink;
-          return (
-            <Tooltip>
-              <TooltipTrigger asChild>{updatesLink}</TooltipTrigger>
-              <TooltipContent side="right" align="center">
-                {t("updates")}
-              </TooltipContent>
-            </Tooltip>
-          );
-        })()}
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right" align="center">
+              {t("updates")}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <Link
+            href="/updates"
+            onClick={close}
+            className="flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground md:h-auto md:rounded-md md:px-2 md:py-1.5 md:text-xs"
+          >
+            <Rss className="size-4 shrink-0 md:size-3.5" />
+            <SidebarLabel>{t("updates")}</SidebarLabel>
+            {activeUpdate?.top ? (
+              <span className="size-1.5 shrink-0 rounded-full bg-primary" />
+            ) : null}
+          </Link>
+        )}
         <p className="border-t border-sidebar-border pt-4 text-[11px] font-medium uppercase tracking-[0.16em] text-sidebar-foreground/50 group-data-[state=collapsed]/sidebar:hidden md:border-0 md:pt-0 md:tracking-wider">
           Advantis Group
         </p>

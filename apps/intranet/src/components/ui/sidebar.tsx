@@ -254,14 +254,18 @@ export function SidebarFooter({ children, className }: React.HTMLAttributes<HTML
 }
 
 export function SidebarGroup({ children, className }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex flex-col gap-0.5 py-1", className)}>{children}</div>;
+  return (
+    <div data-slot="sidebar-group" className={cn("flex flex-col gap-0.5 py-1", className)}>
+      {children}
+    </div>
+  );
 }
 
 export function SidebarGroupLabel({ children, className }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 transition-opacity group-data-[state=collapsed]/sidebar:opacity-0",
+        "px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 group-data-[state=collapsed]/sidebar:hidden",
         className,
       )}
     >
