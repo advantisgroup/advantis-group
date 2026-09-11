@@ -43,6 +43,21 @@ export const STATUS_TINT: Record<ReportStatus, string> = {
   geschlossen: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
 };
 
+/** Theme tokens (not Tailwind shades) for the refreshed design, so the list
+ * dot, the panel's top edge and the status chip agree in both themes. */
+export const SEVERITY_ACCENT: Record<Severity, string> = {
+  niedrig: "var(--muted-foreground)",
+  mittel: "var(--chart-1)",
+  hoch: "var(--warn)",
+  kritisch: "var(--destructive)",
+};
+
+export const STATUS_ACCENT: Record<ReportStatus, string> = {
+  neu: "var(--chart-1)",
+  in_bearbeitung: "var(--warn)",
+  geschlossen: "var(--ok)",
+};
+
 export interface ErrorReportLike {
   severity: Severity;
   status: ReportStatus;

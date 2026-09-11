@@ -1,275 +1,524 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { AlertTriangle, ClipboardPlus, Plus, Search, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  CircleCheck,
+  CircleDashed,
+  CircleDot,
+  ClipboardPlus,
+  Ellipsis,
+  Link2,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import {
+  ClassicErrorReportsPage,
+  NewErrorDialog,
+} from "@/components/error-management/ClassicErrorReportsPage";
+import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
 import { useIsManager } from "@/components/providers/current-user";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CountTabs } from "@/components/ui/count-tabs";
+import { useConfirm } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  useConfirm,
-} from "@/components/ui/dialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterPill, TogglePill } from "@/components/ui/filter-pill";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  PropertyButton,
+  SidePanel,
+  SidePanelProperties,
+  SidePanelSection,
+  StatusChip,
+} from "@/components/ui/side-panel";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { DesignSwitch } from "@/lib/design-preview";
 import {
   CUSTOMER_FEEDBACKS,
   dateInputToMs,
-  ESCALATION_TINT,
   escalationLevel,
   isOverdue,
   msToDateInput,
   REPORT_STATUSES,
-  type ReportStatus,
   responseAmpel,
   SEVERITIES,
-  SEVERITY_TINT,
+  SEVERITY_ACCENT,
+  STATUS_ACCENT,
+  type ReportStatus,
   type Severity,
-  STATUS_TINT,
 } from "@/lib/error-management";
 import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 
 type Report = NonNullable<ReturnType<typeof useQuery<typeof api.errorReports.list>>>[number];
+type Settings = NonNullable<ReturnType<typeof useQuery<typeof api.errorSettings.get>>>;
 type Scope = "offen" | "alle" | "geschlossen";
-type KpiFilter = "critical" | "overdue" | "closed-month";
 
-function parseScope(value: string | null): Scope {
-  return value === "alle" || value === "geschlossen" ? value : "offen";
-}
+const DAY_MS = 24 * 60 * 60 * 1000;
+const STATUS_ICON = { neu: CircleDashed, in_bearbeitung: CircleDot, geschlossen: CircleCheck };
 
-function parseKpiFilter(value: string | null): KpiFilter | null {
-  return value === "critical" || value === "overdue" || value === "closed-month" ? value : null;
-}
-
-function CategorySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const t = useTranslations("ErrorManagement");
-  const categories = useQuery(api.errorCategories.list) ?? [];
+function Dot({ color, label, muted }: { color: string; label: string; muted?: boolean }) {
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger>
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="none">{t("fieldCategoryNone")}</SelectItem>
-        {categories.map((c) => (
-          <SelectItem key={c._id} value={c._id}>
-            {c.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium",
+        muted && "text-muted-foreground",
+      )}
+    >
+      <span className="size-2 shrink-0 rounded-full" style={{ background: color }} />
+      {label}
+    </span>
   );
 }
 
-function NewErrorDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-}) {
+function useDueLabel() {
   const t = useTranslations("ErrorManagement");
-  const tc = useTranslations("Common");
-  const handleError = useErrorHandler();
-  const create = useMutation(api.errorReports.create);
+  return (report: Report, now: number) => {
+    if (report.status === "geschlossen" || report.dueAt === null) return null;
+    const days = Math.floor((report.dueAt - now) / DAY_MS);
+    if (days < 0) return { text: t("overdueBy", { days: -days }), late: true };
+    if (days === 0) return { text: t("dueToday"), late: false };
+    return { text: t("dueIn", { days }), late: false };
+  };
+}
 
-  const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState("none");
-  const [severity, setSeverity] = useState<Severity>("niedrig");
-  const [customer, setCustomer] = useState("");
-  const [responsible, setResponsible] = useState("");
-  const [busy, setBusy] = useState(false);
+/** Customer-facing errors the customer hasn't heard about yet; green is the
+ * expected state, so only amber and red are worth flagging. */
+function notInformed(report: Report, settings: Settings | undefined, now: number) {
+  if (!settings || !report.customerOrProject || report.customerInformedAt) return null;
+  if (report.status === "geschlossen") return null;
+  const ampel = responseAmpel(Math.floor((now - report.createdAt) / DAY_MS), settings);
+  return ampel === "gruen" ? null : ampel;
+}
 
-  function reset() {
-    setDescription("");
-    setCategoryId("none");
-    setSeverity("niedrig");
-    setCustomer("");
-    setResponsible("");
+function ErrorReportsContent() {
+  const t = useTranslations("ErrorManagement");
+  const router = useRouter();
+  const params = useSearchParams();
+  const reports = useQuery(api.errorReports.list);
+  const settings = useQuery(api.errorSettings.get);
+  const dueLabel = useDueLabel();
+
+  // Read once: the dashboard's KPI tiles link here with these, and later URL
+  // changes (opening a report) shouldn't reset what the person has filtered.
+  const initialKpi = params.get("kpi");
+  const [scope, setScope] = useState<Scope>(() => {
+    const value = params.get("scope");
+    return value === "alle" || value === "geschlossen" ? value : "offen";
+  });
+  const [severities, setSeverities] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [criticalOnly, setCriticalOnly] = useState(initialKpi === "critical");
+  const [overdueOnly, setOverdueOnly] = useState(initialKpi === "overdue");
+  const [closedThisMonth, setClosedThisMonth] = useState(initialKpi === "closed-month");
+  const [search, setSearch] = useState("");
+  const [newOpen, setNewOpen] = useState(() => params.get("new") === "1");
+
+  const panelId = params.get("open");
+  const all = useMemo(() => reports ?? [], [reports]);
+  const now = Date.now();
+  const query = search.trim().toLowerCase();
+
+  const filteredByPills = useMemo(() => {
+    const startOfMonth = new Date(new Date().setDate(1)).setHours(0, 0, 0, 0);
+    return all.filter((r) => {
+      if (severities.length > 0 && !severities.includes(r.severity)) return false;
+      if (categories.length > 0 && !categories.includes(r.categoryName ?? "")) return false;
+      if (criticalOnly && escalationLevel(r) !== 3) return false;
+      if (overdueOnly && !isOverdue(r)) return false;
+      if (closedThisMonth && (!r.closedAt || r.closedAt < startOfMonth)) return false;
+      if (!query) return true;
+      return [r.description, r.customerOrProject, r.categoryName, r.responsibleName]
+        .join(" ")
+        .toLowerCase()
+        .includes(query);
+    });
+  }, [all, severities, categories, criticalOnly, overdueOnly, closedThisMonth, query]);
+
+  const inScope = (r: Report, s: Scope) =>
+    s === "alle" || (s === "offen" ? r.status !== "geschlossen" : r.status === "geschlossen");
+  const rows = filteredByPills.filter((r) => inScope(r, scope));
+  const categoryNames = [...new Set(all.map((r) => r.categoryName ?? ""))]
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
+  const filtersActive =
+    severities.length > 0 ||
+    categories.length > 0 ||
+    criticalOnly ||
+    overdueOnly ||
+    closedThisMonth ||
+    query !== "";
+
+  function clearFilters() {
+    setSeverities([]);
+    setCategories([]);
+    setCriticalOnly(false);
+    setOverdueOnly(false);
+    setClosedThisMonth(false);
+    setSearch("");
   }
 
-  async function onSubmit() {
-    if (!description.trim()) return;
-    setBusy(true);
-    try {
-      await create({
-        description,
-        categoryId: categoryId === "none" ? undefined : (categoryId as Id<"errorCategories">),
-        severity,
-        customerOrProject: customer || undefined,
-        responsibleName: responsible || undefined,
-      });
-      toast.success(t("created"));
-      reset();
-      onOpenChange(false);
-    } catch (e) {
-      handleError(e);
-    } finally {
-      setBusy(false);
-    }
+  function openPanel(id: string) {
+    router.replace(`/fehlermanagement?open=${id}`, { scroll: false });
+  }
+
+  function closePanel() {
+    router.replace("/fehlermanagement", { scroll: false });
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{t("newErrorTitle")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              {t("fieldDescription")}
-            </label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("fieldDescriptionPlaceholder")}
-              autoFocus
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldCategory")}
-              </label>
-              <CategorySelect value={categoryId} onChange={setCategoryId} />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldSeverity")}
-              </label>
-              <Select value={severity} onValueChange={(v) => setSeverity(v as Severity)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SEVERITIES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {t(`severity.${s}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldCustomer")}
-              </label>
-              <Input
-                value={customer}
-                onChange={(e) => setCustomer(e.target.value)}
-                placeholder={t("fieldCustomerPlaceholder")}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldResponsible")}
-              </label>
-              <Input
-                value={responsible}
-                onChange={(e) => setResponsible(e.target.value)}
-                placeholder={t("fieldResponsiblePlaceholder")}
-              />
-            </div>
+    <div data-tour="tour-fehlermanagement-list">
+      <PageHeaderActions
+        actions={[
+          {
+            key: "new-error",
+            label: t("newError"),
+            icon: Plus,
+            onClick: () => setNewOpen(true),
+          },
+        ]}
+      />
+
+      <CountTabs
+        value={scope}
+        onChange={setScope}
+        tabs={(["offen", "alle", "geschlossen"] as const).map((value) => ({
+          value,
+          label: t(value === "offen" ? "scopeOpen" : value === "alle" ? "scopeAll" : "scopeClosed"),
+          count: filteredByPills.filter((r) => inScope(r, value)).length,
+        }))}
+      />
+
+      <div className="flex flex-col gap-2 py-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="relative w-full sm:w-72">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t("searchPlaceholder")}
+            aria-label={t("searchPlaceholder")}
+            className="h-9 rounded-full pl-8 text-sm md:h-7 md:text-xs"
+          />
+        </div>
+        <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-1 sm:flex-wrap sm:overflow-visible sm:px-0">
+          <FilterPill
+            label={t("fieldSeverity")}
+            options={SEVERITIES.map((s) => ({
+              value: s,
+              label: t(`severity.${s}`),
+              count: all.filter((r) => r.severity === s).length,
+              leading: (
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ background: SEVERITY_ACCENT[s] }}
+                />
+              ),
+            }))}
+            selected={severities}
+            onChange={setSeverities}
+            clearLabel={t("clearFilter", { label: t("fieldSeverity") })}
+          />
+          <FilterPill
+            label={t("fieldCategory")}
+            options={categoryNames.map((name) => ({
+              value: name,
+              label: name,
+              count: all.filter((r) => r.categoryName === name).length,
+            }))}
+            selected={categories}
+            onChange={setCategories}
+            clearLabel={t("clearFilter", { label: t("fieldCategory") })}
+          />
+          <span aria-hidden className="h-4 w-px shrink-0 bg-border" />
+          <TogglePill
+            active={criticalOnly}
+            onClick={() => setCriticalOnly((v) => !v)}
+            count={all.filter((r) => r.status !== "geschlossen" && escalationLevel(r) === 3).length}
+            dotClassName="bg-destructive"
+          >
+            {t("kpiCritical")}
+          </TogglePill>
+          <TogglePill
+            active={overdueOnly}
+            onClick={() => setOverdueOnly((v) => !v)}
+            count={all.filter((r) => isOverdue(r)).length}
+            dotClassName="bg-warn"
+          >
+            {t("kpiOverdue")}
+          </TogglePill>
+          <TogglePill active={closedThisMonth} onClick={() => setClosedThisMonth((v) => !v)}>
+            {t("kpiClosedThisMonth")}
+          </TogglePill>
+          {filtersActive && (
+            <Button variant="ghost" size="xs" className="shrink-0" onClick={clearFilters}>
+              <X />
+              {t("clearFilters")}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {reports === undefined ? (
+        <div className="space-y-2">
+          {[0, 1, 2, 3].map((index) => (
+            <Skeleton key={index} className="h-12 rounded-lg" />
+          ))}
+        </div>
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon={<AlertTriangle />}
+          title={all.length === 0 ? t("empty") : t("noResults")}
+          action={
+            filtersActive ? (
+              <Button variant="outline" size="sm" onClick={clearFilters}>
+                {t("clearFilters")}
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+          <Table className="hidden md:table">
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>{t("columnError")}</TableHead>
+                <TableHead className="w-32">{t("fieldSeverity")}</TableHead>
+                <TableHead className="w-36">{t("fieldStatus")}</TableHead>
+                <TableHead className="w-36">{t("columnDue")}</TableHead>
+                <TableHead className="w-44">{t("fieldResponsible")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((report) => {
+                const level = escalationLevel(report, now);
+                const due = dueLabel(report, now);
+                const ampel = notInformed(report, settings, now);
+                return (
+                  <TableRow
+                    key={report._id}
+                    tabIndex={0}
+                    data-state={report._id === panelId ? "selected" : undefined}
+                    onClick={() => openPanel(report._id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") openPanel(report._id);
+                    }}
+                    className="cursor-pointer focus-visible:bg-muted/40 focus-visible:outline-none"
+                  >
+                    <TableCell className="w-full max-w-0">
+                      <span className="flex min-w-0 items-center gap-2">
+                        {report.status !== "geschlossen" && level > 1 && (
+                          <span
+                            className={cn(
+                              "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                              level === 3
+                                ? "bg-destructive/12 text-destructive"
+                                : "bg-warn/12 text-warn",
+                            )}
+                          >
+                            {t("escalationShort", { level })}
+                          </span>
+                        )}
+                        <span className="truncate font-medium">{report.description}</span>
+                        {report.customerOrProject && (
+                          <span className="hidden shrink-0 text-muted-foreground lg:inline">
+                            {report.customerOrProject}
+                          </span>
+                        )}
+                        {ampel && (
+                          <span
+                            className={cn(
+                              "shrink-0 text-[11px] font-medium",
+                              ampel === "rot" ? "text-destructive" : "text-warn",
+                            )}
+                          >
+                            {t("notInformedShort")}
+                          </span>
+                        )}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Dot
+                        color={SEVERITY_ACCENT[report.severity]}
+                        label={t(`severity.${report.severity}`)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Dot
+                        color={STATUS_ACCENT[report.status]}
+                        label={t(`status.${report.status}`)}
+                        muted={report.status === "geschlossen"}
+                      />
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {due ? (
+                        <span
+                          className={due.late ? "font-medium text-warn" : "text-muted-foreground"}
+                        >
+                          {due.text}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="max-w-44 truncate text-muted-foreground">
+                      {report.responsibleName ?? "—"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+
+          <ul className="divide-y divide-border/60 md:hidden">
+            {rows.map((report) => {
+              const due = dueLabel(report, now);
+              return (
+                <li
+                  key={report._id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openPanel(report._id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") openPanel(report._id);
+                  }}
+                  className="space-y-1.5 px-4 py-3 active:bg-accent/60"
+                >
+                  <div className="flex items-center gap-3 text-xs">
+                    <Dot
+                      color={SEVERITY_ACCENT[report.severity]}
+                      label={t(`severity.${report.severity}`)}
+                    />
+                    <span className="ml-auto">
+                      <Dot
+                        color={STATUS_ACCENT[report.status]}
+                        label={t(`status.${report.status}`)}
+                        muted={report.status === "geschlossen"}
+                      />
+                    </span>
+                  </div>
+                  <p className="line-clamp-2 text-sm font-medium">{report.description}</p>
+                  <p className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                    <span className="truncate">
+                      {[report.customerOrProject, report.responsibleName]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                    {due && (
+                      <span className={cn("shrink-0", due.late && "font-medium text-warn")}>
+                        {due.text}
+                      </span>
+                    )}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="border-t border-border/70 px-4 py-2.5 text-xs tabular-nums text-muted-foreground">
+            {t("countLabel", { shown: rows.length, total: all.length })}
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {tc("cancel")}
-          </Button>
-          <Button onClick={() => void onSubmit()} disabled={busy || !description.trim()}>
-            {tc("create")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      )}
+
+      <ErrorReportPanel
+        report={all.find((r) => r._id === panelId)}
+        open={!!panelId}
+        onOpenChange={(open) => {
+          if (!open) closePanel();
+        }}
+        settings={settings}
+      />
+      <NewErrorDialog open={newOpen} onOpenChange={setNewOpen} />
+    </div>
   );
 }
 
-function ErrorDetailDialog({
+function ErrorReportPanel({
   report,
+  open,
   onOpenChange,
+  settings,
 }: {
-  report: Report | null;
-  onOpenChange: (o: boolean) => void;
+  report: Report | undefined;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  settings: Settings | undefined;
 }) {
+  const tc = useTranslations("Common");
+  // Holds the last report so the panel keeps its content while animating closed.
+  const [shown, setShown] = useState(report);
+  if (report && report !== shown) setShown(report);
+
+  const accent = shown
+    ? shown.status !== "geschlossen" && escalationLevel(shown) === 3
+      ? "var(--destructive)"
+      : STATUS_ACCENT[shown.status]
+    : undefined;
+
+  return (
+    <SidePanel
+      open={open && !!shown}
+      onOpenChange={onOpenChange}
+      title={shown?.description ?? ""}
+      accent={accent}
+      closeLabel={tc("close")}
+      header={
+        shown && <ErrorReportPanelHeader report={shown} onDeleted={() => onOpenChange(false)} />
+      }
+    >
+      {shown && <ErrorReportPanelBody key={shown._id} report={shown} settings={settings} />}
+    </SidePanel>
+  );
+}
+
+function ErrorReportPanelHeader({ report, onDeleted }: { report: Report; onDeleted: () => void }) {
   const t = useTranslations("ErrorManagement");
   const tc = useTranslations("Common");
+  const locale = useLocale();
   const isManager = useIsManager();
   const confirm = useConfirm();
   const handleError = useErrorHandler();
   const update = useMutation(api.errorReports.update);
   const remove = useMutation(api.errorReports.remove);
-  const measures = useQuery(
-    api.errorMeasures.list,
-    report ? { errorReportId: report._id } : "skip",
-  );
+  const measures = useQuery(api.errorMeasures.list, { errorReportId: report._id });
+  const dueLabel = useDueLabel();
 
-  if (!report) return null;
+  const shortDate = (ms: number) =>
+    new Date(ms).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
+  const due = dueLabel(report, Date.now());
 
-  async function patch(fields: Parameters<typeof update>[0]["patch"]) {
-    if (!report) return;
-    try {
-      await update({ reportId: report._id, patch: fields });
-    } catch (e) {
-      handleError(e);
-    }
-  }
-
-  async function onDelete() {
-    if (!report) return;
-    const ok = await confirm({
-      title: t("deleteErrorConfirm"),
-      details: [
-        { label: tc("fieldTitle"), value: report.description },
-        ...(report.categoryName
-          ? [{ label: tc("fieldCategory"), value: report.categoryName }]
-          : []),
-        { label: tc("fieldStatus"), value: t(`severity.${report.severity}`) },
-      ],
-      confirmLabel: tc("delete"),
-      cancelLabel: tc("cancel"),
-      destructive: true,
-    });
-    if (!ok) return;
-    try {
-      await remove({ reportId: report._id });
-      toast.success(t("deleted"));
-      onOpenChange(false);
-    } catch (e) {
-      handleError(e);
-    }
-  }
-
-  async function onStatusChange(status: ReportStatus) {
+  async function changeStatus(status: ReportStatus) {
+    if (status === report.status) return;
     if (
       status === "geschlossen" &&
       measures &&
@@ -283,408 +532,414 @@ function ErrorDetailDialog({
       });
       if (!ok) return;
     }
-    await patch({ status });
-    toast.success(t("updated"));
+    try {
+      await update({ reportId: report._id, patch: { status } });
+      toast.success(t("updated"));
+    } catch (error) {
+      handleError(error);
+    }
+  }
+
+  async function onDelete() {
+    const ok = await confirm({
+      title: t("deleteErrorConfirm"),
+      details: [
+        { label: tc("fieldTitle"), value: report.description },
+        ...(report.categoryName
+          ? [{ label: tc("fieldCategory"), value: report.categoryName }]
+          : []),
+      ],
+      confirmLabel: tc("delete"),
+      cancelLabel: tc("cancel"),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await remove({ reportId: report._id });
+      toast.success(t("deleted"));
+      onDeleted();
+    } catch (error) {
+      handleError(error);
+    }
+  }
+
+  function copyLink() {
+    void navigator.clipboard
+      .writeText(`${window.location.origin}/fehlermanagement?open=${report._id}`)
+      .then(() => toast.success(t("linkCopied")));
   }
 
   return (
-    <Dialog open={!!report} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t("editErrorTitle")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <Textarea
-            defaultValue={report.description}
-            onBlur={(e) =>
-              e.target.value !== report.description && patch({ description: e.target.value })
-            }
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldStatus")}
-              </label>
-              <Select
-                value={report.status}
-                onValueChange={(v) => void onStatusChange(v as ReportStatus)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {REPORT_STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {t(`status.${s}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldSeverity")}
-              </label>
-              <Select
-                value={report.severity}
-                onValueChange={(v) => void patch({ severity: v as Severity })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SEVERITIES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {t(`severity.${s}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldCategory")}
-              </label>
-              <CategorySelect
-                value={report.categoryId ?? "none"}
-                onChange={(v) =>
-                  void patch({
-                    categoryId: v === "none" ? undefined : (v as Id<"errorCategories">),
-                  })
-                }
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldDueAt")}
-              </label>
-              <Input
-                type="date"
-                defaultValue={msToDateInput(report.dueAt)}
-                onBlur={(e) => void patch({ dueAt: dateInputToMs(e.target.value) })}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldCustomer")}
-              </label>
-              <Input
-                defaultValue={report.customerOrProject ?? ""}
-                onBlur={(e) => void patch({ customerOrProject: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldResponsible")}
-              </label>
-              <Input
-                defaultValue={report.responsibleName ?? ""}
-                onBlur={(e) => void patch({ responsibleName: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldCustomerInformedAt")}
-              </label>
-              <Input
-                type="date"
-                defaultValue={msToDateInput(report.customerInformedAt)}
-                onBlur={(e) => void patch({ customerInformedAt: dateInputToMs(e.target.value) })}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldCustomerRespondedAt")}
-              </label>
-              <Input
-                type="date"
-                defaultValue={msToDateInput(report.customerRespondedAt)}
-                onBlur={(e) => void patch({ customerRespondedAt: dateInputToMs(e.target.value) })}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              {t("fieldCustomerFeedback")}
-            </label>
-            <Select
-              value={report.customerFeedback ?? "none"}
-              onValueChange={(v) =>
-                void patch({
-                  customerFeedback:
-                    v === "none" ? undefined : (v as Report["customerFeedback"] & string),
-                })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">{tc("none")}</SelectItem>
-                {CUSTOMER_FEEDBACKS.map((f) => (
-                  <SelectItem key={f} value={f}>
-                    {t(`feedback.${f}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              {t("fieldPrevention")}
-            </label>
-            <Textarea
-              defaultValue={report.prevention ?? ""}
-              placeholder={t("fieldPreventionPlaceholder")}
-              onBlur={(e) => void patch({ prevention: e.target.value })}
-            />
-          </div>
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox
-              checked={report.effectivenessChecked}
-              onCheckedChange={(v) => void patch({ effectivenessChecked: v === true })}
-            />
-            {t("fieldEffectivenessChecked")}
-          </label>
-
-          <div className="rounded-lg border border-border/60 p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {t("tabMeasures")}
-              </p>
-              <Link href={`/fehlermanagement/measures?error=${report._id}`}>
-                <Button variant="outline" size="sm">
-                  <ClipboardPlus className="mr-1.5 size-3.5" />
-                  {t("addMeasure")}
-                </Button>
-              </Link>
-            </div>
-            {measures === undefined || measures.length === 0 ? (
-              <p className="text-xs text-muted-foreground">{t("noMeasures")}</p>
-            ) : (
-              <ul className="space-y-1 text-sm">
-                {measures.map((m) => (
-                  <li key={m._id} className="flex items-center justify-between gap-2">
-                    <span className="truncate">{m.description}</span>
-                    <Badge variant={m.status === "erledigt" ? "success" : "muted"}>
-                      {t(`measureStatus.${m.status}`)}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-        <DialogFooter>
-          {isManager && (
+    <div className="md:pr-9">
+      <div className="flex min-h-8 items-center gap-1.5 text-xs text-muted-foreground">
+        <span className="truncate">{report.categoryName ?? t("fieldCategoryNone")}</span>
+        <span aria-hidden>·</span>
+        <span className="shrink-0">{t("loggedOn", { date: shortDate(report.createdAt) })}</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="mr-auto text-destructive"
-              onClick={() => void onDelete()}
+              size="icon-sm"
+              className="ml-auto text-muted-foreground"
+              aria-label={t("moreActions")}
             >
-              <Trash2 className="mr-1.5 size-3.5" />
-              {tc("delete")}
+              <Ellipsis />
             </Button>
-          )}
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {tc("close")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={copyLink}>
+              <Link2 />
+              {t("copyLink")}
+            </DropdownMenuItem>
+            {isManager && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => void onDelete()}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 />
+                  {tc("delete")}
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <p className="mt-1.5 line-clamp-3 whitespace-pre-line text-lg font-semibold leading-snug tracking-tight text-balance">
+        {report.description}
+      </p>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <StatusChip
+              accent={STATUS_ACCENT[report.status]}
+              icon={STATUS_ICON[report.status]}
+              label={t(`status.${report.status}`)}
+            />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {REPORT_STATUSES.map((status) => (
+              <DropdownMenuItem key={status} onClick={() => void changeStatus(status)}>
+                <Dot color={STATUS_ACCENT[status]} label={t(`status.${status}`)} />
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <span
+          className={cn("text-xs", due?.late ? "font-medium text-warn" : "text-muted-foreground")}
+        >
+          {report.status === "geschlossen" && report.closedAt
+            ? t("closedOn", { date: shortDate(report.closedAt) })
+            : (due?.text ?? t("noDueDate"))}
+        </span>
+      </div>
+    </div>
   );
 }
 
-type Settings = NonNullable<ReturnType<typeof useQuery<typeof api.errorSettings.get>>>;
-
-function ReportCard({
+function ErrorReportPanelBody({
   report,
   settings,
-  onOpen,
 }: {
   report: Report;
   settings: Settings | undefined;
-  onOpen: () => void;
 }) {
   const t = useTranslations("ErrorManagement");
+  const tc = useTranslations("Common");
   const locale = useLocale();
-  const level = escalationLevel({
-    severity: report.severity,
-    status: report.status,
-    dueAt: report.dueAt,
-  });
-  const overdue = isOverdue({
-    severity: report.severity,
-    status: report.status,
-    dueAt: report.dueAt,
-  });
-  // Only surfaced for customer-facing, still-open errors the customer hasn't
-  // been informed about yet — green (within target) is the expected state
-  // and not worth a badge, so only amber/red actually render.
-  const ampel =
-    settings &&
-    report.customerOrProject &&
-    !report.customerInformedAt &&
-    report.status !== "geschlossen"
-      ? responseAmpel(Math.floor((Date.now() - report.createdAt) / 86400000), settings)
-      : null;
+  const handleError = useErrorHandler();
+  const update = useMutation(api.errorReports.update);
+  const categories = useQuery(api.errorCategories.list) ?? [];
+  const measures = useQuery(api.errorMeasures.list, { errorReportId: report._id });
+  const level = escalationLevel(report);
+  const ampel = notInformed(report, settings, Date.now());
+
+  function patch(fields: Parameters<typeof update>[0]["patch"]) {
+    update({ reportId: report._id, patch: fields }).catch(handleError);
+  }
+
+  const inputClass = "h-8 text-sm md:h-8";
 
   return (
-    <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={onOpen}>
-      <CardContent className="space-y-2 p-4">
-        <div className="flex items-start justify-between gap-2">
-          <p className="min-w-0 flex-1 font-medium leading-snug">{report.description}</p>
-          <Badge className={cn(ESCALATION_TINT[level])}>{t(`escalation.${level}`)}</Badge>
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="outline" className={cn(SEVERITY_TINT[report.severity])}>
-            {t(`severity.${report.severity}`)}
-          </Badge>
-          <Badge variant="outline" className={cn(STATUS_TINT[report.status])}>
-            {t(`status.${report.status}`)}
-          </Badge>
-          {report.categoryName && <Badge variant="muted">{report.categoryName}</Badge>}
-          {overdue && <Badge variant="destructive">{t("overdueBadge")}</Badge>}
-          {ampel && ampel !== "gruen" && (
-            <Badge variant={ampel === "rot" ? "destructive" : "warning"}>
+    <>
+      <SidePanelSection title={t("details")}>
+        <SidePanelProperties
+          rows={[
+            {
+              label: t("fieldSeverity"),
+              value: (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <PropertyButton>
+                      <Dot
+                        color={SEVERITY_ACCENT[report.severity]}
+                        label={t(`severity.${report.severity}`)}
+                      />
+                    </PropertyButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {SEVERITIES.map((s: Severity) => (
+                      <DropdownMenuItem key={s} onClick={() => patch({ severity: s })}>
+                        <Dot color={SEVERITY_ACCENT[s]} label={t(`severity.${s}`)} />
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ),
+            },
+            {
+              label: t("fieldCategory"),
+              value: (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <PropertyButton>
+                      <span className={cn(!report.categoryName && "text-muted-foreground")}>
+                        {report.categoryName ?? t("fieldCategoryNone")}
+                      </span>
+                    </PropertyButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="max-h-72 overflow-y-auto">
+                    {categories.map((category) => (
+                      <DropdownMenuItem
+                        key={category._id}
+                        onClick={() => patch({ categoryId: category._id as Id<"errorCategories"> })}
+                      >
+                        {category.name}
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => patch({ categoryId: undefined })}>
+                      {t("fieldCategoryNone")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ),
+            },
+            {
+              label: t("fieldDueAt"),
+              value: (
+                <Input
+                  type="date"
+                  className={cn(inputClass, "w-auto")}
+                  defaultValue={msToDateInput(report.dueAt)}
+                  onBlur={(event) => patch({ dueAt: dateInputToMs(event.target.value) })}
+                />
+              ),
+            },
+            {
+              label: t("fieldResponsible"),
+              value: (
+                <Input
+                  className={inputClass}
+                  defaultValue={report.responsibleName ?? ""}
+                  placeholder={t("fieldResponsiblePlaceholder")}
+                  onBlur={(event) =>
+                    event.target.value !== (report.responsibleName ?? "") &&
+                    patch({ responsibleName: event.target.value })
+                  }
+                />
+              ),
+            },
+            ...(report.status !== "geschlossen"
+              ? [
+                  {
+                    label: t("columnEscalation"),
+                    value: (
+                      <span
+                        className={cn(
+                          "text-sm",
+                          level === 3 && "font-medium text-destructive",
+                          level === 2 && "font-medium text-warn",
+                        )}
+                      >
+                        {t(`escalation.${level}`)}
+                      </span>
+                    ),
+                  },
+                ]
+              : []),
+          ]}
+        />
+      </SidePanelSection>
+
+      <SidePanelSection title={t("fieldDescription")}>
+        <Textarea
+          defaultValue={report.description}
+          className="min-h-20 text-sm"
+          onBlur={(event) =>
+            event.target.value.trim() &&
+            event.target.value !== report.description &&
+            patch({ description: event.target.value })
+          }
+        />
+      </SidePanelSection>
+
+      <SidePanelSection
+        title={t("customerSection")}
+        action={
+          ampel && (
+            <span
+              className={cn(
+                "text-[11px] font-medium",
+                ampel === "rot" ? "text-destructive" : "text-warn",
+              )}
+            >
               {t("customerNotInformedBadge")}
-            </Badge>
-          )}
+            </span>
+          )
+        }
+      >
+        <SidePanelProperties
+          rows={[
+            {
+              label: t("fieldCustomer"),
+              value: (
+                <Input
+                  className={inputClass}
+                  defaultValue={report.customerOrProject ?? ""}
+                  placeholder={t("fieldCustomerPlaceholder")}
+                  onBlur={(event) =>
+                    event.target.value !== (report.customerOrProject ?? "") &&
+                    patch({ customerOrProject: event.target.value })
+                  }
+                />
+              ),
+            },
+            {
+              label: t("fieldCustomerInformedAt"),
+              value: (
+                <Input
+                  type="date"
+                  className={cn(inputClass, "w-auto")}
+                  defaultValue={msToDateInput(report.customerInformedAt)}
+                  onBlur={(event) =>
+                    patch({ customerInformedAt: dateInputToMs(event.target.value) })
+                  }
+                />
+              ),
+            },
+            {
+              label: t("fieldCustomerRespondedAt"),
+              value: (
+                <Input
+                  type="date"
+                  className={cn(inputClass, "w-auto")}
+                  defaultValue={msToDateInput(report.customerRespondedAt)}
+                  onBlur={(event) =>
+                    patch({ customerRespondedAt: dateInputToMs(event.target.value) })
+                  }
+                />
+              ),
+            },
+            {
+              label: t("fieldCustomerFeedback"),
+              value: (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <PropertyButton>
+                      <span className={cn(!report.customerFeedback && "text-muted-foreground")}>
+                        {report.customerFeedback
+                          ? t(`feedback.${report.customerFeedback}`)
+                          : tc("none")}
+                      </span>
+                    </PropertyButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {CUSTOMER_FEEDBACKS.map((feedback) => (
+                      <DropdownMenuItem
+                        key={feedback}
+                        onClick={() => patch({ customerFeedback: feedback })}
+                      >
+                        {t(`feedback.${feedback}`)}
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => patch({ customerFeedback: undefined })}>
+                      {tc("none")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ),
+            },
+          ]}
+        />
+      </SidePanelSection>
+
+      <SidePanelSection title={t("preventionSection")}>
+        <div className="space-y-3">
+          <Textarea
+            defaultValue={report.prevention ?? ""}
+            placeholder={t("fieldPreventionPlaceholder")}
+            className="min-h-20 text-sm"
+            onBlur={(event) =>
+              event.target.value !== (report.prevention ?? "") &&
+              patch({ prevention: event.target.value })
+            }
+          />
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={report.effectivenessChecked}
+              onCheckedChange={(value) => patch({ effectivenessChecked: value === true })}
+            />
+            {t("fieldEffectivenessChecked")}
+          </label>
         </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          {report.customerOrProject && <span>{report.customerOrProject}</span>}
-          {report.responsibleName && <span>{report.responsibleName}</span>}
-          {report.dueAt && <span>{formatIsoDate(msToDateInput(report.dueAt), locale)}</span>}
-        </div>
-      </CardContent>
-    </Card>
+      </SidePanelSection>
+
+      <SidePanelSection
+        title={t("tabMeasures")}
+        action={
+          <Button asChild variant="ghost" size="xs">
+            <Link href={`/fehlermanagement/measures?error=${report._id}`}>
+              <ClipboardPlus />
+              {t("addMeasure")}
+            </Link>
+          </Button>
+        }
+      >
+        {measures === undefined || measures.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("noMeasures")}</p>
+        ) : (
+          <ul className="space-y-2">
+            {measures.map((measure) => (
+              <li key={measure._id} className="flex items-start gap-2.5 text-sm">
+                <span
+                  className="mt-1.5 size-2 shrink-0 rounded-full"
+                  style={{
+                    background:
+                      measure.status === "erledigt" ? "var(--ok)" : "var(--muted-foreground)",
+                  }}
+                />
+                <span className="min-w-0 flex-1">
+                  <span
+                    className={cn(
+                      "block",
+                      measure.status === "erledigt" && "text-muted-foreground line-through",
+                    )}
+                  >
+                    {measure.description}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {t(`phase.${measure.phase}`)}
+                    {measure.dueAt && ` · ${formatIsoDate(msToDateInput(measure.dueAt), locale)}`}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </SidePanelSection>
+    </>
   );
 }
 
 export default function FehlermanagementPage() {
-  const t = useTranslations("ErrorManagement");
-  const searchParams = useSearchParams();
-  const reports = useQuery(api.errorReports.list);
-  const settings = useQuery(api.errorSettings.get);
-  const [scope, setScope] = useState<Scope>(() => parseScope(searchParams.get("scope")));
-  const [kpiFilter, setKpiFilter] = useState<KpiFilter | null>(() =>
-    parseKpiFilter(searchParams.get("kpi")),
-  );
-  const [search, setSearch] = useState("");
-  const [newOpen, setNewOpen] = useState(false);
-  const [selected, setSelected] = useState<Report | null>(null);
-
-  useEffect(() => {
-    setScope(parseScope(searchParams.get("scope")));
-    setKpiFilter(parseKpiFilter(searchParams.get("kpi")));
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (searchParams.get("new") === "1") setNewOpen(true);
-  }, [searchParams]);
-
-  const filtered = useMemo(() => {
-    if (!reports) return [];
-    const query = search.trim().toLowerCase();
-    const now = Date.now();
-    const startOfMonth = new Date(new Date().setDate(1)).setHours(0, 0, 0, 0);
-    return reports.filter((r) => {
-      if (scope === "offen" && r.status === "geschlossen") return false;
-      if (scope === "geschlossen" && r.status !== "geschlossen") return false;
-      if (
-        kpiFilter === "critical" &&
-        escalationLevel({ severity: r.severity, status: r.status, dueAt: r.dueAt }, now) !== 3
-      ) {
-        return false;
-      }
-      if (
-        kpiFilter === "overdue" &&
-        !isOverdue({ severity: r.severity, status: r.status, dueAt: r.dueAt }, now)
-      ) {
-        return false;
-      }
-      if (kpiFilter === "closed-month" && (!r.closedAt || r.closedAt < startOfMonth)) {
-        return false;
-      }
-      if (
-        query &&
-        !`${r.description} ${r.customerOrProject ?? ""} ${r.categoryName ?? ""}`
-          .toLowerCase()
-          .includes(query)
-      ) {
-        return false;
-      }
-      return true;
-    });
-  }, [reports, scope, search, kpiFilter]);
-
   return (
-    <div className="space-y-4" data-tour="tour-fehlermanagement-list">
-      <PageHeaderActions
-        actions={[
-          {
-            key: "new-error",
-            label: t("newError"),
-            icon: Plus,
-            onClick: () => setNewOpen(true),
-            variant: "outline" as const,
-          },
-        ]}
-      />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="relative w-full max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("searchPlaceholder")}
-            className="pl-9"
-          />
-        </div>
-      </div>
-
-      <div className="flex gap-1.5">
-        {(["offen", "alle", "geschlossen"] as Scope[]).map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => {
-              setScope(s);
-              setKpiFilter(null);
-            }}
-            className={cn(
-              "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-              scope === s
-                ? "border-primary/40 bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:bg-accent",
-            )}
-          >
-            {t(s === "offen" ? "scopeOpen" : s === "alle" ? "scopeAll" : "scopeClosed")}
-          </button>
-        ))}
-      </div>
-
-      {reports === undefined ? null : filtered.length === 0 ? (
-        <EmptyState
-          icon={<AlertTriangle />}
-          title={reports.length === 0 ? t("empty") : t("noResults")}
-        />
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {filtered.map((r) => (
-            <ReportCard key={r._id} report={r} settings={settings} onOpen={() => setSelected(r)} />
-          ))}
-        </div>
-      )}
-
-      <NewErrorDialog open={newOpen} onOpenChange={setNewOpen} />
-      <ErrorDetailDialog report={selected} onOpenChange={(o) => !o && setSelected(null)} />
-    </div>
+    <Suspense fallback={null}>
+      <DesignSwitch refreshed={<ErrorReportsContent />} classic={<ClassicErrorReportsPage />} />
+    </Suspense>
   );
 }
