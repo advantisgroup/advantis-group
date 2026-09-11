@@ -428,7 +428,7 @@ export function ProjectForm({
       </div>
 
       <DraftOfferBanner draft={draft} />
-      <DraftRestoredNote draft={draft} onStartOver={discardChanges} />
+      <DraftRestoredNote draft={draft} onStartOver={discardChanges} filesNotKept />
 
       <Card>
         <CardContent className="space-y-5 p-5">

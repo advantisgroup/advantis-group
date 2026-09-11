@@ -7,18 +7,28 @@ import { decrypt } from "../lib/crypto.js";
 import { Errors } from "../lib/errors.js";
 import { requireAuth } from "../lib/middleware.js";
 
+/** Runs that read a CV hold applicant data, so reading them back needs the
+ *  same access and unlocked vault as the rest of Applicant Management. */
+const APPLICANT_KINDS = new Set(["cvExtract", "cvRescan"]);
+
 /**
  * The readable half of a run. Status comes to the browser live from Convex;
  * this hands over the decrypted text whenever that status moves.
  */
 export const aiRunsRoute = new Elysia().get("/ai/runs/:id", async ({ request, params }) => {
   const { clerkUserId } = await requireAuth(request);
-  const run = await getConvex().query(api.aiRuns.apiGet, {
-    serverKey: getConvexServerKey(),
+  const convex = getConvex();
+  const serverKey = getConvexServerKey();
+  const run = await convex.query(api.aiRuns.apiGet, {
+    serverKey,
     clerkUserId,
     runId: params.id,
   });
   if (!run) throw Errors.notFound("Run not found");
+  if (APPLICANT_KINDS.has(run.kind)) {
+    const access = await convex.query(api.applicants.apiCheckAccess, { serverKey, clerkUserId });
+    if (!access?.hasAccess) throw Errors.forbidden();
+  }
   return {
     status: run.status,
     outputChars: run.outputChars,

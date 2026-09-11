@@ -18,6 +18,8 @@
   "cvReviewFileMissing": "Dieses PDF ist in diesem Tab nicht mehr geöffnet. Laden Sie es erneut hoch, um die Angaben zu erfassen.",
   "cvReviewApplicantMissing": "Diese Bewerbung existiert nicht mehr.",
   "cvReviewTapToFill": "Zeile antippen, um „{field}“ zu füllen",
+  "cvReviewFileLoadFailed": "Das konnte nicht geladen werden. Bitte Verbindung prüfen und erneut versuchen.",
+  "cvImportUploadAgain": "Erneut hochladen",
   "retryExtraction": "Erneut automatisch auslesen",
   "retrying": "Wird ausgelesen…",
   "selectFieldFirstHint": "Bitte zuerst links in ein Feld klicken, dann den Text im PDF auswählen.",

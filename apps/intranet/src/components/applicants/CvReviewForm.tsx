@@ -21,7 +21,7 @@ import {
   RICH_CV_FIELDS,
   textToHtml,
 } from "@/components/applicants/applicant-types";
-import { DraftIndicator } from "@/components/compose/DraftIndicator";
+import { DraftIndicator, DraftOfferBanner } from "@/components/compose/DraftIndicator";
 import { MobileActionBar } from "@/components/compose/MobileActionBar";
 import { ReadinessSubmit } from "@/components/compose/ReadinessSubmit";
 import { useDraft } from "@/components/compose/use-draft";
@@ -431,6 +431,7 @@ export function CvReviewForm({
   function renderFormFields() {
     return (
       <div className="space-y-4">
+        <DraftOfferBanner draft={draft} />
         <p className="text-sm text-muted-foreground">
           {isMobile ? t("fallbackModalDescriptionMobile") : t("fallbackModalDescription")}
         </p>

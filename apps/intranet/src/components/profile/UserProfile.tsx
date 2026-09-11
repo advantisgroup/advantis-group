@@ -10,7 +10,6 @@ import { type Role } from "@advantis/types";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
 import {
-  Building2,
   Cake,
   CalendarClock,
   CalendarDays,
@@ -51,6 +50,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
@@ -65,25 +65,26 @@ import { cn } from "@/lib/utils";
 
 type ProfileUser = NonNullable<ReturnType<typeof useUser>>;
 
-/**
- * Full-width, left-aligned, wrapping button style for the admin action list.
- * The default Button is `whitespace-nowrap` at a fixed height, which is fine
- * for short English labels but overflows German ones (e.g.
- * "Geschäftsführungs-Zugriff gewähren") — this lets them wrap onto a second
- * line instead of spilling into whatever sits next to the button.
- */
-const actionButtonClass =
-  "h-auto min-h-8 w-full items-start justify-start whitespace-normal py-1.5 text-left [&_svg]:mt-0.5";
+/** Sections that load on their own fade in rather than snapping into place. */
+const LATE_SECTION = "animate-in fade-in-0 duration-300";
 
 function useUser(userId: Id<"users"> | null) {
   return useQuery(api.users.get, userId ? { userId } : "skip");
 }
 
 /** A small labelled section so the profile reads like a tidy info card. */
-function Section({ label, children }: { label: string; children: ReactNode }) {
+function Section({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="space-y-2">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className={className}>
+      <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
       {children}
@@ -93,16 +94,25 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
 
 /**
  * The single body card every profile detail lives in — one inset panel with
- * hairline-separated `Section`s, rather than each section floating on the
- * dialog background. Padding is applied to the direct children so the
- * sections themselves stay layout-agnostic (several of them render `null`
- * when empty, which the divider handles for free).
+ * hairline-separated `Section`s. Rows inside a section are plain lines, not
+ * more bordered boxes: a box in a box in a card is what made this feel
+ * cramped. Several sections render `null` when empty, which the divider
+ * handles for free.
  */
 function InfoPanel({ children }: { children: ReactNode }) {
   return (
-    <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-panel-2/50 [&>*]:px-4 [&>*]:py-3.5">
+    <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-panel-2/40 [&>*]:px-4 [&>*]:py-4">
       {children}
     </div>
+  );
+}
+
+/** Every detail row leads with the same tile, so rows line up whatever follows. */
+function IconTile({ children }: { children: ReactNode }) {
+  return (
+    <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground [&_svg]:size-4">
+      {children}
+    </span>
   );
 }
 
@@ -110,8 +120,8 @@ function InfoPanel({ children }: { children: ReactNode }) {
  *  control gets the rail's full width rather than whatever the label leaves. */
 function SettingRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="space-y-1.5">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+    <div>
+      <p className="mb-1.5 text-xs font-medium text-muted-foreground">{label}</p>
       {children}
     </div>
   );
@@ -120,10 +130,61 @@ function SettingRow({ label, children }: { label: string; children: ReactNode })
 /** One `label: value` line in the profile's details section. */
 function DetailRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-2.5 text-sm">
-      <span className="text-muted-foreground">{icon}</span>
+    <div className="flex min-h-10 items-center gap-3 text-sm">
+      <IconTile>{icon}</IconTile>
       <span className="min-w-0 flex-1 truncate text-muted-foreground">{label}</span>
       <span className="shrink-0 font-medium tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+/** A single contact line: icon, a mailto:/tel: link, and a copy button. */
+function ContactRow({
+  icon,
+  value,
+  href,
+  onCopy,
+}: {
+  icon: ReactNode;
+  value: string;
+  href: string;
+  onCopy: () => void;
+}) {
+  return (
+    <div className="flex min-h-10 items-center gap-3 text-sm">
+      <IconTile>{icon}</IconTile>
+      <a href={href} className="min-w-0 flex-1 truncate hover:text-primary hover:underline">
+        {value}
+      </a>
+      <Button
+        size="icon-sm"
+        variant="ghost"
+        className="size-8 shrink-0 text-muted-foreground"
+        onClick={onCopy}
+      >
+        <Copy className="size-3.5" />
+      </Button>
+    </div>
+  );
+}
+
+function PersonRow({
+  person,
+}: {
+  person: { name: string; jobTitle: string | null; avatar: string | null };
+}) {
+  return (
+    <div className="flex min-h-10 items-center gap-3">
+      <Avatar className="size-8 shrink-0">
+        {person.avatar && <AvatarImage src={person.avatar} alt={person.name} />}
+        <AvatarFallback className="text-[10px]">{initials(person.name, "")}</AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{person.name}</p>
+        {person.jobTitle && (
+          <p className="truncate text-xs text-muted-foreground">{person.jobTitle}</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -142,11 +203,13 @@ function TeamsEditor({ userId, teams }: { userId: Id<"users">; teams: string[] }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" variant="outline" className="h-8">
+        <Button size="sm" variant="outline" className="h-9 w-full justify-start">
           <Users2 className="size-3.5" />
-          {t("teams")}
+          <span className="truncate">
+            {teams.length > 0 ? teams.map((id) => tTeams(teamLabelKey(id))).join(", ") : t("teams")}
+          </span>
           {teams.length > 0 && (
-            <span className="ml-0.5 flex items-center gap-1">
+            <span className="ml-auto flex shrink-0 items-center gap-1">
               {teams.map((id) => (
                 <span key={id} className={cn("size-1.5 rounded-full", teamColor(id))} />
               ))}
@@ -188,42 +251,6 @@ function TeamsEditor({ userId, teams }: { userId: Id<"users">; teams: string[] }
   );
 }
 
-/** A single contact line: icon + value, optionally a mailto:/tel: link + copy. */
-function ContactRow({
-  icon,
-  value,
-  href,
-  onCopy,
-}: {
-  icon: ReactNode;
-  value: string;
-  href?: string;
-  onCopy?: () => void;
-}) {
-  return (
-    <div className="flex items-center gap-2.5 text-sm">
-      <span className="text-muted-foreground">{icon}</span>
-      {href ? (
-        <a href={href} className="min-w-0 flex-1 truncate hover:text-primary hover:underline">
-          {value}
-        </a>
-      ) : (
-        <span className="min-w-0 flex-1 truncate">{value}</span>
-      )}
-      {onCopy && (
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          className="size-7 shrink-0 text-muted-foreground"
-          onClick={onCopy}
-        >
-          <Copy className="size-3.5" />
-        </Button>
-      )}
-    </div>
-  );
-}
-
 /** How recent a presence heartbeat still counts as "online". */
 export const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 
@@ -232,32 +259,13 @@ function Organisation({ userId }: { userId: Id<"users"> }) {
   const org = useQuery(api.users.orgContext, { userId });
   if (!org || (!org.manager && org.reports.length === 0)) return null;
 
-  const personRow = (p: {
-    _id: string;
-    name: string;
-    jobTitle: string | null;
-    avatar: string | null;
-  }) => (
-    <div
-      key={p._id}
-      className="flex items-center gap-2.5 rounded-lg border border-border/70 px-2.5 py-2"
-    >
-      <Avatar className="size-7 shrink-0">
-        {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-        <AvatarFallback className="text-[10px]">{initials(p.name, "")}</AvatarFallback>
-      </Avatar>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.name}</span>
-      {p.jobTitle && <span className="shrink-0 text-xs text-muted-foreground">{p.jobTitle}</span>}
-    </div>
-  );
-
   return (
-    <Section label={t("organisation")}>
-      <div className="space-y-2">
+    <Section label={t("organisation")} className={LATE_SECTION}>
+      <div className="space-y-3">
         {org.manager && (
           <div>
             <p className="mb-1 text-xs text-muted-foreground">{t("manager")}</p>
-            {personRow(org.manager)}
+            <PersonRow person={org.manager} />
           </div>
         )}
         {org.reports.length > 0 && (
@@ -265,7 +273,11 @@ function Organisation({ userId }: { userId: Id<"users"> }) {
             <p className="mb-1 text-xs text-muted-foreground">
               {t("reports", { count: org.reports.length })}
             </p>
-            <div className="space-y-1">{org.reports.map(personRow)}</div>
+            <div className="space-y-1">
+              {org.reports.map((p) => (
+                <PersonRow key={p._id} person={p} />
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -289,8 +301,8 @@ function MutualConversations({
   if (!mutual || mutual.length === 0) return null;
 
   return (
-    <Section label={t("mutual")}>
-      <div className="space-y-1">
+    <Section label={t("mutual")} className={LATE_SECTION}>
+      <div className="-mx-2 space-y-0.5">
         {mutual.map((c) => (
           <button
             key={c._id}
@@ -299,17 +311,17 @@ function MutualConversations({
               router.push(`/chat?c=${c._id}`);
               onNavigate();
             }}
-            className="flex w-full items-center gap-2.5 rounded-lg border border-border/70 px-2.5 py-2 text-left transition-colors hover:border-border hover:bg-accent/50"
+            className="flex min-h-11 w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/60"
           >
             {c.type === "dm" ? (
-              <Avatar className="size-7 shrink-0">
+              <Avatar className="size-8 shrink-0">
                 {c.avatar && <AvatarImage src={c.avatar} alt={c.title} />}
                 <AvatarFallback className="text-[10px]">{initials(c.title, "")}</AvatarFallback>
               </Avatar>
             ) : (
-              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-panel-2 text-muted-foreground">
-                <Hash className="size-3.5" />
-              </span>
+              <IconTile>
+                <Hash />
+              </IconTile>
             )}
             <span className="min-w-0 flex-1 truncate text-sm font-medium">{c.title}</span>
             {c.type === "group" && (
@@ -340,21 +352,20 @@ function UpcomingAbsences({ userId }: { userId: Id<"users"> }) {
   if (!absences || absences.length === 0) return null;
 
   return (
-    <Section label={t("upcoming")}>
-      <div className="space-y-1.5">
+    <Section label={t("upcoming")} className={LATE_SECTION}>
+      <div className="space-y-1">
         {absences.map((a) => {
           const range =
             a.startDate === a.endDate
               ? formatIsoDate(a.startDate, locale)
               : `${formatIsoDate(a.startDate, locale)} – ${formatIsoDate(a.endDate, locale)}`;
           return (
-            <div
-              key={a.id}
-              className="flex items-center gap-2.5 rounded-lg border border-border/70 px-2.5 py-2 text-sm"
-            >
-              <CalendarClock className="size-4 shrink-0 text-muted-foreground" />
-              <span className="font-medium">{tAbs(a.type)}</span>
-              <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+            <div key={a.id} className="flex min-h-10 items-center gap-3 text-sm">
+              <IconTile>
+                <CalendarClock />
+              </IconTile>
+              <span className="min-w-0 flex-1 truncate font-medium">{tAbs(a.type)}</span>
+              <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                 {range}
                 {a.halfDay ? " · ½" : ""}
               </span>
@@ -384,6 +395,25 @@ function starterSteps(user: ProfileUser): StarterStep[] {
   ];
 }
 
+function ProgressBar({
+  value,
+  total,
+  className,
+}: {
+  value: number;
+  total: number;
+  className?: string;
+}) {
+  return (
+    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+      <div
+        className={cn("h-full rounded-full transition-[width] duration-300", className)}
+        style={{ width: `${total ? (value / total) * 100 : 0}%` }}
+      />
+    </div>
+  );
+}
+
 function StarterChecklist({ steps }: { steps: StarterStep[] }) {
   const t = useTranslations("Profile");
   const completed = steps.filter((step) => step.complete).length;
@@ -393,23 +423,24 @@ function StarterChecklist({ steps }: { steps: StarterStep[] }) {
       <p className="text-xs text-muted-foreground">
         {t("starterChecklistProgress", { completed, total: steps.length })}
       </p>
-      <div className="mt-2 space-y-1 rounded-lg border border-border/70 p-2">
+      <ProgressBar value={completed} total={steps.length} className="bg-success" />
+      <ul className="mt-4 space-y-1">
         {steps.map((step) => {
           const Icon = step.complete ? CheckCircle2 : Circle;
           return (
-            <div
+            <li
               key={step.key}
               className={cn(
-                "flex items-center gap-2 rounded-md px-1.5 py-1 text-sm",
+                "flex min-h-8 items-center gap-2.5 text-sm",
                 step.complete ? "text-muted-foreground" : "font-medium",
               )}
             >
               <Icon className={cn("size-4 shrink-0", step.complete && "text-success")} />
               <span>{t(`starterChecklist_${step.key}`)}</span>
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </Section>
   );
 }
@@ -436,13 +467,14 @@ function OffboardingChecklist({
       <p className="text-xs text-muted-foreground">
         {t("offboardingChecklistProgress", { completed, total: steps.length })}
       </p>
-      <label className="mt-3 block text-xs font-medium text-muted-foreground">
+      <ProgressBar value={completed} total={steps.length} className="bg-primary" />
+      <label className="mt-4 block text-xs font-medium text-muted-foreground">
         {t("offboardingLastWorkingDay")}
         <Input
           key={checklist?._id ?? "new"}
           type="date"
           defaultValue={checklist?.lastWorkingDay ?? ""}
-          className="mt-1 h-8"
+          className="mt-1.5 h-9"
           onBlur={(event) =>
             void setLastWorkingDay({
               userId: user._id,
@@ -451,14 +483,11 @@ function OffboardingChecklist({
           }
         />
       </label>
-      <div className="mt-3 space-y-2 rounded-lg border border-border/70 p-2">
+      <div className="mt-4 space-y-1">
         {steps.map((step) => {
           const complete = checklist?.completedSteps.includes(step) ?? false;
           return (
-            <label
-              key={step}
-              className="flex cursor-pointer items-center gap-2 px-1 py-0.5 text-sm"
-            >
+            <label key={step} className="flex min-h-9 cursor-pointer items-center gap-2.5 text-sm">
               <Checkbox
                 checked={complete}
                 onCheckedChange={(checked) =>
@@ -478,17 +507,57 @@ function OffboardingChecklist({
   );
 }
 
+/** A settings-style list: one bordered group, rows split by hairlines. */
+function ActionGroup({ children }: { children: ReactNode }) {
+  return (
+    <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
+      {children}
+    </div>
+  );
+}
+
+/** One action in an `ActionGroup`. Wraps instead of truncating — German labels
+ *  ("Geschäftsführungs-Zugriff gewähren") run 2-3x longer than English ones. */
+function ActionRow({
+  icon,
+  children,
+  onClick,
+  destructive,
+}: {
+  icon: ReactNode;
+  children: ReactNode;
+  onClick: () => void;
+  destructive?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-start gap-3 px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:outline-none [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0",
+        destructive ? "text-destructive" : "[&_svg]:text-muted-foreground",
+      )}
+    >
+      {icon}
+      <span className="min-w-0 flex-1">{children}</span>
+    </button>
+  );
+}
+
 function AdminControls({
   user,
   isAdmin,
   onClose,
+  onStartOffboarding,
 }: {
   user: ProfileUser;
   isAdmin: boolean;
   onClose: () => void;
+  onStartOffboarding?: () => void;
 }) {
   const t = useTranslations("Admin");
   const tc = useTranslations("Common");
+  const tProfile = useTranslations("Profile");
   const tRoles = useTranslations("Roles");
   const tCustomRoles = useTranslations("CustomRoles");
   const tApplicants = useTranslations("Applicants");
@@ -609,56 +678,58 @@ function AdminControls({
   // No section heading: this is the management rail's default tab, so the tab
   // label is already the heading.
   return (
-    <div>
+    <div className="space-y-5">
       {(hasCustomRoles || hasNamedPermissions) && (
-        <div className="mb-3 flex flex-wrap items-center gap-1.5">
-          <span className="text-sm text-muted-foreground">{t("permissions")}</span>
-          {user.customRoles.map((role) => (
-            <Tooltip key={role._id}>
-              <TooltipTrigger asChild>
-                <Badge variant="muted" className="cursor-help gap-1">
-                  <ShieldCheck className="size-3" />
-                  {role.name}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                {role.capabilities.length > 0
-                  ? role.capabilities.map((cap) => tCustomRoles(`capability_${cap}`)).join(", ")
-                  : tCustomRoles("noCapabilities")}
-              </TooltipContent>
-            </Tooltip>
-          ))}
-          {user.gfAccess && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant="muted" className="cursor-help">
-                  {t("gfBadge")}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                {t("gfAccessTooltip")}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {user.applicantAccessDelegate && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant="muted" className="cursor-help">
-                  {t("applicantDelegateBadge")}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                {t("applicantDelegateBadgeTitle")}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {!user.uploadRequestsEnabled && <Badge variant="warning">{t("uploadsDisabled")}</Badge>}
-        </div>
+        <Section label={t("permissions")}>
+          <div className="flex flex-wrap gap-1.5">
+            {user.customRoles.map((role) => (
+              <Tooltip key={role._id}>
+                <TooltipTrigger asChild>
+                  <Badge variant="muted" className="cursor-help gap-1">
+                    <ShieldCheck className="size-3" />
+                    {role.name}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  {role.capabilities.length > 0
+                    ? role.capabilities.map((cap) => tCustomRoles(`capability_${cap}`)).join(", ")
+                    : tCustomRoles("noCapabilities")}
+                </TooltipContent>
+              </Tooltip>
+            ))}
+            {user.gfAccess && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="muted" className="cursor-help">
+                    {t("gfBadge")}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  {t("gfAccessTooltip")}
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {user.applicantAccessDelegate && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="muted" className="cursor-help">
+                    {t("applicantDelegateBadge")}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  {t("applicantDelegateBadgeTitle")}
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {!user.uploadRequestsEnabled && <Badge variant="warning">{t("uploadsDisabled")}</Badge>}
+          </div>
+        </Section>
       )}
+
       {/* Label above control, not beside it: the rail is a single narrow
           column, and a `justify-between` row left the role picker (three
           German role names) no width to live in. */}
-      <div className="space-y-3.5 rounded-lg border border-border/70 p-3">
+      <div className="space-y-4">
         {isAdmin && !isSelf && (
           <SettingRow label={t("role")}>
             <RoleSelect value={user.role} onChange={changeRole} canElevate />
@@ -674,79 +745,52 @@ function AdminControls({
             <HireDateEditor userId={user._id} hireDate={user.hireDate} />
           </SettingRow>
         )}
-        {/* Permission grants and lifecycle actions only make sense on
-            someone else's account — a member can't grant themselves access
-            or reinvite/suspend/remove themselves.
-            Stacked full-width rows rather than a 2-up grid: German labels
-            ("Geschäftsführungs-Zugriff gewähren") run 2-3x longer than the
-            English ones and need room to wrap instead of overflowing a
-            fixed-width, `whitespace-nowrap` button. */}
-        {!isSelf && (
-          <div className="flex flex-col gap-2 pt-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className={actionButtonClass}
-              onClick={toggleUploads}
-            >
-              <UploadCloud />
-              <span>{user.uploadRequestsEnabled ? t("disableUploads") : t("enableUploads")}</span>
-            </Button>
-            {isAdmin && (
-              <Button variant="outline" size="sm" className={actionButtonClass} onClick={toggleGf}>
-                <Lock />
-                <span>{user.gfAccess ? t("revokeGf") : t("grantGf")}</span>
-              </Button>
-            )}
-            {isAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                className={actionButtonClass}
-                onClick={() => void toggleApplicantDelegate()}
-              >
-                <Users2 />
-                <span>
-                  {user.applicantAccessDelegate
-                    ? t("revokeApplicantDelegate")
-                    : t("grantApplicantDelegate")}
-                </span>
-              </Button>
-            )}
-            {isAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                className={actionButtonClass}
-                onClick={() => onReinvite()}
-              >
-                <Send /> <span>{t("reinvite")}</span>
-              </Button>
-            )}
-            {isAdmin && !isTargetAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                className={actionButtonClass}
-                onClick={() => void toggleStatus()}
-              >
-                <ShieldCheck />
-                <span>{isActive ? t("suspend") : t("activate")}</span>
-              </Button>
-            )}
-            {isAdmin && !isTargetAdmin && (
-              <Button
-                variant="destructive"
-                size="sm"
-                className={actionButtonClass}
-                onClick={() => void onRemove()}
-              >
-                <UserMinus /> <span>{t("removeMember")}</span>
-              </Button>
-            )}
-          </div>
-        )}
       </div>
+
+      {/* Permission grants and lifecycle actions only make sense on someone
+          else's account. The risky two (suspend, remove) get their own group
+          so they never sit flush against an everyday toggle. */}
+      {!isSelf && (
+        <div className="space-y-3">
+          <ActionGroup>
+            <ActionRow icon={<UploadCloud />} onClick={toggleUploads}>
+              {user.uploadRequestsEnabled ? t("disableUploads") : t("enableUploads")}
+            </ActionRow>
+            {isAdmin && (
+              <ActionRow icon={<Lock />} onClick={toggleGf}>
+                {user.gfAccess ? t("revokeGf") : t("grantGf")}
+              </ActionRow>
+            )}
+            {isAdmin && (
+              <ActionRow icon={<Users2 />} onClick={() => void toggleApplicantDelegate()}>
+                {user.applicantAccessDelegate
+                  ? t("revokeApplicantDelegate")
+                  : t("grantApplicantDelegate")}
+              </ActionRow>
+            )}
+            {isAdmin && (
+              <ActionRow icon={<Send />} onClick={onReinvite}>
+                {t("reinvite")}
+              </ActionRow>
+            )}
+            {onStartOffboarding && (
+              <ActionRow icon={<LogOut />} onClick={onStartOffboarding}>
+                {tProfile("startOffboarding")}
+              </ActionRow>
+            )}
+          </ActionGroup>
+          {isAdmin && !isTargetAdmin && (
+            <ActionGroup>
+              <ActionRow icon={<ShieldCheck />} onClick={() => void toggleStatus()}>
+                {isActive ? t("suspend") : t("activate")}
+              </ActionRow>
+              <ActionRow icon={<UserMinus />} onClick={() => void onRemove()} destructive>
+                {t("removeMember")}
+              </ActionRow>
+            </ActionGroup>
+          )}
+        </div>
+      )}
       <VaultStepUpDialog
         open={stepUpOpen}
         onOpenChange={setStepUpOpen}
@@ -794,9 +838,10 @@ function ManagementRail({
   return (
     <Tabs value={active} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col">
       {/* Text-only triggers: three icon+label pairs don't fit the rail's width
-          at German label lengths, and the bar would scroll sideways. The right
-          padding keeps the last one clear of the dialog's close button. */}
-      <div className="border-b border-border/70 py-2.5 pl-3 pr-12">
+          at German label lengths. The extra right padding on desktop keeps the
+          last one clear of the dialog's close button, which sits over the
+          rail once it's a column of its own. */}
+      <div className="border-b border-border/70 px-3 py-2.5 lg:pr-12">
         <TabsList className="h-9 w-full justify-start">
           <TabsTrigger value="manage" className="px-3">
             {t("manageTab")}
@@ -816,23 +861,21 @@ function ManagementRail({
           )}
         </TabsList>
       </div>
-      <div className="p-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-        <TabsContent value="manage" className="mt-0 space-y-4">
-          <AdminControls user={user} isAdmin={isAdmin} onClose={onClose} />
-          {!showOffboarding && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start text-muted-foreground"
-              onClick={() => {
-                setOffboardingOpened(true);
-                setTab("offboarding");
-              }}
-            >
-              <LogOut />
-              {t("startOffboarding")}
-            </Button>
-          )}
+      <div className="p-5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+        <TabsContent value="manage" className="mt-0">
+          <AdminControls
+            user={user}
+            isAdmin={isAdmin}
+            onClose={onClose}
+            onStartOffboarding={
+              showOffboarding
+                ? undefined
+                : () => {
+                    setOffboardingOpened(true);
+                    setTab("offboarding");
+                  }
+            }
+          />
         </TabsContent>
         {showSetup && (
           <TabsContent value="setup" className="mt-0">
@@ -879,12 +922,14 @@ function HireDateEditor({ userId, hireDate }: { userId: Id<"users">; hireDate: s
       }}
     >
       <PopoverTrigger asChild>
-        <Button size="sm" variant="outline" className="h-8">
+        <Button size="sm" variant="outline" className="h-9 w-full justify-start">
           <CalendarClock className="size-3.5" />
-          {hireDate ? formatIsoDate(hireDate, locale) : t("hireDateUnset")}
+          <span className={cn("truncate", !hireDate && "text-muted-foreground")}>
+            {hireDate ? formatIsoDate(hireDate, locale) : t("hireDateUnset")}
+          </span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 space-y-2" align="end">
+      <PopoverContent className="w-64 space-y-3" align="end">
         <Input type="date" value={value} onChange={(e) => setValue(e.target.value)} />
         <div className="flex justify-end gap-2">
           <Button
@@ -949,13 +994,16 @@ function RoleBadge({
       }}
     >
       <PopoverTrigger asChild>
-        <button type="button">
+        <button
+          type="button"
+          className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
           <Badge variant="muted" className={cn("cursor-pointer", className)}>
             {roleLabel(member, tRoles)}
           </Badge>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 space-y-2" align="start">
+      <PopoverContent className="w-64 space-y-3" align="start">
         <p className="text-xs font-medium text-muted-foreground">{t("roleLabelHint")}</p>
         <Input
           value={value}
@@ -1016,9 +1064,9 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
     }
   }
 
-  function copyEmail() {
-    void navigator.clipboard.writeText(user.email);
-    toast.success(tAdmin("emailCopied"));
+  function copy(value: string, confirmation: string) {
+    void navigator.clipboard.writeText(value);
+    toast.success(confirmation);
   }
 
   function saveRoleLabel(value: string) {
@@ -1044,7 +1092,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
           identity copy reads on the card surface, at full contrast, whatever
           colour was picked. */}
       <div
-        className={cn("h-28", profileGradientClass(user.profileGradient))}
+        className={cn("h-24 sm:h-28", profileGradientClass(user.profileGradient))}
         style={profileColorStyle(user.profileColor)}
       />
       <div className="relative -mt-10 px-5">
@@ -1064,15 +1112,19 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
             )}
           </div>
           {!isSelf && (
-            <Button className="mb-1" onClick={() => void message()}>
+            <Button className="mb-1 shrink-0" onClick={() => void message()}>
               <MessageSquare /> {t("message")}
             </Button>
           )}
         </div>
         <div className="mt-3 min-w-0">
-          <h2 className="truncate font-display text-xl font-bold tracking-tight">{user.name}</h2>
-          {subtitle && <p className="truncate text-sm text-muted-foreground">{subtitle}</p>}
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <h2 className="break-words font-display text-xl font-bold leading-tight tracking-tight text-balance">
+            {user.name}
+          </h2>
+          {subtitle && (
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{subtitle}</p>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
             <RoleBadge member={user} isAdmin={isAdmin} tRoles={tRoles} onSave={saveRoleLabel} />
             {user.status === "suspended" && (
               <Badge variant="destructive">{tAdmin("suspended")}</Badge>
@@ -1086,40 +1138,39 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
 
   const details = (
     <InfoPanel>
+      {/* Department already sits under the name, so it isn't repeated here. */}
       <Section label={t("contact")}>
         <div className="space-y-1">
           <ContactRow
-            icon={<Mail className="size-4" />}
+            icon={<Mail />}
             value={user.email}
             href={`mailto:${user.email}`}
-            onCopy={copyEmail}
+            onCopy={() => copy(user.email, tAdmin("emailCopied"))}
           />
           {user.phone && (
             <ContactRow
-              icon={<Phone className="size-4" />}
+              icon={<Phone />}
               value={user.phone}
               href={`tel:${user.phone.replace(/\s+/g, "")}`}
+              onCopy={() => copy(user.phone ?? "", t("phoneCopied"))}
             />
-          )}
-          {user.department && (
-            <ContactRow icon={<Building2 className="size-4" />} value={user.department} />
           )}
         </div>
       </Section>
 
       {(user.hireDate || showBirthday) && (
         <Section label={t("details")}>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             {user.hireDate && (
               <DetailRow
-                icon={<CalendarDays className="size-4" />}
+                icon={<CalendarDays />}
                 label={t("memberSince")}
                 value={formatIsoDate(user.hireDate, locale)}
               />
             )}
             {showBirthday && user.dateOfBirth && (
               <DetailRow
-                icon={<Cake className="size-4" />}
+                icon={<Cake />}
                 label={t("birthday")}
                 value={formatIsoDate(user.dateOfBirth, locale)}
               />
@@ -1130,7 +1181,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
 
       {user.teams.length > 0 && (
         <Section label={tAdmin("teams")}>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {user.teams.map((team) => (
               <Badge key={team} variant="muted" className="gap-1.5">
                 <span className={cn("size-1.5 rounded-full", teamColor(team))} />
@@ -1148,24 +1199,45 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
   );
 
   const card = (
-    <section className="min-w-0">
+    <section className="min-w-0 pb-5">
       {identity}
-      <div className="p-5">{details}</div>
+      <div className="px-5 pt-5">{details}</div>
     </section>
   );
 
+  // `min-h-0 flex-1` rather than `h-full`: the dialog and the sheet only cap
+  // their height, so a percentage height never resolves and a long profile
+  // got clipped instead of scrolling.
   if (!canManage) {
-    return <div className="h-full min-h-0 overflow-y-auto">{card}</div>;
+    return <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{card}</div>;
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain lg:flex-row lg:overflow-hidden">
       <div className="min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">{card}</div>
       {/* 25rem, not less: the role picker's three German labels are the widest
           thing in the rail and this is what fits them on one line. */}
       <aside className="shrink-0 border-t border-border/70 bg-panel-2/30 lg:flex lg:min-h-0 lg:w-[25rem] lg:flex-col lg:border-l lg:border-t-0">
         <ManagementRail user={user} isAdmin={isAdmin} onClose={onClose} />
       </aside>
+    </div>
+  );
+}
+
+/** Stands in for the identity header while the profile loads, so the dialog
+ *  never opens as an empty box. */
+function ProfileSkeleton() {
+  return (
+    <div aria-hidden className="pb-5">
+      <Skeleton className="h-24 rounded-none sm:h-28" />
+      <div className="-mt-10 px-5">
+        <Skeleton className="size-20 rounded-full ring-4 ring-card" />
+        <Skeleton className="mt-3 h-6 w-40" />
+        <Skeleton className="mt-2 h-4 w-56" />
+      </div>
+      <div className="px-5 pt-5">
+        <Skeleton className="h-36 w-full rounded-xl" />
+      </div>
     </div>
   );
 }
@@ -1197,10 +1269,10 @@ export function UserProfile({ userId, open, onOpenChange }: UserProfileProps) {
 
   const body = user ? (
     <ProfileContent user={user} onClose={close} />
+  ) : user === null ? (
+    <p className="px-6 pb-10 pt-12 text-center text-sm text-muted-foreground">{t("notFound")}</p>
   ) : (
-    <div className="p-10 text-center text-sm text-muted-foreground">
-      {user === null ? t("notFound") : ""}
-    </div>
+    <ProfileSkeleton />
   );
 
   // Mobile: a vaul bottom-sheet that can be dragged to dismiss and animates
@@ -1213,14 +1285,17 @@ export function UserProfile({ userId, open, onOpenChange }: UserProfileProps) {
           <Drawer.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
           <Drawer.Content
             aria-describedby={undefined}
-            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[90dvh] flex-col overflow-hidden rounded-t-2xl border-t border-border bg-background text-foreground shadow-2xl shadow-black/40 outline-none"
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[90dvh] flex-col overflow-hidden rounded-t-2xl border-t border-border bg-card text-card-foreground shadow-2xl shadow-black/40 outline-none"
           >
             <Drawer.Title className="sr-only">{title}</Drawer.Title>
-            {/* Visual drag handle — vaul makes the whole Content draggable */}
-            <div className="flex shrink-0 cursor-grab items-center justify-center pb-1 pt-3 active:cursor-grabbing">
-              <span className="h-1.5 w-10 rounded-full bg-border" />
+            {/* Over the banner rather than above it, so the colour runs all the
+                way to the sheet's rounded top edge. */}
+            <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center pt-2.5">
+              <span className="h-1.5 w-10 rounded-full bg-white/70 ring-1 ring-black/10" />
             </div>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{body}</div>
+            <div className="flex min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)]">
+              {body}
+            </div>
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
@@ -1231,13 +1306,11 @@ export function UserProfile({ userId, open, onOpenChange }: UserProfileProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          "max-h-[85dvh] gap-0 overflow-hidden p-0",
+          "flex max-h-[85dvh] flex-col gap-0 overflow-hidden p-0",
           // The dialog's own close button lands on the colour banner at every
           // width except the two-column one, where it lands on the management
           // rail instead — a translucent chip reads on both.
           "[&_[data-slot=dialog-close]]:bg-black/25 [&_[data-slot=dialog-close]]:text-white [&_[data-slot=dialog-close]]:opacity-100 [&_[data-slot=dialog-close]]:backdrop-blur-sm [&_[data-slot=dialog-close]]:hover:bg-black/45",
-          // Two columns now instead of three, so the dialog no longer needs to
-          // span the whole screen to fit them.
           canManage ? "h-[85dvh] max-h-[44rem] max-w-4xl" : "max-w-md",
         )}
       >

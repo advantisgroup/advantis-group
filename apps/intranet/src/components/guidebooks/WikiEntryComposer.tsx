@@ -479,6 +479,7 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | "new" }) {
                 <DraftRestoredNote
                   draft={draft}
                   onStartOver={entryForm.discardChanges}
+                  filesNotKept
                   className="mb-4"
                 />
                 <input

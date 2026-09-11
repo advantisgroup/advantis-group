@@ -10,7 +10,11 @@ import { AlertTriangle, ChevronDown, Sparkles, Wrench, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { DraftIndicator, DraftRestoredNote } from "@/components/compose/DraftIndicator";
+import {
+  DraftIndicator,
+  DraftOfferBanner,
+  DraftRestoredNote,
+} from "@/components/compose/DraftIndicator";
 import { MobileActionBar } from "@/components/compose/MobileActionBar";
 import {
   type ReadinessCheck,
@@ -212,6 +216,7 @@ export default function NewUpdatePage() {
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="min-w-0 space-y-6">
+          <DraftOfferBanner draft={draft} />
           <DraftRestoredNote draft={draft} onStartOver={discard} />
 
           <div>
