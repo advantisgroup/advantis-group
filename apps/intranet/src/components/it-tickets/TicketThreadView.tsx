@@ -215,7 +215,9 @@ export function TicketThreadView({
                         <div
                           className={cn(
                             "min-w-0 rounded-2xl px-3 py-2 text-sm",
-                            mine ? "rounded-br-md bg-blue-500/15" : "rounded-bl-md bg-muted",
+                            mine
+                              ? "rounded-br-md bg-blue-500/15 refreshed:bg-accent"
+                              : "rounded-bl-md bg-muted refreshed:border refreshed:border-border/70 refreshed:bg-card",
                           )}
                         >
                           {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}

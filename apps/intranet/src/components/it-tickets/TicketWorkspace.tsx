@@ -109,7 +109,7 @@ export function TicketWorkspace({
               >
                 <ArrowLeft className="size-4" />
               </Button>
-              <span className="font-mono text-xs font-bold text-primary">
+              <span className="font-mono text-xs font-bold text-primary refreshed:font-medium refreshed:text-muted-foreground">
                 #{String(ticket.nr).padStart(3, "0")}
               </span>
               <span className="min-w-0 flex-1 truncate text-sm font-semibold">
@@ -142,7 +142,7 @@ export function TicketWorkspace({
 
   return (
     <div className="flex h-full min-h-0 overflow-hidden">
-      <div className="w-80 shrink-0 border-r border-border/70">{detail}</div>
+      <div className="w-80 shrink-0 border-r border-border/70 refreshed:bg-card/40">{detail}</div>
       <div className="min-w-0 flex-1">{chat}</div>
     </div>
   );
