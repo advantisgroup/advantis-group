@@ -5,12 +5,12 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex touch-manipulation items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-transparent font-semibold ring-offset-background transition-[background-color,border-color,box-shadow,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex touch-manipulation items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-transparent font-semibold ring-offset-background transition-[background-color,border-color,box-shadow,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 refreshed:active:scale-100 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-foreground text-background shadow-sm hover:bg-foreground/90 hover:shadow-[0_0_0_1px_color-mix(in_oklch,var(--foreground)_35%,transparent),0_4px_16px_-4px_color-mix(in_oklch,var(--foreground)_45%,transparent)]",
+          "bg-foreground text-background shadow-sm hover:bg-foreground/90 hover:shadow-[0_0_0_1px_color-mix(in_oklch,var(--foreground)_35%,transparent),0_4px_16px_-4px_color-mix(in_oklch,var(--foreground)_45%,transparent)] refreshed:shadow-none refreshed:hover:bg-foreground/88 refreshed:hover:shadow-none",
         sky: "bg-sky-600 text-white shadow-[0_4px_14px_-5px_rgba(2,132,199,0.85)] hover:bg-sky-500 hover:shadow-[0_8px_22px_-6px_rgba(14,165,233,0.9)] dark:bg-sky-500 dark:hover:bg-sky-400",
         violet:
           "bg-violet-600 text-white shadow-[0_4px_14px_-5px_rgba(124,58,237,0.85)] hover:bg-violet-500 hover:shadow-[0_8px_22px_-6px_rgba(139,92,246,0.9)] dark:bg-violet-500 dark:hover:bg-violet-400",
@@ -22,13 +22,13 @@ const buttonVariants = cva(
         premium:
           "border-violet-400/50 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white shadow-[0_5px_18px_-6px_rgba(192,38,211,0.75)] hover:brightness-110 hover:shadow-[0_9px_24px_-7px_rgba(192,38,211,0.9)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-[0_0_0_1px_color-mix(in_oklch,var(--destructive)_45%,transparent),0_4px_16px_-4px_color-mix(in_oklch,var(--destructive)_55%,transparent)]",
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-[0_0_0_1px_color-mix(in_oklch,var(--destructive)_45%,transparent),0_4px_16px_-4px_color-mix(in_oklch,var(--destructive)_55%,transparent)] refreshed:shadow-none refreshed:hover:shadow-none",
         outline:
-          "border-border bg-card/70 text-foreground shadow-[0_1px_2px_color-mix(in_oklch,var(--foreground)_8%,transparent)] hover:border-ring/60 hover:bg-accent hover:text-accent-foreground hover:shadow-[0_4px_12px_-5px_color-mix(in_oklch,var(--ring)_55%,transparent)]",
+          "border-border bg-card/70 text-foreground shadow-[0_1px_2px_color-mix(in_oklch,var(--foreground)_8%,transparent)] hover:border-ring/60 hover:bg-accent hover:text-accent-foreground hover:shadow-[0_4px_12px_-5px_color-mix(in_oklch,var(--ring)_55%,transparent)] refreshed:bg-card refreshed:shadow-none refreshed:hover:border-border refreshed:hover:shadow-none",
         secondary:
-          "border-secondary bg-secondary text-secondary-foreground shadow-[0_1px_2px_color-mix(in_oklch,var(--foreground)_8%,transparent)] hover:bg-secondary/80 hover:shadow-[0_4px_12px_-5px_color-mix(in_oklch,var(--ring)_35%,transparent)]",
+          "border-secondary bg-secondary text-secondary-foreground shadow-[0_1px_2px_color-mix(in_oklch,var(--foreground)_8%,transparent)] hover:bg-secondary/80 hover:shadow-[0_4px_12px_-5px_color-mix(in_oklch,var(--ring)_35%,transparent)] refreshed:shadow-none refreshed:hover:shadow-none",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground hover:shadow-[0_0_10px_-5px_color-mix(in_oklch,var(--ring)_35%,transparent)]",
+          "hover:bg-accent hover:text-accent-foreground hover:shadow-[0_0_10px_-5px_color-mix(in_oklch,var(--ring)_35%,transparent)] refreshed:hover:shadow-none",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

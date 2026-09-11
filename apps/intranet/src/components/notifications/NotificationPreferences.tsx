@@ -56,7 +56,7 @@ export function Switch({
       onClick={onToggle}
       className={cn(
         "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-        checked ? "bg-primary" : "bg-muted",
+        checked ? "bg-primary refreshed:bg-ok" : "bg-muted",
       )}
     >
       <span
