@@ -1,14 +1,13 @@
 {
   "title": "Nutzungsbedingungen – Intranet",
-  "subtitle": "Bedingungen für die Nutzung des Advantis-Group-Intranets durch autorisierte Mitarbeitende",
+  "subtitle": "Bedingungen für die Nutzung des Advantis-Group-Intranets durch autorisierte Mitarbeitende. Jeder Abschnitt beginnt mit einer Zeile in Alltagssprache; verbindlich ist der Text darunter.",
   "updated": "Stand: Juli 2026",
-  "tableOfContents": "Inhaltsverzeichnis",
-  "viewPrivacy": "Datenschutzerklärung ansehen",
-  "viewImprint": "Impressum ansehen",
+  "tableOfContents": "Auf dieser Seite",
   "sections": [
     {
       "id": "scope",
       "title": "Geltungsbereich",
+      "summary": "Diese Bedingungen gelten für dich, sobald du tatsächlich Zugang hast – nicht für jemanden, der sich nur registriert hat.",
       "paragraphs": [
         "Diese Nutzungsbedingungen gelten ausschließlich für Personen, denen die advantis GmbH ausdrücklich Zugang zum Intranet gewährt hat und deren Konto aktiv freigeschaltet ist (nachfolgend „Nutzer:innen“).",
         "Das bloße Anlegen eines Kontos oder ein Anmeldeversuch begründet keinen Anspruch auf Zugang und macht diese Nutzungsbedingungen nicht anwendbar. Personen ohne Berechtigung erhalten stattdessen einen Hinweis auf die fehlende Berechtigung; ihr Konto wird automatisiert gelöscht (siehe Datenschutzerklärung, Abschnitt „Nicht autorisierte Zugriffsversuche“)."
@@ -17,6 +16,7 @@
     {
       "id": "access",
       "title": "Zugang und Berechtigung",
+      "summary": "Zugang gibt es mit zugelassener Firmen-E-Mail oder ausdrücklicher Einladung. Zugangsdaten bleiben bei dir.",
       "paragraphs": [
         "Zugang zum Intranet erhalten ausschließlich Personen mit einer aktiven Geschäftsbeziehung zur advantis GmbH, deren geschäftliche E-Mail-Adresse zu einer zugelassenen Firmendomain gehört, oder die eine ausdrückliche Einladung bzw. Freigabe durch eine Führungskraft oder Administrator:in erhalten haben.",
         "Zugangsanfragen werden von Führungskräften oder Administrator:innen geprüft und können abgelehnt werden. Registrierungsversuche mit nicht zugelassenen E-Mail-Domains werden automatisch abgelehnt; das dabei angelegte Konto wird unverzüglich gelöscht.",
@@ -26,6 +26,7 @@
     {
       "id": "purpose",
       "title": "Bestimmungsgemäße Nutzung",
+      "summary": "Nur für die Arbeit. Was du hier siehst, ist vertraulich und bleibt im Unternehmen.",
       "paragraphs": [
         "Das Intranet dient ausschließlich internen betrieblichen Zwecken der advantis GmbH, insbesondere der Kommunikation, Terminplanung, Abwesenheitsverwaltung, Ablage interner Dokumente sowie dem teaminternen Austausch.",
         "Über das Intranet zugängliche Inhalte, Dokumente und Informationen sind vertraulich und dürfen ohne Zustimmung nicht an unternehmensfremde Dritte weitergegeben werden.",
@@ -35,14 +36,28 @@
     {
       "id": "monitoring",
       "title": "Hinweis zur Auswertung von Nutzungsdaten",
+      "summary": "Bestimmte Nutzungs-, Anwesenheits- und Verfügbarkeitsdaten werden ausgewertet. Die Datenschutzerklärung sagt genau, welche und wozu.",
       "paragraphs": [
         "Im Zusammenhang mit der Nutzung des Intranets werden bestimmte Nutzungs-, Anwesenheits- und Verfügbarkeitsdaten zu Auswertungszwecken verarbeitet, wie in der Datenschutzerklärung im Einzelnen beschrieben.",
         "Mit der Nutzung des Intranets nehmen Nutzer:innen zur Kenntnis, dass diese Verarbeitung im Rahmen des bestehenden Beschäftigungsverhältnisses erfolgt."
       ]
     },
     {
+      "id": "ai",
+      "title": "KI-gestützte Funktionen",
+      "summary": "KI kann entwerfen, auslesen und zusammenfassen. Die Ergebnisse sind Vorschläge, die du prüfen musst – und der Zugang dazu kann abgeschaltet oder je Rolle vergeben werden.",
+      "paragraphs": [
+        "Das Intranet enthält KI-gestützte Funktionen: einen Assistenten, der Fragen aus einem eingebauten Produktbriefing beantwortet, Hilfe beim Formatieren von Wiki-Einträgen und beim Vorschlagen von Titel und Stichwörtern, das Auslesen eines Lebenslaufs in eine Bewerberakte, Zusammenfassungen der eigenen Sales-Coach-Gespräche sowie Fragen zu einem einzelnen IT-Ticket oder einer einzelnen Bewerbung. Jede dieser Funktionen wird bewusst von einer Person gestartet – keine läuft von selbst oder im Hintergrund mit.",
+        "Ergebnisse sind Vorschläge, keine Entscheidungen. Sie können unvollständig oder schlicht falsch sein und sind weder eine rechtliche Bewertung noch eine Anweisung. Wer ein Ergebnis anfordert, ist dafür verantwortlich, es zu prüfen, bevor es verwendet, verschickt oder in einen Datensatz übernommen wird – insbesondere bevor ein KI-Entwurf an Kund:innen oder Bewerber:innen geht und bevor ausgelesene Daten in eine Bewerberakte geschrieben werden.",
+        "Gib nur Inhalte ein, die für die jeweilige Aufgabe nötig sind. Zugangsdaten gehören nicht in eine KI-Funktion, ebenso wenig personenbezogene Daten Dritter, wenn sie für die Aufgabe nicht erforderlich sind.",
+        "KI-Funktionen können jederzeit für das gesamte Unternehmen abgeschaltet und je Rolle freigegeben oder entzogen werden. Ein Anspruch auf ihre Verfügbarkeit besteht nicht."
+      ],
+      "note": "Was die einzelnen Funktionen senden, wohin es geht, wie lange es gespeichert bleibt und wer es sehen kann, steht in der Datenschutzerklärung unter „KI-gestützte Funktionen“ und im Intranet selbst unter Einstellungen → KI."
+    },
+    {
       "id": "obligations",
       "title": "Pflichten der Nutzer:innen",
+      "summary": "Daten aktuell halten, IT- und Sicherheitsrichtlinien einhalten, respektvoll bleiben und Sicherheitsvorfälle sofort melden.",
       "paragraphs": ["Nutzer:innen verpflichten sich,"],
       "list": [
         {
@@ -55,6 +70,9 @@
           "description": "im internen Chat und in Ankündigungen einen respektvollen Umgangston zu wahren,"
         },
         {
+          "description": "KI-Ergebnisse zu prüfen, bevor sie darauf vertrauen, sie versenden oder speichern,"
+        },
+        {
           "description": "sicherheitsrelevante Vorfälle, etwa den Verdacht auf unbefugten Zugriff, unverzüglich zu melden."
         }
       ]
@@ -62,6 +80,7 @@
     {
       "id": "availability",
       "title": "Verfügbarkeit",
+      "summary": "Internes Werkzeug „wie besehen“ – Funktionen können sich ändern, Ausfälle sind möglich.",
       "paragraphs": [
         "Das Intranet wird als internes Arbeitswerkzeug „wie besehen“ bereitgestellt. Die advantis GmbH kann Funktionen jederzeit anpassen, einschränken oder einstellen und übernimmt keine Gewähr für eine unterbrechungsfreie Verfügbarkeit."
       ]
@@ -69,6 +88,7 @@
     {
       "id": "suspension",
       "title": "Sperrung und Beendigung des Zugangs",
+      "summary": "Der Zugang kann enden – typischerweise mit dem Beschäftigungsverhältnis, nach einem Verstoß oder aus Sicherheitsgründen.",
       "paragraphs": [
         "Der Zugang kann jederzeit eingeschränkt, gesperrt oder beendet werden, insbesondere bei Beendigung des Beschäftigungsverhältnisses, einem Verstoß gegen diese Nutzungsbedingungen oder aus Sicherheitsgründen.",
         "Mit Beendigung des Zugangs wird das Konto gemäß der Datenschutzerklärung gelöscht oder anonymisiert; gesetzliche Aufbewahrungspflichten bleiben unberührt."
@@ -77,6 +97,7 @@
     {
       "id": "ip",
       "title": "Geistiges Eigentum",
+      "summary": "Die Inhalte hier gehören dem Unternehmen und sind für den internen Gebrauch.",
       "paragraphs": [
         "Sämtliche über das Intranet bereitgestellten Inhalte, Dokumente, Vorlagen und Materialien sind Eigentum der advantis GmbH oder ihrer Lizenzgeber und dürfen ausschließlich für interne Zwecke verwendet werden."
       ]
@@ -84,6 +105,7 @@
     {
       "id": "liability",
       "title": "Haftung",
+      "summary": "Unbeschränkt bei Vorsatz und grober Fahrlässigkeit, sonst begrenzt auf den typischen, vorhersehbaren Schaden.",
       "paragraphs": [
         "Die advantis GmbH haftet unbeschränkt für Vorsatz und grobe Fahrlässigkeit sowie nach Maßgabe des Produkthaftungsgesetzes. Im Übrigen haftet sie nur bei Verletzung wesentlicher Vertragspflichten und beschränkt auf den vorhersehbaren, vertragstypischen Schaden. Die Haftung für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit bleibt unberührt."
       ]
@@ -91,6 +113,7 @@
     {
       "id": "changes",
       "title": "Änderungen dieser Nutzungsbedingungen",
+      "summary": "Diese Bedingungen können sich ändern; über Wesentliches informieren wir.",
       "paragraphs": [
         "Wir können diese Nutzungsbedingungen mit Wirkung für die Zukunft anpassen, etwa bei Änderungen der eingesetzten Systeme. Über wesentliche Änderungen informieren wir in angemessener Form."
       ]
@@ -98,6 +121,7 @@
     {
       "id": "law",
       "title": "Anwendbares Recht und Gerichtsstand",
+      "summary": "Es gilt deutsches Recht, Gerichtsstand ist Nürnberg.",
       "paragraphs": [
         "Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts. Gerichtsstand ist, soweit gesetzlich zulässig, Nürnberg."
       ]
@@ -105,6 +129,7 @@
     {
       "id": "contact",
       "title": "Kontakt",
+      "summary": "Fragen zu diesen Bedingungen gehen hierhin.",
       "paragraphs": ["Fragen zu diesen Nutzungsbedingungen richten Sie bitte an:"]
     }
   ]

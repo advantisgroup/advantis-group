@@ -6,6 +6,7 @@ import { LegalPage, type LegalSection } from "@/components/legal/LegalPage";
 
 export default function ImprintPage() {
   const t = useTranslations("imprint");
+  const tc = useTranslations("Common");
   const sections = t.raw("sections") as LegalSection[];
 
   return (
@@ -14,10 +15,12 @@ export default function ImprintPage() {
       subtitle={t("subtitle")}
       updated={t("updated")}
       tocLabel={t("tableOfContents")}
+      summaryLabel={tc("inShort")}
       sections={sections}
-      crossPage={[
-        { label: t("viewTerms"), href: "/terms" },
-        { label: t("viewPrivacy"), href: "/privacy" },
+      docs={[
+        { label: tc("docTerms"), href: "/terms" },
+        { label: tc("docPrivacy"), href: "/privacy" },
+        { label: tc("docImprint"), href: "/imprint" },
       ]}
     />
   );
