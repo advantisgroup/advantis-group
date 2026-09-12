@@ -8,7 +8,28 @@
     "coachEod": "Daily summary",
     "coachWikiExtract": "Document import",
     "cvExtract": "CV import",
-    "cvRescan": "CV update"
+    "cvRescan": "CV update",
+    "ask": "Ask about a record"
+  },
+  "ask": {
+    "title": "Ask about this",
+    "action": "Ask",
+    "contextTitle": "What it's given",
+    "contextLoading": "Gathering what this record holds…",
+    "contextHint": "Only these are sent. The record is read on the server with your own access — nothing else about you or the intranet goes along.",
+    "answerTitle": "Answer",
+    "placeholder": "Ask about this record…",
+    "send": "Ask",
+    "openRecord": "Open record",
+    "disclaimer": "Answers come from this record only, and can still be wrong — check anything that matters.",
+    "starter": {
+      "ticketSummary": "Summarise this ticket in a few lines.",
+      "ticketNext": "What still needs doing here?",
+      "ticketHistory": "What has happened on this ticket so far?",
+      "applicantSummary": "Summarise this applicant's background.",
+      "applicantFit": "What speaks for this applicant in the role?",
+      "applicantGaps": "What's missing or unclear in this profile?"
+    }
   },
   "phase": {
     "reading": "Reading",
@@ -49,7 +70,8 @@
       "coachEod": "Your own Sales Coach calls from that day, for the daily summary.",
       "coachWikiExtract": "The document you upload when importing one into the wiki.",
       "cvExtract": "The CV file you upload to an applicant.",
-      "cvRescan": "That applicant's CV again, when you ask for an update."
+      "cvRescan": "That applicant's CV again, when you ask for an update.",
+      "ask": "The record you're asking about — an IT ticket with its status history and thread, or an applicant's profile, CV details and internal notes. The panel lists exactly what was included."
     },
     "whereTitle": "Where it goes",
     "whereHint": "The path a request takes, and what is left behind afterwards.",

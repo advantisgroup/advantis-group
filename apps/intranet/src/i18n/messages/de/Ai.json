@@ -8,7 +8,28 @@
     "coachEod": "Tageszusammenfassung",
     "coachWikiExtract": "Dokument-Import",
     "cvExtract": "Lebenslauf-Import",
-    "cvRescan": "Lebenslauf-Update"
+    "cvRescan": "Lebenslauf-Update",
+    "ask": "Frage zu einem Eintrag"
+  },
+  "ask": {
+    "title": "Dazu fragen",
+    "action": "Fragen",
+    "contextTitle": "Was mitgegeben wird",
+    "contextLoading": "Inhalte des Eintrags werden zusammengestellt…",
+    "contextHint": "Nur das wird gesendet. Der Eintrag wird auf dem Server mit deinen eigenen Rechten gelesen – sonst geht nichts über dich oder das Intranet mit.",
+    "answerTitle": "Antwort",
+    "placeholder": "Frag etwas zu diesem Eintrag…",
+    "send": "Fragen",
+    "openRecord": "Eintrag öffnen",
+    "disclaimer": "Antworten stammen nur aus diesem Eintrag und können trotzdem falsch sein – prüf, was wichtig ist.",
+    "starter": {
+      "ticketSummary": "Fass dieses Ticket in wenigen Zeilen zusammen.",
+      "ticketNext": "Was ist hier noch offen?",
+      "ticketHistory": "Was ist bisher an diesem Ticket passiert?",
+      "applicantSummary": "Fass den Werdegang dieser Bewerbung zusammen.",
+      "applicantFit": "Was spricht für diese Bewerbung auf der Stelle?",
+      "applicantGaps": "Was fehlt oder ist im Profil unklar?"
+    }
   },
   "phase": {
     "reading": "Liest",
@@ -49,7 +70,8 @@
       "coachEod": "Deine eigenen Sales-Coach-Gespräche dieses Tages für die Tageszusammenfassung.",
       "coachWikiExtract": "Das Dokument, das du für den Import ins Wiki hochlädst.",
       "cvExtract": "Die Lebenslauf-Datei, die du zu einer Bewerbung hochlädst.",
-      "cvRescan": "Derselbe Lebenslauf noch einmal, wenn du ein Update anforderst."
+      "cvRescan": "Derselbe Lebenslauf noch einmal, wenn du ein Update anforderst.",
+      "ask": "Der Eintrag, zu dem du fragst – ein IT-Ticket mit Statusverlauf und Thread, oder eine Bewerbung mit Profil, Lebenslauf-Angaben und internen Notizen. Das Panel listet auf, was genau dabei war."
     },
     "whereTitle": "Wohin es geht",
     "whereHint": "Der Weg einer Anfrage – und was danach bleibt.",

@@ -19,7 +19,8 @@ export type AiRunKind =
   | "coachEod"
   | "coachWikiExtract"
   | "cvExtract"
-  | "cvRescan";
+  | "cvRescan"
+  | "ask";
 
 export type AiRunPhase = "reading" | "writing" | "finishing";
 
@@ -78,7 +79,10 @@ const SNAPSHOT_MS = 350;
 function describeFailure(err: unknown): { code: string; retryable: boolean } {
   if (err instanceof AiRunError) return { code: err.code, retryable: err.retryable };
   if (err instanceof ProviderError) {
-    return { code: err.code === "rate_limited" ? "rate_limited" : "upstream", retryable: err.retryable };
+    return {
+      code: err.code === "rate_limited" ? "rate_limited" : "upstream",
+      retryable: err.retryable,
+    };
   }
   if (err instanceof ApiError) return { code: err.code, retryable: false };
   return { code: "internal", retryable: true };

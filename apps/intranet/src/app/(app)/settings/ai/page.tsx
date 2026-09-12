@@ -14,6 +14,7 @@ const FEATURES = [
   "coachWikiExtract",
   "cvExtract",
   "cvRescan",
+  "ask",
 ] as const;
 
 /**

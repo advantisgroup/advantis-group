@@ -9,6 +9,8 @@ import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 
 import { AiDock, AiDockButton } from "@/components/ai/AiDock";
+import { AskProvider } from "@/components/ai/ask-subject";
+import { AskPanel } from "@/components/ai/AskPanel";
 import { PostHogIdentify } from "@/components/analytics/PostHogIdentify";
 import { CommandPalette } from "@/components/CommandPalette";
 import { DesignFeedbackPrompt } from "@/components/design/DesignFeedbackPrompt";
@@ -338,6 +340,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
       {/* Native browser notifications for background tabs (opt-in). */}
       <BrowserNotificationBridge />
       <AiDock />
+      <AskPanel />
       <DesignAttribute />
       <DesignFeedbackPrompt />
       <StartPageRedirect />
@@ -360,7 +363,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <OnboardingProvider>
             <FileViewerProvider>
               <PageHeaderBarProvider>
-                <AppShellInner>{children}</AppShellInner>
+                <AskProvider>
+                  <AppShellInner>{children}</AppShellInner>
+                </AskProvider>
               </PageHeaderBarProvider>
             </FileViewerProvider>
           </OnboardingProvider>

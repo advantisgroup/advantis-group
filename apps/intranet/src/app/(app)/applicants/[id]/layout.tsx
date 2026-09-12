@@ -25,6 +25,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { AskButton } from "@/components/ai/AskButton";
 import { ApplicantSidebar } from "@/components/applicants/ApplicantSidebar";
 import {
   EmailDialog,
@@ -334,7 +335,8 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
+            <AskButton subject={{ type: "applicant", id: applicantId, label: applicant.name }} />
             <ActionMenu
               ariaLabel={t("addEntry")}
               trigger={
