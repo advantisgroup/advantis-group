@@ -2993,6 +2993,20 @@ export default defineSchema({
     .index("by_user_kind", ["clerkUserId", "kind", "startedAt"])
     .index("by_started", ["startedAt"]),
 
+  // "Was this any good?" — one row per person per run. An error rate only
+  // says what broke; this is the half that says what came back wrong while
+  // looking fine, which is the failure mode nothing else catches.
+  aiFeedback: defineTable({
+    runId: v.id("aiRuns"),
+    userId: v.id("users"),
+    kind: aiRunKind,
+    rating: v.union(v.literal("up"), v.literal("down")),
+    note: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_run_user", ["runId", "userId"])
+    .index("by_created", ["createdAt"]),
+
   // --- Drafts ----------------------------------------------------------------
   // Unsent composer/dialog state per person, so a refresh or a closed sheet
   // never costs anyone their text (see drafts.ts).

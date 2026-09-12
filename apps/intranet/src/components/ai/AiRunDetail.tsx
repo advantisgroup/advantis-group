@@ -1,12 +1,19 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import { api } from "@advantis/convex/api";
+import { useMutation, useQuery } from "convex/react";
+import { ExternalLink, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
+import { Button } from "@/components/ui/button";
 import { SidePanel, SidePanelProperties, SidePanelSection } from "@/components/ui/side-panel";
+import { Textarea } from "@/components/ui/textarea";
 import { useNow } from "@/hooks/use-now";
 import { formatDateTime } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 import { AI_STATE_ACCENT, aiErrorKey } from "./AiRunCard";
 import { aiRunState, type AiRunMeta } from "./use-ai-run";
@@ -30,6 +37,15 @@ export function AiRunDetail({
   const tc = useTranslations("Common");
   const locale = useLocale();
   const now = useNow(run?.status === "running");
+  const saved = useQuery(api.aiRuns.myFeedback, run ? { runId: run._id } : "skip");
+  const rateRun = useMutation(api.aiRuns.rateRun);
+  const [note, setNote] = useState("");
+  const [noteSaved, setNoteSaved] = useState(false);
+
+  useEffect(() => {
+    setNote(saved?.note ?? "");
+    setNoteSaved(false);
+  }, [saved?.note, run?._id]);
 
   if (!run) return null;
 
@@ -117,6 +133,59 @@ export function AiRunDetail({
           </ul>
         )}
       </SidePanelSection>
+
+      {state !== "working" && (
+        <SidePanelSection title={t("feedback.question")}>
+          <div className="flex flex-wrap items-center gap-2">
+            {(["up", "down"] as const).map((rating) => {
+              const Icon = rating === "up" ? ThumbsUp : ThumbsDown;
+              const active = saved?.rating === rating;
+              return (
+                <Button
+                  key={rating}
+                  variant="outline"
+                  size="sm"
+                  aria-pressed={active}
+                  className={cn(active && "border-foreground/25 bg-foreground/[0.07]")}
+                  onClick={() => void rateRun({ runId: run._id, rating, note: note || undefined })}
+                >
+                  <Icon />
+                  {t(`feedback.${rating}`)}
+                </Button>
+              );
+            })}
+          </div>
+          {saved?.rating === "down" && (
+            <div className="mt-3 space-y-2">
+              <Textarea
+                value={note}
+                onChange={(event) => {
+                  setNote(event.target.value);
+                  setNoteSaved(false);
+                }}
+                placeholder={t("feedback.notePlaceholder")}
+                className="min-h-[72px]"
+              />
+              <div className="flex items-center justify-end gap-2">
+                {noteSaved && (
+                  <span className="text-xs text-muted-foreground">{t("feedback.saved")}</span>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    void rateRun({ runId: run._id, rating: "down", note }).then(() =>
+                      setNoteSaved(true),
+                    );
+                  }}
+                >
+                  {t("feedback.save")}
+                </Button>
+              </div>
+            </div>
+          )}
+        </SidePanelSection>
+      )}
 
       {run.href && (
         <SidePanelSection title={t("detail.result")}>

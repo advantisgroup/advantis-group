@@ -3,8 +3,9 @@ import { ConvexError, v } from "convex/values";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query, type QueryCtx } from "./_generated/server";
 import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase } from "./lib/aiRuns";
-import { getCurrentUser } from "./lib/auth";
+import { getCurrentUser, requireManager, requireUser } from "./lib/auth";
 import { sandboxedMutation } from "./lib/sandbox";
+import { displayName } from "./lib/users";
 
 /**
  * One row per AI call anywhere in the intranet, so an answer outlives the tab
@@ -153,6 +154,129 @@ export const markSeen = sandboxedMutation({
     }
     await ctx.db.patch(runId, { seenAt: now });
     return null;
+  },
+});
+
+// --- Was it any good? --------------------------------------------------------
+
+/** This person's own verdict on one run, so the panel can show it back. */
+export const myFeedback = query({
+  args: { runId: v.id("aiRuns") },
+  handler: async (ctx, { runId }) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) return null;
+    const row = await ctx.db
+      .query("aiFeedback")
+      .withIndex("by_run_user", (q) => q.eq("runId", runId).eq("userId", user._id))
+      .first();
+    return row ? { rating: row.rating, note: row.note ?? null } : null;
+  },
+});
+
+export const rateRun = sandboxedMutation({
+  args: {
+    runId: v.id("aiRuns"),
+    rating: v.union(v.literal("up"), v.literal("down")),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, { runId, rating, note }) => {
+    const user = await requireUser(ctx);
+    const run = await ctx.db.get(runId);
+    // Only your own run — nobody rates an answer they never saw.
+    if (!run || run.clerkUserId !== user.clerkUserId) return null;
+    const existing = await ctx.db
+      .query("aiFeedback")
+      .withIndex("by_run_user", (q) => q.eq("runId", runId).eq("userId", user._id))
+      .first();
+    const trimmed = note?.trim().slice(0, 2000) || undefined;
+    if (existing) {
+      await ctx.db.patch(existing._id, { rating, note: trimmed, createdAt: Date.now() });
+      return null;
+    }
+    await ctx.db.insert("aiFeedback", {
+      runId,
+      userId: user._id,
+      kind: run.kind,
+      rating,
+      note: trimmed,
+      createdAt: Date.now(),
+    });
+    return null;
+  },
+});
+
+// --- Oversight (managers) ----------------------------------------------------
+
+const STATS_WINDOW_MS = 30 * 86_400_000;
+const STATS_SCAN_LIMIT = 2000;
+
+/**
+ * What AI has actually been doing lately, for the people answerable for it:
+ * volume, what failed and why, and what it cost in tokens. Never any content —
+ * the output stays ciphertext this layer can't read anyway.
+ */
+export const stats = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireManager(ctx);
+    const runs = await ctx.db
+      .query("aiRuns")
+      .withIndex("by_started", (q) => q.gt("startedAt", Date.now() - STATS_WINDOW_MS))
+      .order("desc")
+      .take(STATS_SCAN_LIMIT);
+
+    const byKind = new Map<
+      Doc<"aiRuns">["kind"],
+      { total: number; failed: number; tokens: number }
+    >();
+    const byError = new Map<string, number>();
+    let failed = 0;
+    let tokens = 0;
+    for (const run of runs) {
+      const kind = byKind.get(run.kind) ?? { total: 0, failed: 0, tokens: 0 };
+      kind.total += 1;
+      kind.tokens += (run.tokensIn ?? 0) + (run.tokensOut ?? 0);
+      tokens += (run.tokensIn ?? 0) + (run.tokensOut ?? 0);
+      if (run.status === "error") {
+        kind.failed += 1;
+        failed += 1;
+        const code = run.errorCode ?? "internal";
+        byError.set(code, (byError.get(code) ?? 0) + 1);
+      }
+      byKind.set(run.kind, kind);
+    }
+
+    return {
+      total: runs.length,
+      failed,
+      tokens,
+      capped: runs.length === STATS_SCAN_LIMIT,
+      byKind: [...byKind.entries()]
+        .map(([kind, value]) => ({ kind, ...value }))
+        .sort((a, b) => b.total - a.total),
+      byError: [...byError.entries()]
+        .map(([code, count]) => ({ code, count }))
+        .sort((a, b) => b.count - a.count),
+    };
+  },
+});
+
+export const feedbackList = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireManager(ctx);
+    const rows = await ctx.db.query("aiFeedback").withIndex("by_created").order("desc").take(200);
+    return Promise.all(
+      rows.map(async (row) => ({
+        _id: row._id,
+        userId: row.userId,
+        userName: displayName(await ctx.db.get(row.userId)),
+        kind: row.kind,
+        rating: row.rating,
+        note: row.note ?? null,
+        createdAt: row.createdAt,
+      })),
+    );
   },
 });
 
