@@ -12,6 +12,12 @@ import { toast } from "sonner";
 
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
+import {
+  CHAT_COLUMN,
+  ChatDayDivider,
+  ChatEvent,
+  chatBubbleClass,
+} from "@/components/chat/chat-surface";
 import { MessageComposer } from "@/components/chat/MessageComposer";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
@@ -25,16 +31,6 @@ import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type Thread = NonNullable<FunctionReturnType<typeof api.itTicketThreads.getForTicket>>;
-
-function DayDivider({ label }: { label: string }) {
-  return (
-    <div className="flex items-center justify-center py-1">
-      <span className="rounded-full bg-muted px-3 py-0.5 text-[11px] font-medium text-muted-foreground">
-        {label}
-      </span>
-    </div>
-  );
-}
 
 /**
  * The chat window for a ticket's thread — mirrors ConversationView's basic
@@ -163,7 +159,7 @@ export function TicketThreadView({
             <p className="text-xs text-muted-foreground">{t("thread.noMessagesHint")}</p>
           </div>
         ) : (
-          <div className="mt-auto space-y-3">
+          <div className={cn("mt-auto space-y-3", CHAT_COLUMN)}>
             {messages.map((m, i) => {
               const prev = messages[i - 1];
               const showDay =
@@ -173,14 +169,12 @@ export function TicketThreadView({
               if (m.kind === "system") {
                 return (
                   <Fragment key={m._id}>
-                    {showDay && <DayDivider label={dayLabel(m.createdAt)} />}
-                    <div className="flex items-center justify-center py-1">
-                      <span className="rounded-full bg-muted px-3 py-0.5 text-[11px] font-medium text-muted-foreground">
-                        {t(m.event === "locked" ? "thread.lockedBy" : "thread.unlockedBy", {
-                          name: m.actorName,
-                        })}
-                      </span>
-                    </div>
+                    {showDay && <ChatDayDivider label={dayLabel(m.createdAt)} />}
+                    <ChatEvent>
+                      {t(m.event === "locked" ? "thread.lockedBy" : "thread.unlockedBy", {
+                        name: m.actorName,
+                      })}
+                    </ChatEvent>
                   </Fragment>
                 );
               }
@@ -189,7 +183,7 @@ export function TicketThreadView({
               const isCreator = m.senderUserId === ticketCreatorUserId;
               return (
                 <Fragment key={m._id}>
-                  {showDay && <DayDivider label={dayLabel(m.createdAt)} />}
+                  {showDay && <ChatDayDivider label={dayLabel(m.createdAt)} />}
                   <div className={cn("flex gap-2", mine && "flex-row-reverse")}>
                     <Avatar className="mt-auto size-7 shrink-0">
                       <AvatarFallback className="text-[10px]">
@@ -215,14 +209,7 @@ export function TicketThreadView({
                       <div
                         className={cn("group/msg flex items-end gap-1", mine && "flex-row-reverse")}
                       >
-                        <div
-                          className={cn(
-                            "min-w-0 rounded-2xl px-3 py-2 text-sm",
-                            mine
-                              ? "rounded-br-md bg-blue-500/15 refreshed:bg-accent"
-                              : "rounded-bl-md bg-muted refreshed:border refreshed:border-border/70 refreshed:bg-card",
-                          )}
-                        >
+                        <div className={chatBubbleClass(mine)}>
                           {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
                           {m.attachments.length > 0 && (
                             <div className={cn("flex flex-col gap-1", m.body && "mt-1.5")}>
@@ -284,9 +271,23 @@ export function TicketThreadView({
       </div>
 
       {thread.lockedAt ? (
-        <div className="shrink-0 border-t border-border/70 px-4 py-3 text-center">
-          <p className="text-sm font-medium">{t("thread.locked")}</p>
-          {canPost && <p className="text-xs text-muted-foreground">{t("thread.lockedHint")}</p>}
+        // Where the composer would be, shaped like it — a read-only
+        // conversation reads as "you can't type here", not as a footnote.
+        <div className="shrink-0 border-t border-border/70 px-4 py-3 text-center refreshed:border-t-0 refreshed:pb-4 refreshed:pt-2">
+          <div
+            className={cn(
+              "refreshed:flex refreshed:items-center refreshed:gap-3 refreshed:rounded-2xl refreshed:border refreshed:border-border/70 refreshed:bg-card refreshed:px-4 refreshed:py-3 refreshed:text-left",
+              CHAT_COLUMN,
+            )}
+          >
+            <span className="hidden size-8 shrink-0 place-items-center rounded-lg bg-muted/70 text-muted-foreground refreshed:grid">
+              <Lock className="size-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-medium">{t("thread.locked")}</p>
+              {canPost && <p className="text-xs text-muted-foreground">{t("thread.lockedHint")}</p>}
+            </div>
+          </div>
         </div>
       ) : canPost ? (
         <div className="shrink-0">

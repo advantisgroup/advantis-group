@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { Cloud, Loader2, Paperclip, SendHorizonal, Smile } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { CHAT_COLUMN } from "@/components/chat/chat-surface";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
@@ -102,7 +103,9 @@ export function MessageComposer({
 
   return (
     <div
-      className="border-t border-border/70 p-3"
+      // Refreshed: no rule across the pane — the composer floats in the same
+      // centred column as the messages, the way the AI chat's does.
+      className="border-t border-border/70 p-3 refreshed:border-t-0 refreshed:px-4 refreshed:pt-2"
       style={{
         // Layout viewport doesn't shrink for the keyboard, so this needs
         // lifting by however much it covers (see AnnouncementComposer).
@@ -110,105 +113,107 @@ export function MessageComposer({
         paddingBottom: keyboardInset ? 0 : "calc(0.75rem + env(safe-area-inset-bottom))",
       }}
     >
-      {above}
-      <div className="relative flex items-end gap-2 rounded-xl border border-border bg-background p-1.5 shadow-sm transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40 refreshed:bg-card refreshed:shadow-none refreshed:focus-within:ring-0">
-        {overlay}
+      <div className={CHAT_COLUMN}>
+        {above}
+        <div className="relative flex items-end gap-2 rounded-xl border border-border bg-background p-1.5 shadow-sm transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40 refreshed:rounded-2xl refreshed:bg-card refreshed:p-2 refreshed:shadow-[0_1px_2px_rgb(0_0_0/0.04)] refreshed:focus-within:border-foreground/25 refreshed:focus-within:ring-0">
+          {overlay}
 
-        {onPickFiles && (
-          <>
+          {onPickFiles && (
+            <>
+              <button
+                type="button"
+                aria-label={t("attachFile")}
+                onClick={() => fileInputRef.current?.click()}
+                className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9"
+              >
+                <Paperclip className="h-5 w-5" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  onPickFiles(Array.from(e.target.files ?? []));
+                  e.target.value = "";
+                }}
+              />
+            </>
+          )}
+
+          {onPickOneDrive && (
             <button
               type="button"
-              aria-label={t("attachFile")}
-              onClick={() => fileInputRef.current?.click()}
+              aria-label={tc("fromOneDrive")}
+              title={tc("fromOneDrive")}
+              onClick={onPickOneDrive}
               className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9"
             >
-              <Paperclip className="h-5 w-5" />
+              <Cloud className="h-5 w-5" />
             </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                onPickFiles(Array.from(e.target.files ?? []));
-                e.target.value = "";
+          )}
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label={t("emoji")}
+                className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9"
+              >
+                <Smile className="h-5 w-5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" side="top" className="w-64 p-2">
+              <div className="grid grid-cols-8 gap-0.5">
+                {COMPOSER_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => insertEmoji(emoji)}
+                    className="flex size-7 items-center justify-center rounded text-lg transition-transform hover:scale-125 hover:bg-accent"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <div className="min-w-0 flex-1 self-center">
+            <Textarea
+              ref={textareaRef}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={placeholder}
+              rows={1}
+              className="min-h-9 resize-none overflow-y-auto border-0 bg-transparent px-1 py-2 shadow-none focus-visible:ring-0"
+              style={{ maxHeight: COMPOSER_MAX_HEIGHT }}
+              onKeyDown={(e) => {
+                // Same guard as the send button — Enter during an in-flight
+                // upload otherwise starts a second one over the same entries.
+                if (e.key === "Enter" && !e.shiftKey && !submitBlocked && !sending && !disabled) {
+                  e.preventDefault();
+                  onSend();
+                }
+                if (e.key === "Escape") onEscape?.();
               }}
             />
-          </>
-        )}
+          </div>
 
-        {onPickOneDrive && (
-          <button
-            type="button"
-            aria-label={tc("fromOneDrive")}
-            title={tc("fromOneDrive")}
-            onClick={onPickOneDrive}
-            className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9"
+          <Button
+            size="icon"
+            className="size-10 shrink-0 rounded-lg md:size-9"
+            onClick={onSend}
+            disabled={sending || disabled}
+            aria-label={t("send")}
           >
-            <Cloud className="h-5 w-5" />
-          </button>
-        )}
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              aria-label={t("emoji")}
-              className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9"
-            >
-              <Smile className="h-5 w-5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="start" side="top" className="w-64 p-2">
-            <div className="grid grid-cols-8 gap-0.5">
-              {COMPOSER_EMOJIS.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => insertEmoji(emoji)}
-                  className="flex size-7 items-center justify-center rounded text-lg transition-transform hover:scale-125 hover:bg-accent"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        <div className="min-w-0 flex-1 self-center">
-          <Textarea
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-            rows={1}
-            className="min-h-9 resize-none overflow-y-auto border-0 bg-transparent px-1 py-2 shadow-none focus-visible:ring-0"
-            style={{ maxHeight: COMPOSER_MAX_HEIGHT }}
-            onKeyDown={(e) => {
-              // Same guard as the send button — Enter during an in-flight
-              // upload otherwise starts a second one over the same entries.
-              if (e.key === "Enter" && !e.shiftKey && !submitBlocked && !sending && !disabled) {
-                e.preventDefault();
-                onSend();
-              }
-              if (e.key === "Escape") onEscape?.();
-            }}
-          />
+            {sending ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <SendHorizonal className="h-5 w-5" />
+            )}
+          </Button>
         </div>
-
-        <Button
-          size="icon"
-          className="size-10 shrink-0 rounded-lg md:size-9"
-          onClick={onSend}
-          disabled={sending || disabled}
-          aria-label={t("send")}
-        >
-          {sending ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <SendHorizonal className="h-5 w-5" />
-          )}
-        </Button>
       </div>
     </div>
   );

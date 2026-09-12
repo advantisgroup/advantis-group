@@ -23,6 +23,7 @@ import { CategoriesDialog } from "@/components/it-tickets/CategoriesDialog";
 import { type Status, type Ticket } from "@/components/it-tickets/shared";
 import { TicketDialog } from "@/components/it-tickets/TicketDialog";
 import { TicketWorkspace } from "@/components/it-tickets/TicketWorkspace";
+import { useFillPage } from "@/components/layout/fill-page";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useHasCapability, useIsManager } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
@@ -405,6 +406,8 @@ function ItTicketsPageContent() {
   const savedTicketViews = preferences?.savedTicketViews ?? [];
 
   const selectedTicketId = params.get("ticket") as Id<"itTickets"> | null;
+  // An open ticket is a full-height workspace; the list is a scrolling page.
+  useFillPage(!!selectedTicketId);
   const openNewFromUrl = !selectedTicketId && params.get("new") === "1";
   const threadTicketIds = useMemo(
     () => new Set(startedThreads.map((th) => th.ticketId)),

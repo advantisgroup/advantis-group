@@ -1,13 +1,10 @@
 "use client";
 
-import { useSyncExternalStore, useTransition } from "react";
-
-import { useRouter } from "next/navigation";
-
 import { Monitor, Moon, SlidersHorizontal, Sun } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 
 import { LocaleFlag } from "@/components/icons/flags";
+import { useLocaleSwitch, useMounted } from "@/components/settings/PreferencePickers";
 import { useTheme } from "@/components/theme/theme-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,8 +12,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { type Locale, locales } from "@/i18n/config";
-import { setLocale } from "@/i18n/locale-action";
+import { locales } from "@/i18n/config";
 import { cn } from "@/lib/utils";
 
 const MODES = [
@@ -32,25 +28,9 @@ const MODES = [
  */
 export function SettingsMenu({ className }: { className?: string }) {
   const t = useTranslations("Settings");
-  const current = useLocale() as Locale;
-  const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const [pending, startTransition] = useTransition();
-  // Theme is only known on the client; gate the active highlight on mount to
-  // avoid a hydration mismatch (without a setState-in-effect).
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
-
-  function choose(locale: Locale) {
-    if (locale === current) return;
-    startTransition(async () => {
-      await setLocale(locale);
-      router.refresh();
-    });
-  }
+  const { current, choose, pending } = useLocaleSwitch();
+  const mounted = useMounted();
 
   return (
     <DropdownMenu>

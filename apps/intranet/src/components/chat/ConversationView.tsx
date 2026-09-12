@@ -45,6 +45,7 @@ import { toast } from "sonner";
 
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
+import { CHAT_COLUMN, ChatDayDivider, chatBubbleClass } from "@/components/chat/chat-surface";
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
@@ -780,7 +781,7 @@ export function ConversationView({
           // composer like a real chat, instead of pinned to the top with
           // dead space below — only kicks in when content doesn't already
           // overflow, so normal scrolling is unaffected.
-          <div className="flex min-h-full flex-col justify-end">
+          <div className={cn("flex min-h-full flex-col justify-end", CHAT_COLUMN)}>
             {status === "CanLoadMore" && (
               <div className="mb-2 flex justify-center">
                 <Button variant="ghost" size="sm" onClick={() => loadMore(30)}>
@@ -806,13 +807,7 @@ export function ConversationView({
                     new Date(m.createdAt).toDateString();
                 return (
                   <Fragment key={m._id}>
-                    {showDay && (
-                      <div className="flex items-center justify-center py-1">
-                        <span className="rounded-full bg-muted px-3 py-0.5 text-[11px] font-medium text-muted-foreground">
-                          {dayLabel(m.createdAt)}
-                        </span>
-                      </div>
-                    )}
+                    {showDay && <ChatDayDivider label={dayLabel(m.createdAt)} />}
                     {firstUnreadId === m._id && (
                       <div className="flex items-center gap-2 py-1">
                         <span className="h-px flex-1 bg-blue-500/30 refreshed:bg-info/30" />
@@ -862,12 +857,7 @@ export function ConversationView({
                           }}
                         >
                           <div
-                            className={cn(
-                              "min-w-0 rounded-2xl px-3 py-2 text-sm",
-                              mine
-                                ? "rounded-br-md bg-blue-500/15 text-foreground refreshed:bg-accent"
-                                : "rounded-bl-md bg-muted refreshed:border refreshed:border-border/70 refreshed:bg-card",
-                            )}
+                            className={chatBubbleClass(mine)}
                             {...(isMobile && !m.deleted ? longPressHandlers(m) : {})}
                           >
                             {!mine && conversation?.type === "group" && !grouped && (

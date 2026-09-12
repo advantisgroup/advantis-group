@@ -24,6 +24,7 @@ import { SandboxBanner } from "@/components/layout/SandboxBanner";
 import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ClockodoHeaderControl } from "@/components/layout/ClockodoHeaderControl";
+import { useFillPagePresent } from "@/components/layout/fill-page";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
 import {
   PageHeaderActionsSlot,
@@ -136,9 +137,14 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // content pushed past <main>'s padding box gets clipped right back to it.)
   const isUpdateDetail = pathname.startsWith("/updates/") && pathname !== "/updates/new";
 
+  // A page that's one full-height workspace (see `useFillPage`) gets the whole
+  // of <main>: no padding, a content wrapper that passes the height through,
+  // no smooth scroll translating it, and no bottom nav over its composer.
+  const fillPage = useFillPagePresent();
+
   // Sitewide smooth scrolling on the real scroll container (see
   // `useSmoothScroll` for why this can't be marketing's `<ReactLenis root>`).
-  const lenisRef = useSmoothScroll(mainRef, mainContentRef, !immersive);
+  const lenisRef = useSmoothScroll(mainRef, mainContentRef, !immersive && !fillPage);
 
   // The main pane is the scroll container (not the window), so browser history
   // cannot restore its position for us. Keep one position per route for this
@@ -312,9 +318,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
             // stop here rather than handing the gesture to the document,
             // where it turns into a rubber-band or a pull-to-refresh.
             "min-h-0 flex-1 overflow-y-auto overscroll-contain print:block print:h-auto print:overflow-visible",
-            !immersive && "md:pb-8",
-            isUpdateDetail || immersive ? "" : "px-4 pt-6 md:px-8 md:pt-8",
-            immersive ? "" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]",
+            !immersive && !fillPage && "md:pb-8",
+            isUpdateDetail || immersive || fillPage ? "" : "px-4 pt-6 md:px-8 md:pt-8",
+            immersive || fillPage ? "" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]",
           )}
         >
           {/* Isolate page crashes so the surrounding shell stays usable.
@@ -326,7 +332,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
             // translate. Only rendered off the immersive branch — those routes
             // size themselves to the viewport through <main>, and an extra div
             // would break their `h-full` chain.
-            <div ref={mainContentRef}>
+            <div ref={mainContentRef} className={fillPage ? "h-full" : undefined}>
               <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
             </div>
           )}
@@ -335,7 +341,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
       {/* Mobile bottom navigation — has nothing to open once the sidebar
           (its drawer) is unmounted, so it goes with it. */}
-      {!immersive && !isUpdatesReading && <BottomNav />}
+      {!immersive && !fillPage && !isUpdatesReading && <BottomNav />}
 
       {/* Native browser notifications for background tabs (opt-in). */}
       <BrowserNotificationBridge />

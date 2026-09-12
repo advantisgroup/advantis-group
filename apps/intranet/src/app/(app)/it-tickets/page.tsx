@@ -33,6 +33,7 @@ import {
 } from "@/components/it-tickets/shared";
 import { TicketDialog } from "@/components/it-tickets/TicketDialog";
 import { type TicketAssignee, TicketPanel } from "@/components/it-tickets/TicketPanel";
+import { useFillPage } from "@/components/layout/fill-page";
 import { TicketWorkspace } from "@/components/it-tickets/TicketWorkspace";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { PersonLink } from "@/components/profile/PersonLink";
@@ -252,6 +253,8 @@ function ItTicketsPageContent() {
   const savedTicketViews = preferences?.savedTicketViews ?? [];
 
   const selectedTicketId = params.get("ticket") as Id<"itTickets"> | null;
+  // An open ticket is a full-height workspace; the list is a scrolling page.
+  useFillPage(!!selectedTicketId);
   const panelTicketId = params.get("open");
   const openNewFromUrl = !selectedTicketId && params.get("new") === "1";
   const categoryNames = useMemo(() => (categories ?? []).map((c) => c.name), [categories]);
