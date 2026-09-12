@@ -1,6 +1,6 @@
 "use client";
 
-import { AnnouncementComposer } from "@/components/announcements/AnnouncementComposer";
+import { NewDraftRedirect } from "@/components/compose/NewDraftRedirect";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { useIsManager } from "@/components/providers/current-user";
 
@@ -9,5 +9,5 @@ export default function NewAnnouncementPage() {
 
   if (!isManager) return <ForbiddenScreen />;
 
-  return <AnnouncementComposer editing={null} />;
+  return <NewDraftRedirect surface="announcement" to={(id) => `/announcements/draft/${id}`} />;
 }

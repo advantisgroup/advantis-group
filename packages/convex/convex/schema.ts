@@ -3014,6 +3014,7 @@ export default defineSchema({
     surface: draftSurface,
     subjectKey: v.string(), // the draft's own id (fresh draft), or the id of the thing being edited
     data: v.string(), // JSON the form restores from
+    href: v.optional(v.string()), // where the draft was last written, so it can be reopened
     updatedAt: v.number(),
   })
     .index("by_user_subject", ["userId", "surface", "subjectKey"])

@@ -453,12 +453,6 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
                 {t("composerSwitchToAdvanced")}
               </Link>
             )}
-            <Link
-              href="/drafts"
-              className="hidden shrink-0 text-xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline sm:inline"
-            >
-              {t("myDrafts")}
-            </Link>
             {optionsButton}
             {submitButton}
           </>

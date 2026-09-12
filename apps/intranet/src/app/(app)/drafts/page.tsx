@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 import {
@@ -26,56 +28,70 @@ import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { htmlToText } from "@/components/ui/rich-text";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 type DraftItem = NonNullable<ReturnType<typeof useQuery<typeof api.drafts.listMine>>>[number];
 
-const SURFACE_META: Partial<Record<DraftSurface, { icon: LucideIcon; labelKey: string }>> = {
-  wikiEntry: { icon: BookOpen, labelKey: "surfaceWikiEntry" },
-  guidebookPage: { icon: BookOpen, labelKey: "surfaceGuidebookPage" },
-  blogPost: { icon: Newspaper, labelKey: "surfaceBlogPost" },
-  announcement: { icon: Megaphone, labelKey: "surfaceAnnouncement" },
-  update: { icon: Rss, labelKey: "surfaceUpdate" },
-  suggestion: { icon: Lightbulb, labelKey: "surfaceSuggestion" },
-  itTicket: { icon: Wrench, labelKey: "surfaceItTicket" },
-  coachWiki: { icon: Zap, labelKey: "surfaceCoachWiki" },
-  salesCockpitProject: { icon: Building2, labelKey: "surfaceSalesCockpitProject" },
+// `listHref` is only the way back for drafts saved before they remembered
+// their own address.
+const SURFACE_META: Partial<
+  Record<DraftSurface, { icon: LucideIcon; labelKey: string; listHref: string }>
+> = {
+  wikiEntry: { icon: BookOpen, labelKey: "surfaceWikiEntry", listHref: "/guidebooks" },
+  guidebookPage: { icon: BookOpen, labelKey: "surfaceGuidebookPage", listHref: "/guidebooks" },
+  blogPost: { icon: Newspaper, labelKey: "surfaceBlogPost", listHref: "/blog" },
+  announcement: { icon: Megaphone, labelKey: "surfaceAnnouncement", listHref: "/announcements" },
+  update: { icon: Rss, labelKey: "surfaceUpdate", listHref: "/updates" },
+  suggestion: { icon: Lightbulb, labelKey: "surfaceSuggestion", listHref: "/suggestions" },
+  itTicket: { icon: Wrench, labelKey: "surfaceItTicket", listHref: "/it-tickets" },
+  coachWiki: { icon: Zap, labelKey: "surfaceCoachWiki", listHref: "/sales-coach-ev/wiki" },
+  salesCockpitProject: {
+    icon: Building2,
+    labelKey: "surfaceSalesCockpitProject",
+    listHref: "/sales-cockpit/projekte",
+  },
 };
 
-const MAX_TITLE_CHARS = 80;
-// Checked in order — "thema" covers wiki entries, the rest are best-effort
-// guesses for surfaces that don't have their own composer's title field yet.
-const TITLE_FIELDS = ["thema", "title", "subject", "name"] as const;
+// Drafts don't share a shape — each composer stores its own form — so these
+// are the field names worth trying, in order.
+const TITLE_FIELDS = ["thema", "title", "subject", "name"];
+const BODY_FIELDS = ["erklaerung", "body", "description", "content", "text"];
 
-/**
- * Best-effort one-line preview of a draft's content, from its opaque JSON
- * blob — the shape is entirely up to whichever composer wrote it, so this is
- * the one place that has to guess. Falls back to "Untitled draft" (via the
- * caller) when nothing recognizable is found.
- */
-function draftTitle(surface: DraftSurface, data: string): string {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(data);
-  } catch {
-    return "";
-  }
-  if (typeof parsed !== "object" || parsed === null) return "";
-  const fields = surface === "wikiEntry" ? TITLE_FIELDS : TITLE_FIELDS.slice(1);
+function firstText(source: Record<string, unknown>, fields: string[], max: number): string {
   const raw = fields
-    .map((field) => (parsed as Record<string, unknown>)[field])
+    .map((field) => source[field])
     .find((value): value is string => typeof value === "string" && value.trim().length > 0);
   if (!raw) return "";
   const text = htmlToText(raw).trim();
-  return text.length > MAX_TITLE_CHARS ? `${text.slice(0, MAX_TITLE_CHARS).trimEnd()}…` : text;
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
 }
 
-function resumeHref(draft: DraftItem): string {
-  if (draft.surface === "wikiEntry" && draft.subjectKey === draft._id) {
-    return `/guidebooks/draft/${draft._id}`;
+function draftPreview(data: string): { title: string; snippet: string } {
+  try {
+    const parsed: unknown = JSON.parse(data);
+    if (typeof parsed !== "object" || parsed === null) return { title: "", snippet: "" };
+    const source = parsed as Record<string, unknown>;
+    return {
+      title: firstText(source, TITLE_FIELDS, 90),
+      snippet: firstText(source, BODY_FIELDS, 160),
+    };
+  } catch {
+    return { title: "", snippet: "" };
   }
-  if (draft.surface === "wikiEntry") return `/guidebooks/${draft.subjectKey}/compose`;
-  return "/guidebooks";
+}
+
+const BUCKETS = [
+  { key: "today", labelKey: "groupToday" },
+  { key: "week", labelKey: "groupThisWeek" },
+  { key: "earlier", labelKey: "groupEarlier" },
+] as const;
+
+function bucketOf(updatedAt: number, now: number): (typeof BUCKETS)[number]["key"] {
+  const startOfToday = new Date(now).setHours(0, 0, 0, 0);
+  if (updatedAt >= startOfToday) return "today";
+  if (updatedAt >= startOfToday - 6 * 86_400_000) return "week";
+  return "earlier";
 }
 
 function DraftRow({ draft }: { draft: DraftItem }) {
@@ -86,7 +102,10 @@ function DraftRow({ draft }: { draft: DraftItem }) {
   const ago = useRelativeTime(draft.updatedAt);
   const meta = SURFACE_META[draft.surface];
   const Icon = meta?.icon ?? FileStack;
-  const title = draftTitle(draft.surface, draft.data) || t("untitled");
+  const { title, snippet } = draftPreview(draft.data);
+  // A fresh draft is its own subject (or "new", for the quick dialogs that
+  // keep one unsent form); anything else is unsaved edits on something that exists.
+  const editing = draft.subjectKey !== draft._id && draft.subjectKey !== "new";
 
   async function onDelete() {
     const ok = await confirm({ title: t("deleteConfirmTitle"), description: t("deleteConfirmBody") });
@@ -100,23 +119,50 @@ function DraftRow({ draft }: { draft: DraftItem }) {
   }
 
   return (
-    <div className="flex items-center gap-3 py-3">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-        <Icon className="size-4" />
-      </span>
-      <Link href={resumeHref(draft)} className="min-w-0 flex-1 group">
-        <p className="truncate text-sm font-medium group-hover:underline">{title}</p>
-        <p className="truncate text-xs text-muted-foreground">
-          {meta ? t(meta.labelKey) : draft.surface} · {t("updated", { time: ago ?? "" })}
-        </p>
+    <div className="group flex items-start gap-3 border-b border-border/60 px-4 py-3.5 transition-colors last:border-b-0 hover:bg-accent/50">
+      <Link
+        href={draft.href ?? meta?.listHref ?? "/"}
+        className="flex min-w-0 flex-1 items-start gap-3"
+      >
+        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted/70 text-muted-foreground">
+          <Icon className="size-4" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex min-w-0 items-baseline gap-2">
+            <span
+              className={
+                title
+                  ? "truncate text-[13.5px] font-medium leading-snug"
+                  : "truncate text-[13.5px] leading-snug text-muted-foreground"
+              }
+            >
+              {title || t("untitled")}
+            </span>
+            {editing && (
+              <span className="shrink-0 text-[12px] text-muted-foreground">{t("stateEditing")}</span>
+            )}
+          </span>
+          {snippet && (
+            <span className="mt-0.5 line-clamp-1 block text-[12.5px] text-muted-foreground">
+              {snippet}
+            </span>
+          )}
+          <span className="mt-1 flex items-center gap-1.5 text-[12px] text-muted-foreground">
+            <span>{meta ? t(meta.labelKey) : draft.surface}</span>
+            <span aria-hidden>·</span>
+            <span className="tabular-nums">{ago}</span>
+          </span>
+        </span>
       </Link>
+      {/* Hover-revealed on desktop so it doesn't compete with the content; always there on touch. */}
       <Button
         variant="ghost"
-        size="icon"
+        size="icon-sm"
         aria-label={t("deleteConfirmTitle")}
         onClick={() => void onDelete()}
+        className="shrink-0 text-muted-foreground transition-opacity hover:text-destructive md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
       >
-        <Trash2 className="size-4" />
+        <Trash2 />
       </Button>
     </div>
   );
@@ -126,17 +172,41 @@ export default function DraftsPage() {
   const t = useTranslations("Drafts");
   const drafts = useQuery(api.drafts.listMine);
 
+  const groups = useMemo(() => {
+    if (!drafts) return [];
+    const now = Date.now();
+    return BUCKETS.map((bucket) => ({
+      ...bucket,
+      rows: drafts.filter((d) => bucketOf(d.updatedAt, now) === bucket.key),
+    })).filter((group) => group.rows.length > 0);
+  }, [drafts]);
+
   return (
-    <div className="mx-auto max-w-2xl">
-      <PageHeaderBar title={t("title")} description={t("subtitle")} />
-      {drafts === undefined ? null : drafts.length === 0 ? (
-        <EmptyState icon={<FileStack className="size-6" />} title={t("empty")} description={t("emptyHint")} />
-      ) : (
-        <div className="divide-y divide-border/60">
-          {drafts.map((draft) => (
-            <DraftRow key={draft._id} draft={draft} />
+    <div className="mx-auto max-w-3xl space-y-6">
+      <PageHeaderBar title={t("title")} description={t("subtitle")} icon={<FileStack />} />
+
+      {drafts === undefined ? (
+        <div className="space-y-2">
+          {[0, 1, 2].map((index) => (
+            <Skeleton key={index} className="h-[4.5rem] rounded-xl" />
           ))}
         </div>
+      ) : groups.length === 0 ? (
+        <EmptyState icon={<FileStack />} title={t("empty")} description={t("emptyHint")} />
+      ) : (
+        groups.map((group) => (
+          <section key={group.key} className="space-y-2">
+            <h2 className="px-1 text-xs font-medium text-muted-foreground">
+              {t(group.labelKey)}
+              <span className="ml-1.5 tabular-nums text-muted-foreground/70">{group.rows.length}</span>
+            </h2>
+            <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+              {group.rows.map((draft) => (
+                <DraftRow key={draft._id} draft={draft} />
+              ))}
+            </div>
+          </section>
+        ))
       )}
     </div>
   );

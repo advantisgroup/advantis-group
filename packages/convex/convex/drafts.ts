@@ -18,6 +18,9 @@ import { sandboxedMutation } from "./lib/sandbox";
 /** Well under Convex's 1 MB document cap even for multi-byte text. */
 const MAX_DRAFT_CHARS = 350_000;
 const RETENTION_MS = 60 * 86_400_000;
+const PLACEHOLDER_RETENTION_MS = 86_400_000;
+/** What a box holds between being opened and the first keystroke. */
+const PLACEHOLDER_DATA = "{}";
 
 /** Drafts that hold applicant details. Being yours isn't enough for these —
  *  they follow Applicant Management's rules: access plus an unlocked vault. */
@@ -74,7 +77,7 @@ export const create = sandboxedMutation({
       userId: user._id,
       surface,
       subjectKey: "",
-      data: "{}",
+      data: PLACEHOLDER_DATA,
       updatedAt: Date.now(),
     });
     await ctx.db.patch(id, { subjectKey: id });
@@ -82,7 +85,8 @@ export const create = sandboxedMutation({
   },
 });
 
-/** Every unsent draft across every surface, for the "My drafts" page. */
+/** Every unsent draft across every surface, for the "My drafts" page. Boxes
+ *  that were opened but never typed into aren't drafts yet, so they're left out. */
 export const listMine = query({
   args: {},
   handler: async (ctx) => {
@@ -94,20 +98,33 @@ export const listMine = query({
       .order("desc")
       .collect();
     return drafts
-      .filter((d) => !APPLICANT_SURFACES.has(d.surface))
+      .filter((d) => !APPLICANT_SURFACES.has(d.surface) && d.data !== PLACEHOLDER_DATA)
       .map((d) => ({
         _id: d._id,
         surface: d.surface,
         subjectKey: d.subjectKey,
         data: d.data,
+        href: d.href,
         updatedAt: d.updatedAt,
       }));
   },
 });
 
+/** Only same-site paths — this ends up as a link, so nothing that could leave the app. */
+function safeHref(href: string | undefined): string | undefined {
+  if (!href || href.length > 500) return undefined;
+  if (!href.startsWith("/") || href.startsWith("//") || href.startsWith("/\\")) return undefined;
+  return href;
+}
+
 export const save = sandboxedMutation({
-  args: { surface: draftSurface, subjectKey: v.string(), data: v.string() },
-  handler: async (ctx, { surface, subjectKey, data }) => {
+  args: {
+    surface: draftSurface,
+    subjectKey: v.string(),
+    data: v.string(),
+    href: v.optional(v.string()),
+  },
+  handler: async (ctx, { surface, subjectKey, data, href }) => {
     const user = await requireUser(ctx);
     if (!(await canUseSurface(ctx, user, surface))) {
       throw new ConvexError({ code: "forbidden", message: "You do not have permission to do that" });
@@ -122,8 +139,9 @@ export const save = sandboxedMutation({
       )
       .unique();
     const updatedAt = Date.now();
-    if (existing) await ctx.db.patch(existing._id, { data, updatedAt });
-    else await ctx.db.insert("drafts", { userId: user._id, surface, subjectKey, data, updatedAt });
+    const fields = { data, href: safeHref(href) ?? existing?.href, updatedAt };
+    if (existing) await ctx.db.patch(existing._id, fields);
+    else await ctx.db.insert("drafts", { userId: user._id, surface, subjectKey, ...fields });
     return { updatedAt };
   },
 });
@@ -151,7 +169,15 @@ export const pruneOld = internalMutation({
       .query("drafts")
       .withIndex("by_updated", (q) => q.lt("updatedAt", Date.now() - RETENTION_MS))
       .take(500);
-    for (const draft of old) await ctx.db.delete(draft._id);
-    return { deleted: old.length };
+    // Every visit to a "new" page opens a box; the ones nobody typed into
+    // don't need to wait out the full retention.
+    const unused = await ctx.db
+      .query("drafts")
+      .withIndex("by_updated", (q) => q.lt("updatedAt", Date.now() - PLACEHOLDER_RETENTION_MS))
+      .filter((q) => q.eq(q.field("data"), PLACEHOLDER_DATA))
+      .take(500);
+    const ids = new Set([...old, ...unused].map((draft) => draft._id));
+    for (const id of ids) await ctx.db.delete(id);
+    return { deleted: ids.size };
   },
 });

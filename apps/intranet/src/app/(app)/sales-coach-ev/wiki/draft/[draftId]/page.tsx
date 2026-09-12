@@ -1,13 +1,16 @@
 "use client";
 
+import { useParams } from "next/navigation";
+
 import { useTranslations } from "next-intl";
 
-import { NewDraftRedirect } from "@/components/compose/NewDraftRedirect";
 import { useIsAdmin } from "@/components/providers/current-user";
+import { WikiArticleEditor } from "@/components/sales-coach-ev/WikiArticleEditor";
 
-export default function NewSalesCoachWikiArticlePage() {
+export default function SalesCoachWikiDraftPage() {
   const t = useTranslations("SalesCoachEv");
   const isAdmin = useIsAdmin();
+  const { draftId } = useParams<{ draftId: string }>();
 
   if (!isAdmin) {
     return (
@@ -16,5 +19,5 @@ export default function NewSalesCoachWikiArticlePage() {
       </p>
     );
   }
-  return <NewDraftRedirect surface="coachWiki" to={(id) => `/sales-coach-ev/wiki/draft/${id}`} />;
+  return <WikiArticleEditor key={draftId} article={{ draftId }} />;
 }

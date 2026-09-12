@@ -10,7 +10,7 @@ import { useTranslations } from "next-intl";
 import { BlogPostPreview } from "@/components/blog/BlogPostPreview";
 import {
   BLOG_CATEGORIES,
-  type BlogPostEntry,
+  type BlogPostSubject,
   EXCERPT_MAX_LENGTH,
   useBlogPostForm,
 } from "@/components/blog/useBlogPostForm";
@@ -51,7 +51,7 @@ const NO_CATEGORY = "__none__";
  * with the same draft and readiness behaviour: work is kept as it's typed,
  * and the save button says what's missing instead of refusing silently.
  */
-export function BlogPostComposer({ entry }: { entry: BlogPostEntry | "new" }) {
+export function BlogPostComposer({ entry }: { entry: BlogPostSubject }) {
   const t = useTranslations("Blog");
   const tc = useTranslations("Common");
   const router = useRouter();

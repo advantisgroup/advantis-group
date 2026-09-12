@@ -567,7 +567,7 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
           clerkUserId,
           kind: "coachWikiExtract",
           subjectKey: `coachWikiExtract:${body.subjectKey ?? "new"}`,
-          href: `/sales-coach-ev/wiki/${body.subjectKey ?? "new"}`,
+          href: body.href ?? `/sales-coach-ev/wiki/${body.subjectKey ?? "new"}`,
         },
         async (run) => JSON.stringify({ ...(await runWikiExtraction(run, input)), fileName }),
       );
@@ -578,6 +578,7 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
         text: t.Optional(t.String()),
         fileName: t.Optional(t.String({ maxLength: 260 })),
         subjectKey: t.Optional(t.String({ maxLength: 64 })),
+        href: t.Optional(t.String({ maxLength: 300, pattern: "^/[^/\\\\]" })),
       }),
     },
   )

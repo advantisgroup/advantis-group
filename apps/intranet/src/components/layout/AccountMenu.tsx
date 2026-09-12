@@ -6,6 +6,7 @@ import { useClerk } from "@clerk/nextjs";
 import {
   Building2,
   Eye,
+  FileStack,
   FileText,
   LogOut,
   Settings as SettingsIcon,
@@ -79,6 +80,15 @@ export function AccountMenu({
           <span className="mt-1 text-xs font-normal text-primary">{roleLabel(user, tRoles)}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => {
+            onNavigate?.();
+            router.push("/drafts");
+          }}
+        >
+          <FileStack className="mr-2 h-4 w-4" />
+          {tNav("drafts")}
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => {
             onNavigate?.();

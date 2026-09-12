@@ -642,7 +642,10 @@ function ComposerOptionsFields({
   );
 }
 
-export function AnnouncementComposer({ editing }: { editing: Announcement | null }) {
+export function AnnouncementComposer(
+  props: { editing: Announcement } | { editing: null; draftId: string },
+) {
+  const { editing } = props;
   const t = useTranslations("Announcements");
   const tc = useTranslations("Common");
   const locale = useLocale();
@@ -693,7 +696,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
 
   const serverDraft = useDraft<Draft>({
     surface: "announcement",
-    subjectKey: editing?._id ?? "new",
+    subjectKey: props.editing === null ? props.draftId : props.editing._id,
     value: draft,
     restore: editing ? "offer" : "auto",
     entitySavedAt: editing?.updatedAt ?? undefined,

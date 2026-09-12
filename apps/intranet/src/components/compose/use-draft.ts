@@ -165,7 +165,10 @@ export function useDraft<T>({
         setSavedAt(null);
         setStatus("idle");
       } else {
-        const { updatedAt } = await saveDraft({ surface, subjectKey, data: serialized });
+        // Where this was written is how "My drafts" gets back to it — the
+        // query string included, so a dialog opened via `?open=` reopens too.
+        const href = `${window.location.pathname}${window.location.search}`;
+        const { updatedAt } = await saveDraft({ surface, subjectKey, data: serialized, href });
         setSavedAt(updatedAt);
         setStatus(latest.current.serialized === serialized ? "saved" : "pending");
       }

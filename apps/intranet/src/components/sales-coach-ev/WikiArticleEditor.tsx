@@ -70,8 +70,8 @@ interface ArticleValues {
   doc: AttachedDoc | null;
 }
 
-function initialValues(article: WikiArticle | "new"): ArticleValues {
-  if (article === "new") {
+function initialValues(article: WikiArticle | { draftId: string }): ArticleValues {
+  if ("draftId" in article) {
     return { title: "", cat: "Produktdaten", tags: "", body: "", url: "", doc: null };
   }
   return {
@@ -114,7 +114,7 @@ function FieldLabel({ children }: { children: ReactNode }) {
  * suggests arrives as a card to apply field by field, never written straight
  * into what's already been typed.
  */
-export function WikiArticleEditor({ article }: { article: WikiArticle | "new" }) {
+export function WikiArticleEditor({ article }: { article: WikiArticle | { draftId: string } }) {
   const t = useTranslations("SalesCoachEv");
   const tc = useTranslations("Common");
   const ta = useTranslations("Ai");
@@ -127,8 +127,8 @@ export function WikiArticleEditor({ article }: { article: WikiArticle | "new" })
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const deleteFile = useMutation(api.files.deleteFile);
 
-  const isEditing = article !== "new";
-  const subjectKey = isEditing ? article._id : "new";
+  const isEditing = !("draftId" in article);
+  const subjectKey: string = isEditing ? article._id : article.draftId;
   const savedDoc = initialValues(article).doc;
 
   const [values, setValues] = useState<ArticleValues>(() => initialValues(article));
@@ -172,10 +172,11 @@ export function WikiArticleEditor({ article }: { article: WikiArticle | "new" })
     const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
     const isDocx = file.type === DOCX_MIME || file.name.toLowerCase().endsWith(".docx");
     try {
-      if (isPdf) await startWikiExtraction(apiClient, { file }, subjectKey);
+      const href = window.location.pathname;
+      if (isPdf) await startWikiExtraction(apiClient, { file }, subjectKey, href);
       else {
         const text = isDocx ? await extractDocxText(file) : await file.text();
-        await startWikiExtraction(apiClient, { text, fileName: file.name }, subjectKey);
+        await startWikiExtraction(apiClient, { text, fileName: file.name }, subjectKey, href);
       }
     } catch (e) {
       handleError(e, t("wikiDocumentAnalyzeFailed"));

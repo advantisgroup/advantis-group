@@ -95,6 +95,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // bottom nav and its clearance.
   const isAnnouncementComposer =
     pathname === "/announcements/new" ||
+    pathname.startsWith("/announcements/draft/") ||
     (pathname.startsWith("/announcements/") && pathname.endsWith("/edit"));
   // Same deal for the Sales Cockpit flow composer (`/sales-cockpit/flows/<id>`,
   // but not the `/sales-cockpit/flows` list itself) — a React Flow canvas
@@ -105,13 +106,16 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // (the block editor), which keeps normal page chrome.
   const isWikiComposer =
     pathname === "/guidebooks/new" ||
+    pathname.startsWith("/guidebooks/draft/") ||
     (pathname.startsWith("/guidebooks/") && pathname.endsWith("/compose"));
   // Blog's composer (BlogPostComposer) is built the same full-screen way as
   // the announcement composer, but this route was never opted into
   // `immersive` — without it, <main>'s padding wrapper caps the composer's
   // `h-full` chain and it renders cut off instead of filling the viewport.
   const isBlogComposer =
-    pathname === "/blog/new" || (pathname.startsWith("/blog/") && pathname.endsWith("/edit"));
+    pathname === "/blog/new" ||
+    pathname.startsWith("/blog/draft/") ||
+    (pathname.startsWith("/blog/") && pathname.endsWith("/edit"));
   const immersive =
     pathname.startsWith("/chat") ||
     pathname.startsWith("/wiki-chat") ||
@@ -125,9 +129,13 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // rather than an app surface — the nav sidebar, bottom nav and the sitewide
   // "active update" banner all compete with the post itself, so they're
   // dropped in favor of a slim logo-only header. The composer at
-  // /updates/new keeps full chrome since it's an editing tool, not reading.
+  // /updates/new (and the draft it opens) keeps full chrome since it's an
+  // editing tool, not reading.
   const isUpdatesReading =
-    pathname === "/updates" || (pathname.startsWith("/updates/") && pathname !== "/updates/new");
+    pathname === "/updates" ||
+    (pathname.startsWith("/updates/") &&
+      pathname !== "/updates/new" &&
+      !pathname.startsWith("/updates/draft/"));
 
   // The detail page renders its own full-bleed art banner flush against
   // <main>'s edges, so <main> drops its own padding here and the page
@@ -135,7 +143,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // negative-margin "breakout" doesn't work: overflow-y-auto forces
   // overflow-x to compute to auto too, per the CSS overflow spec, so any
   // content pushed past <main>'s padding box gets clipped right back to it.)
-  const isUpdateDetail = pathname.startsWith("/updates/") && pathname !== "/updates/new";
+  const isUpdateDetail = isUpdatesReading && pathname !== "/updates";
 
   // A page that's one full-height workspace (see `useFillPage`) gets the whole
   // of <main>: no padding, a content wrapper that passes the height through,

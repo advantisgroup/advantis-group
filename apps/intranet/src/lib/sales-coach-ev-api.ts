@@ -167,6 +167,7 @@ export function startWikiExtraction(
   api: IntranetApiClient,
   input: { file: File } | { text: string; fileName: string },
   subjectKey: string,
+  href: string,
 ): Promise<{ runId: string }> {
   const form = new FormData();
   if ("file" in input) form.append("file", input.file);
@@ -175,6 +176,7 @@ export function startWikiExtraction(
     form.append("fileName", input.fileName);
   }
   form.append("subjectKey", subjectKey);
+  form.append("href", href);
   return api.uploadForm<{ runId: string }>("/sales-coach-ev/wiki/extract", form);
 }
 

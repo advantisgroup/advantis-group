@@ -293,16 +293,18 @@ function FlowLinkSection({
   );
 }
 
-export function ProjectForm({
-  projectId,
-  initial,
-  entitySavedAt,
-}: {
-  projectId: Id<"salesCockpitProjects"> | null;
-  initial: ProjectFormValue;
-  /** When the project was last saved, so an older draft isn't offered over it. */
-  entitySavedAt?: number;
-}) {
+export function ProjectForm(
+  props: { initial: ProjectFormValue } & (
+    | {
+        projectId: Id<"salesCockpitProjects">;
+        /** When the project was last saved, so an older draft isn't offered over it. */
+        entitySavedAt?: number;
+      }
+    | { projectId: null; draftId: string }
+  ),
+) {
+  const { projectId, initial } = props;
+  const entitySavedAt = props.projectId === null ? undefined : props.entitySavedAt;
   const t = useTranslations("SalesCockpit");
   const tc = useTranslations("Common");
   const router = useRouter();
@@ -320,7 +322,7 @@ export function ProjectForm({
   // Picked-but-not-uploaded files can't be kept in a draft; everything else is.
   const draft = useDraft<ProjectFormValue>({
     surface: "salesCockpitProject",
-    subjectKey: projectId ?? "new",
+    subjectKey: props.projectId === null ? props.draftId : props.projectId,
     value,
     restore: projectId ? "offer" : "auto",
     entitySavedAt,

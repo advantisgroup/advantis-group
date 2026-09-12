@@ -54,8 +54,11 @@ interface BlogPostValues {
   published: boolean;
 }
 
-function initialValues(entry: BlogPostEntry | "new"): BlogPostValues {
-  if (entry === "new") {
+/** A post being written for the first time is addressed by its draft instead. */
+export type BlogPostSubject = BlogPostEntry | { draftId: string };
+
+function initialValues(entry: BlogPostSubject): BlogPostValues {
+  if ("draftId" in entry) {
     return {
       title: "",
       slug: "",
@@ -87,19 +90,19 @@ function initialValues(entry: BlogPostEntry | "new"): BlogPostValues {
 
 /**
  * State, draft, readiness and submit for the blog composer. The draft is per
- * post ("new" for a fresh one): restored silently for a new post, offered as
- * a question when editing one that's already saved.
+ * post (its own draft id for a fresh one): restored silently for a new post,
+ * offered as a question when editing one that's already saved.
  */
 export function useBlogPostForm({
   entry,
   onDone,
 }: {
-  entry: BlogPostEntry | "new";
+  entry: BlogPostSubject;
   onDone: (id: Id<"blogPosts">) => void;
 }) {
   const t = useTranslations("Blog");
   const handleError = useErrorHandler();
-  const isEditing = entry !== "new";
+  const isEditing = !("draftId" in entry);
 
   const create = useMutation(api.blogPosts.create);
   const update = useMutation(api.blogPosts.update);
@@ -137,7 +140,7 @@ export function useBlogPostForm({
 
   const draft = useDraft<BlogPostValues>({
     surface: "blogPost",
-    subjectKey: isEditing ? entry._id : "new",
+    subjectKey: isEditing ? entry._id : entry.draftId,
     value: values,
     restore: isEditing ? "offer" : "auto",
     entitySavedAt: isEditing ? entry.updatedAt : undefined,
