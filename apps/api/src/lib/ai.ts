@@ -110,8 +110,12 @@ export async function startAiRun(
       model: AI_MODEL,
     });
   } catch (err) {
-    if (err instanceof ConvexError && (err.data as { code?: string })?.code === "conflict") {
+    const code = err instanceof ConvexError ? (err.data as { code?: string })?.code : undefined;
+    if (code === "conflict") {
       throw new ApiError(409, "conflict", "This is still being worked on.");
+    }
+    if (code === "disabled") {
+      throw new ApiError(503, "feature_disabled", "AI is switched off right now.");
     }
     throw err;
   }

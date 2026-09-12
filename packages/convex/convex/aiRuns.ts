@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query, type QueryCtx } from "./_generated/server";
+import { isFeatureEnabled } from "./featureFlags";
 import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase } from "./lib/aiRuns";
 import { getCurrentUser, requireManager, requireUser } from "./lib/auth";
 import { sandboxedMutation } from "./lib/sandbox";
@@ -293,6 +294,11 @@ export const apiStart = mutation({
   },
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
+    // The one gate every AI run in the app passes through: with the flag off,
+    // nothing new reaches the model, whatever the browser still shows.
+    if (!(await isFeatureEnabled(ctx, "ai"))) {
+      throw new ConvexError({ code: "disabled", message: "AI is switched off" });
+    }
     const now = Date.now();
     const previous = await ctx.db
       .query("aiRuns")

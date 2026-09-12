@@ -23,7 +23,7 @@ import { appendTimeline, insertUpdate } from "./updates";
  * this directory is bundled standalone for the Convex deployment and
  * doesn't depend on other workspace packages. Keep both lists in sync by hand.
  */
-export const FEATURE_FLAG_KEYS = ["activitytrack", "chat"] as const;
+export const FEATURE_FLAG_KEYS = ["activitytrack", "chat", "ai"] as const;
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
 export const FEATURE_FLAG_REGISTRY: Record<
   FeatureFlagKey,
@@ -38,6 +38,11 @@ export const FEATURE_FLAG_REGISTRY: Record<
     label: "Chat",
     premadeReason:
       "Chat has been disabled by an administrator. Sending and receiving messages is temporarily unavailable while it's disabled.",
+  },
+  ai: {
+    label: "AI",
+    premadeReason:
+      "AI has been disabled by an administrator. Nothing new can be sent to the model while it's off; runs that already finished stay where they are.",
   },
 };
 

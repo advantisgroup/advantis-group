@@ -20,6 +20,7 @@ import { AiGlyph } from "./AiGlyph";
 import { aiErrorKey } from "./AiRunCard";
 import { AiRunDetail } from "./AiRunDetail";
 import { AiThinking } from "./AiThinking";
+import { useAiEnabled } from "./use-ai-enabled";
 import { type AiRunMeta, aiRunState } from "./use-ai-run";
 
 const STATE_ICON = {
@@ -152,8 +153,9 @@ export function AiDock() {
   const { visible, now, working, waiting } = useDockRuns();
   const [open, setOpen] = useState(false);
   const [detailRun, setDetailRun] = useState<AiRunMeta | null>(null);
+  const aiEnabled = useAiEnabled();
 
-  if (visible.length === 0) return null;
+  if (visible.length === 0 || !aiEnabled) return null;
 
   return (
     <>
@@ -220,9 +222,10 @@ export function AiDockButton({
   const [open, setOpen] = useState(false);
   const [detailRun, setDetailRun] = useState<AiRunMeta | null>(null);
   const bottomSlotPresent = useAiSlotPresent();
-  useRegisterAiSlot(placement === "bottom" && active && visible.length > 0);
+  const aiEnabled = useAiEnabled();
+  useRegisterAiSlot(placement === "bottom" && active && aiEnabled && visible.length > 0);
 
-  if (visible.length === 0) return null;
+  if (visible.length === 0 || !aiEnabled) return null;
   if (placement === "bottom" && !active) return null;
   if (placement === "top" && bottomSlotPresent) return null;
 
