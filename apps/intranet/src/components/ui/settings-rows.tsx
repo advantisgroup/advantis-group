@@ -56,7 +56,7 @@ export function SettingsRow({
 }) {
   return (
     <div className="px-4 py-3.5">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
         <div className="min-w-0 flex-1">
           <div className="text-[13.5px] font-medium">{title}</div>
           {description && (

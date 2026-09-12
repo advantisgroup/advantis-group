@@ -596,7 +596,7 @@ export default function ClockodoEmployeeDetailPage() {
     const value = (text: ReactNode) => (
       <span className="text-sm text-muted-foreground">{text}</span>
     );
-    const control = "h-8 w-44 text-sm";
+    const control = "h-9 w-44 text-sm md:h-8";
 
     return (
       <section className="mx-auto max-w-4xl space-y-6">
