@@ -1,15 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ComponentType, type ReactNode, useEffect, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import { ExternalLink, ThumbsDown, ThumbsUp } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  CalendarClock,
+  Check,
+  Coins,
+  ExternalLink,
+  ThumbsDown,
+  ThumbsUp,
+  Timer,
+  Type,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { AiGlyph } from "@/components/ai/AiGlyph";
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
-import { SidePanel, SidePanelProperties, SidePanelSection } from "@/components/ui/side-panel";
+import { SidePanel, SidePanelSection } from "@/components/ui/side-panel";
 import { Textarea } from "@/components/ui/textarea";
 import { useNow } from "@/hooks/use-now";
 import { formatDateTime } from "@/lib/format";
@@ -53,8 +67,16 @@ export function AiRunDetail({
   const seconds = Math.max(0, Math.floor(((run.finishedAt ?? now) - run.startedAt) / 1000));
   const accent = AI_STATE_ACCENT[state];
 
-  const rows = [
+  const number = new Intl.NumberFormat(locale);
+  const rows: {
+    id: string;
+    icon: ComponentType<{ className?: string }>;
+    label: string;
+    value: ReactNode;
+  }[] = [
     {
+      id: "status",
+      icon: Activity,
       label: t("detail.status"),
       value: (
         <span className="inline-flex items-center gap-1.5">
@@ -63,20 +85,60 @@ export function AiRunDetail({
         </span>
       ),
     },
-    { label: t("detail.started"), value: formatDateTime(run.startedAt, locale) },
-    { label: t("detail.duration"), value: t("elapsed", { seconds }) },
-    { label: t("detail.model"), value: run.model ?? t("detail.notRecorded") },
     {
+      id: "started",
+      icon: CalendarClock,
+      label: t("detail.started"),
+      value: formatDateTime(run.startedAt, locale),
+    },
+    { id: "duration", icon: Timer, label: t("detail.duration"), value: t("elapsed", { seconds }) },
+    {
+      id: "model",
+      // The app's own AI mark rather than a vendor logo — it's the same glyph
+      // every AI surface here wears, and it ships with the app.
+      icon: AiGlyph,
+      label: t("detail.model"),
+      value: run.model ? (
+        <span className="font-mono text-[12.5px]">{run.model}</span>
+      ) : (
+        t("detail.notRecorded")
+      ),
+    },
+    {
+      id: "tokens",
+      icon: Coins,
       label: t("detail.tokens"),
       value:
-        run.tokensIn !== null || run.tokensOut !== null
-          ? t("detail.tokensValue", { in: run.tokensIn ?? 0, out: run.tokensOut ?? 0 })
-          : t("detail.notRecorded"),
+        run.tokensIn !== null || run.tokensOut !== null ? (
+          // In and out as direction rather than as words — the arrows carry it
+          // faster than "rein · raus" ever did.
+          <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="inline-flex items-center gap-1" title={t("detail.tokensIn")}>
+              <ArrowDown className="size-3.5 text-muted-foreground" />
+              <span className="tabular-nums">{number.format(run.tokensIn ?? 0)}</span>
+              <span className="sr-only">{t("detail.tokensIn")}</span>
+            </span>
+            <span className="inline-flex items-center gap-1" title={t("detail.tokensOut")}>
+              <ArrowUp className="size-3.5 text-muted-foreground" />
+              <span className="tabular-nums">{number.format(run.tokensOut ?? 0)}</span>
+              <span className="sr-only">{t("detail.tokensOut")}</span>
+            </span>
+          </span>
+        ) : (
+          t("detail.notRecorded")
+        ),
     },
-    { label: t("detail.output"), value: t("chars", { count: run.outputChars }) },
+    {
+      id: "output",
+      icon: Type,
+      label: t("detail.output"),
+      value: t("chars", { count: run.outputChars }),
+    },
     ...(run.errorCode
       ? [
           {
+            id: "error",
+            icon: AlertTriangle,
             label: t("detail.errorCode"),
             value: (
               <span>
@@ -110,7 +172,19 @@ export function AiRunDetail({
       }
     >
       <SidePanelSection title={t("detail.aboutRun")}>
-        <SidePanelProperties rows={rows} />
+        {/* Icon-led rather than a plain label column: what each line is about
+            reads before the words do, which is the point of a details panel. */}
+        <dl className="grid grid-cols-[8.5rem_minmax(0,1fr)] items-baseline gap-x-3 gap-y-[9px] text-[13px] sm:grid-cols-[9.5rem_minmax(0,1fr)]">
+          {rows.map((row) => (
+            <div key={row.id} className="contents">
+              <dt className="flex items-center gap-2 text-muted-foreground">
+                <row.icon className="size-3.5 shrink-0" />
+                <span className="min-w-0 truncate">{row.label}</span>
+              </dt>
+              <dd className="min-w-0 break-words">{row.value}</dd>
+            </div>
+          ))}
+        </dl>
       </SidePanelSection>
 
       <SidePanelSection title={t("detail.sources")}>
@@ -146,11 +220,20 @@ export function AiRunDetail({
                   variant="outline"
                   size="sm"
                   aria-pressed={active}
-                  className={cn(active && "border-foreground/25 bg-foreground/[0.07]")}
+                  // Unmistakably picked: a tinted fill and a filled icon in the
+                  // rating's own colour. The old two-percent wash on the border
+                  // left people unsure the click had registered at all.
+                  className={cn(
+                    active &&
+                      (rating === "up"
+                        ? "border-success/40 bg-success/10 text-success hover:bg-success/15 hover:text-success"
+                        : "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive"),
+                  )}
                   onClick={() => void rateRun({ runId: run._id, rating, note: note || undefined })}
                 >
-                  <Icon />
+                  <Icon className={cn(active && "fill-current")} />
                   {t(`feedback.${rating}`)}
+                  {active && <Check className="size-3.5 opacity-80" />}
                 </Button>
               );
             })}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { useClerk } from "@clerk/nextjs";
-import { LogOut, Pencil, ShieldCheck } from "lucide-react";
+import { Briefcase, Building2, LogOut, Pencil, Phone, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
 
@@ -20,7 +20,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
+import {
+  SettingsLayoutProvider,
+  SettingsRow,
+  SettingsSection,
+} from "@/components/ui/settings-rows";
 import { useDesignPreview } from "@/lib/design-preview";
 import { initials, roleLabel } from "@/lib/format";
 import { profileColorStyle, profileGradientClass } from "@/lib/profile-gradient";
@@ -38,49 +42,57 @@ export default function SettingsAccountPage() {
   return (
     <>
       {refreshed ? (
-        <div data-tour="tour-settings-profile">
-          <SettingsSection title={t("profile")} description={t("editProfileHint")}>
-            <div className="flex flex-wrap items-center gap-3.5 px-4 py-4">
-              <Avatar className="size-11">
-                {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-                <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
-                  {initials(user.name, user.email)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-[12rem] flex-1">
-                <p className="truncate text-sm font-semibold">{user.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {user.email} · {roleLabel(user, tRoles)}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => setProfileEditorOpen(true)}>
-                  <Pencil />
-                  {t("editProfile")}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => clerk.openUserProfile()}>
-                  <ShieldCheck />
-                  {t("manageAccount")}
-                </Button>
-              </div>
+        /* Who you are and the two ways to change it, in one block — the
+           heading-in-a-far-left-column treatment the rest of settings uses put
+           the name of this section a long way from the person it describes. */
+        <section
+          data-tour="tour-settings-profile"
+          className="overflow-hidden rounded-2xl border border-border/70 bg-card"
+        >
+          <div className="flex flex-wrap items-center gap-4 p-5">
+            <Avatar className="size-14">
+              {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+              <AvatarFallback className="bg-primary/10 text-base font-semibold text-primary">
+                {initials(user.name, user.email)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-[12rem] flex-1">
+              <h2 className="truncate font-display text-lg font-semibold tracking-tight">
+                {user.name}
+              </h2>
+              <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
+                <span className="truncate">{user.email}</span>
+                <span aria-hidden>·</span>
+                <span>{roleLabel(user, tRoles)}</span>
+              </p>
             </div>
-            {/* A definition grid rather than one SettingsRow each: these are
-                read-only facts, and a row puts the label and its value at
-                opposite edges of a wide card with nothing in between. */}
-            <dl className="grid gap-x-8 gap-y-3 px-4 py-4 sm:grid-cols-2">
-              {[
-                { label: t("jobTitle"), value: user.jobTitle },
-                { label: t("department"), value: user.department },
-                { label: t("phone"), value: user.phone },
-              ].map((row) => (
-                <div key={row.label} className="flex min-w-0 items-baseline gap-3">
-                  <dt className="w-28 shrink-0 text-[12.5px] text-muted-foreground">{row.label}</dt>
-                  <dd className="min-w-0 flex-1 truncate text-[13.5px]">{row.value || "—"}</dd>
-                </div>
-              ))}
-            </dl>
-          </SettingsSection>
-        </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => setProfileEditorOpen(true)}>
+                <Pencil />
+                {t("editProfile")}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => clerk.openUserProfile()}>
+                <ShieldCheck />
+                {t("manageAccount")}
+              </Button>
+            </div>
+          </div>
+          <dl className="grid divide-y divide-border/60 border-t border-border/60 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            {[
+              { icon: Briefcase, label: t("jobTitle"), value: user.jobTitle },
+              { icon: Building2, label: t("department"), value: user.department },
+              { icon: Phone, label: t("phone"), value: user.phone },
+            ].map((row) => (
+              <div key={row.label} className="min-w-0 px-5 py-3.5">
+                <dt className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                  <row.icon className="size-3.5" />
+                  {row.label}
+                </dt>
+                <dd className="mt-0.5 truncate text-[13.5px]">{row.value || "—"}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
       ) : (
         <Card className="group overflow-hidden" data-tour="tour-settings-profile">
           <div
@@ -150,41 +162,46 @@ export default function SettingsAccountPage() {
         </Card>
       )}
 
-      {/* One provider around all four so the posture header and the cards
-          under it can never describe different accounts. */}
-      <SecurityStateProvider>
-        <SecurityPosture />
-        <PasskeySettingsCard />
-        <TotpSettingsCard />
-        <SecurityPreferencesCard />
-      </SecurityStateProvider>
+      {/* This page is mostly things to read and occasionally act on, so its
+          groups keep their heading directly above their rows instead of in a
+          column of its own — see `SettingsLayoutProvider`. */}
+      <SettingsLayoutProvider value={refreshed ? "stacked" : "split"}>
+        {/* One provider around all four so the posture header and the cards
+            under it can never describe different accounts. */}
+        <SecurityStateProvider>
+          <SecurityPosture />
+          <PasskeySettingsCard />
+          <TotpSettingsCard />
+          <SecurityPreferencesCard />
+        </SecurityStateProvider>
 
-      {/* Outside the provider: both read from Clerk and Convex directly, not
-          from the credential state the cards above share. */}
-      <ActiveSessionsCard />
+        {/* Outside the provider: both read from Clerk and Convex directly, not
+            from the credential state the cards above share. */}
+        <ActiveSessionsCard />
 
-      <SecurityActivityCard />
+        <SecurityActivityCard />
 
-      <SettingsSection title={t("sessionTitle")} description={t("sessionHint")}>
-        <SettingsRow
-          title={t("signOutTitle")}
-          description={t("signOutHint")}
-          control={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                posthog.reset();
-                void clerk.signOut({ redirectUrl: "/sign-in" });
-              }}
-            >
-              <LogOut />
-              {tNav("signOut")}
-            </Button>
-          }
-        />
-        <SettingsRow title={t("deleteAccountTitle")} description={t("deleteAccountHint")} />
-      </SettingsSection>
+        <SettingsSection title={t("sessionTitle")} description={t("sessionHint")}>
+          <SettingsRow
+            title={t("signOutTitle")}
+            description={t("signOutHint")}
+            control={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  posthog.reset();
+                  void clerk.signOut({ redirectUrl: "/sign-in" });
+                }}
+              >
+                <LogOut />
+                {tNav("signOut")}
+              </Button>
+            }
+          />
+          <SettingsRow title={t("deleteAccountTitle")} description={t("deleteAccountHint")} />
+        </SettingsSection>
+      </SettingsLayoutProvider>
 
       <ProfileEditorDialog
         user={user}
