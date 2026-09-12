@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
+import { type Id } from "@advantis/convex/dataModel";
 import { ArrowLeft, Eye, FileUp, Loader2, PenLine, Settings } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -199,7 +200,7 @@ function ChooseSourceStep({
  * readiness verdict when something required is still missing. The draft
  * keeps all of it across refreshes and devices.
  */
-export function WikiEntryComposer({ entry }: { entry: WikiEntry | "new" }) {
+export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<"drafts"> } }) {
   const t = useTranslations("Guidebooks");
   const tc = useTranslations("Common");
   const locale = useLocale();
@@ -213,8 +214,8 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | "new" }) {
     onDone: (slug) => router.push(`/guidebooks/${slug}`),
   });
   const { isEditing, entryKey, draft, readiness } = entryForm;
-  const composeHref = entry === "new" ? "/guidebooks/new" : `/guidebooks/${entry.slug}/compose`;
-  const backHref = entry === "new" ? "/guidebooks" : `/guidebooks/${entry.slug}`;
+  const composeHref = "draftId" in entry ? `/guidebooks/draft/${entry.draftId}` : `/guidebooks/${entry.slug}/compose`;
+  const backHref = "draftId" in entry ? "/guidebooks" : `/guidebooks/${entry.slug}`;
 
   const [stage, setStage] = useState<"choose" | "compose">(isEditing ? "compose" : "choose");
   const [importing, setImporting] = useState(false);
@@ -452,6 +453,12 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | "new" }) {
                 {t("composerSwitchToAdvanced")}
               </Link>
             )}
+            <Link
+              href="/drafts"
+              className="hidden shrink-0 text-xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline sm:inline"
+            >
+              {t("myDrafts")}
+            </Link>
             {optionsButton}
             {submitButton}
           </>

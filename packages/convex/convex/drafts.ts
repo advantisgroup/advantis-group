@@ -59,6 +59,52 @@ export const get = query({
   },
 });
 
+/** A fresh draft gets its own id up front, before there's anything to save —
+ *  that id becomes its `subjectKey` too, so a URL can point at it right away
+ *  and every existing `<kind>:<subjectKey>` AI-run convention keys off it
+ *  without any changes on that side. */
+export const create = sandboxedMutation({
+  args: { surface: draftSurface },
+  handler: async (ctx, { surface }) => {
+    const user = await requireUser(ctx);
+    if (!(await canUseSurface(ctx, user, surface))) {
+      throw new ConvexError({ code: "forbidden", message: "You do not have permission to do that" });
+    }
+    const id = await ctx.db.insert("drafts", {
+      userId: user._id,
+      surface,
+      subjectKey: "",
+      data: "{}",
+      updatedAt: Date.now(),
+    });
+    await ctx.db.patch(id, { subjectKey: id });
+    return id;
+  },
+});
+
+/** Every unsent draft across every surface, for the "My drafts" page. */
+export const listMine = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) return [];
+    const drafts = await ctx.db
+      .query("drafts")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .collect();
+    return drafts
+      .filter((d) => !APPLICANT_SURFACES.has(d.surface))
+      .map((d) => ({
+        _id: d._id,
+        surface: d.surface,
+        subjectKey: d.subjectKey,
+        data: d.data,
+        updatedAt: d.updatedAt,
+      }));
+  },
+});
+
 export const save = sandboxedMutation({
   args: { surface: draftSurface, subjectKey: v.string(), data: v.string() },
   handler: async (ctx, { surface, subjectKey, data }) => {

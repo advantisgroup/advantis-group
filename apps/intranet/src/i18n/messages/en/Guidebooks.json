@@ -252,6 +252,7 @@
   "createEntryHint": "Structured fields with a category, tags and a review date.",
   "createPageHint": "Free-form block editor for longer, laid-out guides.",
   "composerSwitchToAdvanced": "Advanced editor",
+  "myDrafts": "My drafts",
   "composerSwitchToSimple": "Back to the simple editor",
   "optionsSheetTitle": "Details & attachments",
   "detailsSectionTitle": "Details",

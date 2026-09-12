@@ -1,0 +1,20 @@
+{
+  "title": "Meine Entwürfe",
+  "subtitle": "Unversendetes aus allen Editoren",
+  "empty": "Keine Entwürfe",
+  "emptyHint": "Alles, was du anfängst und nicht fertig schreibst, taucht hier auf.",
+  "untitled": "Unbenannter Entwurf",
+  "updated": "Aktualisiert {time}",
+  "surfaceWikiEntry": "Wiki-Eintrag",
+  "surfaceBlogPost": "Blogbeitrag",
+  "surfaceAnnouncement": "Ankündigung",
+  "surfaceUpdate": "Update",
+  "surfaceSuggestion": "Vorschlag",
+  "surfaceItTicket": "IT-Ticket",
+  "surfaceCoachWiki": "Sales Coach Wiki",
+  "surfaceGuidebookPage": "Guidebook-Seite",
+  "surfaceSalesCockpitProject": "Sales-Cockpit-Projekt",
+  "deleteConfirmTitle": "Diesen Entwurf löschen?",
+  "deleteConfirmBody": "Das kann nicht rückgängig gemacht werden.",
+  "deleted": "Entwurf gelöscht"
+}

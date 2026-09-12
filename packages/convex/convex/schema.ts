@@ -3012,11 +3012,12 @@ export default defineSchema({
   drafts: defineTable({
     userId: v.id("users"),
     surface: draftSurface,
-    subjectKey: v.string(), // "new", or the id of the thing being edited
+    subjectKey: v.string(), // the draft's own id (fresh draft), or the id of the thing being edited
     data: v.string(), // JSON the form restores from
     updatedAt: v.number(),
   })
     .index("by_user_subject", ["userId", "surface", "subjectKey"])
+    .index("by_user", ["userId", "updatedAt"])
     .index("by_updated", ["updatedAt"]),
 
   // --- Sales Coach EV (live call-coaching for Projekt Elektromobilitaet) ------

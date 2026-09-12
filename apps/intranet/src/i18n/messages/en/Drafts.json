@@ -1,0 +1,20 @@
+{
+  "title": "My drafts",
+  "subtitle": "Unsent work across every composer",
+  "empty": "No drafts",
+  "emptyHint": "Anything you start writing and don't finish shows up here.",
+  "untitled": "Untitled draft",
+  "updated": "Updated {time}",
+  "surfaceWikiEntry": "Wiki entry",
+  "surfaceBlogPost": "Blog post",
+  "surfaceAnnouncement": "Announcement",
+  "surfaceUpdate": "Update",
+  "surfaceSuggestion": "Suggestion",
+  "surfaceItTicket": "IT ticket",
+  "surfaceCoachWiki": "Sales Coach wiki",
+  "surfaceGuidebookPage": "Guidebook page",
+  "surfaceSalesCockpitProject": "Sales Cockpit project",
+  "deleteConfirmTitle": "Delete this draft?",
+  "deleteConfirmBody": "This can't be undone.",
+  "deleted": "Draft deleted"
+}

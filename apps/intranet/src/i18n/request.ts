@@ -26,6 +26,7 @@ import deCustomRoles from "./messages/de/CustomRoles.json";
 import deDashboard from "./messages/de/Dashboard.json";
 import deDesign from "./messages/de/Design.json";
 import deDirectory from "./messages/de/Directory.json";
+import deDrafts from "./messages/de/Drafts.json";
 import deErrorManagement from "./messages/de/ErrorManagement.json";
 import deErrors from "./messages/de/Errors.json";
 import deErrorsCatalog from "./messages/de/ErrorsCatalog.json";
@@ -77,6 +78,7 @@ import enCustomRoles from "./messages/en/CustomRoles.json";
 import enDashboard from "./messages/en/Dashboard.json";
 import enDesign from "./messages/en/Design.json";
 import enDirectory from "./messages/en/Directory.json";
+import enDrafts from "./messages/en/Drafts.json";
 import enErrorManagement from "./messages/en/ErrorManagement.json";
 import enErrors from "./messages/en/Errors.json";
 import enErrorsCatalog from "./messages/en/ErrorsCatalog.json";
@@ -130,6 +132,7 @@ const messagesByLocale = {
     RichText: enRichText,
     Chat: enChat,
     Directory: enDirectory,
+    Drafts: enDrafts,
     Profile: enProfile,
     Tour: enTour,
     Onboarding: enOnboarding,
@@ -183,6 +186,7 @@ const messagesByLocale = {
     RichText: deRichText,
     Chat: deChat,
     Directory: deDirectory,
+    Drafts: deDrafts,
     Profile: deProfile,
     Tour: deTour,
     Onboarding: deOnboarding,

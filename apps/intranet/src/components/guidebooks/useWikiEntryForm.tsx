@@ -168,8 +168,8 @@ export interface WikiEntryValues {
   ownerUserId: string;
 }
 
-function initialValues(entry: WikiEntry | "new", currentUserId: string): WikiEntryValues {
-  if (entry === "new") {
+function initialValues(entry: WikiEntry | { draftId: string }, currentUserId: string): WikiEntryValues {
+  if ("draftId" in entry) {
     const now = Date.now();
     return {
       thema: "",
@@ -204,7 +204,7 @@ export function useWikiEntryForm({
   entry,
   onDone,
 }: {
-  entry: WikiEntry | "new";
+  entry: WikiEntry | { draftId: Id<"drafts"> };
   /** Called with the entry's slug once a create/update fully succeeds
    *  (including any attachment upload phase). */
   onDone: (slug: string) => void;
@@ -220,8 +220,8 @@ export function useWikiEntryForm({
   const addAttachment = useMutation(api.guidebookAttachments.add);
   const oneDriveApi = useOneDriveApi();
   const attachmentUpload = useAttachmentUpload();
-  const isEditing = entry !== "new";
-  const entryKey: string = isEditing ? entry._id : "new";
+  const isEditing = !("draftId" in entry);
+  const entryKey: string = isEditing ? entry._id : entry.draftId;
   const existingAttachments = useQuery(
     api.guidebookAttachments.list,
     isEditing ? { slug: entry.slug } : "skip",
