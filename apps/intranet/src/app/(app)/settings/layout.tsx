@@ -4,18 +4,19 @@ import type { ReactNode } from "react";
 
 import { usePathname } from "next/navigation";
 
-import { Bell, CircleHelp, SlidersHorizontal, UserRound } from "lucide-react";
+import { Bell, CircleHelp, SlidersHorizontal, Sparkles, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 
-type SettingsSectionId = "account" | "workspace" | "notifications" | "help";
+type SettingsSectionId = "account" | "workspace" | "notifications" | "ai" | "help";
 
 const HINT_KEY: Record<SettingsSectionId, string> = {
   account: "accountHint",
   workspace: "workspaceHint",
   notifications: "notificationsHint",
+  ai: "aiHint",
   help: "helpHint",
 };
 
@@ -38,6 +39,7 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
       label: t("notifications"),
       icon: Bell,
     },
+    { value: "ai", href: "/settings/ai", label: t("ai"), icon: Sparkles },
     { value: "help", href: "/settings/help", label: t("help"), icon: CircleHelp },
   ];
 

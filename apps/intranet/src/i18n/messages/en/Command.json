@@ -11,6 +11,7 @@
   "actions": "Actions",
   "actionNewEvent": "New event",
   "actionNewAnnouncement": "New announcement",
+  "actionAsk": "Ask about {subject}",
   "actionNewTicket": "New IT ticket",
   "actionNewSuggestion": "New suggestion",
   "actionNewError": "New error",

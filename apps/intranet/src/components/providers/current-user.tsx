@@ -16,7 +16,8 @@ export type Capability =
   | "manage_blog"
   | "manage_it_ticket_threads"
   | "view_clockodo_team"
-  | "manage_clockodo_team";
+  | "manage_clockodo_team"
+  | "use_ai";
 
 export interface CurrentUser {
   _id: string;

@@ -5,6 +5,7 @@ import { type ButtonHTMLAttributes, forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
 import { AiGlyph } from "./AiGlyph";
+import { useAiEnabled } from "./use-ai-enabled";
 
 /**
  * The only way to ask for AI anywhere in the app. `pill` for labelled
@@ -19,6 +20,10 @@ export const AiButton = forwardRef<
     look?: "pill" | "icon" | "floating";
   }
 >(function AiButton({ working = false, look = "pill", className, children, ...props }, ref) {
+  // Nothing to press while AI is off — the run would be refused anyway.
+  const enabled = useAiEnabled();
+  if (!enabled) return null;
+
   return (
     <button
       ref={ref}

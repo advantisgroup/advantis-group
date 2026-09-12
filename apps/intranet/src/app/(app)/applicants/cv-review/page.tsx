@@ -174,7 +174,9 @@ export default function CvReviewPage({
   }
 
   const base = applicant ? applicantToCvValues(applicant) : blankCvReviewValues();
-  const prefill = read ? withExtracted(base, read.extractedFields) : { values: base, origins: {} };
+  const prefill = read
+    ? withExtracted(base, read.extractedFields)
+    : { values: base, origins: {}, proposals: [] };
 
   return (
     <CvReviewForm
@@ -184,6 +186,7 @@ export default function CvReviewPage({
       file={file}
       initialValues={prefill.values}
       initialOrigins={prefill.origins}
+      initialProposals={prefill.proposals}
       pendingStorageId={stagedId}
       draftKey={runId ?? undefined}
       backHref={backHref}

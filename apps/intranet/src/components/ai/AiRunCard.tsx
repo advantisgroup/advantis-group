@@ -16,7 +16,7 @@ const PHASES: AiRunPhase[] = ["reading", "writing", "finishing"];
 
 /** One accent per state, as a bare token so the wash, the meter and the
  * icon can never drift apart — same idea as the Security Standing card. */
-const STATE_ACCENT: Record<AiRunState, string> = {
+export const AI_STATE_ACCENT: Record<AiRunState, string> = {
   working: "var(--ai-2)",
   done: "var(--success)",
   error: "var(--destructive)",
@@ -38,7 +38,7 @@ export function aiErrorKey(code: string | null): string {
 }
 
 function StateIcon({ state }: { state: AiRunState }) {
-  const accent = STATE_ACCENT[state];
+  const accent = AI_STATE_ACCENT[state];
   if (state === "working") {
     return (
       <span className="ai-edge flex size-9 shrink-0 items-center justify-center rounded-xl">
@@ -86,7 +86,7 @@ function PhaseMeter({ run, state }: { run: AiRunMeta; state: AiRunState }) {
                 ? "var(--border)"
                 : state === "working"
                   ? "linear-gradient(to top, var(--ai-1), var(--ai-3))"
-                  : STATE_ACCENT[state],
+                  : AI_STATE_ACCENT[state],
               opacity: on ? 1 : 0.55,
             }}
           />
@@ -124,7 +124,7 @@ export function AiRunCard<T>({
   const { run, state } = view;
   if (!run || !state) return null;
 
-  const accent = STATE_ACCENT[state];
+  const accent = AI_STATE_ACCENT[state];
   const body =
     bodies?.[state] ??
     (state === "working"

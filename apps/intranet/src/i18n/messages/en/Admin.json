@@ -231,7 +231,8 @@
     "featureFlags": "Feature flags",
     "passwordResets": "Password resets",
     "authentication": "Authentication",
-    "designFeedback": "Design feedback"
+    "designFeedback": "Design feedback",
+    "ai": "AI activity"
   },
   "requestedAgo": "Requested {age} ago",
   "requestsWaiting": "{count, plural, one {# request waiting} other {# requests waiting}}",

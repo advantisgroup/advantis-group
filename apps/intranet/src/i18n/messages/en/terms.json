@@ -1,14 +1,13 @@
 {
   "title": "Terms of Use – Intranet",
-  "subtitle": "Terms governing the use of the Advantis Group intranet by authorized employees",
+  "subtitle": "Terms governing the use of the Advantis Group intranet by authorized employees. Each section opens with a plain-language line; the wording underneath it is what applies.",
   "updated": "Last updated: July 2026",
-  "tableOfContents": "Table of contents",
-  "viewPrivacy": "View Privacy Policy",
-  "viewImprint": "View Imprint",
+  "tableOfContents": "On this page",
   "sections": [
     {
       "id": "scope",
       "title": "Scope",
+      "summary": "These terms apply to you once you actually have access — not to someone who merely tried to sign up.",
       "paragraphs": [
         "These Terms of Use apply exclusively to individuals to whom advantis GmbH has expressly granted access to the Intranet and whose account is actively provisioned (“users”).",
         "Merely creating an account or attempting to sign in does not create any entitlement to access and does not make these Terms of Use applicable. Individuals without authorization instead receive a notice that access has been denied, and their account is deleted automatically (see the Privacy Policy, “Unauthorized access attempts”)."
@@ -17,6 +16,7 @@
     {
       "id": "access",
       "title": "Access and authorization",
+      "summary": "Access is for people with an approved company email or an explicit invitation. Keep your credentials to yourself.",
       "paragraphs": [
         "Access to the Intranet is granted exclusively to individuals with an active business relationship with advantis GmbH whose business email address belongs to an approved company domain, or who have received an explicit invitation or approval from a manager or administrator.",
         "Access requests are reviewed by managers or administrators and may be declined. Sign-up attempts using email domains that are not approved are automatically denied, and the account created in the process is deleted without delay.",
@@ -26,6 +26,7 @@
     {
       "id": "purpose",
       "title": "Intended use",
+      "summary": "Work purposes only. What you see in here is confidential and stays inside the company.",
       "paragraphs": [
         "The Intranet serves exclusively internal business purposes of advantis GmbH, in particular communication, scheduling, absence management, storage of internal documents, and team collaboration.",
         "Content, documents and information accessible through the Intranet are confidential and must not be shared with third parties outside the company without consent.",
@@ -35,14 +36,28 @@
     {
       "id": "monitoring",
       "title": "Notice regarding evaluation of usage data",
+      "summary": "Some usage, attendance and availability data is evaluated. The Privacy Policy sets out exactly what and why.",
       "paragraphs": [
         "In connection with using the Intranet, certain usage, attendance and availability data is processed for evaluation purposes, as described in detail in the Privacy Policy.",
         "By using the Intranet, users acknowledge that this processing takes place within the context of their existing employment relationship."
       ]
     },
     {
+      "id": "ai",
+      "title": "AI-assisted features",
+      "summary": "AI can draft, read and summarise. Its results are suggestions you have to check, and access to it can be switched off or granted per role.",
+      "paragraphs": [
+        "The Intranet includes AI-assisted features: an assistant that answers questions from a product briefing built into it, help with formatting wiki entries and suggesting a title and tags, reading a CV into an applicant record, summaries of your own Sales Coach calls, and asking a question about a single IT ticket or applicant record. Every one of them is started deliberately by a person — none of them runs on its own or in the background of your work.",
+        "Results are suggestions, not decisions. They can be incomplete or simply wrong, and they are neither a legal assessment nor an instruction. Whoever asks for a result is responsible for checking it before acting on it, sending it, or saving it into a record — in particular before AI-drafted text goes to a customer or an applicant, and before extracted data is written to an applicant's file.",
+        "Only submit content that the task actually needs. Do not paste access credentials, and do not put personal data of third parties into an AI feature where it isn't necessary for the task.",
+        "AI features can be switched off for the whole company at any time, and the permission to use them can be granted or withdrawn per role. There is no entitlement to their availability."
+      ],
+      "note": "What each feature sends, where it goes, how long it is kept and who can see it is set out in the Privacy Policy under “AI-assisted features”, and in the Intranet itself under Settings → AI."
+    },
+    {
       "id": "obligations",
       "title": "User obligations",
+      "summary": "Keep your details current, follow IT and security policy, stay respectful, and report anything that looks like a security incident.",
       "paragraphs": ["Users agree to"],
       "list": [
         {
@@ -55,6 +70,9 @@
           "description": "maintain a respectful tone in internal chat and announcements,"
         },
         {
+          "description": "check AI-generated results before relying on, sending or saving them,"
+        },
+        {
           "description": "report security-relevant incidents, such as suspected unauthorized access, without delay."
         }
       ]
@@ -62,6 +80,7 @@
     {
       "id": "availability",
       "title": "Availability",
+      "summary": "It's an internal tool provided as is — features can change and downtime can happen.",
       "paragraphs": [
         "The Intranet is provided as an internal work tool “as is.” advantis GmbH may modify, restrict or discontinue features at any time and does not guarantee uninterrupted availability."
       ]
@@ -69,6 +88,7 @@
     {
       "id": "suspension",
       "title": "Suspension and termination of access",
+      "summary": "Access can end — typically when employment ends, after a breach, or for security reasons.",
       "paragraphs": [
         "Access may be restricted, suspended or terminated at any time, in particular upon termination of the employment relationship, a violation of these Terms of Use, or for security reasons.",
         "Upon termination of access, the account is deleted or anonymized in accordance with the Privacy Policy; statutory retention obligations remain unaffected."
@@ -77,6 +97,7 @@
     {
       "id": "ip",
       "title": "Intellectual property",
+      "summary": "The content in here belongs to the company and is for internal use.",
       "paragraphs": [
         "All content, documents, templates and materials made available through the Intranet are the property of advantis GmbH or its licensors and may be used solely for internal purposes."
       ]
@@ -84,6 +105,7 @@
     {
       "id": "liability",
       "title": "Liability",
+      "summary": "Unlimited liability for intent and gross negligence; otherwise limited to typical, foreseeable damage.",
       "paragraphs": [
         "advantis GmbH is liable without limitation for intent and gross negligence, and in accordance with the Product Liability Act. Beyond that, it is liable only for breach of material contractual obligations and limited to foreseeable damage typical for this type of contract. Liability for damages arising from injury to life, body or health remains unaffected."
       ]
@@ -91,6 +113,7 @@
     {
       "id": "changes",
       "title": "Changes to these Terms of Use",
+      "summary": "These terms can change; we'll tell you about anything material.",
       "paragraphs": [
         "We may amend these Terms of Use with effect for the future, for example when the systems we use change. We will inform users of material changes in an appropriate manner."
       ]
@@ -98,6 +121,7 @@
     {
       "id": "law",
       "title": "Governing law and jurisdiction",
+      "summary": "German law applies; the place of jurisdiction is Nuremberg.",
       "paragraphs": [
         "These Terms of Use are governed by the laws of the Federal Republic of Germany, excluding the UN Convention on Contracts for the International Sale of Goods. To the extent legally permissible, the place of jurisdiction is Nuremberg."
       ]
@@ -105,6 +129,7 @@
     {
       "id": "contact",
       "title": "Contact",
+      "summary": "Questions about these terms go here.",
       "paragraphs": ["Questions about these Terms of Use can be directed to:"]
     }
   ]

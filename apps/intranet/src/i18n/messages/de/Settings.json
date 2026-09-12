@@ -83,6 +83,8 @@
   "workspaceHint": "Darstellung, App-Verhalten und verknüpfte Dienste.",
   "notifications": "Benachrichtigungen",
   "notificationsHint": "Lege fest, was deine Aufmerksamkeit bekommt.",
+  "ai": "KI",
+  "aiHint": "Was die KI sieht, wohin es geht und wer es sonst sehen kann.",
   "help": "Hilfe und Einführung",
   "helpHint": "Starte die geführte Tour jederzeit erneut.",
   "account": "Mein Konto",

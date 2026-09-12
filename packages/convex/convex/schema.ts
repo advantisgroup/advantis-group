@@ -29,6 +29,7 @@ export const capabilityValidator = v.union(
   v.literal("manage_it_ticket_threads"),
   v.literal("view_clockodo_team"),
   v.literal("manage_clockodo_team"),
+  v.literal("use_ai"),
 );
 
 // --- Applicant Management (Bewerbermanagement) validators -------------------
@@ -2972,6 +2973,13 @@ export default defineSchema({
     phase: aiRunPhase,
     output: v.optional(v.string()), // ciphertext, partial while running
     outputChars: v.number(),
+    // What answered, how much it read and wrote, and what it was given —
+    // so a run can be inspected after the fact instead of taken on trust.
+    // Optional: runs from before this shipped carry none of it.
+    model: v.optional(v.string()),
+    tokensIn: v.optional(v.number()),
+    tokensOut: v.optional(v.number()),
+    sources: v.optional(v.array(v.object({ label: v.string(), href: v.optional(v.string()) }))),
     errorCode: v.optional(v.string()),
     retryable: v.optional(v.boolean()),
     startedAt: v.number(),
@@ -2983,6 +2991,20 @@ export default defineSchema({
     .index("by_user_subject", ["clerkUserId", "subjectKey", "startedAt"])
     .index("by_user_kind", ["clerkUserId", "kind", "startedAt"])
     .index("by_started", ["startedAt"]),
+
+  // "Was this any good?" — one row per person per run. An error rate only
+  // says what broke; this is the half that says what came back wrong while
+  // looking fine, which is the failure mode nothing else catches.
+  aiFeedback: defineTable({
+    runId: v.id("aiRuns"),
+    userId: v.id("users"),
+    kind: aiRunKind,
+    rating: v.union(v.literal("up"), v.literal("down")),
+    note: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_run_user", ["runId", "userId"])
+    .index("by_created", ["createdAt"]),
 
   // --- Drafts ----------------------------------------------------------------
   // Unsent composer/dialog state per person, so a refresh or a closed sheet

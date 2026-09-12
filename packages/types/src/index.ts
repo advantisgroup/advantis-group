@@ -28,7 +28,7 @@ export function isManagerRole(role: Role | null | undefined): boolean {
  * a registry entry in `packages/convex/convex/featureFlags.ts` — see that
  * file for how enforcement is wired up per feature.
  */
-export const FEATURE_FLAG_KEYS = ["activitytrack", "chat"] as const;
+export const FEATURE_FLAG_KEYS = ["activitytrack", "chat", "ai"] as const;
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
 
 export function isAdminRole(role: Role | null | undefined): boolean {

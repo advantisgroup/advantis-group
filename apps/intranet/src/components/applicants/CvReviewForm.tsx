@@ -13,6 +13,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { AiButton } from "@/components/ai/AiButton";
+import { AiGlyph } from "@/components/ai/AiGlyph";
 import { aiErrorKey } from "@/components/ai/AiRunCard";
 import { parseJson, useAiRun } from "@/components/ai/use-ai-run";
 import {
@@ -28,6 +29,7 @@ import { useDraft } from "@/components/compose/use-draft";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { htmlToText } from "@/components/ui/rich-text";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
@@ -114,22 +116,60 @@ export function applicantToCvValues(applicant: ApplicantDetail): CvReviewValues 
   };
 }
 
-/** Lays what a CV read found over `base`, marking which fields came from the PDF. */
+export interface CvFieldProposal {
+  key: FieldKey | "skills";
+  /** What the form holds right now, as plain text. */
+  current: string;
+  /** What the read suggests, as plain text. */
+  proposed: string;
+  /** What to write when it's accepted — HTML for rich fields, a list for skills. */
+  value: string | string[];
+}
+
+/**
+ * Lays what a CV read found over `base`, marking which fields came from the
+ * PDF — but never over the top of text that is already there. A read that
+ * would replace something comes back as a proposal instead, for a person to
+ * accept or keep, so a rescan can't quietly undo someone's corrections.
+ */
 export function withExtracted(base: CvReviewValues, extracted: ExtractedApplicantFields) {
   const values = { ...base };
   const origins: CvReviewOrigins = {};
+  const proposals: CvFieldProposal[] = [];
+
   for (const key of TEXT_FIELDS.concat(TEXTAREA_FIELDS, RICH_FIELDS)) {
     const value = extracted[key];
-    if (typeof value === "string" && value.trim()) {
-      values[key] = RICH_FIELDS.includes(key) ? textToHtml(value) : value;
+    if (typeof value !== "string" || !value.trim()) continue;
+    const rich = RICH_FIELDS.includes(key);
+    const next = rich ? textToHtml(value) : value;
+    const current = rich ? htmlToText(base[key]) : base[key];
+    if (!current.trim()) {
+      values[key] = next;
       origins[key] = "pdf";
+      continue;
+    }
+    if (current.trim() === value.trim()) continue;
+    proposals.push({ key, current: current.trim(), proposed: value.trim(), value: next });
+  }
+
+  if (extracted.skills.length > 0) {
+    if (base.skills.length === 0) {
+      values.skills = extracted.skills;
+      origins.skills = "pdf";
+    } else {
+      const missing = extracted.skills.filter((skill) => !base.skills.includes(skill));
+      if (missing.length > 0) {
+        proposals.push({
+          key: "skills",
+          current: base.skills.join(", "),
+          proposed: [...base.skills, ...missing].join(", "),
+          value: [...base.skills, ...missing],
+        });
+      }
     }
   }
-  if (extracted.skills.length > 0) {
-    values.skills = extracted.skills;
-    origins.skills = "pdf";
-  }
-  return { values, origins };
+
+  return { values, origins, proposals };
 }
 
 export interface CvReviewFormProps {
@@ -138,6 +178,9 @@ export interface CvReviewFormProps {
   file: File;
   initialValues: CvReviewValues;
   initialOrigins?: CvReviewOrigins;
+  /** Fields the first read wanted to change but didn't, because something was
+   * already there — offered for review instead of applied. */
+  initialProposals?: CvFieldProposal[];
   pendingStorageId?: Id<"_storage">;
   /** Keeps typed-in work across a refresh — only worth it when the PDF can come back too. */
   draftKey?: string;
@@ -237,6 +280,7 @@ export function CvReviewForm({
   file,
   initialValues,
   initialOrigins,
+  initialProposals,
   pendingStorageId: initialPendingStorageId,
   draftKey,
   backHref,
@@ -255,6 +299,7 @@ export function CvReviewForm({
 
   const [form, setForm] = useState<CvReviewValues>(initialValues);
   const [origins, setOrigins] = useState<CvReviewOrigins>(initialOrigins ?? {});
+  const [proposals, setProposals] = useState<CvFieldProposal[]>(initialProposals ?? []);
   const [focusedField, setFocusedField] = useState<FieldKey | "skills" | null>(null);
   const [skillInput, setSkillInput] = useState("");
   const [pendingStorageId, setPendingStorageId] = useState<Id<"_storage"> | undefined>(
@@ -327,6 +372,21 @@ export function CvReviewForm({
     const next = withExtracted(form, extracted);
     setForm(next.values);
     setOrigins((prev) => ({ ...prev, ...next.origins }));
+    setProposals(next.proposals);
+  }
+
+  function acceptProposal(proposal: CvFieldProposal) {
+    if (proposal.key === "skills") {
+      setForm((prev) => ({ ...prev, skills: proposal.value as string[] }));
+      setOrigins((prev) => ({ ...prev, skills: "pdf" }));
+    } else {
+      setField(proposal.key, proposal.value as string, "pdf");
+    }
+    setProposals((prev) => prev.filter((row) => row.key !== proposal.key));
+  }
+
+  function keepProposal(proposal: CvFieldProposal) {
+    setProposals((prev) => prev.filter((row) => row.key !== proposal.key));
   }
 
   function discardChanges() {
@@ -432,6 +492,63 @@ export function CvReviewForm({
     return (
       <div className="space-y-4">
         <DraftOfferBanner draft={draft} />
+
+        {proposals.length > 0 && (
+          <section
+            className="rounded-2xl border border-border/60 p-4"
+            style={{
+              backgroundColor: "var(--card)",
+              backgroundImage:
+                "radial-gradient(26rem 10rem at 0% 0%, color-mix(in oklch, var(--ai-2) 14%, transparent), transparent 70%)",
+            }}
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="ai-edge flex size-8 items-center justify-center rounded-lg">
+                <AiGlyph className="size-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[0.7rem] font-medium uppercase tracking-[0.16em] refreshed:text-xs refreshed:normal-case refreshed:tracking-normal">
+                  <span className="ai-text">{ta("eyebrow")}</span>
+                </p>
+                <h3 className="font-display text-base font-bold tracking-tight refreshed:font-semibold">
+                  {t("cvProposalsTitle", { count: proposals.length })}
+                </h3>
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">{t("cvProposalsHint")}</p>
+            <ul className="mt-2 divide-y divide-border/60">
+              {proposals.map((proposal, index) => (
+                <li
+                  key={proposal.key}
+                  className="ai-rise space-y-1.5 py-2.5"
+                  style={{ ["--i" as string]: index }}
+                >
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {proposal.key === "skills" ? t("skills") : t(FIELD_LABEL_KEY[proposal.key])}
+                  </p>
+                  <p className="text-xs text-muted-foreground line-through">{proposal.current}</p>
+                  <p className="text-sm">{proposal.proposed}</p>
+                  <div className="flex justify-end gap-2">
+                    <Button size="xs" variant="ghost" onClick={() => keepProposal(proposal)}>
+                      {t("cvProposalKeep")}
+                    </Button>
+                    <Button size="xs" variant="outline" onClick={() => acceptProposal(proposal)}>
+                      {t("cvProposalApply")}
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-2 flex justify-end gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setProposals([])}>
+                {t("cvProposalKeepAll")}
+              </Button>
+              <Button size="sm" onClick={() => proposals.forEach(acceptProposal)}>
+                {t("cvProposalApplyAll")}
+              </Button>
+            </div>
+          </section>
+        )}
         <p className="text-sm text-muted-foreground">
           {isMobile ? t("fallbackModalDescriptionMobile") : t("fallbackModalDescription")}
         </p>

@@ -2,9 +2,20 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query, type QueryCtx } from "./_generated/server";
-import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase } from "./lib/aiRuns";
-import { getCurrentUser } from "./lib/auth";
+import { isFeatureEnabled } from "./featureFlags";
+import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase, askSubjectType } from "./lib/aiRuns";
+import {
+  effectiveCustomRoleIds,
+  getCurrentUser,
+  getUserByClerkId,
+  hasApplicantAccess,
+  requireManager,
+  requireUser,
+  requireVaultUnlocked,
+  userHasCapability,
+} from "./lib/auth";
 import { sandboxedMutation } from "./lib/sandbox";
+import { displayName } from "./lib/users";
 
 /**
  * One row per AI call anywhere in the intranet, so an answer outlives the tab
@@ -38,6 +49,10 @@ function toMeta(run: Doc<"aiRuns">) {
     status: run.status,
     phase: run.phase,
     outputChars: run.outputChars,
+    model: run.model ?? null,
+    tokensIn: run.tokensIn ?? null,
+    tokensOut: run.tokensOut ?? null,
+    sources: run.sources ?? [],
     errorCode: run.errorCode ?? null,
     retryable: run.retryable ?? false,
     startedAt: run.startedAt,
@@ -152,6 +167,129 @@ export const markSeen = sandboxedMutation({
   },
 });
 
+// --- Was it any good? --------------------------------------------------------
+
+/** This person's own verdict on one run, so the panel can show it back. */
+export const myFeedback = query({
+  args: { runId: v.id("aiRuns") },
+  handler: async (ctx, { runId }) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) return null;
+    const row = await ctx.db
+      .query("aiFeedback")
+      .withIndex("by_run_user", (q) => q.eq("runId", runId).eq("userId", user._id))
+      .first();
+    return row ? { rating: row.rating, note: row.note ?? null } : null;
+  },
+});
+
+export const rateRun = sandboxedMutation({
+  args: {
+    runId: v.id("aiRuns"),
+    rating: v.union(v.literal("up"), v.literal("down")),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, { runId, rating, note }) => {
+    const user = await requireUser(ctx);
+    const run = await ctx.db.get(runId);
+    // Only your own run — nobody rates an answer they never saw.
+    if (!run || run.clerkUserId !== user.clerkUserId) return null;
+    const existing = await ctx.db
+      .query("aiFeedback")
+      .withIndex("by_run_user", (q) => q.eq("runId", runId).eq("userId", user._id))
+      .first();
+    const trimmed = note?.trim().slice(0, 2000) || undefined;
+    if (existing) {
+      await ctx.db.patch(existing._id, { rating, note: trimmed, createdAt: Date.now() });
+      return null;
+    }
+    await ctx.db.insert("aiFeedback", {
+      runId,
+      userId: user._id,
+      kind: run.kind,
+      rating,
+      note: trimmed,
+      createdAt: Date.now(),
+    });
+    return null;
+  },
+});
+
+// --- Oversight (managers) ----------------------------------------------------
+
+const STATS_WINDOW_MS = 30 * 86_400_000;
+const STATS_SCAN_LIMIT = 2000;
+
+/**
+ * What AI has actually been doing lately, for the people answerable for it:
+ * volume, what failed and why, and what it cost in tokens. Never any content —
+ * the output stays ciphertext this layer can't read anyway.
+ */
+export const stats = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireManager(ctx);
+    const runs = await ctx.db
+      .query("aiRuns")
+      .withIndex("by_started", (q) => q.gt("startedAt", Date.now() - STATS_WINDOW_MS))
+      .order("desc")
+      .take(STATS_SCAN_LIMIT);
+
+    const byKind = new Map<
+      Doc<"aiRuns">["kind"],
+      { total: number; failed: number; tokens: number }
+    >();
+    const byError = new Map<string, number>();
+    let failed = 0;
+    let tokens = 0;
+    for (const run of runs) {
+      const kind = byKind.get(run.kind) ?? { total: 0, failed: 0, tokens: 0 };
+      kind.total += 1;
+      kind.tokens += (run.tokensIn ?? 0) + (run.tokensOut ?? 0);
+      tokens += (run.tokensIn ?? 0) + (run.tokensOut ?? 0);
+      if (run.status === "error") {
+        kind.failed += 1;
+        failed += 1;
+        const code = run.errorCode ?? "internal";
+        byError.set(code, (byError.get(code) ?? 0) + 1);
+      }
+      byKind.set(run.kind, kind);
+    }
+
+    return {
+      total: runs.length,
+      failed,
+      tokens,
+      capped: runs.length === STATS_SCAN_LIMIT,
+      byKind: [...byKind.entries()]
+        .map(([kind, value]) => ({ kind, ...value }))
+        .sort((a, b) => b.total - a.total),
+      byError: [...byError.entries()]
+        .map(([code, count]) => ({ code, count }))
+        .sort((a, b) => b.count - a.count),
+    };
+  },
+});
+
+export const feedbackList = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireManager(ctx);
+    const rows = await ctx.db.query("aiFeedback").withIndex("by_created").order("desc").take(200);
+    return Promise.all(
+      rows.map(async (row) => ({
+        _id: row._id,
+        userId: row.userId,
+        userName: displayName(await ctx.db.get(row.userId)),
+        kind: row.kind,
+        rating: row.rating,
+        note: row.note ?? null,
+        createdAt: row.createdAt,
+      })),
+    );
+  },
+});
+
 // --- apps/api ----------------------------------------------------------------
 
 export const apiStart = mutation({
@@ -161,9 +299,28 @@ export const apiStart = mutation({
     kind: aiRunKind,
     subjectKey: v.string(),
     href: v.optional(v.string()),
+    model: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
+    // The one gate every AI run in the app passes through: with the flag off,
+    // nothing new reaches the model, whatever the browser still shows.
+    if (!(await isFeatureEnabled(ctx, "ai"))) {
+      throw new ConvexError({ code: "disabled", message: "AI is switched off" });
+    }
+    // Same gate, per person. `ctx.auth` isn't the caller here (apps/api calls
+    // this with the server key), so the capability is resolved from the
+    // clerk id it forwarded — managers and admins pass on their tier.
+    const caller = await getUserByClerkId(ctx, args.clerkUserId);
+    if (!caller || caller.status === "suspended") {
+      throw new ConvexError({ code: "forbidden", message: "No account" });
+    }
+    const callerRoles = await Promise.all(
+      effectiveCustomRoleIds(caller).map((id) => ctx.db.get(id)),
+    );
+    if (!userHasCapability(caller, callerRoles, "use_ai")) {
+      throw new ConvexError({ code: "no_capability", message: "AI is not enabled for you" });
+    }
     const now = Date.now();
     const previous = await ctx.db
       .query("aiRuns")
@@ -188,6 +345,7 @@ export const apiStart = mutation({
       kind: args.kind,
       subjectKey: args.subjectKey,
       href: args.href,
+      model: args.model,
       status: "running",
       phase: "reading",
       outputChars: 0,
@@ -226,8 +384,11 @@ export const apiFinish = mutation({
     runId: v.id("aiRuns"),
     output: v.string(),
     outputChars: v.number(),
+    tokensIn: v.optional(v.number()),
+    tokensOut: v.optional(v.number()),
+    sources: v.optional(v.array(v.object({ label: v.string(), href: v.optional(v.string()) }))),
   },
-  handler: async (ctx, { serverKey, runId, output, outputChars }) => {
+  handler: async (ctx, { serverKey, runId, output, outputChars, tokensIn, tokensOut, sources }) => {
     assertServerKey(serverKey);
     const run = await ctx.db.get(runId);
     if (!run || run.status !== "running") return null;
@@ -237,6 +398,9 @@ export const apiFinish = mutation({
       phase: "finishing",
       output,
       outputChars,
+      tokensIn,
+      tokensOut,
+      sources,
       heartbeatAt: now,
       finishedAt: now,
     });
@@ -276,6 +440,200 @@ export const apiGet = query({
     const id = ctx.db.normalizeId("aiRuns", runId);
     const run = id ? await ctx.db.get(id) : null;
     return run && run.clerkUserId === clerkUserId ? run : null;
+  },
+});
+
+// --- Ask in place -----------------------------------------------------------
+
+/** Nothing longer than this is handed to the model — a record with a huge
+ * thread gets its oldest lines dropped rather than an unbounded prompt. */
+const ASK_CONTEXT_CHARS = 12_000;
+
+interface AskContext {
+  title: string;
+  href: string;
+  /** The record as plain text, exactly as the model will see it. */
+  text: string;
+  /** The same thing described for a person: what the panel shows as chips. */
+  sources: { label: string; href?: string }[];
+}
+
+async function userName(ctx: QueryCtx, userId: Id<"users"> | undefined) {
+  return userId ? displayName(await ctx.db.get(userId)) : null;
+}
+
+function block(title: string, lines: (string | null | undefined)[]) {
+  const kept = lines.filter((line): line is string => !!line);
+  return kept.length > 0 ? `## ${title}\n${kept.join("\n")}` : "";
+}
+
+async function ticketContext(ctx: QueryCtx, id: string): Promise<AskContext> {
+  const ticketId = ctx.db.normalizeId("itTickets", id);
+  const ticket = ticketId ? await ctx.db.get(ticketId) : null;
+  if (!ticket || !ticketId) {
+    throw new ConvexError({ code: "not_found", message: "Ticket not found" });
+  }
+
+  const history = await ctx.db
+    .query("itTicketStatusHistory")
+    .withIndex("by_ticket_and_changedAt", (q) => q.eq("ticketId", ticketId))
+    .order("desc")
+    .take(20);
+  const thread = await ctx.db
+    .query("itTicketThreads")
+    .withIndex("by_ticket", (q) => q.eq("ticketId", ticketId))
+    .first();
+  const messages = thread
+    ? (
+        await ctx.db
+          .query("itTicketMessages")
+          .withIndex("by_thread", (q) => q.eq("threadId", thread._id))
+          .order("desc")
+          .take(60)
+      )
+        .filter((m) => m.kind === "message" && !m.deletedAt)
+        .reverse()
+    : [];
+
+  const href = `/it-tickets?open=${ticketId}`;
+  const title = ticket.topic?.trim() || `#${ticket.nr}`;
+  const text = [
+    block("Ticket", [
+      `Nummer: #${ticket.nr}`,
+      `Status: ${ticket.status}`,
+      `Kategorie: ${ticket.category}`,
+      `Datum: ${ticket.date}`,
+      `Angelegt von: ${ticket.createdByName}`,
+      ticket.assignedToUserId
+        ? `Zugewiesen an: ${await userName(ctx, ticket.assignedToUserId)}`
+        : null,
+      ticket.topic ? `Thema: ${ticket.topic}` : null,
+      ticket.camId ? `CAM-ID: ${ticket.camId}` : null,
+      ticket.custNo ? `Kundennummer: ${ticket.custNo}` : null,
+      ticket.info ? `Info: ${ticket.info}` : null,
+    ]),
+    block(
+      "Statusverlauf",
+      await Promise.all(
+        [...history].reverse().map(async (row) => {
+          const when = new Date(row.changedAt).toISOString().slice(0, 10);
+          const who = await userName(ctx, row.changedByUserId);
+          return `${when}: ${row.previousStatus ?? "—"} → ${row.status} (${who})`;
+        }),
+      ),
+    ),
+    block(
+      "Thread",
+      await Promise.all(
+        messages.map(async (m) => {
+          const when = new Date(m.createdAt).toISOString().slice(0, 16).replace("T", " ");
+          const who = m.kind === "message" ? await userName(ctx, m.senderUserId) : null;
+          return m.kind === "message" ? `[${when}] ${who}: ${m.body}` : null;
+        }),
+      ),
+    ),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return {
+    title,
+    href,
+    text,
+    sources: [
+      { label: `IT-Ticket #${ticket.nr}`, href },
+      ...(history.length > 0 ? [{ label: `Statusverlauf (${history.length})` }] : []),
+      ...(messages.length > 0 ? [{ label: `Thread-Nachrichten (${messages.length})` }] : []),
+    ],
+  };
+}
+
+async function applicantContext(
+  ctx: QueryCtx,
+  user: Doc<"users">,
+  id: string,
+): Promise<AskContext> {
+  if (!hasApplicantAccess(user)) {
+    throw new ConvexError({ code: "forbidden", message: "You do not have permission to do that" });
+  }
+  await requireVaultUnlocked(ctx, user._id);
+
+  const applicantId = ctx.db.normalizeId("applicants", id);
+  const applicant = applicantId ? await ctx.db.get(applicantId) : null;
+  if (!applicant) {
+    throw new ConvexError({ code: "not_found", message: "Applicant not found" });
+  }
+
+  const href = `/hr/${applicantId}/uebersicht`;
+  const text = [
+    block("Bewerber", [
+      `Name: ${applicant.name}`,
+      applicant.position ? `Position: ${applicant.position}` : null,
+      applicant.rating ? `Bewertung: ${applicant.rating}` : null,
+      applicant.skills.length > 0 ? `Skills: ${applicant.skills.join(", ")}` : null,
+    ]),
+    block("Ausbildung", [applicant.ausbildung]),
+    block("Berufserfahrung", [applicant.berufserfahrung]),
+    block("Zusammenfassung", [applicant.zusammenfassung]),
+    block("Interne Notizen", [applicant.notizen]),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return {
+    title: applicant.name,
+    href,
+    text,
+    sources: [
+      { label: applicant.name, href },
+      ...(applicant.ausbildung || applicant.berufserfahrung || applicant.zusammenfassung
+        ? [{ label: "Lebenslauf-Angaben im Profil" }]
+        : []),
+      ...(applicant.notizen ? [{ label: "Interne Notizen" }] : []),
+    ],
+  };
+}
+
+/**
+ * Everything the model is given about one record, assembled under the asking
+ * person's own access — never from anything the browser sent. Contact details
+ * are deliberately left out: a question about a record doesn't need someone's
+ * address or date of birth to be answered.
+ */
+async function askContext(
+  ctx: QueryCtx,
+  user: Doc<"users">,
+  type: "itTicket" | "applicant",
+  id: string,
+): Promise<AskContext> {
+  const context =
+    type === "itTicket" ? await ticketContext(ctx, id) : await applicantContext(ctx, user, id);
+  return { ...context, text: context.text.slice(0, ASK_CONTEXT_CHARS) };
+}
+
+/** What the ask panel lists before you send anything — the same sources the
+ * finished run records, so the chips aren't a separate claim from the truth. */
+export const askPreview = query({
+  args: { type: askSubjectType, id: v.string() },
+  handler: async (ctx, { type, id }) => {
+    const user = await requireUser(ctx);
+    const { title, href, sources } = await askContext(ctx, user, type, id);
+    return { title, href, sources };
+  },
+});
+
+export const apiAskContext = query({
+  args: { serverKey: v.string(), clerkUserId: v.string(), type: askSubjectType, id: v.string() },
+  handler: async (ctx, { serverKey, clerkUserId, type, id }) => {
+    assertServerKey(serverKey);
+    const user = await getUserByClerkId(ctx, clerkUserId);
+    if (!user || user.status === "suspended") {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You do not have permission to do that",
+      });
+    }
+    return askContext(ctx, user, type, id);
   },
 });
 

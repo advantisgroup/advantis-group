@@ -31,6 +31,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  Sparkles,
   UploadCloud,
   UserRoundSearch,
   Users,
@@ -40,6 +41,8 @@ import {
 import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
 
+import { useAsk } from "@/components/ai/ask-subject";
+import { useAiEnabled } from "@/components/ai/use-ai-enabled";
 import { accessibleGuidebooks, guidebookTitle } from "@/components/guidebooks/registry";
 import {
   useCurrentUser,
@@ -124,6 +127,8 @@ export function CommandPalette() {
   const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
   const user = useCurrentUser();
   const guidebooks = accessibleGuidebooks(user);
+  const { ask, pageSubject } = useAsk();
+  const aiEnabled = useAiEnabled();
   const keyboardInset = useKeyboardInset();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -296,10 +301,27 @@ export function CommandPalette() {
     const q = query.trim().toLowerCase();
     const list: Item[] = [];
 
+    // Asking about whatever the page has open — deliberately first, since it
+    // acts on where you already are rather than sending you somewhere.
+    const askItem: Item | null =
+      aiEnabled && pageSubject
+        ? {
+            id: "ask-page",
+            group: t("actions"),
+            label: t("actionAsk", { subject: pageSubject.label }),
+            icon: Sparkles,
+            run: () => {
+              setOpen(false);
+              ask();
+            },
+          }
+        : null;
+
     // Empty query: a quick-launch view (recent, then actions, then pages)
     // instead of an empty "type to search" screen — most opens are to jump
     // somewhere already known, not to search.
     if (!q) {
+      if (askItem) list.push(askItem);
       for (const r of recent) {
         list.push({
           id: `recent:${r.id}`,
@@ -333,6 +355,8 @@ export function CommandPalette() {
       }
       return list;
     }
+
+    if (askItem?.label.toLowerCase().includes(q)) list.push(askItem);
 
     for (const a of actions) {
       if (a.label.toLowerCase().includes(q)) {
@@ -424,6 +448,9 @@ export function CommandPalette() {
     query,
     recent,
     actions,
+    aiEnabled,
+    pageSubject,
+    ask,
     pages,
     people,
     announcements,

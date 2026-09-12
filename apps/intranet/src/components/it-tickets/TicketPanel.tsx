@@ -9,6 +9,7 @@ import { ArrowUpRight, Ellipsis, Link2, MessageSquarePlus, Pencil, Trash2 } from
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { AskButton } from "@/components/ai/AskButton";
 import {
   STATUS_ACCENT,
   STATUS_ICON,
@@ -227,6 +228,10 @@ function TicketPanelHeader({
             {since}
           </span>
         )}
+        <AskButton
+          className="ml-auto"
+          subject={{ type: "itTicket", id: ticket._id, label: ticketNumber(ticket.nr) }}
+        />
       </div>
     </div>
   );

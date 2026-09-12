@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import { AlertTriangle, Check, CircleSlash, Unplug, X } from "lucide-react";
+import { AlertTriangle, Check, CircleSlash, Info, Unplug, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useAiSlotPresent, useRegisterAiSlot } from "@/components/layout/bottom-bars";
@@ -18,7 +18,9 @@ import { cn } from "@/lib/utils";
 
 import { AiGlyph } from "./AiGlyph";
 import { aiErrorKey } from "./AiRunCard";
+import { AiRunDetail } from "./AiRunDetail";
 import { AiThinking } from "./AiThinking";
+import { useAiEnabled } from "./use-ai-enabled";
 import { type AiRunMeta, aiRunState } from "./use-ai-run";
 
 const STATE_ICON = {
@@ -47,10 +49,12 @@ function DockList({
   runs,
   now,
   onNavigate,
+  onDetail,
 }: {
   runs: AiRunMeta[];
   now: number;
   onNavigate: () => void;
+  onDetail: (run: AiRunMeta) => void;
 }) {
   const t = useTranslations("Ai");
   const router = useRouter();
@@ -114,6 +118,14 @@ function DockList({
                   )}
                 </span>
               </button>
+              <button
+                type="button"
+                aria-label={t("detail.title")}
+                onClick={() => onDetail(run)}
+                className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-100 transition-opacity hover:bg-background hover:text-foreground md:opacity-0 md:group-hover:opacity-100"
+              >
+                <Info className="size-3.5" />
+              </button>
               {state !== "working" && (
                 <button
                   type="button"
@@ -140,38 +152,51 @@ export function AiDock() {
   const t = useTranslations("Ai");
   const { visible, now, working, waiting } = useDockRuns();
   const [open, setOpen] = useState(false);
+  const [detailRun, setDetailRun] = useState<AiRunMeta | null>(null);
+  const aiEnabled = useAiEnabled();
 
-  if (visible.length === 0) return null;
+  if (visible.length === 0 || !aiEnabled) return null;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          data-working={working > 0}
-          aria-label={t("dockLabel")}
-          className="ai-orbit ai-edge fixed bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] right-6 z-50 hidden h-10 items-center gap-2 rounded-full pl-3 pr-3.5 text-sm font-medium shadow-overlay transition-transform [--ai-ground:var(--popover)] hover:scale-[1.03] print:hidden md:flex"
-        >
-          <AiGlyph working={working > 0} />
-          <span className={cn(working > 0 && "ai-shimmer")}>
-            {working > 0
-              ? t("dockWorking", { count: working })
-              : t("dockReady", { count: waiting })}
-          </span>
-          {working > 0 && waiting > 0 && (
-            <span className="flex size-5 items-center justify-center rounded-full bg-success/15 text-[11px] font-semibold text-success">
-              {waiting}
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            data-working={working > 0}
+            aria-label={t("dockLabel")}
+            className="ai-orbit ai-edge fixed bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] right-6 z-50 hidden h-10 items-center gap-2 rounded-full pl-3 pr-3.5 text-sm font-medium shadow-overlay transition-transform [--ai-ground:var(--popover)] hover:scale-[1.03] print:hidden md:flex"
+          >
+            <AiGlyph working={working > 0} />
+            <span className={cn(working > 0 && "ai-shimmer")}>
+              {working > 0
+                ? t("dockWorking", { count: working })
+                : t("dockReady", { count: waiting })}
             </span>
-          )}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="end" side="top" className="w-80 p-1.5">
-        <p className="px-2.5 pb-1 pt-1.5 text-[0.7rem] font-medium uppercase tracking-[0.16em]">
-          <span className="ai-text">{t("dockLabel")}</span>
-        </p>
-        <DockList runs={visible} now={now} onNavigate={() => setOpen(false)} />
-      </PopoverContent>
-    </Popover>
+            {working > 0 && waiting > 0 && (
+              <span className="flex size-5 items-center justify-center rounded-full bg-success/15 text-[11px] font-semibold text-success">
+                {waiting}
+              </span>
+            )}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="end" side="top" className="w-80 p-1.5">
+          <p className="px-2.5 pb-1 pt-1.5 text-[0.7rem] font-medium uppercase tracking-[0.16em]">
+            <span className="ai-text">{t("dockLabel")}</span>
+          </p>
+          <DockList
+            runs={visible}
+            now={now}
+            onNavigate={() => setOpen(false)}
+            onDetail={(run) => {
+              setOpen(false);
+              setDetailRun(run);
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+      <AiRunDetail run={detailRun} onOpenChange={(next) => !next && setDetailRun(null)} />
+    </>
   );
 }
 
@@ -195,10 +220,12 @@ export function AiDockButton({
   const t = useTranslations("Ai");
   const { visible, now, working, waiting } = useDockRuns();
   const [open, setOpen] = useState(false);
+  const [detailRun, setDetailRun] = useState<AiRunMeta | null>(null);
   const bottomSlotPresent = useAiSlotPresent();
-  useRegisterAiSlot(placement === "bottom" && active && visible.length > 0);
+  const aiEnabled = useAiEnabled();
+  useRegisterAiSlot(placement === "bottom" && active && aiEnabled && visible.length > 0);
 
-  if (visible.length === 0) return null;
+  if (visible.length === 0 || !aiEnabled) return null;
   if (placement === "bottom" && !active) return null;
   if (placement === "top" && bottomSlotPresent) return null;
 
@@ -239,9 +266,18 @@ export function AiDockButton({
           </p>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
-          <DockList runs={visible} now={now} onNavigate={() => setOpen(false)} />
+          <DockList
+            runs={visible}
+            now={now}
+            onNavigate={() => setOpen(false)}
+            onDetail={(run) => {
+              setOpen(false);
+              setDetailRun(run);
+            }}
+          />
         </div>
       </MobileDrawer>
+      <AiRunDetail run={detailRun} onOpenChange={(next) => !next && setDetailRun(null)} />
     </>
   );
 }

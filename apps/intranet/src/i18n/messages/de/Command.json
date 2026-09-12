@@ -11,6 +11,7 @@
   "actions": "Aktionen",
   "actionNewEvent": "Neuer Termin",
   "actionNewAnnouncement": "Neue Ankündigung",
+  "actionAsk": "Zu {subject} fragen",
   "actionNewTicket": "Neue IT-Meldung",
   "actionNewSuggestion": "Neuer Vorschlag",
   "actionNewError": "Neuer Fehler",

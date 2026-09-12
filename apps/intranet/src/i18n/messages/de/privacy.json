@@ -1,14 +1,13 @@
 {
   "title": "Datenschutzerklärung – Intranet",
-  "subtitle": "Wie wir personenbezogene Daten autorisierter Advantis-Mitarbeitender im Intranet verarbeiten – gemäß DSGVO",
+  "subtitle": "Wie wir personenbezogene Daten autorisierter Advantis-Mitarbeitender im Intranet verarbeiten – gemäß DSGVO. Jeder Abschnitt beginnt mit einer Zeile in Alltagssprache; verbindlich ist der Text darunter.",
   "updated": "Stand: Juli 2026",
-  "tableOfContents": "Inhaltsverzeichnis",
-  "viewTerms": "Nutzungsbedingungen ansehen",
-  "viewImprint": "Impressum ansehen",
+  "tableOfContents": "Auf dieser Seite",
   "sections": [
     {
       "id": "scope",
       "title": "Geltungsbereich",
+      "summary": "Es geht um das Intranet – und nur um Personen, die tatsächlich Zugang dazu haben.",
       "paragraphs": [
         "Diese Datenschutzerklärung gilt ausschließlich für Personen, die für das Intranet der advantis GmbH („Intranet“) autorisiert wurden und über ein aktives, freigeschaltetes Konto verfügen (nachfolgend „Nutzer:innen“). Sie ergänzt die allgemeine Datenschutzerklärung von advantisgroup.de um die zusätzlichen Verarbeitungen, die ausschließlich im Intranet stattfinden.",
         "Wer sich lediglich über unseren Anmeldedienst registriert oder anzumelden versucht, ohne für das Intranet freigeschaltet zu sein, wird dadurch nicht Nutzer:in im Sinne dieser Erklärung. Für solche Registrierungsversuche gilt ausschließlich der Abschnitt „Nicht autorisierte Zugriffsversuche“ weiter unten – die übrigen Regelungen dieser Erklärung sowie die Nutzungsbedingungen des Intranets finden auf sie keine Anwendung.",
@@ -18,11 +17,13 @@
     {
       "id": "controller",
       "title": "Verantwortliche Stelle",
+      "summary": "Die advantis GmbH entscheidet über diese Daten. Hier steht, an wen du dich wendest.",
       "paragraphs": ["Verantwortlich für die Datenverarbeitung im Intranet ist:"]
     },
     {
       "id": "categories",
       "title": "Welche Daten wir verarbeiten und warum",
+      "summary": "Konto und Profil, Anmelde- und Sicherheitsereignisse, Anwesenheit und Verfügbarkeit, Abwesenheiten, was du schreibst und hochlädst, Admin-Aktionen und technische Zugriffsdaten.",
       "paragraphs": [
         "Im Rahmen der Nutzung des Intranets verarbeiten wir folgende Kategorien personenbezogener Daten autorisierter Nutzer:innen:"
       ],
@@ -61,6 +62,7 @@
     {
       "id": "recipients",
       "title": "Empfänger und Auftragsverarbeiter",
+      "summary": "Eine überschaubare Liste von Dienstleistern betreibt Teile des Intranets für uns. Sonst bekommt niemand deine Daten, außer das Gesetz verlangt es.",
       "paragraphs": [
         "Zur Bereitstellung des Intranets setzen wir sorgfältig ausgewählte Dienstleister ein, die als Auftragsverarbeiter im Sinne von Art. 28 DSGVO für uns tätig werden oder denen gegenüber wir zur Erfüllung des Beschäftigungsverhältnisses Daten offenlegen:"
       ],
@@ -92,6 +94,10 @@
         {
           "title": "Clockodo",
           "description": "Zeiterfassungsdaten für die Verfügbarkeitsauswertung."
+        },
+        {
+          "title": "Anthropic",
+          "description": "Verarbeitung von KI-Anfragen. Gesendet wird nur, was die von dir gestartete KI-Funktion für diese eine Aufgabe benötigt – siehe „KI-gestützte Funktionen“ weiter unten."
         }
       ],
       "note": "Soweit einzelne Anbieter Daten außerhalb der EU/des EWR verarbeiten, stellen wir durch geeignete Garantien – insbesondere EU-Standardvertragsklauseln – ein angemessenes Datenschutzniveau sicher. Eine Weitergabe an sonstige Dritte erfolgt nicht, es sei denn, wir sind gesetzlich dazu verpflichtet."
@@ -99,15 +105,44 @@
     {
       "id": "retention",
       "title": "Speicherdauer",
+      "summary": "So lange, wie der Zweck es braucht oder das Gesetz es verlangt. KI-Läufe werden nach 30 Tagen gelöscht.",
       "paragraphs": [
         "Wir speichern personenbezogene Daten nur so lange, wie es für die jeweiligen Zwecke erforderlich ist oder gesetzliche Aufbewahrungspflichten bestehen, etwa handels- und steuerrechtliche Fristen von bis zu zehn Jahren.",
         "Konto- und Profildaten werden für die Dauer des freigeschalteten Zugangs gespeichert. Wird der Zugang entzogen, nicht gewährt oder eine Zugangsanfrage abgelehnt, löschen wir das zugehörige Konto einschließlich der Profildaten; bereits entstandene Geschäftsunterlagen, die einer gesetzlichen Aufbewahrungspflicht unterliegen, bleiben hiervon unberührt und werden entsprechend pseudonymisiert aufbewahrt.",
-        "Auswertungsdaten zu Anwesenheit und Verfügbarkeit werden nur so lange vorgehalten, wie dies für den jeweiligen Auswertungszeitraum erforderlich ist."
+        "Auswertungsdaten zu Anwesenheit und Verfügbarkeit werden nur so lange vorgehalten, wie dies für den jeweiligen Auswertungszeitraum erforderlich ist.",
+        "KI-Läufe – der Vorgang einer Anfrage samt Ergebnis – werden 30 Tage nach ihrem Start automatisch gelöscht. Was du aus einem Ergebnis bewusst übernimmst, etwa einen freigegebenen Text oder ausgelesene Bewerberdaten, ist danach Teil des jeweiligen Datensatzes und folgt dessen eigener Speicherdauer."
       ]
+    },
+    {
+      "id": "ai",
+      "title": "KI-gestützte Funktionen",
+      "summary": "Wenn du eine KI-Funktion nutzt, geht der dafür nötige Text über unseren eigenen API-Server an Anthropic. Ergebnisse werden 30 Tage verschlüsselt gespeichert, lesen kannst nur du sie, und Führungskräfte sehen Zahlen – keine Inhalte.",
+      "paragraphs": [
+        "Das Intranet bietet KI-gestützte Funktionen, die bewusst von einer Person gestartet werden: den Wiki-Assistenten, Formatierungshilfe und Titel-/Stichwortvorschläge für Wiki-Einträge, das Auslesen eines Lebenslaufs in eine Bewerberakte, Zusammenfassungen der eigenen Sales-Coach-Gespräche sowie Fragen zu einem einzelnen IT-Ticket oder einer einzelnen Bewerbung. Ohne einen solchen Start wird nichts an einen KI-Anbieter gesendet (Art. 6 Abs. 1 lit. f DSGVO sowie Art. 6 Abs. 1 lit. b DSGVO und § 26 BDSG, soweit die Verarbeitung dem Beschäftigungsverhältnis dient).",
+        "Gesendet wird nur, was die Funktion für diese eine Aufgabe benötigt – der gerade bearbeitete Wiki-Eintrag, die ausgelesene Lebenslauf-Datei, das eigene Gesprächstranskript oder der Datensatz, zu dem du fragst, zusammengestellt auf unserem Server mit deinen eigenen Zugriffsrechten. Deine Frage bzw. Anweisung geht mit. Profil-, Abwesenheits-, Anwesenheits- oder Chatdaten werden einer Anfrage nicht beigefügt, sofern sie nicht selbst der bearbeitete Inhalt sind.",
+        "Die Anfragen laufen von unserem eigenen API-Server zu Anthropic, das sie als Auftragsverarbeiter für uns verarbeitet. Ein anderer KI-Anbieter wird nicht eingesetzt, und wir nutzen die Anfragen nicht zum Training von Modellen.",
+        "Das Ergebnis wird von unserem API-Server verschlüsselt, bevor es gespeichert wird – in der Datenbank des Intranets liegen also keine lesbaren KI-Inhalte. Ein Lauf gehört der Person, die ihn gestartet hat: nur sie kann den Text in der Anwendung öffnen."
+      ],
+      "list": [
+        {
+          "title": "Was Führungskräfte sehen",
+          "description": "Im Bereich KI-Aktivität sehen Führungskräfte, wie viele Läufe es gab, aus welchen Funktionen sie stammen, was fehlgeschlagen ist und wie viele Tokens verbraucht wurden – dazu abgegebenes Feedback. Niemals den Inhalt einer Anfrage oder Antwort."
+        },
+        {
+          "title": "Was du steuerst",
+          "description": "Du startest jeden Lauf selbst, kannst ihn während der Bearbeitung stoppen und eine Antwort bewerten. Bewertungen und eine ergänzende Notiz sind für Führungskräfte sichtbar."
+        },
+        {
+          "title": "Was das Unternehmen steuert",
+          "description": "KI kann für das Intranet vollständig abgeschaltet werden, und die Nutzung wird je Rolle freigegeben – sie lässt sich also entziehen, ohne sonst etwas zu verändern."
+        }
+      ],
+      "note": "Dieselben Angaben, gepflegt im Gleichschritt mit dem, was die Software tatsächlich tut, findest du im Intranet unter Einstellungen → KI."
     },
     {
       "id": "unauthorized",
       "title": "Nicht autorisierte Zugriffsversuche",
+      "summary": "Ein Konto kann entstehen, ohne dass eine Berechtigung besteht. Es wird automatisch gelöscht, und diese Erklärung gilt für solche Personen nie.",
       "paragraphs": [
         "Die Registrierung ist technisch offen, die Berechtigung wird jedoch erst nach der Anmeldung anhand der E-Mail-Domain und einer etwaigen Einladung geprüft. Dadurch kann ein Konto entstehen, obwohl keine Berechtigung für das Intranet besteht.",
         "In diesem Fall wird der betroffenen Person die fehlende Berechtigung angezeigt („Zugriff verweigert“) und das bei unserem Identitätsanbieter angelegte Konto wird automatisiert und unverzüglich gelöscht. Die im Rahmen dieses Registrierungsversuchs übermittelten Daten, etwa Name und E-Mail-Adresse, werden von uns nicht weiter verarbeitet. Diese Datenschutzerklärung sowie die Nutzungsbedingungen des Intranets werden für solche Personen zu keinem Zeitpunkt wirksam."
@@ -116,6 +151,7 @@
     {
       "id": "rights",
       "title": "Ihre Rechte",
+      "summary": "Auskunft, Berichtigung, Löschung, Einschränkung, Widerspruch und Übertragbarkeit – eine formlose E-Mail genügt.",
       "paragraphs": [
         "Autorisierte Nutzer:innen haben jederzeit folgende Rechte hinsichtlich ihrer personenbezogenen Daten:"
       ],
@@ -150,13 +186,16 @@
     {
       "id": "security",
       "title": "Sicherheit",
+      "summary": "Verschlüsselte Übertragung, rollenbasierte Rechte, protokollierte Admin-Aktionen – und KI-Ergebnisse verschlüsselt in der Ablage.",
       "paragraphs": [
-        "Wir schützen die im Intranet verarbeiteten Daten durch technische und organisatorische Maßnahmen, u. a. verschlüsselte Übertragung (TLS), rollenbasierte Zugriffsrechte und Protokollierung sicherheitsrelevanter Administrationsvorgänge."
+        "Wir schützen die im Intranet verarbeiteten Daten durch technische und organisatorische Maßnahmen, u. a. verschlüsselte Übertragung (TLS), rollenbasierte Zugriffsrechte und Protokollierung sicherheitsrelevanter Administrationsvorgänge.",
+        "Besonders sensible gespeicherte Inhalte – Chats mit dem Wiki-Assistenten, Sales-Coach-Transkripte und KI-Ergebnisse – werden zusätzlich von unserem API-Server verschlüsselt, bevor sie in die Datenbank geschrieben werden."
       ]
     },
     {
       "id": "changes",
       "title": "Änderungen dieser Erklärung",
+      "summary": "Diese Seite wird angepasst, wenn sich die Verarbeitung ändert; die aktuelle Fassung steht immer hier.",
       "paragraphs": [
         "Wir passen diese Datenschutzerklärung an, wenn sich die Datenverarbeitung im Intranet ändert. Die jeweils aktuelle Fassung ist stets über diese Seite abrufbar."
       ]

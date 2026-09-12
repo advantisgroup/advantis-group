@@ -9,9 +9,18 @@ export const aiRunKind = v.union(
   v.literal("coachWikiExtract"),
   v.literal("cvExtract"),
   v.literal("cvRescan"),
+  v.literal("ask"),
 );
 
-export const aiRunPhase = v.union(v.literal("reading"), v.literal("writing"), v.literal("finishing"));
+/** Records you can ask a question about in place. Each one has an access rule
+ * of its own in `aiRuns.askContext`, checked before any text is assembled. */
+export const askSubjectType = v.union(v.literal("itTicket"), v.literal("applicant"));
+
+export const aiRunPhase = v.union(
+  v.literal("reading"),
+  v.literal("writing"),
+  v.literal("finishing"),
+);
 
 export const aiRunStatus = v.union(
   v.literal("running"),

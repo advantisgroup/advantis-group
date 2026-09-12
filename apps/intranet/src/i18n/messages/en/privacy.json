@@ -1,14 +1,13 @@
 {
   "title": "Privacy Policy – Intranet",
-  "subtitle": "How we process personal data of authorized Advantis employees within the intranet – in line with the GDPR",
+  "subtitle": "How we process personal data of authorized Advantis employees within the intranet – in line with the GDPR. Each section opens with a plain-language line; the wording underneath it is what applies.",
   "updated": "Last updated: July 2026",
-  "tableOfContents": "Table of contents",
-  "viewTerms": "View Terms of Use",
-  "viewImprint": "View Imprint",
+  "tableOfContents": "On this page",
   "sections": [
     {
       "id": "scope",
       "title": "Scope",
+      "summary": "This covers the intranet specifically, and only for people who actually have access to it.",
       "paragraphs": [
         "This privacy policy applies exclusively to individuals who have been authorized for the advantis GmbH intranet (“Intranet”) and hold an active, provisioned account (“users”). It supplements the general privacy policy at advantisgroup.de with the additional processing that takes place solely within the Intranet.",
         "Anyone who merely registers or attempts to sign in through our authentication provider without being provisioned for the Intranet does not thereby become a user under this policy. Such sign-up attempts are covered exclusively by the “Unauthorized access attempts” section below – the remaining provisions of this policy, as well as the Intranet's Terms of Use, never apply to them.",
@@ -18,11 +17,13 @@
     {
       "id": "controller",
       "title": "Controller",
+      "summary": "advantis GmbH decides what happens with this data. Here's who to contact.",
       "paragraphs": ["The controller responsible for data processing within the Intranet is:"]
     },
     {
       "id": "categories",
       "title": "What data we process, and why",
+      "summary": "Your account and profile, sign-in and security events, presence and availability, absences, what you write and upload, admin actions, and technical access data.",
       "paragraphs": [
         "In connection with using the Intranet, we process the following categories of personal data of authorized users:"
       ],
@@ -61,6 +62,7 @@
     {
       "id": "recipients",
       "title": "Recipients and processors",
+      "summary": "A short list of service providers runs parts of the intranet on our behalf. No one else gets your data unless the law requires it.",
       "paragraphs": [
         "To provide the Intranet, we rely on carefully selected service providers who act as processors under Art. 28 GDPR on our behalf, or to whom we disclose data to fulfil the employment relationship:"
       ],
@@ -92,6 +94,10 @@
         {
           "title": "Clockodo",
           "description": "Time-tracking data for availability evaluation."
+        },
+        {
+          "title": "Anthropic",
+          "description": "Processing of AI requests. Only what an AI feature you started needs for that one task is sent — see “AI-assisted features” below."
         }
       ],
       "note": "Where individual providers process data outside the EU/EEA, we ensure an adequate level of data protection through appropriate safeguards, in particular EU Standard Contractual Clauses. We do not disclose data to other third parties unless legally required to do so."
@@ -99,15 +105,44 @@
     {
       "id": "retention",
       "title": "Retention period",
+      "summary": "Kept as long as the purpose needs, or as long as the law requires. AI runs are deleted after 30 days.",
       "paragraphs": [
         "We store personal data only for as long as necessary for the respective purpose, or as required by statutory retention obligations, such as commercial and tax-law periods of up to ten years.",
         "Account and profile data is stored for the duration of the provisioned access. If access is revoked, not granted, or an access request is denied, we delete the associated account, including profile data; business records that already exist and are subject to a statutory retention obligation are unaffected and are retained in pseudonymized form.",
-        "Attendance and availability evaluation data is retained only for as long as necessary for the respective evaluation period."
+        "Attendance and availability evaluation data is retained only for as long as necessary for the respective evaluation period.",
+        "AI runs — the record of a request and its result — are deleted automatically 30 days after they were started. Anything you chose to save out of a result, such as an accepted text or extracted applicant data, is then part of that record and follows its own retention period."
       ]
+    },
+    {
+      "id": "ai",
+      "title": "AI-assisted features",
+      "summary": "When you use an AI feature, the text that feature needs goes through our own API server to Anthropic. Results are stored encrypted for 30 days, only you can read them, and managers see counts — not content.",
+      "paragraphs": [
+        "The Intranet offers AI-assisted features that a person starts deliberately: the wiki assistant, formatting help and title/tag suggestions for wiki entries, reading a CV into an applicant record, summaries of your own Sales Coach calls, and asking a question about a single IT ticket or applicant record. Nothing is sent to an AI provider unless someone starts one of these (Art. 6(1)(f) GDPR, and Art. 6(1)(b) GDPR and § 26 BDSG where the processing serves the employment relationship).",
+        "What is sent is limited to what the feature needs for that one task — the wiki entry being edited, the CV file being read, your own call transcript, or the record you are asking about, assembled on our server under your own access rights. Your question or instruction is sent with it. No profile, absence, attendance or chat data is attached to a request unless it is itself the content you are working on.",
+        "Requests run from our own API server to Anthropic, which processes them on our behalf as a processor. No other AI provider is used, and requests are not used by us to train any model.",
+        "The result is encrypted by our API server before it is stored, so the Intranet's database holds no readable AI content. A run belongs to the person who started it: only they can open its text in the app."
+      ],
+      "list": [
+        {
+          "title": "What managers can see",
+          "description": "In the AI activity area, managers see how many runs happened, which features they came from, what failed and how many tokens were used, plus any feedback someone chose to submit — never the content of a request or an answer."
+        },
+        {
+          "title": "What you control",
+          "description": "You start every run yourself, you can stop one while it is working, and you can rate an answer. Ratings and any note you add are visible to managers."
+        },
+        {
+          "title": "What the company controls",
+          "description": "AI can be switched off entirely for the Intranet, and permission to use it is granted per role, so it can be withdrawn without touching anything else."
+        }
+      ],
+      "note": "The same information, kept in step with what the software actually does, is available inside the Intranet under Settings → AI."
     },
     {
       "id": "unauthorized",
       "title": "Unauthorized access attempts",
+      "summary": "Someone can create an account without being authorized. That account is deleted automatically and this policy never applies to them.",
       "paragraphs": [
         "Registration is technically open, but authorization is only checked after sign-in, based on the email domain and any invitation on file. As a result, an account can be created even though there is no authorization for the Intranet.",
         "In that case, the affected person is shown that access has been denied (“Access denied”) and the account created with our identity provider is deleted automatically and without delay. We do not further process the data submitted during that sign-up attempt, such as name and email address. This privacy policy and the Intranet's Terms of Use never take effect for such persons."
@@ -116,6 +151,7 @@
     {
       "id": "rights",
       "title": "Your rights",
+      "summary": "Access, rectification, erasure, restriction, objection and portability — an informal email is enough.",
       "paragraphs": [
         "Authorized users have the following rights regarding their personal data at any time:"
       ],
@@ -150,13 +186,16 @@
     {
       "id": "security",
       "title": "Security",
+      "summary": "Encrypted transmission, role-based access, logged admin actions — and AI results encrypted where they're stored.",
       "paragraphs": [
-        "We protect the data processed within the Intranet through technical and organizational measures, including encrypted transmission (TLS), role-based access rights, and logging of security-relevant administrative actions."
+        "We protect the data processed within the Intranet through technical and organizational measures, including encrypted transmission (TLS), role-based access rights, and logging of security-relevant administrative actions.",
+        "Content that is particularly sensitive in storage — chat with the wiki assistant, Sales Coach transcripts and AI results — is additionally encrypted by our API server before being written to the database."
       ]
     },
     {
       "id": "changes",
       "title": "Changes to this policy",
+      "summary": "This page is updated whenever the processing changes; the current version is always here.",
       "paragraphs": [
         "We update this privacy policy whenever data processing within the Intranet changes. The current version is always available on this page."
       ]
