@@ -173,6 +173,7 @@ export async function availableMethodsFor(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
   minLevel = 0,
+  { includePasskey = false }: { includePasskey?: boolean } = {},
 ): Promise<StepMethod[]> {
   const methods: StepMethod[] = ["email_code"];
   const totp = await ctx.db
@@ -188,7 +189,32 @@ export async function availableMethodsFor(
       .first();
     if (hasUnusedRecovery) methods.push("recovery_code");
   }
+  // A passkey is level 3 — at least as strong as the authenticator it would
+  // stand in for — so re-verifying with one is a real option, and usually the
+  // quickest. Held back when the account asked for MFA on top of a passkey:
+  // that preference exists precisely to say a passkey alone isn't enough.
+  // Sign-in doesn't pass this at all — there the passkey route is signing in
+  // again (`passkeyWouldSatisfy`), not a step-up on an existing session.
+  if (includePasskey && !(await prefersNonPasskeyFactor(ctx, userId))) {
+    const passkey = await ctx.db
+      .query("passkeys")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+    if (passkey) methods.push("passkey");
+  }
   return methods.filter((method) => LEVEL[method] >= minLevel);
+}
+
+/** The account's own "always require MFA, even after a passkey" preference. */
+async function prefersNonPasskeyFactor(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+): Promise<boolean> {
+  const pref = await ctx.db
+    .query("securityPreferences")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .unique();
+  return pref?.alwaysRequireMfaAtSignIn === true;
 }
 
 /** Whether signing in again with a passkey would clear this requirement —
@@ -328,8 +354,9 @@ export async function recordPasskeyVerification(
   ctx: MutationCtx,
   user: Doc<"users">,
   sessionId: string,
+  context: StepUpContext = "sign_in",
 ): Promise<void> {
-  await recordVerified(ctx, user, sessionId, "passkey", "sign_in");
+  await recordVerified(ctx, user, sessionId, "passkey", context);
 }
 
 // --- Org policy + per-session sign-in requirement ---------------------------
@@ -441,9 +468,8 @@ export async function resolveSignInRequirement(
     scope === "all" || (scope === "managers_and_up" && MANAGER_ROLES.includes(role));
 
   const mfaAccountPredatesPolicy = user.createdAt < policy.mfaPolicySetAt;
-  const mfaApplies = inScope(policy.requireMfaScope) && (
-    !mfaAccountPredatesPolicy || policy.requireMfaRetroactive
-  );
+  const mfaApplies =
+    inScope(policy.requireMfaScope) && (!mfaAccountPredatesPolicy || policy.requireMfaRetroactive);
   const mfaGraceDeadline = graceDeadlineFor(
     policy.mfaPolicySetAt,
     policy.requireMfaRetroactive,
@@ -453,9 +479,9 @@ export async function resolveSignInRequirement(
   const inMfaGrace = mfaGraceDeadline !== null && Date.now() < mfaGraceDeadline;
 
   const passkeyAccountPredatesPolicy = user.createdAt < policy.passkeyPolicySetAt;
-  const passkeyApplies = inScope(policy.requirePasskeyScope) && (
-    !passkeyAccountPredatesPolicy || policy.requirePasskeyRetroactive
-  );
+  const passkeyApplies =
+    inScope(policy.requirePasskeyScope) &&
+    (!passkeyAccountPredatesPolicy || policy.requirePasskeyRetroactive);
   const passkeyGraceDeadline = graceDeadlineFor(
     policy.passkeyPolicySetAt,
     policy.requirePasskeyRetroactive,
@@ -476,7 +502,8 @@ export async function resolveSignInRequirement(
   // told us they've lost — it keeps working for this session's sign-in, but
   // it no longer counts as "this account has MFA", which is what pushes them
   // into re-enrollment on the way in.
-  const hasQualifyingMfaCredential = (!!totp?.verifiedAt && !totp.recoveryUsedAt) || !!hasPasskeyCred;
+  const hasQualifyingMfaCredential =
+    (!!totp?.verifiedAt && !totp.recoveryUsedAt) || !!hasPasskeyCred;
 
   const needsMfaEnrollment = mfaApplies && !inMfaGrace && !hasQualifyingMfaCredential;
   const needsPasskeyEnrollment = passkeyApplies && !inPasskeyGrace && !hasPasskeyCred;

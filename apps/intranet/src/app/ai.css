@@ -69,9 +69,16 @@
 
 /* While a surface is working, light travels around its edge and it breathes
    a soft glow — enough to see from across the screen, never a spinner. */
-.ai-orbit {
-  position: relative;
-  isolation: isolate;
+/* Layered on purpose: un-layered CSS beats every `@layer`, so as a plain rule
+   this `position` quietly overrode the `fixed` on the AI dock and dropped it
+   back into the flow at the top of the shell. In `components` it only supplies
+   the positioning context the ring below needs, and any position utility on
+   the same element still wins. */
+@layer components {
+  .ai-orbit {
+    position: relative;
+    isolation: isolate;
+  }
 }
 
 .ai-orbit[data-working="true"]::before {

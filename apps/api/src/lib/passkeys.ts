@@ -156,7 +156,16 @@ export async function beginAuthentication() {
   };
 }
 
-export async function finishAuthentication(flowId: string, response: AuthenticationResponseJSON) {
+/**
+ * The WebAuthn half of using a passkey: checks the assertion against the
+ * stored credential and moves its signature counter on. Shared by signing in
+ * and by re-verifying a session that is already signed in — the difference
+ * between those is only what the caller does with the account it returns.
+ */
+export async function verifyAuthenticationAssertion(
+  flowId: string,
+  response: AuthenticationResponseJSON,
+) {
   const context = await getConvex().query(api.passkeys.apiAuthenticationContext, {
     serverKey: serverKey(),
     flowId,
@@ -187,6 +196,11 @@ export async function finishAuthentication(flowId: string, response: Authenticat
     deviceType: verification.authenticationInfo.credentialDeviceType,
     backedUp: verification.authenticationInfo.credentialBackedUp,
   });
+  return { clerkUserId: result.clerkUserId, signal: result.signal, rpID };
+}
+
+export async function finishAuthentication(flowId: string, response: AuthenticationResponseJSON) {
+  const result = await verifyAuthenticationAssertion(flowId, response);
   const signInToken = await getClerkClient().signInTokens.createSignInToken({
     userId: result.clerkUserId,
     expiresInSeconds: 60,
@@ -198,7 +212,7 @@ export async function finishAuthentication(flowId: string, response: Authenticat
     ...(result.signal
       ? {
           signal: {
-            rpId: rpID,
+            rpId: result.rpID,
             ...result.signal,
           } satisfies PasskeySignal,
         }

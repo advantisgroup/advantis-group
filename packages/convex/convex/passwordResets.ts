@@ -11,10 +11,12 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import {
+  availableMethodsFor,
   checkSatisfied,
   needsStepUpHint,
   ORG_REVERIFY_LEVEL,
   REVERIFY_FRESHNESS_MS,
+  type StepMethod,
   type StepUpHint,
 } from "./lib/stepUp";
 import { hashPassword, randomToken, sha256hex } from "./activity/lib/crypto";
@@ -640,7 +642,10 @@ export const dismissRequest = mutation({
         distinctId: admin.clerkUserId,
         properties: { scope: request.scope, action: "dismiss" },
       });
-      return needsStepUpHint(ORG_REVERIFY_LEVEL, ["email_code", "totp", "recovery_code"]);
+      return needsStepUpHint(
+        ORG_REVERIFY_LEVEL,
+        await availableMethodsFor(ctx, admin._id, ORG_REVERIFY_LEVEL, { includePasskey: true }),
+      );
     }
 
     await ctx.db.patch(requestId, {
@@ -723,6 +728,9 @@ export const prepareIssue = internalQuery({
   ): Promise<{
     admin: Doc<"users">;
     reverified: boolean;
+    /** What this admin could re-verify with — resolved here because the
+     * calling action has no database of its own to ask. */
+    availableMethods: StepMethod[];
     scope: PasswordResetScope;
     targetEmail: string;
     sentToEmail: string | null;
@@ -780,6 +788,9 @@ export const prepareIssue = internalQuery({
     return {
       admin,
       reverified,
+      availableMethods: reverified
+        ? []
+        : await availableMethodsFor(ctx, admin._id, ORG_REVERIFY_LEVEL, { includePasskey: true }),
       scope: request.scope,
       targetEmail: request.targetEmail,
       sentToEmail,
@@ -923,7 +934,7 @@ export const issueResetLink = action({
         targetEmail: prepared.targetEmail,
         detail: "action=issue",
       });
-      return needsStepUpHint(ORG_REVERIFY_LEVEL, ["email_code", "totp", "recovery_code"]);
+      return needsStepUpHint(ORG_REVERIFY_LEVEL, prepared.availableMethods);
     }
     if (prepared.needsEmailChoice) {
       // Both possible addresses, masked/public exactly as the admin UI would

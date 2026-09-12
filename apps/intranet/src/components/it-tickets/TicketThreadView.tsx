@@ -150,9 +150,12 @@ export function TicketThreadView({
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+      {/* A column with the list pushed down (`mt-auto`), so a short thread sits
+          on the composer instead of hanging from the top of an empty panel.
+          Once it overflows, `mt-auto` stops doing anything and it scrolls. */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-3">
         {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
             <span className="flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
               <MessageSquare className="size-5" />
             </span>
@@ -160,7 +163,7 @@ export function TicketThreadView({
             <p className="text-xs text-muted-foreground">{t("thread.noMessagesHint")}</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="mt-auto space-y-3">
             {messages.map((m, i) => {
               const prev = messages[i - 1];
               const showDay =

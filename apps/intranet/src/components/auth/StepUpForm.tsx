@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@clerk/nextjs";
+import { startAuthentication } from "@simplewebauthn/browser";
 import { AnimatePresence, motion } from "framer-motion";
 import { KeyRound, Loader2, Mail, LifeBuoy, Smartphone } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -37,14 +38,15 @@ const METHOD_ICON = {
  * field — six fixed slots is the wrong shape for them. */
 const isOtpMethod = (method: StepMethod) => method === "totp" || method === "email_code";
 
-/** Lowest number wins the default slot. A recovery code is a one-shot,
- * burn-it-and-print-a-new-one credential — offering it first (which the raw
- * server order did) invites people to spend one when their authenticator was
- * sitting in their pocket. */
+/** Lowest number wins the default slot. A passkey leads where the account has
+ * one: it's the strongest factor here and the only one that needs nothing
+ * typed. A recovery code is a one-shot, burn-it-and-print-a-new-one
+ * credential — offering it first (which the raw server order did) invites
+ * people to spend one when their authenticator was sitting in their pocket. */
 const METHOD_PRIORITY: Record<StepMethod, number> = {
-  totp: 0,
-  email_code: 1,
-  passkey: 2,
+  passkey: 0,
+  totp: 1,
+  email_code: 2,
   recovery_code: 3,
 };
 
@@ -106,7 +108,9 @@ export function StepUpForm({
   const methods = (
     availableMethods.length > 0 ? availableMethods : (["email_code"] as StepMethod[])
   )
-    .filter((candidate) => candidate !== "passkey")
+    // Signing in is the one place a passkey isn't a step-up: there the passkey
+    // route is signing in again, handled by the screen around this form.
+    .filter((candidate) => candidate !== "passkey" || context !== "sign_in")
     .sort((a, b) => METHOD_PRIORITY[a] - METHOD_PRIORITY[b]);
   const [method, setMethod] = useState<StepMethod>(methods[0] ?? "email_code");
   const [code, setCode] = useState("");
@@ -159,6 +163,38 @@ export function StepUpForm({
     sentOnce.current = "email_code";
     void sendCode();
   }, [method, sendCode]);
+
+  /** Re-verifies with a passkey: the same WebAuthn challenge the sign-in
+   * screen uses, redeemed against the step-up endpoint so it records a
+   * verification for this session instead of starting a new one. */
+  const submitPasskey = useCallback(async () => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const { options, flowId } = (await jsonOrThrow(
+        await fetch(`${apiUrl}/passkeys/authentication/options`, { method: "POST" }),
+      )) as { options: Parameters<typeof startAuthentication>[0]["optionsJSON"]; flowId: string };
+      const credential = await startAuthentication({ optionsJSON: options });
+      const result = (await jsonOrThrow(
+        await apiRequest("/auth/step-up/verify-passkey", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ flowId, response: credential, context }),
+        }),
+      )) as { ok: boolean; message?: string };
+      if (!result.ok) {
+        setError(result.message ?? t("genericError"));
+        return;
+      }
+      onVerified();
+    } catch (err) {
+      // A cancelled prompt throws too — it isn't an error worth shouting
+      // about, so it reads as "that didn't go through, try again".
+      setError(err instanceof Error && err.name === "NotAllowedError" ? null : t("passkeyError"));
+    } finally {
+      setSubmitting(false);
+    }
+  }, [apiRequest, context, onVerified, t]);
 
   useEffect(() => {
     if (cooldownUntil <= Date.now()) return;
@@ -234,7 +270,9 @@ export function StepUpForm({
             ? t("promptEmail")
             : method === "totp"
               ? t("promptTotp")
-              : t("promptRecovery")}
+              : method === "passkey"
+                ? t("promptPasskey")
+                : t("promptRecovery")}
         </p>
         {method === "email_code" && email ? (
           // Its own line, not inlined into the sentence: an address inside a
@@ -248,7 +286,12 @@ export function StepUpForm({
       </div>
 
       <div className="space-y-3">
-        {isOtpMethod(method) ? (
+        {method === "passkey" ? (
+          <Button className="w-full" disabled={busy} onClick={() => void submitPasskey()}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />}
+            {busy ? t("submitting") : t("usePasskey")}
+          </Button>
+        ) : isOtpMethod(method) ? (
           <motion.div
             // Re-keyed per method so switching re-plays the entrance rather
             // than silently swapping the slots' contents underneath you.
@@ -342,7 +385,7 @@ export function StepUpForm({
 
       {/* The recovery-code path has no natural completion length, so it keeps
           an explicit button. OTP methods auto-submit at six digits. */}
-      {!isOtpMethod(method) && (
+      {!isOtpMethod(method) && method !== "passkey" && (
         <Button
           className="w-full"
           disabled={code.length === 0 || busy}
@@ -414,7 +457,9 @@ export function StepUpForm({
                               ? t("methodTotp")
                               : candidate === "email_code"
                                 ? t("methodEmailCode")
-                                : t("methodRecoveryCode")}
+                                : candidate === "passkey"
+                                  ? t("methodPasskey")
+                                  : t("methodRecoveryCode")}
                           </span>
                         </button>
                       );

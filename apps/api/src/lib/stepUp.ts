@@ -2,9 +2,14 @@ import { createHash } from "node:crypto";
 
 import { api } from "@advantis/convex/api";
 import { ConvexError } from "convex/values";
+import type { AuthenticationResponseJSON } from "@simplewebauthn/server";
 
 import { getConvex, getConvexServerKey } from "./convex.js";
-import { verifyCode as verifyTotpCode, verifyRecoveryCode as verifyTotpRecoveryCode } from "./totp.js";
+import { verifyAuthenticationAssertion } from "./passkeys.js";
+import {
+  verifyCode as verifyTotpCode,
+  verifyRecoveryCode as verifyTotpRecoveryCode,
+} from "./totp.js";
 
 export type VerifyMethod = "email_code" | "totp" | "recovery_code";
 export type StepUpContext = "sign_in" | "destructive" | "admin_reverify";
@@ -92,6 +97,33 @@ export async function verifyStepUp(
     context,
   });
   return ok ? { ok: true } : { ok: false, message: "That code didn't match." };
+}
+
+/**
+ * Re-verifies an already signed-in session with a passkey — the same WebAuthn
+ * check signing in runs, but it records a step-up instead of minting a new
+ * session. A passkey is level 3, so this clears any step-up bar; the assertion
+ * has to resolve to the caller's own account, or someone with any passkey at
+ * all could clear someone else's prompt.
+ */
+export async function verifyStepUpPasskey(
+  clerkUserId: string,
+  sessionId: string,
+  flowId: string,
+  response: AuthenticationResponseJSON,
+  context: StepUpContext,
+): Promise<VerifyResult> {
+  const assertion = await verifyAuthenticationAssertion(flowId, response);
+  if (assertion.clerkUserId !== clerkUserId) {
+    return { ok: false, message: "That passkey belongs to a different account." };
+  }
+  const { ok } = await getConvex().mutation(api.stepUp.apiRecordPasskeyStepUp, {
+    serverKey: serverKey(),
+    clerkUserId,
+    sessionId,
+    context,
+  });
+  return ok ? { ok: true } : { ok: false, message: "That passkey could not be accepted." };
 }
 
 /** Mints the single-use ticket `finishAuthentication` (passkeys.ts) hands to

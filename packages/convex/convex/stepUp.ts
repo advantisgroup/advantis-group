@@ -148,7 +148,12 @@ const stepMethodValidator = v.union(
 // routes, never to these directly.
 
 export const apiRequestEmailCode = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string(), sessionId: v.string(), context: contextValidator },
+  args: {
+    serverKey: v.string(),
+    clerkUserId: v.string(),
+    sessionId: v.string(),
+    context: contextValidator,
+  },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
@@ -220,6 +225,27 @@ export const apiRecordVerification = mutation({
 
 // --- Passkey ticket handoff (see apps/api/src/lib/passkeys.ts) ---------------
 
+/** Records a passkey re-verification for an existing session — the in-session
+ * sibling of the ticket dance below, for when someone re-verifies with their
+ * passkey instead of typing a code. apps/api has already checked the WebAuthn
+ * assertion and that the credential belongs to this caller. */
+export const apiRecordPasskeyStepUp = mutation({
+  args: {
+    serverKey: v.string(),
+    clerkUserId: v.string(),
+    sessionId: v.string(),
+    context: contextValidator,
+  },
+  returns: v.object({ ok: v.boolean() }),
+  handler: async (ctx, args) => {
+    assertServerKey(args.serverKey);
+    const user = await getUserByClerkId(ctx, args.clerkUserId);
+    if (!user) return { ok: false };
+    await recordPasskeyVerification(ctx, user, args.sessionId, args.context);
+    return { ok: true };
+  },
+});
+
 export const apiIssuePasskeyTicket = mutation({
   args: { serverKey: v.string(), clerkUserId: v.string() },
   returns: v.object({ ticket: v.string() }),
@@ -243,7 +269,12 @@ export const apiIssuePasskeyTicket = mutation({
  * necessarily picked up the freshly-created session, so this can't rely on
  * `ctx.auth` naming the right identity yet. */
 export const apiClaimPasskeyTicket = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string(), ticket: v.string(), sessionId: v.string() },
+  args: {
+    serverKey: v.string(),
+    clerkUserId: v.string(),
+    ticket: v.string(),
+    sessionId: v.string(),
+  },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
@@ -290,7 +321,9 @@ export const apiDestructiveGate = query({
     return {
       satisfied,
       requiredLevel,
-      availableMethods: satisfied ? [] : await availableMethodsFor(ctx, user._id, requiredLevel),
+      availableMethods: satisfied
+        ? []
+        : await availableMethodsFor(ctx, user._id, requiredLevel, { includePasskey: true }),
     };
   },
 });
@@ -298,7 +331,12 @@ export const apiDestructiveGate = query({
 // --- Device/risk signal (see apps/api's device-evaluate route) ---------------
 
 export const apiEvaluateDevice = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string(), sessionId: v.string(), deviceHash: v.string() },
+  args: {
+    serverKey: v.string(),
+    clerkUserId: v.string(),
+    sessionId: v.string(),
+    deviceHash: v.string(),
+  },
   returns: v.object({ newDevice: v.boolean() }),
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
@@ -308,9 +346,7 @@ export const apiEvaluateDevice = mutation({
     const now = Date.now();
     const existing = await ctx.db
       .query("knownDevices")
-      .withIndex("by_user_hash", (q) =>
-        q.eq("userId", user._id).eq("deviceHash", args.deviceHash),
-      )
+      .withIndex("by_user_hash", (q) => q.eq("userId", user._id).eq("deviceHash", args.deviceHash))
       .unique();
     if (existing) {
       await ctx.db.patch(existing._id, { lastSeenAt: now });
@@ -345,9 +381,7 @@ export const apiEvaluateDevice = mutation({
     // rest.
     const existingSignals = await ctx.db
       .query("sessionRiskSignals")
-      .withIndex("by_user_session", (q) =>
-        q.eq("userId", user._id).eq("sessionId", args.sessionId),
-      )
+      .withIndex("by_user_session", (q) => q.eq("userId", user._id).eq("sessionId", args.sessionId))
       .collect();
     const [keep, ...duplicates] = existingSignals;
     for (const dup of duplicates) await ctx.db.delete(dup._id);

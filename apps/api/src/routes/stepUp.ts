@@ -1,6 +1,12 @@
 import { Elysia, t } from "elysia";
 
-import { claimPasskeyTicket, evaluateDevice, requestStepUpCode, verifyStepUp } from "../lib/stepUp.js";
+import {
+  claimPasskeyTicket,
+  evaluateDevice,
+  requestStepUpCode,
+  verifyStepUp,
+  verifyStepUpPasskey,
+} from "../lib/stepUp.js";
 import { clientIp } from "../lib/client-ip.js";
 import { Errors } from "../lib/errors.js";
 import { rateLimit } from "../lib/rate-limit.js";
@@ -38,6 +44,32 @@ export const stepUpRoute = new Elysia()
       body: t.Object({
         method: t.Union([t.Literal("email_code"), t.Literal("totp"), t.Literal("recovery_code")]),
         code: t.String(),
+        context: contextSchema,
+      }),
+    },
+  )
+  /** Re-verify the current session with a passkey. The challenge comes from
+   * the shared `/passkeys/authentication/options`; only the redemption is
+   * step-up specific. */
+  .post(
+    "/auth/step-up/verify-passkey",
+    async ({ request, body }) => {
+      requireFirstPartyOrigin(request);
+      const { clerkUserId, sessionId } = await requireAuth(request);
+      if (!sessionId) throw Errors.badRequest("No active session");
+      await rateLimit("step-up-verify", clerkUserId, 20, "10 m");
+      return await verifyStepUpPasskey(
+        clerkUserId,
+        sessionId,
+        body.flowId,
+        body.response as never,
+        body.context,
+      );
+    },
+    {
+      body: t.Object({
+        flowId: t.String(),
+        response: t.Unknown(),
         context: contextSchema,
       }),
     },
