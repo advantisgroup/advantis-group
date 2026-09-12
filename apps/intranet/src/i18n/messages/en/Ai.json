@@ -38,6 +38,22 @@
   "dockWorking": "{count} working",
   "dockReady": "{count, plural, one {# result ready} other {# results ready}}",
   "dockFinishedAgo": "Ready · {minutes, plural, =0 {just now} one {# min ago} other {# min ago}}",
+  "detail": {
+    "title": "Run details",
+    "aboutRun": "This run",
+    "status": "Status",
+    "started": "Started",
+    "duration": "Duration",
+    "model": "Model",
+    "tokens": "Tokens",
+    "tokensValue": "{in, number} in · {out, number} out",
+    "output": "Output",
+    "sources": "What it was given",
+    "sourcesEmpty": "Not recorded for this run.",
+    "notRecorded": "Not recorded",
+    "errorCode": "Error code",
+    "result": "Result"
+  },
   "errors": {
     "rate_limited": "Too many requests right now — give it a minute, then try again.",
     "upstream": "The AI service didn't respond. Try again in a moment.",

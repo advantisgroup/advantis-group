@@ -38,6 +38,10 @@ function toMeta(run: Doc<"aiRuns">) {
     status: run.status,
     phase: run.phase,
     outputChars: run.outputChars,
+    model: run.model ?? null,
+    tokensIn: run.tokensIn ?? null,
+    tokensOut: run.tokensOut ?? null,
+    sources: run.sources ?? [],
     errorCode: run.errorCode ?? null,
     retryable: run.retryable ?? false,
     startedAt: run.startedAt,
@@ -161,6 +165,7 @@ export const apiStart = mutation({
     kind: aiRunKind,
     subjectKey: v.string(),
     href: v.optional(v.string()),
+    model: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
@@ -188,6 +193,7 @@ export const apiStart = mutation({
       kind: args.kind,
       subjectKey: args.subjectKey,
       href: args.href,
+      model: args.model,
       status: "running",
       phase: "reading",
       outputChars: 0,
@@ -226,8 +232,13 @@ export const apiFinish = mutation({
     runId: v.id("aiRuns"),
     output: v.string(),
     outputChars: v.number(),
+    tokensIn: v.optional(v.number()),
+    tokensOut: v.optional(v.number()),
+    sources: v.optional(
+      v.array(v.object({ label: v.string(), href: v.optional(v.string()) })),
+    ),
   },
-  handler: async (ctx, { serverKey, runId, output, outputChars }) => {
+  handler: async (ctx, { serverKey, runId, output, outputChars, tokensIn, tokensOut, sources }) => {
     assertServerKey(serverKey);
     const run = await ctx.db.get(runId);
     if (!run || run.status !== "running") return null;
@@ -237,6 +248,9 @@ export const apiFinish = mutation({
       phase: "finishing",
       output,
       outputChars,
+      tokensIn,
+      tokensOut,
+      sources,
       heartbeatAt: now,
       finishedAt: now,
     });

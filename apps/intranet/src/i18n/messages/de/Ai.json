@@ -38,6 +38,22 @@
   "dockWorking": "{count} in Arbeit",
   "dockReady": "{count, plural, one {# Ergebnis bereit} other {# Ergebnisse bereit}}",
   "dockFinishedAgo": "Fertig · {minutes, plural, =0 {gerade eben} other {vor # Min.}}",
+  "detail": {
+    "title": "Details zum Lauf",
+    "aboutRun": "Dieser Lauf",
+    "status": "Status",
+    "started": "Gestartet",
+    "duration": "Dauer",
+    "model": "Modell",
+    "tokens": "Tokens",
+    "tokensValue": "{in, number} rein · {out, number} raus",
+    "output": "Ausgabe",
+    "sources": "Womit gearbeitet wurde",
+    "sourcesEmpty": "Für diesen Lauf nicht erfasst.",
+    "notRecorded": "Nicht erfasst",
+    "errorCode": "Fehlercode",
+    "result": "Ergebnis"
+  },
   "errors": {
     "rate_limited": "Gerade zu viele Anfragen – warte kurz und versuch es dann noch mal.",
     "upstream": "Der KI-Dienst hat nicht geantwortet. Versuch es gleich noch einmal.",

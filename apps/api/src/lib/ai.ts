@@ -53,11 +53,23 @@ export function safeHref(href: string | undefined): string | undefined {
   return href && href.startsWith("/") && !href.startsWith("//") ? href.slice(0, 300) : undefined;
 }
 
+/** One thing the model was given, shown in the run's details. Keep labels
+ * plain enough to mean something to whoever reads them later. */
+export interface AiRunSource {
+  label: string;
+  /** In-app link to the thing itself, where one exists. */
+  href?: string;
+}
+
 export interface AiRunContext {
   signal: AbortSignal;
   phase(phase: AiRunPhase): void;
   /** The text so far — snapshots are throttled, so call it on every delta. */
   text(soFar: string): void;
+  /** Declare what went into the prompt, so the run can say so afterwards. */
+  addSources(sources: AiRunSource[]): void;
+  /** Called by `runModelText` for every model turn in the run. */
+  recordUsage(tokensIn: number, tokensOut: number): void;
 }
 
 const HEARTBEAT_MS = 5_000;
@@ -95,6 +107,7 @@ export async function startAiRun(
       kind: scope.kind,
       subjectKey: scope.subjectKey,
       href: safeHref(scope.href),
+      model: AI_MODEL,
     });
   } catch (err) {
     if (err instanceof ConvexError && (err.data as { code?: string })?.code === "conflict") {
@@ -109,6 +122,9 @@ export async function startAiRun(
   let latest = "";
   let lastSnapshotAt = 0;
   let writes = Promise.resolve();
+  let sources: AiRunSource[] = [];
+  let tokensIn = 0;
+  let tokensOut = 0;
 
   const push = () => {
     const snapshot = {
@@ -144,6 +160,14 @@ export async function startAiRun(
         push();
       }
     },
+    addSources(next) {
+      // Capped: this is a summary for a person to read, not an audit trail.
+      sources = [...sources, ...next].slice(0, 12);
+    },
+    recordUsage(inTokens, outTokens) {
+      tokensIn += inTokens;
+      tokensOut += outTokens;
+    },
   };
 
   const job = (async () => {
@@ -166,6 +190,9 @@ export async function startAiRun(
           runId,
           output: encrypt(output, key),
           outputChars: output.length,
+          tokensIn: tokensIn || undefined,
+          tokensOut: tokensOut || undefined,
+          sources: sources.length > 0 ? sources : undefined,
         });
       } else {
         const { code, retryable } = describeFailure(failure);
@@ -197,6 +224,7 @@ export async function runModelText(
     { model: AI_MODEL, ...request },
     { signal: run.signal, onText: run.text },
   );
+  run.recordUsage(message.usage?.input_tokens ?? 0, message.usage?.output_tokens ?? 0);
   if (!text.trim()) throw new AiRunError("no_content");
   if (message.stop_reason === "max_tokens" && !acceptTruncated) {
     throw new AiRunError("truncated");

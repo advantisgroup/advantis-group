@@ -135,6 +135,13 @@ export const wikiChatRoute = new Elysia()
           href: `/wiki-chat?chat=${chatId}`,
         },
         async (run) => {
+          // No retrieval here: the assistant answers from the briefing in
+          // WIKI_SYSTEM plus this conversation, and says so rather than
+          // implying it looked anything up in the wiki.
+          run.addSources([
+            { label: "UTA product & extension briefing (built into the assistant)" },
+            { label: `Conversation so far (${asked.length} messages)`, href: `/wiki-chat?chat=${chatId}` },
+          ]);
           const answer = await runModelText(
             run,
             {
