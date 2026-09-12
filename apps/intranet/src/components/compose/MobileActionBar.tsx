@@ -3,6 +3,7 @@
 import { type ReactNode } from "react";
 
 import { AiDockButton } from "@/components/ai/AiDock";
+import { useRegisterActionBar } from "@/components/layout/bottom-bars";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { cn } from "@/lib/utils";
 
@@ -24,9 +25,9 @@ export function MobileActionBar({
   className?: string;
 }) {
   const keyboardOpen = useKeyboardInset() > 0;
+  useRegisterActionBar(!keyboardOpen);
   return (
     <div
-      data-mobile-action-bar
       className={cn(
         "z-40 flex items-center gap-1.5 border-t border-border/70 bg-background/95 px-3 pt-2.5 backdrop-blur-xl print:hidden md:hidden",
         inline ? "shrink-0" : "fixed inset-x-0 bottom-0",
@@ -35,7 +36,7 @@ export function MobileActionBar({
       )}
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.625rem)" }}
     >
-      <AiDockButton placement="bottom" />
+      <AiDockButton placement="bottom" active={!keyboardOpen} />
       {children}
     </div>
   );

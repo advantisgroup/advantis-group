@@ -9,6 +9,7 @@ import { useMutation, useQuery } from "convex/react";
 import { AlertTriangle, Check, CircleSlash, Unplug, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { useAiSlotPresent, useRegisterAiSlot } from "@/components/layout/bottom-bars";
 import { Button } from "@/components/ui/button";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -149,7 +150,7 @@ export function AiDock() {
           type="button"
           data-working={working > 0}
           aria-label={t("dockLabel")}
-          className="ai-orbit ai-edge fixed bottom-6 right-6 z-40 hidden h-10 items-center gap-2 rounded-full pl-3 pr-3.5 text-sm font-medium shadow-overlay transition-transform [--ai-ground:var(--popover)] hover:scale-[1.03] print:hidden md:flex"
+          className="ai-orbit ai-edge fixed bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] right-6 z-50 hidden h-10 items-center gap-2 rounded-full pl-3 pr-3.5 text-sm font-medium shadow-overlay transition-transform [--ai-ground:var(--popover)] hover:scale-[1.03] print:hidden md:flex"
         >
           <AiGlyph working={working > 0} />
           <span className={cn(working > 0 && "ai-shimmer")}>
@@ -182,16 +183,24 @@ export function AiDock() {
  */
 export function AiDockButton({
   placement,
+  active = true,
   className,
 }: {
   placement: "top" | "bottom";
+  /** A bottom bar passes `false` while it's off screen (e.g. the keyboard is
+   * open), so the header's copy takes over instead of both disappearing. */
+  active?: boolean;
   className?: string;
 }) {
   const t = useTranslations("Ai");
   const { visible, now, working, waiting } = useDockRuns();
   const [open, setOpen] = useState(false);
+  const bottomSlotPresent = useAiSlotPresent();
+  useRegisterAiSlot(placement === "bottom" && active && visible.length > 0);
 
   if (visible.length === 0) return null;
+  if (placement === "bottom" && !active) return null;
+  if (placement === "top" && bottomSlotPresent) return null;
 
   return (
     <>
@@ -199,12 +208,7 @@ export function AiDockButton({
         variant="ghost"
         size="icon"
         aria-label={t("dockLabel")}
-        data-ai-dock-slot={placement === "bottom" ? "" : undefined}
-        className={cn(
-          "relative shrink-0 md:hidden",
-          placement === "top" && "[body:has([data-ai-dock-slot])_&]:hidden",
-          className,
-        )}
+        className={cn("relative shrink-0 md:hidden", className)}
         onClick={() => setOpen(true)}
       >
         <AiGlyph working={working > 0} className="size-5" />

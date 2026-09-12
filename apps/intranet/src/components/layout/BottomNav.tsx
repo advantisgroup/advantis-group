@@ -7,9 +7,11 @@ import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
 
 import { AiDockButton } from "@/components/ai/AiDock";
+import { useActionBarPresent } from "@/components/layout/bottom-bars";
 import { BottomNavTabButtons, useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
 import { MobilePageHeaderActions, usePageHeaderBarState } from "@/components/layout/PageHeaderBar";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { cn } from "@/lib/utils";
 
 /**
@@ -41,32 +43,47 @@ export function BottomNav() {
   const hasTabs = tabs !== null && tabs.length > 0;
   const { actions: pageActions } = usePageHeaderBarState();
   const hasActions = pageActions !== null && pageActions.length > 0;
+  // Steps aside while a form's MobileActionBar is on screen — it takes this
+  // spot — and while the keyboard covers it, where it would only be a strip
+  // of dead pixels behind the keys.
+  const actionBar = useActionBarPresent();
+  const keyboardOpen = useKeyboardInset() > 0;
 
-  // Steps aside while a form's MobileActionBar is on screen — it takes this spot.
+  if (actionBar || keyboardOpen) return null;
+
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] print:hidden md:hidden [body:has([data-mobile-action-bar])_&]:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] print:hidden md:hidden">
       {/* With a page's tabs in the pill every item is an icon, packed a little
           tighter — five HR tabs plus search, the AI dock and the menu need to
-          fit a 360px phone without scrolling sideways. */}
+          fit a 360px phone. Only the tabs and page actions scroll sideways;
+          search, AI and the menu stay pinned, so they can never end up off
+          the end of a long tab row where nobody would find them. */}
       <div
         className={cn(
-          "flex max-w-full items-center overflow-x-auto rounded-full border border-border/70 bg-background/90 p-1 shadow-lg shadow-black/30 backdrop-blur-xl [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          "flex max-w-full items-center rounded-full border border-border/70 bg-background/90 p-1 shadow-lg shadow-black/30 backdrop-blur-xl",
           hasTabs ? "gap-0.5" : "gap-1",
         )}
       >
-        {hasTabs && (
+        {(hasTabs || hasActions) && (
           <>
-            <BottomNavTabButtons
-              tabs={tabs ?? []}
-              activeValue={activeValue}
-              layoutId="bottom-nav-active-tab"
-            />
-            <span className="h-5 w-px shrink-0 bg-border/70" aria-hidden />
-          </>
-        )}
-        {hasActions && (
-          <>
-            <MobilePageHeaderActions />
+            <div
+              className={cn(
+                "flex min-w-0 flex-1 items-center overflow-x-auto [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+                hasTabs ? "gap-0.5" : "gap-1",
+              )}
+            >
+              {hasTabs && (
+                <BottomNavTabButtons
+                  tabs={tabs ?? []}
+                  activeValue={activeValue}
+                  layoutId="bottom-nav-active-tab"
+                />
+              )}
+              {hasTabs && hasActions && (
+                <span className="h-5 w-px shrink-0 bg-border/70" aria-hidden />
+              )}
+              {hasActions && <MobilePageHeaderActions />}
+            </div>
             <span className="h-5 w-px shrink-0 bg-border/70" aria-hidden />
           </>
         )}
