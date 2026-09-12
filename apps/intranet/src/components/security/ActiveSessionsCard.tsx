@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import type { SessionWithActivitiesResource } from "@clerk/types";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Loader2, LogOut, Monitor, Smartphone } from "lucide-react";
@@ -17,6 +17,15 @@ import { useConfirm } from "@/components/ui/dialog";
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 import { useDesignPreview } from "@/lib/design-preview";
 
+/** Clerk's own code for "this session hasn't proven itself recently enough
+ * for a sensitive action" — revoking another session is one of those. We
+ * don't have a UI here for stepping the user back up, so the only useful
+ * move is pointing them at Clerk's own account modal, which does. */
+function needsReverification(error: unknown): boolean {
+  const errors = (error as { errors?: Array<{ code?: string }> } | null)?.errors;
+  return Array.isArray(errors) && errors.some((e) => e.code === "session_reverification_required");
+}
+
 /**
  * Where this account is signed in, straight from Clerk.
  *
@@ -30,6 +39,7 @@ export function ActiveSessionsCard() {
   const t = useTranslations("Settings");
   const format = useFormatter();
   const confirm = useConfirm();
+  const clerk = useClerk();
   const { user } = useUser();
   const { sessionId } = useAuth();
   const prefersReducedMotion = useReducedMotion();
@@ -52,6 +62,15 @@ export function ActiveSessionsCard() {
     void load();
   }, [load]);
 
+  function promptReverification() {
+    toast.error(t("sessions.needsVerification"), {
+      action: {
+        label: t("sessions.openSecurity"),
+        onClick: () => clerk.openUserProfile(),
+      },
+    });
+  }
+
   async function revoke(session: SessionWithActivitiesResource) {
     const ok = await confirm({
       title: t("sessions.revokeTitle"),
@@ -68,7 +87,11 @@ export function ActiveSessionsCard() {
       toast.success(t("sessions.revoked"));
     } catch (error) {
       console.error("[sessions] revoke failed", error);
-      toast.error(t("sessions.revokeError"));
+      if (needsReverification(error)) {
+        promptReverification();
+      } else {
+        toast.error(t("sessions.revokeError"));
+      }
     } finally {
       setBusyId(null);
     }
@@ -90,7 +113,19 @@ export function ActiveSessionsCard() {
       // Sequential rather than Promise.all: Clerk rate-limits these, and a
       // partial failure mid-batch should still leave the ones already
       // revoked revoked.
-      for (const session of others) await session.revoke();
+      for (const session of others) {
+        try {
+          await session.revoke();
+        } catch (error) {
+          if (!needsReverification(error)) throw error;
+          // Reverification is a property of this session's own proof of
+          // identity, not of the target session, so every remaining revoke
+          // would fail the same way — stop instead of prompting per-session.
+          await load();
+          promptReverification();
+          return;
+        }
+      }
       await load();
       toast.success(t("sessions.revokedAll"));
     } catch (error) {

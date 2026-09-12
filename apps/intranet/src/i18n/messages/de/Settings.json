@@ -19,7 +19,9 @@
     "revokeAllConfirm": "Andere abmelden",
     "revoked": "Die Sitzung wurde abgemeldet.",
     "revokedAll": "Alle anderen Sitzungen wurden abgemeldet.",
-    "revokeError": "Die Sitzung konnte nicht abgemeldet werden. Versuche es erneut."
+    "revokeError": "Die Sitzung konnte nicht abgemeldet werden. Versuche es erneut.",
+    "needsVerification": "Aus Sicherheitsgründen ist dafür erst eine erneute Bestätigung nötig.",
+    "openSecurity": "Kontosicherheit öffnen"
   },
   "activity": {
     "title": "Sicherheitsaktivität",

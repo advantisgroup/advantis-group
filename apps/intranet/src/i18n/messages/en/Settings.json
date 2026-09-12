@@ -19,7 +19,9 @@
     "revokeAllConfirm": "Sign the others out",
     "revoked": "That session was signed out.",
     "revokedAll": "Every other session was signed out.",
-    "revokeError": "Could not sign that session out. Try again."
+    "revokeError": "Could not sign that session out. Try again.",
+    "needsVerification": "For your security, this needs a fresh verification first.",
+    "openSecurity": "Open account security"
   },
   "activity": {
     "title": "Security activity",
