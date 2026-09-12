@@ -266,6 +266,55 @@
   --radius-2xl: 14px;
 }
 
+/* Refreshed dark: the same warm near-neutral ground the light side uses,
+   read the other way up — a dark ground, one step of lift for cards, and
+   borders that are a hairline rather than a line. Only the neutrals move;
+   the Advantis red stays the accent, and the status/chart tokens below are
+   left alone so a chart means the same thing in either design.
+
+   `:not(.light)` rather than `.dark` because dark is what a bare `:root`
+   already is here (see the palette in `@layer base`) — this has to cover the
+   moment before the theme class lands as well as the explicit choice. Kept
+   un-layered so it wins over those base values. */
+:root[data-design="refreshed"]:not(.light) {
+  --background: rgb(31 30 29);
+  --foreground: rgb(245 244 239);
+
+  --card: rgb(38 38 36);
+  --card-foreground: rgb(245 244 239);
+  --card-border: rgb(58 56 53);
+
+  --popover: rgb(44 43 41);
+  --popover-foreground: rgb(245 244 239);
+
+  --secondary: rgb(52 51 48);
+  --secondary-foreground: rgb(245 244 239);
+
+  --muted: rgb(52 51 48);
+  --muted-foreground: rgb(163 160 152);
+
+  --accent: rgb(52 51 48);
+  --accent-foreground: rgb(245 244 239);
+
+  --border: rgb(58 56 53);
+  --input: rgb(58 56 53);
+
+  /* A shade under the page, the way the light side sits a shade over it. */
+  --sidebar: rgb(26 25 24);
+  --sidebar-foreground: rgb(245 244 239);
+  --sidebar-accent: rgb(52 51 48);
+  --sidebar-accent-foreground: rgb(245 244 239);
+  --sidebar-border: rgb(58 56 53);
+
+  /* A chart's own surface follows the card it sits in — the series colours
+     below are deliberately left as they are, so the CVD validation they carry
+     still holds (this ground is a shade lighter, nothing more). */
+  --chart-panel: rgb(38 38 36);
+  --chart-grid: rgb(58 56 53);
+  --chart-axis: rgb(163 160 152);
+  --chart-fg: rgb(245 244 239);
+}
+
 /* The OTP slots draw their own caret — the real input behind them is
    transparent, so the browser's caret never shows. */
 @keyframes caret-blink {
