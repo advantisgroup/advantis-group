@@ -212,6 +212,7 @@
   "authenticationSaving": "Wird gespeichert…",
   "authenticationCancel": "Abbrechen",
   "authenticationDiscard": "Änderungen verwerfen",
+  "authenticationUnsaved": "Nicht gespeicherte Änderungen",
   "authenticationSaved": "Authentifizierungsrichtlinie gespeichert",
   "nav": {
     "groupGeneral": "Allgemein",

@@ -66,6 +66,8 @@
     "accessOnBody": "Du kannst KI-Läufe starten. Alles Weitere unten beschreibt, was dabei passiert.",
     "accessOff": "KI ist für dich nicht freigeschaltet",
     "accessOffBody": "Deine Rolle enthält keine KI-Nutzung – die KI-Buttons bleiben ausgeblendet und es kann kein Lauf starten. Ein Admin kann das im Adminbereich unter Rollen freischalten.",
+    "moreLead": "Dasselbe in juristischer Fassung:",
+    "moreLink": "Datenschutzerklärung → KI-gestützte Funktionen",
     "featuresTitle": "Wo KI eingesetzt wird",
     "featuresHint": "Jede Stelle im Intranet, die einen KI-Lauf starten kann – und was dabei gesendet wird.",
     "feature": {

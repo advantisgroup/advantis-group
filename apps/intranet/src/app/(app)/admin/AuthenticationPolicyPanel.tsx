@@ -385,147 +385,156 @@ export function AuthenticationPolicyPanel() {
       .finally(() => setSaving(false));
   }
 
+  const discard = () =>
+    policy &&
+    setForm({
+      requireMfaScope: policy.requireMfaScope,
+      requireMfaRetroactive: policy.requireMfaRetroactive,
+      requireMfaForDestructive: policy.requireMfaForDestructive,
+      destructiveActionTtlMinutes: policy.destructiveActionTtlMinutes,
+      minDestructiveLevel: policy.minDestructiveLevel,
+      requirePasskeyScope: policy.requirePasskeyScope,
+      requirePasskeyRetroactive: policy.requirePasskeyRetroactive,
+      gracePeriodDays: policy.gracePeriodDays,
+      exemptUserIds: policy.exemptUserIds,
+    });
+
   return (
     <div className="space-y-4">
-      <Card>
-        <CardContent className="space-y-6 p-5">
-          <ScopeSection
-            title={t("authenticationMfaTitle")}
-            hint={t("authenticationMfaHint")}
-            scope={form.requireMfaScope}
-            retroactive={form.requireMfaRetroactive}
-            onScopeChange={(requireMfaScope) => setForm({ ...form, requireMfaScope })}
-            onRetroactiveChange={(requireMfaRetroactive) =>
-              setForm({ ...form, requireMfaRetroactive })
-            }
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="space-y-6 p-5">
-          <ScopeSection
-            title={t("authenticationPasskeyTitle")}
-            hint={t("authenticationPasskeyHint")}
-            scope={form.requirePasskeyScope}
-            retroactive={form.requirePasskeyRetroactive}
-            onScopeChange={(requirePasskeyScope) => setForm({ ...form, requirePasskeyScope })}
-            onRetroactiveChange={(requirePasskeyRetroactive) =>
-              setForm({ ...form, requirePasskeyRetroactive })
-            }
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="space-y-4 p-5">
-          <div>
-            <p className="font-medium">{t("authenticationDestructiveTitle")}</p>
-            <p className="text-sm text-muted-foreground">{t("authenticationDestructiveHint")}</p>
-          </div>
-          <label className="flex cursor-pointer items-start gap-2.5 text-sm">
-            <Checkbox
-              checked={form.requireMfaForDestructive}
-              onCheckedChange={(v) => setForm({ ...form, requireMfaForDestructive: v === true })}
-              className="mt-0.5"
-            />
-            {t("authenticationDestructiveEnable")}
-          </label>
-          {form.requireMfaForDestructive && (
-            <div className="grid gap-4 pl-1 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
-                  {t("authenticationDestructiveLevel")}
-                </Label>
-                <Select
-                  value={String(form.minDestructiveLevel)}
-                  onValueChange={(v) => setForm({ ...form, minDestructiveLevel: Number(v) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">{t("authenticationLevel1")}</SelectItem>
-                    <SelectItem value="2">{t("authenticationLevel2")}</SelectItem>
-                    <SelectItem value="3">{t("authenticationLevel3")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
-                  {t("authenticationDestructiveTtl")}
-                </Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={120}
-                  value={form.destructiveActionTtlMinutes}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      destructiveActionTtlMinutes: Math.max(1, Number(e.target.value) || 1),
-                    })
-                  }
-                />
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="space-y-6 p-5">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">
-              {t("authenticationGracePeriod")}
-            </Label>
-            <p className="text-sm text-muted-foreground">{t("authenticationGracePeriodHint")}</p>
-            <Input
-              type="number"
-              min={0}
-              max={90}
-              className="max-w-32"
-              value={form.gracePeriodDays}
-              onChange={(e) =>
-                setForm({ ...form, gracePeriodDays: Math.max(0, Number(e.target.value) || 0) })
+      {/* The two enrolment policies read as a pair and are the same shape, so
+          they sit side by side rather than one screenful after the other. */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardContent className="space-y-6 p-5">
+            <ScopeSection
+              title={t("authenticationMfaTitle")}
+              hint={t("authenticationMfaHint")}
+              scope={form.requireMfaScope}
+              retroactive={form.requireMfaRetroactive}
+              onScopeChange={(requireMfaScope) => setForm({ ...form, requireMfaScope })}
+              onRetroactiveChange={(requireMfaRetroactive) =>
+                setForm({ ...form, requireMfaRetroactive })
               }
             />
-          </div>
+          </CardContent>
+        </Card>
 
-          <ExemptUsersPicker
-            selected={form.exemptUserIds}
-            onChange={(exemptUserIds) => setForm({ ...form, exemptUserIds })}
-          />
-        </CardContent>
-      </Card>
+        <Card>
+          <CardContent className="space-y-6 p-5">
+            <ScopeSection
+              title={t("authenticationPasskeyTitle")}
+              hint={t("authenticationPasskeyHint")}
+              scope={form.requirePasskeyScope}
+              retroactive={form.requirePasskeyRetroactive}
+              onScopeChange={(requirePasskeyScope) => setForm({ ...form, requirePasskeyScope })}
+              onRetroactiveChange={(requirePasskeyRetroactive) =>
+                setForm({ ...form, requirePasskeyRetroactive })
+              }
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardContent className="space-y-4 p-5">
+            <div>
+              <p className="font-medium">{t("authenticationDestructiveTitle")}</p>
+              <p className="text-sm text-muted-foreground">{t("authenticationDestructiveHint")}</p>
+            </div>
+            <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+              <Checkbox
+                checked={form.requireMfaForDestructive}
+                onCheckedChange={(v) => setForm({ ...form, requireMfaForDestructive: v === true })}
+                className="mt-0.5"
+              />
+              {t("authenticationDestructiveEnable")}
+            </label>
+            {form.requireMfaForDestructive && (
+              <div className="grid gap-4 pl-1 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">
+                    {t("authenticationDestructiveLevel")}
+                  </Label>
+                  <Select
+                    value={String(form.minDestructiveLevel)}
+                    onValueChange={(v) => setForm({ ...form, minDestructiveLevel: Number(v) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">{t("authenticationLevel1")}</SelectItem>
+                      <SelectItem value="2">{t("authenticationLevel2")}</SelectItem>
+                      <SelectItem value="3">{t("authenticationLevel3")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">
+                    {t("authenticationDestructiveTtl")}
+                  </Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={120}
+                    value={form.destructiveActionTtlMinutes}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        destructiveActionTtlMinutes: Math.max(1, Number(e.target.value) || 1),
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="space-y-6 p-5">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">
+                {t("authenticationGracePeriod")}
+              </Label>
+              <p className="text-sm text-muted-foreground">{t("authenticationGracePeriodHint")}</p>
+              <Input
+                type="number"
+                min={0}
+                max={90}
+                className="max-w-32"
+                value={form.gracePeriodDays}
+                onChange={(e) =>
+                  setForm({ ...form, gracePeriodDays: Math.max(0, Number(e.target.value) || 0) })
+                }
+              />
+            </div>
+
+            <ExemptUsersPicker
+              selected={form.exemptUserIds}
+              onChange={(exemptUserIds) => setForm({ ...form, exemptUserIds })}
+            />
+          </CardContent>
+        </Card>
+      </div>
 
       <SecurityStandardSection />
 
-      <div className="flex justify-end gap-2">
-        <Button
-          variant="outline"
-          disabled={!dirty || saving}
-          onClick={() =>
-            policy &&
-            setForm({
-              requireMfaScope: policy.requireMfaScope,
-              requireMfaRetroactive: policy.requireMfaRetroactive,
-              requireMfaForDestructive: policy.requireMfaForDestructive,
-              destructiveActionTtlMinutes: policy.destructiveActionTtlMinutes,
-              minDestructiveLevel: policy.minDestructiveLevel,
-              requirePasskeyScope: policy.requirePasskeyScope,
-              requirePasskeyRetroactive: policy.requirePasskeyRetroactive,
-              gracePeriodDays: policy.gracePeriodDays,
-              exemptUserIds: policy.exemptUserIds,
-            })
-          }
-        >
-          {t("authenticationDiscard")}
-        </Button>
-        <Button disabled={!dirty || saving} onClick={() => void save()}>
-          {saving ? t("authenticationSaving") : t("authenticationSave")}
-        </Button>
-      </div>
+      {/* Sticky, and only once something has actually changed: this page is
+          several screens long, and having the only Save at the very bottom
+          meant scrolling past everything to commit a switch at the top. */}
+      {dirty && (
+        <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-background/90 px-3 py-2.5 shadow-overlay backdrop-blur-xl">
+          <p className="mr-auto text-[13px] text-muted-foreground">{t("authenticationUnsaved")}</p>
+          <Button variant="ghost" size="sm" disabled={saving} onClick={discard}>
+            {t("authenticationDiscard")}
+          </Button>
+          <Button size="sm" disabled={saving} onClick={() => void save()}>
+            {saving ? t("authenticationSaving") : t("authenticationSave")}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -212,6 +212,7 @@
   "authenticationSaving": "Saving…",
   "authenticationCancel": "Cancel",
   "authenticationDiscard": "Discard changes",
+  "authenticationUnsaved": "Unsaved changes",
   "authenticationSaved": "Authentication policy saved",
   "nav": {
     "groupGeneral": "General",

@@ -3,8 +3,9 @@
 import { useState } from "react";
 
 import { useClerk } from "@clerk/nextjs";
-import { Pencil, ShieldCheck } from "lucide-react";
+import { LogOut, Pencil, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
+import posthog from "posthog-js";
 
 import { TotpSettingsCard } from "@/components/mfa/TotpSettingsCard";
 import { PasskeySettingsCard } from "@/components/passkeys/PasskeySettingsCard";
@@ -28,13 +29,11 @@ import { cn } from "@/lib/utils";
 export default function SettingsAccountPage() {
   const t = useTranslations("Settings");
   const tRoles = useTranslations("Roles");
+  const tNav = useTranslations("Nav");
   const user = useCurrentUser();
   const clerk = useClerk();
   const [profileEditorOpen, setProfileEditorOpen] = useState(false);
   const refreshed = useDesignPreview() === "refreshed";
-  const detail = (value: string | null | undefined) => (
-    <span className="text-sm text-muted-foreground">{value || "—"}</span>
-  );
 
   return (
     <>
@@ -65,9 +64,21 @@ export default function SettingsAccountPage() {
                 </Button>
               </div>
             </div>
-            <SettingsRow title={t("jobTitle")} control={detail(user.jobTitle)} />
-            <SettingsRow title={t("department")} control={detail(user.department)} />
-            <SettingsRow title={t("phone")} control={detail(user.phone)} />
+            {/* A definition grid rather than one SettingsRow each: these are
+                read-only facts, and a row puts the label and its value at
+                opposite edges of a wide card with nothing in between. */}
+            <dl className="grid gap-x-8 gap-y-3 px-4 py-4 sm:grid-cols-2">
+              {[
+                { label: t("jobTitle"), value: user.jobTitle },
+                { label: t("department"), value: user.department },
+                { label: t("phone"), value: user.phone },
+              ].map((row) => (
+                <div key={row.label} className="flex min-w-0 items-baseline gap-3">
+                  <dt className="w-28 shrink-0 text-[12.5px] text-muted-foreground">{row.label}</dt>
+                  <dd className="min-w-0 flex-1 truncate text-[13.5px]">{row.value || "—"}</dd>
+                </div>
+              ))}
+            </dl>
           </SettingsSection>
         </div>
       ) : (
@@ -153,6 +164,27 @@ export default function SettingsAccountPage() {
       <ActiveSessionsCard />
 
       <SecurityActivityCard />
+
+      <SettingsSection title={t("sessionTitle")} description={t("sessionHint")}>
+        <SettingsRow
+          title={t("signOutTitle")}
+          description={t("signOutHint")}
+          control={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                posthog.reset();
+                void clerk.signOut({ redirectUrl: "/sign-in" });
+              }}
+            >
+              <LogOut />
+              {tNav("signOut")}
+            </Button>
+          }
+        />
+        <SettingsRow title={t("deleteAccountTitle")} description={t("deleteAccountHint")} />
+      </SettingsSection>
 
       <ProfileEditorDialog
         user={user}

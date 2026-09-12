@@ -66,6 +66,8 @@
     "accessOnBody": "You can start AI runs. Everything below describes what happens when you do.",
     "accessOff": "AI is not switched on for you",
     "accessOffBody": "Your role doesn't include AI use, so the AI buttons stay hidden and no run can start. An admin can grant it under Roles in the admin area.",
+    "moreLead": "The same ground, in legal wording:",
+    "moreLink": "Privacy Policy → AI-assisted features",
     "featuresTitle": "Where AI is used",
     "featuresHint": "Every place in the intranet that can start an AI run, and what each one sends.",
     "feature": {
