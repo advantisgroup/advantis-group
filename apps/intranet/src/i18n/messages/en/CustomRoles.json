@@ -30,6 +30,8 @@
   "capability_view_clockodo_team_desc": "See coworkers' absence types, reports, and pending counts on /clockodo — not just your own",
   "capability_manage_clockodo_team": "Manage team Clockodo data",
   "capability_manage_clockodo_team_desc": "Approve or deny absence requests, and manage employee Clockodo accounts",
+  "capability_use_ai": "Use AI",
+  "capability_use_ai_desc": "Use the AI features — the wiki assistant, formatting help, CV reading and asking about a record. Managers and admins have this anyway; without it, an employee sees no AI buttons and no run can start for them",
   "impliedBy": "Included automatically by \"{by}\"",
   "create": "Create role",
   "save": "Save",

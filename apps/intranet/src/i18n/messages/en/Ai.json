@@ -60,6 +60,12 @@
   "dockReady": "{count, plural, one {# result ready} other {# results ready}}",
   "dockFinishedAgo": "Ready · {minutes, plural, =0 {just now} one {# min ago} other {# min ago}}",
   "privacy": {
+    "accessTitle": "Your access",
+    "accessHint": "Whether AI is available to you at all.",
+    "accessOn": "AI is available to you",
+    "accessOnBody": "You can start AI runs. Everything below describes what happens when you do.",
+    "accessOff": "AI is not switched on for you",
+    "accessOffBody": "Your role doesn't include AI use, so the AI buttons stay hidden and no run can start. An admin can grant it under Roles in the admin area.",
     "featuresTitle": "Where AI is used",
     "featuresHint": "Every place in the intranet that can start an AI run, and what each one sends.",
     "feature": {

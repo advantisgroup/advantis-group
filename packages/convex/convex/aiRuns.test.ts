@@ -26,17 +26,27 @@ function setup() {
 
 type T = ReturnType<typeof setup>;
 
-async function seedUser(t: T, clerkUserId: string) {
-  await t.run(async (ctx) =>
-    ctx.db.insert("users", {
+/** An employee who may use AI — the `use_ai` capability via a custom role,
+ * which is what `apiStart` checks before it opens a run. */
+async function seedUser(t: T, clerkUserId: string, { ai = true }: { ai?: boolean } = {}) {
+  await t.run(async (ctx) => {
+    const userId = await ctx.db.insert("users", {
       clerkUserId,
       email: `${clerkUserId}@advantisgroup.de`,
       role: "employee",
       status: "active",
       external: false,
       createdAt: Date.now(),
-    }),
-  );
+    });
+    if (!ai) return;
+    const roleId = await ctx.db.insert("customRoles", {
+      name: `ai-${clerkUserId}`,
+      capabilities: ["use_ai"],
+      createdBy: userId,
+      createdAt: Date.now(),
+    });
+    await ctx.db.patch(userId, { customRoleIds: [roleId] });
+  });
   return t.withIdentity({ subject: clerkUserId });
 }
 
@@ -81,11 +91,31 @@ describe("aiRuns", () => {
 
     await alice.mutation(api.aiRuns.cancel, { runId });
     expect(
-      await t.mutation(api.aiRuns.apiProgress, { serverKey, runId, phase: "writing", outputChars: 4 }),
+      await t.mutation(api.aiRuns.apiProgress, {
+        serverKey,
+        runId,
+        phase: "writing",
+        outputChars: 4,
+      }),
     ).toEqual({ cancelled: true });
 
     await t.mutation(api.aiRuns.apiFinish, { serverKey, runId, output: "late", outputChars: 4 });
     expect(await alice.query(api.aiRuns.get, { runId })).toMatchObject({ status: "cancelled" });
+  });
+
+  test("a run needs the use_ai capability, which managers have by their tier", async () => {
+    const t = setup();
+    await seedUser(t, "user_carol", { ai: false });
+    await expect(startChatRun(t, "user_carol")).rejects.toThrow(/no_capability/);
+
+    await t.run(async (ctx) => {
+      const user = await ctx.db
+        .query("users")
+        .filter((q) => q.eq(q.field("clerkUserId"), "user_carol"))
+        .first();
+      await ctx.db.patch(user!._id, { role: "manager" });
+    });
+    expect(await startChatRun(t, "user_carol")).toBeDefined();
   });
 
   test("the dock keeps a finished result until it has been seen", async () => {

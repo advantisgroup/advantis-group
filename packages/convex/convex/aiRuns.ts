@@ -5,12 +5,14 @@ import { internalMutation, mutation, query, type QueryCtx } from "./_generated/s
 import { isFeatureEnabled } from "./featureFlags";
 import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase, askSubjectType } from "./lib/aiRuns";
 import {
+  effectiveCustomRoleIds,
   getCurrentUser,
   getUserByClerkId,
   hasApplicantAccess,
   requireManager,
   requireUser,
   requireVaultUnlocked,
+  userHasCapability,
 } from "./lib/auth";
 import { sandboxedMutation } from "./lib/sandbox";
 import { displayName } from "./lib/users";
@@ -305,6 +307,19 @@ export const apiStart = mutation({
     // nothing new reaches the model, whatever the browser still shows.
     if (!(await isFeatureEnabled(ctx, "ai"))) {
       throw new ConvexError({ code: "disabled", message: "AI is switched off" });
+    }
+    // Same gate, per person. `ctx.auth` isn't the caller here (apps/api calls
+    // this with the server key), so the capability is resolved from the
+    // clerk id it forwarded — managers and admins pass on their tier.
+    const caller = await getUserByClerkId(ctx, args.clerkUserId);
+    if (!caller || caller.status === "suspended") {
+      throw new ConvexError({ code: "forbidden", message: "No account" });
+    }
+    const callerRoles = await Promise.all(
+      effectiveCustomRoleIds(caller).map((id) => ctx.db.get(id)),
+    );
+    if (!userHasCapability(caller, callerRoles, "use_ai")) {
+      throw new ConvexError({ code: "no_capability", message: "AI is not enabled for you" });
     }
     const now = Date.now();
     const previous = await ctx.db

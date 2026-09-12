@@ -60,6 +60,12 @@
   "dockReady": "{count, plural, one {# Ergebnis bereit} other {# Ergebnisse bereit}}",
   "dockFinishedAgo": "Fertig · {minutes, plural, =0 {gerade eben} other {vor # Min.}}",
   "privacy": {
+    "accessTitle": "Dein Zugang",
+    "accessHint": "Ob KI für dich überhaupt verfügbar ist.",
+    "accessOn": "KI steht dir zur Verfügung",
+    "accessOnBody": "Du kannst KI-Läufe starten. Alles Weitere unten beschreibt, was dabei passiert.",
+    "accessOff": "KI ist für dich nicht freigeschaltet",
+    "accessOffBody": "Deine Rolle enthält keine KI-Nutzung – die KI-Buttons bleiben ausgeblendet und es kann kein Lauf starten. Ein Admin kann das im Adminbereich unter Rollen freischalten.",
     "featuresTitle": "Wo KI eingesetzt wird",
     "featuresHint": "Jede Stelle im Intranet, die einen KI-Lauf starten kann – und was dabei gesendet wird.",
     "feature": {

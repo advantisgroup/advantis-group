@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
+import { useHasCapability } from "@/components/providers/current-user";
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 
 /** The AI features that can start a run, in the order someone meets them. */
@@ -27,9 +28,17 @@ const FEATURES = [
  */
 export default function SettingsAiPage() {
   const t = useTranslations("Ai");
+  const canUseAi = useHasCapability("use_ai");
 
   return (
     <>
+      <SettingsSection title={t("privacy.accessTitle")} description={t("privacy.accessHint")}>
+        <SettingsRow
+          title={canUseAi ? t("privacy.accessOn") : t("privacy.accessOff")}
+          description={canUseAi ? t("privacy.accessOnBody") : t("privacy.accessOffBody")}
+        />
+      </SettingsSection>
+
       <SettingsSection title={t("privacy.featuresTitle")} description={t("privacy.featuresHint")}>
         {FEATURES.map((feature) => (
           <SettingsRow

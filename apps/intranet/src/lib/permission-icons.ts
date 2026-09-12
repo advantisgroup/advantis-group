@@ -9,6 +9,7 @@ import {
   Newspaper,
   Plug,
   ShieldCheck,
+  Sparkles,
   UploadCloud,
   User,
   Users2,
@@ -40,4 +41,5 @@ export const CAPABILITY_ICONS: Record<Capability, LucideIcon> = {
   manage_it_ticket_threads: MessageSquare,
   view_clockodo_team: Clock3,
   manage_clockodo_team: Clock3,
+  use_ai: Sparkles,
 };

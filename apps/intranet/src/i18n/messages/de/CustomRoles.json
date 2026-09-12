@@ -30,6 +30,8 @@
   "capability_view_clockodo_team_desc": "Abwesenheitsarten, Berichte und offene Anträge von Kolleg:innen einsehen — nicht nur die eigenen",
   "capability_manage_clockodo_team": "Team-Clockodo-Daten verwalten",
   "capability_manage_clockodo_team_desc": "Abwesenheitsanträge genehmigen oder ablehnen und Clockodo-Konten von Mitarbeitenden verwalten",
+  "capability_use_ai": "KI nutzen",
+  "capability_use_ai_desc": "Die KI-Funktionen nutzen – Wiki-Assistent, Formatierungshilfe, Lebenslauf-Auslesen und Fragen zu einem Eintrag. Manager und Admins haben das ohnehin; ohne diese Berechtigung sieht ein:e Mitarbeiter:in keine KI-Buttons und es kann kein Lauf gestartet werden",
   "impliedBy": "Automatisch enthalten durch \"{by}\"",
   "create": "Rolle erstellen",
   "save": "Speichern",

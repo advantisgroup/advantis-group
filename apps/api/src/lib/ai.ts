@@ -121,6 +121,9 @@ export async function startAiRun(
     if (code === "disabled") {
       throw new ApiError(503, "feature_disabled", "AI is switched off right now.");
     }
+    if (code === "no_capability") {
+      throw new ApiError(403, "forbidden", "AI is not enabled for your account.");
+    }
     throw err;
   }
 

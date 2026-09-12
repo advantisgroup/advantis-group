@@ -29,6 +29,7 @@ export const capabilityValidator = v.union(
   v.literal("manage_it_ticket_threads"),
   v.literal("view_clockodo_team"),
   v.literal("manage_clockodo_team"),
+  v.literal("use_ai"),
 );
 
 // --- Applicant Management (Bewerbermanagement) validators -------------------
@@ -2978,9 +2979,7 @@ export default defineSchema({
     model: v.optional(v.string()),
     tokensIn: v.optional(v.number()),
     tokensOut: v.optional(v.number()),
-    sources: v.optional(
-      v.array(v.object({ label: v.string(), href: v.optional(v.string()) })),
-    ),
+    sources: v.optional(v.array(v.object({ label: v.string(), href: v.optional(v.string()) }))),
     errorCode: v.optional(v.string()),
     retryable: v.optional(v.boolean()),
     startedAt: v.number(),
