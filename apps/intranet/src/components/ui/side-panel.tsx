@@ -140,7 +140,7 @@ export const PropertyButton = forwardRef<
     ref={ref}
     type="button"
     className={cn(
-      "group/property -mx-2 -my-1 inline-flex max-w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none data-[state=open]:bg-accent",
+      "group/property -mx-2 -my-1 inline-flex max-w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors max-md:py-2 hover:bg-accent focus-visible:bg-accent focus-visible:outline-none data-[state=open]:bg-accent",
       className,
     )}
     {...props}
@@ -166,7 +166,7 @@ export const StatusChip = forwardRef<
       borderColor: `color-mix(in oklch, ${accent} 32%, transparent)`,
     }}
     className={cn(
-      "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] font-semibold transition-[filter] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:brightness-100 md:h-[30px]",
+      "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] font-semibold transition-[filter] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:brightness-100 md:h-[30px]",
       className,
     )}
     {...props}

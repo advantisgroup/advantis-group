@@ -184,7 +184,7 @@ export function BlogPostInfo({ post }: { post: Doc<"blogPosts"> }) {
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           {isPublished && (
             <Button variant="ghost" size="sm" asChild>
               <a href={publicUrl} target="_blank" rel="noopener noreferrer">

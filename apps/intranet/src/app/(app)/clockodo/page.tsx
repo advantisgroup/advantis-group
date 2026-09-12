@@ -325,7 +325,7 @@ function Segmented<T extends string>({
           aria-pressed={value === option.value}
           onClick={() => onChange(option.value)}
           className={cn(
-            "shrink-0 rounded-md px-3 py-1 text-sm font-medium transition-colors",
+            "shrink-0 rounded-md px-3 py-1 text-sm font-medium transition-colors max-md:py-2",
             value === option.value
               ? "bg-card text-foreground shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
               : "text-muted-foreground hover:text-foreground",
@@ -1167,7 +1167,7 @@ function Requests({
             <div className="ml-auto flex items-center gap-2" data-tour="tour-absences-new">
               <Button variant="ghost" size="sm" onClick={onExport}>
                 <CalendarArrowDown />
-                {t("exportIcs")}
+                <span className="max-sm:sr-only">{t("exportIcs")}</span>
               </Button>
               <Button size="sm" onClick={() => setNewOpen(true)}>
                 <Plus />

@@ -80,7 +80,14 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               >
                 <ClientErrorReporter />
                 {children}
-                <Toaster position="bottom-right" />
+                {/* Lifted clear of the two things that live in the same
+                    corner: the AI dock on desktop, the bottom nav pill on a
+                    phone — both were getting covered by a toast. */}
+                <Toaster
+                  position="bottom-right"
+                  offset={{ bottom: "5.5rem", right: "1.5rem" }}
+                  mobileOffset={{ bottom: "6.25rem", left: "1rem", right: "1rem" }}
+                />
               </ThemeProvider>
             </ConvexClientProvider>
           </NextIntlClientProvider>
