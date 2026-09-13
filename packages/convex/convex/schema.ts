@@ -1217,8 +1217,12 @@ export default defineSchema({
     mentions: v.optional(v.array(v.id("users"))),
     editedAt: v.optional(v.number()),
     deletedAt: v.optional(v.number()),
+    pinnedAt: v.optional(v.number()),
+    pinnedByUserId: v.optional(v.id("users")),
     createdAt: v.number(),
-  }).index("by_conversation", ["conversationId"]),
+  })
+    .index("by_conversation", ["conversationId"])
+    .index("by_conversation_pinnedAt", ["conversationId", "pinnedAt"]),
 
   /**
    * Reverse index from an attachment's storage id to whatever owns it

@@ -30,7 +30,10 @@ import {
   MoreVertical,
   Paperclip,
   Pencil,
+  Pin,
+  PinOff,
   Reply,
+  Search,
   SendHorizonal,
   Settings,
   Smile,
@@ -46,6 +49,7 @@ import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { Mark } from "@/components/branding/ProviderMark";
 import { CHAT_COLUMN, ChatDayDivider, chatBubbleClass } from "@/components/chat/chat-surface";
+import { ConversationSearch, PinnedMessagesBar } from "@/components/chat/ConversationTools";
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
@@ -150,6 +154,8 @@ export function ConversationView({
   const reinviteDm = useMutation(api.chat.reinviteDm);
   const leaveConversation = useMutation(api.chat.leaveConversation);
   const toggleMute = useMutation(api.chat.toggleMute);
+  const togglePinMessage = useMutation(api.chat.togglePinMessage);
+  const [searchOpen, setSearchOpen] = useState(false);
   const handleError = useErrorHandler();
   const attachmentUpload = useAttachmentUpload();
 
@@ -709,6 +715,17 @@ export function ConversationView({
 
         {/* Header actions */}
         <div className="flex shrink-0 items-center gap-1">
+          {conversation && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("searchInConversation")}
+              aria-pressed={searchOpen}
+              onClick={() => setSearchOpen((open) => !open)}
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+          )}
           {conversation?.type === "group" && (
             <Button
               variant="ghost"
@@ -732,6 +749,11 @@ export function ConversationView({
           )}
         </div>
       </div>
+
+      {searchOpen && (
+        <ConversationSearch conversationId={conversationId} onClose={() => setSearchOpen(false)} />
+      )}
+      {conversation && <PinnedMessagesBar conversationId={conversationId} />}
 
       {/* DM-left banner */}
       {conversation?.dmOtherLeft && (
@@ -1042,6 +1064,8 @@ export function ConversationView({
                                 <MessageMenu
                                   canEdit={mine && (!!m.body || m.attachments.length > 0)}
                                   canDelete={mine}
+                                  pinned={m.pinned}
+                                  onTogglePin={() => void togglePinMessage({ messageId: m._id })}
                                   onReply={() => {
                                     setEditing(null);
                                     setReplyTo(m);
@@ -1055,6 +1079,8 @@ export function ConversationView({
                                     copy: tc("copy"),
                                     edit: tc("edit"),
                                     delete: tc("delete"),
+                                    pin: t("pinMessage"),
+                                    unpin: t("unpinMessage"),
                                   }}
                                 />
                               )}
@@ -1350,6 +1376,20 @@ export function ConversationView({
                 }}
               />
               <ActionSheetItem
+                icon={
+                  actionSheetMessage.pinned ? (
+                    <PinOff className="size-4" />
+                  ) : (
+                    <Pin className="size-4" />
+                  )
+                }
+                label={actionSheetMessage.pinned ? t("unpinMessage") : t("pinMessage")}
+                onClick={() => {
+                  void togglePinMessage({ messageId: actionSheetMessage._id });
+                  setActionSheetMessage(null);
+                }}
+              />
+              <ActionSheetItem
                 icon={<Copy className="size-4" />}
                 label={tc("copy")}
                 onClick={() => {
@@ -1459,6 +1499,8 @@ function ConversationUnavailable({
 function MessageMenu({
   canEdit,
   canDelete,
+  pinned,
+  onTogglePin,
   onReply,
   onCopy,
   onEdit,
@@ -1467,14 +1509,29 @@ function MessageMenu({
 }: {
   canEdit: boolean;
   canDelete: boolean;
+  pinned: boolean;
+  onTogglePin: () => void;
   onReply: () => void;
   onCopy: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  labels: { reply: string; copy: string; edit: string; delete: string };
+  labels: {
+    reply: string;
+    copy: string;
+    edit: string;
+    delete: string;
+    pin: string;
+    unpin: string;
+  };
 }) {
   const items: ActionMenuItem[] = [
     { key: "reply", label: labels.reply, icon: <Reply />, onSelect: onReply },
+    {
+      key: "pin",
+      label: pinned ? labels.unpin : labels.pin,
+      icon: pinned ? <PinOff /> : <Pin />,
+      onSelect: onTogglePin,
+    },
     { key: "copy", label: labels.copy, icon: <Copy />, onSelect: onCopy },
     ...(canEdit
       ? [

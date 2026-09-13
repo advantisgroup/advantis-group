@@ -607,12 +607,87 @@ export const getMessages = query({
           replyTo,
           seenBy,
           seenByUsers,
+          pinned: !m.deletedAt && !!m.pinnedAt,
           createdAt: m.createdAt,
         };
       }),
     );
 
     return { ...page, page: items };
+  },
+});
+
+/** Messages in one conversation whose text contains `term`, newest first. */
+export const searchMessages = query({
+  args: { conversationId: v.id("conversations"), term: v.string() },
+  handler: async (ctx, { conversationId, term }) => {
+    const user = await requireUser(ctx);
+    const needle = term.trim().toLowerCase();
+    if (needle.length < 2 || !(await getMembership(ctx, conversationId, user._id))) return [];
+    const rows = await ctx.db
+      .query("messages")
+      .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
+      .order("desc")
+      .take(3000);
+    const hits = rows
+      .filter((m) => !m.deletedAt && m.body.toLowerCase().includes(needle))
+      .slice(0, 30);
+    const names = new Map<Id<"users">, string>();
+    for (const m of hits) {
+      if (!names.has(m.senderUserId))
+        names.set(m.senderUserId, memberDisplay(await ctx.db.get(m.senderUserId)));
+    }
+    return hits.map((m) => ({
+      _id: m._id,
+      body: m.body,
+      senderName: names.get(m.senderUserId) ?? "Unknown",
+      createdAt: m.createdAt,
+    }));
+  },
+});
+
+export const listPinnedMessages = query({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, { conversationId }) => {
+    const user = await requireUser(ctx);
+    if (!(await getMembership(ctx, conversationId, user._id))) return [];
+    const rows = await ctx.db
+      .query("messages")
+      .withIndex("by_conversation_pinnedAt", (q) =>
+        q.eq("conversationId", conversationId).gt("pinnedAt", 0),
+      )
+      .order("desc")
+      .take(50);
+    return Promise.all(
+      rows
+        .filter((m) => !m.deletedAt)
+        .map(async (m) => ({
+          _id: m._id,
+          body: m.body,
+          hasAttachments: m.attachments.length > 0,
+          senderName: memberDisplay(await ctx.db.get(m.senderUserId)),
+          createdAt: m.createdAt,
+        })),
+    );
+  },
+});
+
+export const togglePinMessage = mutation({
+  args: { messageId: v.id("messages") },
+  handler: async (ctx, { messageId }) => {
+    const user = await requireUser(ctx);
+    const message = await ctx.db.get(messageId);
+    if (!message || message.deletedAt) {
+      throw new ConvexError({ code: "not_found", message: "Message not found" });
+    }
+    await requireMembership(ctx, message.conversationId, user._id);
+    await ctx.db.patch(
+      messageId,
+      message.pinnedAt
+        ? { pinnedAt: undefined, pinnedByUserId: undefined }
+        : { pinnedAt: Date.now(), pinnedByUserId: user._id },
+    );
+    return { pinned: !message.pinnedAt };
   },
 });
 
