@@ -7,7 +7,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Bookmark, BookmarkPlus, LayoutGrid, List, Rows3, Search, Users, X } from "lucide-react";
+import {
+  Bookmark,
+  BookmarkPlus,
+  LayoutGrid,
+  List,
+  Network,
+  Rows3,
+  Search,
+  Users,
+  X,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import {
@@ -16,6 +26,7 @@ import {
   type Person,
   type PersonStatus,
 } from "@/components/directory/person-status";
+import { OrgChart } from "@/components/directory/OrgChart";
 import { PersonCard } from "@/components/directory/PersonCard";
 import { PersonTable, type SortDir, type SortKey } from "@/components/directory/PersonTable";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
@@ -57,7 +68,7 @@ import { useDesignPreview } from "@/lib/design-preview";
 import { TEAMS, teamColor } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
-type ViewMode = "list" | "grid";
+type ViewMode = "list" | "grid" | "org";
 
 type SavedDirectoryView = {
   id: string;
@@ -68,7 +79,7 @@ type SavedDirectoryView = {
   myTeamsOnly: boolean;
   availableNow: boolean;
   grouped: boolean;
-  view: ViewMode;
+  view: Exclude<ViewMode, "org">;
 };
 
 function DirectoryPageContent() {
@@ -189,7 +200,7 @@ function DirectoryPageContent() {
       myTeamsOnly,
       availableNow,
       grouped,
-      view,
+      view: view === "org" ? "list" : view,
     };
     await setPreferences({
       savedDirectoryViews: [...savedDirectoryViews, savedView].slice(-8),
@@ -323,6 +334,7 @@ function DirectoryPageContent() {
         [
           ["list", List, t("viewList")],
           ["grid", LayoutGrid, t("viewGrid")],
+          ["org", Network, t("viewOrg")],
         ] as const
       ).map(([mode, Icon, label]) => (
         <button
@@ -668,6 +680,8 @@ function DirectoryPageContent() {
           </div>
         ) : filtered.length === 0 ? (
           <EmptyState icon={<Users />} title={t("noResults")} />
+        ) : view === "org" ? (
+          <OrgChart people={filtered} statuses={statuses} onOpenProfile={setProfileId} />
         ) : sections ? (
           <div className="space-y-6">
             {sections.map(([dept, rows]) => (
