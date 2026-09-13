@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useNow } from "@/hooks/use-now";
 import { cn } from "@/lib/utils";
 
+import { DraftMenu } from "./DraftMenu";
 import { type Draft } from "./use-draft";
 
 const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
@@ -63,7 +64,13 @@ export function DraftIndicator({
   const t = useTranslations("Compose");
   const ago = useRelativeTime(draft.savedAt);
   const online = useOnline();
-  if (draft.status === "idle" && !draft.savedAt) return null;
+  if (draft.status === "idle" && !draft.savedAt) {
+    return (
+      <span className={cn("inline-flex items-center", className)}>
+        <DraftMenu draft={draft} />
+      </span>
+    );
+  }
 
   const waiting = draft.status !== "saved" && draft.status !== "idle";
 
@@ -105,6 +112,7 @@ export function DraftIndicator({
           {t("draftDiscard")}
         </button>
       )}
+      <DraftMenu draft={draft} />
     </span>
   );
 }

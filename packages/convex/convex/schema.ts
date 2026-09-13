@@ -3069,11 +3069,21 @@ export default defineSchema({
     subjectKey: v.string(), // the draft's own id (fresh draft), or the id of the thing being edited
     data: v.string(), // JSON the form restores from
     href: v.optional(v.string()), // where the draft was last written, so it can be reopened
+    /** Set aside with "start a new draft": the subjectKey it was taken from. */
+    parkedFrom: v.optional(v.string()),
     updatedAt: v.number(),
   })
     .index("by_user_subject", ["userId", "surface", "subjectKey"])
     .index("by_user", ["userId", "updatedAt"])
     .index("by_updated", ["updatedAt"]),
+
+  /** Snapshots of a draft over time, so earlier wording can be brought back. */
+  draftVersions: defineTable({
+    draftId: v.id("drafts"),
+    userId: v.id("users"),
+    data: v.string(),
+    savedAt: v.number(),
+  }).index("by_draft", ["draftId", "savedAt"]),
 
   // --- Sales Coach EV (live call-coaching for Projekt Elektromobilitaet) ------
   // Transcript and feedback text may contain real customer conversations, so

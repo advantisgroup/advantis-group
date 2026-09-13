@@ -2,6 +2,8 @@
 
 import { useMemo } from "react";
 
+import { useRouter } from "next/navigation";
+
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 import {
@@ -27,9 +29,9 @@ import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { htmlToText } from "@/components/ui/rich-text";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { draftPreview } from "@/lib/draft-preview";
 
 type DraftItem = NonNullable<ReturnType<typeof useQuery<typeof api.drafts.listMine>>>[number];
 
@@ -53,34 +55,6 @@ const SURFACE_META: Partial<
   },
 };
 
-// Drafts don't share a shape — each composer stores its own form — so these
-// are the field names worth trying, in order.
-const TITLE_FIELDS = ["thema", "title", "subject", "name"];
-const BODY_FIELDS = ["erklaerung", "body", "description", "content", "text"];
-
-function firstText(source: Record<string, unknown>, fields: string[], max: number): string {
-  const raw = fields
-    .map((field) => source[field])
-    .find((value): value is string => typeof value === "string" && value.trim().length > 0);
-  if (!raw) return "";
-  const text = htmlToText(raw).trim();
-  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
-}
-
-function draftPreview(data: string): { title: string; snippet: string } {
-  try {
-    const parsed: unknown = JSON.parse(data);
-    if (typeof parsed !== "object" || parsed === null) return { title: "", snippet: "" };
-    const source = parsed as Record<string, unknown>;
-    return {
-      title: firstText(source, TITLE_FIELDS, 90),
-      snippet: firstText(source, BODY_FIELDS, 160),
-    };
-  } catch {
-    return { title: "", snippet: "" };
-  }
-}
-
 const BUCKETS = [
   { key: "today", labelKey: "groupToday" },
   { key: "week", labelKey: "groupThisWeek" },
@@ -99,6 +73,8 @@ function DraftRow({ draft }: { draft: DraftItem }) {
   const confirm = useConfirm();
   const handleError = useErrorHandler();
   const discard = useMutation(api.drafts.discard);
+  const resume = useMutation(api.drafts.resume);
+  const router = useRouter();
   const ago = useRelativeTime(draft.updatedAt);
   const meta = SURFACE_META[draft.surface];
   const Icon = meta?.icon ?? FileStack;
@@ -108,7 +84,10 @@ function DraftRow({ draft }: { draft: DraftItem }) {
   const editing = draft.subjectKey !== draft._id && draft.subjectKey !== "new";
 
   async function onDelete() {
-    const ok = await confirm({ title: t("deleteConfirmTitle"), description: t("deleteConfirmBody") });
+    const ok = await confirm({
+      title: t("deleteConfirmTitle"),
+      description: t("deleteConfirmBody"),
+    });
     if (!ok) return;
     try {
       await discard({ surface: draft.surface, subjectKey: draft.subjectKey });
@@ -122,6 +101,15 @@ function DraftRow({ draft }: { draft: DraftItem }) {
     <div className="group flex items-start gap-3 border-b border-border/60 px-4 py-3.5 transition-colors last:border-b-0 hover:bg-accent/50">
       <Link
         href={draft.href ?? meta?.listHref ?? "/"}
+        onClick={(event) => {
+          // A set-aside draft has to be swapped back into its form before
+          // that page can show it.
+          if (!draft.parkedFrom) return;
+          event.preventDefault();
+          resume({ surface: draft.surface, subjectKey: draft.parkedFrom, draftId: draft._id })
+            .then(() => router.push(draft.href ?? meta?.listHref ?? "/"))
+            .catch(handleError);
+        }}
         className="flex min-w-0 flex-1 items-start gap-3"
       >
         <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted/70 text-muted-foreground">
@@ -139,7 +127,9 @@ function DraftRow({ draft }: { draft: DraftItem }) {
               {title || t("untitled")}
             </span>
             {editing && (
-              <span className="shrink-0 text-[12px] text-muted-foreground">{t("stateEditing")}</span>
+              <span className="shrink-0 text-[12px] text-muted-foreground">
+                {t("stateEditing")}
+              </span>
             )}
           </span>
           {snippet && (
@@ -198,7 +188,9 @@ export default function DraftsPage() {
           <section key={group.key} className="space-y-2">
             <h2 className="px-1 text-xs font-medium text-muted-foreground">
               {t(group.labelKey)}
-              <span className="ml-1.5 tabular-nums text-muted-foreground/70">{group.rows.length}</span>
+              <span className="ml-1.5 tabular-nums text-muted-foreground/70">
+                {group.rows.length}
+              </span>
             </h2>
             <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
               {group.rows.map((draft) => (

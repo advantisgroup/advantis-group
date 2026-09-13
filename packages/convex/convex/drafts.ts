@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
 import { getCurrentUser, hasApplicantAccess, requireUser } from "./lib/auth";
 import { draftSurface } from "./lib/drafts";
@@ -21,6 +21,61 @@ const RETENTION_MS = 60 * 86_400_000;
 const PLACEHOLDER_RETENTION_MS = 86_400_000;
 /** What a box holds between being opened and the first keystroke. */
 const PLACEHOLDER_DATA = "{}";
+/** A new snapshot at most this often while someone keeps typing. */
+const VERSION_EVERY_MS = 5 * 60_000;
+const MAX_VERSIONS = 20;
+
+async function findDraft(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+  surface: string,
+  subjectKey: string,
+) {
+  return ctx.db
+    .query("drafts")
+    .withIndex("by_user_subject", (q) =>
+      q
+        .eq("userId", userId)
+        .eq("surface", surface as Doc<"drafts">["surface"])
+        .eq("subjectKey", subjectKey),
+    )
+    .unique();
+}
+
+async function snapshot(ctx: MutationCtx, draft: Doc<"drafts">, force = false) {
+  if (draft.data === PLACEHOLDER_DATA) return;
+  const versions = await ctx.db
+    .query("draftVersions")
+    .withIndex("by_draft", (q) => q.eq("draftId", draft._id))
+    .order("desc")
+    .collect();
+  const latest = versions[0];
+  if (latest?.data === draft.data) return;
+  if (!force && latest && Date.now() - latest.savedAt < VERSION_EVERY_MS) return;
+  await ctx.db.insert("draftVersions", {
+    draftId: draft._id,
+    userId: draft.userId,
+    data: draft.data,
+    savedAt: draft.updatedAt,
+  });
+  for (const old of versions.slice(MAX_VERSIONS - 1)) await ctx.db.delete(old._id);
+}
+
+async function moveVersions(ctx: MutationCtx, from: Id<"drafts">, to: Id<"drafts">) {
+  const versions = await ctx.db
+    .query("draftVersions")
+    .withIndex("by_draft", (q) => q.eq("draftId", from))
+    .collect();
+  for (const version of versions) await ctx.db.patch(version._id, { draftId: to });
+}
+
+async function deleteVersions(ctx: MutationCtx, draftId: Id<"drafts">) {
+  const versions = await ctx.db
+    .query("draftVersions")
+    .withIndex("by_draft", (q) => q.eq("draftId", draftId))
+    .collect();
+  for (const version of versions) await ctx.db.delete(version._id);
+}
 
 /** Drafts that hold applicant details. Being yours isn't enough for these —
  *  they follow Applicant Management's rules: access plus an unlocked vault. */
@@ -71,7 +126,10 @@ export const create = sandboxedMutation({
   handler: async (ctx, { surface }) => {
     const user = await requireUser(ctx);
     if (!(await canUseSurface(ctx, user, surface))) {
-      throw new ConvexError({ code: "forbidden", message: "You do not have permission to do that" });
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You do not have permission to do that",
+      });
     }
     const id = await ctx.db.insert("drafts", {
       userId: user._id,
@@ -105,6 +163,7 @@ export const listMine = query({
         subjectKey: d.subjectKey,
         data: d.data,
         href: d.href,
+        parkedFrom: d.parkedFrom ?? null,
         updatedAt: d.updatedAt,
       }));
   },
@@ -127,7 +186,10 @@ export const save = sandboxedMutation({
   handler: async (ctx, { surface, subjectKey, data, href }) => {
     const user = await requireUser(ctx);
     if (!(await canUseSurface(ctx, user, surface))) {
-      throw new ConvexError({ code: "forbidden", message: "You do not have permission to do that" });
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You do not have permission to do that",
+      });
     }
     if (data.length > MAX_DRAFT_CHARS) {
       throw new ConvexError({ code: "bad_request", message: "Draft is too large to keep" });
@@ -140,8 +202,11 @@ export const save = sandboxedMutation({
       .unique();
     const updatedAt = Date.now();
     const fields = { data, href: safeHref(href) ?? existing?.href, updatedAt };
+    let id = existing?._id;
     if (existing) await ctx.db.patch(existing._id, fields);
-    else await ctx.db.insert("drafts", { userId: user._id, surface, subjectKey, ...fields });
+    else id = await ctx.db.insert("drafts", { userId: user._id, surface, subjectKey, ...fields });
+    const saved = await ctx.db.get(id!);
+    if (saved) await snapshot(ctx, saved);
     return { updatedAt };
   },
 });
@@ -157,8 +222,169 @@ export const discard = sandboxedMutation({
         q.eq("userId", user._id).eq("surface", surface).eq("subjectKey", subjectKey),
       )
       .unique();
-    if (existing) await ctx.db.delete(existing._id);
+    if (existing) {
+      await deleteVersions(ctx, existing._id);
+      await ctx.db.delete(existing._id);
+    }
     return null;
+  },
+});
+
+/** Snapshots of the draft behind this form, newest first. */
+export const listVersions = query({
+  args: { surface: draftSurface, subjectKey: v.string() },
+  handler: async (ctx, { surface, subjectKey }) => {
+    const user = await getCurrentUser(ctx);
+    if (!user || !(await canUseSurface(ctx, user, surface))) return [];
+    const draft = await findDraft(ctx, user._id, surface, subjectKey);
+    if (!draft) return [];
+    const versions = await ctx.db
+      .query("draftVersions")
+      .withIndex("by_draft", (q) => q.eq("draftId", draft._id))
+      .order("desc")
+      .take(MAX_VERSIONS);
+    return versions
+      .filter((version) => version.data !== draft.data)
+      .map((version) => ({ _id: version._id, data: version.data, savedAt: version.savedAt }));
+  },
+});
+
+/** The other drafts someone has going for the same composer: ones set aside
+ *  from this form, and — for composers where every draft has its own page —
+ *  the other drafts of that kind. */
+export const listOthers = query({
+  args: { surface: draftSurface, subjectKey: v.string() },
+  handler: async (ctx, { surface, subjectKey }) => {
+    const user = await getCurrentUser(ctx);
+    if (!user || !(await canUseSurface(ctx, user, surface))) return [];
+    const drafts = await ctx.db
+      .query("drafts")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .collect();
+    const current = drafts.find((d) => d.surface === surface && d.subjectKey === subjectKey);
+    const ownPage = current !== undefined && current._id === subjectKey && !current.parkedFrom;
+    return drafts
+      .filter(
+        (d) =>
+          d.surface === surface &&
+          d._id !== current?._id &&
+          d.data !== PLACEHOLDER_DATA &&
+          (d.parkedFrom === subjectKey || (ownPage && d._id === d.subjectKey && !d.parkedFrom)),
+      )
+      .map((d) => ({
+        _id: d._id,
+        data: d.data,
+        updatedAt: d.updatedAt,
+        href: d.href,
+        parked: d.parkedFrom !== undefined,
+      }));
+  },
+});
+
+/** "Start a new draft": moves what's in the form into a draft of its own, set
+ *  aside, and leaves this form empty. */
+export const park = sandboxedMutation({
+  args: { surface: draftSurface, subjectKey: v.string() },
+  handler: async (ctx, { surface, subjectKey }) => {
+    const user = await requireUser(ctx);
+    if (!(await canUseSurface(ctx, user, surface))) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You do not have permission to do that",
+      });
+    }
+    const current = await findDraft(ctx, user._id, surface, subjectKey);
+    const updatedAt = Date.now();
+    if (!current || current.data === PLACEHOLDER_DATA) return { updatedAt };
+    const parkedId = await ctx.db.insert("drafts", {
+      userId: user._id,
+      surface,
+      subjectKey: "",
+      data: current.data,
+      href: current.href,
+      parkedFrom: subjectKey,
+      updatedAt: current.updatedAt,
+    });
+    await ctx.db.patch(parkedId, { subjectKey: parkedId });
+    await moveVersions(ctx, current._id, parkedId);
+    await ctx.db.patch(current._id, { data: PLACEHOLDER_DATA, updatedAt });
+    return { updatedAt };
+  },
+});
+
+/** Brings a set-aside draft back into this form, setting aside whatever the
+ *  form held so switching back and forth never loses anything. */
+export const resume = sandboxedMutation({
+  args: { surface: draftSurface, subjectKey: v.string(), draftId: v.id("drafts") },
+  handler: async (ctx, { surface, subjectKey, draftId }) => {
+    const user = await requireUser(ctx);
+    if (!(await canUseSurface(ctx, user, surface))) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You do not have permission to do that",
+      });
+    }
+    const target = await ctx.db.get(draftId);
+    if (!target || target.userId !== user._id || target.surface !== surface) {
+      throw new ConvexError({ code: "not_found", message: "Draft not found" });
+    }
+    let current = await findDraft(ctx, user._id, surface, subjectKey);
+    if (current && current.data !== PLACEHOLDER_DATA) {
+      const parkedId = await ctx.db.insert("drafts", {
+        userId: user._id,
+        surface,
+        subjectKey: "",
+        data: current.data,
+        href: current.href,
+        parkedFrom: subjectKey,
+        updatedAt: current.updatedAt,
+      });
+      await ctx.db.patch(parkedId, { subjectKey: parkedId });
+      await moveVersions(ctx, current._id, parkedId);
+    }
+    const updatedAt = Date.now();
+    if (current) {
+      await deleteVersions(ctx, current._id);
+      await ctx.db.patch(current._id, { data: target.data, updatedAt });
+    } else {
+      const id = await ctx.db.insert("drafts", {
+        userId: user._id,
+        surface,
+        subjectKey,
+        data: target.data,
+        href: target.href,
+        updatedAt,
+      });
+      current = await ctx.db.get(id);
+    }
+    await moveVersions(ctx, target._id, current!._id);
+    await ctx.db.delete(target._id);
+    return { data: target.data, updatedAt };
+  },
+});
+
+/** Puts an earlier snapshot back into the form; what was there becomes a
+ *  snapshot itself first. */
+export const restoreVersion = sandboxedMutation({
+  args: { surface: draftSurface, subjectKey: v.string(), versionId: v.id("draftVersions") },
+  handler: async (ctx, { surface, subjectKey, versionId }) => {
+    const user = await requireUser(ctx);
+    if (!(await canUseSurface(ctx, user, surface))) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You do not have permission to do that",
+      });
+    }
+    const draft = await findDraft(ctx, user._id, surface, subjectKey);
+    const version = await ctx.db.get(versionId);
+    if (!draft || !version || version.draftId !== draft._id) {
+      throw new ConvexError({ code: "not_found", message: "Version not found" });
+    }
+    await snapshot(ctx, draft, true);
+    const updatedAt = Date.now();
+    await ctx.db.patch(draft._id, { data: version.data, updatedAt });
+    return { data: version.data, updatedAt };
   },
 });
 
@@ -177,7 +403,10 @@ export const pruneOld = internalMutation({
       .filter((q) => q.eq(q.field("data"), PLACEHOLDER_DATA))
       .take(500);
     const ids = new Set([...old, ...unused].map((draft) => draft._id));
-    for (const id of ids) await ctx.db.delete(id);
+    for (const id of ids) {
+      await deleteVersions(ctx, id);
+      await ctx.db.delete(id);
+    }
     return { deleted: ids.size };
   },
 });

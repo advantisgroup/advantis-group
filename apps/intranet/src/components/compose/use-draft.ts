@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
+import type { Id } from "@advantis/convex/dataModel";
 import type { FunctionArgs } from "convex/server";
 
 export type DraftSurface = FunctionArgs<typeof api.drafts.get>["surface"];
@@ -29,6 +30,13 @@ export interface Draft {
    * Pass the value the form is being reset to, if it is. */
   clear(baseline?: unknown): Promise<void>;
   hydrated: boolean;
+  surface: DraftSurface;
+  subjectKey: string;
+  /** Sets the current draft aside and empties the form for a new one. */
+  startNew(): Promise<void>;
+  /** Swaps a set-aside draft back into the form (the current one is set aside). */
+  resume(draftId: Id<"drafts">): Promise<void>;
+  restoreVersion(versionId: Id<"draftVersions">): Promise<void>;
 }
 
 /**
@@ -75,6 +83,9 @@ export function useDraft<T>({
   const stored = useQuery(api.drafts.get, enabled ? { surface, subjectKey } : "skip");
   const saveDraft = useMutation(api.drafts.save);
   const discardDraft = useMutation(api.drafts.discard);
+  const parkDraft = useMutation(api.drafts.park);
+  const resumeDraft = useMutation(api.drafts.resume);
+  const restoreDraftVersion = useMutation(api.drafts.restoreVersion);
 
   const [hydrated, setHydrated] = useState(false);
   const [status, setStatus] = useState<DraftSaveStatus>("idle");
@@ -85,6 +96,9 @@ export function useDraft<T>({
   );
 
   const serialized = useMemo(() => JSON.stringify(value), [value]);
+  // What the form looked like before any draft touched it — "start a new
+  // draft" puts it back to this.
+  const initial = useRef(serialized);
   const latest = useRef({ serialized, value, surface, subjectKey, isEmpty, entitySavedAt });
   latest.current = { serialized, value, surface, subjectKey, isEmpty, entitySavedAt };
   const onRestoreRef = useRef(onRestore);
@@ -239,7 +253,65 @@ export function useDraft<T>({
     [discardDraft],
   );
 
+  // Whatever the server now holds for this form came from these calls, so the
+  // "changed in another tab" check must not treat it as someone else's edit.
+  const loadFromServer = useCallback(
+    (data: string, at: number) => {
+      hydratedAt.current = at;
+      recentWrites.current = [...recentWrites.current.slice(-4), data];
+      apply(data, at);
+      setOffer(null);
+    },
+    [apply],
+  );
+
+  const startNew = useCallback(async () => {
+    await flush();
+    const { updatedAt } = await parkDraft({
+      surface: latest.current.surface,
+      subjectKey: latest.current.subjectKey,
+    });
+    hydratedAt.current = updatedAt;
+    onRestoreRef.current(JSON.parse(initial.current) as T);
+    lastSaved.current = initial.current;
+    setOffer(null);
+    setRestoredAt(null);
+    setSavedAt(null);
+    setStatus("idle");
+  }, [flush, parkDraft]);
+
+  const resume = useCallback(
+    async (draftId: Id<"drafts">) => {
+      await flush();
+      const { data, updatedAt } = await resumeDraft({
+        surface: latest.current.surface,
+        subjectKey: latest.current.subjectKey,
+        draftId,
+      });
+      loadFromServer(data, updatedAt);
+    },
+    [flush, resumeDraft, loadFromServer],
+  );
+
+  const restoreVersion = useCallback(
+    async (versionId: Id<"draftVersions">) => {
+      await flush();
+      const { data, updatedAt } = await restoreDraftVersion({
+        surface: latest.current.surface,
+        subjectKey: latest.current.subjectKey,
+        versionId,
+      });
+      loadFromServer(data, updatedAt);
+    },
+    [flush, restoreDraftVersion, loadFromServer],
+  );
+
   return {
+    surface,
+    subjectKey,
+    startNew,
+    resume,
+    restoreVersion,
     status,
     savedAt,
     restoredAt,
