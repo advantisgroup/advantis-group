@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useQuery } from "convex/react";
-import { ArrowDown, ArrowUp, Download, Plus, Search, TriangleAlert } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -39,7 +39,6 @@ import {
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useSlashFocus } from "@/lib/activity/useSlashFocus";
-import { useDesignPreview } from "@/lib/design-preview";
 import { cn } from "@/lib/utils";
 
 const WEEKDAYS = [
@@ -243,7 +242,6 @@ export function ClockodoAdminPanel() {
   const t = useTranslations("Integrations");
   const router = useRouter();
   const handleError = useErrorHandler();
-  const refreshed = useDesignPreview() === "refreshed";
 
   const listClockodoUsers = useAction(api.integrations.clockodo.users.listClockodoUsers);
   const getClockodoUserDetail = useAction(api.integrations.clockodo.users.getClockodoUserDetail);
@@ -568,28 +566,6 @@ export function ClockodoAdminPanel() {
         </div>
       </ResponsiveDialog>
 
-      {!refreshed && gaps.length > 0 && (
-        <div className="flex flex-col gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
-          {gaps.map((gap) => (
-            <button
-              key={gap.key}
-              type="button"
-              onClick={gap.toggle}
-              className={cn(
-                "flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-amber-500/10",
-                gap.active && "bg-amber-500/15",
-              )}
-            >
-              <span className="flex items-center gap-2">
-                <TriangleAlert className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                {gap.label}
-              </span>
-              <Badge variant="warning">{gap.count}</Badge>
-            </button>
-          ))}
-        </div>
-      )}
-
       {rows !== null && !loadError && rows.length > 0 && (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
@@ -603,7 +579,7 @@ export function ClockodoAdminPanel() {
                 className="pl-9 refreshed:h-9 refreshed:pl-8 refreshed:text-sm md:refreshed:h-8 md:refreshed:text-[13px]"
               />
             </div>
-            {refreshed && gaps.length > 0 && (
+            {gaps.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
                 {gaps.map((gap) => (
                   <TogglePill
@@ -780,20 +756,11 @@ export function ClockodoAdminPanel() {
                           <TableCell className="text-fg refreshed:font-medium">
                             <div className="flex items-center gap-2">
                               {row.name}
-                              {refreshed ? (
-                                row.active === false && (
-                                  <span className="text-xs font-normal text-muted-foreground">
-                                    {t("inactive")}
-                                  </span>
-                                )
-                              ) : (
-                                <Badge
-                                  variant={row.active === false ? "muted" : "success"}
-                                  className="text-[10px]"
-                                >
-                                  {row.active === false ? t("inactive") : t("active")}
-                                </Badge>
-                              )}
+                              row.active === false && (
+                              <span className="text-xs font-normal text-muted-foreground">
+                                {t("inactive")}
+                              </span>
+                              )
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">{row.email}</TableCell>
@@ -817,7 +784,7 @@ export function ClockodoAdminPanel() {
                               : "—"}
                           </TableCell>
                           <TableCell className="text-muted-foreground">
-                            {refreshed && row.linkedUserId ? (
+                            {row.linkedUserId ? (
                               <PersonLink
                                 userId={row.linkedUserId as Id<"users">}
                                 className="text-foreground"

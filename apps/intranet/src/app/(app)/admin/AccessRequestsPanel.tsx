@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import { RoleSelect } from "@/app/(app)/admin/RoleSelect";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
@@ -31,7 +30,6 @@ function RequestRow({
   highlighted,
   role,
   busy,
-  refreshed,
   onRoleChange,
   onApprove,
   onDeny,
@@ -41,7 +39,6 @@ function RequestRow({
   highlighted: boolean;
   role: Role;
   busy: boolean;
-  refreshed: boolean;
   onRoleChange: (role: Role) => void;
   onApprove: () => void;
   onDeny: () => void;
@@ -57,90 +54,54 @@ function RequestRow({
     }
   }, [highlighted]);
 
-  if (refreshed) {
-    return (
-      <div
-        ref={ref}
-        role="listitem"
-        className={cn(
-          "flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center",
-          highlighted && "deeplink-hl",
-        )}
-      >
-        <div className="flex min-w-0 flex-1 items-start gap-3">
-          <Avatar className="size-9">
-            <AvatarFallback className="text-xs">{initials(r.name, r.email)}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{r.name ?? r.email}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {r.name ? `${r.email} · ` : ""}
-              {t("requestedAgo", { age: relativeTime(r.createdAt) })}
+  return (
+    <div
+      ref={ref}
+      role="listitem"
+      className={cn(
+        "flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center",
+        highlighted && "deeplink-hl",
+      )}
+    >
+      <div className="flex min-w-0 flex-1 items-start gap-3">
+        <Avatar className="size-9">
+          <AvatarFallback className="text-xs">{initials(r.name, r.email)}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{r.name ?? r.email}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {r.name ? `${r.email} · ` : ""}
+            {t("requestedAgo", { age: relativeTime(r.createdAt) })}
+          </p>
+          {r.message && (
+            <p className="mt-1.5 line-clamp-3 whitespace-pre-wrap rounded-md bg-muted/50 px-2.5 py-1.5 text-xs">
+              {r.message}
             </p>
-            {r.message && (
-              <p className="mt-1.5 line-clamp-3 whitespace-pre-wrap rounded-md bg-muted/50 px-2.5 py-1.5 text-xs">
-                {r.message}
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 sm:shrink-0">
-          <RoleSelect value={role} onChange={onRoleChange} canElevate={isAdmin} disabled={busy} />
-          <Button
-            size="icon-sm"
-            variant="outline"
-            aria-label={t("deny")}
-            title={t("deny")}
-            disabled={busy}
-            onClick={onDeny}
-          >
-            <X />
-          </Button>
-          <Button size="sm" className="max-sm:flex-1" disabled={busy} onClick={onApprove}>
-            <Check />
-            {t("approve")}
-          </Button>
+          )}
         </div>
       </div>
-    );
-  }
-
-  return (
-    <Card nested ref={ref} className={cn(highlighted && "deeplink-hl")}>
-      <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <p className="font-medium">{r.name ?? r.email}</p>
-          <p className="text-xs text-muted-foreground">{r.email}</p>
-          {r.message && <p className="mt-1 text-xs text-muted-foreground">{r.message}</p>}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <RoleSelect value={role} onChange={onRoleChange} canElevate={isAdmin} disabled={busy} />
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1 sm:flex-none"
-            disabled={busy}
-            onClick={onDeny}
-          >
-            {t("deny")}
-          </Button>
-          <Button size="sm" className="flex-1 sm:flex-none" disabled={busy} onClick={onApprove}>
-            {t("approve")}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="flex items-center gap-2 sm:shrink-0">
+        <RoleSelect value={role} onChange={onRoleChange} canElevate={isAdmin} disabled={busy} />
+        <Button
+          size="icon-sm"
+          variant="outline"
+          aria-label={t("deny")}
+          title={t("deny")}
+          disabled={busy}
+          onClick={onDeny}
+        >
+          <X />
+        </Button>
+        <Button size="sm" className="max-sm:flex-1" disabled={busy} onClick={onApprove}>
+          <Check />
+          {t("approve")}
+        </Button>
+      </div>
+    </div>
   );
 }
 
-export function AccessRequestsPanel({
-  isAdmin,
-  refreshed = false,
-}: {
-  isAdmin: boolean;
-  /** The refreshed design: one hairline-divided list instead of a card per request. */
-  refreshed?: boolean;
-}) {
+export function AccessRequestsPanel({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Admin");
   const tRoles = useTranslations("Roles");
   const tc = useTranslations("Common");
@@ -192,11 +153,7 @@ export function AccessRequestsPanel({
   }
 
   if (requests && requests.length === 0) {
-    return refreshed ? (
-      <EmptyState icon={<Clock />} title={t("noRequests")} />
-    ) : (
-      <p className="py-8 text-center text-sm text-muted-foreground">{t("noRequests")}</p>
-    );
+    return <EmptyState icon={<Clock />} title={t("noRequests")} />;
   }
 
   const rows = requests?.map((r) => (
@@ -207,14 +164,11 @@ export function AccessRequestsPanel({
       highlighted={r._id === highlightId}
       role={roles[r._id] ?? "employee"}
       busy={actingOn === r._id}
-      refreshed={refreshed}
       onRoleChange={(role) => setRoles((s) => ({ ...s, [r._id]: role }))}
       onDeny={() => void onDeny(r._id)}
       onApprove={() => void onApprove(r)}
     />
   ));
-
-  if (!refreshed) return <div className="space-y-2">{rows}</div>;
 
   return (
     <div className="space-y-3">

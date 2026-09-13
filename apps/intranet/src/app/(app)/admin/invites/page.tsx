@@ -20,7 +20,7 @@ export default function AdminInvitesPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeaderBar title={t("invites")} icon={<Mail />} />
-      <InvitesPanel isAdmin={isAdmin} refreshed />
+      <InvitesPanel isAdmin={isAdmin} />
     </div>
   );
 }

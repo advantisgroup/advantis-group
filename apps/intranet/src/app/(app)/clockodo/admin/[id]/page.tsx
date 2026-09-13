@@ -13,12 +13,9 @@ import { toast } from "sonner";
 
 import { Link } from "@/components/Link";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
-import { PageHeader } from "@/components/PageHeader";
 import { PersonLink } from "@/components/profile/PersonLink";
 import { useHasCapability } from "@/components/providers/current-user";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,7 +30,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { useDesignPreview } from "@/lib/design-preview";
 
 const WEEKDAYS = [
   "monday",
@@ -71,48 +67,11 @@ const PERMISSION_ITEMS = [
   },
 ] as const;
 
-const STATUS_STYLE: Record<string, string> = {
-  working: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
-  break: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
-  clockedOut: "bg-muted text-muted-foreground",
-};
-
 const STATUS_ACCENT: Record<string, string> = {
   working: "var(--ok)",
   break: "var(--warn)",
   clockedOut: "var(--muted-foreground)",
 };
-
-/** A labelled read-only row — the default state of every field on this
- * page. Edit mode swaps this out for the real input, per section. */
-function ViewRow({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-0.5 text-sm font-medium">{value}</p>
-    </div>
-  );
-}
-
-function Section({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="space-y-3">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
-      {children}
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <label className="mb-1 block text-xs text-muted-foreground">{label}</label>
-      {children}
-    </div>
-  );
-}
 
 function StatusDot({ color, children }: { color: string; children: ReactNode }) {
   return (
@@ -230,7 +189,6 @@ export default function ClockodoEmployeeDetailPage() {
   const router = useRouter();
   const handleError = useErrorHandler();
   const confirm = useConfirm();
-  const refreshed = useDesignPreview() === "refreshed";
   const params = useParams<{ id: string }>();
   const clockodoUserId = Number(params.id);
 
@@ -591,313 +549,144 @@ export default function ClockodoEmployeeDetailPage() {
     />
   );
 
-  if (refreshed) {
-    const editing = mode === "edit";
-    const value = (text: ReactNode) => (
-      <span className="text-sm text-muted-foreground">{text}</span>
-    );
-    const control = "h-9 w-44 text-sm md:h-8";
-
-    return (
-      <section className="mx-auto max-w-4xl space-y-6">
-        {backButton}
-
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h1 className="truncate text-xl font-semibold tracking-tight">{user.name}</h1>
-            <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-              <span className="truncate">{user.email}</span>
-              <StatusDot color={user.active === false ? "var(--muted-foreground)" : "var(--ok)"}>
-                {user.active === false ? t("inactive") : t("active")}
-              </StatusDot>
-              {status && (
-                <StatusDot color={STATUS_ACCENT[status]}>{t(`liveStatus.${status}`)}</StatusDot>
-              )}
-              {hoursThisWeek !== null && (
-                <span>{t("hoursThisWeek", { hours: hoursThisWeek })}</span>
-              )}
-            </p>
-          </div>
-          {editToggle}
-        </div>
-
-        <Tabs value={tab} onValueChange={setTab}>
-          {tabNav}
-
-          <TabsContent value="profile" className="mt-6">
-            <SettingsSection title={t("employment")}>
-              <SettingsRow
-                title={t("linkedEmployee")}
-                control={
-                  editing ? (
-                    <div className="flex items-center gap-2">
-                      {linkSelect(control)}
-                      {activityLink}
-                    </div>
-                  ) : link ? (
-                    <PersonLink userId={link.userId} className="text-sm">
-                      {link.name}
-                    </PersonLink>
-                  ) : (
-                    value(t("notLinked"))
-                  )
-                }
-              />
-              <SettingsRow
-                title={t("role")}
-                control={editing ? roleSelect(control) : value(roleLabel)}
-              />
-              <SettingsRow
-                title={t("language")}
-                control={editing ? languageSelect(control) : value(languageLabel)}
-              />
-              <SettingsRow
-                title={t("startDate")}
-                control={editing ? startDateInput(control) : value(user.startDate ?? t("notSet"))}
-              />
-              <SettingsRow
-                title={t("exitDate")}
-                control={editing ? exitDateInput(control) : value(user.exitDate ?? t("notSet"))}
-              />
-              <SettingsRow
-                title={t("reportsTo")}
-                control={editing ? bossSelect(control) : value(bossLabel)}
-              />
-            </SettingsSection>
-          </TabsContent>
-
-          <TabsContent value="permissions" className="mt-6">
-            <SettingsSection title={t("permissions")}>
-              {PERMISSION_ITEMS.map((item) => {
-                const checked = permissionChecked(item.field);
-                return (
-                  <SettingsRow
-                    key={item.field}
-                    title={t(item.labelKey)}
-                    description={t(item.descKey)}
-                    control={
-                      editing ? (
-                        <Switch
-                          checked={checked}
-                          aria-label={t(item.labelKey)}
-                          onCheckedChange={(c) => onUpdateUser({ [item.field]: c })}
-                        />
-                      ) : checked ? (
-                        <Check className="size-4 text-ok" />
-                      ) : (
-                        <X className="size-4 text-muted-foreground" />
-                      )
-                    }
-                  />
-                );
-              })}
-            </SettingsSection>
-          </TabsContent>
-
-          <TabsContent value="hours" className="mt-6">
-            <SettingsSection title={t("tabHoursVacation")}>
-              <SettingsRow
-                title={t("weeklyHours")}
-                control={editing ? undefined : value(weeklyHoursLabel)}
-              >
-                {editing && <div className="mt-3">{targetHoursForm}</div>}
-              </SettingsRow>
-              <div className="px-4 py-3">{targetHistory}</div>
-              <SettingsRow
-                title={t("vacationDaysPerYear")}
-                control={
-                  editing ? <div className="w-32">{vacationInput}</div> : value(vacationLabel)
-                }
-              />
-              <div className="px-4 py-3">{vacationHistory}</div>
-            </SettingsSection>
-          </TabsContent>
-
-          <TabsContent value="history" className="mt-6">
-            <SettingsSection title={t("tabHistory")}>
-              {auditHistory === undefined ? (
-                <div className="p-4">
-                  <Skeleton className="h-24 w-full" />
-                </div>
-              ) : auditHistory.length === 0 ? (
-                <p className="px-4 py-3.5 text-sm text-muted-foreground">{t("noHistory")}</p>
-              ) : (
-                auditHistory.map((entry) => (
-                  <SettingsRow
-                    key={entry._id}
-                    title={entry.actor?.name ?? t("unknownActor")}
-                    description={`${t(`auditAction.${entry.action}`)}${entry.detail ? ` — ${entry.detail}` : ""}`}
-                    control={
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(entry.at).toLocaleString()}
-                      </span>
-                    }
-                  />
-                ))
-              )}
-            </SettingsSection>
-          </TabsContent>
-        </Tabs>
-      </section>
-    );
-  }
+  const editing = mode === "edit";
+  const value = (text: ReactNode) => <span className="text-sm text-muted-foreground">{text}</span>;
+  const control = "h-9 w-44 text-sm md:h-8";
 
   return (
     <section className="mx-auto max-w-4xl space-y-6">
       {backButton}
 
-      <PageHeader
-        title={user.name}
-        description={user.email}
-        action={
-          <div className="flex items-center gap-2">
-            <Badge variant={user.active === false ? "muted" : "success"}>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-semibold tracking-tight">{user.name}</h1>
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+            <span className="truncate">{user.email}</span>
+            <StatusDot color={user.active === false ? "var(--muted-foreground)" : "var(--ok)"}>
               {user.active === false ? t("inactive") : t("active")}
-            </Badge>
+            </StatusDot>
             {status && (
-              <Badge variant="outline" className={STATUS_STYLE[status]}>
-                {t(`liveStatus.${status}`)}
-              </Badge>
+              <StatusDot color={STATUS_ACCENT[status]}>{t(`liveStatus.${status}`)}</StatusDot>
             )}
-            {hoursThisWeek !== null && (
-              <Badge variant="muted">{t("hoursThisWeek", { hours: hoursThisWeek })}</Badge>
-            )}
-            {editToggle}
-          </div>
-        }
-      />
+            {hoursThisWeek !== null && <span>{t("hoursThisWeek", { hours: hoursThisWeek })}</span>}
+          </p>
+        </div>
+        {editToggle}
+      </div>
 
       <Tabs value={tab} onValueChange={setTab}>
         {tabNav}
 
-        <TabsContent value="profile" className="space-y-5">
-          <Section label={t("linkedEmployee")}>
-            {mode === "edit" ? (
-              <div className="flex items-center gap-2">
-                {linkSelect("h-9 flex-1 text-sm")}
-                {activityLink}
-              </div>
-            ) : (
-              <ViewRow label={t("linkedEmployee")} value={link?.name ?? t("notLinked")} />
-            )}
-          </Section>
-
-          <Section label={t("employment")}>
-            {mode === "edit" ? (
-              <div className="grid grid-cols-2 gap-3">
-                <Field label={t("role")}>{roleSelect("h-9 text-sm")}</Field>
-                <Field label={t("language")}>{languageSelect("h-9 text-sm")}</Field>
-                <Field label={t("startDate")}>{startDateInput("h-9 text-sm")}</Field>
-                <Field label={t("exitDate")}>{exitDateInput("h-9 text-sm")}</Field>
-                <Field label={t("reportsTo")}>{bossSelect("h-9 text-sm")}</Field>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                <ViewRow label={t("role")} value={roleLabel} />
-                <ViewRow label={t("language")} value={languageLabel} />
-                <ViewRow label={t("startDate")} value={user.startDate ?? t("notSet")} />
-                <ViewRow label={t("exitDate")} value={user.exitDate ?? t("notSet")} />
-                <ViewRow label={t("reportsTo")} value={bossLabel} />
-              </div>
-            )}
-          </Section>
-        </TabsContent>
-
-        <TabsContent value="permissions">
-          <Section label={t("permissions")}>
-            <div className="space-y-2">
-              {PERMISSION_ITEMS.map((item) => {
-                const checked = permissionChecked(item.field);
-                return mode === "edit" ? (
-                  <label
-                    key={item.field}
-                    className="flex cursor-pointer items-start justify-between gap-3 rounded-lg border border-border/70 bg-panel-2 px-3.5 py-3 text-sm transition-colors active:bg-panel-2/70"
-                  >
-                    <span className="min-w-0">
-                      <span className="block font-medium text-fg">{t(item.labelKey)}</span>
-                      <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-                        {t(item.descKey)}
-                      </span>
-                    </span>
-                    <Checkbox
-                      checked={checked}
-                      onCheckedChange={(c) => onUpdateUser({ [item.field]: c === true })}
-                      className="mt-0.5 h-5 w-5 shrink-0"
-                    />
-                  </label>
-                ) : (
-                  <div
-                    key={item.field}
-                    className="flex items-start justify-between gap-3 rounded-lg border border-border/70 px-3.5 py-3 text-sm"
-                  >
-                    <span className="min-w-0">
-                      <span className="block font-medium text-fg">{t(item.labelKey)}</span>
-                      <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-                        {t(item.descKey)}
-                      </span>
-                    </span>
-                    {checked ? (
-                      <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                    ) : (
-                      <X className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-                    )}
+        <TabsContent value="profile" className="mt-6">
+          <SettingsSection title={t("employment")}>
+            <SettingsRow
+              title={t("linkedEmployee")}
+              control={
+                editing ? (
+                  <div className="flex items-center gap-2">
+                    {linkSelect(control)}
+                    {activityLink}
                   </div>
-                );
-              })}
-            </div>
-          </Section>
+                ) : link ? (
+                  <PersonLink userId={link.userId} className="text-sm">
+                    {link.name}
+                  </PersonLink>
+                ) : (
+                  value(t("notLinked"))
+                )
+              }
+            />
+            <SettingsRow
+              title={t("role")}
+              control={editing ? roleSelect(control) : value(roleLabel)}
+            />
+            <SettingsRow
+              title={t("language")}
+              control={editing ? languageSelect(control) : value(languageLabel)}
+            />
+            <SettingsRow
+              title={t("startDate")}
+              control={editing ? startDateInput(control) : value(user.startDate ?? t("notSet"))}
+            />
+            <SettingsRow
+              title={t("exitDate")}
+              control={editing ? exitDateInput(control) : value(user.exitDate ?? t("notSet"))}
+            />
+            <SettingsRow
+              title={t("reportsTo")}
+              control={editing ? bossSelect(control) : value(bossLabel)}
+            />
+          </SettingsSection>
         </TabsContent>
 
-        <TabsContent value="hours" className="space-y-5">
-          <Section label={t("weeklyHours")}>
-            {mode === "view" ? (
-              <ViewRow label={t("weeklyHours")} value={weeklyHoursLabel} />
-            ) : (
-              targetHoursForm
-            )}
-            {targetHistory}
-          </Section>
-
-          <Section label={t("vacationDaysPerYear")}>
-            {mode === "view" ? (
-              <ViewRow label={t("vacationDaysPerYear")} value={vacationLabel} />
-            ) : (
-              vacationInput
-            )}
-            {vacationHistory}
-          </Section>
+        <TabsContent value="permissions" className="mt-6">
+          <SettingsSection title={t("permissions")}>
+            {PERMISSION_ITEMS.map((item) => {
+              const checked = permissionChecked(item.field);
+              return (
+                <SettingsRow
+                  key={item.field}
+                  title={t(item.labelKey)}
+                  description={t(item.descKey)}
+                  control={
+                    editing ? (
+                      <Switch
+                        checked={checked}
+                        aria-label={t(item.labelKey)}
+                        onCheckedChange={(c) => onUpdateUser({ [item.field]: c })}
+                      />
+                    ) : checked ? (
+                      <Check className="size-4 text-ok" />
+                    ) : (
+                      <X className="size-4 text-muted-foreground" />
+                    )
+                  }
+                />
+              );
+            })}
+          </SettingsSection>
         </TabsContent>
 
-        <TabsContent value="history">
-          <Section label={t("tabHistory")}>
-            {auditHistory === undefined && <Skeleton className="h-32 w-full" />}
-            {auditHistory !== undefined && auditHistory.length === 0 && (
-              <p className="text-xs text-muted-foreground">{t("noHistory")}</p>
+        <TabsContent value="hours" className="mt-6">
+          <SettingsSection title={t("tabHoursVacation")}>
+            <SettingsRow
+              title={t("weeklyHours")}
+              control={editing ? undefined : value(weeklyHoursLabel)}
+            >
+              {editing && <div className="mt-3">{targetHoursForm}</div>}
+            </SettingsRow>
+            <div className="px-4 py-3">{targetHistory}</div>
+            <SettingsRow
+              title={t("vacationDaysPerYear")}
+              control={editing ? <div className="w-32">{vacationInput}</div> : value(vacationLabel)}
+            />
+            <div className="px-4 py-3">{vacationHistory}</div>
+          </SettingsSection>
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-6">
+          <SettingsSection title={t("tabHistory")}>
+            {auditHistory === undefined ? (
+              <div className="p-4">
+                <Skeleton className="h-24 w-full" />
+              </div>
+            ) : auditHistory.length === 0 ? (
+              <p className="px-4 py-3.5 text-sm text-muted-foreground">{t("noHistory")}</p>
+            ) : (
+              auditHistory.map((entry) => (
+                <SettingsRow
+                  key={entry._id}
+                  title={entry.actor?.name ?? t("unknownActor")}
+                  description={`${t(`auditAction.${entry.action}`)}${entry.detail ? ` — ${entry.detail}` : ""}`}
+                  control={
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(entry.at).toLocaleString()}
+                    </span>
+                  }
+                />
+              ))
             )}
-            {auditHistory !== undefined && auditHistory.length > 0 && (
-              <ul className="space-y-1.5">
-                {auditHistory.map((entry) => (
-                  <li
-                    key={entry._id}
-                    className="rounded-md border border-border/70 px-3 py-2 text-xs"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-fg">
-                        {entry.actor?.name ?? t("unknownActor")}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {new Date(entry.at).toLocaleString()}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 text-muted-foreground">
-                      {t(`auditAction.${entry.action}`)}
-                      {entry.detail ? ` — ${entry.detail}` : ""}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Section>
+          </SettingsSection>
         </TabsContent>
       </Tabs>
     </section>

@@ -20,7 +20,7 @@ export default function AdminRequestsPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeaderBar title={t("accessRequests")} icon={<Clock />} />
-      <AccessRequestsPanel isAdmin={isAdmin} refreshed />
+      <AccessRequestsPanel isAdmin={isAdmin} />
     </div>
   );
 }

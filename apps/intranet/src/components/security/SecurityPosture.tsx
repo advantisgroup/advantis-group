@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 
 import { MOTION } from "@/components/activity/motion/motion-tokens";
 import { SettingsSection } from "@/components/ui/settings-rows";
-import { useDesignPreview } from "@/lib/design-preview";
 import { cn } from "@/lib/utils";
 
 import { scorePosture, useSecurityState, type Posture, type PostureTier } from "./security-state";
@@ -109,7 +108,6 @@ export function SecurityPosture() {
   const t = useTranslations("Settings");
   const { passkeys, totp, loading } = useSecurityState();
   const prefersReducedMotion = useReducedMotion();
-  const refreshed = useDesignPreview() === "refreshed";
   const animate = !prefersReducedMotion;
 
   if (loading) {
@@ -200,32 +198,11 @@ export function SecurityPosture() {
     </div>
   );
 
-  if (refreshed) {
-    return (
-      <SettingsSection title={t("posture.eyebrow")}>
-        <div className="border-t-[3px] p-5" style={{ borderTopColor: accent }}>
-          {content}
-        </div>
-      </SettingsSection>
-    );
-  }
-
   return (
-    <motion.section
-      initial={animate ? { opacity: 0, y: 8 } : false}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: MOTION.base, ease: MOTION.ease }}
-      aria-label={t("posture.regionLabel")}
-      className="relative overflow-hidden rounded-2xl border border-border/60 p-5"
-      style={{
-        // A wash of the tier colour rather than a solid fill — enough to read
-        // the state peripherally without turning the top of the page into a
-        // banner that has to be dismissed.
-        backgroundImage: `radial-gradient(32rem 14rem at 0% 0%, color-mix(in oklch, ${accent} 16%, transparent), transparent 70%)`,
-        backgroundColor: "var(--card)",
-      }}
-    >
-      {content}
-    </motion.section>
+    <SettingsSection title={t("posture.eyebrow")}>
+      <div className="border-t-[3px] p-5" style={{ borderTopColor: accent }}>
+        {content}
+      </div>
+    </SettingsSection>
   );
 }

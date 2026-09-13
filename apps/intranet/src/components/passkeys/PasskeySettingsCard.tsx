@@ -3,15 +3,11 @@
 import { useState } from "react";
 
 import { startRegistration } from "@simplewebauthn/browser";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CloudCheck, KeyRound, Loader2, Pencil, Plus, Smartphone, Trash2 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { MOTION } from "@/components/activity/motion/motion-tokens";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +22,6 @@ import { Label } from "@/components/ui/label";
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 import { jsonOrThrow, useSecurityState, type Passkey } from "@/components/security/security-state";
 import { useDestructiveStepUp, type StepUpHintShape } from "@/components/auth/useDestructiveStepUp";
-import { useDesignPreview } from "@/lib/design-preview";
 import { signalAcceptedPasskeys } from "./passkey-signal";
 
 type RegistrationOptions = Parameters<typeof startRegistration>[0]["optionsJSON"];
@@ -40,8 +35,7 @@ type AcceptedCredentialsSignal = {
 export function PasskeySettingsCard() {
   const t = useTranslations("Settings");
   const format = useFormatter();
-  const prefersReducedMotion = useReducedMotion();
-  const refreshed = useDesignPreview() === "refreshed";
+
   const { passkeys, refresh, apiRequest } = useSecurityState();
   const [dialog, setDialog] = useState<"add" | "rename" | "remove" | null>(null);
   const [selected, setSelected] = useState<Passkey | null>(null);
@@ -260,136 +254,55 @@ export function PasskeySettingsCard() {
     </>
   );
 
-  if (refreshed) {
-    return (
-      <div id="passkeys" data-hash-anchor>
-        <SettingsSection title={t("passkeys")} description={t("passkeysHint")}>
-          {passkeys === null ? (
-            <div className="flex justify-center px-4 py-5 text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-            </div>
-          ) : passkeys.length === 0 ? (
-            <SettingsRow
-              title={<span className="font-normal text-muted-foreground">{t("noPasskeys")}</span>}
-            />
-          ) : (
-            passkeys.map((passkey) => (
-              <SettingsRow
-                key={passkey._id}
-                title={
-                  <span className="flex min-w-0 items-center gap-2">
-                    <KeyRound className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{passkey.name}</span>
-                    <span className="inline-flex shrink-0 items-center gap-1 text-xs font-normal text-muted-foreground">
-                      {isSynced(passkey) ? (
-                        <CloudCheck className="size-3" />
-                      ) : (
-                        <Smartphone className="size-3" />
-                      )}
-                      {isSynced(passkey) ? t("passkeySynced") : t("passkeyDeviceBound")}
-                    </span>
-                  </span>
-                }
-                description={lastUsed(passkey)}
-                control={<div className="flex gap-1">{rowActions(passkey)}</div>}
-              />
-            ))
-          )}
-          <div className="flex items-center justify-between gap-4 px-4 py-3 max-sm:flex-wrap">
-            <p className="min-w-0 flex-1 text-xs text-muted-foreground">{helpLinks}</p>
-            <Button
-              size="sm"
-              variant="outline"
-              className="shrink-0"
-              onClick={openAdd}
-              disabled={passkeys === null}
-            >
-              <Plus />
-              {t("addPasskey")}
-            </Button>
-          </div>
-        </SettingsSection>
-        {dialogs}
-      </div>
-    );
-  }
-
   return (
-    <Card id="passkeys" data-hash-anchor>
-      <CardContent className="space-y-4 p-5">
-        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="font-semibold tracking-tight">{t("passkeys")}</p>
-            <p className="text-sm text-muted-foreground">{t("passkeysHint")}</p>
-          </div>
-          <Button
-            size="sm"
-            className="w-full sm:w-auto"
-            onClick={openAdd}
-            disabled={passkeys === null}
-          >
-            <Plus className="size-3.5" />
-            {t("addPasskey")}
-          </Button>
-        </div>
-
-        <p className="text-xs text-muted-foreground">{helpLinks}</p>
-
+    <div id="passkeys" data-hash-anchor>
+      <SettingsSection title={t("passkeys")} description={t("passkeysHint")}>
         {passkeys === null ? (
-          <div className="flex justify-center py-3 text-muted-foreground">
+          <div className="flex justify-center px-4 py-5 text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
           </div>
         ) : passkeys.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border/70 px-3 py-4 text-sm text-muted-foreground">
-            {t("noPasskeys")}
-          </p>
+          <SettingsRow
+            title={<span className="font-normal text-muted-foreground">{t("noPasskeys")}</span>}
+          />
         ) : (
-          <div className="space-y-2">
-            <AnimatePresence initial={false}>
-              {passkeys.map((passkey) => (
-                <motion.div
-                  key={passkey._id}
-                  layout={!prefersReducedMotion}
-                  initial={prefersReducedMotion ? false : { opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                  transition={{ duration: MOTION.base, ease: MOTION.ease }}
-                  className="flex items-center justify-between gap-3 overflow-hidden rounded-lg border border-border/70 px-3 py-2.5"
-                >
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <KeyRound className="size-4 shrink-0 text-primary" />
-                    <div className="min-w-0">
-                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                        <p className="truncate text-sm font-medium">{passkey.name}</p>
-                        {/* Whether losing this device loses the key is the one
-                            thing a passkey list has to say, and the data was
-                            already stored — just never rendered. */}
-                        <Badge variant="muted" className="gap-1 text-[10px]">
-                          {isSynced(passkey) ? (
-                            <>
-                              <CloudCheck className="size-3" />
-                              {t("passkeySynced")}
-                            </>
-                          ) : (
-                            <>
-                              <Smartphone className="size-3" />
-                              {t("passkeyDeviceBound")}
-                            </>
-                          )}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{lastUsed(passkey)}</p>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 gap-1">{rowActions(passkey)}</div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+          passkeys.map((passkey) => (
+            <SettingsRow
+              key={passkey._id}
+              title={
+                <span className="flex min-w-0 items-center gap-2">
+                  <KeyRound className="size-3.5 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{passkey.name}</span>
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-normal text-muted-foreground">
+                    {isSynced(passkey) ? (
+                      <CloudCheck className="size-3" />
+                    ) : (
+                      <Smartphone className="size-3" />
+                    )}
+                    {isSynced(passkey) ? t("passkeySynced") : t("passkeyDeviceBound")}
+                  </span>
+                </span>
+              }
+              description={lastUsed(passkey)}
+              control={<div className="flex gap-1">{rowActions(passkey)}</div>}
+            />
+          ))
         )}
-
-        {dialogs}
-      </CardContent>
-    </Card>
+        <div className="flex items-center justify-between gap-4 px-4 py-3 max-sm:flex-wrap">
+          <p className="min-w-0 flex-1 text-xs text-muted-foreground">{helpLinks}</p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+            onClick={openAdd}
+            disabled={passkeys === null}
+          >
+            <Plus />
+            {t("addPasskey")}
+          </Button>
+        </div>
+      </SettingsSection>
+      {dialogs}
+    </div>
   );
 }

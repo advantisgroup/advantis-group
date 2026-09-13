@@ -4,18 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import type { SessionWithActivitiesResource } from "@clerk/types";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Loader2, LogOut, Monitor, Smartphone } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { MOTION } from "@/components/activity/motion/motion-tokens";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
-import { useDesignPreview } from "@/lib/design-preview";
 
 /** Clerk's own code for "this session hasn't proven itself recently enough
  * for a sensitive action" — revoking another session is one of those. We
@@ -42,8 +37,7 @@ export function ActiveSessionsCard() {
   const clerk = useClerk();
   const { user } = useUser();
   const { sessionId } = useAuth();
-  const prefersReducedMotion = useReducedMotion();
-  const refreshed = useDesignPreview() === "refreshed";
+
   const [sessions, setSessions] = useState<SessionWithActivitiesResource[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -148,159 +142,67 @@ export function ActiveSessionsCard() {
 
   const otherCount = sessions?.filter((session) => session.id !== sessionId).length ?? 0;
 
-  if (refreshed) {
-    return (
-      <div id="sessions" data-hash-anchor>
-        <SettingsSection title={t("sessions.title")} description={t("sessions.hint")}>
-          {sessions === null ? (
-            <div className="flex justify-center px-4 py-5 text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-            </div>
-          ) : (
-            sessions.map((session) => {
-              const current = session.id === sessionId;
-              const Icon = session.latestActivity?.isMobile ? Smartphone : Monitor;
-              return (
-                <SettingsRow
-                  key={session.id}
-                  title={
-                    <span className="flex min-w-0 items-center gap-2">
-                      <Icon className="size-3.5 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{describe(session)}</span>
-                      {current && (
-                        <span className="shrink-0 text-xs font-normal text-ok">
-                          {t("sessions.thisDevice")}
-                        </span>
-                      )}
-                    </span>
-                  }
-                  description={t("sessions.lastActive", {
-                    when: format.relativeTime(new Date(session.lastActiveAt)),
-                  })}
-                  control={
-                    !current && (
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-destructive"
-                        disabled={busyId !== null}
-                        aria-label={t("sessions.revokeConfirm")}
-                        onClick={() => void revoke(session)}
-                      >
-                        {busyId === session.id ? <Loader2 className="animate-spin" /> : <LogOut />}
-                      </Button>
-                    )
-                  }
-                />
-              );
-            })
-          )}
-          {otherCount > 0 && (
-            <div className="flex justify-end px-4 py-2.5">
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-destructive hover:text-destructive"
-                disabled={busyId !== null}
-                onClick={() => void revokeOthers()}
-              >
-                {busyId === "all" ? <Loader2 className="animate-spin" /> : <LogOut />}
-                {t("sessions.revokeAll")}
-              </Button>
-            </div>
-          )}
-        </SettingsSection>
-      </div>
-    );
-  }
-
   return (
-    <Card id="sessions" data-hash-anchor>
-      <CardContent className="space-y-4 p-5">
-        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="font-semibold tracking-tight">{t("sessions.title")}</p>
-            <p className="text-sm text-muted-foreground">{t("sessions.hint")}</p>
-          </div>
-          {otherCount > 0 && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full text-destructive hover:text-destructive sm:w-auto"
-              disabled={busyId !== null}
-              onClick={() => void revokeOthers()}
-            >
-              {busyId === "all" ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <LogOut className="size-3.5" />
-              )}
-              {t("sessions.revokeAll")}
-            </Button>
-          )}
-        </div>
-
+    <div id="sessions" data-hash-anchor>
+      <SettingsSection title={t("sessions.title")} description={t("sessions.hint")}>
         {sessions === null ? (
-          <div className="flex justify-center py-3 text-muted-foreground">
+          <div className="flex justify-center px-4 py-5 text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
           </div>
         ) : (
-          <div className="space-y-2">
-            <AnimatePresence initial={false}>
-              {sessions.map((session) => {
-                const current = session.id === sessionId;
-                const Icon = session.latestActivity?.isMobile ? Smartphone : Monitor;
-                return (
-                  <motion.div
-                    key={session.id}
-                    layout={!prefersReducedMotion}
-                    initial={prefersReducedMotion ? false : { opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                    transition={{ duration: MOTION.base, ease: MOTION.ease }}
-                    className="flex items-center justify-between gap-3 overflow-hidden rounded-lg border border-border/70 px-3 py-2.5"
-                  >
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <Icon className="size-4 shrink-0 text-muted-foreground" />
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <p className="truncate text-sm font-medium">{describe(session)}</p>
-                          {current && (
-                            <Badge variant="muted" className="text-[10px]">
-                              {t("sessions.thisDevice")}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {t("sessions.lastActive", {
-                            when: format.relativeTime(new Date(session.lastActiveAt)),
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    {!current && (
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        className="shrink-0 text-destructive hover:text-destructive"
-                        disabled={busyId !== null}
-                        onClick={() => void revoke(session)}
-                      >
-                        {busyId === session.id ? (
-                          <Loader2 className="size-3.5 animate-spin" />
-                        ) : (
-                          <LogOut className="size-3.5" />
-                        )}
-                        <span className="sr-only">{t("sessions.revokeConfirm")}</span>
-                      </Button>
+          sessions.map((session) => {
+            const current = session.id === sessionId;
+            const Icon = session.latestActivity?.isMobile ? Smartphone : Monitor;
+            return (
+              <SettingsRow
+                key={session.id}
+                title={
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Icon className="size-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{describe(session)}</span>
+                    {current && (
+                      <span className="shrink-0 text-xs font-normal text-ok">
+                        {t("sessions.thisDevice")}
+                      </span>
                     )}
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
+                  </span>
+                }
+                description={t("sessions.lastActive", {
+                  when: format.relativeTime(new Date(session.lastActiveAt)),
+                })}
+                control={
+                  !current && (
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      className="text-muted-foreground hover:text-destructive"
+                      disabled={busyId !== null}
+                      aria-label={t("sessions.revokeConfirm")}
+                      onClick={() => void revoke(session)}
+                    >
+                      {busyId === session.id ? <Loader2 className="animate-spin" /> : <LogOut />}
+                    </Button>
+                  )
+                }
+              />
+            );
+          })
+        )}
+        {otherCount > 0 && (
+          <div className="flex justify-end px-4 py-2.5">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-destructive hover:text-destructive"
+              disabled={busyId !== null}
+              onClick={() => void revokeOthers()}
+            >
+              {busyId === "all" ? <Loader2 className="animate-spin" /> : <LogOut />}
+              {t("sessions.revokeAll")}
+            </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </SettingsSection>
+    </div>
   );
 }

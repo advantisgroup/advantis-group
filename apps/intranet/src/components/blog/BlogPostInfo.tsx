@@ -7,10 +7,9 @@ import { Download, ExternalLink, MoreVertical, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { MetricRow, Panel, PanelSkeleton, StatTile } from "@/components/admin/overview/primitives";
+import { MetricRow, Panel, PanelSkeleton } from "@/components/admin/overview/primitives";
 import { Link } from "@/components/Link";
 import { useBlogPostAnalytics } from "@/components/blog/useBlogPostAnalytics";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
 import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
@@ -27,7 +26,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { exportBlogPostAsHtml, exportBlogPostAsMarkdown } from "@/lib/blog-export";
-import { useDesignPreview } from "@/lib/design-preview";
 import { formatDateTime } from "@/lib/format";
 
 const SITE_ORIGIN = "https://advantisgroup.de";
@@ -49,22 +47,12 @@ function formatPercent(fraction: number | null): string {
   return `${Math.round(fraction * 100)}%`;
 }
 
-function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-border/60 py-2.5 last:border-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="min-w-0 truncate text-right text-sm font-medium">{value}</span>
-    </div>
-  );
-}
-
 export function BlogPostInfo({ post }: { post: Doc<"blogPosts"> }) {
   const t = useTranslations("Blog");
   const tc = useTranslations("Common");
   const locale = useLocale();
   const confirm = useConfirm();
   const handleError = useErrorHandler();
-  const refreshed = useDesignPreview() === "refreshed";
 
   const publishMutation = useMutation(api.blogPosts.publish);
   const unpublishMutation = useMutation(api.blogPosts.unpublish);
@@ -168,19 +156,13 @@ export function BlogPostInfo({ post }: { post: Doc<"blogPosts"> }) {
             <h1 className="font-display text-2xl font-bold tracking-tight refreshed:text-xl refreshed:font-semibold">
               {post.title || t("untitled")}
             </h1>
-            {refreshed ? (
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium">
-                <span
-                  className="size-2 rounded-full"
-                  style={{ background: isPublished ? "var(--ok)" : "var(--muted-foreground)" }}
-                />
-                {isPublished ? t("statusPublished") : t("statusDraft")}
-              </span>
-            ) : (
-              <Badge variant={isPublished ? "default" : "muted"}>
-                {isPublished ? t("statusPublished") : t("statusDraft")}
-              </Badge>
-            )}
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+              <span
+                className="size-2 rounded-full"
+                style={{ background: isPublished ? "var(--ok)" : "var(--muted-foreground)" }}
+              />
+              {isPublished ? t("statusPublished") : t("statusDraft")}
+            </span>
           </div>
         </div>
 
@@ -244,27 +226,12 @@ export function BlogPostInfo({ post }: { post: Doc<"blogPosts"> }) {
           <p className="text-sm text-muted-foreground">{t("postHogNotConfigured")}</p>
         ) : (
           <div className="space-y-5">
-            {refreshed ? (
-              <KpiStrip>
-                <Kpi featured label={t("statViews")} value={analytics.views} />
-                <Kpi label={t("statUniqueVisitors")} value={analytics.uniqueVisitors} />
-                <Kpi
-                  label={t("statAvgTime")}
-                  value={formatSeconds(analytics.avgTimeOnPageSeconds)}
-                />
-                <Kpi label={t("statBounceRate")} value={formatPercent(analytics.bounceRate)} />
-              </KpiStrip>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                <StatTile label={t("statViews")} value={analytics.views} />
-                <StatTile label={t("statUniqueVisitors")} value={analytics.uniqueVisitors} />
-                <StatTile
-                  label={t("statAvgTime")}
-                  value={formatSeconds(analytics.avgTimeOnPageSeconds)}
-                />
-                <StatTile label={t("statBounceRate")} value={formatPercent(analytics.bounceRate)} />
-              </div>
-            )}
+            <KpiStrip>
+              <Kpi featured label={t("statViews")} value={analytics.views} />
+              <Kpi label={t("statUniqueVisitors")} value={analytics.uniqueVisitors} />
+              <Kpi label={t("statAvgTime")} value={formatSeconds(analytics.avgTimeOnPageSeconds)} />
+              <Kpi label={t("statBounceRate")} value={formatPercent(analytics.bounceRate)} />
+            </KpiStrip>
             {analytics.views === 0 ? (
               <p className="text-sm text-muted-foreground">{t("noVisitsYet")}</p>
             ) : (
@@ -287,29 +254,19 @@ export function BlogPostInfo({ post }: { post: Doc<"blogPosts"> }) {
         )}
       </Panel>
 
-      {refreshed ? (
-        <SettingsSection title={t("settingsTitle")}>
-          {details.map((detail) => (
-            <SettingsRow
-              key={detail.label}
-              title={detail.label}
-              control={
-                <span className="block max-w-64 truncate text-sm text-muted-foreground">
-                  {detail.value}
-                </span>
-              }
-            />
-          ))}
-        </SettingsSection>
-      ) : (
-        <Panel title={t("settingsTitle")}>
-          <div>
-            {details.map((detail) => (
-              <DetailRow key={detail.label} label={detail.label} value={detail.value} />
-            ))}
-          </div>
-        </Panel>
-      )}
+      <SettingsSection title={t("settingsTitle")}>
+        {details.map((detail) => (
+          <SettingsRow
+            key={detail.label}
+            title={detail.label}
+            control={
+              <span className="block max-w-64 truncate text-sm text-muted-foreground">
+                {detail.value}
+              </span>
+            }
+          />
+        ))}
+      </SettingsSection>
     </div>
   );
 }

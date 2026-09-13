@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
@@ -31,13 +30,11 @@ import {
   ChevronRight,
   Copy,
   List,
-  MapPin,
   Pencil,
   Plane,
   Plus,
   SlidersHorizontal,
   Trash2,
-  User,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -46,16 +43,8 @@ import { FindATime } from "@/components/calendar/FindATime";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { PersonLink } from "@/components/profile/PersonLink";
 import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  useConfirm,
-} from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ui/dialog";
 import { FilterPill, TogglePill } from "@/components/ui/filter-pill";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,7 +61,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useAbsencesCalendar } from "@/lib/absences-api";
-import { useDesignPreview } from "@/lib/design-preview";
 import { formatIsoDate, formatTime } from "@/lib/format";
 import { buildIcs, downloadIcs } from "@/lib/ics";
 import { formatRichDate } from "@/lib/rich-date";
@@ -449,7 +437,6 @@ export default function CalendarPage() {
   const handleError = useErrorHandler();
   const departments = useQuery(api.users.departments) ?? [];
   const prefs = useQuery(api.userPreferences.getMine);
-  const refreshed = useDesignPreview() === "refreshed";
   const [cursor, setCursor] = useState(() => new Date());
   const [detail, setDetail] = useState<DetailState>(null);
   const [view, setView] = useState<CalendarView>("month");
@@ -975,122 +962,62 @@ export default function CalendarPage() {
 
       {/* Interactive legend: click a type to hide/show it, narrow to a
           department, or keep only your own absences. */}
-      {refreshed ? (
-        <div
-          className="mb-4 hidden flex-wrap items-center gap-2 md:flex"
-          data-tour="tour-calendar-filters"
-        >
-          <FilterPill
-            label={t("type")}
-            options={ALL_KINDS.map((kind) => ({
-              value: kind,
-              label: kind === "event" ? t("event") : tAbs(kind),
-              leading: (
-                <span
-                  className={cn(
-                    "size-2 shrink-0 rounded-full",
-                    kind === "event" ? "bg-primary" : ABSENCE_DOTS[kind],
-                  )}
-                />
-              ),
-            }))}
-            selected={
-              hiddenKinds.size === 0 ? [] : ALL_KINDS.filter((kind) => !hiddenKinds.has(kind))
-            }
-            onChange={(next) =>
-              setHiddenKinds(
-                new Set<FilterKind>(
-                  next.length === 0 ? [] : ALL_KINDS.filter((kind) => !next.includes(kind)),
-                ),
-              )
-            }
-            clearLabel={t("clearFilter", { label: t("type") })}
-          />
-          {departments.length > 0 && (
-            <FilterPill
-              label={t("department")}
-              options={departments.map((d) => ({ value: d, label: d }))}
-              selected={deptFilter === "all" ? [] : [deptFilter]}
-              onChange={(next) => setDeptFilter(next.find((d) => d !== deptFilter) ?? "all")}
-              clearLabel={t("clearFilter", { label: t("department") })}
-            />
-          )}
-          <TogglePill active={onlyMyAbsences} onClick={() => setOnlyMyAbsences((v) => !v)}>
-            {t("onlyMyAbsences")}
-          </TogglePill>
-          <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            {ALL_KINDS.filter((kind) => !hiddenKinds.has(kind)).map((kind) => (
-              <span key={kind} className="inline-flex items-center gap-1.5">
-                <span
-                  className={cn(
-                    "size-2 rounded-full",
-                    kind === "event" ? "bg-primary" : ABSENCE_DOTS[kind],
-                  )}
-                />
-                {kind === "event" ? t("event") : tAbs(kind)}
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div
-          className="mb-4 hidden flex-wrap items-center gap-x-2 gap-y-2 text-xs md:flex"
-          data-tour="tour-calendar-filters"
-        >
-          {ALL_KINDS.map((kind) => {
-            const hidden = hiddenKinds.has(kind);
-            return (
-              <button
-                key={kind}
-                type="button"
-                aria-pressed={!hidden}
-                onClick={() => toggleKind(kind)}
+      <div
+        className="mb-4 hidden flex-wrap items-center gap-2 md:flex"
+        data-tour="tour-calendar-filters"
+      >
+        <FilterPill
+          label={t("type")}
+          options={ALL_KINDS.map((kind) => ({
+            value: kind,
+            label: kind === "event" ? t("event") : tAbs(kind),
+            leading: (
+              <span
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 font-medium transition-colors hover:bg-accent",
-                  hidden ? "text-muted-foreground/50 line-through" : "text-muted-foreground",
+                  "size-2 shrink-0 rounded-full",
+                  kind === "event" ? "bg-primary" : ABSENCE_DOTS[kind],
                 )}
-              >
-                <span
-                  className={cn(
-                    "size-2.5 rounded-full",
-                    kind === "event" ? "bg-primary" : ABSENCE_DOTS[kind],
-                    hidden && "opacity-40",
-                  )}
-                />
-                {kind === "event" ? t("event") : tAbs(kind)}
-              </button>
-            );
-          })}
-          <button
-            type="button"
-            aria-pressed={onlyMyAbsences}
-            onClick={() => setOnlyMyAbsences((v) => !v)}
-            className={cn(
-              "rounded-full border px-2.5 py-1 font-medium transition-colors",
-              onlyMyAbsences
-                ? "border-transparent bg-foreground text-background"
-                : "border-border text-muted-foreground hover:bg-accent",
-            )}
-          >
-            {t("onlyMyAbsences")}
-          </button>
-          {departments.length > 0 && (
-            <Select value={deptFilter} onValueChange={setDeptFilter}>
-              <SelectTrigger className="h-7 w-auto gap-1.5 rounded-full border-border px-2.5 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("allDepartments")}</SelectItem>
-                {departments.map((d) => (
-                  <SelectItem key={d} value={d}>
-                    {d}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+              />
+            ),
+          }))}
+          selected={
+            hiddenKinds.size === 0 ? [] : ALL_KINDS.filter((kind) => !hiddenKinds.has(kind))
+          }
+          onChange={(next) =>
+            setHiddenKinds(
+              new Set<FilterKind>(
+                next.length === 0 ? [] : ALL_KINDS.filter((kind) => !next.includes(kind)),
+              ),
+            )
+          }
+          clearLabel={t("clearFilter", { label: t("type") })}
+        />
+        {departments.length > 0 && (
+          <FilterPill
+            label={t("department")}
+            options={departments.map((d) => ({ value: d, label: d }))}
+            selected={deptFilter === "all" ? [] : [deptFilter]}
+            onChange={(next) => setDeptFilter(next.find((d) => d !== deptFilter) ?? "all")}
+            clearLabel={t("clearFilter", { label: t("department") })}
+          />
+        )}
+        <TogglePill active={onlyMyAbsences} onClick={() => setOnlyMyAbsences((v) => !v)}>
+          {t("onlyMyAbsences")}
+        </TogglePill>
+        <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          {ALL_KINDS.filter((kind) => !hiddenKinds.has(kind)).map((kind) => (
+            <span key={kind} className="inline-flex items-center gap-1.5">
+              <span
+                className={cn(
+                  "size-2 rounded-full",
+                  kind === "event" ? "bg-primary" : ABSENCE_DOTS[kind],
+                )}
+              />
+              {kind === "event" ? t("event") : tAbs(kind)}
+            </span>
+          ))}
         </div>
-      )}
+      </div>
 
       <ResponsiveDialog
         open={filtersOpen}
@@ -1376,468 +1303,232 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {refreshed ? (
-        <SidePanel
-          open={detail !== null}
-          onOpenChange={(o) => !o && setDetail(null)}
-          title={
-            detailEvent?.title ??
-            detailAbsence?.userName ??
-            (detailDay ? longDate(detailDay) : t("title"))
-          }
-          accent={
-            detailEvent
-              ? eventAccent(detailEvent)
-              : detailAbsence
-                ? ABSENCE_ACCENT[detailAbsence.type]
-                : undefined
-          }
-          closeLabel={tc("close")}
-          header={
-            <div className="space-y-1 pr-8">
-              {detailEvent && (
-                <>
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ background: eventAccent(detailEvent) }}
-                    />
-                    {t("event")}
-                  </span>
-                  <h2 className="text-lg font-semibold leading-snug tracking-tight">
-                    {detailEvent.title}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">{eventWhen(detailEvent)}</p>
-                </>
-              )}
-              {detailAbsence && (
-                <>
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ background: ABSENCE_ACCENT[detailAbsence.type] }}
-                    />
-                    {t("absence")}
-                  </span>
-                  <h2 className="text-lg font-semibold leading-snug tracking-tight">
-                    <PersonLink userId={detailAbsence.userId as Id<"users">}>
-                      {detailAbsence.userName}
-                    </PersonLink>
-                  </h2>
-                  <p className="text-sm text-muted-foreground">{absenceRange(detailAbsence)}</p>
-                </>
-              )}
-              {detailDay && (
-                <h2 className="text-lg font-semibold capitalize leading-snug tracking-tight">
-                  {longDate(detailDay)}
+      <SidePanel
+        open={detail !== null}
+        onOpenChange={(o) => !o && setDetail(null)}
+        title={
+          detailEvent?.title ??
+          detailAbsence?.userName ??
+          (detailDay ? longDate(detailDay) : t("title"))
+        }
+        accent={
+          detailEvent
+            ? eventAccent(detailEvent)
+            : detailAbsence
+              ? ABSENCE_ACCENT[detailAbsence.type]
+              : undefined
+        }
+        closeLabel={tc("close")}
+        header={
+          <div className="space-y-1 pr-8">
+            {detailEvent && (
+              <>
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <span
+                    className="size-2 rounded-full"
+                    style={{ background: eventAccent(detailEvent) }}
+                  />
+                  {t("event")}
+                </span>
+                <h2 className="text-lg font-semibold leading-snug tracking-tight">
+                  {detailEvent.title}
                 </h2>
-              )}
-            </div>
-          }
-        >
-          {detailEvent && (
-            <>
-              <SidePanelSection title={t("details")}>
-                <SidePanelProperties
-                  rows={[
-                    ...(detailEvent.location
-                      ? [{ label: t("location"), value: detailEvent.location }]
-                      : []),
-                    {
-                      label: t("organizer"),
-                      value: (
-                        <PersonLink userId={detailEvent.createdByUserId}>
-                          {detailEvent.createdByName}
-                        </PersonLink>
-                      ),
-                    },
-                    ...(detailEvent.personalForUserId
-                      ? []
-                      : [{ label: t("audience"), value: audienceLabel(detailEvent) }]),
-                  ]}
-                />
-              </SidePanelSection>
-              {detailEvent.description && (
-                <SidePanelSection title={t("description")}>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                    {detailEvent.description}
-                  </p>
-                </SidePanelSection>
-              )}
-              <SidePanelSection title={t("actions")}>
-                <div className="flex flex-wrap gap-2">
-                  {canEditDetail && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setDetail(null);
-                        setEventDraft(draftFromEvent(detailEvent));
-                      }}
-                    >
-                      <Pencil />
-                      {t("editEvent")}
-                    </Button>
-                  )}
-                  {canDuplicateDetail && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setDetail(null);
-                        setEventDraft(draftFromEvent(detailEvent, true));
-                      }}
-                    >
-                      <Copy />
-                      {t("duplicate")}
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" onClick={() => downloadEventIcs(detailEvent)}>
-                    <CalendarArrowDown />
-                    {t("downloadEventIcs")}
-                  </Button>
-                  {canDeleteDetail && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => void onDeleteEvent(detailEvent)}
-                    >
-                      <Trash2 />
-                      {tc("delete")}
-                    </Button>
-                  )}
-                </div>
-              </SidePanelSection>
-            </>
-          )}
-
-          {detailAbsence && (
+                <p className="text-sm text-muted-foreground">{eventWhen(detailEvent)}</p>
+              </>
+            )}
+            {detailAbsence && (
+              <>
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <span
+                    className="size-2 rounded-full"
+                    style={{ background: ABSENCE_ACCENT[detailAbsence.type] }}
+                  />
+                  {t("absence")}
+                </span>
+                <h2 className="text-lg font-semibold leading-snug tracking-tight">
+                  <PersonLink userId={detailAbsence.userId as Id<"users">}>
+                    {detailAbsence.userName}
+                  </PersonLink>
+                </h2>
+                <p className="text-sm text-muted-foreground">{absenceRange(detailAbsence)}</p>
+              </>
+            )}
+            {detailDay && (
+              <h2 className="text-lg font-semibold capitalize leading-snug tracking-tight">
+                {longDate(detailDay)}
+              </h2>
+            )}
+          </div>
+        }
+      >
+        {detailEvent && (
+          <>
             <SidePanelSection title={t("details")}>
               <SidePanelProperties
                 rows={[
-                  { label: t("type"), value: tAbs(detailAbsence.type) },
-                  { label: t("period"), value: absenceRange(detailAbsence) },
-                  ...(detailAbsence.userDepartment
-                    ? [{ label: t("department"), value: detailAbsence.userDepartment }]
+                  ...(detailEvent.location
+                    ? [{ label: t("location"), value: detailEvent.location }]
                     : []),
+                  {
+                    label: t("organizer"),
+                    value: (
+                      <PersonLink userId={detailEvent.createdByUserId}>
+                        {detailEvent.createdByName}
+                      </PersonLink>
+                    ),
+                  },
+                  ...(detailEvent.personalForUserId
+                    ? []
+                    : [{ label: t("audience"), value: audienceLabel(detailEvent) }]),
                 ]}
               />
             </SidePanelSection>
-          )}
-
-          {detailDay && dayEntries && (
-            <>
-              <SidePanelSection
-                title={t("events")}
-                action={
-                  isManager && (
-                    <Button
-                      variant="ghost"
-                      size="xs"
-                      onClick={() => {
-                        setDetail(null);
-                        setEventDraft(emptyDraft(detailDay));
-                      }}
-                    >
-                      <Plus />
-                      {t("addEvent")}
-                    </Button>
-                  )
-                }
-              >
-                {dayEntries.events.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t("noEntries")}</p>
-                ) : (
-                  <div className="-mx-2 space-y-0.5">
-                    {dayEntries.events.map((e) => (
-                      <button
-                        key={e._id}
-                        type="button"
-                        onClick={() => setDetail({ kind: "event", id: e._id })}
-                        className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
-                      >
-                        <span
-                          className="h-8 w-1 shrink-0 rounded-full"
-                          style={{ background: eventAccent(e) }}
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium">{e.title}</span>
-                          <span className="block truncate text-xs text-muted-foreground">
-                            {e.allDay
-                              ? t("allDay")
-                              : `${formatTime(e.start, locale)} – ${formatTime(e.end, locale)}`}
-                            {e.location ? ` · ${e.location}` : ""}
-                          </span>
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+            {detailEvent.description && (
+              <SidePanelSection title={t("description")}>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                  {detailEvent.description}
+                </p>
               </SidePanelSection>
-              {dayEntries.absences.length > 0 && (
-                <SidePanelSection title={t("absences")}>
-                  <div className="-mx-2 space-y-0.5">
-                    {dayEntries.absences.map((a) => (
-                      <button
-                        key={a.id}
-                        type="button"
-                        onClick={() => setDetail({ kind: "absence", id: a.id })}
-                        className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
-                      >
-                        <span
-                          className="size-2 shrink-0 rounded-full"
-                          style={{ background: ABSENCE_ACCENT[a.type] }}
-                        />
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                          {a.userName}
-                        </span>
-                        <span className="shrink-0 text-xs text-muted-foreground">
-                          {tAbs(a.type)}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </SidePanelSection>
-              )}
-            </>
-          )}
-        </SidePanel>
-      ) : (
-        <Dialog open={detail !== null} onOpenChange={(o) => !o && setDetail(null)}>
-          <DialogContent>
-            {/* Day overview */}
-            {detailDay && dayEntries && (
-              <>
-                <DialogHeader>
-                  <DialogTitle className="capitalize">{longDate(detailDay)}</DialogTitle>
-                </DialogHeader>
-                <div className="max-h-[60vh] space-y-4 overflow-y-auto">
-                  {dayEntries.events.length === 0 && dayEntries.absences.length === 0 ? (
-                    <div className="flex flex-col items-center gap-2 py-8 text-center">
-                      <CalendarClock className="h-7 w-7 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">{t("noEntries")}</p>
-                    </div>
-                  ) : (
-                    <>
-                      {dayEntries.events.length > 0 && (
-                        <div className="space-y-1.5">
-                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            {t("events")}
-                          </p>
-                          {dayEntries.events.map((e) => (
-                            <button
-                              key={e._id}
-                              onClick={() => setDetail({ kind: "event", id: e._id })}
-                              className="flex w-full items-center gap-3 rounded-lg border border-border/70 p-2.5 text-left transition-colors hover:bg-accent"
-                            >
-                              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                <CalendarClock className="h-4 w-4" />
-                              </span>
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium">{e.title}</p>
-                                <p className="truncate text-xs text-muted-foreground">
-                                  {e.allDay
-                                    ? t("allDay")
-                                    : `${formatTime(e.start, locale)} – ${formatTime(e.end, locale)}`}
-                                  {e.location ? ` · ${e.location}` : ""}
-                                </p>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      {dayEntries.absences.length > 0 && (
-                        <div className="space-y-1.5">
-                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            {t("absences")}
-                          </p>
-                          {dayEntries.absences.map((a) => (
-                            <button
-                              key={a.id}
-                              onClick={() => setDetail({ kind: "absence", id: a.id })}
-                              className="flex w-full items-center gap-3 rounded-lg border border-border/70 p-2.5 text-left transition-colors hover:bg-accent"
-                            >
-                              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                                <Plane className="h-4 w-4" />
-                              </span>
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium">{a.userName}</p>
-                                <p className="truncate text-xs text-muted-foreground">
-                                  {tAbs(a.type)}
-                                </p>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-                {isManager && (
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setDetail(null);
-                        setEventDraft(emptyDraft(detailDay));
-                      }}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      {t("addEventOn")}
-                    </Button>
-                  </DialogFooter>
+            )}
+            <SidePanelSection title={t("actions")}>
+              <div className="flex flex-wrap gap-2">
+                {canEditDetail && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setDetail(null);
+                      setEventDraft(draftFromEvent(detailEvent));
+                    }}
+                  >
+                    <Pencil />
+                    {t("editEvent")}
+                  </Button>
                 )}
-              </>
-            )}
+                {canDuplicateDetail && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setDetail(null);
+                      setEventDraft(draftFromEvent(detailEvent, true));
+                    }}
+                  >
+                    <Copy />
+                    {t("duplicate")}
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={() => downloadEventIcs(detailEvent)}>
+                  <CalendarArrowDown />
+                  {t("downloadEventIcs")}
+                </Button>
+                {canDeleteDetail && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => void onDeleteEvent(detailEvent)}
+                  >
+                    <Trash2 />
+                    {tc("delete")}
+                  </Button>
+                )}
+              </div>
+            </SidePanelSection>
+          </>
+        )}
 
-            {/* Single event */}
-            {detailEvent && (
-              <EventDetail
-                event={detailEvent}
-                when={eventWhen(detailEvent)}
-                canEdit={canEditDetail}
-                canDelete={canDeleteDetail}
-                canDuplicate={canDuplicateDetail}
-                onDownload={() => downloadEventIcs(detailEvent)}
-                onEdit={() => {
-                  setDetail(null);
-                  setEventDraft(draftFromEvent(detailEvent));
-                }}
-                onDuplicate={() => {
-                  setDetail(null);
-                  setEventDraft(draftFromEvent(detailEvent, true));
-                }}
-                onDelete={() => onDeleteEvent(detailEvent)}
-              />
-            )}
+        {detailAbsence && (
+          <SidePanelSection title={t("details")}>
+            <SidePanelProperties
+              rows={[
+                { label: t("type"), value: tAbs(detailAbsence.type) },
+                { label: t("period"), value: absenceRange(detailAbsence) },
+                ...(detailAbsence.userDepartment
+                  ? [{ label: t("department"), value: detailAbsence.userDepartment }]
+                  : []),
+              ]}
+            />
+          </SidePanelSection>
+        )}
 
-            {/* Single absence */}
-            {detailAbsence && (
-              <AbsenceDetail
-                absence={detailAbsence}
-                typeLabel={tAbs(detailAbsence.type)}
-                range={absenceRange(detailAbsence)}
-              />
+        {detailDay && dayEntries && (
+          <>
+            <SidePanelSection
+              title={t("events")}
+              action={
+                isManager && (
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => {
+                      setDetail(null);
+                      setEventDraft(emptyDraft(detailDay));
+                    }}
+                  >
+                    <Plus />
+                    {t("addEvent")}
+                  </Button>
+                )
+              }
+            >
+              {dayEntries.events.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t("noEntries")}</p>
+              ) : (
+                <div className="-mx-2 space-y-0.5">
+                  {dayEntries.events.map((e) => (
+                    <button
+                      key={e._id}
+                      type="button"
+                      onClick={() => setDetail({ kind: "event", id: e._id })}
+                      className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
+                    >
+                      <span
+                        className="h-8 w-1 shrink-0 rounded-full"
+                        style={{ background: eventAccent(e) }}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{e.title}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {e.allDay
+                            ? t("allDay")
+                            : `${formatTime(e.start, locale)} – ${formatTime(e.end, locale)}`}
+                          {e.location ? ` · ${e.location}` : ""}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </SidePanelSection>
+            {dayEntries.absences.length > 0 && (
+              <SidePanelSection title={t("absences")}>
+                <div className="-mx-2 space-y-0.5">
+                  {dayEntries.absences.map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => setDetail({ kind: "absence", id: a.id })}
+                      className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
+                    >
+                      <span
+                        className="size-2 shrink-0 rounded-full"
+                        style={{ background: ABSENCE_ACCENT[a.type] }}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        {a.userName}
+                      </span>
+                      <span className="shrink-0 text-xs text-muted-foreground">{tAbs(a.type)}</span>
+                    </button>
+                  ))}
+                </div>
+              </SidePanelSection>
             )}
-          </DialogContent>
-        </Dialog>
-      )}
+          </>
+        )}
+      </SidePanel>
 
       <EventDialog draft={eventDraft} onOpenChange={(open) => !open && setEventDraft(null)} />
     </div>
   );
-
-  function DetailRow({ icon, children }: { icon: ReactNode; children: ReactNode }) {
-    return (
-      <div className="flex items-start gap-3 text-sm">
-        <span className="mt-0.5 text-muted-foreground [&_svg]:size-4">{icon}</span>
-        <span className="min-w-0 flex-1">{children}</span>
-      </div>
-    );
-  }
-
-  function EventDetail({
-    event,
-    when,
-    canEdit,
-    canDelete,
-    canDuplicate,
-    onDownload,
-    onEdit,
-    onDuplicate,
-    onDelete,
-  }: {
-    event: CalEvent;
-    when: string;
-    canEdit: boolean;
-    canDelete: boolean;
-    canDuplicate: boolean;
-    onDownload: () => void;
-    onEdit: () => void;
-    onDuplicate: () => void;
-    onDelete: () => void;
-  }) {
-    return (
-      <>
-        <DialogHeader>
-          <DialogTitle>{event.title}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <DetailRow icon={<CalendarClock />}>{when}</DetailRow>
-          {event.location && <DetailRow icon={<MapPin />}>{event.location}</DetailRow>}
-          <DetailRow icon={<User />}>
-            <span className="text-muted-foreground">{t("organizer")}: </span>
-            {event.createdByName}
-          </DetailRow>
-          {event.description && (
-            <p className="whitespace-pre-wrap rounded-lg bg-muted/40 p-3 text-sm">
-              {event.description}
-            </p>
-          )}
-        </div>
-        <DialogFooter className="flex-wrap">
-          {canDelete && (
-            <Button variant="destructive" onClick={onDelete}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              {tc("delete")}
-            </Button>
-          )}
-          {canEdit && (
-            <Button variant="outline" onClick={onEdit}>
-              <Pencil className="mr-2 h-4 w-4" />
-              {t("editEvent")}
-            </Button>
-          )}
-          {canDuplicate && (
-            <Button variant="outline" onClick={onDuplicate}>
-              <Copy className="mr-2 h-4 w-4" />
-              {t("duplicate")}
-            </Button>
-          )}
-          <Button variant="outline" onClick={onDownload}>
-            <CalendarArrowDown className="mr-2 h-4 w-4" />
-            {t("downloadEventIcs")}
-          </Button>
-          <Button variant="ghost" onClick={() => setDetail(null)}>
-            {tc("close")}
-          </Button>
-        </DialogFooter>
-      </>
-    );
-  }
-
-  function AbsenceDetail({
-    absence,
-    typeLabel,
-    range,
-  }: {
-    absence: CalAbsence;
-    typeLabel: string;
-    range: string;
-  }) {
-    return (
-      <>
-        <DialogHeader>
-          <DialogTitle>{absence.userName}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <DetailRow icon={<Plane />}>
-            <Badge variant="muted" className={ABSENCE_COLORS[absence.type] ?? ABSENCE_COLORS.other}>
-              {typeLabel}
-            </Badge>
-            {absence.userDepartment && (
-              <span className="ml-2 text-xs text-muted-foreground">{absence.userDepartment}</span>
-            )}
-          </DetailRow>
-          <DetailRow icon={<CalendarClock />}>{range}</DetailRow>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setDetail(null)}>
-            {tc("close")}
-          </Button>
-        </DialogFooter>
-      </>
-    );
-  }
 }
