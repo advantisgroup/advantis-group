@@ -202,6 +202,27 @@ export const addUserToTeam = mutation({
   },
 });
 
+export const removeUserFromTeam = mutation({
+  args: { userId: v.id("users"), teamId: v.id("teams") },
+  handler: async (ctx, { userId, teamId }) => {
+    await requireAdmin(ctx);
+    const [user, team] = await Promise.all([ctx.db.get(userId), ctx.db.get(teamId)]);
+    if (!user || !team) {
+      throw new ConvexError({ code: "not_found", message: "User or team not found" });
+    }
+    const existing = await ctx.db
+      .query("userTeams")
+      .withIndex("by_user_team", (q) => q.eq("userId", userId).eq("teamId", teamId))
+      .unique();
+    if (existing) await ctx.db.delete(existing._id);
+    if ((user.teams ?? []).includes(team.slug)) {
+      await ctx.db.patch(userId, {
+        teams: (user.teams ?? []).filter((slug) => slug !== team.slug),
+      });
+    }
+  },
+});
+
 /** Managers and people who manage members place someone in a department —
  *  it isn't something people pick for themselves. */
 export const setUserDepartment = mutation({

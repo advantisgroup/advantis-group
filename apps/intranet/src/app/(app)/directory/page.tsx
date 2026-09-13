@@ -31,7 +31,12 @@ import { PersonCard } from "@/components/directory/PersonCard";
 import { PersonTable, type SortDir, type SortKey } from "@/components/directory/PersonTable";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { UserProfile } from "@/components/profile/UserProfile";
-import { useCurrentUser, useIsAdmin, useIsManager } from "@/components/providers/current-user";
+import {
+  useCurrentUser,
+  useHasCapability,
+  useIsAdmin,
+  useIsManager,
+} from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterPill, TogglePill } from "@/components/ui/filter-pill";
@@ -84,6 +89,7 @@ function DirectoryPageContent() {
   const me = useCurrentUser();
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
+  const canManageMembers = useHasCapability("manage_members");
   const now = useNow();
 
   const [search, setSearch] = useState("");
@@ -521,6 +527,7 @@ function DirectoryPageContent() {
             people={filtered}
             statuses={statuses}
             canEdit={isAdmin}
+            canSetDepartment={canManageMembers}
             onOpenProfile={setProfileId}
           />
         ) : sections ? (

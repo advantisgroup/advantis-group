@@ -31,6 +31,8 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+import { OrgPersonMenu, type OrgUnits } from "./OrgPersonMenu";
+import { OrgStructureBar } from "./OrgStructureBar";
 import { type Person, type PersonStatus } from "./person-status";
 import { StatusPill } from "./StatusPill";
 
@@ -44,6 +46,7 @@ interface DragState {
   dragging: Id<"users"> | null;
   over: string | null;
   startDrag: (event: ReactPointerEvent, personId: Id<"users">) => void;
+  units: OrgUnits | null;
 }
 
 const DragContext = createContext<DragState | null>(null);
@@ -66,6 +69,10 @@ function OrgNode({
   const reports = reportsOf.get(person._id) ?? [];
   const [open, setOpen] = useState(depth < 2);
   const status = statuses.get(person._id);
+  const leads = [
+    ...(drag?.units?.departments ?? []).filter((d) => d.reportsToUserId === person._id),
+    ...(drag?.units?.teams ?? []).filter((team) => team.reportsToUserId === person._id),
+  ].map((unit) => unit.name);
 
   return (
     <li>
@@ -125,6 +132,11 @@ function OrgNode({
             <span className="block truncate text-xs leading-tight text-muted-foreground">
               {[person.jobTitle, person.department].filter(Boolean).join(" · ")}
             </span>
+            {leads.length > 0 && (
+              <span className="mt-0.5 block truncate text-xs leading-tight text-foreground/80">
+                {t("orgLeads", { names: leads.join(", ") })}
+              </span>
+            )}
           </span>
           {reports.length > 0 && (
             <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
@@ -135,6 +147,9 @@ function OrgNode({
             <StatusPill status={status} className="hidden shrink-0 sm:inline-flex" />
           )}
         </button>
+        {drag?.units && (drag.units.canAdmin || drag.units.canSetDepartment) && (
+          <OrgPersonMenu person={person} units={drag.units} />
+        )}
       </div>
       {open && reports.length > 0 && (
         <ul className="ml-3 border-l border-border/70 pl-3">
@@ -252,19 +267,23 @@ export function OrgChart({
   people,
   statuses,
   canEdit = false,
+  canSetDepartment = false,
   onOpenProfile,
 }: {
   people: Person[];
   statuses: Map<string, PersonStatus>;
   /** Admins can drag someone onto another person to change who they report to. */
   canEdit?: boolean;
+  canSetDepartment?: boolean;
   onOpenProfile: (id: Id<"users">) => void;
 }) {
   const t = useTranslations("Directory");
   const handleError = useErrorHandler();
   const setManager = useMutation(api.users.setManager);
-  const teams = useQuery(api.orgData.listTeams, canEdit ? {} : "skip");
-  const departments = useQuery(api.orgData.listDepartments, canEdit ? {} : "skip");
+  const teams = useQuery(api.orgData.listTeams, {});
+  const departments = useQuery(api.orgData.listDepartments, {});
+  const units: OrgUnits | null =
+    teams && departments ? { teams, departments, canAdmin: canEdit, canSetDepartment } : null;
   const [dragging, setDragging] = useState<Id<"users"> | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
@@ -382,7 +401,7 @@ export function OrgChart({
   const draggedPerson = dragging ? people.find((p) => p._id === dragging) : undefined;
 
   return (
-    <DragContext.Provider value={{ canEdit, dragging, over, startDrag }}>
+    <DragContext.Provider value={{ canEdit, dragging, over, startDrag, units }}>
       <div className={cn("space-y-6", dragging && "select-none")}>
         {directors.length > 0 && (
           <section>
@@ -423,7 +442,10 @@ export function OrgChart({
           </div>
         )}
         {canEdit && !dragging && (
-          <p className="text-xs text-muted-foreground">{t("orgDragHint")}</p>
+          <div className="space-y-2">
+            {units && <OrgStructureBar units={units} />}
+            <p className="text-xs text-muted-foreground">{t("orgDragHint")}</p>
+          </div>
         )}
         {roots.length > 0 && (
           <ul className="rounded-xl border border-border/70 bg-card p-2">
