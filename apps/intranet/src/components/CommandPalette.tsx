@@ -116,7 +116,9 @@ function HighlightMatch({ label, query }: { label: string; query: string }) {
   );
 }
 
-export function CommandPalette() {
+/** `compact` shows only the search icon — for a header already crowded by a
+ *  page's own title and tabs. ⌘K works the same either way. */
+export function CommandPalette({ compact = false }: { compact?: boolean } = {}) {
   const t = useTranslations("Command");
   const tNav = useTranslations("Nav");
   const tGuide = useTranslations("Guidebooks");
@@ -500,20 +502,35 @@ export function CommandPalette() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => {
-          openSourceRef.current = "trigger";
-          setOpen(true);
-        }}
-        className="flex h-8 w-full max-w-xs items-center gap-2 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:h-9 md:max-w-md md:px-3"
-      >
-        <Search className="size-4 shrink-0" />
-        <span className="flex-1 truncate text-left">{t("placeholder")}</span>
-        <kbd className="hidden rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium sm:inline">
-          ⌘K
-        </kbd>
-      </button>
+      {compact ? (
+        <button
+          type="button"
+          aria-label={t("placeholder")}
+          title={`${t("placeholder")} (⌘K)`}
+          onClick={() => {
+            openSourceRef.current = "trigger";
+            setOpen(true);
+          }}
+          className="grid size-9 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <Search className="size-4" />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => {
+            openSourceRef.current = "trigger";
+            setOpen(true);
+          }}
+          className="flex h-8 w-full max-w-xs items-center gap-2 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:h-9 md:max-w-md md:px-3"
+        >
+          <Search className="size-4 shrink-0" />
+          <span className="flex-1 truncate text-left">{t("placeholder")}</span>
+          <kbd className="hidden rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium sm:inline">
+            ⌘K
+          </kbd>
+        </button>
+      )}
 
       <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
         <DialogPrimitive.Portal>

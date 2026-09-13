@@ -12,12 +12,12 @@ import { AiDock, AiDockButton } from "@/components/ai/AiDock";
 import { AskProvider } from "@/components/ai/ask-subject";
 import { AskPanel } from "@/components/ai/AskPanel";
 import { PostHogIdentify } from "@/components/analytics/PostHogIdentify";
-import { CommandPalette } from "@/components/CommandPalette";
 import { useSmoothScroll } from "@/components/effects/SmoothScrolling";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { GracePeriodBanner } from "@/components/layout/GracePeriodBanner";
+import { HeaderLeft } from "@/components/layout/HeaderLeft";
 import { KeyboardShortcuts } from "@/components/layout/KeyboardShortcuts";
 import { SandboxBanner } from "@/components/layout/SandboxBanner";
 import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
@@ -86,7 +86,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const mainContentRef = useRef<HTMLDivElement>(null);
   const { state: tourState, phase: tourPhase, targetRect } = useTour();
   const tourActive = (tourState?.active && tourPhase === "active") ?? false;
-  const { identity: pageHeaderBar } = usePageHeaderBarState();
 
   // Chat and the announcement composer are full-screen, self-managing views
   // (their own header and sticky composer/toolbar), so they opt out of the
@@ -277,18 +276,11 @@ function AppShellInner({ children }: { children: ReactNode }) {
           ) : (
             <SidebarTrigger className="-ml-1" />
           )}
-          {/* A page opted into <PageHeaderBar> (see clockodo/layout.tsx) takes
-              this slot over from search — search stays mounted underneath so
-              ⌘K keeps working, it's just visually hidden instead of unmounted.
-              Pages that haven't opted in see exactly the old layout: search on
-              desktop, an empty flex spacer on mobile. */}
-          <div className="flex min-w-0 flex-1 items-center justify-start gap-2">
+          {/* Page title and tabs, with search folding to an icon when they need the room. */}
+          <HeaderLeft>
             {!isUpdatesReading && <PageHeaderBarSlot />}
             {!isUpdatesReading && <PageHeaderTabsSlot />}
-            <div className={pageHeaderBar ? "hidden" : "hidden w-full md:flex"}>
-              <CommandPalette />
-            </div>
-          </div>
+          </HeaderLeft>
           {/* Fixed slot right after the title — same position on every page
               regardless of which/how many actions are active, so actions
               never shift around the way they would sitting under a
