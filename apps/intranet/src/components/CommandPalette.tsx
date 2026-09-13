@@ -142,9 +142,12 @@ export function CommandPalette() {
 
   const people = useQuery(api.users.list, open && query.trim() ? { search: query.trim() } : "skip");
   const announcements = useQuery(api.announcements.list, open && query.trim() ? {} : "skip");
+  // A locked vault makes applicants.list throw, which would take the whole
+  // palette down — only search applicants while it's unlocked.
+  const vault = useQuery(api.applicantVault.status, open && hasApplicantAccess ? {} : "skip");
   const applicants = useQuery(
     api.applicants.list,
-    open && hasApplicantAccess && query.trim() ? {} : "skip",
+    open && hasApplicantAccess && vault?.unlocked && query.trim() ? {} : "skip",
   );
 
   // ⌘K / Ctrl-K toggles the palette from anywhere.
