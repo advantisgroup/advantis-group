@@ -19,7 +19,7 @@ import {
   Settings2,
   Upload,
 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 
 import {
   AdminStatsCard,
@@ -41,6 +41,7 @@ import {
   ProfileCompletionCard,
 } from "@/components/dashboard/ForYouWidgets";
 import { GreetingHeader } from "@/components/dashboard/GreetingHeader";
+import { NeedsYouPanel, TodayPanel } from "@/components/dashboard/NeedsYou";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import {
   AnnouncementsCard,
@@ -77,7 +78,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const now = Date.now();
@@ -148,7 +148,6 @@ function WidgetGrid({
 
 export default function DashboardPage() {
   const t = useTranslations("Dashboard");
-  const locale = useLocale();
   const user = useCurrentUser();
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
@@ -393,28 +392,10 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* Today's schedule */}
-      {todaysEvents.length > 0 && (
-        <div className="mb-6 rounded-xl border border-border/70 bg-muted/30 px-4 py-3 refreshed:bg-card">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
-            {t("todaysSchedule")}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {todaysEvents.map((e) => (
-              <Link
-                key={e._id}
-                href="/calendar"
-                className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
-              >
-                {!e.allDay && (
-                  <span className="tabular-nums opacity-75">{formatTime(e.start, locale)}</span>
-                )}
-                {e.title}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="mb-8 grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <NeedsYouPanel />
+        <TodayPanel events={todaysEvents} />
+      </div>
 
       {forYouWidgets.length > 0 && (
         <section className="mb-8">

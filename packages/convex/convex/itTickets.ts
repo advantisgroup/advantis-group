@@ -168,6 +168,30 @@ export const listMineOpen = query({
   },
 });
 
+/** Open tickets someone handed to the caller — the home page's "Needs you". */
+export const listAssignedOpen = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireUser(ctx);
+    const rows = await ctx.db
+      .query("itTickets")
+      .withIndex("by_assignee", (q) => q.eq("assignedToUserId", user._id))
+      .collect();
+    return rows
+      .filter((t) => t.status !== "closed")
+      .sort((a, b) => a.createdAt - b.createdAt)
+      .map((t) => ({
+        _id: t._id,
+        nr: t.nr,
+        category: t.category,
+        topic: t.topic ?? null,
+        status: t.status,
+        createdByName: t.createdByName,
+        createdAt: t.createdAt,
+      }));
+  },
+});
+
 export const listStatusHistory = query({
   args: { ticketId: v.id("itTickets") },
   handler: async (ctx, { ticketId }) => {

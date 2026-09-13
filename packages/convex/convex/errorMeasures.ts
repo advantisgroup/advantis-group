@@ -84,6 +84,27 @@ export const list = query({
   },
 });
 
+/** Open measures the caller owns, earliest due first. */
+export const listMineOpen = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireUser(ctx);
+    const rows = await ctx.db
+      .query("errorMeasures")
+      .withIndex("by_status", (q) => q.eq("status", "offen"))
+      .collect();
+    return rows
+      .filter((m) => m.ownerUserId === user._id)
+      .sort((a, b) => (a.dueAt ?? Number.MAX_SAFE_INTEGER) - (b.dueAt ?? Number.MAX_SAFE_INTEGER))
+      .map((m) => ({
+        _id: m._id,
+        errorReportId: m.errorReportId,
+        description: m.description,
+        dueAt: m.dueAt ?? null,
+      }));
+  },
+});
+
 export const create = mutation({
   args: {
     errorReportId: v.id("errorReports"),

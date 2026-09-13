@@ -549,6 +549,40 @@ export const unreadCount = query({
   },
 });
 
+/** Pinned announcements the caller hasn't opened yet. */
+export const pinnedUnread = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireUser(ctx);
+    const now = Date.now();
+    const announcements = await ctx.db
+      .query("announcements")
+      .withIndex("by_publishedAt")
+      .order("desc")
+      .take(100);
+    const pinned = announcements.filter(
+      (a) =>
+        a.pinned &&
+        isVisibleToUser(user, a) &&
+        a.publishedAt <= now &&
+        (!a.expiresAt || a.expiresAt > now),
+    );
+    const reads = await Promise.all(
+      pinned.map((a) =>
+        ctx.db
+          .query("announcementReads")
+          .withIndex("by_announcement_user", (q) =>
+            q.eq("announcementId", a._id).eq("userId", user._id),
+          )
+          .unique(),
+      ),
+    );
+    return pinned
+      .filter((_, i) => !reads[i])
+      .map((a) => ({ _id: a._id, title: a.title, publishedAt: a.publishedAt }));
+  },
+});
+
 export const markAllRead = mutation({
   args: {},
   handler: async (ctx) => {
