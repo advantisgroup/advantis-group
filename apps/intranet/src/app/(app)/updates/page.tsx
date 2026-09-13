@@ -158,7 +158,21 @@ export default function UpdatesPage() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <EmptyState icon={<Rss />} title={t("emptyTitle")} description={t("emptyDescription")} />
+        <EmptyState
+          icon={<Rss />}
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
+          action={
+            isAdmin ? (
+              <Button asChild size="sm">
+                <Link href="/updates/new">
+                  <Plus />
+                  {t("newUpdate")}
+                </Link>
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="space-y-2">
           {items.map((item) => {

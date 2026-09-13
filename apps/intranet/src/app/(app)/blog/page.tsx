@@ -169,6 +169,14 @@ function RefreshedBlogList({
         <EmptyState
           icon={<Newspaper />}
           title={posts.length === 0 ? t("noPostsYet") : t("noResults")}
+          action={
+            posts.length === 0 ? (
+              <Button size="sm" onClick={() => router.push("/blog/new")}>
+                <Plus />
+                {t("newPost")}
+              </Button>
+            ) : undefined
+          }
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border/70 bg-card">

@@ -304,7 +304,12 @@ function MeasuresContent() {
               <Button variant="outline" size="sm" onClick={clearFilters}>
                 {t("clearFilters")}
               </Button>
-            ) : undefined
+            ) : (
+              <Button size="sm" onClick={() => setNewOpen(true)}>
+                <Plus />
+                {t("newMeasure")}
+              </Button>
+            )
           }
         />
       ) : (

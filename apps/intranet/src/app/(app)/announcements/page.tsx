@@ -675,10 +675,36 @@ export default function AnnouncementsPage() {
       )}
 
       {announcements && announcements.length === 0 && (
-        <EmptyState icon={<Megaphone />} title={t("empty")} />
+        <EmptyState
+          icon={<Megaphone />}
+          title={t("empty")}
+          action={
+            isManager ? (
+              <Button size="sm" onClick={() => router.push("/announcements/new")}>
+                <Plus />
+                {t("new")}
+              </Button>
+            ) : undefined
+          }
+        />
       )}
       {announcements && announcements.length > 0 && filtered.length === 0 && (
-        <EmptyState icon={<Search />} title={tc("noResults")} />
+        <EmptyState
+          icon={<Search />}
+          title={tc("noResults")}
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearch("");
+                setCategoryFilter(ALL_CATEGORIES_VALUE);
+              }}
+            >
+              {tc("clearSearch")}
+            </Button>
+          }
+        />
       )}
 
       <div className="space-y-6">

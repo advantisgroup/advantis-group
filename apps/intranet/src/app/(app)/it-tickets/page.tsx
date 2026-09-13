@@ -632,7 +632,12 @@ function ItTicketsPageContent() {
               <Button variant="outline" size="sm" onClick={clearFilters}>
                 {t("clearFilters")}
               </Button>
-            ) : undefined
+            ) : (
+              <Button size="sm" onClick={openCreate}>
+                <Plus />
+                {t("newTicket")}
+              </Button>
+            )
           }
         />
       ) : (

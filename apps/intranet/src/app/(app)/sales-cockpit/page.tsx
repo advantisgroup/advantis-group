@@ -5,9 +5,10 @@ import { useMemo, useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
-import { CheckCircle2, PhoneCall, Search, Target } from "lucide-react";
+import { CheckCircle2, PhoneCall, Plus, Search, Target } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Link } from "@/components/Link";
 import { FlowPlayer } from "@/components/sales-cockpit/FlowPlayer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -305,7 +306,18 @@ export default function SalesCockpitHomePage() {
       {projects === undefined ? (
         <p className="text-sm text-muted-foreground">{t("loading")}</p>
       ) : projects.length === 0 ? (
-        <EmptyState icon={<PhoneCall />} title={t("keineProjekte")} />
+        <EmptyState
+          icon={<PhoneCall />}
+          title={t("keineProjekte")}
+          action={
+            <Button asChild size="sm">
+              <Link href="/sales-cockpit/projekte/new">
+                <Plus />
+                {t("neuesProjekt")}
+              </Link>
+            </Button>
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((p) => (

@@ -262,7 +262,12 @@ function SuggestionsPageContent() {
               <Button variant="outline" size="sm" onClick={clearFilters}>
                 {t("clearFilters")}
               </Button>
-            ) : undefined
+            ) : (
+              <Button size="sm" onClick={() => setNewOpen(true)}>
+                <Plus />
+                {t("new")}
+              </Button>
+            )
           }
         />
       ) : (

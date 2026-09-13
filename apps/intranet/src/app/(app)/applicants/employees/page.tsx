@@ -187,6 +187,7 @@ function DirectoryStat({
 
 export default function EmployeesPage() {
   const t = useTranslations("Applicants");
+  const tc = useTranslations("Common");
   const router = useRouter();
   const profiles = useQuery(api.humanResources.listProfiles, {});
   const [search, setSearch] = useState("");
@@ -286,7 +287,22 @@ export default function EmployeesPage() {
       </div>
 
       {profiles === undefined ? null : filtered.length === 0 ? (
-        <EmptyState icon={<UserPlus />} title={t("employeesEmpty")} />
+        <EmptyState
+          icon={<UserPlus />}
+          title={t("employeesEmpty")}
+          action={
+            search ? (
+              <Button variant="outline" size="sm" onClick={() => setSearch("")}>
+                {tc("clearSearch")}
+              </Button>
+            ) : (
+              <Button size="sm" onClick={() => setCreateOpen(true)}>
+                <Plus />
+                {t("employeeNew")}
+              </Button>
+            )
+          }
+        />
       ) : (
         <>
           <div className="hidden overflow-hidden rounded-lg border border-border/70 bg-card md:block">

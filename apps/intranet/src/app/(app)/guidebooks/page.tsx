@@ -314,6 +314,7 @@ function EntryCard({
 
 export default function GuidebooksPage() {
   const t = useTranslations("Guidebooks");
+  const tc = useTranslations("Common");
   const locale = useLocale();
   const router = useRouter();
   const user = useCurrentUser();
@@ -786,6 +787,18 @@ export default function GuidebooksPage() {
           <EmptyState
             icon={showArchive ? <Archive /> : <Sparkles />}
             title={showArchive ? t("archiveEmpty") : t("noResults")}
+            action={
+              search ? (
+                <Button variant="outline" size="sm" onClick={() => setSearch("")}>
+                  {tc("clearSearch")}
+                </Button>
+              ) : canManage && !showArchive ? (
+                <Button size="sm" onClick={() => router.push("/guidebooks/new")}>
+                  <Plus />
+                  {t("newEntry")}
+                </Button>
+              ) : undefined
+            }
           />
         ) : (
           <>
