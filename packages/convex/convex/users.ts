@@ -875,3 +875,70 @@ export const markAccessReviewed = mutation({
     return { ok: true };
   },
 });
+
+/** Everything the intranet keeps that belongs to the caller, for "download my
+ * data". Other people's content (chat replies, comments) stays out. */
+export const exportMine = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireUser(ctx);
+    const strip = <T extends { _id: unknown; _creationTime: number }>(row: T) => {
+      const { _id, _creationTime, ...rest } = row;
+      return rest;
+    };
+    const [preferences, notificationPreferences, notifications, tickets, guidebookReads, aiRuns] =
+      await Promise.all([
+        ctx.db
+          .query("userPreferences")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .unique(),
+        ctx.db
+          .query("notificationPreferences")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .unique(),
+        ctx.db
+          .query("notifications")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .order("desc")
+          .take(1000),
+        ctx.db
+          .query("itTickets")
+          .withIndex("by_creator", (q) => q.eq("createdByUserId", user._id))
+          .collect(),
+        ctx.db
+          .query("guidebookReads")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .collect(),
+        ctx.db
+          .query("aiRuns")
+          .withIndex("by_user", (q) => q.eq("clerkUserId", user.clerkUserId))
+          .order("desc")
+          .take(500),
+      ]);
+    const suggestions = (await ctx.db.query("suggestions").collect()).filter(
+      (s) => s.authorUserId === user._id,
+    );
+    const {
+      clerkUserId: _clerk,
+      webauthnUserId: _webauthn,
+      oneDrivePermissionId: _onedrive,
+      ...profile
+    } = user;
+    return {
+      exportedAt: new Date().toISOString(),
+      profile: strip(profile),
+      preferences: preferences ? strip(preferences) : null,
+      notificationPreferences: notificationPreferences ? strip(notificationPreferences) : null,
+      notifications: notifications.map(strip),
+      itTickets: tickets.map(strip),
+      suggestions: suggestions.map(({ attachments: _a, ...s }) => strip(s)),
+      guidebookReads: guidebookReads.map(({ slug, readAt }) => ({ slug, readAt })),
+      aiRuns: aiRuns.map((run) => ({
+        kind: run.kind,
+        status: run.status,
+        startedAt: run.startedAt,
+        href: run.href ?? null,
+      })),
+    };
+  },
+});

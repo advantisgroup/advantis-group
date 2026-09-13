@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 
+import { api } from "@advantis/convex/api";
 import { useClerk } from "@clerk/nextjs";
-import { Briefcase, Building2, LogOut, Pencil, Phone, ShieldCheck } from "lucide-react";
+import { useConvex } from "convex/react";
+import { Briefcase, Building2, Download, LogOut, Pencil, Phone, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
 
@@ -25,6 +27,8 @@ import {
   SettingsRow,
   SettingsSection,
 } from "@/components/ui/settings-rows";
+import { useErrorHandler } from "@/hooks/use-error-handler";
+import { downloadFile, toJson } from "@/lib/activity/export";
 import { useDesignPreview } from "@/lib/design-preview";
 import { initials, roleLabel } from "@/lib/format";
 import { profileColorStyle, profileGradientClass } from "@/lib/profile-gradient";
@@ -37,6 +41,25 @@ export default function SettingsAccountPage() {
   const user = useCurrentUser();
   const clerk = useClerk();
   const [profileEditorOpen, setProfileEditorOpen] = useState(false);
+  const convex = useConvex();
+  const handleError = useErrorHandler();
+  const [exporting, setExporting] = useState(false);
+
+  async function downloadMyData() {
+    setExporting(true);
+    try {
+      const data = await convex.query(api.users.exportMine, {});
+      downloadFile(
+        `intranet-data_${new Date().toISOString().slice(0, 10)}.json`,
+        "application/json",
+        toJson(data),
+      );
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setExporting(false);
+    }
+  }
   const refreshed = useDesignPreview() === "refreshed";
 
   return (
@@ -196,6 +219,21 @@ export default function SettingsAccountPage() {
               >
                 <LogOut />
                 {tNav("signOut")}
+              </Button>
+            }
+          />
+          <SettingsRow
+            title={t("exportDataTitle")}
+            description={t("exportDataHint")}
+            control={
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={exporting}
+                onClick={() => void downloadMyData()}
+              >
+                <Download />
+                {t("exportDataAction")}
               </Button>
             }
           />
