@@ -102,6 +102,7 @@ function draftFromAnnouncement(editing: Announcement): Draft {
     title: editing.title,
     body: editing.body,
     pinned: editing.pinned,
+    requiresAck: editing.requiresAck,
     category: editing.category ?? "",
     audienceKind: audience.kind === "all" ? "all" : "mixed",
     audienceDepartments:
@@ -424,6 +425,13 @@ function ComposerOptionsFields({
           <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
             <Checkbox checked={draft.pinned} onCheckedChange={(v) => set("pinned", v === true)} />
             {t("pin")}
+          </label>
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+            <Checkbox
+              checked={draft.requiresAck ?? false}
+              onCheckedChange={(v) => set("requiresAck", v === true)}
+            />
+            {t("requireAck")}
           </label>
         </div>
       </OptionsSection>
@@ -935,6 +943,7 @@ export function AnnouncementComposer(
           title: draft.title.trim(),
           body: draft.body.trim(),
           pinned: draft.pinned,
+          requiresAck: draft.requiresAck ?? false,
           ...(keepOriginalAudience ? {} : { audience: audienceValue }),
           category: sanitizeCategory(draft.category),
           expiresAt: draft.expiresAt ? new Date(draft.expiresAt).getTime() : null,
@@ -951,6 +960,7 @@ export function AnnouncementComposer(
             title: draft.title.trim(),
             body: draft.body.trim(),
             pinned: draft.pinned,
+            requiresAck: draft.requiresAck || undefined,
             audience: audienceValue,
             category: sanitizeCategory(draft.category) || undefined,
             attachments,

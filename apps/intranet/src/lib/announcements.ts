@@ -45,6 +45,7 @@ export interface Draft {
   title: string;
   body: string;
   pinned: boolean;
+  requiresAck?: boolean;
   category: string;
   audienceKind: "all" | "mixed";
   audienceDepartments: string[];

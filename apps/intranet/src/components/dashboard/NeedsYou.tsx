@@ -81,7 +81,7 @@ export function NeedsYouPanel() {
   );
   const tickets = useQuery(api.itTickets.listAssignedOpen);
   const measures = useQuery(api.errorMeasures.listMineOpen);
-  const announcements = useQuery(api.announcements.pinnedUnread);
+  const announcements = useQuery(api.announcements.needsAttention);
 
   const loading =
     tickets === undefined ||
@@ -157,9 +157,9 @@ export function NeedsYouPanel() {
         key: `announcement-${a._id}`,
         icon: <Pin />,
         title: a.title,
-        meta: t("needsYouPinned"),
+        meta: t(a.requiresAck ? "needsYouAck" : "needsYouPinned"),
         href: `/announcements?id=${a._id}`,
-        urgent: false,
+        urgent: a.requiresAck,
         at: a.publishedAt,
       });
     }

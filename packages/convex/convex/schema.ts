@@ -941,6 +941,8 @@ export default defineSchema({
     /** User who owns/manages the post when its visible author is an automation account. */
     ownerUserId: v.optional(v.id("users")),
     pinned: v.boolean(),
+    /** Readers are asked to confirm they read it; the author sees who has. */
+    requiresAck: v.optional(v.boolean()),
     audience: audienceValidator,
     /** Free-text topic tag (e.g. "Onboarding", "Customer Care") for grouping
      * the feed — admins type or pick from previously-used values, no fixed enum. */
@@ -971,6 +973,14 @@ export default defineSchema({
     .index("by_announcement_user", ["announcementId", "userId"])
     .index("by_announcement", ["announcementId"])
     .index("by_user", ["userId"]),
+
+  announcementAcks: defineTable({
+    announcementId: v.id("announcements"),
+    userId: v.id("users"),
+    ackedAt: v.number(),
+  })
+    .index("by_announcement_user", ["announcementId", "userId"])
+    .index("by_announcement", ["announcementId"]),
 
   announcementReactions: defineTable({
     announcementId: v.id("announcements"),

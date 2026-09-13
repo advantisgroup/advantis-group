@@ -10,6 +10,7 @@ import {
   CalendarClock,
   CheckCheck,
   ChevronDown,
+  CircleCheck,
   ChevronUp,
   Download,
   ExternalLink,
@@ -127,6 +128,7 @@ function AnnouncementCard({
   const router = useRouter();
   const markRead = useMutation(api.announcements.markRead);
   const toggleReaction = useMutation(api.announcements.toggleReaction);
+  const acknowledge = useMutation(api.announcements.acknowledge);
   const canManage = isOwnerOrAdmin(me, a.ownerId);
   const articleRef = useRef<HTMLElement>(null);
 
@@ -372,6 +374,41 @@ function AnnouncementCard({
             </div>
           )}
         </div>
+
+        {a.requiresAck && (
+          <div
+            className={cn(
+              "mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border px-3.5 py-2.5 text-sm",
+              a.ackedByMe ? "border-border/60 bg-muted/30" : "border-primary/30 bg-primary/5",
+            )}
+          >
+            {a.ackedByMe ? (
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <CircleCheck className="size-4 text-success" />
+                {t("ackDone")}
+              </span>
+            ) : (
+              <>
+                <span className="min-w-0 flex-1">{t("ackPrompt")}</span>
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    void acknowledge({ announcementId: a._id }).then(() =>
+                      toast.success(t("ackThanks")),
+                    )
+                  }
+                >
+                  {t("ackConfirm")}
+                </Button>
+              </>
+            )}
+            {canManage && (
+              <span className="basis-full text-xs tabular-nums text-muted-foreground">
+                {t("ackCount", { count: a.ackCount, total: a.audienceCount })}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Reactions + viewed status. Wraps instead of squeezing the chips
             when a popular post collects more reactions than a narrow screen

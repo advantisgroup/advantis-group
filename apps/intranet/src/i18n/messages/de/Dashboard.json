@@ -23,6 +23,7 @@
   "needsYouMeasureDue": "Fällig am {date}",
   "needsYouMeasureOverdue": "Überfällig seit {date}",
   "needsYouPinned": "Angeheftete Ankündigung, noch nicht gelesen",
+  "needsYouAck": "Bittet um deine Lesebestätigung",
   "todayOpenCalendar": "Kalender",
   "todayNothing": "Heute steht nichts im Kalender",
   "todayAllDay": "Ganztägig",

@@ -23,6 +23,7 @@
   "needsYouMeasureDue": "Due {date}",
   "needsYouMeasureOverdue": "Overdue since {date}",
   "needsYouPinned": "Pinned announcement you haven't read",
+  "needsYouAck": "Asks you to confirm you read it",
   "todayOpenCalendar": "Calendar",
   "todayNothing": "Nothing on the calendar today",
   "todayAllDay": "All day",
