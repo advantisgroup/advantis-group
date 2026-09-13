@@ -28,7 +28,16 @@
       "ticketHistory": "Was ist bisher an diesem Ticket passiert?",
       "applicantSummary": "Fass den Werdegang dieser Bewerbung zusammen.",
       "applicantFit": "Was spricht für diese Bewerbung auf der Stelle?",
-      "applicantGaps": "Was fehlt oder ist im Profil unklar?"
+      "applicantGaps": "Was fehlt oder ist im Profil unklar?",
+      "announcementSummary": "Worum geht es in dieser Ankündigung?",
+      "announcementForMe": "Was bedeutet das für mich?",
+      "announcementDates": "Gibt es darin Termine oder Fristen?",
+      "errorSummary": "Fass diese Fehlermeldung zusammen.",
+      "errorNext": "Welche Maßnahmen sind noch offen?",
+      "errorCause": "Was ist über die Ursache bekannt?",
+      "suggestionSummary": "Fass diesen Vorschlag zusammen.",
+      "suggestionDecision": "Was wurde entschieden und warum?",
+      "suggestionImpact": "Wem würde das helfen?"
     }
   },
   "phase": {

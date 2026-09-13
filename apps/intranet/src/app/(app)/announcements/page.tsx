@@ -22,12 +22,15 @@ import {
   Pin,
   Plus,
   Search,
+  Sparkles,
   Tag,
   Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useAsk } from "@/components/ai/ask-subject";
+import { useAiEnabled } from "@/components/ai/use-ai-enabled";
 import { Mark } from "@/components/branding/ProviderMark";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { ReactionsSummary } from "@/components/announcements/ReactionsSummary";
@@ -129,6 +132,8 @@ function AnnouncementCard({
   const markRead = useMutation(api.announcements.markRead);
   const toggleReaction = useMutation(api.announcements.toggleReaction);
   const acknowledge = useMutation(api.announcements.acknowledge);
+  const { ask } = useAsk();
+  const aiEnabled = useAiEnabled();
   const canManage = isOwnerOrAdmin(me, a.ownerId);
   const articleRef = useRef<HTMLElement>(null);
 
@@ -178,6 +183,16 @@ function AnnouncementCard({
         });
       },
     },
+    ...(aiEnabled
+      ? [
+          {
+            key: "ask",
+            label: t("askAbout"),
+            icon: <Sparkles />,
+            onSelect: () => ask({ type: "announcement", id: a._id, label: a.title }),
+          },
+        ]
+      : []),
     ...(canManage
       ? [
           {

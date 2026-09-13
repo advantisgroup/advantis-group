@@ -9,11 +9,13 @@ import {
   getCurrentUser,
   getUserByClerkId,
   hasApplicantAccess,
+  isOwnerOrAdmin,
   requireManager,
   requireUser,
   requireVaultUnlocked,
   userHasCapability,
 } from "./lib/auth";
+import { userMatchesAudience } from "./lib/audience";
 import { sandboxedMutation } from "./lib/sandbox";
 import { displayName } from "./lib/users";
 
@@ -594,6 +596,124 @@ async function applicantContext(
   };
 }
 
+function plainText(html: string) {
+  return html
+    .replace(/<(br|\/p|\/li|\/h\d)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+async function announcementContext(
+  ctx: QueryCtx,
+  user: Doc<"users">,
+  id: string,
+): Promise<AskContext> {
+  const announcementId = ctx.db.normalizeId("announcements", id);
+  const a = announcementId ? await ctx.db.get(announcementId) : null;
+  const owner = a ? (a.ownerUserId ?? a.authorUserId) : null;
+  const canSee =
+    !!a &&
+    (isOwnerOrAdmin(user, owner!) ||
+      (userMatchesAudience(user, a.audience) &&
+        a.publishedAt <= Date.now() &&
+        (!a.expiresAt || a.expiresAt > Date.now())));
+  if (!a || !canSee) {
+    throw new ConvexError({ code: "not_found", message: "Announcement not found" });
+  }
+  const href = `/announcements?id=${a._id}`;
+  return {
+    title: a.title,
+    href,
+    text: [
+      block("Ankündigung", [
+        `Titel: ${a.title}`,
+        `Veröffentlicht: ${new Date(a.publishedAt).toISOString().slice(0, 10)}`,
+        `Von: ${await userName(ctx, a.authorUserId)}`,
+        a.category ? `Kategorie: ${a.category}` : null,
+      ]),
+      block("Text", [plainText(a.body)]),
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
+    sources: [{ label: a.title, href }],
+  };
+}
+
+async function errorReportContext(ctx: QueryCtx, id: string): Promise<AskContext> {
+  const reportId = ctx.db.normalizeId("errorReports", id);
+  const report = reportId ? await ctx.db.get(reportId) : null;
+  if (!report || !reportId) {
+    throw new ConvexError({ code: "not_found", message: "Error report not found" });
+  }
+  const measures = await ctx.db
+    .query("errorMeasures")
+    .withIndex("by_error", (q) => q.eq("errorReportId", reportId))
+    .collect();
+  const href = `/fehlermanagement?open=${reportId}`;
+  const title = report.description.slice(0, 80);
+  return {
+    title,
+    href,
+    text: [
+      block("Fehlermeldung", [
+        `Beschreibung: ${report.description}`,
+        report.categoryName ? `Kategorie: ${report.categoryName}` : null,
+        `Schwere: ${report.severity}`,
+        `Status: ${report.status}`,
+        `Erfasst: ${new Date(report.createdAt).toISOString().slice(0, 10)}`,
+        report.customerOrProject ? `Kunde/Projekt: ${report.customerOrProject}` : null,
+        report.responsibleName ? `Verantwortlich: ${report.responsibleName}` : null,
+        report.prevention ? `Vorbeugung: ${report.prevention}` : null,
+        report.customerFeedback ? `Kundenfeedback: ${report.customerFeedback}` : null,
+      ]),
+      block(
+        "Maßnahmen",
+        measures.map(
+          (m) =>
+            `- [${m.status}] ${m.phase}: ${m.description}${m.dueAt ? ` (fällig ${new Date(m.dueAt).toISOString().slice(0, 10)})` : ""}`,
+        ),
+      ),
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
+    sources: [
+      { label: title, href },
+      ...(measures.length > 0 ? [{ label: `Maßnahmen (${measures.length})` }] : []),
+    ],
+  };
+}
+
+async function suggestionContext(ctx: QueryCtx, id: string): Promise<AskContext> {
+  const suggestionId = ctx.db.normalizeId("suggestions", id);
+  const s = suggestionId ? await ctx.db.get(suggestionId) : null;
+  if (!s || !suggestionId) {
+    throw new ConvexError({ code: "not_found", message: "Suggestion not found" });
+  }
+  const category = await ctx.db.get(s.categoryId);
+  const votes = await ctx.db
+    .query("suggestionVotes")
+    .withIndex("by_suggestion", (q) => q.eq("suggestionId", suggestionId))
+    .collect();
+  const href = `/suggestions?open=${suggestionId}`;
+  return {
+    title: s.title,
+    href,
+    text: block("Vorschlag", [
+      `Titel: ${s.title}`,
+      `Von: ${await userName(ctx, s.authorUserId)}`,
+      category ? `Kategorie: ${category.name}` : null,
+      `Status: ${s.status}`,
+      s.outcome ? `Ergebnis: ${s.outcome}` : null,
+      `Unterstützer: ${votes.length}`,
+      s.explanation ? `Erklärung: ${s.explanation}` : null,
+      s.decisionNote ? `Entscheidungsnotiz: ${s.decisionNote}` : null,
+    ]),
+    sources: [{ label: s.title, href }],
+  };
+}
+
 /**
  * Everything the model is given about one record, assembled under the asking
  * person's own access — never from anything the browser sent. Contact details
@@ -603,11 +723,19 @@ async function applicantContext(
 async function askContext(
   ctx: QueryCtx,
   user: Doc<"users">,
-  type: "itTicket" | "applicant",
+  type: "itTicket" | "applicant" | "announcement" | "errorReport" | "suggestion",
   id: string,
 ): Promise<AskContext> {
   const context =
-    type === "itTicket" ? await ticketContext(ctx, id) : await applicantContext(ctx, user, id);
+    type === "itTicket"
+      ? await ticketContext(ctx, id)
+      : type === "applicant"
+        ? await applicantContext(ctx, user, id)
+        : type === "announcement"
+          ? await announcementContext(ctx, user, id)
+          : type === "errorReport"
+            ? await errorReportContext(ctx, id)
+            : await suggestionContext(ctx, id);
   return { ...context, text: context.text.slice(0, ASK_CONTEXT_CHARS) };
 }
 

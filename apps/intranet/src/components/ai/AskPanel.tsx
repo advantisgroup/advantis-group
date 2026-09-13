@@ -26,6 +26,9 @@ import { useAiRun } from "./use-ai-run";
 const STARTER_KEYS = {
   itTicket: ["ticketSummary", "ticketNext", "ticketHistory"],
   applicant: ["applicantSummary", "applicantFit", "applicantGaps"],
+  announcement: ["announcementSummary", "announcementForMe", "announcementDates"],
+  errorReport: ["errorSummary", "errorNext", "errorCause"],
+  suggestion: ["suggestionSummary", "suggestionDecision", "suggestionImpact"],
 } as const;
 
 /** One thing the model was given, named plainly. */

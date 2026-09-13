@@ -40,6 +40,7 @@
   "titlePlaceholder": "Titel",
   "pin": "Oben anheften",
   "requireAck": "Lesebestätigung anfordern",
+  "askAbout": "Dazu fragen",
   "ackPrompt": "Bitte bestätige, dass du diese Ankündigung gelesen hast.",
   "ackConfirm": "Gelesen",
   "ackThanks": "Danke für die Bestätigung",

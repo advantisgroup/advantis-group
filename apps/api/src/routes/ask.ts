@@ -73,7 +73,13 @@ export const askRoute = new Elysia().post(
   },
   {
     body: t.Object({
-      type: t.Union([t.Literal("itTicket"), t.Literal("applicant")]),
+      type: t.Union([
+        t.Literal("itTicket"),
+        t.Literal("applicant"),
+        t.Literal("announcement"),
+        t.Literal("errorReport"),
+        t.Literal("suggestion"),
+      ]),
       id: t.String({ maxLength: 64 }),
       question: t.String({ minLength: 1, maxLength: 1000 }),
     }),
