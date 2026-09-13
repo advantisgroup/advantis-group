@@ -31,7 +31,7 @@ import { PersonCard } from "@/components/directory/PersonCard";
 import { PersonTable, type SortDir, type SortKey } from "@/components/directory/PersonTable";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { UserProfile } from "@/components/profile/UserProfile";
-import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
+import { useCurrentUser, useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterPill, TogglePill } from "@/components/ui/filter-pill";
@@ -83,6 +83,7 @@ function DirectoryPageContent() {
   const params = useSearchParams();
   const me = useCurrentUser();
   const isManager = useIsManager();
+  const isAdmin = useIsAdmin();
   const now = useNow();
 
   const [search, setSearch] = useState("");
@@ -516,7 +517,12 @@ function DirectoryPageContent() {
         ) : filtered.length === 0 ? (
           <EmptyState icon={<Users />} title={t("noResults")} />
         ) : view === "org" ? (
-          <OrgChart people={filtered} statuses={statuses} onOpenProfile={setProfileId} />
+          <OrgChart
+            people={filtered}
+            statuses={statuses}
+            canEdit={isAdmin}
+            onOpenProfile={setProfileId}
+          />
         ) : sections ? (
           <div className="space-y-6">
             {sections.map(([dept, rows]) => (

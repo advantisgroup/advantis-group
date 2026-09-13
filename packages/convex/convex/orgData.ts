@@ -181,6 +181,39 @@ export const setTeamReportsTo = mutation({
   },
 });
 
+/** Adds someone to a team — the membership row and the slug on the user, so
+ * both the access checks and older readers of `users.teams` see it. */
+export const addUserToTeam = mutation({
+  args: { userId: v.id("users"), teamId: v.id("teams") },
+  handler: async (ctx, { userId, teamId }) => {
+    await requireAdmin(ctx);
+    const [user, team] = await Promise.all([ctx.db.get(userId), ctx.db.get(teamId)]);
+    if (!user || !team) {
+      throw new ConvexError({ code: "not_found", message: "User or team not found" });
+    }
+    const existing = await ctx.db
+      .query("userTeams")
+      .withIndex("by_user_team", (q) => q.eq("userId", userId).eq("teamId", teamId))
+      .unique();
+    if (!existing) await ctx.db.insert("userTeams", { userId, teamId });
+    if (!(user.teams ?? []).includes(team.slug)) {
+      await ctx.db.patch(userId, { teams: [...(user.teams ?? []), team.slug] });
+    }
+  },
+});
+
+export const setUserDepartment = mutation({
+  args: { userId: v.id("users"), departmentId: v.id("departments") },
+  handler: async (ctx, { userId, departmentId }) => {
+    await requireAdmin(ctx);
+    const department = await ctx.db.get(departmentId);
+    if (!department) {
+      throw new ConvexError({ code: "not_found", message: "Department not found" });
+    }
+    await ctx.db.patch(userId, { departmentId, department: department.name });
+  },
+});
+
 export const archiveTeam = mutation({
   args: { teamId: v.id("teams"), archived: v.boolean() },
   handler: async (ctx, { teamId, archived }) => {
