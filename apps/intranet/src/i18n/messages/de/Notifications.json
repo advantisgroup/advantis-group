@@ -39,6 +39,8 @@
   "desc_chat-message": "Neue Nachrichten in deinen Direktnachrichten und Gruppen-Chats.",
   "desc_chat-mention": "Wenn dich jemand in einer Unterhaltung @erwähnt.",
   "browserTitle": "Browser-Benachrichtigungen",
+  "digestTitle": "Tägliche E-Mail-Zusammenfassung",
+  "digestHint": "Jeden Morgen eine E-Mail mit allem, was du noch nicht gelesen hast. An ruhigen Tagen kommt nichts.",
   "browserHint": "System-Benachrichtigungen, während der Tab im Hintergrund ist.",
   "browserUnsupported": "Dein Browser unterstützt keine Benachrichtigungen.",
   "browserDenied": "Die Benachrichtigungs-Berechtigung wurde im Browser verweigert.",

@@ -39,6 +39,8 @@
   "desc_chat-message": "New messages in your direct messages and group chats.",
   "desc_chat-mention": "When someone @mentions you in a conversation.",
   "browserTitle": "Browser notifications",
+  "digestTitle": "Daily email digest",
+  "digestHint": "One email each morning with anything you haven't read yet. Nothing is sent on quiet days.",
   "browserHint": "System notifications while the tab is in the background.",
   "browserUnsupported": "Your browser doesn't support notifications.",
   "browserDenied": "Notification permission was denied in the browser.",

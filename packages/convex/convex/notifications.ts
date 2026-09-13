@@ -1,7 +1,8 @@
 import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { v } from "convex/values";
 
-import { query } from "./_generated/server";
+import { internal } from "./_generated/api";
+import { internalMutation, query } from "./_generated/server";
 import { requireUser } from "./lib/auth";
 
 export const list = query({
@@ -91,7 +92,7 @@ export const getPreferences = query({
       .query("notificationPreferences")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
-    return { mutedTypes: prefs?.mutedTypes ?? [] };
+    return { mutedTypes: prefs?.mutedTypes ?? [], dailyDigest: prefs?.dailyDigest ?? false };
   },
 });
 
@@ -114,5 +115,69 @@ export const setPreferences = mutation({
       });
     }
     return { ok: true };
+  },
+});
+
+export const setDailyDigest = mutation({
+  args: { enabled: v.boolean() },
+  handler: async (ctx, { enabled }) => {
+    const user = await requireUser(ctx);
+    const existing = await ctx.db
+      .query("notificationPreferences")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .unique();
+    const now = Date.now();
+    if (existing) {
+      await ctx.db.patch(existing._id, { dailyDigest: enabled, updatedAt: now });
+    } else {
+      await ctx.db.insert("notificationPreferences", {
+        userId: user._id,
+        mutedTypes: [],
+        dailyDigest: enabled,
+        updatedAt: now,
+      });
+    }
+    return { ok: true };
+  },
+});
+
+const DIGEST_ITEMS = 12;
+
+/** Morning email for everyone who opted in: unread notifications since their
+ * last digest (at most a day back). Skips people with nothing new. */
+export const queueDailyDigests = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const subscribers = await ctx.db
+      .query("notificationPreferences")
+      .withIndex("by_dailyDigest", (q) => q.eq("dailyDigest", true))
+      .collect();
+    for (const prefs of subscribers) {
+      const user = await ctx.db.get(prefs.userId);
+      if (!user || user.status !== "active") continue;
+      const since = Math.max(prefs.lastDigestAt ?? 0, now - 24 * 60 * 60 * 1000);
+      const unread = (
+        await ctx.db
+          .query("notifications")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .order("desc")
+          .take(100)
+      ).filter((n) => !n.readAt && n.createdAt > since);
+      await ctx.db.patch(prefs._id, { lastDigestAt: now });
+      if (unread.length === 0) continue;
+      await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
+        kind: "digest",
+        to: user.email,
+        data: {
+          count: unread.length,
+          items: unread.slice(0, DIGEST_ITEMS).map((n) => ({
+            title: n.title,
+            body: n.body ?? "",
+            link: n.link ?? "/notifications",
+          })),
+        },
+      });
+    }
   },
 });

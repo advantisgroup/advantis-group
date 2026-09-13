@@ -1279,8 +1279,13 @@ export default defineSchema({
   notificationPreferences: defineTable({
     userId: v.id("users"),
     mutedTypes: v.array(v.string()),
+    /** One morning email listing yesterday's unread notifications. */
+    dailyDigest: v.optional(v.boolean()),
+    lastDigestAt: v.optional(v.number()),
     updatedAt: v.number(),
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_dailyDigest", ["dailyDigest"]),
 
   presence: defineTable({
     userId: v.id("users"),

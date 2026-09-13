@@ -81,6 +81,7 @@ export function NotificationPreferences({ deliveryExtra }: { deliveryExtra?: Rea
   const isManager = useIsManager();
   const prefs = useQuery(api.notifications.getPreferences);
   const setPreferences = useMutation(api.notifications.setPreferences);
+  const setDailyDigest = useMutation(api.notifications.setDailyDigest);
   const userPrefs = useQuery(api.userPreferences.getMine);
   const setUserPrefs = useMutation(api.userPreferences.setMine);
   const [permission, setPermission] = useState<NotificationPermission | null>(null);
@@ -137,6 +138,17 @@ export function NotificationPreferences({ deliveryExtra }: { deliveryExtra?: Rea
             <p className="mt-2 text-xs text-warn">{t("browserDeniedHint")}</p>
           )}
         </SettingsRow>
+        <SettingsRow
+          title={t("digestTitle")}
+          description={t("digestHint")}
+          control={
+            <Switch
+              checked={prefs?.dailyDigest ?? false}
+              onToggle={() => void setDailyDigest({ enabled: !(prefs?.dailyDigest ?? false) })}
+              label={t("digestTitle")}
+            />
+          }
+        />
         {deliveryExtra}
         {isManager && (
           <SettingsRow

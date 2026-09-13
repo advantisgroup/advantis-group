@@ -139,14 +139,32 @@ function render(
         ),
       };
     }
-    case "digest":
+    case "digest": {
+      const items = Array.isArray(data.items) ? (data.items as Data[]) : [];
+      const count = typeof data.count === "number" ? data.count : items.length;
+      const rows = items
+        .map((item) => {
+          const link = str(item, "link");
+          const href = link.startsWith("/")
+            ? `${INTERNAL_URL}${link}`
+            : `${INTERNAL_URL}/notifications`;
+          const body = str(item, "body");
+          return `<tr><td style="padding:12px 0;border-top:1px solid #e4e4e7">
+            <a href="${esc(href)}" style="color:#18181b;font-weight:600;text-decoration:none">${esc(str(item, "title"))}</a>
+            ${body ? `<div style="margin-top:2px;color:#71717a;font-size:14px;line-height:1.5">${esc(body)}</div>` : ""}
+          </td></tr>`;
+        })
+        .join("");
       return {
-        subject: "Your Advantis intranet digest",
+        subject: `${count} unread on the intranet`,
         html: layout(
-          "Digest",
-          `<p style="margin:0;line-height:1.6">${str(data, "summary") || "Here's what's new on the intranet."}</p>`,
+          "While you were away",
+          `<p style="margin:0 0 16px;line-height:1.6">You have ${count} unread notification${count === 1 ? "" : "s"}.</p>
+           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
+           <p style="margin:24px 0 0">${button(`${INTERNAL_URL}/notifications`, "Open notifications")}</p>`,
         ),
       };
+    }
     case "academy-invite": {
       const academyName = str(data, "academyName") || "the Wallbox Sales Academy";
       const code = str(data, "code");
