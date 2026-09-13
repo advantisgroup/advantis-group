@@ -6,11 +6,21 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { type FunctionReturnType } from "convex/server";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, ExternalLink, MessageSquarePlus, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  BookPlus,
+  ExternalLink,
+  MessageSquarePlus,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import { PersonLink } from "@/components/profile/PersonLink";
+import { useIsManager } from "@/components/providers/current-user";
 import {
   STATUS_ACCENT,
   STATUS_BORDER,
@@ -84,6 +94,42 @@ export function TicketDetailView({
   const tc = useTranslations("Common");
   const locale = useLocale();
   const response = useQuery(api.itTickets.firstResponse, { ticketId: ticket._id });
+  const isManager = useIsManager();
+  const router = useRouter();
+  const handleError = useErrorHandler();
+  const createDraft = useMutation(api.drafts.create);
+  const saveDraft = useMutation(api.drafts.save);
+  const messages = useQuery(
+    api.itTicketThreads.listMessages,
+    isManager && thread ? { threadId: thread._id } : "skip",
+  );
+
+  async function saveToWiki() {
+    const escape = (text: string) =>
+      text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const replies = (messages ?? []).filter(
+      (m) => m.kind === "message" && m.body && m.senderUserId !== ticket.createdByUserId,
+    );
+    const body = [
+      ticket.info ? `<p>${escape(ticket.info).replace(/\n/g, "<br>")}</p>` : "",
+      replies.length
+        ? `<h3>${t("wikiFix")}</h3>${replies.map((m) => `<p>${escape(m.kind === "message" ? (m.body ?? "") : "")}</p>`).join("")}`
+        : "",
+      `<p>${t("wikiFromTicket", { nr: ticketNumber(ticket.nr) })}</p>`,
+    ].join("");
+    try {
+      const draftId = await createDraft({ surface: "wikiEntry" });
+      await saveDraft({
+        surface: "wikiEntry",
+        subjectKey: draftId,
+        data: JSON.stringify({ thema: ticket.topic?.trim() || ticket.category, erklaerung: body }),
+        href: `/guidebooks/draft/${draftId}`,
+      });
+      router.push(`/guidebooks/draft/${draftId}`);
+    } catch (error) {
+      handleError(error);
+    }
+  }
 
   const hasSfDetails = ticket.category === "SF" && (ticket.topic || ticket.camId || ticket.custNo);
 
@@ -186,6 +232,12 @@ export function TicketDetailView({
             <Pencil className="mr-1.5 size-3.5" />
             {tc("edit")}
           </Button>
+          {isManager && ticket.status === "closed" && (
+            <Button variant="outline" size="sm" onClick={() => void saveToWiki()}>
+              <BookPlus className="mr-1.5 size-3.5" />
+              {t("saveToWiki")}
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"

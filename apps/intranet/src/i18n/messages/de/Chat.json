@@ -76,6 +76,7 @@
   "searching": "Suche läuft…",
   "noSearchResults": "Keine passenden Nachrichten",
   "messageNotLoaded": "Die Nachricht liegt weiter zurück – lade ältere Nachrichten, um sie zu sehen",
+  "createTicket": "IT-Ticket erstellen",
   "pinMessage": "Anheften",
   "unpinMessage": "Lösen",
   "pinnedCount": "{count} angeheftet",

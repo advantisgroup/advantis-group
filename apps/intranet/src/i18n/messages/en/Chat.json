@@ -76,6 +76,7 @@
   "searching": "Searching…",
   "noSearchResults": "No messages match",
   "messageNotLoaded": "That message is further back — load older messages to see it",
+  "createTicket": "Create IT ticket",
   "pinMessage": "Pin",
   "unpinMessage": "Unpin",
   "pinnedCount": "{count} pinned",

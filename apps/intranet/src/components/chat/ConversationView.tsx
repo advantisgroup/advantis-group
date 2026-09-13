@@ -11,6 +11,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { useRouter } from "next/navigation";
+
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { type LinkPreview, type MessageAttachment, type UnfurlResult } from "@advantis/types";
@@ -39,6 +41,7 @@ import {
   Smile,
   Trash2,
   UploadCloud,
+  Wrench,
   UserPlus,
   X,
 } from "lucide-react";
@@ -50,6 +53,7 @@ import { useAttachmentUpload } from "@/components/attachments/useAttachmentUploa
 import { Mark } from "@/components/branding/ProviderMark";
 import { CHAT_COLUMN, ChatDayDivider, chatBubbleClass } from "@/components/chat/chat-surface";
 import { ConversationSearch, PinnedMessagesBar } from "@/components/chat/ConversationTools";
+import { TICKET_PREFILL_KEY } from "@/components/it-tickets/TicketDialog";
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
@@ -156,6 +160,16 @@ export function ConversationView({
   const toggleMute = useMutation(api.chat.toggleMute);
   const togglePinMessage = useMutation(api.chat.togglePinMessage);
   const [searchOpen, setSearchOpen] = useState(false);
+  const router = useRouter();
+
+  function createTicketFrom(m: Message) {
+    try {
+      sessionStorage.setItem(TICKET_PREFILL_KEY, `${m.senderName}: ${m.body}`);
+    } catch {
+      // without storage the ticket just opens empty
+    }
+    router.push("/it-tickets?new=1");
+  }
   const handleError = useErrorHandler();
   const attachmentUpload = useAttachmentUpload();
 
@@ -1066,6 +1080,7 @@ export function ConversationView({
                                   canDelete={mine}
                                   pinned={m.pinned}
                                   onTogglePin={() => void togglePinMessage({ messageId: m._id })}
+                                  onCreateTicket={m.body ? () => createTicketFrom(m) : undefined}
                                   onReply={() => {
                                     setEditing(null);
                                     setReplyTo(m);
@@ -1081,6 +1096,7 @@ export function ConversationView({
                                     delete: tc("delete"),
                                     pin: t("pinMessage"),
                                     unpin: t("unpinMessage"),
+                                    ticket: t("createTicket"),
                                   }}
                                 />
                               )}
@@ -1501,6 +1517,7 @@ function MessageMenu({
   canDelete,
   pinned,
   onTogglePin,
+  onCreateTicket,
   onReply,
   onCopy,
   onEdit,
@@ -1511,6 +1528,7 @@ function MessageMenu({
   canDelete: boolean;
   pinned: boolean;
   onTogglePin: () => void;
+  onCreateTicket?: () => void;
   onReply: () => void;
   onCopy: () => void;
   onEdit: () => void;
@@ -1522,6 +1540,7 @@ function MessageMenu({
     delete: string;
     pin: string;
     unpin: string;
+    ticket: string;
   };
 }) {
   const items: ActionMenuItem[] = [
@@ -1532,6 +1551,16 @@ function MessageMenu({
       icon: pinned ? <PinOff /> : <Pin />,
       onSelect: onTogglePin,
     },
+    ...(onCreateTicket
+      ? [
+          {
+            key: "ticket",
+            label: labels.ticket,
+            icon: <Wrench />,
+            onSelect: onCreateTicket,
+          } satisfies ActionMenuItem,
+        ]
+      : []),
     { key: "copy", label: labels.copy, icon: <Copy />, onSelect: onCopy },
     ...(canEdit
       ? [

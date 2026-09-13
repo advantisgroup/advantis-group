@@ -34,6 +34,8 @@ const TOPIC_PRESETS = [
   "Taxnumber",
 ] as const;
 const FREE_TOPIC = "__free";
+/** Another surface (e.g. a chat message) hands its text to a new ticket here. */
+export const TICKET_PREFILL_KEY = "itTickets:prefillInfo";
 const SF_CATEGORY = "SF";
 
 type TicketDoc = Doc<"itTickets">;
@@ -97,7 +99,18 @@ function TicketForm({ open, onOpenChange, categories, ticket }: TicketDialogProp
   const updateTicket = useMutation(api.itTickets.update);
   const handleError = useErrorHandler();
 
-  const [values, setValues] = useState<TicketValues>(() => initialValues(ticket, categories));
+  const [values, setValues] = useState<TicketValues>(() => {
+    const initial = initialValues(ticket, categories);
+    if (ticket) return initial;
+    try {
+      const info = sessionStorage.getItem(TICKET_PREFILL_KEY);
+      if (!info) return initial;
+      sessionStorage.removeItem(TICKET_PREFILL_KEY);
+      return { ...initial, info };
+    } catch {
+      return initial;
+    }
+  });
   const [busy, setBusy] = useState(false);
   const set = <K extends keyof TicketValues>(key: K, value: TicketValues[K]) =>
     setValues((prev) => ({ ...prev, [key]: value }));
