@@ -1,5 +1,10 @@
 {
   "title": "Verbesserungsvorschläge",
+  "vote": "Vorschlag unterstützen",
+  "unvote": "Unterstützung zurückziehen",
+  "mostBacked": "Meiste Unterstützung",
+  "viewList": "Liste",
+  "viewBoard": "Board",
   "eyebrow": "Internes Ideenmanagement",
   "description": "Vorschläge einreichen, bearbeiten und den Umsetzungsstand verfolgen. Alle Einträge sind für das gesamte Team sichtbar.",
   "new": "Neuer Vorschlag",

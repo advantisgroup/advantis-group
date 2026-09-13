@@ -1010,6 +1010,15 @@ export default defineSchema({
     .index("by_createdAt", ["createdAt"])
     .index("by_outcome", ["outcome"]),
 
+  /** One row per person backing a suggestion; voters hear when it ships. */
+  suggestionVotes: defineTable({
+    suggestionId: v.id("suggestions"),
+    userId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_suggestion", ["suggestionId"])
+    .index("by_suggestion_user", ["suggestionId", "userId"]),
+
   // --- Refreshed design preview feedback ------------------------------------
   /** What people think of the refreshed page designs while they're opt-in;
    * read by managers at /admin/design-feedback. Append-only. */

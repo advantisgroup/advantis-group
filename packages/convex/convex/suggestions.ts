@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { query } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
 import { requireManager, requireUser } from "./lib/auth";
+import { notifyUsers } from "./lib/notify";
 import { displayName } from "./lib/users";
 import {
   attachmentValidator,
@@ -56,7 +57,7 @@ export const create = mutation({
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
+    const me = await requireUser(ctx);
     const rows = await ctx.db
       .query("suggestions")
       .withIndex("by_createdAt")
@@ -67,6 +68,10 @@ export const list = query({
     return Promise.all(
       rows.map(async (s) => {
         const author = await ctx.db.get(s.authorUserId);
+        const votes = await ctx.db
+          .query("suggestionVotes")
+          .withIndex("by_suggestion", (q) => q.eq("suggestionId", s._id))
+          .collect();
         const attachments = await Promise.all(
           (s.attachments ?? []).map(async (a) => ({
             storageId: a.storageId,
@@ -92,6 +97,8 @@ export const list = query({
           decisionNote: s.decisionNote ?? null,
           createdAt: s.createdAt,
           updatedAt: s.updatedAt ?? null,
+          voteCount: votes.length,
+          votedByMe: votes.some((vote) => vote.userId === me._id),
         };
       }),
     );
@@ -128,7 +135,47 @@ export const update = mutation({
       ...(decisionNote !== undefined ? { decisionNote: nextDecisionNote } : {}),
       updatedAt: Date.now(),
     });
+    if (nextOutcome === "implemented" && existing.outcome !== "implemented") {
+      const votes = await ctx.db
+        .query("suggestionVotes")
+        .withIndex("by_suggestion", (q) => q.eq("suggestionId", suggestionId))
+        .collect();
+      const recipients = new Set([existing.authorUserId, ...votes.map((vote) => vote.userId)]);
+      await notifyUsers(ctx, [...recipients], {
+        type: "suggestion",
+        title: `Implemented: ${existing.title}`,
+        body: nextDecisionNote,
+        link: `/suggestions?open=${suggestionId}`,
+      });
+    }
     return { ok: true };
+  },
+});
+
+export const toggleVote = mutation({
+  args: { suggestionId: v.id("suggestions") },
+  handler: async (ctx, { suggestionId }) => {
+    const user = await requireUser(ctx);
+    const suggestion = await ctx.db.get(suggestionId);
+    if (!suggestion) {
+      throw new ConvexError({ code: "not_found", message: "Suggestion not found" });
+    }
+    const existing = await ctx.db
+      .query("suggestionVotes")
+      .withIndex("by_suggestion_user", (q) =>
+        q.eq("suggestionId", suggestionId).eq("userId", user._id),
+      )
+      .unique();
+    if (existing) {
+      await ctx.db.delete(existing._id);
+      return { voted: false };
+    }
+    await ctx.db.insert("suggestionVotes", {
+      suggestionId,
+      userId: user._id,
+      createdAt: Date.now(),
+    });
+    return { voted: true };
   },
 });
 
@@ -141,6 +188,11 @@ export const remove = mutation({
     for (const a of existing.attachments ?? []) {
       await ctx.storage.delete(a.storageId);
     }
+    const votes = await ctx.db
+      .query("suggestionVotes")
+      .withIndex("by_suggestion", (q) => q.eq("suggestionId", suggestionId))
+      .collect();
+    await Promise.all(votes.map((vote) => ctx.db.delete(vote._id)));
     await ctx.db.delete(suggestionId);
     return { ok: true };
   },

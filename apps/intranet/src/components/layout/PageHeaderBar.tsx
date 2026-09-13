@@ -276,6 +276,7 @@ export function PageHeaderActionsSlot() {
           onClick={action.onClick}
           disabled={action.disabled}
           data-tour={action.tourTarget}
+          data-shortcut-new={action.key === "new" ? "" : undefined}
         >
           <action.icon className="size-4" />
           {action.label}
@@ -302,6 +303,7 @@ export function MobilePageHeaderActions() {
           disabled={action.disabled}
           onClick={action.onClick}
           data-tour={action.tourTarget}
+          data-shortcut-new={action.key === "new" ? "" : undefined}
           className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
         >
           <action.icon className="size-4" />
