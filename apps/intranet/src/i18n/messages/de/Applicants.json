@@ -150,6 +150,8 @@
   "healthStale": "Seit 14+ Tagen keine Aktivität",
   "savedViews": "Gespeicherte Ansichten",
   "saveView": "Ansicht speichern",
+  "layoutList": "Liste",
+  "layoutBoard": "Board",
   "saveViewTitle": "Bewerberansicht speichern",
   "saveViewDescription": "Diesen Recruiting-Filter für später speichern.",
   "viewName": "Name der Ansicht",

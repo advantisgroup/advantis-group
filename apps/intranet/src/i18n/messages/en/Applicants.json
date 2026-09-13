@@ -150,6 +150,8 @@
   "healthStale": "No activity for 14+ days",
   "savedViews": "Saved views",
   "saveView": "Save view",
+  "layoutList": "List",
+  "layoutBoard": "Board",
   "saveViewTitle": "Save applicant view",
   "saveViewDescription": "Keep this recruiting filter for later.",
   "viewName": "View name",

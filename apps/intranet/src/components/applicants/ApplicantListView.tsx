@@ -13,7 +13,9 @@ import {
   BookmarkPlus,
   Briefcase,
   CalendarClock,
+  Columns3,
   FileText,
+  List,
   UserCheck,
   UserRoundSearch,
   X,
@@ -22,6 +24,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { AmpelDot, type Ampel } from "@/components/applicants/AmpelBadge";
+import { ApplicantBoard } from "@/components/applicants/ApplicantBoard";
 import { today } from "@/components/applicants/applicant-types";
 import { CvImportTray } from "@/components/applicants/CvImportTray";
 import { UploadCvButton } from "@/components/applicants/UploadCvButton";
@@ -188,6 +191,7 @@ export function ApplicantListView() {
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const [saveViewOpen, setSaveViewOpen] = useState(false);
   const [viewName, setViewName] = useState("");
+  const [layout, setLayout] = useState<"list" | "board">("list");
   const savedApplicantViews = preferences?.savedApplicantViews ?? [];
 
   function setParams(next: {
@@ -416,6 +420,30 @@ export function ApplicantListView() {
           <BookmarkPlus className="size-4" />
           {t("saveView")}
         </Button>
+        <div className="ml-auto hidden items-center rounded-lg border border-border/70 p-0.5 md:flex">
+          {(
+            [
+              ["list", List],
+              ["board", Columns3],
+            ] as const
+          ).map(([value, Icon]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={layout === value}
+              onClick={() => setLayout(value)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                layout === value
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Icon className="size-3.5" />
+              {t(value === "list" ? "layoutList" : "layoutBoard")}
+            </button>
+          ))}
+        </div>
       </div>
 
       {savedApplicantViews.length > 0 && (
@@ -457,6 +485,8 @@ export function ApplicantListView() {
           icon={<UserRoundSearch />}
           title={search.trim() ? t("noResults", { query: search.trim() }) : t("noFilterResults")}
         />
+      ) : layout === "board" ? (
+        <ApplicantBoard applicants={list} detailHref={detailHref} />
       ) : (
         <>
           {/* Desktop: the dense table. */}
