@@ -19,6 +19,8 @@ export default function DepartmentsPage() {
   const createDepartment = useMutation(api.orgData.createDepartment);
   const renameDepartment = useMutation(api.orgData.renameDepartment);
   const archiveDepartment = useMutation(api.orgData.archiveDepartment);
+  const setReportsTo = useMutation(api.orgData.setDepartmentReportsTo);
+  const people = useQuery(api.users.list, isAdmin ? {} : "skip");
 
   if (!isAdmin) {
     return <ForbiddenScreen />;
@@ -34,6 +36,14 @@ export default function DepartmentsPage() {
       <OrgEntityCrudList
         entities={departments}
         createInDialog
+        reportsTo={{
+          people: people ?? [],
+          onChange: (departmentId, userId) =>
+            setReportsTo({
+              departmentId: departmentId as Id<"departments">,
+              userId: userId as Id<"users"> | null,
+            }).then(() => {}),
+        }}
         createPlaceholder={t("orgEntity.departmentNamePlaceholder")}
         onCreate={(name) => createDepartment({ name }).then(() => {})}
         onRename={(departmentId, name) =>

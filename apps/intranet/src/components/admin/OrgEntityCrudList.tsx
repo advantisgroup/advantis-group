@@ -12,6 +12,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 export interface OrgEntity {
@@ -19,16 +26,27 @@ export interface OrgEntity {
   name: string;
   archivedAt?: number;
   memberCount?: number;
+  reportsToUserId?: string;
+}
+
+const NOBODY = "__nobody";
+
+/** Offered when members of a team/department should report to one person. */
+export interface ReportsToOptions {
+  people: { _id: string; name: string }[];
+  onChange: (id: string, userId: string | null) => Promise<void>;
 }
 
 function EntityRow({
   entity,
   showMemberCount,
+  reportsTo,
   onRename,
   onArchiveToggle,
 }: {
   entity: OrgEntity;
   showMemberCount?: boolean;
+  reportsTo?: ReportsToOptions;
   onRename: (id: string, name: string) => Promise<void>;
   onArchiveToggle: (id: string, archived: boolean) => Promise<void>;
 }) {
@@ -75,6 +93,26 @@ function EntityRow({
           )}
           {archived && <Badge variant="muted">{t("orgEntity.archived")}</Badge>}
         </div>
+        {reportsTo && !archived && (
+          <Select
+            value={entity.reportsToUserId ?? NOBODY}
+            onValueChange={(value) =>
+              reportsTo.onChange(entity._id, value === NOBODY ? null : value).catch(handleError)
+            }
+          >
+            <SelectTrigger className="h-9 w-56" aria-label={t("orgEntity.reportsTo")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NOBODY}>{t("orgEntity.reportsToNobody")}</SelectItem>
+              {reportsTo.people.map((person) => (
+                <SelectItem key={person._id} value={person._id}>
+                  {t("orgEntity.reportsToPerson", { name: person.name })}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Button size="sm" variant="outline" onClick={() => void toggleArchive()}>
           {archived ? t("orgEntity.restore") : t("orgEntity.archive")}
         </Button>
@@ -91,9 +129,11 @@ export function OrgEntityCrudList({
   onRename,
   onArchiveToggle,
   createInDialog,
+  reportsTo,
 }: {
   entities: OrgEntity[] | undefined;
   showMemberCount?: boolean;
+  reportsTo?: ReportsToOptions;
   createPlaceholder: string;
   onCreate: (name: string) => Promise<void>;
   onRename: (id: string, name: string) => Promise<void>;
@@ -193,6 +233,7 @@ export function OrgEntityCrudList({
               key={entity._id}
               entity={entity}
               showMemberCount={showMemberCount}
+              reportsTo={reportsTo}
               onRename={onRename}
               onArchiveToggle={onArchiveToggle}
             />

@@ -3,6 +3,7 @@ import { v } from "convex/values";
 
 import { aiRunKind, aiRunPhase, aiRunStatus } from "./lib/aiRuns";
 import { draftSurface } from "./lib/drafts";
+import { reportsViaValidator } from "./lib/reporting";
 
 // Shared validators -----------------------------------------------------------
 
@@ -274,6 +275,8 @@ export default defineSchema({
       ),
     ),
     managerId: v.optional(v.id("users")),
+    /** Pins where `managerId` comes from; unset tries manual, team, then department. */
+    reportsVia: v.optional(reportsViaValidator),
     status: v.union(v.literal("active"), v.literal("suspended")),
     /**
      * True when the user's email domain is outside `ALLOWED_EMAIL_DOMAINS`.
@@ -607,6 +610,8 @@ export default defineSchema({
     name: v.string(),
     /** Reserved for a future org-chart phase; unused by today's logic. */
     parentId: v.optional(v.id("departments")),
+    /** Who members of this department report to, unless set otherwise. */
+    reportsToUserId: v.optional(v.id("users")),
     /** Soft delete — archived departments stay resolvable for old records. */
     archivedAt: v.optional(v.number()),
     createdAt: v.number(),
@@ -623,6 +628,8 @@ export default defineSchema({
     name: v.string(),
     slug: v.string(),
     colorKey: v.optional(v.string()),
+    /** Who members of this team report to, unless set otherwise. */
+    reportsToUserId: v.optional(v.id("users")),
     archivedAt: v.optional(v.number()),
     createdAt: v.number(),
     createdBy: v.id("users"),

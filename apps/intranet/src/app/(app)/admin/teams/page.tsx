@@ -19,6 +19,8 @@ export default function TeamsPage() {
   const createTeam = useMutation(api.orgData.createTeam);
   const renameTeam = useMutation(api.orgData.renameTeam);
   const archiveTeam = useMutation(api.orgData.archiveTeam);
+  const setReportsTo = useMutation(api.orgData.setTeamReportsTo);
+  const people = useQuery(api.users.list, isAdmin ? {} : "skip");
 
   if (!isAdmin) {
     return <ForbiddenScreen />;
@@ -34,6 +36,14 @@ export default function TeamsPage() {
       <OrgEntityCrudList
         entities={teams}
         showMemberCount
+        reportsTo={{
+          people: people ?? [],
+          onChange: (teamId, userId) =>
+            setReportsTo({
+              teamId: teamId as Id<"teams">,
+              userId: userId as Id<"users"> | null,
+            }).then(() => {}),
+        }}
         createInDialog
         createPlaceholder={t("orgEntity.teamNamePlaceholder")}
         onCreate={(name) => createTeam({ name }).then(() => {})}

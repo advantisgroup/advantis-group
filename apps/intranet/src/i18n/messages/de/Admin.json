@@ -240,6 +240,9 @@
   "requestsWaiting": "{count, plural, one {# Anfrage wartet} other {# Anfragen warten}}",
   "pendingInvites": "{count, plural, one {# offene Einladung} other {# offene Einladungen}}",
   "orgEntity": {
+    "reportsTo": "Mitglieder berichten an",
+    "reportsToNobody": "Niemand festgelegt",
+    "reportsToPerson": "Berichtet an {name}",
     "departmentsTitle": "Abteilungen",
     "departmentsDescription": "Abteilungen anlegen, umbenennen oder archivieren. Archivierte Abteilungen bleiben für bereits zugewiesene Mitglieder gültig, stehen aber bei neuen Zuweisungen nicht mehr zur Auswahl.",
     "departmentNamePlaceholder": "Neue Abteilung…",

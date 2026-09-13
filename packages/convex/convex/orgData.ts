@@ -101,6 +101,14 @@ export const archiveDepartment = mutation({
   },
 });
 
+export const setDepartmentReportsTo = mutation({
+  args: { departmentId: v.id("departments"), userId: v.union(v.id("users"), v.null()) },
+  handler: async (ctx, { departmentId, userId }) => {
+    await requireAdmin(ctx);
+    await ctx.db.patch(departmentId, { reportsToUserId: userId ?? undefined });
+  },
+});
+
 export const listTeams = query({
   args: { includeArchived: v.optional(v.boolean()) },
   handler: async (ctx, { includeArchived }) => {
@@ -162,6 +170,14 @@ export const renameTeam = mutation({
     // Slug is left untouched on rename — it's the stable id guidebook access
     // rules reference (see schema.ts's `teams` comment), not a display label.
     await ctx.db.patch(teamId, { name: trimmed });
+  },
+});
+
+export const setTeamReportsTo = mutation({
+  args: { teamId: v.id("teams"), userId: v.union(v.id("users"), v.null()) },
+  handler: async (ctx, { teamId, userId }) => {
+    await requireAdmin(ctx);
+    await ctx.db.patch(teamId, { reportsToUserId: userId ?? undefined });
   },
 });
 

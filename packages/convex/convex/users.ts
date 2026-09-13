@@ -23,6 +23,7 @@ import {
 import { sandboxedAction as action, sandboxedMutation as mutation } from "./lib/sandbox";
 import { listUserPermissions } from "./lib/permissions";
 import { recordUnifiedAudit } from "./lib/auditLogWrite";
+import { loadReportingLookup, reportsViaValidator, resolveManager } from "./lib/reporting";
 import {
   lockClerkUser,
   unlockClerkUser,
@@ -185,11 +186,15 @@ export const list = query({
   handler: async (ctx, args) => {
     await requireUser(ctx);
     const { users, nameById } = await queryUsers(ctx, args);
+    const lookup = await loadReportingLookup(ctx);
     return Promise.all(
-      users.map(async (u) => ({
-        ...(await withAvatar(ctx, u)),
-        managerName: u.managerId ? (nameById.get(u.managerId as string) ?? null) : null,
-      })),
+      users.map(async (u) => {
+        const { managerId } = resolveManager(u, lookup);
+        return {
+          ...(await withAvatar(ctx, u)),
+          managerName: managerId ? (nameById.get(managerId as string) ?? null) : null,
+        };
+      }),
     );
   },
 });
@@ -211,13 +216,18 @@ export const directoryList = query({
 
     const presenceRows = await ctx.db.query("presence").collect();
     const lastActiveByUser = new Map(presenceRows.map((p) => [p.userId, p.lastActiveAt]));
+    const lookup = await loadReportingLookup(ctx);
 
     return Promise.all(
-      users.map(async (u) => ({
-        ...(await withAvatar(ctx, u)),
-        lastActiveAt: lastActiveByUser.get(u._id) ?? null,
-        managerName: u.managerId ? (nameById.get(u.managerId as string) ?? null) : null,
-      })),
+      users.map(async (u) => {
+        const { managerId } = resolveManager(u, lookup);
+        return {
+          ...(await withAvatar(ctx, u)),
+          managerId,
+          lastActiveAt: lastActiveByUser.get(u._id) ?? null,
+          managerName: managerId ? (nameById.get(managerId as string) ?? null) : null,
+        };
+      }),
     );
   },
 });
@@ -267,14 +277,24 @@ export const orgContext = query({
   handler: async (ctx, { userId }) => {
     await requireUser(ctx);
     const user = await ctx.db.get(userId);
-    if (!user) return { manager: null, reports: [] };
-    const manager = user.managerId ? await ctx.db.get(user.managerId) : null;
+    if (!user) {
+      return {
+        manager: null,
+        managerSource: null,
+        manualManagerId: null,
+        reportsVia: null,
+        reports: [],
+      };
+    }
+    const lookup = await loadReportingLookup(ctx);
+    const resolved = resolveManager(user, lookup);
+    const manager = resolved.managerId ? await ctx.db.get(resolved.managerId) : null;
     const reports = (
       await ctx.db
         .query("users")
-        .withIndex("by_managerId", (q) => q.eq("managerId", userId))
+        .withIndex("by_status", (q) => q.eq("status", "active"))
         .collect()
-    ).filter((u) => u.status === "active");
+    ).filter((u) => resolveManager(u, lookup).managerId === userId);
     const brief = async (u: Doc<"users">) => {
       const full = await withAvatar(ctx, u);
       return {
@@ -286,6 +306,9 @@ export const orgContext = query({
     };
     return {
       manager: manager && manager.status === "active" ? await brief(manager) : null,
+      managerSource: resolved.source,
+      manualManagerId: user.managerId ?? null,
+      reportsVia: user.reportsVia ?? null,
       reports: await Promise.all(reports.map(brief)),
     };
   },
@@ -466,10 +489,18 @@ export const setManager = mutation({
   args: {
     userId: v.id("users"),
     managerId: v.optional(v.id("users")),
+    /** null goes back to automatic: manual, then team, then department. */
+    reportsVia: v.optional(v.union(reportsViaValidator, v.null())),
   },
-  handler: async (ctx, { userId, managerId }) => {
+  handler: async (ctx, { userId, managerId, reportsVia }) => {
     await requireAdmin(ctx);
-    await ctx.db.patch(userId, { managerId });
+    if (managerId === userId) {
+      throw new ConvexError({ code: "bad_request", message: "Nobody can report to themselves" });
+    }
+    await ctx.db.patch(userId, {
+      managerId,
+      ...(reportsVia !== undefined ? { reportsVia: reportsVia ?? undefined } : {}),
+    });
     return { ok: true };
   },
 });

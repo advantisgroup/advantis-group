@@ -240,6 +240,9 @@
   "requestsWaiting": "{count, plural, one {# request waiting} other {# requests waiting}}",
   "pendingInvites": "{count, plural, one {# pending invite} other {# pending invites}}",
   "orgEntity": {
+    "reportsTo": "Members report to",
+    "reportsToNobody": "Nobody set",
+    "reportsToPerson": "Report to {name}",
     "departmentsTitle": "Departments",
     "departmentsDescription": "Create, rename, or archive departments. Archiving keeps the department resolvable for members already assigned to it, but hides it from new assignments.",
     "departmentNamePlaceholder": "New department name…",

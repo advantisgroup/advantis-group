@@ -50,6 +50,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -313,19 +320,123 @@ function TeamsEditor({ userId, teams }: { userId: Id<"users">; teams: string[] }
 /** How recent a presence heartbeat still counts as "online". */
 export const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 
+const AUTO = "auto";
+const NOBODY = "nobody";
+
+/** Admins decide where someone's manager comes from: a person picked by
+ * hand, their team's lead, their department's lead, or whichever of those
+ * is set first. */
+function ReportsToEditor({
+  userId,
+  reportsVia,
+  manualManagerId,
+}: {
+  userId: Id<"users">;
+  reportsVia: "manual" | "team" | "department" | null;
+  manualManagerId: Id<"users"> | null;
+}) {
+  const t = useTranslations("Profile");
+  const handleError = useErrorHandler();
+  const setManager = useMutation(api.users.setManager);
+  const users = useQuery(api.users.list, {});
+  const showPerson = reportsVia === null || reportsVia === "manual";
+
+  function save(next: {
+    reportsVia: "manual" | "team" | "department" | null;
+    managerId: Id<"users"> | null;
+  }) {
+    setManager({
+      userId,
+      reportsVia: next.reportsVia,
+      managerId: next.managerId ?? undefined,
+    })
+      .then(() => toast.success(t("reportsToSaved")))
+      .catch(handleError);
+  }
+
+  return (
+    <div className="space-y-2 rounded-lg border border-border/70 p-3">
+      <p className="text-xs font-medium text-muted-foreground">{t("reportsToTitle")}</p>
+      <Select
+        value={reportsVia ?? AUTO}
+        onValueChange={(value) =>
+          save({
+            reportsVia: value === AUTO ? null : (value as "manual" | "team" | "department"),
+            managerId: manualManagerId,
+          })
+        }
+      >
+        <SelectTrigger className="h-9">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={AUTO}>{t("reportsViaAuto")}</SelectItem>
+          <SelectItem value="manual">{t("reportsViaManual")}</SelectItem>
+          <SelectItem value="team">{t("reportsViaTeam")}</SelectItem>
+          <SelectItem value="department">{t("reportsViaDepartment")}</SelectItem>
+        </SelectContent>
+      </Select>
+      {showPerson && (
+        <Select
+          value={manualManagerId ?? NOBODY}
+          onValueChange={(value) =>
+            save({ reportsVia, managerId: value === NOBODY ? null : (value as Id<"users">) })
+          }
+        >
+          <SelectTrigger className="h-9" aria-label={t("reportsToPerson")}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NOBODY}>{t("reportsToNobody")}</SelectItem>
+            {(users ?? [])
+              .filter((u) => u._id !== userId)
+              .map((u) => (
+                <SelectItem key={u._id} value={u._id}>
+                  {u.name}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+      )}
+      <p className="text-xs text-muted-foreground">
+        {reportsVia === "team"
+          ? t("reportsViaTeamHint")
+          : reportsVia === "department"
+            ? t("reportsViaDepartmentHint")
+            : reportsVia === "manual"
+              ? t("reportsViaManualHint")
+              : t("reportsViaAutoHint")}
+      </p>
+    </div>
+  );
+}
+
 function Organisation({ userId }: { userId: Id<"users"> }) {
   const t = useTranslations("Profile");
+  const isAdmin = useIsAdmin();
   const org = useQuery(api.users.orgContext, { userId });
-  if (!org || (!org.manager && org.reports.length === 0)) return null;
+  if (!org || (!isAdmin && !org.manager && org.reports.length === 0)) return null;
 
   return (
     <Section label={t("organisation")} className={LATE_SECTION}>
       <div className="space-y-3">
         {org.manager && (
           <div>
-            <p className="mb-1 text-xs text-muted-foreground">{t("manager")}</p>
+            <p className="mb-1 text-xs text-muted-foreground">
+              {t("manager")}
+              {org.managerSource && org.managerSource !== "manual" && (
+                <span> · {t(`reportsSource_${org.managerSource}`)}</span>
+              )}
+            </p>
             <PersonRow person={org.manager} />
           </div>
+        )}
+        {isAdmin && (
+          <ReportsToEditor
+            userId={userId}
+            reportsVia={org.reportsVia}
+            manualManagerId={org.manualManagerId}
+          />
         )}
         {org.reports.length > 0 && (
           <div>
