@@ -24,6 +24,8 @@
   "viewList": "Listenansicht",
   "viewGrid": "Kartenansicht",
   "viewOrg": "Organigramm",
+  "orgManagement": "Geschäftsführung",
+  "orgDragHandle": "{name} auf eine andere Person ziehen",
   "orgDragHint": "Ziehe eine Person auf eine andere, um festzulegen, an wen sie berichtet.",
   "orgDropNoManager": "Hier ablegen, um die Führungskraft zu entfernen",
   "orgMoved": "{person} berichtet jetzt an {manager}",

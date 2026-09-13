@@ -1,7 +1,6 @@
 export type OnboardingStepId =
   | "welcome"
   | "profile"
-  | "department"
   | "notifications"
   | "theme"
   | "language"

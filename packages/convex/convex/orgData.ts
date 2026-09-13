@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Id } from "./_generated/dataModel";
 import { type MutationCtx, query } from "./_generated/server";
-import { requireAdmin, requireUser } from "./lib/auth";
+import { requireAdmin, requireCapability, requireUser } from "./lib/auth";
 
 /**
  * Ongoing management of the canonical `departments`/`teams` tables (see
@@ -202,15 +202,29 @@ export const addUserToTeam = mutation({
   },
 });
 
+/** Managers and people who manage members place someone in a department —
+ *  it isn't something people pick for themselves. */
 export const setUserDepartment = mutation({
-  args: { userId: v.id("users"), departmentId: v.id("departments") },
+  args: { userId: v.id("users"), departmentId: v.union(v.id("departments"), v.null()) },
   handler: async (ctx, { userId, departmentId }) => {
-    await requireAdmin(ctx);
+    await requireCapability(ctx, "manage_members");
+    if (!departmentId) {
+      await ctx.db.patch(userId, { departmentId: undefined, department: undefined });
+      return;
+    }
     const department = await ctx.db.get(departmentId);
     if (!department) {
       throw new ConvexError({ code: "not_found", message: "Department not found" });
     }
     await ctx.db.patch(userId, { departmentId, department: department.name });
+  },
+});
+
+export const setTeamDepartment = mutation({
+  args: { teamId: v.id("teams"), departmentId: v.union(v.id("departments"), v.null()) },
+  handler: async (ctx, { teamId, departmentId }) => {
+    await requireAdmin(ctx);
+    await ctx.db.patch(teamId, { departmentId: departmentId ?? undefined });
   },
 });
 

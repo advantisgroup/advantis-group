@@ -24,6 +24,8 @@
   "viewList": "List view",
   "viewGrid": "Card view",
   "viewOrg": "Org chart",
+  "orgManagement": "Management",
+  "orgDragHandle": "Drag {name} to someone else",
   "orgDragHint": "Drag someone onto another person to change who they report to.",
   "orgDropNoManager": "Drop here to remove their manager",
   "orgMoved": "{person} now reports to {manager}",

@@ -1,11 +1,18 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  type PointerEvent as ReactPointerEvent,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { ChevronRight, GripVertical, UserX } from "lucide-react";
+import { ChevronRight, Crown, GripVertical, UserX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -27,15 +34,16 @@ import { cn } from "@/lib/utils";
 import { type Person, type PersonStatus } from "./person-status";
 import { StatusPill } from "./StatusPill";
 
-const DRAG_TYPE = "text/org-person";
+const ROOT = "root";
+/** How far a finger or mouse has to move before a press becomes a drag. */
+const DRAG_THRESHOLD_PX = 6;
+const EDGE_SCROLL_PX = 64;
 
 interface DragState {
   canEdit: boolean;
   dragging: Id<"users"> | null;
-  setDragging: (id: Id<"users"> | null) => void;
-  /** People the dragged person may not land on: themselves and everyone below them. */
-  blocked: Set<string>;
-  onDropOn: (managerId: Id<"users"> | null) => void;
+  over: string | null;
+  startDrag: (event: ReactPointerEvent, personId: Id<"users">) => void;
 }
 
 const DragContext = createContext<DragState | null>(null);
@@ -57,30 +65,28 @@ function OrgNode({
   const drag = useContext(DragContext);
   const reports = reportsOf.get(person._id) ?? [];
   const [open, setOpen] = useState(depth < 2);
-  const [over, setOver] = useState(false);
   const status = statuses.get(person._id);
-  const canDrop = !!drag?.dragging && !drag.blocked.has(person._id);
 
   return (
     <li>
       <div
+        data-org-drop={person._id}
         className={cn(
-          "flex items-center gap-1.5 rounded-lg py-1 transition-colors",
-          over && canDrop && "bg-accent ring-1 ring-foreground/20",
+          "flex items-center gap-1 rounded-lg py-1 transition-colors",
+          drag?.over === person._id && "bg-accent ring-1 ring-foreground/20",
         )}
-        onDragOver={(event) => {
-          if (!canDrop) return;
-          event.preventDefault();
-          event.dataTransfer.dropEffect = "move";
-          setOver(true);
-        }}
-        onDragLeave={() => setOver(false)}
-        onDrop={(event) => {
-          event.preventDefault();
-          setOver(false);
-          if (canDrop) drag!.onDropOn(person._id);
-        }}
       >
+        {drag?.canEdit && (
+          <span
+            role="button"
+            tabIndex={-1}
+            aria-label={t("orgDragHandle", { name: person.name })}
+            onPointerDown={(event) => drag.startDrag(event, person._id)}
+            className="grid size-8 shrink-0 cursor-grab touch-none place-items-center rounded-md text-muted-foreground/50 hover:bg-accent hover:text-muted-foreground active:cursor-grabbing"
+          >
+            <GripVertical className="size-4" />
+          </span>
+        )}
         {reports.length > 0 ? (
           <button
             type="button"
@@ -97,23 +103,12 @@ function OrgNode({
         <button
           type="button"
           data-shortcut-item
-          draggable={drag?.canEdit}
-          onDragStart={(event) => {
-            event.dataTransfer.setData(DRAG_TYPE, person._id);
-            event.dataTransfer.effectAllowed = "move";
-            // changing the layout inside dragstart cancels the drag in Chrome
-            setTimeout(() => drag?.setDragging(person._id));
-          }}
-          onDragEnd={() => drag?.setDragging(null)}
           onClick={() => onOpenProfile(person._id)}
           className={cn(
-            "group flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             drag?.dragging === person._id && "opacity-50",
           )}
         >
-          {drag?.canEdit && (
-            <GripVertical className="size-4 shrink-0 cursor-grab text-muted-foreground/50 group-hover:text-muted-foreground" />
-          )}
           <Avatar className="size-8 shrink-0">
             {person.avatar && <AvatarImage src={person.avatar} alt="" />}
             <AvatarFallback className="text-xs">
@@ -121,7 +116,12 @@ function OrgNode({
             </AvatarFallback>
           </Avatar>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium leading-tight">{person.name}</span>
+            <span className="flex items-center gap-1.5 text-sm font-medium leading-tight">
+              <span className="truncate">{person.name}</span>
+              {person.managingDirector && (
+                <Crown className="size-3.5 shrink-0 text-muted-foreground" />
+              )}
+            </span>
             <span className="block truncate text-xs leading-tight text-muted-foreground">
               {[person.jobTitle, person.department].filter(Boolean).join(" · ")}
             </span>
@@ -266,8 +266,10 @@ export function OrgChart({
   const teams = useQuery(api.orgData.listTeams, canEdit ? {} : "skip");
   const departments = useQuery(api.orgData.listDepartments, canEdit ? {} : "skip");
   const [dragging, setDragging] = useState<Id<"users"> | null>(null);
-  const [overRoot, setOverRoot] = useState(false);
+  const [over, setOver] = useState<string | null>(null);
+  const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
   const [offer, setOffer] = useState<Offer | null>(null);
+  const press = useRef<{ id: Id<"users">; x: number; y: number; active: boolean } | null>(null);
 
   const { roots, reportsOf, unplaced } = useMemo(() => {
     const ids = new Set(people.map((p) => p._id as string));
@@ -289,26 +291,72 @@ export function OrgChart({
     return { roots: roots.sort(byName), reportsOf, unplaced: unplaced.sort(byName) };
   }, [people]);
 
-  const blocked = useMemo(() => {
+  const directors = useMemo(() => people.filter((p) => p.managingDirector), [people]);
+
+  /** Themselves and everyone below them — dropping there would make a loop. */
+  function blockedFor(personId: string) {
     const out = new Set<string>();
-    if (!dragging) return out;
-    const stack = [dragging as string];
+    const stack = [personId];
     while (stack.length) {
       const id = stack.pop()!;
       out.add(id);
       for (const report of reportsOf.get(id) ?? []) stack.push(report._id);
     }
     return out;
-  }, [dragging, reportsOf]);
+  }
 
-  function onDropOn(managerId: Id<"users"> | null) {
-    const personId = dragging;
-    setDragging(null);
-    if (!personId) return;
+  function targetAt(x: number, y: number, blocked: Set<string>): string | null {
+    const el = document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-org-drop]");
+    const id = el?.dataset.orgDrop ?? null;
+    return id && !blocked.has(id) ? id : null;
+  }
+
+  // Pointer events rather than HTML drag and drop, which touch screens don't fire.
+  function startDrag(event: ReactPointerEvent, personId: Id<"users">) {
+    if (event.button !== 0) return;
+    const handle = event.currentTarget as HTMLElement;
+    handle.setPointerCapture(event.pointerId);
+    press.current = { id: personId, x: event.clientX, y: event.clientY, active: false };
+    const blocked = blockedFor(personId);
+
+    const move = (e: PointerEvent) => {
+      const current = press.current;
+      if (!current) return;
+      if (!current.active) {
+        if (Math.hypot(e.clientX - current.x, e.clientY - current.y) < DRAG_THRESHOLD_PX) return;
+        current.active = true;
+        setDragging(current.id);
+      }
+      e.preventDefault();
+      setGhost({ x: e.clientX, y: e.clientY });
+      setOver(targetAt(e.clientX, e.clientY, blocked));
+      if (e.clientY < EDGE_SCROLL_PX) window.scrollBy(0, -12);
+      else if (e.clientY > window.innerHeight - EDGE_SCROLL_PX) window.scrollBy(0, 12);
+    };
+    const end = (e: PointerEvent) => {
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", end);
+      handle.removeEventListener("pointercancel", end);
+      const current = press.current;
+      press.current = null;
+      const target = e.type === "pointerup" ? targetAt(e.clientX, e.clientY, blocked) : null;
+      setDragging(null);
+      setOver(null);
+      setGhost(null);
+      if (current?.active && target) {
+        onDrop(current.id, target === ROOT ? null : (target as Id<"users">));
+      }
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", end);
+    handle.addEventListener("pointercancel", end);
+  }
+
+  function onDrop(personId: Id<"users">, managerId: Id<"users"> | null) {
     const person = people.find((p) => p._id === personId);
     const manager = managerId ? people.find((p) => p._id === managerId) : undefined;
     if (!person || person.managerId === managerId) return;
-    setManager({ userId: personId, managerId: managerId ?? undefined, reportsVia: "manual" })
+    setManager({ userId: personId, managerId: managerId ?? undefined })
       .then(() => {
         toast.success(
           manager
@@ -331,26 +379,43 @@ export function OrgChart({
       .catch(handleError);
   }
 
-  const dragState: DragState = { canEdit, dragging, setDragging, blocked, onDropOn };
+  const draggedPerson = dragging ? people.find((p) => p._id === dragging) : undefined;
 
   return (
-    <DragContext.Provider value={dragState}>
-      <div className="space-y-6">
+    <DragContext.Provider value={{ canEdit, dragging, over, startDrag }}>
+      <div className={cn("space-y-6", dragging && "select-none")}>
+        {directors.length > 0 && (
+          <section>
+            <h2 className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Crown className="size-3.5" />
+              {t("orgManagement")}
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {directors.map((person) => (
+                <button
+                  key={person._id}
+                  type="button"
+                  onClick={() => onOpenProfile(person._id)}
+                  className="flex items-center gap-2 rounded-full border border-border/70 bg-card py-1 pl-1 pr-3 text-sm transition-colors hover:bg-accent/60"
+                >
+                  <Avatar className="size-6">
+                    {person.avatar && <AvatarImage src={person.avatar} alt="" />}
+                    <AvatarFallback className="text-[10px]">
+                      {initials(person.name, person.email)}
+                    </AvatarFallback>
+                  </Avatar>
+                  {person.name}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
         {canEdit && dragging && (
           <div
-            onDragOver={(event) => {
-              event.preventDefault();
-              setOverRoot(true);
-            }}
-            onDragLeave={() => setOverRoot(false)}
-            onDrop={(event) => {
-              event.preventDefault();
-              setOverRoot(false);
-              onDropOn(null);
-            }}
+            data-org-drop={ROOT}
             className={cn(
               "flex items-center justify-center gap-2 rounded-xl border border-dashed border-border py-4 text-sm text-muted-foreground transition-colors",
-              overRoot && "border-foreground/40 bg-accent text-foreground",
+              over === ROOT && "border-foreground/40 bg-accent text-foreground",
             )}
           >
             <UserX className="size-4" />
@@ -394,6 +459,15 @@ export function OrgChart({
           </section>
         )}
       </div>
+      {ghost && draggedPerson && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-[calc(100%+12px)] rounded-full border border-border/70 bg-popover px-3 py-1.5 text-sm font-medium shadow-lg"
+          style={{ left: ghost.x, top: ghost.y }}
+        >
+          {draggedPerson.name}
+        </div>
+      )}
       <MembershipOffer key={offer?.person._id} offer={offer} onClose={() => setOffer(null)} />
     </DragContext.Provider>
   );

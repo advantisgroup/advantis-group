@@ -6,7 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Building2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { OrgEntityCrudList } from "@/components/admin/OrgEntityCrudList";
+import { OrgEntityCrudList, OrgModelIntro } from "@/components/admin/OrgEntityCrudList";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin } from "@/components/providers/current-user";
@@ -36,6 +36,7 @@ export default function DepartmentsPage() {
       <OrgEntityCrudList
         entities={departments}
         createInDialog
+        intro={<OrgModelIntro />}
         reportsTo={{
           people: people ?? [],
           onChange: (departmentId, userId) =>

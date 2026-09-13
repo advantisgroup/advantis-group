@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -27,6 +27,13 @@ export interface OrgEntity {
   archivedAt?: number;
   memberCount?: number;
   reportsToUserId?: string;
+  departmentId?: string;
+}
+
+/** Offered on teams, so each can be placed inside a department. */
+export interface ParentOptions {
+  options: { _id: string; name: string }[];
+  onChange: (id: string, parentId: string | null) => Promise<void>;
 }
 
 const NOBODY = "__nobody";
@@ -41,12 +48,14 @@ function EntityRow({
   entity,
   showMemberCount,
   reportsTo,
+  parent,
   onRename,
   onArchiveToggle,
 }: {
   entity: OrgEntity;
   showMemberCount?: boolean;
   reportsTo?: ReportsToOptions;
+  parent?: ParentOptions;
   onRename: (id: string, name: string) => Promise<void>;
   onArchiveToggle: (id: string, archived: boolean) => Promise<void>;
 }) {
@@ -93,6 +102,26 @@ function EntityRow({
           )}
           {archived && <Badge variant="muted">{t("orgEntity.archived")}</Badge>}
         </div>
+        {parent && !archived && (
+          <Select
+            value={entity.departmentId ?? NOBODY}
+            onValueChange={(value) =>
+              parent.onChange(entity._id, value === NOBODY ? null : value).catch(handleError)
+            }
+          >
+            <SelectTrigger className="h-9 w-48" aria-label={t("orgEntity.inDepartment")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NOBODY}>{t("orgEntity.noDepartment")}</SelectItem>
+              {parent.options.map((option) => (
+                <SelectItem key={option._id} value={option._id}>
+                  {t("orgEntity.inDepartmentName", { name: option.name })}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         {reportsTo && !archived && (
           <Select
             value={entity.reportsToUserId ?? NOBODY}
@@ -130,10 +159,15 @@ export function OrgEntityCrudList({
   onArchiveToggle,
   createInDialog,
   reportsTo,
+  parent,
+  intro,
 }: {
   entities: OrgEntity[] | undefined;
   showMemberCount?: boolean;
   reportsTo?: ReportsToOptions;
+  parent?: ParentOptions;
+  /** A few lines explaining what these are and how they fit together. */
+  intro?: ReactNode;
   createPlaceholder: string;
   onCreate: (name: string) => Promise<void>;
   onRename: (id: string, name: string) => Promise<void>;
@@ -168,6 +202,11 @@ export function OrgEntityCrudList({
 
   return (
     <div className="space-y-4">
+      {intro && (
+        <div className="rounded-xl border border-border/70 bg-card px-4 py-3 text-sm leading-relaxed text-muted-foreground">
+          {intro}
+        </div>
+      )}
       {createInDialog ? (
         <>
           <PageHeaderActions
@@ -234,6 +273,7 @@ export function OrgEntityCrudList({
               entity={entity}
               showMemberCount={showMemberCount}
               reportsTo={reportsTo}
+              parent={parent}
               onRename={onRename}
               onArchiveToggle={onArchiveToggle}
             />
@@ -241,5 +281,30 @@ export function OrgEntityCrudList({
         </div>
       )}
     </div>
+  );
+}
+
+/** How departments, teams and leads relate — shown on both admin pages. */
+export function OrgModelIntro() {
+  const t = useTranslations("Admin");
+  return (
+    <ul className="space-y-1.5">
+      <li>
+        <span className="font-medium text-foreground">{t("orgEntity.introDepartmentsTitle")}</span>{" "}
+        {t("orgEntity.introDepartments")}
+      </li>
+      <li>
+        <span className="font-medium text-foreground">{t("orgEntity.introTeamsTitle")}</span>{" "}
+        {t("orgEntity.introTeams")}
+      </li>
+      <li>
+        <span className="font-medium text-foreground">{t("orgEntity.introLeadsTitle")}</span>{" "}
+        {t("orgEntity.introLeads")}
+      </li>
+      <li>
+        <span className="font-medium text-foreground">{t("orgEntity.introDirectorTitle")}</span>{" "}
+        {t("orgEntity.introDirector")}
+      </li>
+    </ul>
   );
 }

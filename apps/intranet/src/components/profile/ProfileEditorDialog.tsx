@@ -41,7 +41,6 @@ export function ProfileEditorDialog({
   const [firstName, setFirstName] = useState(user.firstName ?? "");
   const [lastName, setLastName] = useState(user.lastName ?? "");
   const [jobTitle, setJobTitle] = useState(user.jobTitle ?? "");
-  const [department, setDepartment] = useState(user.department ?? "");
   const [phone, setPhone] = useState(user.phone ?? "");
   const [dateOfBirth, setDateOfBirth] = useState(user.dateOfBirth ?? "");
   const [showBirthdayPublicly, setShowBirthdayPublicly] = useState(user.showBirthdayPublicly);
@@ -55,7 +54,6 @@ export function ProfileEditorDialog({
     setFirstName(user.firstName ?? "");
     setLastName(user.lastName ?? "");
     setJobTitle(user.jobTitle ?? "");
-    setDepartment(user.department ?? "");
     setPhone(user.phone ?? "");
     setDateOfBirth(user.dateOfBirth ?? "");
     setShowBirthdayPublicly(user.showBirthdayPublicly);
@@ -99,7 +97,6 @@ export function ProfileEditorDialog({
         firstName,
         lastName,
         jobTitle,
-        department,
         phone,
         dateOfBirth,
         showBirthdayPublicly,
@@ -193,15 +190,9 @@ export function ProfileEditorDialog({
         <Label>{t("jobTitle")}</Label>
         <Input value={jobTitle} onChange={(event) => setJobTitle(event.target.value)} />
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>{t("department")}</Label>
-          <Input value={department} onChange={(event) => setDepartment(event.target.value)} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>{t("phone")}</Label>
-          <Input value={phone} onChange={(event) => setPhone(event.target.value)} />
-        </div>
+      <div className="space-y-1.5">
+        <Label>{t("phone")}</Label>
+        <Input value={phone} onChange={(event) => setPhone(event.target.value)} />
       </div>
       <div className="space-y-2">
         <Label>{t("dateOfBirth")}</Label>

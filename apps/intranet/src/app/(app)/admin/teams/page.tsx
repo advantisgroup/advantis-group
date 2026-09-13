@@ -6,7 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Users2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { OrgEntityCrudList } from "@/components/admin/OrgEntityCrudList";
+import { OrgEntityCrudList, OrgModelIntro } from "@/components/admin/OrgEntityCrudList";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin } from "@/components/providers/current-user";
@@ -20,6 +20,8 @@ export default function TeamsPage() {
   const renameTeam = useMutation(api.orgData.renameTeam);
   const archiveTeam = useMutation(api.orgData.archiveTeam);
   const setReportsTo = useMutation(api.orgData.setTeamReportsTo);
+  const setTeamDepartment = useMutation(api.orgData.setTeamDepartment);
+  const departments = useQuery(api.orgData.listDepartments, isAdmin ? {} : "skip");
   const people = useQuery(api.users.list, isAdmin ? {} : "skip");
 
   if (!isAdmin) {
@@ -36,6 +38,15 @@ export default function TeamsPage() {
       <OrgEntityCrudList
         entities={teams}
         showMemberCount
+        intro={<OrgModelIntro />}
+        parent={{
+          options: departments ?? [],
+          onChange: (teamId, departmentId) =>
+            setTeamDepartment({
+              teamId: teamId as Id<"teams">,
+              departmentId: departmentId as Id<"departments"> | null,
+            }).then(() => {}),
+        }}
         reportsTo={{
           people: people ?? [],
           onChange: (teamId, userId) =>

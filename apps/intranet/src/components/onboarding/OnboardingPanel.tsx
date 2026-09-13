@@ -11,7 +11,6 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 
 import { useOnboarding } from "./OnboardingProvider";
-import { DepartmentStep } from "./steps/DepartmentStep";
 import { FinishStep } from "./steps/FinishStep";
 import { LanguageStep } from "./steps/LanguageStep";
 import { ManagerIntroStep } from "./steps/ManagerIntroStep";
@@ -26,7 +25,6 @@ import type { OnboardingStepId } from "./onboarding-types";
 const STEP_CONTENT: Record<OnboardingStepId, () => ReactNode> = {
   welcome: () => <WelcomeStep />,
   profile: () => <ProfileStep />,
-  department: () => <DepartmentStep />,
   notifications: () => <NotificationsStep />,
   theme: () => <ThemeStep />,
   language: () => <LanguageStep />,

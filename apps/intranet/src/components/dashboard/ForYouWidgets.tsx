@@ -28,7 +28,7 @@ import { DashCard, Empty, Row, RowSkeletons, StatLine } from "./primitives";
 import { todayLocalDay } from "@/lib/activity/fmt";
 import { useMemo } from "react";
 
-const PROFILE_FIELDS = ["avatar", "jobTitle", "department", "phone"] as const;
+const PROFILE_FIELDS = ["avatar", "jobTitle", "phone"] as const;
 type ProfileField = (typeof PROFILE_FIELDS)[number];
 
 export function missingProfileFields(user: CurrentUser): ProfileField[] {

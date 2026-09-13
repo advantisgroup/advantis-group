@@ -275,8 +275,11 @@ export default defineSchema({
       ),
     ),
     managerId: v.optional(v.id("users")),
-    /** Pins where `managerId` comes from; unset tries manual, team, then department. */
+    /** No longer read; see lib/reporting.ts. */
     reportsVia: v.optional(reportsViaValidator),
+    /** Managing director (Geschäftsführer): a distinction on top of their role
+     *  and reporting lines, not a line of its own. Admins set it. */
+    managingDirector: v.optional(v.boolean()),
     status: v.union(v.literal("active"), v.literal("suspended")),
     /**
      * True when the user's email domain is outside `ALLOWED_EMAIL_DOMAINS`.
@@ -610,7 +613,7 @@ export default defineSchema({
     name: v.string(),
     /** Reserved for a future org-chart phase; unused by today's logic. */
     parentId: v.optional(v.id("departments")),
-    /** Who members of this department report to, unless set otherwise. */
+    /** The department lead — everyone in the department reports to them. */
     reportsToUserId: v.optional(v.id("users")),
     /** Soft delete — archived departments stay resolvable for old records. */
     archivedAt: v.optional(v.number()),
@@ -628,8 +631,10 @@ export default defineSchema({
     name: v.string(),
     slug: v.string(),
     colorKey: v.optional(v.string()),
-    /** Who members of this team report to, unless set otherwise. */
+    /** The team lead — everyone on the team reports to them. */
     reportsToUserId: v.optional(v.id("users")),
+    /** Teams split a department into smaller groups (Inbound under Sales). */
+    departmentId: v.optional(v.id("departments")),
     archivedAt: v.optional(v.number()),
     createdAt: v.number(),
     createdBy: v.id("users"),

@@ -4,25 +4,41 @@ import { type Doc, type Id } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
 
 /**
- * Who someone reports to can come from three places: a person picked for
- * them by hand, the lead set on one of their teams, or the lead set on their
- * department. `reportsVia` pins one of those; left unset, the first that
- * gives an answer wins in that order.
+ * How the org hangs together: a department covers everyone in one line of
+ * work (Sales), and splits into teams (Inbound). Someone reports to every lead
+ * above them — their team's lead and their department's lead — plus anyone
+ * picked for them by hand. Those lines add up; none replaces another.
  */
+
+/** No longer read — reporting lines are additive now. Kept so rows written
+ *  while it was a choice still validate. */
 export const reportsViaValidator = v.union(
   v.literal("manual"),
   v.literal("team"),
   v.literal("department"),
 );
 
-export type ReportsVia = "manual" | "team" | "department";
+export type ReportingVia = "manual" | "team" | "department";
+
+export interface ReportingLine {
+  userId: Id<"users">;
+  via: ReportingVia;
+  /** The team or department this line comes through. */
+  label: string | null;
+}
+
+interface TeamInfo {
+  name: string;
+  lead: Id<"users"> | undefined;
+  departmentId: Id<"departments"> | undefined;
+}
 
 export interface ReportingLookup {
-  teamLeadById: Map<string, Id<"users">>;
-  teamLeadBySlug: Map<string, Id<"users">>;
+  teamsById: Map<string, TeamInfo>;
+  teamIdBySlug: Map<string, string>;
   teamIdsByUser: Map<string, string[]>;
-  departmentLeadById: Map<string, Id<"users">>;
-  departmentLeadByName: Map<string, Id<"users">>;
+  departmentsById: Map<string, { name: string; lead: Id<"users"> | undefined }>;
+  departmentIdByName: Map<string, string>;
 }
 
 /** One read of teams, memberships and departments, shared by every resolve. */
@@ -32,58 +48,78 @@ export async function loadReportingLookup(ctx: QueryCtx): Promise<ReportingLooku
     ctx.db.query("userTeams").collect(),
     ctx.db.query("departments").collect(),
   ]);
-  const teamLeadById = new Map<string, Id<"users">>();
-  const teamLeadBySlug = new Map<string, Id<"users">>();
+  const teamsById = new Map<string, TeamInfo>();
+  const teamIdBySlug = new Map<string, string>();
   for (const team of teams) {
-    if (team.archivedAt || !team.reportsToUserId) continue;
-    teamLeadById.set(team._id, team.reportsToUserId);
-    teamLeadBySlug.set(team.slug, team.reportsToUserId);
+    if (team.archivedAt) continue;
+    teamsById.set(team._id, {
+      name: team.name,
+      lead: team.reportsToUserId,
+      departmentId: team.departmentId,
+    });
+    teamIdBySlug.set(team.slug, team._id);
   }
   const teamIdsByUser = new Map<string, string[]>();
   for (const m of memberships) {
     teamIdsByUser.set(m.userId, [...(teamIdsByUser.get(m.userId) ?? []), m.teamId]);
   }
-  const departmentLeadById = new Map<string, Id<"users">>();
-  const departmentLeadByName = new Map<string, Id<"users">>();
+  const departmentsById = new Map<string, { name: string; lead: Id<"users"> | undefined }>();
+  const departmentIdByName = new Map<string, string>();
   for (const department of departments) {
-    if (department.archivedAt || !department.reportsToUserId) continue;
-    departmentLeadById.set(department._id, department.reportsToUserId);
-    departmentLeadByName.set(department.name.trim().toLowerCase(), department.reportsToUserId);
+    if (department.archivedAt) continue;
+    departmentsById.set(department._id, {
+      name: department.name,
+      lead: department.reportsToUserId,
+    });
+    departmentIdByName.set(department.name.trim().toLowerCase(), department._id);
   }
-  return { teamLeadById, teamLeadBySlug, teamIdsByUser, departmentLeadById, departmentLeadByName };
+  return { teamsById, teamIdBySlug, teamIdsByUser, departmentsById, departmentIdByName };
 }
 
-function viaTeam(user: Doc<"users">, lookup: ReportingLookup): Id<"users"> | null {
-  const candidates = [
-    ...(lookup.teamIdsByUser.get(user._id) ?? []).map((id) => lookup.teamLeadById.get(id)),
-    ...(user.teams ?? []).map((slug) => lookup.teamLeadBySlug.get(slug)),
-  ];
-  return candidates.find((lead): lead is Id<"users"> => !!lead && lead !== user._id) ?? null;
+/** The teams someone is in, from the membership table and the older slug list. */
+export function teamIdsOf(user: Doc<"users">, lookup: ReportingLookup): string[] {
+  const ids = [
+    ...(lookup.teamIdsByUser.get(user._id) ?? []),
+    ...(user.teams ?? []).map((slug) => lookup.teamIdBySlug.get(slug)),
+  ].filter((id): id is string => !!id && lookup.teamsById.has(id));
+  return [...new Set(ids)];
 }
 
-function viaDepartment(user: Doc<"users">, lookup: ReportingLookup): Id<"users"> | null {
-  const lead =
-    (user.departmentId && lookup.departmentLeadById.get(user.departmentId)) ||
-    (user.department && lookup.departmentLeadByName.get(user.department.trim().toLowerCase()));
-  return lead && lead !== user._id ? lead : null;
+/** Their own department, or — when that isn't set — the departments their teams sit in. */
+export function departmentIdsOf(user: Doc<"users">, lookup: ReportingLookup): string[] {
+  const own =
+    (user.departmentId && lookup.departmentsById.has(user.departmentId) && user.departmentId) ||
+    (user.department && lookup.departmentIdByName.get(user.department.trim().toLowerCase()));
+  if (own) return [own];
+  const viaTeams = teamIdsOf(user, lookup)
+    .map((id) => lookup.teamsById.get(id)?.departmentId)
+    .filter((id): id is Id<"departments"> => !!id);
+  return [...new Set(viaTeams)];
 }
 
+/** Everyone this person reports to, the most direct first. */
+export function reportingLines(user: Doc<"users">, lookup: ReportingLookup): ReportingLine[] {
+  const lines: ReportingLine[] = [];
+  const add = (userId: Id<"users"> | undefined, via: ReportingVia, label: string | null) => {
+    if (!userId || userId === user._id || lines.some((line) => line.userId === userId)) return;
+    lines.push({ userId, via, label });
+  };
+  add(user.managerId, "manual", null);
+  for (const teamId of teamIdsOf(user, lookup)) {
+    const team = lookup.teamsById.get(teamId)!;
+    add(team.lead, "team", team.name);
+  }
+  for (const departmentId of departmentIdsOf(user, lookup)) {
+    const department = lookup.departmentsById.get(departmentId)!;
+    add(department.lead, "department", department.name);
+  }
+  return lines;
+}
+
+/** The single most direct manager, for places that draw one line (the org chart). */
 export function resolveManager(
   user: Doc<"users">,
   lookup: ReportingLookup,
-): { managerId: Id<"users"> | null; source: ReportsVia | null } {
-  const manual = user.managerId && user.managerId !== user._id ? user.managerId : null;
-  const order: ReportsVia[] = user.reportsVia
-    ? [user.reportsVia]
-    : ["manual", "team", "department"];
-  for (const source of order) {
-    const managerId =
-      source === "manual"
-        ? manual
-        : source === "team"
-          ? viaTeam(user, lookup)
-          : viaDepartment(user, lookup);
-    if (managerId) return { managerId, source };
-  }
-  return { managerId: null, source: null };
+): { managerId: Id<"users"> | null } {
+  return { managerId: reportingLines(user, lookup)[0]?.userId ?? null };
 }

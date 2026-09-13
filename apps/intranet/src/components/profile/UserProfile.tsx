@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Circle,
   Copy,
+  Crown,
   Hash,
   Lock,
   LogOut,
@@ -34,7 +35,12 @@ import { Drawer } from "vaul";
 
 import { RoleSelect } from "@/app/(app)/admin/RoleSelect";
 import { VaultStepUpDialog } from "@/components/applicants/VaultStepUpDialog";
-import { useCurrentUser, useIsAdmin, useIsManager } from "@/components/providers/current-user";
+import {
+  useCurrentUser,
+  useHasCapability,
+  useIsAdmin,
+  useIsManager,
+} from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -320,121 +326,125 @@ function TeamsEditor({ userId, teams }: { userId: Id<"users">; teams: string[] }
 /** How recent a presence heartbeat still counts as "online". */
 export const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 
-const AUTO = "auto";
 const NOBODY = "nobody";
 
-/** Admins decide where someone's manager comes from: a person picked by
- * hand, their team's lead, their department's lead, or whichever of those
- * is set first. */
-function ReportsToEditor({
+/** People who manage members place someone in a department; admins can also
+ *  pick someone by hand that they report to, on top of their team and
+ *  department leads. */
+function OrganisationEditor({
   userId,
-  reportsVia,
+  departmentId,
   manualManagerId,
 }: {
   userId: Id<"users">;
-  reportsVia: "manual" | "team" | "department" | null;
+  departmentId: Id<"departments"> | null;
   manualManagerId: Id<"users"> | null;
 }) {
   const t = useTranslations("Profile");
   const handleError = useErrorHandler();
+  const isAdmin = useIsAdmin();
   const setManager = useMutation(api.users.setManager);
-  const users = useQuery(api.users.list, {});
-  const showPerson = reportsVia === null || reportsVia === "manual";
-
-  function save(next: {
-    reportsVia: "manual" | "team" | "department" | null;
-    managerId: Id<"users"> | null;
-  }) {
-    setManager({
-      userId,
-      reportsVia: next.reportsVia,
-      managerId: next.managerId ?? undefined,
-    })
-      .then(() => toast.success(t("reportsToSaved")))
-      .catch(handleError);
-  }
+  const setDepartment = useMutation(api.orgData.setUserDepartment);
+  const departments = useQuery(api.orgData.listDepartments, {});
+  const users = useQuery(api.users.list, isAdmin ? {} : "skip");
 
   return (
-    <div className="space-y-2 rounded-lg border border-border/70 p-3">
-      <p className="text-xs font-medium text-muted-foreground">{t("reportsToTitle")}</p>
-      <Select
-        value={reportsVia ?? AUTO}
-        onValueChange={(value) =>
-          save({
-            reportsVia: value === AUTO ? null : (value as "manual" | "team" | "department"),
-            managerId: manualManagerId,
-          })
-        }
-      >
-        <SelectTrigger className="h-9">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={AUTO}>{t("reportsViaAuto")}</SelectItem>
-          <SelectItem value="manual">{t("reportsViaManual")}</SelectItem>
-          <SelectItem value="team">{t("reportsViaTeam")}</SelectItem>
-          <SelectItem value="department">{t("reportsViaDepartment")}</SelectItem>
-        </SelectContent>
-      </Select>
-      {showPerson && (
+    <div className="space-y-3 rounded-lg border border-border/70 p-3">
+      <div className="space-y-1.5">
+        <p className="text-xs font-medium text-muted-foreground">{t("departmentTitle")}</p>
         <Select
-          value={manualManagerId ?? NOBODY}
+          value={departmentId ?? NOBODY}
           onValueChange={(value) =>
-            save({ reportsVia, managerId: value === NOBODY ? null : (value as Id<"users">) })
+            setDepartment({
+              userId,
+              departmentId: value === NOBODY ? null : (value as Id<"departments">),
+            })
+              .then(() => toast.success(t("organisationSaved")))
+              .catch(handleError)
           }
         >
-          <SelectTrigger className="h-9" aria-label={t("reportsToPerson")}>
+          <SelectTrigger className="h-9">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={NOBODY}>{t("reportsToNobody")}</SelectItem>
-            {(users ?? [])
-              .filter((u) => u._id !== userId)
-              .map((u) => (
-                <SelectItem key={u._id} value={u._id}>
-                  {u.name}
-                </SelectItem>
-              ))}
+            <SelectItem value={NOBODY}>{t("departmentNone")}</SelectItem>
+            {(departments ?? []).map((department) => (
+              <SelectItem key={department._id} value={department._id}>
+                {department.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
+      </div>
+      {isAdmin && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground">{t("reportsToManual")}</p>
+          <Select
+            value={manualManagerId ?? NOBODY}
+            onValueChange={(value) =>
+              setManager({
+                userId,
+                managerId: value === NOBODY ? undefined : (value as Id<"users">),
+              })
+                .then(() => toast.success(t("organisationSaved")))
+                .catch(handleError)
+            }
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NOBODY}>{t("reportsToNobody")}</SelectItem>
+              {(users ?? [])
+                .filter((u) => u._id !== userId)
+                .map((u) => (
+                  <SelectItem key={u._id} value={u._id}>
+                    {u.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
       )}
-      <p className="text-xs text-muted-foreground">
-        {reportsVia === "team"
-          ? t("reportsViaTeamHint")
-          : reportsVia === "department"
-            ? t("reportsViaDepartmentHint")
-            : reportsVia === "manual"
-              ? t("reportsViaManualHint")
-              : t("reportsViaAutoHint")}
-      </p>
+      <p className="text-xs text-muted-foreground">{t("organisationHint")}</p>
     </div>
   );
 }
 
 function Organisation({ userId }: { userId: Id<"users"> }) {
   const t = useTranslations("Profile");
-  const isAdmin = useIsAdmin();
+  const canEdit = useHasCapability("manage_members");
   const org = useQuery(api.users.orgContext, { userId });
-  if (!org || (!isAdmin && !org.manager && org.reports.length === 0)) return null;
+  if (!org || (!canEdit && org.lines.length === 0 && org.reports.length === 0)) return null;
 
   return (
     <Section label={t("organisation")} className={LATE_SECTION}>
       <div className="space-y-3">
-        {org.manager && (
+        {org.lines.length > 0 && (
           <div>
-            <p className="mb-1 text-xs text-muted-foreground">
-              {t("manager")}
-              {org.managerSource && org.managerSource !== "manual" && (
-                <span> · {t(`reportsSource_${org.managerSource}`)}</span>
-              )}
-            </p>
-            <PersonRow person={org.manager} />
+            <p className="mb-1 text-xs text-muted-foreground">{t("reportsToTitle")}</p>
+            <div className="space-y-1">
+              {org.lines.map((line) => (
+                <PersonRow
+                  key={line.person._id}
+                  person={{
+                    ...line.person,
+                    jobTitle:
+                      line.via === "manual"
+                        ? t("lineManual")
+                        : t(line.via === "team" ? "lineTeam" : "lineDepartment", {
+                            name: line.label ?? "",
+                          }),
+                  }}
+                />
+              ))}
+            </div>
           </div>
         )}
-        {isAdmin && (
-          <ReportsToEditor
+        {canEdit && (
+          <OrganisationEditor
             userId={userId}
-            reportsVia={org.reportsVia}
+            departmentId={org.departmentId}
             manualManagerId={org.manualManagerId}
           />
         )}
@@ -454,7 +464,6 @@ function Organisation({ userId }: { userId: Id<"users"> }) {
     </Section>
   );
 }
-
 function MutualConversations({
   userId,
   onNavigate,
@@ -741,6 +750,7 @@ function AdminControls({
   const setUploadPermission = useAction(api.users.setUploadPermission);
   const setGfAccess = useAction(api.users.setGfAccess);
   const setApplicantDelegate = useMutation(api.users.setApplicantDelegate);
+  const setManagingDirector = useMutation(api.users.setManagingDirector);
   const handleError = useErrorHandler();
 
   const isSelf = user._id === me._id;
@@ -936,6 +946,23 @@ function AdminControls({
                 {user.applicantAccessDelegate
                   ? t("revokeApplicantDelegate")
                   : t("grantApplicantDelegate")}
+              </ActionRow>
+            )}
+            {isAdmin && (
+              <ActionRow
+                icon={<Crown />}
+                onClick={() =>
+                  setManagingDirector({
+                    userId: user._id,
+                    managingDirector: !user.managingDirector,
+                  })
+                    .then(() => toast.success(tProfile("organisationSaved")))
+                    .catch(handleError)
+                }
+              >
+                {user.managingDirector
+                  ? tProfile("managingDirectorRemove")
+                  : tProfile("managingDirectorMake")}
               </ActionRow>
             )}
             {isAdmin && (
@@ -1300,6 +1327,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
               <Badge variant="destructive">{tAdmin("suspended")}</Badge>
             )}
             {user.external && <Badge variant="warning">{tAdmin("external")}</Badge>}
+            {user.managingDirector && <Badge variant="muted">{t("managingDirector")}</Badge>}
           </div>
           <Expertise tags={user.expertise} isSelf={isSelf} />
         </div>

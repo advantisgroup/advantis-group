@@ -23,7 +23,7 @@ import {
 import { sandboxedAction as action, sandboxedMutation as mutation } from "./lib/sandbox";
 import { listUserPermissions } from "./lib/permissions";
 import { recordUnifiedAudit } from "./lib/auditLogWrite";
-import { loadReportingLookup, reportsViaValidator, resolveManager } from "./lib/reporting";
+import { loadReportingLookup, reportingLines, resolveManager } from "./lib/reporting";
 import {
   lockClerkUser,
   unlockClerkUser,
@@ -60,6 +60,7 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     jobTitle: user.jobTitle ?? null,
     phone: user.phone ?? null,
     teams: user.teams ?? [],
+    managingDirector: user.managingDirector ?? false,
     expertise: user.expertise ?? [],
     managerId: user.managerId ?? null,
     status: user.status,
@@ -277,24 +278,8 @@ export const orgContext = query({
   handler: async (ctx, { userId }) => {
     await requireUser(ctx);
     const user = await ctx.db.get(userId);
-    if (!user) {
-      return {
-        manager: null,
-        managerSource: null,
-        manualManagerId: null,
-        reportsVia: null,
-        reports: [],
-      };
-    }
+    if (!user) return { lines: [], reports: [], manualManagerId: null, departmentId: null };
     const lookup = await loadReportingLookup(ctx);
-    const resolved = resolveManager(user, lookup);
-    const manager = resolved.managerId ? await ctx.db.get(resolved.managerId) : null;
-    const reports = (
-      await ctx.db
-        .query("users")
-        .withIndex("by_status", (q) => q.eq("status", "active"))
-        .collect()
-    ).filter((u) => resolveManager(u, lookup).managerId === userId);
     const brief = async (u: Doc<"users">) => {
       const full = await withAvatar(ctx, u);
       return {
@@ -304,21 +289,32 @@ export const orgContext = query({
         avatar: full.avatar,
       };
     };
+    const lines = await Promise.all(
+      reportingLines(user, lookup).map(async (line) => {
+        const person = await ctx.db.get(line.userId);
+        return person && person.status === "active"
+          ? { person: await brief(person), via: line.via, label: line.label }
+          : null;
+      }),
+    );
+    const reports = (
+      await ctx.db
+        .query("users")
+        .withIndex("by_status", (q) => q.eq("status", "active"))
+        .collect()
+    ).filter((u) => reportingLines(u, lookup).some((line) => line.userId === userId));
     return {
-      manager: manager && manager.status === "active" ? await brief(manager) : null,
-      managerSource: resolved.source,
-      manualManagerId: user.managerId ?? null,
-      reportsVia: user.reportsVia ?? null,
+      lines: lines.filter((line) => line !== null),
       reports: await Promise.all(reports.map(brief)),
+      manualManagerId: user.managerId ?? null,
+      departmentId: user.departmentId ?? null,
     };
   },
 });
-
 const profileArgs = {
   firstName: v.optional(v.string()),
   lastName: v.optional(v.string()),
   jobTitle: v.optional(v.string()),
-  department: v.optional(v.string()),
   phone: v.optional(v.string()),
   avatarStorageId: v.optional(v.id("_storage")),
   profileColor: v.optional(v.union(v.string(), v.null())),
@@ -357,7 +353,6 @@ export const applyProfileUpdate = internalMutation({
       ...(args.firstName !== undefined ? { firstName: args.firstName } : {}),
       ...(args.lastName !== undefined ? { lastName: args.lastName } : {}),
       ...(args.jobTitle !== undefined ? { jobTitle: args.jobTitle } : {}),
-      ...(args.department !== undefined ? { department: args.department } : {}),
       ...(args.phone !== undefined ? { phone: args.phone } : {}),
       ...(args.avatarStorageId ? { avatarStorageId: args.avatarStorageId } : {}),
       ...(args.profileColor !== undefined ? { profileColor: args.profileColor ?? undefined } : {}),
@@ -489,18 +484,23 @@ export const setManager = mutation({
   args: {
     userId: v.id("users"),
     managerId: v.optional(v.id("users")),
-    /** null goes back to automatic: manual, then team, then department. */
-    reportsVia: v.optional(v.union(reportsViaValidator, v.null())),
   },
-  handler: async (ctx, { userId, managerId, reportsVia }) => {
+  handler: async (ctx, { userId, managerId }) => {
     await requireAdmin(ctx);
     if (managerId === userId) {
       throw new ConvexError({ code: "bad_request", message: "Nobody can report to themselves" });
     }
-    await ctx.db.patch(userId, {
-      managerId,
-      ...(reportsVia !== undefined ? { reportsVia: reportsVia ?? undefined } : {}),
-    });
+    await ctx.db.patch(userId, { managerId, reportsVia: undefined });
+    return { ok: true };
+  },
+});
+
+/** Admin: mark someone as managing director (Geschäftsführer). */
+export const setManagingDirector = mutation({
+  args: { userId: v.id("users"), managingDirector: v.boolean() },
+  handler: async (ctx, { userId, managingDirector }) => {
+    await requireAdmin(ctx);
+    await ctx.db.patch(userId, { managingDirector: managingDirector || undefined });
     return { ok: true };
   },
 });
