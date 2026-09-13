@@ -360,6 +360,8 @@ export default defineSchema({
      * drives the overview's work-anniversary shoutouts.
      */
     hireDate: v.optional(v.string()),
+    /** Topics colleagues can ask this person about ("who knows …"). */
+    expertise: v.optional(v.array(v.string())),
     /** Last time an admin confirmed this person still needs their access. */
     accessReviewedAt: v.optional(v.number()),
     accessReviewedByUserId: v.optional(v.id("users")),

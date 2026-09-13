@@ -1,4 +1,7 @@
 {
+  "expertiseTitle": "Frag mich zu",
+  "expertiseAdd": "Thema hinzufügen",
+  "expertiseRemove": "{tag} entfernen",
   "title": "Profil",
   "message": "Nachricht senden",
   "contact": "Kontakt",

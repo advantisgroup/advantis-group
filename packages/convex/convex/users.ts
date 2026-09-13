@@ -59,6 +59,7 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     jobTitle: user.jobTitle ?? null,
     phone: user.phone ?? null,
     teams: user.teams ?? [],
+    expertise: user.expertise ?? [],
     managerId: user.managerId ?? null,
     status: user.status,
     external: user.external ?? false,
@@ -144,7 +145,15 @@ async function queryUsers(
   if (args.search) {
     const q = args.search.toLowerCase();
     users = users.filter((u) =>
-      [u.firstName, u.lastName, u.email, u.jobTitle, u.department, ...(u.teams ?? [])]
+      [
+        u.firstName,
+        u.lastName,
+        u.email,
+        u.jobTitle,
+        u.department,
+        ...(u.teams ?? []),
+        ...(u.expertise ?? []),
+      ]
         .filter(Boolean)
         .some((field) => field!.toLowerCase().includes(q)),
     );
@@ -367,6 +376,19 @@ export const updateProfile = action({
  * toggle this — internal employees are always eligible and have no consent
  * to withdraw (see `updatesEmailConsent` on the `users` table).
  */
+export const setExpertise = mutation({
+  args: { tags: v.array(v.string()) },
+  handler: async (ctx, { tags }) => {
+    const user = await requireUser(ctx);
+    const clean = [...new Set(tags.map((tag) => tag.trim().slice(0, 32)).filter(Boolean))].slice(
+      0,
+      12,
+    );
+    await ctx.db.patch(user._id, { expertise: clean });
+    return { ok: true };
+  },
+});
+
 export const setUpdatesEmailConsent = mutation({
   args: { consent: v.boolean() },
   handler: async (ctx, { consent }) => {
