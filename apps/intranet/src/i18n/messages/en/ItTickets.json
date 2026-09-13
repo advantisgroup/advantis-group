@@ -19,6 +19,7 @@
   "sfDetails": "SF details",
   "topic": "Topic",
   "firstResponse": "First response",
+  "similarTickets": "Similar tickets — one of these may already have the answer",
   "respondedAfter": "after {duration}",
   "waitingFor": "waiting {duration}",
   "topicFreitext": "Free text …",

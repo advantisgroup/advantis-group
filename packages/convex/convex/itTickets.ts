@@ -168,6 +168,45 @@ export const listMineOpen = query({
   },
 });
 
+/** Earlier tickets that look like the one being filed — same category, and
+ * sharing a topic or words from the description. Resolved ones rank first. */
+export const similar = query({
+  args: { category: v.string(), topic: v.optional(v.string()), text: v.string() },
+  handler: async (ctx, { category, topic, text }) => {
+    await requireUser(ctx);
+    const words = new Set(
+      text
+        .toLowerCase()
+        .split(/[^\p{L}\p{N}]+/u)
+        .filter((w) => w.length >= 4),
+    );
+    if (words.size === 0 && !topic) return [];
+    const rows = await ctx.db.query("itTickets").order("desc").take(500);
+    return rows
+      .filter((row) => row.category === category)
+      .map((row) => {
+        const haystack = `${row.topic ?? ""} ${row.info ?? ""}`.toLowerCase();
+        let score = topic && row.topic === topic ? 2 : 0;
+        for (const word of words) if (haystack.includes(word)) score++;
+        return { row, score };
+      })
+      .filter(({ score }) => score >= 2)
+      .sort(
+        (a, b) =>
+          Number(b.row.status === "closed") - Number(a.row.status === "closed") ||
+          b.score - a.score,
+      )
+      .slice(0, 3)
+      .map(({ row }) => ({
+        _id: row._id,
+        nr: row.nr,
+        topic: row.topic ?? null,
+        info: row.info ?? null,
+        status: row.status,
+      }));
+  },
+});
+
 /** Open tickets someone handed to the caller — the home page's "Needs you". */
 export const listAssignedOpen = query({
   args: {},
