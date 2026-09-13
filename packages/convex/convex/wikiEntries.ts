@@ -2,10 +2,68 @@ import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { query } from "./_generated/server";
-import { isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
+import { getUserByClerkId, isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
 import { displayName } from "./lib/users";
 
 const MAX_PINS = 5;
+
+function plainText(html: string) {
+  return html
+    .replace(/<(br|\/p|\/li|\/h\d)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** The wiki assistant's retrieval: current entries that share the most words
+ * with the question, trimmed to what fits in a prompt. Server-key gated. */
+export const apiSearchForAssistant = query({
+  args: { serverKey: v.string(), clerkUserId: v.string(), question: v.string() },
+  handler: async (ctx, { serverKey, clerkUserId, question }) => {
+    const expected = process.env.CONVEX_SERVER_KEY;
+    if (!expected || serverKey !== expected) {
+      throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
+    }
+    const user = await getUserByClerkId(ctx, clerkUserId);
+    if (!user || user.status === "suspended") return [];
+    const words = [
+      ...new Set(
+        question
+          .toLowerCase()
+          .split(/[^\p{L}\p{N}]+/u)
+          .filter((w) => w.length >= 3),
+      ),
+    ];
+    if (words.length === 0) return [];
+    const now = Date.now();
+    const rows = await ctx.db.query("wikiEntries").collect();
+    return rows
+      .filter((e) => e.validFrom <= now && e.validUntil > now)
+      .map((e) => {
+        const title = e.thema.toLowerCase();
+        const tags = e.tags.join(" ").toLowerCase();
+        const body = plainText(e.erklaerung);
+        const lower = body.toLowerCase();
+        let score = 0;
+        for (const w of words) {
+          if (title.includes(w)) score += 3;
+          if (tags.includes(w)) score += 2;
+          if (lower.includes(w)) score += 1;
+        }
+        return { e, body, score };
+      })
+      .filter(({ score }) => score >= 3)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4)
+      .map(({ e, body }) => ({
+        id: e._id,
+        title: e.thema,
+        text: body.slice(0, 2500),
+        href: `/sales-coach-ev/wiki/${e._id}`,
+      }));
+  },
+});
 
 /** Everything (unfiltered) — the wiki list page applies filtering/sorting
  * (category, tags, search, pinned-first, expired archive) itself. */
