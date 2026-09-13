@@ -9,6 +9,7 @@ import { Archive, Building2, Link2, Mail, Phone, UserRound } from "lucide-react"
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { OnboardingChecklist } from "@/components/applicants/OnboardingChecklist";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -164,6 +165,8 @@ export default function EmployeeOverviewPage() {
       </div>
 
       <div className="space-y-5">
+        <OnboardingChecklist employeeProfileId={employeeProfileId} items={profile.onboarding} />
+
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t("employeeAccount")}</CardTitle>

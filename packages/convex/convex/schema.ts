@@ -118,6 +118,15 @@ export const attachmentValidator = v.object({
   oneDrivePath: v.optional(v.string()),
 });
 
+/** One step of an employee's first weeks. Built-in steps carry a `key` (the
+ * label comes from translations); ones HR adds carry their own `label`. */
+export const onboardingItemValidator = v.object({
+  id: v.string(),
+  key: v.optional(v.string()),
+  label: v.optional(v.string()),
+  doneAt: v.optional(v.number()),
+});
+
 export const suggestionStatusValidator = v.union(
   v.literal("open"),
   v.literal("in_discussion"),
@@ -2722,6 +2731,7 @@ export default defineSchema({
     department: v.optional(v.string()),
     status: v.union(v.literal("active"), v.literal("archived")),
     notes: v.optional(v.string()),
+    onboarding: v.optional(v.array(onboardingItemValidator)),
     createdByUserId: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
