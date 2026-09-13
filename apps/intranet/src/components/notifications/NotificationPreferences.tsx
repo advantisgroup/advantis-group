@@ -81,7 +81,7 @@ export function NotificationPreferences({ deliveryExtra }: { deliveryExtra?: Rea
   const isManager = useIsManager();
   const prefs = useQuery(api.notifications.getPreferences);
   const setPreferences = useMutation(api.notifications.setPreferences);
-  const setDailyDigest = useMutation(api.notifications.setDailyDigest);
+  const setDeliveryOption = useMutation(api.notifications.setDeliveryOption);
   const userPrefs = useQuery(api.userPreferences.getMine);
   const setUserPrefs = useMutation(api.userPreferences.setMine);
   const [permission, setPermission] = useState<NotificationPermission | null>(null);
@@ -144,11 +144,34 @@ export function NotificationPreferences({ deliveryExtra }: { deliveryExtra?: Rea
           control={
             <Switch
               checked={prefs?.dailyDigest ?? false}
-              onToggle={() => void setDailyDigest({ enabled: !(prefs?.dailyDigest ?? false) })}
+              onToggle={() =>
+                void setDeliveryOption({
+                  option: "dailyDigest",
+                  enabled: !(prefs?.dailyDigest ?? false),
+                })
+              }
               label={t("digestTitle")}
             />
           }
         />
+        {isManager && (
+          <SettingsRow
+            title={t("weeklyReportTitle")}
+            description={t("weeklyReportHint")}
+            control={
+              <Switch
+                checked={prefs?.weeklyReport ?? false}
+                onToggle={() =>
+                  void setDeliveryOption({
+                    option: "weeklyReport",
+                    enabled: !(prefs?.weeklyReport ?? false),
+                  })
+                }
+                label={t("weeklyReportTitle")}
+              />
+            }
+          />
+        )}
         {deliveryExtra}
         {isManager && (
           <SettingsRow

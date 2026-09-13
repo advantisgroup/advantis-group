@@ -126,7 +126,11 @@ export const getPreferences = query({
       .query("notificationPreferences")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
-    return { mutedTypes: prefs?.mutedTypes ?? [], dailyDigest: prefs?.dailyDigest ?? false };
+    return {
+      mutedTypes: prefs?.mutedTypes ?? [],
+      dailyDigest: prefs?.dailyDigest ?? false,
+      weeklyReport: prefs?.weeklyReport ?? false,
+    };
   },
 });
 
@@ -152,9 +156,12 @@ export const setPreferences = mutation({
   },
 });
 
-export const setDailyDigest = mutation({
-  args: { enabled: v.boolean() },
-  handler: async (ctx, { enabled }) => {
+export const setDeliveryOption = mutation({
+  args: {
+    option: v.union(v.literal("dailyDigest"), v.literal("weeklyReport")),
+    enabled: v.boolean(),
+  },
+  handler: async (ctx, { option, enabled }) => {
     const user = await requireUser(ctx);
     const existing = await ctx.db
       .query("notificationPreferences")
@@ -162,12 +169,12 @@ export const setDailyDigest = mutation({
       .unique();
     const now = Date.now();
     if (existing) {
-      await ctx.db.patch(existing._id, { dailyDigest: enabled, updatedAt: now });
+      await ctx.db.patch(existing._id, { [option]: enabled, updatedAt: now });
     } else {
       await ctx.db.insert("notificationPreferences", {
         userId: user._id,
         mutedTypes: [],
-        dailyDigest: enabled,
+        [option]: enabled,
         updatedAt: now,
       });
     }
@@ -211,6 +218,75 @@ export const queueDailyDigests = internalMutation({
             link: n.link ?? "/notifications",
           })),
         },
+      });
+    }
+  },
+});
+
+/** Monday email for managers who asked for it: last week against the week
+ * before across tickets, error reports and suggestions. */
+export const queueWeeklyReports = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const week = 7 * 24 * 60 * 60 * 1000;
+    const subscribers = (await ctx.db.query("notificationPreferences").collect()).filter(
+      (p) => p.weeklyReport,
+    );
+    if (subscribers.length === 0) return;
+
+    const tickets = await ctx.db
+      .query("itTickets")
+      .withIndex("by_createdAt", (q) => q.gte("createdAt", now - 2 * week))
+      .collect();
+    const openTickets = (await ctx.db.query("itTickets").order("desc").take(500)).filter(
+      (t) => t.status !== "closed",
+    );
+    const reports = await ctx.db
+      .query("errorReports")
+      .withIndex("by_createdAt", (q) => q.gte("createdAt", now - 2 * week))
+      .collect();
+    const overdueMeasures = (
+      await ctx.db
+        .query("errorMeasures")
+        .withIndex("by_status", (q) => q.eq("status", "offen"))
+        .collect()
+    ).filter((m) => m.dueAt && m.dueAt < now).length;
+    const suggestions = (
+      await ctx.db
+        .query("suggestions")
+        .withIndex("by_createdAt", (q) => q.gte("createdAt", now - week))
+        .collect()
+    ).length;
+
+    const split = <T extends { createdAt: number }>(rows: T[]) => ({
+      thisWeek: rows.filter((r) => r.createdAt >= now - week).length,
+      lastWeek: rows.filter((r) => r.createdAt < now - week).length,
+    });
+    const categoryCounts = new Map<string, number>();
+    for (const r of reports.filter((r) => r.createdAt >= now - week)) {
+      const name = r.categoryName ?? "—";
+      categoryCounts.set(name, (categoryCounts.get(name) ?? 0) + 1);
+    }
+    const data = {
+      tickets: split(tickets),
+      openTickets: openTickets.length,
+      errorReports: split(reports),
+      topCategories: [...categoryCounts]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([name, count]) => ({ name, count })),
+      overdueMeasures,
+      suggestions,
+    };
+
+    for (const prefs of subscribers) {
+      const user = await ctx.db.get(prefs.userId);
+      if (!user || user.status !== "active" || user.role === "employee") continue;
+      await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
+        kind: "weekly-report",
+        to: user.email,
+        data,
       });
     }
   },

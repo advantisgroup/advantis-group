@@ -41,6 +41,7 @@ export type NotificationEmailKind =
   | "upload-decision"
   | "chat-reinvite"
   | "digest"
+  | "weekly-report"
   | "academy-invite"
   | "password-reset-request"
   | "password-reset-link"

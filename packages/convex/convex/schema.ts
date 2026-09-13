@@ -1297,6 +1297,8 @@ export default defineSchema({
     mutedTypes: v.array(v.string()),
     /** One morning email listing yesterday's unread notifications. */
     dailyDigest: v.optional(v.boolean()),
+    /** Managers: a Monday email on how last week compared to the one before. */
+    weeklyReport: v.optional(v.boolean()),
     lastDigestAt: v.optional(v.number()),
     updatedAt: v.number(),
   })

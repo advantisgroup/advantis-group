@@ -156,6 +156,13 @@ if (process.env.DISABLE_CRONS !== "true") {
     {},
   );
 
+  crons.weekly(
+    "notifications: send weekly manager reports",
+    { dayOfWeek: "monday", hourUTC: 5, minuteUTC: 45 },
+    internal.notifications.queueWeeklyReports,
+    {},
+  );
+
   crons.hourly(
     "chat: purge expired left DMs",
     { minuteUTC: 20 },
