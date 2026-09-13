@@ -1,7 +1,8 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useEffect, useRef } from "react";
 
+import { Mic } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
@@ -13,18 +14,35 @@ import { WEAK_PHRASES } from "./constants";
 export function TranscriptPanel({
   transcript,
   interim,
+  live,
   onWordClick,
 }: {
   transcript: string;
   interim: string;
+  live: boolean;
   onWordClick: (word: string) => void;
 }) {
   const t = useTranslations("SalesCoachEv");
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Follow the conversation as it's spoken.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [transcript, interim]);
 
   if (!transcript && !interim) {
     return (
-      <div className="flex-1 overflow-y-auto p-4 text-sm italic text-muted-foreground">
-        {t("transcriptEmpty")}
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+        <span
+          className={cn(
+            "grid size-12 place-items-center rounded-full bg-muted text-muted-foreground",
+            live && "animate-pulse bg-success/15 text-success",
+          )}
+        >
+          <Mic className="size-5" />
+        </span>
+        <p className="max-w-sm text-sm text-muted-foreground">{t("transcriptEmpty")}</p>
       </div>
     );
   }
@@ -32,8 +50,8 @@ export function TranscriptPanel({
   const parts = transcript.split(/(\s+)/);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 text-sm leading-loose">
-      <span className="text-foreground">
+    <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto max-w-3xl px-5 py-6 text-[17px] leading-8 md:px-8">
         {parts.map((part, i) => {
           if (/^\s+$/.test(part)) return <Fragment key={i}>{part}</Fragment>;
           const word = part.replace(/[^a-zA-ZÀ-ɏ]/g, "");
@@ -46,17 +64,17 @@ export function TranscriptPanel({
               title={isWeak ? t("weakFormulation") : undefined}
               onClick={() => word.length >= 3 && onWordClick(word)}
               className={cn(
-                "cursor-pointer rounded-sm transition-colors hover:bg-primary/10",
+                "cursor-pointer rounded-sm transition-colors hover:bg-accent",
                 isWeak &&
-                  "rounded bg-amber-100 px-0.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+                  "rounded bg-warning/15 px-0.5 underline decoration-warning/60 decoration-2",
               )}
             >
               {part}
             </span>
           );
         })}
-      </span>
-      {interim && <span className="text-muted-foreground italic"> {interim}</span>}
+        {interim && <span className="text-muted-foreground"> {interim}</span>}
+      </div>
     </div>
   );
 }

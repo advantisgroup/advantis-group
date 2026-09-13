@@ -156,8 +156,8 @@ export function WikiTab({
   const results = query.trim() ? searchHits : autoHits;
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      <div className="flex items-center gap-1.5 border-b border-border p-2">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex items-center gap-1.5 border-b border-border/70 px-3 py-2">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input

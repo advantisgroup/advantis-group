@@ -22,7 +22,9 @@
   "transcriptEmpty": "Call starten und Gespräch beginnen...",
   "weakFormulation": "Schwache Formulierung",
 
-  "liveCoaching": "Live-Coaching",
+  "liveCoaching": "Coach",
+  "checklistTitle": "EV-Checkliste",
+  "language": "Gesprächssprache",
   "pathLabel": "Weg:",
   "aiAnalyzing": "KI analysiert...",
   "hintsEmpty": "Hinweise erscheinen während des Gesprächs...",

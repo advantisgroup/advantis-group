@@ -17,13 +17,14 @@ export function ObjectionsTab({ detectedId }: { detectedId: string | null }) {
   }, [detectedId]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-2.5">
+    <div className="min-h-0 flex-1 overflow-y-auto p-3">
       {detectedId && (
-        <div className="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-[13px] font-semibold text-amber-700 dark:text-amber-400">
+        <p className="mb-2 flex items-center gap-2 rounded-xl border border-warning/40 bg-warning/10 px-3 py-2 text-[13px] font-medium">
+          <span className="size-1.5 rounded-full bg-warning" />
           {t("objectionDetected")}
-        </div>
+        </p>
       )}
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         {OBJECTIONS.map((o) => {
           const open = openId === o.id;
           return (
@@ -33,13 +34,15 @@ export function ObjectionsTab({ detectedId }: { detectedId: string | null }) {
               role="button"
               tabIndex={0}
               className={cn(
-                "cursor-pointer rounded-lg border border-border bg-muted/40 p-2.5 transition-colors hover:border-primary",
-                open && "border-primary bg-primary/5",
+                "cursor-pointer rounded-xl border border-border/70 bg-card px-3.5 py-2.5 transition-colors hover:border-border",
+                open && "border-foreground/25",
               )}
             >
-              <div className="text-[13px] font-semibold text-foreground/90">{o.q}</div>
+              <div className="text-[13.5px] font-medium">„{o.q}"</div>
               {open && (
-                <div className="mt-1.5 text-[13px] leading-relaxed text-foreground/80">{o.a}</div>
+                <div className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">
+                  {o.a}
+                </div>
               )}
             </div>
           );

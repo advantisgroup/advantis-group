@@ -22,7 +22,9 @@
   "transcriptEmpty": "Start a call to begin the conversation...",
   "weakFormulation": "Weak phrasing",
 
-  "liveCoaching": "Live coaching",
+  "liveCoaching": "Coach",
+  "checklistTitle": "EV checklist",
+  "language": "Call language",
   "pathLabel": "Path:",
   "aiAnalyzing": "AI is analyzing...",
   "hintsEmpty": "Hints will appear during the call...",

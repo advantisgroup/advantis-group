@@ -45,6 +45,18 @@ export default function SalesCoachEvLayout({ children }: { children: ReactNode }
       : []),
   ];
 
+  // The call is a workspace, not a page of cards: it takes the whole width
+  // and height instead of sitting in the reading column.
+  if (segment === "call") {
+    return (
+      <>
+        <PageHeaderBar title={t("pageTitle")} description={t("pageDescription")} icon={<Zap />} />
+        <RouteTabs tabs={tabs} activeValue={segment} />
+        {children}
+      </>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeaderBar title={t("pageTitle")} description={t("pageDescription")} icon={<Zap />} />
