@@ -146,5 +146,7 @@
   "flowKundenantwort": "Customer's answer",
   "flowAstEnde": "End of this branch — no follow-up steps yet.",
   "flowZurueck": "Back",
+  "flowFocus": "Focus",
+  "flowFocusExit": "Exit focus",
   "flowVonVorne": "Start over"
 }

@@ -146,5 +146,7 @@
   "flowKundenantwort": "Antwort des Kunden",
   "flowAstEnde": "Ende dieses Zweigs — noch keine weiteren Schritte.",
   "flowZurueck": "Zurück",
+  "flowFocus": "Fokus",
+  "flowFocusExit": "Fokus beenden",
   "flowVonVorne": "Von vorne"
 }
