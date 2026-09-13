@@ -263,7 +263,17 @@
     "allSources": "All sources",
     "source_activity": "ActivityTrack",
     "source_onedrive": "OneDrive",
-    "source_integrations": "Integrations"
+    "source_integrations": "Integrations",
+    "unknownPerson": "Unknown",
+    "searchPlaceholder": "Search actions or targets",
+    "everyone": "Everyone",
+    "rangeToday": "Today",
+    "range7d": "Last 7 days",
+    "range30d": "Last 30 days",
+    "rangeAll": "All time",
+    "exportCsv": "Export CSV",
+    "resetFilters": "Reset filters",
+    "count": "{count, plural, one {# entry} other {# entries}}"
   },
   "overview": {
     "open": "Open",
