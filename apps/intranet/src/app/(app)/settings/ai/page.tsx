@@ -3,13 +3,14 @@
 import { type ComponentType, type ReactNode } from "react";
 
 import {
-  ArrowRight,
   CalendarCheck,
   Check,
+  ChevronRight,
   CircleHelp,
   Eye,
   FileText,
   FileUp,
+  KeyRound,
   Lock,
   type LucideIcon,
   MessagesSquare,
@@ -20,6 +21,7 @@ import {
   Tags,
   ThumbsUp,
   Timer,
+  Trash2,
   UserRound,
   WandSparkles,
 } from "lucide-react";
@@ -36,10 +38,10 @@ function AnthropicMark({ className }: { className?: string }) {
   return <Mark provider="anthropic" className={className} />;
 }
 
-/** The AI features that can start a run, in the order someone meets them —
- * each with the icon that says what kind of work it is before the words do. */
+/** The AI features that can start a run, in the order someone meets them. */
 const FEATURES: { key: string; icon: LucideIcon }[] = [
   { key: "wikiChat", icon: MessagesSquare },
+  { key: "ask", icon: CircleHelp },
   { key: "wikiFormat", icon: WandSparkles },
   { key: "wikiMeta", icon: Tags },
   { key: "coachReport", icon: PhoneCall },
@@ -47,14 +49,13 @@ const FEATURES: { key: string; icon: LucideIcon }[] = [
   { key: "coachWikiExtract", icon: FileUp },
   { key: "cvExtract", icon: FileText },
   { key: "cvRescan", icon: RefreshCw },
-  { key: "ask", icon: CircleHelp },
 ];
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <section className="space-y-3.5">
+    <section className="space-y-4">
       <div>
-        <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+        <h2 className="text-[15px] font-semibold tracking-tight">{title}</h2>
         {hint && (
           <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-muted-foreground text-pretty">
             {hint}
@@ -66,66 +67,22 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   );
 }
 
-/** Icon, name, one line. The unit this page is built from — it reads in a
- * glance, which a label/paragraph row never does. */
-function Tile({
+function IconSquare({
   icon: Icon,
-  title,
-  body,
-  tone = "muted",
+  className,
 }: {
   icon: ComponentType<{ className?: string }>;
-  title: string;
-  body: string;
-  tone?: "muted" | "ai";
+  className?: string;
 }) {
   return (
-    <div className="flex gap-3 rounded-xl border border-border/60 bg-card p-3.5 transition-colors hover:border-border">
-      <span
-        className={cn(
-          "grid size-8 shrink-0 place-items-center rounded-lg",
-          tone === "ai" ? "ai-edge [--ai-ground:var(--card)]" : "bg-muted/70 text-muted-foreground",
-        )}
-      >
-        <Icon className="size-4" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-[13.5px] font-medium leading-snug">{title}</p>
-        <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground text-pretty">
-          {body}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/** One hop on the path a request takes. */
-function Step({
-  icon: Icon,
-  title,
-  body,
-}: {
-  icon: ComponentType<{ className?: string }>;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="flex-1 rounded-xl border border-border/60 bg-card p-3.5">
-      <span className="grid size-8 place-items-center rounded-lg bg-muted/70 text-muted-foreground">
-        <Icon className="size-4" />
-      </span>
-      <p className="mt-2.5 text-[13.5px] font-medium">{title}</p>
-      <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground text-pretty">{body}</p>
-    </div>
-  );
-}
-
-function Line({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
-  return (
-    <li className="flex items-start gap-2.5 text-[13px] leading-relaxed">
-      <Icon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-      <span className="min-w-0 text-muted-foreground text-pretty">{children}</span>
-    </li>
+    <span
+      className={cn(
+        "grid size-8 shrink-0 place-items-center rounded-lg bg-muted/70 text-muted-foreground",
+        className,
+      )}
+    >
+      <Icon className="size-4" />
+    </span>
   );
 }
 
@@ -133,32 +90,39 @@ function Line({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode 
  * What the AI can see, in plain words.
  *
  * Every line here is something the code actually does — where a feature sends
- * text, what is kept, for how long, and who else can see it. An assistant
- * inside an intranet holding absences and HR documents only gets used if
- * that's answerable without asking an engineer, so this is built to be
- * skimmed: icons first, one line each, no controls anywhere on the page.
+ * text, what is kept, for how long, and who else can see it. Built to be
+ * skimmed: one surface per question instead of a wall of equal cards, with
+ * the encryption — the part people worry about — given its own room.
  */
 export default function SettingsAiPage() {
   const t = useTranslations("Ai");
   const canUseAi = useHasCapability("use_ai");
 
+  const facts = [
+    { icon: AnthropicMark, term: t("privacy.metaProvider"), value: t("privacy.metaProviderValue") },
+    { icon: Lock, term: t("privacy.metaStorage"), value: t("privacy.metaStorageValue") },
+    { icon: Timer, term: t("privacy.metaRetention"), value: t("privacy.metaRetentionValue") },
+    { icon: Eye, term: t("privacy.metaVisibility"), value: t("privacy.metaVisibilityValue") },
+  ];
+
+  const steps = [
+    { icon: UserRound, title: t("privacy.flowYou"), body: t("privacy.flowYouBody") },
+    { icon: Server, title: t("privacy.flowApi"), body: t("privacy.flowApiBody") },
+    { icon: AnthropicMark, title: t("privacy.flowModel"), body: t("privacy.flowModelBody") },
+  ];
+
   return (
-    <div className="max-w-4xl space-y-10">
-      {/* The whole answer at a glance: can I use it, where does it go, how
-          long does it stay, who else sees it. */}
-      <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-        <div className="flex flex-wrap items-start gap-3.5 p-5">
-          <span className="ai-edge grid size-10 shrink-0 place-items-center rounded-xl [--ai-ground:var(--card)]">
+    <div className="max-w-4xl space-y-12">
+      <header className="space-y-5">
+        <div className="flex flex-wrap items-start gap-4">
+          <span className="ai-edge grid size-11 shrink-0 place-items-center rounded-xl [--ai-ground:var(--background)]">
             <AiGlyph className="size-5" />
           </span>
           <div className="min-w-[14rem] flex-1">
-            <p className="text-[0.7rem] font-medium uppercase tracking-[0.16em]">
-              <span className="ai-text">{t("eyebrow")}</span>
-            </p>
-            <h1 className="mt-0.5 font-display text-lg font-semibold tracking-tight">
+            <h1 className="font-display text-xl font-semibold tracking-tight">
               {canUseAi ? t("privacy.accessOn") : t("privacy.accessOff")}
             </h1>
-            <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-muted-foreground text-pretty">
+            <p className="mt-1 max-w-xl text-[13.5px] leading-relaxed text-muted-foreground text-pretty">
               {canUseAi ? t("privacy.accessOnBody") : t("privacy.accessOffBody")}
             </p>
           </div>
@@ -174,106 +138,189 @@ export default function SettingsAiPage() {
             {canUseAi ? t("privacy.badgeOn") : t("privacy.badgeOff")}
           </span>
         </div>
-        <dl className="grid divide-y divide-border/60 border-t border-border/60 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-          {[
-            {
-              icon: AnthropicMark,
-              term: t("privacy.metaProvider"),
-              value: t("privacy.metaProviderValue"),
-            },
-            {
-              icon: Timer,
-              term: t("privacy.metaRetention"),
-              value: t("privacy.metaRetentionValue"),
-            },
-            {
-              icon: Eye,
-              term: t("privacy.metaVisibility"),
-              value: t("privacy.metaVisibilityValue"),
-            },
-          ].map((meta) => (
-            <div key={meta.term} className="px-5 py-3.5">
+        <dl className="grid grid-cols-2 gap-y-4 border-y border-border/60 py-4 sm:grid-cols-4">
+          {facts.map((fact) => (
+            <div
+              key={fact.term}
+              className="min-w-0 sm:border-l sm:border-border/60 sm:pl-4 sm:first:border-l-0 sm:first:pl-0"
+            >
               <dt className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
-                <meta.icon className="size-3.5" />
-                {meta.term}
+                <fact.icon className="size-3.5" />
+                {fact.term}
               </dt>
-              <dd className="mt-0.5 text-[13.5px] font-medium">{meta.value}</dd>
+              <dd className="mt-1 text-[14px] font-medium">{fact.value}</dd>
             </div>
           ))}
         </dl>
+      </header>
+
+      {/* The part people actually worry about, given room of its own. */}
+      <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+        <div className="grid gap-6 p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:p-7">
+          <div>
+            <span className="grid size-11 place-items-center rounded-full bg-success/10 text-success ring-8 ring-success/5">
+              <Lock className="size-5" />
+            </span>
+            <h2 className="mt-5 font-display text-xl font-semibold tracking-tight text-balance">
+              {t("privacy.encTitle")}
+            </h2>
+            <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground text-pretty">
+              {t("privacy.encBody")}
+            </p>
+            <ul className="mt-5 space-y-2.5">
+              {[
+                { icon: Lock, text: t("privacy.encAlgo") },
+                { icon: KeyRound, text: t("privacy.encKey") },
+                { icon: Trash2, text: t("privacy.encDeleted") },
+              ].map((item) => (
+                <li
+                  key={item.text}
+                  className="flex items-start gap-2.5 text-[13px] leading-relaxed"
+                >
+                  <item.icon className="mt-0.5 size-3.5 shrink-0 text-success" />
+                  <span>{item.text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          {/* What that looks like: the same answer, as you see it and as it rests. */}
+          <div className="flex flex-col justify-center gap-3" aria-hidden>
+            <div className="rounded-xl border border-border/70 bg-background p-4">
+              <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                <Eye className="size-3" />
+                {t("privacy.encYouSee")}
+              </p>
+              <p className="text-[13px] leading-relaxed">{t("privacy.encSample")}</p>
+            </div>
+            <div className="flex justify-center text-muted-foreground">
+              <Lock className="size-3.5" />
+            </div>
+            <div className="rounded-xl border border-dashed border-border bg-background p-4">
+              <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                <Server className="size-3" />
+                {t("privacy.encDbHolds")}
+              </p>
+              <p className="break-all font-mono text-[11.5px] leading-relaxed text-muted-foreground">
+                q7Vd2xK9mP0aLw3n.Zr8Jf1sT6yQbHc4E.
+                <span className="opacity-60">
+                  Xk2pN7vR0tLmB9sWq4eYz1aF8uGd3HjC6oIl5VrKxT2nM9bQwE7yZs4pA0cLfD8gJ
+                </span>
+                …
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <Section title={t("privacy.featuresTitle")} hint={t("privacy.featuresHint")}>
-        <div className="grid gap-2.5 sm:grid-cols-2">
-          {FEATURES.map((feature) => (
-            <Tile
-              key={feature.key}
-              icon={feature.icon}
-              title={t(`kind.${feature.key}`)}
-              body={t(`privacy.feature.${feature.key}`)}
-            />
+      <Section title={t("privacy.whereTitle")} hint={t("privacy.whereHint")}>
+        {/* One path, three equal stops. */}
+        <ol className="grid overflow-hidden rounded-2xl border border-border/70 bg-card sm:grid-cols-3">
+          {steps.map((step, i) => (
+            <li
+              key={step.title}
+              className="relative flex flex-col gap-2.5 border-border/60 p-5 max-sm:border-b max-sm:last:border-b-0 sm:border-l sm:first:border-l-0"
+            >
+              {i > 0 && (
+                <span className="absolute -left-2.5 top-8 hidden size-5 place-items-center rounded-full border border-border/70 bg-card text-muted-foreground sm:grid">
+                  <ChevronRight className="size-3" />
+                </span>
+              )}
+              <div className="flex items-center gap-2.5">
+                <IconSquare icon={step.icon} />
+                <span className="text-[11px] tabular-nums text-muted-foreground">{i + 1}</span>
+              </div>
+              <p className="text-[14px] font-medium">{step.title}</p>
+              <p className="text-[13px] leading-relaxed text-muted-foreground text-pretty">
+                {step.body}
+              </p>
+            </li>
           ))}
-        </div>
+        </ol>
       </Section>
 
-      <Section title={t("privacy.whereTitle")} hint={t("privacy.whereHint")}>
-        {/* The path itself, rather than three paragraphs describing it. */}
-        <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center">
-          <Step icon={UserRound} title={t("privacy.flowYou")} body={t("privacy.flowYouBody")} />
-          <ArrowRight className="mx-auto size-4 shrink-0 rotate-90 text-muted-foreground sm:rotate-0" />
-          <Step icon={Server} title={t("privacy.flowApi")} body={t("privacy.flowApiBody")} />
-          <ArrowRight className="mx-auto size-4 shrink-0 rotate-90 text-muted-foreground sm:rotate-0" />
-          {/* The one hop that leaves the building wears the app's AI mark. */}
-          <Step
-            icon={AnthropicMark}
-            title={t("privacy.flowModel")}
-            body={t("privacy.flowModelBody")}
-          />
-        </div>
-        <div className="grid gap-2.5 sm:grid-cols-3">
-          <Tile
-            icon={AnthropicMark}
-            title={t("privacy.provider")}
-            body={t("privacy.providerBody")}
-          />
-          <Tile icon={Lock} title={t("privacy.storage")} body={t("privacy.storageBody")} />
-          <Tile icon={Timer} title={t("privacy.retention")} body={t("privacy.retentionBody")} />
-        </div>
+      <Section title={t("privacy.featuresTitle")} hint={t("privacy.featuresHint")}>
+        <ul className="divide-y divide-border/60 rounded-2xl border border-border/70 bg-card">
+          {FEATURES.map((feature) => (
+            <li
+              key={feature.key}
+              className="grid gap-x-4 gap-y-1 px-5 py-3.5 sm:grid-cols-[13rem_minmax(0,1fr)]"
+            >
+              <p className="flex items-center gap-2.5 text-[13.5px] font-medium">
+                <feature.icon className="size-4 shrink-0 text-muted-foreground" />
+                {t(`kind.${feature.key}`)}
+              </p>
+              <p className="text-[13px] leading-relaxed text-muted-foreground text-pretty sm:pt-px">
+                {t(`privacy.feature.${feature.key}`)}
+              </p>
+            </li>
+          ))}
+        </ul>
       </Section>
 
       <Section title={t("privacy.whoTitle")} hint={t("privacy.whoHint")}>
-        <div className="grid gap-2.5 sm:grid-cols-2">
-          <div className="rounded-xl border border-border/60 bg-card p-4">
-            <p className="flex items-center gap-2 text-[13.5px] font-medium">
-              <UserRound className="size-4 text-muted-foreground" />
-              {t("privacy.youSee")}
-            </p>
-            <ul className="mt-3 space-y-2">
-              <Line icon={Check}>{t("privacy.youSeeBody")}</Line>
-              <Line icon={ThumbsUp}>{t("privacy.ratingsBody")}</Line>
-            </ul>
-          </div>
-          <div className="rounded-xl border border-border/60 bg-card p-4">
-            <p className="flex items-center gap-2 text-[13.5px] font-medium">
-              <Eye className="size-4 text-muted-foreground" />
-              {t("privacy.managersSee")}
-            </p>
-            <ul className="mt-3 space-y-2">
-              <Line icon={Check}>{t("privacy.managersSeeBody")}</Line>
-              <Line icon={Lock}>{t("privacy.managersNeverBody")}</Line>
-            </ul>
-          </div>
+        <div className="grid overflow-hidden rounded-2xl border border-border/70 bg-card sm:grid-cols-2">
+          {[
+            {
+              icon: UserRound,
+              title: t("privacy.youSee"),
+              lines: [
+                { icon: Check, text: t("privacy.youSeeBody") },
+                { icon: ThumbsUp, text: t("privacy.ratingsBody") },
+              ],
+            },
+            {
+              icon: Eye,
+              title: t("privacy.managersSee"),
+              lines: [
+                { icon: Check, text: t("privacy.managersSeeBody") },
+                { icon: Lock, text: t("privacy.managersNeverBody") },
+              ],
+            },
+          ].map((group) => (
+            <div
+              key={group.title}
+              className="border-border/60 p-5 max-sm:border-b max-sm:last:border-b-0 sm:border-l sm:first:border-l-0"
+            >
+              <p className="flex items-center gap-2 text-[14px] font-medium">
+                <group.icon className="size-4 text-muted-foreground" />
+                {group.title}
+              </p>
+              <ul className="mt-3 space-y-2.5">
+                {group.lines.map((line) => (
+                  <li
+                    key={line.text}
+                    className="flex items-start gap-2.5 text-[13px] leading-relaxed"
+                  >
+                    <line.icon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+                    <span className="text-muted-foreground text-pretty">{line.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </Section>
 
       <Section title={t("privacy.controlTitle")} hint={t("privacy.controlHint")}>
-        <div className="grid gap-2.5 sm:grid-cols-2">
-          <Tile icon={Square} title={t("privacy.stop")} body={t("privacy.stopBody")} />
-          <Tile icon={ThumbsUp} title={t("privacy.review")} body={t("privacy.reviewBody")} />
-        </div>
+        <ul className="grid gap-5 sm:grid-cols-2">
+          {[
+            { icon: Square, title: t("privacy.stop"), body: t("privacy.stopBody") },
+            { icon: ThumbsUp, title: t("privacy.review"), body: t("privacy.reviewBody") },
+          ].map((item) => (
+            <li key={item.title} className="flex gap-3">
+              <IconSquare icon={item.icon} />
+              <div>
+                <p className="text-[14px] font-medium">{item.title}</p>
+                <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground text-pretty">
+                  {item.body}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
       </Section>
 
-      <p className="text-[13px] text-muted-foreground">
+      <p className="border-t border-border/60 pt-5 text-[13px] text-muted-foreground">
         {t("privacy.moreLead")}{" "}
         <Link href="/privacy#ai" className="underline underline-offset-4 hover:text-foreground">
           {t("privacy.moreLink")}
