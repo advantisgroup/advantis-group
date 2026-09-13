@@ -92,6 +92,9 @@ interface GridItem {
   wikiEntry: WikiEntry | null;
 }
 
+/** An entry nobody has touched in half a year probably deserves a look. */
+const STALE_AFTER_MS = 180 * 24 * 60 * 60 * 1000;
+
 function useGridItems() {
   const entries = useQuery(api.wikiEntries.list);
   const legacyPages = useQuery(api.guidebookPages.list);
@@ -257,6 +260,14 @@ function EntryCard({
             {item.reviewDue && !item.archived && (
               <Badge variant="warning">{t("reviewDueBadge")}</Badge>
             )}
+            {!item.reviewDue &&
+              !item.archived &&
+              item.kind === "wiki" &&
+              Date.now() - item.updatedAt > STALE_AFTER_MS && (
+                <Badge variant="muted" title={t("staleHint")}>
+                  {t("staleBadge")}
+                </Badge>
+              )}
             {item.archived && !item.categoryDeleted && (
               <Badge variant="muted">{t("expiredBadge")}</Badge>
             )}
