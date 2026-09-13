@@ -34,6 +34,8 @@ export interface SuggestionListItem {
   decisionNote: string | null;
   createdAt: number;
   updatedAt: number | null;
+  voteCount: number;
+  votedByMe: boolean;
 }
 
 export type SuggestionStatus = SuggestionListItem["status"];

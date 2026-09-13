@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo } from "react";
 
-import { Cloud, File as FileIcon, FileArchive, FileSpreadsheet, FileText, X } from "lucide-react";
+import { File as FileIcon, FileArchive, FileSpreadsheet, FileText, X } from "lucide-react";
 
+import { Mark } from "@/components/branding/ProviderMark";
 import { formatFileSize, isImage } from "@/lib/upload";
 
 import { type AttachmentEntry } from "./useAttachmentUpload";
@@ -81,7 +82,7 @@ function AttachmentChip({
         )}
         {oneDriveSource && (
           <span className="absolute -bottom-0.5 -right-0.5 grid size-3.5 place-items-center rounded-full bg-background ring-1 ring-border">
-            <Cloud className="size-2.5 text-blue-500" />
+            <Mark provider="onedrive" className="size-2.5" />
           </span>
         )}
       </span>

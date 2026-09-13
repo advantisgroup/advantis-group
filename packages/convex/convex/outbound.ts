@@ -19,6 +19,7 @@ export const sendNotificationEmail = internalAction({
       v.literal("upload-decision"),
       v.literal("chat-reinvite"),
       v.literal("digest"),
+      v.literal("weekly-report"),
       v.literal("academy-invite"),
       v.literal("password-reset-request"),
       v.literal("password-reset-link"),

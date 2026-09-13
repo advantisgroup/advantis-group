@@ -47,7 +47,7 @@ export default function SalesCockpitProjektePage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button asChild>
+        <Button data-shortcut-new asChild>
           <Link href="/sales-cockpit/projekte/new">
             <Plus />
             {t("neuesProjekt")}
@@ -58,7 +58,18 @@ export default function SalesCockpitProjektePage() {
       {projects === undefined ? (
         <p className="text-sm text-muted-foreground">{t("loading")}</p>
       ) : projects.length === 0 ? (
-        <EmptyState icon={<FolderKanban />} title={t("keineProjekteAngelegt")} />
+        <EmptyState
+          icon={<FolderKanban />}
+          title={t("keineProjekteAngelegt")}
+          action={
+            <Button asChild size="sm">
+              <Link href="/sales-cockpit/projekte/new">
+                <Plus />
+                {t("neuesProjekt")}
+              </Link>
+            </Button>
+          }
+        />
       ) : (
         <Card>
           <div className="divide-y divide-border/70">

@@ -14,7 +14,6 @@ import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeader
 import { Link } from "@/components/Link";
 import { useHasCapability } from "@/components/providers/current-user";
 import { ActionMenu } from "@/components/ui/action-menu";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CountTabs } from "@/components/ui/count-tabs";
@@ -31,7 +30,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { DesignSwitch } from "@/lib/design-preview";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -171,6 +169,14 @@ function RefreshedBlogList({
         <EmptyState
           icon={<Newspaper />}
           title={posts.length === 0 ? t("noPostsYet") : t("noResults")}
+          action={
+            posts.length === 0 ? (
+              <Button data-shortcut-new size="sm" onClick={() => router.push("/blog/new")}>
+                <Plus />
+                {t("newPost")}
+              </Button>
+            ) : undefined
+          }
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
@@ -244,75 +250,6 @@ function RefreshedBlogList({
   );
 }
 
-function ClassicBlogList({
-  posts,
-  onDelete,
-}: {
-  posts: Post[] | undefined;
-  onDelete: (post: Post) => void;
-}) {
-  const t = useTranslations("Blog");
-  const locale = useLocale();
-
-  return (
-    <div className="mx-auto max-w-4xl space-y-6 p-4 md:p-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <Button asChild>
-          <Link href="/blog/new">
-            <Plus className="mr-1.5 size-4" />
-            {t("newPost")}
-          </Link>
-        </Button>
-      </div>
-
-      {posts === undefined ? (
-        <p className="text-sm text-muted-foreground">{t("loading")}</p>
-      ) : posts.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center text-sm text-muted-foreground">
-            {t("noPostsYet")}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="divide-y divide-border rounded-lg border border-border">
-          {posts.map((post) => (
-            <div key={post._id} className="flex items-center gap-3 px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <Link href={`/blog/${post._id}`} className="truncate font-medium hover:underline">
-                  {post.title || t("untitled")}
-                </Link>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {post.language.toUpperCase()} · {formatDateTime(post.updatedAt, locale)}
-                </p>
-              </div>
-              <Badge variant={post.status === "published" ? "default" : "muted"}>
-                {post.status === "published" ? t("statusPublished") : t("statusDraft")}
-              </Badge>
-              <Button variant="ghost" size="icon" aria-label={t("editPost")} asChild>
-                <Link href={`/blog/${post._id}/edit`}>
-                  <Pencil className="size-4 text-muted-foreground" />
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={t("delete")}
-                onClick={() => onDelete(post)}
-              >
-                <Trash2 className="size-4 text-muted-foreground" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function BlogListPage() {
   const t = useTranslations("Blog");
   const canManage = useHasCapability("manage_blog");
@@ -350,10 +287,5 @@ export default function BlogListPage() {
 
   const deletePost = (post: Post) => void onDelete(post._id, post.title || t("untitled"));
 
-  return (
-    <DesignSwitch
-      refreshed={<RefreshedBlogList posts={posts} onDelete={deletePost} />}
-      classic={<ClassicBlogList posts={posts} onDelete={deletePost} />}
-    />
-  );
+  return <RefreshedBlogList posts={posts} onDelete={deletePost} />;
 }

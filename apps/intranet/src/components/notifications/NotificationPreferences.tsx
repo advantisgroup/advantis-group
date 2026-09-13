@@ -81,6 +81,7 @@ export function NotificationPreferences({ deliveryExtra }: { deliveryExtra?: Rea
   const isManager = useIsManager();
   const prefs = useQuery(api.notifications.getPreferences);
   const setPreferences = useMutation(api.notifications.setPreferences);
+  const setDeliveryOption = useMutation(api.notifications.setDeliveryOption);
   const userPrefs = useQuery(api.userPreferences.getMine);
   const setUserPrefs = useMutation(api.userPreferences.setMine);
   const [permission, setPermission] = useState<NotificationPermission | null>(null);
@@ -137,6 +138,40 @@ export function NotificationPreferences({ deliveryExtra }: { deliveryExtra?: Rea
             <p className="mt-2 text-xs text-warn">{t("browserDeniedHint")}</p>
           )}
         </SettingsRow>
+        <SettingsRow
+          title={t("digestTitle")}
+          description={t("digestHint")}
+          control={
+            <Switch
+              checked={prefs?.dailyDigest ?? false}
+              onToggle={() =>
+                void setDeliveryOption({
+                  option: "dailyDigest",
+                  enabled: !(prefs?.dailyDigest ?? false),
+                })
+              }
+              label={t("digestTitle")}
+            />
+          }
+        />
+        {isManager && (
+          <SettingsRow
+            title={t("weeklyReportTitle")}
+            description={t("weeklyReportHint")}
+            control={
+              <Switch
+                checked={prefs?.weeklyReport ?? false}
+                onToggle={() =>
+                  void setDeliveryOption({
+                    option: "weeklyReport",
+                    enabled: !(prefs?.weeklyReport ?? false),
+                  })
+                }
+                label={t("weeklyReportTitle")}
+              />
+            }
+          />
+        )}
         {deliveryExtra}
         {isManager && (
           <SettingsRow

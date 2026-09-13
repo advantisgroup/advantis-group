@@ -3,6 +3,7 @@
 import { Clock3, Coffee, Play, Square } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Mark } from "@/components/branding/ProviderMark";
 import { ClockStartPicker } from "@/components/clockodo/ClockStartPicker";
 import { ClockStatusGradient } from "@/components/clockodo/ClockStatusGradient";
 import { Link } from "@/components/Link";
@@ -82,8 +83,9 @@ export function ClockodoHeaderControl() {
           </div>
           <Link
             href="/clockodo"
-            className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-fg hover:underline"
+            className="inline-flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground underline-offset-2 hover:text-fg hover:underline"
           >
+            <Mark provider="clockodo" className="size-3.5" />
             {t("openClockodo")}
           </Link>
         </div>

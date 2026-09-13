@@ -25,10 +25,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import {
-  ClassicMeasuresPage,
-  NewMeasureDialog,
-} from "@/components/error-management/ClassicMeasuresPage";
+import { NewMeasureDialog } from "@/components/error-management/NewMeasureDialog";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
@@ -73,7 +70,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { DesignSwitch } from "@/lib/design-preview";
 import {
   dateInputToMs,
   MEASURE_PHASES,
@@ -308,7 +304,12 @@ function MeasuresContent() {
               <Button variant="outline" size="sm" onClick={clearFilters}>
                 {t("clearFilters")}
               </Button>
-            ) : undefined
+            ) : (
+              <Button data-shortcut-new size="sm" onClick={() => setNewOpen(true)}>
+                <Plus />
+                {t("newMeasure")}
+              </Button>
+            )
           }
         />
       ) : (
@@ -768,9 +769,59 @@ function MeasurePanelBody({ measure }: { measure: Measure }) {
         />
       </SidePanelSection>
 
+      {measure.completedAt && <MeasureEffectiveness measure={measure} />}
       <MeasureRelatedLinks measure={measure} />
       <MeasureDocuments measure={measure} />
     </>
+  );
+}
+
+function MeasureEffectiveness({ measure }: { measure: Measure }) {
+  const t = useTranslations("ErrorManagement");
+  const result = useQuery(api.errorMeasures.effectiveness, { measureId: measure._id });
+  if (!result) return null;
+  const max = Math.max(result.before, result.after, 1);
+  const verdict =
+    result.after < result.before ? "better" : result.after > result.before ? "worse" : "same";
+
+  return (
+    <SidePanelSection title={t("effectivenessTitle")}>
+      <div className="space-y-2">
+        {(
+          [
+            ["before", result.before],
+            ["after", result.after],
+          ] as const
+        ).map(([key, count]) => (
+          <div key={key} className="flex items-center gap-3 text-sm">
+            <span className="w-24 shrink-0 text-muted-foreground">
+              {t(key === "before" ? "effectivenessBefore" : "effectivenessAfter")}
+            </span>
+            <span className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+              <span
+                className={cn(
+                  "block h-full rounded-full",
+                  key === "before" ? "bg-muted-foreground/40" : "bg-foreground",
+                )}
+                style={{ width: `${(count / max) * 100}%` }}
+              />
+            </span>
+            <span className="w-6 shrink-0 text-right tabular-nums">{count}</span>
+          </div>
+        ))}
+      </div>
+      <p
+        className={cn(
+          "mt-2.5 text-xs",
+          verdict === "better" && "text-success",
+          verdict === "worse" && "text-warning",
+          verdict === "same" && "text-muted-foreground",
+        )}
+      >
+        {t(`effectiveness_${verdict}`, { category: result.categoryName ?? "—" })}
+        {!result.windowDone && ` ${t("effectivenessPending")}`}
+      </p>
+    </SidePanelSection>
   );
 }
 
@@ -1035,7 +1086,7 @@ function MeasureDocuments({ measure }: { measure: Measure }) {
 export default function MeasuresPage() {
   return (
     <Suspense fallback={null}>
-      <DesignSwitch refreshed={<MeasuresContent />} classic={<ClassicMeasuresPage />} />
+      <MeasuresContent />
     </Suspense>
   );
 }

@@ -1,5 +1,10 @@
 {
   "title": "Improvement Suggestions",
+  "vote": "Back this suggestion",
+  "unvote": "Remove your backing",
+  "mostBacked": "Most backed",
+  "viewList": "List",
+  "viewBoard": "Board",
   "eyebrow": "Internal idea management",
   "description": "Submit suggestions, track their status, and follow up on the outcome. Every entry is visible to the whole team.",
   "new": "New suggestion",

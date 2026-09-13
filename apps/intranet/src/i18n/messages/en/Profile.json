@@ -1,4 +1,7 @@
 {
+  "expertiseTitle": "Ask me about",
+  "expertiseAdd": "Add a topic",
+  "expertiseRemove": "Remove {tag}",
   "title": "Profile",
   "message": "Send message",
   "contact": "Contact",

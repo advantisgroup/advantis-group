@@ -64,6 +64,8 @@
   "yourRequestsHint": "All Clockodo absences linked to your account.",
   "searchRequests": "Search requests",
   "absencePlanner": "Absence planner",
+  "coverageRow": "People out",
+  "coverageCell": "{count, plural, =0 {Everyone in} one {# person out} other {# people out}}",
   "previousPeriod": "Previous period",
   "nextPeriod": "Next period",
   "employee": "Employee",

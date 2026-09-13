@@ -10,8 +10,8 @@ import {
   CalendarClock,
   CheckCheck,
   ChevronDown,
+  CircleCheck,
   ChevronUp,
-  Cloud,
   Download,
   ExternalLink,
   FileText,
@@ -22,12 +22,16 @@ import {
   Pin,
   Plus,
   Search,
+  Sparkles,
   Tag,
   Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useAsk } from "@/components/ai/ask-subject";
+import { useAiEnabled } from "@/components/ai/use-ai-enabled";
+import { Mark } from "@/components/branding/ProviderMark";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { ReactionsSummary } from "@/components/announcements/ReactionsSummary";
 import { RelevantDateCallout } from "@/components/announcements/RelevantDateCallout";
@@ -46,16 +50,8 @@ import { FilterPill } from "@/components/ui/filter-pill";
 import { Input } from "@/components/ui/input";
 import { ReactionPicker } from "@/components/ui/reactions";
 import { htmlToText } from "@/components/ui/rich-text";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { useDesignPreview } from "@/lib/design-preview";
 import { formatDateTime, initials } from "@/lib/format";
 import { pathToUrl } from "@/lib/onedrive-path";
 import { formatFileSize } from "@/lib/upload";
@@ -127,6 +123,9 @@ function AnnouncementCard({
   const router = useRouter();
   const markRead = useMutation(api.announcements.markRead);
   const toggleReaction = useMutation(api.announcements.toggleReaction);
+  const acknowledge = useMutation(api.announcements.acknowledge);
+  const { ask } = useAsk();
+  const aiEnabled = useAiEnabled();
   const canManage = isOwnerOrAdmin(me, a.ownerId);
   const articleRef = useRef<HTMLElement>(null);
 
@@ -176,6 +175,16 @@ function AnnouncementCard({
         });
       },
     },
+    ...(aiEnabled
+      ? [
+          {
+            key: "ask",
+            label: t("askAbout"),
+            icon: <Sparkles />,
+            onSelect: () => ask({ type: "announcement", id: a._id, label: a.title }),
+          },
+        ]
+      : []),
     ...(canManage
       ? [
           {
@@ -298,7 +307,7 @@ function AnnouncementCard({
                             title={tc("fromOneDrive")}
                             className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-background/90 shadow ring-1 ring-border"
                           >
-                            <Cloud className="size-3.5 text-blue-500" />
+                            <Mark provider="onedrive" className="size-3.5" />
                           </span>
                         </a>
                       ) : (
@@ -339,7 +348,7 @@ function AnnouncementCard({
                         >
                           <span className="grid size-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
                             {fromOneDrive ? (
-                              <Cloud className="size-4 text-blue-500" />
+                              <Mark provider="onedrive" className="size-4" />
                             ) : (
                               <FileText className="size-4" />
                             )}
@@ -372,6 +381,41 @@ function AnnouncementCard({
             </div>
           )}
         </div>
+
+        {a.requiresAck && (
+          <div
+            className={cn(
+              "mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border px-3.5 py-2.5 text-sm",
+              a.ackedByMe ? "border-border/60 bg-muted/30" : "border-primary/30 bg-primary/5",
+            )}
+          >
+            {a.ackedByMe ? (
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <CircleCheck className="size-4 text-success" />
+                {t("ackDone")}
+              </span>
+            ) : (
+              <>
+                <span className="min-w-0 flex-1">{t("ackPrompt")}</span>
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    void acknowledge({ announcementId: a._id }).then(() =>
+                      toast.success(t("ackThanks")),
+                    )
+                  }
+                >
+                  {t("ackConfirm")}
+                </Button>
+              </>
+            )}
+            {canManage && (
+              <span className="basis-full text-xs tabular-nums text-muted-foreground">
+                {t("ackCount", { count: a.ackCount, total: a.audienceCount })}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Reactions + viewed status. Wraps instead of squeezing the chips
             when a popular post collects more reactions than a narrow screen
@@ -430,7 +474,6 @@ export default function AnnouncementsPage() {
   const remove = useMutation(api.announcements.remove);
   const markAllRead = useMutation(api.announcements.markAllRead);
   const handleError = useErrorHandler();
-  const design = useDesignPreview();
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -525,160 +568,112 @@ export default function AnnouncementsPage() {
         }
       />
 
-      {design === "refreshed" ? (
-        <div className="mb-1" data-tour="tour-announcements-toolbar">
-          <CountTabs
-            value={filter}
-            onChange={setFilter}
-            tabs={[
-              { value: "all", label: t("filter_all"), count: announcements?.length },
-              { value: "unread", label: t("filter_unread"), count: unreadCount },
-              {
-                value: "pinned",
-                label: t("filter_pinned"),
-                count: (announcements ?? []).filter((a) => a.pinned).length,
-              },
-            ]}
-          />
-          <div className="flex flex-col gap-2 py-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="relative w-full sm:w-64">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={tc("search")}
-                aria-label={tc("search")}
-                className="h-9 pl-8 text-sm md:h-8 md:text-[13px]"
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-2 sm:flex-1">
-              {existingCategories.length > 0 && (
-                <FilterPill
-                  label={t("categoryFilter")}
-                  options={existingCategories.map((c) => ({
-                    value: c,
-                    label: c,
-                    count: (announcements ?? []).filter((a) => a.category === c).length,
-                  }))}
-                  selected={categoryFilter === ALL_CATEGORIES_VALUE ? [] : [categoryFilter]}
-                  // One category at a time: picking another replaces the current one.
-                  onChange={(next) =>
-                    setCategoryFilter(
-                      next.find((c) => c !== categoryFilter) ?? ALL_CATEGORIES_VALUE,
-                    )
-                  }
-                  clearLabel={t("clearFilter", { label: t("categoryFilter") })}
-                />
-              )}
-              <div className="inline-flex rounded-lg border border-border/70 bg-muted/40 p-0.5">
-                {(["newest", "reactions"] as const).map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    aria-pressed={sort === value}
-                    onClick={() => setSort(value)}
-                    className={cn(
-                      "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                      sort === value
-                        ? "bg-card text-foreground shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {value === "newest" ? t("sortNewest") : t("sortReactions")}
-                  </button>
-                ))}
-              </div>
-              {unreadCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  className="ml-auto text-muted-foreground"
-                  onClick={() => void markAllRead({})}
-                >
-                  <CheckCheck />
-                  {t("markAllRead")}
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : (
-        /* Search gets its own full-width row — sharing one line with the
-          filter pills/selects left it squeezed down to a sliver on mobile,
-          with the rest of the toolbar wrapping unpredictably around it. */
-        <div className="mb-4 space-y-2.5" data-tour="tour-announcements-toolbar">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="mb-1" data-tour="tour-announcements-toolbar">
+        <CountTabs
+          value={filter}
+          onChange={setFilter}
+          tabs={[
+            { value: "all", label: t("filter_all"), count: announcements?.length },
+            { value: "unread", label: t("filter_unread"), count: unreadCount },
+            {
+              value: "pinned",
+              label: t("filter_pinned"),
+              count: (announcements ?? []).filter((a) => a.pinned).length,
+            },
+          ]}
+        />
+        <div className="flex flex-col gap-2 py-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="relative w-full sm:w-64">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={tc("search")}
-              className="pl-9"
+              aria-label={tc("search")}
+              className="h-9 pl-8 text-sm md:h-8 md:text-[13px]"
             />
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-wrap items-center gap-1.5">
-              {(["all", "unread", "pinned"] as const).map((f) => (
+          <div className="flex flex-wrap items-center gap-2 sm:flex-1">
+            {existingCategories.length > 0 && (
+              <FilterPill
+                label={t("categoryFilter")}
+                options={existingCategories.map((c) => ({
+                  value: c,
+                  label: c,
+                  count: (announcements ?? []).filter((a) => a.category === c).length,
+                }))}
+                selected={categoryFilter === ALL_CATEGORIES_VALUE ? [] : [categoryFilter]}
+                // One category at a time: picking another replaces the current one.
+                onChange={(next) =>
+                  setCategoryFilter(next.find((c) => c !== categoryFilter) ?? ALL_CATEGORIES_VALUE)
+                }
+                clearLabel={t("clearFilter", { label: t("categoryFilter") })}
+              />
+            )}
+            <div className="inline-flex rounded-lg border border-border/70 bg-muted/40 p-0.5">
+              {(["newest", "reactions"] as const).map((value) => (
                 <button
-                  key={f}
+                  key={value}
                   type="button"
-                  onClick={() => setFilter(f)}
+                  aria-pressed={sort === value}
+                  onClick={() => setSort(value)}
                   className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                    filter === f
-                      ? "border-transparent bg-foreground text-background"
-                      : "border-border text-muted-foreground hover:bg-accent",
+                    "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                    sort === value
+                      ? "bg-card text-foreground shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  {t(`filter_${f}`)}
-                  {f === "unread" && unreadCount > 0 ? ` (${unreadCount})` : ""}
+                  {value === "newest" ? t("sortNewest") : t("sortReactions")}
                 </button>
               ))}
             </div>
-            {existingCategories.length > 0 && (
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL_CATEGORIES_VALUE}>{t("allCategories")}</SelectItem>
-                  {existingCategories.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
-              <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">{t("sortNewest")}</SelectItem>
-                <SelectItem value="reactions">{t("sortReactions")}</SelectItem>
-              </SelectContent>
-            </Select>
             {unreadCount > 0 && (
               <Button
                 variant="ghost"
-                size="sm"
+                size="xs"
                 className="ml-auto text-muted-foreground"
                 onClick={() => void markAllRead({})}
               >
-                <CheckCheck className="mr-1.5 size-3.5" />
+                <CheckCheck />
                 {t("markAllRead")}
               </Button>
             )}
           </div>
         </div>
-      )}
+      </div>
 
       {announcements && announcements.length === 0 && (
-        <EmptyState icon={<Megaphone />} title={t("empty")} />
+        <EmptyState
+          icon={<Megaphone />}
+          title={t("empty")}
+          action={
+            isManager ? (
+              <Button data-shortcut-new size="sm" onClick={() => router.push("/announcements/new")}>
+                <Plus />
+                {t("new")}
+              </Button>
+            ) : undefined
+          }
+        />
       )}
       {announcements && announcements.length > 0 && filtered.length === 0 && (
-        <EmptyState icon={<Search />} title={tc("noResults")} />
+        <EmptyState
+          icon={<Search />}
+          title={tc("noResults")}
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearch("");
+                setCategoryFilter(ALL_CATEGORIES_VALUE);
+              }}
+            >
+              {tc("clearSearch")}
+            </Button>
+          }
+        />
       )}
 
       <div className="space-y-6">

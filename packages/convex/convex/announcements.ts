@@ -118,6 +118,7 @@ export const create = mutation({
     title: v.string(),
     body: v.string(),
     pinned: v.optional(v.boolean()),
+    requiresAck: v.optional(v.boolean()),
     audience: audienceValidator,
     category: v.optional(v.string()),
     relevantDate: v.optional(relevantDateValidator),
@@ -141,6 +142,7 @@ export const create = mutation({
       authorUserId: author._id,
       ownerUserId: author._id,
       pinned: args.pinned ?? false,
+      requiresAck: args.requiresAck || undefined,
       audience: args.audience,
       category,
       relevantDate: args.relevantDate,
@@ -266,6 +268,7 @@ export const update = mutation({
     title: v.optional(v.string()),
     body: v.optional(v.string()),
     pinned: v.optional(v.boolean()),
+    requiresAck: v.optional(v.boolean()),
     audience: v.optional(audienceValidator),
     category: v.optional(v.string()),
     relevantDate: v.optional(v.union(relevantDateValidator, v.null())),
@@ -346,6 +349,11 @@ export const remove = mutation({
       .withIndex("by_announcement", (q) => q.eq("announcementId", announcementId))
       .collect();
     await Promise.all(reactions.map((r) => ctx.db.delete(r._id)));
+    const acks = await ctx.db
+      .query("announcementAcks")
+      .withIndex("by_announcement", (q) => q.eq("announcementId", announcementId))
+      .collect();
+    await Promise.all(acks.map((r) => ctx.db.delete(r._id)));
     await ctx.db.delete(announcementId);
     return { ok: true };
   },
@@ -444,6 +452,12 @@ export const list = query({
           .query("announcementReads")
           .withIndex("by_announcement", (q) => q.eq("announcementId", a._id))
           .collect();
+        const acks = a.requiresAck
+          ? await ctx.db
+              .query("announcementAcks")
+              .withIndex("by_announcement", (q) => q.eq("announcementId", a._id))
+              .collect()
+          : [];
         // Capped avatar sample for the inline "seen by" stack — the full
         // list is fetched lazily by the `viewers`/`nonReaders` queries once
         // the reader actually opens the panel.
@@ -464,6 +478,9 @@ export const list = query({
           title: a.title,
           body: a.body,
           pinned: a.pinned,
+          requiresAck: a.requiresAck ?? false,
+          ackCount: acks.length,
+          ackedByMe: acks.some((ack) => ack.userId === user._id),
           category: a.category ?? null,
           relevantDate: a.relevantDate ?? null,
           publishedAt: a.publishedAt,
@@ -546,6 +563,71 @@ export const unreadCount = query({
       .collect();
     const readSet = new Set(myReads.map((r) => r.announcementId));
     return visible.filter((a) => !readSet.has(a._id)).length;
+  },
+});
+
+/** Announcements waiting on the caller: ones asking for a read confirmation
+ * they haven't given, and pinned ones they haven't opened. */
+export const needsAttention = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireUser(ctx);
+    const now = Date.now();
+    const announcements = await ctx.db
+      .query("announcements")
+      .withIndex("by_publishedAt")
+      .order("desc")
+      .take(100);
+    const pinned = announcements.filter(
+      (a) =>
+        (a.pinned || a.requiresAck) &&
+        isVisibleToUser(user, a) &&
+        a.publishedAt <= now &&
+        (!a.expiresAt || a.expiresAt > now),
+    );
+    const done = await Promise.all(
+      pinned.map((a) =>
+        ctx.db
+          .query(a.requiresAck ? "announcementAcks" : "announcementReads")
+          .withIndex("by_announcement_user", (q) =>
+            q.eq("announcementId", a._id).eq("userId", user._id),
+          )
+          .first(),
+      ),
+    );
+    return pinned
+      .filter((_, i) => !done[i])
+      .map((a) => ({
+        _id: a._id,
+        title: a.title,
+        publishedAt: a.publishedAt,
+        requiresAck: a.requiresAck ?? false,
+      }));
+  },
+});
+
+export const acknowledge = mutation({
+  args: { announcementId: v.id("announcements") },
+  handler: async (ctx, { announcementId }) => {
+    const user = await requireUser(ctx);
+    const announcement = await ctx.db.get(announcementId);
+    if (!announcement || !isVisibleToUser(user, announcement)) {
+      throw new ConvexError({ code: "not_found", message: "Not found" });
+    }
+    const existing = await ctx.db
+      .query("announcementAcks")
+      .withIndex("by_announcement_user", (q) =>
+        q.eq("announcementId", announcementId).eq("userId", user._id),
+      )
+      .unique();
+    if (!existing) {
+      await ctx.db.insert("announcementAcks", {
+        announcementId,
+        userId: user._id,
+        ackedAt: Date.now(),
+      });
+    }
+    return { ok: true };
   },
 });
 

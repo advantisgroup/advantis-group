@@ -17,7 +17,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Panel, PanelSkeleton } from "@/components/admin/overview/primitives";
-import { ClassicApprovalsPage } from "@/components/approvals/ClassicApprovalsPage";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
@@ -38,7 +37,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { isoToday } from "@/lib/absences";
 import { usePendingApprovals } from "@/lib/absences-api";
-import { DesignSwitch } from "@/lib/design-preview";
 import { msToDateInput } from "@/lib/error-management";
 import { formatIsoDate, relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -471,5 +469,5 @@ function ApprovalCoverPanel() {
 }
 
 export default function ApprovalsPage() {
-  return <DesignSwitch refreshed={<RefreshedApprovalsPage />} classic={<ClassicApprovalsPage />} />;
+  return <RefreshedApprovalsPage />;
 }

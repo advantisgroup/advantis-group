@@ -3,6 +3,7 @@ import {
   Bell,
   CalendarCheck,
   GraduationCap,
+  Lightbulb,
   Megaphone,
   MessageSquare,
   Plane,
@@ -58,6 +59,7 @@ const VISUALS: Record<string, { icon: LucideIcon; tint: string }> = {
     icon: GraduationCap,
     tint: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
   },
+  suggestion: { icon: Lightbulb, tint: "bg-amber-500/15 text-amber-600 dark:text-amber-300" },
   incident: { icon: Wrench, tint: "bg-destructive/10 text-destructive" },
   maintenance: { icon: Wrench, tint: "bg-amber-500/15 text-amber-600 dark:text-amber-300" },
 };

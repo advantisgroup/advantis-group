@@ -84,6 +84,58 @@ export const list = query({
   },
 });
 
+/** Same-category error reports in the 30 days before a measure was completed
+ * versus the 30 days after — a quick read on whether it worked. */
+export const effectiveness = query({
+  args: { measureId: v.id("errorMeasures") },
+  handler: async (ctx, { measureId }) => {
+    await requireUser(ctx);
+    const measure = await ctx.db.get(measureId);
+    if (!measure?.completedAt) return null;
+    const report = await ctx.db.get(measure.errorReportId);
+    if (!report) return null;
+    const windowMs = 30 * 24 * 60 * 60 * 1000;
+    const start = measure.completedAt - windowMs;
+    const end = measure.completedAt + windowMs;
+    const rows = await ctx.db
+      .query("errorReports")
+      .withIndex("by_createdAt", (q) => q.gte("createdAt", start).lt("createdAt", end))
+      .collect();
+    const sameCategory = rows.filter((r) =>
+      report.categoryId
+        ? r.categoryId === report.categoryId
+        : r.categoryName === report.categoryName,
+    );
+    return {
+      categoryName: report.categoryName ?? null,
+      before: sameCategory.filter((r) => r.createdAt < measure.completedAt!).length,
+      after: sameCategory.filter((r) => r.createdAt >= measure.completedAt!).length,
+      windowDone: Date.now() >= end,
+    };
+  },
+});
+
+/** Open measures the caller owns, earliest due first. */
+export const listMineOpen = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireUser(ctx);
+    const rows = await ctx.db
+      .query("errorMeasures")
+      .withIndex("by_status", (q) => q.eq("status", "offen"))
+      .collect();
+    return rows
+      .filter((m) => m.ownerUserId === user._id)
+      .sort((a, b) => (a.dueAt ?? Number.MAX_SAFE_INTEGER) - (b.dueAt ?? Number.MAX_SAFE_INTEGER))
+      .map((m) => ({
+        _id: m._id,
+        errorReportId: m.errorReportId,
+        description: m.description,
+        dueAt: m.dueAt ?? null,
+      }));
+  },
+});
+
 export const create = mutation({
   args: {
     errorReportId: v.id("errorReports"),

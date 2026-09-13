@@ -9,7 +9,6 @@ import { type LucideIcon } from "lucide-react";
 import { useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
 import { useSetPageHeaderTabs } from "@/components/layout/PageHeaderBar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useDesignPreview } from "@/lib/design-preview";
 import { cn } from "@/lib/utils";
 
 export interface RouteTab {
@@ -34,7 +33,7 @@ export function RouteTabs({ tabs, activeValue }: { tabs: RouteTab[]; activeValue
   const isMobile = useIsMobile();
   const { setTabs } = useBottomNavTabs();
   const setHeaderTabs = useSetPageHeaderTabs();
-  const inHeader = useDesignPreview() === "refreshed" && !isMobile;
+  const inHeader = !isMobile;
 
   // Refreshed design: on desktop the tabs sit as pills beside the page title.
   useEffect(() => {

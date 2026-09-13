@@ -21,7 +21,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { CategoriesDialog } from "@/components/it-tickets/CategoriesDialog";
-import { ClassicTicketsPage } from "@/components/it-tickets/ClassicTicketsPage";
 import {
   StatusBadge,
   STATUSES,
@@ -79,7 +78,6 @@ import {
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { isoToday } from "@/lib/absences";
-import { DesignSwitch } from "@/lib/design-preview";
 import { formatIsoDate, initials } from "@/lib/format";
 
 type StatusTab = "alle" | Status;
@@ -634,7 +632,12 @@ function ItTicketsPageContent() {
               <Button variant="outline" size="sm" onClick={clearFilters}>
                 {t("clearFilters")}
               </Button>
-            ) : undefined
+            ) : (
+              <Button data-shortcut-new size="sm" onClick={openCreate}>
+                <Plus />
+                {t("newTicket")}
+              </Button>
+            )
           }
         />
       ) : (
@@ -806,7 +809,7 @@ function ItTicketsPageContent() {
 export default function ItTicketsPage() {
   return (
     <Suspense fallback={null}>
-      <DesignSwitch refreshed={<ItTicketsPageContent />} classic={<ClassicTicketsPage />} />
+      <ItTicketsPageContent />
     </Suspense>
   );
 }

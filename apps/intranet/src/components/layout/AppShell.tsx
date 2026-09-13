@@ -13,13 +13,12 @@ import { AskProvider } from "@/components/ai/ask-subject";
 import { AskPanel } from "@/components/ai/AskPanel";
 import { PostHogIdentify } from "@/components/analytics/PostHogIdentify";
 import { CommandPalette } from "@/components/CommandPalette";
-import { DesignFeedbackPrompt } from "@/components/design/DesignFeedbackPrompt";
-import { DesignPreviewBanner } from "@/components/design/DesignPreviewBanner";
 import { useSmoothScroll } from "@/components/effects/SmoothScrolling";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { GracePeriodBanner } from "@/components/layout/GracePeriodBanner";
+import { KeyboardShortcuts } from "@/components/layout/KeyboardShortcuts";
 import { SandboxBanner } from "@/components/layout/SandboxBanner";
 import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -49,7 +48,6 @@ import { TourProvider, useTour } from "@/components/tour/TourProvider";
 import { TourSpotlight } from "@/components/tour/TourSpotlight";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { UpdateBanner } from "@/components/updates/UpdateBanner";
-import { DesignAttribute } from "@/lib/design-preview";
 import { cn } from "@/lib/utils";
 
 /**
@@ -264,7 +262,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
         {/* Above the scrollable <main> (and the sticky header), so it's
             always on top of the page rather than scrolling away. */}
         {!immersive && !isUpdatesReading && <UpdateBanner />}
-        {!immersive && !isUpdatesReading && <DesignPreviewBanner />}
         <header
           data-tour="tour-header"
           className="sticky top-0 z-30 flex h-12 items-center gap-1 border-b border-border/70 bg-background/70 px-2.5 backdrop-blur-xl print:hidden md:h-16 md:px-4"
@@ -353,10 +350,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
       {/* Native browser notifications for background tabs (opt-in). */}
       <BrowserNotificationBridge />
+      <KeyboardShortcuts />
       <AiDock />
       <AskPanel />
-      <DesignAttribute />
-      <DesignFeedbackPrompt />
       <StartPageRedirect />
 
       {/* Tour UI layers (portal-based, fixed position) */}

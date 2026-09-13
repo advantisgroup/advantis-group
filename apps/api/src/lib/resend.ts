@@ -139,14 +139,71 @@ function render(
         ),
       };
     }
-    case "digest":
+    case "digest": {
+      const items = Array.isArray(data.items) ? (data.items as Data[]) : [];
+      const count = typeof data.count === "number" ? data.count : items.length;
+      const rows = items
+        .map((item) => {
+          const link = str(item, "link");
+          const href = link.startsWith("/")
+            ? `${INTERNAL_URL}${link}`
+            : `${INTERNAL_URL}/notifications`;
+          const body = str(item, "body");
+          return `<tr><td style="padding:12px 0;border-top:1px solid #e4e4e7">
+            <a href="${esc(href)}" style="color:#18181b;font-weight:600;text-decoration:none">${esc(str(item, "title"))}</a>
+            ${body ? `<div style="margin-top:2px;color:#71717a;font-size:14px;line-height:1.5">${esc(body)}</div>` : ""}
+          </td></tr>`;
+        })
+        .join("");
       return {
-        subject: "Your Advantis intranet digest",
+        subject: `${count} unread on the intranet`,
         html: layout(
-          "Digest",
-          `<p style="margin:0;line-height:1.6">${str(data, "summary") || "Here's what's new on the intranet."}</p>`,
+          "While you were away",
+          `<p style="margin:0 0 16px;line-height:1.6">You have ${count} unread notification${count === 1 ? "" : "s"}.</p>
+           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
+           <p style="margin:24px 0 0">${button(`${INTERNAL_URL}/notifications`, "Open notifications")}</p>`,
         ),
       };
+    }
+    case "weekly-report": {
+      const num = (value: unknown) => (typeof value === "number" ? value : 0);
+      const pair = (value: unknown) => {
+        const d = (value ?? {}) as Data;
+        return { now: num(d.thisWeek), before: num(d.lastWeek) };
+      };
+      const delta = ({ now, before }: { now: number; before: number }) =>
+        now === before
+          ? "same as the week before"
+          : `${now > before ? "up" : "down"} from ${before}`;
+      const tickets = pair(data.tickets);
+      const reports = pair(data.errorReports);
+      const categories = Array.isArray(data.topCategories) ? (data.topCategories as Data[]) : [];
+      const row = (label: string, value: string, note = "") =>
+        `<tr><td style="padding:10px 0;border-top:1px solid #e4e4e7;color:#71717a">${label}</td>
+          <td style="padding:10px 0;border-top:1px solid #e4e4e7;text-align:right;font-weight:600">${value}</td>
+          <td style="padding:10px 0 10px 12px;border-top:1px solid #e4e4e7;color:#71717a;font-size:13px">${note}</td></tr>`;
+      return {
+        subject: "Your week on the intranet",
+        html: layout(
+          "Last week at a glance",
+          `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            ${row("IT tickets opened", String(tickets.now), delta(tickets))}
+            ${row("IT tickets still open", String(num(data.openTickets)))}
+            ${row("Error reports", String(reports.now), delta(reports))}
+            ${row("Overdue measures", String(num(data.overdueMeasures)))}
+            ${row("New suggestions", String(num(data.suggestions)))}
+          </table>
+          ${
+            categories.length
+              ? `<p style="margin:20px 0 6px;color:#71717a;font-size:13px">Most reported</p><p style="margin:0;line-height:1.6">${categories
+                  .map((c) => `${esc(str(c, "name"))} (${num(c.count)})`)
+                  .join(" · ")}</p>`
+              : ""
+          }
+          <p style="margin:24px 0 0">${button(`${INTERNAL_URL}/`, "Open the intranet")}</p>`,
+        ),
+      };
+    }
     case "academy-invite": {
       const academyName = str(data, "academyName") || "the Wallbox Sales Academy";
       const code = str(data, "code");

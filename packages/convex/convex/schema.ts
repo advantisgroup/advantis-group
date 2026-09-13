@@ -118,6 +118,15 @@ export const attachmentValidator = v.object({
   oneDrivePath: v.optional(v.string()),
 });
 
+/** One step of an employee's first weeks. Built-in steps carry a `key` (the
+ * label comes from translations); ones HR adds carry their own `label`. */
+export const onboardingItemValidator = v.object({
+  id: v.string(),
+  key: v.optional(v.string()),
+  label: v.optional(v.string()),
+  doneAt: v.optional(v.number()),
+});
+
 export const suggestionStatusValidator = v.union(
   v.literal("open"),
   v.literal("in_discussion"),
@@ -351,6 +360,11 @@ export default defineSchema({
      * drives the overview's work-anniversary shoutouts.
      */
     hireDate: v.optional(v.string()),
+    /** Topics colleagues can ask this person about ("who knows …"). */
+    expertise: v.optional(v.array(v.string())),
+    /** Last time an admin confirmed this person still needs their access. */
+    accessReviewedAt: v.optional(v.number()),
+    accessReviewedByUserId: v.optional(v.id("users")),
     /**
      * Opaque code identifying this person as the source of a share link
      * (`/share/blog/x?r=<code>`). Deliberately not the Clerk id or anything
@@ -941,6 +955,8 @@ export default defineSchema({
     /** User who owns/manages the post when its visible author is an automation account. */
     ownerUserId: v.optional(v.id("users")),
     pinned: v.boolean(),
+    /** Readers are asked to confirm they read it; the author sees who has. */
+    requiresAck: v.optional(v.boolean()),
     audience: audienceValidator,
     /** Free-text topic tag (e.g. "Onboarding", "Customer Care") for grouping
      * the feed — admins type or pick from previously-used values, no fixed enum. */
@@ -971,6 +987,14 @@ export default defineSchema({
     .index("by_announcement_user", ["announcementId", "userId"])
     .index("by_announcement", ["announcementId"])
     .index("by_user", ["userId"]),
+
+  announcementAcks: defineTable({
+    announcementId: v.id("announcements"),
+    userId: v.id("users"),
+    ackedAt: v.number(),
+  })
+    .index("by_announcement_user", ["announcementId", "userId"])
+    .index("by_announcement", ["announcementId"]),
 
   announcementReactions: defineTable({
     announcementId: v.id("announcements"),
@@ -1009,6 +1033,15 @@ export default defineSchema({
   })
     .index("by_createdAt", ["createdAt"])
     .index("by_outcome", ["outcome"]),
+
+  /** One row per person backing a suggestion; voters hear when it ships. */
+  suggestionVotes: defineTable({
+    suggestionId: v.id("suggestions"),
+    userId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_suggestion", ["suggestionId"])
+    .index("by_suggestion_user", ["suggestionId", "userId"]),
 
   // --- Refreshed design preview feedback ------------------------------------
   /** What people think of the refreshed page designs while they're opt-in;
@@ -1198,8 +1231,12 @@ export default defineSchema({
     mentions: v.optional(v.array(v.id("users"))),
     editedAt: v.optional(v.number()),
     deletedAt: v.optional(v.number()),
+    pinnedAt: v.optional(v.number()),
+    pinnedByUserId: v.optional(v.id("users")),
     createdAt: v.number(),
-  }).index("by_conversation", ["conversationId"]),
+  })
+    .index("by_conversation", ["conversationId"])
+    .index("by_conversation_pinnedAt", ["conversationId", "pinnedAt"]),
 
   /**
    * Reverse index from an attachment's storage id to whatever owns it
@@ -1248,6 +1285,8 @@ export default defineSchema({
     body: v.optional(v.string()),
     link: v.optional(v.string()),
     readAt: v.optional(v.number()),
+    /** Hidden until then, when it comes back unread at the top. */
+    snoozedUntil: v.optional(v.number()),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
 
@@ -1256,8 +1295,15 @@ export default defineSchema({
   notificationPreferences: defineTable({
     userId: v.id("users"),
     mutedTypes: v.array(v.string()),
+    /** One morning email listing yesterday's unread notifications. */
+    dailyDigest: v.optional(v.boolean()),
+    /** Managers: a Monday email on how last week compared to the one before. */
+    weeklyReport: v.optional(v.boolean()),
+    lastDigestAt: v.optional(v.number()),
     updatedAt: v.number(),
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_dailyDigest", ["dailyDigest"]),
 
   presence: defineTable({
     userId: v.id("users"),
@@ -2694,6 +2740,7 @@ export default defineSchema({
     department: v.optional(v.string()),
     status: v.union(v.literal("active"), v.literal("archived")),
     notes: v.optional(v.string()),
+    onboarding: v.optional(v.array(onboardingItemValidator)),
     createdByUserId: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),

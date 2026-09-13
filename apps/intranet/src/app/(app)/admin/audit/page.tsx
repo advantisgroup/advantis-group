@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { ScrollText } from "lucide-react";
+import { Activity, Download, Plug, ScrollText, Search } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { Mark } from "@/components/branding/ProviderMark";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin } from "@/components/providers/current-user";
-import { Badge, type BadgeProps } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -21,23 +23,22 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
-import { formatDateTime } from "@/lib/format";
+import { downloadFile, toCsv } from "@/lib/activity/export";
+import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
 
 type Source = "activity" | "onedrive" | "integrations";
+type Range = "today" | "7d" | "30d" | "all";
 type AuditEntry = FunctionReturnType<typeof api.auditLog.list>[number];
 
-function sourceVariant(source: Source): BadgeProps["variant"] {
-  switch (source) {
-    case "activity":
-      return "default";
-    case "onedrive":
-      return "secondary";
-    case "integrations":
-      return "outline";
-  }
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function SourceIcon({ source }: { source: Source }) {
+  if (source === "onedrive") return <Mark provider="onedrive" className="size-4" />;
+  if (source === "integrations") return <Plug className="size-4 text-muted-foreground" />;
+  return <Activity className="size-4 text-muted-foreground" />;
 }
 
 function AuditRow({
@@ -50,7 +51,7 @@ function AuditRow({
   highlighted: boolean;
 }) {
   const t = useTranslations("Admin");
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLLIElement>(null);
 
   // Deep link from a notification/dashboard widget: scroll the matching
   // entry into view and give it the same warm flash used elsewhere.
@@ -61,27 +62,29 @@ function AuditRow({
   }, [highlighted]);
 
   return (
-    <div
+    <li
       ref={ref}
-      className={cn(
-        "flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-sm",
-        highlighted && "deeplink-hl",
-      )}
+      className={cn("flex items-start gap-3 px-4 py-3 text-sm", highlighted && "deeplink-hl")}
     >
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <Badge variant={sourceVariant(row.source)} className="text-[10px]">
-          {t(`auditLog.source_${row.source}`)}
-        </Badge>
-        <span className="font-medium">{row.user?.name ?? "unknown"}</span>
-        <Badge variant="muted" className="font-mono text-[10px]">
-          {row.action}
-        </Badge>
-        {row.target && <span className="truncate text-muted-foreground">{row.target}</span>}
-      </div>
-      <span className="shrink-0 text-xs text-muted-foreground">
-        {formatDateTime(row.at, locale)}
+      <span
+        className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-muted"
+        title={t(`auditLog.source_${row.source}`)}
+      >
+        <SourceIcon source={row.source} />
       </span>
-    </div>
+      <div className="min-w-0 flex-1">
+        <p className="flex min-w-0 flex-wrap items-baseline gap-x-2">
+          <span className="font-medium">{row.user?.name ?? t("auditLog.unknownPerson")}</span>
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+            {row.action}
+          </code>
+        </p>
+        {row.target && <p className="mt-0.5 truncate text-muted-foreground">{row.target}</p>}
+      </div>
+      <span className="shrink-0 pt-0.5 text-xs tabular-nums text-muted-foreground">
+        {formatTime(row.at, locale)}
+      </span>
+    </li>
   );
 }
 
@@ -90,32 +93,124 @@ export default function AuditLogPage() {
   const locale = useLocale();
   const isAdmin = useIsAdmin();
   const [source, setSource] = useState<Source | "all">("all");
+  const [person, setPerson] = useState("all");
+  const [range, setRange] = useState<Range>("7d");
+  const [search, setSearch] = useState("");
 
   const rows = useQuery(api.auditLog.list, {
     source: source === "all" ? undefined : source,
-    limit: 200,
+    limit: 500,
   });
 
   // Deep link from a notification/dashboard widget: /admin/audit?entry=<id>
   // highlights the matching row once the log has loaded.
   const highlightId = useDeepLinkId("entry");
 
+  const people = useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const row of rows ?? []) {
+      if (row.user) byId.set(row.actorUserId, row.user.name);
+    }
+    return [...byId].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [rows]);
+
+  const filtered = useMemo(() => {
+    const now = Date.now();
+    const since =
+      range === "today"
+        ? new Date().setHours(0, 0, 0, 0)
+        : range === "7d"
+          ? now - 7 * DAY_MS
+          : range === "30d"
+            ? now - 30 * DAY_MS
+            : 0;
+    const q = search.trim().toLowerCase();
+    return (rows ?? []).filter(
+      (row) =>
+        (highlightId === row._id || row.at >= since) &&
+        (person === "all" || row.actorUserId === person) &&
+        (!q ||
+          row.action.toLowerCase().includes(q) ||
+          (row.target ?? "").toLowerCase().includes(q)),
+    );
+  }, [highlightId, person, range, rows, search]);
+
+  const days = useMemo(() => {
+    const groups: { key: string; label: string; rows: AuditEntry[] }[] = [];
+    for (const row of filtered) {
+      const date = new Date(row.at);
+      const key = date.toDateString();
+      let group = groups.at(-1);
+      if (group?.key !== key) {
+        group = {
+          key,
+          label: date.toLocaleDateString(locale, {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          }),
+          rows: [],
+        };
+        groups.push(group);
+      }
+      group.rows.push(row);
+    }
+    return groups;
+  }, [filtered, locale]);
+
+  function exportCsv() {
+    const csv = toCsv(
+      filtered.map((row) => ({
+        at: new Date(row.at).toISOString(),
+        source: row.source,
+        person: row.user?.name ?? "",
+        action: row.action,
+        target: row.target ?? "",
+      })),
+      ["at", "source", "person", "action", "target"],
+    );
+    downloadFile(
+      `audit-log_${new Date().toISOString().slice(0, 10)}.csv`,
+      "text/csv;charset=utf-8",
+      csv,
+    );
+  }
+
   if (!isAdmin) {
     return <ForbiddenScreen />;
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-5">
       <PageHeaderBar
         title={t("auditLog.title")}
         description={t("auditLog.description")}
         icon={<ScrollText />}
       />
 
-      {/* Source filter sits with the list it filters now that the header
-          only takes button-style actions — see admin/audit for the one
-          PageHeader migration whose "action" wasn't a row of buttons. */}
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-48 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("auditLog.searchPlaceholder")}
+            className="pl-9"
+          />
+        </div>
+        <Select value={person} onValueChange={setPerson}>
+          <SelectTrigger className="w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("auditLog.everyone")}</SelectItem>
+            {people.map(([id, name]) => (
+              <SelectItem key={id} value={id}>
+                {name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={source} onValueChange={(v) => setSource(v as Source | "all")}>
           <SelectTrigger className="w-40">
             <SelectValue />
@@ -127,23 +222,66 @@ export default function AuditLogPage() {
             <SelectItem value="integrations">{t("auditLog.source_integrations")}</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={range} onValueChange={(v) => setRange(v as Range)}>
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="today">{t("auditLog.rangeToday")}</SelectItem>
+            <SelectItem value="7d">{t("auditLog.range7d")}</SelectItem>
+            <SelectItem value="30d">{t("auditLog.range30d")}</SelectItem>
+            <SelectItem value="all">{t("auditLog.rangeAll")}</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button variant="outline" onClick={exportCsv} disabled={filtered.length === 0}>
+          <Download />
+          {t("auditLog.exportCsv")}
+        </Button>
       </div>
 
       {rows === undefined ? (
-        <Skeleton className="h-64 w-full" />
-      ) : rows.length === 0 ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">{t("noAudit")}</p>
+        <Skeleton className="h-64 w-full rounded-xl" />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={<ScrollText />}
+          title={t("noAudit")}
+          action={
+            (search || person !== "all" || range !== "all") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearch("");
+                  setPerson("all");
+                  setRange("all");
+                }}
+              >
+                {t("auditLog.resetFilters")}
+              </Button>
+            )
+          }
+        />
       ) : (
-        <Card className="divide-y divide-border/60">
-          {rows.map((row) => (
-            <AuditRow
-              key={row._id}
-              row={row}
-              locale={locale}
-              highlighted={row._id === highlightId}
-            />
+        <div className="space-y-5">
+          <p className="text-xs text-muted-foreground">
+            {t("auditLog.count", { count: filtered.length })}
+          </p>
+          {days.map((day) => (
+            <section key={day.key}>
+              <h2 className="mb-2 text-xs font-medium text-muted-foreground">{day.label}</h2>
+              <ul className="divide-y divide-border/60 rounded-xl border border-border/70 bg-card">
+                {day.rows.map((row) => (
+                  <AuditRow
+                    key={row._id}
+                    row={row}
+                    locale={locale}
+                    highlighted={row._id === highlightId}
+                  />
+                ))}
+              </ul>
+            </section>
           ))}
-        </Card>
+        </div>
       )}
     </div>
   );

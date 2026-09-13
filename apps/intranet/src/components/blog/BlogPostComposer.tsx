@@ -252,6 +252,8 @@ export function BlogPostComposer({ entry }: { entry: BlogPostSubject }) {
       body={form.body}
       coverPreviewUrl={form.coverPreviewUrl}
       authorName={me.name}
+      slug={form.slug}
+      language={form.language}
     />
   );
 

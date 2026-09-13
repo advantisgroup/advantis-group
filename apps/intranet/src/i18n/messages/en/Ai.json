@@ -28,7 +28,16 @@
       "ticketHistory": "What has happened on this ticket so far?",
       "applicantSummary": "Summarise this applicant's background.",
       "applicantFit": "What speaks for this applicant in the role?",
-      "applicantGaps": "What's missing or unclear in this profile?"
+      "applicantGaps": "What's missing or unclear in this profile?",
+      "announcementSummary": "What's the gist of this announcement?",
+      "announcementForMe": "What does this mean for me?",
+      "announcementDates": "Are there any dates or deadlines in here?",
+      "errorSummary": "Summarise this error report.",
+      "errorNext": "Which measures are still open?",
+      "errorCause": "What is known about the cause?",
+      "suggestionSummary": "Summarise this suggestion.",
+      "suggestionDecision": "What was decided, and why?",
+      "suggestionImpact": "Who would this help?"
     }
   },
   "phase": {

@@ -40,6 +40,13 @@
   "fieldPreventionPlaceholder": "Wie wird das künftig verhindert?",
   "fieldCustomerFeedback": "Kundenfeedback",
   "fieldEffectivenessChecked": "Wirksamkeit geprüft",
+  "effectivenessTitle": "Hat es gewirkt?",
+  "effectivenessBefore": "30 Tage davor",
+  "effectivenessAfter": "30 Tage danach",
+  "effectiveness_better": "Seit der Umsetzung weniger Meldungen in {category}.",
+  "effectiveness_worse": "Seit der Umsetzung mehr Meldungen in {category}.",
+  "effectiveness_same": "Noch keine Veränderung bei Meldungen in {category}.",
+  "effectivenessPending": "Die 30 Tage sind noch nicht vorbei.",
   "fieldStatus": "Status",
   "severity": {
     "niedrig": "Niedrig",

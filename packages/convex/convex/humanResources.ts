@@ -5,6 +5,7 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx, query } from "./_generated/server";
 import { requireApplicantAccess } from "./lib/auth";
 import { partialProfileValidator, profileDisplayName, toPartialProfileOrNull } from "./lib/profile";
+import { onboardingItemValidator } from "./schema";
 
 const employeeDocumentCategoryValidator = v.union(
   v.literal("documents"),
@@ -38,6 +39,7 @@ const employeeProfileValidator = v.object({
   jobTitle: v.optional(v.string()),
   department: v.optional(v.string()),
   status: v.union(v.literal("active"), v.literal("archived")),
+  onboarding: v.optional(v.array(onboardingItemValidator)),
   notes: v.optional(v.string()),
   createdByUserId: v.id("users"),
   createdAt: v.number(),
@@ -196,6 +198,22 @@ export const updateProfile = mutation({
       ...(patch.notes !== undefined ? { notes: compact(patch.notes) } : {}),
       updatedAt: Date.now(),
     });
+    return { ok: true };
+  },
+});
+
+export const setOnboarding = mutation({
+  args: {
+    employeeProfileId: v.id("employeeProfiles"),
+    items: v.array(onboardingItemValidator),
+  },
+  handler: async (ctx, { employeeProfileId, items }) => {
+    await requireApplicantAccess(ctx);
+    await requireProfile(ctx, employeeProfileId);
+    if (items.length > 40) {
+      throw new ConvexError({ code: "bad_request", message: "Too many onboarding steps" });
+    }
+    await ctx.db.patch(employeeProfileId, { onboarding: items, updatedAt: Date.now() });
     return { ok: true };
   },
 });

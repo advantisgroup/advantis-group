@@ -54,6 +54,8 @@
   "archiveEmpty": "Nothing in the archive",
   "expiredBadge": "Expired",
   "reviewDueBadge": "Review due",
+  "staleBadge": "Not updated in 6 months",
+  "staleHint": "Nobody has changed this entry in over 180 days — check it still holds.",
   "reviewPanelTitle": "Review needed",
   "reviewPanelBody": "These entries expire within 7 days or are already expired. Please extend or delete them.",
   "ownershipPanelTitle": "Ownership needed",

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import { Lightbulb, Plus, Search, Settings2, X } from "lucide-react";
+import { Columns3, Lightbulb, List, Plus, Search, Settings2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -14,7 +14,6 @@ import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeader
 import { PersonLink } from "@/components/profile/PersonLink";
 import { useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { CategoryManagerDialog } from "@/components/suggestions/CategoryManagerDialog";
-import { ClassicSuggestionsPage } from "@/components/suggestions/ClassicSuggestionsPage";
 import { NewSuggestionDialog } from "@/components/suggestions/NewSuggestionDialog";
 import {
   SUGGESTION_STATUSES,
@@ -23,6 +22,7 @@ import {
   type SuggestionStatus,
 } from "@/components/suggestions/shared";
 import { SuggestionPanel } from "@/components/suggestions/SuggestionPanel";
+import { VoteButton } from "@/components/suggestions/VoteButton";
 import { Button } from "@/components/ui/button";
 import { CountTabs } from "@/components/ui/count-tabs";
 import { useConfirm } from "@/components/ui/dialog";
@@ -39,8 +39,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { DesignSwitch } from "@/lib/design-preview";
 import { formatDateTime } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 type StatusTab = "all" | SuggestionStatus;
 
@@ -70,6 +70,8 @@ function SuggestionsPageContent() {
   const [monthFilter, setMonthFilter] = useState<string[]>([]);
   const [implementedOnly, setImplementedOnly] = useState(false);
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<"list" | "board">("list");
+  const [mostBacked, setMostBacked] = useState(false);
 
   const openNewFromUrl = params.get("new") === "1";
   const panelId = params.get("open");
@@ -106,18 +108,20 @@ function SuggestionsPageContent() {
       }),
     [all, categoryFilter, monthFilter, implementedOnly, query],
   );
-  const rows = tab === "all" ? filteredByPills : filteredByPills.filter((s) => s.status === tab);
+  const rows = (
+    tab === "all" ? filteredByPills : filteredByPills.filter((s) => s.status === tab)
+  ).toSorted((a, b) => (mostBacked ? b.voteCount - a.voteCount : 0));
 
   // Month headings inside the list keep the old month-by-month reading
   // without forcing a month filter on everyone who opens the page.
   const groups = useMemo(() => {
     const map = new Map<string, SuggestionListItem[]>();
     for (const row of rows) {
-      const key = monthKey(row.createdAt);
+      const key = mostBacked ? "all" : monthKey(row.createdAt);
       map.set(key, [...(map.get(key) ?? []), row]);
     }
     return [...map.entries()];
-  }, [rows]);
+  }, [mostBacked, rows]);
 
   const categoryNames = [...new Set(all.map((s) => s.categoryName))].sort((a, b) =>
     a.localeCompare(b),
@@ -240,12 +244,43 @@ function SuggestionsPageContent() {
           >
             {t("implementedFilter")}
           </TogglePill>
+          <TogglePill
+            active={mostBacked}
+            onClick={() => setMostBacked((value) => !value)}
+            dotClassName="bg-primary"
+          >
+            {t("mostBacked")}
+          </TogglePill>
           {filtersActive && (
             <Button variant="ghost" size="xs" className="shrink-0" onClick={clearFilters}>
               <X />
               {t("clearFilters")}
             </Button>
           )}
+        </div>
+        <div className="hidden shrink-0 items-center rounded-lg border border-border/70 p-0.5 md:flex">
+          {(
+            [
+              ["list", List],
+              ["board", Columns3],
+            ] as const
+          ).map(([value, Icon]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={view === value}
+              onClick={() => setView(value)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                view === value
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Icon className="size-3.5" />
+              {t(value === "list" ? "viewList" : "viewBoard")}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -264,14 +299,63 @@ function SuggestionsPageContent() {
               <Button variant="outline" size="sm" onClick={clearFilters}>
                 {t("clearFilters")}
               </Button>
-            ) : undefined
+            ) : (
+              <Button data-shortcut-new size="sm" onClick={() => setNewOpen(true)}>
+                <Plus />
+                {t("new")}
+              </Button>
+            )
           }
         />
+      ) : view === "board" ? (
+        <div className="grid gap-3 md:grid-cols-4">
+          {SUGGESTION_STATUSES.map((status) => {
+            const column = filteredByPills
+              .filter((s) => s.status === status)
+              .toSorted((a, b) => b.voteCount - a.voteCount);
+            return (
+              <section key={status} className="min-w-0 rounded-xl bg-muted/40 p-2">
+                <h2 className="flex items-center justify-between px-1.5 pb-2 pt-1 text-xs font-medium text-muted-foreground">
+                  {t(`status_${status}`)}
+                  <span className="tabular-nums">{column.length}</span>
+                </h2>
+                <ul className="space-y-2">
+                  {column.map((s) => (
+                    <li key={s._id}>
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        data-shortcut-item
+                        onClick={() => openPanel(s._id)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") openPanel(s._id);
+                        }}
+                        className="flex cursor-pointer gap-2.5 rounded-lg border border-border/70 bg-card p-2.5 transition-colors hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <VoteButton suggestion={s} />
+                        <div className="min-w-0 flex-1">
+                          <p className="line-clamp-2 text-sm font-medium">{s.title}</p>
+                          <p className="mt-1 truncate text-xs text-muted-foreground">
+                            {s.categoryName} · {s.authorName}
+                          </p>
+                          {s.outcome && <SuggestionStateBadge suggestion={s} className="mt-1.5" />}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
           <Table className="hidden md:table">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
+                <TableHead className="w-16">
+                  <span className="sr-only">{t("vote")}</span>
+                </TableHead>
                 <TableHead>{t("columnSuggestion")}</TableHead>
                 <TableHead className="w-44">{t("field_category")}</TableHead>
                 <TableHead className="w-48">{t("columnSubmittedBy")}</TableHead>
@@ -284,10 +368,10 @@ function SuggestionsPageContent() {
                 <Fragment key={key}>
                   <TableRow className="hover:bg-transparent">
                     <TableCell
-                      colSpan={5}
+                      colSpan={6}
                       className="bg-muted/30 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
                     >
-                      {monthLabel(key)}
+                      {key === "all" ? t("mostBacked") : monthLabel(key)}
                       <span className="ml-2 font-normal tabular-nums">{items.length}</span>
                     </TableCell>
                   </TableRow>
@@ -300,8 +384,12 @@ function SuggestionsPageContent() {
                       onKeyDown={(event) => {
                         if (event.key === "Enter") openPanel(s._id);
                       }}
+                      data-shortcut-item
                       className="cursor-pointer focus-visible:bg-muted/40 focus-visible:outline-none"
                     >
+                      <TableCell className="py-1.5">
+                        <VoteButton suggestion={s} />
+                      </TableCell>
                       <TableCell className="w-full max-w-0">
                         <span className="block truncate font-medium">{s.title}</span>
                       </TableCell>
@@ -328,7 +416,7 @@ function SuggestionsPageContent() {
             {groups.map(([key, items]) => (
               <section key={key}>
                 <p className="border-b border-border/60 bg-muted/30 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {monthLabel(key)}
+                  {key === "all" ? t("mostBacked") : monthLabel(key)}
                   <span className="ml-2 font-normal tabular-nums">{items.length}</span>
                 </p>
                 <ul className="divide-y divide-border/60">
@@ -341,19 +429,22 @@ function SuggestionsPageContent() {
                       onKeyDown={(event) => {
                         if (event.key === "Enter") openPanel(s._id);
                       }}
-                      className="space-y-1 px-4 py-3 active:bg-accent/60"
+                      className="flex gap-3 px-4 py-3 active:bg-accent/60"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="min-w-0 text-sm font-medium">{s.title}</p>
-                        <SuggestionStateBadge suggestion={s} className="mt-0.5 shrink-0" />
+                      <VoteButton suggestion={s} />
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="min-w-0 text-sm font-medium">{s.title}</p>
+                          <SuggestionStateBadge suggestion={s} className="mt-0.5 shrink-0" />
+                        </div>
+                        <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                          <span className="truncate">{s.categoryName}</span>
+                          <span aria-hidden>·</span>
+                          <PersonLink userId={s.authorUserId} className="shrink-0">
+                            {s.authorName}
+                          </PersonLink>
+                        </p>
                       </div>
-                      <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-                        <span className="truncate">{s.categoryName}</span>
-                        <span aria-hidden>·</span>
-                        <PersonLink userId={s.authorUserId} className="shrink-0">
-                          {s.authorName}
-                        </PersonLink>
-                      </p>
                     </li>
                   ))}
                 </ul>
@@ -385,7 +476,7 @@ function SuggestionsPageContent() {
 export default function SuggestionsPage() {
   return (
     <Suspense fallback={null}>
-      <DesignSwitch refreshed={<SuggestionsPageContent />} classic={<ClassicSuggestionsPage />} />
+      <SuggestionsPageContent />
     </Suspense>
   );
 }

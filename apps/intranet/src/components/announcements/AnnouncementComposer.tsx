@@ -12,7 +12,6 @@ import {
   Building2,
   CalendarDays,
   CalendarPlus,
-  Cloud,
   Paperclip,
   Search,
   Settings,
@@ -30,6 +29,7 @@ import {
   DraftOfferBanner,
   DraftRestoredNote,
 } from "@/components/compose/DraftIndicator";
+import { Mark } from "@/components/branding/ProviderMark";
 import { type ReadinessCheck, ReadinessCard, scoreReadiness } from "@/components/compose/Readiness";
 import { MobileActionBar } from "@/components/compose/MobileActionBar";
 import { useDraft } from "@/components/compose/use-draft";
@@ -102,6 +102,7 @@ function draftFromAnnouncement(editing: Announcement): Draft {
     title: editing.title,
     body: editing.body,
     pinned: editing.pinned,
+    requiresAck: editing.requiresAck,
     category: editing.category ?? "",
     audienceKind: audience.kind === "all" ? "all" : "mixed",
     audienceDepartments:
@@ -425,6 +426,13 @@ function ComposerOptionsFields({
             <Checkbox checked={draft.pinned} onCheckedChange={(v) => set("pinned", v === true)} />
             {t("pin")}
           </label>
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+            <Checkbox
+              checked={draft.requiresAck ?? false}
+              onCheckedChange={(v) => set("requiresAck", v === true)}
+            />
+            {t("requireAck")}
+          </label>
         </div>
       </OptionsSection>
 
@@ -449,7 +457,7 @@ function ComposerOptionsFields({
               onClick={onOpenOneDrivePicker}
               className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              <Cloud className="h-4 w-4" />
+              <Mark provider="onedrive" className="size-4" />
               {tc("fromOneDrive")}
             </button>
           </div>
@@ -935,6 +943,7 @@ export function AnnouncementComposer(
           title: draft.title.trim(),
           body: draft.body.trim(),
           pinned: draft.pinned,
+          requiresAck: draft.requiresAck ?? false,
           ...(keepOriginalAudience ? {} : { audience: audienceValue }),
           category: sanitizeCategory(draft.category),
           expiresAt: draft.expiresAt ? new Date(draft.expiresAt).getTime() : null,
@@ -951,6 +960,7 @@ export function AnnouncementComposer(
             title: draft.title.trim(),
             body: draft.body.trim(),
             pinned: draft.pinned,
+            requiresAck: draft.requiresAck || undefined,
             audience: audienceValue,
             category: sanitizeCategory(draft.category) || undefined,
             attachments,

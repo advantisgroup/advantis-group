@@ -54,6 +54,8 @@
   "archiveEmpty": "Nichts im Archiv",
   "expiredBadge": "Abgelaufen",
   "reviewDueBadge": "Prüfung fällig",
+  "staleBadge": "Seit 6 Monaten unverändert",
+  "staleHint": "Seit über 180 Tagen hat niemand diesen Eintrag geändert – prüf, ob er noch stimmt.",
   "reviewPanelTitle": "Prüfung erforderlich",
   "reviewPanelBody": "Diese Einträge laufen innerhalb von 7 Tagen ab oder sind bereits abgelaufen. Bitte verlängern oder löschen.",
   "ownershipPanelTitle": "Verantwortung festlegen",

@@ -65,6 +65,65 @@ import { cn } from "@/lib/utils";
 
 type ProfileUser = NonNullable<ReturnType<typeof useUser>>;
 
+/** "Ask me about" — topics colleagues can come to this person with. Editable
+ * inline on your own profile. */
+function Expertise({ tags, isSelf }: { tags: string[]; isSelf: boolean }) {
+  const t = useTranslations("Profile");
+  const setExpertise = useMutation(api.users.setExpertise);
+  const handleError = useErrorHandler();
+  const [draft, setDraft] = useState("");
+
+  if (!isSelf && tags.length === 0) return null;
+
+  function save(next: string[]) {
+    setExpertise({ tags: next }).catch(handleError);
+  }
+
+  return (
+    <div className="mt-4">
+      <p className="mb-1.5 text-xs font-medium text-muted-foreground">{t("expertiseTitle")}</p>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {tags.map((tag) => (
+          <span
+            key={tag}
+            className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/40 px-2.5 py-0.5 text-xs"
+          >
+            {tag}
+            {isSelf && (
+              <button
+                type="button"
+                aria-label={t("expertiseRemove", { tag })}
+                onClick={() => save(tags.filter((other) => other !== tag))}
+                className="-mr-1 text-muted-foreground hover:text-foreground"
+              >
+                ×
+              </button>
+            )}
+          </span>
+        ))}
+        {isSelf && tags.length < 12 && (
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!draft.trim()) return;
+              save([...tags, draft.trim()]);
+              setDraft("");
+            }}
+          >
+            <Input
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder={t("expertiseAdd")}
+              maxLength={32}
+              className="h-7 w-36 rounded-full px-2.5 text-xs"
+            />
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** Sections that load on their own fade in rather than snapping into place. */
 const LATE_SECTION = "animate-in fade-in-0 duration-300";
 
@@ -1131,6 +1190,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
             )}
             {user.external && <Badge variant="warning">{tAdmin("external")}</Badge>}
           </div>
+          <Expertise tags={user.expertise} isSelf={isSelf} />
         </div>
       </div>
     </header>

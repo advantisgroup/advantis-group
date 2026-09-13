@@ -11,7 +11,7 @@ import {
 } from "react";
 
 export interface AskSubject {
-  type: "itTicket" | "applicant";
+  type: "itTicket" | "applicant" | "announcement" | "errorReport" | "suggestion";
   id: string;
   /** Shown in the panel header while the real title is still loading. */
   label: string;

@@ -149,7 +149,26 @@ if (process.env.DISABLE_CRONS !== "true") {
 
   // Delete DMs abandoned by one side once their 48h grace window elapses without
   // a rejoin. Runs hourly so the "auto-deletes in …" countdown stays honest.
-  crons.hourly("chat: purge expired left DMs", { minuteUTC: 20 }, internal.chat.purgeExpiredDms, {});
+  crons.daily(
+    "notifications: send daily digests",
+    { hourUTC: 5, minuteUTC: 30 },
+    internal.notifications.queueDailyDigests,
+    {},
+  );
+
+  crons.weekly(
+    "notifications: send weekly manager reports",
+    { dayOfWeek: "monday", hourUTC: 5, minuteUTC: 45 },
+    internal.notifications.queueWeeklyReports,
+    {},
+  );
+
+  crons.hourly(
+    "chat: purge expired left DMs",
+    { minuteUTC: 20 },
+    internal.chat.purgeExpiredDms,
+    {},
+  );
 }
 
 export default crons;

@@ -39,7 +39,8 @@ import {
 import { GuidebookPager, GuidebookSwitcher } from "@/components/guidebooks/switcher";
 import { WikiFileLinkText } from "@/components/guidebooks/WikiFileLinkText";
 import { Link } from "@/components/Link";
-import { PageHeader } from "@/components/PageHeader";
+import { DocumentHeader } from "@/components/layout/DocumentHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import {
   isOwnerOrAdmin,
   useCurrentUser,
@@ -369,7 +370,10 @@ export default function GuidebookPage() {
         </Card>
       ) : (
         <>
-          <PageHeader eyebrow={t("eyebrow")} title={title} description={description} />
+          {/* A guidebook is read, not operated: its title belongs in the page at
+              reading size. The top bar just says which part of the app this is. */}
+          <PageHeaderBar title={t("eyebrow")} />
+          <DocumentHeader eyebrow={t("eyebrow")} title={title} description={description} />
           <div id="guidebook-content">
             {Component ? (
               <Component />

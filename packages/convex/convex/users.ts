@@ -59,6 +59,7 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     jobTitle: user.jobTitle ?? null,
     phone: user.phone ?? null,
     teams: user.teams ?? [],
+    expertise: user.expertise ?? [],
     managerId: user.managerId ?? null,
     status: user.status,
     external: user.external ?? false,
@@ -144,7 +145,15 @@ async function queryUsers(
   if (args.search) {
     const q = args.search.toLowerCase();
     users = users.filter((u) =>
-      [u.firstName, u.lastName, u.email, u.jobTitle, u.department, ...(u.teams ?? [])]
+      [
+        u.firstName,
+        u.lastName,
+        u.email,
+        u.jobTitle,
+        u.department,
+        ...(u.teams ?? []),
+        ...(u.expertise ?? []),
+      ]
         .filter(Boolean)
         .some((field) => field!.toLowerCase().includes(q)),
     );
@@ -367,6 +376,19 @@ export const updateProfile = action({
  * toggle this — internal employees are always eligible and have no consent
  * to withdraw (see `updatesEmailConsent` on the `users` table).
  */
+export const setExpertise = mutation({
+  args: { tags: v.array(v.string()) },
+  handler: async (ctx, { tags }) => {
+    const user = await requireUser(ctx);
+    const clean = [...new Set(tags.map((tag) => tag.trim().slice(0, 32)).filter(Boolean))].slice(
+      0,
+      12,
+    );
+    await ctx.db.patch(user._id, { expertise: clean });
+    return { ok: true };
+  },
+});
+
 export const setUpdatesEmailConsent = mutation({
   args: { consent: v.boolean() },
   handler: async (ctx, { consent }) => {
@@ -807,5 +829,138 @@ export const setRoleLabel = mutation({
     }
     await ctx.db.patch(userId, { roleLabel: roleLabel?.trim() || undefined });
     return { ok: true };
+  },
+});
+
+/** Everyone holding more than plain employee access, for the periodic access
+ * review: who they are, what they hold, when they were last around, and when
+ * someone last confirmed they still need it. */
+export const accessReviewList = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    const users = await ctx.db
+      .query("users")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .collect();
+    const roles = new Map((await ctx.db.query("customRoles").collect()).map((r) => [r._id, r]));
+    const presence = new Map(
+      (await ctx.db.query("presence").collect()).map((p) => [p.userId, p.lastActiveAt]),
+    );
+    const rows = users
+      .map((u) => {
+        const customRoles = effectiveCustomRoleIds(u)
+          .map((id) => roles.get(id)?.name)
+          .filter((name): name is string => !!name);
+        const grants = [
+          ...(u.gfAccess ? ["gfAccess"] : []),
+          ...(u.applicantAccess ? ["applicantAccess"] : []),
+          ...(u.applicantAccessDelegate ? ["applicantDelegate"] : []),
+          ...(u.uploadRequestsEnabled ? ["uploads"] : []),
+        ];
+        return { u, customRoles, grants };
+      })
+      .filter(
+        ({ u, customRoles, grants }) =>
+          u.role !== "employee" || customRoles.length || grants.length,
+      );
+    return Promise.all(
+      rows.map(async ({ u, customRoles, grants }) => {
+        const reviewer = u.accessReviewedByUserId
+          ? await ctx.db.get(u.accessReviewedByUserId)
+          : null;
+        return {
+          _id: u._id,
+          name: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
+          email: u.email,
+          role: u.role,
+          customRoles,
+          grants,
+          lastActiveAt: presence.get(u._id) ?? null,
+          reviewedAt: u.accessReviewedAt ?? null,
+          reviewedByName: reviewer
+            ? [reviewer.firstName, reviewer.lastName].filter(Boolean).join(" ") || reviewer.email
+            : null,
+        };
+      }),
+    );
+  },
+});
+
+export const markAccessReviewed = mutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => {
+    const admin = await requireAdmin(ctx);
+    const user = await ctx.db.get(userId);
+    if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
+    await ctx.db.patch(userId, { accessReviewedAt: Date.now(), accessReviewedByUserId: admin._id });
+    return { ok: true };
+  },
+});
+
+/** Everything the intranet keeps that belongs to the caller, for "download my
+ * data". Other people's content (chat replies, comments) stays out. */
+export const exportMine = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireUser(ctx);
+    const strip = <T extends { _id: unknown; _creationTime: number }>(row: T) => {
+      const { _id, _creationTime, ...rest } = row;
+      return rest;
+    };
+    const [preferences, notificationPreferences, notifications, tickets, guidebookReads, aiRuns] =
+      await Promise.all([
+        ctx.db
+          .query("userPreferences")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .unique(),
+        ctx.db
+          .query("notificationPreferences")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .unique(),
+        ctx.db
+          .query("notifications")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .order("desc")
+          .take(1000),
+        ctx.db
+          .query("itTickets")
+          .withIndex("by_creator", (q) => q.eq("createdByUserId", user._id))
+          .collect(),
+        ctx.db
+          .query("guidebookReads")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .collect(),
+        ctx.db
+          .query("aiRuns")
+          .withIndex("by_user", (q) => q.eq("clerkUserId", user.clerkUserId))
+          .order("desc")
+          .take(500),
+      ]);
+    const suggestions = (await ctx.db.query("suggestions").collect()).filter(
+      (s) => s.authorUserId === user._id,
+    );
+    const {
+      clerkUserId: _clerk,
+      webauthnUserId: _webauthn,
+      oneDrivePermissionId: _onedrive,
+      ...profile
+    } = user;
+    return {
+      exportedAt: new Date().toISOString(),
+      profile: strip(profile),
+      preferences: preferences ? strip(preferences) : null,
+      notificationPreferences: notificationPreferences ? strip(notificationPreferences) : null,
+      notifications: notifications.map(strip),
+      itTickets: tickets.map(strip),
+      suggestions: suggestions.map(({ attachments: _a, ...s }) => strip(s)),
+      guidebookReads: guidebookReads.map(({ slug, readAt }) => ({ slug, readAt })),
+      aiRuns: aiRuns.map((run) => ({
+        kind: run.kind,
+        status: run.status,
+        startedAt: run.startedAt,
+        href: run.href ?? null,
+      })),
+    };
   },
 });

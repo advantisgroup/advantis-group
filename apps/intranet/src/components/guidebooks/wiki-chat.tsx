@@ -15,6 +15,7 @@ import { aiErrorKey } from "@/components/ai/AiRunCard";
 import { AiReveal } from "@/components/ai/AiReveal";
 import { AiThinking } from "@/components/ai/AiThinking";
 import { useAiRun } from "@/components/ai/use-ai-run";
+import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -99,6 +100,9 @@ export function WikiChat({ className }: { className?: string } = {}) {
   const messages = activeChat?.messages ?? [];
   const awaitingAnswer = messages.at(-1)?.role === "user";
   const working = view.state === "working";
+  const citations = (view.run?.sources ?? []).filter(
+    (source) => source.href && /^\[\d+\]/.test(source.label),
+  );
 
   // The run writes the answer into the chat before it reports done, so
   // reloading on "done" always picks the stored answer up.
@@ -393,6 +397,19 @@ export function WikiChat({ className }: { className?: string } = {}) {
                   ) : (
                     <AssistantRow key={i}>
                       <AiMarkdown>{m.content}</AiMarkdown>
+                      {i === messages.length - 1 && citations.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {citations.map((source) => (
+                            <Link
+                              key={source.label}
+                              href={source.href!}
+                              className="inline-flex max-w-full items-center rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[12px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            >
+                              <span className="truncate">{source.label}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
                     </AssistantRow>
                   ),
                 )}

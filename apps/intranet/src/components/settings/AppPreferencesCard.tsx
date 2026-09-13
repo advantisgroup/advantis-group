@@ -4,8 +4,6 @@ import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -16,7 +14,7 @@ import {
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 import { START_PAGES } from "@/lib/startPages";
 
-export function AppPreferencesCard({ refreshed = false }: { refreshed?: boolean }) {
+export function AppPreferencesCard() {
   const t = useTranslations("Settings");
   const prefs = useQuery(api.userPreferences.getMine);
   const setPrefs = useMutation(api.userPreferences.setMine);
@@ -80,41 +78,14 @@ export function AppPreferencesCard({ refreshed = false }: { refreshed?: boolean 
     </Select>
   );
 
-  if (refreshed) {
-    const control = "h-8 w-40 text-sm";
-    return (
-      <div data-tour="tour-settings-app-prefs">
-        <SettingsSection title={t("appPrefs")} description={t("appPrefsHint")}>
-          <SettingsRow title={t("startPage")} control={startPage(control)} />
-          <SettingsRow title={t("defaultCalendarView")} control={calendarView(control)} />
-          <SettingsRow title={t("weekStart")} control={weekStart(control)} />
-        </SettingsSection>
-      </div>
-    );
-  }
-
+  const control = "h-8 w-40 text-sm";
   return (
-    <Card data-tour="tour-settings-app-prefs">
-      <CardContent className="space-y-4 p-5">
-        <div>
-          <p className="font-semibold tracking-tight">{t("appPrefs")}</p>
-          <p className="text-sm text-muted-foreground">{t("appPrefsHint")}</p>
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="space-y-1.5">
-            <Label>{t("defaultCalendarView")}</Label>
-            {calendarView()}
-          </div>
-          <div className="space-y-1.5">
-            <Label>{t("startPage")}</Label>
-            {startPage()}
-          </div>
-          <div className="space-y-1.5">
-            <Label>{t("weekStart")}</Label>
-            {weekStart()}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div data-tour="tour-settings-app-prefs">
+      <SettingsSection title={t("appPrefs")} description={t("appPrefsHint")}>
+        <SettingsRow title={t("startPage")} control={startPage(control)} />
+        <SettingsRow title={t("defaultCalendarView")} control={calendarView(control)} />
+        <SettingsRow title={t("weekStart")} control={weekStart(control)} />
+      </SettingsSection>
+    </div>
   );
 }

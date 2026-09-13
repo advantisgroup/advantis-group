@@ -17,7 +17,6 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -32,14 +31,12 @@ import { Label } from "@/components/ui/label";
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 import { useDestructiveStepUp, type StepUpHintShape } from "@/components/auth/useDestructiveStepUp";
 import { jsonOrThrow, useSecurityState } from "@/components/security/security-state";
-import { useDesignPreview } from "@/lib/design-preview";
 import { cn } from "@/lib/utils";
 
 type Enrollment = { secret: string; otpauthUrl: string; qrCodeDataUrl: string };
 
 export function TotpSettingsCard() {
   const t = useTranslations("Settings");
-  const refreshed = useDesignPreview() === "refreshed";
   const { totp, refresh, apiRequest } = useSecurityState();
   const enrolled = totp === null ? null : totp.enrolled;
   // Enrolled, but the authenticator behind it is presumed gone — a recovery
@@ -277,177 +274,89 @@ export function TotpSettingsCard() {
     </>
   );
 
-  if (refreshed) {
-    return (
-      <div id="totp" data-hash-anchor>
-        <SettingsSection title={t("totp")} description={t("totpHint")}>
-          {enrolled === null ? (
-            <div className="flex justify-center px-4 py-5 text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-            </div>
-          ) : needsRotation ? (
-            <SettingsRow
-              title={
-                <span className="flex items-start gap-2 font-normal">
-                  <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warn" />
-                  {t("totpNeedsRotation")}
-                </span>
-              }
-              control={
-                <Button size="sm" onClick={() => void openSetup()} disabled={busy}>
-                  <Plus />
-                  {t("replaceTotp")}
-                </Button>
-              }
-            />
-          ) : enrolled ? (
-            <>
-              <SettingsRow
-                title={
-                  <span className="flex items-center gap-2">
-                    <ShieldCheck className="size-4 shrink-0 text-ok" />
-                    {t("totpEnabledHint")}
-                  </span>
-                }
-                control={
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => setDialog("remove")}
-                  >
-                    <Trash2 className="size-3.5" />
-                    <span className="sr-only">{t("removeTotp")}</span>
-                  </Button>
-                }
-              />
-              <SettingsRow
-                title={
-                  <span className="flex items-center gap-2">
-                    <LifeBuoy
-                      className={cn(
-                        "size-4 shrink-0",
-                        recoveryLow ? "text-warn" : "text-muted-foreground",
-                      )}
-                    />
-                    {recoveryLabel}
-                  </span>
-                }
-                description={recoveryLow ? t("recoveryCodesLowHint") : undefined}
-                control={
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() => void regenerateCodes()}
-                  >
-                    <RefreshCw />
-                    {t("regenerateRecoveryCodes")}
-                  </Button>
-                }
-              />
-            </>
-          ) : (
-            <SettingsRow
-              title={
-                <span className="font-normal text-muted-foreground">{t("totpNotEnabled")}</span>
-              }
-              control={
-                <Button size="sm" onClick={() => void openSetup()} disabled={busy}>
-                  <Plus />
-                  {t("setUpTotp")}
-                </Button>
-              }
-            />
-          )}
-          <p className="px-4 py-3 text-xs text-muted-foreground">{helpLinks}</p>
-        </SettingsSection>
-        {dialogs}
-      </div>
-    );
-  }
-
   return (
-    <Card id="totp" data-hash-anchor>
-      <CardContent className="space-y-4 p-5">
-        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="font-semibold tracking-tight">{t("totp")}</p>
-            <p className="text-sm text-muted-foreground">{t("totpHint")}</p>
-          </div>
-          {enrolled && !needsRotation ? (
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full text-destructive hover:text-destructive sm:w-auto"
-              onClick={() => setDialog("remove")}
-            >
-              <Trash2 className="size-3.5" />
-              {t("removeTotp")}
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              className="w-full sm:w-auto"
-              onClick={() => void openSetup()}
-              disabled={enrolled === null || busy}
-            >
-              <Plus className="size-3.5" />
-              {needsRotation ? t("replaceTotp") : t("setUpTotp")}
-            </Button>
-          )}
-        </div>
-
-        <p className="text-xs text-muted-foreground">{helpLinks}</p>
-
+    <div id="totp" data-hash-anchor>
+      <SettingsSection title={t("totp")} description={t("totpHint")}>
         {enrolled === null ? (
-          <div className="flex justify-center py-3 text-muted-foreground">
+          <div className="flex justify-center px-4 py-5 text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
           </div>
         ) : needsRotation ? (
-          <p className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2.5 text-sm">
-            <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warning" />
-            {t("totpNeedsRotation")}
-          </p>
-        ) : enrolled ? (
-          <div className="space-y-2">
-            <p className="flex items-center gap-2 rounded-lg border border-border/70 px-3 py-2.5 text-sm">
-              <ShieldCheck className="size-4 shrink-0 text-primary" />
-              {t("totpEnabledHint")}
-            </p>
-            {/* Recovery codes were shown once at enrollment and never again —
-                no way to tell how many were left, and no way to get a fresh
-                set short of tearing the authenticator down and starting over. */}
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 px-3 py-2.5">
-              <div className="flex items-center gap-2 text-sm">
-                <LifeBuoy
-                  className={cn(
-                    "size-4 shrink-0",
-                    recoveryLow ? "text-warning" : "text-muted-foreground",
-                  )}
-                />
-                <span className={cn(recoveryLow && "font-medium")}>{recoveryLabel}</span>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={busy}
-                onClick={() => void regenerateCodes()}
-              >
-                <RefreshCw className="size-3.5" />
-                {t("regenerateRecoveryCodes")}
+          <SettingsRow
+            title={
+              <span className="flex items-start gap-2 font-normal">
+                <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warn" />
+                {t("totpNeedsRotation")}
+              </span>
+            }
+            control={
+              <Button size="sm" onClick={() => void openSetup()} disabled={busy}>
+                <Plus />
+                {t("replaceTotp")}
               </Button>
-            </div>
-            {recoveryLow && <p className="text-xs text-warning">{t("recoveryCodesLowHint")}</p>}
-          </div>
+            }
+          />
+        ) : enrolled ? (
+          <>
+            <SettingsRow
+              title={
+                <span className="flex items-center gap-2">
+                  <ShieldCheck className="size-4 shrink-0 text-ok" />
+                  {t("totpEnabledHint")}
+                </span>
+              }
+              control={
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setDialog("remove")}
+                >
+                  <Trash2 className="size-3.5" />
+                  <span className="sr-only">{t("removeTotp")}</span>
+                </Button>
+              }
+            />
+            <SettingsRow
+              title={
+                <span className="flex items-center gap-2">
+                  <LifeBuoy
+                    className={cn(
+                      "size-4 shrink-0",
+                      recoveryLow ? "text-warn" : "text-muted-foreground",
+                    )}
+                  />
+                  {recoveryLabel}
+                </span>
+              }
+              description={recoveryLow ? t("recoveryCodesLowHint") : undefined}
+              control={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => void regenerateCodes()}
+                >
+                  <RefreshCw />
+                  {t("regenerateRecoveryCodes")}
+                </Button>
+              }
+            />
+          </>
         ) : (
-          <p className="rounded-lg border border-dashed border-border/70 px-3 py-4 text-sm text-muted-foreground">
-            {t("totpNotEnabled")}
-          </p>
+          <SettingsRow
+            title={<span className="font-normal text-muted-foreground">{t("totpNotEnabled")}</span>}
+            control={
+              <Button size="sm" onClick={() => void openSetup()} disabled={busy}>
+                <Plus />
+                {t("setUpTotp")}
+              </Button>
+            }
+          />
         )}
-
-        {dialogs}
-      </CardContent>
-    </Card>
+        <p className="px-4 py-3 text-xs text-muted-foreground">{helpLinks}</p>
+      </SettingsSection>
+      {dialogs}
+    </div>
   );
 }

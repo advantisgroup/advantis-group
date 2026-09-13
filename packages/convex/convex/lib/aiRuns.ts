@@ -14,7 +14,13 @@ export const aiRunKind = v.union(
 
 /** Records you can ask a question about in place. Each one has an access rule
  * of its own in `aiRuns.askContext`, checked before any text is assembled. */
-export const askSubjectType = v.union(v.literal("itTicket"), v.literal("applicant"));
+export const askSubjectType = v.union(
+  v.literal("itTicket"),
+  v.literal("applicant"),
+  v.literal("announcement"),
+  v.literal("errorReport"),
+  v.literal("suggestion"),
+);
 
 export const aiRunPhase = v.union(
   v.literal("reading"),

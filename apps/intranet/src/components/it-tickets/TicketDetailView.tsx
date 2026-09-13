@@ -5,12 +5,22 @@ import { useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { type FunctionReturnType } from "convex/server";
-import { useMutation } from "convex/react";
-import { ArrowLeft, ExternalLink, MessageSquarePlus, Pencil, Plus, Trash2 } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import {
+  ArrowLeft,
+  BookPlus,
+  ExternalLink,
+  MessageSquarePlus,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import { PersonLink } from "@/components/profile/PersonLink";
+import { useIsManager } from "@/components/providers/current-user";
 import {
   STATUS_ACCENT,
   STATUS_BORDER,
@@ -32,8 +42,8 @@ import {
 } from "@/components/ui/select";
 import { TimelineOrder } from "@/components/ui/timeline";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { useDesignPreview } from "@/lib/design-preview";
 import { formatIsoDate } from "@/lib/format";
+import { formatDuration } from "@/lib/updates";
 import { cn } from "@/lib/utils";
 
 // `| undefined` on top of the query's own `| null` — undefined while the
@@ -47,6 +57,8 @@ const RELATED_LINK_TYPES: RelatedLinkType[] = [
   "error_measure",
   "other",
 ];
+
+const SLOW_RESPONSE_MS = 4 * 60 * 60 * 1000;
 
 export interface OtherThreadTicket {
   ticketId: Id<"itTickets">;
@@ -81,7 +93,43 @@ export function TicketDetailView({
   const t = useTranslations("ItTickets");
   const tc = useTranslations("Common");
   const locale = useLocale();
-  const refreshed = useDesignPreview() === "refreshed";
+  const response = useQuery(api.itTickets.firstResponse, { ticketId: ticket._id });
+  const isManager = useIsManager();
+  const router = useRouter();
+  const handleError = useErrorHandler();
+  const createDraft = useMutation(api.drafts.create);
+  const saveDraft = useMutation(api.drafts.save);
+  const messages = useQuery(
+    api.itTicketThreads.listMessages,
+    isManager && thread ? { threadId: thread._id } : "skip",
+  );
+
+  async function saveToWiki() {
+    const escape = (text: string) =>
+      text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const replies = (messages ?? []).filter(
+      (m) => m.kind === "message" && m.body && m.senderUserId !== ticket.createdByUserId,
+    );
+    const body = [
+      ticket.info ? `<p>${escape(ticket.info).replace(/\n/g, "<br>")}</p>` : "",
+      replies.length
+        ? `<h3>${t("wikiFix")}</h3>${replies.map((m) => `<p>${escape(m.kind === "message" ? (m.body ?? "") : "")}</p>`).join("")}`
+        : "",
+      `<p>${t("wikiFromTicket", { nr: ticketNumber(ticket.nr) })}</p>`,
+    ].join("");
+    try {
+      const draftId = await createDraft({ surface: "wikiEntry" });
+      await saveDraft({
+        surface: "wikiEntry",
+        subjectKey: draftId,
+        data: JSON.stringify({ thema: ticket.topic?.trim() || ticket.category, erklaerung: body }),
+        href: `/guidebooks/draft/${draftId}`,
+      });
+      router.push(`/guidebooks/draft/${draftId}`);
+    } catch (error) {
+      handleError(error);
+    }
+  }
 
   const hasSfDetails = ticket.category === "SF" && (ticket.topic || ticket.camId || ticket.custNo);
 
@@ -111,26 +159,50 @@ export function TicketDetailView({
           <span className="text-sm font-semibold refreshed:text-base">{ticket.category}</span>
           <StatusBadge status={ticket.status} />
         </div>
-        <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs refreshed:grid-cols-[6.5rem_minmax(0,1fr)] refreshed:gap-y-2 refreshed:text-[13px] refreshed:[&_dd]:font-normal">
+        <dl className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 text-[13px]">
           <dt className="text-muted-foreground">{t("date")}</dt>
           <dd className="font-medium">{formatIsoDate(ticket.date, locale)}</dd>
           <dt className="text-muted-foreground">{t("createdBy")}</dt>
           <dd className="font-medium">
-            {refreshed && ticket.createdByName ? (
+            {ticket.createdByName ? (
               <PersonLink userId={ticket.createdByUserId}>{ticket.createdByName}</PersonLink>
             ) : (
-              ticket.createdByName || "–"
+              "–"
             )}
           </dd>
           {ticket.assignedToUserId && (
             <>
               <dt className="text-muted-foreground">{t("assignedToLabel")}</dt>
               <dd className="font-medium">
-                {refreshed && assigneeName ? (
+                {assigneeName ? (
                   <PersonLink userId={ticket.assignedToUserId}>{assigneeName}</PersonLink>
                 ) : (
-                  (assigneeName ?? "–")
+                  "–"
                 )}
+              </dd>
+            </>
+          )}
+          {response && (
+            <>
+              <dt className="text-muted-foreground">{t("firstResponse")}</dt>
+              <dd
+                className={cn(
+                  "tabular-nums",
+                  response.respondedAt === null &&
+                    ticket.status !== "closed" &&
+                    Date.now() - response.createdAt > SLOW_RESPONSE_MS &&
+                    "text-warning",
+                )}
+              >
+                {response.respondedAt !== null
+                  ? t("respondedAfter", {
+                      duration: formatDuration(response.respondedAt - response.createdAt),
+                    })
+                  : ticket.status === "closed"
+                    ? "–"
+                    : t("waitingFor", {
+                        duration: formatDuration(Date.now() - response.createdAt),
+                      })}
               </dd>
             </>
           )}
@@ -160,6 +232,12 @@ export function TicketDetailView({
             <Pencil className="mr-1.5 size-3.5" />
             {tc("edit")}
           </Button>
+          {isManager && ticket.status === "closed" && (
+            <Button variant="outline" size="sm" onClick={() => void saveToWiki()}>
+              <BookPlus className="mr-1.5 size-3.5" />
+              {t("saveToWiki")}
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"

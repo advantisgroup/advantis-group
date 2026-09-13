@@ -1,14 +1,16 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Doc, type Id } from "@advantis/convex/dataModel";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { FormDialog } from "@/components/compose/FormDialog";
+import { StatusBadge, ticketNumber } from "@/components/it-tickets/shared";
+import { Link } from "@/components/Link";
 import { useDraft } from "@/components/compose/use-draft";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,6 +34,8 @@ const TOPIC_PRESETS = [
   "Taxnumber",
 ] as const;
 const FREE_TOPIC = "__free";
+/** Another surface (e.g. a chat message) hands its text to a new ticket here. */
+export const TICKET_PREFILL_KEY = "itTickets:prefillInfo";
 const SF_CATEGORY = "SF";
 
 type TicketDoc = Doc<"itTickets">;
@@ -95,7 +99,18 @@ function TicketForm({ open, onOpenChange, categories, ticket }: TicketDialogProp
   const updateTicket = useMutation(api.itTickets.update);
   const handleError = useErrorHandler();
 
-  const [values, setValues] = useState<TicketValues>(() => initialValues(ticket, categories));
+  const [values, setValues] = useState<TicketValues>(() => {
+    const initial = initialValues(ticket, categories);
+    if (ticket) return initial;
+    try {
+      const info = sessionStorage.getItem(TICKET_PREFILL_KEY);
+      if (!info) return initial;
+      sessionStorage.removeItem(TICKET_PREFILL_KEY);
+      return { ...initial, info };
+    } catch {
+      return initial;
+    }
+  });
   const [busy, setBusy] = useState(false);
   const set = <K extends keyof TicketValues>(key: K, value: TicketValues[K]) =>
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -118,6 +133,18 @@ function TicketForm({ open, onOpenChange, categories, ticket }: TicketDialogProp
 
   const isSF = values.category === SF_CATEGORY;
   const isFreeTopic = values.topicChoice === FREE_TOPIC;
+  const [similarText, setSimilarText] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setSimilarText(values.info.trim()), 400);
+    return () => clearTimeout(id);
+  }, [values.info]);
+  const similarTopic = isSF ? (isFreeTopic ? values.topicFree.trim() : values.topicChoice) : "";
+  const similar = useQuery(
+    api.itTickets.similar,
+    !ticket && values.category && similarText.length >= 8
+      ? { category: values.category, topic: similarTopic || undefined, text: similarText }
+      : "skip",
+  );
 
   async function save() {
     const topic = isSF ? (isFreeTopic ? values.topicFree.trim() : values.topicChoice) : undefined;
@@ -267,6 +294,29 @@ function TicketForm({ open, onOpenChange, categories, ticket }: TicketDialogProp
           placeholder={t("infoPlaceholder")}
         />
       </label>
+
+      {similar && similar.length > 0 && (
+        <div className="rounded-xl border border-border/70 p-3">
+          <p className="mb-1.5 text-xs font-medium text-muted-foreground">{t("similarTickets")}</p>
+          <ul className="space-y-1">
+            {similar.map((s) => (
+              <li key={s._id}>
+                <Link
+                  href={`/it-tickets?ticket=${s._id}`}
+                  target="_blank"
+                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-accent/60"
+                >
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {ticketNumber(s.nr)}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">{s.topic || s.info}</span>
+                  <StatusBadge status={s.status} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </FormDialog>
   );
 }

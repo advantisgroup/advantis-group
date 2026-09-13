@@ -8,6 +8,7 @@ import { Ellipsis, ExternalLink, Link2, Paperclip, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { AskButton } from "@/components/ai/AskButton";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { PersonLink } from "@/components/profile/PersonLink";
 import {
@@ -135,36 +136,42 @@ function SuggestionPanelHeader({
     <div className="md:pr-9">
       <div className="flex min-h-8 items-center gap-1.5 text-xs text-muted-foreground">
         <span className="truncate">{suggestion.categoryName}</span>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="ml-auto text-muted-foreground"
-              aria-label={t("moreActions")}
-            >
-              <Ellipsis />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={copyLink}>
-              <Link2 />
-              {t("copyLink")}
-            </DropdownMenuItem>
-            {canModerate && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => onDelete(suggestion)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 />
-                  {tc("delete")}
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="ml-auto flex items-center gap-0.5">
+          <AskButton
+            look="icon"
+            subject={{ type: "suggestion", id: suggestion._id, label: suggestion.title }}
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground"
+                aria-label={t("moreActions")}
+              >
+                <Ellipsis />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={copyLink}>
+                <Link2 />
+                {t("copyLink")}
+              </DropdownMenuItem>
+              {canModerate && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onDelete(suggestion)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 />
+                    {tc("delete")}
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <p className="mt-1.5 text-lg font-semibold leading-snug tracking-tight text-balance">

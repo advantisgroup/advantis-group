@@ -11,6 +11,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { useRouter } from "next/navigation";
+
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { type LinkPreview, type MessageAttachment, type UnfurlResult } from "@advantis/types";
@@ -23,7 +25,6 @@ import {
   ArrowLeft,
   Check,
   CheckCheck,
-  Cloud,
   Copy,
   ExternalLink,
   Loader2,
@@ -31,12 +32,16 @@ import {
   MoreVertical,
   Paperclip,
   Pencil,
+  Pin,
+  PinOff,
   Reply,
+  Search,
   SendHorizonal,
   Settings,
   Smile,
   Trash2,
   UploadCloud,
+  Wrench,
   UserPlus,
   X,
 } from "lucide-react";
@@ -45,7 +50,10 @@ import { toast } from "sonner";
 
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
+import { Mark } from "@/components/branding/ProviderMark";
 import { CHAT_COLUMN, ChatDayDivider, chatBubbleClass } from "@/components/chat/chat-surface";
+import { ConversationSearch, PinnedMessagesBar } from "@/components/chat/ConversationTools";
+import { TICKET_PREFILL_KEY } from "@/components/it-tickets/TicketDialog";
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
@@ -150,6 +158,18 @@ export function ConversationView({
   const reinviteDm = useMutation(api.chat.reinviteDm);
   const leaveConversation = useMutation(api.chat.leaveConversation);
   const toggleMute = useMutation(api.chat.toggleMute);
+  const togglePinMessage = useMutation(api.chat.togglePinMessage);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const router = useRouter();
+
+  function createTicketFrom(m: Message) {
+    try {
+      sessionStorage.setItem(TICKET_PREFILL_KEY, `${m.senderName}: ${m.body}`);
+    } catch {
+      // without storage the ticket just opens empty
+    }
+    router.push("/it-tickets?new=1");
+  }
   const handleError = useErrorHandler();
   const attachmentUpload = useAttachmentUpload();
 
@@ -709,6 +729,17 @@ export function ConversationView({
 
         {/* Header actions */}
         <div className="flex shrink-0 items-center gap-1">
+          {conversation && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("searchInConversation")}
+              aria-pressed={searchOpen}
+              onClick={() => setSearchOpen((open) => !open)}
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+          )}
           {conversation?.type === "group" && (
             <Button
               variant="ghost"
@@ -732,6 +763,11 @@ export function ConversationView({
           )}
         </div>
       </div>
+
+      {searchOpen && (
+        <ConversationSearch conversationId={conversationId} onClose={() => setSearchOpen(false)} />
+      )}
+      {conversation && <PinnedMessagesBar conversationId={conversationId} />}
 
       {/* DM-left banner */}
       {conversation?.dmOtherLeft && (
@@ -928,7 +964,7 @@ export function ConversationView({
                                             title={tc("fromOneDrive")}
                                             className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-background/90 shadow ring-1 ring-border"
                                           >
-                                            <Cloud className="size-3.5 text-blue-500" />
+                                            <Mark provider="onedrive" className="size-3.5" />
                                           </span>
                                         )}
                                       </button>
@@ -942,7 +978,7 @@ export function ConversationView({
                                         href={pathToUrl(a.oneDrivePath!)}
                                         className="mt-1 flex items-center gap-1 underline"
                                       >
-                                        <Cloud className="h-3 w-3 text-blue-500" />
+                                        <Mark provider="onedrive" className="size-3" />
                                         {a.name}
                                         <ExternalLink className="h-3 w-3 text-blue-500" />
                                       </a>
@@ -1042,6 +1078,9 @@ export function ConversationView({
                                 <MessageMenu
                                   canEdit={mine && (!!m.body || m.attachments.length > 0)}
                                   canDelete={mine}
+                                  pinned={m.pinned}
+                                  onTogglePin={() => void togglePinMessage({ messageId: m._id })}
+                                  onCreateTicket={m.body ? () => createTicketFrom(m) : undefined}
                                   onReply={() => {
                                     setEditing(null);
                                     setReplyTo(m);
@@ -1055,6 +1094,9 @@ export function ConversationView({
                                     copy: tc("copy"),
                                     edit: tc("edit"),
                                     delete: tc("delete"),
+                                    pin: t("pinMessage"),
+                                    unpin: t("unpinMessage"),
+                                    ticket: t("createTicket"),
                                   }}
                                 />
                               )}
@@ -1242,7 +1284,7 @@ export function ConversationView({
             onClick={() => setOneDrivePickerOpen(true)}
             className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9"
           >
-            <Cloud className="h-5 w-5" />
+            <Mark provider="onedrive" className="size-5" />
           </button>
 
           <Popover>
@@ -1347,6 +1389,20 @@ export function ConversationView({
                   const m = actionSheetMessage;
                   setActionSheetMessage(null);
                   swipeToReply(m);
+                }}
+              />
+              <ActionSheetItem
+                icon={
+                  actionSheetMessage.pinned ? (
+                    <PinOff className="size-4" />
+                  ) : (
+                    <Pin className="size-4" />
+                  )
+                }
+                label={actionSheetMessage.pinned ? t("unpinMessage") : t("pinMessage")}
+                onClick={() => {
+                  void togglePinMessage({ messageId: actionSheetMessage._id });
+                  setActionSheetMessage(null);
                 }}
               />
               <ActionSheetItem
@@ -1459,6 +1515,9 @@ function ConversationUnavailable({
 function MessageMenu({
   canEdit,
   canDelete,
+  pinned,
+  onTogglePin,
+  onCreateTicket,
   onReply,
   onCopy,
   onEdit,
@@ -1467,14 +1526,41 @@ function MessageMenu({
 }: {
   canEdit: boolean;
   canDelete: boolean;
+  pinned: boolean;
+  onTogglePin: () => void;
+  onCreateTicket?: () => void;
   onReply: () => void;
   onCopy: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  labels: { reply: string; copy: string; edit: string; delete: string };
+  labels: {
+    reply: string;
+    copy: string;
+    edit: string;
+    delete: string;
+    pin: string;
+    unpin: string;
+    ticket: string;
+  };
 }) {
   const items: ActionMenuItem[] = [
     { key: "reply", label: labels.reply, icon: <Reply />, onSelect: onReply },
+    {
+      key: "pin",
+      label: pinned ? labels.unpin : labels.pin,
+      icon: pinned ? <PinOff /> : <Pin />,
+      onSelect: onTogglePin,
+    },
+    ...(onCreateTicket
+      ? [
+          {
+            key: "ticket",
+            label: labels.ticket,
+            icon: <Wrench />,
+            onSelect: onCreateTicket,
+          } satisfies ActionMenuItem,
+        ]
+      : []),
     { key: "copy", label: labels.copy, icon: <Copy />, onSelect: onCopy },
     ...(canEdit
       ? [
@@ -1582,7 +1668,11 @@ function AttachmentChip({
         <img src={src} alt="" className="size-8 shrink-0 rounded object-cover" />
       ) : (
         <span className="flex size-8 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
-          {fromOneDrive ? <Cloud className="size-3.5" /> : <Paperclip className="size-3.5" />}
+          {fromOneDrive ? (
+            <Mark provider="onedrive" className="size-3.5" />
+          ) : (
+            <Paperclip className="size-3.5" />
+          )}
         </span>
       )}
       <span className="min-w-0 flex-1 truncate">{name}</span>

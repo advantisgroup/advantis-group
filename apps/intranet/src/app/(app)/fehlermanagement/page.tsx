@@ -23,10 +23,8 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import {
-  ClassicErrorReportsPage,
-  NewErrorDialog,
-} from "@/components/error-management/ClassicErrorReportsPage";
+import { AskButton } from "@/components/ai/AskButton";
+import { NewErrorDialog } from "@/components/error-management/NewErrorDialog";
 import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
 import { useIsManager } from "@/components/providers/current-user";
@@ -62,7 +60,6 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { DesignSwitch } from "@/lib/design-preview";
 import {
   CUSTOMER_FEEDBACKS,
   dateInputToMs,
@@ -303,7 +300,12 @@ function ErrorReportsContent() {
               <Button variant="outline" size="sm" onClick={clearFilters}>
                 {t("clearFilters")}
               </Button>
-            ) : undefined
+            ) : (
+              <Button data-shortcut-new size="sm" onClick={() => setNewOpen(true)}>
+                <Plus />
+                {t("newError")}
+              </Button>
+            )
           }
         />
       ) : (
@@ -575,36 +577,46 @@ function ErrorReportPanelHeader({ report, onDeleted }: { report: Report; onDelet
         <span className="truncate">{report.categoryName ?? t("fieldCategoryNone")}</span>
         <span aria-hidden>·</span>
         <span className="shrink-0">{t("loggedOn", { date: shortDate(report.createdAt) })}</span>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="ml-auto text-muted-foreground"
-              aria-label={t("moreActions")}
-            >
-              <Ellipsis />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={copyLink}>
-              <Link2 />
-              {t("copyLink")}
-            </DropdownMenuItem>
-            {isManager && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => void onDelete()}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 />
-                  {tc("delete")}
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="ml-auto flex items-center gap-0.5">
+          <AskButton
+            look="icon"
+            subject={{
+              type: "errorReport",
+              id: report._id,
+              label: report.description.slice(0, 60),
+            }}
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground"
+                aria-label={t("moreActions")}
+              >
+                <Ellipsis />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={copyLink}>
+                <Link2 />
+                {t("copyLink")}
+              </DropdownMenuItem>
+              {isManager && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => void onDelete()}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 />
+                    {tc("delete")}
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <p className="mt-1.5 line-clamp-3 whitespace-pre-line text-lg font-semibold leading-snug tracking-tight text-balance">
@@ -939,7 +951,7 @@ function ErrorReportPanelBody({
 export default function FehlermanagementPage() {
   return (
     <Suspense fallback={null}>
-      <DesignSwitch refreshed={<ErrorReportsContent />} classic={<ClassicErrorReportsPage />} />
+      <ErrorReportsContent />
     </Suspense>
   );
 }

@@ -13,9 +13,7 @@ import { toast } from "sonner";
 import { RoleSelect } from "@/app/(app)/admin/RoleSelect";
 import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 import { ActionMenu } from "@/components/ui/action-menu";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -30,14 +28,7 @@ function isExternalEmail(email: string, allowedDomains: string[]): boolean {
   return domain.length > 0 && !allowedDomains.includes(domain);
 }
 
-export function InvitesPanel({
-  isAdmin,
-  refreshed = false,
-}: {
-  isAdmin: boolean;
-  /** The refreshed design: one hairline-divided list, row actions behind a menu. */
-  refreshed?: boolean;
-}) {
+export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Admin");
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
@@ -119,7 +110,6 @@ export function InvitesPanel({
           { key: "invite", label: t("sendInvite"), icon: Mail, onClick: () => setInviteOpen(true) },
         ]}
       />
-
       <ResponsiveDialog
         open={inviteOpen}
         onOpenChange={setInviteOpen}
@@ -146,116 +136,66 @@ export function InvitesPanel({
           </p>
         )}
       </ResponsiveDialog>
-
-      {refreshed ? (
-        pending.length === 0 ? (
-          <EmptyState icon={<Mail />} title={t("noInvites")} />
-        ) : (
-          <div className="space-y-3">
-            <p className="text-xs text-muted-foreground">
-              {t("pendingInvites", { count: pending.length })}
-            </p>
-            <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
-              {pending.map((i) => (
-                <li key={i._id} className="flex items-center gap-3 px-4 py-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
-                    <Mail className="size-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="flex min-w-0 items-center gap-2">
-                      <span className="truncate text-sm font-medium">{i.email}</span>
-                      {i.external && (
-                        <span className="shrink-0 rounded-full bg-warn/12 px-1.5 py-0.5 text-[10px] font-medium text-warn">
-                          {t("external")}
-                        </span>
-                      )}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {tRoles(i.role)} · {t("invitedBy", { name: i.invitedByName })} ·{" "}
-                      {formatDateTime(i.createdAt, locale)}
-                    </p>
-                  </div>
-                  <ActionMenu
-                    ariaLabel={i.email}
-                    trigger={
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        className="shrink-0 text-muted-foreground"
-                        aria-label={i.email}
-                      >
-                        <Ellipsis />
-                      </Button>
-                    }
-                    items={[
-                      {
-                        key: "resend",
-                        label: t("resend"),
-                        icon: <RotateCw />,
-                        onSelect: () => onResend(i._id),
-                      },
-                      {
-                        key: "revoke",
-                        label: t("revoke"),
-                        icon: <XCircle />,
-                        destructive: true,
-                        onSelect: () => void onRevoke(i),
-                      },
-                    ]}
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-        )
-      ) : pending.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">{t("noInvites")}</p>
-      ) : (
-        <div className="space-y-2">
+      pending.length === 0 ? (
+      <EmptyState icon={<Mail />} title={t("noInvites")} />) : (
+      <div className="space-y-3">
+        <p className="text-xs text-muted-foreground">
+          {t("pendingInvites", { count: pending.length })}
+        </p>
+        <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
           {pending.map((i) => (
-            <Card nested key={i._id}>
-              <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-center gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{i.email}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {t("invitedBy", { name: i.invitedByName })} ·{" "}
-                      {formatDateTime(i.createdAt, locale)}
-                    </p>
-                  </div>
+            <li key={i._id} className="flex items-center gap-3 px-4 py-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
+                <Mail className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="flex min-w-0 items-center gap-2">
+                  <span className="truncate text-sm font-medium">{i.email}</span>
                   {i.external && (
-                    <Badge variant="warning" className="shrink-0">
+                    <span className="shrink-0 rounded-full bg-warn/12 px-1.5 py-0.5 text-[10px] font-medium text-warn">
                       {t("external")}
-                    </Badge>
+                    </span>
                   )}
-                  <Badge variant="muted" className="shrink-0">
-                    {i.role}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2">
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {tRoles(i.role)} · {t("invitedBy", { name: i.invitedByName })} ·{" "}
+                  {formatDateTime(i.createdAt, locale)}
+                </p>
+              </div>
+              <ActionMenu
+                ariaLabel={i.email}
+                trigger={
                   <Button
-                    size="sm"
+                    size="icon-sm"
                     variant="ghost"
-                    className="flex-1 sm:flex-none"
-                    onClick={() => onResend(i._id)}
+                    className="shrink-0 text-muted-foreground"
+                    aria-label={i.email}
                   >
-                    <RotateCw className="mr-1 h-3.5 w-3.5" />
-                    {t("resend")}
+                    <Ellipsis />
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="flex-1 sm:flex-none"
-                    onClick={() => void onRevoke(i)}
-                  >
-                    {t("revoke")}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                }
+                items={[
+                  {
+                    key: "resend",
+                    label: t("resend"),
+                    icon: <RotateCw />,
+                    onSelect: () => onResend(i._id),
+                  },
+                  {
+                    key: "revoke",
+                    label: t("revoke"),
+                    icon: <XCircle />,
+                    destructive: true,
+                    onSelect: () => void onRevoke(i),
+                  },
+                ]}
+              />
+            </li>
           ))}
-        </div>
-      )}
+        </ul>
+      </div>
+      ) ) : pending.length === 0 ? (
+      <p className="py-6 text-center text-sm text-muted-foreground">{t("noInvites")}</p>
     </div>
   );
 }

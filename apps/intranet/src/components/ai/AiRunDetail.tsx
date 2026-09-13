@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { AiGlyph } from "@/components/ai/AiGlyph";
+import { Mark } from "@/components/branding/ProviderMark";
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { SidePanel, SidePanelSection } from "@/components/ui/side-panel";
@@ -31,6 +31,11 @@ import { cn } from "@/lib/utils";
 
 import { AI_STATE_ACCENT, aiErrorKey } from "./AiRunCard";
 import { aiRunState, type AiRunMeta } from "./use-ai-run";
+
+/** Every run here is answered by a Claude model, so the model row wears its mark. */
+function ClaudeMark({ className }: { className?: string }) {
+  return <Mark provider="claude" className={className} />;
+}
 
 /**
  * Everything the app knows about one run, in plain rows: what answered it,
@@ -94,9 +99,7 @@ export function AiRunDetail({
     { id: "duration", icon: Timer, label: t("detail.duration"), value: t("elapsed", { seconds }) },
     {
       id: "model",
-      // The app's own AI mark rather than a vendor logo — it's the same glyph
-      // every AI surface here wears, and it ships with the app.
-      icon: AiGlyph,
+      icon: ClaudeMark,
       label: t("detail.model"),
       value: run.model ? (
         <span className="font-mono text-[12.5px]">{run.model}</span>
