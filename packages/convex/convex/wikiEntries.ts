@@ -60,7 +60,7 @@ export const apiSearchForAssistant = query({
         id: e._id,
         title: e.thema,
         text: body.slice(0, 2500),
-        href: `/sales-coach-ev/wiki/${e._id}`,
+        href: `/guidebooks/${encodeURIComponent(e.slug)}`,
       }));
   },
 });
