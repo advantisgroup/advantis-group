@@ -7,7 +7,6 @@ import { AccessRequestsPanel } from "@/app/(app)/admin/AccessRequestsPanel";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin, useIsManager } from "@/components/providers/current-user";
-import { DesignSwitch } from "@/lib/design-preview";
 
 export default function AdminRequestsPage() {
   const t = useTranslations("Admin");
@@ -21,10 +20,7 @@ export default function AdminRequestsPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeaderBar title={t("accessRequests")} icon={<Clock />} />
-      <DesignSwitch
-        refreshed={<AccessRequestsPanel isAdmin={isAdmin} refreshed />}
-        classic={<AccessRequestsPanel isAdmin={isAdmin} />}
-      />
+      <AccessRequestsPanel isAdmin={isAdmin} refreshed />
     </div>
   );
 }

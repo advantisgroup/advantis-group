@@ -23,10 +23,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import {
-  ClassicErrorReportsPage,
-  NewErrorDialog,
-} from "@/components/error-management/ClassicErrorReportsPage";
+import { NewErrorDialog } from "@/components/error-management/NewErrorDialog";
 import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
 import { useIsManager } from "@/components/providers/current-user";
@@ -62,7 +59,6 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { DesignSwitch } from "@/lib/design-preview";
 import {
   CUSTOMER_FEEDBACKS,
   dateInputToMs,
@@ -939,7 +935,7 @@ function ErrorReportPanelBody({
 export default function FehlermanagementPage() {
   return (
     <Suspense fallback={null}>
-      <DesignSwitch refreshed={<ErrorReportsContent />} classic={<ClassicErrorReportsPage />} />
+      <ErrorReportsContent />
     </Suspense>
   );
 }

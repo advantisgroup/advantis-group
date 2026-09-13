@@ -25,10 +25,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import {
-  ClassicMeasuresPage,
-  NewMeasureDialog,
-} from "@/components/error-management/ClassicMeasuresPage";
+import { NewMeasureDialog } from "@/components/error-management/NewMeasureDialog";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
@@ -73,7 +70,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { DesignSwitch } from "@/lib/design-preview";
 import {
   dateInputToMs,
   MEASURE_PHASES,
@@ -1035,7 +1031,7 @@ function MeasureDocuments({ measure }: { measure: Measure }) {
 export default function MeasuresPage() {
   return (
     <Suspense fallback={null}>
-      <DesignSwitch refreshed={<MeasuresContent />} classic={<ClassicMeasuresPage />} />
+      <MeasuresContent />
     </Suspense>
   );
 }

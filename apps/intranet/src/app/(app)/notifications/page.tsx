@@ -11,14 +11,12 @@ import { Bell, Check, ChevronDown, Mail, MailOpen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
-import { ClassicNotificationsPage } from "@/components/notifications/ClassicNotificationsPage";
 import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
 import { Button } from "@/components/ui/button";
 import { CountTabs } from "@/components/ui/count-tabs";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterPill } from "@/components/ui/filter-pill";
 import { useNow } from "@/lib/activity/useNow";
-import { DesignSwitch } from "@/lib/design-preview";
 import { relativeTime } from "@/lib/format";
 import { bucketFor, notificationVisual } from "@/lib/notification-kinds";
 import { cn } from "@/lib/utils";
@@ -60,12 +58,7 @@ function needsDecision(notification: NotificationDoc): boolean {
 }
 
 export default function NotificationsPage() {
-  return (
-    <DesignSwitch
-      refreshed={<RefreshedNotificationsPage />}
-      classic={<ClassicNotificationsPage />}
-    />
-  );
+  return <RefreshedNotificationsPage />;
 }
 
 function RefreshedNotificationsPage() {

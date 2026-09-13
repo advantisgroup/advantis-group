@@ -9,7 +9,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import { Delta, Panel, SplitBar } from "@/components/admin/overview/primitives";
-import { ClassicErrorDashboard } from "@/components/error-management/ClassicErrorDashboard";
 import { Link } from "@/components/Link";
 import {
   ChartContainer,
@@ -19,7 +18,6 @@ import {
 } from "@/components/ui/chart";
 import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DesignSwitch } from "@/lib/design-preview";
 import {
   escalationLevel,
   isOverdue,
@@ -363,7 +361,5 @@ function RefreshedErrorDashboard() {
 }
 
 export default function ErrorDashboardPage() {
-  return (
-    <DesignSwitch refreshed={<RefreshedErrorDashboard />} classic={<ClassicErrorDashboard />} />
-  );
+  return <RefreshedErrorDashboard />;
 }

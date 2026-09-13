@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 
-import { DesignPreviewSettings } from "@/components/design/DesignPreviewSettings";
 import { AppPreferencesCard } from "@/components/settings/AppPreferencesCard";
 import { ConnectionsCard } from "@/components/settings/ConnectionsCard";
 import { AppearancePicker, LanguagePicker } from "@/components/settings/PreferencePickers";
@@ -16,7 +15,6 @@ export default function SettingsWorkspacePage() {
 
   return (
     <>
-      <DesignPreviewSettings />
       {/* Both chosen right here rather than behind the header's preferences
           menu: this is the page someone opens specifically to change them. */}
       {refreshed ? (
