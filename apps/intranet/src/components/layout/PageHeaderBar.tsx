@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 import Link from "next/link";
 
@@ -50,9 +50,16 @@ const PageHeaderBarContext = createContext<PageHeaderBarState>({
   actions: null,
   tabs: null,
 });
-const SetIdentityContext = createContext<(identity: PageHeaderIdentity | null) => void>(() => {});
+type RegisterIdentity = (
+  key: symbol,
+  entry: { identity: PageHeaderIdentity; priority: number } | null,
+) => void;
+
+const RegisterIdentityContext = createContext<RegisterIdentity>(() => {});
 const SetActionsContext = createContext<(actions: PageHeaderAction[] | null) => void>(() => {});
 const SetTabsContext = createContext<(tabs: PageHeaderTabs | null) => void>(() => {});
+
+let registrationOrder = 0;
 
 /**
  * Two independent state slots (not one merged object) because a section's
@@ -60,13 +67,47 @@ const SetTabsContext = createContext<(tabs: PageHeaderTabs | null) => void>(() =
  * tabs within it (e.g. Clockodo's admin tab) mount/unmount and contribute
  * `actions` on their own — a single shared object would have whichever
  * effect commits last clobber the other's contribution.
+ *
+ * Identity is a set of registrations rather than one slot, because a section
+ * layout and a page inside it can both name themselves. A plain setter let
+ * the layout win (a parent's effect commits after its child's) and let the
+ * page, on its way out, wipe the layout's title to nothing. Now each one only
+ * ever removes itself, and a page's own header outranks its section's.
  */
 export function PageHeaderBarProvider({ children }: { children: ReactNode }) {
-  const [identity, setIdentity] = useState<PageHeaderIdentity | null>(null);
+  const [entries, setEntries] = useState<
+    Map<symbol, { identity: PageHeaderIdentity; priority: number; order: number }>
+  >(() => new Map());
   const [actions, setActions] = useState<PageHeaderAction[] | null>(null);
   const [tabs, setTabs] = useState<PageHeaderTabs | null>(null);
+
+  const register = useCallback<RegisterIdentity>((key, entry) => {
+    setEntries((prev) => {
+      const next = new Map(prev);
+      if (entry) {
+        next.set(key, { ...entry, order: prev.get(key)?.order ?? ++registrationOrder });
+      } else {
+        next.delete(key);
+      }
+      return next;
+    });
+  }, []);
+
+  let identity: PageHeaderIdentity | null = null;
+  let best: { priority: number; order: number } | null = null;
+  for (const entry of entries.values()) {
+    if (
+      !best ||
+      entry.priority > best.priority ||
+      (entry.priority === best.priority && entry.order > best.order)
+    ) {
+      best = entry;
+      identity = entry.identity;
+    }
+  }
+
   return (
-    <SetIdentityContext.Provider value={setIdentity}>
+    <RegisterIdentityContext.Provider value={register}>
       <SetActionsContext.Provider value={setActions}>
         <SetTabsContext.Provider value={setTabs}>
           <PageHeaderBarContext.Provider value={{ identity, actions, tabs }}>
@@ -74,7 +115,7 @@ export function PageHeaderBarProvider({ children }: { children: ReactNode }) {
           </PageHeaderBarContext.Provider>
         </SetTabsContext.Provider>
       </SetActionsContext.Provider>
-    </SetIdentityContext.Provider>
+    </RegisterIdentityContext.Provider>
   );
 }
 
@@ -134,12 +175,22 @@ export function PageHeaderTabsSlot() {
  * app shell; immersive areas (ActivityTrack, Performance) keep their own
  * header. Typically called once per section (from its layout), not per tab.
  */
-export function PageHeaderBar({ title, icon, description, tourCheckpoint }: PageHeaderIdentity) {
-  const setIdentity = useContext(SetIdentityContext);
+export function PageHeaderBar({
+  title,
+  icon,
+  description,
+  tourCheckpoint,
+  priority = 0,
+}: PageHeaderIdentity & {
+  /** A page's own header passes 1 so it outranks the section layout's. */
+  priority?: number;
+}) {
+  const register = useContext(RegisterIdentityContext);
+  const [key] = useState(() => Symbol("page-header"));
   useEffect(() => {
-    setIdentity({ title, icon, description, tourCheckpoint });
-    return () => setIdentity(null);
-  }, [setIdentity, title, icon, description, tourCheckpoint]);
+    register(key, { identity: { title, icon, description, tourCheckpoint }, priority });
+  }, [register, key, title, icon, description, tourCheckpoint, priority]);
+  useEffect(() => () => register(key, null), [register, key]);
   return null;
 }
 

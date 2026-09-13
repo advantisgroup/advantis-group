@@ -8,7 +8,7 @@ import { AlertTriangle, Plus, Rss, Search, Sparkles, Wrench } from "lucide-react
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
-import { PageHeader } from "@/components/PageHeader";
+import { DocumentHeader } from "@/components/layout/DocumentHeader";
 import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,10 +58,9 @@ export default function UpdatesPage() {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <PageHeader
+      <DocumentHeader
         title={t("title")}
         description={t("description")}
-        icon={<Rss />}
         action={
           isAdmin ? (
             <Button asChild>

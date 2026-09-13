@@ -1,56 +1,42 @@
+"use client";
+
 import type { ReactNode } from "react";
 
-import { TourFirstVisitNudge, TourReplayButton, type CheckpointId } from "@/components/tour";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
+import { TourFirstVisitNudge, type CheckpointId } from "@/components/tour";
 
+/**
+ * The header for an app page: its title, icon and description go into the
+ * shared top bar (exactly where every other page puts them), and only its
+ * controls stay in the page, right-aligned above the content.
+ *
+ * For a page someone reads rather than operates — a wiki entry, a changelog —
+ * use `DocumentHeader` instead, which keeps a real in-page title.
+ */
 export function PageHeader({
   title,
   description,
-  eyebrow,
   icon,
   action,
   tourCheckpoint,
 }: {
   title: string;
   description?: string;
-  eyebrow?: string;
   icon?: ReactNode;
   action?: ReactNode;
-  /** Renders a replay-tour help button and a first-visit nudge for this tab. */
+  /** Renders a replay-tour button in the top bar and a first-visit nudge. */
   tourCheckpoint?: CheckpointId;
 }) {
   return (
     <>
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-        <div className="flex min-w-0 items-start gap-3">
-          {icon && (
-            <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary [&_svg]:size-5">
-              {icon}
-            </span>
-          )}
-          <div className="min-w-0">
-            {eyebrow && (
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-                {eyebrow}
-              </p>
-            )}
-            <span className="flex items-center gap-1.5">
-              <h1 className="font-display text-2xl font-bold tracking-tight md:text-[1.75rem]">
-                {title}
-              </h1>
-              {tourCheckpoint && <TourReplayButton checkpointId={tourCheckpoint} />}
-            </span>
-            {description && (
-              <p className="mt-1 break-words text-sm text-muted-foreground">{description}</p>
-            )}
-          </div>
-        </div>
-        {/* Right-aligned even when the header stacks. Left-aligned actions on
-            mobile read as part of the description text above them, and put the
-            primary button furthest from the thumb. */}
-        {action && (
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{action}</div>
-        )}
-      </div>
+      <PageHeaderBar
+        title={title}
+        description={description}
+        icon={icon}
+        tourCheckpoint={tourCheckpoint}
+        priority={1}
+      />
+      {action && <div className="mb-5 flex flex-wrap items-center justify-end gap-2">{action}</div>}
       {tourCheckpoint && <TourFirstVisitNudge checkpointId={tourCheckpoint} />}
     </>
   );

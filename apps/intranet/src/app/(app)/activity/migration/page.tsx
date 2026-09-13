@@ -76,7 +76,6 @@ export default function ActivityMigrationPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
-        eyebrow={t("title")}
         title={t("migration.title")}
         icon={<DatabaseZap />}
         action={

@@ -13,7 +13,8 @@ import {
 } from "@/components/guidebooks/registry";
 import { AcademySessionProvider } from "@/components/guidebooks/wallbox-academy/session";
 import { Link } from "@/components/Link";
-import { PageHeader } from "@/components/PageHeader";
+import { DocumentHeader } from "@/components/layout/DocumentHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -58,7 +59,8 @@ export default function WallboxAcademyLayout({ children }: { children: ReactNode
         </Card>
       ) : (
         <>
-          <PageHeader
+          <PageHeaderBar title={t("eyebrow")} />
+          <DocumentHeader
             eyebrow={t("eyebrow")}
             title={guidebookTitle(guidebook, t)}
             description={guidebookDescription(guidebook, t)}
