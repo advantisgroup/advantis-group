@@ -1567,7 +1567,6 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
   const t = useTranslations("Absences");
   const locale = useLocale();
   const hasTeamAccess = useHasCapability("view_clockodo_team");
-  const refreshed = useDesignPreview() === "refreshed";
   const [view, setView] = useState<"calendar" | "summary">("calendar");
   const [start, setStart] = useState(isoToday());
   const end = addDaysIso(start, 27);
@@ -1581,7 +1580,21 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
     }
     return [...grouped.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [calendar, start, end]);
-  const days = Array.from({ length: 28 }, (_, index) => addDaysIso(start, index));
+  const days = useMemo(
+    () => Array.from({ length: 28 }, (_, index) => addDaysIso(start, index)),
+    [start],
+  );
+  const outByDay = useMemo(
+    () =>
+      new Map(
+        days.map((day) => [
+          day,
+          (calendar ?? []).filter((a) => a.startDate <= day && day <= a.endDate).length,
+        ]),
+      ),
+    [calendar, days],
+  );
+  const busiest = Math.max(1, ...outByDay.values());
 
   const year = String(new Date().getFullYear());
   const summaryRows = useMemo(() => {
@@ -1614,7 +1627,7 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {hasTeamAccess && refreshed && (
+          {hasTeamAccess && (
             <Segmented
               value={view}
               onChange={setView}
@@ -1623,24 +1636,6 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
                 { value: "summary", label: t("viewSummary") },
               ]}
             />
-          )}
-          {hasTeamAccess && !refreshed && (
-            <div className="flex items-center gap-0.5 rounded-md border border-border/70 p-0.5">
-              <Button
-                variant={view === "calendar" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setView("calendar")}
-              >
-                {t("viewCalendar")}
-              </Button>
-              <Button
-                variant={view === "summary" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setView("summary")}
-              >
-                {t("viewSummary")}
-              </Button>
-            </div>
           )}
           {view === "calendar" && (
             <div className="flex items-center gap-1">
@@ -1680,6 +1675,37 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
                   {new Date(`${day}T00:00:00`).getDate()}
                 </div>
               ))}
+            </div>
+            <div className="grid grid-cols-[13rem_repeat(28,minmax(0,1fr))] border-b border-border/70 bg-muted/20">
+              <div className="px-4 py-2 text-xs font-medium text-muted-foreground">
+                {t("coverageRow")}
+              </div>
+              {days.map((day) => {
+                const out = outByDay.get(day) ?? 0;
+                const weekday = new Date(`${day}T00:00:00`).getDay();
+                return (
+                  <div
+                    key={day}
+                    title={t("coverageCell", { count: out })}
+                    className="relative border-l border-border/70 py-2 text-center text-[11px] tabular-nums"
+                  >
+                    <span
+                      aria-hidden
+                      className="absolute inset-1 rounded-sm bg-warning"
+                      style={{ opacity: out === 0 ? 0 : 0.15 + (out / busiest) * 0.55 }}
+                    />
+                    <span
+                      className={cn(
+                        "relative",
+                        weekday === 0 || weekday === 6 ? "text-muted-foreground/50" : "",
+                        out === 0 && "text-muted-foreground/60",
+                      )}
+                    >
+                      {out || "·"}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
             {people.map(([name, absences]) => (
               <div

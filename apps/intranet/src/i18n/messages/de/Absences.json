@@ -64,6 +64,8 @@
   "yourRequestsHint": "Alle mit deinem Konto verknüpften Clockodo-Abwesenheiten.",
   "searchRequests": "Anträge durchsuchen",
   "absencePlanner": "Abwesenheitsplaner",
+  "coverageRow": "Abwesend",
+  "coverageCell": "{count, plural, =0 {Alle da} one {# Person abwesend} other {# Personen abwesend}}",
   "previousPeriod": "Vorheriger Zeitraum",
   "nextPeriod": "Nächster Zeitraum",
   "employee": "Mitarbeiter",
