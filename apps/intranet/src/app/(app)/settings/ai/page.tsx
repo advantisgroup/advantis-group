@@ -26,9 +26,15 @@ import {
 import { useTranslations } from "next-intl";
 
 import { AiGlyph } from "@/components/ai/AiGlyph";
+import { Mark } from "@/components/branding/ProviderMark";
 import { Link } from "@/components/Link";
 import { useHasCapability } from "@/components/providers/current-user";
 import { cn } from "@/lib/utils";
+
+/** Requests go to Anthropic, so the hops and facts about the model wear its mark. */
+function AnthropicMark({ className }: { className?: string }) {
+  return <Mark provider="anthropic" className={className} />;
+}
 
 /** The AI features that can start a run, in the order someone meets them —
  * each with the icon that says what kind of work it is before the words do. */
@@ -68,7 +74,7 @@ function Tile({
   body,
   tone = "muted",
 }: {
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string }>;
   title: string;
   body: string;
   tone?: "muted" | "ai";
@@ -171,7 +177,7 @@ export default function SettingsAiPage() {
         <dl className="grid divide-y divide-border/60 border-t border-border/60 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {[
             {
-              icon: Server,
+              icon: AnthropicMark,
               term: t("privacy.metaProvider"),
               value: t("privacy.metaProviderValue"),
             },
@@ -218,10 +224,18 @@ export default function SettingsAiPage() {
           <Step icon={Server} title={t("privacy.flowApi")} body={t("privacy.flowApiBody")} />
           <ArrowRight className="mx-auto size-4 shrink-0 rotate-90 text-muted-foreground sm:rotate-0" />
           {/* The one hop that leaves the building wears the app's AI mark. */}
-          <Step icon={AiGlyph} title={t("privacy.flowModel")} body={t("privacy.flowModelBody")} />
+          <Step
+            icon={AnthropicMark}
+            title={t("privacy.flowModel")}
+            body={t("privacy.flowModelBody")}
+          />
         </div>
         <div className="grid gap-2.5 sm:grid-cols-3">
-          <Tile icon={Server} title={t("privacy.provider")} body={t("privacy.providerBody")} />
+          <Tile
+            icon={AnthropicMark}
+            title={t("privacy.provider")}
+            body={t("privacy.providerBody")}
+          />
           <Tile icon={Lock} title={t("privacy.storage")} body={t("privacy.storageBody")} />
           <Tile icon={Timer} title={t("privacy.retention")} body={t("privacy.retentionBody")} />
         </div>

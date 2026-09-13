@@ -23,7 +23,6 @@ import {
   ArrowLeft,
   Check,
   CheckCheck,
-  Cloud,
   Copy,
   ExternalLink,
   Loader2,
@@ -45,6 +44,7 @@ import { toast } from "sonner";
 
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
+import { Mark } from "@/components/branding/ProviderMark";
 import { CHAT_COLUMN, ChatDayDivider, chatBubbleClass } from "@/components/chat/chat-surface";
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
@@ -928,7 +928,7 @@ export function ConversationView({
                                             title={tc("fromOneDrive")}
                                             className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-background/90 shadow ring-1 ring-border"
                                           >
-                                            <Cloud className="size-3.5 text-blue-500" />
+                                            <Mark provider="onedrive" className="size-3.5" />
                                           </span>
                                         )}
                                       </button>
@@ -942,7 +942,7 @@ export function ConversationView({
                                         href={pathToUrl(a.oneDrivePath!)}
                                         className="mt-1 flex items-center gap-1 underline"
                                       >
-                                        <Cloud className="h-3 w-3 text-blue-500" />
+                                        <Mark provider="onedrive" className="size-3" />
                                         {a.name}
                                         <ExternalLink className="h-3 w-3 text-blue-500" />
                                       </a>
@@ -1242,7 +1242,7 @@ export function ConversationView({
             onClick={() => setOneDrivePickerOpen(true)}
             className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9"
           >
-            <Cloud className="h-5 w-5" />
+            <Mark provider="onedrive" className="size-5" />
           </button>
 
           <Popover>
@@ -1582,7 +1582,11 @@ function AttachmentChip({
         <img src={src} alt="" className="size-8 shrink-0 rounded object-cover" />
       ) : (
         <span className="flex size-8 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
-          {fromOneDrive ? <Cloud className="size-3.5" /> : <Paperclip className="size-3.5" />}
+          {fromOneDrive ? (
+            <Mark provider="onedrive" className="size-3.5" />
+          ) : (
+            <Paperclip className="size-3.5" />
+          )}
         </span>
       )}
       <span className="min-w-0 flex-1 truncate">{name}</span>

@@ -11,7 +11,6 @@ import {
   CheckCheck,
   ChevronDown,
   ChevronUp,
-  Cloud,
   Download,
   ExternalLink,
   FileText,
@@ -28,6 +27,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { Mark } from "@/components/branding/ProviderMark";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { ReactionsSummary } from "@/components/announcements/ReactionsSummary";
 import { RelevantDateCallout } from "@/components/announcements/RelevantDateCallout";
@@ -298,7 +298,7 @@ function AnnouncementCard({
                             title={tc("fromOneDrive")}
                             className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-background/90 shadow ring-1 ring-border"
                           >
-                            <Cloud className="size-3.5 text-blue-500" />
+                            <Mark provider="onedrive" className="size-3.5" />
                           </span>
                         </a>
                       ) : (
@@ -339,7 +339,7 @@ function AnnouncementCard({
                         >
                           <span className="grid size-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
                             {fromOneDrive ? (
-                              <Cloud className="size-4 text-blue-500" />
+                              <Mark provider="onedrive" className="size-4" />
                             ) : (
                               <FileText className="size-4" />
                             )}

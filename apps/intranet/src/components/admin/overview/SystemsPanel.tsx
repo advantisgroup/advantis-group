@@ -1,5 +1,7 @@
 "use client";
 
+import type { ComponentType } from "react";
+
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
@@ -10,16 +12,30 @@ import {
   Plug,
   PowerOff,
   TriangleAlert,
-  Webhook,
   Wrench,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Mark } from "@/components/branding/ProviderMark";
 import { Link } from "@/components/Link";
 import { Badge } from "@/components/ui/badge";
 import { relativeTime } from "@/lib/format";
 
 import { MetricRow, Panel, PanelSkeleton } from "./primitives";
+
+/** The webhook row is about Clockodo's feed specifically, so it wears Clockodo. */
+function ClockodoMark({ className }: { className?: string }) {
+  return <Mark provider="clockodo" className={className} />;
+}
+
+function GenesysMark({ className }: { className?: string }) {
+  return <Mark provider="genesys" className={className} />;
+}
+
+const PROVIDER_MARKS: Record<string, ComponentType<{ className?: string }>> = {
+  clockodo: ClockodoMark,
+  genesys: GenesysMark,
+};
 
 /**
  * Integration, agent-fleet and killswitch health, plus anything currently
@@ -78,7 +94,12 @@ export function SystemsPanel() {
               return (
                 <MetricRow
                   key={integration.source}
-                  icon={ok ? CircleCheck : unconfigured ? CircleSlash : TriangleAlert}
+                  // The provider's own mark says which system this is; the
+                  // badge on the right already says how it's doing.
+                  icon={
+                    PROVIDER_MARKS[integration.source] ??
+                    (ok ? CircleCheck : unconfigured ? CircleSlash : TriangleAlert)
+                  }
                   label={t(`overview.systems.source.${integration.source}`)}
                   sublabel={
                     integration.message ??
@@ -115,7 +136,7 @@ export function SystemsPanel() {
 
           {data.clockodoWebhook?.lastAt && (
             <MetricRow
-              icon={Webhook}
+              icon={ClockodoMark}
               label={t("overview.systems.webhook")}
               sublabel={t("overview.systems.webhookDetail", {
                 age: relativeTime(data.clockodoWebhook.lastAt),

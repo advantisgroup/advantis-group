@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import type { ComponentType, CSSProperties, ReactNode } from "react";
 
 import { ArrowDownRight, ArrowRight, ArrowUpRight, type LucideIcon } from "lucide-react";
 
@@ -244,7 +244,8 @@ export function MetricRow({
   href,
   tone = "neutral",
 }: {
-  icon?: LucideIcon;
+  /** A lucide icon, or a provider `Mark` wrapper for a row about an integration. */
+  icon?: ComponentType<{ className?: string }>;
   label: string;
   sublabel?: string | null;
   value?: ReactNode;
@@ -264,7 +265,7 @@ export function MetricRow({
             tone === "critical" && "bg-destructive/12 text-destructive ring-destructive/25",
           )}
         >
-          <Icon />
+          <Icon className="size-4" />
         </span>
       )}
       <div className="min-w-0 flex-1">

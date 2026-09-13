@@ -12,7 +12,6 @@ import {
   Building2,
   CalendarDays,
   CalendarPlus,
-  Cloud,
   Paperclip,
   Search,
   Settings,
@@ -30,6 +29,7 @@ import {
   DraftOfferBanner,
   DraftRestoredNote,
 } from "@/components/compose/DraftIndicator";
+import { Mark } from "@/components/branding/ProviderMark";
 import { type ReadinessCheck, ReadinessCard, scoreReadiness } from "@/components/compose/Readiness";
 import { MobileActionBar } from "@/components/compose/MobileActionBar";
 import { useDraft } from "@/components/compose/use-draft";
@@ -449,7 +449,7 @@ function ComposerOptionsFields({
               onClick={onOpenOneDrivePicker}
               className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              <Cloud className="h-4 w-4" />
+              <Mark provider="onedrive" className="size-4" />
               {tc("fromOneDrive")}
             </button>
           </div>

@@ -2,9 +2,10 @@
 
 import { type ReactNode, useEffect, useRef } from "react";
 
-import { Cloud, Loader2, Paperclip, SendHorizonal, Smile } from "lucide-react";
+import { Loader2, Paperclip, SendHorizonal, Smile } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Mark } from "@/components/branding/ProviderMark";
 import { CHAT_COLUMN } from "@/components/chat/chat-surface";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -149,7 +150,7 @@ export function MessageComposer({
               onClick={onPickOneDrive}
               className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9"
             >
-              <Cloud className="h-5 w-5" />
+              <Mark provider="onedrive" className="size-5" />
             </button>
           )}
 
