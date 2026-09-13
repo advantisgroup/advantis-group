@@ -215,6 +215,7 @@
   "authenticationUnsaved": "Nicht gespeicherte Änderungen",
   "authenticationSaved": "Authentifizierungsrichtlinie gespeichert",
   "nav": {
+    "accessReview": "Zugriffsprüfung",
     "groupGeneral": "Allgemein",
     "groupAccess": "Zugriff & Mitglieder",
     "groupSystem": "System",
@@ -257,7 +258,31 @@
     "empty": "Noch keine vorhanden — oben eines hinzufügen.",
     "memberCount": "{count} Mitglied(er)"
   },
-  "auditLog": {
+  "accessReview": {
+    "title": "Zugriffsprüfung",
+    "description": "Bestätige, dass erweiterte Rollen und Rechte noch gebraucht werden – zuerst bei Personen, die länger nicht da waren.",
+    "due": "Prüfung fällig",
+    "dueHint": "In den letzten {days} Tagen nicht bestätigt",
+    "inactive": "Inaktiv",
+    "inactiveHint": "Seit {days} Tagen nicht gesehen",
+    "total": "Personen mit Zusatzrechten",
+    "filter_due": "Fällig",
+    "filter_inactive": "Inaktiv",
+    "filter_all": "Alle",
+    "allClear": "Hier gibt es nichts zu prüfen",
+    "role_admin": "Admin",
+    "role_manager": "Manager",
+    "grant_gfAccess": "Geschäftsführungsbereich",
+    "grant_applicantAccess": "Bewerber",
+    "grant_applicantDelegate": "Vertretung Bewerberzugriff",
+    "grant_uploads": "Upload-Anfragen",
+    "lastActive": "Zuletzt aktiv",
+    "reviewed": "Bestätigt",
+    "never": "Nie",
+    "change": "Ändern",
+    "stillNeeded": "Weiter nötig",
+    "confirmed": "Zugriff für {name} bestätigt"
+  },  "auditLog": {
     "title": "Audit-Log",
     "description": "Alle privilegierten Aktionen aus ActivityTrack, OneDrive-Uploads und Integrationen an einem Ort.",
     "allSources": "Alle Quellen",

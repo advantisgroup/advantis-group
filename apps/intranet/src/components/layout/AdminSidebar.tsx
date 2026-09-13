@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   Sparkles,
   Upload,
+  UserCheck,
   Users,
   Users2,
 } from "lucide-react";
@@ -107,6 +108,12 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         labelKey: "nav.roles",
         icon: ShieldCheck,
         managerOnly: true,
+      },
+      {
+        href: "/admin/access-review",
+        labelKey: "nav.accessReview",
+        icon: UserCheck,
+        adminOnly: true,
       },
       {
         href: "/admin/password-resets",

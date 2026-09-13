@@ -809,3 +809,69 @@ export const setRoleLabel = mutation({
     return { ok: true };
   },
 });
+
+/** Everyone holding more than plain employee access, for the periodic access
+ * review: who they are, what they hold, when they were last around, and when
+ * someone last confirmed they still need it. */
+export const accessReviewList = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    const users = await ctx.db
+      .query("users")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .collect();
+    const roles = new Map((await ctx.db.query("customRoles").collect()).map((r) => [r._id, r]));
+    const presence = new Map(
+      (await ctx.db.query("presence").collect()).map((p) => [p.userId, p.lastActiveAt]),
+    );
+    const rows = users
+      .map((u) => {
+        const customRoles = effectiveCustomRoleIds(u)
+          .map((id) => roles.get(id)?.name)
+          .filter((name): name is string => !!name);
+        const grants = [
+          ...(u.gfAccess ? ["gfAccess"] : []),
+          ...(u.applicantAccess ? ["applicantAccess"] : []),
+          ...(u.applicantAccessDelegate ? ["applicantDelegate"] : []),
+          ...(u.uploadRequestsEnabled ? ["uploads"] : []),
+        ];
+        return { u, customRoles, grants };
+      })
+      .filter(
+        ({ u, customRoles, grants }) =>
+          u.role !== "employee" || customRoles.length || grants.length,
+      );
+    return Promise.all(
+      rows.map(async ({ u, customRoles, grants }) => {
+        const reviewer = u.accessReviewedByUserId
+          ? await ctx.db.get(u.accessReviewedByUserId)
+          : null;
+        return {
+          _id: u._id,
+          name: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
+          email: u.email,
+          role: u.role,
+          customRoles,
+          grants,
+          lastActiveAt: presence.get(u._id) ?? null,
+          reviewedAt: u.accessReviewedAt ?? null,
+          reviewedByName: reviewer
+            ? [reviewer.firstName, reviewer.lastName].filter(Boolean).join(" ") || reviewer.email
+            : null,
+        };
+      }),
+    );
+  },
+});
+
+export const markAccessReviewed = mutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => {
+    const admin = await requireAdmin(ctx);
+    const user = await ctx.db.get(userId);
+    if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
+    await ctx.db.patch(userId, { accessReviewedAt: Date.now(), accessReviewedByUserId: admin._id });
+    return { ok: true };
+  },
+});

@@ -360,6 +360,9 @@ export default defineSchema({
      * drives the overview's work-anniversary shoutouts.
      */
     hireDate: v.optional(v.string()),
+    /** Last time an admin confirmed this person still needs their access. */
+    accessReviewedAt: v.optional(v.number()),
+    accessReviewedByUserId: v.optional(v.id("users")),
     /**
      * Opaque code identifying this person as the source of a share link
      * (`/share/blog/x?r=<code>`). Deliberately not the Clerk id or anything

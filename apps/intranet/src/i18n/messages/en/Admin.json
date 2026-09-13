@@ -215,6 +215,7 @@
   "authenticationUnsaved": "Unsaved changes",
   "authenticationSaved": "Authentication policy saved",
   "nav": {
+    "accessReview": "Access review",
     "groupGeneral": "General",
     "groupAccess": "Access & people",
     "groupSystem": "System",
@@ -257,7 +258,31 @@
     "empty": "None yet — add one above.",
     "memberCount": "{count} member(s)"
   },
-  "auditLog": {
+  "accessReview": {
+    "title": "Access review",
+    "description": "Confirm every elevated role and grant is still needed, starting with people who haven't been around.",
+    "due": "Due for review",
+    "dueHint": "Not confirmed in the last {days} days",
+    "inactive": "Inactive",
+    "inactiveHint": "Not seen in {days} days",
+    "total": "People with extra access",
+    "filter_due": "Due",
+    "filter_inactive": "Inactive",
+    "filter_all": "Everyone",
+    "allClear": "Nothing to review here",
+    "role_admin": "Admin",
+    "role_manager": "Manager",
+    "grant_gfAccess": "Management area",
+    "grant_applicantAccess": "Applicants",
+    "grant_applicantDelegate": "Applicant access delegate",
+    "grant_uploads": "Upload requests",
+    "lastActive": "Last active",
+    "reviewed": "Confirmed",
+    "never": "Never",
+    "change": "Change",
+    "stillNeeded": "Still needed",
+    "confirmed": "Confirmed access for {name}"
+  },  "auditLog": {
     "title": "Audit log",
     "description": "Every privileged action across ActivityTrack, OneDrive uploads, and integrations, in one place.",
     "allSources": "All sources",
