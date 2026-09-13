@@ -58,9 +58,9 @@ export default function SettingsAccountPage() {
 
   return (
     <>
-      /* Who you are and the two ways to change it, in one block — the heading-in-a-far-left-column
+      {/* Who you are and the two ways to change it, in one block — the heading-in-a-far-left-column
       treatment the rest of settings uses put the name of this section a long way from the person it
-      describes. */
+      describes. */}
       <section
         data-tour="tour-settings-profile"
         className="overflow-hidden rounded-2xl border border-border/70 bg-card"
