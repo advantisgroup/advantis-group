@@ -20,8 +20,8 @@ import { cn } from "@/lib/utils";
  * Every product the intranet integrates with, and how to show it.
  *
  * Three tiers, best first, and a mark never pretends to be a tier it isn't:
- * 1. `logo` — the vendor's official file, dropped into `public/logos/`. Takes
- *    over automatically the moment the file exists.
+ * 1. `logo` — the vendor's official file in `public/logos/`. Add the file, then
+ *    the `logo` path below; it outranks the tiers under it.
  * 2. `glyph` — the CC0 mark from simple-icons, in the brand's own colour.
  * 3. `fallback` — a generic icon tinted in the brand's colour, for vendors
  *    (Microsoft, Salesforce, Genesys) whose marks aren't freely licensable.
@@ -55,15 +55,13 @@ interface ProviderDef {
 
 const PROVIDERS: Record<Provider, ProviderDef> = {
   clockodo: { name: "Clockodo", logo: "/logos/clockodo.svg", color: "#3657F7" },
-  genesys: { name: "Genesys", logo: "/logos/genesys.svg", fallback: PhoneCall, color: "#FF4F1F" },
-  onedrive: { name: "OneDrive", logo: "/logos/onedrive.svg", fallback: Cloud, color: "#0078D4" },
-  outlook: { name: "Outlook", logo: "/logos/outlook.svg", fallback: Mail, color: "#0078D4" },
-  salesforce: {
-    name: "Salesforce",
-    logo: "/logos/salesforce.svg",
-    fallback: Cloud,
-    color: "#00A1E0",
-  },
+  // No `logo` until the official file is actually in public/logos/ — a path to
+  // a missing file costs a 404 and a broken-image flash on every render, and
+  // OneDrive renders on every attachment chip.
+  genesys: { name: "Genesys", fallback: PhoneCall, color: "#FF4F1F" },
+  onedrive: { name: "OneDrive", fallback: Cloud, color: "#0078D4" },
+  outlook: { name: "Outlook", fallback: Mail, color: "#0078D4" },
+  salesforce: { name: "Salesforce", fallback: Cloud, color: "#00A1E0" },
   anthropic: { name: "Anthropic", glyph: siAnthropic },
   claude: { name: "Claude", glyph: siClaude },
   clerk: { name: "Clerk", glyph: siClerk },
