@@ -192,6 +192,45 @@ export const listAssignedOpen = query({
   },
 });
 
+/** When someone other than the reporter first reacted — a status change or a
+ * chat reply, whichever came first. `respondedAt` stays null while waiting. */
+export const firstResponse = query({
+  args: { ticketId: v.id("itTickets") },
+  handler: async (ctx, { ticketId }) => {
+    await requireUser(ctx);
+    const ticket = await ctx.db.get(ticketId);
+    if (!ticket) return null;
+    const history = await ctx.db
+      .query("itTicketStatusHistory")
+      .withIndex("by_ticket_and_changedAt", (q) => q.eq("ticketId", ticketId))
+      .order("asc")
+      .take(50);
+    // the first row is the ticket being filed, not a response
+    const firstChange = history.find(
+      (row) => row.previousStatus && row.changedByUserId !== ticket.createdByUserId,
+    );
+    const candidates = firstChange ? [firstChange.changedAt] : [];
+    const thread = await ctx.db
+      .query("itTicketThreads")
+      .withIndex("by_ticket", (q) => q.eq("ticketId", ticketId))
+      .first();
+    if (thread) {
+      const messages = await ctx.db
+        .query("itTicketMessages")
+        .withIndex("by_thread", (q) => q.eq("threadId", thread._id))
+        .take(50);
+      const reply = messages.find(
+        (m) => m.kind === "message" && m.senderUserId !== ticket.createdByUserId,
+      );
+      if (reply) candidates.push(reply.createdAt);
+    }
+    return {
+      createdAt: ticket.createdAt,
+      respondedAt: candidates.length ? Math.min(...candidates) : null,
+    };
+  },
+});
+
 export const listStatusHistory = query({
   args: { ticketId: v.id("itTickets") },
   handler: async (ctx, { ticketId }) => {
