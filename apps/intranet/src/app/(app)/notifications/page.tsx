@@ -7,13 +7,19 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Bell, Check, ChevronDown, Mail, MailOpen, Trash2 } from "lucide-react";
+import { AlarmClock, Bell, Check, ChevronDown, Mail, MailOpen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
 import { Button } from "@/components/ui/button";
 import { CountTabs } from "@/components/ui/count-tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterPill } from "@/components/ui/filter-pill";
 import { useNow } from "@/lib/activity/useNow";
@@ -213,6 +219,7 @@ function NotificationRow({ n }: { n: NotificationDoc }) {
   const markRead = useMutation(api.notifications.markRead);
   const markUnread = useMutation(api.notifications.markUnread);
   const remove = useMutation(api.notifications.remove);
+  const snooze = useMutation(api.notifications.snooze);
   // Icon/tint come from the shared registry, so a row looks the same here
   // as in the header menu. The coarse category is only for the filter chips.
   const { icon: Icon, tint } = notificationVisual(n.type);
@@ -266,6 +273,51 @@ function NotificationRow({ n }: { n: NotificationDoc }) {
         >
           {n.readAt ? <Mail /> : <MailOpen />}
         </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("snooze")}
+              className="text-muted-foreground"
+            >
+              <AlarmClock />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {(
+              [
+                ["snoozeHour", () => Date.now() + 60 * 60 * 1000],
+                ["snoozeAfternoon", () => new Date().setHours(14, 0, 0, 0)],
+                [
+                  "snoozeTomorrow",
+                  () => {
+                    const d = new Date();
+                    d.setDate(d.getDate() + 1);
+                    return d.setHours(9, 0, 0, 0);
+                  },
+                ],
+                [
+                  "snoozeNextWeek",
+                  () => {
+                    const d = new Date();
+                    d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7));
+                    return d.setHours(9, 0, 0, 0);
+                  },
+                ],
+              ] as const
+            )
+              .filter(([key]) => key !== "snoozeAfternoon" || new Date().getHours() < 13)
+              .map(([key, until]) => (
+                <DropdownMenuItem
+                  key={key}
+                  onClick={() => void snooze({ notificationId: n._id, until: until() })}
+                >
+                  {t(key)}
+                </DropdownMenuItem>
+              ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button
           variant="ghost"
           size="icon-sm"

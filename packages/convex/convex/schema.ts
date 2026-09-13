@@ -1283,6 +1283,8 @@ export default defineSchema({
     body: v.optional(v.string()),
     link: v.optional(v.string()),
     readAt: v.optional(v.number()),
+    /** Hidden until then, when it comes back unread at the top. */
+    snoozedUntil: v.optional(v.number()),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
 

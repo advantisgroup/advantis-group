@@ -9,11 +9,15 @@ export const list = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
     const user = await requireUser(ctx);
-    return ctx.db
+    const rows = await ctx.db
       .query("notifications")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .order("desc")
-      .take(limit ?? 50);
+      .take((limit ?? 50) + 20);
+    return rows
+      .filter((n) => !n.snoozedUntil)
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, limit ?? 50);
   },
 });
 
@@ -70,6 +74,36 @@ export const markUnread = mutation({
       await ctx.db.patch(notificationId, { readAt: undefined });
     }
     return { ok: true };
+  },
+});
+
+export const snooze = mutation({
+  args: { notificationId: v.id("notifications"), until: v.number() },
+  handler: async (ctx, { notificationId, until }) => {
+    const user = await requireUser(ctx);
+    const notification = await ctx.db.get(notificationId);
+    if (!notification || notification.userId !== user._id) return { ok: false };
+    const now = Date.now();
+    const snoozedUntil = Math.min(Math.max(until, now + 60_000), now + 14 * 24 * 60 * 60 * 1000);
+    await ctx.db.patch(notificationId, { snoozedUntil, readAt: notification.readAt ?? now });
+    await ctx.scheduler.runAt(snoozedUntil, internal.notifications.resurface, {
+      notificationId,
+      snoozedUntil,
+    });
+    return { ok: true };
+  },
+});
+
+export const resurface = internalMutation({
+  args: { notificationId: v.id("notifications"), snoozedUntil: v.number() },
+  handler: async (ctx, { notificationId, snoozedUntil }) => {
+    const notification = await ctx.db.get(notificationId);
+    if (!notification || notification.snoozedUntil !== snoozedUntil) return;
+    await ctx.db.patch(notificationId, {
+      snoozedUntil: undefined,
+      readAt: undefined,
+      createdAt: Date.now(),
+    });
   },
 });
 
