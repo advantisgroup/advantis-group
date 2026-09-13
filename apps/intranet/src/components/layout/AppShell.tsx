@@ -30,7 +30,6 @@ import {
   PageHeaderBarProvider,
   PageHeaderBarSlot,
   PageHeaderTabsSlot,
-  usePageHeaderBarState,
 } from "@/components/layout/PageHeaderBar";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Sidebar } from "@/components/layout/Sidebar";
