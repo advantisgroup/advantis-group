@@ -680,7 +680,7 @@ export default function AnnouncementsPage() {
           title={t("empty")}
           action={
             isManager ? (
-              <Button size="sm" onClick={() => router.push("/announcements/new")}>
+              <Button data-shortcut-new size="sm" onClick={() => router.push("/announcements/new")}>
                 <Plus />
                 {t("new")}
               </Button>

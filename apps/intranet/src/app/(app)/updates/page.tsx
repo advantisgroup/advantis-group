@@ -98,7 +98,7 @@ export default function UpdatesPage() {
         description={t("description")}
         action={
           isAdmin ? (
-            <Button asChild>
+            <Button data-shortcut-new asChild>
               <Link href="/updates/new">
                 <Plus className="size-4" />
                 {t("newUpdate")}
@@ -227,6 +227,7 @@ export default function UpdatesPage() {
                     <Link
                       key={item._id}
                       href={`/updates/${item._id}`}
+                      data-shortcut-item
                       className="flex items-start gap-3 rounded-xl border border-border/70 bg-card px-4 py-3.5 transition-colors hover:bg-accent"
                     >
                       <span

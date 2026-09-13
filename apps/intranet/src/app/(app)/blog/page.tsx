@@ -171,7 +171,7 @@ function RefreshedBlogList({
           title={posts.length === 0 ? t("noPostsYet") : t("noResults")}
           action={
             posts.length === 0 ? (
-              <Button size="sm" onClick={() => router.push("/blog/new")}>
+              <Button data-shortcut-new size="sm" onClick={() => router.push("/blog/new")}>
                 <Plus />
                 {t("newPost")}
               </Button>

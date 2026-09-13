@@ -633,7 +633,7 @@ function ItTicketsPageContent() {
                 {t("clearFilters")}
               </Button>
             ) : (
-              <Button size="sm" onClick={openCreate}>
+              <Button data-shortcut-new size="sm" onClick={openCreate}>
                 <Plus />
                 {t("newTicket")}
               </Button>

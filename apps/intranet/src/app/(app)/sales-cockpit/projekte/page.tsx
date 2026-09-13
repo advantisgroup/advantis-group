@@ -47,7 +47,7 @@ export default function SalesCockpitProjektePage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button asChild>
+        <Button data-shortcut-new asChild>
           <Link href="/sales-cockpit/projekte/new">
             <Plus />
             {t("neuesProjekt")}

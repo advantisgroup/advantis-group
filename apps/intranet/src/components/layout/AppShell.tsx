@@ -18,6 +18,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { GracePeriodBanner } from "@/components/layout/GracePeriodBanner";
+import { KeyboardShortcuts } from "@/components/layout/KeyboardShortcuts";
 import { SandboxBanner } from "@/components/layout/SandboxBanner";
 import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -349,6 +350,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
       {/* Native browser notifications for background tabs (opt-in). */}
       <BrowserNotificationBridge />
+      <KeyboardShortcuts />
       <AiDock />
       <AskPanel />
       <StartPageRedirect />

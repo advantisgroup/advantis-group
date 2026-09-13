@@ -263,7 +263,7 @@ function SuggestionsPageContent() {
                 {t("clearFilters")}
               </Button>
             ) : (
-              <Button size="sm" onClick={() => setNewOpen(true)}>
+              <Button data-shortcut-new size="sm" onClick={() => setNewOpen(true)}>
                 <Plus />
                 {t("new")}
               </Button>

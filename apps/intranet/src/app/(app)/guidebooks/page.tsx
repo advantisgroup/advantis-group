@@ -793,7 +793,7 @@ export default function GuidebooksPage() {
                   {tc("clearSearch")}
                 </Button>
               ) : canManage && !showArchive ? (
-                <Button size="sm" onClick={() => router.push("/guidebooks/new")}>
+                <Button data-shortcut-new size="sm" onClick={() => router.push("/guidebooks/new")}>
                   <Plus />
                   {t("newEntry")}
                 </Button>

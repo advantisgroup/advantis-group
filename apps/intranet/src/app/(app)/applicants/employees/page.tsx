@@ -238,7 +238,7 @@ export default function EmployeesPage() {
               {t("browseFiles")}
             </Link>
           </Button>
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button data-shortcut-new onClick={() => setCreateOpen(true)}>
             <Plus className="size-4" />
             {t("employeeNew")}
           </Button>
