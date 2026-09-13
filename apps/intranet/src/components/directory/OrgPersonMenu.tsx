@@ -27,7 +27,13 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { type Person } from "./person-status";
 
 export interface OrgUnits {
-  teams: { _id: Id<"teams">; name: string; slug: string; reportsToUserId?: Id<"users"> }[];
+  teams: {
+    _id: Id<"teams">;
+    name: string;
+    slug: string;
+    reportsToUserId?: Id<"users">;
+    departmentId?: Id<"departments">;
+  }[];
   departments: { _id: Id<"departments">; name: string; reportsToUserId?: Id<"users"> }[];
   /** Admins shape the structure; people who manage members can place someone in a department. */
   canAdmin: boolean;

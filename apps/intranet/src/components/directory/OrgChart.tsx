@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 
 import { OrgPersonMenu, type OrgUnits } from "./OrgPersonMenu";
 import { OrgStructureBar } from "./OrgStructureBar";
+import { OrgStructureBoard } from "./OrgStructureBoard";
 import { type Person, type PersonStatus } from "./person-status";
 import { StatusPill } from "./StatusPill";
 
@@ -429,6 +430,7 @@ export function OrgChart({
             </div>
           </section>
         )}
+        {units && <OrgStructureBoard units={units} people={people} />}
         {canEdit && dragging && (
           <div
             data-org-drop={ROOT}
