@@ -42,6 +42,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { FindATime } from "@/components/calendar/FindATime";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { PersonLink } from "@/components/profile/PersonLink";
 import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
@@ -178,6 +179,11 @@ function EventDialog({
   const [form, setForm] = useState<EventDraft>(emptyDraft());
   const [busy, setBusy] = useState(false);
   const [occurrences, setOccurrences] = useState("1");
+  const [findOpen, setFindOpen] = useState(false);
+  const localInput = (ms: number) => {
+    const d = new Date(ms);
+    return `${isoDay(d)}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  };
 
   const conflictRange = useMemo(() => {
     if (!form.start || !form.end) return null;
@@ -325,6 +331,17 @@ function EventDialog({
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-4 pt-1">
+            {!form.allDay && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                aria-expanded={findOpen}
+                onClick={() => setFindOpen((open) => !open)}
+              >
+                {t("findATime")}
+              </Button>
+            )}
             <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
               <input
                 type="checkbox"
@@ -335,6 +352,24 @@ function EventDialog({
               {t("allDay")}
             </label>
           </div>
+          {findOpen && !form.allDay && (
+            <FindATime
+              from={form.start ? new Date(form.start) : new Date()}
+              durationMin={
+                conflictRange ? Math.round((conflictRange.end - conflictRange.start) / 60_000) : 60
+              }
+              audience={form.audience}
+              ignoreEventId={form.eventId}
+              onPick={(slot) => {
+                setForm((f) => ({
+                  ...f,
+                  start: localInput(slot.start),
+                  end: localInput(slot.end),
+                }));
+                setFindOpen(false);
+              }}
+            />
+          )}
         </div>
 
         <Select value={form.audience} onValueChange={(v) => set("audience", v)}>
