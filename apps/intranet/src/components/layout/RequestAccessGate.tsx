@@ -49,6 +49,21 @@ export function RequestAccessGate() {
     return <AccessDeniedScreen />;
   }
 
+  // The convex JWT's email claim can briefly lag behind a just-created
+  // Clerk account (e.g. right after accepting an invite via OAuth) — myStatus
+  // reports no email yet. Wait rather than offering a request button that's
+  // just going to throw "no email address"; the query is live and re-renders
+  // itself once the claim catches up.
+  if (status && state === "none" && !status.email) {
+    return (
+      <div className="app-atmosphere relative flex min-h-screen items-center justify-center p-4">
+        <div className="animate-pulse opacity-70">
+          <BrandLogo />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-atmosphere relative flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md overflow-hidden">
