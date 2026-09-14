@@ -9,9 +9,9 @@ import { Briefcase, Building2, Download, LogOut, Pencil, Phone, ShieldCheck } fr
 import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
 
+import { Link } from "@/components/Link";
 import { TotpSettingsCard } from "@/components/mfa/TotpSettingsCard";
 import { PasskeySettingsCard } from "@/components/passkeys/PasskeySettingsCard";
-import { ProfileEditorDialog } from "@/components/profile/ProfileEditorDialog";
 import { ActiveSessionsCard } from "@/components/security/ActiveSessionsCard";
 import { SecurityActivityCard } from "@/components/security/SecurityActivityCard";
 import { SecurityPosture } from "@/components/security/SecurityPosture";
@@ -35,7 +35,6 @@ export default function SettingsAccountPage() {
   const tNav = useTranslations("Nav");
   const user = useCurrentUser();
   const clerk = useClerk();
-  const [profileEditorOpen, setProfileEditorOpen] = useState(false);
   const convex = useConvex();
   const handleError = useErrorHandler();
   const [exporting, setExporting] = useState(false);
@@ -83,9 +82,11 @@ export default function SettingsAccountPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => setProfileEditorOpen(true)}>
-              <Pencil />
-              {t("editProfile")}
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/settings/account/profile">
+                <Pencil />
+                {t("editProfile")}
+              </Link>
             </Button>
             <Button variant="ghost" size="sm" onClick={() => clerk.openUserProfile()}>
               <ShieldCheck />
@@ -164,11 +165,6 @@ export default function SettingsAccountPage() {
           <SettingsRow title={t("deleteAccountTitle")} description={t("deleteAccountHint")} />
         </SettingsSection>
       </SettingsLayoutProvider>
-      <ProfileEditorDialog
-        user={user}
-        open={profileEditorOpen}
-        onOpenChange={setProfileEditorOpen}
-      />
     </>
   );
 }

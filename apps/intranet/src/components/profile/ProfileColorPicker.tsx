@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-import { Pipette, Plus } from "lucide-react";
+import { Check, Pipette, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 const QUICK_COLORS = ["#8ecae6", "#6d6875", "#b7e4c7", "#e9c5b0", "#d6a6df"];
@@ -188,38 +186,44 @@ export function ProfileColorPicker({
   onChange: (color: string) => void;
 }) {
   const t = useTranslations("Settings");
-  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const color = value ?? "#38bdf8";
-  const trigger = (
-    <Button
-      type="button"
-      variant="outline"
-      className="w-full justify-start gap-3"
-      onClick={() => setOpen((current) => !current)}
-    >
-      <span
-        className="size-5 rounded-md border border-border/70"
-        style={{ backgroundColor: color }}
-      />
-      <span className="flex-1 text-left">{t("customColor")}</span>
-      <Pipette className="size-4 text-muted-foreground" />
-    </Button>
-  );
-
-  if (isMobile) {
-    return (
-      <div className="space-y-3">
-        {trigger}
-        {open && <ColorControls value={color} onChange={onChange} />}
-      </div>
-    );
-  }
+  const selected = value !== null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent align="start" className="w-80 p-3">
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-pressed={selected}
+          className="group space-y-1.5 text-left focus-visible:outline-none"
+        >
+          <span
+            className={cn(
+              "grid h-12 place-items-center rounded-lg border ring-offset-2 ring-offset-card transition-shadow group-focus-visible:ring-2 group-focus-visible:ring-ring",
+              selected
+                ? "border-transparent ring-2 ring-foreground"
+                : "border-dashed border-border bg-muted/40 group-hover:bg-muted",
+            )}
+            style={selected ? { backgroundColor: color } : undefined}
+          >
+            {selected ? (
+              <Check className="size-4 text-white drop-shadow" />
+            ) : (
+              <Pipette className="size-4 text-muted-foreground" />
+            )}
+          </span>
+          <span
+            className={cn(
+              "block text-[12.5px]",
+              selected ? "font-medium" : "text-muted-foreground",
+            )}
+          >
+            {t("customColor")}
+          </span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-3">
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
           <Plus className="size-4 text-primary" />
           {t("customColor")}
