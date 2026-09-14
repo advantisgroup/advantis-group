@@ -115,7 +115,7 @@
   "profileGradientHint": "The color behind your picture on your profile and in the directory.",
   "avatarHint": "Any photo works — it's cropped to a square for you.",
   "profilePreview": "How colleagues see you",
-  "unsavedChanges": "Unsaved changes",
+  "saving": "Saving…",
   "customColor": "Custom color",
   "colorHue": "Hue",
   "colorSaturation": "Saturation and brightness",

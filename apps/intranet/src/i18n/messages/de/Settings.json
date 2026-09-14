@@ -115,7 +115,7 @@
   "profileGradientHint": "Die Farbe hinter deinem Bild im Profil und im Verzeichnis.",
   "avatarHint": "Jedes Foto passt — es wird automatisch quadratisch zugeschnitten.",
   "profilePreview": "So sehen dich Kolleg:innen",
-  "unsavedChanges": "Ungespeicherte Änderungen",
+  "saving": "Wird gespeichert…",
   "customColor": "Eigene Farbe",
   "colorHue": "Farbton",
   "colorSaturation": "Sättigung und Helligkeit",

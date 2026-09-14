@@ -1,22 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { KeyRound, ScanFace, Search, ShieldAlert, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { Switch } from "@/components/notifications/NotificationPreferences";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -25,6 +24,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  SettingsLayoutProvider,
+  SettingsRow,
+  SettingsSection,
+} from "@/components/ui/settings-rows";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 
@@ -59,42 +64,36 @@ function ScopeSection({
 }) {
   const t = useTranslations("Admin");
   return (
-    <div className="space-y-3">
-      <div>
-        <p className="font-medium">{title}</p>
-        <p className="text-sm text-muted-foreground">{hint}</p>
-      </div>
+    <SettingsSection title={title} description={hint}>
       <RadioGroup
         value={scope}
         onValueChange={(v) => onScopeChange(v as Scope)}
-        className="gap-2.5"
+        className="gap-0 divide-y divide-border/60"
       >
         {(["off", "managers_and_up", "all"] as const).map((value) => (
           <label
             key={value}
-            className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border/70 p-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
+            className="flex cursor-pointer items-center gap-3 px-4 py-3 text-[13.5px] transition-colors hover:bg-muted/40 has-[[data-state=checked]]:font-medium"
           >
-            <RadioGroupItem value={value} className="mt-0.5" />
-            <span className="text-sm">{t(`authenticationScope_${value}`)}</span>
+            <RadioGroupItem value={value} />
+            {t(`authenticationScope_${value}`)}
           </label>
         ))}
       </RadioGroup>
       {scope !== "off" && (
-        <label className="flex cursor-pointer items-start gap-2.5 pl-1 text-sm">
-          <Checkbox
-            checked={retroactive}
-            onCheckedChange={(v) => onRetroactiveChange(v === true)}
-            className="mt-0.5"
-          />
-          <span>
-            <span className="block">{t("authenticationRetroactive")}</span>
-            <span className="block text-xs text-muted-foreground">
-              {t("authenticationRetroactiveHint")}
-            </span>
-          </span>
-        </label>
+        <SettingsRow
+          title={t("authenticationRetroactive")}
+          description={t("authenticationRetroactiveHint")}
+          control={
+            <Switch
+              checked={retroactive}
+              onToggle={() => onRetroactiveChange(!retroactive)}
+              label={t("authenticationRetroactive")}
+            />
+          }
+        />
       )}
-    </div>
+    </SettingsSection>
   );
 }
 
@@ -128,12 +127,7 @@ function ExemptUsersPicker({
   }
 
   return (
-    <div className="space-y-2">
-      <div>
-        <p className="font-medium">{t("authenticationExempt")}</p>
-        <p className="text-sm text-muted-foreground">{t("authenticationExemptHint")}</p>
-      </div>
-
+    <div className="mt-3 space-y-2.5">
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {selected.map((id) => {
@@ -155,17 +149,17 @@ function ExemptUsersPicker({
         </div>
       )}
 
-      <div className="relative">
+      <div className="relative sm:max-w-sm">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("authenticationExemptSearchPlaceholder")}
-          className="h-9 pl-8"
+          className="pl-8"
         />
       </div>
       {search.trim() && (
-        <div className="max-h-56 space-y-1 overflow-y-auto rounded-lg border border-border/70 p-1.5">
+        <div className="max-h-56 space-y-0.5 overflow-y-auto rounded-lg border border-border/70 p-1 sm:max-w-sm">
           {results?.length === 0 ? (
             <p className="px-2 py-3 text-center text-xs text-muted-foreground">
               {t("authenticationExemptEmpty")}
@@ -174,7 +168,7 @@ function ExemptUsersPicker({
             results?.map((user) => (
               <label
                 key={user._id}
-                className="flex cursor-pointer items-center gap-2.5 rounded-md p-1.5 hover:bg-muted"
+                className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-2 hover:bg-muted"
               >
                 <Checkbox
                   checked={selected.includes(user._id)}
@@ -194,273 +188,256 @@ function ExemptUsersPicker({
   );
 }
 
-function AdoptionBar({
+function AdoptionKpi({
   label,
   pct,
   count,
   total,
-  icon: Icon,
 }: {
   label: string;
   pct: number;
   count: number;
   total: number;
-  icon: typeof KeyRound;
 }) {
+  const percent = Math.min(100, Math.round(pct * 100));
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between gap-2 text-sm">
-        <span className="flex items-center gap-1.5 font-medium">
-          <Icon className="size-3.5 text-muted-foreground" />
-          {label}
-        </span>
-        <span className="text-muted-foreground">
-          {count}/{total} · {Math.round(pct * 100)}%
-        </span>
-      </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full rounded-full bg-primary transition-[width]"
-          style={{ width: `${Math.min(100, Math.round(pct * 100))}%` }}
+    <Kpi label={label} value={`${percent}%`} hint={`${count} / ${total}`}>
+      <span className="mt-1 h-1 overflow-hidden rounded-full bg-muted">
+        <span
+          className="block h-full rounded-full bg-primary transition-[width]"
+          style={{ width: `${percent}%` }}
         />
-      </div>
-    </div>
+      </span>
+    </Kpi>
   );
 }
 
 /** The compliance answer this whole feature was partly built to replace "go
  * look in the Convex dashboard" with — exact counts, and exactly who's
- * currently out of step with the policy above. Read-only; changing anything
- * here happens through the sections above it. */
+ * currently out of step with the policy below. Read-only; changing anything
+ * here happens through the sections under it. */
 function SecurityStandardSection() {
   const t = useTranslations("Admin");
   const tRoles = useTranslations("Roles");
   const standard = useQuery(api.stepUp.orgStandard);
 
-  if (!standard) {
-    return (
-      <Card>
-        <CardContent className="flex justify-center p-5 text-muted-foreground">
-          <ShieldAlert className="size-5 animate-pulse" />
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
-      <CardContent className="space-y-5 p-5">
-        <div>
-          <p className="font-medium">{t("authenticationStandardTitle")}</p>
-          <p className="text-sm text-muted-foreground">{t("authenticationStandardHint")}</p>
-        </div>
+    <section className="space-y-3">
+      <header>
+        <h2 className="text-sm font-semibold tracking-tight">{t("authenticationStandardTitle")}</h2>
+        <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground text-pretty">
+          {t("authenticationStandardHint")}
+        </p>
+      </header>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <AdoptionBar
-            label={t("authenticationStandardMfaAdoption")}
-            pct={standard.mfaEnrolledPct}
-            count={standard.mfaEnrolledCount}
-            total={standard.totalActive}
-            icon={ScanFace}
-          />
-          <AdoptionBar
-            label={t("authenticationStandardPasskeyAdoption")}
-            pct={standard.passkeyEnrolledPct}
-            count={standard.passkeyEnrolledCount}
-            total={standard.totalActive}
-            icon={KeyRound}
-          />
-        </div>
+      {!standard ? (
+        <Skeleton className="h-28 rounded-xl" />
+      ) : (
+        <>
+          <KpiStrip className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3">
+            <AdoptionKpi
+              label={t("authenticationStandardMfaAdoption")}
+              pct={standard.mfaEnrolledPct}
+              count={standard.mfaEnrolledCount}
+              total={standard.totalActive}
+            />
+            <AdoptionKpi
+              label={t("authenticationStandardPasskeyAdoption")}
+              pct={standard.passkeyEnrolledPct}
+              count={standard.passkeyEnrolledCount}
+              total={standard.totalActive}
+            />
+            <Kpi
+              label={t("authenticationStandardBelow")}
+              value={standard.nonCompliant.length}
+              tone={standard.nonCompliant.length > 0 ? "warn" : "neutral"}
+            />
+          </KpiStrip>
 
-        <div className="space-y-2 border-t border-border/70 pt-4">
-          <p className="text-sm font-medium">
-            {t("authenticationStandardNonCompliant", { count: standard.nonCompliant.length })}
-          </p>
           {standard.nonCompliant.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("authenticationStandardClean")}</p>
+            <p className="text-[13px] text-muted-foreground">{t("authenticationStandardClean")}</p>
           ) : (
-            <div className="space-y-1.5">
+            <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
               {standard.nonCompliant.map((entry) => (
-                <div
+                <li
                   key={entry.userId}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-sm"
+                  className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 px-4 py-3"
                 >
-                  <span className="min-w-0 truncate font-medium">{entry.name}</span>
-                  <div className="flex shrink-0 flex-wrap gap-1">
-                    <Badge variant="outline" className="text-[10px]">
+                  <span className="min-w-0 text-[13.5px] font-medium">{entry.name}</span>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="outline" className="text-[11px]">
                       {tRoles(entry.role as "admin" | "manager" | "employee")}
                     </Badge>
                     {entry.missing.map((missing) => (
-                      <Badge key={missing} variant="warning" className="text-[10px]">
+                      <Badge key={missing} variant="warning" className="text-[11px]">
                         {missing === "mfa"
                           ? t("authenticationStandardMissingMfa")
                           : t("authenticationStandardMissingPasskey")}
                       </Badge>
                     ))}
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-        </div>
-      </CardContent>
-    </Card>
+        </>
+      )}
+    </section>
   );
 }
 
+function formOf(policy: PolicyForm): PolicyForm {
+  return {
+    requireMfaScope: policy.requireMfaScope,
+    requireMfaRetroactive: policy.requireMfaRetroactive,
+    requireMfaForDestructive: policy.requireMfaForDestructive,
+    destructiveActionTtlMinutes: policy.destructiveActionTtlMinutes,
+    minDestructiveLevel: policy.minDestructiveLevel,
+    requirePasskeyScope: policy.requirePasskeyScope,
+    requirePasskeyRetroactive: policy.requirePasskeyRetroactive,
+    gracePeriodDays: policy.gracePeriodDays,
+    exemptUserIds: policy.exemptUserIds,
+  };
+}
+
+function appliesRetroactively(scope: Scope, retroactive: boolean) {
+  return scope !== "off" && retroactive;
+}
+
+/**
+ * Every change commits the moment it's made, like the rest of settings —
+ * there's no draft to lose and no save bar to chase. The one kind of change
+ * that interrupts people who already have access asks first.
+ */
 export function AuthenticationPolicyPanel() {
   const t = useTranslations("Admin");
   const policy = useQuery(api.stepUp.orgPolicy);
   const setPolicy = useMutation(api.stepUp.setOrgPolicy);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
-
   const [form, setForm] = useState<PolicyForm | null>(null);
-  const [saving, setSaving] = useState(false);
+  // Saves run one after another so a slow earlier save can't land on top of a newer one.
+  const queue = useRef(Promise.resolve());
 
   useEffect(() => {
-    if (policy && !form) {
-      setForm({
-        requireMfaScope: policy.requireMfaScope,
-        requireMfaRetroactive: policy.requireMfaRetroactive,
-        requireMfaForDestructive: policy.requireMfaForDestructive,
-        destructiveActionTtlMinutes: policy.destructiveActionTtlMinutes,
-        minDestructiveLevel: policy.minDestructiveLevel,
-        requirePasskeyScope: policy.requirePasskeyScope,
-        requirePasskeyRetroactive: policy.requirePasskeyRetroactive,
-        gracePeriodDays: policy.gracePeriodDays,
-        exemptUserIds: policy.exemptUserIds,
-      });
-    }
+    if (policy && !form) setForm(formOf(policy));
   }, [policy, form]);
 
-  if (!form) {
+  if (!form || !policy) {
     return (
-      <div className="flex justify-center py-10 text-muted-foreground">
-        <ShieldAlert className="size-5 animate-pulse" />
+      <div className="space-y-8">
+        <Skeleton className="h-36 rounded-xl" />
+        <Skeleton className="h-48 rounded-xl" />
       </div>
     );
   }
 
-  const dirty =
-    !!policy &&
-    (form.requireMfaScope !== policy.requireMfaScope ||
-      form.requireMfaRetroactive !== policy.requireMfaRetroactive ||
-      form.requireMfaForDestructive !== policy.requireMfaForDestructive ||
-      form.destructiveActionTtlMinutes !== policy.destructiveActionTtlMinutes ||
-      form.minDestructiveLevel !== policy.minDestructiveLevel ||
-      form.requirePasskeyScope !== policy.requirePasskeyScope ||
-      form.requirePasskeyRetroactive !== policy.requirePasskeyRetroactive ||
-      form.gracePeriodDays !== policy.gracePeriodDays ||
-      form.exemptUserIds.length !== policy.exemptUserIds.length ||
-      form.exemptUserIds.some((id) => !policy.exemptUserIds.includes(id)));
+  function persist(next: PolicyForm) {
+    queue.current = queue.current
+      .then(() => setPolicy(next))
+      .then(
+        () => {
+          toast.success(t("authenticationSaved"));
+        },
+        (error) => {
+          handleError(error);
+          if (policy) setForm(formOf(policy));
+        },
+      );
+  }
 
-  const turningOnRetroactive =
-    (form.requireMfaRetroactive && !policy?.requireMfaRetroactive) ||
-    (form.requirePasskeyRetroactive && !policy?.requirePasskeyRetroactive);
-
-  async function save() {
-    if (!form) return;
-    if (turningOnRetroactive) {
-      const items: { tone: "neutral"; text: string }[] = [];
-      if (form.requireMfaRetroactive && !policy?.requireMfaRetroactive) {
-        items.push({ tone: "neutral", text: t("authenticationConfirmMfaRetroactive") });
-      }
-      if (form.requirePasskeyRetroactive && !policy?.requirePasskeyRetroactive) {
-        items.push({ tone: "neutral", text: t("authenticationConfirmPasskeyRetroactive") });
-      }
+  async function change(patch: Partial<PolicyForm>) {
+    if (!form || !policy) return;
+    const next = { ...form, ...patch };
+    const items: { tone: "neutral"; text: string }[] = [];
+    if (
+      appliesRetroactively(next.requireMfaScope, next.requireMfaRetroactive) &&
+      !appliesRetroactively(policy.requireMfaScope, policy.requireMfaRetroactive)
+    ) {
+      items.push({ tone: "neutral", text: t("authenticationConfirmMfaRetroactive") });
+    }
+    if (
+      appliesRetroactively(next.requirePasskeyScope, next.requirePasskeyRetroactive) &&
+      !appliesRetroactively(policy.requirePasskeyScope, policy.requirePasskeyRetroactive)
+    ) {
+      items.push({ tone: "neutral", text: t("authenticationConfirmPasskeyRetroactive") });
+    }
+    if (items.length > 0) {
       const ok = await confirm({
         title: t("authenticationConfirmTitle"),
         description: t("authenticationConfirmBody"),
         items,
-        confirmLabel: t("authenticationSave"),
+        confirmLabel: t("authenticationApply"),
         cancelLabel: t("authenticationCancel"),
       });
       if (!ok) return;
     }
-    setSaving(true);
-    setPolicy(form)
-      .then(() => toast.success(t("authenticationSaved")))
-      .catch(handleError)
-      .finally(() => setSaving(false));
+    setForm(next);
+    persist(next);
   }
 
-  const discard = () =>
-    policy &&
-    setForm({
-      requireMfaScope: policy.requireMfaScope,
-      requireMfaRetroactive: policy.requireMfaRetroactive,
-      requireMfaForDestructive: policy.requireMfaForDestructive,
-      destructiveActionTtlMinutes: policy.destructiveActionTtlMinutes,
-      minDestructiveLevel: policy.minDestructiveLevel,
-      requirePasskeyScope: policy.requirePasskeyScope,
-      requirePasskeyRetroactive: policy.requirePasskeyRetroactive,
-      gracePeriodDays: policy.gracePeriodDays,
-      exemptUserIds: policy.exemptUserIds,
-    });
+  // Number fields save when you leave them, not on every keystroke.
+  function commitNumbers() {
+    if (!form || !policy) return;
+    if (
+      form.gracePeriodDays !== policy.gracePeriodDays ||
+      form.destructiveActionTtlMinutes !== policy.destructiveActionTtlMinutes
+    ) {
+      persist(form);
+    }
+  }
 
   return (
-    <div className="space-y-4">
-      {/* The two enrolment policies read as a pair and are the same shape, so
-          they sit side by side rather than one screenful after the other. */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardContent className="space-y-6 p-5">
-            <ScopeSection
-              title={t("authenticationMfaTitle")}
-              hint={t("authenticationMfaHint")}
-              scope={form.requireMfaScope}
-              retroactive={form.requireMfaRetroactive}
-              onScopeChange={(requireMfaScope) => setForm({ ...form, requireMfaScope })}
-              onRetroactiveChange={(requireMfaRetroactive) =>
-                setForm({ ...form, requireMfaRetroactive })
-              }
-            />
-          </CardContent>
-        </Card>
+    <SettingsLayoutProvider value="stacked">
+      <div className="space-y-10">
+        <SecurityStandardSection />
 
-        <Card>
-          <CardContent className="space-y-6 p-5">
-            <ScopeSection
-              title={t("authenticationPasskeyTitle")}
-              hint={t("authenticationPasskeyHint")}
-              scope={form.requirePasskeyScope}
-              retroactive={form.requirePasskeyRetroactive}
-              onScopeChange={(requirePasskeyScope) => setForm({ ...form, requirePasskeyScope })}
-              onRetroactiveChange={(requirePasskeyRetroactive) =>
-                setForm({ ...form, requirePasskeyRetroactive })
-              }
-            />
-          </CardContent>
-        </Card>
-      </div>
+        <ScopeSection
+          title={t("authenticationMfaTitle")}
+          hint={t("authenticationMfaHint")}
+          scope={form.requireMfaScope}
+          retroactive={form.requireMfaRetroactive}
+          onScopeChange={(requireMfaScope) => void change({ requireMfaScope })}
+          onRetroactiveChange={(requireMfaRetroactive) => void change({ requireMfaRetroactive })}
+        />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardContent className="space-y-4 p-5">
-            <div>
-              <p className="font-medium">{t("authenticationDestructiveTitle")}</p>
-              <p className="text-sm text-muted-foreground">{t("authenticationDestructiveHint")}</p>
-            </div>
-            <label className="flex cursor-pointer items-start gap-2.5 text-sm">
-              <Checkbox
+        <ScopeSection
+          title={t("authenticationPasskeyTitle")}
+          hint={t("authenticationPasskeyHint")}
+          scope={form.requirePasskeyScope}
+          retroactive={form.requirePasskeyRetroactive}
+          onScopeChange={(requirePasskeyScope) => void change({ requirePasskeyScope })}
+          onRetroactiveChange={(requirePasskeyRetroactive) =>
+            void change({ requirePasskeyRetroactive })
+          }
+        />
+
+        <SettingsSection
+          title={t("authenticationDestructiveTitle")}
+          description={t("authenticationDestructiveHint")}
+        >
+          <SettingsRow
+            title={t("authenticationDestructiveEnable")}
+            control={
+              <Switch
                 checked={form.requireMfaForDestructive}
-                onCheckedChange={(v) => setForm({ ...form, requireMfaForDestructive: v === true })}
-                className="mt-0.5"
+                onToggle={() =>
+                  void change({ requireMfaForDestructive: !form.requireMfaForDestructive })
+                }
+                label={t("authenticationDestructiveEnable")}
               />
-              {t("authenticationDestructiveEnable")}
-            </label>
-            {form.requireMfaForDestructive && (
-              <div className="grid gap-4 pl-1 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">
-                    {t("authenticationDestructiveLevel")}
-                  </Label>
+            }
+          />
+          {form.requireMfaForDestructive && (
+            <>
+              <SettingsRow
+                title={t("authenticationDestructiveLevel")}
+                control={
                   <Select
                     value={String(form.minDestructiveLevel)}
-                    onValueChange={(v) => setForm({ ...form, minDestructiveLevel: Number(v) })}
+                    onValueChange={(v) => void change({ minDestructiveLevel: Number(v) })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-64 max-w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -469,72 +446,68 @@ export function AuthenticationPolicyPanel() {
                       <SelectItem value="3">{t("authenticationLevel3")}</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">
-                    {t("authenticationDestructiveTtl")}
-                  </Label>
+                }
+              />
+              <SettingsRow
+                title={t("authenticationDestructiveTtl")}
+                control={
                   <Input
                     type="number"
+                    inputMode="numeric"
                     min={1}
                     max={120}
+                    className="w-24 tabular-nums"
                     value={form.destructiveActionTtlMinutes}
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        destructiveActionTtlMinutes: Math.max(1, Number(e.target.value) || 1),
+                        destructiveActionTtlMinutes: Math.min(
+                          120,
+                          Math.max(1, Number(e.target.value) || 1),
+                        ),
                       })
                     }
+                    onBlur={commitNumbers}
                   />
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="space-y-6 p-5">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
-                {t("authenticationGracePeriod")}
-              </Label>
-              <p className="text-sm text-muted-foreground">{t("authenticationGracePeriodHint")}</p>
-              <Input
-                type="number"
-                min={0}
-                max={90}
-                className="max-w-32"
-                value={form.gracePeriodDays}
-                onChange={(e) =>
-                  setForm({ ...form, gracePeriodDays: Math.max(0, Number(e.target.value) || 0) })
                 }
               />
-            </div>
+            </>
+          )}
+        </SettingsSection>
 
+        <SettingsSection title={t("authenticationEnforcementTitle")}>
+          <SettingsRow
+            title={t("authenticationGracePeriod")}
+            description={t("authenticationGracePeriodHint")}
+            control={
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={90}
+                className="w-24 tabular-nums"
+                value={form.gracePeriodDays}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    gracePeriodDays: Math.min(90, Math.max(0, Number(e.target.value) || 0)),
+                  })
+                }
+                onBlur={commitNumbers}
+              />
+            }
+          />
+          <SettingsRow
+            title={t("authenticationExempt")}
+            description={t("authenticationExemptHint")}
+          >
             <ExemptUsersPicker
               selected={form.exemptUserIds}
-              onChange={(exemptUserIds) => setForm({ ...form, exemptUserIds })}
+              onChange={(exemptUserIds) => void change({ exemptUserIds })}
             />
-          </CardContent>
-        </Card>
+          </SettingsRow>
+        </SettingsSection>
       </div>
-
-      <SecurityStandardSection />
-
-      {/* Sticky, and only once something has actually changed: this page is
-          several screens long, and having the only Save at the very bottom
-          meant scrolling past everything to commit a switch at the top. */}
-      {dirty && (
-        <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-background/90 px-3 py-2.5 shadow-overlay backdrop-blur-xl">
-          <p className="mr-auto text-[13px] text-muted-foreground">{t("authenticationUnsaved")}</p>
-          <Button variant="ghost" size="sm" disabled={saving} onClick={discard}>
-            {t("authenticationDiscard")}
-          </Button>
-          <Button size="sm" disabled={saving} onClick={() => void save()}>
-            {saving ? t("authenticationSaving") : t("authenticationSave")}
-          </Button>
-        </div>
-      )}
-    </div>
+    </SettingsLayoutProvider>
   );
 }
