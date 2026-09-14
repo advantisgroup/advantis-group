@@ -38,6 +38,7 @@ export const create = mutation({
         message: "Not signed in",
       });
     }
+    console.log(`[accessRequests.create] identity: ${JSON.stringify(identity)}`);
     // Already provisioned? Nothing to request.
     const existing = await getUserByClerkId(ctx, identity.subject);
     if (existing) return { status: "already_member" as const };
@@ -89,6 +90,7 @@ export const myStatus = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
+    console.log(`[accessRequests.myStatus] identity: ${JSON.stringify(identity)}`);
     const member = await getUserByClerkId(ctx, identity.subject);
     if (member) return { status: "member" as const };
     const request = await ctx.db
@@ -125,6 +127,7 @@ export const assertUnauthorized = internalMutation({
         message: "Not signed in",
       });
     }
+    console.log(`[assertUnauthorized] identity: ${JSON.stringify(identity)}`);
     if (await getUserByClerkId(ctx, identity.subject)) {
       throw new ConvexError({
         code: "bad_request",

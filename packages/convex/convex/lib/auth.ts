@@ -385,6 +385,8 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return { status: "unauthenticated" };
 
+  console.log(`[ensureUser] identity: ${JSON.stringify(identity)}`);
+
   const clerkUserId = identity.subject;
   const email = (identity.email ?? "").toLowerCase();
   const firstName = identity.givenName ?? undefined;
