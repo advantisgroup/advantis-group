@@ -136,66 +136,66 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
           </p>
         )}
       </ResponsiveDialog>
-      pending.length === 0 ? (
-      <EmptyState icon={<Mail />} title={t("noInvites")} />) : (
-      <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          {t("pendingInvites", { count: pending.length })}
-        </p>
-        <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
-          {pending.map((i) => (
-            <li key={i._id} className="flex items-center gap-3 px-4 py-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
-                <Mail className="size-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="flex min-w-0 items-center gap-2">
-                  <span className="truncate text-sm font-medium">{i.email}</span>
-                  {i.external && (
-                    <span className="shrink-0 rounded-full bg-warn/12 px-1.5 py-0.5 text-[10px] font-medium text-warn">
-                      {t("external")}
-                    </span>
-                  )}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {tRoles(i.role)} · {t("invitedBy", { name: i.invitedByName })} ·{" "}
-                  {formatDateTime(i.createdAt, locale)}
-                </p>
-              </div>
-              <ActionMenu
-                ariaLabel={i.email}
-                trigger={
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    className="shrink-0 text-muted-foreground"
-                    aria-label={i.email}
-                  >
-                    <Ellipsis />
-                  </Button>
-                }
-                items={[
-                  {
-                    key: "resend",
-                    label: t("resend"),
-                    icon: <RotateCw />,
-                    onSelect: () => onResend(i._id),
-                  },
-                  {
-                    key: "revoke",
-                    label: t("revoke"),
-                    icon: <XCircle />,
-                    destructive: true,
-                    onSelect: () => void onRevoke(i),
-                  },
-                ]}
-              />
-            </li>
-          ))}
-        </ul>
-      </div>
-      ) ) : pending.length === 0 ? (
-      <p className="py-6 text-center text-sm text-muted-foreground">{t("noInvites")}</p>
+      {pending.length === 0 ? (
+        <EmptyState icon={<Mail />} title={t("noInvites")} />
+      ) : (
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {t("pendingInvites", { count: pending.length })}
+          </p>
+          <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
+            {pending.map((i) => (
+              <li key={i._id} className="flex items-center gap-3 px-4 py-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
+                  <Mail className="size-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="flex min-w-0 items-center gap-2">
+                    <span className="truncate text-sm font-medium">{i.email}</span>
+                    {i.external && (
+                      <span className="shrink-0 rounded-full bg-warn/12 px-1.5 py-0.5 text-[10px] font-medium text-warn">
+                        {t("external")}
+                      </span>
+                    )}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {tRoles(i.role)} · {t("invitedBy", { name: i.invitedByName })} ·{" "}
+                    {formatDateTime(i.createdAt, locale)}
+                  </p>
+                </div>
+                <ActionMenu
+                  ariaLabel={i.email}
+                  trigger={
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      className="shrink-0 text-muted-foreground"
+                      aria-label={i.email}
+                    >
+                      <Ellipsis />
+                    </Button>
+                  }
+                  items={[
+                    {
+                      key: "resend",
+                      label: t("resend"),
+                      icon: <RotateCw />,
+                      onSelect: () => onResend(i._id),
+                    },
+                    {
+                      key: "revoke",
+                      label: t("revoke"),
+                      icon: <XCircle />,
+                      destructive: true,
+                      onSelect: () => void onRevoke(i),
+                    },
+                  ]}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
