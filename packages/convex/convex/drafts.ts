@@ -21,9 +21,10 @@ const RETENTION_MS = 60 * 86_400_000;
 const PLACEHOLDER_RETENTION_MS = 86_400_000;
 /** What a box holds between being opened and the first keystroke. */
 const PLACEHOLDER_DATA = "{}";
-/** A new snapshot at most this often while someone keeps typing. */
-const VERSION_EVERY_MS = 5 * 60_000;
-const MAX_VERSIONS = 20;
+/** A new snapshot at most this often while someone keeps typing — short and
+ *  frequent, like commits, so there's always a recent checkpoint to fall back to. */
+const VERSION_EVERY_MS = 30_000;
+const MAX_VERSIONS = 50;
 
 async function findDraft(
   ctx: QueryCtx | MutationCtx,
@@ -42,23 +43,29 @@ async function findDraft(
     .unique();
 }
 
-async function snapshot(ctx: MutationCtx, draft: Doc<"drafts">, force = false) {
-  if (draft.data === PLACEHOLDER_DATA) return;
+/** Returns the new version's id, or null if nothing was snapshotted. */
+async function snapshot(
+  ctx: MutationCtx,
+  draft: Doc<"drafts">,
+  force = false,
+): Promise<Id<"draftVersions"> | null> {
+  if (draft.data === PLACEHOLDER_DATA) return null;
   const versions = await ctx.db
     .query("draftVersions")
     .withIndex("by_draft", (q) => q.eq("draftId", draft._id))
     .order("desc")
     .collect();
   const latest = versions[0];
-  if (latest?.data === draft.data) return;
-  if (!force && latest && Date.now() - latest.savedAt < VERSION_EVERY_MS) return;
-  await ctx.db.insert("draftVersions", {
+  if (latest?.data === draft.data) return null;
+  if (!force && latest && Date.now() - latest.savedAt < VERSION_EVERY_MS) return null;
+  const id = await ctx.db.insert("draftVersions", {
     draftId: draft._id,
     userId: draft.userId,
     data: draft.data,
     savedAt: draft.updatedAt,
   });
   for (const old of versions.slice(MAX_VERSIONS - 1)) await ctx.db.delete(old._id);
+  return id;
 }
 
 async function moveVersions(ctx: MutationCtx, from: Id<"drafts">, to: Id<"drafts">) {
@@ -365,7 +372,8 @@ export const resume = sandboxedMutation({
 });
 
 /** Puts an earlier snapshot back into the form; what was there becomes a
- *  snapshot itself first. */
+ *  snapshot itself first, so a restore is always itself undoable — its id
+ *  comes back as `previousVersionId` for a one-click "undo that". */
 export const restoreVersion = sandboxedMutation({
   args: { surface: draftSurface, subjectKey: v.string(), versionId: v.id("draftVersions") },
   handler: async (ctx, { surface, subjectKey, versionId }) => {
@@ -381,10 +389,10 @@ export const restoreVersion = sandboxedMutation({
     if (!draft || !version || version.draftId !== draft._id) {
       throw new ConvexError({ code: "not_found", message: "Version not found" });
     }
-    await snapshot(ctx, draft, true);
+    const previousVersionId = await snapshot(ctx, draft, true);
     const updatedAt = Date.now();
     await ctx.db.patch(draft._id, { data: version.data, updatedAt });
-    return { data: version.data, updatedAt };
+    return { data: version.data, updatedAt, previousVersionId };
   },
 });
 

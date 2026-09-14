@@ -1,24 +1,64 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { Fragment, type ReactNode, useMemo, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import type { Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
 import { FilePlus2, FileStack, History } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useConfirm } from "@/components/ui/dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { draftPreview } from "@/lib/draft-preview";
+import { diffWords } from "@/lib/text-diff";
 
 import { useRelativeTime } from "./DraftIndicator";
 import { type Draft } from "./use-draft";
 
 function Ago({ ms }: { ms: number }) {
   return <>{useRelativeTime(ms)}</>;
+}
+
+/** What restoring `versionData` would change compared to what's in the form
+ *  right now — red/struck-through for text that would go away, green for
+ *  text that would come back. Plain "nothing to show" when they match. */
+function VersionDiff({ currentData, versionData }: { currentData: string; versionData: string }) {
+  const t = useTranslations("Compose");
+  const tokens = useMemo(() => {
+    const current = draftPreview(currentData);
+    const version = draftPreview(versionData);
+    return diffWords(
+      [current.title, current.snippet].filter(Boolean).join(" — "),
+      [version.title, version.snippet].filter(Boolean).join(" — "),
+    );
+  }, [currentData, versionData]);
+
+  if (tokens.every((token) => token.type === "same")) {
+    return <p className="text-sm text-muted-foreground">{t("draftsRestoreNoChange")}</p>;
+  }
+
+  return (
+    <p className="max-h-40 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed">
+      {tokens.map((token, i) => (
+        <Fragment key={i}>
+          {token.type === "removed" ? (
+            <span className="rounded-[3px] bg-destructive/10 text-destructive line-through">
+              {token.text}
+            </span>
+          ) : token.type === "added" ? (
+            <span className="rounded-[3px] bg-success/10 text-success">{token.text}</span>
+          ) : (
+            token.text
+          )}
+        </Fragment>
+      ))}
+    </p>
+  );
 }
 
 function MenuRow({
@@ -49,6 +89,7 @@ function MenuBody({ draft, onDone }: { draft: Draft; onDone: () => void }) {
   const t = useTranslations("Compose");
   const router = useRouter();
   const handleError = useErrorHandler();
+  const confirm = useConfirm();
   const others = useQuery(api.drafts.listOthers, {
     surface: draft.surface,
     subjectKey: draft.subjectKey,
@@ -65,6 +106,49 @@ function MenuBody({ draft, onDone }: { draft: Draft; onDone: () => void }) {
       await action();
       toast.success(message);
       onDone();
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Undoing a restore is just restoring the snapshot the restore itself took
+   *  right before overwriting anything — so it's offered the same way. Only
+   *  missing when there was nothing to undo back to (nothing unsaved yet). */
+  function offerUndo(previousVersionId: Id<"draftVersions"> | null) {
+    toast.success(t("draftsVersionRestored"), {
+      duration: previousVersionId ? 10_000 : undefined,
+      action: previousVersionId
+        ? {
+            label: t("draftsUndo"),
+            onClick: () => {
+              void draft
+                .restoreVersion(previousVersionId)
+                .then(() => toast.success(t("draftsUndoDone")))
+                .catch(handleError);
+            },
+          }
+        : undefined,
+    });
+  }
+
+  async function restoreVersion(versionId: Id<"draftVersions">, savedAt: number, data: string) {
+    const ok = await confirm({
+      title: t("draftsRestoreTitle"),
+      description: t("draftsRestoreBody"),
+      destructive: false,
+      details: [{ label: t("draftsRestoreFrom"), value: <Ago ms={savedAt} /> }],
+      tip: <VersionDiff currentData={draft.currentData} versionData={data} />,
+      confirmLabel: t("draftsRestoreConfirm"),
+      cancelLabel: t("draftsRestoreCancel"),
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const { previousVersionId } = await draft.restoreVersion(versionId);
+      onDone();
+      offerUndo(previousVersionId);
     } catch (error) {
       handleError(error);
     } finally {
@@ -125,17 +209,20 @@ function MenuBody({ draft, onDone }: { draft: Draft; onDone: () => void }) {
           <p className="px-2.5 py-1.5 text-xs text-muted-foreground">{t("draftsNoVersions")}</p>
         ) : (
           <div className="max-h-48 overflow-y-auto">
-            {versions.map((version) => {
+            {versions.map((version, i) => {
               const { title, snippet } = draftPreview(version.data);
+              const number = versions.length - i;
               return (
                 <MenuRow
                   key={version._id}
                   disabled={busy}
-                  title={title || snippet || t("draftsUntitled")}
-                  meta={<Ago ms={version.savedAt} />}
-                  onClick={() =>
-                    void run(() => draft.restoreVersion(version._id), t("draftsVersionRestored"))
+                  title={t("draftsVersionNumber", { number })}
+                  meta={
+                    <>
+                      <Ago ms={version.savedAt} /> · {title || snippet || t("draftsUntitled")}
+                    </>
                   }
+                  onClick={() => void restoreVersion(version._id, version.savedAt, version.data)}
                 />
               );
             })}

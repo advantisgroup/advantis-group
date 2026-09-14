@@ -36,7 +36,14 @@ export interface Draft {
   startNew(): Promise<void>;
   /** Swaps a set-aside draft back into the form (the current one is set aside). */
   resume(draftId: Id<"drafts">): Promise<void>;
-  restoreVersion(versionId: Id<"draftVersions">): Promise<void>;
+  /** Restoring is always itself undoable — the id returned (if any) is the
+   *  snapshot taken of what was in the form just before this restore. */
+  restoreVersion(versionId: Id<"draftVersions">): Promise<{
+    previousVersionId: Id<"draftVersions"> | null;
+  }>;
+  /** The form's current, possibly-unsaved content, JSON-serialized — for
+   *  showing what a version restore would actually change. */
+  currentData: string;
 }
 
 /**
@@ -296,12 +303,13 @@ export function useDraft<T>({
   const restoreVersion = useCallback(
     async (versionId: Id<"draftVersions">) => {
       await flush();
-      const { data, updatedAt } = await restoreDraftVersion({
+      const { data, updatedAt, previousVersionId } = await restoreDraftVersion({
         surface: latest.current.surface,
         subjectKey: latest.current.subjectKey,
         versionId,
       });
       loadFromServer(data, updatedAt);
+      return { previousVersionId };
     },
     [flush, restoreDraftVersion, loadFromServer],
   );
@@ -333,5 +341,6 @@ export function useDraft<T>({
     },
     clear,
     hydrated,
+    currentData: serialized,
   };
 }
