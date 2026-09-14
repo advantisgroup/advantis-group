@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 
 import { StepUpScreen } from "@/components/auth/StepUpScreen";
@@ -28,17 +28,24 @@ function FullScreenLoader() {
 
 export function AppGate({ children }: { children: ReactNode }) {
   const { isLoaded, isSignedIn, sessionId, getToken } = useAuth();
+  const { user, isLoaded: userLoaded } = useUser();
   const ensure = useMutation(api.users.ensureCurrentUser);
   const me = useQuery(api.users.me);
   const ensured = useRef(false);
   const deviceEvaluated = useRef<string | null>(null);
 
+  // Wait for Clerk's own user object to report a primary email, not just
+  // isSignedIn — right after accepting an invite (especially via OAuth), a
+  // session can exist a moment before the convex JWT template's `email`
+  // claim catches up. Calling ensureUser with that claim still empty makes
+  // it miss a real pending invite, and since this only ever runs once, it
+  // never gets a second chance.
   useEffect(() => {
-    if (!ensured.current && isSignedIn) {
+    if (!ensured.current && isSignedIn && userLoaded && user?.primaryEmailAddress) {
       ensured.current = true;
       void ensure({});
     }
-  }, [ensure, isSignedIn]);
+  }, [ensure, isSignedIn, userLoaded, user]);
 
   // One-shot per Clerk session — feeds the "new device" risk signal
   // `resolveSignInRequirement` reads. Best-effort: a failed call just means

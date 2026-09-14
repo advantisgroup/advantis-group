@@ -96,10 +96,16 @@ export const myStatus = query({
       .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", identity.subject))
       .order("desc")
       .first();
+    if (!identity.email) {
+      // No email claim yet (JWT hasn't caught up with a just-created
+      // account) — don't report this as a blocked domain, or the client
+      // routes it into the auto-delete screen for no real reason.
+      console.log(`[accessRequests.myStatus] identity ${identity.subject} has no email claim yet`);
+    }
     return {
       status: request?.status ?? ("none" as const),
       email: identity.email ?? null,
-      domainAllowed: identity.email ? isEmailDomainAllowed(identity.email) : false,
+      domainAllowed: identity.email ? isEmailDomainAllowed(identity.email) : true,
     };
   },
 });
@@ -127,6 +133,11 @@ export const assertUnauthorized = internalMutation({
     }
     const email = (identity.email ?? "").toLowerCase();
     if (!email || isEmailDomainAllowed(email)) {
+      console.log(
+        `[assertUnauthorized] refusing self-delete for ${identity.subject}: ${
+          !email ? "no email claim yet" : `domain of ${email} is allowed`
+        }`,
+      );
       throw new ConvexError({
         code: "bad_request",
         message: "This account's email domain is not blocked",

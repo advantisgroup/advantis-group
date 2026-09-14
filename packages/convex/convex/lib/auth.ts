@@ -390,6 +390,10 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
   const firstName = identity.givenName ?? undefined;
   const lastName = identity.familyName ?? undefined;
 
+  if (!email) {
+    console.log(`[ensureUser] identity ${clerkUserId} has no email claim on its JWT yet`);
+  }
+
   // Whether this identity's email domain sits outside the company allowlist.
   // Externals are full members; the flag only drives the admin grouping.
   const external = email ? !isEmailDomainAllowed(email) : false;
@@ -434,6 +438,12 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
       .filter((q) => q.eq(q.field("status"), "pending"))
       .first();
 
+    if (!invite) {
+      console.log(`[ensureUser] no pending invite for ${email}`);
+    } else if (invite.expiresAt <= now) {
+      console.log(`[ensureUser] invite for ${email} expired at ${invite.expiresAt}`);
+    }
+
     if (invite && invite.expiresAt > now) {
       const userId = await ctx.db.insert("users", {
         clerkUserId,
@@ -459,6 +469,7 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
         status: "accepted",
         acceptedAt: now,
       });
+      console.log(`[ensureUser] consumed invite for ${email}, role=${invite.role}`);
       return { status: "active", userId, role: invite.role };
     }
   }
