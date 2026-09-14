@@ -60,6 +60,7 @@ import type * as companyRoles from "../companyRoles.js";
 import type * as crons from "../crons.js";
 import type * as customRoles from "../customRoles.js";
 import type * as designFeedback from "../designFeedback.js";
+import type * as draftShares from "../draftShares.js";
 import type * as drafts from "../drafts.js";
 import type * as emails from "../emails.js";
 import type * as errorCategories from "../errorCategories.js";
@@ -216,6 +217,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   customRoles: typeof customRoles;
   designFeedback: typeof designFeedback;
+  draftShares: typeof draftShares;
   drafts: typeof drafts;
   emails: typeof emails;
   errorCategories: typeof errorCategories;

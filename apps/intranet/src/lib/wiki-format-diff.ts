@@ -1,3 +1,5 @@
+import { lcsMatches } from "./text-diff";
+
 export interface FormatHunk {
   id: string;
   kind: "unchanged" | "changed";
@@ -19,35 +21,6 @@ function newHunkId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `h${Date.now()}${Math.random().toString(36).slice(2)}`;
-}
-
-/** Longest-common-subsequence match pairs between two block arrays — the
- *  same technique a line-based text diff uses, just at block granularity.
- *  Returned pairs are strictly increasing in both indices. */
-function lcsMatches(a: string[], b: string[]): Array<[number, number]> {
-  const n = a.length;
-  const m = b.length;
-  const dp: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
-  for (let i = n - 1; i >= 0; i--) {
-    for (let j = m - 1; j >= 0; j--) {
-      dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
-    }
-  }
-  const matches: Array<[number, number]> = [];
-  let i = 0;
-  let j = 0;
-  while (i < n && j < m) {
-    if (a[i] === b[j]) {
-      matches.push([i, j]);
-      i++;
-      j++;
-    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
-      i++;
-    } else {
-      j++;
-    }
-  }
-  return matches;
 }
 
 /**

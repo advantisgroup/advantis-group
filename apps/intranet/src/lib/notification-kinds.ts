@@ -6,7 +6,9 @@ import {
   Lightbulb,
   Megaphone,
   MessageSquare,
+  MessageSquareText,
   Plane,
+  Share2,
   ShieldCheck,
   UploadCloud,
   Wrench,
@@ -58,6 +60,11 @@ const VISUALS: Record<string, { icon: LucideIcon; tint: string }> = {
   academy_finished: {
     icon: GraduationCap,
     tint: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
+  },
+  draft_shared: { icon: Share2, tint: "bg-teal-500/15 text-teal-600 dark:text-teal-300" },
+  draft_comment: {
+    icon: MessageSquareText,
+    tint: "bg-teal-500/15 text-teal-600 dark:text-teal-300",
   },
   suggestion: { icon: Lightbulb, tint: "bg-amber-500/15 text-amber-600 dark:text-amber-300" },
   incident: { icon: Wrench, tint: "bg-destructive/10 text-destructive" },

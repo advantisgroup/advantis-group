@@ -29,10 +29,13 @@ export const MUTABLE_TYPES: { type: string; icon: LucideIcon; tint: string }[] =
   "announcement",
   "upload_request",
   "upload_decision",
+  "draft_shared",
+  "draft_comment",
 ].map((type) => ({ type, ...notificationVisual(type) }));
 
 const SECTIONS = [
   { key: "chat", types: ["chat-message", "chat-mention"] },
+  { key: "drafts", types: ["draft_shared", "draft_comment"] },
   { key: "absence", types: ["absence_request", "absence_decision"] },
   { key: "uploads", types: ["upload_request", "upload_decision"] },
   { key: "announcement", types: ["announcement"] },

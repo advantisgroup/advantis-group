@@ -12,7 +12,8 @@ import { sandboxedMutation } from "./lib/sandbox";
  * `data` is whatever JSON the form wants back — this layer doesn't interpret
  * it, which is what lets one table serve a blog post and an IT ticket alike.
  * Owner-only in both directions: nobody can read or overwrite someone else's
- * draft, including admins.
+ * draft, including admins — the one way out is sharing a single version on
+ * purpose (see draftShares.ts).
  */
 
 /** Well under Convex's 1 MB document cap even for multi-byte text. */
@@ -21,12 +22,22 @@ const RETENTION_MS = 60 * 86_400_000;
 const PLACEHOLDER_RETENTION_MS = 86_400_000;
 /** What a box holds between being opened and the first keystroke. */
 const PLACEHOLDER_DATA = "{}";
-/** A new snapshot at most this often while someone keeps typing — short and
- *  frequent, like commits, so there's always a recent checkpoint to fall back to. */
-const VERSION_EVERY_MS = 30_000;
-const MAX_VERSIONS = 50;
+/** Stopping typing for this long makes what was there a version, like a commit. */
+const CHECKPOINT_PAUSE_MS = 20_000;
+/** ...and a long stretch of typing without a pause still gets one this often. */
+const CHECKPOINT_EVERY_MS = 3 * 60_000;
+/** Everything from the last hour stays; older versions thin out to the newest
+ *  one per window, so history reaches back far without piling up. */
+const THINNING: [maxAgeMs: number, windowMs: number][] = [
+  [60 * 60_000, 0],
+  [86_400_000, 10 * 60_000],
+  [7 * 86_400_000, 60 * 60_000],
+  [Infinity, 86_400_000],
+];
+const MAX_VERSIONS = 100;
+const MAX_NAME_CHARS = 80;
 
-async function findDraft(
+export async function findDraft(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
   surface: string,
@@ -43,57 +54,160 @@ async function findDraft(
     .unique();
 }
 
-/** Returns the new version's id, or null if nothing was snapshotted. */
-async function snapshot(
-  ctx: MutationCtx,
-  draft: Doc<"drafts">,
-  force = false,
-): Promise<Id<"draftVersions"> | null> {
-  if (draft.data === PLACEHOLDER_DATA) return null;
-  const versions = await ctx.db
+function listDraftVersions(ctx: QueryCtx | MutationCtx, draftId: Id<"drafts">) {
+  return ctx.db
     .query("draftVersions")
-    .withIndex("by_draft", (q) => q.eq("draftId", draft._id))
+    .withIndex("by_draft", (q) => q.eq("draftId", draftId))
     .order("desc")
     .collect();
-  const latest = versions[0];
-  if (latest?.data === draft.data) return null;
-  if (!force && latest && Date.now() - latest.savedAt < VERSION_EVERY_MS) return null;
+}
+
+/** Each version's parent. Versions from before branches were tracked have no
+ *  `parentId` at all, and descend from the next-older version. */
+export function resolveParents(
+  newestFirst: Doc<"draftVersions">[],
+): Map<Id<"draftVersions">, Id<"draftVersions"> | null> {
+  return new Map(
+    newestFirst.map((version, i) => [
+      version._id,
+      version.parentId !== undefined ? version.parentId : (newestFirst[i + 1]?._id ?? null),
+    ]),
+  );
+}
+
+export function headOf(draft: Doc<"drafts">, newestFirst: Doc<"draftVersions">[]) {
+  return newestFirst.find((version) => version._id === draft.headVersionId) ?? newestFirst[0];
+}
+
+/** Unnamed versions that fall out of the thinning windows or past the cap. */
+export function versionsToDrop<V extends { savedAt: number; name?: string }>(
+  newestFirst: V[],
+  now: number,
+): V[] {
+  const seen = new Set<string>();
+  const drop: V[] = [];
+  let kept = 0;
+  for (const version of newestFirst) {
+    if (version.name) continue;
+    const age = now - version.savedAt;
+    const tier = THINNING.findIndex(([maxAge]) => age < maxAge);
+    const window = THINNING[tier][1];
+    const bucket = window ? `${tier}:${Math.floor(version.savedAt / window)}` : null;
+    if ((bucket && seen.has(bucket)) || kept >= MAX_VERSIONS) {
+      drop.push(version);
+      continue;
+    }
+    if (bucket) seen.add(bucket);
+    kept++;
+  }
+  return drop;
+}
+
+/** Thins out versions in the middle of a line. Anything someone could be
+ *  looking for stays: the one the form builds on, named and shared ones, the
+ *  ends of branches and the points they split off. */
+async function thin(ctx: MutationCtx, newestFirst: Doc<"draftVersions">[], headId: string) {
+  const parents = resolveParents(newestFirst);
+  const children = new Map<string, number>();
+  for (const parent of parents.values()) {
+    if (parent) children.set(parent, (children.get(parent) ?? 0) + 1);
+  }
+  const candidates = newestFirst.filter(
+    (version) =>
+      version._id !== headId && !version.sharedAt && (children.get(version._id) ?? 0) === 1,
+  );
+  const drop = versionsToDrop(candidates, Date.now());
+  if (drop.length === 0) return;
+
+  // Whatever hung off a removed version now hangs off its parent instead.
+  const before = new Map(parents);
+  for (const version of drop) {
+    const parent = parents.get(version._id) ?? null;
+    for (const [child, childParent] of parents) {
+      if (childParent === version._id) parents.set(child, parent);
+    }
+  }
+  const dropped = new Set<string>(drop.map((version) => version._id));
+  for (const version of newestFirst) {
+    if (dropped.has(version._id)) {
+      await ctx.db.delete(version._id);
+    } else if (parents.get(version._id) !== before.get(version._id)) {
+      await ctx.db.patch(version._id, { parentId: parents.get(version._id) ?? null });
+    }
+  }
+}
+
+/** Makes what the draft holds right now a version on top of its head. Returns
+ *  its id — or the head's, if that already holds the same thing. */
+export async function snapshot(
+  ctx: MutationCtx,
+  draft: Doc<"drafts">,
+): Promise<Id<"draftVersions"> | null> {
+  if (draft.data === PLACEHOLDER_DATA) return null;
+  const versions = await listDraftVersions(ctx, draft._id);
+  const head = headOf(draft, versions);
+  if (head?.data === draft.data) return head._id;
   const id = await ctx.db.insert("draftVersions", {
     draftId: draft._id,
     userId: draft.userId,
     data: draft.data,
     savedAt: draft.updatedAt,
+    parentId: head?._id ?? null,
   });
-  for (const old of versions.slice(MAX_VERSIONS - 1)) await ctx.db.delete(old._id);
+  await ctx.db.patch(draft._id, { headVersionId: id });
+  const inserted = await ctx.db.get(id);
+  await thin(ctx, [inserted!, ...versions], id);
   return id;
 }
 
-async function moveVersions(ctx: MutationCtx, from: Id<"drafts">, to: Id<"drafts">) {
-  const versions = await ctx.db
+/** Whether the text about to be overwritten should become a version first. */
+async function dueForCheckpoint(ctx: MutationCtx, draft: Doc<"drafts">, now: number) {
+  if (draft.data === PLACEHOLDER_DATA) return false;
+  if (now - draft.updatedAt >= CHECKPOINT_PAUSE_MS) return true;
+  const latest = await ctx.db
     .query("draftVersions")
-    .withIndex("by_draft", (q) => q.eq("draftId", from))
-    .collect();
+    .withIndex("by_draft", (q) => q.eq("draftId", draft._id))
+    .order("desc")
+    .first();
+  return !!latest && now - latest.savedAt >= CHECKPOINT_EVERY_MS;
+}
+
+async function moveVersions(ctx: MutationCtx, from: Id<"drafts">, to: Id<"drafts">) {
+  const versions = await listDraftVersions(ctx, from);
   for (const version of versions) await ctx.db.patch(version._id, { draftId: to });
 }
 
+/** Removes a version along with everything shared about it. */
+export async function deleteVersion(ctx: MutationCtx, version: Doc<"draftVersions">) {
+  if (version.sharedAt) {
+    const shares = await ctx.db
+      .query("draftShares")
+      .withIndex("by_version_user", (q) => q.eq("versionId", version._id))
+      .collect();
+    for (const share of shares) await ctx.db.delete(share._id);
+    const comments = await ctx.db
+      .query("draftComments")
+      .withIndex("by_version", (q) => q.eq("versionId", version._id))
+      .collect();
+    for (const comment of comments) await ctx.db.delete(comment._id);
+  }
+  await ctx.db.delete(version._id);
+}
+
 async function deleteVersions(ctx: MutationCtx, draftId: Id<"drafts">) {
-  const versions = await ctx.db
-    .query("draftVersions")
-    .withIndex("by_draft", (q) => q.eq("draftId", draftId))
-    .collect();
-  for (const version of versions) await ctx.db.delete(version._id);
+  for (const version of await listDraftVersions(ctx, draftId)) await deleteVersion(ctx, version);
 }
 
 /** Drafts that hold applicant details. Being yours isn't enough for these —
  *  they follow Applicant Management's rules: access plus an unlocked vault. */
-const APPLICANT_SURFACES = new Set<string>([
+export const APPLICANT_SURFACES = new Set<string>([
   "applicantContact",
   "applicantEmail",
   "applicantInterview",
   "cvReview",
 ]);
 
-async function canUseSurface(
+export async function canUseSurface(
   ctx: QueryCtx | MutationCtx,
   user: Doc<"users">,
   surface: string,
@@ -209,11 +323,14 @@ export const save = sandboxedMutation({
       .unique();
     const updatedAt = Date.now();
     const fields = { data, href: safeHref(href) ?? existing?.href, updatedAt };
-    let id = existing?._id;
-    if (existing) await ctx.db.patch(existing._id, fields);
-    else id = await ctx.db.insert("drafts", { userId: user._id, surface, subjectKey, ...fields });
-    const saved = await ctx.db.get(id!);
-    if (saved) await snapshot(ctx, saved);
+    if (existing) {
+      if (existing.data !== data && (await dueForCheckpoint(ctx, existing, updatedAt))) {
+        await snapshot(ctx, existing);
+      }
+      await ctx.db.patch(existing._id, fields);
+    } else {
+      await ctx.db.insert("drafts", { userId: user._id, surface, subjectKey, ...fields });
+    }
     return { updatedAt };
   },
 });
@@ -237,24 +354,65 @@ export const discard = sandboxedMutation({
   },
 });
 
-/** Snapshots of the draft behind this form, newest first. */
+/** Versions of the draft behind this form, newest first, with the version
+ *  the form builds on. What's in the form right now is only one of them if
+ *  nothing's been typed since it was saved or brought back. */
 export const listVersions = query({
   args: { surface: draftSurface, subjectKey: v.string() },
   handler: async (ctx, { surface, subjectKey }) => {
+    const empty = { headId: null, versions: [] };
     const user = await getCurrentUser(ctx);
-    if (!user || !(await canUseSurface(ctx, user, surface))) return [];
+    if (!user || !(await canUseSurface(ctx, user, surface))) return empty;
     const draft = await findDraft(ctx, user._id, surface, subjectKey);
-    if (!draft) return [];
-    const versions = await ctx.db
-      .query("draftVersions")
-      .withIndex("by_draft", (q) => q.eq("draftId", draft._id))
-      .order("desc")
-      .take(MAX_VERSIONS);
-    return versions
-      .filter((version) => version.data !== draft.data)
-      .map((version) => ({ _id: version._id, data: version.data, savedAt: version.savedAt }));
+    if (!draft) return empty;
+    const versions = await listDraftVersions(ctx, draft._id);
+    const parents = resolveParents(versions);
+    return {
+      headId: headOf(draft, versions)?._id ?? null,
+      versions: await Promise.all(
+        versions.map(async (version) => ({
+          _id: version._id,
+          data: version.data,
+          savedAt: version.savedAt,
+          parentId: parents.get(version._id) ?? null,
+          name: version.name ?? null,
+          sharedWith: version.sharedAt ? await sharedWith(ctx, version._id) : [],
+          comments: version.sharedAt ? await commentCount(ctx, version._id) : 0,
+        })),
+      ),
+    };
   },
 });
+
+export function personName(user: Doc<"users">) {
+  return [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
+}
+
+export async function person(ctx: QueryCtx, userId: Id<"users">) {
+  const user = await ctx.db.get(userId);
+  if (!user) return null;
+  const avatar = user.avatarStorageId
+    ? await ctx.storage.getUrl(user.avatarStorageId)
+    : (user.avatarUrl ?? null);
+  return { _id: user._id, name: personName(user), email: user.email, avatar };
+}
+
+export async function sharedWith(ctx: QueryCtx, versionId: Id<"draftVersions">) {
+  const shares = await ctx.db
+    .query("draftShares")
+    .withIndex("by_version_user", (q) => q.eq("versionId", versionId))
+    .collect();
+  const people = await Promise.all(shares.map((share) => person(ctx, share.userId)));
+  return people.filter((p) => p !== null);
+}
+
+async function commentCount(ctx: QueryCtx, versionId: Id<"draftVersions">) {
+  const comments = await ctx.db
+    .query("draftComments")
+    .withIndex("by_version", (q) => q.eq("versionId", versionId))
+    .collect();
+  return comments.length;
+}
 
 /** The other drafts someone has going for the same composer: ones set aside
  *  from this form, and — for composers where every draft has its own page —
@@ -311,11 +469,16 @@ export const park = sandboxedMutation({
       data: current.data,
       href: current.href,
       parkedFrom: subjectKey,
+      headVersionId: current.headVersionId,
       updatedAt: current.updatedAt,
     });
     await ctx.db.patch(parkedId, { subjectKey: parkedId });
     await moveVersions(ctx, current._id, parkedId);
-    await ctx.db.patch(current._id, { data: PLACEHOLDER_DATA, updatedAt });
+    await ctx.db.patch(current._id, {
+      data: PLACEHOLDER_DATA,
+      headVersionId: undefined,
+      updatedAt,
+    });
     return { updatedAt };
   },
 });
@@ -345,6 +508,7 @@ export const resume = sandboxedMutation({
         data: current.data,
         href: current.href,
         parkedFrom: subjectKey,
+        headVersionId: current.headVersionId,
         updatedAt: current.updatedAt,
       });
       await ctx.db.patch(parkedId, { subjectKey: parkedId });
@@ -353,7 +517,11 @@ export const resume = sandboxedMutation({
     const updatedAt = Date.now();
     if (current) {
       await deleteVersions(ctx, current._id);
-      await ctx.db.patch(current._id, { data: target.data, updatedAt });
+      await ctx.db.patch(current._id, {
+        data: target.data,
+        headVersionId: target.headVersionId,
+        updatedAt,
+      });
     } else {
       const id = await ctx.db.insert("drafts", {
         userId: user._id,
@@ -361,6 +529,7 @@ export const resume = sandboxedMutation({
         subjectKey,
         data: target.data,
         href: target.href,
+        headVersionId: target.headVersionId,
         updatedAt,
       });
       current = await ctx.db.get(id);
@@ -371,9 +540,10 @@ export const resume = sandboxedMutation({
   },
 });
 
-/** Puts an earlier snapshot back into the form; what was there becomes a
- *  snapshot itself first, so a restore is always itself undoable — its id
- *  comes back as `previousVersionId` for a one-click "undo that". */
+/** Puts an earlier version back into the form, like checking out an old
+ *  commit: what was there is kept as a version first, and writing on from
+ *  here starts a new branch beside it. `previousVersionId` is what an undo
+ *  goes back to. */
 export const restoreVersion = sandboxedMutation({
   args: { surface: draftSurface, subjectKey: v.string(), versionId: v.id("draftVersions") },
   handler: async (ctx, { surface, subjectKey, versionId }) => {
@@ -389,12 +559,53 @@ export const restoreVersion = sandboxedMutation({
     if (!draft || !version || version.draftId !== draft._id) {
       throw new ConvexError({ code: "not_found", message: "Version not found" });
     }
-    const previousVersionId = await snapshot(ctx, draft, true);
+    const previousVersionId = await snapshot(ctx, draft);
     const updatedAt = Date.now();
-    await ctx.db.patch(draft._id, { data: version.data, updatedAt });
+    await ctx.db.patch(draft._id, { data: version.data, headVersionId: version._id, updatedAt });
     return { data: version.data, updatedAt, previousVersionId };
   },
 });
+
+/** Names a version so it's easy to find again — or, without `versionId`,
+ *  makes what's in the form now a named version. An empty name clears it. */
+export const nameVersion = sandboxedMutation({
+  args: {
+    surface: draftSurface,
+    subjectKey: v.string(),
+    versionId: v.optional(v.id("draftVersions")),
+    name: v.string(),
+  },
+  handler: async (ctx, { surface, subjectKey, versionId, name }) => {
+    const user = await requireUser(ctx);
+    if (!(await canUseSurface(ctx, user, surface))) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You do not have permission to do that",
+      });
+    }
+    const version = await versionToUse(ctx, user._id, surface, subjectKey, versionId);
+    const trimmed = name.trim().slice(0, MAX_NAME_CHARS);
+    await ctx.db.patch(version._id, { name: trimmed || undefined });
+    return null;
+  },
+});
+
+/** The version a name or share is for: the one given, or what's in the form now. */
+export async function versionToUse(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  surface: string,
+  subjectKey: string,
+  versionId: Id<"draftVersions"> | undefined,
+) {
+  const draft = await findDraft(ctx, userId, surface, subjectKey);
+  const id = draft && (versionId ?? (await snapshot(ctx, draft)));
+  const version = id ? await ctx.db.get(id) : null;
+  if (!draft || !version || version.draftId !== draft._id) {
+    throw new ConvexError({ code: "not_found", message: "Version not found" });
+  }
+  return version;
+}
 
 export const pruneOld = internalMutation({
   args: {},

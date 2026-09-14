@@ -6,54 +6,70 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import {
-  BookOpen,
-  Building2,
-  FileStack,
-  Lightbulb,
-  Megaphone,
-  Newspaper,
-  Rss,
-  Trash2,
-  Wrench,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
+import { FileStack, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { useRelativeTime } from "@/components/compose/DraftIndicator";
-import { type DraftSurface } from "@/components/compose/use-draft";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { draftPreview } from "@/lib/draft-preview";
+import { DRAFT_SURFACES } from "@/lib/draft-surfaces";
+import { initials } from "@/lib/format";
 
 type DraftItem = NonNullable<ReturnType<typeof useQuery<typeof api.drafts.listMine>>>[number];
+type SharedItem = NonNullable<
+  ReturnType<typeof useQuery<typeof api.draftShares.listSharedWithMe>>
+>[number];
 
-// `listHref` is only the way back for drafts saved before they remembered
-// their own address.
-const SURFACE_META: Partial<
-  Record<DraftSurface, { icon: LucideIcon; labelKey: string; listHref: string }>
-> = {
-  wikiEntry: { icon: BookOpen, labelKey: "surfaceWikiEntry", listHref: "/guidebooks" },
-  guidebookPage: { icon: BookOpen, labelKey: "surfaceGuidebookPage", listHref: "/guidebooks" },
-  blogPost: { icon: Newspaper, labelKey: "surfaceBlogPost", listHref: "/blog" },
-  announcement: { icon: Megaphone, labelKey: "surfaceAnnouncement", listHref: "/announcements" },
-  update: { icon: Rss, labelKey: "surfaceUpdate", listHref: "/updates" },
-  suggestion: { icon: Lightbulb, labelKey: "surfaceSuggestion", listHref: "/suggestions" },
-  itTicket: { icon: Wrench, labelKey: "surfaceItTicket", listHref: "/it-tickets" },
-  coachWiki: { icon: Zap, labelKey: "surfaceCoachWiki", listHref: "/sales-coach-ev/wiki" },
-  salesCockpitProject: {
-    icon: Building2,
-    labelKey: "surfaceSalesCockpitProject",
-    listHref: "/sales-cockpit/projekte",
-  },
-};
+function SharedRow({ item }: { item: SharedItem }) {
+  const t = useTranslations("Drafts");
+  const ago = useRelativeTime(item.sharedAt);
+  const meta = DRAFT_SURFACES[item.surface];
+  const { title, snippet } = draftPreview(item.data);
+  return (
+    <Link
+      href={`/drafts/shared/${item.versionId}`}
+      className="flex items-start gap-3 border-b border-border/60 px-4 py-3.5 transition-colors last:border-b-0 hover:bg-accent/50"
+    >
+      <Avatar className="size-9">
+        {item.owner.avatar && <AvatarImage src={item.owner.avatar} alt={item.owner.name} />}
+        <AvatarFallback className="text-xs">
+          {initials(item.owner.name, item.owner.email)}
+        </AvatarFallback>
+      </Avatar>
+      <span className="min-w-0 flex-1">
+        <span
+          className={
+            title
+              ? "block truncate text-[13.5px] font-medium leading-snug"
+              : "block truncate text-[13.5px] leading-snug text-muted-foreground"
+          }
+        >
+          {title || t("untitled")}
+        </span>
+        {snippet && (
+          <span className="mt-0.5 line-clamp-1 block text-[12.5px] text-muted-foreground">
+            {snippet}
+          </span>
+        )}
+        <span className="mt-1 flex items-center gap-1.5 text-[12px] text-muted-foreground">
+          <span>{t("sharedBy", { name: item.owner.name })}</span>
+          <span aria-hidden>·</span>
+          <span>{meta ? t(meta.labelKey) : item.surface}</span>
+          <span aria-hidden>·</span>
+          <span className="tabular-nums">{ago}</span>
+        </span>
+      </span>
+    </Link>
+  );
+}
 
 const BUCKETS = [
   { key: "today", labelKey: "groupToday" },
@@ -76,7 +92,7 @@ function DraftRow({ draft }: { draft: DraftItem }) {
   const resume = useMutation(api.drafts.resume);
   const router = useRouter();
   const ago = useRelativeTime(draft.updatedAt);
-  const meta = SURFACE_META[draft.surface];
+  const meta = DRAFT_SURFACES[draft.surface];
   const Icon = meta?.icon ?? FileStack;
   const { title, snippet } = draftPreview(draft.data);
   // A fresh draft is its own subject (or "new", for the quick dialogs that
@@ -161,6 +177,7 @@ function DraftRow({ draft }: { draft: DraftItem }) {
 export default function DraftsPage() {
   const t = useTranslations("Drafts");
   const drafts = useQuery(api.drafts.listMine);
+  const shared = useQuery(api.draftShares.listSharedWithMe);
 
   const groups = useMemo(() => {
     if (!drafts) return [];
@@ -174,6 +191,20 @@ export default function DraftsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeaderBar title={t("title")} description={t("subtitle")} icon={<FileStack />} />
+
+      {shared && shared.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="px-1 text-xs font-medium text-muted-foreground">
+            {t("sharedWithYouGroup")}
+            <span className="ml-1.5 tabular-nums text-muted-foreground/70">{shared.length}</span>
+          </h2>
+          <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+            {shared.map((item) => (
+              <SharedRow key={item.versionId} item={item} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {drafts === undefined ? (
         <div className="space-y-2">

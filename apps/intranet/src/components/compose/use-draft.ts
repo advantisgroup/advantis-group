@@ -36,13 +36,19 @@ export interface Draft {
   startNew(): Promise<void>;
   /** Swaps a set-aside draft back into the form (the current one is set aside). */
   resume(draftId: Id<"drafts">): Promise<void>;
-  /** Restoring is always itself undoable — the id returned (if any) is the
-   *  snapshot taken of what was in the form just before this restore. */
+  /** Resolves to the version holding what the form had before, for an undo. */
   restoreVersion(versionId: Id<"draftVersions">): Promise<{
     previousVersionId: Id<"draftVersions"> | null;
   }>;
-  /** The form's current, possibly-unsaved content, JSON-serialized — for
-   *  showing what a version restore would actually change. */
+  /** Without `versionId`, names what's in the form now. */
+  nameVersion(versionId: Id<"draftVersions"> | null, name: string): Promise<void>;
+  /** Without `versionId`, shares what's in the form now. Resolves to the shared version. */
+  shareVersion(
+    versionId: Id<"draftVersions"> | null,
+    userIds: Id<"users">[],
+    name: string,
+  ): Promise<Id<"draftVersions">>;
+  /** What's in the form right now, as it would be saved — for comparing versions. */
   currentData: string;
 }
 
@@ -93,6 +99,8 @@ export function useDraft<T>({
   const parkDraft = useMutation(api.drafts.park);
   const resumeDraft = useMutation(api.drafts.resume);
   const restoreDraftVersion = useMutation(api.drafts.restoreVersion);
+  const nameDraftVersion = useMutation(api.drafts.nameVersion);
+  const shareDraftVersion = useMutation(api.draftShares.share);
 
   const [hydrated, setHydrated] = useState(false);
   const [status, setStatus] = useState<DraftSaveStatus>("idle");
@@ -314,12 +322,41 @@ export function useDraft<T>({
     [flush, restoreDraftVersion, loadFromServer],
   );
 
+  const nameVersion = useCallback(
+    async (versionId: Id<"draftVersions"> | null, name: string) => {
+      await flush();
+      await nameDraftVersion({
+        surface: latest.current.surface,
+        subjectKey: latest.current.subjectKey,
+        versionId: versionId ?? undefined,
+        name,
+      });
+    },
+    [flush, nameDraftVersion],
+  );
+
+  const shareVersion = useCallback(
+    async (versionId: Id<"draftVersions"> | null, userIds: Id<"users">[], name: string) => {
+      await flush();
+      return shareDraftVersion({
+        surface: latest.current.surface,
+        subjectKey: latest.current.subjectKey,
+        versionId: versionId ?? undefined,
+        userIds,
+        name,
+      });
+    },
+    [flush, shareDraftVersion],
+  );
+
   return {
     surface,
     subjectKey,
     startNew,
     resume,
     restoreVersion,
+    nameVersion,
+    shareVersion,
     status,
     savedAt,
     restoredAt,

@@ -6,9 +6,10 @@
  * browser-side queries then let each person see.
  */
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import { api } from "./_generated/api";
+import { versionsToDrop } from "./drafts";
 import schema from "./schema";
 
 const modules = Object.fromEntries(
@@ -175,5 +176,128 @@ describe("drafts", () => {
 
     await t.run((ctx) => ctx.db.patch(unlockId, { expiresAt: Date.now() - 1 }));
     expect(await alice.query(api.drafts.get, key)).toBeNull();
+  });
+
+  test("a pause makes a version, and going back to one branches off instead of deleting", async () => {
+    vi.useFakeTimers();
+    try {
+      const t = setup();
+      const alice = await seedUser(t, "user_alice");
+      const key = { surface: "blogPost" as const, subjectKey: "new" };
+      const save = (title: string) =>
+        alice.mutation(api.drafts.save, { ...key, data: JSON.stringify({ title }) });
+      const history = () => alice.query(api.drafts.listVersions, key);
+
+      await save("A");
+      vi.advanceTimersByTime(1_000);
+      await save("AB");
+      expect((await history()).versions).toHaveLength(0);
+
+      vi.advanceTimersByTime(30_000);
+      await save("ABC");
+      const [ab] = (await history()).versions;
+      expect(ab).toMatchObject({ data: '{"title":"AB"}', parentId: null });
+
+      const { previousVersionId } = await alice.mutation(api.drafts.restoreVersion, {
+        ...key,
+        versionId: ab._id,
+      });
+      const afterRestore = await history();
+      expect(afterRestore.headId).toBe(ab._id);
+      expect(afterRestore.versions[0]).toMatchObject({
+        _id: previousVersionId,
+        data: '{"title":"ABC"}',
+        parentId: ab._id,
+      });
+      expect(await alice.query(api.drafts.get, key)).toMatchObject({ data: '{"title":"AB"}' });
+
+      vi.advanceTimersByTime(30_000);
+      await save("ABX");
+      vi.advanceTimersByTime(30_000);
+      await save("ABXY");
+      const { versions, headId } = await history();
+      expect(versions.map((v) => v.data)).toEqual([
+        '{"title":"ABX"}',
+        '{"title":"ABC"}',
+        '{"title":"AB"}',
+      ]);
+      expect(versions.filter((v) => v.parentId === ab._id)).toHaveLength(2);
+      expect(headId).toBe(versions[0]._id);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("a shared version is readable by who it's shared with, and no one else", async () => {
+    vi.useFakeTimers();
+    try {
+      const t = setup();
+      const alice = await seedUser(t, "user_alice");
+      const bob = await seedUser(t, "user_bob");
+      const carol = await seedUser(t, "user_carol");
+      const bobId = await t.run(async (ctx) => {
+        const user = await ctx.db
+          .query("users")
+          .filter((q) => q.eq(q.field("clerkUserId"), "user_bob"))
+          .first();
+        return user!._id;
+      });
+      const draftId = await alice.mutation(api.drafts.create, { surface: "blogPost" });
+      const key = { surface: "blogPost" as const, subjectKey: draftId };
+      await alice.mutation(api.drafts.save, {
+        ...key,
+        data: '{"title":"Launch post"}',
+        href: `/blog/draft/${draftId}`,
+      });
+
+      const versionId = await alice.mutation(api.draftShares.share, {
+        ...key,
+        userIds: [bobId],
+        name: "Shared with Bob",
+      });
+      expect(await bob.query(api.draftShares.get, { versionId })).toMatchObject({
+        data: '{"title":"Launch post"}',
+        isOwner: false,
+        canContinue: true,
+      });
+      expect(await carol.query(api.draftShares.get, { versionId })).toBeNull();
+      await expect(
+        carol.mutation(api.draftShares.addComment, { versionId, body: "hi" }),
+      ).rejects.toThrow();
+
+      await bob.mutation(api.draftShares.addComment, { versionId, body: "Looks good" });
+      expect(await alice.query(api.draftShares.listComments, { versionId })).toHaveLength(1);
+      const aliceNotifications = await alice.query(api.notifications.list, {});
+      expect(aliceNotifications[0]).toMatchObject({ type: "draft_comment" });
+
+      // What Alice writes afterwards isn't shared.
+      vi.advanceTimersByTime(30_000);
+      await alice.mutation(api.drafts.save, { ...key, data: '{"title":"Launch post v2"}' });
+      expect(await bob.query(api.draftShares.get, { versionId })).toMatchObject({
+        data: '{"title":"Launch post"}',
+      });
+
+      const href = await bob.mutation(api.draftShares.continueFrom, { versionId });
+      expect(href).toMatch(/^\/blog\/draft\//);
+      expect(href).not.toContain(draftId);
+
+      await alice.mutation(api.draftShares.unshare, { versionId, userId: bobId });
+      expect(await bob.query(api.draftShares.get, { versionId })).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("old versions thin out, named ones stay", () => {
+    const now = 100 * 86_400_000;
+    const minutesAgo = (m: number, name?: string) => ({ savedAt: now - m * 60_000, name });
+    const versions = [
+      minutesAgo(1),
+      minutesAgo(30),
+      minutesAgo(121),
+      minutesAgo(122),
+      minutesAgo(123, "Sent for review"),
+    ];
+    expect(versionsToDrop(versions, now)).toEqual([versions[3]]);
   });
 });

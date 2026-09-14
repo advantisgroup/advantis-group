@@ -3076,19 +3076,48 @@ export default defineSchema({
     href: v.optional(v.string()), // where the draft was last written, so it can be reopened
     /** Set aside with "start a new draft": the subjectKey it was taken from. */
     parkedFrom: v.optional(v.string()),
+    /** The version what's in the form builds on — its next version's parent. */
+    headVersionId: v.optional(v.id("draftVersions")),
     updatedAt: v.number(),
   })
     .index("by_user_subject", ["userId", "surface", "subjectKey"])
     .index("by_user", ["userId", "updatedAt"])
     .index("by_updated", ["updatedAt"]),
 
-  /** Snapshots of a draft over time, so earlier wording can be brought back. */
+  /** Snapshots of a draft over time, so earlier wording can be brought back.
+   *  They form a tree: going back to an old version and writing on starts a
+   *  new branch, and the one left behind stays. */
   draftVersions: defineTable({
     draftId: v.id("drafts"),
     userId: v.id("users"),
     data: v.string(),
     savedAt: v.number(),
+    /** Null for the first version; missing on ones saved before branches
+     *  existed, which read as a straight line. */
+    parentId: v.optional(v.union(v.id("draftVersions"), v.null())),
+    /** Given by the person — named versions are never thinned out. */
+    name: v.optional(v.string()),
+    /** Set once shared; cleared when nobody has it and it has no comments. */
+    sharedAt: v.optional(v.number()),
   }).index("by_draft", ["draftId", "savedAt"]),
+
+  /** One colleague's read access to one draft version. */
+  draftShares: defineTable({
+    versionId: v.id("draftVersions"),
+    ownerId: v.id("users"),
+    userId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_version_user", ["versionId", "userId"])
+    .index("by_user", ["userId", "createdAt"]),
+
+  /** Feedback on a shared version, seen by its author and everyone it's shared with. */
+  draftComments: defineTable({
+    versionId: v.id("draftVersions"),
+    authorId: v.id("users"),
+    body: v.string(),
+    createdAt: v.number(),
+  }).index("by_version", ["versionId", "createdAt"]),
 
   // --- Sales Coach EV (live call-coaching for Projekt Elektromobilitaet) ------
   // Transcript and feedback text may contain real customer conversations, so
