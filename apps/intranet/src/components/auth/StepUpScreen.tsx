@@ -14,6 +14,7 @@ import { useCurrentUser } from "@/components/providers/current-user";
 import { SecurityStateProvider } from "@/components/security/security-state";
 import { useTheme } from "@/components/theme/theme-provider";
 import { Button } from "@/components/ui/button";
+import { SettingsLayoutProvider } from "@/components/ui/settings-rows";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { cn } from "@/lib/utils";
 
@@ -307,30 +308,36 @@ export function StepUpScreen({
                   state from it, so enrolling one factor here immediately
                   refreshes the other's view too. */}
               <SecurityStateProvider>
-                <div className="space-y-6">
-                  {status.needsMfa && (
-                    <EnrollStep
-                      index={1}
-                      total={enrollTotal}
-                      icon={Smartphone}
-                      title={t("enrollTotpTitle")}
-                      body={t("enrollTotpBody")}
-                    >
-                      <TotpSettingsCard />
-                    </EnrollStep>
-                  )}
-                  {status.needsPasskey && (
-                    <EnrollStep
-                      index={status.needsMfa ? 2 : 1}
-                      total={enrollTotal}
-                      icon={KeyRound}
-                      title={t("enrollPasskeyTitle")}
-                      body={t("enrollPasskeyBody")}
-                    >
-                      <PasskeySettingsCard />
-                    </EnrollStep>
-                  )}
-                </div>
+                {/* The gate is a narrow column (max-w-lg, further indented by
+                    EnrollStep's sm:pl-11) — nowhere near enough room for
+                    SettingsSection's default split grid, which crushed the
+                    passkey row/help-links/button into an unreadable sliver. */}
+                <SettingsLayoutProvider value="stacked">
+                  <div className="space-y-6">
+                    {status.needsMfa && (
+                      <EnrollStep
+                        index={1}
+                        total={enrollTotal}
+                        icon={Smartphone}
+                        title={t("enrollTotpTitle")}
+                        body={t("enrollTotpBody")}
+                      >
+                        <TotpSettingsCard />
+                      </EnrollStep>
+                    )}
+                    {status.needsPasskey && (
+                      <EnrollStep
+                        index={status.needsMfa ? 2 : 1}
+                        total={enrollTotal}
+                        icon={KeyRound}
+                        title={t("enrollPasskeyTitle")}
+                        body={t("enrollPasskeyBody")}
+                      >
+                        <PasskeySettingsCard />
+                      </EnrollStep>
+                    )}
+                  </div>
+                </SettingsLayoutProvider>
               </SecurityStateProvider>
 
               <p className="flex items-start gap-2 border-t border-border/60 pt-4 text-xs leading-relaxed text-muted-foreground/80 text-pretty">
