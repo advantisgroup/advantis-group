@@ -151,6 +151,67 @@ Three layers, none of which ever contain a token, a token hash, or a password:
   `_reverification_required`). Server events use the Clerk user id as
   `distinct_id` so they join with the browser's.
 
+## Linked emails: skipping the human review
+
+`selfService` (step 3, "loudly — whether those last two are the same
+person") is a heuristic for the reviewing admin, not an access-control gate
+— the link is *always* mailed to the resolved account's own address, never
+to whoever filed the request, so a mismatched filer can't get anything out
+of it by itself. That means a mismatch an admin would clearly wave through
+anyway — because the system already vouches for it — doesn't need a human
+in the loop at all.
+
+Two ways a mismatch gets explained away automatically, both inside
+`resolveTarget`'s `performance` branch (`hr` never takes an email param, so
+it can't mismatch):
+
+- **The filer is already the linked owner.** `performanceLogins.linkedUserId`
+  points a login at its owner's intranet account. If the account has two
+  distinct addresses (`sentToEmail` vs `intranetEmail`) and the filer is
+  signed in as the *intranet* one while the request names the *login's own*
+  address, that's the same person asking under their other identity.
+- **The typed email is the linked side, not the login's own.** Someone
+  typing their intranet address into a Performance lock screen by mistake
+  used to dead-end at "no such account" — the direct lookup only matches a
+  login's own email. Now, if the typed address matches an intranet account
+  whose linked login belongs to the same company, that login is the target.
+
+Both stay inside the **safe, filtered** lookup — never the `bypassFilters`
+("force issue") escape hatch. An account that's deactivated, unlinked
+mid-flight, or in a suspended tenant still needs a human to force it through.
+
+**Fallback: `passwordResetLinkedEmails`.** For a pair with no
+`linkedUserId` to lean on, an admin can register one explicitly from the
+"Linked emails" tab on `/admin/password-resets` — step-up gated, since
+adding one pre-authorizes every future request between the two addresses.
+`resolveTarget` checks this table first; a hit substitutes the registered
+`canonicalEmail` before the lookups above run.
+
+When any of the three apply, `requestReset` records `autoApproved: true` +
+`autoApprovedVia` on the row, skips the admin-notification email (there's
+nothing to approve), and schedules `autoIssueLinkedReset` — an action with
+the same mint-store-mail tail as `issueResetLink`, minus the admin/step-up
+gate — instead. `storeIssuedToken` audits this as `link_auto_issued`
+(distinct from `link_issued`) so the trail always shows whether a human
+decided or a link did. The admin queue still shows every one of these,
+tagged with a distinct badge and the reasoning, and a **Revoke** button on
+any issued-but-unopened link (auto-approved or not) lets an admin kill it on
+the spot if it turns out to be abuse.
+
+**Debugging a stuck or missing auto-approval.** `autoIssueLinkedReset` is a
+scheduled action, so a failure there doesn't surface in the original
+`requestReset` call — look in the Convex dashboard's function logs (or grep
+the deployment logs) for the `[passwordReset:autoIssue]` prefix:
+`prepareAutoIssue` re-checks the same reasoning fresh (the link could have
+been edited or removed in the gap between scheduling and running) and, if
+it no longer holds, logs `skipped … reason=…` and writes an
+`auto_issue_skipped` row to `passwordResetAuditLog` (visible in that
+request's "Trail" in the admin UI) instead of silently leaving the request
+stuck `pending`. An actual crash (mint/store/mail step) logs
+`failed request=… scope=…` with the underlying error before rethrowing, so
+the request/scope is recoverable straight from the log line rather than
+from an anonymous action stack trace.
+
 ## Adding a third area
 
 1. Add the literal to `passwordResetScopeValidator` (`schema.ts`).

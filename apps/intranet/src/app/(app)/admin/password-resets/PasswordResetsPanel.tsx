@@ -8,7 +8,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useAuth } from "@clerk/nextjs";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { KeyRound, ShieldAlert, TriangleAlert } from "lucide-react";
+import { KeyRound, Link2, ShieldAlert, TriangleAlert } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import posthog from "posthog-js";
 import { toast } from "sonner";
@@ -26,6 +26,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -68,6 +70,14 @@ function isEmailChoiceHint(value: unknown): value is EmailChoiceHintShape {
     (value as EmailChoiceHintShape).needsEmailChoice === true
   );
 }
+
+/** Which i18n key explains an auto-approval reason — read by the hint line
+ * under an auto-approved request's badges. */
+const AUTO_APPROVED_HINT_KEY = {
+  callerLinkedAccount: "adminAutoApprovedViaCallerLinkedAccount",
+  targetLinkedAccount: "adminAutoApprovedViaTargetLinkedAccount",
+  adminLinkedEmail: "adminAutoApprovedViaAdminLinkedEmail",
+} as const;
 
 function RequestHistory({ requestId }: { requestId: RequestId }) {
   const t = useTranslations("PasswordReset");
@@ -200,12 +210,13 @@ function RequestCard({
     null,
   );
 
-  // Both admin actions are wrapped: the Convex function returns a
+  // All three admin actions are wrapped: the Convex function returns a
   // `{ needsStepUp: true }` hint instead of acting when the admin hasn't
   // stepped up recently enough — see `run` below, which opens `StepUpDialog`
   // and retries exactly once.
   const issue = useAction(api.passwordResets.issueResetLink);
   const dismiss = useMutation(api.passwordResets.dismissRequest);
+  const revokeLink = useMutation(api.passwordResets.revokeIssuedLink);
 
   const when = (at: number) =>
     format.dateTime(new Date(at), {
@@ -246,11 +257,23 @@ function RequestCard({
     setEmailChoiceOpen(false);
   }
 
-  async function run(action: "issue" | "dismiss") {
+  async function run(action: "issue" | "dismiss" | "revoke") {
     if (!sessionId) return;
     setBusy(true);
     try {
-      if (action === "issue") {
+      if (action === "revoke") {
+        let result = await revokeLink({ requestId: request.id, sessionId });
+        if (isStepUpHint(result)) {
+          if (!(await openVerification(result.availableMethods))) return;
+          result = await revokeLink({ requestId: request.id, sessionId });
+        }
+        if (isStepUpHint(result)) {
+          toast.error(t("adminVerifyStale"));
+          posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
+          return;
+        }
+        toast.success(t("adminRevoked"));
+      } else if (action === "issue") {
         // Asked before the step-up code, not after — the destination is
         // never something the reverification step should be able to gloss
         // over. `request.emailChoice` already carries both addresses from
@@ -326,6 +349,8 @@ function RequestCard({
           <span className="break-all font-medium">{request.targetEmailDisplay}</span>
           {request.selfService ? (
             <Badge variant="outline">{t("adminSelf")}</Badge>
+          ) : request.autoApproved ? (
+            <Badge variant="success">{t("adminAutoApproved")}</Badge>
           ) : (
             <Badge variant="warning">{t("adminMismatch")}</Badge>
           )}
@@ -354,10 +379,16 @@ function RequestCard({
           {request.canForceIssue ? t("adminForceHint") : t("adminUnknownAccountHint")}
         </p>
       )}
-      {request.targetExists && !request.selfService && (
+      {request.targetExists && !request.selfService && !request.autoApproved && (
         <p className="mt-3 flex items-start gap-2 text-xs text-foreground">
           <TriangleAlert className="mt-px size-3.5 shrink-0 text-warning" />
           {t("adminMismatchHint")}
+        </p>
+      )}
+      {request.autoApproved && request.autoApprovedVia && (
+        <p className="mt-3 flex items-start gap-2 text-xs text-foreground">
+          <Link2 className="mt-px size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          {t(AUTO_APPROVED_HINT_KEY[request.autoApprovedVia])}
         </p>
       )}
 
@@ -395,16 +426,29 @@ function RequestCard({
           <Badge variant="outline">
             {request.status === "issued" ? t("adminStatusIssued") : t("adminStatusDismissed")}
           </Badge>
-          {request.handledByName && request.handledAt && (
+          {request.linkRevoked && <Badge variant="destructive">{t("adminLinkRevokedStatus")}</Badge>}
+          {request.handledByName && request.handledAt ? (
             <span className="break-words">
               {t("adminHandledBy", {
                 name: request.handledByName,
                 time: when(request.handledAt),
               })}
             </span>
+          ) : (
+            request.autoApproved && <span>{t("adminHandledAuto")}</span>
           )}
           {request.activeLinkExpiresAt && (
             <span>{t("adminLinkLive", { time: when(request.activeLinkExpiresAt) })}</span>
+          )}
+          {request.activeLinkExpiresAt && (
+            <Button
+              size="sm"
+              variant="destructive"
+              disabled={busy}
+              onClick={() => void run("revoke")}
+            >
+              {t("adminRevoke")}
+            </Button>
           )}
           <Button size="sm" variant="ghost" onClick={() => setShowHistory((v) => !v)}>
             {showHistory ? t("adminHistoryHide") : t("adminHistory")}
@@ -434,6 +478,195 @@ function RequestCard({
   );
 }
 
+/**
+ * The admin-maintained fallback `resolveTarget` consults when a mismatch
+ * isn't already explained by an existing `linkedUserId` — pairs registered
+ * here pre-authorize future requests between the two addresses to skip
+ * manual review, so adding one goes through the same step-up gate as
+ * issuing or dismissing a request.
+ */
+function LinkedEmailsPanel() {
+  const t = useTranslations("PasswordReset");
+  const format = useFormatter();
+  const { sessionId } = useAuth();
+  const rows = useQuery(api.passwordResets.listLinkedEmails);
+  const addLink = useMutation(api.passwordResets.addLinkedEmail);
+  const removeLink = useMutation(api.passwordResets.removeLinkedEmail);
+
+  const [scope, setScope] = useState<"hr" | "performance">("performance");
+  const [companySlug, setCompanySlug] = useState("");
+  const [aliasEmail, setAliasEmail] = useState("");
+  const [canonicalEmail, setCanonicalEmail] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [verifyMethods, setVerifyMethods] = useState<StepMethod[]>(["email_code"]);
+  const verifyResolver = useRef<((verified: boolean) => void) | null>(null);
+
+  function openVerification(availableMethods: StepMethod[]): Promise<boolean> {
+    setVerifyMethods(availableMethods);
+    setVerifyOpen(true);
+    return new Promise((resolve) => {
+      verifyResolver.current = resolve;
+    });
+  }
+
+  function settleVerification(verified: boolean) {
+    verifyResolver.current?.(verified);
+    verifyResolver.current = null;
+    setVerifyOpen(false);
+  }
+
+  async function handleAdd() {
+    if (!sessionId || !aliasEmail || !canonicalEmail) return;
+    setBusy(true);
+    const payload = {
+      scope,
+      companySlug: scope === "performance" ? companySlug || undefined : undefined,
+      aliasEmail,
+      canonicalEmail,
+      note: note || undefined,
+      sessionId,
+    };
+    try {
+      let result = await addLink(payload);
+      if (isStepUpHint(result)) {
+        if (!(await openVerification(result.availableMethods))) return;
+        result = await addLink(payload);
+      }
+      if (isStepUpHint(result)) {
+        toast.error(t("adminVerifyStale"));
+        return;
+      }
+      toast.success(t("linkedEmailsAdded"));
+      setAliasEmail("");
+      setCanonicalEmail("");
+      setNote("");
+    } catch {
+      toast.error(t("linkedEmailsAddFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRemove(id: Id<"passwordResetLinkedEmails">) {
+    try {
+      await removeLink({ id });
+      toast.success(t("linkedEmailsRemoved"));
+    } catch {
+      toast.error(t("adminActionFailed"));
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">{t("linkedEmailsSubtitle")}</p>
+
+      <div className="space-y-3 rounded-xl border border-border/70 bg-card p-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>{t("linkedEmailsScope")}</Label>
+            <Select value={scope} onValueChange={(v) => setScope(v as "hr" | "performance")}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="performance">{t("areaPerformance")}</SelectItem>
+                <SelectItem value="hr">{t("areaHr")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {scope === "performance" && (
+            <div className="space-y-1.5">
+              <Label>{t("linkedEmailsCompany")}</Label>
+              <Input
+                value={companySlug}
+                onChange={(e) => setCompanySlug(e.target.value)}
+                placeholder="advantis"
+              />
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <Label>{t("linkedEmailsAlias")}</Label>
+            <Input type="email" value={aliasEmail} onChange={(e) => setAliasEmail(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>{t("linkedEmailsCanonical")}</Label>
+            <Input
+              type="email"
+              value={canonicalEmail}
+              onChange={(e) => setCanonicalEmail(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>{t("linkedEmailsNote")}</Label>
+            <Input value={note} onChange={(e) => setNote(e.target.value)} />
+          </div>
+        </div>
+        <Button
+          size="sm"
+          disabled={busy || !aliasEmail || !canonicalEmail}
+          onClick={() => void handleAdd()}
+        >
+          {busy ? t("linkedEmailsAdding") : t("linkedEmailsAdd")}
+        </Button>
+      </div>
+
+      {rows?.length === 0 ? (
+        <EmptyState icon={<Link2 />} title={t("linkedEmailsEmpty")} />
+      ) : (
+        <div className="space-y-2">
+          {rows?.map((row) => (
+            <div
+              key={row.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/70 bg-card p-3 text-sm"
+            >
+              <div className="min-w-0 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">
+                    {row.scope === "hr" ? t("areaHr") : t("areaPerformance")}
+                  </Badge>
+                  {row.companySlug && <Badge variant="outline">{row.companySlug}</Badge>}
+                </div>
+                <p className="break-all">
+                  <span className="font-mono">{row.aliasEmail}</span>
+                  {" → "}
+                  <span className="font-mono">{row.canonicalEmail}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {row.note && `${row.note} · `}
+                  {t("linkedEmailsAddedBy", {
+                    name: row.addedByName ?? "—",
+                    time: format.dateTime(new Date(row.createdAt), {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }),
+                  })}
+                </p>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => void handleRemove(row.id)}>
+                {t("linkedEmailsRemove")}
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <StepUpDialog
+        open={verifyOpen}
+        availableMethods={verifyMethods}
+        context="admin_reverify"
+        onVerified={() => settleVerification(true)}
+        onOpenChange={(open) => {
+          if (!open) settleVerification(false);
+        }}
+      />
+    </div>
+  );
+}
+
 export function PasswordResetsPanel() {
   const t = useTranslations("PasswordReset");
   const params = useSearchParams();
@@ -457,6 +690,7 @@ export function PasswordResetsPanel() {
           )}
         </TabsTrigger>
         <TabsTrigger value="handled">{t("adminHandled")}</TabsTrigger>
+        <TabsTrigger value="linked">{t("linkedEmailsTab")}</TabsTrigger>
       </TabsList>
       <Select value={tab} onValueChange={setTab}>
         <SelectTrigger className="md:hidden">
@@ -468,6 +702,7 @@ export function PasswordResetsPanel() {
             {pending && pending.length > 0 ? ` (${pending.length})` : ""}
           </SelectItem>
           <SelectItem value="handled">{t("adminHandled")}</SelectItem>
+          <SelectItem value="linked">{t("linkedEmailsTab")}</SelectItem>
         </SelectContent>
       </Select>
 
@@ -497,6 +732,10 @@ export function PasswordResetsPanel() {
             />
           ))
         )}
+      </TabsContent>
+
+      <TabsContent value="linked">
+        <LinkedEmailsPanel />
       </TabsContent>
     </Tabs>
   );

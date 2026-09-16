@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import {
+  internalAction,
   internalMutation,
   internalQuery,
   query,
@@ -167,6 +168,13 @@ interface ResolvedTarget {
    * intranet account there, so there's nothing to choose between) and for
    * any `performance` login with no `linkedUserId`. */
   intranetEmail?: string;
+  /** How the typed email led here, when it wasn't a direct match — absent
+   * for a plain lookup. `targetLink`: the typed email matched the *linked*
+   * intranet account instead of the login's own address.  `adminLink`: an
+   * admin-registered `passwordResetLinkedEmails` pair pointed at the
+   * account that actually resolved. Read by `requestReset` to decide
+   * whether a mismatch can skip manual review. */
+  resolvedVia?: "targetLink" | "adminLink";
 }
 
 /** Which account, if any, `scope` + `email` names. A resolution with every id
@@ -191,10 +199,32 @@ async function resolveTarget(
   opts: { bypassFilters?: boolean } = {},
 ): Promise<ResolvedTarget> {
   const targetEmail = normalizeEmail(email);
+  // `hr` has no company to scope by; `performance` defaults to "advantis"
+  // the same way the company lookup below does — keeping these in lockstep
+  // matters, since an alias registered against the defaulted slug must still
+  // match a request that left `companySlug` unset.
+  const aliasCompanySlug = scope === "hr" ? undefined : (companySlug ?? "advantis");
+  // An admin-registered "these are the same person" pair takes the typed
+  // email straight to whatever it's declared to mean, before any lookup
+  // runs — the substitution only changes *which* email gets looked up, not
+  // the active/membership/company filters below, so this applies the same
+  // whether or not the caller is bypassing those. `targetEmail` in the
+  // returned struct stays what was actually typed either way, matching the
+  // existing "targetEmail = input, sentToEmail = where it actually goes"
+  // pattern.
+  const link = await ctx.db
+    .query("passwordResetLinkedEmails")
+    .withIndex("by_scope_company_alias", (q) =>
+      q.eq("scope", scope).eq("companySlug", aliasCompanySlug).eq("aliasEmail", targetEmail),
+    )
+    .unique();
+  const lookupEmail = link ? link.canonicalEmail : targetEmail;
+  const resolvedVia = link ? ("adminLink" as const) : undefined;
+
   if (scope === "hr") {
     const user = await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", targetEmail))
+      .withIndex("by_email", (q) => q.eq("email", lookupEmail))
       .unique();
     // A vault password only exists for someone who belongs to the area at
     // all — anyone else is "no such account" as far as this flow goes.
@@ -204,7 +234,7 @@ async function resolveTarget(
     ) {
       return { targetEmail };
     }
-    return { targetEmail, targetUserId: user._id, sentToEmail: user.email };
+    return { targetEmail, targetUserId: user._id, sentToEmail: user.email, resolvedVia };
   }
 
   const company = await ctx.db
@@ -215,7 +245,7 @@ async function resolveTarget(
   if (company && (opts.bypassFilters || company.status === "active")) {
     login = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_company_email", (q) => q.eq("companyId", company._id).eq("email", targetEmail))
+      .withIndex("by_company_email", (q) => q.eq("companyId", company._id).eq("email", lookupEmail))
       .unique();
   }
   if (!login) {
@@ -228,11 +258,35 @@ async function resolveTarget(
     // actually about — bypassing must never cross a company boundary.
     const candidates = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_email", (q) => q.eq("email", targetEmail))
+      .withIndex("by_email", (q) => q.eq("email", lookupEmail))
       .collect();
     login = candidates.find((c) => c.isSuperAdmin === true) ?? null;
   }
-  if (!login || !(opts.bypassFilters || login.active)) return { targetEmail };
+  let viaTargetLink = false;
+  if (!login && company && (opts.bypassFilters || company.status === "active")) {
+    // The typed (or admin-linked) email didn't match any login directly —
+    // try it as the *intranet* side of a `linkedUserId` pair instead, same
+    // shape as `performanceAuth.ts`'s `getLoginLinkedTo`. Someone typing
+    // their intranet address into a Performance lock screen by mistake
+    // shouldn't dead-end just because that's not the login's own email.
+    const linkedIntranetUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", lookupEmail))
+      .unique();
+    if (linkedIntranetUser && linkedIntranetUser.status === "active") {
+      const viaLink = await ctx.db
+        .query("performanceLogins")
+        .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", linkedIntranetUser._id))
+        .first();
+      // Never cross a company boundary, same invariant as every other
+      // lookup here — a link to a different tenant's login doesn't count.
+      if (viaLink && viaLink.companyId === company._id) {
+        login = viaLink;
+        viaTargetLink = true;
+      }
+    }
+  }
+  if (!login || !(opts.bypassFilters || login.active)) return { targetEmail, resolvedVia };
   const linkedUser = login.linkedUserId ? await ctx.db.get(login.linkedUserId) : null;
   return {
     targetEmail,
@@ -240,6 +294,7 @@ async function resolveTarget(
     targetCompanyId: login.companyId,
     sentToEmail: login.email,
     intranetEmail: linkedUser && linkedUser.email !== login.email ? linkedUser.email : undefined,
+    resolvedVia: viaTargetLink ? "targetLink" : resolvedVia,
   };
 }
 
@@ -314,6 +369,25 @@ export const requestReset = mutation({
 
     const now = Date.now();
     const selfService = caller?.email === resolved.targetEmail;
+    const knownAccount = !!(resolved.targetUserId ?? resolved.targetLoginId);
+    // A mismatch an admin would almost certainly wave through anyway,
+    // because the system already vouches for it: either the filer is signed
+    // in as the intranet account this login is linked to, or the typed
+    // email itself only resolved *through* a link (an admin-established
+    // `linkedUserId`, or an explicit `passwordResetLinkedEmails` pair).
+    // `selfService` itself is untouched by this — it keeps meaning exactly
+    // what it always has.
+    const autoApprovedVia: "callerLinkedAccount" | "targetLinkedAccount" | "adminLinkedEmail" | undefined =
+      selfService || !knownAccount
+        ? undefined
+        : resolved.resolvedVia === "targetLink"
+          ? "targetLinkedAccount"
+          : resolved.resolvedVia === "adminLink"
+            ? "adminLinkedEmail"
+            : caller && resolved.intranetEmail && caller.email === resolved.intranetEmail
+              ? "callerLinkedAccount"
+              : undefined;
+
     const previous = await ctx.db
       .query("passwordResetRequests")
       .withIndex("by_scope_email", (q) =>
@@ -348,11 +422,12 @@ export const requestReset = mutation({
       requestedByUserId: caller?._id,
       requestedByEmail: caller?.email,
       selfService,
+      autoApproved: !!autoApprovedVia,
+      autoApprovedVia,
       status: "pending",
       createdAt: now,
     });
 
-    const knownAccount = !!(resolved.targetUserId ?? resolved.targetLoginId);
     await audit(ctx, {
       event: knownAccount ? "request_filed" : "request_unknown_account",
       scope,
@@ -361,18 +436,47 @@ export const requestReset = mutation({
       targetEmail: resolved.targetEmail,
       targetUserId: resolved.targetUserId,
       targetLoginId: resolved.targetLoginId,
-      detail: `self=${selfService}`,
+      detail: `self=${selfService}${autoApprovedVia ? ` autoVia=${autoApprovedVia}` : ""}`,
     });
     await trackEvent(ctx, {
       event: "password_reset_requested",
       distinctId: caller?.clerkUserId,
-      properties: { scope, self_service: selfService, known_account: knownAccount },
+      properties: {
+        scope,
+        self_service: selfService,
+        known_account: knownAccount,
+        auto_approved_via: autoApprovedVia ?? null,
+      },
     });
 
     // An unresolved email gets a row (so repeated probing stays visible) but
     // no admin ping — otherwise anyone could mail-bomb the admins with
     // made-up addresses.
     if (!knownAccount) return { status: "sent" };
+
+    if (autoApprovedVia) {
+      // Mints the token and mails it from an action — mutations can't (see
+      // `autoIssueLinkedReset`) — so this only queues it; the request row
+      // stays `pending` for the brief window until that action runs, same
+      // as any other scheduled side effect in this file.
+      await ctx.scheduler.runAfter(0, internal.passwordResets.autoIssueLinkedReset, {
+        requestId,
+        scope,
+        companySlug,
+      });
+      const admins = await adminIds(ctx);
+      // FYI only — there's nothing to approve, so no "please review" email,
+      // just an in-app ping so an admin skimming notifications still sees
+      // it land in near-real-time instead of only on their next visit to
+      // the queue.
+      await notifyUsers(ctx, admins, {
+        type: "password_reset_request",
+        title: `Password reset auto-approved (${SCOPE_LABEL[scope]})`,
+        body: `${resolved.targetEmail} → linked account, reset sent automatically.`,
+        link: `/admin/password-resets?request=${requestId}`,
+      });
+      return { status: "sent" };
+    }
 
     const admins = await adminIds(ctx);
     await notifyUsers(ctx, admins, {
@@ -465,12 +569,19 @@ interface AdminRequestRow {
   requestedByName: string | null;
   requestedByEmail: string | null;
   selfService: boolean;
+  /** True when this request skipped human review because an existing link
+   * (or an admin-registered pair) already explained the mismatch. */
+  autoApproved: boolean;
+  autoApprovedVia: "callerLinkedAccount" | "targetLinkedAccount" | "adminLinkedEmail" | null;
   status: "pending" | "issued" | "dismissed";
   createdAt: number;
   handledByName: string | null;
   handledAt: number | null;
   /** Expiry of the still-usable link issued for this request, if any. */
   activeLinkExpiresAt: number | null;
+  /** True when a link was issued for this request and an admin has since
+   * revoked it before it was used. */
+  linkRevoked: boolean;
 }
 
 function userLabel(user: Doc<"users"> | null): string | null {
@@ -501,6 +612,9 @@ async function toAdminRow(
       : [];
   const live = tokens.find(
     (t) => t.requestId === request._id && !t.usedAt && !t.revokedAt && t.expiresAt > Date.now(),
+  );
+  const linkRevoked = tokens.some(
+    (t) => t.requestId === request._id && !t.usedAt && !!t.revokedAt,
   );
 
   const targetExists = !!(request.targetUserId ?? request.targetLoginId);
@@ -535,11 +649,14 @@ async function toAdminRow(
     requestedByName: userLabel(requester),
     requestedByEmail: request.requestedByEmail ?? null,
     selfService: request.selfService,
+    autoApproved: request.autoApproved ?? false,
+    autoApprovedVia: request.autoApprovedVia ?? null,
     status: request.status,
     createdAt: request.createdAt,
     handledByName: userLabel(handler),
     handledAt: request.handledAt ?? null,
     activeLinkExpiresAt: live?.expiresAt ?? null,
+    linkRevoked,
   };
 }
 
@@ -597,6 +714,123 @@ export const pendingCount = query({
     // Probes (no matching account) never became an admin ping, so they don't
     // belong in the badge either.
     return pending.filter((r) => r.targetUserId ?? r.targetLoginId).length;
+  },
+});
+
+// ------------------------------------------------------------ linked emails
+
+interface LinkedEmailRow {
+  id: Id<"passwordResetLinkedEmails">;
+  scope: PasswordResetScope;
+  companySlug: string | null;
+  aliasEmail: string;
+  canonicalEmail: string;
+  note: string | null;
+  addedByName: string | null;
+  createdAt: number;
+}
+
+/** The admin-maintained fallback list — pairs `resolveTarget` treats as the
+ * same person when no existing account link (`performanceLogins.linkedUserId`)
+ * already explains a mismatch. See `passwordResetLinkedEmails` in
+ * `schema.ts`. */
+export const listLinkedEmails = query({
+  args: {},
+  handler: async (ctx): Promise<LinkedEmailRow[]> => {
+    await requireAdmin(ctx);
+    const rows = await ctx.db.query("passwordResetLinkedEmails").order("desc").collect();
+    const addedBy = await Promise.all(rows.map((r) => ctx.db.get(r.addedByUserId)));
+    return rows.map((r, i) => ({
+      id: r._id,
+      scope: r.scope,
+      companySlug: r.companySlug ?? null,
+      aliasEmail: r.aliasEmail,
+      canonicalEmail: r.canonicalEmail,
+      note: r.note ?? null,
+      addedByName: userLabel(addedBy[i]),
+      createdAt: r.createdAt,
+    }));
+  },
+});
+
+/** Registers a pair `resolveTarget` will treat as the same person from now
+ * on — this pre-authorizes every future reset request between the two to
+ * skip manual review, so it's step-up gated the same as issuing or
+ * dismissing a request. */
+export const addLinkedEmail = mutation({
+  args: {
+    scope: passwordResetScopeValidator,
+    companySlug: v.optional(v.string()),
+    aliasEmail: v.string(),
+    canonicalEmail: v.string(),
+    note: v.optional(v.string()),
+    sessionId: v.string(),
+  },
+  handler: async (ctx, args): Promise<{ ok: true } | StepUpHint> => {
+    const admin = await requireAdmin(ctx);
+    const aliasEmail = normalizeEmail(args.aliasEmail);
+    const canonicalEmail = normalizeEmail(args.canonicalEmail);
+    if (!aliasEmail || !canonicalEmail || aliasEmail === canonicalEmail) {
+      throw new ConvexError({
+        code: "validation",
+        message: "Both addresses are required and must differ.",
+      });
+    }
+    // Matches `resolveTarget`'s `aliasCompanySlug` default exactly — a
+    // performance-scope link left blank still has to resolve for a request
+    // that also left `companySlug` unset (both default to "advantis").
+    const companySlug =
+      args.scope === "performance" ? (args.companySlug ?? "advantis") : undefined;
+
+    const satisfied = await checkSatisfied(ctx, {
+      userId: admin._id,
+      sessionId: args.sessionId,
+      requiredLevel: ORG_REVERIFY_LEVEL,
+      freshnessMs: REVERIFY_FRESHNESS_MS,
+    });
+    if (!satisfied) {
+      return needsStepUpHint(
+        ORG_REVERIFY_LEVEL,
+        await availableMethodsFor(ctx, admin._id, ORG_REVERIFY_LEVEL, { includePasskey: true }),
+      );
+    }
+
+    const existing = await ctx.db
+      .query("passwordResetLinkedEmails")
+      .withIndex("by_scope_company_alias", (q) =>
+        q.eq("scope", args.scope).eq("companySlug", companySlug).eq("aliasEmail", aliasEmail),
+      )
+      .unique();
+    if (existing) {
+      console.warn(
+        `[passwordReset] addLinkedEmail conflict scope=${args.scope} company=${companySlug ?? "n/a"} alias=${maskEmail(aliasEmail)}`,
+      );
+      throw new ConvexError({ code: "conflict", message: "That address is already linked." });
+    }
+
+    const id = await ctx.db.insert("passwordResetLinkedEmails", {
+      scope: args.scope,
+      companySlug,
+      aliasEmail,
+      canonicalEmail,
+      addedByUserId: admin._id,
+      createdAt: Date.now(),
+      note: args.note,
+    });
+    console.log(
+      `[passwordReset] linkedEmail added id=${id} scope=${args.scope} company=${companySlug ?? "n/a"} alias=${maskEmail(aliasEmail)} canonical=${maskEmail(canonicalEmail)} by=${admin._id}`,
+    );
+    return { ok: true };
+  },
+});
+
+export const removeLinkedEmail = mutation({
+  args: { id: v.id("passwordResetLinkedEmails") },
+  handler: async (ctx, { id }): Promise<{ ok: true }> => {
+    const admin = await requireAdmin(ctx);
+    await ctx.db.delete(id);
+    console.log(`[passwordReset] linkedEmail removed id=${id} by=${admin._id}`);
+    return { ok: true };
   },
 });
 
@@ -669,6 +903,90 @@ export const dismissRequest = mutation({
       event: "password_reset_request_dismissed",
       distinctId: admin.clerkUserId,
       properties: { scope: request.scope, waited_ms: Date.now() - request.createdAt },
+    });
+    return { ok: true };
+  },
+});
+
+/** Kills a still-live, unused link before it's opened — the intervention an
+ * admin needs when an issued request (auto-approved or not) turns out to be
+ * suspicious, without a trip to the Convex dashboard. Step-up gated like
+ * `dismissRequest`/`issueResetLink`: denying someone a reset they're
+ * entitled to is just as much a real action as granting one. */
+export const revokeIssuedLink = mutation({
+  args: { requestId: v.id("passwordResetRequests"), sessionId: v.string() },
+  handler: async (ctx, { requestId, sessionId }): Promise<{ ok: true } | StepUpHint> => {
+    const admin = await requireAdmin(ctx);
+    const request = await ctx.db.get(requestId);
+    if (!request || request.status !== "issued") {
+      throw new ConvexError({ code: "not_found", message: "No issued link for this request." });
+    }
+
+    const satisfied = await checkSatisfied(ctx, {
+      userId: admin._id,
+      sessionId,
+      requiredLevel: ORG_REVERIFY_LEVEL,
+      freshnessMs: REVERIFY_FRESHNESS_MS,
+    });
+    if (!satisfied) {
+      await audit(ctx, {
+        event: "reverification_failed",
+        scope: request.scope,
+        requestId,
+        actor: admin,
+        actorIsAdmin: true,
+        reverified: false,
+        targetEmail: request.targetEmail,
+        detail: "action=revoke",
+      });
+      await trackEvent(ctx, {
+        event: "password_reset_reverification_required",
+        distinctId: admin.clerkUserId,
+        properties: { scope: request.scope, action: "revoke" },
+      });
+      return needsStepUpHint(
+        ORG_REVERIFY_LEVEL,
+        await availableMethodsFor(ctx, admin._id, ORG_REVERIFY_LEVEL, { includePasskey: true }),
+      );
+    }
+
+    const tokens = request.targetUserId
+      ? await ctx.db
+          .query("passwordResetTokens")
+          .withIndex("by_targetUser", (q) => q.eq("targetUserId", request.targetUserId))
+          .collect()
+      : request.targetLoginId
+        ? await ctx.db
+            .query("passwordResetTokens")
+            .withIndex("by_targetLogin", (q) => q.eq("targetLoginId", request.targetLoginId))
+            .collect()
+        : [];
+    const live = tokens.find(
+      (t) => t.requestId === requestId && !t.usedAt && !t.revokedAt && t.expiresAt > Date.now(),
+    );
+    if (!live) {
+      console.warn(
+        `[passwordReset] revoke found nothing to revoke request=${requestId} tokens=${tokens.length}`,
+      );
+      throw new ConvexError({ code: "not_found", message: "No live link to revoke." });
+    }
+    await ctx.db.patch(live._id, { revokedAt: Date.now() });
+    await audit(ctx, {
+      event: "link_revoked",
+      scope: request.scope,
+      requestId,
+      actor: admin,
+      actorIsAdmin: true,
+      reverified: true,
+      targetEmail: request.targetEmail,
+      targetUserId: request.targetUserId,
+      targetLoginId: request.targetLoginId,
+      detail: `autoApprovedVia=${request.autoApprovedVia ?? "none"}`,
+    });
+    await trackEvent(ctx, {
+      event: "password_reset_link_revoked",
+      distinctId: admin.clerkUserId,
+      properties: { scope: request.scope, auto_approved: request.autoApproved ?? false },
     });
     return { ok: true };
   },
@@ -815,7 +1133,11 @@ export const storeIssuedToken = internalMutation({
     targetLoginId: v.optional(v.id("performanceLogins")),
     targetEmail: v.string(),
     sentToEmail: v.string(),
-    issuedByUserId: v.id("users"),
+    /** Absent when `autoIssueLinkedReset` minted this on its own — there's
+     * no admin actor to record, and the request's `handledByUserId` stays
+     * unset too (its `autoApproved`/`autoApprovedVia` fields already say
+     * why it was issued). */
+    issuedByUserId: v.optional(v.id("users")),
     expiresAt: v.number(),
     forced: v.boolean(),
     sendTo: sendToValidator,
@@ -847,23 +1169,25 @@ export const storeIssuedToken = internalMutation({
         body: "Check your inbox — the link is valid for one hour.",
       });
     }
-    const admin = await ctx.db.get(args.issuedByUserId);
+    const admin = args.issuedByUserId ? await ctx.db.get(args.issuedByUserId) : null;
     await audit(ctx, {
-      event: "link_issued",
+      event: admin ? "link_issued" : "link_auto_issued",
       scope: args.scope,
       requestId: args.requestId,
       actor: admin,
-      actorIsAdmin: true,
-      reverified: true,
+      actorIsAdmin: !!admin,
+      reverified: !!admin,
       targetEmail: args.targetEmail,
       targetUserId: args.targetUserId,
       targetLoginId: args.targetLoginId,
       detail: `sentTo=${maskEmail(args.sentToEmail)} sendTo=${args.sendTo} forced=${args.forced} ttlMin=${Math.round(
         (args.expiresAt - now) / 60000,
-      )} waitedMs=${request ? now - request.createdAt : 0}`,
+      )} waitedMs=${request ? now - request.createdAt : 0}${
+        request?.autoApprovedVia ? ` autoVia=${request.autoApprovedVia}` : ""
+      }`,
     });
     await trackEvent(ctx, {
-      event: "password_reset_link_issued",
+      event: admin ? "password_reset_link_issued" : "password_reset_link_auto_issued",
       distinctId: admin?.clerkUserId,
       properties: {
         scope: args.scope,
@@ -871,6 +1195,7 @@ export const storeIssuedToken = internalMutation({
         self_service: request?.selfService ?? false,
         forced: args.forced,
         send_to: args.sendTo,
+        auto_approved_via: request?.autoApprovedVia ?? null,
       },
     });
     return { ok: true };
@@ -990,6 +1315,178 @@ export const issueResetLink = action({
       sentTo:
         resolvedSendTo === "intranet" ? prepared.sentToEmail : maskEmail(prepared.sentToEmail),
     };
+  },
+});
+
+// ------------------------------------------------------- auto-issuing a link
+
+/** `prepareIssue`'s shape without the admin/step-up gate — there's no admin
+ * acting here. Re-resolves the target and the auto-approval reason fresh
+ * rather than trusting what `requestReset` computed moments earlier (the
+ * link that justified it could have been edited or removed in the
+ * scheduler gap between the mutation committing and this query running).
+ * Comes back `eligible: false` rather than throwing when that reasoning no
+ * longer holds — the request just stays `pending` for a human, the same
+ * outcome as if no link had ever explained it. */
+export const prepareAutoIssue = internalQuery({
+  args: {
+    requestId: v.id("passwordResetRequests"),
+    companySlug: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { requestId, companySlug },
+  ): Promise<
+    | { eligible: false; reason: string; scope?: PasswordResetScope }
+    | {
+        eligible: true;
+        scope: PasswordResetScope;
+        targetEmail: string;
+        sentToEmail: string;
+        targetUserId?: Id<"users">;
+        targetLoginId?: Id<"performanceLogins">;
+        linkBase: string;
+      }
+  > => {
+    const request = await ctx.db.get(requestId);
+    if (!request) return { eligible: false, reason: "request_missing" };
+    if (request.status !== "pending") {
+      return { eligible: false, reason: `status=${request.status}`, scope: request.scope };
+    }
+    if (!request.autoApprovedVia) {
+      return { eligible: false, reason: "no_autoApprovedVia_on_row", scope: request.scope };
+    }
+
+    const caller = request.requestedByUserId ? await ctx.db.get(request.requestedByUserId) : null;
+    // The safe, filtered lookup only — auto-issuing must never fall back to
+    // the "force issue" bypass, same boundary `requestReset` already draws.
+    const resolved = await resolveTarget(ctx, request.scope, request.targetEmail, companySlug);
+    if (!resolved.sentToEmail || !(resolved.targetUserId ?? resolved.targetLoginId)) {
+      return { eligible: false, reason: "account_no_longer_resolves", scope: request.scope };
+    }
+
+    const selfService = caller?.email === resolved.targetEmail;
+    const stillExplained =
+      !selfService &&
+      (resolved.resolvedVia === "targetLink" ||
+        resolved.resolvedVia === "adminLink" ||
+        (!!caller && !!resolved.intranetEmail && caller.email === resolved.intranetEmail));
+    if (!stillExplained) {
+      return {
+        eligible: false,
+        reason: `link_no_longer_explains_it via=${request.autoApprovedVia} nowResolvedVia=${
+          resolved.resolvedVia ?? "none"
+        } selfService=${selfService}`,
+        scope: request.scope,
+      };
+    }
+
+    // Land the link on the domain the person actually signs in on, same
+    // rule `prepareIssue` uses.
+    const intranetUrl = process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de";
+    const tenant = resolved.targetCompanyId ? await ctx.db.get(resolved.targetCompanyId) : null;
+    const linkBase =
+      tenant && tenant.status === "active" && tenant.slug !== "advantis"
+        ? `https://${tenant.domain}`
+        : intranetUrl;
+
+    return {
+      eligible: true,
+      scope: request.scope,
+      targetEmail: request.targetEmail,
+      sentToEmail: resolved.sentToEmail,
+      targetUserId: resolved.targetUserId,
+      targetLoginId: resolved.targetLoginId,
+      linkBase,
+    };
+  },
+});
+
+/** Mints and mails a reset link with no admin actor — what `requestReset`
+ * schedules when a mismatch is already explained by an existing or
+ * admin-registered link. Mirrors `issueResetLink`'s tail end exactly (mint,
+ * store, mail — always to the account's own address, `sendTo: "feature"`,
+ * since there's no admin here to ask which of two addresses to use), minus
+ * the admin/step-up gate. */
+export const autoIssueLinkedReset = internalAction({
+  args: {
+    requestId: v.id("passwordResetRequests"),
+    scope: passwordResetScopeValidator,
+    companySlug: v.optional(v.string()),
+  },
+  handler: async (ctx, { requestId, companySlug }): Promise<{ ok: true } | { skipped: true }> => {
+    console.log(`[passwordReset:autoIssue] start request=${requestId}`);
+
+    const prepared = await ctx.runQuery(internal.passwordResets.prepareAutoIssue, {
+      requestId,
+      companySlug,
+    });
+    if (!prepared.eligible) {
+      // Not a crash — the request just falls back to needing a human, same
+      // as if no link had ever explained it. Logged (console + audit trail
+      // when we at least know the scope) so "why didn't this auto-issue"
+      // has an answer in the Convex dashboard instead of just silence.
+      console.warn(
+        `[passwordReset:autoIssue] skipped request=${requestId} reason=${prepared.reason}`,
+      );
+      if (prepared.scope) {
+        await ctx.runMutation(internal.passwordResets.recordAudit, {
+          event: "auto_issue_skipped",
+          scope: prepared.scope,
+          requestId,
+          detail: prepared.reason,
+        });
+      }
+      return { skipped: true };
+    }
+
+    try {
+      const token = randomToken();
+      const expiresAt = Date.now() + TOKEN_TTL_MS;
+      console.log(
+        `[passwordReset:autoIssue] minting request=${requestId} scope=${prepared.scope} sentTo=${maskEmail(
+          prepared.sentToEmail,
+        )}`,
+      );
+      await ctx.runMutation(internal.passwordResets.storeIssuedToken, {
+        requestId,
+        scope: prepared.scope,
+        tokenHash: await sha256hex(token),
+        targetUserId: prepared.targetUserId,
+        targetLoginId: prepared.targetLoginId,
+        targetEmail: prepared.targetEmail,
+        sentToEmail: prepared.sentToEmail,
+        expiresAt,
+        forced: false,
+        sendTo: "feature",
+      });
+
+      console.log(`[passwordReset:autoIssue] mailing request=${requestId}`);
+      await ctx.runAction(internal.outbound.sendNotificationEmail, {
+        kind: "password-reset-link",
+        to: prepared.sentToEmail,
+        data: {
+          area: SCOPE_LABEL[prepared.scope],
+          url: `${prepared.linkBase}/password?o=${prepared.scope}&token=${token}`,
+          expiresAt,
+        },
+      });
+      console.log(`[passwordReset:autoIssue] done request=${requestId}`);
+    } catch (error) {
+      // The token may or may not have been stored by the time this fires —
+      // `storeIssuedToken` already revokes prior tokens and patches the
+      // request to `issued` in one transaction, so a failure here is almost
+      // always the mail step. Either way, this is the one place that knows
+      // *which* request and step failed; Convex logs the thrown error too,
+      // but without this it's just an anonymous action crash in the
+      // dashboard with no link back to the request row.
+      console.error(
+        `[passwordReset:autoIssue] failed request=${requestId} scope=${prepared.scope}:`,
+        error,
+      );
+      throw error;
+    }
+    return { ok: true };
   },
 });
 

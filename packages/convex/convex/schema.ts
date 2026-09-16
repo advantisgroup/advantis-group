@@ -2907,8 +2907,29 @@ export default defineSchema({
     requestedByEmail: v.optional(v.string()),
     /** False when the filer's own identity doesn't match the account they
      * asked about (or is unknown) — the "an employee is asking for their
-     * manager's login" case an admin must eyeball before issuing anything. */
+     * manager's login" case an admin must eyeball before issuing anything.
+     * Untouched by `autoApproved` below — it keeps meaning exactly this,
+     * even for a row that skipped human review. */
     selfService: v.boolean(),
+    /** True when the mismatch above was explained away automatically — the
+     * filer (or the typed email itself) resolved to this account through an
+     * admin-established link, not through eyeballing. See
+     * `autoApprovedVia` for which kind of link. Absent on every row written
+     * before this existed, which reads identically to `false`. */
+    autoApproved: v.optional(v.boolean()),
+    /** `callerLinkedAccount`: the filer is signed in as the intranet account
+     * this login's `linkedUserId` already points at. `targetLinkedAccount`:
+     * the *typed* email didn't match the login directly, but matched its
+     * linked intranet account's email instead. `adminLinkedEmail`: neither
+     * of those applied, but an admin explicitly registered this pair in
+     * `passwordResetLinkedEmails`. */
+    autoApprovedVia: v.optional(
+      v.union(
+        v.literal("callerLinkedAccount"),
+        v.literal("targetLinkedAccount"),
+        v.literal("adminLinkedEmail"),
+      ),
+    ),
     status: v.union(v.literal("pending"), v.literal("issued"), v.literal("dismissed")),
     createdAt: v.number(),
     handledByUserId: v.optional(v.id("users")),
@@ -2936,7 +2957,9 @@ export default defineSchema({
      * the filer's, so an approved-but-impersonated request still can't hand
      * the link to whoever filed it. */
     sentToEmail: v.string(),
-    issuedByUserId: v.id("users"),
+    /** Absent for a link `autoIssueLinkedReset` minted on its own — there's
+     * no admin actor to record. */
+    issuedByUserId: v.optional(v.id("users")),
     expiresAt: v.number(),
     usedAt: v.optional(v.number()),
     revokedAt: v.optional(v.number()),
@@ -2965,6 +2988,18 @@ export default defineSchema({
       v.literal("request_unknown_account"),
       v.literal("admins_notified"),
       v.literal("link_issued"),
+      /** Same as `link_issued`, minted by `autoIssueLinkedReset` with no
+       * admin actor — kept distinct so the trail (and the admin queue) can
+       * tell "a human decided this" from "a known link decided this". */
+      v.literal("link_auto_issued"),
+      /** `autoIssueLinkedReset` ran but `prepareAutoIssue` no longer found
+       * the same reasoning `requestReset` did (the link was edited or
+       * removed in the scheduler gap, or the account stopped resolving) —
+       * the request is left `pending` for a human instead of silently
+       * failing open. `detail` names which check failed. */
+      v.literal("auto_issue_skipped"),
+      /** An admin killed a still-live, unused link before it was opened. */
+      v.literal("link_revoked"),
       v.literal("request_dismissed"),
       v.literal("token_checked"),
       v.literal("reset_completed"),
@@ -2992,6 +3027,33 @@ export default defineSchema({
     .index("by_at", ["at"])
     .index("by_request", ["requestId"])
     .index("by_actor", ["actorUserId"]),
+
+  /**
+   * Admin-declared "these two emails are the same person" pairs — the
+   * fallback for a mismatch `resolveTarget` can't already explain via
+   * `performanceLogins.linkedUserId`. A hit here makes `requestReset` treat
+   * `aliasEmail` as if `canonicalEmail` had been typed instead, and skip the
+   * manual approval step the way a linked-account match would.
+   *
+   * Deliberately separate from `linkedUserId`: that link is for signing
+   * into Performance via an intranet session and is 1:1 by account id. This
+   * is a plain "these addresses both reach the same person" note, admin
+   * text-entered, with no bearing on authentication.
+   */
+  passwordResetLinkedEmails: defineTable({
+    scope: passwordResetScopeValidator,
+    /** Performance email uniqueness is per-company; absent for `hr`. */
+    companySlug: v.optional(v.string()),
+    /** Lowercased — the address that might get typed or signed in with by
+     * mistake. */
+    aliasEmail: v.string(),
+    /** Lowercased — the address `resolveTarget` already knows how to
+     * resolve to a real account. */
+    canonicalEmail: v.string(),
+    addedByUserId: v.id("users"),
+    createdAt: v.number(),
+    note: v.optional(v.string()),
+  }).index("by_scope_company_alias", ["scope", "companySlug", "aliasEmail"]),
 
   /**
    * The step-up gate for admin password-reset actions (`issueResetLink`,
