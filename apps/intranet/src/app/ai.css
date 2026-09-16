@@ -1,18 +1,21 @@
-/* ── AI · Aurora ────────────────────────────────────────────────────────────
-   One gradient reserved for anything a model did or is doing, so AI reads as
-   AI at a glance anywhere in the app. Nothing else should borrow these —
-   the moment a normal button is violet-blue too, the signal is gone. */
+/* ── AI ─────────────────────────────────────────────────────────────────────
+   Plain and quiet, the way Claude itself looks: neutral surfaces, the Claude
+   mark as the one spot of colour, and grey text that shimmers while it works.
+   No gradients, glows or rings — the mark and the words carry it.
+
+   --ai-1/2/3 all hold the same clay tone now; they stay three names so older
+   call sites keep working without turning back into a gradient. */
 
 :root {
-  --ai-1: oklch(72% 0.16 300);
-  --ai-2: oklch(70% 0.15 262);
-  --ai-3: oklch(80% 0.11 200);
+  --ai-1: oklch(71% 0.12 42);
+  --ai-2: oklch(71% 0.12 42);
+  --ai-3: oklch(71% 0.12 42);
 }
 
 :root.light {
-  --ai-1: oklch(54% 0.19 300);
-  --ai-2: oklch(54% 0.17 262);
-  --ai-3: oklch(60% 0.11 212);
+  --ai-1: oklch(62% 0.13 40);
+  --ai-2: oklch(62% 0.13 40);
+  --ai-3: oklch(62% 0.13 40);
 }
 
 @theme {
@@ -21,122 +24,59 @@
   --color-ai-3: var(--ai-3);
 }
 
-@property --ai-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
+/* Small "AI" labels: just muted text, same as any other eyebrow. */
 .ai-text {
-  background-image: linear-gradient(100deg, var(--ai-1), var(--ai-2) 50%, var(--ai-3));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--muted-foreground);
 }
 
-/* The "Thinking" look: muted text with a bright band sweeping through it. */
+/* The "Thinking" look: muted text with a lighter band passing through it. */
 .ai-shimmer {
   background-image: linear-gradient(
     100deg,
     var(--muted-foreground) 0%,
-    var(--muted-foreground) 38%,
-    var(--ai-1) 45%,
+    var(--muted-foreground) 40%,
     var(--foreground) 50%,
-    var(--ai-3) 55%,
-    var(--muted-foreground) 62%,
+    var(--muted-foreground) 60%,
     var(--muted-foreground) 100%
   );
   background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: ai-shimmer 2.4s linear infinite;
+  animation: ai-shimmer 2.2s linear infinite;
 }
 
-/* A thin gradient border that keeps whatever ground it sits on. */
+/* A plain hairline tile that keeps whatever ground it sits on. */
 .ai-edge {
-  border: 1px solid transparent;
-  background:
-    linear-gradient(var(--ai-ground, var(--card)), var(--ai-ground, var(--card))) padding-box,
-    linear-gradient(
-        100deg,
-        color-mix(in oklch, var(--ai-1) 70%, transparent),
-        color-mix(in oklch, var(--ai-2) 45%, transparent),
-        color-mix(in oklch, var(--ai-3) 70%, transparent)
-      )
-      border-box;
+  border: 1px solid var(--border);
+  background-color: var(--ai-ground, var(--card));
 }
 
-/* While a surface is working, light travels around its edge and it breathes
-   a soft glow — enough to see from across the screen, never a spinner. */
-/* Layered on purpose: un-layered CSS beats every `@layer`, so as a plain rule
-   this `position` quietly overrode the `fixed` on the AI dock and dropped it
-   back into the flow at the top of the shell. In `components` it only supplies
-   the positioning context the ring below needs, and any position utility on
-   the same element still wins. */
+/* Only supplies positioning now — working surfaces no longer draw a ring.
+   Layered so a `fixed` utility on the same element (the AI dock) still wins. */
 @layer components {
   .ai-orbit {
     position: relative;
-    isolation: isolate;
   }
 }
 
-.ai-orbit[data-working="true"]::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  padding: 1.5px;
-  border-radius: inherit;
-  pointer-events: none;
-  background: conic-gradient(
-    from var(--ai-angle),
-    transparent 0deg,
-    var(--ai-1) 70deg,
-    var(--ai-2) 130deg,
-    var(--ai-3) 190deg,
-    transparent 250deg
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box exclude,
-    linear-gradient(#000 0 0);
-  animation: ai-orbit 2.8s linear infinite;
-}
-
-.ai-orbit[data-working="true"]::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  pointer-events: none;
-  box-shadow: 0 0 36px -10px color-mix(in oklch, var(--ai-2) 60%, transparent);
-  animation: ai-breathe 2.8s ease-in-out infinite;
-}
-
+/* The Claude mark turns slowly while a run is working. */
 .ai-glyph[data-working="true"] {
   transform-origin: center;
-  transform-box: fill-box;
   will-change: transform;
-  /* Same 2.8s as the orbit, so the glyph and the light on the edge stay in
-     step instead of drifting against each other. */
-  animation: ai-glyph 2.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  animation: ai-glyph 3s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
 /* Streamed words arrive soft and settle — each span animates once, on mount. */
 .ai-word {
-  animation: ai-word 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: ai-word 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Finished structured results (list items, suggestion rows) rise in order;
    set --i on each item for the stagger. */
 .ai-rise {
-  animation: ai-rise 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: calc(var(--i, 0) * 45ms);
+  animation: ai-rise 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
 }
 
 @keyframes ai-shimmer {
@@ -148,51 +88,27 @@
   }
 }
 
-@keyframes ai-orbit {
-  to {
-    --ai-angle: 360deg;
-  }
-}
-
-@keyframes ai-breathe {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
 @keyframes ai-glyph {
-  0% {
-    transform: rotate(0deg) scale(1);
-  }
-  50% {
-    transform: rotate(180deg) scale(0.88);
-  }
-  100% {
-    transform: rotate(360deg) scale(1);
+  to {
+    transform: rotate(360deg);
   }
 }
 
 @keyframes ai-word {
   from {
     opacity: 0;
-    filter: blur(4px);
-    transform: translateY(0.15em);
+    filter: blur(3px);
   }
   to {
     opacity: 1;
     filter: none;
-    transform: none;
   }
 }
 
 @keyframes ai-rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -202,8 +118,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ai-shimmer,
-  .ai-orbit[data-working="true"]::before,
-  .ai-orbit[data-working="true"]::after,
   .ai-glyph[data-working="true"],
   .ai-word,
   .ai-rise {

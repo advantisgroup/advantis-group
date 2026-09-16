@@ -228,16 +228,12 @@ export function AskPanel() {
       closeLabel={tc("close")}
       header={
         <div className="flex items-center gap-2.5 pr-8">
-          <span className="ai-edge flex size-8 shrink-0 items-center justify-center rounded-lg [--ai-ground:var(--card)]">
-            <AiGlyph className="size-4" />
-          </span>
+          <AiGlyph className="size-4" />
           <div className="min-w-0">
-            <p className="text-[0.7rem] font-medium uppercase tracking-[0.16em] refreshed:text-xs refreshed:normal-case refreshed:tracking-normal">
+            <p className="text-xs font-medium text-muted-foreground">
               <span className="ai-text">{t("ask.title")}</span>
             </p>
-            <h2 className="truncate font-display text-base font-bold tracking-tight refreshed:font-semibold">
-              {open.label}
-            </h2>
+            <h2 className="truncate text-[15px] font-semibold tracking-tight">{open.label}</h2>
           </div>
         </div>
       }

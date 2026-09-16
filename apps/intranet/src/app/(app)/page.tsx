@@ -13,7 +13,6 @@ import {
   Command,
   Heart,
   Megaphone,
-  NotebookPen,
   PhoneCall,
   ShieldCheck,
   Settings2,
@@ -21,6 +20,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { useAiEnabled } from "@/components/ai/use-ai-enabled";
 import {
   AdminStatsCard,
   ApplicantPipelineHealthCard,
@@ -40,8 +40,10 @@ import {
   missingProfileFields,
   ProfileCompletionCard,
 } from "@/components/dashboard/ForYouWidgets";
+import { AiBriefCard } from "@/components/dashboard/AiBriefCard";
 import { GreetingHeader } from "@/components/dashboard/GreetingHeader";
 import { NeedsYouPanel, TodayPanel } from "@/components/dashboard/NeedsYou";
+import { DashSurface } from "@/components/dashboard/primitives";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import {
   AnnouncementsCard,
@@ -84,6 +86,7 @@ const now = Date.now();
 const startOfToday = new Date(now).setHours(0, 0, 0, 0);
 
 const CARD_IDS = [
+  "aibrief",
   "chats",
   "myday",
   "myweek",
@@ -124,25 +127,23 @@ function WidgetGrid({
   density: "comfortable" | "compact";
 }) {
   return (
-    <div
+    <DashSurface
       className={cn(
-        "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3",
-        density === "compact" ? "gap-3" : "gap-4",
         "[&>*]:opacity-0 [&>*]:animate-[fadeInUp_0.5s_ease-out_forwards]",
         density === "compact" &&
-          "[&_[data-dashboard-card-header]]:px-4 [&_[data-dashboard-card-header]]:py-2.5 [&_[data-dashboard-card-content]]:p-1 [&_[data-dashboard-row]]:py-1.5",
+          "[&_[data-dashboard-card-header]]:pt-3 [&_[data-dashboard-card-content]]:pb-1.5 [&_[data-dashboard-row]]:py-1.5",
       )}
     >
       {widgets.map((w, i) => (
         <div
           key={w.id}
           className={cn(w.wide && "sm:col-span-2")}
-          style={{ animationDelay: `${0.05 * i}s` }}
+          style={{ animationDelay: `${0.04 * i}s` }}
         >
           {w.node}
         </div>
       ))}
-    </div>
+    </DashSurface>
   );
 }
 
@@ -151,6 +152,7 @@ export default function DashboardPage() {
   const user = useCurrentUser();
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
+  const aiEnabled = useAiEnabled();
   const hasActivityCapability = useHasCapability("view_activity_admin");
   const { session: performanceSession } = usePerformanceSession();
   const hasMyPerformance = Boolean(performanceSession?.valid && performanceSession.employeeId);
@@ -206,6 +208,7 @@ export default function DashboardPage() {
   }, [events]);
 
   const cardLabels: Record<CardId, string> = {
+    aibrief: t("briefTitle"),
     chats: t("unreadChats"),
     myday: t("yourDayTitle"),
     myweek: t("myWeekTitle"),
@@ -268,6 +271,7 @@ export default function DashboardPage() {
   );
 
   const availableCardIds = CARD_IDS.filter((id) => {
+    if (id === "aibrief") return aiEnabled;
     if (id === "myperformance") return hasMyPerformance;
     if (id === "profilecompletion") return profileGaps.length > 0;
     if (id === "newwiki") return hasNewWiki;
@@ -281,7 +285,7 @@ export default function DashboardPage() {
     return true;
   });
   const reorderableCardIds = orderedCardIds.filter(
-    (id) => id !== "newwiki" && availableCardIds.includes(id),
+    (id) => id !== "newwiki" && id !== "aibrief" && availableCardIds.includes(id),
   );
 
   async function moveCard(id: CardId, direction: -1 | 1) {
@@ -392,6 +396,12 @@ export default function DashboardPage() {
         </button>
       </div>
 
+      {aiEnabled && showCard("aibrief") && (
+        <div className="mb-4">
+          <AiBriefCard />
+        </div>
+      )}
+
       <div className="mb-8 grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <NeedsYouPanel />
         <TodayPanel events={todaysEvents} />
@@ -406,33 +416,20 @@ export default function DashboardPage() {
 
       {showWikiCarousel && (
         <section className="mb-8">
-          <SectionHeading
-            icon={<NotebookPen />}
-            title={t("sectionNewWiki")}
-            tint="bg-violet-500/10 text-violet-600 dark:text-violet-300"
-          />
           <WikiCarousel />
         </section>
       )}
 
       {teamCompanyWidgets.length > 0 && (
         <section className="mb-8">
-          <SectionHeading
-            icon={<Building2 />}
-            title={t("sectionTeamCompany")}
-            tint="bg-sky-500/10 text-sky-600 dark:text-sky-300"
-          />
+          <SectionHeading icon={<Building2 />} title={t("sectionTeamCompany")} />
           <WidgetGrid widgets={teamCompanyWidgets} density={dashboardDensity} />
         </section>
       )}
 
       {isManager && adminWidgets.length > 0 && (
         <section className="mb-8">
-          <SectionHeading
-            icon={<ShieldCheck />}
-            title={t("sectionAdmin")}
-            tint="bg-amber-500/10 text-amber-600 dark:text-amber-300"
-          />
+          <SectionHeading icon={<ShieldCheck />} title={t("sectionAdmin")} />
           <WidgetGrid widgets={adminWidgets} density={dashboardDensity} />
         </section>
       )}

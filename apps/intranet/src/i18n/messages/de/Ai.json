@@ -9,7 +9,8 @@
     "coachWikiExtract": "Dokument-Import",
     "cvExtract": "Lebenslauf-Import",
     "cvRescan": "Lebenslauf-Update",
-    "ask": "Frage zu einem Eintrag"
+    "ask": "Frage zu einem Eintrag",
+    "dailyBrief": "Dein Tag im Überblick"
   },
   "ask": {
     "title": "Dazu fragen",
@@ -115,7 +116,8 @@
       "coachWikiExtract": "Das Dokument, das du für den Import ins Wiki hochlädst.",
       "cvExtract": "Die Lebenslauf-Datei, die du zu einer Bewerbung hochlädst.",
       "cvRescan": "Derselbe Lebenslauf noch einmal, wenn du ein Update anforderst.",
-      "ask": "Der Eintrag, zu dem du fragst – ein IT-Ticket mit Verlauf und Thread, eine Ankündigung, eine Fehlermeldung mit Maßnahmen, ein Vorschlag oder eine Bewerbung mit Profil und Notizen. Das Panel listet auf, was genau dabei war."
+      "ask": "Der Eintrag, zu dem du fragst – ein IT-Ticket mit Verlauf und Thread, eine Ankündigung, eine Fehlermeldung mit Maßnahmen, ein Vorschlag oder eine Bewerbung mit Profil und Notizen. Das Panel listet auf, was genau dabei war.",
+      "dailyBrief": "Dasselbe, was dir deine Startseite zeigt – deine offenen Tickets und Maßnahmen, Termine von heute und morgen, ungelesene Ankündigungen und wie viele Chatnachrichten warten (nicht deren Inhalt) –, um ein paar Sätze zu deinem Tag zu schreiben."
     },
     "whereTitle": "Wohin es geht",
     "whereHint": "Der Weg einer Anfrage – und was danach bleibt.",

@@ -765,6 +765,169 @@ export const apiAskContext = query({
   },
 });
 
+const BERLIN = "Europe/Berlin";
+const DAY_MS = 86_400_000;
+
+function berlinTime(ms: number) {
+  return new Date(ms).toLocaleString("de-DE", {
+    timeZone: BERLIN,
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/**
+ * The same things the overview page already shows this person — their open
+ * work, today's and tomorrow's events, what's waiting to be read — as one
+ * plain block for the daily brief. Nothing here is beyond what they can
+ * already see on the page.
+ */
+async function dailyBriefContext(ctx: QueryCtx, user: Doc<"users">) {
+  const now = Date.now();
+  const sources: { label: string; href?: string }[] = [];
+
+  const assigned = (
+    await ctx.db
+      .query("itTickets")
+      .withIndex("by_assignee", (q) => q.eq("assignedToUserId", user._id))
+      .collect()
+  ).filter((t) => t.status !== "closed");
+  const mine = (
+    await ctx.db
+      .query("itTickets")
+      .withIndex("by_creator", (q) => q.eq("createdByUserId", user._id))
+      .collect()
+  ).filter((t) => t.status !== "closed");
+  if (assigned.length || mine.length) sources.push({ label: "IT-Tickets", href: "/it-tickets" });
+
+  const measures = (
+    await ctx.db
+      .query("errorMeasures")
+      .withIndex("by_status", (q) => q.eq("status", "offen"))
+      .collect()
+  ).filter((m) => m.ownerUserId === user._id);
+  if (measures.length) {
+    sources.push({ label: "Maßnahmen", href: "/fehlermanagement/measures" });
+  }
+
+  const events = (
+    await ctx.db
+      .query("events")
+      .withIndex("by_start", (q) => q.lte("start", now + 2 * DAY_MS))
+      .collect()
+  )
+    .filter(
+      (e) =>
+        !e.dismissedAt && e.end >= now - 12 * 3_600_000 && userMatchesAudience(user, e.audience),
+    )
+    .sort((a, b) => a.start - b.start)
+    .slice(0, 12);
+  if (events.length) sources.push({ label: "Kalender", href: "/calendar" });
+
+  const announcements = (
+    await ctx.db.query("announcements").withIndex("by_publishedAt").order("desc").take(50)
+  ).filter(
+    (a) =>
+      a.publishedAt <= now &&
+      (!a.expiresAt || a.expiresAt > now) &&
+      (isOwnerOrAdmin(user, a.ownerUserId ?? a.authorUserId) ||
+        userMatchesAudience(user, a.audience)),
+  );
+  const openAnnouncements = (
+    await Promise.all(
+      announcements.map(async (a) => {
+        const recent = now - a.publishedAt < 3 * DAY_MS;
+        if (!recent && !a.pinned && !a.requiresAck) return null;
+        const done = await ctx.db
+          .query(a.requiresAck ? "announcementAcks" : "announcementReads")
+          .withIndex("by_announcement_user", (q) =>
+            q.eq("announcementId", a._id).eq("userId", user._id),
+          )
+          .first();
+        return done ? null : a;
+      }),
+    )
+  ).filter((a): a is Doc<"announcements"> => a !== null);
+  if (openAnnouncements.length) sources.push({ label: "Ankündigungen", href: "/announcements" });
+
+  const memberships = await ctx.db
+    .query("conversationMembers")
+    .withIndex("by_user", (q) => q.eq("userId", user._id))
+    .collect();
+  const unreadChats = memberships.filter((m) => !m.leftAt && (m.unreadCount ?? 0) > 0);
+  const unreadMessages = unreadChats.reduce((sum, m) => sum + (m.unreadCount ?? 0), 0);
+  if (unreadChats.length) sources.push({ label: "Chats", href: "/chat" });
+
+  const days = (ms: number) => Math.floor((now - ms) / DAY_MS);
+  const text = [
+    block("Person", [
+      `Vorname: ${user.firstName ?? displayName(user)}`,
+      `Jetzt: ${berlinTime(now)}`,
+    ]),
+    block(
+      "IT-Tickets, die dir zugewiesen sind",
+      assigned.map(
+        (t) =>
+          `- #${t.nr} ${t.topic?.trim() || t.category} (Status: ${t.status}, von ${t.createdByName}, seit ${days(t.createdAt)} Tagen)`,
+      ),
+    ),
+    block(
+      "Deine eigenen offenen IT-Tickets",
+      mine.map((t) => `- #${t.nr} ${t.topic?.trim() || t.category} (Status: ${t.status})`),
+    ),
+    block(
+      "Deine offenen Maßnahmen",
+      measures.map(
+        (m) =>
+          `- ${m.description.slice(0, 200)}${m.dueAt ? ` (fällig ${berlinTime(m.dueAt)}${m.dueAt < now ? ", überfällig" : ""})` : ""}`,
+      ),
+    ),
+    block(
+      "Termine heute und morgen",
+      events.map(
+        (e) =>
+          `- ${e.title}: ${e.allDay ? "ganztägig" : berlinTime(e.start)}${e.location ? `, ${e.location}` : ""}`,
+      ),
+    ),
+    block(
+      "Ungelesene oder zu bestätigende Ankündigungen",
+      openAnnouncements
+        .slice(0, 8)
+        .map(
+          (a) =>
+            `- ${a.title}${a.requiresAck ? " (Bestätigung nötig)" : a.pinned ? " (angeheftet)" : ""}`,
+        ),
+    ),
+    block("Chats", [
+      unreadChats.length
+        ? `${unreadMessages} ungelesene Nachrichten in ${unreadChats.length} Unterhaltungen`
+        : null,
+    ]),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return { text: text.slice(0, ASK_CONTEXT_CHARS), sources };
+}
+
+export const apiDailyBriefContext = query({
+  args: { serverKey: v.string(), clerkUserId: v.string() },
+  handler: async (ctx, { serverKey, clerkUserId }) => {
+    assertServerKey(serverKey);
+    const user = await getUserByClerkId(ctx, clerkUserId);
+    if (!user || user.status === "suspended") {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You do not have permission to do that",
+      });
+    }
+    return dailyBriefContext(ctx, user);
+  },
+});
+
 export const pruneOld = internalMutation({
   args: {},
   handler: async (ctx) => {

@@ -136,26 +136,15 @@ export function WikiMetaAssist({
     }
 
     return (
-      <section
-        className="rounded-2xl border border-border/60 p-4"
-        style={{
-          backgroundColor: "var(--card)",
-          backgroundImage:
-            "radial-gradient(26rem 10rem at 0% 0%, color-mix(in oklch, var(--ai-2) 14%, transparent), transparent 70%)",
-        }}
-      >
+      <section className="rounded-xl border border-border/70 bg-card p-4">
         <div className="flex items-center gap-2.5">
-          <span className="ai-edge flex size-8 items-center justify-center rounded-lg">
-            <AiGlyph className="size-4" />
-          </span>
+          <AiGlyph className="size-4" />
           <div className="min-w-0">
-            <p className="text-[0.7rem] font-medium uppercase tracking-[0.16em] refreshed:text-xs refreshed:normal-case refreshed:tracking-normal">
+            <p className="text-xs font-medium text-muted-foreground">
               <span className="ai-text">{ta("eyebrow")}</span>
               <span className="text-muted-foreground"> · {ta("kind.wikiMeta")}</span>
             </p>
-            <h3 className="font-display text-base font-bold tracking-tight refreshed:font-semibold">
-              {t("metaAssistReady")}
-            </h3>
+            <h3 className="text-[15px] font-semibold tracking-tight">{t("metaAssistReady")}</h3>
           </div>
         </div>
         <ul className="mt-3 divide-y divide-border/60">

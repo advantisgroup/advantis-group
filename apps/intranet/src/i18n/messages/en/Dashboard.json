@@ -1,4 +1,9 @@
 {
+  "briefTitle": "Your day at a glance",
+  "briefPrompt": "Let Claude read through your tickets, events and announcements and sum up what matters today.",
+  "briefStart": "Summarise my day",
+  "briefRefresh": "Write it again",
+  "briefDetails": "Run details",
   "active": "Clocked in {time}",
   "title": "Dashboard",
   "upcomingEvents": "Upcoming events",

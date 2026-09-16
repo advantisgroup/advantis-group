@@ -77,26 +77,16 @@ function DockList({
                 disabled={!run.href}
                 className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
               >
-                {state === "working" ? (
-                  <span className="ai-edge flex size-7 shrink-0 items-center justify-center rounded-lg [--ai-ground:var(--popover)]">
-                    <AiGlyph working className="size-3.5" />
-                  </span>
-                ) : (
-                  (() => {
-                    const { Icon, color } = STATE_ICON[state];
-                    return (
-                      <span
-                        className="flex size-7 shrink-0 items-center justify-center rounded-lg"
-                        style={{
-                          color,
-                          background: `color-mix(in oklch, ${color} 14%, transparent)`,
-                        }}
-                      >
-                        <Icon className="size-3.5" strokeWidth={2.5} />
-                      </span>
-                    );
-                  })()
-                )}
+                <span className="flex size-5 shrink-0 items-center justify-center">
+                  {state === "working" ? (
+                    <AiGlyph working />
+                  ) : (
+                    (() => {
+                      const { Icon, color } = STATE_ICON[state];
+                      return <Icon className="size-4" style={{ color }} strokeWidth={2.25} />;
+                    })()
+                  )}
+                </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">
                     {t(`kind.${run.kind}`)}
@@ -165,7 +155,7 @@ export function AiDock() {
             type="button"
             data-working={working > 0}
             aria-label={t("dockLabel")}
-            className="ai-orbit ai-edge fixed bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] right-6 z-50 hidden h-10 items-center gap-2 rounded-full pl-3 pr-3.5 text-sm font-medium shadow-overlay transition-transform [--ai-ground:var(--popover)] hover:scale-[1.03] print:hidden md:flex"
+            className="fixed bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] right-6 z-50 hidden h-10 items-center gap-2 rounded-full border border-border bg-popover pl-3 pr-3.5 text-sm font-medium shadow-overlay transition-colors hover:bg-accent print:hidden md:flex"
           >
             <AiGlyph working={working > 0} />
             <span className={cn(working > 0 && "ai-shimmer")}>
@@ -181,7 +171,7 @@ export function AiDock() {
           </button>
         </PopoverTrigger>
         <PopoverContent align="end" side="top" className="w-80 p-1.5">
-          <p className="px-2.5 pb-1 pt-1.5 text-[0.7rem] font-medium uppercase tracking-[0.16em]">
+          <p className="px-2.5 pb-1 pt-1.5 text-xs font-medium text-muted-foreground">
             <span className="ai-text">{t("dockLabel")}</span>
           </p>
           <DockList
@@ -242,8 +232,7 @@ export function AiDockButton({
         <span
           className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white"
           style={{
-            background:
-              working > 0 ? "linear-gradient(135deg, var(--ai-1), var(--ai-3))" : "var(--success)",
+            background: working > 0 ? "var(--ai-1)" : "var(--success)",
           }}
         >
           {visible.length}
@@ -256,10 +245,10 @@ export function AiDockButton({
         className="h-auto max-h-[70dvh] bg-popover text-popover-foreground"
       >
         <div className="shrink-0 px-5 pb-2 pt-1">
-          <p className="text-[0.7rem] font-medium uppercase tracking-[0.16em]">
+          <p className="text-xs font-medium text-muted-foreground">
             <span className="ai-text">{t("dockLabel")}</span>
           </p>
-          <p className="mt-0.5 font-display text-lg font-bold tracking-tight">
+          <p className="mt-0.5 text-[15px] font-semibold tracking-tight">
             {working > 0
               ? t("dockWorking", { count: working })
               : t("dockReady", { count: waiting })}

@@ -315,17 +315,15 @@ export function MyTicketsCard() {
             title={ticket.topic?.trim() || ticket.category}
             subtitle={formatIsoDate(ticket.date, locale)}
             leading={
-              <span className="grid size-8 shrink-0 place-items-center rounded-md bg-muted text-[11px] font-semibold tabular-nums text-muted-foreground">
+              <span className="w-8 shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
                 {ticket.nr}
               </span>
             }
             trailing={
               <span
                 className={cn(
-                  "rounded-full px-2 py-0.5 text-[11px] font-medium",
-                  ticket.status === "offen"
-                    ? "bg-warning/15 text-warning"
-                    : "bg-primary/10 text-primary",
+                  "text-[11px] font-medium",
+                  ticket.status === "offen" ? "text-warning" : "text-muted-foreground",
                 )}
               >
                 {t(`ticketStatus.${ticket.status}`)}

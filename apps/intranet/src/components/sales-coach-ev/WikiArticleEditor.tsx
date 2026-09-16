@@ -343,7 +343,7 @@ export function WikiArticleEditor({ article }: { article: WikiArticle | { draftI
           <ArrowLeft className="size-4" />
           {t("wikiBackToList")}
         </Link>
-        <h2 className="font-display text-lg font-bold tracking-tight">
+        <h2 className="text-[15px] font-semibold tracking-tight">
           {isEditing ? t("wikiEditTitle") : t("wikiNewTitle")}
         </h2>
         <div className="ml-auto flex items-center gap-2">
@@ -519,19 +519,12 @@ export function WikiArticleEditor({ article }: { article: WikiArticle | { draftI
           )}
 
           {suggestion && (
-            <section
-              className="rounded-2xl border border-border/60 p-4"
-              style={{
-                backgroundColor: "var(--card)",
-                backgroundImage:
-                  "radial-gradient(24rem 10rem at 0% 0%, color-mix(in oklch, var(--ai-2) 14%, transparent), transparent 70%)",
-              }}
-            >
-              <p className="text-[0.7rem] font-medium uppercase tracking-[0.16em]">
+            <section className="rounded-xl border border-border/70 bg-card p-4">
+              <p className="text-xs font-medium text-muted-foreground">
                 <span className="ai-text">{ta("eyebrow")}</span>
                 <span className="text-muted-foreground"> · {ta("kind.coachWikiExtract")}</span>
               </p>
-              <h3 className="mt-0.5 font-display text-base font-bold tracking-tight">
+              <h3 className="mt-0.5 text-[15px] font-semibold tracking-tight">
                 {suggestion.fileName
                   ? t("wikiExtractReady", { file: suggestion.fileName })
                   : t("wikiExtractReadyNoFile")}

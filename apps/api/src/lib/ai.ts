@@ -20,7 +20,8 @@ export type AiRunKind =
   | "coachWikiExtract"
   | "cvExtract"
   | "cvRescan"
-  | "ask";
+  | "ask"
+  | "dailyBrief";
 
 export type AiRunPhase = "reading" | "writing" | "finishing";
 

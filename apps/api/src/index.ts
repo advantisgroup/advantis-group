@@ -11,6 +11,7 @@ import { aiRunsRoute } from "./routes/ai-runs.js";
 import { applicantsRoute } from "./routes/applicants.js";
 import { askRoute } from "./routes/ask.js";
 import { clockodoAbsencesRoute } from "./routes/clockodo-absences.js";
+import { dailyBriefRoute } from "./routes/daily-brief.js";
 import { clockodoEntriesRoute } from "./routes/clockodo-entries.js";
 import { onedriveRoute } from "./routes/onedrive.js";
 import { performanceRoute } from "./routes/performance.js";
@@ -77,6 +78,7 @@ export const app = new Elysia()
   .use(activityRoute)
   .use(aiRunsRoute)
   .use(askRoute)
+  .use(dailyBriefRoute)
   .use(clockodoAbsencesRoute)
   .use(clockodoEntriesRoute)
   .use(onedriveRoute)

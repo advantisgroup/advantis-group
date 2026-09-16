@@ -2,30 +2,21 @@
 
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
-
 export function SectionHeading({
   icon,
   title,
-  tint,
+  action,
 }: {
   icon: ReactNode;
   title: string;
-  tint?: string;
+  action?: ReactNode;
 }) {
   return (
-    <div className="mb-3 flex items-center gap-2.5">
-      <span
-        className={cn(
-          "flex size-7 shrink-0 items-center justify-center rounded-lg [&_svg]:size-4",
-          tint ?? "bg-primary/10 text-primary",
-          "refreshed:size-auto refreshed:bg-transparent refreshed:text-muted-foreground",
-        )}
-      >
-        {icon}
-      </span>
-      <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+    <div className="mb-3 flex items-center gap-2 px-1">
+      <span className="shrink-0 text-muted-foreground [&_svg]:size-4">{icon}</span>
+      <h2 className="text-[15px] font-semibold tracking-tight">{title}</h2>
       <span className="h-px flex-1 bg-border/60" />
+      {action}
     </div>
   );
 }

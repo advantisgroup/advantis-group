@@ -241,7 +241,7 @@ function Hunk({
         aria-hidden
         className="absolute inset-y-2.5 left-1.5 w-0.5 rounded-full"
         style={{
-          background: reverted ? "var(--border)" : "linear-gradient(var(--ai-1), var(--ai-3))",
+          background: reverted ? "var(--border)" : "var(--ai-1)",
         }}
       />
       {editing ? (

@@ -1,4 +1,9 @@
 {
+  "briefTitle": "Dein Tag im Überblick",
+  "briefPrompt": "Claude liest deine Tickets, Termine und Ankündigungen und fasst zusammen, was heute wichtig ist.",
+  "briefStart": "Tag zusammenfassen",
+  "briefRefresh": "Neu schreiben",
+  "briefDetails": "Details zum Lauf",
   "active": "Eingestempelt {time}",
   "title": "Übersicht",
   "upcomingEvents": "Anstehende Termine",

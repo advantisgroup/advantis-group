@@ -30,12 +30,11 @@ export const AiButton = forwardRef<
       type="button"
       data-working={working}
       className={cn(
-        "inline-flex shrink-0 touch-manipulation items-center justify-center gap-1.5 font-medium text-foreground outline-none transition-[box-shadow,transform,background-color] duration-150 focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50",
-        look === "pill" &&
-          "ai-edge h-8 rounded-full px-3 text-xs hover:shadow-[0_4px_18px_-6px_color-mix(in_oklch,var(--ai-2)_65%,transparent)]",
+        "inline-flex shrink-0 touch-manipulation items-center justify-center gap-1.5 font-medium text-foreground outline-none transition-[transform,background-color] duration-150 focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50",
+        look === "pill" && "h-8 rounded-full border border-border px-3 text-xs hover:bg-accent",
         look === "icon" && "size-8 rounded-md hover:bg-accent",
         look === "floating" &&
-          "ai-edge size-10 rounded-full shadow-lg [--ai-ground:var(--popover)] hover:scale-105",
+          "size-10 rounded-full border border-border bg-popover shadow-overlay hover:bg-accent",
         className,
       )}
       {...props}

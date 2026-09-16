@@ -46,7 +46,12 @@ function NeedsYouRow({ item }: { item: Item }) {
         data-shortcut-item
         className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-accent/60"
       >
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground [&_svg]:size-4">
+        <span
+          className={cn(
+            "grid size-5 shrink-0 place-items-center [&_svg]:size-4",
+            item.urgent ? "text-warning" : "text-muted-foreground",
+          )}
+        >
           {item.icon}
         </span>
         <span className="min-w-0 flex-1">

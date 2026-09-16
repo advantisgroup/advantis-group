@@ -84,11 +84,7 @@ function CvImportRow({ runId, index }: { runId: Id<"aiRuns">; index: number }) {
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{title}</p>
         {view.state === "working" ? (
-          <AiThinking
-            className="text-xs"
-            phase={view.run?.phase}
-            elapsedSec={view.elapsedSec}
-          />
+          <AiThinking className="text-xs" phase={view.run?.phase} elapsedSec={view.elapsedSec} />
         ) : duplicate ? (
           <p className="text-xs text-muted-foreground">
             {t("cvImportDuplicateBody", {
@@ -207,25 +203,15 @@ export function CvImportTray() {
   const working = visible.filter((r) => aiRunState(r, now) === "working").length;
 
   return (
-    <section
-      data-working={working > 0}
-      className="ai-orbit rounded-2xl border border-border/60 p-4"
-      style={{
-        backgroundColor: "var(--card)",
-        backgroundImage:
-          "radial-gradient(30rem 12rem at 0% 0%, color-mix(in oklch, var(--ai-2) 13%, transparent), transparent 70%)",
-      }}
-    >
+    <section data-working={working > 0} className="rounded-xl border border-border/70 bg-card p-4">
       <div className="flex items-start gap-3">
-        <span className="ai-edge flex size-9 shrink-0 items-center justify-center rounded-xl">
-          <AiGlyph working={working > 0} className="size-[18px]" />
-        </span>
+        <AiGlyph working={working > 0} className="mt-0.5 size-[18px]" />
         <div className="min-w-0 flex-1">
-          <p className="text-[0.7rem] font-medium uppercase tracking-[0.16em]">
+          <p className="text-xs font-medium text-muted-foreground">
             <span className="ai-text">{ta("eyebrow")}</span>
             <span className="text-muted-foreground"> · {t("cvImportEyebrow")}</span>
           </p>
-          <h3 className="mt-0.5 font-display text-lg font-bold tracking-tight">
+          <h3 className="mt-0.5 text-[15px] font-semibold tracking-tight">
             {working > 0
               ? t("cvImportWorkingTitle", { count: working })
               : t("cvImportAttentionTitle", { count: visible.length })}

@@ -11,6 +11,7 @@ import {
   FileText,
   FileUp,
   KeyRound,
+  LayoutDashboard,
   Lock,
   type LucideIcon,
   MessagesSquare,
@@ -42,6 +43,7 @@ function AnthropicMark({ className }: { className?: string }) {
 const FEATURES: { key: string; icon: LucideIcon }[] = [
   { key: "wikiChat", icon: MessagesSquare },
   { key: "ask", icon: CircleHelp },
+  { key: "dailyBrief", icon: LayoutDashboard },
   { key: "wikiFormat", icon: WandSparkles },
   { key: "wikiMeta", icon: Tags },
   { key: "coachReport", icon: PhoneCall },
@@ -115,9 +117,7 @@ export default function SettingsAiPage() {
     <div className="max-w-4xl space-y-12">
       <header className="space-y-5">
         <div className="flex flex-wrap items-start gap-4">
-          <span className="ai-edge grid size-11 shrink-0 place-items-center rounded-xl [--ai-ground:var(--background)]">
-            <AiGlyph className="size-5" />
-          </span>
+          <AiGlyph className="size-5" />
           <div className="min-w-[14rem] flex-1">
             <h1 className="font-display text-xl font-semibold tracking-tight">
               {canUseAi ? t("privacy.accessOn") : t("privacy.accessOff")}

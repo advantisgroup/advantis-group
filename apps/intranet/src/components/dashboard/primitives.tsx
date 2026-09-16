@@ -3,9 +3,11 @@
 import type { ReactNode } from "react";
 
 import { Link } from "@/components/Link";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
+/** One block of a dashboard section. No surface of its own — the section it
+ * sits in draws the ground and the hairlines between blocks. */
 export function DashCard({
   icon,
   title,
@@ -18,25 +20,38 @@ export function DashCard({
   children: ReactNode;
 }) {
   return (
-    <Card className="group/card h-full overflow-hidden transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-18px_rgb(0_0_0/0.18)] refreshed:hover:shadow-none">
-      <div
-        data-dashboard-card-header
-        className="flex items-center gap-3 border-b border-border/60 px-5 py-3.5"
-      >
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary [&_svg]:size-[18px]">
-          {icon}
-        </span>
-        <h2 className="flex-1 truncate text-sm font-semibold tracking-tight">{title}</h2>
+    <section className="flex h-full min-w-0 flex-col">
+      <div data-dashboard-card-header className="flex items-center gap-2 px-4 pb-1.5 pt-4">
+        <span className="shrink-0 text-muted-foreground [&_svg]:size-4">{icon}</span>
+        <h2 className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight">{title}</h2>
         {count ? (
-          <span className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 px-2 text-xs font-semibold tabular-nums text-primary">
+          <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
             {count}
           </span>
         ) : null}
       </div>
-      <div data-dashboard-card-content className="p-2">
+      <div data-dashboard-card-content className="flex-1 px-1.5 pb-2.5">
         {children}
       </div>
-    </Card>
+    </section>
+  );
+}
+
+/** A dashboard section's single surface: blocks sit side by side, split by
+ * hairlines instead of each being its own card. The inner grid overhangs by a
+ * pixel so the outer edge's borders get clipped away. */
+export function DashSurface({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+      <div
+        className={cn(
+          "-mb-px -mr-px grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 [&>*]:border-b [&>*]:border-r [&>*]:border-border/60",
+          className,
+        )}
+      >
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -50,7 +65,7 @@ export function Empty({
   linkLabel?: string;
 }) {
   return (
-    <div className="px-3 py-6 text-center">
+    <div className="px-2.5 py-5 text-center">
       <p className="text-sm text-muted-foreground">{children}</p>
       {href && linkLabel && (
         <Link
@@ -98,7 +113,7 @@ export function Row({
     <Link
       href={href}
       data-dashboard-row
-      className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent"
+      className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-accent/60"
     >
       {leading}
       <div className="min-w-0 flex-1">
@@ -130,7 +145,7 @@ export function StatLine({
 }) {
   const content = (
     <>
-      <span className="text-muted-foreground">{icon}</span>
+      <span className="shrink-0 text-muted-foreground [&_svg]:size-4">{icon}</span>
       <span className="min-w-0 flex-1 truncate text-sm">{label}</span>
       <span className="shrink-0 text-sm font-semibold tabular-nums">{value}</span>
     </>
@@ -140,14 +155,14 @@ export function StatLine({
       <Link
         href={href}
         data-dashboard-row
-        className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent"
+        className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-accent/60"
       >
         {content}
       </Link>
     );
   }
   return (
-    <div data-dashboard-row className="flex items-center gap-3 px-3 py-2">
+    <div data-dashboard-row className="flex items-center gap-3 px-2.5 py-2">
       {content}
     </div>
   );
