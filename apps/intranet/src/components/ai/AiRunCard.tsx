@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { AiGlyph } from "./AiGlyph";
-import { AiThinking } from "./AiThinking";
+import { AiRunStats, AiThinking } from "./AiThinking";
 import { type AiRunMeta, type AiRunPhase, type AiRunState, type AiRunView } from "./use-ai-run";
 
 const PHASES: AiRunPhase[] = ["reading", "writing", "finishing"];
@@ -176,6 +176,7 @@ export function AiRunCard<T>({
               {body}
             </p>
           )}
+          {state === "done" && <AiRunStats run={run} className="mt-1" />}
         </div>
         <PhaseMeter run={run} state={state} />
       </div>

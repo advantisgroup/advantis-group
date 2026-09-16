@@ -53,6 +53,8 @@
     "cancelled": "Gestoppt"
   },
   "elapsed": "{seconds} s",
+  "workedFor": "{seconds} s gearbeitet",
+  "tokensUsed": "{count} Tokens",
   "chars": "{count, number} Zeichen",
   "keepsRunning": "Du kannst das schließen oder die Seite verlassen – es läuft weiter und wartet im KI-Dock auf dich.",
   "interruptedBody": "Die Verbindung zur KI ist abgebrochen, bevor sie fertig war. Es wurde nichts geändert.",

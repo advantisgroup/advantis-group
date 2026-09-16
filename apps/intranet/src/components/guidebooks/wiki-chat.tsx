@@ -13,7 +13,7 @@ import { AiGlyph } from "@/components/ai/AiGlyph";
 import { AiMarkdown } from "@/components/ai/AiMarkdown";
 import { aiErrorKey } from "@/components/ai/AiRunCard";
 import { AiReveal } from "@/components/ai/AiReveal";
-import { AiThinking } from "@/components/ai/AiThinking";
+import { AiRunStats, AiThinking } from "@/components/ai/AiThinking";
 import { useAiRun } from "@/components/ai/use-ai-run";
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
@@ -40,8 +40,8 @@ interface Chat {
 function AssistantRow({ working = false, children }: { working?: boolean; children: ReactNode }) {
   return (
     <div className="flex gap-3">
-      <span className="ai-edge mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full [--ai-ground:var(--background)]">
-        <AiGlyph working={working} className="size-3.5" />
+      <span className="flex size-7 shrink-0 items-center justify-center">
+        <AiGlyph working={working} className="size-[18px]" />
       </span>
       <div className="min-w-0 flex-1 pt-1 text-sm leading-relaxed">{children}</div>
     </div>
@@ -397,6 +397,9 @@ export function WikiChat({ className }: { className?: string } = {}) {
                   ) : (
                     <AssistantRow key={i}>
                       <AiMarkdown>{m.content}</AiMarkdown>
+                      {i === messages.length - 1 && view.run && (
+                        <AiRunStats run={view.run} className="mt-2" />
+                      )}
                       {i === messages.length - 1 && citations.length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-1.5">
                           {citations.map((source) => (

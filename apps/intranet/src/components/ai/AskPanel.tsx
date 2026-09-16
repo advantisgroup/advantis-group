@@ -18,7 +18,7 @@ import { AiGlyph } from "./AiGlyph";
 import { AiMarkdown } from "./AiMarkdown";
 import { aiErrorKey } from "./AiRunCard";
 import { AiReveal } from "./AiReveal";
-import { AiThinking } from "./AiThinking";
+import { AiRunStats, AiThinking } from "./AiThinking";
 import { type AskSubject, useAskOpen } from "./ask-subject";
 import { useAiEnabled } from "./use-ai-enabled";
 import { useAiRun } from "./use-ai-run";
@@ -109,17 +109,12 @@ function AskBody({ subject, onClose }: { subject: AskSubject; onClose: () => voi
           </p>
         )}
         {working ? (
-          <div className="flex items-start gap-3">
-            <span className="ai-edge mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full [--ai-ground:var(--card)]">
-              <AiGlyph working className="size-3.5" />
-            </span>
-            <div className="min-w-0 flex-1 text-sm leading-relaxed">
-              {view.text && !sending ? (
-                <AiReveal text={view.text} />
-              ) : (
-                <AiThinking phase={view.run?.phase} elapsedSec={view.elapsedSec} />
-              )}
-            </div>
+          <div className="text-sm leading-relaxed">
+            {view.text && !sending ? (
+              <AiReveal text={view.text} />
+            ) : (
+              <AiThinking phase={view.run?.phase} elapsedSec={view.elapsedSec} />
+            )}
           </div>
         ) : failed ? (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -134,6 +129,7 @@ function AskBody({ subject, onClose }: { subject: AskSubject; onClose: () => voi
         ) : view.text ? (
           <div className="text-sm leading-relaxed">
             <AiMarkdown>{view.text}</AiMarkdown>
+            {view.run && <AiRunStats run={view.run} className="mt-2" />}
           </div>
         ) : (
           <div className="flex flex-col gap-2">

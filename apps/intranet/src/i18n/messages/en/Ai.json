@@ -53,6 +53,8 @@
     "cancelled": "Stopped"
   },
   "elapsed": "{seconds}s",
+  "workedFor": "Worked for {seconds}s",
+  "tokensUsed": "{count} tokens",
   "chars": "{count, number} characters",
   "keepsRunning": "You can close this or leave the page — it keeps going and waits for you in the AI dock.",
   "interruptedBody": "The connection to the AI dropped before it finished. Nothing was changed.",

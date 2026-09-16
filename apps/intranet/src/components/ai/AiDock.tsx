@@ -103,7 +103,7 @@ function DockList({
                   </span>
                   {state === "working" ? (
                     <AiThinking
-                      className="text-xs [&_svg]:hidden"
+                      className="text-xs"
                       phase={run.phase}
                       elapsedSec={Math.floor((now - run.startedAt) / 1000)}
                     />

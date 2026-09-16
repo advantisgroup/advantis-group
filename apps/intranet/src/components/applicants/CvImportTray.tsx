@@ -85,7 +85,7 @@ function CvImportRow({ runId, index }: { runId: Id<"aiRuns">; index: number }) {
         <p className="truncate text-sm font-medium">{title}</p>
         {view.state === "working" ? (
           <AiThinking
-            className="text-xs [&_svg]:hidden"
+            className="text-xs"
             phase={view.run?.phase}
             elapsedSec={view.elapsedSec}
           />
