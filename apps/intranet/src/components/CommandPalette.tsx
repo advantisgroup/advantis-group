@@ -21,6 +21,7 @@ import {
   Calendar,
   CalendarPlus,
   Clock,
+  Compass,
   FolderOpen,
   LayoutDashboard,
   Lightbulb,
@@ -40,9 +41,11 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
+import { toast } from "sonner";
 
 import { useAsk } from "@/components/ai/ask-subject";
 import { useAiEnabled } from "@/components/ai/use-ai-enabled";
+import { useAiNavigate } from "@/components/ai/use-ai-navigate";
 import { accessibleGuidebooks, guidebookTitle } from "@/components/guidebooks/registry";
 import {
   useCurrentUser,
@@ -131,6 +134,7 @@ export function CommandPalette({ compact = false }: { compact?: boolean } = {}) 
   const guidebooks = accessibleGuidebooks(user);
   const { ask, pageSubject } = useAsk();
   const aiEnabled = useAiEnabled();
+  const navigateAi = useAiNavigate();
   const keyboardInset = useKeyboardInset();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -174,6 +178,22 @@ export function CommandPalette({ compact = false }: { compact?: boolean } = {}) 
     window.addEventListener("command-palette:open", openFromEvent);
     return () => window.removeEventListener("command-palette:open", openFromEvent);
   }, []);
+
+  // The dialog closes the moment "Ask AI to find…" is picked, so feedback
+  // while it resolves (and a redirect, once it does) has to happen as toasts.
+  useEffect(() => {
+    if (!navigateAi.pending) return;
+    const id = toast.loading(t("aiSearching"));
+    return () => {
+      toast.dismiss(id);
+    };
+  }, [navigateAi.pending, t]);
+  useEffect(() => {
+    if (navigateAi.notFound) toast.info(t("aiNoMatch"));
+  }, [navigateAi.notFound, t]);
+  useEffect(() => {
+    if (navigateAi.failed) toast.error(t("aiSearchFailed"));
+  }, [navigateAi.failed, t]);
 
   useEffect(() => {
     if (open) {
@@ -363,6 +383,22 @@ export function CommandPalette({ compact = false }: { compact?: boolean } = {}) 
 
     if (askItem?.label.toLowerCase().includes(q)) list.push(askItem);
 
+    // A catch-all fallback for anything that didn't match a page, person or
+    // record below — lets the same box that searches also just be asked.
+    if (aiEnabled) {
+      list.push({
+        id: "ai-navigate",
+        group: t("actions"),
+        label: t("actionFind", { query: query.trim() }),
+        icon: Compass,
+        run: () => {
+          const asked = query.trim();
+          setOpen(false);
+          void navigateAi.run(asked);
+        },
+      });
+    }
+
     for (const a of actions) {
       if (a.label.toLowerCase().includes(q)) {
         list.push({
@@ -456,6 +492,7 @@ export function CommandPalette({ compact = false }: { compact?: boolean } = {}) 
     aiEnabled,
     pageSubject,
     ask,
+    navigateAi,
     pages,
     people,
     announcements,

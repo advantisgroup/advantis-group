@@ -41,6 +41,7 @@ import {
   ProfileCompletionCard,
 } from "@/components/dashboard/ForYouWidgets";
 import { AiBriefCard } from "@/components/dashboard/AiBriefCard";
+import { AiNavigateCard } from "@/components/dashboard/AiNavigateCard";
 import { GreetingHeader } from "@/components/dashboard/GreetingHeader";
 import { NeedsYouPanel, TodayPanel } from "@/components/dashboard/NeedsYou";
 import { DashSurface } from "@/components/dashboard/primitives";
@@ -397,8 +398,9 @@ export default function DashboardPage() {
       </div>
 
       {aiEnabled && showCard("aibrief") && (
-        <div className="mb-4">
+        <div className="mb-4 grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
           <AiBriefCard />
+          <AiNavigateCard />
         </div>
       )}
 

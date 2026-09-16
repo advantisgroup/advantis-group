@@ -6,6 +6,7 @@ import { isFeatureEnabled } from "./featureFlags";
 import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase, askSubjectType } from "./lib/aiRuns";
 import {
   effectiveCustomRoleIds,
+  effectiveRole,
   getCurrentUser,
   getUserByClerkId,
   hasApplicantAccess,
@@ -925,6 +926,126 @@ export const apiDailyBriefContext = query({
       });
     }
     return dailyBriefContext(ctx, user);
+  },
+});
+
+/**
+ * What the "find your way around" helper is allowed to point at: the static
+ * pages this person can actually see, plus a handful of their own recent IT
+ * tickets. The model picks a `key` from this list — never a raw href — and
+ * `hrefByKey` is how the API route turns that back into a real path, so a
+ * garbled model reply can only ever fail closed, not link somewhere unlisted.
+ */
+async function navigateContext(ctx: QueryCtx, user: Doc<"users">) {
+  const role = effectiveRole(user);
+  const isManagerOrAdmin = role === "admin" || role === "manager";
+  const applicantAccess = hasApplicantAccess(user);
+
+  const pages: { href: string; label: string }[] = [
+    { href: "/", label: "Startseite / Übersicht" },
+    { href: "/calendar", label: "Kalender" },
+    ...(user.clockodoUserId
+      ? [{ href: "/clockodo", label: "Abwesenheiten / Urlaub (Clockodo)" }]
+      : []),
+    { href: "/announcements", label: "Ankündigungen" },
+    { href: "/chat", label: "Chat" },
+    { href: "/guidebooks", label: "Guidebooks / Wiki" },
+    { href: "/directory", label: "Personenverzeichnis" },
+    { href: "/suggestions", label: "Vorschläge" },
+    { href: "/suggestions?new=1", label: "Neuen Vorschlag einreichen" },
+    { href: "/it-tickets", label: "IT-Tickets" },
+    { href: "/it-tickets?new=1", label: "Neues IT-Ticket melden" },
+    { href: "/fehlermanagement", label: "Fehlermanagement (Qualität, QVM)" },
+    { href: "/fehlermanagement?new=1", label: "Neue Fehlermeldung erfassen" },
+    ...(applicantAccess ? [{ href: "/hr", label: "Bewerbermanagement" }] : []),
+    { href: "/settings", label: "Kontoeinstellungen" },
+    { href: "/settings/ai", label: "KI-Einstellungen & Datenschutz" },
+    ...(isManagerOrAdmin
+      ? [
+          { href: "/admin", label: "Adminbereich" },
+          { href: "/admin/password-resets", label: "Warteschlange für Passwort-Zurücksetzungen" },
+          { href: "/admin/members", label: "Mitglieder / Benutzerkonten verwalten" },
+          { href: "/admin/roles", label: "Benutzerdefinierte Rollen & Rechte" },
+          { href: "/admin/teams", label: "Teams" },
+          { href: "/admin/departments", label: "Abteilungen" },
+          {
+            href: "/admin/integrations",
+            label: "Integrationen (Clockodo, Genesys, OneDrive, ...)",
+          },
+          { href: "/admin/feature-flags", label: "Feature-Flags" },
+          { href: "/admin/audit", label: "Audit-Log" },
+          { href: "/admin/invites", label: "Einladungen" },
+          { href: "/admin/authentication", label: "Authentifizierungseinstellungen" },
+          { href: "/admin/requests", label: "Zugriffsanfragen" },
+          { href: "/admin/onboard", label: "Neue Mitarbeitende onboarden" },
+          { href: "/admin/uploads", label: "Uploads" },
+          { href: "/admin/design-feedback", label: "Design-Feedback" },
+          { href: "/admin/ai", label: "KI-Aktivität im Intranet" },
+        ]
+      : []),
+  ];
+
+  const myTickets = await ctx.db
+    .query("itTickets")
+    .withIndex("by_creator", (q) => q.eq("createdByUserId", user._id))
+    .order("desc")
+    .take(5);
+  const assignedTickets = await ctx.db
+    .query("itTickets")
+    .withIndex("by_assignee", (q) => q.eq("assignedToUserId", user._id))
+    .order("desc")
+    .take(5);
+
+  const hrefByKey: Record<string, string> = {};
+  for (const p of pages) hrefByKey[p.href] = p.href;
+
+  const ticketLine = (prefix: string, t: Doc<"itTickets">, index: number) => {
+    const key = `${prefix}${index}`;
+    hrefByKey[key] = `/it-tickets?ticket=${t._id}`;
+    return `- ${key} — #${t.nr} ${t.topic?.trim() || t.category} (Status: ${t.status}, ${berlinTime(t.createdAt)})`;
+  };
+
+  const text = [
+    block(
+      "Bekannte Seiten (key — Beschreibung)",
+      pages.map((p) => `- ${p.href} — ${p.label}`),
+    ),
+    block(
+      "Eigene zuletzt erstellte IT-Tickets",
+      myTickets.map((t, i) => ticketLine("myTicket", t, i)),
+    ),
+    block(
+      "IT-Tickets, die dir zugewiesen sind",
+      assignedTickets.map((t, i) => ticketLine("assignedTicket", t, i)),
+    ),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return {
+    text,
+    hrefByKey,
+    sources: [
+      { label: "Bekannte Seiten" },
+      ...(myTickets.length || assignedTickets.length
+        ? [{ label: "IT-Tickets", href: "/it-tickets" }]
+        : []),
+    ],
+  };
+}
+
+export const apiNavigateContext = query({
+  args: { serverKey: v.string(), clerkUserId: v.string() },
+  handler: async (ctx, { serverKey, clerkUserId }) => {
+    assertServerKey(serverKey);
+    const user = await getUserByClerkId(ctx, clerkUserId);
+    if (!user || user.status === "suspended") {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You do not have permission to do that",
+      });
+    }
+    return navigateContext(ctx, user);
   },
 });
 

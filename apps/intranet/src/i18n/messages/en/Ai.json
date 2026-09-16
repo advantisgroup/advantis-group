@@ -10,7 +10,8 @@
     "cvExtract": "CV import",
     "cvRescan": "CV update",
     "ask": "Ask about a record",
-    "dailyBrief": "Your day at a glance"
+    "dailyBrief": "Your day at a glance",
+    "navigate": "Find your way around"
   },
   "ask": {
     "title": "Ask about this",
@@ -117,7 +118,8 @@
       "cvExtract": "The CV file you upload to an applicant.",
       "cvRescan": "That applicant's CV again, when you ask for an update.",
       "ask": "The record you're asking about — an IT ticket with its history and thread, an announcement, an error report with its measures, a suggestion, or an applicant's profile and notes. The panel lists exactly what was included.",
-      "dailyBrief": "The same things your overview page shows you — your open tickets and measures, today's and tomorrow's events, unread announcements and how many chat messages are waiting (not their content) — to write a few sentences about your day."
+      "dailyBrief": "The same things your overview page shows you — your open tickets and measures, today's and tomorrow's events, unread announcements and how many chat messages are waiting (not their content) — to write a few sentences about your day.",
+      "navigate": "What you type into the helper, plus the list of pages you can see and a few of your own recent IT tickets — just enough to pick the one link that matches, never their full content."
     },
     "whereTitle": "Where it goes",
     "whereHint": "The path a request takes, and what is left behind afterwards.",

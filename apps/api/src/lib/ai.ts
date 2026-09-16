@@ -21,7 +21,8 @@ export type AiRunKind =
   | "cvExtract"
   | "cvRescan"
   | "ask"
-  | "dailyBrief";
+  | "dailyBrief"
+  | "navigate";
 
 export type AiRunPhase = "reading" | "writing" | "finishing";
 

@@ -11,6 +11,7 @@ export const aiRunKind = v.union(
   v.literal("cvRescan"),
   v.literal("ask"),
   v.literal("dailyBrief"),
+  v.literal("navigate"),
 );
 
 /** Records you can ask a question about in place. Each one has an access rule
