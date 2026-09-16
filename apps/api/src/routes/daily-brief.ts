@@ -37,7 +37,17 @@ export const dailyBriefRoute = new Elysia().post(
           messages: [
             {
               role: "user",
-              content: `<intranet>\n${context.text}\n</intranet>\n\nWrite the overview in ${language}.`,
+              // The intranet block is its own cache breakpoint: pressing
+              // "write it again" resends the same snapshot, so only the short
+              // instruction after it is billed as new input.
+              content: [
+                {
+                  type: "text",
+                  text: `<intranet>\n${context.text}\n</intranet>`,
+                  cache_control: { type: "ephemeral" },
+                },
+                { type: "text", text: `Write the overview in ${language}.` },
+              ],
             },
           ],
         });

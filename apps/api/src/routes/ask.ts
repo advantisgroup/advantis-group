@@ -17,9 +17,18 @@ const ASK_SYSTEM = `You answer one question about one internal record of an intr
 - Be brief: a few sentences, or a short list when that reads better.`;
 
 /** The record's own words never become instructions — they arrive as a labelled
- * block and the question is asked after it. */
-function askPrompt(context: string, question: string): string {
-  return `<record>\n${context}\n</record>\n\nQuestion: ${question}`;
+ * block and the question is asked after it. The record is its own cached
+ * content block: someone asking a second question about the same ticket or
+ * applicant reuses it, so only the (short) question is billed as new input. */
+function askPrompt(context: string, question: string) {
+  return [
+    {
+      type: "text" as const,
+      text: `<record>\n${context}\n</record>`,
+      cache_control: { type: "ephemeral" as const },
+    },
+    { type: "text" as const, text: `Question: ${question}` },
+  ];
 }
 
 export const askRoute = new Elysia().post(
