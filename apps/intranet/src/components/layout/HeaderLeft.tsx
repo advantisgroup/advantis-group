@@ -6,7 +6,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { cn } from "@/lib/utils";
 
 /** Below this the search field stops being worth its width. */
-const SEARCH_MIN_PX = 280;
+const SEARCH_MIN_PX = 440;
 /** Breathing room kept between the page's title/tabs and the search field. */
 const CLEARANCE_PX = 32;
 /** Extra room needed before a folded search opens back up, so it doesn't flicker at the edge. */
