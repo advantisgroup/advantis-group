@@ -136,12 +136,85 @@ have to remember what's linked where." Once Phases 1–5 land:
   not a schema migration" — reuse existing per-area queries, don't create a
   new cross-cutting table.
 
+## Phase 7 — Device trust and periodic re-verification for linked areas
+
+Once Phase 3/4 make an area rely on the intranet session instead of its own
+password, that trust isn't permanent. This phase reuses the *existing*
+step-up engine end to end — same `email_code`/`totp`/`recovery_code`/`passkey`
+challenge, same `stepUpVerifications`/`stepUpAuditLog` — by adding a new
+trigger condition alongside the ones already there (new device, destructive
+action, org policy): a per-area trust window expiring.
+
+- **14-day re-verification ceiling.** Track when an area was last stepped up
+  for (a `context`-scoped read of `stepUpVerifications`, or a small
+  `lastStepUpAt` per (user, area) if that's cleaner than filtering the
+  existing table). Once it's older than 14 days, block entry/fetch to that
+  area — Performance, the HR vault, and any future area built this way —
+  until a fresh step-up clears it. No silent grace: the area is inaccessible,
+  not degraded, until re-verified.
+- **Forced first step-up on migration.** The moment an account moves onto
+  the new linked, password-less flow (shipped as part of Phase 3/4), force
+  one step-up challenge immediately. This is also the natural moment to ask
+  the preference below, once, rather than defaulting it silently.
+- **Per-area, per-user step-up preference**, asked at that forced first
+  step-up and editable later in `/settings`: "always require step-up here"
+  (extra security, opt-in) vs. "trust this device for 14 days." Extends
+  `securityPreferences` (today just `alwaysRequireMfaAtSignIn`, one row per
+  user) with an area-scoped variant — either a second field per area on that
+  table, or a small `areaSecurityPreferences: { userId, area, mode }` table
+  if one row per (user, area) reads cleaner than overloading the singleton.
+- **General device-trust status, not just per-area.** Promote `knownDevices`
+  from "have we seen this device hash before" (today, one input into the
+  `newDevice` risk signal) into a user-facing, per-device trust record —
+  name, last-seen, trusted-until — visible and revocable from `/settings`.
+  A device only counts as trusted if the user opted into tracking at all
+  (below) and is within its 14-day window; otherwise every session from it
+  is untrusted, which forces step-up near-universally — the same way
+  `sessionRiskSignals.newDevice` already forces `LEVEL.email_code` today,
+  just made the permanent state instead of a one-time signal.
+- **Privacy opt-out, modeled honestly, not as a special case.** A user can
+  decline device tracking outright. That's not a broken or degraded state —
+  it's every session being treated as untrusted, which is already a
+  well-defined, already-enforced condition (near-universal step-up). Opting
+  out costs convenience, not security, and needs no separate code path: it's
+  just "no trusted devices for this user," which the trust check already
+  handles.
+- **Every toggle this phase adds belongs on `/admin/authentication`.**
+  `AuthenticationPolicyPanel.tsx` already holds the org-wide levers
+  (`requireMfaScope`, `requirePasskeyScope`, `gracePeriodDays`,
+  `exemptUserIds`) — the standing rule going forward is that any new
+  security/auth behavior gets a toggle, metric, or rule surfaced there, not
+  buried in a per-feature settings corner. Concretely: the 14-day
+  re-verification window as an editable org default, a device-trust
+  opted-in/opted-out count, and the "always require step-up" vs. "trust
+  device" preference split as an admin-visible metric.
+
+## Phase 8 — 30-day legacy password grace period
+
+Once an area ships Phases 1–7, its old standalone password
+(`performanceLogins.passwordHash`, `applicantVaultPasswords.hash`) keeps
+working for **30 days**, not zero — the same shape as `authPolicy`'s
+existing `gracePeriodDays` for the org-wide MFA/passkey rollout, scoped here
+to this migration instead:
+
+- The login screen shows a persistent, dismissible notice — "We're moving
+  this to your intranet account — sign in with that instead" — linking
+  straight to the new flow.
+- The old password keeps authenticating for the full 30 days, so nobody is
+  force-cut-over mid-migration.
+- At day 30 the standalone password stops being accepted; the account
+  becomes linked-only, with Phase 3's admin-forced-fallback as the only way
+  to reinstate a standalone password for a genuine edge case.
+- Natural companion metric for `/admin/authentication`: a per-area
+  count/countdown of "accounts still on their legacy password, N days
+  left," so the migration's tail is visible instead of silent.
+
 ## Deliberately out of scope here
 
-- **Deleting `passwordHash`/`applicantVaultPasswords` columns.** Every phase
-  above keeps the standalone-password path alive as a fallback; removing it
-  outright is a separate, later decision once real usage data shows how
-  many accounts are still on it.
+- **Deleting `passwordHash`/`applicantVaultPasswords` columns before Phase
+  8's grace period ends.** Every phase up to 8 keeps the standalone-password
+  path alive as a fallback; Phase 8 is the first phase that actually turns
+  one off, and only after the fixed, communicated 30-day window.
 - **Single sign-on for the ActivityTrack tray-app debug password
   (`activitySettings`).** Called out in `docs/password-resets.md` as out of
   scope for the same reason it's out of scope here — it's one shared
@@ -156,10 +229,14 @@ have to remember what's linked where." Once Phases 1–5 land:
    busywork independent of everything else.
 2. Phase 2 (secondary emails) — the shared primitive every later phase
    needs; get the verification UX right once.
-3. Phase 3 (Performance password-less linked accounts) — highest-volume
-   area, most visible win.
-4. Phase 5 (reset routing) — falls out naturally once 2 and 3 exist.
-5. Phase 4 (HR vault passkey option) — independent of 3/5, can slot in
-   whenever.
-6. Phase 6 (admin rollup view) — last, since it's a view over everything
-   the earlier phases produced.
+3. Phase 3 (Performance password-less linked accounts) together with
+   Phase 7's forced first step-up and device-trust prompt — Phase 3 is what
+   triggers that forced step-up, so ship them together for this area.
+4. Phase 8 (30-day legacy grace period) for Performance — its clock starts
+   the moment Phase 3 ships.
+5. Phase 5 (reset routing) — falls out naturally once 2 and 3 exist.
+6. Phase 4 (HR vault passkey option) together with the same Phase 7/8
+   treatment as Performance — independent of 3/5, can slot in whenever.
+7. Phase 6 (admin rollup view) plus the `/admin/authentication` additions
+   from Phase 7 — last, since they're views over everything the earlier
+   phases produced.
