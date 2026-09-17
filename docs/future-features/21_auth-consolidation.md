@@ -24,6 +24,34 @@ Ordered by dependency, smallest first. Each phase should be its own
 commit/PR per `AGENTS.md`'s "Multi-item sessions" convention — this is
 several distinct changes toward one goal, not one diff.
 
+## Authentication vs. authorization: this plan only touches the former
+
+Everything below consolidates *how someone proves who they are* across
+areas. It deliberately does not change *what they're allowed to see once
+they've proved it* — that stays owned by each area, as an explicit,
+admin-approved grant, exactly as it works today:
+
+- **Performance already has real per-company RBAC**: `companyRoles`
+  (`{ companyId, name, permissions: string[] }`) assigned to a login via
+  `performanceLogins.roleId`. A login with no `roleId` can authenticate (once
+  linked) but has nothing to see.
+- **HR/Applicant Management already keys authorization off the intranet
+  account directly**: `users.applicantAccess` (can see/edit applicant
+  records) and `users.applicantAccessDelegate` (can grant/revoke it for
+  others, admin-adjacent allowlist) are both fields on `users`, not on
+  `applicantVaultPasswords`. This is the pattern every other area should
+  converge toward, not a special case.
+
+The one rule every phase below has to respect: **auto-linking (Phase 1) or
+going password-less (Phase 3/4) is identity resolution, never a grant.** A
+newly auto-linked Performance login starts with whatever `roleId` it already
+had — usually none — same as an unlinked one; a linked intranet account with
+no `applicantAccess` still can't open the HR vault. Collapsing "this account
+is now recognized as the same person" into "this account can now see the
+area's data" would be a real access-control bug wearing a convenience
+feature's clothes, so it gets called out explicitly at every phase where the
+distinction could blur (Phase 1, Phase 3, Phase 4) rather than assumed obvious.
+
 ## Phase 1 — Auto-link at creation, not just after the fact
 
 Closes the gap `14_identity-linking.md` already names.
@@ -39,6 +67,9 @@ Closes the gap `14_identity-linking.md` already names.
   automatically" vs. "linked by an admin" without guessing.
 - No behavior change yet for sign-in — this only makes `linkedUserId`
   reliably populated so the later phases have something to build on.
+- **Explicitly does not touch `roleId`/`applicantAccess`.** Auto-linking
+  resolves identity only; an admin still separately assigns a Performance
+  role or grants `applicantAccess`, same as before this phase existed.
 
 ## Phase 2 — Secondary/verified emails on the intranet account
 
@@ -80,6 +111,11 @@ proves the primary one.
 - An admin can still force a standalone password back onto a linked account
   (contractor sharing a login, edge case where SSO-only is undesirable) —
   this is a default, not a removal of the escape hatch.
+- **This changes how the person signs in, not what they can see.**
+  `roleId`/`companyId`/permissions stay exactly where they are today, read
+  off the (now password-less) `performanceLogins` row the same way they
+  always were — going password-less removes a credential, not a permission
+  check.
 
 ## Phase 4 — HR/Applicant vault: passkey-first, password as fallback only
 
@@ -100,6 +136,11 @@ keyboard," which a passkey already provides better than a typed password.
   vs. active `applicantAccess` count), flip the *default* for newly granted
   vault access to passkey-only with password as an explicit opt-in, rather
   than every new grant starting with a password to set.
+- **This changes how the vault is unlocked, not who gets `applicantAccess`
+  in the first place.** Granting/revoking `applicantAccess` itself is
+  untouched — still an admin or `applicantAccessDelegate` action on the
+  `users` row. A passkey only proves "it's still the person who already has
+  the grant," same job the vault password does today.
 
 ## Phase 5 — Password-reset routing follows the verified email, automatically
 
@@ -209,6 +250,44 @@ to this migration instead:
   count/countdown of "accounts still on their legacy password, N days
   left," so the migration's tail is visible instead of silent.
 
+## Phase 9 — A modular shape for "linked, but is it actually authorized" per area
+
+Phase 6's admin rollup, taken at face value, risks showing "linked" as if
+it meant "has access" — exactly the conflation the authentication-vs-
+authorization section above warns about. This phase is what makes the
+rollup (and any future area) show the real, separate answer without every
+area re-inventing how.
+
+- Each area keeps owning its own authorization *model* — Performance's
+  per-company `companyRoles`/`permissions`, HR's boolean `applicantAccess`,
+  whatever shape a future area genuinely needs. This plan does not force
+  a shared schema; Performance's per-company RBAC and HR's single allowlist
+  flag are different enough that squashing them into one table would lose
+  information either one needs.
+- What *is* shared: a small read-only projection each area exposes, in the
+  same `getXSubprofile` shape `docs/architecture/profiles.md` already
+  standardizes — e.g. `getPerformanceAccessSubprofile(ctx, userId)` /
+  `getApplicantAccessSubprofile(ctx, userId)` — returning one normalized
+  shape: `{ area, linked: boolean, status: "none" | "granted" | "revoked",
+  level: string | null, grantedByUserId, grantedAt }`. `level` is an
+  area-defined free string (a Performance role name, or `"vault"` for HR's
+  single tier) — the rollup renders it, it doesn't interpret it.
+- This is a **read projection only** — granting/revoking access keeps
+  happening exactly where it does today (Performance's role-assignment
+  admin UI, the Applicant Management access toggle). Nothing about *how*
+  access is approved changes; this phase only makes the *current* state
+  legible in one place instead of requiring a trip to each area's own
+  admin page to find out.
+- Phase 6's rollup consumes this: a row now reads "linked, no grant yet,"
+  "linked, Performance role: Sales Manager," or "linked, HR vault: granted"
+  — instead of a bare "linked" that an admin could misread as "has access."
+- **The payoff for future areas** ("or future things," as asked): a new
+  area that follows this convention from day one — its own authorization
+  table/field plus one `getXSubprofile`-shaped projection function — shows
+  up in the same rollup and the same auto-link/password-less/step-up
+  machinery from Phases 1–8 for free, instead of needing its own bespoke
+  admin page before anyone can tell who has access to it.
+
 ## Deliberately out of scope here
 
 - **Deleting `passwordHash`/`applicantVaultPasswords` columns before Phase
@@ -222,6 +301,12 @@ to this migration instead:
 - **Forcing passkey enrollment.** `authPolicy.requirePasskeyScope` already
   exists as an org-wide lever; this plan makes passkeys *more useful* once
   set up, it doesn't change whether they're required.
+- **Replacing any area's existing authorization model.**
+  `companyRoles`/`permissions` and `applicantAccess`/`applicantAccessDelegate`
+  stay exactly as they are; Phase 9 adds a shared *read* projection over
+  them, not a shared *grant* mechanism. Unifying how access is actually
+  approved across areas — if that's ever wanted — is a separate, later
+  decision with its own tradeoffs, not a side effect of this plan.
 
 ## Suggested order across the next several days
 
@@ -237,6 +322,9 @@ to this migration instead:
 5. Phase 5 (reset routing) — falls out naturally once 2 and 3 exist.
 6. Phase 4 (HR vault passkey option) together with the same Phase 7/8
    treatment as Performance — independent of 3/5, can slot in whenever.
-7. Phase 6 (admin rollup view) plus the `/admin/authentication` additions
-   from Phase 7 — last, since they're views over everything the earlier
-   phases produced.
+7. Phase 9 (modular access-grant projection) — write
+   `getPerformanceAccessSubprofile`/`getApplicantAccessSubprofile` once
+   Phases 3/4 exist for both areas to project.
+8. Phase 6 (admin rollup view) plus the `/admin/authentication` additions
+   from Phase 7 — last, since they consume everything the earlier phases
+   (Phase 9 included) produced.
