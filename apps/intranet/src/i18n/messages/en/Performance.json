@@ -268,6 +268,7 @@
   "userIntranetAccountNone": "No intranet account linked",
   "userIntranetAccountSearch": "Search by name or email…",
   "userIntranetAccountEmpty": "No matching accounts.",
+  "userAutoLinkedBadge": "Auto-linked",
   "userAlreadyLinkedBadge": "Linked elsewhere",
   "userPasswordNotNeeded": "Not needed — this account signs in with its linked intranet account.",
   "linkPromptBody": "Link your intranet account ({name}, {email}) to this Performance login? You'll be able to sign in here without a password next time.",

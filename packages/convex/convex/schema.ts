@@ -1445,6 +1445,11 @@ export default defineSchema({
     isSuperAdmin: v.optional(v.boolean()),
     employeeId: v.optional(v.id("performanceEmployees")),
     linkedUserId: v.optional(v.id("users")),
+    /** Set only when `linkedUserId` was resolved by matching this login's
+     * email against `users.by_email` rather than picked by an admin —
+     * absent (with `linkedUserId` set) means a human chose the link. See
+     * `docs/future-features/21_auth-consolidation.md`'s Phase 1. */
+    autoLinkedVia: v.optional(v.literal("email_match")),
     active: v.boolean(),
     createdAt: v.number(),
   })
@@ -2399,6 +2404,11 @@ export default defineSchema({
     linkedUserId: v.optional(v.id("users")),
     linkedAt: v.optional(v.number()),
     linkedByUserId: v.optional(v.id("users")),
+    /** Set only when `linkedUserId` was resolved by matching `email` against
+     * `users.by_email` rather than picked by an admin (`linkedByUserId` set
+     * instead) — see `docs/future-features/21_auth-consolidation.md`'s
+     * Phase 1. */
+    autoLinkedVia: v.optional(v.literal("email_match")),
   })
     .index("by_academy_code", ["academyId", "code"])
     .index("by_academy", ["academyId"])

@@ -138,6 +138,23 @@ if (process.env.DISABLE_CRONS !== "true") {
     {},
   );
 
+  // Auto-links Performance/Academy logins to their intranet account by email
+  // for rows created before this existed, or whose matching account showed
+  // up later — see docs/future-features/21_auth-consolidation.md's Phase 1.
+  crons.daily(
+    "performance: reconcile auto-links",
+    { hourUTC: 4, minuteUTC: 15 },
+    internal.performanceAuth.reconcileAutoLinks,
+    {},
+  );
+
+  crons.daily(
+    "academy: reconcile auto-links",
+    { hourUTC: 4, minuteUTC: 18 },
+    internal.academyParticipants.reconcileAutoLinks,
+    {},
+  );
+
   // Keep the OneDrive change-notification subscription fresh (renew well within
   // its expiry) so the file-listing cache invalidates promptly on changes.
   crons.daily(

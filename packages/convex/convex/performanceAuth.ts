@@ -660,6 +660,7 @@ export const insertLogin = internalMutation({
     roleId: v.id("companyRoles"),
     employeeId: v.optional(v.id("performanceEmployees")),
     linkedUserId: v.optional(v.id("users")),
+    autoLinkedVia: v.optional(v.literal("email_match")),
   },
   handler: async (ctx, args): Promise<Id<"performanceLogins">> =>
     await ctx.db.insert("performanceLogins", {
@@ -679,6 +680,76 @@ export const getLoginLinkedTo = internalQuery({
       .query("performanceLogins")
       .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", userId))
       .first(),
+});
+
+/** Identity resolution only, never a grant (see
+ * `docs/future-features/21_auth-consolidation.md`'s "Authentication vs.
+ * authorization" note) — finds the intranet account a login's own email
+ * would auto-link to, without touching `roleId`/permissions either way.
+ * Only Advantis has intranet (Clerk) accounts at all (see
+ * `listIntranetUsersForLink`), the candidate must be active, and it must not
+ * already be claimed by a different login — any of those makes this a
+ * no-match, left for an admin to resolve by hand instead of guessed at. */
+async function findAutoLinkCandidate(
+  ctx: QueryCtx,
+  companyId: Id<"companies">,
+  email: string,
+): Promise<Id<"users"> | null> {
+  const company = await ctx.db.get(companyId);
+  if (company?.slug !== "advantis") return null;
+
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_email", (q) => q.eq("email", email))
+    .unique();
+  if (!user || user.status !== "active") return null;
+
+  const conflict = await ctx.db
+    .query("performanceLogins")
+    .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", user._id))
+    .first();
+  if (conflict) return null;
+
+  return user._id;
+}
+
+/** Action-side lookup (actions have no `ctx.db`) for `createLogin`'s
+ * auto-link attempt when the admin didn't pick a `linkedUserId` themselves. */
+export const findAutoLinkCandidateForCompany = internalQuery({
+  args: { companyId: v.id("companies"), email: v.string() },
+  handler: async (ctx, { companyId, email }): Promise<Id<"users"> | null> =>
+    await findAutoLinkCandidate(ctx, companyId, email),
+});
+
+/** Nightly reconciliation for logins created before this feature existed, or
+ * whose matching intranet account showed up later — see Phase 1 of
+ * `docs/future-features/21_auth-consolidation.md`. Scoped to Advantis (the
+ * only company `findAutoLinkCandidate` can ever match) so this never scans
+ * every company's logins for a match that can't exist. */
+export const reconcileAutoLinks = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<{ linked: number }> => {
+    const company = await ctx.db
+      .query("companies")
+      .withIndex("by_slug", (q) => q.eq("slug", "advantis"))
+      .unique();
+    if (!company) return { linked: 0 };
+
+    const logins = await ctx.db
+      .query("performanceLogins")
+      .withIndex("by_company_email", (q) => q.eq("companyId", company._id))
+      .collect();
+
+    let linked = 0;
+    for (const login of logins) {
+      if (login.linkedUserId) continue;
+      const candidate = await findAutoLinkCandidate(ctx, company._id, login.email);
+      if (!candidate) continue;
+      await ctx.db.patch(login._id, { linkedUserId: candidate, autoLinkedVia: "email_match" });
+      linked++;
+    }
+    return { linked };
+  },
 });
 
 export const setPasswordHash = internalMutation({
@@ -741,6 +812,7 @@ export const listLogins = query({
         employeeName: l.employeeId ? (employeeName.get(l.employeeId) ?? null) : null,
         linkedUserId: l.linkedUserId ?? null,
         linkedUserName: l.linkedUserId ? (userName.get(l.linkedUserId) ?? null) : null,
+        autoLinked: l.autoLinkedVia === "email_match",
         createdAt: l.createdAt,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -987,6 +1059,17 @@ export const createLogin = action({
     );
     if (existing) throw emailTaken();
 
+    // Auto-link only when the admin didn't already pick an account
+    // themselves — identity resolution, never a grant (see Phase 1 of
+    // docs/future-features/21_auth-consolidation.md). Still requires the
+    // password above exactly as before; this only populates `linkedUserId`.
+    const autoLinkedUserId = linkedUserId
+      ? null
+      : await ctx.runQuery(internal.performanceAuth.findAutoLinkCandidateForCompany, {
+          companyId: targetCompanyId,
+          email: normalizedEmail,
+        });
+
     const passwordHash = await hashPassword(password ?? randomToken());
     const id: Id<"performanceLogins"> = await ctx.runMutation(
       internal.performanceAuth.insertLogin,
@@ -997,7 +1080,8 @@ export const createLogin = action({
         companyId: targetCompanyId,
         roleId,
         employeeId,
-        linkedUserId,
+        linkedUserId: linkedUserId ?? autoLinkedUserId ?? undefined,
+        autoLinkedVia: autoLinkedUserId ? "email_match" : undefined,
       },
     );
     return { id };
@@ -1085,7 +1169,11 @@ export const updateLogin = mutation({
       ...(roleId !== undefined ? { roleId } : {}),
       ...(active !== undefined ? { active } : {}),
       ...(employeeId !== undefined ? { employeeId: employeeId ?? undefined } : {}),
-      ...(linkedUserId !== undefined ? { linkedUserId: linkedUserId ?? undefined } : {}),
+      // An admin picking (or clearing) the link by hand is always the
+      // human-linked case from here on, whatever it was before.
+      ...(linkedUserId !== undefined
+        ? { linkedUserId: linkedUserId ?? undefined, autoLinkedVia: undefined }
+        : {}),
     });
     return { ok: true };
   },

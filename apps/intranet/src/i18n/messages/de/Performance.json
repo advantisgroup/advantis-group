@@ -268,6 +268,7 @@
   "userIntranetAccountNone": "Kein Intranet-Konto verknüpft",
   "userIntranetAccountSearch": "Nach Name oder E-Mail suchen…",
   "userIntranetAccountEmpty": "Keine passenden Konten.",
+  "userAutoLinkedBadge": "Automatisch verknüpft",
   "userAlreadyLinkedBadge": "Anderweitig verknüpft",
   "userPasswordNotNeeded": "Nicht nötig — dieses Konto meldet sich über sein verknüpftes Intranet-Konto an.",
   "linkPromptBody": "Dein Intranet-Konto ({name}, {email}) mit diesem Performance-Login verknüpfen? Du kannst dich dann beim nächsten Mal ohne Passwort anmelden.",
