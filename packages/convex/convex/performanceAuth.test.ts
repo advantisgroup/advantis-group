@@ -8,7 +8,7 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
@@ -70,6 +70,36 @@ async function seedLogin(
       createdAt: Date.now(),
     }),
   );
+}
+
+async function seedRole(t: T, companyId: Id<"companies">): Promise<Id<"companyRoles">> {
+  return await t.run(async (ctx) =>
+    ctx.db.insert("companyRoles", {
+      companyId,
+      name: "Employee",
+      permissions: [],
+      isBuiltIn: true,
+      createdAt: Date.now(),
+    }),
+  );
+}
+
+/** A cross-company super-admin session token — bypasses per-company
+ * permission checks entirely, so `createLogin`'s own admin gate needs no
+ * separate role/permission seeding. */
+async function seedSuperAdminSession(t: T): Promise<string> {
+  const loginId = await t.run(async (ctx) =>
+    ctx.db.insert("performanceLogins", {
+      email: "root@advantisgroup.de",
+      name: "Root",
+      passwordHash: "hash",
+      isSuperAdmin: true,
+      active: true,
+      createdAt: Date.now(),
+    }),
+  );
+  const { token } = await t.mutation(internal.performanceAuth.createSession, { loginId });
+  return token;
 }
 
 describe("findAutoLinkCandidateForCompany", () => {
@@ -172,5 +202,66 @@ describe("performanceAuth.reconcileAutoLinks", () => {
 
     const { linked } = await t.mutation(internal.performanceAuth.reconcileAutoLinks, {});
     expect(linked).toBe(0);
+  });
+});
+
+describe("createLogin — Phase 3: auto-linked accounts skip the password requirement", () => {
+  test("an auto-linkable email needs no password at all", async () => {
+    const t = setup();
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "frank", email: "frank@advantisgroup.de" });
+    const roleId = await seedRole(t, advantis);
+    const token = await seedSuperAdminSession(t);
+
+    const { id } = await t.action(api.performanceAuth.createLogin, {
+      token,
+      email: "frank@advantisgroup.de",
+      name: "Frank",
+      roleId,
+      companyId: advantis,
+    });
+
+    const login = await t.run(async (ctx) => ctx.db.get(id));
+    expect(login?.linkedUserId).toBe(user);
+    expect(login?.autoLinkedVia).toBe("email_match");
+    expect(login?.passwordHash).toBeTruthy();
+  });
+
+  test("an email with no auto-link candidate still requires a password", async () => {
+    const t = setup();
+    const advantis = await seedCompany(t, "advantis");
+    const roleId = await seedRole(t, advantis);
+    const token = await seedSuperAdminSession(t);
+
+    await expect(
+      t.action(api.performanceAuth.createLogin, {
+        token,
+        email: "nobody@advantisgroup.de",
+        name: "Nobody",
+        roleId,
+        companyId: advantis,
+      }),
+    ).rejects.toThrow("Password must be at least 8 characters.");
+  });
+
+  test("an admin-picked linkedUserId still needs no password, same as before", async () => {
+    const t = setup();
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "grace", email: "grace@advantisgroup.de" });
+    const roleId = await seedRole(t, advantis);
+    const token = await seedSuperAdminSession(t);
+
+    const { id } = await t.action(api.performanceAuth.createLogin, {
+      token,
+      email: "grace-work@example.com",
+      name: "Grace",
+      roleId,
+      companyId: advantis,
+      linkedUserId: user,
+    });
+
+    const login = await t.run(async (ctx) => ctx.db.get(id));
+    expect(login?.linkedUserId).toBe(user);
+    expect(login?.autoLinkedVia).toBeUndefined();
   });
 });

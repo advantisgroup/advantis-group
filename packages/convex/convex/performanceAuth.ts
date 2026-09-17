@@ -1043,32 +1043,39 @@ export const createLogin = action({
       });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     if (linkedUserId) {
       const conflict = await ctx.runQuery(internal.performanceAuth.getLoginLinkedTo, {
         userId: linkedUserId,
       });
       if (conflict) throw alreadyLinked();
-    } else if (!password || password.length < 8) {
-      throw passwordTooShort();
     }
-
-    const normalizedEmail = email.trim().toLowerCase();
-    const existing: Doc<"performanceLogins"> | null = await ctx.runQuery(
-      internal.performanceAuth.getLoginByCompanyEmail,
-      { companyId: targetCompanyId, email: normalizedEmail },
-    );
-    if (existing) throw emailTaken();
 
     // Auto-link only when the admin didn't already pick an account
     // themselves — identity resolution, never a grant (see Phase 1 of
-    // docs/future-features/21_auth-consolidation.md). Still requires the
-    // password above exactly as before; this only populates `linkedUserId`.
+    // docs/future-features/21_auth-consolidation.md). Resolved *before* the
+    // password check below (Phase 3): an auto-linkable account gets to skip
+    // the password requirement exactly like an admin-linked one, instead of
+    // forcing a password onto a login that will immediately go
+    // Clerk-authenticated anyway.
     const autoLinkedUserId = linkedUserId
       ? null
       : await ctx.runQuery(internal.performanceAuth.findAutoLinkCandidateForCompany, {
           companyId: targetCompanyId,
           email: normalizedEmail,
         });
+    const resolvedLinkedUserId = linkedUserId ?? autoLinkedUserId ?? undefined;
+
+    if (!resolvedLinkedUserId && (!password || password.length < 8)) {
+      throw passwordTooShort();
+    }
+
+    const existing: Doc<"performanceLogins"> | null = await ctx.runQuery(
+      internal.performanceAuth.getLoginByCompanyEmail,
+      { companyId: targetCompanyId, email: normalizedEmail },
+    );
+    if (existing) throw emailTaken();
 
     const passwordHash = await hashPassword(password ?? randomToken());
     const id: Id<"performanceLogins"> = await ctx.runMutation(
@@ -1080,7 +1087,7 @@ export const createLogin = action({
         companyId: targetCompanyId,
         roleId,
         employeeId,
-        linkedUserId: linkedUserId ?? autoLinkedUserId ?? undefined,
+        linkedUserId: resolvedLinkedUserId,
         autoLinkedVia: autoLinkedUserId ? "email_match" : undefined,
       },
     );
