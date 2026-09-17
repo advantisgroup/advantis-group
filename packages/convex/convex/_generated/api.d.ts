@@ -140,6 +140,7 @@ import type * as salesCoachEv_wiki from "../salesCoachEv/wiki.js";
 import type * as salesCockpit from "../salesCockpit.js";
 import type * as salesCockpitFlows from "../salesCockpitFlows.js";
 import type * as sandbox from "../sandbox.js";
+import type * as secondaryEmails from "../secondaryEmails.js";
 import type * as sharing from "../sharing.js";
 import type * as stepUp from "../stepUp.js";
 import type * as suggestionCategories from "../suggestionCategories.js";
@@ -158,11 +159,7 @@ import type * as wikiEntries from "../wikiEntries.js";
 import type * as wikiFormatSettings from "../wikiFormatSettings.js";
 import type * as wikiMigration from "../wikiMigration.js";
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
+import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
   academyParticipants: typeof academyParticipants;
@@ -297,6 +294,7 @@ declare const fullApi: ApiFromModules<{
   salesCockpit: typeof salesCockpit;
   salesCockpitFlows: typeof salesCockpitFlows;
   sandbox: typeof sandbox;
+  secondaryEmails: typeof secondaryEmails;
   sharing: typeof sharing;
   stepUp: typeof stepUp;
   suggestionCategories: typeof suggestionCategories;
@@ -324,10 +322,7 @@ declare const fullApi: ApiFromModules<{
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-export declare const api: FilterApi<
-  typeof fullApi,
-  FunctionReference<any, "public">
->;
+export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>;
 
 /**
  * A utility for referencing Convex functions in your app's internal API.
@@ -337,9 +332,6 @@ export declare const api: FilterApi<
  * const myFunctionReference = internal.myModule.myFunction;
  * ```
  */
-export declare const internal: FilterApi<
-  typeof fullApi,
-  FunctionReference<any, "internal">
->;
+export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>;
 
 export declare const components: {};

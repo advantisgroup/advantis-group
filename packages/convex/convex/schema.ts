@@ -605,6 +605,41 @@ export default defineSchema({
   }).index("by_user_at", ["userId", "at"]),
 
   /**
+   * Phase 2 of docs/future-features/21_auth-consolidation.md: additional
+   * email addresses an intranet account has verified ownership of (a
+   * work-issued Performance address, an HR-only address), so a secondary
+   * area can be reached — sign-in or a password reset — through either
+   * address once linked. `verifiedAt` absent means a pending add: the code
+   * was requested but never confirmed, same convention as
+   * `totpCredentials.verifiedAt`. Only a verified row is usable anywhere
+   * downstream.
+   */
+  userSecondaryEmails: defineTable({
+    userId: v.id("users"),
+    email: v.string(),
+    verifiedAt: v.optional(v.number()),
+    addedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_email", ["userId", "email"])
+    // A verified row here must be globally unique — see `secondaryEmails.ts`'s
+    // conflict checks — so a lookup by email alone (not scoped to a user)
+    // has to be possible.
+    .index("by_email", ["email"]),
+
+  /** One open verification code per (user, candidate email) — same shape as
+   * `stepUpChallenges`, just proving ownership of a new address instead of
+   * re-proving the account's existing one. */
+  userSecondaryEmailChallenges: defineTable({
+    userId: v.id("users"),
+    email: v.string(),
+    codeHash: v.string(),
+    attempts: v.number(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_user_email", ["userId", "email"]),
+
+  /**
    * Canonical org departments. Replaces the free-text `users.department` —
    * see the org-data migration (`orgDataMigration.ts`) that backfills
    * `users.departmentId` from the legacy string values.

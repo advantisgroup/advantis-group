@@ -287,6 +287,22 @@ function render(
         ),
       };
     }
+    case "secondary-email-code": {
+      const code = str(data, "code");
+      const expiresInMinutes =
+        typeof data.expiresInMinutes === "number" ? data.expiresInMinutes : 10;
+      const accountName = esc(str(data, "accountName"));
+      return {
+        subject: `Your verification code: ${code}`,
+        html: layout(
+          "Verify this email address",
+          `<p style="margin:0 0 16px;line-height:1.6"><strong>${accountName}</strong> wants to add this address as a secondary email on their intranet account.</p>
+           <p style="margin:0 0 24px;font-size:28px;font-weight:700;letter-spacing:0.12em;font-family:monospace">${esc(code)}</p>
+           <p style="margin:0 0 8px;line-height:1.6;color:#71717a;font-size:13px">Expires in about ${expiresInMinutes} minutes.</p>
+           <p style="margin:24px 0 0;line-height:1.6;color:#b91c1c;font-size:13px">Didn't request this? Ignore this email — nothing changes until the code is entered.</p>`,
+        ),
+      };
+    }
     case "password-reset-link": {
       const area = esc(str(data, "area"));
       const url = str(data, "url");

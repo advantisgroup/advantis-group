@@ -30,6 +30,7 @@ export const internalNotificationsRoute = new Elysia().post(
         t.Literal("password-reset-link"),
         t.Literal("admin-verification-code"),
         t.Literal("security-alert"),
+        t.Literal("secondary-email-code"),
       ]),
       to: t.String(),
       data: t.Optional(t.Record(t.String(), t.Unknown())),

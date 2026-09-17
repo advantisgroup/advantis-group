@@ -28,6 +28,13 @@ export type TotpState = {
   recoveryCodesTotal: number;
 };
 
+export type SecondaryEmail = {
+  _id: string;
+  email: string;
+  verified: boolean;
+  addedAt: number;
+};
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
 
 export async function jsonOrThrow(response: Response) {
@@ -39,7 +46,8 @@ export async function jsonOrThrow(response: Response) {
 interface SecurityState {
   passkeys: Passkey[] | null;
   totp: TotpState | null;
-  /** True until both endpoints have answered once. */
+  secondaryEmails: SecondaryEmail[] | null;
+  /** True until all endpoints have answered once. */
   loading: boolean;
   refresh: () => Promise<void>;
   apiRequest: (path: string, init?: RequestInit) => Promise<Response>;
@@ -62,6 +70,7 @@ export function SecurityStateProvider({ children }: { children: ReactNode }) {
   const { getToken } = useAuth();
   const [passkeys, setPasskeys] = useState<Passkey[] | null>(null);
   const [totp, setTotp] = useState<TotpState | null>(null);
+  const [secondaryEmails, setSecondaryEmails] = useState<SecondaryEmail[] | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   const apiRequest = useCallback(
@@ -81,12 +90,18 @@ export function SecurityStateProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     // Settled, not all: one endpoint being down shouldn't blank the other's
     // card. Whichever answers, renders.
-    const [passkeyResult, totpResult] = await Promise.allSettled([
+    const [passkeyResult, totpResult, secondaryEmailResult] = await Promise.allSettled([
       jsonOrThrow(await apiRequest("/passkeys")) as Promise<{ passkeys: Passkey[] }>,
       jsonOrThrow(await apiRequest("/mfa/totp/status")) as Promise<TotpState>,
+      jsonOrThrow(await apiRequest("/secondary-emails")) as Promise<{
+        secondaryEmails: SecondaryEmail[];
+      }>,
     ]);
     if (passkeyResult.status === "fulfilled") setPasskeys(passkeyResult.value.passkeys);
     if (totpResult.status === "fulfilled") setTotp(totpResult.value);
+    if (secondaryEmailResult.status === "fulfilled") {
+      setSecondaryEmails(secondaryEmailResult.value.secondaryEmails);
+    }
     setLoaded(true);
   }, [apiRequest]);
 
@@ -95,8 +110,8 @@ export function SecurityStateProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const value = useMemo(
-    () => ({ passkeys, totp, loading: !loaded, refresh, apiRequest }),
-    [passkeys, totp, loaded, refresh, apiRequest],
+    () => ({ passkeys, totp, secondaryEmails, loading: !loaded, refresh, apiRequest }),
+    [passkeys, totp, secondaryEmails, loaded, refresh, apiRequest],
   );
 
   return <SecurityStateContext.Provider value={value}>{children}</SecurityStateContext.Provider>;
@@ -136,13 +151,7 @@ export function scorePosture(passkeys: Passkey[] | null, totp: TotpState | null)
   const hasTotp = totp?.enrolled === true && !totpNeedsRotation;
 
   const tier: PostureTier =
-    hasPasskey && hasTotp
-      ? "maximum"
-      : hasPasskey
-        ? "strong"
-        : hasTotp
-          ? "basic"
-          : "exposed";
+    hasPasskey && hasTotp ? "maximum" : hasPasskey ? "strong" : hasTotp ? "basic" : "exposed";
   const score = { exposed: 0.16, basic: 0.5, strong: 0.78, maximum: 1 }[tier];
 
   return {

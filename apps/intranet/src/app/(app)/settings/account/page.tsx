@@ -13,6 +13,7 @@ import { Link } from "@/components/Link";
 import { TotpSettingsCard } from "@/components/mfa/TotpSettingsCard";
 import { PasskeySettingsCard } from "@/components/passkeys/PasskeySettingsCard";
 import { ActiveSessionsCard } from "@/components/security/ActiveSessionsCard";
+import { SecondaryEmailsCard } from "@/components/security/SecondaryEmailsCard";
 import { SecurityActivityCard } from "@/components/security/SecurityActivityCard";
 import { SecurityPosture } from "@/components/security/SecurityPosture";
 import { SecurityPreferencesCard } from "@/components/security/SecurityPreferencesCard";
@@ -120,6 +121,7 @@ export default function SettingsAccountPage() {
           <SecurityPosture />
           <PasskeySettingsCard />
           <TotpSettingsCard />
+          <SecondaryEmailsCard />
           <SecurityPreferencesCard />
         </SecurityStateProvider>
 

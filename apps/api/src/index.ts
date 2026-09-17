@@ -18,6 +18,7 @@ import { onedriveRoute } from "./routes/onedrive.js";
 import { performanceRoute } from "./routes/performance.js";
 import { passkeysRoute } from "./routes/passkeys.js";
 import { salesCoachEvRoute } from "./routes/sales-coach-ev.js";
+import { secondaryEmailsRoute } from "./routes/secondaryEmails.js";
 import { stepUpRoute } from "./routes/stepUp.js";
 import { totpRoute } from "./routes/totp.js";
 import { wikiChatRoute } from "./routes/wiki-chat.js";
@@ -87,6 +88,7 @@ export const app = new Elysia()
   .use(performanceRoute)
   .use(passkeysRoute)
   .use(salesCoachEvRoute)
+  .use(secondaryEmailsRoute)
   .use(stepUpRoute)
   .use(totpRoute)
   .use(wikiChatRoute)
