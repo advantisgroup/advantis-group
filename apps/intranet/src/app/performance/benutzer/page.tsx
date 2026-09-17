@@ -161,7 +161,20 @@ export default function PerformanceUsersPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>{login.employeeName ?? "–"}</TableCell>
-                      <TableCell>{login.linkedUserName ?? "–"}</TableCell>
+                      <TableCell>
+                        {login.linkedUserName ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            {login.linkedUserName}
+                            {login.autoLinked && (
+                              <Badge variant="muted" className="text-[10px]">
+                                {t("userAutoLinkedBadge")}
+                              </Badge>
+                            )}
+                          </span>
+                        ) : (
+                          "–"
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={login.active ? "success" : "muted"}>
                           {login.active ? t("userActiveLabel") : t("userInactiveLabel")}

@@ -25,6 +25,7 @@ export const sendNotificationEmail = internalAction({
       v.literal("password-reset-link"),
       v.literal("admin-verification-code"),
       v.literal("security-alert"),
+      v.literal("secondary-email-code"),
     ),
     to: v.string(),
     data: v.any(),

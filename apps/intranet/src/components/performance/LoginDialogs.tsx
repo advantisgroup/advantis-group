@@ -40,6 +40,7 @@ export interface LoginRow {
   employeeName: string | null;
   linkedUserId: Id<"users"> | null;
   linkedUserName: string | null;
+  autoLinked: boolean;
 }
 
 export interface EmployeeOption {

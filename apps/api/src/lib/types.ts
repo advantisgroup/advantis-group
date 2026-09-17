@@ -46,7 +46,8 @@ export type NotificationEmailKind =
   | "password-reset-request"
   | "password-reset-link"
   | "admin-verification-code"
-  | "security-alert";
+  | "security-alert"
+  | "secondary-email-code";
 
 export interface UnfurlResult {
   url: string;

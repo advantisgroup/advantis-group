@@ -323,7 +323,13 @@ export function ParticipantsTab({ focusParticipantId }: { focusParticipantId?: s
                       <TableCell>
                         <div className="flex items-center gap-1.5">
                           <span className="font-medium">{p.name}</span>
-                          {p.linkedUserId ? <Badge variant="secondary">verknüpft</Badge> : null}
+                          {p.linkedUserId ? (
+                            <Badge variant="secondary">
+                              {p.autoLinkedVia === "email_match"
+                                ? "automatisch verknüpft"
+                                : "verknüpft"}
+                            </Badge>
+                          ) : null}
                         </div>
                         <div className="text-xs text-muted-foreground">{p.email}</div>
                       </TableCell>

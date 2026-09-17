@@ -3,7 +3,7 @@ import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc } from "./_generated/dataModel";
-import { query } from "./_generated/server";
+import { internalMutation, query } from "./_generated/server";
 import { requireAcademyAdmin } from "./academySettings";
 import { createNotification } from "./lib/notify";
 
@@ -40,17 +40,32 @@ export const create = mutation({
     const linkedUser = linkUserId ? await ctx.db.get(linkUserId) : null;
     const now = Date.now();
 
+    // Identity resolution only, never a grant (see Phase 1 of
+    // docs/future-features/21_auth-consolidation.md) — only tried when the
+    // admin didn't already pick an account for a plain email invite.
+    const autoLinkedUser =
+      !linkedUser && !linkUserId
+        ? await ctx.db
+            .query("users")
+            .withIndex("by_email", (q) => q.eq("email", email.trim().toLowerCase()))
+            .unique()
+        : null;
+    const resolvedUser =
+      linkedUser ?? (autoLinkedUser?.status === "active" ? autoLinkedUser : null);
+
     const participantId = await ctx.db.insert("academyParticipants", {
       academyId,
-      name: linkedUser ? displayName(linkedUser) : name,
-      email: linkedUser ? linkedUser.email : email,
+      name: resolvedUser ? displayName(resolvedUser) : name,
+      email: resolvedUser ? resolvedUser.email : email,
       code,
       createdAt: now,
-      ...(linkedUser
+      ...(resolvedUser
         ? {
-            linkedUserId: linkedUser._id,
+            linkedUserId: resolvedUser._id,
             linkedAt: now,
-            linkedByUserId: admin._id,
+            ...(linkedUser
+              ? { linkedByUserId: admin._id }
+              : { autoLinkedVia: "email_match" as const }),
           }
         : {}),
     });
@@ -137,6 +152,9 @@ export const linkToAccount = mutation({
       linkedUserId: userId,
       linkedAt: Date.now(),
       linkedByUserId: admin._id,
+      // An admin picking the link by hand is always the human-linked case
+      // from here on, whatever it was before.
+      autoLinkedVia: undefined,
     });
   },
 });
@@ -151,6 +169,36 @@ export const unlinkAccount = mutation({
       linkedUserId: undefined,
       linkedAt: undefined,
       linkedByUserId: undefined,
+      autoLinkedVia: undefined,
     });
+  },
+});
+
+/** Nightly reconciliation for participant rows created before this feature
+ * existed, or whose matching intranet account showed up later — see Phase 1
+ * of docs/future-features/21_auth-consolidation.md. Only ever matches a
+ * still-unlinked row, so it never overrides an admin's own choice. */
+export const reconcileAutoLinks = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<{ linked: number }> => {
+    const unlinked = (await ctx.db.query("academyParticipants").collect()).filter(
+      (p) => !p.linkedUserId,
+    );
+
+    let linked = 0;
+    for (const participant of unlinked) {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_email", (q) => q.eq("email", participant.email.trim().toLowerCase()))
+        .unique();
+      if (!user || user.status !== "active") continue;
+      await ctx.db.patch(participant._id, {
+        linkedUserId: user._id,
+        linkedAt: Date.now(),
+        autoLinkedVia: "email_match",
+      });
+      linked++;
+    }
+    return { linked };
   },
 });
