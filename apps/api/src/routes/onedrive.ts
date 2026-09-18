@@ -351,9 +351,12 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         throw Errors.badRequest(reason?.detail ?? "This file type is not allowed");
       }
       const scanJson = JSON.stringify(report);
-      const uploadUrl = await getConvex().mutation(api.integrations.onedrive.apiGenerateStagingUrl, {
-        serverKey: getConvexServerKey(),
-      });
+      const uploadUrl = await getConvex().mutation(
+        api.integrations.onedrive.apiGenerateStagingUrl,
+        {
+          serverKey: getConvexServerKey(),
+        },
+      );
       const staged = await fetch(uploadUrl, {
         method: "POST",
         headers: {

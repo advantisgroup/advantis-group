@@ -51,7 +51,7 @@ the real Convex functions execute against an in-memory backend, so a test
 seeds rows, calls `api.*` exactly the way apps/api or the browser would, and
 asserts on what landed in the database.
 
-- `convex/auth.test.ts` covers the step-up engine — which level each
+- `convex/security/auth.test.ts` covers the step-up engine — which level each
   verification method banks, and which (policy, credential, risk) combination
   opens the sign-in gate or the destructive-action gate.
 - Config lives in `packages/convex/vitest.config.ts`. It needs the

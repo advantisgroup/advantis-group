@@ -137,5 +137,8 @@ export async function getStatus(clerkUserId: string): Promise<{
 }
 
 export async function removeMfa(clerkUserId: string): Promise<void> {
-  await getConvex().mutation(api.security.totp.apiRemove, { serverKey: getConvexServerKey(), clerkUserId });
+  await getConvex().mutation(api.security.totp.apiRemove, {
+    serverKey: getConvexServerKey(),
+    clerkUserId,
+  });
 }
