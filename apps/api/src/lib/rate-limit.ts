@@ -1,19 +1,8 @@
 import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
-
 import { Errors } from "./errors.js";
+import { getRedis } from "./redis.js";
 
-let redis: Redis | null = null;
 const limiters = new Map<string, Ratelimit>();
-
-function getRedis(): Redis | null {
-  if (redis) return redis;
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return null; // rate limiting disabled when unconfigured
-  redis = new Redis({ url, token });
-  return redis;
-}
 
 /**
  * Sliding-window rate limit. No-op when Upstash isn't configured (local dev).

@@ -1,4 +1,6 @@
-import { Redis } from "@upstash/redis";
+import { type Redis } from "@upstash/redis";
+
+import { getRedis } from "../redis.js";
 
 /**
  * OneDrive listing cache. Backed by the same Upstash Redis used for rate
@@ -15,19 +17,6 @@ import { Redis } from "@upstash/redis";
 const TTL_SECONDS = 60;
 const PREFIX = "od:list:";
 const VERSION_KEY = "od:list:version";
-
-let redis: Redis | null = null;
-let triedRedis = false;
-
-function getRedis(): Redis | null {
-  if (triedRedis) return redis;
-  triedRedis = true;
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return null;
-  redis = new Redis({ url, token });
-  return redis;
-}
 
 /**
  * A monotonic cache version. Bumping it on any change instantly invalidates

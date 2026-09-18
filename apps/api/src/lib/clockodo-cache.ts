@@ -1,4 +1,6 @@
-import { Redis } from "@upstash/redis";
+import { type Redis } from "@upstash/redis";
+
+import { getRedis } from "./redis.js";
 
 /**
  * Absence-list cache, same Upstash Redis + version-invalidation shape as
@@ -19,19 +21,6 @@ import { Redis } from "@upstash/redis";
 const TTL_SECONDS = 120;
 const PREFIX = "co:absences:";
 const VERSION_KEY = "co:absences:version";
-
-let redis: Redis | null = null;
-let triedRedis = false;
-
-function getRedis(): Redis | null {
-  if (triedRedis) return redis;
-  triedRedis = true;
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return null;
-  redis = new Redis({ url, token });
-  return redis;
-}
 
 async function currentVersion(client: Redis): Promise<number> {
   const v = await client.get<number>(VERSION_KEY);
@@ -54,10 +43,7 @@ export async function getCachedAbsences<T>(years: number[]): Promise<T | null> {
   }
 }
 
-export async function setCachedAbsences<T>(
-  years: number[],
-  value: T
-): Promise<void> {
+export async function setCachedAbsences<T>(years: number[], value: T): Promise<void> {
   const client = getRedis();
   if (!client) return;
   try {
