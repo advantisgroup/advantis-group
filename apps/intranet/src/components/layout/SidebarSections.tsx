@@ -38,19 +38,6 @@ interface PendingDrag {
 const START_THRESHOLD = 4;
 const EDGE = 48;
 
-/** Top of `el` within `root`'s scroll content, ignoring transforms — the
- * layout animations move things with transforms, and measuring those
- * mid-flight made the drop target jitter back and forth. */
-function offsetWithin(el: HTMLElement, root: HTMLElement) {
-  let top = 0;
-  let node: HTMLElement | null = el;
-  while (node && node !== root) {
-    top += node.offsetTop;
-    node = node.offsetParent as HTMLElement | null;
-    if (node && !root.contains(node)) break;
-  }
-  return top;
-}
 
 function RowVisual({ children, lifted }: { children: ReactNode; lifted?: boolean }) {
   return (
@@ -112,22 +99,28 @@ export function SidebarSections({
 
   const physics = usePhysicsDrag();
 
+  // Hit-test entirely in viewport coordinates. The pointer uses clientX/clientY,
+  // and getBoundingClientRect() returns viewport coordinates too. This avoids the
+  // coordinate-system mismatch that made the drop zone appear far away from the
+  // mouse in the sidebar.
   const hitTest = useCallback(() => {
     const active = dragRef.current;
-    const root = rootRef.current;
-    if (!active || !root) return;
-    const rootRect = root.getBoundingClientRect();
-    const localY = pointer.current.y - rootRect.top + root.scrollTop;
+    if (!active) return;
+
     const current = draftRef.current;
 
     if (active.kind === "section") {
       const others = current.filter((s) => s.id !== active.id);
       let index = 0;
+
       for (const s of others) {
         const el = sectionEls.current.get(s.id);
         if (!el) continue;
-        if (offsetWithin(el, root) + el.offsetHeight / 2 < localY) index++;
+
+        const rect = el.getBoundingClientRect();
+        if (rect.top + rect.height / 2 < pointer.current.y) index++;
       }
+
       const from = current.findIndex((s) => s.id === active.id);
       if (from !== index) setDraft(moveSidebarSection(current, active.id, index));
       return;
@@ -136,26 +129,40 @@ export function SidebarSections({
     // Pick the section the pointer is over (or the nearest one).
     let target = current[0];
     let best = Infinity;
+
     for (const s of current) {
       const el = sectionEls.current.get(s.id);
       if (!el) continue;
-      const top = offsetWithin(el, root);
-      const bottom = top + el.offsetHeight;
-      const distance = localY < top ? top - localY : localY > bottom ? localY - bottom : 0;
+
+      const rect = el.getBoundingClientRect();
+      const distance =
+        pointer.current.y < rect.top
+          ? rect.top - pointer.current.y
+          : pointer.current.y > rect.bottom
+            ? pointer.current.y - rect.bottom
+            : 0;
+
       if (distance < best) {
         best = distance;
         target = s;
       }
     }
+
     let index = 0;
+
     for (const href of target.items) {
       if (href === active.id) continue;
+
       const el = itemEls.current.get(href);
       if (!el) continue;
-      if (offsetWithin(el, root) + el.offsetHeight / 2 < localY) index++;
+
+      const rect = el.getBoundingClientRect();
+      if (rect.top + rect.height / 2 < pointer.current.y) index++;
     }
+
     const fromSection = current.find((s) => s.items.includes(active.id));
     if (fromSection?.id === target.id && fromSection.items.indexOf(active.id) === index) return;
+
     setDraft(moveSidebarItem(current, active.id, target.id, index));
   }, []);
 
