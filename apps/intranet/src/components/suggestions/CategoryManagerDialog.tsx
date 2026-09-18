@@ -17,10 +17,10 @@ export function CategoryManagerDialog({
 }) {
   const t = useTranslations("Admin");
   const ts = useTranslations("Suggestions");
-  const categories = useQuery(api.suggestionCategories.list, {});
-  const createCategory = useMutation(api.suggestionCategories.create);
-  const renameCategory = useMutation(api.suggestionCategories.rename);
-  const archiveCategory = useMutation(api.suggestionCategories.archive);
+  const categories = useQuery(api.suggestions.categories.list, {});
+  const createCategory = useMutation(api.suggestions.categories.create);
+  const renameCategory = useMutation(api.suggestions.categories.rename);
+  const archiveCategory = useMutation(api.suggestions.categories.archive);
 
   return (
     <ResponsiveDialog

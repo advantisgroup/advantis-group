@@ -18,23 +18,25 @@ export function VoteButton({
 }) {
   const t = useTranslations("Suggestions");
   const handleError = useErrorHandler();
-  const toggle = useMutation(api.suggestions.toggleVote).withOptimisticUpdate((store, args) => {
-    const list = store.getQuery(api.suggestions.list, {});
-    if (!list) return;
-    store.setQuery(
-      api.suggestions.list,
-      {},
-      list.map((s) =>
-        s._id === args.suggestionId
-          ? {
-              ...s,
-              votedByMe: !s.votedByMe,
-              voteCount: s.voteCount + (s.votedByMe ? -1 : 1),
-            }
-          : s,
-      ),
-    );
-  });
+  const toggle = useMutation(api.suggestions.suggestions.toggleVote).withOptimisticUpdate(
+    (store, args) => {
+      const list = store.getQuery(api.suggestions.suggestions.list, {});
+      if (!list) return;
+      store.setQuery(
+        api.suggestions.suggestions.list,
+        {},
+        list.map((s) =>
+          s._id === args.suggestionId
+            ? {
+                ...s,
+                votedByMe: !s.votedByMe,
+                voteCount: s.voteCount + (s.votedByMe ? -1 : 1),
+              }
+            : s,
+        ),
+      );
+    },
+  );
 
   return (
     <button

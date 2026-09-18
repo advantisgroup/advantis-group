@@ -154,6 +154,8 @@ import type * as sharing from "../sharing.js";
 import type * as stepUp from "../stepUp.js";
 import type * as suggestionCategories from "../suggestionCategories.js";
 import type * as suggestions from "../suggestions.js";
+import type * as suggestions_categories from "../suggestions/categories.js";
+import type * as suggestions_suggestions from "../suggestions/suggestions.js";
 import type * as tables_activity from "../tables/activity.js";
 import type * as tables_ai from "../tables/ai.js";
 import type * as tables_chat from "../tables/chat.js";
@@ -334,6 +336,8 @@ declare const fullApi: ApiFromModules<{
   stepUp: typeof stepUp;
   suggestionCategories: typeof suggestionCategories;
   suggestions: typeof suggestions;
+  "suggestions/categories": typeof suggestions_categories;
+  "suggestions/suggestions": typeof suggestions_suggestions;
   "tables/activity": typeof tables_activity;
   "tables/ai": typeof tables_ai;
   "tables/chat": typeof tables_chat;

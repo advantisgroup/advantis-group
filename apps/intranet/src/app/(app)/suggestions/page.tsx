@@ -61,8 +61,8 @@ function SuggestionsPageContent() {
   const confirm = useConfirm();
   const handleError = useErrorHandler();
 
-  const suggestions = useQuery(api.suggestions.list, {});
-  const remove = useMutation(api.suggestions.remove);
+  const suggestions = useQuery(api.suggestions.suggestions.list, {});
+  const remove = useMutation(api.suggestions.suggestions.remove);
 
   const [newOpen, setNewOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);

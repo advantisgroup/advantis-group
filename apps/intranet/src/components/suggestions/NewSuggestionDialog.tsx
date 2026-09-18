@@ -42,8 +42,8 @@ function NewSuggestionForm({
 }) {
   const t = useTranslations("Suggestions");
   const handleError = useErrorHandler();
-  const categories = useQuery(api.suggestionCategories.list, {});
-  const createSuggestion = useMutation(api.suggestions.create);
+  const categories = useQuery(api.suggestions.categories.list, {});
+  const createSuggestion = useMutation(api.suggestions.suggestions.create);
   const upload = useAttachmentUpload();
 
   const [values, setValues] = useState<SuggestionValues>(EMPTY_SUGGESTION);

@@ -100,7 +100,7 @@ function SuggestionPanelHeader({
   const t = useTranslations("Suggestions");
   const tc = useTranslations("Common");
   const locale = useLocale();
-  const update = useMutation(api.suggestions.update);
+  const update = useMutation(api.suggestions.suggestions.update);
   const handleError = useErrorHandler();
   const state = suggestionState(suggestion);
 
@@ -212,7 +212,7 @@ function SuggestionPanelBody({
   const t = useTranslations("Suggestions");
   const tc = useTranslations("Common");
   const locale = useLocale();
-  const update = useMutation(api.suggestions.update);
+  const update = useMutation(api.suggestions.suggestions.update);
   const handleError = useErrorHandler();
   const { openFileViewer } = useFileViewer();
   const [note, setNote] = useState(suggestion.decisionNote ?? "");
