@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@advantis/convex": "workspace:*",
-    "@advantis/types": "workspace:*",
     "@clerk/nextjs": "^7.6.1",
     "@elysiajs/eden": "^1.4.9",
     "@gsap/react": "^2.1.2",

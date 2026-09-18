@@ -17,11 +17,8 @@ import { appendTimeline, insertUpdate } from "./updates";
  * message, and wherever the feature's own mutations/actions call
  * `isFeatureEnabled` to stop doing work while it's off.
  *
- * `FEATURE_FLAG_KEYS` is intentionally duplicated in `@advantis/types` (for
- * the intranet client) rather than imported from there — same reason
- * `schema.ts`'s `roleValidator` redeclares `Role` instead of importing it:
- * this directory is bundled standalone for the Convex deployment and
- * doesn't depend on other workspace packages. Keep both lists in sync by hand.
+ * This is the only list of flag keys — the intranet derives its
+ * `FeatureFlagKey` type from `setFlag`'s args.
  */
 export const FEATURE_FLAG_KEYS = ["activitytrack", "chat", "ai"] as const;
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];

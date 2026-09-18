@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
+import type { ApplicantSkillProfile } from "@advantis/types";
 import { Elysia, t } from "elysia";
 
 import {
@@ -19,7 +20,19 @@ import { decrypt } from "../lib/crypto.js";
 import { Errors } from "../lib/errors.js";
 import { requireAuth } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
-import { autoProfil } from "../lib/types.js";
+
+/** Suggests a skill profile whose name matches the applicant's stated position. */
+function autoProfil(
+  profiles: ApplicantSkillProfile[],
+  positionText: string | null | undefined,
+): string | null {
+  if (!positionText) return null;
+  const text = positionText.toLowerCase();
+  const hit = profiles.find(
+    (p) => text.includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(text),
+  );
+  return hit ? hit.id : null;
+}
 
 const MAX_CV_BYTES = 3.5 * 1024 * 1024;
 

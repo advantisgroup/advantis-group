@@ -1,54 +1,19 @@
 /**
- * Shared types used across the Advantis monorepo (intranet app + Elysia API +
- * Convex functions). Keep this framework-agnostic — no React/Next/Convex
- * runtime imports, types only.
+ * Shared types for the intranet and the Elysia API. Keep this framework-
+ * agnostic — no React/Next/Convex imports. apps/api may only use
+ * `import type` from here: its Vercel deploy can't load this package's raw
+ * `.ts` at runtime, so a value import crashes every route on cold start.
  */
 
 // ---------------------------------------------------------------------------
 // Roles & access
 // ---------------------------------------------------------------------------
 
-export const ROLES = ["admin", "manager", "employee"] as const;
-export type Role = (typeof ROLES)[number];
-
-/** Roles that may manage access, invites, announcements, events and approvals. */
-export const MANAGER_ROLES: readonly Role[] = ["admin", "manager"];
-
-export function isManagerRole(role: Role | null | undefined): boolean {
-  return role === "admin" || role === "manager";
-}
+export type Role = "admin" | "manager" | "employee";
 
 // ---------------------------------------------------------------------------
-// Feature flags
+// Chat
 // ---------------------------------------------------------------------------
-
-/**
- * Keys for globally disableable features, admin-toggled from
- * `/admin/feature-flags`. Adding a new one is a one-entry addition here plus
- * a registry entry in `packages/convex/convex/featureFlags.ts` — see that
- * file for how enforcement is wired up per feature.
- */
-export const FEATURE_FLAG_KEYS = ["activitytrack", "chat", "ai"] as const;
-export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
-
-export function isAdminRole(role: Role | null | undefined): boolean {
-  return role === "admin";
-}
-
-export type UserStatus = "active" | "suspended";
-export type InviteStatus = "pending" | "accepted" | "revoked" | "expired";
-export type AccessRequestStatus = "pending" | "approved" | "denied";
-
-// ---------------------------------------------------------------------------
-// Domain enums
-// ---------------------------------------------------------------------------
-
-export const ABSENCE_TYPES = ["vacation", "sick", "personal", "other"] as const;
-export type AbsenceType = (typeof ABSENCE_TYPES)[number];
-
-export type AbsenceStatus = "pending" | "approved" | "denied" | "cancelled";
-
-export type ConversationType = "dm" | "group";
 
 export type MessageAttachmentKind = "image" | "file";
 
@@ -93,14 +58,14 @@ export type NotificationEmailKind =
   | "absence-decision"
   | "upload-decision"
   | "chat-reinvite"
-  | "digest";
-
-/** Body for POST /internal/notifications (serverKey-gated, called by Convex). */
-export interface InternalNotificationRequest {
-  kind: NotificationEmailKind;
-  to: string;
-  data: Record<string, unknown>;
-}
+  | "digest"
+  | "weekly-report"
+  | "academy-invite"
+  | "password-reset-request"
+  | "password-reset-link"
+  | "admin-verification-code"
+  | "security-alert"
+  | "secondary-email-code";
 
 // ---------------------------------------------------------------------------
 // OneDrive / file store (api.advantisgroup.de → Microsoft Graph)
@@ -183,21 +148,6 @@ export interface ScanReport {
   scannedAt: number;
 }
 
-export type UploadStatus = "pending" | "approved" | "denied" | "uploading" | "failed" | "cancelled";
-
-export const UPLOAD_AUDIT_ACTIONS = [
-  "request",
-  "approve",
-  "deny",
-  "upload",
-  "delete",
-  "mkdir",
-  "rename",
-  "move",
-  "share",
-  "restore",
-] as const;
-
 // ---------------------------------------------------------------------------
 // Applicant Management (Bewerbermanagement) — skill matching
 // ---------------------------------------------------------------------------
@@ -228,17 +178,3 @@ export function matchSkills(profileSkills: string[], applicant: ApplicantSkillMa
     .toLowerCase();
   return profileSkills.filter((skill) => haystack.includes(skill.toLowerCase()));
 }
-
-/** Suggests a skill profile whose name matches the applicant's stated position. */
-export function autoProfil(
-  profiles: ApplicantSkillProfile[],
-  positionText: string | null | undefined,
-): string | null {
-  if (!positionText) return null;
-  const text = positionText.toLowerCase();
-  const hit = profiles.find(
-    (p) => text.includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(text),
-  );
-  return hit ? hit.id : null;
-}
-export type UploadAuditAction = (typeof UPLOAD_AUDIT_ACTIONS)[number];

@@ -1,5 +1,5 @@
 import { api } from "@advantis/convex/api";
-import { type DriveQuota } from "../types.js";
+import type { DriveQuota } from "@advantis/types";
 
 import { getConvex, getConvexServerKey } from "../convex.js";
 import { decrypt, encrypt } from "../crypto.js";

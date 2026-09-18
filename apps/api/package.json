@@ -23,6 +23,7 @@
   "dependencies": {
     "@advantis/api-contract": "workspace:*",
     "@advantis/convex": "workspace:*",
+    "@advantis/types": "workspace:*",
     "@anthropic-ai/sdk": "^0.106.0",
     "@clerk/backend": "^2.18.0",
     "@simplewebauthn/server": "^13.0.0",

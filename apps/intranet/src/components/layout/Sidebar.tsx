@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { type FeatureFlagKey } from "@advantis/types";
 import { useQuery } from "convex/react";
 import {
   Activity,
@@ -35,7 +34,7 @@ import {
 import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
 
-import { useFeatureFlags } from "@/components/feature-flags/FeatureGate";
+import { type FeatureFlagKey, useFeatureFlags } from "@/components/feature-flags/FeatureGate";
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { ActivitySidebar } from "@/components/layout/ActivitySidebar";

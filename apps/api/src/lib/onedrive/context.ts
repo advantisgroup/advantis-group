@@ -1,6 +1,6 @@
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { type Role } from "../types.js";
+import type { Role } from "@advantis/types";
 
 import { getConvex, getConvexServerKey } from "../convex.js";
 import { Errors } from "../errors.js";

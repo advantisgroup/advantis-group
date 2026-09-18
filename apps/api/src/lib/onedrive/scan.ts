@@ -1,6 +1,6 @@
 import { fileTypeFromBuffer } from "file-type";
 
-import { type ScanFlag, type ScanReport, type ScanSeverity, type ScanVerdict } from "../types.js";
+import type { ScanFlag, ScanReport, ScanSeverity, ScanVerdict } from "@advantis/types";
 
 /**
  * In-house "is this file suspicious?" scanner. Deliberately heuristic and

@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-import { type NotificationEmailKind } from "./types.js";
+import type { NotificationEmailKind } from "@advantis/types";
 
 import { Errors } from "./errors.js";
 

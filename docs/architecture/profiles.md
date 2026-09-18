@@ -119,10 +119,9 @@ same way `args: {...v.*}` has always been mandatory.
 ## Where types live
 
 `packages/convex` deliberately does not depend on `@advantis/types` — it's
-bundled standalone for the Convex deployment (see the comment on
-`FEATURE_FLAG_KEYS` in `packages/convex/convex/featureFlags.ts`). Canonical
+bundled standalone for the Convex deployment. Canonical
 Profile/Subprofile/Partial-profile types therefore live inside
 `packages/convex/convex/lib/`, not in `packages/types`. If `apps/intranet`
-or `apps/api` need a client-side twin of one of these shapes, hand-sync it
-into `packages/types` the same way `FEATURE_FLAG_KEYS` is today — duplicated
-on purpose, not imported.
+or `apps/api` need one of these shapes, derive it from the Convex API
+(`FunctionReturnType`/`FunctionArgs`) the way the intranet's
+`FeatureFlagKey` does, rather than hand-syncing a copy.

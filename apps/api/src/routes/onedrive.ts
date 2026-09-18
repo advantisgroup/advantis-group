@@ -1,6 +1,6 @@
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { type OneDriveBreadcrumb, type OneDriveItem, type OneDriveListing } from "../lib/types.js";
+import type { OneDriveBreadcrumb, OneDriveItem, OneDriveListing } from "@advantis/types";
 import { Elysia, t } from "elysia";
 
 import { getConvex, getConvexServerKey } from "../lib/convex.js";

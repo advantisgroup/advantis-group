@@ -3,11 +3,14 @@
 import type { ReactNode } from "react";
 
 import { api } from "@advantis/convex/api";
-import { type FeatureFlagKey } from "@advantis/types";
 import { useQuery } from "convex/react";
+import { type FunctionArgs } from "convex/server";
 
 import { FeatureDisabledScreen } from "@/components/layout/FeatureDisabledScreen";
 import { useIsAdmin } from "@/components/providers/current-user";
+
+/** Taken from the Convex API so the list of flags only lives in `featureFlags.ts`. */
+export type FeatureFlagKey = FunctionArgs<typeof api.featureFlags.setFlag>["key"];
 
 /** Reactive read of every feature flag's current state. */
 export function useFeatureFlags() {
