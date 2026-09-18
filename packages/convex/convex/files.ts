@@ -3,7 +3,13 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
-import { getCurrentUser, hasApplicantAccess, requireUser, requireVaultUnlocked } from "./lib/auth";
+import {
+  assertServerKey,
+  getCurrentUser,
+  hasApplicantAccess,
+  requireUser,
+  requireVaultUnlocked,
+} from "./lib/auth";
 
 /**
  * Issue a short-lived upload URL for chat attachments, avatars and
@@ -17,13 +23,6 @@ export const generateUploadUrl = mutation({
     return ctx.storage.generateUploadUrl();
   },
 });
-
-function assertServerKey(serverKey: string): void {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
 
 /**
  * Same as `generateUploadUrl`, but for the API server rather than a

@@ -43,19 +43,7 @@ import {
   resolveCompanyId,
 } from "./performanceAuth";
 import { toISODate } from "./performance/lib/workdays";
-
-/** Same convention as `onedrive.ts`: functions prefixed `api*` are
- * server-key gated and only called by `apps/api`, which has already
- * authenticated the caller (here: a valid, admin-role Performance
- * session) before reaching Convex. Exported so `performanceUploadParse.ts`
- * (a separate "use node" action file — see its header comment) can reuse
- * the same check. */
-export function assertServerKey(serverKey: string): void {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
+import { assertServerKey } from "./lib/auth";
 
 /** A one-shot URL `apps/api` POSTs the original report file to (Convex
  * file storage), before parsing and importing it. Public (not internal) —

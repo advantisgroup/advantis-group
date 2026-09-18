@@ -1,5 +1,6 @@
 import { sandboxedMutation as mutation } from "./lib/sandbox";
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
+import { assertServerKey } from "./lib/auth";
 
 /**
  * Server-key gated mutations invoked by the Elysia API's Clerk webhook handler
@@ -8,13 +9,6 @@ import { ConvexError, v } from "convex/values";
  * provisioning is gated by invites/approvals via lib/auth.ensureUser — they
  * only refresh profiles and deactivate removed accounts.
  */
-function assertServerKey(serverKey: string) {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
-
 export const syncFromClerk = mutation({
   args: {
     serverKey: v.string(),

@@ -2,10 +2,10 @@ import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { safeEqual, sha256hex } from "./activity/lib/crypto";
-import { type Doc, type Id } from "./_generated/dataModel";
+import { type Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { query, type MutationCtx, type QueryCtx } from "./_generated/server";
-import { getUserByClerkId } from "./lib/auth";
+import { assertServerKey, getUserByClerkId, requireActiveUser } from "./lib/auth";
 import { trackEvent } from "./lib/analytics";
 import { notifySecurityChange } from "./lib/stepUp";
 
@@ -21,20 +21,6 @@ const REQUEST_COOLDOWN_MS = 60_000;
 /** A handful is plenty for "a work address, an HR address" — bounds the
  * table against someone scripting an unbounded pile of pending adds. */
 const MAX_SECONDARY_EMAILS = 5;
-
-function assertServerKey(serverKey: string): void {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
-
-function requireActiveUser(user: Doc<"users"> | null): Doc<"users"> {
-  if (!user || user.status !== "active") {
-    throw new ConvexError({ code: "not_found", message: "User not found" });
-  }
-  return user;
-}
 
 function generateCode(): string {
   const bytes = crypto.getRandomValues(new Uint32Array(1));

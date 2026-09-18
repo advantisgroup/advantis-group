@@ -1,7 +1,8 @@
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 
 import { query } from "../_generated/server";
 import {
+  assertServerKey,
   effectiveCustomRoleIds,
   effectiveRole,
   isSandboxed,
@@ -24,13 +25,6 @@ import { hasActiveAbsenceApprovalDelegation } from "../approvalDelegations";
  * "intranet account with no Clockodo link" apart rather than getting a bare
  * `null` for either.
  */
-function assertServerKey(serverKey: string) {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
-
 export const clockodoCallerValidator = v.union(
   /** No intranet account matches the Clerk identity at all. */
   v.object({ status: v.literal("no_account") }),

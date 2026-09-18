@@ -6,6 +6,7 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalAction, query } from "./_generated/server";
 import {
+  assertServerKey,
   effectiveCustomRoleIds,
   effectiveRole,
   getUserByClerkId,
@@ -27,13 +28,6 @@ import { batchUserSummaries, displayName } from "./lib/users";
  * Functions prefixed `api*` are server-key gated and only called by the API.
  * The rest are Clerk-authenticated and called straight from the intranet.
  */
-
-function assertServerKey(serverKey: string): void {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
 
 async function approverIds(ctx: MutationCtx): Promise<Id<"users">[]> {
   const admins = await ctx.db

@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx, query } from "./_generated/server";
-import { requireApplicantAccess } from "./lib/auth";
+import { assertServerKey, requireApplicantAccess } from "./lib/auth";
 import { partialProfileValidator, profileDisplayName, toPartialProfileOrNull } from "./lib/profile";
 import { onboardingItemValidator } from "./schema";
 
@@ -14,13 +14,6 @@ const employeeDocumentCategoryValidator = v.union(
   v.literal("contract"),
   v.literal("other"),
 );
-
-function assertServerKey(serverKey: string): void {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
 
 /**
  * `employeeProfiles` is HumanResources' subprofile: a feature-owned record

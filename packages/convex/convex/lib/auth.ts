@@ -65,6 +65,26 @@ export function isAdminEmail(email: string): boolean {
   return getAdminEmails().includes(email.toLowerCase());
 }
 
+// --- Server-to-server (apps/api) --------------------------------------------
+
+/** Gate for the `api*` functions apps/api calls with the shared server key —
+ * apps/api has already authenticated the real caller before reaching here. */
+export function assertServerKey(serverKey: string): void {
+  const expected = process.env.CONVEX_SERVER_KEY;
+  if (!expected || serverKey !== expected) {
+    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
+  }
+}
+
+/** For server-key calls that name a user by `clerkUserId`: that user must
+ * exist and not be suspended. */
+export function requireActiveUser(user: Doc<"users"> | null): Doc<"users"> {
+  if (!user || user.status !== "active") {
+    throw new ConvexError({ code: "not_found", message: "User not found" });
+  }
+  return user;
+}
+
 // --- Identity / user resolution ---------------------------------------------
 
 export async function getUserByClerkId(

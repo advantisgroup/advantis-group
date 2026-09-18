@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Id } from "./_generated/dataModel";
 import { type MutationCtx, query } from "./_generated/server";
+import { assertServerKey } from "./lib/auth";
 
 /**
  * Server-key gated CRUD for the Wiki AI assistant's per-user chat history.
@@ -13,13 +14,6 @@ import { type MutationCtx, query } from "./_generated/server";
  * and `messages` fields are AES-256-GCM ciphertext — this layer never sees or
  * stores plaintext chat content.
  */
-function assertServerKey(serverKey: string) {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
-
 /** Load a chat and verify it belongs to the given user, or throw. */
 async function ownedChat(ctx: MutationCtx, id: Id<"wikiChats">, clerkUserId: string) {
   const chat = await ctx.db.get(id);

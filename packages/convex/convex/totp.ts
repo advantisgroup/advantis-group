@@ -2,29 +2,14 @@ import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { safeEqual, sha256hex } from "./activity/lib/crypto";
-import { type Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
-import { getUserByClerkId } from "./lib/auth";
+import { assertServerKey, getUserByClerkId, requireActiveUser } from "./lib/auth";
 import { trackEvent } from "./lib/analytics";
 import { notifySecurityChange } from "./lib/stepUp";
 
 const RECOVERY_CODE_COUNT = 8;
 // Avoids 0/O/1/I/L so a printed code isn't ambiguous to read back.
 const RECOVERY_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-
-function assertServerKey(serverKey: string): void {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
-
-function requireActiveUser(user: Doc<"users"> | null): Doc<"users"> {
-  if (!user || user.status !== "active") {
-    throw new ConvexError({ code: "not_found", message: "User not found" });
-  }
-  return user;
-}
 
 function randomRecoveryCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(10));
@@ -98,7 +83,11 @@ export const apiRegenerateRecoveryCodes = mutation({
         createdAt: now,
       });
     }
-    await ctx.db.insert("totpAuditLog", { userId: user._id, event: "recovery_regenerated", at: now });
+    await ctx.db.insert("totpAuditLog", {
+      userId: user._id,
+      event: "recovery_regenerated",
+      at: now,
+    });
     await notifySecurityChange(
       ctx,
       user,
@@ -161,7 +150,11 @@ export const apiBeginEnrollment = mutation({
       secretCiphertext: args.secretCiphertext,
       createdAt: Date.now(),
     });
-    await trackEvent(ctx, { event: "mfa_enrollment_started", distinctId: user.clerkUserId, properties: {} });
+    await trackEvent(ctx, {
+      event: "mfa_enrollment_started",
+      distinctId: user.clerkUserId,
+      properties: {},
+    });
     return { ok: true };
   },
 });

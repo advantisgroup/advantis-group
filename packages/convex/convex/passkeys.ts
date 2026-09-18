@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, internalMutation, query } from "./_generated/server";
-import { getUserByClerkId } from "./lib/auth";
+import { assertServerKey, getUserByClerkId, requireActiveUser } from "./lib/auth";
 import { trackEvent } from "./lib/analytics";
 import { notifySecurityChange } from "./lib/stepUp";
 
@@ -32,20 +32,6 @@ const acceptedCredentialsSignalValidator = v.object({
   userId: v.string(),
   allAcceptedCredentialIds: v.array(v.string()),
 });
-
-function assertServerKey(serverKey: string): void {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
-
-function requireActiveUser(user: Doc<"users"> | null): Doc<"users"> {
-  if (!user || user.status !== "active") {
-    throw new ConvexError({ code: "not_found", message: "User not found" });
-  }
-  return user;
-}
 
 function toPasskeyView(passkey: Doc<"passkeys">) {
   return {

@@ -2,7 +2,13 @@ import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { query } from "./_generated/server";
-import { getUserByClerkId, isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
+import {
+  assertServerKey,
+  getUserByClerkId,
+  isOwnerOrAdmin,
+  requireCapability,
+  requireUser,
+} from "./lib/auth";
 import { displayName } from "./lib/users";
 
 const MAX_PINS = 5;
@@ -21,10 +27,7 @@ function plainText(html: string) {
 export const apiSearchForAssistant = query({
   args: { serverKey: v.string(), clerkUserId: v.string(), question: v.string() },
   handler: async (ctx, { serverKey, clerkUserId, question }) => {
-    const expected = process.env.CONVEX_SERVER_KEY;
-    if (!expected || serverKey !== expected) {
-      throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-    }
+    assertServerKey(serverKey);
     const user = await getUserByClerkId(ctx, clerkUserId);
     if (!user || user.status === "suspended") return [];
     const words = [

@@ -5,6 +5,7 @@ import { internalMutation, mutation, query, type QueryCtx } from "./_generated/s
 import { isFeatureEnabled } from "./featureFlags";
 import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase, askSubjectType } from "./lib/aiRuns";
 import {
+  assertServerKey,
   effectiveCustomRoleIds,
   effectiveRole,
   getCurrentUser,
@@ -34,13 +35,6 @@ import { displayName } from "./lib/users";
 
 const RETENTION_MS = 30 * 86_400_000;
 const DOCK_WINDOW_MS = 86_400_000;
-
-function assertServerKey(serverKey: string) {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
 
 /** Everything but the ciphertext — the browser never needs it from here. */
 function toMeta(run: Doc<"aiRuns">) {

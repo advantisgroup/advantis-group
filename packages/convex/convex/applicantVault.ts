@@ -7,6 +7,7 @@ import { internalMutation, internalQuery, query, type MutationCtx } from "./_gen
 import { hashPassword, verifyPassword } from "./activity/lib/crypto";
 import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import {
+  assertServerKey,
   getUserByClerkId,
   isApplicantAreaMember,
   requireAdmin,
@@ -21,13 +22,6 @@ import {
   isLegacyPasswordSunsetInForce,
   legacyPasswordSunsetDeadline,
 } from "./lib/stepUp";
-
-function assertServerKey(serverKey: string): void {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
 
 /** How long a vault unlock lasts before the password must be re-entered. */
 export const UNLOCK_DURATION_MS = 30 * 60 * 1000;

@@ -6,6 +6,7 @@ import { type Id } from "./_generated/dataModel";
 import { internalMutation, query, type MutationCtx } from "./_generated/server";
 import { sha256hex } from "./activity/lib/crypto";
 import {
+  assertServerKey,
   effectiveRole,
   getUserByClerkId,
   isApplicantAreaMember,
@@ -39,13 +40,6 @@ import {
   resolveSignInRequirement,
   verifyEmailCode,
 } from "./lib/stepUp";
-
-function assertServerKey(serverKey: string): void {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
 
 const scopeValidator = v.union(v.literal("off"), v.literal("all"), v.literal("managers_and_up"));
 

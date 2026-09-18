@@ -11,7 +11,12 @@ import {
   terminArtValidator,
   terminTypValidator,
 } from "./schema";
-import { getUserByClerkId, hasApplicantAccess, requireApplicantAccess } from "./lib/auth";
+import {
+  assertServerKey,
+  getUserByClerkId,
+  hasApplicantAccess,
+  requireApplicantAccess,
+} from "./lib/auth";
 import { batchUserSummaries, toUserSummary } from "./lib/users";
 
 /**
@@ -20,13 +25,6 @@ import { batchUserSummaries, toUserSummary } from "./lib/users";
  * except the `api*` functions, which are server-key gated and only called by
  * the Elysia API's PDF-extraction route — see `apps/api/src/routes/applicants.ts`.
  */
-
-function assertServerKey(serverKey: string): void {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
 
 async function requireApplicant(
   ctx: QueryCtx | MutationCtx,

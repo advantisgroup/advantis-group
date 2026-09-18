@@ -2,7 +2,8 @@ import { sandboxedMutation as mutation } from "../lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { query } from "../_generated/server";
-import { assertServerKey, requireAdminCaller } from "./lib";
+import { assertServerKey } from "../lib/auth";
+import { requireAdminCaller } from "./lib";
 
 /**
  * Server-key gated CRUD for the Sales Coach EV knowledge base. Reads are

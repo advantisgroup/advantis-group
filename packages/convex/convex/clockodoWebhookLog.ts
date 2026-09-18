@@ -1,20 +1,14 @@
 import { sandboxedMutation as mutation } from "./lib/sandbox";
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 
 import { internalMutation } from "./_generated/server";
+import { assertServerKey } from "./lib/auth";
 
 /**
  * Durable record of every inbound Clockodo webhook delivery — see the schema
  * comment on `clockodoWebhookLog`. Server-key gated like the other
  * apps/api-invoked mutations in `clockodoSync.ts`.
  */
-function assertServerKey(serverKey: string) {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
-
 export const logWebhookDelivery = mutation({
   args: {
     serverKey: v.string(),

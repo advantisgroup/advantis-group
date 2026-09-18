@@ -4,20 +4,11 @@
  * Same client/server split as the upload pipeline: Convex returns plain
  * data, apps/api owns the actual spreadsheet I/O via `xlsx`.
  */
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 
 import { query } from "./_generated/server";
 import { teamTotals } from "./performanceQueries";
-
-/** Server-key gate for apps/api → Convex calls (see `performanceImport.ts`
- * for the fuller rationale) — apps/api has already authenticated the
- * caller as a Performance admin before reaching here. */
-function assertServerKey(serverKey: string): void {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
+import { assertServerKey } from "./lib/auth";
 
 export interface ExportRow {
   name: string;

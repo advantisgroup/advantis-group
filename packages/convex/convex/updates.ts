@@ -5,7 +5,7 @@ import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx } from "./_generated/server";
 import { internalMutation, query } from "./_generated/server";
-import { effectiveRole, requireAdmin, requireUser } from "./lib/auth";
+import { assertServerKey, effectiveRole, requireAdmin, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
 import { displayName } from "./lib/users";
@@ -40,13 +40,6 @@ const NOTIFY_TITLES: Record<Doc<"updates">["type"], string> = {
   maintenance: "Scheduled maintenance",
   changelog: "What's new",
 };
-
-function assertServerKey(serverKey: string) {
-  const expected = process.env.CONVEX_SERVER_KEY;
-  if (!expected || serverKey !== expected) {
-    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
-  }
-}
 
 async function resolveMarkdownAuthor(
   ctx: MutationCtx,
