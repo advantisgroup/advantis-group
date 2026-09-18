@@ -3,7 +3,7 @@ import { v } from "convex/values";
 
 import { requireCapability, requireUser } from "../lib/auth";
 import { toClockodoIdString } from "../lib/clockodoId";
-import { appError } from "../activity/lib/errors";
+import { appError } from "../lib/errors";
 import { writeIntegrationsAudit } from "./audit";
 
 /**

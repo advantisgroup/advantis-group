@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { api, internal } from "./_generated/api";
-import { requireBlogManageAction } from "./integrations/lib/auth";
+import { requireCapabilityForAction } from "./lib/auth";
 import { action } from "./functions";
 
 /**
@@ -35,7 +35,7 @@ const SITE_ORIGIN = "https://advantisgroup.de";
 export const getForPost = action({
   args: { postId: v.id("blogPosts"), days: v.optional(v.number()) },
   handler: async (ctx, { postId, days }): Promise<BlogAnalyticsResult> => {
-    await requireBlogManageAction(ctx);
+    await requireCapabilityForAction(ctx, "manage_blog");
 
     const post = await ctx.runQuery(api.blogPosts.get, { postId });
     if (!post) throw new Error("Post not found");

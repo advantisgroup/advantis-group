@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { query } from "../functions";
 import { safeEqual } from "./lib/crypto";
-import { appError } from "./lib/errors";
+import { appError } from "../lib/errors";
 
 /**
  * Secret-guarded, read-only paginated export of an ActivityTrack table.

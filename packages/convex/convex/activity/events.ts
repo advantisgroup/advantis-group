@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import type { MutationCtx } from "../_generated/server";
 import { requireUser, requireAdmin } from "../lib/auth";
 import { writeAudit } from "./audit";
-import { appError } from "./lib/errors";
+import { appError } from "../lib/errors";
 import { safeEqual } from "./lib/crypto";
 import { displayName } from "./lib/users";
 

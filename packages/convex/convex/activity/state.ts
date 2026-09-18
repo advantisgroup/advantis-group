@@ -10,7 +10,7 @@ import {
   startOfBusinessDayUtcMs,
   WORK_EVIDENCE_STATES,
 } from "./lib/businessHours";
-import { appError } from "./lib/errors";
+import { appError } from "../lib/errors";
 import { safeEqual } from "./lib/crypto";
 import { getActivitySubprofile } from "./people";
 

@@ -4,7 +4,7 @@ import { action } from "../../functions";
 import { v } from "convex/values";
 
 import { internal } from "../../_generated/api";
-import { requireClockodoManagerAction } from "../lib/auth";
+import { requireCapabilityForAction } from "../../lib/auth";
 import { clockodoFetch } from "./client";
 
 /**
@@ -153,7 +153,7 @@ function toHolidaysQuota(row: ClockodoHolidaysQuotaWire): ClockodoHolidaysQuota 
 export const listClockodoUsers = action({
   args: {},
   handler: async (ctx): Promise<ClockodoUser[]> => {
-    await requireClockodoManagerAction(ctx);
+    await requireCapabilityForAction(ctx, "manage_clockodo_team");
     const body = await clockodoFetch<{ data?: ClockodoUserWire[] }>(
       "/api/v3/users?items_per_page=1000",
     );
@@ -172,7 +172,7 @@ export const getClockodoUserDetail = action({
     targetHours: ClockodoTargetHour[];
     holidaysQuota: ClockodoHolidaysQuota[];
   }> => {
-    await requireClockodoManagerAction(ctx);
+    await requireCapabilityForAction(ctx, "manage_clockodo_team");
     const userBody = await clockodoFetch<{ data: ClockodoUserWire }>(
       `/api/v3/users/${clockodoUserId}`,
     );
@@ -229,7 +229,7 @@ export const createClockodoUser = action({
     vacationDaysPerYear: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<{ clockodoUserId: number }> => {
-    await requireClockodoManagerAction(ctx);
+    await requireCapabilityForAction(ctx, "manage_clockodo_team");
     const created = await clockodoFetch<{ data: ClockodoUserWire }>("/api/v3/users", {
       method: "POST",
       body: { name: args.name, email: args.email, number: args.number },
@@ -317,7 +317,7 @@ export const updateClockodoUser = action({
     exemptFromFlextime: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<void> => {
-    const actor = await requireClockodoManagerAction(ctx);
+    const actor = await requireCapabilityForAction(ctx, "manage_clockodo_team");
     const { clockodoUserId, ...patch } = args;
     const body: Record<string, unknown> = {};
     if (patch.name !== undefined) body.name = patch.name;
@@ -383,7 +383,7 @@ export const setTargetHours = action({
     sunday: v.number(),
   },
   handler: async (ctx, { clockodoUserId, dateSince, ...days }): Promise<void> => {
-    const actor = await requireClockodoManagerAction(ctx);
+    const actor = await requireCapabilityForAction(ctx, "manage_clockodo_team");
     const effectiveDate = dateSince ?? new Date().toISOString().slice(0, 10);
     await clockodoFetch("/api/targethours", {
       method: "POST",
@@ -412,7 +412,7 @@ export const setVacationEntitlement = action({
     yearSince: v.optional(v.number()),
   },
   handler: async (ctx, { clockodoUserId, daysPerYear, yearSince }): Promise<void> => {
-    const actor = await requireClockodoManagerAction(ctx);
+    const actor = await requireCapabilityForAction(ctx, "manage_clockodo_team");
     const effectiveYear = yearSince ?? new Date().getFullYear();
     await clockodoFetch("/api/v2/holidaysQuota", {
       method: "POST",
@@ -462,7 +462,7 @@ export const getClockodoRosterHours = action({
     ctx,
     { clockodoUserIds },
   ): Promise<{ clockodoUserId: number; hoursThisWeek: number }[]> => {
-    await requireClockodoManagerAction(ctx);
+    await requireCapabilityForAction(ctx, "manage_clockodo_team");
     const ids = clockodoUserIds.slice(0, 200);
     const since = toClockodoTimestamp(mondayOfWeek(new Date()));
     const until = toClockodoTimestamp(new Date());

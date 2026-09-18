@@ -5,7 +5,7 @@ import { type Id } from "../_generated/dataModel";
 import { type QueryCtx, type MutationCtx } from "../_generated/server";
 import { requireUser, requireCapability } from "../lib/auth";
 import { writeAudit } from "./audit";
-import { appError } from "./lib/errors";
+import { appError } from "../lib/errors";
 
 /** All people (coworkers being tracked). Any signed-in user. */
 export const list = query({

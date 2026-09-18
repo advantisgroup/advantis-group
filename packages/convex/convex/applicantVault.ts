@@ -9,11 +9,12 @@ import {
 import { ConvexError, v } from "convex/values";
 
 import { type Id } from "./_generated/dataModel";
-import { api, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 import { type MutationCtx } from "./_generated/server";
 import { hashPassword, verifyPassword } from "./activity/lib/crypto";
 import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import {
+  getCallerForAction,
   getUserByClerkId,
   isApplicantAreaMember,
   requireAdmin,
@@ -155,7 +156,7 @@ export const storePasswordHash = internalMutation({
 export const setPassword = action({
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
-    const me = await ctx.runQuery(api.users.me, {});
+    const me = (await getCallerForAction(ctx))?.user;
     if (!me || !isApplicantAreaMember(me)) {
       throw new ConvexError({
         code: "forbidden",
@@ -236,7 +237,7 @@ export const apiUnlockViaPasskey = serverMutation({
 export const unlock = action({
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
-    const me = await ctx.runQuery(api.users.me, {});
+    const me = (await getCallerForAction(ctx))?.user;
     if (!me || !isApplicantAreaMember(me)) {
       throw new ConvexError({
         code: "forbidden",

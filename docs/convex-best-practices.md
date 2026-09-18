@@ -26,7 +26,7 @@ are deliberate. Re-audit rather than trusting the counts if it matters.
 | Access control on public functions | Followed — `lib/auth.ts`'s `requireUser`/`requireManager`/`requireAdmin`/`requireCapability` is the first line of essentially every handler. |
 | Avoid `.filter` on db queries | Mostly followed — 9 remaining call sites (`accessRequests.ts`, `invites.ts`, `lib/auth.ts`, `companies.ts`, `orgDataMigration.ts`, `performanceImport.ts`, `migrations/backfillPerformanceCompanyId.ts`). |
 | `.collect` only on small result sets | ~265 `.collect()` calls. Fine for the org-scale tables (`users`, `departments`, `presence`); worth checking before adding one on an append-only table (`activitySamples`, `stateSamples`, `auditLog`, `messages`). |
-| Only schedule/`ctx.run*` **internal** functions | Deliberate exception: `activity/state.ts`'s `pushSignal`/`reportHealth`/`mappings` are public *by design* — `apps/api` calls them server-to-server behind `ACTIVITYTRACK_SIGNAL_SECRET` (see AGENTS.md's ActivityTrack section). The `ctx.runQuery(api.users.me)` calls in `integrations/lib/auth.ts` are not, and could be plain helpers. |
+| Only schedule/`ctx.run*` **internal** functions | Deliberate exception: `activity/state.ts`'s `pushSignal`/`reportHealth`/`mappings` are public *by design* — `apps/api` calls them server-to-server behind `ACTIVITYTRACK_SIGNAL_SECRET` (see AGENTS.md's ActivityTrack section). Action-side access checks go through the internal `users.callerForAction` (`lib/auth.ts`'s `requireCapabilityForAction` / `requireAdminForAction`). |
 | Table name as first `ctx.db` argument | Not adopted — 0 of ~258 `ctx.db.get` calls pass one. Harmless today, required later for custom ID generation. |
 | No `Date.now()` in queries | Not followed, mostly unavoidably — "is this person working right now", "is this measure overdue", "is this invite expired" are inherently clock-relative. See the [note below](#dont-use-datenow-in-queries). |
 
@@ -409,8 +409,10 @@ crons.daily(
 > `internal`; you'll break the integration relays.
 >
 > The genuinely reviewable ones are the intra-Convex `ctx.runQuery(api.…)`
-> calls, e.g. `integrations/lib/auth.ts` calling `api.users.me`, which could
-> be a plain helper over `lib/auth.ts`'s `getCurrentUser`.
+> calls: `blogAnalytics.ts` reading `api.blogPosts.get` is the one left (the
+> `activity/state.ts` ones are deliberate). The action-side access checks
+> that used to round-trip through `api.users.me` now use the internal
+> `users.callerForAction` via `lib/auth.ts`'s `getCallerForAction`.
 
 ## Use helper functions to write shared code
 

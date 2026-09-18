@@ -4,7 +4,7 @@ import { action, gatedInternalAction } from "../functions";
 
 import type { ActionCtx } from "../_generated/server";
 import { api } from "../_generated/api";
-import { requireManagerAction } from "../integrations/lib/auth";
+import { requireCapabilityForAction } from "../lib/auth";
 import { signalSecret } from "./lib/integrationsShared";
 import { pollGenesys } from "./genesys";
 import { pollClockodo } from "./clockodo";
@@ -42,13 +42,13 @@ export const pollAll = gatedInternalAction("activitytrack")({
 /**
  * Settings → Troubleshooting: run the full Genesys + Clockodo poll right now
  * instead of waiting for the next scheduled one — the first thing to reach for
- * when a live state looks stuck or stale. Manager+, via `requireManagerAction`
+ * when a live state looks stuck or stale. Manager+, via `requireCapabilityForAction`
  * (actions have no direct db access).
  */
 export const troubleshootSyncNow = action({
   args: {},
   handler: async (ctx) => {
-    await requireManagerAction(ctx);
+    await requireCapabilityForAction(ctx, "access_integrations");
     await runPollAll(ctx);
     return { ok: true as const };
   },

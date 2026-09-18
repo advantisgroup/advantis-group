@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { requireManager, requireAdmin } from "../lib/auth";
-import { appError } from "./lib/errors";
+import { appError } from "../lib/errors";
 
 /**
  * One-time, resumable, status-tracked migration of ActivityTrack data from the

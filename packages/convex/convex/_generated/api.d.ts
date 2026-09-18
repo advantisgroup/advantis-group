@@ -28,7 +28,6 @@ import type * as activity_lib_businessHours from "../activity/lib/businessHours.
 import type * as activity_lib_clockodoDay from "../activity/lib/clockodoDay.js";
 import type * as activity_lib_contracts from "../activity/lib/contracts.js";
 import type * as activity_lib_crypto from "../activity/lib/crypto.js";
-import type * as activity_lib_errors from "../activity/lib/errors.js";
 import type * as activity_lib_integrationsShared from "../activity/lib/integrationsShared.js";
 import type * as activity_lib_patterns from "../activity/lib/patterns.js";
 import type * as activity_lib_state from "../activity/lib/state.js";
@@ -86,7 +85,6 @@ import type * as integrations_clockodoAbsences from "../integrations/clockodoAbs
 import type * as integrations_clockodoLink from "../integrations/clockodoLink.js";
 import type * as integrations_clockodoView from "../integrations/clockodoView.js";
 import type * as integrations_debug from "../integrations/debug.js";
-import type * as integrations_lib_auth from "../integrations/lib/auth.js";
 import type * as invites from "../invites.js";
 import type * as itTicketThreads from "../itTicketThreads.js";
 import type * as itTickets from "../itTickets.js";
@@ -99,6 +97,7 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_clerk from "../lib/clerk.js";
 import type * as lib_clockodoId from "../lib/clockodoId.js";
 import type * as lib_drafts from "../lib/drafts.js";
+import type * as lib_errors from "../lib/errors.js";
 import type * as lib_featureFlags from "../lib/featureFlags.js";
 import type * as lib_internalApi from "../lib/internalApi.js";
 import type * as lib_notify from "../lib/notify.js";
@@ -206,7 +205,6 @@ declare const fullApi: ApiFromModules<{
   "activity/lib/clockodoDay": typeof activity_lib_clockodoDay;
   "activity/lib/contracts": typeof activity_lib_contracts;
   "activity/lib/crypto": typeof activity_lib_crypto;
-  "activity/lib/errors": typeof activity_lib_errors;
   "activity/lib/integrationsShared": typeof activity_lib_integrationsShared;
   "activity/lib/patterns": typeof activity_lib_patterns;
   "activity/lib/state": typeof activity_lib_state;
@@ -264,7 +262,6 @@ declare const fullApi: ApiFromModules<{
   "integrations/clockodoLink": typeof integrations_clockodoLink;
   "integrations/clockodoView": typeof integrations_clockodoView;
   "integrations/debug": typeof integrations_debug;
-  "integrations/lib/auth": typeof integrations_lib_auth;
   invites: typeof invites;
   itTicketThreads: typeof itTicketThreads;
   itTickets: typeof itTickets;
@@ -277,6 +274,7 @@ declare const fullApi: ApiFromModules<{
   "lib/clerk": typeof lib_clerk;
   "lib/clockodoId": typeof lib_clockodoId;
   "lib/drafts": typeof lib_drafts;
+  "lib/errors": typeof lib_errors;
   "lib/featureFlags": typeof lib_featureFlags;
   "lib/internalApi": typeof lib_internalApi;
   "lib/notify": typeof lib_notify;

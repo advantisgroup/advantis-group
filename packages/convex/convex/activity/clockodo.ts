@@ -21,7 +21,7 @@ import {
   startOfBusinessDayUtcMs,
 } from "./lib/businessHours";
 import { deriveClockodoDaySegments } from "./lib/clockodoDay";
-import { requireAdminAction } from "../integrations/lib/auth";
+import { requireAdminForAction } from "../lib/auth";
 
 /**
  * Clockodo time-tracking client, running inside Convex's Node runtime. An open
@@ -463,7 +463,7 @@ export const refreshClockodoByEntry = gatedAction("activitytrack")({
 export const troubleshootSanitizeDay = action({
   args: { day: v.optional(v.string()) },
   handler: async (ctx, { day }) => {
-    await requireAdminAction(ctx);
+    await requireAdminForAction(ctx);
 
     const secret = signalSecret();
     const targetDay = day ?? today();

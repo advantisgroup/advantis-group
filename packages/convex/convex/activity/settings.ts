@@ -4,10 +4,10 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { requireUser, requireManager, requireAdmin } from "../lib/auth";
-import { requireAdminAction } from "../integrations/lib/auth";
+import { requireAdminForAction } from "../lib/auth";
 import { writeAudit } from "./audit";
 import { hashPassword } from "./lib/crypto";
-import { appError } from "./lib/errors";
+import { appError } from "../lib/errors";
 
 const DEBUG_PASSWORD_KEY = "debugToolPasswordHash";
 
@@ -159,12 +159,12 @@ export const store = internalMutation({
 
 /**
  * Set the tray-app debug login password. Runs as an action so it can use Web
- * Crypto to hash; admin-gated via `requireAdminAction`.
+ * Crypto to hash; admin-gated via `requireAdminForAction`.
  */
 export const setDebugPassword = action({
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
-    const me = await requireAdminAction(ctx);
+    const me = await requireAdminForAction(ctx);
     if (password.length < 6) {
       throw appError("validation.password_short", "Password must be at least 6 characters");
     }

@@ -1,7 +1,9 @@
 import { ConvexError } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
-import { type MutationCtx, type QueryCtx } from "../_generated/server";
+import { internal } from "../_generated/api";
+import { type ActionCtx, type MutationCtx, type QueryCtx } from "../_generated/server";
+import { appError } from "./errors";
 
 export type Role = Doc<"users">["role"];
 export type Capability = Doc<"customRoles">["capabilities"][number];
@@ -309,8 +311,8 @@ export async function requireVaultUnlocked(
  * `requireApplicantAccess`) and to resolve a *target* user's eligibility
  * elsewhere (e.g. the API's own `apiCheckAccess`). Takes just the fields it
  * needs so it also accepts the curated `users.me` shape, not only a raw
- * `Doc<"users">` — both `setPassword`/`unlock` (actions, round-tripping
- * through `api.users.me`) and direct-db callers can share it. */
+ * `Doc<"users">` — both `setPassword`/`unlock` (actions, via
+ * `getCallerForAction`) and direct-db callers can share it. */
 export function hasApplicantAccess(
   user: Pick<Doc<"users">, "role" | "applicantAccess"> & {
     sandboxRole?: SandboxRole | null;
@@ -354,8 +356,8 @@ export async function requireApplicantDelegateOrAdmin(
 /** True when `user` belongs to the Applicant Management area at all: an
  * admin, or granted either `applicantAccess` or `applicantAccessDelegate`.
  * Same narrow-field shape as `hasApplicantAccess`, for the same reason —
- * shared by direct-db callers and the action call sites round-tripping
- * through `api.users.me`. */
+ * shared by direct-db callers and the action call sites using
+ * `getCallerForAction`. */
 export function isApplicantAreaMember(
   user: Pick<Doc<"users">, "role" | "applicantAccess" | "applicantAccessDelegate"> & {
     sandboxRole?: SandboxRole | null;
@@ -502,4 +504,39 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
     email,
     domainAllowed: email ? isEmailDomainAllowed(email) : false,
   };
+}
+
+// --- Actions (no ctx.db) -----------------------------------------------------
+
+/** The signed-in caller as seen from an action, or null. */
+export async function getCallerForAction(
+  ctx: ActionCtx,
+): Promise<{ user: Doc<"users">; capabilities: Capability[] } | null> {
+  return await ctx.runQuery(internal.users.callerForAction, {});
+}
+
+/** `requireCapability` for actions: manager/admin, or a custom role granting
+ * `capability`. */
+export async function requireCapabilityForAction(
+  ctx: ActionCtx,
+  capability: Capability,
+): Promise<Doc<"users">> {
+  const caller = await getCallerForAction(ctx);
+  if (
+    !caller ||
+    (!MANAGER_ROLES.includes(effectiveRole(caller.user)) &&
+      !caller.capabilities.includes(capability))
+  ) {
+    throw appError("auth.forbidden", `Forbidden: requires ${capability}`);
+  }
+  return caller.user;
+}
+
+/** `requireAdmin` for actions. */
+export async function requireAdminForAction(ctx: ActionCtx): Promise<Doc<"users">> {
+  const caller = await getCallerForAction(ctx);
+  if (!caller || effectiveRole(caller.user) !== "admin") {
+    throw appError("auth.forbidden", "Forbidden: requires admin role");
+  }
+  return caller.user;
 }

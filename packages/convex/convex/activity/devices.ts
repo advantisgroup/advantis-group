@@ -3,7 +3,7 @@ import { v } from "convex/values";
 
 import { requireUser, requireManager, requireAdmin } from "../lib/auth";
 import { writeAudit } from "./audit";
-import { appError } from "./lib/errors";
+import { appError } from "../lib/errors";
 import { assertSignalSecret, issueDeviceToken, invalidateDeviceToken } from "./deviceAuth";
 import { hashNonce, safeEqual } from "./lib/crypto";
 

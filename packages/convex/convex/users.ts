@@ -19,7 +19,14 @@ import {
   requireUser,
   requireVaultUnlocked,
 } from "./lib/auth";
-import { action, internalMutation, mutation, query, sandboxSafeMutation } from "./functions";
+import {
+  action,
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+  sandboxSafeMutation,
+} from "./functions";
 import { listUserPermissions } from "./lib/permissions";
 import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import { loadReportingLookup, reportingLines, resolveManager } from "./lib/reporting";
@@ -99,6 +106,22 @@ export const me = query({
     const user = await getCurrentUser(ctx);
     if (!user) return null;
     return withAvatar(ctx, user);
+  },
+});
+
+/** The signed-in caller, for actions, which have no `ctx.db` to look them up
+ * themselves — see `requireCapabilityForAction` in `lib/auth.ts`. Custom-role
+ * capabilities don't count while sandboxed, same as `me`. */
+export const callerForAction = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) return null;
+    const customRoles = isSandboxed(user)
+      ? []
+      : await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
+    const capabilities = [...new Set(customRoles.flatMap((role) => role?.capabilities ?? []))];
+    return { user, capabilities };
   },
 });
 

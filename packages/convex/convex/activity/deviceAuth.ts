@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { internalQuery, query } from "../functions";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { safeEqual, sha256hex, randomToken } from "./lib/crypto";
-import { appError } from "./lib/errors";
+import { appError } from "../lib/errors";
 
 /**
  * Per-device bearer tokens for the desktop agent.
