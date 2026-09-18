@@ -49,7 +49,8 @@
     "goAnnouncements": "Announcements",
     "goWiki": "Wiki",
     "goCalendar": "Calendar"
-  },  "fieldName": "Name",
+  },
+  "fieldName": "Name",
   "fieldTitle": "Title",
   "fieldCategory": "Category",
   "fieldStatus": "Status",

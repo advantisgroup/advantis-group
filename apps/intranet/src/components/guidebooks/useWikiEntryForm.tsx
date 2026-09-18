@@ -168,7 +168,10 @@ export interface WikiEntryValues {
   ownerUserId: string;
 }
 
-function initialValues(entry: WikiEntry | { draftId: string }, currentUserId: string): WikiEntryValues {
+function initialValues(
+  entry: WikiEntry | { draftId: string },
+  currentUserId: string,
+): WikiEntryValues {
   if ("draftId" in entry) {
     const now = Date.now();
     return {

@@ -362,10 +362,7 @@ export function LegalPage({
         </Sheet>
       )}
 
-      <main
-        id="legal-content"
-        className="mx-auto max-w-[78rem] px-4 pb-24 pt-12 sm:px-6 sm:pt-16"
-      >
+      <main id="legal-content" className="mx-auto max-w-[78rem] px-4 pb-24 pt-12 sm:px-6 sm:pt-16">
         <div className="max-w-[46rem] space-y-3 pb-10">
           {updated && (
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground/80">
@@ -424,7 +421,9 @@ export function LegalPage({
                   )}
 
                   <div className="mt-4 space-y-4 text-[15px] leading-[1.75] text-foreground/85">
-                    {section.paragraphs?.map((p, i) => <p key={i}>{p}</p>)}
+                    {section.paragraphs?.map((p, i) => (
+                      <p key={i}>{p}</p>
+                    ))}
                     {CONTACT_SECTION_IDS.has(section.id) && (
                       <ContactBox full={FULL_LEGAL_SECTION_IDS.has(section.id)} />
                     )}
@@ -432,7 +431,11 @@ export function LegalPage({
                       <ul className="space-y-2.5 pl-5">
                         {section.list.map((item, i) => (
                           <li key={i} className="list-disc marker:text-muted-foreground/60">
-                            {item.title && <strong className="font-semibold text-foreground">{item.title}: </strong>}
+                            {item.title && (
+                              <strong className="font-semibold text-foreground">
+                                {item.title}:{" "}
+                              </strong>
+                            )}
                             {item.description}
                           </li>
                         ))}
