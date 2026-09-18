@@ -6,6 +6,7 @@ import {
   type CoarseAbsenceType,
   mapAbsenceStatus,
   mapAbsenceType,
+  toClockodoTimestamp,
 } from "../lib/clockodo.js";
 import { resolveClockodoCaller } from "../lib/clockodo-caller.js";
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
@@ -100,10 +101,6 @@ async function requireOwnAbsence(id: number, clockodoUserId: number) {
 /** Clockodo's time_since/time_until params reject the fractional seconds
  * Date#toISOString() includes ("Wrong format") — they need exactly
  * YYYY-MM-DDTHH:MM:SSZ. */
-function toClockodoTimestamp(date: Date): string {
-  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
-}
-
 function recentWindow() {
   const now = new Date();
   return {

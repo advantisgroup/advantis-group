@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 
 import { resolveClockodoCaller } from "../lib/clockodo-caller.js";
-import { clockodo, type ClockodoEntry } from "../lib/clockodo.js";
+import { clockodo, type ClockodoEntry, toClockodoTimestamp } from "../lib/clockodo.js";
 import { Errors } from "../lib/errors.js";
 
 /**
@@ -32,10 +32,6 @@ function toDto(entry: ClockodoEntry): EntryDTO {
 /** Clockodo's time_since/time_until params reject the fractional seconds
  * Date#toISOString() includes ("Wrong format") — mirrors the same fix in
  * clockodo-absences.ts's toClockodoTimestamp. */
-function toClockodoTimestamp(date: Date): string {
-  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
-}
-
 export const clockodoEntriesRoute = new Elysia()
   .get(
     "/clockodo/entries",

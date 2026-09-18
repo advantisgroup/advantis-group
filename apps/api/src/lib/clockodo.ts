@@ -134,6 +134,11 @@ export function mapAbsenceStatus(clockodoStatus: number): CoarseAbsenceStatus {
   }
 }
 
+/** Clockodo wants ISO timestamps without milliseconds. */
+export function toClockodoTimestamp(date: Date): string {
+  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
 function createClockodoClient(options: ClockodoClientOptions) {
   const baseUrl = (options.baseUrl ?? "https://my.clockodo.com/api").replace(/\/$/, "");
   const request = options.fetch ?? globalThis.fetch;
