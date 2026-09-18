@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 
 import { internalAction } from "./_generated/server";
+import { internalApiFetch } from "./lib/internalApi";
 
 /**
  * Hand a transactional email off to the Elysia API (api.advantisgroup.de),
@@ -31,23 +32,18 @@ export const sendNotificationEmail = internalAction({
     data: v.any(),
   },
   handler: async (_ctx, args) => {
-    const baseUrl = process.env.API_INTERNAL_URL ?? process.env.API_URL;
-    const serverKey = process.env.CONVEX_SERVER_KEY;
-    if (!baseUrl || !serverKey) {
-      console.warn(
-        `[outbound] skipping ${args.kind} email to ${args.to} — API_URL/CONVEX_SERVER_KEY not set`,
-      );
-      return { sent: false };
-    }
     try {
-      const res = await fetch(`${baseUrl}/internal/notifications`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-convex-server-key": serverKey,
-        },
-        body: JSON.stringify({ kind: args.kind, to: args.to, data: args.data }),
+      const res = await internalApiFetch("/internal/notifications", {
+        kind: args.kind,
+        to: args.to,
+        data: args.data,
       });
+      if (!res) {
+        console.warn(
+          `[outbound] skipping ${args.kind} email to ${args.to} — API_URL/CONVEX_SERVER_KEY not set`,
+        );
+        return { sent: false };
+      }
       if (!res.ok) {
         console.error(`[outbound] ${args.kind} email failed: ${res.status} ${await res.text()}`);
         return { sent: false };

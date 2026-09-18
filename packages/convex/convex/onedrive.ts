@@ -16,6 +16,7 @@ import {
   requireCapability,
   requireUser,
 } from "./lib/auth";
+import { internalApiFetch } from "./lib/internalApi";
 import { createNotification, notifyUsers } from "./lib/notify";
 import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import { batchUserSummaries, displayName } from "./lib/users";
@@ -571,21 +572,12 @@ export const cancelRequest = mutation({
 export const renewSubscription = internalAction({
   args: {},
   handler: async () => {
-    const baseUrl = process.env.API_INTERNAL_URL ?? process.env.API_URL;
-    const serverKey = process.env.CONVEX_SERVER_KEY;
-    if (!baseUrl || !serverKey) {
-      console.warn("[onedrive] subscription renewal skipped — API not configured");
-      return { ok: false };
-    }
     try {
-      const res = await fetch(`${baseUrl}/internal/onedrive/subscribe`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-convex-server-key": serverKey,
-        },
-        body: "{}",
-      });
+      const res = await internalApiFetch("/internal/onedrive/subscribe", {});
+      if (!res) {
+        console.warn("[onedrive] subscription renewal skipped — API not configured");
+        return { ok: false };
+      }
       if (!res.ok) {
         console.error(`[onedrive] subscription renewal failed: ${res.status}`);
         return { ok: false };

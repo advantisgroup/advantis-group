@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { type Id } from "./_generated/dataModel";
 import { internalAction } from "./_generated/server";
 import { type Audience, userMatchesAudience } from "./lib/audience";
+import { internalApiFetch } from "./lib/internalApi";
 
 /**
  * Hands the company-wide email blast for a published update off to the
@@ -14,15 +15,6 @@ import { type Audience, userMatchesAudience } from "./lib/audience";
 export const sendBulk = internalAction({
   args: { updateId: v.id("updates") },
   handler: async (ctx, { updateId }) => {
-    const baseUrl = process.env.API_INTERNAL_URL ?? process.env.API_URL;
-    const serverKey = process.env.CONVEX_SERVER_KEY;
-    if (!baseUrl || !serverKey) {
-      console.log(
-        `[updatesEmail] skipping bulk send for ${updateId} — API_URL/CONVEX_SERVER_KEY not set`,
-      );
-      return { sent: false, reason: "skipping cause unset keys" };
-    }
-
     const update = await ctx.runQuery(internal.updatesInternal.getForEmail, {
       updateId,
     });
@@ -39,21 +31,20 @@ export const sendBulk = internalAction({
 
     const internalUrl = process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de";
     try {
-      const res = await fetch(`${baseUrl}/internal/updates/broadcast`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-convex-server-key": serverKey,
-        },
-        body: JSON.stringify({
-          updateId,
-          type: update.type,
-          title: update.title,
-          summary: update.summary,
-          url: `${internalUrl}/updates/${updateId}`,
-          recipients,
-        }),
+      const res = await internalApiFetch("/internal/updates/broadcast", {
+        updateId,
+        type: update.type,
+        title: update.title,
+        summary: update.summary,
+        url: `${internalUrl}/updates/${updateId}`,
+        recipients,
       });
+      if (!res) {
+        console.log(
+          `[updatesEmail] skipping bulk send for ${updateId} — API_URL/CONVEX_SERVER_KEY not set`,
+        );
+        return { sent: false, reason: "skipping cause unset keys" };
+      }
       if (!res.ok) {
         console.error(`[updatesEmail] broadcast failed: ${res.status} ${await res.text()}`);
         return { sent: false, reason: `Not ok` };

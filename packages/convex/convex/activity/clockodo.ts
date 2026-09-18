@@ -7,6 +7,7 @@ import { v } from "convex/values";
 import { api, internal } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
 import { gatedAction } from "../lib/featureGate";
+import { internalApiFetch } from "../lib/internalApi";
 import {
   signalSecret,
   reportHealth,
@@ -72,15 +73,11 @@ interface Absence {
  * (see `troubleshootSanitizeDay`).
  */
 async function fetchAbsences(year?: number): Promise<Absence[]> {
-  const baseUrl = process.env.API_INTERNAL_URL ?? process.env.API_URL;
-  const serverKey = process.env.CONVEX_SERVER_KEY;
-  if (!baseUrl || !serverKey) {
+  const qs = year ? `?year=${year}` : "";
+  const res = await internalApiFetch(`/internal/clockodo/absences${qs}`);
+  if (!res) {
     throw new Error("API_URL/CONVEX_SERVER_KEY not configured");
   }
-  const qs = year ? `?year=${year}` : "";
-  const res = await fetch(`${baseUrl}/internal/clockodo/absences${qs}`, {
-    headers: { "x-convex-server-key": serverKey },
-  });
   if (!res.ok) {
     throw new Error(`apps/api GET /internal/clockodo/absences failed: ${res.status}`);
   }
