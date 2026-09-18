@@ -9,7 +9,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test, vi } from "vitest";
 
 import { api } from "./_generated/api";
-import { versionsToDrop } from "./drafts";
+import { versionsToDrop } from "./drafts/drafts";
 import schema from "./schema";
 import { modules } from "./test.setup";
 
@@ -132,15 +132,17 @@ describe("drafts", () => {
     const bob = await seedUser(t, "user_bob");
     const key = { surface: "blogPost" as const, subjectKey: "new" };
 
-    await alice.mutation(api.drafts.save, { ...key, data: '{"title":"Hallo"}' });
-    await bob.mutation(api.drafts.save, { ...key, data: '{"title":"Moin"}' });
+    await alice.mutation(api.drafts.drafts.save, { ...key, data: '{"title":"Hallo"}' });
+    await bob.mutation(api.drafts.drafts.save, { ...key, data: '{"title":"Moin"}' });
 
-    expect(await alice.query(api.drafts.get, key)).toMatchObject({ data: '{"title":"Hallo"}' });
-    expect(await bob.query(api.drafts.get, key)).toMatchObject({ data: '{"title":"Moin"}' });
+    expect(await alice.query(api.drafts.drafts.get, key)).toMatchObject({
+      data: '{"title":"Hallo"}',
+    });
+    expect(await bob.query(api.drafts.drafts.get, key)).toMatchObject({ data: '{"title":"Moin"}' });
 
-    await alice.mutation(api.drafts.discard, key);
-    expect(await alice.query(api.drafts.get, key)).toBeNull();
-    expect(await bob.query(api.drafts.get, key)).not.toBeNull();
+    await alice.mutation(api.drafts.drafts.discard, key);
+    expect(await alice.query(api.drafts.drafts.get, key)).toBeNull();
+    expect(await bob.query(api.drafts.drafts.get, key)).not.toBeNull();
   });
 
   test("applicant drafts stay behind the vault", async () => {
@@ -156,7 +158,7 @@ describe("drafts", () => {
       return user!._id;
     });
 
-    await expect(alice.mutation(api.drafts.save, { ...key, data: "{}" })).rejects.toThrow();
+    await expect(alice.mutation(api.drafts.drafts.save, { ...key, data: "{}" })).rejects.toThrow();
 
     const unlockId = await t.run((ctx) =>
       ctx.db.insert("applicantVaultUnlocks", {
@@ -165,11 +167,13 @@ describe("drafts", () => {
         expiresAt: Date.now() + 60_000,
       }),
     );
-    await alice.mutation(api.drafts.save, { ...key, data: '{"name":"Jana"}' });
-    expect(await alice.query(api.drafts.get, key)).toMatchObject({ data: '{"name":"Jana"}' });
+    await alice.mutation(api.drafts.drafts.save, { ...key, data: '{"name":"Jana"}' });
+    expect(await alice.query(api.drafts.drafts.get, key)).toMatchObject({
+      data: '{"name":"Jana"}',
+    });
 
     await t.run((ctx) => ctx.db.patch(unlockId, { expiresAt: Date.now() - 1 }));
-    expect(await alice.query(api.drafts.get, key)).toBeNull();
+    expect(await alice.query(api.drafts.drafts.get, key)).toBeNull();
   });
 
   test("a pause makes a version, and going back to one branches off instead of deleting", async () => {
@@ -179,8 +183,8 @@ describe("drafts", () => {
       const alice = await seedUser(t, "user_alice");
       const key = { surface: "blogPost" as const, subjectKey: "new" };
       const save = (title: string) =>
-        alice.mutation(api.drafts.save, { ...key, data: JSON.stringify({ title }) });
-      const history = () => alice.query(api.drafts.listVersions, key);
+        alice.mutation(api.drafts.drafts.save, { ...key, data: JSON.stringify({ title }) });
+      const history = () => alice.query(api.drafts.drafts.listVersions, key);
 
       await save("A");
       vi.advanceTimersByTime(1_000);
@@ -192,7 +196,7 @@ describe("drafts", () => {
       const [ab] = (await history()).versions;
       expect(ab).toMatchObject({ data: '{"title":"AB"}', parentId: null });
 
-      const { previousVersionId } = await alice.mutation(api.drafts.restoreVersion, {
+      const { previousVersionId } = await alice.mutation(api.drafts.drafts.restoreVersion, {
         ...key,
         versionId: ab._id,
       });
@@ -203,7 +207,9 @@ describe("drafts", () => {
         data: '{"title":"ABC"}',
         parentId: ab._id,
       });
-      expect(await alice.query(api.drafts.get, key)).toMatchObject({ data: '{"title":"AB"}' });
+      expect(await alice.query(api.drafts.drafts.get, key)).toMatchObject({
+        data: '{"title":"AB"}',
+      });
 
       vi.advanceTimersByTime(30_000);
       await save("ABX");
@@ -236,47 +242,47 @@ describe("drafts", () => {
           .first();
         return user!._id;
       });
-      const draftId = await alice.mutation(api.drafts.create, { surface: "blogPost" });
+      const draftId = await alice.mutation(api.drafts.drafts.create, { surface: "blogPost" });
       const key = { surface: "blogPost" as const, subjectKey: draftId };
-      await alice.mutation(api.drafts.save, {
+      await alice.mutation(api.drafts.drafts.save, {
         ...key,
         data: '{"title":"Launch post"}',
         href: `/blog/draft/${draftId}`,
       });
 
-      const versionId = await alice.mutation(api.draftShares.share, {
+      const versionId = await alice.mutation(api.drafts.shares.share, {
         ...key,
         userIds: [bobId],
         name: "Shared with Bob",
       });
-      expect(await bob.query(api.draftShares.get, { versionId })).toMatchObject({
+      expect(await bob.query(api.drafts.shares.get, { versionId })).toMatchObject({
         data: '{"title":"Launch post"}',
         isOwner: false,
         canContinue: true,
       });
-      expect(await carol.query(api.draftShares.get, { versionId })).toBeNull();
+      expect(await carol.query(api.drafts.shares.get, { versionId })).toBeNull();
       await expect(
-        carol.mutation(api.draftShares.addComment, { versionId, body: "hi" }),
+        carol.mutation(api.drafts.shares.addComment, { versionId, body: "hi" }),
       ).rejects.toThrow();
 
-      await bob.mutation(api.draftShares.addComment, { versionId, body: "Looks good" });
-      expect(await alice.query(api.draftShares.listComments, { versionId })).toHaveLength(1);
+      await bob.mutation(api.drafts.shares.addComment, { versionId, body: "Looks good" });
+      expect(await alice.query(api.drafts.shares.listComments, { versionId })).toHaveLength(1);
       const aliceNotifications = await alice.query(api.notifications.list, {});
       expect(aliceNotifications[0]).toMatchObject({ type: "draft_comment" });
 
       // What Alice writes afterwards isn't shared.
       vi.advanceTimersByTime(30_000);
-      await alice.mutation(api.drafts.save, { ...key, data: '{"title":"Launch post v2"}' });
-      expect(await bob.query(api.draftShares.get, { versionId })).toMatchObject({
+      await alice.mutation(api.drafts.drafts.save, { ...key, data: '{"title":"Launch post v2"}' });
+      expect(await bob.query(api.drafts.shares.get, { versionId })).toMatchObject({
         data: '{"title":"Launch post"}',
       });
 
-      const href = await bob.mutation(api.draftShares.continueFrom, { versionId });
+      const href = await bob.mutation(api.drafts.shares.continueFrom, { versionId });
       expect(href).toMatch(/^\/blog\/draft\//);
       expect(href).not.toContain(draftId);
 
-      await alice.mutation(api.draftShares.unshare, { versionId, userId: bobId });
-      expect(await bob.query(api.draftShares.get, { versionId })).toBeNull();
+      await alice.mutation(api.drafts.shares.unshare, { versionId, userId: bobId });
+      expect(await bob.query(api.drafts.shares.get, { versionId })).toBeNull();
     } finally {
       vi.useRealTimers();
     }

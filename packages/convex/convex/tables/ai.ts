@@ -2,7 +2,7 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
 import { aiRunKind, aiRunPhase, aiRunStatus } from "../lib/aiRuns";
-import { draftSurface } from "../lib/drafts";
+import { draftSurface } from "../drafts/lib/surfaces";
 
 export const aiTables = {
   // --- Wiki Chat (AI assistant history) ------------------------------------

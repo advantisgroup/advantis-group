@@ -97,8 +97,8 @@ export function TicketDetailView({
   const isManager = useIsManager();
   const router = useRouter();
   const handleError = useErrorHandler();
-  const createDraft = useMutation(api.drafts.create);
-  const saveDraft = useMutation(api.drafts.save);
+  const createDraft = useMutation(api.drafts.drafts.create);
+  const saveDraft = useMutation(api.drafts.drafts.save);
   const messages = useQuery(
     api.itTickets.threads.listMessages,
     isManager && thread ? { threadId: thread._id } : "skip",

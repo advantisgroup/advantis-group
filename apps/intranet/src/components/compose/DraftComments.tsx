@@ -32,9 +32,9 @@ export function DraftComments({
 }) {
   const t = useTranslations("Compose");
   const handleError = useErrorHandler();
-  const comments = useQuery(api.draftShares.listComments, { versionId });
-  const addComment = useMutation(api.draftShares.addComment);
-  const deleteComment = useMutation(api.draftShares.deleteComment);
+  const comments = useQuery(api.drafts.shares.listComments, { versionId });
+  const addComment = useMutation(api.drafts.shares.addComment);
+  const deleteComment = useMutation(api.drafts.shares.deleteComment);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
 

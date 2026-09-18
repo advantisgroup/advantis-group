@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { type Draft } from "./use-draft";
 
 type SharedPerson = FunctionReturnType<
-  typeof api.drafts.listVersions
+  typeof api.drafts.drafts.listVersions
 >["versions"][number]["sharedWith"][number];
 
 export interface ShareTarget {
@@ -67,10 +67,10 @@ export function ShareVersionDialog({
   const handleError = useErrorHandler();
   const people = useQuery(api.users.list, target ? {} : "skip");
   const history = useQuery(
-    api.drafts.listVersions,
+    api.drafts.drafts.listVersions,
     target?.versionId ? { surface: draft.surface, subjectKey: draft.subjectKey } : "skip",
   );
-  const unshare = useMutation(api.draftShares.unshare);
+  const unshare = useMutation(api.drafts.shares.unshare);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<Id<"users">>>(new Set());
   const [busy, setBusy] = useState(false);

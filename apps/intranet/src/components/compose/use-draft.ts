@@ -7,7 +7,7 @@ import { useMutation, useQuery } from "convex/react";
 import type { Id } from "@advantis/convex/dataModel";
 import type { FunctionArgs } from "convex/server";
 
-export type DraftSurface = FunctionArgs<typeof api.drafts.get>["surface"];
+export type DraftSurface = FunctionArgs<typeof api.drafts.drafts.get>["surface"];
 export type DraftSaveStatus = "idle" | "pending" | "saving" | "saved" | "error";
 
 const SAVE_DELAY_MS = 800;
@@ -93,14 +93,14 @@ export function useDraft<T>({
   entitySavedAt?: number;
   enabled?: boolean;
 }): Draft {
-  const stored = useQuery(api.drafts.get, enabled ? { surface, subjectKey } : "skip");
-  const saveDraft = useMutation(api.drafts.save);
-  const discardDraft = useMutation(api.drafts.discard);
-  const parkDraft = useMutation(api.drafts.park);
-  const resumeDraft = useMutation(api.drafts.resume);
-  const restoreDraftVersion = useMutation(api.drafts.restoreVersion);
-  const nameDraftVersion = useMutation(api.drafts.nameVersion);
-  const shareDraftVersion = useMutation(api.draftShares.share);
+  const stored = useQuery(api.drafts.drafts.get, enabled ? { surface, subjectKey } : "skip");
+  const saveDraft = useMutation(api.drafts.drafts.save);
+  const discardDraft = useMutation(api.drafts.drafts.discard);
+  const parkDraft = useMutation(api.drafts.drafts.park);
+  const resumeDraft = useMutation(api.drafts.drafts.resume);
+  const restoreDraftVersion = useMutation(api.drafts.drafts.restoreVersion);
+  const nameDraftVersion = useMutation(api.drafts.drafts.nameVersion);
+  const shareDraftVersion = useMutation(api.drafts.shares.share);
 
   const [hydrated, setHydrated] = useState(false);
   const [status, setStatus] = useState<DraftSaveStatus>("idle");

@@ -35,7 +35,7 @@ import { DraftComments } from "./DraftComments";
 import { ShareVersionDialog, type ShareTarget } from "./ShareVersionDialog";
 import { type Draft } from "./use-draft";
 
-type Version = FunctionReturnType<typeof api.drafts.listVersions>["versions"][number];
+type Version = FunctionReturnType<typeof api.drafts.drafts.listVersions>["versions"][number];
 
 type ChangeKind =
   | "first"
@@ -345,7 +345,7 @@ function HistoryBody({ draft, onClose }: { draft: Draft; onClose: () => void }) 
   const t = useTranslations("Compose");
   const format = useFormats();
   const handleError = useErrorHandler();
-  const history = useQuery(api.drafts.listVersions, {
+  const history = useQuery(api.drafts.drafts.listVersions, {
     surface: draft.surface,
     subjectKey: draft.subjectKey,
   });

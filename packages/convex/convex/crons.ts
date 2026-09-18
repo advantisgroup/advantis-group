@@ -120,7 +120,7 @@ if (process.env.DISABLE_CRONS !== "true") {
   crons.daily(
     "drafts: prune drafts untouched for 60 days",
     { hourUTC: 4, minuteUTC: 25 },
-    internal.drafts.pruneOld,
+    internal.drafts.drafts.pruneOld,
     {},
   );
 

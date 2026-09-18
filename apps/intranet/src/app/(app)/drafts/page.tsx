@@ -23,9 +23,11 @@ import { draftPreview } from "@/lib/draft-preview";
 import { DRAFT_SURFACES } from "@/lib/draft-surfaces";
 import { initials } from "@/lib/format";
 
-type DraftItem = NonNullable<ReturnType<typeof useQuery<typeof api.drafts.listMine>>>[number];
+type DraftItem = NonNullable<
+  ReturnType<typeof useQuery<typeof api.drafts.drafts.listMine>>
+>[number];
 type SharedItem = NonNullable<
-  ReturnType<typeof useQuery<typeof api.draftShares.listSharedWithMe>>
+  ReturnType<typeof useQuery<typeof api.drafts.shares.listSharedWithMe>>
 >[number];
 
 function SharedRow({ item }: { item: SharedItem }) {
@@ -88,8 +90,8 @@ function DraftRow({ draft }: { draft: DraftItem }) {
   const t = useTranslations("Drafts");
   const confirm = useConfirm();
   const handleError = useErrorHandler();
-  const discard = useMutation(api.drafts.discard);
-  const resume = useMutation(api.drafts.resume);
+  const discard = useMutation(api.drafts.drafts.discard);
+  const resume = useMutation(api.drafts.drafts.resume);
   const router = useRouter();
   const ago = useRelativeTime(draft.updatedAt);
   const meta = DRAFT_SURFACES[draft.surface];
@@ -176,8 +178,8 @@ function DraftRow({ draft }: { draft: DraftItem }) {
 
 export default function DraftsPage() {
   const t = useTranslations("Drafts");
-  const drafts = useQuery(api.drafts.listMine);
-  const shared = useQuery(api.draftShares.listSharedWithMe);
+  const drafts = useQuery(api.drafts.drafts.listMine);
+  const shared = useQuery(api.drafts.shares.listSharedWithMe);
 
   const groups = useMemo(() => {
     if (!drafts) return [];

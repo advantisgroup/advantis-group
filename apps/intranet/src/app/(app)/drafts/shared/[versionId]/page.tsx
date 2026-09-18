@@ -33,8 +33,8 @@ export default function SharedDraftPage() {
   const router = useRouter();
   const handleError = useErrorHandler();
   const { versionId } = useParams<{ versionId: string }>();
-  const shared = useQuery(api.draftShares.get, { versionId });
-  const continueFrom = useMutation(api.draftShares.continueFrom);
+  const shared = useQuery(api.drafts.shares.get, { versionId });
+  const continueFrom = useMutation(api.drafts.shares.continueFrom);
   const [copying, setCopying] = useState(false);
   const sharedAgo = useRelativeTime(shared?.sharedAt ?? null);
   const content = useMemo(() => (shared ? draftContent(shared.data) : null), [shared]);

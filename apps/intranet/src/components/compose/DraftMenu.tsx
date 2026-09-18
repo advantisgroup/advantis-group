@@ -58,11 +58,11 @@ function MenuBody({
   const t = useTranslations("Compose");
   const router = useRouter();
   const handleError = useErrorHandler();
-  const others = useQuery(api.drafts.listOthers, {
+  const others = useQuery(api.drafts.drafts.listOthers, {
     surface: draft.surface,
     subjectKey: draft.subjectKey,
   });
-  const versions = useQuery(api.drafts.listVersions, {
+  const versions = useQuery(api.drafts.drafts.listVersions, {
     surface: draft.surface,
     subjectKey: draft.subjectKey,
   })?.versions;

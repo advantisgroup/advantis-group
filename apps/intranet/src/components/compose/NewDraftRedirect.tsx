@@ -24,7 +24,7 @@ export function NewDraftRedirect({
   to: (draftId: string) => string;
 }) {
   const router = useRouter();
-  const createDraft = useMutation(api.drafts.create);
+  const createDraft = useMutation(api.drafts.drafts.create);
   const handleError = useErrorHandler();
   const started = useRef(false);
   const toRef = useRef(to);
