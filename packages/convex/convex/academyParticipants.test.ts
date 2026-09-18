@@ -1,8 +1,3 @@
-/**
- * Phase 1 of docs/future-features/21_auth-consolidation.md: auto-linking a
- * participant to its matching intranet account by email, without an admin
- * having to pick it — and never overriding a human's own choice.
- */
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 

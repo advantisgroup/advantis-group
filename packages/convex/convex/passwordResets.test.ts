@@ -306,7 +306,7 @@ describe("admin-maintained linked-emails fallback", () => {
   });
 });
 
-describe("Phase 5 of docs/future-features/21_auth-consolidation.md: verified secondary emails", () => {
+describe("Verified secondary emails", () => {
   test("typing a verified secondary email resolves to the linked login and auto-issues, with no admin-registered pair involved", async () => {
     const t = setup();
     const companyId = await seedCompany(t);

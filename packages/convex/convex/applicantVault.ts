@@ -71,22 +71,14 @@ export const status = query({
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     const unlocked = !!unlockRow && unlockRow.expiresAt > Date.now();
-    // Phase 4 of docs/future-features/21_auth-consolidation.md: the vault
-    // gate offers a passkey unlock once the member has at least one
-    // registered — the password stays as the fallback either way.
     const passkey = await ctx.db
       .query("passkeys")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .first();
-    // Phase 7: on top of the vault's own (much shorter) unlock above, an
-    // intranet-side re-verification lapsing after 14 days blocks even
-    // attempting an unlock — `performUnlock` enforces this server-side;
-    // this is only what tells the gate to show a step-up form first instead
-    // of a password/passkey prompt that would just fail.
+    // `performUnlock` enforces this; here it only tells the gate to show a
+    // step-up form instead of an unlock prompt that would fail.
     const areaTrusted = await isAreaTrusted(ctx, user._id, "applicant_vault");
-    // Phase 8: only meaningful for a member who actually has a passkey —
-    // otherwise the password is their only way in and can never sunset, so
-    // there's nothing to show a countdown for.
+    // Without a passkey the password is the only way in, so it never sunsets.
     const legacyPasswordSunsetDeadlineAt = passkey
       ? legacyPasswordSunsetDeadline(await getOrDefaultPolicy(ctx), "applicant_vault")
       : null;
@@ -101,6 +93,8 @@ export const status = query({
         ? []
         : await availableMethodsFor(ctx, user._id, AREA_REVERIFY_LEVEL, { includePasskey: true }),
       legacyPasswordSunsetDeadline: legacyPasswordSunsetDeadlineAt,
+      passwordRetired:
+        legacyPasswordSunsetDeadlineAt !== null && Date.now() > legacyPasswordSunsetDeadlineAt,
     };
   },
 });
@@ -182,21 +176,13 @@ export const setPassword = action({
   },
 });
 
-/** Shared by the password and passkey unlock paths — plain helper, not a
- * Convex function, so both `recordUnlock` (internalMutation, called from the
- * `unlock` action) and `apiUnlockViaPasskey` (a plain mutation, already
- * inside a transaction) can call it directly. `action` distinguishes how in
- * the audit trail without adding a second table. */
+/** Shared by the password and passkey unlock paths. */
 async function performUnlock(
   ctx: MutationCtx,
   userId: Id<"users">,
   action: "vault_unlocked" | "vault_unlocked_via_passkey",
 ): Promise<void> {
-  // Phase 7 of docs/future-features/21_auth-consolidation.md: no silent
-  // grace — an intranet-side re-verification older than the 14-day window
-  // blocks the unlock outright, whichever credential (password or passkey)
-  // the caller is presenting, same as `resolveClerkLinkedLogin`'s equivalent
-  // gate for Performance.
+  // A lapsed area re-verification blocks every unlock, password or passkey.
   if (!(await isAreaTrusted(ctx, userId, "applicant_vault"))) {
     throw new ConvexError({
       code: "needs_area_step_up",
@@ -229,12 +215,8 @@ export const recordUnlock = internalMutation({
   },
 });
 
-/** Server-key-gated like every other WebAuthn-adjacent Convex function
- * (`passkeys.ts`, `stepUp.ts`) — the actual assertion verification needs
- * `@simplewebauthn/server`, which only runs in `apps/api`; this just records
- * the outcome once that's already confirmed the assertion resolves to
- * `clerkUserId`'s own passkey. Phase 4 of
- * docs/future-features/21_auth-consolidation.md. */
+/** Called by apps/api once it has verified the passkey assertion belongs to
+ * `clerkUserId` (WebAuthn verification only runs there). */
 export const apiUnlockViaPasskey = mutation({
   args: { serverKey: v.string(), clerkUserId: v.string() },
   handler: async (ctx, { serverKey, clerkUserId }) => {
@@ -278,12 +260,7 @@ export const unlock = action({
         message: "Incorrect password",
       });
     }
-    // Phase 8 of docs/future-features/21_auth-consolidation.md: checked only
-    // once the password is already confirmed correct, same reasoning as
-    // Performance's equivalent check — never lets a guesser learn "this
-    // account is past its grace period" without the real password. A member
-    // with no passkey registered has no other way to unlock the vault, so
-    // this never applies to them whatever the policy says.
+    // Only checked after the password is right, so a guesser learns nothing.
     if (
       await ctx.runQuery(internal.applicantVault.checkLegacyPasswordSunset, {
         userId: me._id,

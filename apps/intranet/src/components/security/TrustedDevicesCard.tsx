@@ -1,29 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Loader2, Monitor, Pencil, Search, ShieldOff, Smartphone, Tablet } from "lucide-react";
+import { Loader2, Monitor, Pencil, Smartphone, Tablet, X } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
-import { FilterPill } from "@/components/ui/filter-pill";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { SettingsSection } from "@/components/ui/settings-rows";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 type Device = {
@@ -31,21 +21,18 @@ type Device = {
   name: string;
   browser: string | null;
   os: string | null;
-  firstSeenAt: number;
   lastSeenAt: number;
   trusted: boolean;
   trustedUntil: number | null;
 };
+
+const COLLAPSED_COUNT = 5;
 
 function DeviceIcon({ os }: { os: string | null }) {
   const Icon = os === "iOS" || os === "Android" ? Smartphone : os === "iPadOS" ? Tablet : Monitor;
   return <Icon className="size-3.5 shrink-0 text-muted-foreground" />;
 }
 
-/** Same popover-triggered rename UX as `RoleBadge`'s label editor in
- * `UserProfile.tsx` — an inline text swap in the row itself would be a new,
- * one-off pattern; this reuses the one the rest of the app already teaches
- * people. */
 function RenameDeviceButton({ device }: { device: Device }) {
   const t = useTranslations("Settings");
   const handleError = useErrorHandler();
@@ -74,9 +61,9 @@ function RenameDeviceButton({ device }: { device: Device }) {
   return (
     <Popover
       open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-        if (o) setValue(device.name);
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) setValue(device.name);
       }}
     >
       <PopoverTrigger asChild>
@@ -89,44 +76,33 @@ function RenameDeviceButton({ device }: { device: Device }) {
           <Pencil />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 space-y-3" align="end">
-        <p className="text-xs font-medium text-muted-foreground">{t("devices.renameHint")}</p>
-        <Input
-          autoFocus
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") void save();
+      <PopoverContent className="w-64" align="end">
+        <form
+          className="space-y-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void save();
           }}
-          placeholder={device.name}
-        />
-        <div className="flex justify-end">
-          <Button size="sm" disabled={saving || !value.trim()} onClick={() => void save()}>
-            {saving ? <Loader2 className="animate-spin" /> : t("devices.saveName")}
-          </Button>
-        </div>
+        >
+          <Input
+            autoFocus
+            maxLength={60}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            aria-label={t("devices.rename")}
+          />
+          <div className="flex justify-end">
+            <Button type="submit" size="sm" disabled={saving || !value.trim()}>
+              {saving && <Loader2 className="animate-spin" />}
+              {t("devices.saveName")}
+            </Button>
+          </div>
+        </form>
       </PopoverContent>
     </Popover>
   );
 }
 
-type StatusFilter = "trusted" | "not_trusted";
-
-/**
- * Phase 7 of docs/future-features/21_auth-consolidation.md: the user-facing
- * side of `knownDevices` — a device recognized from a step-up is now a
- * named, revocable record instead of a purely backend recognition hash.
- * Revoking forgets the device outright (see `revokeDeviceTrust`'s doc
- * comment) rather than merely marking it untrusted, so the next visit from
- * it looks genuinely new again.
- *
- * A real `Table` with search/filter, not a bare row list: an account that's
- * signed in from a handful of browsers over the years accumulates a device
- * per (rough location, browser, OS) combination it's used, and a flat list
- * with no way to search or tell them apart stops being useful well before
- * it gets that long. `Search`/`FilterPill` match the same pattern the
- * directory's own person list already uses.
- */
 export function TrustedDevicesCard() {
   const t = useTranslations("Settings");
   const format = useFormatter();
@@ -135,40 +111,26 @@ export function TrustedDevicesCard() {
   const result = useQuery(api.stepUp.trustedDevices);
   const revoke = useMutation(api.stepUp.revokeDeviceTrust);
   const forgetUntrusted = useMutation(api.stepUp.forgetUntrustedDevices);
-
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [forgetting, setForgetting] = useState(false);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter[]>([]);
+  const [expanded, setExpanded] = useState(false);
 
   const devices = result?.devices;
-  const untrustedCount = useMemo(() => devices?.filter((d) => !d.trusted).length ?? 0, [devices]);
+  const untrustedCount = devices?.filter((d) => !d.trusted).length ?? 0;
+  const visible = expanded ? devices : devices?.slice(0, COLLAPSED_COUNT);
+  const hiddenCount = (devices?.length ?? 0) - (visible?.length ?? 0);
 
-  const filtered = useMemo(() => {
-    if (!devices) return [];
-    const query = search.trim().toLowerCase();
-    return devices.filter((d) => {
-      if (statusFilter.length > 0) {
-        const matchesStatus = statusFilter.includes(d.trusted ? "trusted" : "not_trusted");
-        if (!matchesStatus) return false;
-      }
-      if (!query) return true;
-      return [d.name, d.browser, d.os].some((field) => field?.toLowerCase().includes(query));
-    });
-  }, [devices, search, statusFilter]);
-
-  async function handleRevoke(id: Id<"knownDevices">, name: string) {
+  async function handleRevoke(device: Device) {
     const ok = await confirm({
       title: t("devices.revokeTitle"),
-      description: t("devices.revokeBody", { name }),
+      description: t("devices.revokeBody", { name: device.name }),
       confirmLabel: t("devices.revokeConfirm"),
       cancelLabel: t("cancel"),
       destructive: true,
     });
     if (!ok) return;
-    setBusyId(id);
+    setBusyId(device.id);
     try {
-      await revoke({ deviceId: id });
+      await revoke({ deviceId: device.id });
       toast.success(t("devices.revoked"));
     } catch (error) {
       handleError(error);
@@ -186,144 +148,108 @@ export function TrustedDevicesCard() {
       destructive: true,
     });
     if (!ok) return;
-    setForgetting(true);
+    setBusyId("untrusted");
     try {
       const { removed } = await forgetUntrusted({});
       toast.success(t("devices.forgetUntrustedDone", { count: removed }));
     } catch (error) {
       handleError(error);
     } finally {
-      setForgetting(false);
+      setBusyId(null);
     }
+  }
+
+  function describe(device: Device): string {
+    const lastSeen = t("devices.lastSeen", {
+      when: format.relativeTime(new Date(device.lastSeenAt)),
+    });
+    const defaultName = device.browser && device.os ? `${device.browser} on ${device.os}` : null;
+    const platform = [device.browser, device.os].filter(Boolean).join(" · ");
+    return device.name !== defaultName && platform ? `${platform} · ${lastSeen}` : lastSeen;
   }
 
   return (
     <div id="devices" data-hash-anchor>
       <SettingsSection title={t("devices.title")} description={t("devices.hint")}>
-        {devices === undefined ? (
+        {visible === undefined ? (
           <div className="flex justify-center px-4 py-5 text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
           </div>
-        ) : devices.length === 0 ? (
-          <p className="px-4 py-5 text-center text-sm text-muted-foreground">
-            {t("devices.empty")}
-          </p>
+        ) : visible.length === 0 ? (
+          <SettingsRow
+            title={<span className="font-normal text-muted-foreground">{t("devices.empty")}</span>}
+          />
         ) : (
-          <div className="space-y-3 p-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                <div className="relative w-full sm:w-56">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder={t("devices.searchPlaceholder")}
-                    aria-label={t("devices.searchPlaceholder")}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="h-8 pl-8 text-[13px]"
-                  />
+          visible.map((device) => (
+            <SettingsRow
+              key={device.id}
+              title={
+                <span className="flex min-w-0 items-center gap-2">
+                  <DeviceIcon os={device.os} />
+                  <span className="truncate">{device.name}</span>
+                  {device.trusted && device.trustedUntil !== null && (
+                    <span className="shrink-0 text-xs font-normal text-ok">
+                      {t("devices.trustedUntil", {
+                        date: format.dateTime(new Date(device.trustedUntil), {
+                          day: "numeric",
+                          month: "short",
+                        }),
+                      })}
+                    </span>
+                  )}
+                </span>
+              }
+              description={describe(device)}
+              control={
+                <div className="flex items-center gap-1">
+                  <RenameDeviceButton device={device} />
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-destructive"
+                    aria-label={t("devices.revokeConfirm")}
+                    disabled={busyId !== null}
+                    onClick={() => void handleRevoke(device)}
+                  >
+                    {busyId === device.id ? <Loader2 className="animate-spin" /> : <X />}
+                  </Button>
                 </div>
-                <FilterPill
-                  label={t("devices.filterStatus")}
-                  options={[
-                    { value: "trusted", label: t("devices.trusted") },
-                    { value: "not_trusted", label: t("devices.notTrusted") },
-                  ]}
-                  selected={statusFilter}
-                  onChange={(next) => setStatusFilter(next as StatusFilter[])}
-                  clearLabel={t("devices.clearFilter")}
-                />
-              </div>
-              {untrustedCount > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={forgetting}
-                  onClick={() => void handleForgetUntrusted()}
-                  className="shrink-0"
-                >
-                  {forgetting ? <Loader2 className="animate-spin" /> : <ShieldOff />}
-                  {t("devices.forgetUntrusted", { count: untrustedCount })}
-                </Button>
-              )}
-            </div>
-
-            {result?.truncated && (
-              <p className="text-xs text-muted-foreground">{t("devices.truncatedNotice")}</p>
-            )}
-
-            {filtered.length === 0 ? (
-              <p className="px-1 py-6 text-center text-sm text-muted-foreground">
-                {t("devices.noMatches")}
-              </p>
+              }
+            />
+          ))
+        )}
+        {(hiddenCount > 0 || untrustedCount > 0) && (
+          <div className="flex items-center justify-between gap-4 px-4 py-2.5">
+            {hiddenCount > 0 ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-muted-foreground"
+                onClick={() => setExpanded(true)}
+              >
+                {t("devices.showAll", { count: devices?.length ?? 0 })}
+              </Button>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead>{t("devices.columnDevice")}</TableHead>
-                    <TableHead className="hidden sm:table-cell">
-                      {t("devices.columnBrowser")}
-                    </TableHead>
-                    <TableHead className="hidden md:table-cell">{t("devices.columnOs")}</TableHead>
-                    <TableHead className="hidden sm:table-cell">
-                      {t("devices.columnLastSeen")}
-                    </TableHead>
-                    <TableHead>{t("devices.columnStatus")}</TableHead>
-                    <TableHead className="text-right">{t("devices.columnActions")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((device) => (
-                    <TableRow key={device.id}>
-                      <TableCell className="py-2">
-                        <span className="flex min-w-0 items-center gap-2">
-                          <DeviceIcon os={device.os} />
-                          <span className="truncate">{device.name}</span>
-                        </span>
-                      </TableCell>
-                      <TableCell className="hidden py-2 text-sm text-muted-foreground sm:table-cell">
-                        {device.browser ?? "—"}
-                      </TableCell>
-                      <TableCell className="hidden py-2 text-sm text-muted-foreground md:table-cell">
-                        {device.os ?? "—"}
-                      </TableCell>
-                      <TableCell className="hidden py-2 text-sm text-muted-foreground sm:table-cell">
-                        {format.relativeTime(new Date(device.lastSeenAt))}
-                      </TableCell>
-                      <TableCell className="py-2">
-                        <Badge
-                          variant={device.trusted ? "success" : "muted"}
-                          className="text-[10px]"
-                        >
-                          {device.trusted ? t("devices.trusted") : t("devices.notTrusted")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="py-2 text-right">
-                        <span className="inline-flex items-center gap-1">
-                          <RenameDeviceButton device={device} />
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            className="text-muted-foreground hover:text-destructive"
-                            aria-label={t("devices.revokeConfirm")}
-                            disabled={busyId !== null}
-                            onClick={() => void handleRevoke(device.id, device.name)}
-                          >
-                            {busyId === device.id ? (
-                              <Loader2 className="animate-spin" />
-                            ) : (
-                              <ShieldOff />
-                            )}
-                          </Button>
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <span />
+            )}
+            {untrustedCount > 0 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:text-destructive"
+                disabled={busyId !== null}
+                onClick={() => void handleForgetUntrusted()}
+              >
+                {busyId === "untrusted" && <Loader2 className="animate-spin" />}
+                {t("devices.forgetUntrusted", { count: untrustedCount })}
+              </Button>
             )}
           </div>
         )}
       </SettingsSection>
+      {result?.truncated && expanded && (
+        <p className="mt-2 text-xs text-muted-foreground">{t("devices.truncatedNotice")}</p>
+      )}
     </div>
   );
 }

@@ -2,11 +2,13 @@ import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
+import { type Id } from "./_generated/dataModel";
 import { internalMutation, query } from "./_generated/server";
 import { sha256hex } from "./activity/lib/crypto";
 import {
   effectiveRole,
   getUserByClerkId,
+  isApplicantAreaMember,
   MANAGER_ROLES,
   requireAdmin,
   requireUser,
@@ -57,10 +59,8 @@ const policyFieldsValidator = {
   requirePasskeyRetroactive: v.boolean(),
   gracePeriodDays: v.number(),
   exemptUserIds: v.array(v.id("users")),
-  // Phase 7 of docs/future-features/21_auth-consolidation.md.
   areaReverifyDays: v.number(),
-  // Phase 8: whether *this* toggle is on, not when it was turned on — the
-  // handler computes `SetAt` itself, same as `mfaPolicySetAt` above.
+  // Whether the sunset is on, not when — the handler stamps `SetAt` itself.
   performanceLegacyPasswordSunsetEnabled: v.boolean(),
   applicantVaultLegacyPasswordSunsetEnabled: v.boolean(),
   legacyPasswordGraceDays: v.number(),
@@ -125,15 +125,38 @@ export const setOrgPolicy = mutation({
       !existing ||
       existing.requirePasskeyScope !== args.requirePasskeyScope ||
       existing.requirePasskeyRetroactive !== args.requirePasskeyRetroactive;
-    // Phase 8: bumped whenever the toggle itself changes, in either
-    // direction — turning it back on after turning it off restarts the
-    // clock rather than resuming the old deadline, same as the two above.
+    // Turning a sunset back on restarts its clock rather than resuming the old one.
     const performanceSunsetChanged =
       (existing?.performanceLegacyPasswordSunsetEnabled === true) !==
       args.performanceLegacyPasswordSunsetEnabled;
     const applicantVaultSunsetChanged =
       (existing?.applicantVaultLegacyPasswordSunsetEnabled === true) !==
       args.applicantVaultLegacyPasswordSunsetEnabled;
+
+    // Shortening the grace period moves a running deadline, possibly into the
+    // past, which would cut every legacy password off the moment this saves.
+    const previousGraceDays =
+      existing?.legacyPasswordGraceDays ?? LEGACY_PASSWORD_GRACE_DEFAULT_DAYS;
+    if (existing && args.legacyPasswordGraceDays < previousGraceDays) {
+      const nextGraceMs = Math.max(1, args.legacyPasswordGraceDays) * 86_400_000;
+      const runningSetAts = [
+        !performanceSunsetChanged && args.performanceLegacyPasswordSunsetEnabled
+          ? existing.performanceLegacyPasswordSunsetSetAt
+          : undefined,
+        !applicantVaultSunsetChanged && args.applicantVaultLegacyPasswordSunsetEnabled
+          ? existing.applicantVaultLegacyPasswordSunsetSetAt
+          : undefined,
+      ];
+      const tooSoon = runningSetAts.some(
+        (setAt) => setAt !== undefined && setAt + nextGraceMs < now + 86_400_000,
+      );
+      if (tooSoon) {
+        throw new ConvexError({
+          code: "validation",
+          message: "That would end a running grace period within a day. Choose a longer period.",
+        });
+      }
+    }
 
     const doc = {
       ...args,
@@ -226,10 +249,7 @@ export const apiSubmitEmailCode = mutation({
     sessionId: v.string(),
     code: v.string(),
     context: contextValidator,
-    // Phase 7: only meaningful (and only ever passed) with context ===
-    // "area_reverify" — which linked area's 14-day trust this clearance
-    // should also renew, on top of the session-scoped verification every
-    // context records.
+    // Only with context "area_reverify": which area's trust this renews.
     area: v.optional(areaValidator),
   },
   returns: v.object({ ok: v.boolean(), message: v.optional(v.string()) }),
@@ -404,11 +424,6 @@ export const apiEvaluateDevice = mutation({
     clerkUserId: v.string(),
     sessionId: v.string(),
     deviceHash: v.string(),
-    // Phase 7: browser/OS, re-derived and re-sent on every visit (see
-    // knownDevices' schema comment) — `browser`/`os` always refresh,
-    // `name` (the default display label built from them) only backfills
-    // when a device has never had one, so it never overwrites a name the
-    // user picked themselves in /settings.
     browser: v.optional(v.string()),
     os: v.optional(v.string()),
   },
@@ -419,63 +434,65 @@ export const apiEvaluateDevice = mutation({
     if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
 
     const now = Date.now();
-    // Phase 7: a device only ever counts as trusted while the account opted
-    // into recognition at all — declining costs convenience (near-universal
-    // step-up via `isAreaTrusted`/`resolveSignInRequirement`'s existing
-    // `newDevice` check), never security, and needs no separate code path
-    // here beyond simply never stamping a `trustedUntil`.
-    const trackingOptedOut = await hasOptedOutOfDeviceTracking(ctx, user._id);
-    const trustedUntil = trackingOptedOut ? undefined : now + (await areaReverifyWindowMs(ctx));
     const defaultName = args.browser && args.os ? `${args.browser} on ${args.os}` : undefined;
 
-    const existing = await ctx.db
-      .query("knownDevices")
-      .withIndex("by_user_hash", (q) => q.eq("userId", user._id).eq("deviceHash", args.deviceHash))
-      .unique();
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        lastSeenAt: now,
-        trustedUntil,
-        browser: args.browser,
-        os: args.os,
-        // Backfills a device that predates browser/os tracking (or whose
-        // very first sighting had no label for some reason) — never
-        // touches a name the account already has, custom or auto-set.
-        name: existing.name ?? defaultName,
-      });
-    } else {
-      await ctx.db.insert("knownDevices", {
-        userId: user._id,
-        deviceHash: args.deviceHash,
-        firstSeenAt: now,
-        lastSeenAt: now,
-        name: defaultName,
-        browser: args.browser,
-        os: args.os,
-        trustedUntil,
-      });
-    }
-
-    // A brand new device is only "suspicious" if this user already had a
-    // different one on file — a first-ever sign-in isn't a risk signal.
-    let flagAsNew = false;
-    if (!existing) {
-      const priorDevices = await ctx.db
+    // Opted out: nothing about this browser is stored, and every session
+    // counts as untrusted.
+    let deviceId: Id<"knownDevices"> | undefined;
+    let flagAsNew = true;
+    if (!(await hasOptedOutOfDeviceTracking(ctx, user._id))) {
+      const existing = await ctx.db
         .query("knownDevices")
-        .withIndex("by_user_hash", (q) => q.eq("userId", user._id))
-        .collect();
-      flagAsNew = priorDevices.length > 1;
+        .withIndex("by_user_hash", (q) =>
+          q.eq("userId", user._id).eq("deviceHash", args.deviceHash),
+        )
+        .unique();
+      if (existing) {
+        deviceId = existing._id;
+        // Leaves `trustedUntil` alone: only passing a step-up earns trust.
+        await ctx.db.patch(existing._id, {
+          lastSeenAt: now,
+          browser: args.browser,
+          os: args.os,
+          name: existing.name ?? defaultName,
+        });
+        flagAsNew = existing.trustedUntil === undefined || existing.trustedUntil <= now;
+      } else {
+        // The first device an account ever signs in from isn't a risk
+        // signal, so it starts out trusted; any later one has to earn it.
+        const hasOtherDevice = await ctx.db
+          .query("knownDevices")
+          .withIndex("by_user_hash", (q) => q.eq("userId", user._id))
+          .first();
+        flagAsNew = hasOtherDevice !== null;
+        deviceId = await ctx.db.insert("knownDevices", {
+          userId: user._id,
+          deviceHash: args.deviceHash,
+          firstSeenAt: now,
+          lastSeenAt: now,
+          name: defaultName,
+          browser: args.browser,
+          os: args.os,
+          trustedUntil: flagAsNew ? undefined : now + (await areaReverifyWindowMs(ctx)),
+        });
+      }
+      // A passkey sign-in can record its verification before this runs for
+      // the same session — that still counts as proving this device.
+      if (flagAsNew) {
+        const verified = await ctx.db
+          .query("stepUpVerifications")
+          .withIndex("by_user_session", (q) =>
+            q.eq("userId", user._id).eq("sessionId", args.sessionId),
+          )
+          .first();
+        if (verified) {
+          await ctx.db.patch(deviceId, { trustedUntil: now + (await areaReverifyWindowMs(ctx)) });
+        }
+      }
     }
 
-    // Upsert: AppGate re-fires this once per Clerk session, but "once per
-    // session" only holds per browser tab/mount — a page refresh resets the
-    // guarding ref and re-triggers the same (user, session) call. A blind
-    // insert here left a second row behind every time, which made the
-    // `by_user_session` read in `resolveSignInRequirement` throw and crash
-    // the whole app. `.collect()` (not `.unique()`) so an account that
-    // already accumulated duplicate rows before this fix self-heals here
-    // instead of needing them deleted by hand — keep the newest, drop the
-    // rest.
+    // Upsert, since a page refresh re-fires this for the same session.
+    // `.collect()` so accounts that already have duplicate rows self-heal.
     const existingSignals = await ctx.db
       .query("sessionRiskSignals")
       .withIndex("by_user_session", (q) => q.eq("userId", user._id).eq("sessionId", args.sessionId))
@@ -483,18 +500,11 @@ export const apiEvaluateDevice = mutation({
     const [keep, ...duplicates] = existingSignals;
     for (const dup of duplicates) await ctx.db.delete(dup._id);
     if (keep) {
-      // Write-once per session: a re-evaluation must never *clear* a flag an
-      // earlier one raised. The first call for a new device inserts it into
-      // `knownDevices` above, so every later call in the same session sees a
-      // familiar device and computes `flagAsNew: false` — and since a page
-      // refresh re-fires this route (AppGate's guarding ref is per-mount),
-      // reloading the step-up screen used to downgrade the signal, drop
-      // `requiredLevel` back to 0 and let the gate disappear unverified.
-      // Only a genuinely new Clerk session (new sessionId → new row) gets a
-      // fresh verdict; clearing this one happens by passing the gate, which
-      // records a verification that satisfies the level.
+      // A re-evaluation can raise the flag but never clear it — otherwise a
+      // refresh on the step-up screen would let the gate vanish unverified.
       await ctx.db.patch(keep._id, {
         newDevice: keep.newDevice || flagAsNew,
+        deviceId,
         evaluatedAt: now,
       });
     } else {
@@ -502,6 +512,7 @@ export const apiEvaluateDevice = mutation({
         userId: user._id,
         sessionId: args.sessionId,
         newDevice: flagAsNew,
+        deviceId,
         evaluatedAt: now,
       });
     }
@@ -599,14 +610,10 @@ export const status = query({
   },
 });
 
-// --- Phase 7: per-area access status + preference -----------------------------
+// --- Linked areas: access status + preference ---------------------------------
 //
-// Plain user-session queries/mutations, called directly by each area's own
-// entry point (the Performance login page, the HR vault gate) — the actual
-// enforcement lives server-side in `performanceAuth.ts`/`applicantVault.ts`
-// (a blocked area simply can't be resolved/unlocked); this is only what
-// tells the frontend *why*, so it can show a step-up form instead of a dead
-// end.
+// Enforcement lives in performanceAuth.ts/applicantVault.ts; these only tell
+// the frontend why it's blocked so it can show a step-up form.
 
 export const areaAccessStatus = query({
   args: { area: areaValidator },
@@ -633,10 +640,22 @@ export const areaAccessStatus = query({
 
 export const areaPreference = query({
   args: { area: areaValidator },
-  returns: v.object({ mode: v.union(v.literal("always_step_up"), v.literal("trust_device")) }),
+  returns: v.object({
+    mode: v.union(v.literal("always_step_up"), v.literal("trust_device")),
+    applies: v.boolean(),
+  }),
   handler: async (ctx, { area }) => {
     const user = await requireUser(ctx);
-    return { mode: await getAreaPreference(ctx, user._id, area) };
+    const applies =
+      area === "performance"
+        ? (
+            await ctx.db
+              .query("performanceLogins")
+              .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", user._id))
+              .first()
+          )?.active === true
+        : isApplicantAreaMember(user);
+    return { mode: await getAreaPreference(ctx, user._id, area), applies };
   },
 });
 
@@ -667,12 +686,9 @@ export const setAreaPreference = mutation({
   },
 });
 
-// --- Phase 7: trusted devices (/settings) --------------------------------------
+// --- Trusted devices (/settings) -----------------------------------------------
 
-// A defensive cap, not an expected ceiling — realistically nobody
-// accumulates this many distinct (IP-prefix, user-agent) combinations, but
-// an unbounded `.collect()` on a table with no natural cap is still worth
-// guarding, same reasoning as `orgStandard`'s `nonCompliant` cap.
+// A defensive cap, not an expected ceiling.
 const TRUSTED_DEVICES_LIMIT = 200;
 
 export const trustedDevices = query({
@@ -716,11 +732,7 @@ export const trustedDevices = query({
   },
 });
 
-/** Bulk equivalent of `revokeDeviceTrust` for every device that isn't
- * currently trusted — the practical answer to "this list is mostly stale
- * devices I don't recognize": one click instead of revoking each row by
- * hand. Never touches a currently-trusted device; use `revokeDeviceTrust`
- * for that one deliberately. */
+/** `revokeDeviceTrust` for every device that isn't currently trusted. */
 export const forgetUntrustedDevices = mutation({
   args: {},
   returns: v.object({ removed: v.number() }),
@@ -760,10 +772,8 @@ export const renameDevice = mutation({
   },
 });
 
-/** Forgets a device outright rather than just clearing `trustedUntil` — the
- * whole point of `knownDevices` is recognition, so the next visit from this
- * browser has to look genuinely new again (forcing a fresh step-up via the
- * existing `newDevice` risk signal), not merely "known but untrusted". */
+/** Deletes the device rather than clearing `trustedUntil`, so its next
+ * sign-in looks genuinely new again. */
 export const revokeDeviceTrust = mutation({
   args: { deviceId: v.id("knownDevices") },
   returns: v.object({ ok: v.boolean() }),
@@ -831,6 +841,14 @@ export const setSecurityPreference = mutation({
       await ctx.db.patch(existing._id, patch);
     } else {
       await ctx.db.insert("securityPreferences", { userId: user._id, ...patch });
+    }
+    // Opting out also forgets what was already recorded.
+    if (args.deviceTrackingOptOut === true && existing?.deviceTrackingOptOut !== true) {
+      const devices = await ctx.db
+        .query("knownDevices")
+        .withIndex("by_user_hash", (q) => q.eq("userId", user._id))
+        .collect();
+      await Promise.all(devices.map((d) => ctx.db.delete(d._id)));
     }
     return { ok: true };
   },
@@ -998,11 +1016,7 @@ export const orgStandard = query({
   },
 });
 
-/** Phase 7's admin-visible companion metric to `orgStandard` above — the
- * device-trust opt-in/opt-out split and each area's "always step up" vs.
- * "trust device" preference split, so the org default set via
- * `setOrgPolicy`'s `areaReverifyDays` isn't the only thing visible on
- * `/admin/authentication`. */
+/** Device-recognition opt-outs and each area's "always step up" count. */
 export const areaStandard = query({
   args: {},
   returns: v.object({
@@ -1023,10 +1037,8 @@ export const areaStandard = query({
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
-    // Both preference tables are read unscoped and then filtered down to
-    // this set — a deactivated user's stale row must not keep counting
-    // against `users.length`, which would otherwise let these subtractions
-    // go negative.
+    // Filtered to active users so a deactivated account's old row can't push
+    // the subtractions below negative.
     const activeUserIds = new Set(users.map((u) => u._id));
     const prefs = await ctx.db.query("securityPreferences").collect();
     const deviceTrackingOptOutCount = prefs.filter(
@@ -1053,13 +1065,7 @@ export const areaStandard = query({
   },
 });
 
-/** Phase 8's admin-visible companion metric — the migration's tail made
- * visible instead of silent, per the plan's own ask: "a per-area
- * count/countdown of accounts still on their legacy password, N days
- * left." The deadline is a single shared clock per area (whoever turned the
- * toggle on set it for everyone at once), so there's one countdown, not one
- * per account — what varies per account is only whether it's affected at
- * all. */
+/** Per area: the sunset deadline and how many accounts it still affects. */
 export const legacyPasswordStandard = query({
   args: {},
   returns: v.object({
@@ -1078,9 +1084,8 @@ export const legacyPasswordStandard = query({
     await requireAdmin(ctx);
     const policy = await getOrDefaultPolicy(ctx);
 
-    // Only a *linked* login is ever affected — one with no `linkedUserId`
-    // has no password-less fallback, so it's never in scope here at all,
-    // whether or not the sunset is enabled.
+    // Only accounts with another way in are affected: a linked login, or a
+    // vault member with a passkey.
     const linkedLogins = await ctx.db
       .query("performanceLogins")
       .filter((q) =>
@@ -1088,9 +1093,6 @@ export const legacyPasswordStandard = query({
       )
       .collect();
 
-    // Only a vault password belonging to a member who's also registered a
-    // passkey is ever affected — same reasoning, the passkey is the only
-    // other way in.
     const vaultPasswordRows = await ctx.db.query("applicantVaultPasswords").collect();
     const passkeyUserIds = new Set((await ctx.db.query("passkeys").collect()).map((p) => p.userId));
     const vaultAccountsWithFallback = vaultPasswordRows.filter((row) =>

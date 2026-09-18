@@ -2,10 +2,16 @@
 
 import { useState } from "react";
 
-import { Loader2, Mail, MailCheck, Plus, Trash2 } from "lucide-react";
+import { Loader2, Mail, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useDestructiveStepUp, type StepUpHintShape } from "@/components/auth/useDestructiveStepUp";
+import {
+  jsonOrThrow,
+  useSecurityState,
+  type SecondaryEmail,
+} from "@/components/security/security-state";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,189 +20,129 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  useConfirm,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
-import {
-  jsonOrThrow,
-  useSecurityState,
-  type SecondaryEmail,
-} from "@/components/security/security-state";
 
-/**
- * Phase 2 of docs/future-features/21_auth-consolidation.md: additional
- * verified addresses an intranet account is reachable at — a work-issued
- * Performance address, an HR-only address — so later phases can route
- * sign-in and password resets through either one. Same card shape as
- * `PasskeySettingsCard`/`TotpSettingsCard` next to it.
- */
 export function SecondaryEmailsCard() {
   const t = useTranslations("Settings");
+  const confirm = useConfirm();
   const { secondaryEmails, refresh, apiRequest } = useSecurityState();
-  const [dialog, setDialog] = useState<"add" | "remove" | null>(null);
+  const { runGuarded, dialog: stepUpDialog } = useDestructiveStepUp();
+  const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-  const [selected, setSelected] = useState<SecondaryEmail | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
-  function closeDialog() {
+  function close() {
     if (busy) return;
-    setDialog(null);
-    setStep("email");
-    setEmail("");
-    setCode("");
-    setSelected(null);
+    setOpen(false);
   }
 
   function openAdd() {
     setEmail("");
+    setCode("");
+    setError(null);
     setStep("email");
-    setDialog("add");
+    setOpen(true);
+  }
+
+  function openVerify(row: SecondaryEmail) {
+    setEmail(row.email);
+    setCode("");
+    setError(null);
+    setStep("code");
+    setOpen(true);
   }
 
   async function requestCode() {
     setBusy(true);
+    setError(null);
     try {
-      const result = (await jsonOrThrow(
-        await apiRequest("/secondary-emails/request-code", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ email: email.trim() }),
-        }),
-      )) as { alreadyVerified: boolean };
+      const result = await runGuarded(
+        async () =>
+          (await jsonOrThrow(
+            await apiRequest("/secondary-emails/request-code", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ email: email.trim() }),
+            }),
+          )) as { alreadyVerified: boolean } | StepUpHintShape,
+      );
+      if (!result) return;
+      await refresh();
       if (result.alreadyVerified) {
-        await refresh();
-        closeDialog();
+        setOpen(false);
         toast.success(t("secondaryEmailAdded"));
         return;
       }
       setCode("");
       setStep("code");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("secondaryEmailAddError"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("secondaryEmailAddError"));
     } finally {
       setBusy(false);
     }
   }
 
-  async function verifyCode() {
+  async function verifyCode(value: string) {
     setBusy(true);
+    setError(null);
     try {
       const result = (await jsonOrThrow(
         await apiRequest("/secondary-emails/verify", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ email: email.trim(), code: code.trim() }),
+          body: JSON.stringify({ email: email.trim(), code: value }),
         }),
       )) as { ok: boolean; message?: string };
       if (!result.ok) {
-        toast.error(result.message ?? t("secondaryEmailCodeError"));
+        setError(result.message ?? t("secondaryEmailCodeError"));
+        setCode("");
         return;
       }
       await refresh();
-      closeDialog();
+      setOpen(false);
       toast.success(t("secondaryEmailAdded"));
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("secondaryEmailCodeError"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("secondaryEmailCodeError"));
+      setCode("");
     } finally {
       setBusy(false);
     }
   }
 
-  async function removeSelected() {
-    if (!selected) return;
-    setBusy(true);
+  async function remove(row: SecondaryEmail) {
+    const ok = await confirm({
+      title: t("removeSecondaryEmailTitle", { email: row.email }),
+      description: t("removeSecondaryEmailHint"),
+      confirmLabel: t("removeSecondaryEmail"),
+      cancelLabel: t("cancel"),
+      destructive: true,
+    });
+    if (!ok) return;
+    setRemovingId(row._id);
     try {
-      await jsonOrThrow(
-        await apiRequest(`/secondary-emails/${selected._id}`, { method: "DELETE" }),
-      );
+      await jsonOrThrow(await apiRequest(`/secondary-emails/${row._id}`, { method: "DELETE" }));
       await refresh();
-      closeDialog();
       toast.success(t("secondaryEmailRemoved"));
-    } catch (error) {
-      console.error("[secondary-emails] removal failed", error);
+    } catch {
       toast.error(t("secondaryEmailRemoveError"));
     } finally {
-      setBusy(false);
+      setRemovingId(null);
     }
   }
-
-  const dialogs = (
-    <>
-      <Dialog open={dialog === "add"} onOpenChange={(open) => !open && closeDialog()}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("addSecondaryEmail")}</DialogTitle>
-            <DialogDescription>
-              {step === "email"
-                ? t("addSecondaryEmailHint")
-                : t("secondaryEmailCodeHint", { email })}
-            </DialogDescription>
-          </DialogHeader>
-          {step === "email" ? (
-            <div className="space-y-2">
-              <Label htmlFor="secondary-email">{t("secondaryEmailLabel")}</Label>
-              <Input
-                id="secondary-email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Label htmlFor="secondary-email-code">{t("secondaryEmailCodeLabel")}</Label>
-              <Input
-                id="secondary-email-code"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                value={code}
-                onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
-              />
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="ghost" onClick={closeDialog} disabled={busy}>
-              {t("cancel")}
-            </Button>
-            {step === "email" ? (
-              <Button disabled={busy || !email.trim()} onClick={() => void requestCode()}>
-                {busy && <Loader2 className="size-4 animate-spin" />}
-                {t("secondaryEmailSendCode")}
-              </Button>
-            ) : (
-              <Button disabled={busy || code.length !== 6} onClick={() => void verifyCode()}>
-                {busy && <Loader2 className="size-4 animate-spin" />}
-                {t("secondaryEmailVerify")}
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={dialog === "remove"} onOpenChange={(open) => !open && closeDialog()}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("removeSecondaryEmail")}</DialogTitle>
-            <DialogDescription>{t("removeSecondaryEmailHint")}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="ghost" onClick={closeDialog} disabled={busy}>
-              {t("cancel")}
-            </Button>
-            <Button variant="destructive" disabled={busy} onClick={() => void removeSelected()}>
-              {busy && <Loader2 className="size-4 animate-spin" />}
-              {t("removeSecondaryEmail")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
 
   return (
     <div id="secondary-emails" data-hash-anchor>
@@ -217,28 +163,29 @@ export function SecondaryEmailsCard() {
               key={row._id}
               title={
                 <span className="flex min-w-0 items-center gap-2">
-                  {row.verified ? (
-                    <MailCheck className="size-3.5 shrink-0 text-ok" />
-                  ) : (
-                    <Mail className="size-3.5 shrink-0 text-muted-foreground" />
-                  )}
+                  <Mail className="size-3.5 shrink-0 text-muted-foreground" />
                   <span className="truncate">{row.email}</span>
                 </span>
               }
-              description={row.verified ? undefined : t("secondaryEmailPending")}
+              description={row.verified ? t("secondaryEmailVerified") : t("secondaryEmailPending")}
               control={
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => {
-                    setSelected(row);
-                    setDialog("remove");
-                  }}
-                >
-                  <Trash2 className="size-3.5" />
-                  <span className="sr-only">{t("removeSecondaryEmail")}</span>
-                </Button>
+                <div className="flex items-center gap-1">
+                  {!row.verified && (
+                    <Button size="sm" variant="ghost" onClick={() => openVerify(row)}>
+                      {t("secondaryEmailEnterCode")}
+                    </Button>
+                  )}
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-destructive"
+                    disabled={removingId !== null}
+                    aria-label={t("removeSecondaryEmail")}
+                    onClick={() => void remove(row)}
+                  >
+                    {removingId === row._id ? <Loader2 className="animate-spin" /> : <Trash2 />}
+                  </Button>
+                </div>
               }
             />
           ))
@@ -259,7 +206,105 @@ export function SecondaryEmailsCard() {
           </Button>
         </div>
       </SettingsSection>
-      {dialogs}
+
+      <Dialog open={open} onOpenChange={(next) => !next && close()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {step === "email" ? t("addSecondaryEmail") : t("secondaryEmailCodeTitle")}
+            </DialogTitle>
+            <DialogDescription>
+              {step === "email"
+                ? t("addSecondaryEmailHint")
+                : t("secondaryEmailCodeHint", { email: email.trim() })}
+            </DialogDescription>
+          </DialogHeader>
+
+          {step === "email" ? (
+            <form
+              id="secondary-email-form"
+              className="space-y-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (email.trim() && !busy) void requestCode();
+              }}
+            >
+              <Label htmlFor="secondary-email">{t("secondaryEmailLabel")}</Label>
+              <Input
+                id="secondary-email"
+                type="email"
+                autoComplete="email"
+                autoFocus
+                value={email}
+                aria-invalid={!!error}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError(null);
+                }}
+              />
+            </form>
+          ) : (
+            <InputOTP
+              maxLength={6}
+              value={code}
+              disabled={busy}
+              autoFocus
+              containerClassName="w-full justify-center"
+              aria-label={t("secondaryEmailCodeLabel")}
+              onChange={(value) => {
+                setCode(value);
+                setError(null);
+                if (value.length === 6) void verifyCode(value);
+              }}
+            >
+              <InputOTPGroup className="flex-1">
+                <InputOTPSlot index={0} aria-invalid={!!error} />
+                <InputOTPSlot index={1} aria-invalid={!!error} />
+                <InputOTPSlot index={2} aria-invalid={!!error} />
+              </InputOTPGroup>
+              <InputOTPSeparator />
+              <InputOTPGroup className="flex-1">
+                <InputOTPSlot index={3} aria-invalid={!!error} />
+                <InputOTPSlot index={4} aria-invalid={!!error} />
+                <InputOTPSlot index={5} aria-invalid={!!error} />
+              </InputOTPGroup>
+            </InputOTP>
+          )}
+
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+
+          <DialogFooter className="gap-2 sm:justify-between">
+            {step === "code" ? (
+              <Button
+                variant="ghost"
+                className="text-muted-foreground"
+                disabled={busy}
+                onClick={() => void requestCode()}
+              >
+                {t("secondaryEmailResend")}
+              </Button>
+            ) : (
+              <span />
+            )}
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={close} disabled={busy}>
+                {t("cancel")}
+              </Button>
+              {step === "email" && (
+                <Button type="submit" form="secondary-email-form" disabled={busy || !email.trim()}>
+                  {busy && <Loader2 className="animate-spin" />}
+                  {t("secondaryEmailSendCode")}
+                </Button>
+              )}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {stepUpDialog}
     </div>
   );
 }

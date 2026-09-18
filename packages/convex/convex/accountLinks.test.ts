@@ -1,8 +1,3 @@
-/**
- * Phase 6 (with a slice of Phase 9) of
- * docs/future-features/21_auth-consolidation.md: the read-only rollup query
- * over Performance/HR-vault/Academy subprofiles.
- */
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 

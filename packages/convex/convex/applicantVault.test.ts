@@ -1,11 +1,6 @@
 /**
- * Phase 4 of docs/future-features/21_auth-consolidation.md: unlocking the
- * Applicant Management vault with a passkey, as an alternative to typing
- * its password. The actual WebAuthn assertion is verified in apps/api
- * (Web Crypto isn't available the same way here) — these tests exercise
- * what's left on the Convex side: `status`'s `hasPasskey` flag and the
- * server-key-gated `apiUnlockViaPasskey` mutation apps/api calls once it's
- * already confirmed the assertion resolves to the caller's own account.
+ * The WebAuthn assertion itself is verified in apps/api — these cover the
+ * Convex side: `status` and the server-key-gated `apiUnlockViaPasskey`.
  */
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
@@ -66,10 +61,7 @@ async function seedPasskey(t: T, userId: Id<"users">): Promise<void> {
   );
 }
 
-/** Phase 7 of docs/future-features/21_auth-consolidation.md: an unlock
- * attempt is refused outright unless this area's 14-day intranet
- * re-verification is current — seeded here so `apiUnlockViaPasskey` tests
- * that aren't themselves testing that gate can get past it. */
+/** Unlocks are refused without current area trust. */
 async function seedAreaTrust(t: T, userId: Id<"users">): Promise<void> {
   await t.run(async (ctx) =>
     ctx.db.insert("areaStepUps", {
@@ -81,8 +73,6 @@ async function seedAreaTrust(t: T, userId: Id<"users">): Promise<void> {
   );
 }
 
-/** A real, verifiable vault password — needed for Phase 8 tests that
- * exercise `unlock`'s password path rather than just reading the row back. */
 async function seedVaultPassword(t: T, userId: Id<"users">, password: string): Promise<void> {
   const hash = await hashPassword(password);
   await t.run(async (ctx) =>
@@ -90,8 +80,7 @@ async function seedVaultPassword(t: T, userId: Id<"users">, password: string): P
   );
 }
 
-/** Phase 8's admin toggle, pre-enabled with a `SetAt` far enough in the past
- * that the grace period has already elapsed by the time a test reads it. */
+/** A sunset whose grace period has already run out. */
 async function seedLegacyPasswordSunset(
   t: T,
   admin: Id<"users">,
@@ -216,7 +205,7 @@ describe("apiUnlockViaPasskey", () => {
   });
 });
 
-describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-verification", () => {
+describe("Area re-verification", () => {
   test("status reports needsAreaStepUp true with no prior area clearance", async () => {
     const t = setup();
     await seedMember(t, { clerkUserId: "alice" });
@@ -311,7 +300,7 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
   });
 });
 
-describe("Phase 8 of docs/future-features/21_auth-consolidation.md: legacy password grace period", () => {
+describe("Legacy password grace period", () => {
   test("password unlock still works while the sunset is off", async () => {
     const t = setup();
     const userId = await seedMember(t, { clerkUserId: "rita" });

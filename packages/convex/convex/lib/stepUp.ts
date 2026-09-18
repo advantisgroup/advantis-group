@@ -10,8 +10,6 @@ import { trackEvent } from "./analytics";
 export type StepMethod = "email_code" | "totp" | "recovery_code" | "passkey";
 export type StepUpContext = "sign_in" | "destructive" | "admin_reverify" | "area_reverify";
 
-/** A password-less linked area gated by Phase 7's 14-day re-verification
- * ceiling — see docs/future-features/21_auth-consolidation.md. */
 export type Area = "performance" | "applicant_vault";
 
 export const LEVEL: Record<StepMethod, number> = {
@@ -104,6 +102,7 @@ async function recordVerified(
     context,
     verifiedAt: now,
   });
+  await trustSessionDevice(ctx, user._id, sessionId, now);
   await ctx.db.insert("stepUpAuditLog", {
     userId: user._id,
     event: "verified",
@@ -116,6 +115,26 @@ async function recordVerified(
     distinctId: user.clerkUserId,
     properties: { context, method, level: LEVEL[method] },
   });
+}
+
+/** Passing any step-up is what makes the device it happened on trusted —
+ * the only way `trustedUntil` ever moves forward. A session with no device
+ * (the account opted out of recognition) has nothing to trust. */
+async function trustSessionDevice(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  sessionId: string,
+  now: number,
+): Promise<void> {
+  const signal = await ctx.db
+    .query("sessionRiskSignals")
+    .withIndex("by_user_session", (q) => q.eq("userId", userId).eq("sessionId", sessionId))
+    .order("desc")
+    .first();
+  if (!signal?.deviceId) return;
+  const device = await ctx.db.get(signal.deviceId);
+  if (!device) return;
+  await ctx.db.patch(device._id, { trustedUntil: now + (await areaReverifyWindowMs(ctx)) });
 }
 
 async function recordFailed(
@@ -569,48 +588,33 @@ export async function hasNonPasskeyVerification(
   return rows.some((row) => row.method !== "passkey" && row.level >= 1);
 }
 
-// --- Phase 7: per-area 14-day re-verification -------------------------------
+// --- Linked areas: periodic re-verification ---------------------------------
 //
-// Once an area lets someone in on the strength of their intranet session
-// instead of a password of its own (Performance's Phase 3, the HR vault's
-// Phase 4 passkey option), that trust can't be permanent — see
-// docs/future-features/21_auth-consolidation.md's Phase 7. This reuses the
-// step-up engine above end to end (same challenge/verify/record functions,
-// just called with `context: "area_reverify"`); what's new here is only
-// *how long a clearance lasts* and *where it's tracked* — per (user, area),
-// not per session, since the whole point is that it has to survive a
-// browser restart or a brand new Clerk session.
+// Performance and the HR vault let people in on their intranet session rather
+// than a password of their own, so that trust has to lapse. Tracked per
+// (user, area), not per session, so it survives a new Clerk session.
 
-/** The bar a fresh area re-verification has to clear — any method at all,
- * same floor as `destructiveRequirement`: deliberately something every
- * account can always produce (an email code), so this can never become its
- * own lockout. */
+/** Any method at all, so an email code can always get someone back in. */
 export const AREA_REVERIFY_LEVEL = LEVEL.email_code;
 
 export const AREA_REVERIFY_DEFAULT_DAYS = 14;
 
-/** Also the general device-trust duration (see `apiEvaluateDevice`) — one
- * org-configurable "how long do we trust something without asking again"
- * number, rather than a second independent setting nobody would think to
- * keep in sync with the first. */
+/** Also how long a verified device stays trusted. */
 export async function areaReverifyWindowMs(ctx: QueryCtx | MutationCtx): Promise<number> {
   const policy = await getOrDefaultPolicy(ctx);
   const days = policy.areaReverifyDays ?? AREA_REVERIFY_DEFAULT_DAYS;
   return Math.max(1, days) * 86_400_000;
 }
 
-/** How long an "always require step-up" clearance counts as fresh — long
- * enough to actually walk through the door you just proved you should be
- * let through (the area's own queries re-run reactively, so this has to
- * outlive at least one poll cycle), short enough that leaving and coming
- * back demands a real fresh step-up rather than the normal 14-day window.
- * Never 0: a preference literally named "always require step-up" that
- * rejects the step-up someone just completed is a permanent lockout with
- * no way out, not extra security — see `isAreaTrusted`. */
-const ALWAYS_STEP_UP_FRESHNESS_MS = 5 * 60_000;
+/** Under "always require step-up": long enough to get in after verifying.
+ * Never 0, or the step-up someone just passed would itself be rejected. */
+const ALWAYS_STEP_UP_ENTRY_MS = 5 * 60_000;
 
-/** Whether this account has opted out of device recognition entirely — see
- * `securityPreferences.deviceTrackingOptOut`. */
+/** Under "always require step-up": how long a visit that got in keeps
+ * working. Holding an open Performance tab to the entry window signed people
+ * out five minutes after every step-up. */
+const ALWAYS_STEP_UP_VISIT_MS = 8 * 60 * 60_000;
+
 export async function hasOptedOutOfDeviceTracking(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
@@ -622,9 +626,6 @@ export async function hasOptedOutOfDeviceTracking(
   return pref?.deviceTrackingOptOut === true;
 }
 
-/** The account's own "always require step-up here" vs. "trust this device
- * for 14 days" preference for one area — absent row defaults to trusting,
- * matching every other per-user preference in this file. */
 export async function getAreaPreference(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
@@ -637,11 +638,8 @@ export async function getAreaPreference(
   return pref?.mode ?? "trust_device";
 }
 
-/** Whether this area has ever been cleared for this user, and when. Also
- * doubles as "has this account ever been through the forced first step-up
- * onto this area's password-less flow" — a missing row means no, which
- * `isAreaTrusted` below treats exactly like an expired one: inaccessible
- * until a step-up clears it. */
+/** No row means the area has never been cleared, which counts the same as
+ * an expired clearance. */
 export async function getAreaTrust(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
@@ -653,31 +651,39 @@ export async function getAreaTrust(
     .unique();
 }
 
-/**
- * The single gate every area's own entry point calls. No silent grace: an
- * account whose preference is "always require step-up" is never trusted
- * here regardless of how recently it last cleared one, and an account past
- * its 14-day (or org-configured) window is exactly as untrusted as one
- * that's never stepped up for this area at all.
- */
-export async function isAreaTrusted(
+async function isAreaTrustedWithin(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
   area: Area,
+  alwaysStepUpWindowMs: number,
 ): Promise<boolean> {
   const trust = await getAreaTrust(ctx, userId, area);
   if (!trust) return false;
   const preference = await getAreaPreference(ctx, userId, area);
   const windowMs =
-    preference === "always_step_up" ? ALWAYS_STEP_UP_FRESHNESS_MS : await areaReverifyWindowMs(ctx);
+    preference === "always_step_up" ? alwaysStepUpWindowMs : await areaReverifyWindowMs(ctx);
   return Date.now() - trust.verifiedAt <= windowMs;
 }
 
-/** Records a fresh area clearance — called right after the shared
- * `recordVerified`/`recordExternalVerification`/`recordPasskeyVerification`
- * functions above succeed with `context: "area_reverify"`. Upserts rather
- * than inserting: there's exactly one live clearance per (user, area), same
- * convention as `securityPreferences`/`areaSecurityPreferences`. */
+/** Whether someone may enter the area now. */
+export async function isAreaTrusted(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+  area: Area,
+): Promise<boolean> {
+  return await isAreaTrustedWithin(ctx, userId, area, ALWAYS_STEP_UP_ENTRY_MS);
+}
+
+/** Whether a visit that already got in (a promoted Performance token) may
+ * carry on. */
+export async function isAreaVisitTrusted(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+  area: Area,
+): Promise<boolean> {
+  return await isAreaTrustedWithin(ctx, userId, area, ALWAYS_STEP_UP_VISIT_MS);
+}
+
 export async function recordAreaStepUp(
   ctx: MutationCtx,
   userId: Id<"users">,
@@ -696,15 +702,11 @@ export async function recordAreaStepUp(
   }
 }
 
-// --- Phase 8: 30-day legacy password grace period ---------------------------
+// --- Legacy password sunset --------------------------------------------------
 //
-// Once an area's linked, password-less flow exists (Phase 3 for
-// Performance, Phase 4's passkey option for the HR vault), its old
-// standalone password doesn't stop working the moment that ships — it gets
-// a fixed, communicated grace window first. This is an admin opt-in per
-// area (see `authPolicy.performanceLegacyPasswordSunsetEnabled`), not a
-// default-on migration: turning it on starts the clock from that moment,
-// same convention as `mfaPolicySetAt`/`passkeyPolicySetAt`.
+// An admin opt-in per area: once turned on, an area's standalone password
+// keeps working for a grace period, then stops for accounts that have
+// another way in.
 
 export const LEGACY_PASSWORD_GRACE_DEFAULT_DAYS = 30;
 
@@ -713,11 +715,7 @@ function legacyPasswordGraceMs(policy: PolicyRow | DefaultPolicy): number {
   return Math.max(1, days) * 86_400_000;
 }
 
-/** The moment a linked account's standalone password in `area` stops
- * authenticating, or `null` while the sunset hasn't been turned on (or
- * hasn't been saved yet) for that area at all — never confused with "the
- * deadline already passed", which callers check separately against
- * `Date.now()`. */
+/** `null` while the sunset is off for this area. */
 export function legacyPasswordSunsetDeadline(
   policy: PolicyRow | DefaultPolicy,
   area: Area,
@@ -734,11 +732,8 @@ export function legacyPasswordSunsetDeadline(
   return setAt + legacyPasswordGraceMs(policy);
 }
 
-/** Whether `area`'s standalone-password sunset has actually taken effect —
- * `legacyPasswordSunsetDeadline` returned a moment, and it's in the past.
- * Callers still have to check the account itself is eligible (Performance:
- * `linkedUserId` set; the HR vault: a passkey registered) — an account with
- * no other way in is never subject to this, whatever the policy says. */
+/** Callers still check the account has another way in (a link, a passkey)
+ * — an account without one is never subject to this. */
 export async function isLegacyPasswordSunsetInForce(
   ctx: QueryCtx | MutationCtx,
   area: Area,

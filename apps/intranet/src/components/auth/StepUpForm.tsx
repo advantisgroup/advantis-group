@@ -100,8 +100,7 @@ export function StepUpForm({
 }: {
   availableMethods: StepMethod[];
   context: StepUpContext;
-  /** Only meaningful (and only ever passed) with `context === "area_reverify"`
-   * — see docs/future-features/21_auth-consolidation.md's Phase 7. */
+  /** Only with `context === "area_reverify"`. */
   area?: Area;
   /** Only shown (masked) on the email path — the other methods never mention
    * an address, so passing it is harmless when it goes unused. */
@@ -177,8 +176,13 @@ export function StepUpForm({
     setError(null);
     try {
       const { options, flowId } = (await jsonOrThrow(
-        await fetch(`${apiUrl}/passkeys/authentication/options`, { method: "POST" }),
-      )) as { options: Parameters<typeof startAuthentication>[0]["optionsJSON"]; flowId: string };
+        await fetch(`${apiUrl}/passkeys/authentication/options`, {
+          method: "POST",
+        }),
+      )) as {
+        options: Parameters<typeof startAuthentication>[0]["optionsJSON"];
+        flowId: string;
+      };
       const credential = await startAuthentication({ optionsJSON: options });
       const result = (await jsonOrThrow(
         await apiRequest("/auth/step-up/verify-passkey", {

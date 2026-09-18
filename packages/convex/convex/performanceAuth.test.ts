@@ -1,10 +1,3 @@
-/**
- * Phase 1 of docs/future-features/21_auth-consolidation.md: resolving a
- * Performance login's `linkedUserId` by matching its email against an
- * intranet account, without an admin picking it — scoped to Advantis (the
- * only company with intranet accounts at all), never overriding a human's
- * own choice, and never claiming an account another login already holds.
- */
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
@@ -77,9 +70,6 @@ async function seedLogin(
   );
 }
 
-/** Like `seedLogin`, but with a real, verifiable password hash — needed for
- * Phase 8 tests that exercise `login`'s password path rather than just
- * reading the row back. */
 async function seedLoginWithPassword(
   t: T,
   opts: { companyId: Id<"companies">; email: string; password: string; linkedUserId?: Id<"users"> },
@@ -98,9 +88,7 @@ async function seedLoginWithPassword(
   );
 }
 
-/** Phase 8 of docs/future-features/21_auth-consolidation.md's admin toggle,
- * pre-enabled with a `SetAt` far enough in the past that the grace period
- * has already elapsed by the time a test reads it. */
+/** A sunset whose grace period has already run out. */
 async function seedLegacyPasswordSunset(
   t: T,
   admin: Id<"users">,
@@ -264,7 +252,7 @@ describe("performanceAuth.reconcileAutoLinks", () => {
   });
 });
 
-describe("createLogin — Phase 3: auto-linked accounts skip the password requirement", () => {
+describe("createLogin: auto-linked accounts skip the password requirement", () => {
   test("an auto-linkable email needs no password at all", async () => {
     const t = setup();
     const advantis = await seedCompany(t, "advantis");
@@ -325,7 +313,7 @@ describe("createLogin — Phase 3: auto-linked accounts skip the password requir
   });
 });
 
-describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-verification", () => {
+describe("Area re-verification", () => {
   test("validateSession reports needsAreaStepUp for a linked account with no prior clearance", async () => {
     const t = setup();
     const advantis = await seedCompany(t, "advantis");
@@ -502,9 +490,53 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
     });
     expect(session.valid).toBe(false);
   });
+
+  test("under 'always require step-up', an open visit outlives the 5-minute entry window", async () => {
+    const t = setup();
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "omar", email: "omar@advantisgroup.de" });
+    await seedLogin(t, { companyId: advantis, email: "omar@advantisgroup.de", linkedUserId: user });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("areaStepUps", {
+        userId: user,
+        area: "performance",
+        verifiedAt: Date.now(),
+        method: "email_code",
+      });
+      await ctx.db.insert("areaSecurityPreferences", {
+        userId: user,
+        area: "performance",
+        mode: "always_step_up",
+        updatedAt: Date.now(),
+      });
+    });
+    const token = await asUser(t, "omar").mutation(
+      api.performanceAuth.createSessionForLinkedAccount,
+      {},
+    );
+
+    const ageTrust = (ms: number) =>
+      t.run(async (ctx) => {
+        const trust = await ctx.db
+          .query("areaStepUps")
+          .withIndex("by_user_area", (q) => q.eq("userId", user).eq("area", "performance"))
+          .unique();
+        if (trust) await ctx.db.patch(trust._id, { verifiedAt: Date.now() - ms });
+      });
+
+    await ageTrust(30 * 60_000);
+    expect(
+      (await t.query(api.performanceAuth.validateSession, { token: token!.token })).valid,
+    ).toBe(true);
+
+    await ageTrust(9 * 60 * 60_000);
+    expect(
+      (await t.query(api.performanceAuth.validateSession, { token: token!.token })).valid,
+    ).toBe(false);
+  });
 });
 
-describe("Phase 8 of docs/future-features/21_auth-consolidation.md: legacy password grace period", () => {
+describe("Legacy password grace period", () => {
   test("a linked account's password still works while the sunset is off", async () => {
     const t = setup();
     const advantis = await seedCompany(t, "advantis");

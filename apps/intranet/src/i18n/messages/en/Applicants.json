@@ -362,7 +362,7 @@
   "vaultLockedTitle": "Human Resources locked",
   "vaultLockedDescription": "Please re-enter the password to continue.",
   "vaultReverifyTitle": "Verify it's you to continue",
-  "vaultReverifyDescription": "Your intranet re-verification for this area has expired.",
+  "vaultReverifyDescription": "It's been a while since you last verified. Confirm it's you to continue.",
   "vaultPasswordPlaceholder": "Password",
   "vaultConfirmPasswordPlaceholder": "Confirm password",
   "vaultUnlock": "Unlock",
@@ -371,7 +371,7 @@
   "vaultPasskeyError": "Could not unlock with that passkey",
   "vaultIncorrectPassword": "Incorrect password",
   "vaultLegacyPasswordSunset": "Password unlock has moved — use your passkey instead.",
-  "vaultLegacyPasswordNotice": "We're moving vault unlock to your passkey — use that instead. Password unlock stops working on {date}.",
+  "vaultLegacyPasswordNotice": "Password unlock stops on {date}. Use your passkey from then on.",
   "vaultLegacyPasswordNoticeDismiss": "Dismiss",
   "vaultSetupTitle": "Secure your access",
   "vaultSetupDescription": "Set a password only you know — it adds an extra layer on top of your HR access.",
@@ -396,5 +396,6 @@
   "undoHireConfirm": "Undo hiring {name}?",
   "undoHireBody": "This removes the employee record that was created and puts them back in the applicant list.",
   "undoHireDone": "{name} is back in the applicant list",
-  "undoHireBlocked": "This employee record already has documents attached, so it can't be undone automatically."
+  "undoHireBlocked": "This employee record already has documents attached, so it can't be undone automatically.",
+  "vaultLockedPasskeyDescription": "Use your passkey to continue."
 }

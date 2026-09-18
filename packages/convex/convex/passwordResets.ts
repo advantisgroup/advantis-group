@@ -172,22 +172,16 @@ interface ResolvedTarget {
    * for a plain lookup. `targetLink`: the typed email matched the *linked*
    * intranet account instead of the login's own address. `adminLink`: an
    * admin-registered `passwordResetLinkedEmails` pair pointed at the
-   * account that actually resolved. `verifiedSecondaryEmail` (Phase 5): the
+   * account that actually resolved. `verifiedSecondaryEmail`: the
    * typed email matched a verified `userSecondaryEmails` row instead of a
    * primary address. Read by `requestReset` to decide whether a mismatch
    * can skip manual review. */
   resolvedVia?: "targetLink" | "adminLink" | "verifiedSecondaryEmail";
 }
 
-/** Phase 5 of docs/future-features/21_auth-consolidation.md: the intranet
- * account that has *verified* ownership of `email` as a secondary address
- * (`/settings/account`'s "Secondary emails" card), if any. Deliberately
- * ignores a still-pending row — an unverified add hasn't proven anything
- * yet, same as everywhere else `userSecondaryEmails.verifiedAt` gates
- * usability. At most one account can ever hold a *verified* row for a given
- * email (`secondaryEmails.ts`'s `isClaimedByAnotherAccount` enforces that at
- * request and verify time), so `.first()` is as safe as `.unique()` here
- * without the crash risk if that invariant is ever violated. */
+/** The account that has verified `email` as a secondary address. Pending
+ * rows don't count. `.first()` rather than `.unique()` so a broken
+ * one-owner invariant can't crash a reset. */
 async function findVerifiedSecondaryEmailOwner(
   ctx: QueryCtx | MutationCtx,
   email: string,
@@ -250,7 +244,7 @@ async function resolveTarget(
       .withIndex("by_email", (q) => q.eq("email", lookupEmail))
       .unique();
     // The typed address didn't match anyone's primary email directly — try
-    // it as a verified secondary email instead (Phase 5) before giving up.
+    // it as a verified secondary email before giving up.
     let viaVerifiedSecondary = false;
     if (!user) {
       const owner = await findVerifiedSecondaryEmailOwner(ctx, lookupEmail);
@@ -312,7 +306,7 @@ async function resolveTarget(
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", lookupEmail))
       .unique();
-    // Nor should typing a *verified secondary* address (Phase 5) — same
+    // Nor should typing a *verified secondary* address — same
     // idea, just proven by the account holder in `/settings/account`
     // instead of matching their primary intranet email exactly.
     let matchedViaSecondary = false;
@@ -429,11 +423,8 @@ export const requestReset = mutation({
     // because the system already vouches for it: either the filer is signed
     // in as the intranet account this login is linked to, the typed email
     // itself only resolved *through* a link (an admin-established
-    // `linkedUserId`, an explicit `passwordResetLinkedEmails` pair, or —
-    // Phase 5 of docs/future-features/21_auth-consolidation.md — a verified
-    // `userSecondaryEmails` row the account holder registered themselves).
-    // `selfService` itself is untouched by this — it keeps meaning exactly
-    // what it always has.
+    // `linkedUserId`, an explicit `passwordResetLinkedEmails` pair, or a
+    // verified `userSecondaryEmails` row the account holder added).
     const autoApprovedVia:
       | "callerLinkedAccount"
       | "targetLinkedAccount"

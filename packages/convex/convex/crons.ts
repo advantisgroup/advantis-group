@@ -138,9 +138,7 @@ if (process.env.DISABLE_CRONS !== "true") {
     {},
   );
 
-  // Auto-links Performance/Academy logins to their intranet account by email
-  // for rows created before this existed, or whose matching account showed
-  // up later — see docs/future-features/21_auth-consolidation.md's Phase 1.
+  // Links Performance/Academy logins whose intranet account showed up later.
   crons.daily(
     "performance: reconcile auto-links",
     { hourUTC: 4, minuteUTC: 15 },

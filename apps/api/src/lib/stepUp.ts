@@ -70,9 +70,7 @@ export async function verifyStepUp(
   method: VerifyMethod,
   code: string,
   context: StepUpContext,
-  // Phase 7 of docs/future-features/21_auth-consolidation.md: only
-  // meaningful with context === "area_reverify" — which linked area's
-  // 14-day trust this clearance also renews.
+  // Only with context "area_reverify": which area's trust this renews.
   area?: Area,
 ): Promise<VerifyResult> {
   if (method === "email_code") {
@@ -193,12 +191,7 @@ export async function destructiveStepUpHint(
   };
 }
 
-/** Coarse, human-readable browser/OS, parsed from the user-agent — never
- * used for any security decision, just what the Phase 7 trusted-devices
- * list shows and lets someone filter by. Re-derived and re-sent on every
- * visit (see `apiEvaluateDevice`), not just a device's first sighting, so a
- * device already known before this existed picks it up the next time it's
- * seen instead of staying unlabeled forever. */
+/** Display only — never used for a security decision. */
 function deviceBrowserAndOs(userAgent: string): { browser: string; os: string } {
   const ua = userAgent.toLowerCase();
   const browser = ua.includes("edg/")

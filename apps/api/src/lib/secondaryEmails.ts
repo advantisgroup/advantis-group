@@ -5,13 +5,6 @@ import type { Id } from "@advantis/convex/dataModel";
 import { getConvex, getConvexServerKey } from "./convex.js";
 import { Errors } from "./errors.js";
 
-/**
- * Phase 2 of docs/future-features/21_auth-consolidation.md — glue between
- * apps/api's session-resolved routes and Convex's server-key-gated
- * `secondaryEmails.ts` functions, same shape as `stepUp.ts`/`totp.ts` next
- * to it.
- */
-
 function serverKey(): string {
   return getConvexServerKey();
 }

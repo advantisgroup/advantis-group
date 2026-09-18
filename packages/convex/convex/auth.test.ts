@@ -1177,7 +1177,7 @@ describe("org policy edits", () => {
   });
 });
 
-describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-verification", () => {
+describe("Area re-verification", () => {
   describe("areaAccessStatus", () => {
     test("needs_verification with no prior clearance", async () => {
       const t = setup();
@@ -1412,23 +1412,83 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
       expect(devices[0]!.name).toBe("My work laptop");
     });
 
-    test("opting out of device tracking leaves new devices untrusted", async () => {
+    test("opting out forgets stored devices, stores no new ones, and treats every session as untrusted", async () => {
       const t = setup();
       await seedUser(t, { clerkUserId: "user_alice" });
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: "sess_before",
+        deviceHash: "hash1",
+      });
+
       await asUser(t, "user_alice").mutation(api.stepUp.setSecurityPreference, {
         deviceTrackingOptOut: true,
       });
+      const afterOptOut = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(afterOptOut.devices).toHaveLength(0);
 
-      await t.mutation(api.stepUp.apiEvaluateDevice, {
+      const result = await t.mutation(api.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
         deviceHash: "hash1",
       });
-
+      expect(result.newDevice).toBe(true);
       const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
-      expect(devices[0]!.trusted).toBe(false);
-      expect(devices[0]!.trustedUntil).toBeNull();
+      expect(devices).toHaveLength(0);
+    });
+
+    test("visiting again never extends a device's trust; only a step-up on it does", async () => {
+      const t = setup();
+      const userId = await seedUser(t, { clerkUserId: "user_alice" });
+      const evaluate = (deviceHash: string, sessionId: string) =>
+        t.mutation(api.stepUp.apiEvaluateDevice, {
+          serverKey,
+          clerkUserId: "user_alice",
+          sessionId,
+          deviceHash,
+        });
+
+      await evaluate("laptop", "sess_laptop");
+      // A second device starts out untrusted, and a revisit doesn't change that.
+      expect(await evaluate("phone", "sess_phone_1")).toEqual({ newDevice: true });
+      expect(await evaluate("phone", "sess_phone_2")).toEqual({ newDevice: true });
+
+      await plantEmailCode(t, "user_alice", userId, "123456", "sess_phone_2");
+      await t.mutation(api.stepUp.apiSubmitEmailCode, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: "sess_phone_2",
+        code: "123456",
+        context: "sign_in",
+      });
+
+      expect(await evaluate("phone", "sess_phone_3")).toEqual({ newDevice: false });
+      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(devices.every((d) => d.trusted)).toBe(true);
+    });
+
+    test("a device whose trust has lapsed asks for a check again", async () => {
+      const t = setup();
+      const userId = await seedUser(t, { clerkUserId: "user_alice" });
+      await t.run(async (ctx) =>
+        ctx.db.insert("knownDevices", {
+          userId,
+          deviceHash: "laptop",
+          firstSeenAt: Date.now() - 60 * 86_400_000,
+          lastSeenAt: Date.now() - 20 * 86_400_000,
+          trustedUntil: Date.now() - 86_400_000,
+        }),
+      );
+
+      const result = await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash: "laptop",
+      });
+      expect(result.newDevice).toBe(true);
     });
 
     test("renameDevice updates the name; only the device's own owner may", async () => {
@@ -1490,10 +1550,7 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
         browser: "Chrome",
         os: "macOS",
       });
-      // Two stale ones, opted out so they never get a trustedUntil.
-      await asUser(t, "user_alice").mutation(api.stepUp.setSecurityPreference, {
-        deviceTrackingOptOut: true,
-      });
+      // Two more that never passed a step-up, so never earned trust.
       await t.mutation(api.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
@@ -1583,7 +1640,7 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
   });
 });
 
-describe("Phase 8 of docs/future-features/21_auth-consolidation.md: legacy password grace period", () => {
+describe("Legacy password grace period", () => {
   const basePolicy = {
     requireMfaScope: "off" as const,
     requireMfaRetroactive: false,
@@ -1644,6 +1701,37 @@ describe("Phase 8 of docs/future-features/21_auth-consolidation.md: legacy passw
     });
     const afterUnrelatedChange = await t.run(async (ctx) => ctx.db.query("authPolicy").first());
     expect(afterUnrelatedChange!.performanceLegacyPasswordSunsetSetAt).toBe(setAt);
+  });
+
+  test("shortening the grace period can't end a running clock within a day", async () => {
+    const t = setup();
+    await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+    const admin = asUser(t, "user_admin");
+    await admin.mutation(api.stepUp.setOrgPolicy, {
+      ...basePolicy,
+      performanceLegacyPasswordSunsetEnabled: true,
+      applicantVaultLegacyPasswordSunsetEnabled: false,
+    });
+    await t.run(async (ctx) => {
+      const row = await ctx.db.query("authPolicy").first();
+      await ctx.db.patch(row!._id, { performanceLegacyPasswordSunsetSetAt: Date.now() - 20 * DAY });
+    });
+
+    await expect(
+      admin.mutation(api.stepUp.setOrgPolicy, {
+        ...basePolicy,
+        performanceLegacyPasswordSunsetEnabled: true,
+        applicantVaultLegacyPasswordSunsetEnabled: false,
+        legacyPasswordGraceDays: 10,
+      }),
+    ).rejects.toThrow();
+
+    await admin.mutation(api.stepUp.setOrgPolicy, {
+      ...basePolicy,
+      performanceLegacyPasswordSunsetEnabled: true,
+      applicantVaultLegacyPasswordSunsetEnabled: false,
+      legacyPasswordGraceDays: 25,
+    });
   });
 
   describe("legacyPasswordStandard", () => {

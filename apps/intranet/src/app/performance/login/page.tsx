@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { useAuth } from "@clerk/nextjs";
 import { useAction, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
-import { LineChart, Loader2, ShieldCheck, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 
 import { StepUpForm } from "@/components/auth/StepUpForm";
@@ -17,66 +18,87 @@ import { PerformanceBrandMark } from "@/components/performance/PerformanceBrandM
 import { usePerformanceCompanySlug } from "@/components/performance/PerformanceCompanyProvider";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { setPerformanceToken } from "@/lib/performanceAuth";
 
-/**
- * Phase 8 of docs/future-features/21_auth-consolidation.md: a persistent,
- * dismissible notice — not the hard block above, since the standalone
- * password is still valid throughout the grace period. Dismissal is scoped
- * to this specific deadline (in localStorage) so re-enabling the sunset
- * later, with a new deadline, shows it again rather than staying silenced
- * forever from one earlier dismissal.
- */
-function LegacyPasswordSunsetNotice() {
+const NOTICE_DISMISSED_KEY = "performance-legacy-password-notice-dismissed";
+
+function LoginShell({
+  title,
+  intro,
+  children,
+}: {
+  title: string;
+  intro?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+      <div className="w-full max-w-sm">
+        <div className="flex justify-center">
+          <PerformanceBrandMark />
+        </div>
+        <h1 className="mt-10 text-center font-display text-2xl font-semibold tracking-tight">
+          {title}
+        </h1>
+        {intro && (
+          <p className="mt-2 text-center text-sm text-muted-foreground text-pretty">{intro}</p>
+        )}
+        <div className="mt-8">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// Dismissal is keyed to the deadline itself, so a later, different deadline
+// shows again instead of staying silenced by an old dismissal.
+function LegacyPasswordNotice() {
   const t = useTranslations("Performance");
   const format = useFormatter();
   const notice = useQuery(api.performanceAuth.legacyPasswordSunsetNotice);
-  const [dismissedDeadline, setDismissedDeadline] = useState<number | null>(null);
+  const [dismissed, setDismissed] = useState<number | null>(null);
 
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem("performance-legacy-password-notice-dismissed");
-      if (raw) setDismissedDeadline(Number(raw));
+      const raw = window.localStorage.getItem(NOTICE_DISMISSED_KEY);
+      if (raw) setDismissed(Number(raw));
     } catch {
-      // Private window or blocked storage — the notice just shows every visit.
+      // Blocked storage just means the notice shows every visit.
     }
   }, []);
 
-  if (!notice?.enabled || notice.deadlineAt === null) return null;
-  if (dismissedDeadline === notice.deadlineAt) return null;
+  const deadline = notice?.deadlineAt ?? null;
+  if (deadline === null || deadline < Date.now() || dismissed === deadline) return null;
 
   function dismiss() {
-    if (!notice?.deadlineAt) return;
-    setDismissedDeadline(notice.deadlineAt);
+    setDismissed(deadline);
     try {
-      window.localStorage.setItem(
-        "performance-legacy-password-notice-dismissed",
-        String(notice.deadlineAt),
-      );
+      window.localStorage.setItem(NOTICE_DISMISSED_KEY, String(deadline));
     } catch {
-      // Nothing to persist across visits — still dismisses for this one.
+      // Still dismissed for this visit.
     }
   }
 
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2.5 text-xs text-foreground">
-      <span className="min-w-0 flex-1">
+    <p className="flex items-start gap-2 text-[13px] text-muted-foreground">
+      <span className="min-w-0 flex-1 text-pretty">
         {t("loginLegacyPasswordNotice", {
-          date: format.dateTime(new Date(notice.deadlineAt), { day: "2-digit", month: "short" }),
+          date: format.dateTime(new Date(deadline), {
+            day: "numeric",
+            month: "long",
+          }),
         })}
       </span>
       <button
         type="button"
         aria-label={t("loginLegacyPasswordNoticeDismiss")}
         onClick={dismiss}
-        className="shrink-0 rounded-full p-0.5 text-muted-foreground hover:bg-muted"
+        className="-mr-1 shrink-0 rounded-md p-1 hover:bg-muted hover:text-foreground"
       >
         <X className="size-3.5" />
       </button>
-    </div>
+    </p>
   );
 }
 
@@ -84,22 +106,16 @@ export default function PerformanceLoginPage() {
   const t = useTranslations("Performance");
   const router = useRouter();
   const slug = usePerformanceCompanySlug();
+  const { isLoaded: clerkLoaded, isSignedIn } = useAuth();
   const login = useAction(api.performanceAuth.login);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  // Only offered once the password has actually been got wrong.
+  // "Forgot password" only shows up once a password has actually been wrong.
   const [attemptFailed, setAttemptFailed] = useState(false);
 
-  // Phase 3 of docs/future-features/21_auth-consolidation.md: someone whose
-  // Performance login is linked to their intranet account, and who's
-  // already signed into the intranet in this browser, never needs to see a
-  // password field at all — `usePerformanceSession` resolves them straight
-  // from their Clerk identity (see `performanceAuth.ts`'s
-  // `resolveClerkLinkedLogin`), the same way it already does for every
-  // other Performance page. Bounce straight past the login form instead of
-  // asking for a credential that was never required.
+  // A linked intranet account that's already signed in never needs this form.
   const { session } = usePerformanceSession();
   useEffect(() => {
     if (session?.valid) router.replace("/performance");
@@ -127,118 +143,111 @@ export default function PerformanceLoginPage() {
     }
   }
 
-  // Undefined while `validateSession` is still in flight, or `valid` while
-  // the redirect above fires — either way, nothing worth rendering yet.
   if (session === undefined || session.valid) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="size-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  // Phase 7 of docs/future-features/21_auth-consolidation.md: this Clerk
-  // identity IS linked to a Performance login, but its 14-day
-  // re-verification window lapsed — a password form would be a dead end for
-  // an account that may never have set one. `validateSession` is a live
-  // Convex query, so clearing this re-renders straight into the redirect
-  // effect above once it does, with no manual refetch needed.
+  // Linked, but the re-verification window lapsed. `validateSession` is live,
+  // so passing this re-renders straight into the redirect above.
   if (session.needsAreaStepUp) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="items-center text-center">
-            <PerformanceBrandMark className="mb-4" />
-            <ShieldCheck className="mb-2 size-6 text-primary" />
-            <CardTitle>{t("reverifyTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <StepUpForm
-              availableMethods={session.availableMethods}
-              context="area_reverify"
-              area="performance"
-              // No-op: `validateSession` above is a live query, so clearing
-              // this re-renders into the redirect effect on its own.
-              onVerified={() => {}}
-            />
-          </CardContent>
-        </Card>
-      </div>
+      <LoginShell title={t("reverifyTitle")}>
+        <StepUpForm
+          availableMethods={session.availableMethods}
+          context="area_reverify"
+          area="performance"
+          onVerified={() => {}}
+        />
+      </LoginShell>
     );
   }
 
+  // Only Advantis logins can be linked to an intranet account. Someone
+  // already signed into the intranet and still here isn't linked, so the
+  // button would only bring them straight back.
+  const offerIntranet = slug === "advantis" && clerkLoaded && !isSignedIn;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="items-center text-center">
-          <PerformanceBrandMark className="mb-4" />
-          <CardTitle className="flex items-center gap-2">
-            <LineChart className="h-5 w-5 text-primary" />
-            {t("loginTitle")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">{t("loginIntro")}</p>
-          {/* Only Advantis logins can ever be linked to an intranet account
-              (see `showIntranetLink` in LoginDialogs.tsx) — shown to everyone
-              on that tenant rather than only to accounts we know are linked,
-              since `requestReset`/`resolveTarget` deliberately never reveals
-              that over the wire (no account-existence oracle). */}
-          {slug === "advantis" && (
-            <>
-              <p className="rounded-lg border border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                {t("loginIntranetHint")}{" "}
-                <Link href="/performance" className="font-medium underline underline-offset-2">
-                  {t("loginIntranetLink")}
-                </Link>
-              </p>
-              <LegacyPasswordSunsetNotice />
-            </>
-          )}
-          <div className="space-y-2">
+    <LoginShell title={t("loginTitle")} intro={t("loginIntro")}>
+      <div className="space-y-5">
+        {offerIntranet && (
+          <>
+            <Button variant="outline" className="h-10 w-full" asChild>
+              <a href={`/sign-in?redirect_url=${encodeURIComponent("/performance")}`}>
+                {t("loginIntranetLink")}
+              </a>
+            </Button>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <div className="h-px flex-1 bg-border" />
+              {t("loginOr")}
+              <div className="h-px flex-1 bg-border" />
+            </div>
+          </>
+        )}
+
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void submit();
+          }}
+        >
+          <div className="space-y-1.5">
             <Label htmlFor="performance-email">{t("emailLabel")}</Label>
             <Input
               id="performance-email"
               type="email"
               autoComplete="username"
+              className="h-10"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void submit();
-              }}
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="performance-password">{t("passwordLabel")}</Label>
             <Input
               id="performance-password"
               type="password"
               autoComplete="current-password"
+              className="h-10"
               value={password}
+              aria-invalid={!!error}
               onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void submit();
-              }}
             />
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
           <Button
-            className="w-full"
+            type="submit"
+            className="h-10 w-full"
             disabled={submitting || !email.trim() || !password}
-            onClick={() => void submit()}
           >
+            {submitting && <Loader2 className="animate-spin" />}
             {t("loginSubmit")}
           </Button>
-          {attemptFailed && (
-            <ForgotPasswordPanel scope="performance" email={email} companySlug={slug} />
-          )}
-          <p className="text-center text-sm text-muted-foreground">
-            <Link href="/performance/setup" className="underline underline-offset-4">
-              {t("setupLink")}
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+        </form>
+
+        {attemptFailed && (
+          <ForgotPasswordPanel scope="performance" email={email} companySlug={slug} />
+        )}
+        {slug === "advantis" && <LegacyPasswordNotice />}
+
+        <p className="pt-2 text-center text-[13px] text-muted-foreground">
+          <Link
+            href="/performance/setup"
+            className="underline decoration-muted-foreground/50 underline-offset-4 hover:text-foreground"
+          >
+            {t("setupLink")}
+          </Link>
+        </p>
+      </div>
+    </LoginShell>
   );
 }
