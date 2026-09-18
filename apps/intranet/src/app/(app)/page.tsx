@@ -1,19 +1,21 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Building2,
-  ChevronDown,
-  ChevronUp,
   CalendarPlus,
   Command,
+  EyeOff,
   Heart,
   Megaphone,
   PhoneCall,
+  Plus,
+  RotateCcw,
   ShieldCheck,
   Settings2,
   Upload,
@@ -42,9 +44,10 @@ import {
 } from "@/components/dashboard/ForYouWidgets";
 import { AiBriefCard } from "@/components/dashboard/AiBriefCard";
 import { AiNavigateCard } from "@/components/dashboard/AiNavigateCard";
+import { EditableGrid, type GridWidget } from "@/components/dashboard/EditableGrid";
 import { GreetingHeader } from "@/components/dashboard/GreetingHeader";
 import { NeedsYouPanel, TodayPanel } from "@/components/dashboard/NeedsYou";
-import { DashSurface } from "@/components/dashboard/primitives";
+import { type DashCardSize } from "@/components/dashboard/primitives";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import {
   AnnouncementsCard,
@@ -62,25 +65,8 @@ import {
   useIsManager,
 } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuItem,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 const now = Date.now();
@@ -110,46 +96,21 @@ const CARD_IDS = [
 ] as const;
 type CardId = (typeof CARD_IDS)[number];
 
+const DEFAULT_SIZES: Partial<Record<CardId, DashCardSize>> = { celebrations: "wide" };
+
 interface Widget {
   id: CardId;
   node: ReactNode;
-  wide?: boolean;
 }
 
-function widget(id: CardId, node: ReactNode, wide?: boolean): Widget {
-  return { id, node, wide };
-}
-
-function WidgetGrid({
-  widgets,
-  density,
-}: {
-  widgets: Widget[];
-  density: "comfortable" | "compact";
-}) {
-  return (
-    <DashSurface
-      className={cn(
-        "[&>*]:opacity-0 [&>*]:animate-[fadeInUp_0.5s_ease-out_forwards]",
-        density === "compact" &&
-          "[&_[data-dashboard-card-header]]:pt-3 [&_[data-dashboard-card-content]]:pb-1.5 [&_[data-dashboard-row]]:py-1.5",
-      )}
-    >
-      {widgets.map((w, i) => (
-        <div
-          key={w.id}
-          className={cn(w.wide && "sm:col-span-2")}
-          style={{ animationDelay: `${0.04 * i}s` }}
-        >
-          {w.node}
-        </div>
-      ))}
-    </DashSurface>
-  );
+function widget(id: CardId, node: ReactNode): Widget {
+  return { id, node };
 }
 
 export default function DashboardPage() {
   const t = useTranslations("Dashboard");
+  const handleError = useErrorHandler();
+  const isMobile = useIsMobile();
   const user = useCurrentUser();
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
@@ -171,14 +132,26 @@ export default function DashboardPage() {
   });
   const newWikiPages = useLatestWikiPages();
   const prefs = useQuery(api.userPreferences.getMine);
-  const setPrefs = useMutation(api.userPreferences.setMine);
-  const [arrangeOpen, setArrangeOpen] = useState(false);
+  const setPrefs = useMutation(api.userPreferences.setMine).withOptimisticUpdate((store, patch) => {
+    const current = store.getQuery(api.userPreferences.getMine, {});
+    if (current) store.setQuery(api.userPreferences.getMine, {}, { ...current, ...patch });
+  });
+  const save = (patch: Parameters<typeof setPrefs>[0]) => void setPrefs(patch).catch(handleError);
+
+  const [editing, setEditing] = useState(false);
+  useEffect(() => {
+    if (!editing) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setEditing(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [editing]);
 
   const hiddenCards = useMemo(
     () => new Set((prefs?.hiddenDashboardCards ?? []) as CardId[]),
     [prefs],
   );
-  const dashboardDensity = prefs?.dashboardDensity ?? "comfortable";
   const savedCardOrder = [...new Set(prefs?.dashboardCardOrder ?? [])].filter((id): id is CardId =>
     CARD_IDS.includes(id as CardId),
   );
@@ -190,11 +163,28 @@ export default function DashboardPage() {
   const orderWidgets = (widgets: Widget[]) =>
     [...widgets].sort((a, b) => (cardRank.get(a.id) ?? 0) - (cardRank.get(b.id) ?? 0));
   const showCard = (id: CardId) => !hiddenCards.has(id);
-  async function toggleCard(id: CardId) {
+  const sizeOf = (id: CardId): DashCardSize =>
+    (prefs?.dashboardCardSizes?.[id] as DashCardSize | undefined) ?? DEFAULT_SIZES[id] ?? "normal";
+
+  function setHidden(id: CardId, hidden: boolean) {
     const next = new Set(hiddenCards);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    await setPrefs({ hiddenDashboardCards: [...next] });
+    if (hidden) next.add(id);
+    else next.delete(id);
+    save({ hiddenDashboardCards: [...next] });
+  }
+
+  /** A section's new order, slotted back into the one global order — cards
+   * from other sections (and hidden ones) keep their places. */
+  function reorderSection(ids: string[]) {
+    const moved = new Set(ids);
+    const queue = [...ids];
+    save({
+      dashboardCardOrder: orderedCardIds.map((id) => (moved.has(id) ? (queue.shift() ?? id) : id)),
+    });
+  }
+
+  function resizeCard(id: string, size: DashCardSize) {
+    save({ dashboardCardSizes: { ...(prefs?.dashboardCardSizes ?? {}), [id]: size } });
   }
 
   const todaysEvents = useMemo(() => {
@@ -231,45 +221,47 @@ export default function DashboardPage() {
     adminactivity: t("recentActivityTitle"),
   };
 
-  const forYouWidgets = orderWidgets(
-    [
-      widget("chats", <ChatsCard />),
-      widget("myday", <MyDayCard />),
-      widget("myweek", <MyWeekCard />),
-      widget("mytickets", <MyTicketsCard />),
-      ...(profileGaps.length
-        ? [widget("profilecompletion", <ProfileCompletionCard missingFields={profileGaps} />)]
-        : []),
-      ...(hasMyPerformance ? [widget("myperformance", <MyPerformanceCard />)] : []),
-    ].filter((w) => showCard(w.id)),
-  );
+  const toGrid = (widgets: Widget[]): GridWidget[] =>
+    orderWidgets(widgets.filter((w) => showCard(w.id))).map((w) => ({
+      id: w.id,
+      label: cardLabels[w.id],
+      node: w.node,
+      size: sizeOf(w.id),
+    }));
+
+  const forYouWidgets = toGrid([
+    widget("chats", <ChatsCard />),
+    widget("myday", <MyDayCard />),
+    widget("myweek", <MyWeekCard />),
+    widget("mytickets", <MyTicketsCard />),
+    ...(profileGaps.length
+      ? [widget("profilecompletion", <ProfileCompletionCard missingFields={profileGaps} />)]
+      : []),
+    ...(hasMyPerformance ? [widget("myperformance", <MyPerformanceCard />)] : []),
+  ]);
 
   const hasNewWiki = (newWikiPages?.length ?? 0) > 0;
   const showWikiCarousel = hasNewWiki && showCard("newwiki");
 
-  const teamCompanyWidgets = orderWidgets(
-    [
-      widget("events", <EventsCard />),
-      widget("announcements", <AnnouncementsCard />),
-      widget("whosout", <WhosOutCard />),
-      widget("celebrations", <CelebrationsCard />, true),
-    ].filter((w) => showCard(w.id)),
-  );
+  const teamCompanyWidgets = toGrid([
+    widget("events", <EventsCard />),
+    widget("announcements", <AnnouncementsCard />),
+    widget("whosout", <WhosOutCard />),
+    widget("celebrations", <CelebrationsCard />),
+  ]);
 
-  const adminWidgets = orderWidgets(
-    [
-      widget("managerbrief", <ManagerBriefCard />),
-      ...(user.teams.length ? [widget("teamavailability", <TeamAvailabilityCard />)] : []),
-      ...(hasActivityCapability ? [widget("teamstatus", <TeamStatusCard />)] : []),
-      ...(hasTeamPerformance ? [widget("teamperformance", <TeamPerformanceCard />)] : []),
-      widget("errormeasures", <OpenMeasuresCard />),
-      widget("adminstats", <AdminStatsCard />),
-      ...(hasApplicantPipelineHealth
-        ? [widget("applicantpipeline", <ApplicantPipelineHealthCard />)]
-        : []),
-      ...(isAdmin ? [widget("adminactivity", <RecentActivityCard />)] : []),
-    ].filter((w) => showCard(w.id)),
-  );
+  const adminWidgets = toGrid([
+    widget("managerbrief", <ManagerBriefCard />),
+    ...(user.teams.length ? [widget("teamavailability", <TeamAvailabilityCard />)] : []),
+    ...(hasActivityCapability ? [widget("teamstatus", <TeamStatusCard />)] : []),
+    ...(hasTeamPerformance ? [widget("teamperformance", <TeamPerformanceCard />)] : []),
+    widget("errormeasures", <OpenMeasuresCard />),
+    widget("adminstats", <AdminStatsCard />),
+    ...(hasApplicantPipelineHealth
+      ? [widget("applicantpipeline", <ApplicantPipelineHealthCard />)]
+      : []),
+    ...(isAdmin ? [widget("adminactivity", <RecentActivityCard />)] : []),
+  ]);
 
   const availableCardIds = CARD_IDS.filter((id) => {
     if (id === "aibrief") return aiEnabled;
@@ -285,78 +277,123 @@ export default function DashboardPage() {
     }
     return true;
   });
-  const reorderableCardIds = orderedCardIds.filter(
-    (id) => id !== "newwiki" && id !== "aibrief" && availableCardIds.includes(id),
+  const hiddenAvailable = availableCardIds.filter((id) => hiddenCards.has(id));
+  const customized =
+    hiddenCards.size > 0 ||
+    savedCardOrder.length > 0 ||
+    Object.keys(prefs?.dashboardCardSizes ?? {}).length > 0;
+
+  // Everything that isn't a card steps back while editing, so the cards are
+  // clearly the thing being worked on.
+  const inert = cn(
+    "transition-[opacity,filter] duration-300",
+    editing && "pointer-events-none select-none opacity-35 blur-[1.5px]",
   );
 
-  async function moveCard(id: CardId, direction: -1 | 1) {
-    const currentIndex = orderedCardIds.indexOf(id);
-    const visibleIds = new Set(reorderableCardIds);
-    let targetIndex = currentIndex + direction;
-    while (
-      targetIndex >= 0 &&
-      targetIndex < orderedCardIds.length &&
-      !visibleIds.has(orderedCardIds[targetIndex])
-    ) {
-      targetIndex += direction;
-    }
-    if (targetIndex < 0 || targetIndex >= orderedCardIds.length) return;
-    const next = [...orderedCardIds];
-    [next[currentIndex], next[targetIndex]] = [next[targetIndex], next[currentIndex]];
-    await setPrefs({ dashboardCardOrder: next });
+  /** A block that isn't a movable card (AI brief, wiki) can still be hidden. */
+  function hideable(id: CardId, node: ReactNode) {
+    return (
+      <div className="relative">
+        <div className={cn(editing && "pointer-events-none select-none")}>{node}</div>
+        {editing && (
+          <button
+            type="button"
+            onClick={() => setHidden(id, true)}
+            aria-label={t("editHide", { name: cardLabels[id] })}
+            title={t("editHide", { name: cardLabels[id] })}
+            className="absolute right-2 top-2 z-10 grid size-8 place-items-center rounded-lg border border-border/70 bg-background/95 text-muted-foreground shadow-sm transition-colors hover:bg-destructive/10 hover:text-destructive sm:size-7"
+          >
+            <EyeOff className="size-3.5" />
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  function section(icon: ReactNode, title: string, widgets: GridWidget[]) {
+    if (widgets.length === 0) return null;
+    return (
+      <section className="mb-6 sm:mb-8">
+        <SectionHeading icon={icon} title={title} />
+        <EditableGrid
+          widgets={widgets}
+          editing={editing}
+          onReorder={reorderSection}
+          onResize={resizeCard}
+          onHide={(id) => setHidden(id as CardId, true)}
+        />
+      </section>
+    );
   }
 
   return (
     <div className="mx-auto max-w-6xl" data-tour="tour-dashboard-main">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <GreetingHeader />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t("customize")}
-              className="text-muted-foreground"
-              data-tour="tour-dashboard-customize"
-            >
-              <Settings2 />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{t("customize")}</DropdownMenuLabel>
-            {availableCardIds.map((id) => (
-              <DropdownMenuCheckboxItem
-                key={id}
-                checked={showCard(id)}
-                onCheckedChange={() => void toggleCard(id)}
-              >
-                {cardLabels[id]}
-              </DropdownMenuCheckboxItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>{t("cardDensity")}</DropdownMenuLabel>
-            <DropdownMenuRadioGroup
-              value={dashboardDensity}
-              onValueChange={(value) =>
-                void setPrefs({ dashboardDensity: value as "comfortable" | "compact" })
-              }
-            >
-              <DropdownMenuRadioItem value="comfortable">
-                {t("densityComfortable")}
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="compact">{t("densityCompact")}</DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setArrangeOpen(true)}>
-              {t("arrangeCards")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <AnimatePresence>
+        {editing && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="sticky top-0 z-30 -mx-1 mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-sky-500/30 bg-background/90 px-4 py-3 shadow-lg shadow-black/5 backdrop-blur-xl"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">{t("editTitle")}</p>
+              <p className="text-xs text-muted-foreground">
+                {isMobile ? t("editHintTouch") : t("editHint")}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {customized && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    save({
+                      hiddenDashboardCards: [],
+                      dashboardCardOrder: [],
+                      dashboardCardSizes: {},
+                    })
+                  }
+                >
+                  <RotateCcw className="mr-1.5 size-3.5" />
+                  {t("editReset")}
+                </Button>
+              )}
+              <Button size="sm" onClick={() => setEditing(false)}>
+                {t("done")}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="mb-5 flex items-start justify-between gap-3 sm:mb-6">
+        <div className={inert}>
+          <GreetingHeader />
+        </div>
+        {!editing && (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t("customize")}
+            title={t("customize")}
+            className="-mr-2 -mt-1 shrink-0 text-muted-foreground sm:mr-0 sm:mt-0 sm:size-8"
+            data-tour="tour-dashboard-customize"
+            onClick={() => setEditing(true)}
+          >
+            <Settings2 className="size-4" />
+          </Button>
+        )}
       </div>
 
-      {/* Quick actions */}
+      {/* Quick actions — a swipeable row on phones, fading out at the edge
+          so it reads as "there's more" rather than cut off. */}
       <div
-        className="-mx-1 mb-6 flex items-center gap-2 overflow-x-auto px-1 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
+        className={cn(
+          "-mx-4 mb-5 flex items-center gap-2 overflow-x-auto px-4 pb-1 [-webkit-overflow-scrolling:touch] [mask-image:linear-gradient(to_right,black_calc(100%-32px),transparent)] [scrollbar-width:none] sm:mx-0 sm:mb-6 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 sm:[mask-image:none] [&::-webkit-scrollbar]:hidden",
+          inert,
+        )}
         data-tour="tour-dashboard-actions"
       >
         {isManager && (
@@ -397,87 +434,67 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {aiEnabled && showCard("aibrief") && (
-        <div className="mb-4 grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-          <AiBriefCard />
-          <AiNavigateCard />
-        </div>
-      )}
+      {aiEnabled &&
+        showCard("aibrief") &&
+        hideable(
+          "aibrief",
+          <div className="mb-3 grid gap-3 sm:mb-4 sm:gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+            <AiBriefCard />
+            <AiNavigateCard />
+          </div>,
+        )}
 
-      <div className="mb-8 grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div
+        className={cn(
+          "mb-6 grid gap-3 sm:mb-8 sm:gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]",
+          inert,
+        )}
+      >
         <NeedsYouPanel />
         <TodayPanel events={todaysEvents} />
       </div>
 
-      {forYouWidgets.length > 0 && (
-        <section className="mb-8">
-          <SectionHeading icon={<Heart />} title={t("sectionForYou")} />
-          <WidgetGrid widgets={forYouWidgets} density={dashboardDensity} />
-        </section>
-      )}
+      {section(<Heart />, t("sectionForYou"), forYouWidgets)}
 
       {showWikiCarousel && (
-        <section className="mb-8">
-          <WikiCarousel />
-        </section>
+        <section className="mb-6 sm:mb-8">{hideable("newwiki", <WikiCarousel />)}</section>
       )}
 
-      {teamCompanyWidgets.length > 0 && (
-        <section className="mb-8">
-          <SectionHeading icon={<Building2 />} title={t("sectionTeamCompany")} />
-          <WidgetGrid widgets={teamCompanyWidgets} density={dashboardDensity} />
-        </section>
-      )}
+      {section(<Building2 />, t("sectionTeamCompany"), teamCompanyWidgets)}
 
-      {isManager && adminWidgets.length > 0 && (
-        <section className="mb-8">
-          <SectionHeading icon={<ShieldCheck />} title={t("sectionAdmin")} />
-          <WidgetGrid widgets={adminWidgets} density={dashboardDensity} />
-        </section>
-      )}
+      {isManager && section(<ShieldCheck />, t("sectionAdmin"), adminWidgets)}
 
-      <Dialog open={arrangeOpen} onOpenChange={setArrangeOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("arrangeCards")}</DialogTitle>
-            <DialogDescription>{t("arrangeCardsDescription")}</DialogDescription>
-          </DialogHeader>
-          <div className="divide-y divide-border/60 rounded-lg border border-border/70">
-            {reorderableCardIds.map((id, index) => (
-              <div key={id} className="flex items-center gap-2 px-3 py-2">
-                <span className="min-w-0 flex-1 truncate text-sm font-medium">
+      {/* Hidden cards wait here while editing, one tap from coming back. */}
+      <AnimatePresence>
+        {editing && hiddenAvailable.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            className="mb-8 rounded-2xl border border-dashed border-border p-4"
+          >
+            <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
+              <EyeOff className="size-4 text-muted-foreground" />
+              {t("editHiddenTitle")}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {hiddenAvailable.map((id) => (
+                <motion.button
+                  key={id}
+                  layout
+                  type="button"
+                  onClick={() => setHidden(id, false)}
+                  aria-label={t("editShow", { name: cardLabels[id] })}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-card px-3 text-sm font-medium transition-colors hover:border-sky-500/50 hover:bg-sky-500/[0.07]"
+                >
+                  <Plus className="size-3.5 text-muted-foreground" />
                   {cardLabels[id]}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t("moveCardUp", { name: cardLabels[id] })}
-                  disabled={index === 0}
-                  onClick={() => void moveCard(id, -1)}
-                >
-                  <ChevronUp className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t("moveCardDown", { name: cardLabels[id] })}
-                  disabled={index === reorderableCardIds.length - 1}
-                  onClick={() => void moveCard(id, 1)}
-                >
-                  <ChevronDown className="size-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button type="button" onClick={() => setArrangeOpen(false)}>
-              {t("done")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                </motion.button>
+              ))}
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

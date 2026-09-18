@@ -46,14 +46,14 @@ export function GreetingHeader() {
   return (
     <div>
       <p className="text-sm font-medium capitalize text-muted-foreground">{todayLabel}</p>
-      <h1 className="mt-1 font-display text-3xl font-bold tracking-tight">
+      <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-balance sm:text-3xl">
         {t(greeting.titleKey, { name })}
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">{t(greeting.subtitleKey, { name })}</p>
       {nextAbsence && (
         <Link
           href="/clockodo/requests"
-          className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border/70 px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+          className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full border border-border/70 px-3 py-1.5 text-xs sm:py-1 font-medium text-muted-foreground transition-colors hover:bg-accent"
         >
           <Plane className="size-3.5 text-primary" />
           {t("nextAbsence", {
