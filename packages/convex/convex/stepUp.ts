@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Id } from "./_generated/dataModel";
-import { internalMutation, query } from "./_generated/server";
+import { internalMutation, query, type MutationCtx } from "./_generated/server";
 import { sha256hex } from "./activity/lib/crypto";
 import {
   effectiveRole,
@@ -418,11 +418,37 @@ export const apiDestructiveGate = query({
 
 // --- Device/risk signal (see apps/api's device-evaluate route) ---------------
 
+/** The Clerk client is the real key. A row with only a hash predates it and
+ * gets adopted by the first client that matches, so existing devices keep
+ * their trust instead of all looking new at once. */
+async function findKnownDevice(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  clerkClientId: string | undefined,
+  deviceHash: string,
+) {
+  if (clerkClientId) {
+    const byClient = await ctx.db
+      .query("knownDevices")
+      .withIndex("by_user_client", (q) => q.eq("userId", userId).eq("clerkClientId", clerkClientId))
+      .first();
+    if (byClient) return byClient;
+  }
+  const byHash = await ctx.db
+    .query("knownDevices")
+    .withIndex("by_user_hash", (q) => q.eq("userId", userId).eq("deviceHash", deviceHash))
+    .collect();
+  return byHash.find((d) => !clerkClientId || d.clerkClientId === undefined) ?? null;
+}
+
 export const apiEvaluateDevice = mutation({
   args: {
     serverKey: v.string(),
     clerkUserId: v.string(),
     sessionId: v.string(),
+    // The Clerk client this session belongs to, as looked up server-side by
+    // apps/api. Absent only if that lookup failed; the hash still works then.
+    clerkClientId: v.optional(v.string()),
     deviceHash: v.string(),
     browser: v.optional(v.string()),
     os: v.optional(v.string()),
@@ -441,16 +467,13 @@ export const apiEvaluateDevice = mutation({
     let deviceId: Id<"knownDevices"> | undefined;
     let flagAsNew = true;
     if (!(await hasOptedOutOfDeviceTracking(ctx, user._id))) {
-      const existing = await ctx.db
-        .query("knownDevices")
-        .withIndex("by_user_hash", (q) =>
-          q.eq("userId", user._id).eq("deviceHash", args.deviceHash),
-        )
-        .unique();
+      const existing = await findKnownDevice(ctx, user._id, args.clerkClientId, args.deviceHash);
       if (existing) {
         deviceId = existing._id;
         // Leaves `trustedUntil` alone: only passing a step-up earns trust.
         await ctx.db.patch(existing._id, {
+          clerkClientId: existing.clerkClientId ?? args.clerkClientId,
+          deviceHash: args.deviceHash,
           lastSeenAt: now,
           browser: args.browser,
           os: args.os,
@@ -467,6 +490,7 @@ export const apiEvaluateDevice = mutation({
         flagAsNew = hasOtherDevice !== null;
         deviceId = await ctx.db.insert("knownDevices", {
           userId: user._id,
+          clerkClientId: args.clerkClientId,
           deviceHash: args.deviceHash,
           firstSeenAt: now,
           lastSeenAt: now,

@@ -583,14 +583,17 @@ export default defineSchema({
     .index("by_tokenHash", ["tokenHash"])
     .index("by_user", ["userId"]),
 
-  /** Minimal "new device" risk signal — a hash of a coarse IP network prefix
-   * + normalized user-agent, never the raw IP. Purged periodically (see
-   * crons.ts) — this is a rolling recognition list, not a permanent log.
+  /** One browser this account signs in from, keyed by its Clerk client — the
+   * browser-level record Clerk keeps across sign-ins, IP changes and browser
+   * updates. `deviceHash` (coarse IP prefix + user-agent, never the raw IP)
+   * is the older key; rows without a `clerkClientId` get adopted by the first
+   * client seen with a matching hash. Purged periodically (see crons.ts).
    *
    * `trustedUntil` is only earned by passing a step-up in a session on this
    * device (see `recordVerified`); visiting again never extends it. */
   knownDevices: defineTable({
     userId: v.id("users"),
+    clerkClientId: v.optional(v.string()),
     deviceHash: v.string(),
     firstSeenAt: v.number(),
     lastSeenAt: v.number(),
@@ -600,6 +603,7 @@ export default defineSchema({
     trustedUntil: v.optional(v.number()),
   })
     .index("by_user_hash", ["userId", "deviceHash"])
+    .index("by_user_client", ["userId", "clerkClientId"])
     .index("by_lastSeenAt", ["lastSeenAt"]),
 
   /** One-shot result of the device check for a given session, written by

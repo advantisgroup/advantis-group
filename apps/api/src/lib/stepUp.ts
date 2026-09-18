@@ -4,6 +4,7 @@ import { api } from "@advantis/convex/api";
 import { ConvexError } from "convex/values";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/server";
 
+import { getClerkClient } from "./clerk.js";
 import { getConvex, getConvexServerKey } from "./convex.js";
 import { verifyAuthenticationAssertion } from "./passkeys.js";
 import {
@@ -219,6 +220,22 @@ function deviceBrowserAndOs(userAgent: string): { browser: string; os: string } 
   return { browser, os };
 }
 
+/** The Clerk client (one per browser, kept across sign-ins) a session belongs
+ * to. Looked up here rather than trusted from the browser. A failed lookup
+ * falls back to the IP/user-agent hash instead of blocking sign-in. */
+async function sessionClientId(
+  clerkUserId: string,
+  sessionId: string,
+): Promise<string | undefined> {
+  try {
+    const session = await getClerkClient().sessions.getSession(sessionId);
+    return session.userId === clerkUserId ? session.clientId : undefined;
+  } catch (error) {
+    console.warn("[step-up] Clerk session lookup failed", error);
+    return undefined;
+  }
+}
+
 export async function evaluateDevice(
   clerkUserId: string,
   sessionId: string,
@@ -230,6 +247,7 @@ export async function evaluateDevice(
     serverKey: serverKey(),
     clerkUserId,
     sessionId,
+    clerkClientId: await sessionClientId(clerkUserId, sessionId),
     deviceHash: deviceHash(ip, userAgent),
     browser,
     os,
