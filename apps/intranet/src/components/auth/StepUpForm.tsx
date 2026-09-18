@@ -22,7 +22,8 @@ import { cn } from "@/lib/utils";
 // two packages' types line up — this form only ever renders/submits the
 // other three, since a passkey is never redeemed by typing a code back in.
 export type StepMethod = "email_code" | "totp" | "recovery_code" | "passkey";
-export type StepUpContext = "sign_in" | "destructive" | "admin_reverify";
+export type StepUpContext = "sign_in" | "destructive" | "admin_reverify" | "area_reverify";
+export type Area = "performance" | "applicant_vault";
 
 const RESEND_COOLDOWN_MS = 60_000;
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
@@ -93,11 +94,15 @@ async function jsonOrThrow(response: Response) {
 export function StepUpForm({
   availableMethods,
   context,
+  area,
   email,
   onVerified,
 }: {
   availableMethods: StepMethod[];
   context: StepUpContext;
+  /** Only meaningful (and only ever passed) with `context === "area_reverify"`
+   * — see docs/future-features/21_auth-consolidation.md's Phase 7. */
+  area?: Area;
   /** Only shown (masked) on the email path — the other methods never mention
    * an address, so passing it is harmless when it goes unused. */
   email?: string;
@@ -179,7 +184,7 @@ export function StepUpForm({
         await apiRequest("/auth/step-up/verify-passkey", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ flowId, response: credential, context }),
+          body: JSON.stringify({ flowId, response: credential, context, area }),
         }),
       )) as { ok: boolean; message?: string };
       if (!result.ok) {
@@ -194,7 +199,7 @@ export function StepUpForm({
     } finally {
       setSubmitting(false);
     }
-  }, [apiRequest, context, onVerified, t]);
+  }, [apiRequest, area, context, onVerified, t]);
 
   useEffect(() => {
     if (cooldownUntil <= Date.now()) return;
@@ -213,7 +218,7 @@ export function StepUpForm({
           await apiRequest("/auth/step-up/verify", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ method, code: value, context }),
+            body: JSON.stringify({ method, code: value, context, area }),
           }),
         )) as { ok: boolean; message?: string };
         if (!result.ok) {
@@ -231,7 +236,7 @@ export function StepUpForm({
         setSubmitting(false);
       }
     },
-    [apiRequest, context, method, onVerified, t],
+    [apiRequest, area, context, method, onVerified, t],
   );
 
   // Auto-submit the moment six digits land — whether typed, pasted, or filled

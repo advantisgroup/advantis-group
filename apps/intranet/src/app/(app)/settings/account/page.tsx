@@ -18,6 +18,7 @@ import { SecurityActivityCard } from "@/components/security/SecurityActivityCard
 import { SecurityPosture } from "@/components/security/SecurityPosture";
 import { SecurityPreferencesCard } from "@/components/security/SecurityPreferencesCard";
 import { SecurityStateProvider } from "@/components/security/security-state";
+import { TrustedDevicesCard } from "@/components/security/TrustedDevicesCard";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -128,6 +129,7 @@ export default function SettingsAccountPage() {
         {/* Outside the provider: both read from Clerk and Convex directly, not
             from the credential state the cards above share. */}
         <ActiveSessionsCard />
+        <TrustedDevicesCard />
 
         <SecurityActivityCard />
 

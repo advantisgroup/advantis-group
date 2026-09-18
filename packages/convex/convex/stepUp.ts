@@ -15,14 +15,23 @@ import {
 import { trackEvent } from "./lib/analytics";
 import { displayName } from "./lib/users";
 import {
+  AREA_REVERIFY_DEFAULT_DAYS,
+  AREA_REVERIFY_LEVEL,
+  areaReverifyWindowMs,
   availableMethodsFor,
   checkSatisfied,
   destructiveRequirement,
+  getAreaPreference,
   getOrDefaultPolicy,
   hasNonPasskeyVerification,
+  hasOptedOutOfDeviceTracking,
+  isAreaTrusted,
   issueEmailCode,
+  LEGACY_PASSWORD_GRACE_DEFAULT_DAYS,
+  legacyPasswordSunsetDeadline,
   LEVEL,
   passkeyWouldSatisfy,
+  recordAreaStepUp,
   recordExternalVerification,
   recordPasskeyVerification,
   resolveSignInRequirement,
@@ -48,13 +57,26 @@ const policyFieldsValidator = {
   requirePasskeyRetroactive: v.boolean(),
   gracePeriodDays: v.number(),
   exemptUserIds: v.array(v.id("users")),
+  // Phase 7 of docs/future-features/21_auth-consolidation.md.
+  areaReverifyDays: v.number(),
+  // Phase 8: whether *this* toggle is on, not when it was turned on — the
+  // handler computes `SetAt` itself, same as `mfaPolicySetAt` above.
+  performanceLegacyPasswordSunsetEnabled: v.boolean(),
+  applicantVaultLegacyPasswordSunsetEnabled: v.boolean(),
+  legacyPasswordGraceDays: v.number(),
 };
 
 // --- Org-wide policy (admin only) ---------------------------------------------
 
 export const orgPolicy = query({
   args: {},
-  returns: v.object({ ...policyFieldsValidator, updatedAt: v.number() }),
+  returns: v.object({
+    ...policyFieldsValidator,
+    // Derived, not directly settable — see `legacyPasswordSunsetDeadline`.
+    performanceLegacyPasswordSunsetDeadline: v.union(v.number(), v.null()),
+    applicantVaultLegacyPasswordSunsetDeadline: v.union(v.number(), v.null()),
+    updatedAt: v.number(),
+  }),
   handler: async (ctx) => {
     await requireAdmin(ctx);
     const policy = await getOrDefaultPolicy(ctx);
@@ -68,6 +90,17 @@ export const orgPolicy = query({
       requirePasskeyRetroactive: policy.requirePasskeyRetroactive,
       gracePeriodDays: policy.gracePeriodDays,
       exemptUserIds: policy.exemptUserIds,
+      areaReverifyDays: policy.areaReverifyDays ?? AREA_REVERIFY_DEFAULT_DAYS,
+      performanceLegacyPasswordSunsetEnabled:
+        policy.performanceLegacyPasswordSunsetEnabled === true,
+      applicantVaultLegacyPasswordSunsetEnabled:
+        policy.applicantVaultLegacyPasswordSunsetEnabled === true,
+      legacyPasswordGraceDays: policy.legacyPasswordGraceDays ?? LEGACY_PASSWORD_GRACE_DEFAULT_DAYS,
+      performanceLegacyPasswordSunsetDeadline: legacyPasswordSunsetDeadline(policy, "performance"),
+      applicantVaultLegacyPasswordSunsetDeadline: legacyPasswordSunsetDeadline(
+        policy,
+        "applicant_vault",
+      ),
       updatedAt: policy.updatedAt,
     };
   },
@@ -92,11 +125,26 @@ export const setOrgPolicy = mutation({
       !existing ||
       existing.requirePasskeyScope !== args.requirePasskeyScope ||
       existing.requirePasskeyRetroactive !== args.requirePasskeyRetroactive;
+    // Phase 8: bumped whenever the toggle itself changes, in either
+    // direction — turning it back on after turning it off restarts the
+    // clock rather than resuming the old deadline, same as the two above.
+    const performanceSunsetChanged =
+      (existing?.performanceLegacyPasswordSunsetEnabled === true) !==
+      args.performanceLegacyPasswordSunsetEnabled;
+    const applicantVaultSunsetChanged =
+      (existing?.applicantVaultLegacyPasswordSunsetEnabled === true) !==
+      args.applicantVaultLegacyPasswordSunsetEnabled;
 
     const doc = {
       ...args,
       mfaPolicySetAt: mfaChanged ? now : (existing?.mfaPolicySetAt ?? now),
       passkeyPolicySetAt: passkeyChanged ? now : (existing?.passkeyPolicySetAt ?? now),
+      performanceLegacyPasswordSunsetSetAt: performanceSunsetChanged
+        ? now
+        : (existing?.performanceLegacyPasswordSunsetSetAt ?? now),
+      applicantVaultLegacyPasswordSunsetSetAt: applicantVaultSunsetChanged
+        ? now
+        : (existing?.applicantVaultLegacyPasswordSunsetSetAt ?? now),
       updatedAt: now,
       updatedByUserId: admin._id,
     };
@@ -131,6 +179,7 @@ const contextValidator = v.union(
   v.literal("sign_in"),
   v.literal("destructive"),
   v.literal("admin_reverify"),
+  v.literal("area_reverify"),
 );
 const stepMethodValidator = v.union(
   v.literal("email_code"),
@@ -138,6 +187,7 @@ const stepMethodValidator = v.union(
   v.literal("recovery_code"),
   v.literal("passkey"),
 );
+const areaValidator = v.union(v.literal("performance"), v.literal("applicant_vault"));
 
 // --- Email code ---------------------------------------------------------------
 //
@@ -176,6 +226,11 @@ export const apiSubmitEmailCode = mutation({
     sessionId: v.string(),
     code: v.string(),
     context: contextValidator,
+    // Phase 7: only meaningful (and only ever passed) with context ===
+    // "area_reverify" — which linked area's 14-day trust this clearance
+    // should also renew, on top of the session-scoped verification every
+    // context records.
+    area: v.optional(areaValidator),
   },
   returns: v.object({ ok: v.boolean(), message: v.optional(v.string()) }),
   handler: async (ctx, args) => {
@@ -183,7 +238,12 @@ export const apiSubmitEmailCode = mutation({
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user) return { ok: false, message: "User not found" };
     const result = await verifyEmailCode(ctx, user, args.sessionId, args.code, args.context);
-    if (result.ok) return { ok: true };
+    if (result.ok) {
+      if (args.context === "area_reverify" && args.area) {
+        await recordAreaStepUp(ctx, user._id, args.area, "email_code");
+      }
+      return { ok: true };
+    }
     const message =
       result.reason === "wrong_code"
         ? `Incorrect code. ${result.attemptsLeft} attempt${result.attemptsLeft === 1 ? "" : "s"} left.`
@@ -206,6 +266,7 @@ export const apiRecordVerification = mutation({
     method: v.union(v.literal("totp"), v.literal("recovery_code")),
     ok: v.boolean(),
     context: contextValidator,
+    area: v.optional(areaValidator),
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
@@ -219,6 +280,9 @@ export const apiRecordVerification = mutation({
       ok: args.ok,
       context: args.context,
     });
+    if (args.ok && args.context === "area_reverify" && args.area) {
+      await recordAreaStepUp(ctx, user._id, args.area, args.method);
+    }
     return { ok: true };
   },
 });
@@ -235,6 +299,7 @@ export const apiRecordPasskeyStepUp = mutation({
     clerkUserId: v.string(),
     sessionId: v.string(),
     context: contextValidator,
+    area: v.optional(areaValidator),
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
@@ -242,6 +307,9 @@ export const apiRecordPasskeyStepUp = mutation({
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user) return { ok: false };
     await recordPasskeyVerification(ctx, user, args.sessionId, args.context);
+    if (args.context === "area_reverify" && args.area) {
+      await recordAreaStepUp(ctx, user._id, args.area, "passkey");
+    }
     return { ok: true };
   },
 });
@@ -336,6 +404,10 @@ export const apiEvaluateDevice = mutation({
     clerkUserId: v.string(),
     sessionId: v.string(),
     deviceHash: v.string(),
+    // Phase 7: a coarse "Chrome on macOS"-style label, used only as the
+    // default `name` on first sight of a device — never overwrites a name
+    // the user picked themselves in /settings.
+    deviceLabel: v.optional(v.string()),
   },
   returns: v.object({ newDevice: v.boolean() }),
   handler: async (ctx, args) => {
@@ -344,18 +416,28 @@ export const apiEvaluateDevice = mutation({
     if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
 
     const now = Date.now();
+    // Phase 7: a device only ever counts as trusted while the account opted
+    // into recognition at all — declining costs convenience (near-universal
+    // step-up via `isAreaTrusted`/`resolveSignInRequirement`'s existing
+    // `newDevice` check), never security, and needs no separate code path
+    // here beyond simply never stamping a `trustedUntil`.
+    const trackingOptedOut = await hasOptedOutOfDeviceTracking(ctx, user._id);
+    const trustedUntil = trackingOptedOut ? undefined : now + (await areaReverifyWindowMs(ctx));
+
     const existing = await ctx.db
       .query("knownDevices")
       .withIndex("by_user_hash", (q) => q.eq("userId", user._id).eq("deviceHash", args.deviceHash))
       .unique();
     if (existing) {
-      await ctx.db.patch(existing._id, { lastSeenAt: now });
+      await ctx.db.patch(existing._id, { lastSeenAt: now, trustedUntil });
     } else {
       await ctx.db.insert("knownDevices", {
         userId: user._id,
         deviceHash: args.deviceHash,
         firstSeenAt: now,
         lastSeenAt: now,
+        name: args.deviceLabel,
+        trustedUntil,
       });
     }
 
@@ -502,6 +584,146 @@ export const status = query({
   },
 });
 
+// --- Phase 7: per-area access status + preference -----------------------------
+//
+// Plain user-session queries/mutations, called directly by each area's own
+// entry point (the Performance login page, the HR vault gate) — the actual
+// enforcement lives server-side in `performanceAuth.ts`/`applicantVault.ts`
+// (a blocked area simply can't be resolved/unlocked); this is only what
+// tells the frontend *why*, so it can show a step-up form instead of a dead
+// end.
+
+export const areaAccessStatus = query({
+  args: { area: areaValidator },
+  returns: v.union(
+    v.object({ state: v.literal("satisfied") }),
+    v.object({
+      state: v.literal("needs_verification"),
+      requiredLevel: v.number(),
+      availableMethods: v.array(stepMethodValidator),
+    }),
+  ),
+  handler: async (ctx, { area }) => {
+    const user = await requireUser(ctx);
+    if (await isAreaTrusted(ctx, user._id, area)) return { state: "satisfied" as const };
+    return {
+      state: "needs_verification" as const,
+      requiredLevel: AREA_REVERIFY_LEVEL,
+      availableMethods: await availableMethodsFor(ctx, user._id, AREA_REVERIFY_LEVEL, {
+        includePasskey: true,
+      }),
+    };
+  },
+});
+
+export const areaPreference = query({
+  args: { area: areaValidator },
+  returns: v.object({ mode: v.union(v.literal("always_step_up"), v.literal("trust_device")) }),
+  handler: async (ctx, { area }) => {
+    const user = await requireUser(ctx);
+    return { mode: await getAreaPreference(ctx, user._id, area) };
+  },
+});
+
+export const setAreaPreference = mutation({
+  args: {
+    area: areaValidator,
+    mode: v.union(v.literal("always_step_up"), v.literal("trust_device")),
+  },
+  returns: v.object({ ok: v.boolean() }),
+  handler: async (ctx, { area, mode }) => {
+    const user = await requireUser(ctx);
+    const existing = await ctx.db
+      .query("areaSecurityPreferences")
+      .withIndex("by_user_area", (q) => q.eq("userId", user._id).eq("area", area))
+      .unique();
+    const now = Date.now();
+    if (existing) {
+      await ctx.db.patch(existing._id, { mode, updatedAt: now });
+    } else {
+      await ctx.db.insert("areaSecurityPreferences", {
+        userId: user._id,
+        area,
+        mode,
+        updatedAt: now,
+      });
+    }
+    return { ok: true };
+  },
+});
+
+// --- Phase 7: trusted devices (/settings) --------------------------------------
+
+export const trustedDevices = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      id: v.id("knownDevices"),
+      name: v.string(),
+      firstSeenAt: v.number(),
+      lastSeenAt: v.number(),
+      trusted: v.boolean(),
+      trustedUntil: v.union(v.number(), v.null()),
+    }),
+  ),
+  handler: async (ctx) => {
+    const user = await requireUser(ctx);
+    const rows = await ctx.db
+      .query("knownDevices")
+      .withIndex("by_user_hash", (q) => q.eq("userId", user._id))
+      .collect();
+    const now = Date.now();
+    return rows
+      .sort((a, b) => b.lastSeenAt - a.lastSeenAt)
+      .map((d) => ({
+        id: d._id,
+        name: d.name ?? "Unrecognized device",
+        firstSeenAt: d.firstSeenAt,
+        lastSeenAt: d.lastSeenAt,
+        trusted: d.trustedUntil !== undefined && d.trustedUntil > now,
+        trustedUntil: d.trustedUntil ?? null,
+      }));
+  },
+});
+
+export const renameDevice = mutation({
+  args: { deviceId: v.id("knownDevices"), name: v.string() },
+  returns: v.object({ ok: v.boolean() }),
+  handler: async (ctx, { deviceId, name }) => {
+    const user = await requireUser(ctx);
+    const device = await ctx.db.get(deviceId);
+    if (!device || device.userId !== user._id) {
+      throw new ConvexError({ code: "not_found", message: "Device not found" });
+    }
+    const trimmed = name.trim().slice(0, 60);
+    await ctx.db.patch(deviceId, { name: trimmed || undefined });
+    return { ok: true };
+  },
+});
+
+/** Forgets a device outright rather than just clearing `trustedUntil` — the
+ * whole point of `knownDevices` is recognition, so the next visit from this
+ * browser has to look genuinely new again (forcing a fresh step-up via the
+ * existing `newDevice` risk signal), not merely "known but untrusted". */
+export const revokeDeviceTrust = mutation({
+  args: { deviceId: v.id("knownDevices") },
+  returns: v.object({ ok: v.boolean() }),
+  handler: async (ctx, { deviceId }) => {
+    const user = await requireUser(ctx);
+    const device = await ctx.db.get(deviceId);
+    if (!device || device.userId !== user._id) {
+      throw new ConvexError({ code: "not_found", message: "Device not found" });
+    }
+    await ctx.db.delete(deviceId);
+    await ctx.db.insert("stepUpAuditLog", {
+      userId: user._id,
+      event: "device_trust_revoked",
+      at: Date.now(),
+    });
+    return { ok: true };
+  },
+});
+
 // --- Personal sign-in preference ----------------------------------------------
 //
 // Plain user-session query/mutation, same upsert shape as
@@ -510,35 +732,46 @@ export const status = query({
 
 export const securityPreference = query({
   args: {},
-  returns: v.object({ alwaysRequireMfaAtSignIn: v.boolean() }),
+  returns: v.object({
+    alwaysRequireMfaAtSignIn: v.boolean(),
+    deviceTrackingOptOut: v.boolean(),
+  }),
   handler: async (ctx) => {
     const user = await requireUser(ctx);
     const pref = await ctx.db
       .query("securityPreferences")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
-    return { alwaysRequireMfaAtSignIn: pref?.alwaysRequireMfaAtSignIn === true };
+    return {
+      alwaysRequireMfaAtSignIn: pref?.alwaysRequireMfaAtSignIn === true,
+      deviceTrackingOptOut: pref?.deviceTrackingOptOut === true,
+    };
   },
 });
 
 export const setSecurityPreference = mutation({
-  args: { alwaysRequireMfaAtSignIn: v.boolean() },
+  args: {
+    alwaysRequireMfaAtSignIn: v.optional(v.boolean()),
+    deviceTrackingOptOut: v.optional(v.boolean()),
+  },
   returns: v.object({ ok: v.boolean() }),
-  handler: async (ctx, { alwaysRequireMfaAtSignIn }) => {
+  handler: async (ctx, args) => {
     const user = await requireUser(ctx);
     const existing = await ctx.db
       .query("securityPreferences")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     const now = Date.now();
+    const patch = {
+      alwaysRequireMfaAtSignIn:
+        args.alwaysRequireMfaAtSignIn ?? existing?.alwaysRequireMfaAtSignIn ?? false,
+      deviceTrackingOptOut: args.deviceTrackingOptOut ?? existing?.deviceTrackingOptOut ?? false,
+      updatedAt: now,
+    };
     if (existing) {
-      await ctx.db.patch(existing._id, { alwaysRequireMfaAtSignIn, updatedAt: now });
+      await ctx.db.patch(existing._id, patch);
     } else {
-      await ctx.db.insert("securityPreferences", {
-        userId: user._id,
-        alwaysRequireMfaAtSignIn,
-        updatedAt: now,
-      });
+      await ctx.db.insert("securityPreferences", { userId: user._id, ...patch });
     }
     return { ok: true };
   },
@@ -702,6 +935,113 @@ export const orgStandard = query({
       passkeyEnrolledCount,
       passkeyEnrolledPct: users.length ? passkeyEnrolledCount / users.length : 0,
       nonCompliant,
+    };
+  },
+});
+
+/** Phase 7's admin-visible companion metric to `orgStandard` above — the
+ * device-trust opt-in/opt-out split and each area's "always step up" vs.
+ * "trust device" preference split, so the org default set via
+ * `setOrgPolicy`'s `areaReverifyDays` isn't the only thing visible on
+ * `/admin/authentication`. */
+export const areaStandard = query({
+  args: {},
+  returns: v.object({
+    areaReverifyDays: v.number(),
+    deviceTrackingOptOutCount: v.number(),
+    deviceTrackingOptInCount: v.number(),
+    byArea: v.array(
+      v.object({
+        area: areaValidator,
+        alwaysStepUpCount: v.number(),
+        trustDeviceCount: v.number(),
+      }),
+    ),
+  }),
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    const users = await ctx.db
+      .query("users")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .collect();
+    const prefs = await ctx.db.query("securityPreferences").collect();
+    const deviceTrackingOptOutCount = prefs.filter((p) => p.deviceTrackingOptOut === true).length;
+    const areaPrefs = await ctx.db.query("areaSecurityPreferences").collect();
+    const byArea = (["performance", "applicant_vault"] as const).map((area) => {
+      const alwaysStepUpCount = areaPrefs.filter(
+        (p) => p.area === area && p.mode === "always_step_up",
+      ).length;
+      return {
+        area,
+        alwaysStepUpCount,
+        trustDeviceCount: users.length - alwaysStepUpCount,
+      };
+    });
+    const policy = await getOrDefaultPolicy(ctx);
+    return {
+      areaReverifyDays: policy.areaReverifyDays ?? AREA_REVERIFY_DEFAULT_DAYS,
+      deviceTrackingOptOutCount,
+      deviceTrackingOptInCount: users.length - deviceTrackingOptOutCount,
+      byArea,
+    };
+  },
+});
+
+/** Phase 8's admin-visible companion metric — the migration's tail made
+ * visible instead of silent, per the plan's own ask: "a per-area
+ * count/countdown of accounts still on their legacy password, N days
+ * left." The deadline is a single shared clock per area (whoever turned the
+ * toggle on set it for everyone at once), so there's one countdown, not one
+ * per account — what varies per account is only whether it's affected at
+ * all. */
+export const legacyPasswordStandard = query({
+  args: {},
+  returns: v.object({
+    performance: v.object({
+      enabled: v.boolean(),
+      deadlineAt: v.union(v.number(), v.null()),
+      accountsStillOnLegacyPassword: v.number(),
+    }),
+    applicantVault: v.object({
+      enabled: v.boolean(),
+      deadlineAt: v.union(v.number(), v.null()),
+      accountsStillOnLegacyPassword: v.number(),
+    }),
+  }),
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    const policy = await getOrDefaultPolicy(ctx);
+
+    // Only a *linked* login is ever affected — one with no `linkedUserId`
+    // has no password-less fallback, so it's never in scope here at all,
+    // whether or not the sunset is enabled.
+    const linkedLogins = await ctx.db
+      .query("performanceLogins")
+      .filter((q) =>
+        q.and(q.neq(q.field("linkedUserId"), undefined), q.eq(q.field("active"), true)),
+      )
+      .collect();
+
+    // Only a vault password belonging to a member who's also registered a
+    // passkey is ever affected — same reasoning, the passkey is the only
+    // other way in.
+    const vaultPasswordRows = await ctx.db.query("applicantVaultPasswords").collect();
+    const passkeyUserIds = new Set((await ctx.db.query("passkeys").collect()).map((p) => p.userId));
+    const vaultAccountsWithFallback = vaultPasswordRows.filter((row) =>
+      passkeyUserIds.has(row.userId),
+    ).length;
+
+    return {
+      performance: {
+        enabled: policy.performanceLegacyPasswordSunsetEnabled === true,
+        deadlineAt: legacyPasswordSunsetDeadline(policy, "performance"),
+        accountsStillOnLegacyPassword: linkedLogins.length,
+      },
+      applicantVault: {
+        enabled: policy.applicantVaultLegacyPasswordSunsetEnabled === true,
+        deadlineAt: legacyPasswordSunsetDeadline(policy, "applicant_vault"),
+        accountsStillOnLegacyPassword: vaultAccountsWithFallback,
+      },
     };
   },
 });

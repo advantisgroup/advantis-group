@@ -77,6 +77,7 @@ const AUTO_APPROVED_HINT_KEY = {
   callerLinkedAccount: "adminAutoApprovedViaCallerLinkedAccount",
   targetLinkedAccount: "adminAutoApprovedViaTargetLinkedAccount",
   adminLinkedEmail: "adminAutoApprovedViaAdminLinkedEmail",
+  verifiedSecondaryEmail: "adminAutoApprovedViaVerifiedSecondaryEmail",
 } as const;
 
 function RequestHistory({ requestId }: { requestId: RequestId }) {
@@ -426,7 +427,9 @@ function RequestCard({
           <Badge variant="outline">
             {request.status === "issued" ? t("adminStatusIssued") : t("adminStatusDismissed")}
           </Badge>
-          {request.linkRevoked && <Badge variant="destructive">{t("adminLinkRevokedStatus")}</Badge>}
+          {request.linkRevoked && (
+            <Badge variant="destructive">{t("adminLinkRevokedStatus")}</Badge>
+          )}
           {request.handledByName && request.handledAt ? (
             <span className="break-words">
               {t("adminHandledBy", {
@@ -588,7 +591,11 @@ function LinkedEmailsPanel() {
           )}
           <div className="space-y-1.5">
             <Label>{t("linkedEmailsAlias")}</Label>
-            <Input type="email" value={aliasEmail} onChange={(e) => setAliasEmail(e.target.value)} />
+            <Input
+              type="email"
+              value={aliasEmail}
+              onChange={(e) => setAliasEmail(e.target.value)}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>{t("linkedEmailsCanonical")}</Label>

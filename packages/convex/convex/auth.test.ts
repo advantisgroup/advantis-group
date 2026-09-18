@@ -79,6 +79,12 @@ async function seedPolicy(
     passkeyPolicySetAt: number;
     gracePeriodDays: number;
     exemptUserIds: Id<"users">[];
+    areaReverifyDays: number;
+    performanceLegacyPasswordSunsetEnabled: boolean;
+    performanceLegacyPasswordSunsetSetAt: number;
+    applicantVaultLegacyPasswordSunsetEnabled: boolean;
+    applicantVaultLegacyPasswordSunsetSetAt: number;
+    legacyPasswordGraceDays: number;
   }> = {},
 ) {
   await t.run(async (ctx) => {
@@ -146,12 +152,13 @@ async function plantEmailCode(
   userId: Id<"users">,
   code: string,
   sessionId = SESSION,
+  context: "sign_in" | "destructive" | "admin_reverify" | "area_reverify" = "sign_in",
 ) {
   await t.mutation(api.stepUp.apiRequestEmailCode, {
     serverKey,
     clerkUserId,
     sessionId,
-    context: "sign_in",
+    context,
   });
   await t.run(async (ctx) => {
     const row = await ctx.db
@@ -1117,6 +1124,10 @@ describe("org policy edits", () => {
       requirePasskeyRetroactive: false,
       gracePeriodDays: 0,
       exemptUserIds: [],
+      areaReverifyDays: 14,
+      performanceLegacyPasswordSunsetEnabled: false,
+      applicantVaultLegacyPasswordSunsetEnabled: false,
+      legacyPasswordGraceDays: 30,
     };
 
     await admin.mutation(api.stepUp.setOrgPolicy, base);
@@ -1142,6 +1153,10 @@ describe("org policy edits", () => {
       requirePasskeyRetroactive: false,
       gracePeriodDays: 0,
       exemptUserIds: [],
+      areaReverifyDays: 14,
+      performanceLegacyPasswordSunsetEnabled: false,
+      applicantVaultLegacyPasswordSunsetEnabled: false,
+      legacyPasswordGraceDays: 30,
     };
 
     await admin.mutation(api.stepUp.setOrgPolicy, base);
@@ -1159,5 +1174,400 @@ describe("org policy edits", () => {
     await seedUser(t, { clerkUserId: "user_alice" });
 
     await expect(asUser(t, "user_alice").query(api.stepUp.orgPolicy, {})).rejects.toThrow();
+  });
+});
+
+describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-verification", () => {
+  describe("areaAccessStatus", () => {
+    test("needs_verification with no prior clearance", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+
+      const status = await asUser(t, "user_alice").query(api.stepUp.areaAccessStatus, {
+        area: "performance",
+      });
+      expect(status.state).toBe("needs_verification");
+    });
+
+    test("clearing an area_reverify email code satisfies it, and only that area", async () => {
+      const t = setup();
+      const userId = await seedUser(t, { clerkUserId: "user_alice" });
+      await plantEmailCode(t, "user_alice", userId, "111222", SESSION, "area_reverify");
+      const result = await t.mutation(api.stepUp.apiSubmitEmailCode, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        code: "111222",
+        context: "area_reverify",
+        area: "performance",
+      });
+      expect(result.ok).toBe(true);
+
+      const performance = await asUser(t, "user_alice").query(api.stepUp.areaAccessStatus, {
+        area: "performance",
+      });
+      expect(performance.state).toBe("satisfied");
+
+      const vault = await asUser(t, "user_alice").query(api.stepUp.areaAccessStatus, {
+        area: "applicant_vault",
+      });
+      expect(vault.state).toBe("needs_verification");
+    });
+
+    test("a clearance older than the org's areaReverifyDays no longer satisfies it", async () => {
+      const t = setup();
+      const admin = await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+      await seedPolicy(t, admin, {});
+      const userId = await seedUser(t, { clerkUserId: "user_bob" });
+      await t.run(async (ctx) =>
+        ctx.db.insert("areaStepUps", {
+          userId,
+          area: "performance",
+          verifiedAt: Date.now() - 15 * DAY,
+          method: "email_code",
+        }),
+      );
+
+      const status = await asUser(t, "user_bob").query(api.stepUp.areaAccessStatus, {
+        area: "performance",
+      });
+      expect(status.state).toBe("needs_verification");
+    });
+
+    test("respects an org-configured areaReverifyDays shorter than the 14-day default", async () => {
+      const t = setup();
+      const admin = await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+      await seedPolicy(t, admin, { areaReverifyDays: 1 });
+      const userId = await seedUser(t, { clerkUserId: "user_carl" });
+      await t.run(async (ctx) =>
+        ctx.db.insert("areaStepUps", {
+          userId,
+          area: "performance",
+          verifiedAt: Date.now() - 2 * DAY,
+          method: "email_code",
+        }),
+      );
+
+      const status = await asUser(t, "user_carl").query(api.stepUp.areaAccessStatus, {
+        area: "performance",
+      });
+      expect(status.state).toBe("needs_verification");
+    });
+  });
+
+  describe("areaPreference / setAreaPreference", () => {
+    test("defaults to trust_device", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+
+      const pref = await asUser(t, "user_alice").query(api.stepUp.areaPreference, {
+        area: "performance",
+      });
+      expect(pref.mode).toBe("trust_device");
+    });
+
+    test("setAreaPreference roundtrips and never trusts the area while always_step_up", async () => {
+      const t = setup();
+      const userId = await seedUser(t, { clerkUserId: "user_alice" });
+      await t.run(async (ctx) =>
+        ctx.db.insert("areaStepUps", {
+          userId,
+          area: "performance",
+          verifiedAt: Date.now(),
+          method: "email_code",
+        }),
+      );
+
+      await asUser(t, "user_alice").mutation(api.stepUp.setAreaPreference, {
+        area: "performance",
+        mode: "always_step_up",
+      });
+
+      const pref = await asUser(t, "user_alice").query(api.stepUp.areaPreference, {
+        area: "performance",
+      });
+      expect(pref.mode).toBe("always_step_up");
+
+      const status = await asUser(t, "user_alice").query(api.stepUp.areaAccessStatus, {
+        area: "performance",
+      });
+      expect(status.state).toBe("needs_verification");
+    });
+  });
+
+  describe("trusted devices", () => {
+    test("apiEvaluateDevice stamps a default name and a trustedUntil window on a new device", async () => {
+      const t = setup();
+      const userId = await seedUser(t, { clerkUserId: "user_alice" });
+
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash: "hash1",
+        deviceLabel: "Chrome on macOS",
+      });
+
+      const devices = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(devices).toHaveLength(1);
+      expect(devices[0]!.name).toBe("Chrome on macOS");
+      expect(devices[0]!.trusted).toBe(true);
+      void userId;
+    });
+
+    test("opting out of device tracking leaves new devices untrusted", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+      await asUser(t, "user_alice").mutation(api.stepUp.setSecurityPreference, {
+        deviceTrackingOptOut: true,
+      });
+
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash: "hash1",
+      });
+
+      const devices = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(devices[0]!.trusted).toBe(false);
+      expect(devices[0]!.trustedUntil).toBeNull();
+    });
+
+    test("renameDevice updates the name; only the device's own owner may", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+      await seedUser(t, { clerkUserId: "user_mallory" });
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash: "hash1",
+      });
+      const [device] = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+
+      await asUser(t, "user_alice").mutation(api.stepUp.renameDevice, {
+        deviceId: device!.id,
+        name: "My laptop",
+      });
+      const renamed = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(renamed[0]!.name).toBe("My laptop");
+
+      await expect(
+        asUser(t, "user_mallory").mutation(api.stepUp.renameDevice, {
+          deviceId: device!.id,
+          name: "Hijacked",
+        }),
+      ).rejects.toThrow("Device not found");
+    });
+
+    test("revokeDeviceTrust forgets the device outright", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash: "hash1",
+      });
+      const [device] = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+
+      await asUser(t, "user_alice").mutation(api.stepUp.revokeDeviceTrust, {
+        deviceId: device!.id,
+      });
+
+      const devices = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(devices).toHaveLength(0);
+    });
+  });
+
+  describe("areaStandard", () => {
+    test("counts the always_step_up split per area and the device-tracking opt-out total", async () => {
+      const t = setup();
+      const admin = await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+      const alice = await seedUser(t, { clerkUserId: "user_alice" });
+      await seedUser(t, { clerkUserId: "user_bob" });
+      await t.run(async (ctx) =>
+        ctx.db.insert("areaSecurityPreferences", {
+          userId: alice,
+          area: "performance",
+          mode: "always_step_up",
+          updatedAt: Date.now(),
+        }),
+      );
+      await asUser(t, "user_bob").mutation(api.stepUp.setSecurityPreference, {
+        deviceTrackingOptOut: true,
+      });
+
+      const standard = await asUser(t, "user_admin").query(api.stepUp.areaStandard, {});
+      expect(standard.areaReverifyDays).toBe(14);
+      expect(standard.deviceTrackingOptOutCount).toBe(1);
+      const performance = standard.byArea.find((a) => a.area === "performance");
+      expect(performance?.alwaysStepUpCount).toBe(1);
+      void admin;
+    });
+  });
+});
+
+describe("Phase 8 of docs/future-features/21_auth-consolidation.md: legacy password grace period", () => {
+  const basePolicy = {
+    requireMfaScope: "off" as const,
+    requireMfaRetroactive: false,
+    requireMfaForDestructive: false,
+    destructiveActionTtlMinutes: 10,
+    minDestructiveLevel: 1,
+    requirePasskeyScope: "off" as const,
+    requirePasskeyRetroactive: false,
+    gracePeriodDays: 0,
+    exemptUserIds: [],
+    areaReverifyDays: 14,
+    legacyPasswordGraceDays: 30,
+  };
+
+  test("orgPolicy defaults both sunsets to off with no deadline", async () => {
+    const t = setup();
+    await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+
+    const policy = await asUser(t, "user_admin").query(api.stepUp.orgPolicy, {});
+    expect(policy.performanceLegacyPasswordSunsetEnabled).toBe(false);
+    expect(policy.performanceLegacyPasswordSunsetDeadline).toBeNull();
+    expect(policy.applicantVaultLegacyPasswordSunsetEnabled).toBe(false);
+    expect(policy.applicantVaultLegacyPasswordSunsetDeadline).toBeNull();
+    expect(policy.legacyPasswordGraceDays).toBe(30);
+  });
+
+  test("setOrgPolicy stamps a SetAt only the moment the toggle turns on, then leaves it alone", async () => {
+    const t = setup();
+    await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+    const admin = asUser(t, "user_admin");
+
+    await admin.mutation(api.stepUp.setOrgPolicy, {
+      ...basePolicy,
+      performanceLegacyPasswordSunsetEnabled: false,
+      applicantVaultLegacyPasswordSunsetEnabled: false,
+    });
+    // Still off, so this is exactly "not started yet" whatever SetAt holds
+    // internally — `legacyPasswordSunsetDeadline` never reads it while
+    // `enabled` is false.
+    const beforeToggle = await asUser(t, "user_admin").query(api.stepUp.orgPolicy, {});
+    expect(beforeToggle.performanceLegacyPasswordSunsetDeadline).toBeNull();
+
+    await admin.mutation(api.stepUp.setOrgPolicy, {
+      ...basePolicy,
+      performanceLegacyPasswordSunsetEnabled: true,
+      applicantVaultLegacyPasswordSunsetEnabled: false,
+    });
+    const afterToggle = await t.run(async (ctx) => ctx.db.query("authPolicy").first());
+    const setAt = afterToggle!.performanceLegacyPasswordSunsetSetAt;
+    expect(setAt).toBeDefined();
+
+    // An unrelated field changing must not restamp it.
+    await admin.mutation(api.stepUp.setOrgPolicy, {
+      ...basePolicy,
+      performanceLegacyPasswordSunsetEnabled: true,
+      applicantVaultLegacyPasswordSunsetEnabled: false,
+      legacyPasswordGraceDays: 45,
+    });
+    const afterUnrelatedChange = await t.run(async (ctx) => ctx.db.query("authPolicy").first());
+    expect(afterUnrelatedChange!.performanceLegacyPasswordSunsetSetAt).toBe(setAt);
+  });
+
+  describe("legacyPasswordStandard", () => {
+    async function seedCompany(t: T): Promise<Id<"companies">> {
+      return await t.run(async (ctx) =>
+        ctx.db.insert("companies", {
+          name: "Acme",
+          slug: "acme",
+          domain: "acme.example.com",
+          status: "active",
+          adminBootstrapEmails: [],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        }),
+      );
+    }
+
+    async function seedPerformanceLogin(
+      t: T,
+      companyId: Id<"companies">,
+      opts: { email: string; linkedUserId?: Id<"users"> },
+    ) {
+      await t.run(async (ctx) =>
+        ctx.db.insert("performanceLogins", {
+          email: opts.email,
+          name: "Test Login",
+          passwordHash: "hash",
+          companyId,
+          linkedUserId: opts.linkedUserId,
+          active: true,
+          createdAt: Date.now(),
+        }),
+      );
+    }
+
+    test("counts only linked, active Performance logins as still-on-legacy-password", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+      const linked = await seedUser(t, { clerkUserId: "user_linked" });
+      const company = await seedCompany(t);
+      await seedPerformanceLogin(t, company, {
+        email: "linked@acme.example.com",
+        linkedUserId: linked,
+      });
+      await seedPerformanceLogin(t, company, { email: "standalone@acme.example.com" });
+
+      const standard = await asUser(t, "user_admin").query(api.stepUp.legacyPasswordStandard, {});
+      expect(standard.performance.accountsStillOnLegacyPassword).toBe(1);
+      expect(standard.performance.enabled).toBe(false);
+    });
+
+    test("counts only vault passwords belonging to a member who also has a passkey", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+      const withPasskey = await seedUser(t, { clerkUserId: "user_alice" });
+      const withoutPasskey = await seedUser(t, { clerkUserId: "user_bob" });
+      await t.run(async (ctx) => {
+        await ctx.db.insert("applicantVaultPasswords", {
+          userId: withPasskey,
+          hash: "hash",
+          updatedAt: Date.now(),
+        });
+        await ctx.db.insert("applicantVaultPasswords", {
+          userId: withoutPasskey,
+          hash: "hash",
+          updatedAt: Date.now(),
+        });
+      });
+      await seedPasskey(t, withPasskey);
+
+      const standard = await asUser(t, "user_admin").query(api.stepUp.legacyPasswordStandard, {});
+      expect(standard.applicantVault.accountsStillOnLegacyPassword).toBe(1);
+    });
+
+    test("reports the enabled flag and deadline once the sunset is turned on", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+      const admin = asUser(t, "user_admin");
+      await admin.mutation(api.stepUp.setOrgPolicy, {
+        ...basePolicy,
+        performanceLegacyPasswordSunsetEnabled: true,
+        applicantVaultLegacyPasswordSunsetEnabled: false,
+      });
+
+      const standard = await admin.query(api.stepUp.legacyPasswordStandard, {});
+      expect(standard.performance.enabled).toBe(true);
+      expect(standard.performance.deadlineAt).not.toBeNull();
+      expect(standard.applicantVault.enabled).toBe(false);
+      expect(standard.applicantVault.deadlineAt).toBeNull();
+    });
+
+    test("only an admin can read it", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+
+      await expect(
+        asUser(t, "user_alice").query(api.stepUp.legacyPasswordStandard, {}),
+      ).rejects.toThrow();
+    });
   });
 });

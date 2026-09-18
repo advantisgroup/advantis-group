@@ -3,16 +3,73 @@
 import { type ReactNode, useEffect, useState } from "react";
 
 import { api } from "@advantis/convex/api";
+import { useAuth } from "@clerk/nextjs";
+import { startAuthentication } from "@simplewebauthn/browser";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { Lock, ShieldCheck } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { ConvexError } from "convex/values";
+import { KeyRound, Loader2, Lock, ShieldCheck, X } from "lucide-react";
+import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { StepUpForm } from "@/components/auth/StepUpForm";
 import { ForgotPasswordPanel } from "@/components/password-reset/ForgotPasswordPanel";
+import { jsonOrThrow } from "@/components/security/security-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+
+/**
+ * Phase 8 of docs/future-features/21_auth-consolidation.md: a persistent,
+ * dismissible notice on the locked screen, for a member who actually has a
+ * passkey to fall back on (`status.legacyPasswordSunsetDeadline` is null
+ * otherwise — nothing to show a countdown for). Dismissal is scoped to this
+ * specific deadline in localStorage, same as the Performance login page's
+ * equivalent notice.
+ */
+function LegacyPasswordSunsetNotice({ deadlineAt }: { deadlineAt: number }) {
+  const t = useTranslations("Applicants");
+  const format = useFormatter();
+  const [dismissedDeadline, setDismissedDeadline] = useState<number | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("vault-legacy-password-notice-dismissed");
+      if (raw) setDismissedDeadline(Number(raw));
+    } catch {
+      // Private window or blocked storage — the notice just shows every visit.
+    }
+  }, []);
+
+  if (dismissedDeadline === deadlineAt) return null;
+
+  function dismiss() {
+    setDismissedDeadline(deadlineAt);
+    try {
+      window.localStorage.setItem("vault-legacy-password-notice-dismissed", String(deadlineAt));
+    } catch {
+      // Nothing to persist across visits — still dismisses for this one.
+    }
+  }
+
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2.5 text-left text-xs text-foreground">
+      <span className="min-w-0 flex-1">
+        {t("vaultLegacyPasswordNotice", {
+          date: format.dateTime(new Date(deadlineAt), { day: "2-digit", month: "short" }),
+        })}
+      </span>
+      <button
+        type="button"
+        aria-label={t("vaultLegacyPasswordNoticeDismiss")}
+        onClick={dismiss}
+        className="shrink-0 rounded-full p-0.5 text-muted-foreground hover:bg-muted"
+      >
+        <X className="size-3.5" />
+      </button>
+    </div>
+  );
+}
 
 /** Small header button to re-lock the vault immediately, without waiting for
  * the unlock to expire on its own. Only renders once unlocked. */
@@ -36,12 +93,24 @@ export function LockVaultButton() {
   );
 }
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
+
+type PasskeyOptionsResponse = {
+  options: Parameters<typeof startAuthentication>[0]["optionsJSON"];
+  flowId: string;
+};
+
 /**
  * Second, independent password gate in front of the whole Applicant
  * Management area — on top of the normal applicantAccess/delegate checks,
  * for defense-in-depth against a leaked or unattended session. Wraps every
  * `/applicants/*` route from the top-level layout, so nothing underneath
  * ever mounts (and fires its Convex queries) while locked.
+ *
+ * Phase 4 of docs/future-features/21_auth-consolidation.md: once a member
+ * has a passkey registered, it's offered as a faster alternative to typing
+ * the vault password — never a replacement, since the password stays as
+ * the setup step and the recovery path if the passkey is unavailable.
  */
 export function ApplicantVaultGate({ children }: { children: ReactNode }) {
   const t = useTranslations("Applicants");
@@ -49,10 +118,12 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
   const unlock = useAction(api.applicantVault.unlock);
   const setPassword = useAction(api.applicantVault.setPassword);
   const handleError = useErrorHandler();
+  const { getToken } = useAuth();
 
   const [password, setPasswordInput] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
   // The forgot-password route only appears once the password has actually
   // been got wrong — offering it up front invites skipping the password
   // instead of remembering it.
@@ -72,6 +143,34 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
   const expired = status.unlocked && status.expiresAt !== null && status.expiresAt <= now;
   if (status.unlocked && !expired) return <>{children}</>;
 
+  // Phase 7 of docs/future-features/21_auth-consolidation.md: on top of the
+  // vault's own (much shorter) unlock above, an intranet-side
+  // re-verification older than 14 days blocks even attempting one — show
+  // that step-up first instead of a password/passkey prompt that would just
+  // fail server-side. `status` is a live Convex query, so clearing this
+  // re-renders straight past it once done, with no manual refetch needed.
+  if (status.needsAreaStepUp) {
+    return (
+      <div className="mx-auto max-w-sm py-16">
+        <Card>
+          <CardContent className="space-y-4 p-6">
+            <div className="space-y-1 text-center">
+              <ShieldCheck className="mx-auto size-6 text-primary" />
+              <p className="font-semibold">{t("vaultReverifyTitle")}</p>
+              <p className="text-sm text-muted-foreground">{t("vaultReverifyDescription")}</p>
+            </div>
+            <StepUpForm
+              availableMethods={status.areaStepUpAvailableMethods}
+              context="area_reverify"
+              area="applicant_vault"
+              onVerified={() => {}}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   async function handleUnlock() {
     if (!password.trim()) return;
     setSubmitting(true);
@@ -80,7 +179,20 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
       setPasswordInput("");
     } catch (e) {
       setAttemptFailed(true);
-      handleError(e, t("vaultIncorrectPassword"));
+      // `parseError`'s `ErrorCode` union doesn't (and shouldn't) know every
+      // backend-specific code, so this Convex-specific one is read directly
+      // rather than through the shared parser — same as the Performance
+      // login page's equivalent check.
+      const code =
+        e instanceof ConvexError && typeof e.data === "object" && e.data !== null
+          ? (e.data as { code?: string }).code
+          : undefined;
+      handleError(
+        e,
+        code === "legacy_password_sunset"
+          ? t("vaultLegacyPasswordSunset")
+          : t("vaultIncorrectPassword"),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -105,6 +217,36 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
       handleError(e);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleUnlockWithPasskey() {
+    setPasskeyBusy(true);
+    try {
+      const { options, flowId } = (await jsonOrThrow(
+        await fetch(`${apiUrl}/passkeys/authentication/options`, { method: "POST" }),
+      )) as PasskeyOptionsResponse;
+      const credential = await startAuthentication({ optionsJSON: options });
+      const token = await getToken();
+      await jsonOrThrow(
+        await fetch(`${apiUrl}/applicant-vault/unlock-passkey`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            ...(token ? { authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ flowId, response: credential }),
+        }),
+      );
+      // No local state to clear — `status` is a reactive Convex query, so
+      // the gate re-renders as unlocked the moment the mutation commits.
+    } catch (e) {
+      // A cancelled/no-op WebAuthn prompt throws too (the user just backed
+      // out) — nothing useful to show for that beyond staying locked.
+      if (e instanceof Error && e.name === "NotAllowedError") return;
+      handleError(e, t("vaultPasskeyError"));
+    } finally {
+      setPasskeyBusy(false);
     }
   }
 
@@ -157,6 +299,29 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
             <p className="font-semibold">{t("vaultLockedTitle")}</p>
             <p className="text-sm text-muted-foreground">{t("vaultLockedDescription")}</p>
           </div>
+          {status.hasPasskey && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={passkeyBusy}
+                onClick={() => void handleUnlockWithPasskey()}
+              >
+                {passkeyBusy ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <KeyRound className="size-4" />
+                )}
+                {t("vaultUnlockWithPasskey")}
+              </Button>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="h-px flex-1 bg-border" />
+                {t("vaultOrPassword")}
+                <div className="h-px flex-1 bg-border" />
+              </div>
+            </>
+          )}
           <Input
             type="password"
             value={password}
@@ -176,6 +341,9 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
             {t("vaultUnlock")}
           </Button>
           {attemptFailed && <ForgotPasswordPanel scope="hr" />}
+          {status.legacyPasswordSunsetDeadline !== null && (
+            <LegacyPasswordSunsetNotice deadlineAt={status.legacyPasswordSunsetDeadline} />
+          )}
         </CardContent>
       </Card>
     </div>

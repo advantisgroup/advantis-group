@@ -13,6 +13,7 @@ import type * as academyQuestions from "../academyQuestions.js";
 import type * as academyResults from "../academyResults.js";
 import type * as academySettings from "../academySettings.js";
 import type * as accessRequests from "../accessRequests.js";
+import type * as accountLinks from "../accountLinks.js";
 import type * as activity_access from "../activity/access.js";
 import type * as activity_agentVersion from "../activity/agentVersion.js";
 import type * as activity_audit from "../activity/audit.js";
@@ -167,6 +168,7 @@ declare const fullApi: ApiFromModules<{
   academyResults: typeof academyResults;
   academySettings: typeof academySettings;
   accessRequests: typeof accessRequests;
+  accountLinks: typeof accountLinks;
   "activity/access": typeof activity_access;
   "activity/agentVersion": typeof activity_agentVersion;
   "activity/audit": typeof activity_audit;

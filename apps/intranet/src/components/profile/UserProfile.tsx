@@ -723,6 +723,94 @@ function ActionRow({
   );
 }
 
+/**
+ * Phase 6 of docs/future-features/21_auth-consolidation.md: a read-only
+ * rollup of every area this profile has a subprofile in — Performance,
+ * Academy, HR vault — and whether it's linked, auto-linked, or still
+ * standalone. One glance here instead of a trip to `/admin/performance`,
+ * `/admin/applicants`, etc. separately. Purely informational: granting or
+ * revoking access itself still happens in each area's own admin surface.
+ */
+function LinkedAccountsSection({ userId }: { userId: Id<"users"> }) {
+  const t = useTranslations("Admin");
+  const links = useQuery(api.accountLinks.forUser, { userId });
+  if (!links) return null;
+
+  const applicantDetail =
+    links.applicant.status === "granted"
+      ? links.applicant.hasPasskey
+        ? t("linkedAccountsPasskey")
+        : links.applicant.vaultPasswordSet
+          ? t("linkedAccountsPassword")
+          : t("linkedAccountsNoVaultSetup")
+      : null;
+
+  return (
+    <Section label={t("linkedAccounts")}>
+      <div className="space-y-2 text-[13px]">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-muted-foreground">{t("linkedAccountsPerformance")}</span>
+          {links.performance.status === "linked" ? (
+            <span className="flex flex-wrap justify-end gap-1.5">
+              <Badge variant="success" className="text-[10px]">
+                {links.performance.isSuperAdmin
+                  ? t("linkedAccountsSuperAdmin")
+                  : (links.performance.roleName ?? t("linkedAccountsLinked"))}
+              </Badge>
+              {links.performance.autoLinked && (
+                <Badge variant="muted" className="text-[10px]">
+                  {t("linkedAccountsAuto")}
+                </Badge>
+              )}
+            </span>
+          ) : (
+            <Badge variant="muted" className="text-[10px]">
+              {t("linkedAccountsNotLinked")}
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-muted-foreground">{t("linkedAccountsHr")}</span>
+          {links.applicant.status === "granted" ? (
+            <span className="flex flex-wrap justify-end gap-1.5">
+              <Badge variant="success" className="text-[10px]">
+                {links.applicant.isDelegate
+                  ? t("linkedAccountsDelegate")
+                  : t("linkedAccountsGranted")}
+              </Badge>
+              {applicantDetail && (
+                <Badge variant="muted" className="text-[10px]">
+                  {applicantDetail}
+                </Badge>
+              )}
+            </span>
+          ) : (
+            <Badge variant="muted" className="text-[10px]">
+              {t("linkedAccountsNoAccess")}
+            </Badge>
+          )}
+        </div>
+        {links.academies.length > 0 && (
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-muted-foreground">{t("linkedAccountsAcademy")}</span>
+            <span className="flex flex-wrap justify-end gap-1.5">
+              {links.academies.map((academy) => (
+                <Badge
+                  key={academy.academyId}
+                  variant={academy.autoLinked ? "muted" : "success"}
+                  className="text-[10px]"
+                >
+                  {academy.academyId}
+                </Badge>
+              ))}
+            </span>
+          </div>
+        )}
+      </div>
+    </Section>
+  );
+}
+
 function AdminControls({
   user,
   isAdmin,
@@ -905,6 +993,8 @@ function AdminControls({
           </div>
         </Section>
       )}
+
+      {isAdmin && <LinkedAccountsSection userId={user._id} />}
 
       {/* Label above control, not beside it: the rail is a single narrow
           column, and a `justify-between` row left the role picker (three

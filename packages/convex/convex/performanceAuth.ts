@@ -12,6 +12,14 @@ import {
 } from "./_generated/server";
 import { hashPassword, randomToken, verifyPassword } from "./activity/lib/crypto";
 import { getCurrentUser } from "./lib/auth";
+import {
+  AREA_REVERIFY_LEVEL,
+  availableMethodsFor,
+  getOrDefaultPolicy,
+  isAreaTrusted,
+  isLegacyPasswordSunsetInForce,
+  legacyPasswordSunsetDeadline,
+} from "./lib/stepUp";
 import { PERMISSIONS, type Permission } from "./performance/lib/permissions";
 
 const SESSION_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
@@ -289,8 +297,15 @@ export const setupSuperAdminAccount = action({
 });
 
 export const createSession = internalMutation({
-  args: { loginId: v.id("performanceLogins") },
-  handler: async (ctx, { loginId }): Promise<{ token: string; expiresAt: number }> => {
+  args: {
+    loginId: v.id("performanceLogins"),
+    // Phase 7 of docs/future-features/21_auth-consolidation.md — set only by
+    // `createSessionForLinkedAccount`, never a real password login. Lets
+    // `resolveActiveSession` keep re-checking the 14-day area-trust window
+    // for the life of the token instead of only at mint time.
+    viaClerk: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { loginId, viaClerk }): Promise<{ token: string; expiresAt: number }> => {
     const now = Date.now();
     const token = randomToken();
     const login = await ctx.db.get(loginId);
@@ -298,6 +313,7 @@ export const createSession = internalMutation({
       token,
       loginId,
       companyId: login?.companyId,
+      viaClerk,
       expiresAt: now + SESSION_DURATION_MS,
       createdAt: now,
       lastUsedAt: now,
@@ -353,6 +369,23 @@ export const login = action({
     const ok = await verifyPassword(password, loginRow.passwordHash);
     if (!ok) throw invalid();
 
+    // Phase 8 of docs/future-features/21_auth-consolidation.md: checked only
+    // once the password is already confirmed correct — checking it earlier
+    // would let a guesser learn "this account is linked and past its grace
+    // period" from the email alone, without ever knowing the real password.
+    // An unlinked login (no other way in) is never affected, whatever the
+    // policy says.
+    if (
+      loginRow.linkedUserId &&
+      (await ctx.runQuery(internal.performanceAuth.checkLegacyPasswordSunset, {}))
+    ) {
+      throw new ConvexError({
+        code: "legacy_password_sunset",
+        message:
+          "Password sign-in for this account has moved — sign in with your intranet account instead.",
+      });
+    }
+
     const session = await ctx.runMutation(internal.performanceAuth.createSession, {
       loginId: loginRow._id,
     });
@@ -366,20 +399,35 @@ export const login = action({
   },
 });
 
-/** Alternative to the password-session token: if the caller is signed into
- * the intranet via Clerk and an admin has linked their account to a
- * Performance login (`performanceLogins.linkedUserId`, set via the
- * Benutzer page's "Intranet account" field), that login authenticates
- * them without a separate password. Never throws — just returns null when
- * there's no Clerk identity or no matching active login, so callers fall
- * through to "please sign in" the same as an invalid password token.
- *
- * Generalized to any company's logins (not hardcoded to Advantis) — in
- * practice it only has eligible link targets for companies whose staff
- * have an intranet Clerk `users` row, which today is Advantis only. */
-async function resolveClerkLinkedLogin(
+export const checkLegacyPasswordSunset = internalQuery({
+  args: {},
+  handler: async (ctx): Promise<boolean> => await isLegacyPasswordSunsetInForce(ctx, "performance"),
+});
+
+/** Generic, account-independent — safe to call from the unauthenticated
+ * login screen. Never conditioned on whether *this* visitor's account is
+ * linked, matching the same account-existence-oracle constraint
+ * `requestReset`/`resolveTarget` already enforce elsewhere: revealing that
+ * would work the other way around too (confirming a typed email is NOT
+ * linked). The banner it backs is static copy shown to everyone on the
+ * tenant, not a per-account notice. */
+export const legacyPasswordSunsetNotice = query({
+  args: {},
+  handler: async (ctx): Promise<{ enabled: boolean; deadlineAt: number | null }> => {
+    const policy = await getOrDefaultPolicy(ctx);
+    const deadline = legacyPasswordSunsetDeadline(policy, "performance");
+    return { enabled: deadline !== null, deadlineAt: deadline };
+  },
+});
+
+/** The raw link lookup, with no Phase 7 trust check — `resolveClerkLinkedLogin`
+ * below is what every actual access path uses; `validateSession` calls this
+ * directly so it can tell "not linked at all" apart from "linked, but this
+ * area's 14-day trust window has lapsed" and answer the frontend
+ * accordingly instead of collapsing both into the same null. */
+async function resolveClerkLinkedLoginRaw(
   ctx: QueryCtx | MutationCtx,
-): Promise<{ session: null; login: Doc<"performanceLogins"> } | null> {
+): Promise<{ user: Doc<"users">; login: Doc<"performanceLogins"> } | null> {
   const user = await getCurrentUser(ctx);
   if (!user) return null;
   const login = await ctx.db
@@ -387,7 +435,29 @@ async function resolveClerkLinkedLogin(
     .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", user._id))
     .first();
   if (!login || !login.active) return null;
-  return { session: null, login };
+  return { user, login };
+}
+
+/** Alternative to the password-session token: if the caller is signed into
+ * the intranet via Clerk and an admin has linked their account to a
+ * Performance login (`performanceLogins.linkedUserId`, set via the
+ * Benutzer page's "Intranet account" field), that login authenticates
+ * them without a separate password. Never throws — just returns null when
+ * there's no Clerk identity, no matching active login, or (Phase 7 of
+ * docs/future-features/21_auth-consolidation.md) this area's 14-day
+ * re-verification window has lapsed — callers fall through to "please sign
+ * in"/"please re-verify" the same as an invalid password token.
+ *
+ * Generalized to any company's logins (not hardcoded to Advantis) — in
+ * practice it only has eligible link targets for companies whose staff
+ * have an intranet Clerk `users` row, which today is Advantis only. */
+async function resolveClerkLinkedLogin(
+  ctx: QueryCtx | MutationCtx,
+): Promise<{ session: null; login: Doc<"performanceLogins"> } | null> {
+  const raw = await resolveClerkLinkedLoginRaw(ctx);
+  if (!raw) return null;
+  if (!(await isAreaTrusted(ctx, raw.user._id, "performance"))) return null;
+  return { session: null, login: raw.login };
 }
 
 /** Promotes a Clerk-linked visitor into a real password-session token, the
@@ -404,6 +474,7 @@ export const createSessionForLinkedAccount = mutation({
     if (!resolved) return null;
     return await ctx.runMutation(internal.performanceAuth.createSession, {
       loginId: resolved.login._id,
+      viaClerk: true,
     });
   },
 });
@@ -422,7 +493,20 @@ export async function resolveActiveSession(
       .unique();
     if (session && session.expiresAt >= Date.now()) {
       const login = await ctx.db.get(session.loginId);
-      if (login && login.active) return { session, login };
+      if (login && login.active) {
+        // Phase 7: a promoted token (see `createSessionForLinkedAccount`)
+        // still rides on the caller's intranet trust, not a password — its
+        // own `expiresAt` (also 14 days, `SESSION_DURATION_MS`) runs on an
+        // independent clock from the area-trust window it stands in for, so
+        // without this re-check a token minted right after a step-up would
+        // keep working for its full lifetime even once that trust lapsed.
+        // A real password login's token has no `viaClerk` flag and skips
+        // this entirely — that trust is the password itself, not this.
+        const stillTrusted =
+          !session.viaClerk ||
+          (login.linkedUserId && (await isAreaTrusted(ctx, login.linkedUserId, "performance")));
+        if (stillTrusted) return { session, login };
+      }
     }
   }
   return resolveClerkLinkedLogin(ctx);
@@ -572,7 +656,26 @@ export const validateSession = query({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
     const resolved = await resolveActiveSession(ctx, token);
-    if (!resolved) return { valid: false as const };
+    if (!resolved) {
+      // Phase 7 of docs/future-features/21_auth-consolidation.md: distinguish
+      // "not linked at all" (show the password form) from "linked, but this
+      // area's 14-day trust window lapsed" (show a step-up prompt instead —
+      // a password form for an account that may never have had a password
+      // is a dead end). `resolveActiveSession` already collapsed both into
+      // `null`; the raw lookup here is only to tell them apart for display.
+      const raw = await resolveClerkLinkedLoginRaw(ctx);
+      if (raw) {
+        return {
+          valid: false as const,
+          needsAreaStepUp: true as const,
+          requiredLevel: AREA_REVERIFY_LEVEL,
+          availableMethods: await availableMethodsFor(ctx, raw.user._id, AREA_REVERIFY_LEVEL, {
+            includePasskey: true,
+          }),
+        };
+      }
+      return { valid: false as const };
+    }
     const role = resolved.login.roleId ? await ctx.db.get(resolved.login.roleId) : null;
     return {
       valid: true as const,

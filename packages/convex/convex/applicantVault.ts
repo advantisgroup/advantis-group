@@ -7,11 +7,27 @@ import { internalMutation, internalQuery, query, type MutationCtx } from "./_gen
 import { hashPassword, verifyPassword } from "./activity/lib/crypto";
 import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import {
+  getUserByClerkId,
   isApplicantAreaMember,
   requireAdmin,
   requireApplicantAreaMember,
   requireUser,
 } from "./lib/auth";
+import {
+  AREA_REVERIFY_LEVEL,
+  availableMethodsFor,
+  getOrDefaultPolicy,
+  isAreaTrusted,
+  isLegacyPasswordSunsetInForce,
+  legacyPasswordSunsetDeadline,
+} from "./lib/stepUp";
+
+function assertServerKey(serverKey: string): void {
+  const expected = process.env.CONVEX_SERVER_KEY;
+  if (!expected || serverKey !== expected) {
+    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
+  }
+}
 
 /** How long a vault unlock lasts before the password must be re-entered. */
 export const UNLOCK_DURATION_MS = 30 * 60 * 1000;
@@ -55,10 +71,36 @@ export const status = query({
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     const unlocked = !!unlockRow && unlockRow.expiresAt > Date.now();
+    // Phase 4 of docs/future-features/21_auth-consolidation.md: the vault
+    // gate offers a passkey unlock once the member has at least one
+    // registered — the password stays as the fallback either way.
+    const passkey = await ctx.db
+      .query("passkeys")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .first();
+    // Phase 7: on top of the vault's own (much shorter) unlock above, an
+    // intranet-side re-verification lapsing after 14 days blocks even
+    // attempting an unlock — `performUnlock` enforces this server-side;
+    // this is only what tells the gate to show a step-up form first instead
+    // of a password/passkey prompt that would just fail.
+    const areaTrusted = await isAreaTrusted(ctx, user._id, "applicant_vault");
+    // Phase 8: only meaningful for a member who actually has a passkey —
+    // otherwise the password is their only way in and can never sunset, so
+    // there's nothing to show a countdown for.
+    const legacyPasswordSunsetDeadlineAt = passkey
+      ? legacyPasswordSunsetDeadline(await getOrDefaultPolicy(ctx), "applicant_vault")
+      : null;
     return {
       passwordIsSet: !!passwordRow,
+      hasPasskey: !!passkey,
       unlocked,
       expiresAt: unlocked ? unlockRow.expiresAt : null,
+      needsAreaStepUp: !areaTrusted,
+      areaStepUpRequiredLevel: areaTrusted ? null : AREA_REVERIFY_LEVEL,
+      areaStepUpAvailableMethods: areaTrusted
+        ? []
+        : await availableMethodsFor(ctx, user._id, AREA_REVERIFY_LEVEL, { includePasskey: true }),
+      legacyPasswordSunsetDeadline: legacyPasswordSunsetDeadlineAt,
     };
   },
 });
@@ -140,35 +182,71 @@ export const setPassword = action({
   },
 });
 
+/** Shared by the password and passkey unlock paths — plain helper, not a
+ * Convex function, so both `recordUnlock` (internalMutation, called from the
+ * `unlock` action) and `apiUnlockViaPasskey` (a plain mutation, already
+ * inside a transaction) can call it directly. `action` distinguishes how in
+ * the audit trail without adding a second table. */
+async function performUnlock(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  action: "vault_unlocked" | "vault_unlocked_via_passkey",
+): Promise<void> {
+  // Phase 7 of docs/future-features/21_auth-consolidation.md: no silent
+  // grace — an intranet-side re-verification older than the 14-day window
+  // blocks the unlock outright, whichever credential (password or passkey)
+  // the caller is presenting, same as `resolveClerkLinkedLogin`'s equivalent
+  // gate for Performance.
+  if (!(await isAreaTrusted(ctx, userId, "applicant_vault"))) {
+    throw new ConvexError({
+      code: "needs_area_step_up",
+      message: "Re-verify your identity to continue.",
+    });
+  }
+  const now = Date.now();
+  const expiresAt = now + UNLOCK_DURATION_MS;
+  const existing = await ctx.db
+    .query("applicantVaultUnlocks")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .unique();
+  if (existing) {
+    await ctx.db.patch(existing._id, { unlockedAt: now, expiresAt });
+  } else {
+    await ctx.db.insert("applicantVaultUnlocks", {
+      userId,
+      unlockedAt: now,
+      expiresAt,
+    });
+  }
+  await ctx.db.insert("applicantAuditLog", { actorUserId: userId, action, at: now });
+  await recordUnifiedAudit(ctx, { domain: "applicant", actorUserId: userId, action, at: now });
+}
+
 export const recordUnlock = internalMutation({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const now = Date.now();
-    const expiresAt = now + UNLOCK_DURATION_MS;
-    const existing = await ctx.db
-      .query("applicantVaultUnlocks")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .unique();
-    if (existing) {
-      await ctx.db.patch(existing._id, { unlockedAt: now, expiresAt });
-    } else {
-      await ctx.db.insert("applicantVaultUnlocks", {
-        userId,
-        unlockedAt: now,
-        expiresAt,
+    await performUnlock(ctx, userId, "vault_unlocked");
+  },
+});
+
+/** Server-key-gated like every other WebAuthn-adjacent Convex function
+ * (`passkeys.ts`, `stepUp.ts`) — the actual assertion verification needs
+ * `@simplewebauthn/server`, which only runs in `apps/api`; this just records
+ * the outcome once that's already confirmed the assertion resolves to
+ * `clerkUserId`'s own passkey. Phase 4 of
+ * docs/future-features/21_auth-consolidation.md. */
+export const apiUnlockViaPasskey = mutation({
+  args: { serverKey: v.string(), clerkUserId: v.string() },
+  handler: async (ctx, { serverKey, clerkUserId }) => {
+    assertServerKey(serverKey);
+    const user = await getUserByClerkId(ctx, clerkUserId);
+    if (!user || !isApplicantAreaMember(user)) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You do not have permission to do that",
       });
     }
-    await ctx.db.insert("applicantAuditLog", {
-      actorUserId: userId,
-      action: "vault_unlocked",
-      at: now,
-    });
-    await recordUnifiedAudit(ctx, {
-      domain: "applicant",
-      actorUserId: userId,
-      action: "vault_unlocked",
-      at: now,
-    });
+    await performUnlock(ctx, user._id, "vault_unlocked_via_passkey");
   },
 });
 
@@ -200,9 +278,37 @@ export const unlock = action({
         message: "Incorrect password",
       });
     }
+    // Phase 8 of docs/future-features/21_auth-consolidation.md: checked only
+    // once the password is already confirmed correct, same reasoning as
+    // Performance's equivalent check — never lets a guesser learn "this
+    // account is past its grace period" without the real password. A member
+    // with no passkey registered has no other way to unlock the vault, so
+    // this never applies to them whatever the policy says.
+    if (
+      await ctx.runQuery(internal.applicantVault.checkLegacyPasswordSunset, {
+        userId: me._id,
+      })
+    ) {
+      throw new ConvexError({
+        code: "legacy_password_sunset",
+        message: "Password unlock has moved — use your passkey instead.",
+      });
+    }
     await ctx.runMutation(internal.applicantVault.recordUnlock, {
       userId: me._id,
     });
+  },
+});
+
+export const checkLegacyPasswordSunset = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }): Promise<boolean> => {
+    const passkey = await ctx.db
+      .query("passkeys")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+    if (!passkey) return false;
+    return await isLegacyPasswordSunsetInForce(ctx, "applicant_vault");
   },
 });
 

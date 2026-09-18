@@ -23,6 +23,20 @@
     "needsVerification": "For your security, this needs a fresh verification first.",
     "openSecurity": "Open account security"
   },
+  "devices": {
+    "title": "Trusted devices",
+    "hint": "Devices recognized well enough to skip re-verifying a linked area for 14 days.",
+    "empty": "No devices recognized yet.",
+    "trusted": "Trusted",
+    "notTrusted": "Not trusted",
+    "lastSeen": "Last seen {when}",
+    "rename": "Rename",
+    "saveName": "Save",
+    "revokeTitle": "Forget this device?",
+    "revokeBody": "\"{name}\" will need to be recognized again next time — including a fresh step-up for any linked area.",
+    "revokeConfirm": "Forget device",
+    "revoked": "That device was forgotten."
+  },
   "activity": {
     "title": "Security activity",
     "hint": "Recent changes and checks on this account.",
@@ -249,5 +263,12 @@
   "securityAlwaysMfaDisabled": "MFA is no longer required at every sign-in",
   "securityPreferenceError": "Could not save this preference",
   "securitySignIn": "Sign-in",
+  "securityDeviceTracking": "Remember my devices",
+  "securityDeviceTrackingHint": "Lets a recognized device skip re-verifying a linked area for 14 days. Off means every visit is treated as unrecognized.",
+  "securityAreaTitle": "Linked areas",
+  "securityAreaHint": "How often you're asked to re-verify a password-less linked area, on top of the 14-day default.",
+  "securityAreaPerformance": "Always step up for Performance",
+  "securityAreaApplicantVault": "Always step up for the HR vault",
+  "securityAreaAlwaysStepUpHint": "Demands a fresh verification every time instead of trusting this device for 14 days.",
   "cancel": "Cancel"
 }

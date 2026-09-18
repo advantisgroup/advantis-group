@@ -6,7 +6,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { Search, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Switch } from "@/components/notifications/NotificationPreferences";
@@ -45,6 +45,10 @@ interface PolicyForm {
   requirePasskeyRetroactive: boolean;
   gracePeriodDays: number;
   exemptUserIds: Id<"users">[];
+  areaReverifyDays: number;
+  performanceLegacyPasswordSunsetEnabled: boolean;
+  applicantVaultLegacyPasswordSunsetEnabled: boolean;
+  legacyPasswordGraceDays: number;
 }
 
 function ScopeSection({
@@ -286,6 +290,113 @@ function SecurityStandardSection() {
   );
 }
 
+const AREA_LABEL_KEY = {
+  performance: "authenticationAreaPerformance",
+  applicant_vault: "authenticationAreaApplicantVault",
+} as const;
+
+/** Phase 7 of docs/future-features/21_auth-consolidation.md's admin-visible
+ * companion to `SecurityStandardSection` above — the device-trust opt-in/
+ * opt-out split and each area's "always step up" vs. "trust device"
+ * preference split, so the 14-day window set below isn't the only thing
+ * visible here. Read-only, same as the section above it. */
+function AreaReverifyStandardSection() {
+  const t = useTranslations("Admin");
+  const standard = useQuery(api.stepUp.areaStandard);
+
+  if (!standard) return <Skeleton className="h-28 rounded-xl" />;
+
+  return (
+    <section className="space-y-3">
+      <header>
+        <h2 className="text-sm font-semibold tracking-tight">
+          {t("authenticationAreaStandardTitle")}
+        </h2>
+        <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground text-pretty">
+          {t("authenticationAreaStandardHint")}
+        </p>
+      </header>
+      <KpiStrip className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3">
+        <Kpi
+          label={t("authenticationDeviceTrackingOptIn")}
+          value={standard.deviceTrackingOptInCount}
+        />
+        <Kpi
+          label={t("authenticationDeviceTrackingOptOut")}
+          value={standard.deviceTrackingOptOutCount}
+        />
+        {standard.byArea.map((entry) => (
+          <Kpi
+            key={entry.area}
+            label={t("authenticationAlwaysStepUpFor", { area: t(AREA_LABEL_KEY[entry.area]) })}
+            value={entry.alwaysStepUpCount}
+            hint={`${t("authenticationTrustDeviceCount")}: ${entry.trustDeviceCount}`}
+          />
+        ))}
+      </KpiStrip>
+    </section>
+  );
+}
+
+/** Phase 8's companion metric — the migration's tail made visible instead of
+ * silent, per the plan's own ask. Only rendered per-area once that area's
+ * sunset is actually enabled; while it's off there's no clock and nothing to
+ * count down. */
+function LegacyPasswordStandardSection() {
+  const t = useTranslations("Admin");
+  const format = useFormatter();
+  const standard = useQuery(api.stepUp.legacyPasswordStandard);
+
+  if (!standard) return <Skeleton className="h-20 rounded-xl" />;
+  if (!standard.performance.enabled && !standard.applicantVault.enabled) return null;
+
+  return (
+    <section className="space-y-3">
+      <header>
+        <h2 className="text-sm font-semibold tracking-tight">
+          {t("authenticationLegacyPasswordStandardTitle")}
+        </h2>
+      </header>
+      <KpiStrip className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
+        {standard.performance.enabled && (
+          <Kpi
+            label={t("authenticationAreaPerformance")}
+            value={standard.performance.accountsStillOnLegacyPassword}
+            hint={
+              standard.performance.deadlineAt
+                ? t("authenticationLegacyPasswordDeadline", {
+                    date: format.dateTime(new Date(standard.performance.deadlineAt), {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    }),
+                  })
+                : undefined
+            }
+          />
+        )}
+        {standard.applicantVault.enabled && (
+          <Kpi
+            label={t("authenticationAreaApplicantVault")}
+            value={standard.applicantVault.accountsStillOnLegacyPassword}
+            hint={
+              standard.applicantVault.deadlineAt
+                ? t("authenticationLegacyPasswordDeadline", {
+                    date: format.dateTime(new Date(standard.applicantVault.deadlineAt), {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    }),
+                  })
+                : undefined
+            }
+          />
+        )}
+      </KpiStrip>
+    </section>
+  );
+}
+
 function formOf(policy: PolicyForm): PolicyForm {
   return {
     requireMfaScope: policy.requireMfaScope,
@@ -297,6 +408,10 @@ function formOf(policy: PolicyForm): PolicyForm {
     requirePasskeyRetroactive: policy.requirePasskeyRetroactive,
     gracePeriodDays: policy.gracePeriodDays,
     exemptUserIds: policy.exemptUserIds,
+    areaReverifyDays: policy.areaReverifyDays,
+    performanceLegacyPasswordSunsetEnabled: policy.performanceLegacyPasswordSunsetEnabled,
+    applicantVaultLegacyPasswordSunsetEnabled: policy.applicantVaultLegacyPasswordSunsetEnabled,
+    legacyPasswordGraceDays: policy.legacyPasswordGraceDays,
   };
 }
 
@@ -362,6 +477,22 @@ export function AuthenticationPolicyPanel() {
     ) {
       items.push({ tone: "neutral", text: t("authenticationConfirmPasskeyRetroactive") });
     }
+    // Phase 8: starting the clock is exactly the kind of change that
+    // interrupts people who already have access — every linked account (or,
+    // for the vault, every member with a passkey) loses its standalone
+    // password once the grace period elapses.
+    if (
+      next.performanceLegacyPasswordSunsetEnabled &&
+      !policy.performanceLegacyPasswordSunsetEnabled
+    ) {
+      items.push({ tone: "neutral", text: t("authenticationConfirmPerformanceSunset") });
+    }
+    if (
+      next.applicantVaultLegacyPasswordSunsetEnabled &&
+      !policy.applicantVaultLegacyPasswordSunsetEnabled
+    ) {
+      items.push({ tone: "neutral", text: t("authenticationConfirmApplicantVaultSunset") });
+    }
     if (items.length > 0) {
       const ok = await confirm({
         title: t("authenticationConfirmTitle"),
@@ -381,7 +512,9 @@ export function AuthenticationPolicyPanel() {
     if (!form || !policy) return;
     if (
       form.gracePeriodDays !== policy.gracePeriodDays ||
-      form.destructiveActionTtlMinutes !== policy.destructiveActionTtlMinutes
+      form.destructiveActionTtlMinutes !== policy.destructiveActionTtlMinutes ||
+      form.areaReverifyDays !== policy.areaReverifyDays ||
+      form.legacyPasswordGraceDays !== policy.legacyPasswordGraceDays
     ) {
       persist(form);
     }
@@ -391,6 +524,8 @@ export function AuthenticationPolicyPanel() {
     <SettingsLayoutProvider value="stacked">
       <div className="space-y-10">
         <SecurityStandardSection />
+        <AreaReverifyStandardSection />
+        <LegacyPasswordStandardSection />
 
         <ScopeSection
           title={t("authenticationMfaTitle")}
@@ -506,6 +641,90 @@ export function AuthenticationPolicyPanel() {
               onChange={(exemptUserIds) => void change({ exemptUserIds })}
             />
           </SettingsRow>
+        </SettingsSection>
+
+        <SettingsSection
+          title={t("authenticationAreaReverifyTitle")}
+          description={t("authenticationAreaReverifyHint")}
+        >
+          <SettingsRow
+            title={t("authenticationAreaReverifyDays")}
+            control={
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={90}
+                className="w-24 tabular-nums"
+                value={form.areaReverifyDays}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    areaReverifyDays: Math.min(90, Math.max(1, Number(e.target.value) || 1)),
+                  })
+                }
+                onBlur={commitNumbers}
+              />
+            }
+          />
+        </SettingsSection>
+
+        <SettingsSection
+          title={t("authenticationLegacyPasswordTitle")}
+          description={t("authenticationLegacyPasswordHint")}
+        >
+          <SettingsRow
+            title={t("authenticationAreaPerformance")}
+            description={t("authenticationLegacyPasswordPerformanceHint")}
+            control={
+              <Switch
+                checked={form.performanceLegacyPasswordSunsetEnabled}
+                onToggle={() =>
+                  void change({
+                    performanceLegacyPasswordSunsetEnabled:
+                      !form.performanceLegacyPasswordSunsetEnabled,
+                  })
+                }
+                label={t("authenticationAreaPerformance")}
+              />
+            }
+          />
+          <SettingsRow
+            title={t("authenticationAreaApplicantVault")}
+            description={t("authenticationLegacyPasswordApplicantVaultHint")}
+            control={
+              <Switch
+                checked={form.applicantVaultLegacyPasswordSunsetEnabled}
+                onToggle={() =>
+                  void change({
+                    applicantVaultLegacyPasswordSunsetEnabled:
+                      !form.applicantVaultLegacyPasswordSunsetEnabled,
+                  })
+                }
+                label={t("authenticationAreaApplicantVault")}
+              />
+            }
+          />
+          <SettingsRow
+            title={t("authenticationLegacyPasswordGraceDays")}
+            control={
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={90}
+                className="w-24 tabular-nums"
+                value={form.legacyPasswordGraceDays}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    legacyPasswordGraceDays: Math.min(90, Math.max(1, Number(e.target.value) || 1)),
+                  })
+                }
+                onBlur={commitNumbers}
+              />
+            }
+          />
         </SettingsSection>
       </div>
     </SettingsLayoutProvider>
