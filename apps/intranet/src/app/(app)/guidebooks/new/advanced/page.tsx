@@ -37,10 +37,10 @@ export default function NewGuidebookAdvancedPage() {
   const tc = useTranslations("Common");
   const router = useRouter();
   const isManager = useIsManager();
-  const customPages = useQuery(api.guidebookPages.list);
-  const createPage = useMutation(api.guidebookPages.create);
-  const updatePage = useMutation(api.guidebookPages.update);
-  const addAttachment = useMutation(api.guidebookAttachments.add);
+  const customPages = useQuery(api.guidebooks.pages.list);
+  const createPage = useMutation(api.guidebooks.pages.create);
+  const updatePage = useMutation(api.guidebooks.pages.update);
+  const addAttachment = useMutation(api.guidebooks.attachments.add);
   const oneDriveApi = useOneDriveApi();
   const attachmentUpload = useAttachmentUpload();
   // Set once a submission's create call succeeds; a retry after a failed

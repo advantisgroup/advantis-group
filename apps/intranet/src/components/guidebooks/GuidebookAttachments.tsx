@@ -35,9 +35,9 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
   const canManage = useHasCapability("manage_guidebooks");
   const confirm = useConfirm();
   const handleError = useErrorHandler();
-  const attachments = useQuery(api.guidebookAttachments.list, { slug });
-  const addAttachment = useMutation(api.guidebookAttachments.add);
-  const removeAttachment = useMutation(api.guidebookAttachments.remove);
+  const attachments = useQuery(api.guidebooks.attachments.list, { slug });
+  const addAttachment = useMutation(api.guidebooks.attachments.add);
+  const removeAttachment = useMutation(api.guidebooks.attachments.remove);
   const oneDriveApi = useOneDriveApi();
   const { openFileViewer } = useFileViewer();
   const inputRef = useRef<HTMLInputElement>(null);

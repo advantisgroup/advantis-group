@@ -220,13 +220,13 @@ export function useWikiEntryForm({
   const entries = useQuery(api.wikiEntries.list) ?? [];
   const create = useMutation(api.wikiEntries.create);
   const update = useMutation(api.wikiEntries.update);
-  const addAttachment = useMutation(api.guidebookAttachments.add);
+  const addAttachment = useMutation(api.guidebooks.attachments.add);
   const oneDriveApi = useOneDriveApi();
   const attachmentUpload = useAttachmentUpload();
   const isEditing = !("draftId" in entry);
   const entryKey: string = isEditing ? entry._id : entry.draftId;
   const existingAttachments = useQuery(
-    api.guidebookAttachments.list,
+    api.guidebooks.attachments.list,
     isEditing ? { slug: entry.slug } : "skip",
   );
 

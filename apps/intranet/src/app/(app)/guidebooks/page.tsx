@@ -96,8 +96,8 @@ const STALE_AFTER_MS = 180 * 24 * 60 * 60 * 1000;
 
 function useGridItems() {
   const entries = useQuery(api.wikiEntries.list);
-  const legacyPages = useQuery(api.guidebookPages.list);
-  const highlightedSlugs = useQuery(api.guidebookHighlights.list);
+  const legacyPages = useQuery(api.guidebooks.pages.list);
+  const highlightedSlugs = useQuery(api.guidebooks.highlights.list);
 
   return useMemo(() => {
     if (entries === undefined || legacyPages === undefined || highlightedSlugs === undefined) {
@@ -177,9 +177,9 @@ function EntryCard({
   const handleError = useErrorHandler();
   const confirm = useConfirm();
   const togglePin = useMutation(api.wikiEntries.togglePin);
-  const toggleHighlight = useMutation(api.guidebookHighlights.toggle);
+  const toggleHighlight = useMutation(api.guidebooks.highlights.toggle);
   const removeEntry = useMutation(api.wikiEntries.remove);
-  const removePage = useMutation(api.guidebookPages.remove);
+  const removePage = useMutation(api.guidebooks.pages.remove);
   const color = item.archived ? "#77808A" : item.categoryColor;
   // Pinning is manager-curated (no ownership check, mirrors the server's
   // `togglePin`/`guidebookHighlights.toggle`); edit/delete require owning the

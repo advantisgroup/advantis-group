@@ -24,8 +24,8 @@ export default function EditGuidebookPage() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
   const user = useCurrentUser();
-  const page = useQuery(api.guidebookPages.get, { slug: params.slug });
-  const updatePage = useMutation(api.guidebookPages.update);
+  const page = useQuery(api.guidebooks.pages.get, { slug: params.slug });
+  const updatePage = useMutation(api.guidebooks.pages.update);
 
   const canEdit = !!page && isOwnerOrAdmin(user, page.authorUserId);
 

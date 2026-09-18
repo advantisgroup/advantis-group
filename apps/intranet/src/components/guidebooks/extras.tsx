@@ -158,9 +158,9 @@ export function ReadingProgress() {
 /** "Was this helpful?" — one revisable vote per user; managers see totals. */
 export function FeedbackWidget({ slug }: { slug: string }) {
   const t = useTranslations("Guidebooks");
-  const mine = useQuery(api.guidebookFeedback.getMine, { slug });
-  const stats = useQuery(api.guidebookFeedback.stats, { slug });
-  const set = useMutation(api.guidebookFeedback.set);
+  const mine = useQuery(api.guidebooks.feedback.getMine, { slug });
+  const stats = useQuery(api.guidebooks.feedback.stats, { slug });
+  const set = useMutation(api.guidebooks.feedback.set);
 
   return (
     <div className="mt-8 flex flex-wrap items-center gap-3 rounded-xl border border-border/70 bg-muted/30 px-4 py-3 print:hidden">

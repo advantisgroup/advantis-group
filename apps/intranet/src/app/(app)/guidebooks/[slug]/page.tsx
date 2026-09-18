@@ -69,12 +69,12 @@ function ReadConfirmation({ slug }: { slug: string }) {
   const t = useTranslations("Guidebooks");
   const locale = useLocale();
   const canManageWiki = useHasCapability("manage_guidebooks");
-  const readSlugs = useQuery(api.guidebookReads.listMine) ?? EMPTY_SLUGS;
+  const readSlugs = useQuery(api.guidebooks.reads.listMine) ?? EMPTY_SLUGS;
   const confirmers = useQuery(
-    api.guidebookReads.listConfirmersForSlug,
+    api.guidebooks.reads.listConfirmersForSlug,
     canManageWiki ? { slug } : "skip",
   );
-  const markRead = useMutation(api.guidebookReads.markRead);
+  const markRead = useMutation(api.guidebooks.reads.markRead);
   const [justConfirmed, setJustConfirmed] = useState(false);
   const [showConfirmers, setShowConfirmers] = useState(false);
   const isRead = readSlugs.includes(slug) || justConfirmed;
@@ -156,18 +156,18 @@ export default function GuidebookPage() {
   // (post-migration) — only look up the legacy page once we know there's no
   // wiki entry.
   const legacyPage = useQuery(
-    api.guidebookPages.get,
+    api.guidebooks.pages.get,
     staticGuidebook || entry ? "skip" : { slug: params.slug },
   );
   // Loaded here (not just inside `GuidebookAttachments`) so `WikiFileLinkText`
   // can resolve inline file-link chips in the body — Convex dedupes this
   // against the identical query that component runs itself.
   const attachments = useQuery(
-    api.guidebookAttachments.list,
+    api.guidebooks.attachments.list,
     entry ? { slug: entry.slug } : "skip",
   );
   const removeEntry = useMutation(api.wikiEntries.remove);
-  const removePage = useMutation(api.guidebookPages.remove);
+  const removePage = useMutation(api.guidebooks.pages.remove);
   const announceGuidebook = useMutation(api.announcements.announceGuidebook);
   const setPrefs = useMutation(api.userPreferences.setMine);
 

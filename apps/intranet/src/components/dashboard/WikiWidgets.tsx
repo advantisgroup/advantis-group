@@ -32,8 +32,8 @@ interface LatestWikiEntry {
  * section and its "should we even show that section" check. */
 export function useLatestWikiPages(): LatestWikiEntry[] | undefined {
   const entries = useQuery(api.wikiEntries.list);
-  const legacyPages = useQuery(api.guidebookPages.list);
-  const readSlugs = useQuery(api.guidebookReads.listMine) ?? EMPTY_SLUGS;
+  const legacyPages = useQuery(api.guidebooks.pages.list);
+  const readSlugs = useQuery(api.guidebooks.reads.listMine) ?? EMPTY_SLUGS;
 
   return useMemo(() => {
     if (entries === undefined || legacyPages === undefined) return undefined;
