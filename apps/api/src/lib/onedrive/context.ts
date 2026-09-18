@@ -26,7 +26,7 @@ export interface OneDriveUser extends AccessUser {
  */
 export async function resolveOneDriveUser(request: Request): Promise<OneDriveUser> {
   const { clerkUserId } = await requireAuth(request);
-  const ctx = await getConvex().query(api.onedrive.apiUserContext, {
+  const ctx = await getConvex().query(api.integrations.onedrive.apiUserContext, {
     serverKey: getConvexServerKey(),
     clerkUserId,
   });

@@ -97,7 +97,7 @@ if (process.env.DISABLE_CRONS !== "true") {
   crons.daily(
     "clockodo: prune old webhook delivery log",
     { hourUTC: 3, minuteUTC: 45 },
-    internal.clockodoWebhookLog.pruneOldWebhookLogs,
+    internal.integrations.clockodoWebhookLog.pruneOldWebhookLogs,
     {},
   );
 
@@ -158,7 +158,7 @@ if (process.env.DISABLE_CRONS !== "true") {
   crons.daily(
     "onedrive: renew change subscription",
     { hourUTC: 4, minuteUTC: 0 },
-    internal.onedrive.renewSubscription,
+    internal.integrations.onedrive.renewSubscription,
     {},
   );
 

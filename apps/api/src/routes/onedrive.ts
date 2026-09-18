@@ -128,7 +128,7 @@ async function buildListing(user: OneDriveUser, relPath: string): Promise<OneDri
   try {
     const fileIds = items.filter((i) => i.type === "file").map((i) => i.id);
     if (fileIds.length > 0) {
-      const map = await getConvex().query(api.onedrive.apiUploadersByItemIds, {
+      const map = await getConvex().query(api.integrations.onedrive.apiUploadersByItemIds, {
         serverKey: getConvexServerKey(),
         itemIds: fileIds,
       });
@@ -330,7 +330,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
           throw Errors.badRequest(reason?.detail ?? "This file type is not allowed");
         }
         const created = await uploadFile(folder.id, file.name, bytes, file.type);
-        await getConvex().mutation(api.onedrive.apiRecordDirectUpload, {
+        await getConvex().mutation(api.integrations.onedrive.apiRecordDirectUpload, {
           serverKey: getConvexServerKey(),
           uploaderUserId: user.userId,
           fileName: file.name,
@@ -351,7 +351,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         throw Errors.badRequest(reason?.detail ?? "This file type is not allowed");
       }
       const scanJson = JSON.stringify(report);
-      const uploadUrl = await getConvex().mutation(api.onedrive.apiGenerateStagingUrl, {
+      const uploadUrl = await getConvex().mutation(api.integrations.onedrive.apiGenerateStagingUrl, {
         serverKey: getConvexServerKey(),
       });
       const staged = await fetch(uploadUrl, {
@@ -368,7 +368,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       const { storageId } = (await staged.json()) as {
         storageId: Id<"_storage">;
       };
-      const { uploadId } = await getConvex().mutation(api.onedrive.apiSubmitRequest, {
+      const { uploadId } = await getConvex().mutation(api.integrations.onedrive.apiSubmitRequest, {
         serverKey: getConvexServerKey(),
         requesterUserId: user.userId,
         fileName: file.name,
@@ -396,7 +396,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       requireManagerUser(user);
       const uploadId = params.id as Id<"onedriveUploads">;
 
-      const found = await getConvex().query(api.onedrive.apiGetUpload, {
+      const found = await getConvex().query(api.integrations.onedrive.apiGetUpload, {
         serverKey: getConvexServerKey(),
         uploadId,
       });
@@ -407,7 +407,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       // A manager still needs write-access to the destination (e.g. gfAccess).
       assertCanWrite(user, upload.targetFolderPath);
 
-      await getConvex().mutation(api.onedrive.apiMarkUploading, {
+      await getConvex().mutation(api.integrations.onedrive.apiMarkUploading, {
         serverKey: getConvexServerKey(),
         uploadId,
       });
@@ -420,7 +420,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         const bytes = new Uint8Array(await staged.arrayBuffer());
         const folder = await getItemByPath(upload.targetFolderPath);
         const created = await uploadFile(folder.id, upload.fileName, bytes, upload.contentType);
-        await getConvex().mutation(api.onedrive.apiMarkApproved, {
+        await getConvex().mutation(api.integrations.onedrive.apiMarkApproved, {
           serverKey: getConvexServerKey(),
           uploadId,
           reviewerUserId: user.userId,
@@ -431,7 +431,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         return { ok: true as const };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Upload failed";
-        await getConvex().mutation(api.onedrive.apiMarkFailed, {
+        await getConvex().mutation(api.integrations.onedrive.apiMarkFailed, {
           serverKey: getConvexServerKey(),
           uploadId,
           error: message,
@@ -451,7 +451,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     async ({ request, params, body }) => {
       const user = await resolveOneDriveUser(request);
       requireManagerUser(user);
-      await getConvex().mutation(api.onedrive.apiMarkDenied, {
+      await getConvex().mutation(api.integrations.onedrive.apiMarkDenied, {
         serverKey: getConvexServerKey(),
         uploadId: params.id as Id<"onedriveUploads">,
         reviewerUserId: user.userId,
@@ -680,7 +680,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
   .get("/team-access", async ({ request }) => {
     const user = await resolveOneDriveUser(request);
     requireManagerUser(user);
-    const roster = await getConvex().query(api.onedrive.apiTeamAccessRoster, {
+    const roster = await getConvex().query(api.integrations.onedrive.apiTeamAccessRoster, {
       serverKey: getConvexServerKey(),
     });
     return { users: roster };
@@ -700,7 +700,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
 
       const existing = await findPermissionByEmail(team.id, body.email);
       if (existing) {
-        await getConvex().mutation(api.onedrive.apiSetTeamAccess, {
+        await getConvex().mutation(api.integrations.onedrive.apiSetTeamAccess, {
           serverKey: getConvexServerKey(),
           actorUserId: user.userId,
           targetUserId: body.userId as Id<"users">,
@@ -714,7 +714,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       }
 
       const { permissionId } = await inviteToItem(team.id, body.email, "read");
-      await getConvex().mutation(api.onedrive.apiSetTeamAccess, {
+      await getConvex().mutation(api.integrations.onedrive.apiSetTeamAccess, {
         serverKey: getConvexServerKey(),
         actorUserId: user.userId,
         targetUserId: body.userId as Id<"users">,
@@ -733,7 +733,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       requireManagerUser(user);
       const team = await getItemByPath(folderConfig().team);
       await removePermission(team.id, body.permissionId);
-      await getConvex().mutation(api.onedrive.apiClearTeamAccess, {
+      await getConvex().mutation(api.integrations.onedrive.apiClearTeamAccess, {
         serverKey: getConvexServerKey(),
         actorUserId: user.userId,
         targetUserId: body.userId as Id<"users">,
@@ -747,7 +747,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
   .post("/team-access/sync", async ({ request }) => {
     const user = await resolveOneDriveUser(request);
     requireManagerUser(user);
-    const roster = await getConvex().query(api.onedrive.apiTeamAccessRoster, {
+    const roster = await getConvex().query(api.integrations.onedrive.apiTeamAccessRoster, {
       serverKey: getConvexServerKey(),
     });
     const missing = roster.filter((r) => !r.permissionId);
@@ -760,7 +760,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         const permissionId = existing
           ? existing.id
           : (await inviteToItem(team.id, person.email, "read")).permissionId;
-        await getConvex().mutation(api.onedrive.apiSetTeamAccess, {
+        await getConvex().mutation(api.integrations.onedrive.apiSetTeamAccess, {
           serverKey: getConvexServerKey(),
           actorUserId: user.userId,
           targetUserId: person.userId,
@@ -787,7 +787,7 @@ async function recordAction(
   target: string,
 ): Promise<void> {
   try {
-    await getConvex().mutation(api.onedrive.apiRecordAction, {
+    await getConvex().mutation(api.integrations.onedrive.apiRecordAction, {
       serverKey: getConvexServerKey(),
       actorUserId: user.userId,
       action,

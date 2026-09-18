@@ -195,7 +195,7 @@ export function AdminSidebar() {
   // badged in ActivitySidebar — a manager approving requests shouldn't have
   // to open the section just to see there's something waiting.
   const pendingUploads = useQuery(
-    api.onedrive.listPending,
+    api.integrations.onedrive.listPending,
     isManager || hasUploadsView ? {} : "skip",
   );
   const pendingCount = pendingUploads?.length ?? 0;

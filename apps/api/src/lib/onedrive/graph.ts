@@ -33,7 +33,7 @@ export async function isConfigured(): Promise<boolean> {
   }
   if (optionalEnv("ONEDRIVE_REFRESH_TOKEN")) return true;
   try {
-    const stored = await getConvex().query(api.onedrive.apiGetRefreshToken, {
+    const stored = await getConvex().query(api.integrations.onedrive.apiGetRefreshToken, {
       serverKey: getConvexServerKey(),
     });
     return Boolean(stored?.refreshToken);
@@ -54,7 +54,7 @@ let currentRefresh: string | null = null; // decrypted refresh token, in-memory
 async function loadRefreshToken(): Promise<string> {
   if (currentRefresh) return currentRefresh;
   try {
-    const stored = await getConvex().query(api.onedrive.apiGetRefreshToken, {
+    const stored = await getConvex().query(api.integrations.onedrive.apiGetRefreshToken, {
       serverKey: getConvexServerKey(),
     });
     if (stored?.refreshToken) {
@@ -78,7 +78,7 @@ async function loadRefreshToken(): Promise<string> {
 async function persistRefreshToken(next: string): Promise<void> {
   currentRefresh = next;
   try {
-    await getConvex().mutation(api.onedrive.apiSetRefreshToken, {
+    await getConvex().mutation(api.integrations.onedrive.apiSetRefreshToken, {
       serverKey: getConvexServerKey(),
       refreshToken: encrypt(next),
     });

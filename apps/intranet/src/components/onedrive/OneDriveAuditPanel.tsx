@@ -11,7 +11,7 @@ import { formatDateTime } from "@/lib/format";
 export function OneDriveAuditPanel() {
   const t = useTranslations("Admin");
   const locale = useLocale();
-  const rows = useQuery(api.onedrive.auditFeed, { limit: 100 });
+  const rows = useQuery(api.integrations.onedrive.auditFeed, { limit: 100 });
 
   if (rows === undefined) {
     return (

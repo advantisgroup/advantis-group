@@ -18,7 +18,7 @@ export function logClockodoWebhookDelivery(args: {
   resourceId?: string;
 }): void {
   getConvex()
-    .mutation(api.clockodoWebhookLog.logWebhookDelivery, {
+    .mutation(api.integrations.clockodoWebhookLog.logWebhookDelivery, {
       serverKey: getConvexServerKey(),
       endpoint: args.endpoint,
       eventName: args.eventName,

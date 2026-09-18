@@ -105,7 +105,10 @@ import type * as integrations_clockodo_users from "../integrations/clockodo/user
 import type * as integrations_clockodoAbsences from "../integrations/clockodoAbsences.js";
 import type * as integrations_clockodoLink from "../integrations/clockodoLink.js";
 import type * as integrations_clockodoView from "../integrations/clockodoView.js";
+import type * as integrations_clockodoWebhookLog from "../integrations/clockodoWebhookLog.js";
 import type * as integrations_debug from "../integrations/debug.js";
+import type * as integrations_onedrive from "../integrations/onedrive.js";
+import type * as integrations_posthog from "../integrations/posthog.js";
 import type * as invites from "../invites.js";
 import type * as itTicketThreads from "../itTicketThreads.js";
 import type * as itTickets from "../itTickets.js";
@@ -322,7 +325,10 @@ declare const fullApi: ApiFromModules<{
   "integrations/clockodoAbsences": typeof integrations_clockodoAbsences;
   "integrations/clockodoLink": typeof integrations_clockodoLink;
   "integrations/clockodoView": typeof integrations_clockodoView;
+  "integrations/clockodoWebhookLog": typeof integrations_clockodoWebhookLog;
   "integrations/debug": typeof integrations_debug;
+  "integrations/onedrive": typeof integrations_onedrive;
+  "integrations/posthog": typeof integrations_posthog;
   invites: typeof invites;
   itTicketThreads: typeof itTicketThreads;
   itTickets: typeof itTickets;

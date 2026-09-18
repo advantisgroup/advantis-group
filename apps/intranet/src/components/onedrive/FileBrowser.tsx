@@ -136,7 +136,7 @@ export function FileBrowser({
 
   const prefs = useQuery(api.userPreferences.getMine);
   const setPrefs = useMutation(api.userPreferences.setMine);
-  const myUploads = useQuery(api.onedrive.myUploads);
+  const myUploads = useQuery(api.integrations.onedrive.myUploads);
   const favoriteFolders = useMemo(() => prefs?.favoriteFolders ?? [], [prefs]);
 
   useEffect(() => {

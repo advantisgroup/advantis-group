@@ -21,7 +21,7 @@ export interface AnalyticsEvent {
  * addresses.
  */
 export async function trackEvent(ctx: MutationCtx, event: AnalyticsEvent): Promise<void> {
-  await ctx.scheduler.runAfter(0, internal.analytics.capture, {
+  await ctx.scheduler.runAfter(0, internal.integrations.posthog.capture, {
     event: event.event,
     distinctId: event.distinctId,
     properties: event.properties,

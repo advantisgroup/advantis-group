@@ -25,7 +25,7 @@ import { useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
 
 type PendingUpload = NonNullable<
-  ReturnType<typeof useQuery<typeof api.onedrive.listPending>>
+  ReturnType<typeof useQuery<typeof api.integrations.onedrive.listPending>>
 >[number];
 
 function parseReport(json: string): ScanReport | null {
@@ -55,7 +55,7 @@ export function UploadApprovalQueue({
   readOnly?: boolean;
 }) {
   const t = useTranslations("Admin");
-  const pending = useQuery(api.onedrive.listPending);
+  const pending = useQuery(api.integrations.onedrive.listPending);
   const [selected, setSelected] = useState<PendingUpload | null>(null);
 
   // Deep link from a notification: /admin/uploads?upload=<id> opens the
