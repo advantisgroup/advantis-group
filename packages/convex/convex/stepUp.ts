@@ -1,4 +1,4 @@
-import { internalMutation, mutation, query } from "./functions";
+import { internalMutation, mutation, query, serverMutation, serverQuery } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
@@ -6,7 +6,6 @@ import { type Id } from "./_generated/dataModel";
 import { type MutationCtx } from "./_generated/server";
 import { sha256hex } from "./activity/lib/crypto";
 import {
-  assertServerKey,
   effectiveRole,
   getUserByClerkId,
   isApplicantAreaMember,
@@ -214,16 +213,14 @@ const areaValidator = v.union(v.literal("performance"), v.literal("applicant_vau
 // frontend's `<StepUpForm>` always talks to apps/api's `/auth/step-up/*`
 // routes, never to these directly.
 
-export const apiRequestEmailCode = mutation({
+export const apiRequestEmailCode = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     sessionId: v.string(),
     context: contextValidator,
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
     const code = await issueEmailCode(ctx, user, args.sessionId, args.context);
@@ -236,9 +233,8 @@ export const apiRequestEmailCode = mutation({
   },
 });
 
-export const apiSubmitEmailCode = mutation({
+export const apiSubmitEmailCode = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     sessionId: v.string(),
     code: v.string(),
@@ -248,7 +244,6 @@ export const apiSubmitEmailCode = mutation({
   },
   returns: v.object({ ok: v.boolean(), message: v.optional(v.string()) }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user) return { ok: false, message: "User not found" };
     const result = await verifyEmailCode(ctx, user, args.sessionId, args.code, args.context);
@@ -272,9 +267,8 @@ export const apiSubmitEmailCode = mutation({
 
 // --- Called from apps/api after it verifies TOTP/recovery-code itself --------
 
-export const apiRecordVerification = mutation({
+export const apiRecordVerification = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     sessionId: v.string(),
     method: v.union(v.literal("totp"), v.literal("recovery_code")),
@@ -284,7 +278,6 @@ export const apiRecordVerification = mutation({
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user) return { ok: false };
     await recordExternalVerification(ctx, {
@@ -307,9 +300,8 @@ export const apiRecordVerification = mutation({
  * sibling of the ticket dance below, for when someone re-verifies with their
  * passkey instead of typing a code. apps/api has already checked the WebAuthn
  * assertion and that the credential belongs to this caller. */
-export const apiRecordPasskeyStepUp = mutation({
+export const apiRecordPasskeyStepUp = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     sessionId: v.string(),
     context: contextValidator,
@@ -317,7 +309,6 @@ export const apiRecordPasskeyStepUp = mutation({
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user) return { ok: false };
     await recordPasskeyVerification(ctx, user, args.sessionId, args.context);
@@ -328,11 +319,10 @@ export const apiRecordPasskeyStepUp = mutation({
   },
 });
 
-export const apiIssuePasskeyTicket = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const apiIssuePasskeyTicket = serverMutation({
+  args: { clerkUserId: v.string() },
   returns: v.object({ ticket: v.string() }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
     const ticket = crypto.randomUUID() + crypto.randomUUID();
@@ -350,16 +340,14 @@ export const apiIssuePasskeyTicket = mutation({
  * apps/api right after `setActive()`, before Convex's own client has
  * necessarily picked up the freshly-created session, so this can't rely on
  * `ctx.auth` naming the right identity yet. */
-export const apiClaimPasskeyTicket = mutation({
+export const apiClaimPasskeyTicket = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     ticket: v.string(),
     sessionId: v.string(),
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user) return { ok: false };
     const tokenHash = await sha256hex(args.ticket);
@@ -382,15 +370,14 @@ export const apiClaimPasskeyTicket = mutation({
  * passkey. Returns the hint shape the frontend already knows from
  * `passwordResets.ts` rather than throwing, so the caller can put a
  * `<StepUpDialog>` in front of the action and retry it. */
-export const apiDestructiveGate = query({
-  args: { serverKey: v.string(), clerkUserId: v.string(), sessionId: v.string() },
+export const apiDestructiveGate = serverQuery({
+  args: { clerkUserId: v.string(), sessionId: v.string() },
   returns: v.object({
     satisfied: v.boolean(),
     requiredLevel: v.number(),
     availableMethods: v.array(stepMethodValidator),
   }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
     const { requiredLevel, freshnessMs } = await destructiveRequirement(ctx, user);
@@ -435,9 +422,8 @@ async function findKnownDevice(
   return byHash.find((d) => !clerkClientId || d.clerkClientId === undefined) ?? null;
 }
 
-export const apiEvaluateDevice = mutation({
+export const apiEvaluateDevice = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     sessionId: v.string(),
     // The Clerk client this session belongs to, as looked up server-side by
@@ -449,7 +435,6 @@ export const apiEvaluateDevice = mutation({
   },
   returns: v.object({ newDevice: v.boolean() }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
 

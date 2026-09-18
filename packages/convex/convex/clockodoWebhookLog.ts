@@ -1,16 +1,13 @@
-import { internalMutation, mutation } from "./functions";
+import { internalMutation, serverMutation } from "./functions";
 import { v } from "convex/values";
-
-import { assertServerKey } from "./lib/auth";
 
 /**
  * Durable record of every inbound Clockodo webhook delivery — see the schema
  * comment on `clockodoWebhookLog`. Server-key gated like the other
  * apps/api-invoked mutations in `clockodoSync.ts`.
  */
-export const logWebhookDelivery = mutation({
+export const logWebhookDelivery = serverMutation({
   args: {
-    serverKey: v.string(),
     endpoint: v.union(v.literal("webhooks/clockodo"), v.literal("integrations/clockodo/webhook")),
     eventName: v.optional(v.string()),
     ok: v.boolean(),
@@ -19,8 +16,7 @@ export const logWebhookDelivery = mutation({
     tokenLength: v.optional(v.number()),
     resourceId: v.optional(v.string()),
   },
-  handler: async (ctx, { serverKey, ...args }) => {
-    assertServerKey(serverKey);
+  handler: async (ctx, { ...args }) => {
     await ctx.db.insert("clockodoWebhookLog", { ...args, at: Date.now() });
   },
 });

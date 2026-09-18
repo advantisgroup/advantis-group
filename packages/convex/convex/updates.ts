@@ -1,10 +1,10 @@
-import { internalMutation, mutation, query } from "./functions";
+import { internalMutation, mutation, query, serverMutation } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx } from "./_generated/server";
-import { assertServerKey, effectiveRole, requireAdmin, requireUser } from "./lib/auth";
+import { effectiveRole, requireAdmin, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
 import { displayName } from "./lib/users";
@@ -243,9 +243,8 @@ export const create = mutation({
  * second run of the same slug patches the existing row instead of
  * re-notifying/re-emailing everyone.
  */
-export const publishFromMarkdown = mutation({
+export const publishFromMarkdown = serverMutation({
   args: {
-    serverKey: v.string(),
     authorEmail: v.string(),
     slug: v.string(),
     type: v.union(v.literal("incident"), v.literal("maintenance"), v.literal("changelog")),
@@ -260,7 +259,6 @@ export const publishFromMarkdown = mutation({
     emailRequested: v.boolean(),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const resolvedAuthor = await resolveMarkdownAuthor(ctx, args.authorEmail.toLowerCase());
     if (!resolvedAuthor) {
       throw new ConvexError({
@@ -726,9 +724,8 @@ const EVENT_STATUS_RANK: Record<string, number> = {
 };
 
 /** Server-key gated: called by the Elysia API's Resend webhook handler. */
-export const recordEmailEvent = mutation({
+export const recordEmailEvent = serverMutation({
   args: {
-    serverKey: v.string(),
     resendEmailId: v.optional(v.string()),
     updateId: v.optional(v.id("updates")),
     userId: v.optional(v.id("users")),
@@ -736,8 +733,6 @@ export const recordEmailEvent = mutation({
     occurredAt: v.number(),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
-
     let row = args.resendEmailId
       ? await ctx.db
           .query("updateEmailRecipients")

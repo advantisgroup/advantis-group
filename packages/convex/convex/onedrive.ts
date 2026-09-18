@@ -1,11 +1,10 @@
-import { internalAction, mutation, query } from "./functions";
+import { internalAction, mutation, query, serverMutation, serverQuery } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import {
-  assertServerKey,
   effectiveCustomRoleIds,
   effectiveRole,
   getUserByClerkId,
@@ -86,10 +85,9 @@ async function writeAudit(
 // ===========================================================================
 
 /** Resolve the intranet user behind a Clerk id, with OneDrive-relevant flags. */
-export const apiUserContext = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
-  handler: async (ctx, { serverKey, clerkUserId }) => {
-    assertServerKey(serverKey);
+export const apiUserContext = serverQuery({
+  args: { clerkUserId: v.string() },
+  handler: async (ctx, { clerkUserId }) => {
     const user = await getUserByClerkId(ctx, clerkUserId);
     if (!user || user.status !== "active") return null;
     const sandboxed = isSandboxed(user);
@@ -121,18 +119,16 @@ export const apiUserContext = query({
 });
 
 /** A one-shot URL the API POSTs staged bytes to (Convex file storage). */
-export const apiGenerateStagingUrl = mutation({
-  args: { serverKey: v.string() },
-  handler: async (ctx, { serverKey }) => {
-    assertServerKey(serverKey);
+export const apiGenerateStagingUrl = serverMutation({
+  args: {},
+  handler: async (ctx) => {
     return ctx.storage.generateUploadUrl();
   },
 });
 
 /** Create a pending upload request (employee path). */
-export const apiSubmitRequest = mutation({
+export const apiSubmitRequest = serverMutation({
   args: {
-    serverKey: v.string(),
     requesterUserId: v.id("users"),
     fileName: v.string(),
     size: v.number(),
@@ -142,7 +138,6 @@ export const apiSubmitRequest = mutation({
     scanReport: v.string(),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const requester = await ctx.db.get(args.requesterUserId);
     if (!requester) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -170,9 +165,8 @@ export const apiSubmitRequest = mutation({
 });
 
 /** Record a manager's direct upload (no approval needed). */
-export const apiRecordDirectUpload = mutation({
+export const apiRecordDirectUpload = serverMutation({
   args: {
-    serverKey: v.string(),
     uploaderUserId: v.id("users"),
     fileName: v.string(),
     size: v.number(),
@@ -182,7 +176,6 @@ export const apiRecordDirectUpload = mutation({
     scanReport: v.string(),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const uploadId = await ctx.db.insert("onedriveUploads", {
       requesterUserId: args.uploaderUserId,
       fileName: args.fileName,
@@ -202,10 +195,9 @@ export const apiRecordDirectUpload = mutation({
 });
 
 /** Fetch a single upload + a fresh staging-blob URL (for the approve flow). */
-export const apiGetUpload = query({
-  args: { serverKey: v.string(), uploadId: v.id("onedriveUploads") },
-  handler: async (ctx, { serverKey, uploadId }) => {
-    assertServerKey(serverKey);
+export const apiGetUpload = serverQuery({
+  args: { uploadId: v.id("onedriveUploads") },
+  handler: async (ctx, { uploadId }) => {
     const upload = await ctx.db.get(uploadId);
     if (!upload) return null;
     const stagingUrl = upload.stagingStorageId
@@ -216,10 +208,9 @@ export const apiGetUpload = query({
 });
 
 /** Move a pending upload into the "uploading" state during approval. */
-export const apiMarkUploading = mutation({
-  args: { serverKey: v.string(), uploadId: v.id("onedriveUploads") },
-  handler: async (ctx, { serverKey, uploadId }) => {
-    assertServerKey(serverKey);
+export const apiMarkUploading = serverMutation({
+  args: { uploadId: v.id("onedriveUploads") },
+  handler: async (ctx, { uploadId }) => {
     await ctx.db.patch(uploadId, { status: "uploading", error: undefined });
     return { ok: true };
   },
@@ -253,16 +244,14 @@ async function notifyDecision(
 }
 
 /** Finalise an approved upload once its bytes are in OneDrive. */
-export const apiMarkApproved = mutation({
+export const apiMarkApproved = serverMutation({
   args: {
-    serverKey: v.string(),
     uploadId: v.id("onedriveUploads"),
     reviewerUserId: v.id("users"),
     driveItemId: v.string(),
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const upload = await ctx.db.get(args.uploadId);
     if (!upload) {
       throw new ConvexError({ code: "not_found", message: "Upload not found" });
@@ -286,15 +275,13 @@ export const apiMarkApproved = mutation({
 });
 
 /** Deny a pending upload — discard the staged bytes, notify the requester. */
-export const apiMarkDenied = mutation({
+export const apiMarkDenied = serverMutation({
   args: {
-    serverKey: v.string(),
     uploadId: v.id("onedriveUploads"),
     reviewerUserId: v.id("users"),
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const upload = await ctx.db.get(args.uploadId);
     if (!upload) {
       throw new ConvexError({ code: "not_found", message: "Upload not found" });
@@ -316,23 +303,20 @@ export const apiMarkDenied = mutation({
 });
 
 /** Mark an approved-but-failed upload; keep the staged bytes for a retry. */
-export const apiMarkFailed = mutation({
+export const apiMarkFailed = serverMutation({
   args: {
-    serverKey: v.string(),
     uploadId: v.id("onedriveUploads"),
     error: v.string(),
   },
-  handler: async (ctx, { serverKey, uploadId, error }) => {
-    assertServerKey(serverKey);
+  handler: async (ctx, { uploadId, error }) => {
     await ctx.db.patch(uploadId, { status: "failed", error });
     return { ok: true };
   },
 });
 
 /** Record a OneDrive action (delete/mkdir/rename/move/share/restore) for audit. */
-export const apiRecordAction = mutation({
+export const apiRecordAction = serverMutation({
   args: {
-    serverKey: v.string(),
     actorUserId: v.id("users"),
     action: v.union(
       v.literal("mkdir"),
@@ -344,8 +328,7 @@ export const apiRecordAction = mutation({
     ),
     target: v.optional(v.string()),
   },
-  handler: async (ctx, { serverKey, actorUserId, action, target }) => {
-    assertServerKey(serverKey);
+  handler: async (ctx, { actorUserId, action, target }) => {
     await writeAudit(ctx, actorUserId, action, target);
     return { ok: true };
   },
@@ -355,20 +338,18 @@ export const apiRecordAction = mutation({
  * Read the stored (encrypted) delegated refresh token, or null. The API holds
  * the encryption key; Convex only ever sees ciphertext.
  */
-export const apiGetRefreshToken = query({
-  args: { serverKey: v.string() },
-  handler: async (ctx, { serverKey }) => {
-    assertServerKey(serverKey);
+export const apiGetRefreshToken = serverQuery({
+  args: {},
+  handler: async (ctx) => {
     const row = await ctx.db.query("onedriveAuth").first();
     return row ? { refreshToken: row.refreshToken } : null;
   },
 });
 
 /** Upsert the rotating (encrypted) delegated refresh token. */
-export const apiSetRefreshToken = mutation({
-  args: { serverKey: v.string(), refreshToken: v.string() },
-  handler: async (ctx, { serverKey, refreshToken }) => {
-    assertServerKey(serverKey);
+export const apiSetRefreshToken = serverMutation({
+  args: { refreshToken: v.string() },
+  handler: async (ctx, { refreshToken }) => {
     const row = await ctx.db.query("onedriveAuth").first();
     if (row) {
       await ctx.db.patch(row._id, { refreshToken, updatedAt: Date.now() });
@@ -383,10 +364,9 @@ export const apiSetRefreshToken = mutation({
 });
 
 /** Map driveItem ids → uploader display names, for the file browser. */
-export const apiUploadersByItemIds = query({
-  args: { serverKey: v.string(), itemIds: v.array(v.string()) },
-  handler: async (ctx, { serverKey, itemIds }) => {
-    assertServerKey(serverKey);
+export const apiUploadersByItemIds = serverQuery({
+  args: { itemIds: v.array(v.string()) },
+  handler: async (ctx, { itemIds }) => {
     const out: Record<string, string> = {};
     for (const itemId of itemIds) {
       const row = await ctx.db
@@ -403,10 +383,9 @@ export const apiUploadersByItemIds = query({
 
 /** Active employees plus their direct Team-folder share status, for the
  * admin "Team folder access" panel. */
-export const apiTeamAccessRoster = query({
-  args: { serverKey: v.string() },
-  handler: async (ctx, { serverKey }) => {
-    assertServerKey(serverKey);
+export const apiTeamAccessRoster = serverQuery({
+  args: {},
+  handler: async (ctx) => {
     const users = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -423,15 +402,13 @@ export const apiTeamAccessRoster = query({
 });
 
 /** Record a granted direct share (after a successful Graph invite). */
-export const apiSetTeamAccess = mutation({
+export const apiSetTeamAccess = serverMutation({
   args: {
-    serverKey: v.string(),
     actorUserId: v.id("users"),
     targetUserId: v.id("users"),
     permissionId: v.string(),
   },
-  handler: async (ctx, { serverKey, actorUserId, targetUserId, permissionId }) => {
-    assertServerKey(serverKey);
+  handler: async (ctx, { actorUserId, targetUserId, permissionId }) => {
     const target = await ctx.db.get(targetUserId);
     await ctx.db.patch(targetUserId, { oneDrivePermissionId: permissionId });
     await writeAudit(ctx, actorUserId, "teamAccessGrant", target ? displayName(target) : undefined);
@@ -440,14 +417,12 @@ export const apiSetTeamAccess = mutation({
 });
 
 /** Clear a revoked direct share (after a successful Graph removal). */
-export const apiClearTeamAccess = mutation({
+export const apiClearTeamAccess = serverMutation({
   args: {
-    serverKey: v.string(),
     actorUserId: v.id("users"),
     targetUserId: v.id("users"),
   },
-  handler: async (ctx, { serverKey, actorUserId, targetUserId }) => {
-    assertServerKey(serverKey);
+  handler: async (ctx, { actorUserId, targetUserId }) => {
     const target = await ctx.db.get(targetUserId);
     await ctx.db.patch(targetUserId, { oneDrivePermissionId: undefined });
     await writeAudit(

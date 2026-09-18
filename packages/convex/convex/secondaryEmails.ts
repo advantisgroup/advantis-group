@@ -1,11 +1,11 @@
-import { mutation, query } from "./functions";
+import { serverMutation, serverQuery } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { safeEqual, sha256hex } from "./activity/lib/crypto";
 import { type Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
-import { assertServerKey, getUserByClerkId, requireActiveUser } from "./lib/auth";
+import { getUserByClerkId, requireActiveUser } from "./lib/auth";
 import { trackEvent } from "./lib/analytics";
 import { notifySecurityChange } from "./lib/stepUp";
 
@@ -54,8 +54,8 @@ async function isClaimedByAnotherAccount(
   return rows.some((r) => r.userId !== userId && r.verifiedAt !== undefined);
 }
 
-export const apiList = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const apiList = serverQuery({
+  args: { clerkUserId: v.string() },
   returns: v.array(
     v.object({
       _id: v.id("userSecondaryEmails"),
@@ -65,7 +65,6 @@ export const apiList = query({
     }),
   ),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const rows = await ctx.db
       .query("userSecondaryEmails")
@@ -82,11 +81,10 @@ export const apiList = query({
   },
 });
 
-export const apiRequestCode = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string(), email: v.string() },
+export const apiRequestCode = serverMutation({
+  args: { clerkUserId: v.string(), email: v.string() },
   returns: v.object({ alreadyVerified: v.boolean() }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const email = normalizeEmail(args.email);
     if (!email.includes("@") || email.length > 254) {
@@ -164,11 +162,10 @@ export const apiRequestCode = mutation({
   },
 });
 
-export const apiVerifyCode = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string(), email: v.string(), code: v.string() },
+export const apiVerifyCode = serverMutation({
+  args: { clerkUserId: v.string(), email: v.string(), code: v.string() },
   returns: v.object({ ok: v.boolean(), message: v.optional(v.string()) }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const email = normalizeEmail(args.email);
 
@@ -230,15 +227,13 @@ export const apiVerifyCode = mutation({
   },
 });
 
-export const apiRemove = mutation({
+export const apiRemove = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     secondaryEmailId: v.id("userSecondaryEmails"),
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const row = await ctx.db.get(args.secondaryEmailId);
     if (!row || row.userId !== user._id) {

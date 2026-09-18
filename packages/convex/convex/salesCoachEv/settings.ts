@@ -1,14 +1,11 @@
-import { mutation, query } from "../functions";
+import { serverMutation, serverQuery } from "../functions";
 import { v } from "convex/values";
-
-import { assertServerKey } from "../lib/auth";
 
 /** Per-user KPI/call-guide text for Sales Coach EV, fed into the AI coaching prompts. */
 
-export const get = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const get = serverQuery({
+  args: { clerkUserId: v.string() },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const row = await ctx.db
       .query("salesCoachEvSettings")
       .withIndex("by_user", (q) => q.eq("clerkUserId", args.clerkUserId))
@@ -17,10 +14,9 @@ export const get = query({
   },
 });
 
-export const upsert = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string(), kpiText: v.string() },
+export const upsert = serverMutation({
+  args: { clerkUserId: v.string(), kpiText: v.string() },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const existing = await ctx.db
       .query("salesCoachEvSettings")
       .withIndex("by_user", (q) => q.eq("clerkUserId", args.clerkUserId))

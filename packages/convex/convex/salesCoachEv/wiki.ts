@@ -1,7 +1,6 @@
-import { mutation, query } from "../functions";
+import { serverMutation, serverQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
-import { assertServerKey } from "../lib/auth";
 import { requireAdminCaller } from "./lib";
 
 /**
@@ -21,10 +20,9 @@ const catValidator = v.union(
   v.literal("Links"),
 );
 
-export const list = query({
-  args: { serverKey: v.string() },
-  handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
+export const list = serverQuery({
+  args: {},
+  handler: async (ctx) => {
     const articles = await ctx.db.query("salesCoachEvWiki").collect();
     return articles.sort((a, b) => b.updatedAt - a.updatedAt);
   },
@@ -33,10 +31,9 @@ export const list = query({
 /** Lets apps/api gate the document-analysis endpoint on the same
  * admin-only rule as every other wiki write, without duplicating
  * `requireAdminCaller`'s throw-based check into a boolean itself. */
-export const isAdmin = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const isAdmin = serverQuery({
+  args: { clerkUserId: v.string() },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     try {
       await requireAdminCaller(ctx, args.clerkUserId);
       return true;
@@ -46,9 +43,8 @@ export const isAdmin = query({
   },
 });
 
-export const create = mutation({
+export const create = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     title: v.string(),
     cat: catValidator,
@@ -62,7 +58,6 @@ export const create = mutation({
     fileSize: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     await requireAdminCaller(ctx, args.clerkUserId);
     const now = Date.now();
     const id = await ctx.db.insert("salesCoachEvWiki", {
@@ -84,9 +79,8 @@ export const create = mutation({
   },
 });
 
-export const update = mutation({
+export const update = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     id: v.id("salesCoachEvWiki"),
     title: v.optional(v.string()),
@@ -103,7 +97,6 @@ export const update = mutation({
     removeFile: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     await requireAdminCaller(ctx, args.clerkUserId);
     const existing = await ctx.db.get(args.id);
     if (!existing) throw new ConvexError({ code: "not_found", message: "Article not found" });
@@ -145,10 +138,9 @@ export const update = mutation({
   },
 });
 
-export const remove = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string(), id: v.id("salesCoachEvWiki") },
+export const remove = serverMutation({
+  args: { clerkUserId: v.string(), id: v.id("salesCoachEvWiki") },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     await requireAdminCaller(ctx, args.clerkUserId);
     const existing = await ctx.db.get(args.id);
     if (existing?.storageId) await ctx.storage.delete(existing.storageId);

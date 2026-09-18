@@ -1,13 +1,7 @@
-import { mutation, query } from "./functions";
+import { mutation, query, serverQuery } from "./functions";
 import { ConvexError, v } from "convex/values";
 
-import {
-  assertServerKey,
-  getUserByClerkId,
-  isOwnerOrAdmin,
-  requireCapability,
-  requireUser,
-} from "./lib/auth";
+import { getUserByClerkId, isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
 import { displayName } from "./lib/users";
 
 const MAX_PINS = 5;
@@ -23,10 +17,9 @@ function plainText(html: string) {
 
 /** The wiki assistant's retrieval: current entries that share the most words
  * with the question, trimmed to what fits in a prompt. Server-key gated. */
-export const apiSearchForAssistant = query({
-  args: { serverKey: v.string(), clerkUserId: v.string(), question: v.string() },
-  handler: async (ctx, { serverKey, clerkUserId, question }) => {
-    assertServerKey(serverKey);
+export const apiSearchForAssistant = serverQuery({
+  args: { clerkUserId: v.string(), question: v.string() },
+  handler: async (ctx, { clerkUserId, question }) => {
     const user = await getUserByClerkId(ctx, clerkUserId);
     if (!user || user.status === "suspended") return [];
     const words = [

@@ -1,9 +1,8 @@
-import { mutation, query } from "./functions";
+import { serverMutation, serverQuery } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Id } from "./_generated/dataModel";
 import { type MutationCtx } from "./_generated/server";
-import { assertServerKey } from "./lib/auth";
 
 /**
  * Server-key gated CRUD for the Wiki AI assistant's per-user chat history.
@@ -23,10 +22,9 @@ async function ownedChat(ctx: MutationCtx, id: Id<"wikiChats">, clerkUserId: str
   return chat;
 }
 
-export const list = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const list = serverQuery({
+  args: { clerkUserId: v.string() },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const chats = await ctx.db
       .query("wikiChats")
       .withIndex("by_user", (q) => q.eq("clerkUserId", args.clerkUserId))
@@ -43,10 +41,9 @@ export const list = query({
   },
 });
 
-export const get = query({
-  args: { serverKey: v.string(), clerkUserId: v.string(), id: v.string() },
+export const get = serverQuery({
+  args: { clerkUserId: v.string(), id: v.string() },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const id = ctx.db.normalizeId("wikiChats", args.id);
     const chat = id ? await ctx.db.get(id) : null;
     if (!chat || chat.clerkUserId !== args.clerkUserId) return null;
@@ -54,15 +51,13 @@ export const get = query({
   },
 });
 
-export const create = mutation({
+export const create = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     title: v.string(),
     messages: v.string(),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const now = Date.now();
     const id = await ctx.db.insert("wikiChats", {
       clerkUserId: args.clerkUserId,
@@ -75,16 +70,14 @@ export const create = mutation({
   },
 });
 
-export const update = mutation({
+export const update = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     id: v.id("wikiChats"),
     title: v.optional(v.string()),
     messages: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     await ownedChat(ctx, args.id, args.clerkUserId);
     await ctx.db.patch(args.id, {
       ...(args.title !== undefined ? { title: args.title } : {}),
@@ -95,14 +88,12 @@ export const update = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     id: v.id("wikiChats"),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     await ownedChat(ctx, args.id, args.clerkUserId);
     await ctx.db.delete(args.id);
     return { deleted: true };

@@ -1,8 +1,8 @@
-import { mutation, query } from "./functions";
+import { serverMutation, serverQuery } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { safeEqual, sha256hex } from "./activity/lib/crypto";
-import { assertServerKey, getUserByClerkId, requireActiveUser } from "./lib/auth";
+import { getUserByClerkId, requireActiveUser } from "./lib/auth";
 import { trackEvent } from "./lib/analytics";
 import { notifySecurityChange } from "./lib/stepUp";
 
@@ -20,8 +20,8 @@ function randomRecoveryCode(): string {
   return out;
 }
 
-export const apiStatus = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const apiStatus = serverQuery({
+  args: { clerkUserId: v.string() },
   returns: v.object({
     enrolled: v.boolean(),
     needsRotation: v.boolean(),
@@ -29,7 +29,6 @@ export const apiStatus = query({
     recoveryCodesTotal: v.number(),
   }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const credential = await ctx.db
       .query("totpCredentials")
@@ -52,11 +51,10 @@ export const apiStatus = query({
 /** Burns every existing code and issues a fresh set. Used both for "I've
  * spent a few and want a clean sheet" and for "I'm not sure where that
  * printout ended up" — which is why it replaces rather than tops up. */
-export const apiRegenerateRecoveryCodes = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const apiRegenerateRecoveryCodes = serverMutation({
+  args: { clerkUserId: v.string() },
   returns: v.object({ recoveryCodes: v.array(v.string()) }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const credential = await ctx.db
       .query("totpCredentials")
@@ -102,11 +100,10 @@ export const apiRegenerateRecoveryCodes = mutation({
   },
 });
 
-export const apiEnrollmentContext = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const apiEnrollmentContext = serverQuery({
+  args: { clerkUserId: v.string() },
   returns: v.union(v.null(), v.object({ email: v.string(), hasVerified: v.boolean() })),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user || user.status !== "active") return null;
     const credential = await ctx.db
@@ -123,11 +120,10 @@ export const apiEnrollmentContext = query({
   },
 });
 
-export const apiBeginEnrollment = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string(), secretCiphertext: v.string() },
+export const apiBeginEnrollment = serverMutation({
+  args: { clerkUserId: v.string(), secretCiphertext: v.string() },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const existing = await ctx.db
       .query("totpCredentials")
@@ -158,11 +154,10 @@ export const apiBeginEnrollment = mutation({
   },
 });
 
-export const apiPendingSecret = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const apiPendingSecret = serverQuery({
+  args: { clerkUserId: v.string() },
   returns: v.union(v.null(), v.string()),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const credential = await ctx.db
       .query("totpCredentials")
@@ -173,11 +168,10 @@ export const apiPendingSecret = query({
   },
 });
 
-export const apiFinishEnrollment = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string(), usedStep: v.optional(v.number()) },
+export const apiFinishEnrollment = serverMutation({
+  args: { clerkUserId: v.string(), usedStep: v.optional(v.number()) },
   returns: v.object({ recoveryCodes: v.array(v.string()) }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const credential = await ctx.db
       .query("totpCredentials")
@@ -220,14 +214,13 @@ export const apiFinishEnrollment = mutation({
   },
 });
 
-export const apiSecretForVerification = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const apiSecretForVerification = serverQuery({
+  args: { clerkUserId: v.string() },
   returns: v.union(
     v.null(),
     v.object({ secretCiphertext: v.string(), lastUsedStep: v.union(v.number(), v.null()) }),
   ),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const credential = await ctx.db
       .query("totpCredentials")
@@ -241,9 +234,8 @@ export const apiSecretForVerification = query({
   },
 });
 
-export const apiRecordVerification = mutation({
+export const apiRecordVerification = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     ok: v.boolean(),
     /** The TOTP step the accepted code belonged to — burns that step so the
@@ -252,7 +244,6 @@ export const apiRecordVerification = mutation({
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const credential = await ctx.db
       .query("totpCredentials")
@@ -273,11 +264,10 @@ export const apiRecordVerification = mutation({
   },
 });
 
-export const apiVerifyRecoveryCode = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string(), code: v.string() },
+export const apiVerifyRecoveryCode = serverMutation({
+  args: { clerkUserId: v.string(), code: v.string() },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const candidateHash = await sha256hex(args.code.trim().toUpperCase());
     const unused = await ctx.db
@@ -315,11 +305,10 @@ export const apiVerifyRecoveryCode = mutation({
   },
 });
 
-export const apiRemove = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const apiRemove = serverMutation({
+  args: { clerkUserId: v.string() },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const credential = await ctx.db
       .query("totpCredentials")

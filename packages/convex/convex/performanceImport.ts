@@ -1,4 +1,11 @@
-import { internalMutation, internalQuery, mutation, query } from "./functions";
+import {
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+  serverMutation,
+  serverQuery,
+} from "./functions";
 /**
  * Database-side half of the Performance feature's report-upload pipeline.
  * Ported from the reference script's application-level import functions
@@ -31,17 +38,15 @@ import {
 } from "./performance/lib/types";
 import { requirePermission, requireSessionLogin, resolveCompanyId } from "./lib/performanceAuth";
 import { toISODate } from "./performance/lib/workdays";
-import { assertServerKey } from "./lib/auth";
 
 /** A one-shot URL `apps/api` POSTs the original report file to (Convex
  * file storage), before parsing and importing it. Public (not internal) —
  * `apps/api` calls this directly via the Convex HTTP client, which can
  * only reach public functions; the `serverKey` argument is what actually
  * restricts the caller. */
-export const apiGenerateUploadUrl = mutation({
-  args: { serverKey: v.string() },
-  handler: async (ctx, { serverKey }): Promise<string> => {
-    assertServerKey(serverKey);
+export const apiGenerateUploadUrl = serverMutation({
+  args: {},
+  handler: async (ctx): Promise<string> => {
     return await ctx.storage.generateUploadUrl();
   },
 });
@@ -49,10 +54,9 @@ export const apiGenerateUploadUrl = mutation({
 /** Discards a staged file — used when the report turned out to have no
  * activity to import (see `apiImportReport`'s `{status: "empty"}`), so an
  * empty day's file doesn't linger in storage forever. */
-export const apiDeleteStorage = mutation({
-  args: { serverKey: v.string(), storageId: v.id("_storage") },
-  handler: async (ctx, { serverKey, storageId }): Promise<void> => {
-    assertServerKey(serverKey);
+export const apiDeleteStorage = serverMutation({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, { storageId }): Promise<void> => {
     await ctx.storage.delete(storageId);
   },
 });
@@ -738,14 +742,12 @@ export const findUploadByHash = internalQuery({
 /** Same lookup, callable by `apps/api` before it even stages the file —
  * lets the upload route skip the storage write entirely for an obvious
  * re-upload instead of staging-then-deleting. */
-export const apiFindUploadByHash = query({
+export const apiFindUploadByHash = serverQuery({
   args: {
-    serverKey: v.string(),
     companyId: v.id("companies"),
     contentHash: v.string(),
   },
-  handler: async (ctx, { serverKey, companyId, contentHash }) => {
-    assertServerKey(serverKey);
+  handler: async (ctx, { companyId, contentHash }) => {
     return lookupUploadByHash(ctx, companyId, contentHash);
   },
 });

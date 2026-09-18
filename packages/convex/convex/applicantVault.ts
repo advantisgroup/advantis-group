@@ -1,4 +1,11 @@
-import { action, internalMutation, internalQuery, mutation, query } from "./functions";
+import {
+  action,
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+  serverMutation,
+} from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Id } from "./_generated/dataModel";
@@ -7,7 +14,6 @@ import { type MutationCtx } from "./_generated/server";
 import { hashPassword, verifyPassword } from "./activity/lib/crypto";
 import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import {
-  assertServerKey,
   getUserByClerkId,
   isApplicantAreaMember,
   requireAdmin,
@@ -211,10 +217,9 @@ export const recordUnlock = internalMutation({
 
 /** Called by apps/api once it has verified the passkey assertion belongs to
  * `clerkUserId` (WebAuthn verification only runs there). */
-export const apiUnlockViaPasskey = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
-  handler: async (ctx, { serverKey, clerkUserId }) => {
-    assertServerKey(serverKey);
+export const apiUnlockViaPasskey = serverMutation({
+  args: { clerkUserId: v.string() },
+  handler: async (ctx, { clerkUserId }) => {
     const user = await getUserByClerkId(ctx, clerkUserId);
     if (!user || !isApplicantAreaMember(user)) {
       throw new ConvexError({

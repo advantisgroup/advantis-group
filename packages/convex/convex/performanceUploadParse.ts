@@ -1,6 +1,6 @@
 "use node";
 
-import { action } from "./functions";
+import { action, serverAction } from "./functions";
 
 /**
  * Report-file detection/parsing for the Performance upload pipeline —
@@ -48,7 +48,6 @@ import {
 } from "./performance/lib/types";
 import { normalizeZipLocalHeaders } from "./performance/lib/xlsxZip";
 import { toISODate, todayUTC } from "./performance/lib/workdays";
-import { assertServerKey } from "./lib/auth";
 import { parseAggregatedTemplate } from "./performanceImport";
 
 // Safely under Convex's 8192-element array-argument limit, with headroom
@@ -582,9 +581,8 @@ async function processReport(
  * session — same trust boundary as the `api*`-prefixed OneDrive functions
  * in `onedrive.ts`.
  */
-export const apiImportReport = action({
+export const apiImportReport = serverAction({
   args: {
-    serverKey: v.string(),
     companyId: v.id("companies"),
     filename: v.string(),
     storageId: v.id("_storage"),
@@ -601,20 +599,8 @@ export const apiImportReport = action({
   },
   handler: async (
     ctx,
-    {
-      serverKey,
-      companyId,
-      filename,
-      storageId,
-      contentHash,
-      force,
-      fileSize,
-      batchId,
-      uploadedBy,
-    },
+    { companyId, filename, storageId, contentHash, force, fileSize, batchId, uploadedBy },
   ): Promise<ImportResult> => {
-    assertServerKey(serverKey);
-
     // Checked before any parsing — covers every report type (Salesforce
     // Lead/Opp, call report, aggregated template) uniformly, and skips the
     // (potentially expensive) parse entirely for a re-upload. Scoped to

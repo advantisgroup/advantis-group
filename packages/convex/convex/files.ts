@@ -1,14 +1,8 @@
-import { mutation, query } from "./functions";
+import { mutation, query, serverMutation } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import {
-  assertServerKey,
-  getCurrentUser,
-  hasApplicantAccess,
-  requireUser,
-  requireVaultUnlocked,
-} from "./lib/auth";
+import { getCurrentUser, hasApplicantAccess, requireUser, requireVaultUnlocked } from "./lib/auth";
 
 /**
  * Issue a short-lived upload URL for chat attachments, avatars and
@@ -29,10 +23,9 @@ export const generateUploadUrl = mutation({
  * imported into a chat attachment) straight to Convex storage without
  * round-tripping them through the browser first.
  */
-export const apiGenerateUploadUrl = mutation({
-  args: { serverKey: v.string() },
-  handler: async (ctx, { serverKey }) => {
-    assertServerKey(serverKey);
+export const apiGenerateUploadUrl = serverMutation({
+  args: {},
+  handler: async (ctx) => {
     return ctx.storage.generateUploadUrl();
   },
 });

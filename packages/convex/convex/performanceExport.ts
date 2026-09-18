@@ -6,9 +6,8 @@
  */
 import { v } from "convex/values";
 
-import { query } from "./functions";
+import { serverQuery } from "./functions";
 import { teamTotals } from "./performanceQueries";
-import { assertServerKey } from "./lib/auth";
 
 export interface ExportRow {
   name: string;
@@ -32,10 +31,9 @@ export interface ExportRow {
 }
 
 /** Per-employee KPI export for one month. */
-export const apiExportTeam = query({
-  args: { serverKey: v.string(), companyId: v.id("companies"), ym: v.string() },
-  handler: async (ctx, { serverKey, companyId, ym }): Promise<ExportRow[]> => {
-    assertServerKey(serverKey);
+export const apiExportTeam = serverQuery({
+  args: { companyId: v.id("companies"), ym: v.string() },
+  handler: async (ctx, { companyId, ym }): Promise<ExportRow[]> => {
     const { snaps } = await teamTotals(ctx, companyId, ym);
     return snaps.map((s) => ({
       name: s.name,

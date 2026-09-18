@@ -1,9 +1,9 @@
-import { mutation, query } from "../functions";
+import { serverMutation, serverQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
-import { assertServerKey, getUserByClerkId } from "../lib/auth";
+import { getUserByClerkId } from "../lib/auth";
 import { requireAdminCaller } from "./lib";
 
 /**
@@ -37,10 +37,9 @@ async function ownedCall(ctx: MutationCtx, id: Id<"salesCoachEvCalls">, clerkUse
 /** The caller's own call history, newest first, optionally bounded to a
  * start timestamp. Capped at 500 rows — a single rep's own history, not an
  * org-scale scan, but still an ever-growing table so never `.collect()`. */
-export const list = query({
-  args: { serverKey: v.string(), clerkUserId: v.string(), sinceMs: v.optional(v.number()) },
+export const list = serverQuery({
+  args: { clerkUserId: v.string(), sinceMs: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const calls = await ctx.db
       .query("salesCoachEvCalls")
       .withIndex("by_user_time", (q) =>
@@ -54,19 +53,17 @@ export const list = query({
   },
 });
 
-export const get = query({
-  args: { serverKey: v.string(), clerkUserId: v.string(), id: v.id("salesCoachEvCalls") },
+export const get = serverQuery({
+  args: { clerkUserId: v.string(), id: v.id("salesCoachEvCalls") },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const call = await ctx.db.get(args.id);
     if (!call || call.clerkUserId !== args.clerkUserId) return null;
     return call;
   },
 });
 
-export const create = mutation({
+export const create = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     startedAt: v.number(),
     durationSec: v.number(),
@@ -75,7 +72,6 @@ export const create = mutation({
     transcriptEnc: v.string(),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     // Resolved from the authoritative users table, not trusted client input.
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     const userName = user
@@ -96,9 +92,8 @@ export const create = mutation({
 });
 
 /** Attach the AI-generated scoring report to a previously-saved call. */
-export const attachReport = mutation({
+export const attachReport = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     id: v.id("salesCoachEvCalls"),
     scores: scoresValidator,
@@ -106,7 +101,6 @@ export const attachReport = mutation({
     feedbackEnc: v.string(),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     await ownedCall(ctx, args.id, args.clerkUserId);
     await ctx.db.patch(args.id, {
       scored: true,
@@ -126,10 +120,9 @@ export const attachReport = mutation({
  * index range bound here is a plain argument, never `Date.now()` evaluated
  * inside the query itself.
  */
-export const adminRoster = query({
-  args: { serverKey: v.string(), clerkUserId: v.string(), sinceMs: v.number() },
+export const adminRoster = serverQuery({
+  args: { clerkUserId: v.string(), sinceMs: v.number() },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     await requireAdminCaller(ctx, args.clerkUserId);
 
     const calls = await ctx.db
@@ -186,15 +179,13 @@ export const adminRoster = query({
  * view surfaces scores and outcomes, not the rep's raw call content, same
  * privacy line `adminRoster` already draws.
  */
-export const adminUserDetail = query({
+export const adminUserDetail = serverQuery({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     targetClerkUserId: v.string(),
     sinceMs: v.number(),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     await requireAdminCaller(ctx, args.clerkUserId);
 
     const calls = await ctx.db

@@ -1,6 +1,5 @@
-import { mutation } from "./functions";
+import { serverMutation } from "./functions";
 import { v } from "convex/values";
-import { assertServerKey } from "./lib/auth";
 
 /**
  * Server-key gated mutations invoked by the Elysia API's Clerk webhook handler
@@ -9,9 +8,8 @@ import { assertServerKey } from "./lib/auth";
  * provisioning is gated by invites/approvals via lib/auth.ensureUser — they
  * only refresh profiles and deactivate removed accounts.
  */
-export const syncFromClerk = mutation({
+export const syncFromClerk = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     email: v.optional(v.string()),
     firstName: v.optional(v.string()),
@@ -19,7 +17,6 @@ export const syncFromClerk = mutation({
     avatarUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", args.clerkUserId))
@@ -35,10 +32,9 @@ export const syncFromClerk = mutation({
   },
 });
 
-export const deactivateFromClerk = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const deactivateFromClerk = serverMutation({
+  args: { clerkUserId: v.string() },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", args.clerkUserId))

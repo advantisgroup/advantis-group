@@ -1,8 +1,7 @@
 import { v } from "convex/values";
 
-import { query } from "../functions";
+import { serverQuery } from "../functions";
 import {
-  assertServerKey,
   effectiveCustomRoleIds,
   effectiveRole,
   isSandboxed,
@@ -51,11 +50,10 @@ export const clockodoCallerValidator = v.union(
 
 /** The calling user's own Clockodo subprofile — always one of the three
  *  `clockodoCallerValidator` shapes above, never a bare `null`. */
-export const resolveCaller = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const resolveCaller = serverQuery({
+  args: { clerkUserId: v.string() },
   returns: clockodoCallerValidator,
-  handler: async (ctx, { serverKey, clerkUserId }) => {
-    assertServerKey(serverKey);
+  handler: async (ctx, { clerkUserId }) => {
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", clerkUserId))
@@ -102,8 +100,8 @@ export const resolveCaller = query({
 /** Every active user, for joining the org-wide calendar — Clockodo-linked or
  *  not. Callers that only care about linked people should filter on
  *  `linked` themselves rather than this query silently omitting rows. */
-export const roster = query({
-  args: { serverKey: v.string() },
+export const roster = serverQuery({
+  args: {},
   returns: v.array(
     v.object({
       userId: v.id("users"),
@@ -113,8 +111,7 @@ export const roster = query({
       clockodoUserId: v.union(v.string(), v.null()),
     }),
   ),
-  handler: async (ctx, { serverKey }) => {
-    assertServerKey(serverKey);
+  handler: async (ctx) => {
     const users = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))

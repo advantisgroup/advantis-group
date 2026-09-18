@@ -1,4 +1,10 @@
-import { ConvexError, v, type ObjectType, type PropertyValidators } from "convex/values";
+import {
+  ConvexError,
+  type GenericValidator,
+  type ObjectType,
+  type PropertyValidators,
+  v,
+} from "convex/values";
 import type { ActionBuilder, MutationBuilder } from "convex/server";
 
 import { internal } from "./_generated/api";
@@ -87,39 +93,48 @@ export const sandboxSafeMutation = rawMutation;
  * the handler never sees `serverKey`. */
 export function serverQuery<Args extends PropertyValidators, Output>(definition: {
   args: Args;
+  returns?: GenericValidator;
   handler: (ctx: QueryCtx, args: ObjectType<Args>) => Output;
 }) {
+  const { args, handler, ...rest } = definition;
   return query({
-    args: { ...definition.args, serverKey: v.string() },
-    handler: (ctx, { serverKey, ...args }) => {
+    ...rest,
+    args: { ...args, serverKey: v.string() },
+    handler: (ctx, { serverKey, ...handlerArgs }) => {
       assertServerKey(serverKey);
-      return definition.handler(ctx, args as ObjectType<Args>);
+      return handler(ctx, handlerArgs as ObjectType<Args>);
     },
   });
 }
 
 export function serverMutation<Args extends PropertyValidators, Output>(definition: {
   args: Args;
+  returns?: GenericValidator;
   handler: (ctx: MutationCtx, args: ObjectType<Args>) => Output;
 }) {
+  const { args, handler, ...rest } = definition;
   return rawMutation({
-    args: { ...definition.args, serverKey: v.string() },
-    handler: (ctx, { serverKey, ...args }) => {
+    ...rest,
+    args: { ...args, serverKey: v.string() },
+    handler: (ctx, { serverKey, ...handlerArgs }) => {
       assertServerKey(serverKey);
-      return definition.handler(ctx, args as ObjectType<Args>);
+      return handler(ctx, handlerArgs as ObjectType<Args>);
     },
   });
 }
 
 export function serverAction<Args extends PropertyValidators, Output>(definition: {
   args: Args;
+  returns?: GenericValidator;
   handler: (ctx: ActionCtx, args: ObjectType<Args>) => Output;
 }) {
+  const { args, handler, ...rest } = definition;
   return rawAction({
-    args: { ...definition.args, serverKey: v.string() },
-    handler: (ctx, { serverKey, ...args }) => {
+    ...rest,
+    args: { ...args, serverKey: v.string() },
+    handler: (ctx, { serverKey, ...handlerArgs }) => {
       assertServerKey(serverKey);
-      return definition.handler(ctx, args as ObjectType<Args>);
+      return handler(ctx, handlerArgs as ObjectType<Args>);
     },
   });
 }

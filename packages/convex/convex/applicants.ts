@@ -1,4 +1,4 @@
-import { mutation, query } from "./functions";
+import { mutation, query, serverMutation, serverQuery } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
@@ -10,12 +10,7 @@ import {
   terminArtValidator,
   terminTypValidator,
 } from "./schema";
-import {
-  assertServerKey,
-  getUserByClerkId,
-  hasApplicantAccess,
-  requireApplicantAccess,
-} from "./lib/auth";
+import { getUserByClerkId, hasApplicantAccess, requireApplicantAccess } from "./lib/auth";
 import { batchUserSummaries, toUserSummary } from "./lib/users";
 
 /**
@@ -599,10 +594,9 @@ export const convertTermin = mutation({
  * Also requires the vault to be unlocked — CV extraction writes real applicant
  * data, so it shouldn't be reachable while the feature is locked, even via
  * the server-key-gated API path. */
-export const apiCheckAccess = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
-  handler: async (ctx, { serverKey, clerkUserId }) => {
-    assertServerKey(serverKey);
+export const apiCheckAccess = serverQuery({
+  args: { clerkUserId: v.string() },
+  handler: async (ctx, { clerkUserId }) => {
     const user = await getUserByClerkId(ctx, clerkUserId);
     if (!user || user.status !== "active") return null;
     if (!hasApplicantAccess(user)) return { userId: user._id, hasAccess: false };
@@ -621,14 +615,12 @@ export const apiCheckAccess = query({
  * signal (a non-empty email, or a phone number with enough digits to avoid
  * false positives on short numbers).
  */
-export const apiFindDuplicateByContact = query({
+export const apiFindDuplicateByContact = serverQuery({
   args: {
-    serverKey: v.string(),
     email: v.optional(v.string()),
     telefon: v.optional(v.string()),
   },
-  handler: async (ctx, { serverKey, email, telefon }) => {
-    assertServerKey(serverKey);
+  handler: async (ctx, { email, telefon }) => {
     const mailNeu = (email ?? "").trim().toLowerCase();
     const telNeu = (telefon ?? "").replace(/\D/g, "");
     if (!mailNeu && telNeu.length < 6) return null;
@@ -663,27 +655,24 @@ export const apiFindDuplicateByContact = query({
 });
 
 /** Skill profiles for the API's auto-profile-matching step. */
-export const apiListProfiles = query({
-  args: { serverKey: v.string() },
-  handler: async (ctx, { serverKey }) => {
-    assertServerKey(serverKey);
+export const apiListProfiles = serverQuery({
+  args: {},
+  handler: async (ctx) => {
     return ctx.db.query("applicantSkillProfiles").collect();
   },
 });
 
 /** A one-shot URL the API POSTs the staged CV bytes to (Convex file storage). */
-export const apiGenerateStagingUrl = mutation({
-  args: { serverKey: v.string() },
-  handler: async (ctx, { serverKey }) => {
-    assertServerKey(serverKey);
+export const apiGenerateStagingUrl = serverMutation({
+  args: {},
+  handler: async (ctx) => {
     return ctx.storage.generateUploadUrl();
   },
 });
 
 /** Create a new "Neue Bewerber" record from the API's Claude extraction result. */
-export const apiCreateFromExtraction = mutation({
+export const apiCreateFromExtraction = serverMutation({
   args: {
-    serverKey: v.string(),
     createdByUserId: v.id("users"),
     name: v.string(),
     email: v.optional(v.string()),
@@ -700,7 +689,6 @@ export const apiCreateFromExtraction = mutation({
     fileName: v.string(),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const applicantId = await ctx.db.insert("applicants", {
       name: args.name,
       email: args.email,

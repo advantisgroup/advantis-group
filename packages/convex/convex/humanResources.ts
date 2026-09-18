@@ -1,9 +1,9 @@
-import { mutation, query } from "./functions";
+import { mutation, query, serverQuery } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
-import { assertServerKey, requireApplicantAccess } from "./lib/auth";
+import { requireApplicantAccess } from "./lib/auth";
 import { partialProfileValidator, profileDisplayName, toPartialProfileOrNull } from "./lib/profile";
 import { onboardingItemValidator } from "./schema";
 
@@ -414,10 +414,9 @@ export const employeeFolderName = query({
 
 /** Server-key gated variant of `employeeFolderName`, for apps/api — never
  * trusts a client-supplied folder name for the actual upload path. */
-export const apiEmployeeFolderName = query({
-  args: { serverKey: v.string(), employeeProfileId: v.id("employeeProfiles") },
-  handler: async (ctx, { serverKey, employeeProfileId }) => {
-    assertServerKey(serverKey);
+export const apiEmployeeFolderName = serverQuery({
+  args: { employeeProfileId: v.id("employeeProfiles") },
+  handler: async (ctx, { employeeProfileId }) => {
     const profile = await ctx.db.get(employeeProfileId);
     if (!profile) {
       throw new ConvexError({ code: "not_found", message: "Employee profile not found" });

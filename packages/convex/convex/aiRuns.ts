@@ -1,12 +1,11 @@
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { internalMutation, mutation, query } from "./functions";
+import { internalMutation, mutation, query, serverMutation, serverQuery } from "./functions";
 import { type QueryCtx } from "./_generated/server";
 import { isFeatureEnabled } from "./lib/featureFlags";
 import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase, askSubjectType } from "./lib/aiRuns";
 import {
-  assertServerKey,
   effectiveCustomRoleIds,
   effectiveRole,
   getCurrentUser,
@@ -289,9 +288,8 @@ export const feedbackList = query({
 
 // --- apps/api ----------------------------------------------------------------
 
-export const apiStart = mutation({
+export const apiStart = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     kind: aiRunKind,
     subjectKey: v.string(),
@@ -299,7 +297,6 @@ export const apiStart = mutation({
     model: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     // The one gate every AI run in the app passes through: with the flag off,
     // nothing new reaches the model, whatever the browser still shows.
     if (!(await isFeatureEnabled(ctx, "ai"))) {
@@ -353,16 +350,14 @@ export const apiStart = mutation({
 });
 
 /** Heartbeat + snapshot. Tells the API whether the person pressed stop. */
-export const apiProgress = mutation({
+export const apiProgress = serverMutation({
   args: {
-    serverKey: v.string(),
     runId: v.id("aiRuns"),
     phase: aiRunPhase,
     output: v.optional(v.string()),
     outputChars: v.number(),
   },
-  handler: async (ctx, { serverKey, runId, phase, output, outputChars }) => {
-    assertServerKey(serverKey);
+  handler: async (ctx, { runId, phase, output, outputChars }) => {
     const run = await ctx.db.get(runId);
     if (!run || run.status !== "running") return { cancelled: true };
     await ctx.db.patch(runId, {
@@ -375,9 +370,8 @@ export const apiProgress = mutation({
   },
 });
 
-export const apiFinish = mutation({
+export const apiFinish = serverMutation({
   args: {
-    serverKey: v.string(),
     runId: v.id("aiRuns"),
     output: v.string(),
     outputChars: v.number(),
@@ -385,8 +379,7 @@ export const apiFinish = mutation({
     tokensOut: v.optional(v.number()),
     sources: v.optional(v.array(v.object({ label: v.string(), href: v.optional(v.string()) }))),
   },
-  handler: async (ctx, { serverKey, runId, output, outputChars, tokensIn, tokensOut, sources }) => {
-    assertServerKey(serverKey);
+  handler: async (ctx, { runId, output, outputChars, tokensIn, tokensOut, sources }) => {
     const run = await ctx.db.get(runId);
     if (!run || run.status !== "running") return null;
     const now = Date.now();
@@ -405,15 +398,13 @@ export const apiFinish = mutation({
   },
 });
 
-export const apiFail = mutation({
+export const apiFail = serverMutation({
   args: {
-    serverKey: v.string(),
     runId: v.id("aiRuns"),
     errorCode: v.string(),
     retryable: v.boolean(),
   },
-  handler: async (ctx, { serverKey, runId, errorCode, retryable }) => {
-    assertServerKey(serverKey);
+  handler: async (ctx, { runId, errorCode, retryable }) => {
     const run = await ctx.db.get(runId);
     if (!run || run.status !== "running") return null;
     const now = Date.now();
@@ -430,10 +421,9 @@ export const apiFail = mutation({
 
 /** The full row, ciphertext included, for the API to decrypt. `runId` is a
  * plain string because it arrives straight from a URL. */
-export const apiGet = query({
-  args: { serverKey: v.string(), clerkUserId: v.string(), runId: v.string() },
-  handler: async (ctx, { serverKey, clerkUserId, runId }) => {
-    assertServerKey(serverKey);
+export const apiGet = serverQuery({
+  args: { clerkUserId: v.string(), runId: v.string() },
+  handler: async (ctx, { clerkUserId, runId }) => {
     const id = ctx.db.normalizeId("aiRuns", runId);
     const run = id ? await ctx.db.get(id) : null;
     return run && run.clerkUserId === clerkUserId ? run : null;
@@ -745,10 +735,9 @@ export const askPreview = query({
   },
 });
 
-export const apiAskContext = query({
-  args: { serverKey: v.string(), clerkUserId: v.string(), type: askSubjectType, id: v.string() },
-  handler: async (ctx, { serverKey, clerkUserId, type, id }) => {
-    assertServerKey(serverKey);
+export const apiAskContext = serverQuery({
+  args: { clerkUserId: v.string(), type: askSubjectType, id: v.string() },
+  handler: async (ctx, { clerkUserId, type, id }) => {
     const user = await getUserByClerkId(ctx, clerkUserId);
     if (!user || user.status === "suspended") {
       throw new ConvexError({
@@ -908,10 +897,9 @@ async function dailyBriefContext(ctx: QueryCtx, user: Doc<"users">) {
   return { text: text.slice(0, ASK_CONTEXT_CHARS), sources };
 }
 
-export const apiDailyBriefContext = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
-  handler: async (ctx, { serverKey, clerkUserId }) => {
-    assertServerKey(serverKey);
+export const apiDailyBriefContext = serverQuery({
+  args: { clerkUserId: v.string() },
+  handler: async (ctx, { clerkUserId }) => {
     const user = await getUserByClerkId(ctx, clerkUserId);
     if (!user || user.status === "suspended") {
       throw new ConvexError({
@@ -1028,10 +1016,9 @@ async function navigateContext(ctx: QueryCtx, user: Doc<"users">) {
   };
 }
 
-export const apiNavigateContext = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
-  handler: async (ctx, { serverKey, clerkUserId }) => {
-    assertServerKey(serverKey);
+export const apiNavigateContext = serverQuery({
+  args: { clerkUserId: v.string() },
+  handler: async (ctx, { clerkUserId }) => {
     const user = await getUserByClerkId(ctx, clerkUserId);
     if (!user || user.status === "suspended") {
       throw new ConvexError({

@@ -1,9 +1,9 @@
-import { internalMutation, mutation, query } from "./functions";
+import { internalMutation, serverMutation, serverQuery } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx } from "./_generated/server";
-import { assertServerKey, getUserByClerkId, requireActiveUser } from "./lib/auth";
+import { getUserByClerkId, requireActiveUser } from "./lib/auth";
 import { trackEvent } from "./lib/analytics";
 import { notifySecurityChange } from "./lib/stepUp";
 
@@ -56,9 +56,8 @@ async function readPasskeyForUser(
   return passkey;
 }
 
-export const apiRegistrationContext = mutation({
+export const apiRegistrationContext = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     webauthnUserId: v.string(),
   },
@@ -75,7 +74,6 @@ export const apiRegistrationContext = mutation({
     }),
   ),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user || user.status !== "active") return null;
     const webauthnUserId = user.webauthnUserId ?? args.webauthnUserId;
@@ -99,9 +97,8 @@ export const apiRegistrationContext = mutation({
   },
 });
 
-export const apiCreateChallenge = mutation({
+export const apiCreateChallenge = serverMutation({
   args: {
-    serverKey: v.string(),
     flowId: v.string(),
     challenge: v.string(),
     kind: v.union(v.literal("registration"), v.literal("authentication")),
@@ -110,7 +107,6 @@ export const apiCreateChallenge = mutation({
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     let userId: Id<"users"> | undefined;
     if (args.clerkUserId) {
       userId = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId))._id;
@@ -127,8 +123,8 @@ export const apiCreateChallenge = mutation({
   },
 });
 
-export const apiAuthenticationContext = query({
-  args: { serverKey: v.string(), flowId: v.string(), credentialId: v.string() },
+export const apiAuthenticationContext = serverQuery({
+  args: { flowId: v.string(), credentialId: v.string() },
   returns: v.union(
     v.null(),
     v.object({
@@ -145,7 +141,6 @@ export const apiAuthenticationContext = query({
     }),
   ),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const challenge = await ctx.db
       .query("passkeyChallenges")
       .withIndex("by_flowId", (q) => q.eq("flowId", args.flowId))
@@ -170,11 +165,10 @@ export const apiAuthenticationContext = query({
   },
 });
 
-export const apiRegistrationChallenge = query({
-  args: { serverKey: v.string(), flowId: v.string(), clerkUserId: v.string() },
+export const apiRegistrationChallenge = serverQuery({
+  args: { flowId: v.string(), clerkUserId: v.string() },
   returns: v.union(v.string(), v.null()),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user || user.status !== "active") return null;
     const challenge = await ctx.db
@@ -193,9 +187,8 @@ export const apiRegistrationChallenge = query({
   },
 });
 
-export const apiCompleteRegistration = mutation({
+export const apiCompleteRegistration = serverMutation({
   args: {
-    serverKey: v.string(),
     flowId: v.string(),
     clerkUserId: v.string(),
     credentialId: v.string(),
@@ -208,7 +201,6 @@ export const apiCompleteRegistration = mutation({
   },
   returns: passkeyValidator,
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const name = args.name.trim();
     if (!name || name.length > 80) {
@@ -281,9 +273,8 @@ export const apiCompleteRegistration = mutation({
   },
 });
 
-export const apiCompleteAuthentication = mutation({
+export const apiCompleteAuthentication = serverMutation({
   args: {
-    serverKey: v.string(),
     flowId: v.string(),
     credentialId: v.string(),
     newCounter: v.number(),
@@ -295,7 +286,6 @@ export const apiCompleteAuthentication = mutation({
     signal: v.optional(acceptedCredentialsSignalValidator),
   }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const challenge = await ctx.db
       .query("passkeyChallenges")
       .withIndex("by_flowId", (q) => q.eq("flowId", args.flowId))
@@ -349,11 +339,10 @@ export const apiCompleteAuthentication = mutation({
   },
 });
 
-export const apiListForUser = query({
-  args: { serverKey: v.string(), clerkUserId: v.string() },
+export const apiListForUser = serverQuery({
+  args: { clerkUserId: v.string() },
   returns: v.array(passkeyValidator),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const passkeys = await ctx.db
       .query("passkeys")
@@ -363,16 +352,14 @@ export const apiListForUser = query({
   },
 });
 
-export const apiRenameForUser = mutation({
+export const apiRenameForUser = serverMutation({
   args: {
-    serverKey: v.string(),
     clerkUserId: v.string(),
     passkeyId: v.id("passkeys"),
     name: v.string(),
   },
   returns: passkeyValidator,
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const name = args.name.trim();
     if (!name || name.length > 80) {
@@ -390,11 +377,10 @@ export const apiRenameForUser = mutation({
   },
 });
 
-export const apiRemoveForUser = mutation({
-  args: { serverKey: v.string(), clerkUserId: v.string(), passkeyId: v.id("passkeys") },
+export const apiRemoveForUser = serverMutation({
+  args: { clerkUserId: v.string(), passkeyId: v.id("passkeys") },
   returns: v.object({ ok: v.boolean(), signal: v.optional(acceptedCredentialsSignalValidator) }),
   handler: async (ctx, args) => {
-    assertServerKey(args.serverKey);
     const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
     const passkey = await readPasskeyForUser(ctx, user._id, args.passkeyId);
     await ctx.db.delete(passkey._id);
