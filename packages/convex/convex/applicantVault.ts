@@ -13,7 +13,14 @@ import {
   requireApplicantAreaMember,
   requireUser,
 } from "./lib/auth";
-import { AREA_REVERIFY_LEVEL, availableMethodsFor, isAreaTrusted } from "./lib/stepUp";
+import {
+  AREA_REVERIFY_LEVEL,
+  availableMethodsFor,
+  getOrDefaultPolicy,
+  isAreaTrusted,
+  isLegacyPasswordSunsetInForce,
+  legacyPasswordSunsetDeadline,
+} from "./lib/stepUp";
 
 function assertServerKey(serverKey: string): void {
   const expected = process.env.CONVEX_SERVER_KEY;
@@ -77,6 +84,12 @@ export const status = query({
     // this is only what tells the gate to show a step-up form first instead
     // of a password/passkey prompt that would just fail.
     const areaTrusted = await isAreaTrusted(ctx, user._id, "applicant_vault");
+    // Phase 8: only meaningful for a member who actually has a passkey —
+    // otherwise the password is their only way in and can never sunset, so
+    // there's nothing to show a countdown for.
+    const legacyPasswordSunsetDeadlineAt = passkey
+      ? legacyPasswordSunsetDeadline(await getOrDefaultPolicy(ctx), "applicant_vault")
+      : null;
     return {
       passwordIsSet: !!passwordRow,
       hasPasskey: !!passkey,
@@ -87,6 +100,7 @@ export const status = query({
       areaStepUpAvailableMethods: areaTrusted
         ? []
         : await availableMethodsFor(ctx, user._id, AREA_REVERIFY_LEVEL, { includePasskey: true }),
+      legacyPasswordSunsetDeadline: legacyPasswordSunsetDeadlineAt,
     };
   },
 });
@@ -264,9 +278,37 @@ export const unlock = action({
         message: "Incorrect password",
       });
     }
+    // Phase 8 of docs/future-features/21_auth-consolidation.md: checked only
+    // once the password is already confirmed correct, same reasoning as
+    // Performance's equivalent check — never lets a guesser learn "this
+    // account is past its grace period" without the real password. A member
+    // with no passkey registered has no other way to unlock the vault, so
+    // this never applies to them whatever the policy says.
+    if (
+      await ctx.runQuery(internal.applicantVault.checkLegacyPasswordSunset, {
+        userId: me._id,
+      })
+    ) {
+      throw new ConvexError({
+        code: "legacy_password_sunset",
+        message: "Password unlock has moved — use your passkey instead.",
+      });
+    }
     await ctx.runMutation(internal.applicantVault.recordUnlock, {
       userId: me._id,
     });
+  },
+});
+
+export const checkLegacyPasswordSunset = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }): Promise<boolean> => {
+    const passkey = await ctx.db
+      .query("passkeys")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+    if (!passkey) return false;
+    return await isLegacyPasswordSunsetInForce(ctx, "applicant_vault");
   },
 });
 

@@ -9,6 +9,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
 import { api, internal } from "./_generated/api";
+import { hashPassword } from "./activity/lib/crypto";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
@@ -72,6 +73,60 @@ async function seedLogin(
       linkedUserId: opts.linkedUserId,
       active: true,
       createdAt: Date.now(),
+    }),
+  );
+}
+
+/** Like `seedLogin`, but with a real, verifiable password hash — needed for
+ * Phase 8 tests that exercise `login`'s password path rather than just
+ * reading the row back. */
+async function seedLoginWithPassword(
+  t: T,
+  opts: { companyId: Id<"companies">; email: string; password: string; linkedUserId?: Id<"users"> },
+): Promise<Id<"performanceLogins">> {
+  const passwordHash = await hashPassword(opts.password);
+  return await t.run(async (ctx) =>
+    ctx.db.insert("performanceLogins", {
+      email: opts.email,
+      name: "Test Login",
+      passwordHash,
+      companyId: opts.companyId,
+      linkedUserId: opts.linkedUserId,
+      active: true,
+      createdAt: Date.now(),
+    }),
+  );
+}
+
+/** Phase 8 of docs/future-features/21_auth-consolidation.md's admin toggle,
+ * pre-enabled with a `SetAt` far enough in the past that the grace period
+ * has already elapsed by the time a test reads it. */
+async function seedLegacyPasswordSunset(
+  t: T,
+  admin: Id<"users">,
+  opts: { performance?: boolean; applicantVault?: boolean; elapsedDays?: number } = {},
+) {
+  const setAt = Date.now() - (opts.elapsedDays ?? 31) * 86_400_000;
+  await t.run(async (ctx) =>
+    ctx.db.insert("authPolicy", {
+      requireMfaScope: "off",
+      requireMfaRetroactive: false,
+      mfaPolicySetAt: 0,
+      requireMfaForDestructive: false,
+      destructiveActionTtlMinutes: 10,
+      minDestructiveLevel: 1,
+      requirePasskeyScope: "off",
+      requirePasskeyRetroactive: false,
+      passkeyPolicySetAt: 0,
+      gracePeriodDays: 0,
+      exemptUserIds: [],
+      performanceLegacyPasswordSunsetEnabled: opts.performance ?? false,
+      performanceLegacyPasswordSunsetSetAt: setAt,
+      applicantVaultLegacyPasswordSunsetEnabled: opts.applicantVault ?? false,
+      applicantVaultLegacyPasswordSunsetSetAt: setAt,
+      legacyPasswordGraceDays: 30,
+      updatedAt: Date.now(),
+      updatedByUserId: admin,
     }),
   );
 }
@@ -415,5 +470,143 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
       token: "",
     });
     expect(session.valid).toBe(false);
+  });
+});
+
+describe("Phase 8 of docs/future-features/21_auth-consolidation.md: legacy password grace period", () => {
+  test("a linked account's password still works while the sunset is off", async () => {
+    const t = setup();
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "nora", email: "nora@advantisgroup.de" });
+    await seedLoginWithPassword(t, {
+      companyId: advantis,
+      email: "nora@advantisgroup.de",
+      password: "correct-horse",
+      linkedUserId: user,
+    });
+
+    const result = await t.action(api.performanceAuth.login, {
+      slug: "advantis",
+      email: "nora@advantisgroup.de",
+      password: "correct-horse",
+    });
+    expect(result.token).toBeTruthy();
+  });
+
+  test("a linked account's password is refused once the sunset has elapsed", async () => {
+    const t = setup();
+    const admin = await seedUser(t, {
+      clerkUserId: "sunset_admin",
+      email: "sunset_admin@advantisgroup.de",
+    });
+    await seedLegacyPasswordSunset(t, admin, { performance: true });
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "oscar", email: "oscar@advantisgroup.de" });
+    await seedLoginWithPassword(t, {
+      companyId: advantis,
+      email: "oscar@advantisgroup.de",
+      password: "correct-horse",
+      linkedUserId: user,
+    });
+
+    await expect(
+      t.action(api.performanceAuth.login, {
+        slug: "advantis",
+        email: "oscar@advantisgroup.de",
+        password: "correct-horse",
+      }),
+    ).rejects.toThrow("Password sign-in for this account has moved");
+  });
+
+  test("an unlinked login's password never sunsets — there's no other way in", async () => {
+    const t = setup();
+    const admin = await seedUser(t, {
+      clerkUserId: "sunset_admin2",
+      email: "sunset_admin2@advantisgroup.de",
+    });
+    await seedLegacyPasswordSunset(t, admin, { performance: true });
+    const advantis = await seedCompany(t, "advantis");
+    await seedLoginWithPassword(t, {
+      companyId: advantis,
+      email: "standalone@company.example",
+      password: "correct-horse",
+    });
+
+    const result = await t.action(api.performanceAuth.login, {
+      slug: "advantis",
+      email: "standalone@company.example",
+      password: "correct-horse",
+    });
+    expect(result.token).toBeTruthy();
+  });
+
+  test("a wrong password is refused before the sunset check ever runs, for a linked account", async () => {
+    const t = setup();
+    const admin = await seedUser(t, {
+      clerkUserId: "sunset_admin3",
+      email: "sunset_admin3@advantisgroup.de",
+    });
+    await seedLegacyPasswordSunset(t, admin, { performance: true });
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "pat", email: "pat@advantisgroup.de" });
+    await seedLoginWithPassword(t, {
+      companyId: advantis,
+      email: "pat@advantisgroup.de",
+      password: "correct-horse",
+      linkedUserId: user,
+    });
+
+    await expect(
+      t.action(api.performanceAuth.login, {
+        slug: "advantis",
+        email: "pat@advantisgroup.de",
+        password: "wrong-password",
+      }),
+    ).rejects.toThrow("Email or password is incorrect");
+  });
+
+  test("a linked account still works within the grace period, even with the sunset enabled", async () => {
+    const t = setup();
+    const admin = await seedUser(t, {
+      clerkUserId: "sunset_admin4",
+      email: "sunset_admin4@advantisgroup.de",
+    });
+    await seedLegacyPasswordSunset(t, admin, { performance: true, elapsedDays: 5 });
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "quinn", email: "quinn@advantisgroup.de" });
+    await seedLoginWithPassword(t, {
+      companyId: advantis,
+      email: "quinn@advantisgroup.de",
+      password: "correct-horse",
+      linkedUserId: user,
+    });
+
+    const result = await t.action(api.performanceAuth.login, {
+      slug: "advantis",
+      email: "quinn@advantisgroup.de",
+      password: "correct-horse",
+    });
+    expect(result.token).toBeTruthy();
+  });
+
+  test("legacyPasswordSunsetNotice reports the deadline generically, with no account lookup", async () => {
+    const t = setup();
+    const admin = await seedUser(t, {
+      clerkUserId: "sunset_admin5",
+      email: "sunset_admin5@advantisgroup.de",
+    });
+    await seedLegacyPasswordSunset(t, admin, { performance: true });
+
+    const notice = await t.query(api.performanceAuth.legacyPasswordSunsetNotice, {});
+    expect(notice.enabled).toBe(true);
+    expect(notice.deadlineAt).not.toBeNull();
+  });
+
+  test("legacyPasswordSunsetNotice reports disabled when the toggle is off", async () => {
+    const t = setup();
+
+    const notice = await t.query(api.performanceAuth.legacyPasswordSunsetNotice, {});
+    expect(notice.enabled).toBe(false);
+    expect(notice.deadlineAt).toBeNull();
   });
 });

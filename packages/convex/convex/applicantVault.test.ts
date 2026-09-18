@@ -11,6 +11,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
 import { api } from "./_generated/api";
+import { hashPassword } from "./activity/lib/crypto";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
@@ -76,6 +77,47 @@ async function seedAreaTrust(t: T, userId: Id<"users">): Promise<void> {
       area: "applicant_vault",
       verifiedAt: Date.now(),
       method: "email_code",
+    }),
+  );
+}
+
+/** A real, verifiable vault password — needed for Phase 8 tests that
+ * exercise `unlock`'s password path rather than just reading the row back. */
+async function seedVaultPassword(t: T, userId: Id<"users">, password: string): Promise<void> {
+  const hash = await hashPassword(password);
+  await t.run(async (ctx) =>
+    ctx.db.insert("applicantVaultPasswords", { userId, hash, updatedAt: Date.now() }),
+  );
+}
+
+/** Phase 8's admin toggle, pre-enabled with a `SetAt` far enough in the past
+ * that the grace period has already elapsed by the time a test reads it. */
+async function seedLegacyPasswordSunset(
+  t: T,
+  admin: Id<"users">,
+  opts: { applicantVault?: boolean; elapsedDays?: number } = {},
+) {
+  const setAt = Date.now() - (opts.elapsedDays ?? 31) * 86_400_000;
+  await t.run(async (ctx) =>
+    ctx.db.insert("authPolicy", {
+      requireMfaScope: "off",
+      requireMfaRetroactive: false,
+      mfaPolicySetAt: 0,
+      requireMfaForDestructive: false,
+      destructiveActionTtlMinutes: 10,
+      minDestructiveLevel: 1,
+      requirePasskeyScope: "off",
+      requirePasskeyRetroactive: false,
+      passkeyPolicySetAt: 0,
+      gracePeriodDays: 0,
+      exemptUserIds: [],
+      performanceLegacyPasswordSunsetEnabled: false,
+      performanceLegacyPasswordSunsetSetAt: 0,
+      applicantVaultLegacyPasswordSunsetEnabled: opts.applicantVault ?? false,
+      applicantVaultLegacyPasswordSunsetSetAt: setAt,
+      legacyPasswordGraceDays: 30,
+      updatedAt: Date.now(),
+      updatedByUserId: admin,
     }),
   );
 }
@@ -239,5 +281,79 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
 
     const status = await asUser(t, "alice").query(api.applicantVault.status, {});
     expect(status.needsAreaStepUp).toBe(true);
+  });
+});
+
+describe("Phase 8 of docs/future-features/21_auth-consolidation.md: legacy password grace period", () => {
+  test("password unlock still works while the sunset is off", async () => {
+    const t = setup();
+    const userId = await seedMember(t, { clerkUserId: "rita" });
+    await seedAreaTrust(t, userId);
+    await seedVaultPassword(t, userId, "correct-horse");
+    await seedPasskey(t, userId);
+
+    await asUser(t, "rita").action(api.applicantVault.unlock, { password: "correct-horse" });
+
+    const status = await asUser(t, "rita").query(api.applicantVault.status, {});
+    expect(status.unlocked).toBe(true);
+  });
+
+  test("password unlock is refused once the sunset has elapsed, for a member with a passkey", async () => {
+    const t = setup();
+    const admin = await seedMember(t, { clerkUserId: "sam" });
+    await seedLegacyPasswordSunset(t, admin, { applicantVault: true });
+    const userId = await seedMember(t, { clerkUserId: "tara" });
+    await seedAreaTrust(t, userId);
+    await seedVaultPassword(t, userId, "correct-horse");
+    await seedPasskey(t, userId);
+
+    await expect(
+      asUser(t, "tara").action(api.applicantVault.unlock, { password: "correct-horse" }),
+    ).rejects.toThrow("Password unlock has moved");
+  });
+
+  test("a member with no passkey is never sunset — there's no other way in", async () => {
+    const t = setup();
+    const admin = await seedMember(t, { clerkUserId: "uma" });
+    await seedLegacyPasswordSunset(t, admin, { applicantVault: true });
+    const userId = await seedMember(t, { clerkUserId: "victor" });
+    await seedAreaTrust(t, userId);
+    await seedVaultPassword(t, userId, "correct-horse");
+
+    await asUser(t, "victor").action(api.applicantVault.unlock, { password: "correct-horse" });
+
+    const status = await asUser(t, "victor").query(api.applicantVault.status, {});
+    expect(status.unlocked).toBe(true);
+  });
+
+  test("passkey unlock is unaffected by the sunset, whatever the password's state", async () => {
+    const t = setup();
+    const admin = await seedMember(t, { clerkUserId: "wendy" });
+    await seedLegacyPasswordSunset(t, admin, { applicantVault: true });
+    const userId = await seedMember(t, { clerkUserId: "xavier" });
+    await seedAreaTrust(t, userId);
+    await seedPasskey(t, userId);
+
+    await t.mutation(api.applicantVault.apiUnlockViaPasskey, {
+      serverKey,
+      clerkUserId: "xavier",
+    });
+
+    const status = await asUser(t, "xavier").query(api.applicantVault.status, {});
+    expect(status.unlocked).toBe(true);
+  });
+
+  test("a wrong password is refused before the sunset check ever runs", async () => {
+    const t = setup();
+    const admin = await seedMember(t, { clerkUserId: "yara" });
+    await seedLegacyPasswordSunset(t, admin, { applicantVault: true });
+    const userId = await seedMember(t, { clerkUserId: "zane" });
+    await seedAreaTrust(t, userId);
+    await seedVaultPassword(t, userId, "correct-horse");
+    await seedPasskey(t, userId);
+
+    await expect(
+      asUser(t, "zane").action(api.applicantVault.unlock, { password: "wrong-password" }),
+    ).rejects.toThrow("Incorrect password");
   });
 });

@@ -12,7 +12,14 @@ import {
 } from "./_generated/server";
 import { hashPassword, randomToken, verifyPassword } from "./activity/lib/crypto";
 import { getCurrentUser } from "./lib/auth";
-import { AREA_REVERIFY_LEVEL, availableMethodsFor, isAreaTrusted } from "./lib/stepUp";
+import {
+  AREA_REVERIFY_LEVEL,
+  availableMethodsFor,
+  getOrDefaultPolicy,
+  isAreaTrusted,
+  isLegacyPasswordSunsetInForce,
+  legacyPasswordSunsetDeadline,
+} from "./lib/stepUp";
 import { PERMISSIONS, type Permission } from "./performance/lib/permissions";
 
 const SESSION_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
@@ -362,6 +369,23 @@ export const login = action({
     const ok = await verifyPassword(password, loginRow.passwordHash);
     if (!ok) throw invalid();
 
+    // Phase 8 of docs/future-features/21_auth-consolidation.md: checked only
+    // once the password is already confirmed correct — checking it earlier
+    // would let a guesser learn "this account is linked and past its grace
+    // period" from the email alone, without ever knowing the real password.
+    // An unlinked login (no other way in) is never affected, whatever the
+    // policy says.
+    if (
+      loginRow.linkedUserId &&
+      (await ctx.runQuery(internal.performanceAuth.checkLegacyPasswordSunset, {}))
+    ) {
+      throw new ConvexError({
+        code: "legacy_password_sunset",
+        message:
+          "Password sign-in for this account has moved — sign in with your intranet account instead.",
+      });
+    }
+
     const session = await ctx.runMutation(internal.performanceAuth.createSession, {
       loginId: loginRow._id,
     });
@@ -372,6 +396,27 @@ export const login = action({
       isSuperAdmin: loginRow.isSuperAdmin ?? false,
       name: loginRow.name,
     };
+  },
+});
+
+export const checkLegacyPasswordSunset = internalQuery({
+  args: {},
+  handler: async (ctx): Promise<boolean> => await isLegacyPasswordSunsetInForce(ctx, "performance"),
+});
+
+/** Generic, account-independent — safe to call from the unauthenticated
+ * login screen. Never conditioned on whether *this* visitor's account is
+ * linked, matching the same account-existence-oracle constraint
+ * `requestReset`/`resolveTarget` already enforce elsewhere: revealing that
+ * would work the other way around too (confirming a typed email is NOT
+ * linked). The banner it backs is static copy shown to everyone on the
+ * tenant, not a per-account notice. */
+export const legacyPasswordSunsetNotice = query({
+  args: {},
+  handler: async (ctx): Promise<{ enabled: boolean; deadlineAt: number | null }> => {
+    const policy = await getOrDefaultPolicy(ctx);
+    const deadline = legacyPasswordSunsetDeadline(policy, "performance");
+    return { enabled: deadline !== null, deadlineAt: deadline };
   },
 });
 

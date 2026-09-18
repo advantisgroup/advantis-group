@@ -6,8 +6,9 @@ import { api } from "@advantis/convex/api";
 import { useAuth } from "@clerk/nextjs";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { KeyRound, Loader2, Lock, ShieldCheck } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { ConvexError } from "convex/values";
+import { KeyRound, Loader2, Lock, ShieldCheck, X } from "lucide-react";
+import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { StepUpForm } from "@/components/auth/StepUpForm";
@@ -17,6 +18,58 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+
+/**
+ * Phase 8 of docs/future-features/21_auth-consolidation.md: a persistent,
+ * dismissible notice on the locked screen, for a member who actually has a
+ * passkey to fall back on (`status.legacyPasswordSunsetDeadline` is null
+ * otherwise — nothing to show a countdown for). Dismissal is scoped to this
+ * specific deadline in localStorage, same as the Performance login page's
+ * equivalent notice.
+ */
+function LegacyPasswordSunsetNotice({ deadlineAt }: { deadlineAt: number }) {
+  const t = useTranslations("Applicants");
+  const format = useFormatter();
+  const [dismissedDeadline, setDismissedDeadline] = useState<number | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("vault-legacy-password-notice-dismissed");
+      if (raw) setDismissedDeadline(Number(raw));
+    } catch {
+      // Private window or blocked storage — the notice just shows every visit.
+    }
+  }, []);
+
+  if (dismissedDeadline === deadlineAt) return null;
+
+  function dismiss() {
+    setDismissedDeadline(deadlineAt);
+    try {
+      window.localStorage.setItem("vault-legacy-password-notice-dismissed", String(deadlineAt));
+    } catch {
+      // Nothing to persist across visits — still dismisses for this one.
+    }
+  }
+
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2.5 text-left text-xs text-foreground">
+      <span className="min-w-0 flex-1">
+        {t("vaultLegacyPasswordNotice", {
+          date: format.dateTime(new Date(deadlineAt), { day: "2-digit", month: "short" }),
+        })}
+      </span>
+      <button
+        type="button"
+        aria-label={t("vaultLegacyPasswordNoticeDismiss")}
+        onClick={dismiss}
+        className="shrink-0 rounded-full p-0.5 text-muted-foreground hover:bg-muted"
+      >
+        <X className="size-3.5" />
+      </button>
+    </div>
+  );
+}
 
 /** Small header button to re-lock the vault immediately, without waiting for
  * the unlock to expire on its own. Only renders once unlocked. */
@@ -126,7 +179,20 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
       setPasswordInput("");
     } catch (e) {
       setAttemptFailed(true);
-      handleError(e, t("vaultIncorrectPassword"));
+      // `parseError`'s `ErrorCode` union doesn't (and shouldn't) know every
+      // backend-specific code, so this Convex-specific one is read directly
+      // rather than through the shared parser — same as the Performance
+      // login page's equivalent check.
+      const code =
+        e instanceof ConvexError && typeof e.data === "object" && e.data !== null
+          ? (e.data as { code?: string }).code
+          : undefined;
+      handleError(
+        e,
+        code === "legacy_password_sunset"
+          ? t("vaultLegacyPasswordSunset")
+          : t("vaultIncorrectPassword"),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -275,6 +341,9 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
             {t("vaultUnlock")}
           </Button>
           {attemptFailed && <ForgotPasswordPanel scope="hr" />}
+          {status.legacyPasswordSunsetDeadline !== null && (
+            <LegacyPasswordSunsetNotice deadlineAt={status.legacyPasswordSunsetDeadline} />
+          )}
         </CardContent>
       </Card>
     </div>

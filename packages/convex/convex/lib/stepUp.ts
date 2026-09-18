@@ -685,3 +685,55 @@ export async function recordAreaStepUp(
     await ctx.db.insert("areaStepUps", { userId, area, verifiedAt, method });
   }
 }
+
+// --- Phase 8: 30-day legacy password grace period ---------------------------
+//
+// Once an area's linked, password-less flow exists (Phase 3 for
+// Performance, Phase 4's passkey option for the HR vault), its old
+// standalone password doesn't stop working the moment that ships — it gets
+// a fixed, communicated grace window first. This is an admin opt-in per
+// area (see `authPolicy.performanceLegacyPasswordSunsetEnabled`), not a
+// default-on migration: turning it on starts the clock from that moment,
+// same convention as `mfaPolicySetAt`/`passkeyPolicySetAt`.
+
+export const LEGACY_PASSWORD_GRACE_DEFAULT_DAYS = 30;
+
+function legacyPasswordGraceMs(policy: PolicyRow | DefaultPolicy): number {
+  const days = policy.legacyPasswordGraceDays ?? LEGACY_PASSWORD_GRACE_DEFAULT_DAYS;
+  return Math.max(1, days) * 86_400_000;
+}
+
+/** The moment a linked account's standalone password in `area` stops
+ * authenticating, or `null` while the sunset hasn't been turned on (or
+ * hasn't been saved yet) for that area at all — never confused with "the
+ * deadline already passed", which callers check separately against
+ * `Date.now()`. */
+export function legacyPasswordSunsetDeadline(
+  policy: PolicyRow | DefaultPolicy,
+  area: Area,
+): number | null {
+  const enabled =
+    area === "performance"
+      ? policy.performanceLegacyPasswordSunsetEnabled
+      : policy.applicantVaultLegacyPasswordSunsetEnabled;
+  const setAt =
+    area === "performance"
+      ? policy.performanceLegacyPasswordSunsetSetAt
+      : policy.applicantVaultLegacyPasswordSunsetSetAt;
+  if (!enabled || !setAt) return null;
+  return setAt + legacyPasswordGraceMs(policy);
+}
+
+/** Whether `area`'s standalone-password sunset has actually taken effect —
+ * `legacyPasswordSunsetDeadline` returned a moment, and it's in the past.
+ * Callers still have to check the account itself is eligible (Performance:
+ * `linkedUserId` set; the HR vault: a passkey registered) — an account with
+ * no other way in is never subject to this, whatever the policy says. */
+export async function isLegacyPasswordSunsetInForce(
+  ctx: QueryCtx | MutationCtx,
+  area: Area,
+): Promise<boolean> {
+  const policy = await getOrDefaultPolicy(ctx);
+  const deadline = legacyPasswordSunsetDeadline(policy, area);
+  return deadline !== null && Date.now() > deadline;
+}

@@ -80,6 +80,11 @@ async function seedPolicy(
     gracePeriodDays: number;
     exemptUserIds: Id<"users">[];
     areaReverifyDays: number;
+    performanceLegacyPasswordSunsetEnabled: boolean;
+    performanceLegacyPasswordSunsetSetAt: number;
+    applicantVaultLegacyPasswordSunsetEnabled: boolean;
+    applicantVaultLegacyPasswordSunsetSetAt: number;
+    legacyPasswordGraceDays: number;
   }> = {},
 ) {
   await t.run(async (ctx) => {
@@ -1120,6 +1125,9 @@ describe("org policy edits", () => {
       gracePeriodDays: 0,
       exemptUserIds: [],
       areaReverifyDays: 14,
+      performanceLegacyPasswordSunsetEnabled: false,
+      applicantVaultLegacyPasswordSunsetEnabled: false,
+      legacyPasswordGraceDays: 30,
     };
 
     await admin.mutation(api.stepUp.setOrgPolicy, base);
@@ -1146,6 +1154,9 @@ describe("org policy edits", () => {
       gracePeriodDays: 0,
       exemptUserIds: [],
       areaReverifyDays: 14,
+      performanceLegacyPasswordSunsetEnabled: false,
+      applicantVaultLegacyPasswordSunsetEnabled: false,
+      legacyPasswordGraceDays: 30,
     };
 
     await admin.mutation(api.stepUp.setOrgPolicy, base);
@@ -1394,6 +1405,169 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
       const performance = standard.byArea.find((a) => a.area === "performance");
       expect(performance?.alwaysStepUpCount).toBe(1);
       void admin;
+    });
+  });
+});
+
+describe("Phase 8 of docs/future-features/21_auth-consolidation.md: legacy password grace period", () => {
+  const basePolicy = {
+    requireMfaScope: "off" as const,
+    requireMfaRetroactive: false,
+    requireMfaForDestructive: false,
+    destructiveActionTtlMinutes: 10,
+    minDestructiveLevel: 1,
+    requirePasskeyScope: "off" as const,
+    requirePasskeyRetroactive: false,
+    gracePeriodDays: 0,
+    exemptUserIds: [],
+    areaReverifyDays: 14,
+    legacyPasswordGraceDays: 30,
+  };
+
+  test("orgPolicy defaults both sunsets to off with no deadline", async () => {
+    const t = setup();
+    await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+
+    const policy = await asUser(t, "user_admin").query(api.stepUp.orgPolicy, {});
+    expect(policy.performanceLegacyPasswordSunsetEnabled).toBe(false);
+    expect(policy.performanceLegacyPasswordSunsetDeadline).toBeNull();
+    expect(policy.applicantVaultLegacyPasswordSunsetEnabled).toBe(false);
+    expect(policy.applicantVaultLegacyPasswordSunsetDeadline).toBeNull();
+    expect(policy.legacyPasswordGraceDays).toBe(30);
+  });
+
+  test("setOrgPolicy stamps a SetAt only the moment the toggle turns on, then leaves it alone", async () => {
+    const t = setup();
+    await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+    const admin = asUser(t, "user_admin");
+
+    await admin.mutation(api.stepUp.setOrgPolicy, {
+      ...basePolicy,
+      performanceLegacyPasswordSunsetEnabled: false,
+      applicantVaultLegacyPasswordSunsetEnabled: false,
+    });
+    // Still off, so this is exactly "not started yet" whatever SetAt holds
+    // internally — `legacyPasswordSunsetDeadline` never reads it while
+    // `enabled` is false.
+    const beforeToggle = await asUser(t, "user_admin").query(api.stepUp.orgPolicy, {});
+    expect(beforeToggle.performanceLegacyPasswordSunsetDeadline).toBeNull();
+
+    await admin.mutation(api.stepUp.setOrgPolicy, {
+      ...basePolicy,
+      performanceLegacyPasswordSunsetEnabled: true,
+      applicantVaultLegacyPasswordSunsetEnabled: false,
+    });
+    const afterToggle = await t.run(async (ctx) => ctx.db.query("authPolicy").first());
+    const setAt = afterToggle!.performanceLegacyPasswordSunsetSetAt;
+    expect(setAt).toBeDefined();
+
+    // An unrelated field changing must not restamp it.
+    await admin.mutation(api.stepUp.setOrgPolicy, {
+      ...basePolicy,
+      performanceLegacyPasswordSunsetEnabled: true,
+      applicantVaultLegacyPasswordSunsetEnabled: false,
+      legacyPasswordGraceDays: 45,
+    });
+    const afterUnrelatedChange = await t.run(async (ctx) => ctx.db.query("authPolicy").first());
+    expect(afterUnrelatedChange!.performanceLegacyPasswordSunsetSetAt).toBe(setAt);
+  });
+
+  describe("legacyPasswordStandard", () => {
+    async function seedCompany(t: T): Promise<Id<"companies">> {
+      return await t.run(async (ctx) =>
+        ctx.db.insert("companies", {
+          name: "Acme",
+          slug: "acme",
+          domain: "acme.example.com",
+          status: "active",
+          adminBootstrapEmails: [],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        }),
+      );
+    }
+
+    async function seedPerformanceLogin(
+      t: T,
+      companyId: Id<"companies">,
+      opts: { email: string; linkedUserId?: Id<"users"> },
+    ) {
+      await t.run(async (ctx) =>
+        ctx.db.insert("performanceLogins", {
+          email: opts.email,
+          name: "Test Login",
+          passwordHash: "hash",
+          companyId,
+          linkedUserId: opts.linkedUserId,
+          active: true,
+          createdAt: Date.now(),
+        }),
+      );
+    }
+
+    test("counts only linked, active Performance logins as still-on-legacy-password", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+      const linked = await seedUser(t, { clerkUserId: "user_linked" });
+      const company = await seedCompany(t);
+      await seedPerformanceLogin(t, company, {
+        email: "linked@acme.example.com",
+        linkedUserId: linked,
+      });
+      await seedPerformanceLogin(t, company, { email: "standalone@acme.example.com" });
+
+      const standard = await asUser(t, "user_admin").query(api.stepUp.legacyPasswordStandard, {});
+      expect(standard.performance.accountsStillOnLegacyPassword).toBe(1);
+      expect(standard.performance.enabled).toBe(false);
+    });
+
+    test("counts only vault passwords belonging to a member who also has a passkey", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+      const withPasskey = await seedUser(t, { clerkUserId: "user_alice" });
+      const withoutPasskey = await seedUser(t, { clerkUserId: "user_bob" });
+      await t.run(async (ctx) => {
+        await ctx.db.insert("applicantVaultPasswords", {
+          userId: withPasskey,
+          hash: "hash",
+          updatedAt: Date.now(),
+        });
+        await ctx.db.insert("applicantVaultPasswords", {
+          userId: withoutPasskey,
+          hash: "hash",
+          updatedAt: Date.now(),
+        });
+      });
+      await seedPasskey(t, withPasskey);
+
+      const standard = await asUser(t, "user_admin").query(api.stepUp.legacyPasswordStandard, {});
+      expect(standard.applicantVault.accountsStillOnLegacyPassword).toBe(1);
+    });
+
+    test("reports the enabled flag and deadline once the sunset is turned on", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+      const admin = asUser(t, "user_admin");
+      await admin.mutation(api.stepUp.setOrgPolicy, {
+        ...basePolicy,
+        performanceLegacyPasswordSunsetEnabled: true,
+        applicantVaultLegacyPasswordSunsetEnabled: false,
+      });
+
+      const standard = await admin.query(api.stepUp.legacyPasswordStandard, {});
+      expect(standard.performance.enabled).toBe(true);
+      expect(standard.performance.deadlineAt).not.toBeNull();
+      expect(standard.applicantVault.enabled).toBe(false);
+      expect(standard.applicantVault.deadlineAt).toBeNull();
+    });
+
+    test("only an admin can read it", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+
+      await expect(
+        asUser(t, "user_alice").query(api.stepUp.legacyPasswordStandard, {}),
+      ).rejects.toThrow();
     });
   });
 });

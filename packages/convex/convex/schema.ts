@@ -518,6 +518,28 @@ export default defineSchema({
      * documented 14-day default rather than 0 — see `lib/stepUp.ts`'s
      * `AREA_REVERIFY_DEFAULT_DAYS`. */
     areaReverifyDays: v.optional(v.number()),
+    /** Phase 8 of docs/future-features/21_auth-consolidation.md: an admin
+     * opt-in per area, not a default-on migration — turning it on starts
+     * that area's 30-day (or `legacyPasswordGraceDays`) clock from this
+     * moment, after which a linked account's own standalone password
+     * (`performanceLogins.passwordHash`) stops authenticating and it
+     * becomes linked-only. Never affects an *unlinked* login — one with no
+     * `linkedUserId` has no other way in, so its password never sunsets.
+     * `SetAt` absent/0 means "not started yet", same convention as
+     * `mfaPolicySetAt`/`passkeyPolicySetAt` before their first save. */
+    performanceLegacyPasswordSunsetEnabled: v.optional(v.boolean()),
+    performanceLegacyPasswordSunsetSetAt: v.optional(v.number()),
+    /** Same shape, for the HR vault's own password
+     * (`applicantVaultPasswords.hash`) — only ever affects a member who has
+     * a passkey registered (Phase 4's alternative unlock), since that's the
+     * only account this could ever apply to without cutting off someone
+     * with no other way to unlock the vault. */
+    applicantVaultLegacyPasswordSunsetEnabled: v.optional(v.boolean()),
+    applicantVaultLegacyPasswordSunsetSetAt: v.optional(v.number()),
+    /** Shared by both areas above — optional so an existing row reads as
+     * the documented 30-day default; see `lib/stepUp.ts`'s
+     * `LEGACY_PASSWORD_GRACE_DEFAULT_DAYS`. */
+    legacyPasswordGraceDays: v.optional(v.number()),
     updatedAt: v.number(),
     updatedByUserId: v.id("users"),
   }),

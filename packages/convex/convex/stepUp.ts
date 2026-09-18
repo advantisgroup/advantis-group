@@ -27,6 +27,8 @@ import {
   hasOptedOutOfDeviceTracking,
   isAreaTrusted,
   issueEmailCode,
+  LEGACY_PASSWORD_GRACE_DEFAULT_DAYS,
+  legacyPasswordSunsetDeadline,
   LEVEL,
   passkeyWouldSatisfy,
   recordAreaStepUp,
@@ -57,13 +59,24 @@ const policyFieldsValidator = {
   exemptUserIds: v.array(v.id("users")),
   // Phase 7 of docs/future-features/21_auth-consolidation.md.
   areaReverifyDays: v.number(),
+  // Phase 8: whether *this* toggle is on, not when it was turned on — the
+  // handler computes `SetAt` itself, same as `mfaPolicySetAt` above.
+  performanceLegacyPasswordSunsetEnabled: v.boolean(),
+  applicantVaultLegacyPasswordSunsetEnabled: v.boolean(),
+  legacyPasswordGraceDays: v.number(),
 };
 
 // --- Org-wide policy (admin only) ---------------------------------------------
 
 export const orgPolicy = query({
   args: {},
-  returns: v.object({ ...policyFieldsValidator, updatedAt: v.number() }),
+  returns: v.object({
+    ...policyFieldsValidator,
+    // Derived, not directly settable — see `legacyPasswordSunsetDeadline`.
+    performanceLegacyPasswordSunsetDeadline: v.union(v.number(), v.null()),
+    applicantVaultLegacyPasswordSunsetDeadline: v.union(v.number(), v.null()),
+    updatedAt: v.number(),
+  }),
   handler: async (ctx) => {
     await requireAdmin(ctx);
     const policy = await getOrDefaultPolicy(ctx);
@@ -78,6 +91,16 @@ export const orgPolicy = query({
       gracePeriodDays: policy.gracePeriodDays,
       exemptUserIds: policy.exemptUserIds,
       areaReverifyDays: policy.areaReverifyDays ?? AREA_REVERIFY_DEFAULT_DAYS,
+      performanceLegacyPasswordSunsetEnabled:
+        policy.performanceLegacyPasswordSunsetEnabled === true,
+      applicantVaultLegacyPasswordSunsetEnabled:
+        policy.applicantVaultLegacyPasswordSunsetEnabled === true,
+      legacyPasswordGraceDays: policy.legacyPasswordGraceDays ?? LEGACY_PASSWORD_GRACE_DEFAULT_DAYS,
+      performanceLegacyPasswordSunsetDeadline: legacyPasswordSunsetDeadline(policy, "performance"),
+      applicantVaultLegacyPasswordSunsetDeadline: legacyPasswordSunsetDeadline(
+        policy,
+        "applicant_vault",
+      ),
       updatedAt: policy.updatedAt,
     };
   },
@@ -102,11 +125,26 @@ export const setOrgPolicy = mutation({
       !existing ||
       existing.requirePasskeyScope !== args.requirePasskeyScope ||
       existing.requirePasskeyRetroactive !== args.requirePasskeyRetroactive;
+    // Phase 8: bumped whenever the toggle itself changes, in either
+    // direction — turning it back on after turning it off restarts the
+    // clock rather than resuming the old deadline, same as the two above.
+    const performanceSunsetChanged =
+      (existing?.performanceLegacyPasswordSunsetEnabled === true) !==
+      args.performanceLegacyPasswordSunsetEnabled;
+    const applicantVaultSunsetChanged =
+      (existing?.applicantVaultLegacyPasswordSunsetEnabled === true) !==
+      args.applicantVaultLegacyPasswordSunsetEnabled;
 
     const doc = {
       ...args,
       mfaPolicySetAt: mfaChanged ? now : (existing?.mfaPolicySetAt ?? now),
       passkeyPolicySetAt: passkeyChanged ? now : (existing?.passkeyPolicySetAt ?? now),
+      performanceLegacyPasswordSunsetSetAt: performanceSunsetChanged
+        ? now
+        : (existing?.performanceLegacyPasswordSunsetSetAt ?? now),
+      applicantVaultLegacyPasswordSunsetSetAt: applicantVaultSunsetChanged
+        ? now
+        : (existing?.applicantVaultLegacyPasswordSunsetSetAt ?? now),
       updatedAt: now,
       updatedByUserId: admin._id,
     };
@@ -945,6 +983,65 @@ export const areaStandard = query({
       deviceTrackingOptOutCount,
       deviceTrackingOptInCount: users.length - deviceTrackingOptOutCount,
       byArea,
+    };
+  },
+});
+
+/** Phase 8's admin-visible companion metric — the migration's tail made
+ * visible instead of silent, per the plan's own ask: "a per-area
+ * count/countdown of accounts still on their legacy password, N days
+ * left." The deadline is a single shared clock per area (whoever turned the
+ * toggle on set it for everyone at once), so there's one countdown, not one
+ * per account — what varies per account is only whether it's affected at
+ * all. */
+export const legacyPasswordStandard = query({
+  args: {},
+  returns: v.object({
+    performance: v.object({
+      enabled: v.boolean(),
+      deadlineAt: v.union(v.number(), v.null()),
+      accountsStillOnLegacyPassword: v.number(),
+    }),
+    applicantVault: v.object({
+      enabled: v.boolean(),
+      deadlineAt: v.union(v.number(), v.null()),
+      accountsStillOnLegacyPassword: v.number(),
+    }),
+  }),
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    const policy = await getOrDefaultPolicy(ctx);
+
+    // Only a *linked* login is ever affected — one with no `linkedUserId`
+    // has no password-less fallback, so it's never in scope here at all,
+    // whether or not the sunset is enabled.
+    const linkedLogins = await ctx.db
+      .query("performanceLogins")
+      .filter((q) =>
+        q.and(q.neq(q.field("linkedUserId"), undefined), q.eq(q.field("active"), true)),
+      )
+      .collect();
+
+    // Only a vault password belonging to a member who's also registered a
+    // passkey is ever affected — same reasoning, the passkey is the only
+    // other way in.
+    const vaultPasswordRows = await ctx.db.query("applicantVaultPasswords").collect();
+    const passkeyUserIds = new Set((await ctx.db.query("passkeys").collect()).map((p) => p.userId));
+    const vaultAccountsWithFallback = vaultPasswordRows.filter((row) =>
+      passkeyUserIds.has(row.userId),
+    ).length;
+
+    return {
+      performance: {
+        enabled: policy.performanceLegacyPasswordSunsetEnabled === true,
+        deadlineAt: legacyPasswordSunsetDeadline(policy, "performance"),
+        accountsStillOnLegacyPassword: linkedLogins.length,
+      },
+      applicantVault: {
+        enabled: policy.applicantVaultLegacyPasswordSunsetEnabled === true,
+        deadlineAt: legacyPasswordSunsetDeadline(policy, "applicant_vault"),
+        accountsStillOnLegacyPassword: vaultAccountsWithFallback,
+      },
     };
   },
 });
