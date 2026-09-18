@@ -599,6 +599,16 @@ export async function areaReverifyWindowMs(ctx: QueryCtx | MutationCtx): Promise
   return Math.max(1, days) * 86_400_000;
 }
 
+/** How long an "always require step-up" clearance counts as fresh — long
+ * enough to actually walk through the door you just proved you should be
+ * let through (the area's own queries re-run reactively, so this has to
+ * outlive at least one poll cycle), short enough that leaving and coming
+ * back demands a real fresh step-up rather than the normal 14-day window.
+ * Never 0: a preference literally named "always require step-up" that
+ * rejects the step-up someone just completed is a permanent lockout with
+ * no way out, not extra security — see `isAreaTrusted`. */
+const ALWAYS_STEP_UP_FRESHNESS_MS = 5 * 60_000;
+
 /** Whether this account has opted out of device recognition entirely — see
  * `securityPreferences.deviceTrackingOptOut`. */
 export async function hasOptedOutOfDeviceTracking(
@@ -655,11 +665,11 @@ export async function isAreaTrusted(
   userId: Id<"users">,
   area: Area,
 ): Promise<boolean> {
-  const preference = await getAreaPreference(ctx, userId, area);
-  if (preference === "always_step_up") return false;
   const trust = await getAreaTrust(ctx, userId, area);
   if (!trust) return false;
-  const windowMs = await areaReverifyWindowMs(ctx);
+  const preference = await getAreaPreference(ctx, userId, area);
+  const windowMs =
+    preference === "always_step_up" ? ALWAYS_STEP_UP_FRESHNESS_MS : await areaReverifyWindowMs(ctx);
   return Date.now() - trust.verifiedAt <= windowMs;
 }
 

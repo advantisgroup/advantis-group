@@ -964,12 +964,19 @@ export const areaStandard = query({
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
+    // Both preference tables are read unscoped and then filtered down to
+    // this set — a deactivated user's stale row must not keep counting
+    // against `users.length`, which would otherwise let these subtractions
+    // go negative.
+    const activeUserIds = new Set(users.map((u) => u._id));
     const prefs = await ctx.db.query("securityPreferences").collect();
-    const deviceTrackingOptOutCount = prefs.filter((p) => p.deviceTrackingOptOut === true).length;
+    const deviceTrackingOptOutCount = prefs.filter(
+      (p) => p.deviceTrackingOptOut === true && activeUserIds.has(p.userId),
+    ).length;
     const areaPrefs = await ctx.db.query("areaSecurityPreferences").collect();
     const byArea = (["performance", "applicant_vault"] as const).map((area) => {
       const alwaysStepUpCount = areaPrefs.filter(
-        (p) => p.area === area && p.mode === "always_step_up",
+        (p) => p.area === area && p.mode === "always_step_up" && activeUserIds.has(p.userId),
       ).length;
       return {
         area,

@@ -446,7 +446,7 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
     expect(session.valid).toBe(true);
   });
 
-  test("the 'always require step-up' preference blocks resolution however recent the clearance", async () => {
+  test("the 'always require step-up' preference still resolves right after a fresh clearance", async () => {
     const t = setup();
     const advantis = await seedCompany(t, "advantis");
     const user = await seedUser(t, { clerkUserId: "mona", email: "mona@advantisgroup.de" });
@@ -466,7 +466,38 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
       });
     });
 
+    // Rejecting the step-up someone just completed would be a permanent
+    // lockout, not extra security — see `isAreaTrusted`'s
+    // ALWAYS_STEP_UP_FRESHNESS_MS.
     const session = await asUser(t, "mona").query(api.performanceAuth.validateSession, {
+      token: "",
+    });
+    expect(session.valid).toBe(true);
+  });
+
+  test("the 'always require step-up' preference blocks resolution once the freshness window passes", async () => {
+    const t = setup();
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "nina", email: "nina@advantisgroup.de" });
+    await seedLogin(t, { companyId: advantis, email: "nina@advantisgroup.de", linkedUserId: user });
+    await t.run(async (ctx) => {
+      // Well within the normal 14-day trust_device window, but past
+      // always_step_up's much shorter freshness window.
+      await ctx.db.insert("areaStepUps", {
+        userId: user,
+        area: "performance",
+        verifiedAt: Date.now() - 10 * 60_000,
+        method: "email_code",
+      });
+      await ctx.db.insert("areaSecurityPreferences", {
+        userId: user,
+        area: "performance",
+        mode: "always_step_up",
+        updatedAt: Date.now(),
+      });
+    });
+
+    const session = await asUser(t, "nina").query(api.performanceAuth.validateSession, {
       token: "",
     });
     expect(session.valid).toBe(false);
