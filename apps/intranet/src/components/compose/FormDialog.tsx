@@ -85,3 +85,12 @@ export function FormDialog({
     </ResponsiveDialog>
   );
 }
+
+/** Small uppercase label above a field in a form dialog. */
+export function FieldLabel({ children }: { children: ReactNode }) {
+  return (
+    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      {children}
+    </span>
+  );
+}

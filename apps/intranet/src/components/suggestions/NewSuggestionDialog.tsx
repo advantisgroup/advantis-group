@@ -1,6 +1,6 @@
 "use client";
 
-import { type ClipboardEvent, type ReactNode, useState } from "react";
+import { type ClipboardEvent, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
-import { FormDialog } from "@/components/compose/FormDialog";
+import { FieldLabel, FormDialog } from "@/components/compose/FormDialog";
 import { useDraft } from "@/components/compose/use-draft";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,14 +23,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { MAX_ATTACHMENT_BYTES } from "@/lib/upload";
-
-function FieldLabel({ children }: { children: ReactNode }) {
-  return (
-    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-      {children}
-    </span>
-  );
-}
 
 interface SuggestionValues {
   categoryId: string;

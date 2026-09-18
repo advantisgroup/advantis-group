@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Doc, type Id } from "@advantis/convex/dataModel";
@@ -8,7 +8,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { FormDialog } from "@/components/compose/FormDialog";
+import { FieldLabel, FormDialog } from "@/components/compose/FormDialog";
 import { StatusBadge, ticketNumber } from "@/components/it-tickets/shared";
 import { Link } from "@/components/Link";
 import { useDraft } from "@/components/compose/use-draft";
@@ -39,14 +39,6 @@ export const TICKET_PREFILL_KEY = "itTickets:prefillInfo";
 const SF_CATEGORY = "SF";
 
 type TicketDoc = Doc<"itTickets">;
-
-function FieldLabel({ children }: { children: ReactNode }) {
-  return (
-    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-      {children}
-    </span>
-  );
-}
 
 interface TicketDialogProps {
   open: boolean;

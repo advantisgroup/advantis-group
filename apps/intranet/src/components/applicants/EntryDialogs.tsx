@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -15,7 +15,7 @@ import {
   TERMIN_TYPEN,
   today,
 } from "@/components/applicants/applicant-types";
-import { FormDialog } from "@/components/compose/FormDialog";
+import { FieldLabel, FormDialog } from "@/components/compose/FormDialog";
 import { useDraft } from "@/components/compose/use-draft";
 import { DialogTip } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -41,14 +41,6 @@ interface EntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   applicantId: Id<"applicants">;
-}
-
-function FieldLabel({ children }: { children: ReactNode }) {
-  return (
-    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-      {children}
-    </span>
-  );
 }
 
 /* ── Kontakt ─────────────────────────────────────────────────────────────── */
