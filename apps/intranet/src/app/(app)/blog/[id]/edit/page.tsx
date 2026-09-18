@@ -18,7 +18,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
   const { id } = use(params);
   const t = useTranslations("Blog");
   const canManage = useHasCapability("manage_blog");
-  const post = useQuery(api.blogPosts.get, canManage ? { postId: id as Id<"blogPosts"> } : "skip");
+  const post = useQuery(api.blog.posts.get, canManage ? { postId: id as Id<"blogPosts"> } : "skip");
 
   if (!canManage) {
     return (

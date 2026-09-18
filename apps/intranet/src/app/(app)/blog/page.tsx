@@ -33,7 +33,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type Post = NonNullable<ReturnType<typeof useQuery<typeof api.blogPosts.list>>>[number];
+type Post = NonNullable<ReturnType<typeof useQuery<typeof api.blog.posts.list>>>[number];
 type Tab = "all" | "published" | "draft";
 
 function PostStatus({ published }: { published: boolean }) {
@@ -253,8 +253,8 @@ function RefreshedBlogList({
 export default function BlogListPage() {
   const t = useTranslations("Blog");
   const canManage = useHasCapability("manage_blog");
-  const posts = useQuery(api.blogPosts.list, canManage ? {} : "skip");
-  const remove = useMutation(api.blogPosts.remove);
+  const posts = useQuery(api.blog.posts.list, canManage ? {} : "skip");
+  const remove = useMutation(api.blog.posts.remove);
   const confirm = useConfirm();
   const handleError = useErrorHandler();
 

@@ -42,8 +42,8 @@ export function SharePost({ shareCode, longPath }: { shareCode: string | null; l
   // as a bare path.
   const origin = typeof window === "undefined" ? "" : window.location.origin;
 
-  const referral = useQuery(api.sharing.myReferralState, {});
-  const setReferralSharing = useMutation(api.sharing.setReferralSharing);
+  const referral = useQuery(api.blog.sharing.myReferralState, {});
+  const setReferralSharing = useMutation(api.blog.sharing.setReferralSharing);
 
   // Default-on only becomes real the first time someone opens the sheet —
   // that's when the code gets minted, so nobody who never shares ends up

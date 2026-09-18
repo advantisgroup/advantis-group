@@ -104,10 +104,10 @@ export function useBlogPostForm({
   const handleError = useErrorHandler();
   const isEditing = !("draftId" in entry);
 
-  const create = useMutation(api.blogPosts.create);
-  const update = useMutation(api.blogPosts.update);
-  const publishMutation = useMutation(api.blogPosts.publish);
-  const unpublishMutation = useMutation(api.blogPosts.unpublish);
+  const create = useMutation(api.blog.posts.create);
+  const update = useMutation(api.blog.posts.update);
+  const publishMutation = useMutation(api.blog.posts.publish);
+  const unpublishMutation = useMutation(api.blog.posts.unpublish);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
   const [values, setValues] = useState<BlogPostValues>(() => initialValues(entry));

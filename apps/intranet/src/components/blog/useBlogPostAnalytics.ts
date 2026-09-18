@@ -24,7 +24,7 @@ export interface BlogPostAnalytics {
  * the rest of the app's Convex data is.
  */
 export function useBlogPostAnalytics(postId: Id<"blogPosts">) {
-  const getForPost = useAction(api.blogAnalytics.getForPost);
+  const getForPost = useAction(api.blog.analytics.getForPost);
   const [data, setData] = useState<BlogPostAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

@@ -31,9 +31,9 @@ export interface BlogPost extends BlogPostSummary {
 }
 
 export function getPosts(language: "de" | "en"): Promise<BlogPostSummary[]> {
-  return convex.query(api.blogPosts.getAll, { language });
+  return convex.query(api.blog.posts.getAll, { language });
 }
 
 export function getPost(language: "de" | "en", slug: string): Promise<BlogPost | null> {
-  return convex.query(api.blogPosts.getBySlug, { language, slug });
+  return convex.query(api.blog.posts.getBySlug, { language, slug });
 }

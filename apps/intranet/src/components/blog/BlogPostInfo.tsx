@@ -54,9 +54,9 @@ export function BlogPostInfo({ post }: { post: Doc<"blogPosts"> }) {
   const confirm = useConfirm();
   const handleError = useErrorHandler();
 
-  const publishMutation = useMutation(api.blogPosts.publish);
-  const unpublishMutation = useMutation(api.blogPosts.unpublish);
-  const removeMutation = useMutation(api.blogPosts.remove);
+  const publishMutation = useMutation(api.blog.posts.publish);
+  const unpublishMutation = useMutation(api.blog.posts.unpublish);
+  const removeMutation = useMutation(api.blog.posts.remove);
 
   const {
     data: analytics,

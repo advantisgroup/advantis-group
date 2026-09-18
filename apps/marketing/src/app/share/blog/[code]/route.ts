@@ -22,7 +22,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
-  const post = await convex.query(api.sharing.resolveShare, { code });
+  const post = await convex.query(api.blog.sharing.resolveShare, { code });
 
   if (!post) {
     return NextResponse.redirect(new URL("/de/blog", request.nextUrl.origin), { status: 307 });
