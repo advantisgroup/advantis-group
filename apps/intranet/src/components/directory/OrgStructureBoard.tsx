@@ -28,7 +28,7 @@ type Team = OrgUnits["teams"][number];
 export function OrgStructureBoard({ units, people }: { units: OrgUnits; people: Person[] }) {
   const t = useTranslations("Directory");
   const handleError = useErrorHandler();
-  const setTeamDepartment = useMutation(api.orgData.setTeamDepartment);
+  const setTeamDepartment = useMutation(api.org.structure.setTeamDepartment);
   const [dragging, setDragging] = useState<Id<"teams"> | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);

@@ -1494,7 +1494,7 @@ export function ClockodoWorkspace({ section }: { section: ClockodoSection }) {
   const router = useRouter();
   const hasTeamAccess = useHasCapability("view_clockodo_team");
   const canManageClockodo = useHasCapability("manage_clockodo_team");
-  const approvalCover = useQuery(api.approvalDelegations.mine);
+  const approvalCover = useQuery(api.org.delegations.mine);
   const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
   const canReviewAbsences = canManageClockodo || hasApprovalCover;
   const { absences: mine, refresh } = useMyAbsences();

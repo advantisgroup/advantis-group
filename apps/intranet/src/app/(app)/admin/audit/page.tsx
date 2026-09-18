@@ -31,7 +31,7 @@ import type { FunctionReturnType } from "convex/server";
 
 type Source = "activity" | "onedrive" | "integrations";
 type Range = "today" | "7d" | "30d" | "all";
-type AuditEntry = FunctionReturnType<typeof api.auditLog.list>[number];
+type AuditEntry = FunctionReturnType<typeof api.org.auditLog.list>[number];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -97,7 +97,7 @@ export default function AuditLogPage() {
   const [range, setRange] = useState<Range>("7d");
   const [search, setSearch] = useState("");
 
-  const rows = useQuery(api.auditLog.list, {
+  const rows = useQuery(api.org.auditLog.list, {
     source: source === "all" ? undefined : source,
     limit: 500,
   });

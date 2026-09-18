@@ -15,13 +15,13 @@ export default function TeamsPage() {
   const t = useTranslations("Admin");
   const isAdmin = useIsAdmin();
 
-  const teams = useQuery(api.orgData.listTeams, {});
-  const createTeam = useMutation(api.orgData.createTeam);
-  const renameTeam = useMutation(api.orgData.renameTeam);
-  const archiveTeam = useMutation(api.orgData.archiveTeam);
-  const setReportsTo = useMutation(api.orgData.setTeamReportsTo);
-  const setTeamDepartment = useMutation(api.orgData.setTeamDepartment);
-  const departments = useQuery(api.orgData.listDepartments, isAdmin ? {} : "skip");
+  const teams = useQuery(api.org.structure.listTeams, {});
+  const createTeam = useMutation(api.org.structure.createTeam);
+  const renameTeam = useMutation(api.org.structure.renameTeam);
+  const archiveTeam = useMutation(api.org.structure.archiveTeam);
+  const setReportsTo = useMutation(api.org.structure.setTeamReportsTo);
+  const setTeamDepartment = useMutation(api.org.structure.setTeamDepartment);
+  const departments = useQuery(api.org.structure.listDepartments, isAdmin ? {} : "skip");
   const people = useQuery(api.users.list, isAdmin ? {} : "skip");
 
   if (!isAdmin) {

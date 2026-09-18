@@ -25,7 +25,7 @@ import { QUEUE_META, QUEUE_ORDER } from "./streams";
  */
 export function ActionQueue() {
   const t = useTranslations("Admin");
-  const data = useQuery(api.adminOverview.queue);
+  const data = useQuery(api.org.overview.queue);
 
   const items = data
     ? [...data.items].sort((a, b) => QUEUE_ORDER.indexOf(a.key) - QUEUE_ORDER.indexOf(b.key))

@@ -155,7 +155,7 @@ const checkDirect = (ctx: unknown, key: FeatureFlagKey) =>
 
 /** Actions have no `ctx.db`, so they ask through a query. */
 const checkViaQuery = (ctx: unknown, key: FeatureFlagKey) =>
-  (ctx as ActionCtx).runQuery(internal.featureFlags.isEnabledInternal, { key });
+  (ctx as ActionCtx).runQuery(internal.org.featureFlags.isEnabledInternal, { key });
 
 /** Wraps a builder so every function it defines checks `key` first, keeping
  * the builder's exact type so `args`/`handler` inference is unchanged. Only

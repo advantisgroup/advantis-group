@@ -46,11 +46,11 @@ const NO_DEPARTMENT = "none";
 export function OrgPersonMenu({ person, units }: { person: Person; units: OrgUnits }) {
   const t = useTranslations("Directory");
   const handleError = useErrorHandler();
-  const setTeamLead = useMutation(api.orgData.setTeamReportsTo);
-  const setDepartmentLead = useMutation(api.orgData.setDepartmentReportsTo);
-  const setDepartment = useMutation(api.orgData.setUserDepartment);
-  const addToTeam = useMutation(api.orgData.addUserToTeam);
-  const removeFromTeam = useMutation(api.orgData.removeUserFromTeam);
+  const setTeamLead = useMutation(api.org.structure.setTeamReportsTo);
+  const setDepartmentLead = useMutation(api.org.structure.setDepartmentReportsTo);
+  const setDepartment = useMutation(api.org.structure.setUserDepartment);
+  const addToTeam = useMutation(api.org.structure.addUserToTeam);
+  const removeFromTeam = useMutation(api.org.structure.removeUserFromTeam);
   const setManagingDirector = useMutation(api.users.setManagingDirector);
 
   const saved = (promise: Promise<unknown>) =>

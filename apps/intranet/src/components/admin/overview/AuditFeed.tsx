@@ -17,7 +17,7 @@ import { Panel, PanelSkeleton } from "./primitives";
  * empty shell here, the section just isn't rendered. */
 export function AuditFeed() {
   const t = useTranslations("Admin");
-  const rows = useQuery(api.auditLog.list, { limit: 8 });
+  const rows = useQuery(api.org.auditLog.list, { limit: 8 });
 
   return (
     <Panel

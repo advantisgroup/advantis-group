@@ -15,11 +15,11 @@ export default function DepartmentsPage() {
   const t = useTranslations("Admin");
   const isAdmin = useIsAdmin();
 
-  const departments = useQuery(api.orgData.listDepartments, {});
-  const createDepartment = useMutation(api.orgData.createDepartment);
-  const renameDepartment = useMutation(api.orgData.renameDepartment);
-  const archiveDepartment = useMutation(api.orgData.archiveDepartment);
-  const setReportsTo = useMutation(api.orgData.setDepartmentReportsTo);
+  const departments = useQuery(api.org.structure.listDepartments, {});
+  const createDepartment = useMutation(api.org.structure.createDepartment);
+  const renameDepartment = useMutation(api.org.structure.renameDepartment);
+  const archiveDepartment = useMutation(api.org.structure.archiveDepartment);
+  const setReportsTo = useMutation(api.org.structure.setDepartmentReportsTo);
   const people = useQuery(api.users.list, isAdmin ? {} : "skip");
 
   if (!isAdmin) {

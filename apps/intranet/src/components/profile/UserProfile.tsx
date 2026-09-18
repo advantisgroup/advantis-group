@@ -344,8 +344,8 @@ function OrganisationEditor({
   const handleError = useErrorHandler();
   const isAdmin = useIsAdmin();
   const setManager = useMutation(api.users.setManager);
-  const setDepartment = useMutation(api.orgData.setUserDepartment);
-  const departments = useQuery(api.orgData.listDepartments, {});
+  const setDepartment = useMutation(api.org.structure.setUserDepartment);
+  const departments = useQuery(api.org.structure.listDepartments, {});
   const users = useQuery(api.users.list, isAdmin ? {} : "skip");
 
   return (
@@ -624,7 +624,7 @@ function StarterChecklist({ steps }: { steps: StarterStep[] }) {
   );
 }
 
-type OffboardingRecord = FunctionReturnType<typeof api.offboarding.get>;
+type OffboardingRecord = FunctionReturnType<typeof api.org.offboarding.get>;
 
 function OffboardingChecklist({
   user,
@@ -635,8 +635,8 @@ function OffboardingChecklist({
   checklist: OffboardingRecord | undefined;
 }) {
   const t = useTranslations("Profile");
-  const setLastWorkingDay = useMutation(api.offboarding.setLastWorkingDay);
-  const setStep = useMutation(api.offboarding.setStep);
+  const setLastWorkingDay = useMutation(api.org.offboarding.setLastWorkingDay);
+  const setStep = useMutation(api.org.offboarding.setStep);
   const handleError = useErrorHandler();
   const steps = ["handover", "tickets", "guidebooks", "files", "devices", "access"] as const;
   const completed = checklist?.completedSteps.length ?? 0;
@@ -1104,7 +1104,7 @@ function ManagementRail({
   onClose: () => void;
 }) {
   const t = useTranslations("Profile");
-  const checklist = useQuery(api.offboarding.get, { userId: user._id });
+  const checklist = useQuery(api.org.offboarding.get, { userId: user._id });
   const [offboardingOpened, setOffboardingOpened] = useState(false);
   const [tab, setTab] = useState("manage");
 

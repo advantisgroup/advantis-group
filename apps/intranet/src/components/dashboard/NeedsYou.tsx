@@ -77,7 +77,7 @@ export function NeedsYouPanel() {
   const locale = useLocale();
   const isManager = useIsManager();
   const canManageClockodo = useHasCapability("manage_clockodo_team");
-  const approvalCover = useQuery(api.approvalDelegations.mine);
+  const approvalCover = useQuery(api.org.delegations.mine);
   const canReviewAbsences = canManageClockodo || (approvalCover?.length ?? 0) > 0;
   const { approvals } = usePendingApprovals(canReviewAbsences);
   const accessRequests = useQuery(

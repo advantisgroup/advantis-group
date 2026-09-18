@@ -20,9 +20,9 @@ import { StatTile } from "./primitives";
  */
 export function Vitals({ tzOffsetMinutes }: { tzOffsetMinutes: number }) {
   const t = useTranslations("Admin");
-  const pulse = useQuery(api.adminOverview.pulse, { tzOffsetMinutes });
-  const queue = useQuery(api.adminOverview.queue);
-  const systems = useQuery(api.adminOverview.systems);
+  const pulse = useQuery(api.org.overview.pulse, { tzOffsetMinutes });
+  const queue = useQuery(api.org.overview.queue);
+  const systems = useQuery(api.org.overview.systems);
 
   if (!pulse || !queue || !systems) {
     return (

@@ -47,7 +47,7 @@ const PROVIDER_MARKS: Record<string, ComponentType<{ className?: string }>> = {
  */
 export function SystemsPanel() {
   const t = useTranslations("Admin");
-  const data = useQuery(api.adminOverview.systems);
+  const data = useQuery(api.org.overview.systems);
 
   return (
     <Panel

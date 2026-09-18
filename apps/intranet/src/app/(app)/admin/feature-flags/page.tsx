@@ -42,7 +42,7 @@ function ToggleDialog({
 }) {
   const t = useTranslations("FeatureFlags");
   const tc = useTranslations("Common");
-  const setFlag = useMutation(api.featureFlags.setFlag);
+  const setFlag = useMutation(api.org.featureFlags.setFlag);
   const handleError = useErrorHandler();
   const [reasonMode, setReasonMode] = useState<"premade" | "custom">("premade");
   const [customReason, setCustomReason] = useState("");

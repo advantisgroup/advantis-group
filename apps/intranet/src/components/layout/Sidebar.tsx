@@ -175,7 +175,7 @@ export function Sidebar() {
   const hasBlogAccess = useHasCapability("manage_blog");
   const hasApplicantAccess = useHasApplicantAccess();
   const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
-  const approvalCover = useQuery(api.approvalDelegations.mine);
+  const approvalCover = useQuery(api.org.delegations.mine);
   const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
   const { setOpenMobile, state, isMobile, editing, setEditing } = useSidebar();
   const featureFlags = useFeatureFlags();

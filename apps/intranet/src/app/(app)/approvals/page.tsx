@@ -113,7 +113,7 @@ function RefreshedApprovalsPage() {
   const locale = useLocale();
   const isManager = useIsManager();
   const canManageClockodo = useHasCapability("manage_clockodo_team");
-  const approvalCover = useQuery(api.approvalDelegations.mine);
+  const approvalCover = useQuery(api.org.delegations.mine);
   const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
   const canReviewAbsences = canManageClockodo || hasApprovalCover;
   const { approvals } = usePendingApprovals(canReviewAbsences);
@@ -326,10 +326,10 @@ function RefreshedApprovalsPage() {
 function ApprovalCoverPanel() {
   const t = useTranslations("Approvals");
   const locale = useLocale();
-  const covers = useQuery(api.approvalDelegations.listGranted);
+  const covers = useQuery(api.org.delegations.listGranted);
   const users = useQuery(api.users.list, {});
-  const createCover = useMutation(api.approvalDelegations.create);
-  const revokeCover = useMutation(api.approvalDelegations.revoke);
+  const createCover = useMutation(api.org.delegations.create);
+  const revokeCover = useMutation(api.org.delegations.revoke);
   const handleError = useErrorHandler();
   const [open, setOpen] = useState(false);
   const [delegateUserId, setDelegateUserId] = useState<string>();

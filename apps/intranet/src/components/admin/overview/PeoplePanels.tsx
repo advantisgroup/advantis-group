@@ -21,7 +21,7 @@ import { MetricRow, Panel, PanelSkeleton, SplitBar } from "./primitives";
 
 type Pulse = NonNullable<ReturnType<typeof usePulse>>;
 function usePulse(tzOffsetMinutes: number) {
-  return useQuery(api.adminOverview.pulse, { tzOffsetMinutes });
+  return useQuery(api.org.overview.pulse, { tzOffsetMinutes });
 }
 
 /** Headcount by department, plus the role mix. */

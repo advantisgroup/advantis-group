@@ -83,7 +83,7 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
   const tTeams = useTranslations("Teams");
   const tCap = useTranslations("CustomRoles");
   const members = useQuery(api.users.list, { includeSuspended: true });
-  const customRoles = useQuery(api.customRoles.list);
+  const customRoles = useQuery(api.org.roles.list);
   const setCustomRoles = useMutation(api.users.setCustomRoles);
   const handleError = useErrorHandler();
 

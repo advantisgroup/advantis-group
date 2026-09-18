@@ -181,8 +181,8 @@ function MembershipOffer({ offer, onClose }: { offer: Offer | null; onClose: () 
   const t = useTranslations("Directory");
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
-  const addToTeam = useMutation(api.orgData.addUserToTeam);
-  const setDepartment = useMutation(api.orgData.setUserDepartment);
+  const addToTeam = useMutation(api.org.structure.addUserToTeam);
+  const setDepartment = useMutation(api.org.structure.setUserDepartment);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
 
@@ -281,8 +281,8 @@ export function OrgChart({
   const t = useTranslations("Directory");
   const handleError = useErrorHandler();
   const setManager = useMutation(api.users.setManager);
-  const teams = useQuery(api.orgData.listTeams, {});
-  const departments = useQuery(api.orgData.listDepartments, {});
+  const teams = useQuery(api.org.structure.listTeams, {});
+  const departments = useQuery(api.org.structure.listDepartments, {});
   const units: OrgUnits | null =
     teams && departments ? { teams, departments, canAdmin: canEdit, canSetDepartment } : null;
   const [dragging, setDragging] = useState<Id<"users"> | null>(null);

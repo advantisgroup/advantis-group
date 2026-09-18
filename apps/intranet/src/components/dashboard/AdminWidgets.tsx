@@ -411,7 +411,7 @@ export function AdminStatsCard() {
  * section, since `auditLog.list` itself requires `requireAdmin`. */
 export function RecentActivityCard() {
   const t = useTranslations("Dashboard");
-  const rows = useQuery(api.auditLog.list, { limit: 5 });
+  const rows = useQuery(api.org.auditLog.list, { limit: 5 });
 
   return (
     <DashCard icon={<ScrollText />} title={t("recentActivityTitle")}>

@@ -25,7 +25,7 @@ export default function ClockodoLayout({ children }: { children: ReactNode }) {
   const user = useCurrentUser();
   const hasTeamAccess = useHasCapability("view_clockodo_team");
   const canManageClockodo = useHasCapability("manage_clockodo_team");
-  const approvalCover = useQuery(api.approvalDelegations.mine);
+  const approvalCover = useQuery(api.org.delegations.mine);
   const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
   const migrateLegacyLink = useMutation(api.integrations.clockodoLink.migrateLegacyClockodoLink);
   const migrationStarted = useRef(false);

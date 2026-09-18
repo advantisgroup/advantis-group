@@ -265,11 +265,11 @@ function RoleEditorShell({
 export function CustomRolesPanel() {
   const t = useTranslations("CustomRoles");
   const tc = useTranslations("Common");
-  const roles = useQuery(api.customRoles.list);
+  const roles = useQuery(api.org.roles.list);
   const members = useQuery(api.users.list, { includeSuspended: true });
-  const createRole = useMutation(api.customRoles.create);
-  const updateRole = useMutation(api.customRoles.update);
-  const removeRole = useMutation(api.customRoles.remove);
+  const createRole = useMutation(api.org.roles.create);
+  const updateRole = useMutation(api.org.roles.update);
+  const removeRole = useMutation(api.org.roles.remove);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
 

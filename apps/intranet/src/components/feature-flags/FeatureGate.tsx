@@ -10,11 +10,11 @@ import { FeatureDisabledScreen } from "@/components/layout/FeatureDisabledScreen
 import { useIsAdmin } from "@/components/providers/current-user";
 
 /** Taken from the Convex API so the list of flags only lives in `featureFlags.ts`. */
-export type FeatureFlagKey = FunctionArgs<typeof api.featureFlags.setFlag>["key"];
+export type FeatureFlagKey = FunctionArgs<typeof api.org.featureFlags.setFlag>["key"];
 
 /** Reactive read of every feature flag's current state. */
 export function useFeatureFlags() {
-  return useQuery(api.featureFlags.list);
+  return useQuery(api.org.featureFlags.list);
 }
 
 /**

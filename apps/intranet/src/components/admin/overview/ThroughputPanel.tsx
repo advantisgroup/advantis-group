@@ -55,7 +55,7 @@ export function ThroughputPanel() {
   const [familyKey, setFamilyKey] = useState<string>("support");
   const [view, setView] = useState<"chart" | "table">("chart");
 
-  const data = useQuery(api.adminOverview.timelines, {
+  const data = useQuery(api.org.overview.timelines, {
     days: range,
     tzOffsetMinutes: new Date().getTimezoneOffset(),
   });

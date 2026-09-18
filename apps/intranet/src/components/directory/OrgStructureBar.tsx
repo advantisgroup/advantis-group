@@ -31,9 +31,9 @@ const NONE = "none";
 export function OrgStructureBar({ units }: { units: OrgUnits }) {
   const t = useTranslations("Directory");
   const handleError = useErrorHandler();
-  const createDepartment = useMutation(api.orgData.createDepartment);
-  const createTeam = useMutation(api.orgData.createTeam);
-  const setTeamDepartment = useMutation(api.orgData.setTeamDepartment);
+  const createDepartment = useMutation(api.org.structure.createDepartment);
+  const createTeam = useMutation(api.org.structure.createTeam);
+  const setTeamDepartment = useMutation(api.org.structure.setTeamDepartment);
   const [kind, setKind] = useState<"team" | "department" | null>(null);
   const [name, setName] = useState("");
   const [departmentId, setDepartmentId] = useState(NONE);

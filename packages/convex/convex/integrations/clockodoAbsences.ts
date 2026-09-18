@@ -9,7 +9,7 @@ import {
   userHasCapability,
 } from "../lib/auth";
 import { toClockodoIdString } from "../lib/clockodoId";
-import { hasActiveAbsenceApprovalDelegation } from "../approvalDelegations";
+import { hasActiveAbsenceApprovalDelegation } from "../org/delegations";
 
 /**
  * Server-key gated lookups the Elysia API uses to join live-fetched Clockodo

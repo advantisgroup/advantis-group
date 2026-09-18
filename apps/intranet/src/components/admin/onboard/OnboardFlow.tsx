@@ -48,8 +48,8 @@ function PersonalEmailFlow({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Admin");
   const handleError = useErrorHandler();
   const create = useAction(api.invites.create);
-  const departments = useQuery(api.orgData.listDepartments, {}) ?? [];
-  const teams = useQuery(api.orgData.listTeams, {}) ?? [];
+  const departments = useQuery(api.org.structure.listDepartments, {}) ?? [];
+  const teams = useQuery(api.org.structure.listTeams, {}) ?? [];
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("employee");
