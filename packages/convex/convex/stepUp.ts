@@ -224,7 +224,7 @@ export const apiRequestEmailCode = serverMutation({
     const user = await getUserByClerkId(ctx, args.clerkUserId);
     if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
     const code = await issueEmailCode(ctx, user, args.sessionId, args.context);
-    await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
+    await ctx.scheduler.runAfter(0, internal.notifications.email.sendNotificationEmail, {
       kind: "admin-verification-code",
       to: user.email,
       data: { code, expiresInMinutes: 10 },

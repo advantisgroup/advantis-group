@@ -70,8 +70,8 @@ export default function NotificationsPage() {
 function RefreshedNotificationsPage() {
   const t = useTranslations("Notifications");
 
-  const notifications = useQuery(api.notifications.list, { limit: 100 });
-  const markAllRead = useMutation(api.notifications.markAllRead);
+  const notifications = useQuery(api.notifications.notifications.list, { limit: 100 });
+  const markAllRead = useMutation(api.notifications.notifications.markAllRead);
 
   const [tab, setTab] = useState<"unread" | "all">("unread");
   const [types, setTypes] = useState<Category[]>([]);
@@ -216,10 +216,10 @@ function RefreshedNotificationsPage() {
 function NotificationRow({ n }: { n: NotificationDoc }) {
   const t = useTranslations("Notifications");
   const router = useRouter();
-  const markRead = useMutation(api.notifications.markRead);
-  const markUnread = useMutation(api.notifications.markUnread);
-  const remove = useMutation(api.notifications.remove);
-  const snooze = useMutation(api.notifications.snooze);
+  const markRead = useMutation(api.notifications.notifications.markRead);
+  const markUnread = useMutation(api.notifications.notifications.markUnread);
+  const remove = useMutation(api.notifications.notifications.remove);
+  const snooze = useMutation(api.notifications.notifications.snooze);
   // Icon/tint come from the shared registry, so a row looks the same here
   // as in the header menu. The coarse category is only for the filter chips.
   const { icon: Icon, tint } = notificationVisual(n.type);

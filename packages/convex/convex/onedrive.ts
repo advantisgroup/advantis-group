@@ -231,7 +231,7 @@ async function notifyDecision(
     body: `"${upload.fileName}" was ${decision}${note ? `: ${note}` : ""}`,
     link: "/files",
   });
-  await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
+  await ctx.scheduler.runAfter(0, internal.notifications.email.sendNotificationEmail, {
     kind: "upload-decision",
     to: requester.email,
     data: {

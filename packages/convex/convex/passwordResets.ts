@@ -252,7 +252,7 @@ export const requestReset = mutation({
     for (const adminId of admins) {
       const admin = await ctx.db.get(adminId);
       if (!admin) continue;
-      await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
+      await ctx.scheduler.runAfter(0, internal.notifications.email.sendNotificationEmail, {
         kind: "password-reset-request",
         to: admin.email,
         data: {
@@ -945,7 +945,7 @@ export const issueResetLink = action({
       sendTo: resolvedSendTo,
     });
 
-    await ctx.runAction(internal.outbound.sendNotificationEmail, {
+    await ctx.runAction(internal.notifications.email.sendNotificationEmail, {
       kind: "password-reset-link",
       to: prepared.sentToEmail,
       data: {
@@ -1109,7 +1109,7 @@ export const autoIssueLinkedReset = internalAction({
       });
 
       console.log(`[passwordReset:autoIssue] mailing request=${requestId}`);
-      await ctx.runAction(internal.outbound.sendNotificationEmail, {
+      await ctx.runAction(internal.notifications.email.sendNotificationEmail, {
         kind: "password-reset-link",
         to: prepared.sentToEmail,
         data: {

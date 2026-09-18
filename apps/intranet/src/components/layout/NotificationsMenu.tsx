@@ -30,11 +30,11 @@ export function NotificationsMenu() {
   const router = useRouter();
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const notifications = useQuery(api.notifications.list, { limit: 20 });
-  const unread = useQuery(api.notifications.unreadCount) ?? 0;
-  const markRead = useMutation(api.notifications.markRead);
-  const markAllRead = useMutation(api.notifications.markAllRead);
-  const remove = useMutation(api.notifications.remove);
+  const notifications = useQuery(api.notifications.notifications.list, { limit: 20 });
+  const unread = useQuery(api.notifications.notifications.unreadCount) ?? 0;
+  const markRead = useMutation(api.notifications.notifications.markRead);
+  const markAllRead = useMutation(api.notifications.notifications.markAllRead);
+  const remove = useMutation(api.notifications.notifications.remove);
 
   // Newest first within a day; the day headings carry the ordering the old
   // unread-first sort was trying to express, without shuffling an item out

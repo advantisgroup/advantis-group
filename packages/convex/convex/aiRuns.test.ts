@@ -267,7 +267,7 @@ describe("drafts", () => {
 
       await bob.mutation(api.drafts.shares.addComment, { versionId, body: "Looks good" });
       expect(await alice.query(api.drafts.shares.listComments, { versionId })).toHaveLength(1);
-      const aliceNotifications = await alice.query(api.notifications.list, {});
+      const aliceNotifications = await alice.query(api.notifications.notifications.list, {});
       expect(aliceNotifications[0]).toMatchObject({ type: "draft_comment" });
 
       // What Alice writes afterwards isn't shared.

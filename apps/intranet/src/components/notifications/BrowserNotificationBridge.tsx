@@ -21,7 +21,10 @@ export function BrowserNotificationBridge() {
     (prefs?.browserPushEnabled ?? false) &&
     typeof Notification !== "undefined" &&
     Notification.permission === "granted";
-  const notifications = useQuery(api.notifications.list, enabled ? { limit: 10 } : "skip");
+  const notifications = useQuery(
+    api.notifications.notifications.list,
+    enabled ? { limit: 10 } : "skip",
+  );
   // Everything present on mount is old news — only notify for what arrives after.
   const watermarkRef = useRef<number | null>(null);
 

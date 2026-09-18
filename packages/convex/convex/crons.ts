@@ -167,14 +167,14 @@ if (process.env.DISABLE_CRONS !== "true") {
   crons.daily(
     "notifications: send daily digests",
     { hourUTC: 5, minuteUTC: 30 },
-    internal.notifications.queueDailyDigests,
+    internal.notifications.notifications.queueDailyDigests,
     {},
   );
 
   crons.weekly(
     "notifications: send weekly manager reports",
     { dayOfWeek: "monday", hourUTC: 5, minuteUTC: 45 },
-    internal.notifications.queueWeeklyReports,
+    internal.notifications.notifications.queueWeeklyReports,
     {},
   );
 

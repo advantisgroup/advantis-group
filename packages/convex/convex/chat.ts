@@ -1189,7 +1189,7 @@ export const reinviteDm = mutation({
       body: "Re-join the chat to keep your conversation.",
       link: `/chat?rejoin=${conversationId}`,
     });
-    await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
+    await ctx.scheduler.runAfter(0, internal.notifications.email.sendNotificationEmail, {
       kind: "chat-reinvite",
       to: partner.email,
       data: {

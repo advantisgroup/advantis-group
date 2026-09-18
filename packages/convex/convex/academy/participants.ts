@@ -75,7 +75,7 @@ export const create = mutation({
         body: `Dein Zugangscode: ${code}`,
         link: "/guidebooks/wallbox-sales-academy",
       });
-      await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
+      await ctx.scheduler.runAfter(0, internal.notifications.email.sendNotificationEmail, {
         kind: "academy-invite",
         to: linkedUser.email,
         data: { code, invitedByName: displayName(admin) },

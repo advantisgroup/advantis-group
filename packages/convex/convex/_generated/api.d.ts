@@ -139,6 +139,8 @@ import type * as migrations_backfillManageClockodoTeam from "../migrations/backf
 import type * as migrations_backfillPerformanceCompanyId from "../migrations/backfillPerformanceCompanyId.js";
 import type * as migrations_dropGuestFields from "../migrations/dropGuestFields.js";
 import type * as notifications from "../notifications.js";
+import type * as notifications_email from "../notifications/email.js";
+import type * as notifications_notifications from "../notifications/notifications.js";
 import type * as offboarding from "../offboarding.js";
 import type * as onedrive from "../onedrive.js";
 import type * as orgData from "../orgData.js";
@@ -351,6 +353,8 @@ declare const fullApi: ApiFromModules<{
   "migrations/backfillPerformanceCompanyId": typeof migrations_backfillPerformanceCompanyId;
   "migrations/dropGuestFields": typeof migrations_dropGuestFields;
   notifications: typeof notifications;
+  "notifications/email": typeof notifications_email;
+  "notifications/notifications": typeof notifications_notifications;
   offboarding: typeof offboarding;
   onedrive: typeof onedrive;
   orgData: typeof orgData;

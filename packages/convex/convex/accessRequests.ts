@@ -217,7 +217,7 @@ export const approve = mutation({
       reviewedAt: Date.now(),
     });
 
-    await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
+    await ctx.scheduler.runAfter(0, internal.notifications.email.sendNotificationEmail, {
       kind: "access-approved",
       to: request.email,
       data: { role: grantedRole },
@@ -243,7 +243,7 @@ export const deny = mutation({
       reviewedByUserId: reviewer._id,
       reviewedAt: Date.now(),
     });
-    await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
+    await ctx.scheduler.runAfter(0, internal.notifications.email.sendNotificationEmail, {
       kind: "access-denied",
       to: request.email,
       data: {},

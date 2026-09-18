@@ -149,7 +149,7 @@ export const apiRequestCode = serverMutation({
       await ctx.db.insert("userSecondaryEmails", { userId: user._id, email, addedAt: now });
     }
 
-    await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
+    await ctx.scheduler.runAfter(0, internal.notifications.email.sendNotificationEmail, {
       kind: "secondary-email-code",
       to: email,
       data: { code, expiresInMinutes: 10, accountName: user.firstName ?? user.email },

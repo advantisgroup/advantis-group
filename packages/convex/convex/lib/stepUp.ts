@@ -73,7 +73,7 @@ export async function notifySecurityChange(
   detail: string,
 ): Promise<void> {
   const base = process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de";
-  await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
+  await ctx.scheduler.runAfter(0, internal.notifications.email.sendNotificationEmail, {
     kind: "security-alert",
     to: user.email,
     data: { headline, detail, url: `${base}/settings/account#security-activity` },

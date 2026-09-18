@@ -82,9 +82,9 @@ export function Switch({
 export function NotificationPreferences({ deliveryExtra }: { deliveryExtra?: ReactNode }) {
   const t = useTranslations("Notifications");
   const isManager = useIsManager();
-  const prefs = useQuery(api.notifications.getPreferences);
-  const setPreferences = useMutation(api.notifications.setPreferences);
-  const setDeliveryOption = useMutation(api.notifications.setDeliveryOption);
+  const prefs = useQuery(api.notifications.notifications.getPreferences);
+  const setPreferences = useMutation(api.notifications.notifications.setPreferences);
+  const setDeliveryOption = useMutation(api.notifications.notifications.setDeliveryOption);
   const userPrefs = useQuery(api.userPreferences.getMine);
   const setUserPrefs = useMutation(api.userPreferences.setMine);
   const [permission, setPermission] = useState<NotificationPermission | null>(null);

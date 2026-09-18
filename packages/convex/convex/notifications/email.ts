@@ -1,0 +1,57 @@
+import { v } from "convex/values";
+
+import { internalAction } from "../functions";
+import { internalApiFetch } from "../lib/internalApi";
+
+/**
+ * Hand a transactional email off to the Elysia API (api.advantisgroup.de),
+ * which owns Resend. Scheduled from mutations via
+ * `internal.notifications.email.sendNotificationEmail`. Safe no-op when the API isn't
+ * configured (e.g. local dev without the API running) — the in-app
+ * notification already covers the user-visible signal.
+ */
+export const sendNotificationEmail = internalAction({
+  args: {
+    kind: v.union(
+      v.literal("invite"),
+      v.literal("access-approved"),
+      v.literal("access-denied"),
+      v.literal("absence-decision"),
+      v.literal("upload-decision"),
+      v.literal("chat-reinvite"),
+      v.literal("digest"),
+      v.literal("weekly-report"),
+      v.literal("academy-invite"),
+      v.literal("password-reset-request"),
+      v.literal("password-reset-link"),
+      v.literal("admin-verification-code"),
+      v.literal("security-alert"),
+      v.literal("secondary-email-code"),
+    ),
+    to: v.string(),
+    data: v.any(),
+  },
+  handler: async (_ctx, args) => {
+    try {
+      const res = await internalApiFetch("/internal/notifications", {
+        kind: args.kind,
+        to: args.to,
+        data: args.data,
+      });
+      if (!res) {
+        console.warn(
+          `[outbound] skipping ${args.kind} email to ${args.to} — API_URL/CONVEX_SERVER_KEY not set`,
+        );
+        return { sent: false };
+      }
+      if (!res.ok) {
+        console.error(`[outbound] ${args.kind} email failed: ${res.status} ${await res.text()}`);
+        return { sent: false };
+      }
+      return { sent: true };
+    } catch (error) {
+      console.error(`[outbound] ${args.kind} email error:`, error);
+      return { sent: false };
+    }
+  },
+});
