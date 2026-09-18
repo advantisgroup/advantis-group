@@ -14,7 +14,7 @@ export function ManagerIntroStep() {
   const t = useTranslations("Onboarding");
   const tProfile = useTranslations("Profile");
   const user = useCurrentUser();
-  const orgContext = useQuery(api.users.orgContext, {
+  const orgContext = useQuery(api.people.users.orgContext, {
     userId: user._id as Id<"users">,
   });
   const lines = orgContext?.lines ?? [];

@@ -91,7 +91,7 @@ export function UpdateComposer({ draftId }: { draftId: string }) {
   const router = useRouter();
   const handleError = useErrorHandler();
 
-  const departments = useQuery(api.users.departments) ?? [];
+  const departments = useQuery(api.people.users.departments) ?? [];
   const create = useMutation(api.updates.updates.create);
 
   const [values, setValues] = useState<UpdateValues>(EMPTY_UPDATE);

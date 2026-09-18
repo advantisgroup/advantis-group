@@ -203,7 +203,7 @@ export default function ClockodoEmployeeDetailPage() {
 
   const canManageClockodo = useHasCapability("manage_clockodo_team");
   const links = useQuery(api.integrations.clockodoView.listWithLinks);
-  const intranetUsers = useQuery(api.users.list, {});
+  const intranetUsers = useQuery(api.people.users.list, {});
   const liveStatus = useQuery(api.activity.state.clockodoStatusForRoster, {
     clockodoUserIds: [clockodoUserId],
   });

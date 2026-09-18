@@ -43,7 +43,7 @@ export default function SettingsAccountPage() {
   async function downloadMyData() {
     setExporting(true);
     try {
-      const data = await convex.query(api.users.exportMine, {});
+      const data = await convex.query(api.people.users.exportMine, {});
       downloadFile(
         `intranet-data_${new Date().toISOString().slice(0, 10)}.json`,
         "application/json",

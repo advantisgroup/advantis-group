@@ -57,7 +57,7 @@ import { cn } from "@/lib/utils";
 function StartPageRedirect() {
   const router = useRouter();
   const pathname = usePathname();
-  const prefs = useQuery(api.userPreferences.getMine);
+  const prefs = useQuery(api.people.preferences.getMine);
 
   useEffect(() => {
     if (prefs === undefined) return;
@@ -80,7 +80,7 @@ function StartPageRedirect() {
 
 function AppShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const heartbeat = useMutation(api.presence.heartbeat);
+  const heartbeat = useMutation(api.people.presence.heartbeat);
   const mainRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const { state: tourState, phase: tourPhase, targetRect } = useTour();

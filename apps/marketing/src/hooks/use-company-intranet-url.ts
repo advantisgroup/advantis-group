@@ -10,7 +10,7 @@ import { useQuery } from "convex/react";
  * being signed in here already means the same session is active on the
  * intranet too — this hook is just a navigational nicety, not an auth check.
  *
- * Checks real intranet membership via `api.users.me` (the same
+ * Checks real intranet membership via `api.people.users.me` (the same
  * `getCurrentUser` lookup the intranet itself gates on — see
  * packages/convex/convex/lib/auth.ts) rather than guessing from the email
  * domain: employees sign up under any of Advantis Group's brand domains
@@ -25,7 +25,7 @@ import { useQuery } from "convex/react";
 export function useCompanyIntranetUrl(): string | null {
   const { isSignedIn } = useUser();
   const intranetUrl = process.env.NEXT_PUBLIC_INTRANET_URL;
-  const me = useQuery(api.users.me, isSignedIn ? {} : "skip");
+  const me = useQuery(api.people.users.me, isSignedIn ? {} : "skip");
   if (!intranetUrl || !me) return null;
   return intranetUrl;
 }

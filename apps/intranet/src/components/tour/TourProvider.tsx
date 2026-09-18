@@ -75,7 +75,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
-  const upsertProgress = useMutation(api.tourProgress.upsertMyProgress);
+  const upsertProgress = useMutation(api.people.tourProgress.upsertMyProgress);
 
   const [state, setState] = useState<TourLocalState | null>(null);
   const [phase, setPhase] = useState<TourPhase>("idle");

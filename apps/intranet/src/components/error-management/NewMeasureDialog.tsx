@@ -39,7 +39,7 @@ export function NewMeasureDialog({
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
   const reports = useQuery(api.fehlermanagement.reports.list) ?? EMPTY_REPORTS;
-  const users = useQuery(api.users.list, {}) ?? [];
+  const users = useQuery(api.people.users.list, {}) ?? [];
   const create = useMutation(api.fehlermanagement.measures.create);
 
   const [errorId, setErrorId] = useState(defaultErrorId ?? "");

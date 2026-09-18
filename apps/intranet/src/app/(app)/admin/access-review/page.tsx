@@ -31,8 +31,8 @@ export default function AccessReviewPage() {
   const locale = useLocale();
   const isAdmin = useIsAdmin();
   const handleError = useErrorHandler();
-  const rows = useQuery(api.users.accessReviewList, isAdmin ? {} : "skip");
-  const markReviewed = useMutation(api.users.markAccessReviewed);
+  const rows = useQuery(api.people.users.accessReviewList, isAdmin ? {} : "skip");
+  const markReviewed = useMutation(api.people.users.markAccessReviewed);
   const [filter, setFilter] = useState<Filter>("due");
 
   const enriched = useMemo(() => {

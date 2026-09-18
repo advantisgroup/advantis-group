@@ -215,7 +215,7 @@ export function useWikiEntryForm({
   const t = useTranslations("Guidebooks");
   const handleError = useErrorHandler();
   const categories = useQuery(api.wiki.categories.list) ?? [];
-  const users = useQuery(api.users.list, {}) ?? [];
+  const users = useQuery(api.people.users.list, {}) ?? [];
   const currentUser = useCurrentUser();
   const entries = useQuery(api.wiki.entries.list) ?? [];
   const create = useMutation(api.wiki.entries.create);

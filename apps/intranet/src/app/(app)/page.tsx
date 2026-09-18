@@ -131,10 +131,10 @@ export default function DashboardPage() {
     end: now + 30 * 24 * 60 * 60 * 1000,
   });
   const newWikiPages = useLatestWikiPages();
-  const prefs = useQuery(api.userPreferences.getMine);
-  const setPrefs = useMutation(api.userPreferences.setMine).withOptimisticUpdate((store, patch) => {
-    const current = store.getQuery(api.userPreferences.getMine, {});
-    if (current) store.setQuery(api.userPreferences.getMine, {}, { ...current, ...patch });
+  const prefs = useQuery(api.people.preferences.getMine);
+  const setPrefs = useMutation(api.people.preferences.setMine).withOptimisticUpdate((store, patch) => {
+    const current = store.getQuery(api.people.preferences.getMine, {});
+    if (current) store.setQuery(api.people.preferences.getMine, {}, { ...current, ...patch });
   });
   const save = (patch: Parameters<typeof setPrefs>[0]) => void setPrefs(patch).catch(handleError);
 

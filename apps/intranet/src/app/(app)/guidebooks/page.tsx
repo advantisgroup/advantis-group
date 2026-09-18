@@ -332,7 +332,7 @@ export default function GuidebooksPage() {
   const handleError = useErrorHandler();
 
   const items = useGridItems();
-  const users = useQuery(api.users.list, {}) ?? [];
+  const users = useQuery(api.people.users.list, {}) ?? [];
   const wikiCategoriesRaw = useQuery(api.wiki.categories.list);
   const wikiCategories = wikiCategoriesRaw ?? EMPTY_CATEGORIES;
   const extend = useMutation(api.wiki.entries.update);

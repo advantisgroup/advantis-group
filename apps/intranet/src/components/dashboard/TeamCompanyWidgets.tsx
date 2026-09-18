@@ -142,7 +142,7 @@ export function WhosOutCard() {
 /** Today's birthdays (opt-in only) and work anniversaries, org-wide. */
 export function CelebrationsCard() {
   const t = useTranslations("Dashboard");
-  const celebrations = useQuery(api.users.todaysCelebrations);
+  const celebrations = useQuery(api.people.users.todaysCelebrations);
 
   return (
     <DashCard icon={<PartyPopper />} title={t("celebrationsTitle")}>

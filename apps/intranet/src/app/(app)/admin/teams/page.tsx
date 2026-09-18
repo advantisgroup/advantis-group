@@ -22,7 +22,7 @@ export default function TeamsPage() {
   const setReportsTo = useMutation(api.org.structure.setTeamReportsTo);
   const setTeamDepartment = useMutation(api.org.structure.setTeamDepartment);
   const departments = useQuery(api.org.structure.listDepartments, isAdmin ? {} : "skip");
-  const people = useQuery(api.users.list, isAdmin ? {} : "skip");
+  const people = useQuery(api.people.users.list, isAdmin ? {} : "skip");
 
   if (!isAdmin) {
     return <ForbiddenScreen />;

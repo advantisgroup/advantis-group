@@ -21,8 +21,8 @@ export function RequestAccessGate() {
   const t = useTranslations("Access");
   const tNav = useTranslations("Nav");
   const { user, isLoaded } = useUser();
-  const status = useQuery(api.accessRequests.myStatus);
-  const requestAccess = useMutation(api.accessRequests.create);
+  const status = useQuery(api.people.accessRequests.myStatus);
+  const requestAccess = useMutation(api.people.accessRequests.create);
   const handleError = useErrorHandler();
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);

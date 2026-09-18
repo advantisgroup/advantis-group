@@ -25,7 +25,7 @@ function currentPermission(): Permission {
  */
 export function useChatNotifications() {
   const [permission, setPermission] = useState<Permission>("unsupported");
-  const setUserPrefs = useMutation(api.userPreferences.setMine);
+  const setUserPrefs = useMutation(api.people.preferences.setMine);
 
   useEffect(() => {
     // Read the browser permission after paint so we don't diverge from SSR

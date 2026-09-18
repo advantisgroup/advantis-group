@@ -512,7 +512,7 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
 export async function getCallerForAction(
   ctx: ActionCtx,
 ): Promise<{ user: Doc<"users">; capabilities: Capability[] } | null> {
-  return await ctx.runQuery(internal.users.callerForAction, {});
+  return await ctx.runQuery(internal.people.users.callerForAction, {});
 }
 
 /** `requireCapability` for actions: manager/admin, or a custom role granting

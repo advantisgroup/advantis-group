@@ -266,7 +266,7 @@ export function CustomRolesPanel() {
   const t = useTranslations("CustomRoles");
   const tc = useTranslations("Common");
   const roles = useQuery(api.org.roles.list);
-  const members = useQuery(api.users.list, { includeSuspended: true });
+  const members = useQuery(api.people.users.list, { includeSuspended: true });
   const createRole = useMutation(api.org.roles.create);
   const updateRole = useMutation(api.org.roles.update);
   const removeRole = useMutation(api.org.roles.remove);

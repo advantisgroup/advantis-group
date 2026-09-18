@@ -27,9 +27,9 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 export function ApplicantAccessPanel() {
   const t = useTranslations("Applicants");
   const tRoles = useTranslations("Roles");
-  const eligible = useQuery(api.users.eligibleForApplicantAccess);
+  const eligible = useQuery(api.people.users.eligibleForApplicantAccess);
   const passwordStatuses = useQuery(api.hr.vault.memberPasswordStatuses);
-  const setAccess = useMutation(api.users.setApplicantAccess);
+  const setAccess = useMutation(api.people.users.setApplicantAccess);
   const resetPassword = useMutation(api.hr.vault.resetPassword);
   const handleError = useErrorHandler();
   const confirm = useConfirm();

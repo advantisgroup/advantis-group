@@ -22,8 +22,8 @@ export function NotificationsStep() {
   const tn = useTranslations("Notifications");
   const prefs = useQuery(api.notifications.notifications.getPreferences);
   const setPreferences = useMutation(api.notifications.notifications.setPreferences);
-  const userPrefs = useQuery(api.userPreferences.getMine);
-  const setUserPrefs = useMutation(api.userPreferences.setMine);
+  const userPrefs = useQuery(api.people.preferences.getMine);
+  const setUserPrefs = useMutation(api.people.preferences.setMine);
   const [permission, setPermission] = useState<NotificationPermission | null>(null);
   const bellControls = useAnimationControls();
 

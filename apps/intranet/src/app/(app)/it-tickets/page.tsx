@@ -222,13 +222,13 @@ function ItTicketsPageContent() {
   const isManager = useIsManager();
 
   const tickets = useQuery(api.itTickets.tickets.list);
-  const preferences = useQuery(api.userPreferences.getMine);
-  const users = useQuery(api.users.list, {});
+  const preferences = useQuery(api.people.preferences.getMine);
+  const users = useQuery(api.people.users.list, {});
   const categories = useQuery(api.itTickets.tickets.listCategories);
   const startedThreads = useQuery(api.itTickets.threads.listStarted) ?? EMPTY_THREADS;
   const ensureDefaultCategories = useMutation(api.itTickets.tickets.ensureDefaultCategories);
   const removeTicket = useMutation(api.itTickets.tickets.remove);
-  const setPreferences = useMutation(api.userPreferences.setMine);
+  const setPreferences = useMutation(api.people.preferences.setMine);
 
   useEffect(() => {
     if (categories !== undefined && categories.length === 0) {

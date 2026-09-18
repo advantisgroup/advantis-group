@@ -20,7 +20,7 @@ export default function DepartmentsPage() {
   const renameDepartment = useMutation(api.org.structure.renameDepartment);
   const archiveDepartment = useMutation(api.org.structure.archiveDepartment);
   const setReportsTo = useMutation(api.org.structure.setDepartmentReportsTo);
-  const people = useQuery(api.users.list, isAdmin ? {} : "skip");
+  const people = useQuery(api.people.users.list, isAdmin ? {} : "skip");
 
   if (!isAdmin) {
     return <ForbiddenScreen />;

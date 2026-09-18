@@ -82,7 +82,7 @@ type ProfileUser = NonNullable<ReturnType<typeof useUser>>;
  * inline on your own profile. */
 function Expertise({ tags, isSelf }: { tags: string[]; isSelf: boolean }) {
   const t = useTranslations("Profile");
-  const setExpertise = useMutation(api.users.setExpertise);
+  const setExpertise = useMutation(api.people.users.setExpertise);
   const handleError = useErrorHandler();
   const [draft, setDraft] = useState("");
 
@@ -141,7 +141,7 @@ function Expertise({ tags, isSelf }: { tags: string[]; isSelf: boolean }) {
 const LATE_SECTION = "animate-in fade-in-0 duration-300";
 
 function useUser(userId: Id<"users"> | null) {
-  return useQuery(api.users.get, userId ? { userId } : "skip");
+  return useQuery(api.people.users.get, userId ? { userId } : "skip");
 }
 
 /** A small labelled section so the profile reads like a tidy info card. */
@@ -264,7 +264,7 @@ function PersonRow({
 function TeamsEditor({ userId, teams }: { userId: Id<"users">; teams: string[] }) {
   const t = useTranslations("Admin");
   const tTeams = useTranslations("Teams");
-  const setTeams = useMutation(api.users.setTeams);
+  const setTeams = useMutation(api.people.users.setTeams);
   const handleError = useErrorHandler();
 
   function toggle(id: string) {
@@ -343,10 +343,10 @@ function OrganisationEditor({
   const t = useTranslations("Profile");
   const handleError = useErrorHandler();
   const isAdmin = useIsAdmin();
-  const setManager = useMutation(api.users.setManager);
+  const setManager = useMutation(api.people.users.setManager);
   const setDepartment = useMutation(api.org.structure.setUserDepartment);
   const departments = useQuery(api.org.structure.listDepartments, {});
-  const users = useQuery(api.users.list, isAdmin ? {} : "skip");
+  const users = useQuery(api.people.users.list, isAdmin ? {} : "skip");
 
   return (
     <div className="space-y-3 rounded-lg border border-border/70 p-3">
@@ -414,7 +414,7 @@ function OrganisationEditor({
 function Organisation({ userId }: { userId: Id<"users"> }) {
   const t = useTranslations("Profile");
   const canEdit = useHasCapability("manage_members");
-  const org = useQuery(api.users.orgContext, { userId });
+  const org = useQuery(api.people.users.orgContext, { userId });
   if (!org || (!canEdit && org.lines.length === 0 && org.reports.length === 0)) return null;
 
   return (
@@ -831,14 +831,14 @@ function AdminControls({
   const me = useCurrentUser();
   const confirm = useConfirm();
   const [stepUpOpen, setStepUpOpen] = useState(false);
-  const setRole = useMutation(api.users.setRole);
-  const setStatus = useAction(api.users.setStatus);
-  const removeMember = useAction(api.members.remove);
-  const reinvite = useAction(api.members.reinvite);
-  const setUploadPermission = useAction(api.users.setUploadPermission);
-  const setGfAccess = useAction(api.users.setGfAccess);
-  const setApplicantDelegate = useMutation(api.users.setApplicantDelegate);
-  const setManagingDirector = useMutation(api.users.setManagingDirector);
+  const setRole = useMutation(api.people.users.setRole);
+  const setStatus = useAction(api.people.users.setStatus);
+  const removeMember = useAction(api.people.members.remove);
+  const reinvite = useAction(api.people.members.reinvite);
+  const setUploadPermission = useAction(api.people.users.setUploadPermission);
+  const setGfAccess = useAction(api.people.users.setGfAccess);
+  const setApplicantDelegate = useMutation(api.people.users.setApplicantDelegate);
+  const setManagingDirector = useMutation(api.people.users.setManagingDirector);
   const handleError = useErrorHandler();
 
   const isSelf = user._id === me._id;
@@ -1188,7 +1188,7 @@ function HireDateEditor({ userId, hireDate }: { userId: Id<"users">; hireDate: s
   const t = useTranslations("Admin");
   const tc = useTranslations("Common");
   const locale = useLocale();
-  const setHireDate = useMutation(api.users.setHireDate);
+  const setHireDate = useMutation(api.people.users.setHireDate);
   const handleError = useErrorHandler();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(hireDate ?? "");
@@ -1335,7 +1335,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
   const isAdmin = useIsAdmin();
   const isManager = useIsManager();
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
-  const setRoleLabelMutation = useMutation(api.users.setRoleLabel);
+  const setRoleLabelMutation = useMutation(api.people.users.setRoleLabel);
   const handleError = useErrorHandler();
   const now = useNow();
 

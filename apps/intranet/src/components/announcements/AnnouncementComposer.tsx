@@ -663,11 +663,11 @@ export function AnnouncementComposer(
 
   const create = useMutation(api.announcements.create);
   const update = useMutation(api.announcements.update);
-  const departments = useQuery(api.users.departments) ?? [];
+  const departments = useQuery(api.people.users.departments) ?? [];
   // Left as the raw (possibly-undefined) query result rather than falling
   // back to `?? []` here — a fresh `[]` on every render would defeat the
   // useMemo deps below that read them.
-  const peopleQuery = useQuery(api.users.list, {});
+  const peopleQuery = useQuery(api.people.users.list, {});
   const announcementsQuery = useQuery(api.announcements.list, {});
   const attachmentUpload = useAttachmentUpload();
 

@@ -57,7 +57,7 @@ function CreateEmployeeDialog({
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
   const createProfile = useMutation(api.hr.employees.createProfile);
-  const users = useQuery(api.users.list, {}) ?? [];
+  const users = useQuery(api.people.users.list, {}) ?? [];
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [jobTitle, setJobTitle] = useState("");

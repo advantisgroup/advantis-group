@@ -42,7 +42,7 @@ export function ManagerBriefCard() {
   const today = isoToday();
   const outToday = useAbsencesCalendar(today, today);
   const pendingAbsences = usePendingAbsenceCount(true);
-  const accessRequests = useQuery(api.accessRequests.list, { status: "pending" });
+  const accessRequests = useQuery(api.people.accessRequests.list, { status: "pending" });
   const tickets = useQuery(api.itTickets.tickets.list);
   const measures = useQuery(api.fehlermanagement.measures.list, {});
 
@@ -184,7 +184,7 @@ export function TeamAvailabilityCard() {
   const user = useCurrentUser();
   const today = isoToday();
   const absences = useAbsencesCalendar(today, plusDays(today, 13));
-  const users = useQuery(api.users.list, {});
+  const users = useQuery(api.people.users.list, {});
 
   const memberIds = new Set(
     users

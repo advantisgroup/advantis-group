@@ -47,7 +47,7 @@ function SuccessCard({ email, onReset }: { email: string; onReset: () => void })
 function PersonalEmailFlow({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Admin");
   const handleError = useErrorHandler();
-  const create = useAction(api.invites.create);
+  const create = useAction(api.people.invites.create);
   const departments = useQuery(api.org.structure.listDepartments, {}) ?? [];
   const teams = useQuery(api.org.structure.listTeams, {}) ?? [];
 
@@ -179,7 +179,7 @@ function PersonalEmailFlow({ isAdmin }: { isAdmin: boolean }) {
 function CompanyEmailGuide({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Admin");
   const handleError = useErrorHandler();
-  const create = useAction(api.invites.create);
+  const create = useAction(api.people.invites.create);
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("employee");

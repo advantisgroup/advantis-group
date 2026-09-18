@@ -23,7 +23,7 @@ export function ProfileStep() {
   const t = useTranslations("Onboarding");
   const ts = useTranslations("Settings");
   const user = useCurrentUser();
-  const updateProfile = useAction(api.users.updateProfile);
+  const updateProfile = useAction(api.people.users.updateProfile);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const handleError = useErrorHandler();
 

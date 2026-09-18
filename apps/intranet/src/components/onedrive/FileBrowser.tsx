@@ -134,8 +134,8 @@ export function FileBrowser({
   const [queue, setQueue] = useState<QueueEntry[]>([]);
   const queueIdRef = useRef(0);
 
-  const prefs = useQuery(api.userPreferences.getMine);
-  const setPrefs = useMutation(api.userPreferences.setMine);
+  const prefs = useQuery(api.people.preferences.getMine);
+  const setPrefs = useMutation(api.people.preferences.setMine);
   const myUploads = useQuery(api.integrations.onedrive.myUploads);
   const favoriteFolders = useMemo(() => prefs?.favoriteFolders ?? [], [prefs]);
 

@@ -54,7 +54,7 @@ export function AccountMenu({
   const router = useRouter();
   const tNav = useTranslations("Nav");
   const tRoles = useTranslations("Roles");
-  const setSandboxRole = useMutation(api.users.setSandboxRole);
+  const setSandboxRole = useMutation(api.people.users.setSandboxRole);
 
   async function enterSandbox(role: "manager" | "employee") {
     await setSandboxRole({ role });

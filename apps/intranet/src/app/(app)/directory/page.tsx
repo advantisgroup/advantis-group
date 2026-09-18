@@ -132,14 +132,14 @@ function DirectoryPageContent() {
     return () => clearTimeout(handle);
   }, [search]);
 
-  const departments = useQuery(api.users.departments) ?? [];
-  const preferences = useQuery(api.userPreferences.getMine);
-  const people = useQuery(api.users.directoryList, {
+  const departments = useQuery(api.people.users.departments) ?? [];
+  const preferences = useQuery(api.people.preferences.getMine);
+  const people = useQuery(api.people.users.directoryList, {
     search: debouncedSearch || undefined,
     department: department === "all" ? undefined : department,
   });
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
-  const setPreferences = useMutation(api.userPreferences.setMine);
+  const setPreferences = useMutation(api.people.preferences.setMine);
   const savedDirectoryViews = preferences?.savedDirectoryViews ?? [];
 
   // Device-active + clocked-in via Clockodo — a much more meaningful signal

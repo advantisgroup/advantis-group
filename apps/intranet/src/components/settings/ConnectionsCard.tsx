@@ -33,7 +33,7 @@ function LinkState({ linked }: { linked: boolean }) {
 
 export function ConnectionsCard() {
   const t = useTranslations("Settings");
-  const connections = useQuery(api.users.myConnections);
+  const connections = useQuery(api.people.users.myConnections);
   const migrateLegacyLink = useMutation(api.integrations.clockodoLink.migrateLegacyClockodoLink);
   const [migrating, setMigrating] = useState(false);
   if (!connections) return null;

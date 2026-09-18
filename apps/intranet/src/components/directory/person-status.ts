@@ -4,7 +4,7 @@ import { ONLINE_WINDOW_MS } from "@/components/profile/UserProfile";
 
 import type { FunctionReturnType } from "convex/server";
 
-export type Person = FunctionReturnType<typeof api.users.directoryList>[number];
+export type Person = FunctionReturnType<typeof api.people.users.directoryList>[number];
 
 export type PersonStatus =
   | { kind: "out"; until: string }

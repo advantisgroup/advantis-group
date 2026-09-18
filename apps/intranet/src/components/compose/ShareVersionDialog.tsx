@@ -65,7 +65,7 @@ export function ShareVersionDialog({
   const tc = useTranslations("Common");
   const me = useCurrentUser();
   const handleError = useErrorHandler();
-  const people = useQuery(api.users.list, target ? {} : "skip");
+  const people = useQuery(api.people.users.list, target ? {} : "skip");
   const history = useQuery(
     api.drafts.drafts.listVersions,
     target?.versionId ? { surface: draft.surface, subjectKey: draft.subjectKey } : "skip",

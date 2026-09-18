@@ -81,7 +81,7 @@ export function NeedsYouPanel() {
   const canReviewAbsences = canManageClockodo || (approvalCover?.length ?? 0) > 0;
   const { approvals } = usePendingApprovals(canReviewAbsences);
   const accessRequests = useQuery(
-    api.accessRequests.list,
+    api.people.accessRequests.list,
     isManager ? { status: "pending" } : "skip",
   );
   const tickets = useQuery(api.itTickets.tickets.listAssignedOpen);

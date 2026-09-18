@@ -17,7 +17,7 @@ import { CurrentUserProvider, type CurrentUser } from "@/components/providers/cu
  * (e.g. a password-only login with no intranet account at all), leaving
  * Performance's own `SettingsMenu` as the fallback. */
 export function PerformanceAccountMenu() {
-  const me = useQuery(api.users.me);
+  const me = useQuery(api.people.users.me);
   if (!me) return null;
   return (
     <CurrentUserProvider user={me as CurrentUser}>

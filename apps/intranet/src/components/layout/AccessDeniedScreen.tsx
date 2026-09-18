@@ -20,7 +20,7 @@ export function AccessDeniedScreen() {
   const t = useTranslations("AccessDenied");
   const { user } = useUser();
   const { signOut } = useClerk();
-  const selfDelete = useAction(api.accessRequests.selfDeleteUnauthorized);
+  const selfDelete = useAction(api.people.accessRequests.selfDeleteUnauthorized);
   const started = useRef(false);
 
   const email = user?.primaryEmailAddress?.emailAddress ?? "";

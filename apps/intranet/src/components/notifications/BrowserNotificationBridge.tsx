@@ -16,7 +16,7 @@ import { useQuery } from "convex/react";
  */
 export function BrowserNotificationBridge() {
   const router = useRouter();
-  const prefs = useQuery(api.userPreferences.getMine);
+  const prefs = useQuery(api.people.preferences.getMine);
   const enabled =
     (prefs?.browserPushEnabled ?? false) &&
     typeof Notification !== "undefined" &&

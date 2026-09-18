@@ -34,13 +34,13 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
   const tRoles = useTranslations("Roles");
   const locale = useLocale();
   const confirm = useConfirm();
-  const invites = useQuery(api.invites.list, {});
-  const config = useQuery(api.invites.config, {});
+  const invites = useQuery(api.people.invites.list, {});
+  const config = useQuery(api.people.invites.config, {});
   // create/resend/revoke are Convex actions: they call Clerk's Backend API
   // directly and await it, so failures surface here as a rejected promise.
-  const create = useAction(api.invites.create);
-  const revoke = useAction(api.invites.revoke);
-  const resend = useAction(api.invites.resend);
+  const create = useAction(api.people.invites.create);
+  const revoke = useAction(api.people.invites.revoke);
+  const resend = useAction(api.people.invites.resend);
   const handleError = useErrorHandler();
   const allowedDomains = config?.allowedDomains ?? [];
 

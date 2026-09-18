@@ -37,7 +37,7 @@ export default function EmployeeOverviewPage() {
   const params = useParams<{ id: string }>();
   const employeeProfileId = params.id as Id<"employeeProfiles">;
   const profile = useQuery(api.hr.employees.getProfile, { employeeProfileId });
-  const users = useQuery(api.users.list, {}) ?? [];
+  const users = useQuery(api.people.users.list, {}) ?? [];
   const update = useMutation(api.hr.employees.updateProfile);
   const archive = useMutation(api.hr.employees.archiveProfile);
 

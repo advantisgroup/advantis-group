@@ -376,7 +376,7 @@ function AddMembersPanel({
   onConfirm: () => void;
   labels: { add: string; cancel: string; empty: string };
 }) {
-  const people = useQuery(api.users.list, {});
+  const people = useQuery(api.people.users.list, {});
   const candidates = (people ?? []).filter((p) => !existingIds.has(p._id));
 
   return (

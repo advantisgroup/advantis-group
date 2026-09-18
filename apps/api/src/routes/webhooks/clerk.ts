@@ -72,7 +72,7 @@ export const clerkWebhookRoute = new Elysia().post("/webhooks/clerk", async ({ r
 
   if (event.type === "user.created" || event.type === "user.updated") {
     const user = event.data as ClerkUserData;
-    await convex.mutation(api.clerkSync.syncFromClerk, {
+    await convex.mutation(api.people.clerkSync.syncFromClerk, {
       serverKey,
       clerkUserId: user.id,
       email: primaryEmail(user),
@@ -82,7 +82,7 @@ export const clerkWebhookRoute = new Elysia().post("/webhooks/clerk", async ({ r
     });
   } else if (event.type === "user.deleted") {
     const user = event.data as ClerkUserData;
-    await convex.mutation(api.clerkSync.deactivateFromClerk, {
+    await convex.mutation(api.people.clerkSync.deactivateFromClerk, {
       serverKey,
       clerkUserId: user.id,
     });

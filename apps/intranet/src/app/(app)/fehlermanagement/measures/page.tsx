@@ -659,7 +659,7 @@ function MeasurePanelBody({ measure }: { measure: Measure }) {
   const isManager = useIsManager();
   const handleError = useErrorHandler();
   const update = useMutation(api.fehlermanagement.measures.update);
-  const users = useQuery(api.users.list, isManager ? {} : "skip") ?? [];
+  const users = useQuery(api.people.users.list, isManager ? {} : "skip") ?? [];
   const currentIndex = MEASURE_PHASES.indexOf(measure.phase);
 
   function patch(fields: Parameters<typeof update>[0]["patch"]) {

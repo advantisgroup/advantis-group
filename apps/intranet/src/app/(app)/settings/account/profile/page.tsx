@@ -58,7 +58,7 @@ type ProfileFields = ReturnType<typeof fieldsOf>;
 export default function EditProfilePage() {
   const t = useTranslations("Settings");
   const user = useCurrentUser();
-  const updateProfile = useAction(api.users.updateProfile);
+  const updateProfile = useAction(api.people.users.updateProfile);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const handleError = useErrorHandler();
   const [fields, setFields] = useState<ProfileFields>(() => fieldsOf(user));

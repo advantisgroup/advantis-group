@@ -280,7 +280,7 @@ export function OrgChart({
 }) {
   const t = useTranslations("Directory");
   const handleError = useErrorHandler();
-  const setManager = useMutation(api.users.setManager);
+  const setManager = useMutation(api.people.users.setManager);
   const teams = useQuery(api.org.structure.listTeams, {});
   const departments = useQuery(api.org.structure.listDepartments, {});
   const units: OrgUnits | null =

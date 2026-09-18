@@ -32,7 +32,7 @@ export function MentionCard({
 }) {
   const t = useTranslations("Profile");
   const tRoles = useTranslations("Roles");
-  const user = useQuery(api.users.get, { userId });
+  const user = useQuery(api.people.users.get, { userId });
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardHeight, setCardHeight] = useState(0);
 

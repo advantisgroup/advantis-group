@@ -16,8 +16,8 @@ import { START_PAGES } from "@/lib/startPages";
 
 export function AppPreferencesCard() {
   const t = useTranslations("Settings");
-  const prefs = useQuery(api.userPreferences.getMine);
-  const setPrefs = useMutation(api.userPreferences.setMine);
+  const prefs = useQuery(api.people.preferences.getMine);
+  const setPrefs = useMutation(api.people.preferences.setMine);
 
   const pageLabel: Record<(typeof START_PAGES)[number], string> = {
     "/": t("pageDashboard"),

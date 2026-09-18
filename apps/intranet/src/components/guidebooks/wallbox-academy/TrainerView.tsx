@@ -75,7 +75,7 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
-  const users = useQuery(api.users.list, {});
+  const users = useQuery(api.people.users.list, {});
   const create = useMutation(api.academy.participants.create);
   const { academyPin } = useAcademySession();
 
@@ -416,7 +416,7 @@ export function ParticipantsTab({ focusParticipantId }: { focusParticipantId?: s
 }
 
 function LinkAccountControl({ participant }: { participant: Doc<"academyParticipants"> }) {
-  const users = useQuery(api.users.list, {});
+  const users = useQuery(api.people.users.list, {});
   const linkToAccount = useMutation(api.academy.participants.linkToAccount);
   const unlinkAccount = useMutation(api.academy.participants.unlinkAccount);
   const { academyPin } = useAcademySession();

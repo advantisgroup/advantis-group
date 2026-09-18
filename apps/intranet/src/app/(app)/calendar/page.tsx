@@ -163,7 +163,7 @@ function EventDialog({
   const createWeeklySeries = useMutation(api.events.createWeeklySeries);
   const update = useMutation(api.events.update);
   const handleError = useErrorHandler();
-  const departments = useQuery(api.users.departments) ?? [];
+  const departments = useQuery(api.people.users.departments) ?? [];
   const [form, setForm] = useState<EventDraft>(emptyDraft());
   const [busy, setBusy] = useState(false);
   const [occurrences, setOccurrences] = useState("1");
@@ -435,8 +435,8 @@ export default function CalendarPage() {
   const confirm = useConfirm();
   const removeEvent = useMutation(api.events.remove);
   const handleError = useErrorHandler();
-  const departments = useQuery(api.users.departments) ?? [];
-  const prefs = useQuery(api.userPreferences.getMine);
+  const departments = useQuery(api.people.users.departments) ?? [];
+  const prefs = useQuery(api.people.preferences.getMine);
   const [cursor, setCursor] = useState(() => new Date());
   const [detail, setDetail] = useState<DetailState>(null);
   const [view, setView] = useState<CalendarView>("month");

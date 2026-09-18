@@ -52,7 +52,7 @@ async function assertNotSandboxed(ctx: MutationCtx) {
 async function assertActionNotSandboxed(ctx: ActionCtx) {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return;
-  const sandboxed = await ctx.runQuery(internal.sandbox.isActiveForClerkUser, {
+  const sandboxed = await ctx.runQuery(internal.people.sandbox.isActiveForClerkUser, {
     clerkUserId: identity.subject,
   });
   if (sandboxed) throw sandboxError();

@@ -178,12 +178,12 @@ export function ApplicantListView() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const applicants = useQuery(api.hr.applicants.list);
-  const preferences = useQuery(api.userPreferences.getMine);
+  const preferences = useQuery(api.people.preferences.getMine);
   const profiles = useQuery(api.hr.applicants.listProfiles);
   const convertApplicant = useMutation(api.hr.employees.convertApplicant);
   const revertConversion = useMutation(api.hr.employees.revertConversion);
   const archiveApplicant = useMutation(api.hr.employees.archiveApplicant);
-  const setPreferences = useMutation(api.userPreferences.setMine);
+  const setPreferences = useMutation(api.people.preferences.setMine);
 
   const status = parseStatusFilter(searchParams.get("status"));
   const rating = parseRatingFilter(searchParams.get("rating"));

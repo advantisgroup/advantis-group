@@ -43,7 +43,7 @@ import { TEAMS } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
 function TourProgressChip({ userId }: { userId: Id<"users"> }) {
-  const progress = useQuery(api.tourProgress.getMemberProgress, { userId });
+  const progress = useQuery(api.people.tourProgress.getMemberProgress, { userId });
   if (progress === undefined) return null;
 
   let completed = 0;
@@ -82,9 +82,9 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
   const tRoles = useTranslations("Roles");
   const tTeams = useTranslations("Teams");
   const tCap = useTranslations("CustomRoles");
-  const members = useQuery(api.users.list, { includeSuspended: true });
+  const members = useQuery(api.people.users.list, { includeSuspended: true });
   const customRoles = useQuery(api.org.roles.list);
-  const setCustomRoles = useMutation(api.users.setCustomRoles);
+  const setCustomRoles = useMutation(api.people.users.setCustomRoles);
   const handleError = useErrorHandler();
 
   type Member = NonNullable<typeof members>[number];

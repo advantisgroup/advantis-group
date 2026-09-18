@@ -17,7 +17,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 export function UpdatesEmailConsent() {
   const t = useTranslations("Updates");
   const user = useCurrentUser();
-  const setConsent = useMutation(api.users.setUpdatesEmailConsent);
+  const setConsent = useMutation(api.people.users.setUpdatesEmailConsent);
   const handleError = useErrorHandler();
 
   if (!user.external) return null;

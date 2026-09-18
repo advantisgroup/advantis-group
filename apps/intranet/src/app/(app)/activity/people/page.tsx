@@ -62,7 +62,7 @@ export default function PeoplePage() {
   const { t } = useI18n();
   const canEdit = useIsManager();
   const people = useQuery(api.activity.people.list);
-  const intranetUsers = useQuery(api.users.list, {});
+  const intranetUsers = useQuery(api.people.users.list, {});
   const create = useMutationWithToast(api.activity.people.create);
   const update = useMutationWithToast(api.activity.people.update);
   const remove = useMutationWithToast(api.activity.people.remove);

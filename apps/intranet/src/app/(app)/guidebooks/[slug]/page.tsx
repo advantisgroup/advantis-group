@@ -169,7 +169,7 @@ export default function GuidebookPage() {
   const removeEntry = useMutation(api.wiki.entries.remove);
   const removePage = useMutation(api.guidebooks.pages.remove);
   const announceGuidebook = useMutation(api.announcements.announceGuidebook);
-  const setPrefs = useMutation(api.userPreferences.setMine);
+  const setPrefs = useMutation(api.people.preferences.setMine);
 
   const loading = !staticGuidebook && entry === undefined && legacyPage === undefined;
   const guidebook = staticGuidebook

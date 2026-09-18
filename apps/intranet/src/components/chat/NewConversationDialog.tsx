@@ -30,7 +30,7 @@ export function NewConversationDialog({
   const t = useTranslations("Chat");
   const tc = useTranslations("Common");
   const me = useCurrentUser();
-  const people = useQuery(api.users.list, {});
+  const people = useQuery(api.people.users.list, {});
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
   const createGroup = useMutation(api.chat.createGroup);
   const handleError = useErrorHandler();

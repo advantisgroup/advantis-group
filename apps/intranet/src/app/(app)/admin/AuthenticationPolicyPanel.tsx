@@ -110,7 +110,7 @@ function ExemptUsersPicker({
 }) {
   const t = useTranslations("Admin");
   const [search, setSearch] = useState("");
-  const results = useQuery(api.users.list, { search, includeSuspended: false });
+  const results = useQuery(api.people.users.list, { search, includeSuspended: false });
   const [nameCache, setNameCache] = useState<Map<string, { name: string; avatar?: string }>>(
     new Map(),
   );

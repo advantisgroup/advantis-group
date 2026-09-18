@@ -51,7 +51,7 @@ export function OrgPersonMenu({ person, units }: { person: Person; units: OrgUni
   const setDepartment = useMutation(api.org.structure.setUserDepartment);
   const addToTeam = useMutation(api.org.structure.addUserToTeam);
   const removeFromTeam = useMutation(api.org.structure.removeUserFromTeam);
-  const setManagingDirector = useMutation(api.users.setManagingDirector);
+  const setManagingDirector = useMutation(api.people.users.setManagingDirector);
 
   const saved = (promise: Promise<unknown>) =>
     promise.then(() => toast.success(t("orgSaved"))).catch(handleError);

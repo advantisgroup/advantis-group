@@ -148,7 +148,10 @@ export function CommandPalette({ className }: { className?: string } = {}) {
 
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
 
-  const people = useQuery(api.users.list, open && query.trim() ? { search: query.trim() } : "skip");
+  const people = useQuery(
+    api.people.users.list,
+    open && query.trim() ? { search: query.trim() } : "skip",
+  );
   const announcements = useQuery(api.announcements.list, open && query.trim() ? {} : "skip");
   // A locked vault makes applicants.list throw, which would take the whole
   // palette down — only search applicants while it's unlocked.

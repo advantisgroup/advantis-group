@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 
 export function SandboxBanner() {
   const user = useCurrentUser();
-  const leaveSandbox = useMutation(api.users.setSandboxRole);
+  const leaveSandbox = useMutation(api.people.users.setSandboxRole);
   const t = useTranslations("Nav");
   const tRoles = useTranslations("Roles");
   const [leaving, setLeaving] = useState(false);

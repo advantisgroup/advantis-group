@@ -32,9 +32,9 @@ const SYNC_DEBOUNCE_MS = 2000;
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const user = useCurrentUser();
   const isManagerOrAdmin = useIsManager();
-  const remote = useQuery(api.userPreferences.getMine);
-  const setMine = useMutation(api.userPreferences.setMine);
-  const resetOnboardingRemote = useMutation(api.userPreferences.resetOnboarding);
+  const remote = useQuery(api.people.preferences.getMine);
+  const setMine = useMutation(api.people.preferences.setMine);
+  const resetOnboardingRemote = useMutation(api.people.preferences.resetOnboarding);
 
   const [local, setLocal] = useState<OnboardingLocalState | null>(null);
   const [open, setOpen] = useState(false);

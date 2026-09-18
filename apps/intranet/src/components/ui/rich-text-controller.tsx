@@ -29,7 +29,7 @@ import {
 
 /** State and commands behind the rich text editor — the toolbar and surface both drive one of these. */
 
-/** A mentionable person — supplied by the consumer, e.g. from `api.users.list`. */
+/** A mentionable person — supplied by the consumer, e.g. from `api.people.users.list`. */
 export interface MentionCandidate {
   id: string;
   name: string;

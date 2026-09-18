@@ -118,7 +118,7 @@ function RefreshedApprovalsPage() {
   const canReviewAbsences = canManageClockodo || hasApprovalCover;
   const { approvals } = usePendingApprovals(canReviewAbsences);
   const accessRequests = useQuery(
-    api.accessRequests.list,
+    api.people.accessRequests.list,
     isManager ? { status: "pending" } : "skip",
   );
   const measures = useQuery(api.fehlermanagement.measures.list, isManager ? {} : "skip");
@@ -327,7 +327,7 @@ function ApprovalCoverPanel() {
   const t = useTranslations("Approvals");
   const locale = useLocale();
   const covers = useQuery(api.org.delegations.listGranted);
-  const users = useQuery(api.users.list, {});
+  const users = useQuery(api.people.users.list, {});
   const createCover = useMutation(api.org.delegations.create);
   const revokeCover = useMutation(api.org.delegations.revoke);
   const handleError = useErrorHandler();

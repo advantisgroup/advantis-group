@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
 
-type AccessRequest = FunctionReturnType<typeof api.accessRequests.list>[number];
+type AccessRequest = FunctionReturnType<typeof api.people.accessRequests.list>[number];
 
 function RequestRow({
   r,
@@ -106,9 +106,9 @@ export function AccessRequestsPanel({ isAdmin }: { isAdmin: boolean }) {
   const tRoles = useTranslations("Roles");
   const tc = useTranslations("Common");
   const confirm = useConfirm();
-  const requests = useQuery(api.accessRequests.list, { status: "pending" });
-  const approve = useMutation(api.accessRequests.approve);
-  const deny = useMutation(api.accessRequests.deny);
+  const requests = useQuery(api.people.accessRequests.list, { status: "pending" });
+  const approve = useMutation(api.people.accessRequests.approve);
+  const deny = useMutation(api.people.accessRequests.deny);
   const handleError = useErrorHandler();
   const [roles, setRoles] = useState<Record<string, Role>>({});
   const [actingOn, setActingOn] = useState<string | null>(null);

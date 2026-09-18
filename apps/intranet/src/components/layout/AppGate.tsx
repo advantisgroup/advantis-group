@@ -29,8 +29,8 @@ function FullScreenLoader() {
 export function AppGate({ children }: { children: ReactNode }) {
   const { isLoaded, isSignedIn, sessionId, getToken } = useAuth();
   const { user, isLoaded: userLoaded } = useUser();
-  const ensure = useMutation(api.users.ensureCurrentUser);
-  const me = useQuery(api.users.me);
+  const ensure = useMutation(api.people.users.ensureCurrentUser);
+  const me = useQuery(api.people.users.me);
   const ensured = useRef(false);
   const deviceEvaluated = useRef<string | null>(null);
 
