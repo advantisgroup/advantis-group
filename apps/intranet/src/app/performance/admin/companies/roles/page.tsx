@@ -101,8 +101,8 @@ function RoleDialog({
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
-  const createRole = useMutation(api.companyRoles.create);
-  const updateRole = useMutation(api.companyRoles.update);
+  const createRole = useMutation(api.performance.roles.create);
+  const updateRole = useMutation(api.performance.roles.update);
   const [name, setName] = useState(role?.name ?? "");
   const [permissions, setPermissions] = useState<Set<string>>(new Set(role?.permissions ?? []));
   const [saving, setSaving] = useState(false);
@@ -201,7 +201,7 @@ export default function PerformanceRolesAdminPage() {
   const { token, session } = usePerformanceSession();
   const handleError = useErrorHandler();
   const confirm = useConfirm();
-  const removeRole = useMutation(api.companyRoles.remove);
+  const removeRole = useMutation(api.performance.roles.remove);
   const [editing, setEditing] = useState<RoleRow | null | "new">(null);
   // Only meaningful for a super-admin, who has no company of their own —
   // a scoped company admin's own companyId is resolved server-side and
@@ -215,9 +215,9 @@ export default function PerformanceRolesAdminPage() {
   // A super-admin has no companyId of their own (`companyRoles.list`
   // requires one explicitly in that case) — everyone else's own company is
   // resolved server-side from their session, so no company arg is passed.
-  const companies = useQuery(api.companies.listCompanies, isSuperAdmin ? { token } : "skip");
+  const companies = useQuery(api.performance.companies.listCompanies, isSuperAdmin ? { token } : "skip");
   const roles = useQuery(
-    api.companyRoles.list,
+    api.performance.roles.list,
     isSuperAdmin ? (companyId ? { token, companyId } : "skip") : { token },
   );
 

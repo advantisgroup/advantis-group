@@ -112,12 +112,12 @@ function EmployeeChrome({
   const locale = useLocale();
   const pathname = usePathname();
   const [ym, setYm] = usePerformanceYm();
-  const data = useQuery(api.performanceQueries.employeeDetail, {
+  const data = useQuery(api.performance.queries.employeeDetail, {
     token,
     employeeId,
     ym,
   });
-  const interactions = useQuery(api.performanceQueries.interactionsMonth, {
+  const interactions = useQuery(api.performance.queries.interactionsMonth, {
     token,
     ym,
     employeeId,

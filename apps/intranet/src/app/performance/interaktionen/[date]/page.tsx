@@ -41,7 +41,7 @@ export default function DashboardInteractionDayPage() {
   }, [session, router]);
 
   const data = useQuery(
-    api.performanceQueries.interactionsDayDetail,
+    api.performance.queries.interactionsDayDetail,
     session?.valid && session.permissions.includes("view_all_employees")
       ? { token, date: params.date }
       : "skip",

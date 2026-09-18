@@ -26,7 +26,7 @@ export default function PerformancePasswordPage() {
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
 
-  const changeOwnPassword = useAction(api.performanceAuth.changeOwnPassword);
+  const changeOwnPassword = useAction(api.performance.auth.changeOwnPassword);
 
   const tooShort = newPassword.length > 0 && newPassword.length < 8;
   const mismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;

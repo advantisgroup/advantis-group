@@ -39,7 +39,7 @@ export default function EmployeeInteractionDayPage() {
     (session.permissions.includes("view_all_employees") || session.employeeId === employeeId);
 
   const data = useQuery(
-    api.performanceQueries.interactionsDayDetail,
+    api.performance.queries.interactionsDayDetail,
     canView ? { token, date: params.date, employeeId } : "skip",
   );
 

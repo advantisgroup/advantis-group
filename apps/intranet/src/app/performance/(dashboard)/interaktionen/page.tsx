@@ -34,7 +34,7 @@ export default function DashboardInteractionsPage() {
   const [employeeFilter, setEmployeeFilter] = useState<string>(ALL_EMPLOYEES);
   const { start, end } = computePeriodRange(anchor, granularity);
 
-  const data = useQuery(api.performanceQueries.interactionsMonth, {
+  const data = useQuery(api.performance.queries.interactionsMonth, {
     token,
     start,
     end,

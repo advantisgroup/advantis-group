@@ -56,7 +56,7 @@ function LoginShell({
 function LegacyPasswordNotice() {
   const t = useTranslations("Performance");
   const format = useFormatter();
-  const notice = useQuery(api.performanceAuth.legacyPasswordSunsetNotice);
+  const notice = useQuery(api.performance.auth.legacyPasswordSunsetNotice);
   const [dismissed, setDismissed] = useState<number | null>(null);
 
   useEffect(() => {
@@ -107,7 +107,7 @@ export default function PerformanceLoginPage() {
   const router = useRouter();
   const slug = usePerformanceCompanySlug();
   const { isLoaded: clerkLoaded, isSignedIn } = useAuth();
-  const login = useAction(api.performanceAuth.login);
+  const login = useAction(api.performance.auth.login);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);

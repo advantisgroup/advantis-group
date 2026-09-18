@@ -298,7 +298,7 @@ export function CreateLoginDialog({
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
-  const createLogin = useAction(api.performanceAuth.createLogin);
+  const createLogin = useAction(api.performance.auth.createLogin);
   // Only Advantis has staff with intranet Clerk accounts to link — every
   // other company's "users" is naturally empty (and the field itself would
   // be a confusing dead end for a client admin), so the whole picker is
@@ -464,8 +464,8 @@ export function EditLoginDialog({
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
-  const updateLogin = useMutation(api.performanceAuth.updateLogin);
-  const setSuperAdmin = useMutation(api.performanceAuth.setSuperAdmin);
+  const updateLogin = useMutation(api.performance.auth.updateLogin);
+  const setSuperAdmin = useMutation(api.performance.auth.setSuperAdmin);
 
   return (
     <Dialog
@@ -656,7 +656,7 @@ export function ResetPasswordDialog({
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
-  const resetLoginPassword = useAction(api.performanceAuth.resetLoginPassword);
+  const resetLoginPassword = useAction(api.performance.auth.resetLoginPassword);
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
 

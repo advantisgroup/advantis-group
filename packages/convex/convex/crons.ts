@@ -76,7 +76,7 @@ if (process.env.DISABLE_CRONS !== "true") {
   crons.daily(
     "performance: cache completed month badges",
     { hourUTC: 3, minuteUTC: 5 },
-    internal.performanceQueries.cacheCompletedMonthBadges,
+    internal.performance.queries.cacheCompletedMonthBadges,
     {},
   );
 
@@ -142,7 +142,7 @@ if (process.env.DISABLE_CRONS !== "true") {
   crons.daily(
     "performance: reconcile auto-links",
     { hourUTC: 4, minuteUTC: 15 },
-    internal.performanceAuth.reconcileAutoLinks,
+    internal.performance.auth.reconcileAutoLinks,
     {},
   );
 

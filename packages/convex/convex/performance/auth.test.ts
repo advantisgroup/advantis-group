@@ -1,11 +1,11 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
-import { api, internal } from "./_generated/api";
-import { hashPassword } from "./activity/lib/crypto";
-import type { Id } from "./_generated/dataModel";
-import schema from "./schema";
-import { modules } from "./test.setup";
+import { api, internal } from "../_generated/api";
+import { hashPassword } from "../activity/lib/crypto";
+import type { Id } from "../_generated/dataModel";
+import schema from "../schema";
+import { modules } from "../test.setup";
 
 function setup() {
   return convexTest(schema, modules);
@@ -139,7 +139,7 @@ async function seedSuperAdminSession(t: T): Promise<string> {
       createdAt: Date.now(),
     }),
   );
-  const { token } = await t.mutation(internal.performanceAuth.createSession, { loginId });
+  const { token } = await t.mutation(internal.performance.auth.createSession, { loginId });
   return token;
 }
 
@@ -149,7 +149,7 @@ describe("findAutoLinkCandidateForCompany", () => {
     const advantis = await seedCompany(t, "advantis");
     const user = await seedUser(t, { clerkUserId: "alice", email: "alice@advantisgroup.de" });
 
-    const candidate = await t.query(internal.performanceAuth.findAutoLinkCandidateForCompany, {
+    const candidate = await t.query(internal.performance.auth.findAutoLinkCandidateForCompany, {
       companyId: advantis,
       email: "alice@advantisgroup.de",
     });
@@ -161,7 +161,7 @@ describe("findAutoLinkCandidateForCompany", () => {
     const otherCo = await seedCompany(t, "acme");
     await seedUser(t, { clerkUserId: "alice", email: "alice@advantisgroup.de" });
 
-    const candidate = await t.query(internal.performanceAuth.findAutoLinkCandidateForCompany, {
+    const candidate = await t.query(internal.performance.auth.findAutoLinkCandidateForCompany, {
       companyId: otherCo,
       email: "alice@advantisgroup.de",
     });
@@ -177,7 +177,7 @@ describe("findAutoLinkCandidateForCompany", () => {
       status: "suspended",
     });
 
-    const candidate = await t.query(internal.performanceAuth.findAutoLinkCandidateForCompany, {
+    const candidate = await t.query(internal.performance.auth.findAutoLinkCandidateForCompany, {
       companyId: advantis,
       email: "bob@advantisgroup.de",
     });
@@ -194,7 +194,7 @@ describe("findAutoLinkCandidateForCompany", () => {
       linkedUserId: user,
     });
 
-    const candidate = await t.query(internal.performanceAuth.findAutoLinkCandidateForCompany, {
+    const candidate = await t.query(internal.performance.auth.findAutoLinkCandidateForCompany, {
       companyId: advantis,
       email: "carl@advantisgroup.de",
     });
@@ -209,7 +209,7 @@ describe("performanceAuth.reconcileAutoLinks", () => {
     const user = await seedUser(t, { clerkUserId: "dana", email: "dana@advantisgroup.de" });
     const loginId = await seedLogin(t, { companyId: advantis, email: "dana@advantisgroup.de" });
 
-    const { linked } = await t.mutation(internal.performanceAuth.reconcileAutoLinks, {});
+    const { linked } = await t.mutation(internal.performance.auth.reconcileAutoLinks, {});
     expect(linked).toBe(1);
 
     const login = await t.run(async (ctx) => ctx.db.get(loginId));
@@ -229,7 +229,7 @@ describe("performanceAuth.reconcileAutoLinks", () => {
     });
     void decoy;
 
-    const { linked } = await t.mutation(internal.performanceAuth.reconcileAutoLinks, {});
+    const { linked } = await t.mutation(internal.performance.auth.reconcileAutoLinks, {});
     expect(linked).toBe(0);
 
     const login = await t.run(async (ctx) => ctx.db.get(loginId));
@@ -241,7 +241,7 @@ describe("performanceAuth.reconcileAutoLinks", () => {
     const t = setup();
     await seedCompany(t, "acme");
 
-    const { linked } = await t.mutation(internal.performanceAuth.reconcileAutoLinks, {});
+    const { linked } = await t.mutation(internal.performance.auth.reconcileAutoLinks, {});
     expect(linked).toBe(0);
   });
 });
@@ -254,7 +254,7 @@ describe("createLogin: auto-linked accounts skip the password requirement", () =
     const roleId = await seedRole(t, advantis);
     const token = await seedSuperAdminSession(t);
 
-    const { id } = await t.action(api.performanceAuth.createLogin, {
+    const { id } = await t.action(api.performance.auth.createLogin, {
       token,
       email: "frank@advantisgroup.de",
       name: "Frank",
@@ -275,7 +275,7 @@ describe("createLogin: auto-linked accounts skip the password requirement", () =
     const token = await seedSuperAdminSession(t);
 
     await expect(
-      t.action(api.performanceAuth.createLogin, {
+      t.action(api.performance.auth.createLogin, {
         token,
         email: "nobody@advantisgroup.de",
         name: "Nobody",
@@ -292,7 +292,7 @@ describe("createLogin: auto-linked accounts skip the password requirement", () =
     const roleId = await seedRole(t, advantis);
     const token = await seedSuperAdminSession(t);
 
-    const { id } = await t.action(api.performanceAuth.createLogin, {
+    const { id } = await t.action(api.performance.auth.createLogin, {
       token,
       email: "grace-work@example.com",
       name: "Grace",
@@ -314,7 +314,7 @@ describe("Area re-verification", () => {
     const user = await seedUser(t, { clerkUserId: "hank", email: "hank@advantisgroup.de" });
     await seedLogin(t, { companyId: advantis, email: "hank@advantisgroup.de", linkedUserId: user });
 
-    const session = await asUser(t, "hank").query(api.performanceAuth.validateSession, {
+    const session = await asUser(t, "hank").query(api.performance.auth.validateSession, {
       token: "",
     });
     expect(session.valid).toBe(false);
@@ -335,7 +335,7 @@ describe("Area re-verification", () => {
       }),
     );
 
-    const session = await asUser(t, "iris").query(api.performanceAuth.validateSession, {
+    const session = await asUser(t, "iris").query(api.performance.auth.validateSession, {
       token: "",
     });
     expect(session.valid).toBe(true);
@@ -356,7 +356,7 @@ describe("Area re-verification", () => {
       }),
     );
 
-    const session = await asUser(t, "jill").query(api.performanceAuth.validateSession, {
+    const session = await asUser(t, "jill").query(api.performance.auth.validateSession, {
       token: "",
     });
     expect(session.valid).toBe(false);
@@ -369,7 +369,7 @@ describe("Area re-verification", () => {
     await seedLogin(t, { companyId: advantis, email: "kate@advantisgroup.de", linkedUserId: user });
 
     const result = await asUser(t, "kate").mutation(
-      api.performanceAuth.createSessionForLinkedAccount,
+      api.performance.auth.createSessionForLinkedAccount,
       {},
     );
     expect(result).toBeNull();
@@ -390,7 +390,7 @@ describe("Area re-verification", () => {
     );
 
     const token = await asUser(t, "liam").mutation(
-      api.performanceAuth.createSessionForLinkedAccount,
+      api.performance.auth.createSessionForLinkedAccount,
       {},
     );
     expect(token).not.toBeNull();
@@ -406,7 +406,7 @@ describe("Area re-verification", () => {
       if (trust) await ctx.db.patch(trust._id, { verifiedAt: Date.now() - 15 * 86_400_000 });
     });
 
-    const session = await t.query(api.performanceAuth.validateSession, { token: token!.token });
+    const session = await t.query(api.performance.auth.validateSession, { token: token!.token });
     expect(session.valid).toBe(false);
   });
 
@@ -422,9 +422,9 @@ describe("Area re-verification", () => {
         createdAt: Date.now(),
       }),
     );
-    const { token } = await t.mutation(internal.performanceAuth.createSession, { loginId });
+    const { token } = await t.mutation(internal.performance.auth.createSession, { loginId });
 
-    const session = await t.query(api.performanceAuth.validateSession, { token });
+    const session = await t.query(api.performance.auth.validateSession, { token });
     expect(session.valid).toBe(true);
   });
 
@@ -451,7 +451,7 @@ describe("Area re-verification", () => {
     // Rejecting the step-up someone just completed would be a permanent
     // lockout, not extra security — see `isAreaTrusted`'s
     // ALWAYS_STEP_UP_FRESHNESS_MS.
-    const session = await asUser(t, "mona").query(api.performanceAuth.validateSession, {
+    const session = await asUser(t, "mona").query(api.performance.auth.validateSession, {
       token: "",
     });
     expect(session.valid).toBe(true);
@@ -479,7 +479,7 @@ describe("Area re-verification", () => {
       });
     });
 
-    const session = await asUser(t, "nina").query(api.performanceAuth.validateSession, {
+    const session = await asUser(t, "nina").query(api.performance.auth.validateSession, {
       token: "",
     });
     expect(session.valid).toBe(false);
@@ -505,7 +505,7 @@ describe("Area re-verification", () => {
       });
     });
     const token = await asUser(t, "omar").mutation(
-      api.performanceAuth.createSessionForLinkedAccount,
+      api.performance.auth.createSessionForLinkedAccount,
       {},
     );
 
@@ -520,12 +520,12 @@ describe("Area re-verification", () => {
 
     await ageTrust(30 * 60_000);
     expect(
-      (await t.query(api.performanceAuth.validateSession, { token: token!.token })).valid,
+      (await t.query(api.performance.auth.validateSession, { token: token!.token })).valid,
     ).toBe(true);
 
     await ageTrust(9 * 60 * 60_000);
     expect(
-      (await t.query(api.performanceAuth.validateSession, { token: token!.token })).valid,
+      (await t.query(api.performance.auth.validateSession, { token: token!.token })).valid,
     ).toBe(false);
   });
 });
@@ -542,7 +542,7 @@ describe("Legacy password grace period", () => {
       linkedUserId: user,
     });
 
-    const result = await t.action(api.performanceAuth.login, {
+    const result = await t.action(api.performance.auth.login, {
       slug: "advantis",
       email: "nora@advantisgroup.de",
       password: "correct-horse",
@@ -567,7 +567,7 @@ describe("Legacy password grace period", () => {
     });
 
     await expect(
-      t.action(api.performanceAuth.login, {
+      t.action(api.performance.auth.login, {
         slug: "advantis",
         email: "oscar@advantisgroup.de",
         password: "correct-horse",
@@ -589,7 +589,7 @@ describe("Legacy password grace period", () => {
       password: "correct-horse",
     });
 
-    const result = await t.action(api.performanceAuth.login, {
+    const result = await t.action(api.performance.auth.login, {
       slug: "advantis",
       email: "standalone@company.example",
       password: "correct-horse",
@@ -614,7 +614,7 @@ describe("Legacy password grace period", () => {
     });
 
     await expect(
-      t.action(api.performanceAuth.login, {
+      t.action(api.performance.auth.login, {
         slug: "advantis",
         email: "pat@advantisgroup.de",
         password: "wrong-password",
@@ -638,7 +638,7 @@ describe("Legacy password grace period", () => {
       linkedUserId: user,
     });
 
-    const result = await t.action(api.performanceAuth.login, {
+    const result = await t.action(api.performance.auth.login, {
       slug: "advantis",
       email: "quinn@advantisgroup.de",
       password: "correct-horse",
@@ -654,7 +654,7 @@ describe("Legacy password grace period", () => {
     });
     await seedLegacyPasswordSunset(t, admin, { performance: true });
 
-    const notice = await t.query(api.performanceAuth.legacyPasswordSunsetNotice, {});
+    const notice = await t.query(api.performance.auth.legacyPasswordSunsetNotice, {});
     expect(notice.enabled).toBe(true);
     expect(notice.deadlineAt).not.toBeNull();
   });
@@ -662,7 +662,7 @@ describe("Legacy password grace period", () => {
   test("legacyPasswordSunsetNotice reports disabled when the toggle is off", async () => {
     const t = setup();
 
-    const notice = await t.query(api.performanceAuth.legacyPasswordSunsetNotice, {});
+    const notice = await t.query(api.performance.auth.legacyPasswordSunsetNotice, {});
     expect(notice.enabled).toBe(false);
     expect(notice.deadlineAt).toBeNull();
   });

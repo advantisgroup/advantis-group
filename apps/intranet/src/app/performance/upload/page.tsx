@@ -125,7 +125,7 @@ function LogRow({
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
-  const reimportUpload = useAction(api.performanceUploadParse.reimportUpload);
+  const reimportUpload = useAction(api.performance.uploadParse.reimportUpload);
   const [reimporting, setReimporting] = useState(false);
   // Predates this session's date-parsing fix (and the richer metadata added
   // alongside it) — worth a re-import even though we can't tell from stored
@@ -259,7 +259,7 @@ function BatchRows({
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
-  const reimportBatch = useAction(api.performanceUploadParse.reimportBatch);
+  const reimportBatch = useAction(api.performance.uploadParse.reimportBatch);
   const [reimporting, setReimporting] = useState(false);
   const totalRows = rows.reduce((sum, r) => sum + r.rowsImported, 0);
   const latest = rows[0].uploadedAt;
@@ -331,7 +331,7 @@ export default function PerformanceUploadPage() {
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [flaggedDialogOpen, setFlaggedDialogOpen] = useState(false);
 
-  const log = useQuery(api.performanceImport.listUploadLog, session ? { token } : "skip");
+  const log = useQuery(api.performance.import.listUploadLog, session ? { token } : "skip");
 
   function updateItem(id: string, patch: Partial<QueueItem>) {
     setQueue((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));

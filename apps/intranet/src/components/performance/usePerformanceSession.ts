@@ -25,8 +25,8 @@ import { getPerformanceToken, setPerformanceToken } from "@/lib/performanceAuth"
  * permanently unreachable for a Clerk-linked visitor. */
 export function usePerformanceSession() {
   const [token, setToken] = useState<string>(() => getPerformanceToken() ?? "");
-  const session = useQuery(api.performanceAuth.validateSession, { token });
-  const promote = useMutation(api.performanceAuth.createSessionForLinkedAccount);
+  const session = useQuery(api.performance.auth.validateSession, { token });
+  const promote = useMutation(api.performance.auth.createSessionForLinkedAccount);
   const promoting = useRef(false);
 
   useEffect(() => {

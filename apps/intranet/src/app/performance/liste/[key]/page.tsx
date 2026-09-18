@@ -84,7 +84,7 @@ export default function DrilldownPage() {
   }, [session, router]);
 
   const data = useQuery(
-    api.performanceQueries.drilldown,
+    api.performance.queries.drilldown,
     session?.valid && validKey ? { token, key: validKey } : "skip",
   );
 

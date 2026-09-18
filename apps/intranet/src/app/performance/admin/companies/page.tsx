@@ -391,7 +391,7 @@ function CreateCompanyDialog({
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
-  const createCompany = useAction(api.companies.createCompany);
+  const createCompany = useAction(api.performance.companies.createCompany);
   const [name, setName] = useState(prefill?.name ?? "");
   const [domain, setDomain] = useState(prefill?.domain ?? "");
   const [emails, setEmails] = useState("");
@@ -494,7 +494,7 @@ function EditCompanyDialog({
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
-  const updateCompany = useMutation(api.companies.updateCompany);
+  const updateCompany = useMutation(api.performance.companies.updateCompany);
   const [name, setName] = useState("");
   const [emails, setEmails] = useState("");
   const [saving, setSaving] = useState(false);
@@ -623,8 +623,8 @@ export default function PerformanceCompaniesAdminPage() {
   const { token, session } = usePerformanceSession();
   const handleError = useErrorHandler();
   const confirm = useConfirm();
-  const checkDomainVerification = useAction(api.companies.checkDomainVerification);
-  const deleteCompany = useAction(api.companies.deleteCompany);
+  const checkDomainVerification = useAction(api.performance.companies.checkDomainVerification);
+  const deleteCompany = useAction(api.performance.companies.deleteCompany);
   const [creating, setCreating] = useState(false);
   const [retrying, setRetrying] = useState<{
     name: string;
@@ -636,7 +636,10 @@ export default function PerformanceCompaniesAdminPage() {
   // Gated on isSuperAdmin by the parent layout — always true by the time
   // this page is mounted.
   const isSuperAdmin = session?.valid && session.isSuperAdmin;
-  const companies = useQuery(api.companies.listCompanies, isSuperAdmin ? { token } : "skip");
+  const companies = useQuery(
+    api.performance.companies.listCompanies,
+    isSuperAdmin ? { token } : "skip",
+  );
 
   async function handleCheck(companyId: Id<"companies">) {
     setChecking(companyId);

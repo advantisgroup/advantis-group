@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { nextSort, type Sort, SortableHead } from "@/components/ui/sortable-head";
 
-export type TeamDashboardData = FunctionReturnType<typeof api.performanceQueries.teamDashboard>;
+export type TeamDashboardData = FunctionReturnType<typeof api.performance.queries.teamDashboard>;
 
 const BADGE_ICONS: Record<string, string> = {
   hitrate: "🎯",

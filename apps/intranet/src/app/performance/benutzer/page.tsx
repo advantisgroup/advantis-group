@@ -55,10 +55,10 @@ export default function PerformanceUsersPage() {
   const [resetting, setResetting] = useState<Id<"performanceLogins"> | null>(null);
 
   const args = session ? { token } : "skip";
-  const logins = useQuery(api.performanceAuth.listLogins, args);
-  const employees = useQuery(api.performanceAuth.listEmployeesForLink, args);
-  const intranetUsers = useQuery(api.performanceAuth.listIntranetUsersForLink, args);
-  const roles = useQuery(api.companyRoles.list, args);
+  const logins = useQuery(api.performance.auth.listLogins, args);
+  const employees = useQuery(api.performance.auth.listEmployeesForLink, args);
+  const intranetUsers = useQuery(api.performance.auth.listIntranetUsersForLink, args);
+  const roles = useQuery(api.performance.roles.list, args);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

@@ -25,7 +25,7 @@ export default function EmployeeInteractionsPage() {
   const token = getPerformanceToken() ?? "";
   const [anchor, setAnchor] = useState(todayIso);
 
-  const data = useQuery(api.performanceQueries.interactionsDayDetail, {
+  const data = useQuery(api.performance.queries.interactionsDayDetail, {
     token,
     date: anchor,
     employeeId,

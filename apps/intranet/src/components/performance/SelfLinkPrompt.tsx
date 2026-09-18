@@ -24,10 +24,10 @@ import { dismissLinkPrompt, isLinkPromptDismissed } from "@/lib/performanceAuth"
 export function SelfLinkPrompt({ token }: { token: string }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
-  const identity = useQuery(api.performanceAuth.myLinkableClerkIdentity, {
+  const identity = useQuery(api.performance.auth.myLinkableClerkIdentity, {
     token,
   });
-  const linkMyAccount = useMutation(api.performanceAuth.linkMyAccount);
+  const linkMyAccount = useMutation(api.performance.auth.linkMyAccount);
   const [linking, setLinking] = useState(false);
   const [dismissedNow, setDismissedNow] = useState(false);
 

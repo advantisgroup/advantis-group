@@ -343,7 +343,7 @@ export function MyPerformanceCard() {
   const { token, session } = usePerformanceSession();
   const employeeId = session?.valid ? session.employeeId : null;
   const detail = useQuery(
-    api.performanceQueries.employeeDetail,
+    api.performance.queries.employeeDetail,
     employeeId ? { token, employeeId } : "skip",
   );
 

@@ -42,7 +42,7 @@ function TopicForm({
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
-  const saveTopic = useMutation(api.performanceTopics.saveTopic);
+  const saveTopic = useMutation(api.performance.topics.saveTopic);
   const [text, setText] = useState(topic?.topic ?? "");
   const [todo, setTodo] = useState(topic?.todo ?? "");
   const [endDate, setEndDate] = useState(topic?.endDate ?? "");

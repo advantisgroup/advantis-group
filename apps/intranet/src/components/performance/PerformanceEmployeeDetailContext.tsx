@@ -5,7 +5,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import { type api } from "@advantis/convex/api";
 import { type FunctionReturnType } from "convex/server";
 
-export type EmployeeDetailData = FunctionReturnType<typeof api.performanceQueries.employeeDetail>;
+export type EmployeeDetailData = FunctionReturnType<typeof api.performance.queries.employeeDetail>;
 
 interface EmployeeDetailCtx {
   data: EmployeeDetailData | undefined;

@@ -38,7 +38,7 @@ async function isActiveCompanyOrigin(origin: string): Promise<boolean> {
 
   let allowed = false;
   try {
-    const company = await getConvex().query(api.companies.getByDomain, {
+    const company = await getConvex().query(api.performance.companies.getByDomain, {
       domain: hostname,
     });
     allowed = company?.status === "active";

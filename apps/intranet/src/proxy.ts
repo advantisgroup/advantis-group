@@ -74,7 +74,7 @@ async function lookupTenant(host: string): Promise<TenantLookup> {
   const cached = tenantCache.get(host);
   if (cached && cached.expiresAt > Date.now()) return cached.company;
 
-  const company = await fetchQuery(api.companies.getByDomain, { domain: host });
+  const company = await fetchQuery(api.performance.companies.getByDomain, { domain: host });
   tenantCache.set(host, {
     company,
     expiresAt: Date.now() + (company ? CACHE_TTL_MS : NEGATIVE_CACHE_TTL_MS),

@@ -149,8 +149,8 @@ function DashboardChrome({
   const locale = useLocale();
   const pathname = usePathname();
   const [ym, setYm] = usePerformanceYm();
-  const data = useQuery(api.performanceQueries.teamDashboard, { token, ym });
-  const interactions = useQuery(api.performanceQueries.interactionsMonth, {
+  const data = useQuery(api.performance.queries.teamDashboard, { token, ym });
+  const interactions = useQuery(api.performance.queries.interactionsMonth, {
     token,
     ym,
   });
@@ -271,7 +271,7 @@ export default function PerformanceDashboardLayout({ children }: { children: Rea
   const t = useTranslations("Performance");
   const router = useRouter();
   const { token, session } = usePerformanceSession();
-  const touchSession = useMutation(api.performanceAuth.touchSession);
+  const touchSession = useMutation(api.performance.auth.touchSession);
 
   useEffect(() => {
     void touchSession({ token });

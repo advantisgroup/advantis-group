@@ -27,7 +27,7 @@ export default function DashboardDevelopmentPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
   const token = getPerformanceToken() ?? "";
-  const data = useQuery(api.performanceQueries.teamDevelopment, { token });
+  const data = useQuery(api.performance.queries.teamDevelopment, { token });
 
   const funnelChart = useMemo(
     () =>

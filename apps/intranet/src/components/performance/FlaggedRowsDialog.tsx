@@ -46,7 +46,7 @@ type FlaggedRow = {
 function FlaggedRowActions({ row, token }: { row: FlaggedRow; token: string }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
-  const resolve = useMutation(api.performanceImport.resolveFlaggedRow);
+  const resolve = useMutation(api.performance.import.resolveFlaggedRow);
   const [editing, setEditing] = useState(false);
   const [hours, setHours] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -161,7 +161,7 @@ export function FlaggedRowsDialog({
   const [openState, setOpenState] = useState(false);
   const open = openProp ?? openState;
   const setOpen = onOpenChangeProp ?? setOpenState;
-  const rows = useQuery(api.performanceImport.listFlaggedRows, { token });
+  const rows = useQuery(api.performance.import.listFlaggedRows, { token });
 
   if (!rows || rows.length === 0) return null;
 

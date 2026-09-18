@@ -56,13 +56,13 @@ export function RescanOlderUploads({ token }: { token: string }) {
   const t = useTranslations("Performance");
   const locale = useLocale();
   const handleError = useErrorHandler();
-  const unscanned = useQuery(api.performanceImport.listUnscannedCallUploads, {
+  const unscanned = useQuery(api.performance.import.listUnscannedCallUploads, {
     token,
   });
-  const employeeNames = useQuery(api.performanceImport.listEmployeeNames, {
+  const employeeNames = useQuery(api.performance.import.listEmployeeNames, {
     token,
   });
-  const recordScanResults = useMutation(api.performanceImport.recordScanResults);
+  const recordScanResults = useMutation(api.performance.import.recordScanResults);
 
   const [open, setOpen] = useState(false);
   const [batchFilter, setBatchFilter] = useState(ALL_BATCHES);

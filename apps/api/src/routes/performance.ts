@@ -117,7 +117,7 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       const contentHash = Buffer.from(digest).toString("hex");
 
       if (!force) {
-        const priorUpload = await getConvex().query(api.performanceImport.apiFindUploadByHash, {
+        const priorUpload = await getConvex().query(api.performance.import.apiFindUploadByHash, {
           serverKey: getConvexServerKey(),
           companyId: admin.companyId,
           contentHash,
@@ -131,7 +131,7 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
         }
       }
 
-      const uploadUrl = await getConvex().mutation(api.performanceImport.apiGenerateUploadUrl, {
+      const uploadUrl = await getConvex().mutation(api.performance.import.apiGenerateUploadUrl, {
         serverKey: getConvexServerKey(),
       });
       const staged = await fetch(uploadUrl, {
@@ -153,7 +153,7 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       // if shipped as a single argument. This route only stages the file
       // and hands off its storageId.
       try {
-        const result = await getConvex().action(api.performanceUploadParse.apiImportReport, {
+        const result = await getConvex().action(api.performance.uploadParse.apiImportReport, {
           serverKey: getConvexServerKey(),
           companyId: admin.companyId,
           filename: file.name,
@@ -170,7 +170,7 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
           // concurrent upload of the same file won the race against the
           // pre-stage hash check above. Either way, drop the now-orphaned
           // staged file rather than leaving it in storage.
-          await getConvex().mutation(api.performanceImport.apiDeleteStorage, {
+          await getConvex().mutation(api.performance.import.apiDeleteStorage, {
             serverKey: getConvexServerKey(),
             storageId,
           });
@@ -202,7 +202,7 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
     "/export",
     async ({ request, query }) => {
       const admin = await requirePerformanceAdmin(request);
-      const rows = await getConvex().query(api.performanceExport.apiExportTeam, {
+      const rows = await getConvex().query(api.performance.export.apiExportTeam, {
         serverKey: getConvexServerKey(),
         companyId: admin.companyId,
         ym: query.ym,

@@ -36,12 +36,12 @@ export default function EmployeeTopicsPage() {
   const [ym] = usePerformanceYm();
   const handleError = useErrorHandler();
 
-  const session = useQuery(api.performanceAuth.validateSession, { token });
+  const session = useQuery(api.performance.auth.validateSession, { token });
   const isAdmin = session?.valid && session.permissions.includes("manage_roster");
 
   const data = useEmployeeDetailData();
-  const setTopicStatus = useMutation(api.performanceTopics.setTopicStatus);
-  const deleteTopic = useMutation(api.performanceTopics.deleteTopic);
+  const setTopicStatus = useMutation(api.performance.topics.setTopicStatus);
+  const deleteTopic = useMutation(api.performance.topics.deleteTopic);
 
   const [topicDialog, setTopicDialog] = useState<
     { open: true; topic: Doc<"performanceTopics"> | null } | { open: false }

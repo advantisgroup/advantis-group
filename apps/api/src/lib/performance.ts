@@ -30,7 +30,7 @@ export async function requirePerformanceAdmin(
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
   if (!token) throw Errors.unauthorized();
 
-  const session = await getConvex().query(api.performanceAuth.validateSession, {
+  const session = await getConvex().query(api.performance.auth.validateSession, {
     token,
   });
   if (!session.valid || !session.permissions.includes("upload_reports")) {

@@ -22,7 +22,7 @@ export default function PerformanceSetupPage() {
   const t = useTranslations("Performance");
   const router = useRouter();
   const slug = usePerformanceCompanySlug();
-  const setupAccount = useAction(api.performanceAuth.setupAccount);
+  const setupAccount = useAction(api.performance.auth.setupAccount);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");

@@ -250,7 +250,7 @@ export function TeamAvailabilityCard() {
 export function TeamPerformanceCard() {
   const t = useTranslations("Dashboard");
   const { token } = usePerformanceSession();
-  const dashboard = useQuery(api.performanceQueries.teamDashboard, { token });
+  const dashboard = useQuery(api.performance.queries.teamDashboard, { token });
 
   return (
     <DashCard icon={<TrendingUp />} title={t("teamPerformanceTitle")}>

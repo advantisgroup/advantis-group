@@ -1,10 +1,10 @@
 import { ConvexError } from "convex/values";
 
-import { type Doc, type Id } from "../_generated/dataModel";
-import { type MutationCtx, type QueryCtx } from "../_generated/server";
-import { type Permission } from "../performance/lib/permissions";
-import { getCurrentUser } from "./auth";
-import { isAreaTrusted, isAreaVisitTrusted } from "./stepUp";
+import { type Doc, type Id } from "../../_generated/dataModel";
+import { type MutationCtx, type QueryCtx } from "../../_generated/server";
+import { type Permission } from "./permissions";
+import { getCurrentUser } from "../../lib/auth";
+import { isAreaTrusted, isAreaVisitTrusted } from "../../lib/stepUp";
 
 /**
  * Performance login helpers: env allowlists, session and Clerk-link
