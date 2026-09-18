@@ -44,11 +44,9 @@ import { Label } from "@/components/ui/label";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { htmlToText } from "@/components/ui/rich-text";
-import {
-  RichTextSurface,
-  RichTextToolbar,
-  useRichTextController,
-} from "@/components/ui/rich-text-editor";
+import { useRichTextController } from "@/components/ui/rich-text-controller";
+import { RichTextSurface } from "@/components/ui/rich-text-editor";
+import { RichTextToolbar } from "@/components/ui/rich-text-toolbar";
 import {
   Select,
   SelectContent,

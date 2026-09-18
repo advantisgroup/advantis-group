@@ -18,7 +18,7 @@ import { TagInput, type WikiEntry } from "@/components/guidebooks/WikiEntryDialo
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Input } from "@/components/ui/input";
 import { htmlToText } from "@/components/ui/rich-text";
-import { type FileLinkCandidate } from "@/components/ui/rich-text-editor";
+import { type FileLinkCandidate } from "@/components/ui/rich-text-toolbar";
 import {
   Select,
   SelectContent,
