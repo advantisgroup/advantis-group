@@ -5,10 +5,6 @@ import type { Id } from "@advantis/convex/dataModel";
 import { getConvex, getConvexServerKey } from "./convex.js";
 import { Errors } from "./errors.js";
 
-function serverKey(): string {
-  return getConvexServerKey();
-}
-
 function convexErrorMessage(error: unknown, fallback: string): string {
   if (
     error instanceof ConvexError &&
@@ -30,7 +26,7 @@ export interface SecondaryEmail {
 
 export async function listSecondaryEmails(clerkUserId: string): Promise<SecondaryEmail[]> {
   return await getConvex().query(api.secondaryEmails.apiList, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
   });
 }
@@ -41,7 +37,7 @@ export async function requestSecondaryEmailCode(
 ): Promise<{ alreadyVerified: boolean }> {
   try {
     return await getConvex().mutation(api.secondaryEmails.apiRequestCode, {
-      serverKey: serverKey(),
+      serverKey: getConvexServerKey(),
       clerkUserId,
       email,
     });
@@ -56,7 +52,7 @@ export async function verifySecondaryEmailCode(
   code: string,
 ): Promise<{ ok: boolean; message?: string }> {
   return await getConvex().mutation(api.secondaryEmails.apiVerifyCode, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
     email,
     code,
@@ -69,7 +65,7 @@ export async function removeSecondaryEmail(
 ): Promise<void> {
   try {
     await getConvex().mutation(api.secondaryEmails.apiRemove, {
-      serverKey: serverKey(),
+      serverKey: getConvexServerKey(),
       clerkUserId,
       secondaryEmailId: secondaryEmailId as Id<"userSecondaryEmails">,
     });

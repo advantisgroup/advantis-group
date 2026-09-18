@@ -55,10 +55,6 @@ function randomId(): string {
   return randomBytes(32).toString("base64url");
 }
 
-function serverKey(): string {
-  return getConvexServerKey();
-}
-
 async function createChallenge(
   kind: PasskeyFlowKind,
   challenge: string,
@@ -66,7 +62,7 @@ async function createChallenge(
 ): Promise<string> {
   const flowId = randomId();
   await getConvex().mutation(api.passkeys.apiCreateChallenge, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     flowId,
     challenge,
     kind,
@@ -83,7 +79,7 @@ export function requirePasskeyOrigin(request: Request): void {
 
 export async function beginRegistration(clerkUserId: string) {
   const registration = await getConvex().mutation(api.passkeys.apiRegistrationContext, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
     webauthnUserId: randomId(),
   });
@@ -115,7 +111,7 @@ export async function finishRegistration(
   name: string,
 ) {
   const challenge = await getConvex().query(api.passkeys.apiRegistrationChallenge, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     flowId,
     clerkUserId,
   });
@@ -131,7 +127,7 @@ export async function finishRegistration(
   if (!verification.verified) throw Errors.badRequest("Passkey could not be verified");
   const info = verification.registrationInfo;
   const passkey = await getConvex().mutation(api.passkeys.apiCompleteRegistration, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     flowId,
     clerkUserId,
     credentialId: info.credential.id,
@@ -167,7 +163,7 @@ export async function verifyAuthenticationAssertion(
   response: AuthenticationResponseJSON,
 ) {
   const context = await getConvex().query(api.passkeys.apiAuthenticationContext, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     flowId,
     credentialId: response.id,
   });
@@ -189,7 +185,7 @@ export async function verifyAuthenticationAssertion(
   });
   if (!verification.verified) throw Errors.badRequest("Passkey could not be verified");
   const result = await getConvex().mutation(api.passkeys.apiCompleteAuthentication, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     flowId,
     credentialId: response.id,
     newCounter: verification.authenticationInfo.newCounter,
@@ -222,14 +218,14 @@ export async function finishAuthentication(flowId: string, response: Authenticat
 
 export async function listPasskeys(clerkUserId: string): Promise<Passkey[]> {
   return await getConvex().query(api.passkeys.apiListForUser, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
   });
 }
 
 export async function renamePasskey(clerkUserId: string, passkeyId: string, name: string) {
   const passkey = await getConvex().mutation(api.passkeys.apiRenameForUser, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
     passkeyId: passkeyId as Id<"passkeys">,
     name,
@@ -240,7 +236,7 @@ export async function renamePasskey(clerkUserId: string, passkeyId: string, name
 
 export async function removePasskey(clerkUserId: string, passkeyId: string) {
   const result = await getConvex().mutation(api.passkeys.apiRemoveForUser, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
     passkeyId: passkeyId as Id<"passkeys">,
   });

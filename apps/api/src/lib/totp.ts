@@ -19,10 +19,6 @@ function stepFromDelta(delta: number): number {
   return Math.floor(Date.now() / 1000 / PERIOD_SECONDS) + delta;
 }
 
-function serverKey(): string {
-  return getConvexServerKey();
-}
-
 function totpFor(secretBase32: string, label: string): OTPAuth.TOTP {
   return new OTPAuth.TOTP({
     issuer: ISSUER,
@@ -42,7 +38,7 @@ export interface EnrollmentStart {
 
 export async function beginEnrollment(clerkUserId: string): Promise<EnrollmentStart> {
   const context = await getConvex().query(api.totp.apiEnrollmentContext, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
   });
   if (!context) throw Errors.forbidden("Your intranet account is not active");
@@ -52,7 +48,7 @@ export async function beginEnrollment(clerkUserId: string): Promise<EnrollmentSt
   const secret = new OTPAuth.Secret({ size: 20 }).base32;
   const totp = totpFor(secret, context.email);
   await getConvex().mutation(api.totp.apiBeginEnrollment, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
     secretCiphertext: encrypt(secret, ENC_KEY_ENV),
   });
@@ -65,15 +61,19 @@ export async function finishEnrollment(
   code: string,
 ): Promise<{ recoveryCodes: string[] }> {
   const ciphertext = await getConvex().query(api.totp.apiPendingSecret, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
   });
   if (!ciphertext) throw Errors.badRequest("Start authenticator setup again");
   const secret = decrypt(ciphertext, ENC_KEY_ENV);
-  const delta = totpFor(secret, clerkUserId).validate({ token: code.trim(), window: VERIFY_WINDOW });
-  if (delta === null) throw Errors.badRequest("That code didn't match — check the time on your device");
+  const delta = totpFor(secret, clerkUserId).validate({
+    token: code.trim(),
+    window: VERIFY_WINDOW,
+  });
+  if (delta === null)
+    throw Errors.badRequest("That code didn't match — check the time on your device");
   return await getConvex().mutation(api.totp.apiFinishEnrollment, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
     usedStep: stepFromDelta(delta),
   });
@@ -82,7 +82,7 @@ export async function finishEnrollment(
 /** Returns false on a wrong/expired code rather than throwing — mistyped 6-digit codes are the normal case, not an error. */
 export async function verifyCode(clerkUserId: string, code: string): Promise<boolean> {
   const credential = await getConvex().query(api.totp.apiSecretForVerification, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
   });
   if (!credential) throw Errors.badRequest("No authenticator app is set up for this account");
@@ -97,7 +97,7 @@ export async function verifyCode(clerkUserId: string, code: string): Promise<boo
   const step = delta === null ? null : stepFromDelta(delta);
   const ok = step !== null && (credential.lastUsedStep === null || step > credential.lastUsedStep);
   await getConvex().mutation(api.totp.apiRecordVerification, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
     ok,
     ...(ok && step !== null ? { usedStep: step } : {}),
@@ -107,7 +107,7 @@ export async function verifyCode(clerkUserId: string, code: string): Promise<boo
 
 export async function verifyRecoveryCode(clerkUserId: string, code: string): Promise<boolean> {
   const result = await getConvex().mutation(api.totp.apiVerifyRecoveryCode, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
     code,
   });
@@ -119,7 +119,7 @@ export async function regenerateRecoveryCodes(
   clerkUserId: string,
 ): Promise<{ recoveryCodes: string[] }> {
   return await getConvex().mutation(api.totp.apiRegenerateRecoveryCodes, {
-    serverKey: serverKey(),
+    serverKey: getConvexServerKey(),
     clerkUserId,
   });
 }
@@ -130,9 +130,12 @@ export async function getStatus(clerkUserId: string): Promise<{
   recoveryCodesRemaining: number;
   recoveryCodesTotal: number;
 }> {
-  return await getConvex().query(api.totp.apiStatus, { serverKey: serverKey(), clerkUserId });
+  return await getConvex().query(api.totp.apiStatus, {
+    serverKey: getConvexServerKey(),
+    clerkUserId,
+  });
 }
 
 export async function removeMfa(clerkUserId: string): Promise<void> {
-  await getConvex().mutation(api.totp.apiRemove, { serverKey: serverKey(), clerkUserId });
+  await getConvex().mutation(api.totp.apiRemove, { serverKey: getConvexServerKey(), clerkUserId });
 }
