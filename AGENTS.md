@@ -20,6 +20,10 @@ Bun workspaces + Turborepo monorepo.
   both Next.js apps and the API service.
 - `packages/config`, `packages/types` — shared config/types.
 
+[`docs/architecture/overview.md`](./docs/architecture/overview.md) has the
+hand-checked diagram of who calls whom — keep it in sync when you add an
+integration or change which side owns a call.
+
 Package manager is `bun` (see `packageManager` in root `package.json`); use
 `bun install`, not npm/pnpm/yarn.
 
