@@ -108,3 +108,20 @@ feature move is its own commit so a broken deploy bisects to one feature.
 
 `docs/architecture/overview.md` and `AGENTS.md` paths get updated in the
 phase that moves them.
+
+## Progress
+
+- **2026-09-18 — phases 0–2 done.** `functions.ts` builders; `server*`
+  builders for the 94 server-key functions; `users.callerForAction` replaces
+  the `api.users.me` round-trips; `appError` moved to `lib/errors.ts`;
+  shared `test.setup.ts`; every feature in the table above moved, one commit
+  each, with shims at the 74 old paths.
+- **Next (2b): helpers out of function modules.** 30 imports still reach
+  into another function module for a helper — e.g. `activity/settings.ts`'s
+  `readConfig`, `activity/audit.ts`'s `writeAudit`, `academy/settings.ts`'s
+  `requireAcademyAdmin`, `updates/updates.ts`'s `insertUpdate`,
+  `hr/vault.ts`'s `clearVaultPasswordForUser`. Each moves to its feature's
+  `lib/`. No `api.*` change.
+- **Shim removal (phase 3): not before 2026-09-25**, and only once no
+  scheduled job targets an old path (check the dashboard's scheduled
+  functions for `updates:publishScheduled` first — it can sit for days).

@@ -17,7 +17,7 @@ flowchart TD
   end
 
   subgraph convex["packages/convex"]
-    functions["Function modules<br/>convex/*.ts"]
+    functions["Function modules<br/>convex/<feature>/*.ts"]
     http["HTTP actions<br/>/ingest, /agent/*"]
     crons["crons.ts"]
     lib["lib/<br/>auth, stepUp, internalApi, …"]
@@ -80,7 +80,7 @@ flowchart TD
 | Intranet UI | `apps/intranet/src` | `app/` routes, `components/` by feature, `components/ui` shared primitives, `lib/` client helpers |
 | Marketing | `apps/marketing/src` | public site; `app/api/[[...slugs]]` for its own form endpoints |
 | Integration edge | `apps/api/src` | `routes/` public, `routes/internal/` Convex-only, `routes/webhooks/`; `lib/` one client per provider |
-| Backend functions | `packages/convex/convex/*.ts` | one module per feature; these paths are the `api.*` names, so don't move functions casually |
-| Backend helpers | `packages/convex/convex/lib/` | access checks, step-up, validators, shared helpers — no Convex functions here |
+| Backend functions | `packages/convex/convex/<feature>/*.ts` | feature folders (`academy/`, `performance/`, `security/`, …) — each path is its `api.*` name; builders come from `functions.ts`. Root keeps single-module features (`chat.ts`, `files.ts`, …) plus shims for moved paths |
+| Backend helpers | `packages/convex/convex/lib/`, `<feature>/lib/` | root `lib/` for cross-feature helpers (auth, step-up, validators), `<feature>/lib/` for one feature's — no Convex functions in either |
 | Schema | `packages/convex/convex/schema.ts` + `tables/` | tables grouped by area; validators in `lib/validators.ts` |
 | Shared types | `packages/types`, `packages/api-contract` | apps/api may only `import type` from these (no runtime load on Vercel) |
