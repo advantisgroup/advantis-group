@@ -1266,7 +1266,7 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
       expect(pref.mode).toBe("trust_device");
     });
 
-    test("setAreaPreference roundtrips and never trusts the area while always_step_up", async () => {
+    test("setAreaPreference roundtrips, and a moments-old clearance still counts under always_step_up", async () => {
       const t = setup();
       const userId = await seedUser(t, { clerkUserId: "user_alice" });
       await t.run(async (ctx) =>
@@ -1288,7 +1288,37 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
       });
       expect(pref.mode).toBe("always_step_up");
 
+      // A preference literally named "always require step-up" that rejects
+      // the step-up someone just completed would be a permanent lockout,
+      // not extra security — the fresh clearance from moments ago still
+      // has to grant entry for this visit.
       const status = await asUser(t, "user_alice").query(api.stepUp.areaAccessStatus, {
+        area: "performance",
+      });
+      expect(status.state).toBe("satisfied");
+    });
+
+    test("always_step_up demands a fresh clearance once the short freshness window has passed", async () => {
+      const t = setup();
+      const userId = await seedUser(t, { clerkUserId: "user_bob" });
+      await t.run(async (ctx) => {
+        await ctx.db.insert("areaStepUps", {
+          userId,
+          area: "performance",
+          verifiedAt: Date.now() - 10 * 60_000,
+          method: "email_code",
+        });
+        await ctx.db.insert("areaSecurityPreferences", {
+          userId,
+          area: "performance",
+          mode: "always_step_up",
+          updatedAt: Date.now(),
+        });
+      });
+
+      // Well within the normal 14-day trust_device window, but past
+      // always_step_up's much shorter freshness window.
+      const status = await asUser(t, "user_bob").query(api.stepUp.areaAccessStatus, {
         area: "performance",
       });
       expect(status.state).toBe("needs_verification");
@@ -1405,6 +1435,45 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
       const performance = standard.byArea.find((a) => a.area === "performance");
       expect(performance?.alwaysStepUpCount).toBe(1);
       void admin;
+    });
+
+    test("a deactivated user's stale preference row doesn't inflate the count or go negative", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+      // A suspended account can still carry an old areaSecurityPreferences
+      // row from before it was deactivated — that row must not count
+      // against `users.length` (active users only), or trustDeviceCount
+      // goes negative.
+      const suspended = await t.run(async (ctx) =>
+        ctx.db.insert("users", {
+          clerkUserId: "user_gone",
+          email: "user_gone@advantisgroup.de",
+          role: "employee",
+          status: "suspended",
+          external: false,
+          createdAt: Date.now(),
+        }),
+      );
+      await t.run(async (ctx) => {
+        await ctx.db.insert("areaSecurityPreferences", {
+          userId: suspended,
+          area: "performance",
+          mode: "always_step_up",
+          updatedAt: Date.now(),
+        });
+        await ctx.db.insert("securityPreferences", {
+          userId: suspended,
+          alwaysRequireMfaAtSignIn: false,
+          deviceTrackingOptOut: true,
+          updatedAt: Date.now(),
+        });
+      });
+
+      const standard = await asUser(t, "user_admin").query(api.stepUp.areaStandard, {});
+      expect(standard.deviceTrackingOptOutCount).toBe(0);
+      const performance = standard.byArea.find((a) => a.area === "performance");
+      expect(performance?.alwaysStepUpCount).toBe(0);
+      expect(performance!.trustDeviceCount).toBeGreaterThanOrEqual(0);
     });
   });
 });

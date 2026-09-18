@@ -266,7 +266,7 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
     expect(status.needsAreaStepUp).toBe(true);
   });
 
-  test("an 'always require step-up' preference never trusts the area, however recent the clearance", async () => {
+  test("an 'always require step-up' preference still counts a moments-old clearance", async () => {
     const t = setup();
     const userId = await seedMember(t, { clerkUserId: "alice" });
     await seedAreaTrust(t, userId);
@@ -279,7 +279,34 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
       }),
     );
 
+    // Rejecting the step-up someone just completed would be a permanent
+    // lockout, not extra security — see `isAreaTrusted`'s
+    // ALWAYS_STEP_UP_FRESHNESS_MS.
     const status = await asUser(t, "alice").query(api.applicantVault.status, {});
+    expect(status.needsAreaStepUp).toBe(false);
+  });
+
+  test("an 'always require step-up' preference demands a fresh clearance once the freshness window passes", async () => {
+    const t = setup();
+    const userId = await seedMember(t, { clerkUserId: "bob" });
+    await t.run(async (ctx) => {
+      // Well within the normal 14-day trust_device window, but past
+      // always_step_up's much shorter freshness window.
+      await ctx.db.insert("areaStepUps", {
+        userId,
+        area: "applicant_vault",
+        verifiedAt: Date.now() - 10 * 60_000,
+        method: "email_code",
+      });
+      await ctx.db.insert("areaSecurityPreferences", {
+        userId,
+        area: "applicant_vault",
+        mode: "always_step_up",
+        updatedAt: Date.now(),
+      });
+    });
+
+    const status = await asUser(t, "bob").query(api.applicantVault.status, {});
     expect(status.needsAreaStepUp).toBe(true);
   });
 });

@@ -684,9 +684,11 @@ export default defineSchema({
 
   /** Phase 7's per-area, per-user step-up preference, asked at the forced
    * first step-up onto a password-less linked area and editable later in
-   * `/settings`: always demand a fresh step-up for this area ("always"), or
-   * trust it for the 14-day window above ("trust"). Absent row means the
-   * default (trust). */
+   * `/settings`: demand a fresh step-up on every visit to this area
+   * ("always" — see `ALWAYS_STEP_UP_FRESHNESS_MS`, a short grace window
+   * just long enough to act on the step-up someone just completed, not a
+   * standing exemption), or trust it for the 14-day window above ("trust").
+   * Absent row means the default (trust). */
   areaSecurityPreferences: defineTable({
     userId: v.id("users"),
     area: v.union(v.literal("performance"), v.literal("applicant_vault")),
