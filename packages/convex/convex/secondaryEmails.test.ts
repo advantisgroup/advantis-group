@@ -1,9 +1,6 @@
 /**
- * Phase 2 of docs/future-features/21_auth-consolidation.md: an intranet
- * account proving ownership of an additional email address. The email code
- * is only ever mailed, so `plantSecondaryEmailCode` rewrites the challenge
- * row's hash to a code the test knows — same seam `auth.test.ts`'s
- * `plantEmailCode` simulates for the sign-in step-up flow.
+ * The code is only ever mailed, so `plantSecondaryEmailCode` rewrites the
+ * challenge hash to one the test knows.
  */
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";

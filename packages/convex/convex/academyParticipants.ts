@@ -40,9 +40,7 @@ export const create = mutation({
     const linkedUser = linkUserId ? await ctx.db.get(linkUserId) : null;
     const now = Date.now();
 
-    // Identity resolution only, never a grant (see Phase 1 of
-    // docs/future-features/21_auth-consolidation.md) — only tried when the
-    // admin didn't already pick an account for a plain email invite.
+    // Only when the admin didn't pick an account themselves.
     const autoLinkedUser =
       !linkedUser && !linkUserId
         ? await ctx.db
@@ -174,10 +172,8 @@ export const unlinkAccount = mutation({
   },
 });
 
-/** Nightly reconciliation for participant rows created before this feature
- * existed, or whose matching intranet account showed up later — see Phase 1
- * of docs/future-features/21_auth-consolidation.md. Only ever matches a
- * still-unlinked row, so it never overrides an admin's own choice. */
+/** Nightly: links participants whose intranet account showed up later. Only
+ * touches unlinked rows, so it never overrides an admin's choice. */
 export const reconcileAutoLinks = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ linked: number }> => {

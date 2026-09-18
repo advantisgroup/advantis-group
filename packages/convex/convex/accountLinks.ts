@@ -5,20 +5,9 @@ import { query, type QueryCtx } from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
 
 /**
- * Phase 6 (with a slice of Phase 9) of
- * docs/future-features/21_auth-consolidation.md: a read-only rollup of
- * every area a profile has a subprofile in — Performance, Academy, HR
- * vault — and whether each is linked, auto-linked, or still standalone, so
- * an admin can see it in one place instead of visiting `/admin/performance`
- * `/admin/applicants`, etc. separately. Reuses each area's own tables;
- * no new cross-cutting table, matching `20_audit-trail-unification.md`'s
- * "first slice: a read-only merged view, not a schema migration."
- *
- * Each area keeps owning its own authorization *model* (Performance's
- * per-company `companyRoles`, HR's `applicantAccess` boolean) — these
- * functions are a projection over that, not a new grant mechanism.
- * Granting/revoking access itself is untouched; this only makes the
- * current state legible.
+ * Read-only: every area a profile is linked into and what that area has
+ * granted. Each area keeps its own authorization model; granting still
+ * happens in each area's own admin page.
  */
 
 export type PerformanceAccessSubprofile =

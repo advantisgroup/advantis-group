@@ -18,8 +18,7 @@ const contextSchema = t.Union([
   t.Literal("admin_reverify"),
   t.Literal("area_reverify"),
 ]);
-// Phase 7 of docs/future-features/21_auth-consolidation.md: only meaningful
-// (and only ever sent) alongside context === "area_reverify".
+// Only sent alongside context "area_reverify".
 const areaSchema = t.Optional(t.Union([t.Literal("performance"), t.Literal("applicant_vault")]));
 
 export const stepUpRoute = new Elysia()
