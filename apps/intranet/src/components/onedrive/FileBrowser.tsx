@@ -62,7 +62,7 @@ import {
   FileRow,
   GridTile,
   QuotaBar,
-  RowActionType,
+  type RowActionType,
   SortHeader,
 } from "./FileBrowserParts";
 
