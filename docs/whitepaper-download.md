@@ -14,13 +14,13 @@ confirmation mail, and the whitepaper itself is sent once that link is opened.
    that isn't there. The homepage CTA band is gated on the same check, and the
    header and footer carry a permanent `/whitepaper` link.
 2. `POST /api/whitepaper/request` — validates consent, mints a 32-byte token,
-   stores its sha256 on the lead (`whitepaperLeads.saveRequest`) and mails the
+   stores its sha256 on the lead (`marketing/leads.ts`'s `saveRequest`) and mails the
    confirmation link. The plaintext token exists only in that mail.
 3. `GET /{locale}/whitepaper/confirm?token=…` — a page with a button, not an
    auto-confirm on load: link scanners in corporate mail gateways follow URLs,
    and a scanner must not be able to opt someone in.
 4. `POST /api/whitepaper/confirm` — redeems the token
-   (`whitepaperLeads.confirmRequest`), mails the PDF as an attachment, records
+   (`marketing/leads.ts`'s `confirmRequest`), mails the PDF as an attachment, records
    delivery, and notifies the team at `NEXT_PUBLIC_EMAIL_ADRESS`.
 
 Both mails go out through Resend from `NEXT_PUBLIC_EMAIL_ADRESS`
@@ -41,7 +41,7 @@ Both mails go out through Resend from `NEXT_PUBLIC_EMAIL_ADRESS`
   download the repo cannot serve.
 - `apps/marketing/src/components/email/whitepaper-emails.tsx` — both mails,
   localized from `i18n/messages/{de,en,fr,zh}.json` under `whitepaper.email`.
-- `packages/convex/convex/whitepaperLeads.ts` — the four mutations.
+- `packages/convex/convex/marketing/leads.ts` — the four mutations.
 
 ## Consent and proof
 

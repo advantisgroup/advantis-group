@@ -6,10 +6,10 @@ lifecycle around it (onboarding, offboarding, HR records).
 - **Interview scheduling with calendar sync** — extend
   `applicants/termine` to sync directly with the intranet calendar.
 - **New-hire onboarding checklist** — a per-person tracker for tasks,
-  IT provisioning, and documents, feeding into `humanResources.ts` (related
+  IT provisioning, and documents, feeding into `hr/employees.ts` (related
   to the new-starter checklist already noted in
   `intranet-management-feature-ideas.md`).
-- **Offboarding automation** — extend `offboarding.ts` with automated
+- **Offboarding automation** — extend `org/offboarding.ts` with automated
   OneDrive/device revocation triggers via `apps/api`, on top of the
   checklist visibility that already exists.
 - **Referral tracking** — let an employee refer a candidate and track the

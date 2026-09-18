@@ -8,7 +8,7 @@ grew their own password instead of leaning on it:
 
 | Area                         | Credential                    | Linking today                                                                 |
 | ----------------------------- | ------------------------------ | ------------------------------------------------------------------------------ |
-| Performance dashboard         | `performanceLogins.passwordHash` | Optional `linkedUserId` → Clerk session auth via `performanceAuth.ts`'s `resolveActiveSession`; password stays live either way |
+| Performance dashboard         | `performanceLogins.passwordHash` | Optional `linkedUserId` → Clerk session auth via `performance/lib/auth.ts`'s `resolveActiveSession`; password stays live either way |
 | HR / Applicant Management     | `applicantVaultPasswords.hash` | None — a second password every member sets themselves, on top of the existing `applicantAccess`/delegate check |
 | Academy                       | `academyParticipants.linkedUserId` | Same optional-link shape as Performance, manual only |
 
@@ -61,7 +61,7 @@ Closes the gap `14_identity-linking.md` already names.
   existed), match `email` against `users.by_email` and set `linkedUserId`
   automatically. Keep the existing manual admin link as the fallback for a
   mismatched email (personal vs. work address, a typo, a legal-name change).
-- Log the auto-link the same way `passwordResets.ts` distinguishes
+- Log the auto-link the same way `security/passwordResets.ts` distinguishes
   `autoApproved`/`autoApprovedVia` from a human decision — an
   `autoLinkedVia: "email_match"` field, so the admin UI can show "linked
   automatically" vs. "linked by an admin" without guessing.
@@ -102,7 +102,7 @@ proves the primary one.
   skip issuing a password at creation entirely and mint the row
   password-less, matching how `performanceLogins.ts` already treats
   `password` as optional when `linkedUserId` is set.
-- `passwordResets.ts`'s `performance` scope then has fewer accounts to ever
+- `security/passwordResets.ts`'s `performance` scope then has fewer accounts to ever
   apply to — a linked, password-less login has nothing to reset. Update
   `resolveTarget`'s `performance` branch to say so plainly (surface "sign in
   with your intranet account" instead of a dead-end "no account found") for

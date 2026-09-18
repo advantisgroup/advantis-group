@@ -24,7 +24,7 @@ are deliberate. Re-audit rather than trusting the counts if it matters.
 | --- | --- |
 | Argument validators on public functions | Followed — every `query`/`mutation`/`action` in `convex/` declares `args`. |
 | Access control on public functions | Followed — `lib/auth.ts`'s `requireUser`/`requireManager`/`requireAdmin`/`requireCapability` is the first line of essentially every handler. |
-| Avoid `.filter` on db queries | Mostly followed — 9 remaining call sites (`accessRequests.ts`, `invites.ts`, `lib/auth.ts`, `companies.ts`, `orgDataMigration.ts`, `performanceImport.ts`, `migrations/backfillPerformanceCompanyId.ts`). |
+| Avoid `.filter` on db queries | Mostly followed — 9 remaining call sites (`people/accessRequests.ts`, `people/invites.ts`, `lib/auth.ts`, `performance/companies.ts`, `org/structureMigration.ts`, `performance/import.ts`, `migrations/backfillPerformanceCompanyId.ts`). |
 | `.collect` only on small result sets | ~265 `.collect()` calls. Fine for the org-scale tables (`users`, `departments`, `presence`); worth checking before adding one on an append-only table (`activitySamples`, `stateSamples`, `auditLog`, `messages`). |
 | Only schedule/`ctx.run*` **internal** functions | Deliberate exception: `activity/state.ts`'s `pushSignal`/`reportHealth`/`mappings` are public *by design* — `apps/api` calls them server-to-server behind `ACTIVITYTRACK_SIGNAL_SECRET` (see AGENTS.md's ActivityTrack section). Action-side access checks go through the internal `users.callerForAction` (`lib/auth.ts`'s `requireCapabilityForAction` / `requireAdminForAction`). |
 | Table name as first `ctx.db` argument | Not adopted — 0 of ~258 `ctx.db.get` calls pass one. Harmless today, required later for custom ID generation. |
@@ -402,14 +402,14 @@ crons.daily(
 > `reportHealth` and `mappings` are public on purpose. `apps/api` is a
 > separate service, so it cannot call `internal.*`; it authenticates with
 > `ACTIVITYTRACK_SIGNAL_SECRET` and the mutation validates that secret itself.
-> Same story for the `api*`-prefixed functions across `onedrive.ts`,
-> `applicants.ts`, `humanResources.ts` and `integrations/clockodoAbsences.ts`
+> Same story for the `api*`-prefixed functions across `integrations/onedrive.ts`,
+> `hr/applicants.ts`, `hr/employees.ts` and `integrations/clockodoAbsences.ts`
 > — the `api` prefix in the *name* marks "reached from apps/api, guarded by a
 > server key," and the guard is inside the handler. Don't "fix" these to
 > `internal`; you'll break the integration relays.
 >
 > The genuinely reviewable ones are the intra-Convex `ctx.runQuery(api.…)`
-> calls: `blogAnalytics.ts` reading `api.blogPosts.get` is the one left (the
+> calls: `blog/analytics.ts` reading `api.blog.posts.get` is the one left (the
 > `activity/state.ts` ones are deliberate). The action-side access checks
 > that used to round-trip through `api.users.me` now use the internal
 > `users.callerForAction` via `lib/auth.ts`'s `getCallerForAction`.
@@ -561,7 +561,7 @@ between the calls — read data, hand it to an external service, write the
 result back — which is the normal shape of every integration poller.
 
 > **In this repo:** `activity/clockodo.ts` and `activity/genesys.ts` are the
-> fetch-then-write shape and are fine as they are. `performanceImport.ts` is
+> fetch-then-write shape and are fine as they are. `performance/import.ts` is
 > the batched-migration shape.
 
 ## Use `ctx.runQuery` / `ctx.runMutation` sparingly *inside* queries and mutations
@@ -678,7 +678,7 @@ Two fixes:
 >
 > - Don't put `Date.now()` inside a `.withIndex` range bound in a query. That
 >   makes the read range itself move continuously. Take the bound as an
->   argument instead — `adminOverview.timelines` does this, deriving its
+>   argument instead — `org/overview.ts`'s `timelines` does this, deriving its
 >   window from a client-supplied `tzOffsetMinutes` plus a `days` count.
 > - Comparing `Date.now()` against a field on rows you already read (to label
 >   something overdue) is the cheap case; it doesn't change what was read.

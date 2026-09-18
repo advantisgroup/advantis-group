@@ -7,7 +7,7 @@ management.
   action type, and date range.
 - **Custom role diff viewer** — compare two custom roles' capabilities
   side by side.
-- **Staged feature flag rollout** — extend `featureFlags.ts` beyond on/off
+- **Staged feature flag rollout** — extend `org/featureFlags.ts` beyond on/off
   to a percentage-based or cohort rollout.
 - **Bulk member operations** — bulk role assignment and bulk deactivation
   from the members panel.

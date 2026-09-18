@@ -14,7 +14,7 @@ or ranking.
 - **Manager availability/integration-health digest** — a scheduled cron
   (`crons.ts`) that emails managers a *current-state* summary (who's
   reachable right now, and whether any of the three fused signals are
-  degraded for their team), following the `updatesEmail.ts` pattern. Not a
+  degraded for their team), following the `updates/email.ts` pattern. Not a
   historical activity rollup — `docs/intranet-management-feature-ideas.md`
   explicitly rules out turning ActivityTrack into workforce surveillance, so
   this has to stay present-tense, the same boundary the rest of this file

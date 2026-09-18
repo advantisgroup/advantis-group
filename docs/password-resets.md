@@ -75,7 +75,7 @@ the flow that gets someone back in without anyone ever learning their password.
   match reports as plain `invalid`, so the URL can't be used to ask which area
   a token belongs to.
 - **The admin queue masks every address except the intranet account's own.**
-  `passwordResets.ts`'s `maskEmail` shows 1-3 leading characters of the local
+  `security/lib/passwordResets.ts`'s `maskEmail` shows 1-3 leading characters of the local
   part (never all of it) then a *fixed* run of asterisks — long enough to
   recognise an account, short enough that the asterisk count can't be counted
   to recover the real length — and the full domain. A `hr`-scope target email
@@ -215,7 +215,7 @@ from an anonymous action stack trace.
 ## Adding a third area
 
 1. Add the literal to `passwordResetScopeValidator` (`schema.ts`).
-2. Add a branch to `resolveTarget` and to `applyReset` (`passwordResets.ts`).
+2. Add a branch to `resolveTarget` (`security/lib/passwordResets.ts`) and to `applyReset` (`security/passwordResets.ts`).
 3. Add a `SCOPE_LABEL` entry and an `AFTER_RESET_HREF` entry
    (`app/password/page.tsx`).
 4. Render `<ForgotPasswordPanel scope="…" />` from that area's lock screen,
