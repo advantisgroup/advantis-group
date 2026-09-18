@@ -31,6 +31,7 @@
     "notTrusted": "Not trusted",
     "lastSeen": "Last seen {when}",
     "rename": "Rename",
+    "renameHint": "Give this device a name you'll recognize later.",
     "saveName": "Save",
     "revokeTitle": "Forget this device?",
     "revokeBody": "\"{name}\" will need to be recognized again next time — including a fresh step-up for any linked area.",

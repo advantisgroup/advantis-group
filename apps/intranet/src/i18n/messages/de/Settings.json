@@ -31,6 +31,7 @@
     "notTrusted": "Nicht vertraut",
     "lastSeen": "Zuletzt gesehen {when}",
     "rename": "Umbenennen",
+    "renameHint": "Gib diesem Gerät einen Namen, den du später wiedererkennst.",
     "saveName": "Speichern",
     "revokeTitle": "Dieses Gerät vergessen?",
     "revokeBody": "„{name}“ muss beim nächsten Mal erneut erkannt werden — inklusive einer neuen Bestätigung für jeden verknüpften Bereich.",
