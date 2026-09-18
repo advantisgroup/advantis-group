@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useQuery } from "convex/react";
-import { ArrowDown, ArrowUp, Download, Plus, Search } from "lucide-react";
+import { Download, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -29,6 +29,7 @@ import { TogglePill } from "@/components/ui/filter-pill";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { nextSort, type Sort, SortableHead, sortSign } from "@/components/ui/sortable-head";
 import {
   Table,
   TableBody,
@@ -92,34 +93,6 @@ const STATUS_DOT: Record<NonNullable<LiveStatus>, string> = {
 function csvEscape(value: unknown): string {
   const str = String(value ?? "");
   return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
-}
-
-/** Sortable column header — click to sort, click again to flip direction. */
-function SortableHead({
-  label,
-  sortKey,
-  sort,
-  onSort,
-}: {
-  label: string;
-  sortKey: SortKey;
-  sort: { key: SortKey; dir: 1 | -1 };
-  onSort: (key: SortKey) => void;
-}) {
-  const active = sort.key === sortKey;
-  return (
-    <TableHead>
-      <button
-        type="button"
-        onClick={() => onSort(sortKey)}
-        className="flex items-center gap-1 hover:text-fg"
-      >
-        {label}
-        {active &&
-          (sort.dir === 1 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
-      </button>
-    </TableHead>
-  );
 }
 
 /** Bulk-set the same weekly target-hours period for every selected employee. */
@@ -265,10 +238,7 @@ export function ClockodoAdminPanel() {
   const [filterUnlinked, setFilterUnlinked] = useState(false);
   const [filterMissingHours, setFilterMissingHours] = useState(false);
   const [filterMissingVacation, setFilterMissingVacation] = useState(false);
-  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({
-    key: "name",
-    dir: 1,
-  });
+  const [sort, setSort] = useState<Sort<SortKey>>({ key: "name", dir: "asc" });
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkHoursOpen, setBulkHoursOpen] = useState(false);
   const [bulkVacationOpen, setBulkVacationOpen] = useState(false);
@@ -372,9 +342,9 @@ export function ClockodoAdminPanel() {
       if (av == null) return 1;
       if (bv == null) return -1;
       if (typeof av === "string" && typeof bv === "string") {
-        return av.localeCompare(bv) * sort.dir;
+        return av.localeCompare(bv) * sortSign(sort.dir);
       }
-      return ((av as number) - (bv as number)) * sort.dir;
+      return ((av as number) - (bv as number)) * sortSign(sort.dir);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [merged, search, filterUnlinked, filterMissingHours, filterMissingVacation, sort]);
@@ -409,7 +379,7 @@ export function ClockodoAdminPanel() {
   );
 
   function toggleSort(key: SortKey) {
-    setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }));
+    setSort((s) => nextSort(s, key));
   }
 
   function toggleSelected(id: number, checked: boolean) {
@@ -714,24 +684,24 @@ export function ClockodoAdminPanel() {
                       </TableHead>
                       <SortableHead
                         label={t("name")}
-                        sortKey="name"
-                        sort={sort}
-                        onSort={toggleSort}
+                        active={sort.key === "name"}
+                        dir={sort.dir}
+                        onClick={() => toggleSort("name")}
                       />
                       <TableHead>{t("email")}</TableHead>
                       <TableHead>{t("statusColumn")}</TableHead>
                       <SortableHead
                         label={t("weeklyHours")}
-                        sortKey="weeklyHours"
-                        sort={sort}
-                        onSort={toggleSort}
+                        active={sort.key === "weeklyHours"}
+                        dir={sort.dir}
+                        onClick={() => toggleSort("weeklyHours")}
                       />
                       <TableHead>{t("hoursThisWeekColumn")}</TableHead>
                       <SortableHead
                         label={t("vacationDaysPerYear")}
-                        sortKey="vacationDaysPerYear"
-                        sort={sort}
-                        onSort={toggleSort}
+                        active={sort.key === "vacationDaysPerYear"}
+                        dir={sort.dir}
+                        onClick={() => toggleSort("vacationDaysPerYear")}
                       />
                       <TableHead>{t("linkedEmployee")}</TableHead>
                     </TableRow>

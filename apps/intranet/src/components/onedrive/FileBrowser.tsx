@@ -8,8 +8,6 @@ import { api } from "@advantis/convex/api";
 import { type DriveQuota, type OneDriveItem, type OneDriveListing } from "@advantis/types";
 import { useMutation, useQuery } from "convex/react";
 import {
-  ArrowDown,
-  ArrowUp,
   CheckCircle2,
   ChevronRight,
   Clock,
@@ -48,6 +46,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  ariaSort,
+  nextSort,
+  type Sort,
+  SortButton,
+  type SortDir,
+  sortSign,
+} from "@/components/ui/sortable-head";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { shouldEagerPrefetch } from "@/lib/network-heuristics";
@@ -201,8 +207,7 @@ export function FileBrowser({
   const [previewItem, setPreviewItem] = useState<OneDriveItem | null>(null);
 
   const [view, setView] = useState<ViewMode>("list");
-  const [sortKey, setSortKey] = useState<SortKey>("name");
-  const [sortDir, setSortDir] = useState<1 | -1>(1);
+  const [sort, setSort] = useState<Sort<SortKey>>({ key: "name", dir: "asc" });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [focusIdx, setFocusIdx] = useState(-1);
   const [queue, setQueue] = useState<QueueEntry[]>([]);
@@ -471,22 +476,18 @@ export function FileBrowser({
     const compare = (a: OneDriveItem, b: OneDriveItem) => {
       if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
       let cmp = 0;
-      if (sortKey === "modified") cmp = (a.lastModified ?? "").localeCompare(b.lastModified ?? "");
-      else if (sortKey === "size") cmp = a.size - b.size;
+      if (sort.key === "modified") cmp = (a.lastModified ?? "").localeCompare(b.lastModified ?? "");
+      else if (sort.key === "size") cmp = a.size - b.size;
       else cmp = a.name.localeCompare(b.name, undefined, { numeric: true });
-      return cmp * sortDir;
+      return cmp * sortSign(sort.dir);
     };
     return [...rawItems].sort(compare);
-  }, [results, listing, sortKey, sortDir]);
+  }, [results, listing, sort]);
   const canWrite = listing?.canWrite ?? false;
   const canDrop = Boolean(listing && (listing.canWrite || listing.canRequest));
 
   function toggleSort(key: SortKey) {
-    if (sortKey === key) setSortDir((d) => (d === 1 ? -1 : 1));
-    else {
-      setSortKey(key);
-      setSortDir(1);
-    }
+    setSort((s) => nextSort(s, key));
   }
 
   // Selection and keyboard focus reset whenever the visible set changes.
@@ -854,21 +855,21 @@ export function FileBrowser({
                 </th>
                 <SortHeader
                   label={t("colName")}
-                  active={sortKey === "name"}
-                  dir={sortDir}
+                  active={sort.key === "name"}
+                  dir={sort.dir}
                   onClick={() => toggleSort("name")}
                 />
                 <th className="px-4 py-2.5 font-medium">{t("colUploadedBy")}</th>
                 <SortHeader
                   label={t("colModified")}
-                  active={sortKey === "modified"}
-                  dir={sortDir}
+                  active={sort.key === "modified"}
+                  dir={sort.dir}
                   onClick={() => toggleSort("modified")}
                 />
                 <SortHeader
                   label={t("colSize")}
-                  active={sortKey === "size"}
-                  dir={sortDir}
+                  active={sort.key === "size"}
+                  dir={sort.dir}
                   onClick={() => toggleSort("size")}
                   align="right"
                 />
@@ -1005,23 +1006,22 @@ function SortHeader({
 }: {
   label: string;
   active: boolean;
-  dir: 1 | -1;
+  dir: SortDir;
   onClick: () => void;
   align?: "right";
 }) {
   return (
-    <th className={cn("px-4 py-2.5 font-medium", align === "right" && "text-right")}>
-      <button
-        type="button"
+    <th
+      className={cn("px-4 py-2.5 font-medium", align === "right" && "text-right")}
+      aria-sort={ariaSort(active, dir)}
+    >
+      <SortButton
+        label={label}
+        active={active}
+        dir={dir}
         onClick={onClick}
-        className={cn(
-          "inline-flex items-center gap-1 uppercase tracking-wide hover:text-foreground refreshed:normal-case refreshed:tracking-normal",
-          active && "text-foreground",
-        )}
-      >
-        {label}
-        {active && (dir === 1 ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />)}
-      </button>
+        className="uppercase tracking-wide refreshed:normal-case refreshed:tracking-normal"
+      />
     </th>
   );
 }

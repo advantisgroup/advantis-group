@@ -1,10 +1,10 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { type Sort, SortableHead } from "@/components/ui/sortable-head";
 import {
   Table,
   TableBody,
@@ -22,7 +22,6 @@ import { type Person, type PersonStatus } from "./person-status";
 import { StatusPill } from "./StatusPill";
 
 export type SortKey = "name" | "department" | "role";
-export type SortDir = "asc" | "desc";
 
 /**
  * The default view: one row per person, which is what a directory of this size
@@ -39,7 +38,6 @@ export function PersonTable({
   people,
   statuses,
   sort,
-  sortDir,
   onSort,
   onOpenProfile,
   onMessage,
@@ -47,8 +45,7 @@ export function PersonTable({
 }: {
   people: Person[];
   statuses: Map<string, PersonStatus>;
-  sort: SortKey;
-  sortDir: SortDir;
+  sort: Sort<SortKey>;
   onSort: (key: SortKey) => void;
   onOpenProfile: (id: Person["_id"]) => void;
   onMessage: (id: Person["_id"]) => void;
@@ -58,44 +55,28 @@ export function PersonTable({
   const tRoles = useTranslations("Roles");
   const tTeams = useTranslations("Teams");
 
-  const SortHeader = ({
-    column,
-    label,
-    className,
-  }: {
-    column: SortKey;
-    label: string;
-    className?: string;
-  }) => {
-    const active = sort === column;
-    const Icon = !active ? ChevronsUpDown : sortDir === "asc" ? ArrowUp : ArrowDown;
-    return (
-      <TableHead className={className}>
-        <button
-          type="button"
-          onClick={() => onSort(column)}
-          aria-sort={active ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-          className={cn(
-            "-mx-1 flex items-center gap-1 rounded px-1 py-0.5 transition-colors hover:text-foreground",
-            active && "text-foreground",
-          )}
-        >
-          {label}
-          <Icon className={cn("size-3", active ? "opacity-100" : "opacity-40")} />
-        </button>
-      </TableHead>
-    );
-  };
-
   return (
     <Table>
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <SortHeader column="name" label={t("columnPerson")} />
-          <SortHeader column="role" label={t("columnRole")} className="hidden sm:table-cell" />
-          <SortHeader
-            column="department"
+          <SortableHead
+            label={t("columnPerson")}
+            active={sort.key === "name"}
+            dir={sort.dir}
+            onClick={() => onSort("name")}
+          />
+          <SortableHead
+            label={t("columnRole")}
+            active={sort.key === "role"}
+            dir={sort.dir}
+            onClick={() => onSort("role")}
+            className="hidden sm:table-cell"
+          />
+          <SortableHead
             label={t("columnDepartment")}
+            active={sort.key === "department"}
+            dir={sort.dir}
+            onClick={() => onSort("department")}
             className="hidden md:table-cell"
           />
           <TableHead className="hidden lg:table-cell">{t("columnTeams")}</TableHead>

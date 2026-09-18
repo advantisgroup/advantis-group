@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { type api } from "@advantis/convex/api";
 import { type FunctionReturnType } from "convex/server";
-import { ArrowDown, ArrowUp, ChevronRight, Search } from "lucide-react";
+import { ChevronRight, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { fmtNum, fmtPct } from "@/components/performance/PerformanceFormat";
@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { nextSort, type Sort, SortableHead } from "@/components/ui/sortable-head";
 
 export type TeamDashboardData = FunctionReturnType<typeof api.performanceQueries.teamDashboard>;
 
@@ -65,7 +65,7 @@ const SORT_KEYS: SortKey[] = [
 ];
 const SORT_STORAGE_KEY = "performance_team_sort";
 
-function loadTeamSort(): { key: SortKey; dir: "asc" | "desc" } {
+function loadTeamSort(): Sort<SortKey> {
   const fallback = { key: "name" as const, dir: "asc" as const };
   if (typeof window === "undefined") return fallback;
   try {
@@ -84,39 +84,6 @@ function loadTeamSort(): { key: SortKey; dir: "asc" | "desc" } {
   return fallback;
 }
 
-function SortableHead({
-  label,
-  sortKey,
-  active,
-  dir,
-  onSort,
-  align,
-}: {
-  label: string;
-  sortKey: SortKey;
-  active: boolean;
-  dir: "asc" | "desc";
-  onSort: (key: SortKey) => void;
-  align?: "right";
-}) {
-  return (
-    <TableHead className={align === "right" ? "text-right" : undefined}>
-      <button
-        type="button"
-        onClick={() => onSort(sortKey)}
-        className={cn(
-          "inline-flex items-center gap-1 hover:text-foreground",
-          active ? "font-medium text-foreground" : "text-muted-foreground",
-        )}
-      >
-        {label}
-        {active &&
-          (dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
-      </button>
-    </TableHead>
-  );
-}
-
 /** Searchable, sortable table of every employee in the report — shared by
  * the dedicated Team tab and the bottom of the dashboard's Overview tab, so
  * an admin can click into any employee from either without switching tabs
@@ -126,13 +93,11 @@ export function TeamTable({ data }: { data: TeamDashboardData }) {
   const router = useRouter();
 
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>(() => loadTeamSort());
+  const [sort, setSort] = useState<Sort<SortKey>>(() => loadTeamSort());
 
   function toggleSort(key: SortKey) {
     setSort((prev) => {
-      const dir: "asc" | "desc" =
-        prev.key === key ? (prev.dir === "asc" ? "desc" : "asc") : key === "name" ? "asc" : "desc";
-      const next = { key, dir };
+      const next = nextSort(prev, key, key === "name" ? "asc" : "desc");
       if (typeof window !== "undefined") {
         window.localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify(next));
       }
@@ -248,114 +213,100 @@ export function TeamTable({ data }: { data: TeamDashboardData }) {
               <TableRow>
                 <SortableHead
                   label={t("colName")}
-                  sortKey="name"
                   active={sort.key === "name"}
                   dir={sort.dir}
-                  onSort={toggleSort}
+                  onClick={() => toggleSort("name")}
                 />
                 <SortableHead
                   label={t("colLeads")}
-                  sortKey="leadsCreated"
                   active={sort.key === "leadsCreated"}
                   dir={sort.dir}
-                  onSort={toggleSort}
-                  align="right"
+                  onClick={() => toggleSort("leadsCreated")}
+                  className="text-right"
                 />
                 <SortableHead
                   label={t("colWorkable")}
-                  sortKey="workableCreated"
                   active={sort.key === "workableCreated"}
                   dir={sort.dir}
-                  onSort={toggleSort}
-                  align="right"
+                  onClick={() => toggleSort("workableCreated")}
+                  className="text-right"
                 />
                 <SortableHead
                   label={t("colWorkableRate")}
-                  sortKey="workableRate"
                   active={sort.key === "workableRate"}
                   dir={sort.dir}
-                  onSort={toggleSort}
-                  align="right"
+                  onClick={() => toggleSort("workableRate")}
+                  className="text-right"
                 />
                 <SortableHead
                   label={t("colWon")}
-                  sortKey="wonMonth"
                   active={sort.key === "wonMonth"}
                   dir={sort.dir}
-                  onSort={toggleSort}
-                  align="right"
+                  onClick={() => toggleSort("wonMonth")}
+                  className="text-right"
                 />
                 <SortableHead
                   label={t("colHitrate")}
-                  sortKey="hitrate"
                   active={sort.key === "hitrate"}
                   dir={sort.dir}
-                  onSort={toggleSort}
-                  align="right"
+                  onClick={() => toggleSort("hitrate")}
+                  className="text-right"
                 />
                 <SortableHead
                   label={t("colWonPerDay")}
-                  sortKey="wonPerDay"
                   active={sort.key === "wonPerDay"}
                   dir={sort.dir}
-                  onSort={toggleSort}
-                  align="right"
+                  onClick={() => toggleSort("wonPerDay")}
+                  className="text-right"
                 />
                 <SortableHead
                   label={t("colForecast")}
-                  sortKey="fc1"
                   active={sort.key === "fc1"}
                   dir={sort.dir}
-                  onSort={toggleSort}
-                  align="right"
+                  onClick={() => toggleSort("fc1")}
+                  className="text-right"
                 />
                 <SortableHead
                   label={t("colOppsOpen")}
-                  sortKey="oppsOpen"
                   active={sort.key === "oppsOpen"}
                   dir={sort.dir}
-                  onSort={toggleSort}
-                  align="right"
+                  onClick={() => toggleSort("oppsOpen")}
+                  className="text-right"
                 />
                 <SortableHead
                   label={t("colAnalysis30")}
-                  sortKey="overduesAnalysis"
                   active={sort.key === "overduesAnalysis"}
                   dir={sort.dir}
-                  onSort={toggleSort}
-                  align="right"
+                  onClick={() => toggleSort("overduesAnalysis")}
+                  className="text-right"
                 />
                 <SortableHead
                   label={t("colOppOverdue")}
-                  sortKey="overduesOpps"
                   active={sort.key === "overduesOpps"}
                   dir={sort.dir}
-                  onSort={toggleSort}
-                  align="right"
+                  onClick={() => toggleSort("overduesOpps")}
+                  className="text-right"
                 />
                 <SortableHead
                   label={t("colOpps30")}
-                  sortKey="oppsOver30"
                   active={sort.key === "oppsOver30"}
                   dir={sort.dir}
-                  onSort={toggleSort}
-                  align="right"
+                  onClick={() => toggleSort("oppsOver30")}
+                  className="text-right"
                 />
                 <SortableHead
                   label={t("colLeads14")}
-                  sortKey="leadsNoAction14"
                   active={sort.key === "leadsNoAction14"}
                   dir={sort.dir}
-                  onSort={toggleSort}
-                  align="right"
+                  onClick={() => toggleSort("leadsNoAction14")}
+                  className="text-right"
                 />
                 <SortableHead
                   label={t("colOpps14")}
-                  sortKey="oppsNoAction14"
                   active={sort.key === "oppsNoAction14"}
                   dir={sort.dir}
-                  onSort={toggleSort}
-                  align="right"
+                  onClick={() => toggleSort("oppsNoAction14")}
+                  className="text-right"
                 />
                 <TableHead>{t("colBadges")}</TableHead>
                 <TableHead>{t("colMark")}</TableHead>

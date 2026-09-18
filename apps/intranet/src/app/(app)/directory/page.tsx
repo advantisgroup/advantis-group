@@ -28,7 +28,7 @@ import {
 } from "@/components/directory/person-status";
 import { OrgChart } from "@/components/directory/OrgChart";
 import { PersonCard } from "@/components/directory/PersonCard";
-import { PersonTable, type SortDir, type SortKey } from "@/components/directory/PersonTable";
+import { PersonTable, type SortKey } from "@/components/directory/PersonTable";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { UserProfile } from "@/components/profile/UserProfile";
 import {
@@ -58,6 +58,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { nextSort, type Sort, sortSign } from "@/components/ui/sortable-head";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { isoToday } from "@/lib/absences";
 import { useAbsencesCalendar } from "@/lib/absences-api";
@@ -99,8 +100,7 @@ function DirectoryPageContent() {
   const [team, setTeam] = useState<string>("all");
   const [myTeamsOnly, setMyTeamsOnly] = useState(false);
   const [availableNow, setAvailableNow] = useState(false);
-  const [sort, setSort] = useState<SortKey>("name");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [sort, setSort] = useState<Sort<SortKey>>({ key: "name", dir: "asc" });
   const [view, setView] = useState<ViewMode>("list");
   const [grouped, setGrouped] = useState(false);
   const [profileId, setProfileId] = useState<Id<"users"> | null>(null);
@@ -230,8 +230,8 @@ function DirectoryPageContent() {
       });
     }
     const key = (p: Person) =>
-      sort === "department" ? (p.department ?? "￿") : sort === "role" ? p.role : p.name;
-    const dir = sortDir === "asc" ? 1 : -1;
+      sort.key === "department" ? (p.department ?? "￿") : sort.key === "role" ? p.role : p.name;
+    const dir = sortSign(sort.dir);
     return [...rows].sort(
       (a, b) => dir * (key(a).localeCompare(key(b)) || a.name.localeCompare(b.name)),
     );
@@ -245,7 +245,6 @@ function DirectoryPageContent() {
     people,
     role,
     sort,
-    sortDir,
     team,
   ]);
 
@@ -258,11 +257,7 @@ function DirectoryPageContent() {
   }, [filtered, now, inOfficeByUserId, outUntilByUser]);
 
   function toggleSort(key: SortKey) {
-    if (sort === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSort(key);
-      setSortDir("asc");
-    }
+    setSort((s) => nextSort(s, key));
   }
 
   const sections = useMemo(() => {
@@ -311,7 +306,6 @@ function DirectoryPageContent() {
           people={rows}
           statuses={statuses}
           sort={sort}
-          sortDir={sortDir}
           onSort={toggleSort}
           onOpenProfile={setProfileId}
           onMessage={(id) => void message(id)}

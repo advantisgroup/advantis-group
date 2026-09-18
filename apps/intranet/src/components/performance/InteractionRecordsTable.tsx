@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { ArrowDown, ArrowUp, ArrowUpDown, Clock, Phone, Timer } from "lucide-react";
+import { Clock, Phone, Timer } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { nextSort, type Sort, SortableHead, sortSign } from "@/components/ui/sortable-head";
 import {
   Table,
   TableBody,
@@ -58,41 +59,6 @@ function durationBucket(sec: number): Exclude<DurationFilter, "all"> {
   return "long";
 }
 
-function SortableHead({
-  label,
-  active,
-  dir,
-  onClick,
-  className,
-}: {
-  label: string;
-  active: boolean;
-  dir: "asc" | "desc";
-  onClick: () => void;
-  className?: string;
-}) {
-  return (
-    <TableHead className={className}>
-      <button
-        type="button"
-        onClick={onClick}
-        className="inline-flex items-center gap-1 hover:text-foreground"
-      >
-        {label}
-        {active ? (
-          dir === "asc" ? (
-            <ArrowUp className="h-3 w-3" />
-          ) : (
-            <ArrowDown className="h-3 w-3" />
-          )
-        ) : (
-          <ArrowUpDown className="h-3 w-3 opacity-30" />
-        )}
-      </button>
-    </TableHead>
-  );
-}
-
 /** Every individual interaction on one day — the drill-down behind an
  * `InteractionsTable` day row. A single day can carry hundreds of rows, so
  * this is filterable (employee search, direction, duration bucket),
@@ -113,8 +79,7 @@ export function InteractionRecordsTable({
   const [search, setSearch] = useState("");
   const [direction, setDirection] = useState<string>(ALL);
   const [durationFilter, setDurationFilter] = useState<DurationFilter>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("startedAt");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [sort, setSort] = useState<Sort<SortKey>>({ key: "startedAt", dir: "asc" });
   const [page, setPage] = useState(0);
 
   const directions = useMemo(() => {
@@ -144,9 +109,9 @@ export function InteractionRecordsTable({
   }, [records, search, direction, durationFilter, showEmployee]);
 
   const sorted = useMemo(() => {
-    const dir = sortDir === "asc" ? 1 : -1;
+    const dir = sortSign(sort.dir);
     return [...filtered].sort((a, b) => {
-      switch (sortKey) {
+      switch (sort.key) {
         case "employeeName":
           return dir * a.employeeName.localeCompare(b.employeeName);
         case "durationSec":
@@ -157,7 +122,7 @@ export function InteractionRecordsTable({
           return dir * (a.startedAt - b.startedAt);
       }
     });
-  }, [filtered, sortKey, sortDir]);
+  }, [filtered, sort]);
 
   const hourly = useMemo(() => {
     const counts = new Array(24).fill(0) as number[];
@@ -173,12 +138,7 @@ export function InteractionRecordsTable({
   const pageRows = sorted.slice(page0 * PAGE_SIZE, page0 * PAGE_SIZE + PAGE_SIZE);
 
   function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
+    setSort((s) => nextSort(s, key));
   }
 
   function resetPage() {
@@ -321,29 +281,29 @@ export function InteractionRecordsTable({
                     {showEmployee && (
                       <SortableHead
                         label={t("colName")}
-                        active={sortKey === "employeeName"}
-                        dir={sortDir}
+                        active={sort.key === "employeeName"}
+                        dir={sort.dir}
                         onClick={() => toggleSort("employeeName")}
                       />
                     )}
                     <SortableHead
                       label={t("colFrom")}
-                      active={sortKey === "startedAt"}
-                      dir={sortDir}
+                      active={sort.key === "startedAt"}
+                      dir={sort.dir}
                       onClick={() => toggleSort("startedAt")}
                     />
                     <TableHead>{t("colTo")}</TableHead>
                     <SortableHead
                       label={t("colTotalDuration")}
-                      active={sortKey === "durationSec"}
-                      dir={sortDir}
+                      active={sort.key === "durationSec"}
+                      dir={sort.dir}
                       onClick={() => toggleSort("durationSec")}
                       className="text-right"
                     />
                     <SortableHead
                       label={t("interactionDirection")}
-                      active={sortKey === "direction"}
-                      dir={sortDir}
+                      active={sort.key === "direction"}
+                      dir={sort.dir}
                       onClick={() => toggleSort("direction")}
                     />
                   </TableRow>

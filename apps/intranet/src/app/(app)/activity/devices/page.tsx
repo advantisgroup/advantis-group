@@ -6,17 +6,7 @@ import Link from "next/link";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Ban,
-  CheckCircle2,
-  Clock3,
-  Monitor,
-  MonitorSmartphone,
-  Trash2,
-} from "lucide-react";
+import { Ban, CheckCircle2, Clock3, Monitor, MonitorSmartphone, Trash2 } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { InfoTip } from "@/components/activity/InfoTip";
@@ -35,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { nextSort, type Sort, SortableHead, sortSign } from "@/components/ui/sortable-head";
 import {
   Table,
   TableBody,
@@ -59,46 +50,12 @@ const DEVICE_VARIANT: Record<string, "success" | "warning" | "destructive"> = {
 // ── column sorting ───────────────────────────────────────────────────────────
 
 type SortKey = "hostname" | "status" | "lastSeen";
-type Sort = { key: SortKey; dir: 1 | -1 };
 /** Actives first when sorting by status ascending. */
 const STATUS_RANK: Record<string, number> = {
   active: 0,
   pending: 1,
   disabled: 2,
 };
-
-/** Header-cell sort button: label + direction indicator. */
-function SortHeader({
-  label,
-  sortKey,
-  sort,
-  onToggle,
-}: {
-  label: string;
-  sortKey: SortKey;
-  sort: Sort | null;
-  onToggle: (key: SortKey) => void;
-}) {
-  const active = sort?.key === sortKey;
-  const Icon = !active ? ArrowUpDown : sort.dir === 1 ? ArrowUp : ArrowDown;
-  return (
-    <button
-      type="button"
-      onClick={() => onToggle(sortKey)}
-      className="group inline-flex items-center gap-1 transition-colors hover:text-fg"
-    >
-      {label}
-      <Icon
-        aria-hidden
-        className={
-          active
-            ? "h-3.5 w-3.5 text-signal"
-            : "h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-60"
-        }
-      />
-    </button>
-  );
-}
 
 // ── page ───────────────────────────────────────────────────────────────────
 
@@ -117,7 +74,7 @@ export default function DevicesPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const searchRef = useSlashFocus<HTMLInputElement>();
-  const [sort, setSort] = useState<Sort | null>(null);
+  const [sort, setSort] = useState<Sort<SortKey> | null>(null);
   // Per-row pending guard: while a device's mutation is in flight we disable its
   // action buttons so a double-click can't fire two requests.
   const [busyId, setBusyId] = useState<GenericId<"devices"> | null>(null);
@@ -160,18 +117,14 @@ export default function DevicesPage() {
           : sort.key === "status"
             ? (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9)
             : a.lastSeen - b.lastSeen;
-      return cmp * sort.dir;
+      return cmp * sortSign(sort.dir);
     });
   }, [devices, statusFilter, search, sort]);
 
   // First click sorts a column its natural way (last seen: newest first);
   // clicking the same column again flips the direction.
   function toggleSort(key: SortKey) {
-    setSort((s) =>
-      s?.key === key
-        ? { key, dir: s.dir === 1 ? -1 : 1 }
-        : { key, dir: key === "lastSeen" ? -1 : 1 },
-    );
+    setSort((s) => nextSort(s, key, key === "lastSeen" ? "desc" : "asc"));
   }
 
   const counts = useMemo(() => {
@@ -419,56 +372,26 @@ export default function DevicesPage() {
           <Table aria-label={t("devices.slots.heading.devices")}>
             <TableHeader>
               <TableRow>
-                <TableHead
-                  aria-sort={
-                    sort?.key === "hostname"
-                      ? sort.dir === 1
-                        ? "ascending"
-                        : "descending"
-                      : undefined
-                  }
-                >
-                  <SortHeader
-                    label={t("devices.host")}
-                    sortKey="hostname"
-                    sort={sort}
-                    onToggle={toggleSort}
-                  />
-                </TableHead>
+                <SortableHead
+                  label={t("devices.host")}
+                  active={sort?.key === "hostname"}
+                  dir={sort?.dir ?? "asc"}
+                  onClick={() => toggleSort("hostname")}
+                />
                 <TableHead>{t("devices.user")}</TableHead>
-                <TableHead
-                  aria-sort={
-                    sort?.key === "status"
-                      ? sort.dir === 1
-                        ? "ascending"
-                        : "descending"
-                      : undefined
-                  }
-                >
-                  <SortHeader
-                    label={t("devices.status")}
-                    sortKey="status"
-                    sort={sort}
-                    onToggle={toggleSort}
-                  />
-                </TableHead>
+                <SortableHead
+                  label={t("devices.status")}
+                  active={sort?.key === "status"}
+                  dir={sort?.dir ?? "asc"}
+                  onClick={() => toggleSort("status")}
+                />
                 <TableHead>{t("devices.person")}</TableHead>
-                <TableHead
-                  aria-sort={
-                    sort?.key === "lastSeen"
-                      ? sort.dir === 1
-                        ? "ascending"
-                        : "descending"
-                      : undefined
-                  }
-                >
-                  <SortHeader
-                    label={t("devices.lastSeen")}
-                    sortKey="lastSeen"
-                    sort={sort}
-                    onToggle={toggleSort}
-                  />
-                </TableHead>
+                <SortableHead
+                  label={t("devices.lastSeen")}
+                  active={sort?.key === "lastSeen"}
+                  dir={sort?.dir ?? "asc"}
+                  onClick={() => toggleSort("lastSeen")}
+                />
                 {(isAdmin || isManager) && <TableHead>{t("devices.actions")}</TableHead>}
               </TableRow>
             </TableHeader>
