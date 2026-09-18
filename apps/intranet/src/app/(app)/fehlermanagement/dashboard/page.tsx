@@ -52,7 +52,7 @@ function monthKey(ms: number) {
 function RefreshedErrorDashboard() {
   const t = useTranslations("ErrorManagement");
   const locale = useLocale();
-  const reports = useQuery(api.errorReports.list);
+  const reports = useQuery(api.fehlermanagement.reports.list);
   const [range, setRange] = useState<(typeof RANGES)[number]>(6);
   const [view, setView] = useState<"chart" | "table">("chart");
 

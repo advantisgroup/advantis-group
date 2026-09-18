@@ -82,13 +82,17 @@ import { formatDateTime } from "@/lib/format";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
-type Measure = NonNullable<ReturnType<typeof useQuery<typeof api.errorMeasures.list>>>[number];
+type Measure = NonNullable<
+  ReturnType<typeof useQuery<typeof api.fehlermanagement.measures.list>>
+>[number];
 type Scope = "offen" | "alle" | "erledigt";
 type RelatedLinkType = "guidebook" | "announcement" | "ticket" | "other";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RELATED_LINK_TYPES: RelatedLinkType[] = ["guidebook", "announcement", "ticket", "other"];
-const EMPTY_REPORTS: NonNullable<ReturnType<typeof useQuery<typeof api.errorReports.list>>> = [];
+const EMPTY_REPORTS: NonNullable<
+  ReturnType<typeof useQuery<typeof api.fehlermanagement.reports.list>>
+> = [];
 const NO_OWNER = "none";
 
 function nextPhase(phase: MeasurePhase): MeasurePhase | null {
@@ -119,8 +123,8 @@ function useDue() {
 function MeasuresContent() {
   const t = useTranslations("ErrorManagement");
   const params = useSearchParams();
-  const measures = useQuery(api.errorMeasures.list, {});
-  const reports = useQuery(api.errorReports.list) ?? EMPTY_REPORTS;
+  const measures = useQuery(api.fehlermanagement.measures.list, {});
+  const reports = useQuery(api.fehlermanagement.reports.list) ?? EMPTY_REPORTS;
   const due = useDue();
 
   // Read once — an error's panel links here to add a measure for it.
@@ -513,8 +517,8 @@ function MeasurePanelHeader({
   const isManager = useIsManager();
   const confirm = useConfirm();
   const handleError = useErrorHandler();
-  const update = useMutation(api.errorMeasures.update);
-  const remove = useMutation(api.errorMeasures.remove);
+  const update = useMutation(api.fehlermanagement.measures.update);
+  const remove = useMutation(api.fehlermanagement.measures.remove);
   const due = useDue()(measure, Date.now());
 
   const shortDate = (ms: number) =>
@@ -654,7 +658,7 @@ function MeasurePanelBody({ measure }: { measure: Measure }) {
   const t = useTranslations("ErrorManagement");
   const isManager = useIsManager();
   const handleError = useErrorHandler();
-  const update = useMutation(api.errorMeasures.update);
+  const update = useMutation(api.fehlermanagement.measures.update);
   const users = useQuery(api.users.list, isManager ? {} : "skip") ?? [];
   const currentIndex = MEASURE_PHASES.indexOf(measure.phase);
 
@@ -770,7 +774,7 @@ function MeasurePanelBody({ measure }: { measure: Measure }) {
 
 function MeasureEffectiveness({ measure }: { measure: Measure }) {
   const t = useTranslations("ErrorManagement");
-  const result = useQuery(api.errorMeasures.effectiveness, { measureId: measure._id });
+  const result = useQuery(api.fehlermanagement.measures.effectiveness, { measureId: measure._id });
   if (!result) return null;
   const max = Math.max(result.before, result.after, 1);
   const verdict =
@@ -822,7 +826,7 @@ function MeasureRelatedLinks({ measure }: { measure: Measure }) {
   const tc = useTranslations("Common");
   const isManager = useIsManager();
   const handleError = useErrorHandler();
-  const update = useMutation(api.errorMeasures.update);
+  const update = useMutation(api.fehlermanagement.measures.update);
   const [open, setOpen] = useState(false);
   const [label, setLabel] = useState("");
   const [url, setUrl] = useState("");
@@ -969,9 +973,11 @@ function MeasureDocuments({ measure }: { measure: Measure }) {
   const handleError = useErrorHandler();
   const { openFileViewer } = useFileViewer();
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
-  const addDocument = useMutation(api.errorMeasures.addDocument);
-  const removeDocument = useMutation(api.errorMeasures.removeDocument);
-  const documents = useQuery(api.errorMeasures.listDocuments, { measureId: measure._id });
+  const addDocument = useMutation(api.fehlermanagement.measures.addDocument);
+  const removeDocument = useMutation(api.fehlermanagement.measures.removeDocument);
+  const documents = useQuery(api.fehlermanagement.measures.listDocuments, {
+    measureId: measure._id,
+  });
   const [uploading, setUploading] = useState(false);
 
   async function upload(file: File) {

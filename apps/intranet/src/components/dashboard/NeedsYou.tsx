@@ -85,7 +85,7 @@ export function NeedsYouPanel() {
     isManager ? { status: "pending" } : "skip",
   );
   const tickets = useQuery(api.itTickets.listAssignedOpen);
-  const measures = useQuery(api.errorMeasures.listMineOpen);
+  const measures = useQuery(api.fehlermanagement.measures.listMineOpen);
   const announcements = useQuery(api.announcements.needsAttention);
 
   const loading =

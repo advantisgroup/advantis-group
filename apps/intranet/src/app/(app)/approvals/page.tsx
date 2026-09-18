@@ -121,7 +121,7 @@ function RefreshedApprovalsPage() {
     api.accessRequests.list,
     isManager ? { status: "pending" } : "skip",
   );
-  const measures = useQuery(api.errorMeasures.list, isManager ? {} : "skip");
+  const measures = useQuery(api.fehlermanagement.measures.list, isManager ? {} : "skip");
   const openMeasures = useMemo(
     () =>
       measures

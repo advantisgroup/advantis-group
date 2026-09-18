@@ -22,7 +22,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { MEASURE_PHASES, dateInputToMs, type MeasurePhase } from "@/lib/error-management";
 
-const EMPTY_REPORTS: NonNullable<ReturnType<typeof useQuery<typeof api.errorReports.list>>> = [];
+const EMPTY_REPORTS: NonNullable<
+  ReturnType<typeof useQuery<typeof api.fehlermanagement.reports.list>>
+> = [];
 
 export function NewMeasureDialog({
   open,
@@ -36,9 +38,9 @@ export function NewMeasureDialog({
   const t = useTranslations("ErrorManagement");
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
-  const reports = useQuery(api.errorReports.list) ?? EMPTY_REPORTS;
+  const reports = useQuery(api.fehlermanagement.reports.list) ?? EMPTY_REPORTS;
   const users = useQuery(api.users.list, {}) ?? [];
-  const create = useMutation(api.errorMeasures.create);
+  const create = useMutation(api.fehlermanagement.measures.create);
 
   const [errorId, setErrorId] = useState(defaultErrorId ?? "");
   const [description, setDescription] = useState("");

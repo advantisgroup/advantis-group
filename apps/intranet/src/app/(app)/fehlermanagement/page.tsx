@@ -78,8 +78,10 @@ import {
 import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type Report = NonNullable<ReturnType<typeof useQuery<typeof api.errorReports.list>>>[number];
-type Settings = NonNullable<ReturnType<typeof useQuery<typeof api.errorSettings.get>>>;
+type Report = NonNullable<
+  ReturnType<typeof useQuery<typeof api.fehlermanagement.reports.list>>
+>[number];
+type Settings = NonNullable<ReturnType<typeof useQuery<typeof api.fehlermanagement.settings.get>>>;
 type Scope = "offen" | "alle" | "geschlossen";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -122,8 +124,8 @@ function notInformed(report: Report, settings: Settings | undefined, now: number
 function ErrorReportsContent() {
   const t = useTranslations("ErrorManagement");
   const params = useSearchParams();
-  const reports = useQuery(api.errorReports.list);
-  const settings = useQuery(api.errorSettings.get);
+  const reports = useQuery(api.fehlermanagement.reports.list);
+  const settings = useQuery(api.fehlermanagement.settings.get);
   const dueLabel = useDueLabel();
 
   // Read once: the dashboard's KPI tiles link here with these, and later URL
@@ -502,9 +504,9 @@ function ErrorReportPanelHeader({ report, onDeleted }: { report: Report; onDelet
   const isManager = useIsManager();
   const confirm = useConfirm();
   const handleError = useErrorHandler();
-  const update = useMutation(api.errorReports.update);
-  const remove = useMutation(api.errorReports.remove);
-  const measures = useQuery(api.errorMeasures.list, { errorReportId: report._id });
+  const update = useMutation(api.fehlermanagement.reports.update);
+  const remove = useMutation(api.fehlermanagement.reports.remove);
+  const measures = useQuery(api.fehlermanagement.measures.list, { errorReportId: report._id });
   const dueLabel = useDueLabel();
 
   const shortDate = (ms: number) =>
@@ -653,9 +655,9 @@ function ErrorReportPanelBody({
   const tc = useTranslations("Common");
   const locale = useLocale();
   const handleError = useErrorHandler();
-  const update = useMutation(api.errorReports.update);
-  const categories = useQuery(api.errorCategories.list) ?? [];
-  const measures = useQuery(api.errorMeasures.list, { errorReportId: report._id });
+  const update = useMutation(api.fehlermanagement.reports.update);
+  const categories = useQuery(api.fehlermanagement.categories.list) ?? [];
+  const measures = useQuery(api.fehlermanagement.measures.list, { errorReportId: report._id });
   const level = escalationLevel(report);
   const ampel = notInformed(report, settings, Date.now());
 

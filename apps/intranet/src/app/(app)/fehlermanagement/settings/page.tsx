@@ -25,14 +25,14 @@ export default function ErrorManagementSettingsPage() {
   const confirm = useConfirm();
   const handleError = useErrorHandler();
 
-  const categories = useQuery(api.errorCategories.list) ?? [];
-  const createCategory = useMutation(api.errorCategories.create);
-  const renameCategory = useMutation(api.errorCategories.rename);
-  const removeCategory = useMutation(api.errorCategories.remove);
+  const categories = useQuery(api.fehlermanagement.categories.list) ?? [];
+  const createCategory = useMutation(api.fehlermanagement.categories.create);
+  const renameCategory = useMutation(api.fehlermanagement.categories.rename);
+  const removeCategory = useMutation(api.fehlermanagement.categories.remove);
   const [newCategory, setNewCategory] = useState("");
 
-  const settings = useQuery(api.errorSettings.get);
-  const updateSettings = useMutation(api.errorSettings.update);
+  const settings = useQuery(api.fehlermanagement.settings.get);
+  const updateSettings = useMutation(api.fehlermanagement.settings.update);
   const [targetResponseDays, setTargetResponseDays] = useState(3);
   const [warnResponseDays, setWarnResponseDays] = useState(7);
   const [defaultDueDays, setDefaultDueDays] = useState(14);

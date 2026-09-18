@@ -36,7 +36,7 @@ export function CategorySelect({
   onChange: (v: string) => void;
 }) {
   const t = useTranslations("ErrorManagement");
-  const categories = useQuery(api.errorCategories.list) ?? [];
+  const categories = useQuery(api.fehlermanagement.categories.list) ?? [];
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger>
@@ -64,7 +64,7 @@ export function NewErrorDialog({
   const t = useTranslations("ErrorManagement");
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
-  const create = useMutation(api.errorReports.create);
+  const create = useMutation(api.fehlermanagement.reports.create);
 
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("none");

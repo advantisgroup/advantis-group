@@ -44,7 +44,7 @@ export function ManagerBriefCard() {
   const pendingAbsences = usePendingAbsenceCount(true);
   const accessRequests = useQuery(api.accessRequests.list, { status: "pending" });
   const tickets = useQuery(api.itTickets.list);
-  const measures = useQuery(api.errorMeasures.list, {});
+  const measures = useQuery(api.fehlermanagement.measures.list, {});
 
   const staleTickets =
     tickets?.filter(
@@ -331,7 +331,7 @@ export function ApplicantPipelineHealthCard() {
 
 export function OpenMeasuresCard() {
   const t = useTranslations("Dashboard");
-  const measures = useQuery(api.errorMeasures.list, {});
+  const measures = useQuery(api.fehlermanagement.measures.list, {});
   const open = measures?.filter((measure) => measure.status === "offen") ?? [];
   const overdue = open.filter((measure) => measure.dueAt && measure.dueAt < Date.now());
 
