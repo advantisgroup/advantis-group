@@ -49,7 +49,14 @@ export const getForPost = action({
     };
 
     if (post.status !== "published") {
-      return { ...base, views: 0, uniqueVisitors: 0, avgTimeOnPageSeconds: null, bounceRate: null, referrers: [] };
+      return {
+        ...base,
+        views: 0,
+        uniqueVisitors: 0,
+        avgTimeOnPageSeconds: null,
+        bounceRate: null,
+        referrers: [],
+      };
     }
 
     const stats = await ctx.runQuery(internal.marketingAnalytics.computeForPost, {

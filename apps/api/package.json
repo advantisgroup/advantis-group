@@ -15,7 +15,10 @@
     "build": "bash ../../scripts/vercel-preview-convex-api-build.sh \"tsc --noEmit\"",
     "onedrive:auth": "bun run scripts/onedrive-auth.ts",
     "type-check": "tsc --noEmit",
-    "lint": "echo \"@advantis/api: no lint\""
+    "lint": "oxlint ./src",
+    "lint:fix": "oxlint ./src --fix",
+    "format:check": "oxfmt --check ./src",
+    "format": "oxfmt --write ./src"
   },
   "dependencies": {
     "@advantis/api-contract": "workspace:*",

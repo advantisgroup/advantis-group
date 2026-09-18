@@ -51,7 +51,9 @@ export type PartialProfileSource = Pick<
  * independently in `chat.ts` (`memberDisplay`) and `humanResources.ts`
  * (`displayName`).
  */
-export function profileDisplayName(user: Pick<Doc<"users">, "firstName" | "lastName" | "email">): string {
+export function profileDisplayName(
+  user: Pick<Doc<"users">, "firstName" | "lastName" | "email">,
+): string {
   return [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
 }
 

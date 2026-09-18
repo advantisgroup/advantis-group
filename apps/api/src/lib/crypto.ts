@@ -25,7 +25,9 @@ function getKey(envVar: string): Buffer {
   const raw = requireEnv(envVar);
   const key = Buffer.from(raw, "base64");
   if (key.length !== 32) {
-    throw new Error(`${envVar} must be 32 bytes, base64-encoded (e.g. \`openssl rand -base64 32\`)`);
+    throw new Error(
+      `${envVar} must be 32 bytes, base64-encoded (e.g. \`openssl rand -base64 32\`)`,
+    );
   }
   cachedKeys.set(envVar, key);
   return key;

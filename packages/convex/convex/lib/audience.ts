@@ -1,7 +1,7 @@
 import { type Infer } from "convex/values";
 
 import { type Doc } from "../_generated/dataModel";
-import { audienceValidator } from "../schema";
+import { type audienceValidator } from "../schema";
 
 export type Audience = Infer<typeof audienceValidator>;
 
@@ -48,7 +48,9 @@ export function audienceLabel(audience: Audience): string {
       const parts: string[] = [];
       if (audience.departments.length) parts.push(`${audience.departments.length} dept.`);
       if (audience.userIds.length) {
-        parts.push(`${audience.userIds.length} ${audience.userIds.length === 1 ? "person" : "people"}`);
+        parts.push(
+          `${audience.userIds.length} ${audience.userIds.length === 1 ? "person" : "people"}`,
+        );
       }
       return parts.length ? parts.join(" + ") : "No one selected";
     }

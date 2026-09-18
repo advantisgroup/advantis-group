@@ -46,9 +46,8 @@ Upstream recommends typescript-eslint's
 
 > **In this repo:** that rule is type-aware, and `oxlint` only runs
 > type-aware rules through `oxlint-tsgolint` (already a root devDependency).
-> Since `packages/convex` has no lint script at all, wiring one up is the
-> prerequisite for enforcing this mechanically. Until then it's a review
-> concern.
+> `packages/convex` now has an `oxlint` script, but not with type-aware
+> rules turned on, so until that's wired up it's a review concern.
 
 ## Avoid `.filter` on database queries
 

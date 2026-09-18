@@ -29,7 +29,9 @@ async function resolvePostId(ctx: MutationCtx, path: string) {
   const [, language, slug] = match;
   const post = await ctx.db
     .query("blogPosts")
-    .withIndex("by_slug_language", (q) => q.eq("slug", slug).eq("language", language as "de" | "en"))
+    .withIndex("by_slug_language", (q) =>
+      q.eq("slug", slug).eq("language", language as "de" | "en"),
+    )
     .unique();
   return post?._id;
 }

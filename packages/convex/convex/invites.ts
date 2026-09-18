@@ -1,4 +1,4 @@
-import { sandboxedAction as action, sandboxedMutation as mutation } from "./lib/sandbox";
+import { sandboxedAction as action } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";

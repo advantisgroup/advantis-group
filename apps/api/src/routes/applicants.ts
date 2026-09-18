@@ -247,7 +247,9 @@ export const applicantsRoute = new Elysia()
     if (!run || run.kind !== "cvExtract" || run.status !== "done" || !run.output) {
       throw Errors.notFound("Import not found");
     }
-    const result = JSON.parse(decrypt(run.output, runEncryptionKey("cvExtract"))) as CvExtractOutput;
+    const result = JSON.parse(
+      decrypt(run.output, runEncryptionKey("cvExtract")),
+    ) as CvExtractOutput;
     if (result.kind !== "duplicate") throw Errors.badRequest("Already created");
     const applicantId = await createFromExtraction(
       access.userId,

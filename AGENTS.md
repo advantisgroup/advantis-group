@@ -142,7 +142,7 @@ Read [`docs/convex-best-practices.md`](./docs/convex-best-practices.md)
 before adding or editing anything in `packages/convex/convex`. It's Convex's
 official best-practices list annotated with where this repo follows it, where
 it deliberately doesn't, and why. Nothing enforces any of it automatically —
-`packages/convex` has no lint script and none of the `@convex-dev/*` ESLint
+`packages/convex` runs plain `oxlint`, but none of the `@convex-dev/*` ESLint
 rules are installed — so it's on whoever writes the function.
 
 The four that bite hardest here:

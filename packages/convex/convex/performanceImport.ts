@@ -25,7 +25,6 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { fmtDuration, MAX_PLAUSIBLE_DAY_SECONDS } from "./performance/lib/callImport";
 import { monthBounds } from "./performance/lib/kpi";
 import { EXCLUDED_OWNERS } from "./performance/lib/salesforceImport";
 import {
@@ -36,12 +35,7 @@ import {
   type SheetRow,
   type SnapshotFields,
 } from "./performance/lib/types";
-import {
-  requireAdminLogin,
-  requirePermission,
-  requireSessionLogin,
-  resolveCompanyId,
-} from "./performanceAuth";
+import { requirePermission, requireSessionLogin, resolveCompanyId } from "./performanceAuth";
 import { toISODate } from "./performance/lib/workdays";
 import { assertServerKey } from "./lib/auth";
 

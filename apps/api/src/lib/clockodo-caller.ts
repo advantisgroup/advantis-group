@@ -12,13 +12,10 @@ import { requireAuth } from "./middleware.js";
  * holders without a personal link. */
 export async function resolveClockodoCaller(request: Request) {
   const { clerkUserId } = await requireAuth(request);
-  const caller = await getConvex().query(
-    api.integrations.clockodoAbsences.resolveCaller,
-    {
-      serverKey: getConvexServerKey(),
-      clerkUserId,
-    }
-  );
+  const caller = await getConvex().query(api.integrations.clockodoAbsences.resolveCaller, {
+    serverKey: getConvexServerKey(),
+    clerkUserId,
+  });
   if (caller.status !== "linked") {
     throw Errors.forbidden("Clockodo account is not linked");
   }

@@ -685,12 +685,7 @@ export const clockodoStatusForRoster = query({
   returns: v.array(
     v.object({
       clockodoUserId: v.number(),
-      status: v.union(
-        v.literal("working"),
-        v.literal("break"),
-        v.literal("clockedOut"),
-        v.null(),
-      ),
+      status: v.union(v.literal("working"), v.literal("break"), v.literal("clockedOut"), v.null()),
     }),
   ),
   handler: async (ctx, { clockodoUserIds }) => {

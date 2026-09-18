@@ -22,7 +22,6 @@ import {
   startOfBusinessDayUtcMs,
 } from "./lib/businessHours";
 import { deriveClockodoDaySegments } from "./lib/clockodoDay";
-import { appError } from "./lib/errors";
 import { requireAdminAction } from "../integrations/lib/auth";
 
 /**

@@ -37,7 +37,12 @@ async function seedAdmin(t: T, clerkUserId = "admin"): Promise<Id<"users">> {
 
 async function seedEmployee(
   t: T,
-  opts: { clerkUserId: string; email: string; applicantAccess?: boolean; applicantAccessDelegate?: boolean },
+  opts: {
+    clerkUserId: string;
+    email: string;
+    applicantAccess?: boolean;
+    applicantAccessDelegate?: boolean;
+  },
 ): Promise<Id<"users">> {
   return await t.run(async (ctx) =>
     ctx.db.insert("users", {
@@ -67,7 +72,11 @@ async function seedCompany(t: T): Promise<Id<"companies">> {
   );
 }
 
-async function seedRole(t: T, companyId: Id<"companies">, name = "Team Lead"): Promise<Id<"companyRoles">> {
+async function seedRole(
+  t: T,
+  companyId: Id<"companies">,
+  name = "Team Lead",
+): Promise<Id<"companyRoles">> {
   return await t.run(async (ctx) =>
     ctx.db.insert("companyRoles", {
       companyId,
@@ -108,7 +117,12 @@ async function seedPerformanceLogin(
 
 async function seedAcademyParticipant(
   t: T,
-  opts: { academyId: string; email: string; linkedUserId?: Id<"users">; autoLinkedVia?: "email_match" },
+  opts: {
+    academyId: string;
+    email: string;
+    linkedUserId?: Id<"users">;
+    autoLinkedVia?: "email_match";
+  },
 ): Promise<Id<"academyParticipants">> {
   return await t.run(async (ctx) =>
     ctx.db.insert("academyParticipants", {
@@ -136,7 +150,10 @@ describe("accountLinks.forUser", () => {
   test("returns null for a user that doesn't exist", async () => {
     const t = setup();
     await seedAdmin(t);
-    const other = await seedEmployee(t, { clerkUserId: "throwaway", email: "throwaway@advantisgroup.de" });
+    const other = await seedEmployee(t, {
+      clerkUserId: "throwaway",
+      email: "throwaway@advantisgroup.de",
+    });
     await t.run(async (ctx) => ctx.db.delete(other));
 
     const result = await asUser(t, "admin").query(api.accountLinks.forUser, { userId: other });
@@ -146,7 +163,10 @@ describe("accountLinks.forUser", () => {
   test("reports not_linked/no_access/no academies for a plain unlinked user", async () => {
     const t = setup();
     await seedAdmin(t);
-    const employee = await seedEmployee(t, { clerkUserId: "plain", email: "plain@advantisgroup.de" });
+    const employee = await seedEmployee(t, {
+      clerkUserId: "plain",
+      email: "plain@advantisgroup.de",
+    });
 
     const result = await asUser(t, "admin").query(api.accountLinks.forUser, { userId: employee });
     expect(result).toEqual({
@@ -159,7 +179,10 @@ describe("accountLinks.forUser", () => {
   test("reports a linked, role-bearing Performance login with company/role names", async () => {
     const t = setup();
     await seedAdmin(t);
-    const employee = await seedEmployee(t, { clerkUserId: "linked", email: "linked@advantisgroup.de" });
+    const employee = await seedEmployee(t, {
+      clerkUserId: "linked",
+      email: "linked@advantisgroup.de",
+    });
     const companyId = await seedCompany(t);
     const roleId = await seedRole(t, companyId, "Team Lead");
     await seedPerformanceLogin(t, {
@@ -184,7 +207,10 @@ describe("accountLinks.forUser", () => {
   test("reports a super-admin Performance login without a company/role", async () => {
     const t = setup();
     await seedAdmin(t);
-    const employee = await seedEmployee(t, { clerkUserId: "super", email: "super@advantisgroup.de" });
+    const employee = await seedEmployee(t, {
+      clerkUserId: "super",
+      email: "super@advantisgroup.de",
+    });
     await seedPerformanceLogin(t, {
       email: "super@advantisgroup.de",
       isSuperAdmin: true,
@@ -234,7 +260,11 @@ describe("accountLinks.forUser", () => {
       applicantAccessDelegate: true,
     });
     await t.run(async (ctx) => {
-      await ctx.db.insert("applicantVaultPasswords", { userId: employee, hash: "hash", updatedAt: Date.now() });
+      await ctx.db.insert("applicantVaultPasswords", {
+        userId: employee,
+        hash: "hash",
+        updatedAt: Date.now(),
+      });
       await ctx.db.insert("passkeys", {
         userId: employee,
         credentialId: "cred-1",
@@ -259,7 +289,10 @@ describe("accountLinks.forUser", () => {
   test("reports multiple academy links, distinguishing auto-linked from human-linked", async () => {
     const t = setup();
     await seedAdmin(t);
-    const employee = await seedEmployee(t, { clerkUserId: "student", email: "student@advantisgroup.de" });
+    const employee = await seedEmployee(t, {
+      clerkUserId: "student",
+      email: "student@advantisgroup.de",
+    });
     await seedAcademyParticipant(t, {
       academyId: "sales-101",
       email: "student@advantisgroup.de",

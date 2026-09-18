@@ -40,7 +40,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "type-check": "tsc --noEmit",
-    "lint": "echo \"@advantis/convex: no lint\""
+    "lint": "oxlint ./convex",
+    "lint:fix": "oxlint ./convex --fix",
+    "format:check": "oxfmt --check ./convex",
+    "format": "oxfmt --write ./convex"
   },
   "dependencies": {
     "@types/node": "^26.1.1",
