@@ -92,7 +92,7 @@ export function UpdateComposer({ draftId }: { draftId: string }) {
   const handleError = useErrorHandler();
 
   const departments = useQuery(api.users.departments) ?? [];
-  const create = useMutation(api.updates.create);
+  const create = useMutation(api.updates.updates.create);
 
   const [values, setValues] = useState<UpdateValues>(EMPTY_UPDATE);
   const [customSystem, setCustomSystem] = useState("");
@@ -120,7 +120,7 @@ export function UpdateComposer({ draftId }: { draftId: string }) {
     [values.audience],
   );
   const emailPreview = useQuery(
-    api.updates.previewEmailRecipients,
+    api.updates.updates.previewEmailRecipients,
     isAdmin && values.emailRequested ? { audience: audienceValue } : "skip",
   );
 

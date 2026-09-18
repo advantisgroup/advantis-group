@@ -49,7 +49,7 @@ const TYPE_BADGE_VARIANT = {
   changelog: "success",
 } as const;
 
-type UpdateDetail = FunctionReturnType<typeof api.updates.get>;
+type UpdateDetail = FunctionReturnType<typeof api.updates.updates.get>;
 type UpdateData = NonNullable<UpdateDetail>;
 
 function StatusCard({
@@ -124,9 +124,9 @@ export default function UpdateDetailPage() {
   const confirm = useConfirm();
   const handleError = useErrorHandler();
 
-  const data = useQuery(api.updates.get, { updateId });
-  const addTimeline = useMutation(api.updates.addTimelineEntry);
-  const removeUpdate = useMutation(api.updates.remove);
+  const data = useQuery(api.updates.updates.get, { updateId });
+  const addTimeline = useMutation(api.updates.updates.addTimelineEntry);
+  const removeUpdate = useMutation(api.updates.updates.remove);
 
   const [message, setMessage] = useState("");
   const [nextStatus, setNextStatus] = useState<string>("none");

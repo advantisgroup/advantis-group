@@ -49,7 +49,7 @@ export default function UpdatesPage() {
   const [affectedSystem, setAffectedSystem] = useState<string>("all");
   const [search, setSearch] = useState("");
 
-  const items = useQuery(api.updates.list, {
+  const items = useQuery(api.updates.updates.list, {
     type: type === "all" ? undefined : type,
     status: status === "all" ? undefined : (status as never),
     affectedSystem: affectedSystem === "all" ? undefined : affectedSystem,

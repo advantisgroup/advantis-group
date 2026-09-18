@@ -94,7 +94,7 @@ if (!convexUrl || !serverKey) {
 
 const client = new ConvexHttpClient(convexUrl);
 
-const result = await client.mutation(api.updates.publishFromMarkdown, {
+const result = await client.mutation(api.updates.updates.publishFromMarkdown, {
   serverKey,
   authorEmail,
   slug,

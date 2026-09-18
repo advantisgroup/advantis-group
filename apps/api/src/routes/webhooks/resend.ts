@@ -69,7 +69,7 @@ export const resendWebhookRoute = new Elysia().post(
     if (!event.data.email_id && !(updateId && userId)) return { ok: true };
 
     const convex = getConvex();
-    await convex.mutation(api.updates.recordEmailEvent, {
+    await convex.mutation(api.updates.updates.recordEmailEvent, {
       serverKey: getConvexServerKey(),
       resendEmailId: event.data.email_id,
       updateId: updateId as Id<"updates"> | undefined,

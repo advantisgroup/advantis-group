@@ -48,8 +48,8 @@ const TYPE_STYLE = {
 export function UpdateBanner() {
   const t = useTranslations("Updates");
   const pathname = usePathname();
-  const active = useQuery(api.updates.bannerActive);
-  const dismiss = useMutation(api.updates.dismissBanner);
+  const active = useQuery(api.updates.updates.bannerActive);
+  const dismiss = useMutation(api.updates.updates.dismissBanner);
 
   if (!active?.top) return null;
   const { top, moreCount, others } = active;

@@ -191,7 +191,7 @@ export function Sidebar() {
 
   const chatConversations = useQuery(api.chat.listConversations);
   const announcementUnread = useQuery(api.announcements.unreadCount);
-  const activeUpdate = useQuery(api.updates.bannerActive);
+  const activeUpdate = useQuery(api.updates.updates.bannerActive);
   const chatUnread = chatConversations?.reduce((sum, c) => sum + c.unread, 0) ?? 0;
   const hasGuidebooks = accessibleGuidebooks(user).length > 0;
 
