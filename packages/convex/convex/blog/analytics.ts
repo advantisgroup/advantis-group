@@ -59,7 +59,7 @@ export const getForPost = action({
       };
     }
 
-    const stats = await ctx.runQuery(internal.marketingAnalytics.computeForPost, {
+    const stats = await ctx.runQuery(internal.marketing.analytics.computeForPost, {
       postId,
       days: days ?? 30,
     });

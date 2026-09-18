@@ -57,7 +57,7 @@ export const submissions = new Elysia().get(
     const convex = new ConvexHttpClient(convexUrl);
 
     try {
-      const submissions = await convex.query(api.emails.listEmailsByAccountEmail, {
+      const submissions = await convex.query(api.marketing.emails.listEmailsByAccountEmail, {
         accountEmail,
       });
       if (!submissions) {

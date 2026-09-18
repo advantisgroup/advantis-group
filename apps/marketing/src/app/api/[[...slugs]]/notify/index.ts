@@ -29,7 +29,7 @@ export const notify = new Elysia()
       }
 
       try {
-        const result = await convex.mutation(api.emails.saveNotifyEmail, {
+        const result = await convex.mutation(api.marketing.emails.saveNotifyEmail, {
           email: body.email.trim().toLowerCase(),
         });
 
@@ -87,7 +87,7 @@ export const notify = new Elysia()
       }
 
       try {
-        const result = (await convex.mutation(api.emails.deleteNotifyEmail, {
+        const result = (await convex.mutation(api.marketing.emails.deleteNotifyEmail, {
           email: decodedEmail,
         })) as { deleted: boolean; email: string | null; error: string | null };
 

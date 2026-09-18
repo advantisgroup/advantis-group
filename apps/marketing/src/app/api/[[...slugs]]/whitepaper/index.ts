@@ -97,7 +97,7 @@ export const whitepaper = new Elysia({ prefix: "/whitepaper" })
       const token = randomBytes(32).toString("hex");
 
       try {
-        const { leadId, throttled } = await convex.mutation(api.whitepaperLeads.saveRequest, {
+        const { leadId, throttled } = await convex.mutation(api.marketing.leads.saveRequest, {
           email,
           company: body.company.trim(),
           firstName: body.firstName.trim(),
@@ -138,7 +138,7 @@ export const whitepaper = new Elysia({ prefix: "/whitepaper" })
           };
         }
 
-        await convex.mutation(api.whitepaperLeads.markConfirmationSent, {
+        await convex.mutation(api.marketing.leads.markConfirmationSent, {
           leadId,
           emailId: data?.id,
         });
@@ -185,7 +185,7 @@ export const whitepaper = new Elysia({ prefix: "/whitepaper" })
       }
 
       try {
-        const result = await convex.mutation(api.whitepaperLeads.confirmRequest, {
+        const result = await convex.mutation(api.marketing.leads.confirmRequest, {
           confirmTokenHash: sha256(body.token),
           confirmIp: clientIp(headers),
         });
@@ -222,7 +222,7 @@ export const whitepaper = new Elysia({ prefix: "/whitepaper" })
           ],
         });
 
-        await convex.mutation(api.whitepaperLeads.markDelivered, {
+        await convex.mutation(api.marketing.leads.markDelivered, {
           leadId: result.leadId,
           emailId: data?.id,
           error: error?.message,

@@ -68,7 +68,7 @@ export const email = new Elysia().post(
 
       if (convex) {
         try {
-          await convex.mutation(api.emails.saveEmail, {
+          await convex.mutation(api.marketing.emails.saveEmail, {
             firstName,
             lastName,
             phone: phone || undefined,
@@ -113,7 +113,7 @@ export const email = new Elysia().post(
 
       if (convex) {
         try {
-          await convex.mutation(api.emails.saveEmail, {
+          await convex.mutation(api.marketing.emails.saveEmail, {
             firstName,
             lastName,
             email: cc?.[0] || "",

@@ -239,7 +239,7 @@ http.route({
     const parsed = durationBeaconSchema.safeParse(body);
     if (!parsed.success) return badRequest();
 
-    await ctx.runMutation(internal.marketingAnalytics.applyDuration, {
+    await ctx.runMutation(internal.marketing.analytics.applyDuration, {
       pageviewId: parsed.data.pageviewId as Id<"analyticsPageviews">,
       durationMs: parsed.data.durationMs,
     });

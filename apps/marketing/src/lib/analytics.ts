@@ -43,7 +43,7 @@ export function getSessionId(): string {
  * the thing it's only there to measure.
  */
 export function useTrackEvent() {
-  const recordEvent = useMutation(api.marketingAnalytics.recordEvent);
+  const recordEvent = useMutation(api.marketing.analytics.recordEvent);
   const locale = useLocale();
 
   return useCallback(

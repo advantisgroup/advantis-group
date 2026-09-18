@@ -27,7 +27,7 @@ export function AnalyticsTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const locale = useLocale();
-  const recordPageview = useMutation(api.marketingAnalytics.recordPageview);
+  const recordPageview = useMutation(api.marketing.analytics.recordPageview);
 
   // Only the landing hit of a share link is attributed. Carrying `?r=` into
   // every later pageview would credit the sharer for the whole visit, which
