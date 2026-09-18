@@ -120,7 +120,10 @@ function ExemptUsersPicker({
     setNameCache((prev) => {
       const next = new Map(prev);
       for (const user of results) {
-        next.set(user._id, { name: user.name, avatar: user.avatar ?? undefined });
+        next.set(user._id, {
+          name: user.name,
+          avatar: user.avatar ?? undefined,
+        });
       }
       return next;
     });
@@ -290,113 +293,6 @@ function SecurityStandardSection() {
   );
 }
 
-const AREA_LABEL_KEY = {
-  performance: "authenticationAreaPerformance",
-  applicant_vault: "authenticationAreaApplicantVault",
-} as const;
-
-/** Phase 7 of docs/future-features/21_auth-consolidation.md's admin-visible
- * companion to `SecurityStandardSection` above — the device-trust opt-in/
- * opt-out split and each area's "always step up" vs. "trust device"
- * preference split, so the 14-day window set below isn't the only thing
- * visible here. Read-only, same as the section above it. */
-function AreaReverifyStandardSection() {
-  const t = useTranslations("Admin");
-  const standard = useQuery(api.stepUp.areaStandard);
-
-  if (!standard) return <Skeleton className="h-28 rounded-xl" />;
-
-  return (
-    <section className="space-y-3">
-      <header>
-        <h2 className="text-sm font-semibold tracking-tight">
-          {t("authenticationAreaStandardTitle")}
-        </h2>
-        <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground text-pretty">
-          {t("authenticationAreaStandardHint")}
-        </p>
-      </header>
-      <KpiStrip className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3">
-        <Kpi
-          label={t("authenticationDeviceTrackingOptIn")}
-          value={standard.deviceTrackingOptInCount}
-        />
-        <Kpi
-          label={t("authenticationDeviceTrackingOptOut")}
-          value={standard.deviceTrackingOptOutCount}
-        />
-        {standard.byArea.map((entry) => (
-          <Kpi
-            key={entry.area}
-            label={t("authenticationAlwaysStepUpFor", { area: t(AREA_LABEL_KEY[entry.area]) })}
-            value={entry.alwaysStepUpCount}
-            hint={`${t("authenticationTrustDeviceCount")}: ${entry.trustDeviceCount}`}
-          />
-        ))}
-      </KpiStrip>
-    </section>
-  );
-}
-
-/** Phase 8's companion metric — the migration's tail made visible instead of
- * silent, per the plan's own ask. Only rendered per-area once that area's
- * sunset is actually enabled; while it's off there's no clock and nothing to
- * count down. */
-function LegacyPasswordStandardSection() {
-  const t = useTranslations("Admin");
-  const format = useFormatter();
-  const standard = useQuery(api.stepUp.legacyPasswordStandard);
-
-  if (!standard) return <Skeleton className="h-20 rounded-xl" />;
-  if (!standard.performance.enabled && !standard.applicantVault.enabled) return null;
-
-  return (
-    <section className="space-y-3">
-      <header>
-        <h2 className="text-sm font-semibold tracking-tight">
-          {t("authenticationLegacyPasswordStandardTitle")}
-        </h2>
-      </header>
-      <KpiStrip className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
-        {standard.performance.enabled && (
-          <Kpi
-            label={t("authenticationAreaPerformance")}
-            value={standard.performance.accountsStillOnLegacyPassword}
-            hint={
-              standard.performance.deadlineAt
-                ? t("authenticationLegacyPasswordDeadline", {
-                    date: format.dateTime(new Date(standard.performance.deadlineAt), {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    }),
-                  })
-                : undefined
-            }
-          />
-        )}
-        {standard.applicantVault.enabled && (
-          <Kpi
-            label={t("authenticationAreaApplicantVault")}
-            value={standard.applicantVault.accountsStillOnLegacyPassword}
-            hint={
-              standard.applicantVault.deadlineAt
-                ? t("authenticationLegacyPasswordDeadline", {
-                    date: format.dateTime(new Date(standard.applicantVault.deadlineAt), {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    }),
-                  })
-                : undefined
-            }
-          />
-        )}
-      </KpiStrip>
-    </section>
-  );
-}
-
 function formOf(policy: PolicyForm): PolicyForm {
   return {
     requireMfaScope: policy.requireMfaScope,
@@ -426,8 +322,11 @@ function appliesRetroactively(scope: Scope, retroactive: boolean) {
  */
 export function AuthenticationPolicyPanel() {
   const t = useTranslations("Admin");
+  const format = useFormatter();
   const policy = useQuery(api.stepUp.orgPolicy);
   const setPolicy = useMutation(api.stepUp.setOrgPolicy);
+  const areaStandard = useQuery(api.stepUp.areaStandard);
+  const legacy = useQuery(api.stepUp.legacyPasswordStandard);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
   const [form, setForm] = useState<PolicyForm | null>(null);
@@ -465,33 +364,42 @@ export function AuthenticationPolicyPanel() {
     if (!form || !policy) return;
     const next = { ...form, ...patch };
     const items: { tone: "neutral"; text: string }[] = [];
+    const sunsetItems: { tone: "neutral"; text: string }[] = [];
     if (
       appliesRetroactively(next.requireMfaScope, next.requireMfaRetroactive) &&
       !appliesRetroactively(policy.requireMfaScope, policy.requireMfaRetroactive)
     ) {
-      items.push({ tone: "neutral", text: t("authenticationConfirmMfaRetroactive") });
+      items.push({
+        tone: "neutral",
+        text: t("authenticationConfirmMfaRetroactive"),
+      });
     }
     if (
       appliesRetroactively(next.requirePasskeyScope, next.requirePasskeyRetroactive) &&
       !appliesRetroactively(policy.requirePasskeyScope, policy.requirePasskeyRetroactive)
     ) {
-      items.push({ tone: "neutral", text: t("authenticationConfirmPasskeyRetroactive") });
+      items.push({
+        tone: "neutral",
+        text: t("authenticationConfirmPasskeyRetroactive"),
+      });
     }
-    // Phase 8: starting the clock is exactly the kind of change that
-    // interrupts people who already have access — every linked account (or,
-    // for the vault, every member with a passkey) loses its standalone
-    // password once the grace period elapses.
     if (
       next.performanceLegacyPasswordSunsetEnabled &&
       !policy.performanceLegacyPasswordSunsetEnabled
     ) {
-      items.push({ tone: "neutral", text: t("authenticationConfirmPerformanceSunset") });
+      sunsetItems.push({
+        tone: "neutral",
+        text: t("authenticationConfirmPerformanceSunset"),
+      });
     }
     if (
       next.applicantVaultLegacyPasswordSunsetEnabled &&
       !policy.applicantVaultLegacyPasswordSunsetEnabled
     ) {
-      items.push({ tone: "neutral", text: t("authenticationConfirmApplicantVaultSunset") });
+      sunsetItems.push({
+        tone: "neutral",
+        text: t("authenticationConfirmApplicantVaultSunset"),
+      });
     }
     if (items.length > 0) {
       const ok = await confirm({
@@ -499,6 +407,18 @@ export function AuthenticationPolicyPanel() {
         description: t("authenticationConfirmBody"),
         items,
         confirmLabel: t("authenticationApply"),
+        cancelLabel: t("authenticationCancel"),
+      });
+      if (!ok) return;
+    }
+    if (sunsetItems.length > 0) {
+      const ok = await confirm({
+        title: t("authenticationConfirmSunsetTitle"),
+        description: t("authenticationConfirmSunsetBody", {
+          days: next.legacyPasswordGraceDays,
+        }),
+        items: sunsetItems,
+        confirmLabel: t("authenticationConfirmSunsetApply"),
         cancelLabel: t("authenticationCancel"),
       });
       if (!ok) return;
@@ -524,9 +444,6 @@ export function AuthenticationPolicyPanel() {
     <SettingsLayoutProvider value="stacked">
       <div className="space-y-10">
         <SecurityStandardSection />
-        <AreaReverifyStandardSection />
-        <LegacyPasswordStandardSection />
-
         <ScopeSection
           title={t("authenticationMfaTitle")}
           hint={t("authenticationMfaHint")}
@@ -535,7 +452,6 @@ export function AuthenticationPolicyPanel() {
           onScopeChange={(requireMfaScope) => void change({ requireMfaScope })}
           onRetroactiveChange={(requireMfaRetroactive) => void change({ requireMfaRetroactive })}
         />
-
         <ScopeSection
           title={t("authenticationPasskeyTitle")}
           hint={t("authenticationPasskeyHint")}
@@ -546,7 +462,6 @@ export function AuthenticationPolicyPanel() {
             void change({ requirePasskeyRetroactive })
           }
         />
-
         <SettingsSection
           title={t("authenticationDestructiveTitle")}
           description={t("authenticationDestructiveHint")}
@@ -557,7 +472,9 @@ export function AuthenticationPolicyPanel() {
               <Switch
                 checked={form.requireMfaForDestructive}
                 onToggle={() =>
-                  void change({ requireMfaForDestructive: !form.requireMfaForDestructive })
+                  void change({
+                    requireMfaForDestructive: !form.requireMfaForDestructive,
+                  })
                 }
                 label={t("authenticationDestructiveEnable")}
               />
@@ -609,7 +526,6 @@ export function AuthenticationPolicyPanel() {
             </>
           )}
         </SettingsSection>
-
         <SettingsSection title={t("authenticationEnforcementTitle")}>
           <SettingsRow
             title={t("authenticationGracePeriod")}
@@ -642,7 +558,6 @@ export function AuthenticationPolicyPanel() {
             />
           </SettingsRow>
         </SettingsSection>
-
         <SettingsSection
           title={t("authenticationAreaReverifyTitle")}
           description={t("authenticationAreaReverifyHint")}
@@ -667,44 +582,68 @@ export function AuthenticationPolicyPanel() {
               />
             }
           />
+          {areaStandard && (
+            <p className="px-4 py-3 text-xs text-muted-foreground text-pretty">
+              {t("authenticationAreaStats", {
+                performance:
+                  areaStandard.byArea.find((a) => a.area === "performance")?.alwaysStepUpCount ?? 0,
+                vault:
+                  areaStandard.byArea.find((a) => a.area === "applicant_vault")
+                    ?.alwaysStepUpCount ?? 0,
+                optedOut: areaStandard.deviceTrackingOptOutCount,
+              })}
+            </p>
+          )}
         </SettingsSection>
-
         <SettingsSection
           title={t("authenticationLegacyPasswordTitle")}
           description={t("authenticationLegacyPasswordHint")}
         >
-          <SettingsRow
-            title={t("authenticationAreaPerformance")}
-            description={t("authenticationLegacyPasswordPerformanceHint")}
-            control={
-              <Switch
-                checked={form.performanceLegacyPasswordSunsetEnabled}
-                onToggle={() =>
-                  void change({
-                    performanceLegacyPasswordSunsetEnabled:
-                      !form.performanceLegacyPasswordSunsetEnabled,
-                  })
-                }
-                label={t("authenticationAreaPerformance")}
-              />
-            }
-          />
-          <SettingsRow
-            title={t("authenticationAreaApplicantVault")}
-            description={t("authenticationLegacyPasswordApplicantVaultHint")}
-            control={
-              <Switch
-                checked={form.applicantVaultLegacyPasswordSunsetEnabled}
-                onToggle={() =>
-                  void change({
-                    applicantVaultLegacyPasswordSunsetEnabled:
-                      !form.applicantVaultLegacyPasswordSunsetEnabled,
-                  })
-                }
-                label={t("authenticationAreaApplicantVault")}
-              />
-            }
-          />
+          {(
+            [
+              {
+                key: "performanceLegacyPasswordSunsetEnabled",
+                title: t("authenticationAreaPerformance"),
+                hint: t("authenticationLegacyPasswordPerformanceHint"),
+                standard: legacy?.performance,
+              },
+              {
+                key: "applicantVaultLegacyPasswordSunsetEnabled",
+                title: t("authenticationAreaApplicantVault"),
+                hint: t("authenticationLegacyPasswordApplicantVaultHint"),
+                standard: legacy?.applicantVault,
+              },
+            ] as const
+          ).map((row) => (
+            <SettingsRow
+              key={row.key}
+              title={row.title}
+              description={
+                form[row.key] && row.standard?.deadlineAt
+                  ? t(
+                      row.standard.deadlineAt > Date.now()
+                        ? "authenticationLegacyPasswordRunning"
+                        : "authenticationLegacyPasswordEnded",
+                      {
+                        date: format.dateTime(new Date(row.standard.deadlineAt), {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        }),
+                        count: row.standard.accountsStillOnLegacyPassword,
+                      },
+                    )
+                  : row.hint
+              }
+              control={
+                <Switch
+                  checked={form[row.key]}
+                  onToggle={() => void change({ [row.key]: !form[row.key] })}
+                  label={row.title}
+                />
+              }
+            />
+          ))}
           <SettingsRow
             title={t("authenticationLegacyPasswordGraceDays")}
             control={
@@ -725,7 +664,7 @@ export function AuthenticationPolicyPanel() {
               />
             }
           />
-        </SettingsSection>
+        </SettingsSection>{" "}
       </div>
     </SettingsLayoutProvider>
   );

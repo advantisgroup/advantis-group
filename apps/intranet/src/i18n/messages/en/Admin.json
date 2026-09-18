@@ -142,7 +142,6 @@
   "linkedAccountsHr": "HR / Applicant vault",
   "linkedAccountsAcademy": "Academy",
   "linkedAccountsNotLinked": "Not linked",
-  "linkedAccountsLinked": "Linked",
   "linkedAccountsSuperAdmin": "Super Admin",
   "linkedAccountsAuto": "Auto-linked",
   "linkedAccountsNoAccess": "No access",
@@ -220,19 +219,11 @@
   "authenticationExemptRemove": "Remove",
   "authenticationExemptSearchPlaceholder": "Search people…",
   "authenticationExemptEmpty": "No matches.",
-  "authenticationAreaStandardTitle": "Device trust & area preferences",
-  "authenticationAreaStandardHint": "Who's opted out of device recognition, and who's asked to always step up for a linked area instead of trusting the 14-day window below.",
-  "authenticationDeviceTrackingOptIn": "Device tracking on",
-  "authenticationDeviceTrackingOptOut": "Device tracking off",
   "authenticationAreaPerformance": "Performance",
   "authenticationAreaApplicantVault": "HR vault",
-  "authenticationAlwaysStepUpFor": "Always step up: {area}",
-  "authenticationTrustDeviceCount": "Trusting device",
-  "authenticationAreaReverifyTitle": "Area re-verification",
-  "authenticationAreaReverifyHint": "How long a password-less linked area (Performance, the HR vault) trusts a step-up before demanding a fresh one. Applies unless someone's own preference asks for a step-up every time.",
+  "authenticationAreaReverifyTitle": "Linked areas",
+  "authenticationAreaReverifyHint": "How long a verification for Performance or the HR vault lasts before people are asked again. A verified device stays trusted for the same time.",
   "authenticationAreaReverifyDays": "Re-verify every (days)",
-  "authenticationLegacyPasswordStandardTitle": "Legacy password migration",
-  "authenticationLegacyPasswordDeadline": "Password sign-in stops on {date}",
   "authenticationLegacyPasswordTitle": "Legacy password grace period",
   "authenticationLegacyPasswordHint": "Once turned on, a fixed grace period starts immediately — the standalone password keeps working for that long, then stops for every account it applies to. This interrupts people who already have access; confirm before turning it on.",
   "authenticationLegacyPasswordPerformanceHint": "Every Performance login linked to an intranet account loses its own password once the grace period ends — the intranet-account sign-in stays as the only way in.",
@@ -476,5 +467,12 @@
       "empty": "No admin actions recorded yet.",
       "unknown": "unknown"
     }
-  }
+  },
+  "linkedAccountsNoRole": "Linked, no role yet",
+  "authenticationAreaStats": "{performance, plural, one {# person verifies} other {# people verify}} more often for Performance and {vault} for the HR vault. {optedOut, plural, =0 {Nobody has turned off device recognition.} one {# person has turned off device recognition.} other {# people have turned off device recognition.}}",
+  "authenticationLegacyPasswordRunning": "Passwords stop working on {date} · {count, plural, one {# account} other {# accounts}} affected",
+  "authenticationLegacyPasswordEnded": "Passwords stopped working on {date}",
+  "authenticationConfirmSunsetTitle": "Start phasing out passwords?",
+  "authenticationConfirmSunsetBody": "Passwords keep working for {days} days, then stop for everyone this applies to.",
+  "authenticationConfirmSunsetApply": "Start"
 }

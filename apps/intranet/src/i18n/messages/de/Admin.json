@@ -142,7 +142,6 @@
   "linkedAccountsHr": "HR / Bewerber-Tresor",
   "linkedAccountsAcademy": "Academy",
   "linkedAccountsNotLinked": "Nicht verknüpft",
-  "linkedAccountsLinked": "Verknüpft",
   "linkedAccountsSuperAdmin": "Super Admin",
   "linkedAccountsAuto": "Automatisch verknüpft",
   "linkedAccountsNoAccess": "Kein Zugriff",
@@ -220,19 +219,11 @@
   "authenticationExemptRemove": "Entfernen",
   "authenticationExemptSearchPlaceholder": "Personen suchen…",
   "authenticationExemptEmpty": "Keine Treffer.",
-  "authenticationAreaStandardTitle": "Gerätevertrauen & Bereichseinstellungen",
-  "authenticationAreaStandardHint": "Wer die Geräteerkennung deaktiviert hat und wer für einen verknüpften Bereich immer eine erneute Bestätigung verlangt, statt dem 14-Tage-Fenster unten zu vertrauen.",
-  "authenticationDeviceTrackingOptIn": "Geräteerkennung an",
-  "authenticationDeviceTrackingOptOut": "Geräteerkennung aus",
   "authenticationAreaPerformance": "Performance",
   "authenticationAreaApplicantVault": "HR-Tresor",
-  "authenticationAlwaysStepUpFor": "Immer bestätigen: {area}",
-  "authenticationTrustDeviceCount": "Gerät vertraut",
-  "authenticationAreaReverifyTitle": "Bereichs-Neubestätigung",
-  "authenticationAreaReverifyHint": "Wie lange ein passwortloser verknüpfter Bereich (Performance, HR-Tresor) einer Bestätigung vertraut, bevor eine neue verlangt wird. Gilt, sofern niemandes eigene Einstellung eine Bestätigung bei jedem Mal verlangt.",
+  "authenticationAreaReverifyTitle": "Verknüpfte Bereiche",
+  "authenticationAreaReverifyHint": "Wie lange eine Bestätigung für Performance oder den HR-Tresor gilt, bevor erneut gefragt wird. Ein bestätigtes Gerät bleibt genauso lange vertrauenswürdig.",
   "authenticationAreaReverifyDays": "Erneut bestätigen alle (Tage)",
-  "authenticationLegacyPasswordStandardTitle": "Migration alter Passwörter",
-  "authenticationLegacyPasswordDeadline": "Passwort-Anmeldung endet am {date}",
   "authenticationLegacyPasswordTitle": "Übergangsfrist für alte Passwörter",
   "authenticationLegacyPasswordHint": "Einmal aktiviert, beginnt sofort eine feste Übergangsfrist — das eigenständige Passwort funktioniert so lange weiter und danach für jedes betroffene Konto nicht mehr. Das unterbricht Personen, die bereits Zugriff haben — vor dem Aktivieren bestätigen.",
   "authenticationLegacyPasswordPerformanceHint": "Jeder mit einem Intranet-Konto verknüpfte Performance-Login verliert nach Ablauf der Frist sein eigenes Passwort — die Anmeldung über das Intranet-Konto bleibt der einzige Weg.",
@@ -476,5 +467,12 @@
       "empty": "Noch keine Admin-Aktionen erfasst.",
       "unknown": "unbekannt"
     }
-  }
+  },
+  "linkedAccountsNoRole": "Verknüpft, noch keine Rolle",
+  "authenticationAreaStats": "{performance, plural, one {# Person bestätigt} other {# Personen bestätigen}} für Performance öfter, {vault} für den HR-Tresor. {optedOut, plural, =0 {Niemand hat die Geräteerkennung ausgeschaltet.} one {# Person hat die Geräteerkennung ausgeschaltet.} other {# Personen haben die Geräteerkennung ausgeschaltet.}}",
+  "authenticationLegacyPasswordRunning": "Passwörter funktionieren ab dem {date} nicht mehr · {count, plural, one {# Konto} other {# Konten}} betroffen",
+  "authenticationLegacyPasswordEnded": "Passwörter funktionieren seit dem {date} nicht mehr",
+  "authenticationConfirmSunsetTitle": "Passwörter auslaufen lassen?",
+  "authenticationConfirmSunsetBody": "Passwörter funktionieren noch {days} Tage und danach für alle Betroffenen nicht mehr.",
+  "authenticationConfirmSunsetApply": "Starten"
 }

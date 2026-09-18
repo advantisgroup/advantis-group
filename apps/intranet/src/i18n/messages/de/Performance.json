@@ -4,14 +4,13 @@
   "loginTitle": "Anmelden",
   "loginIntro": "Melde dich mit deinem Performance-Konto an, um die Vertriebs-KPIs zu sehen.",
   "reverifyTitle": "Bestätige deine Identität, um fortzufahren",
-  "loginIntranetHint": "Advantis-Mitarbeitende können sich auch mit ihrem Intranet-Konto anmelden, ganz ohne Passwort.",
   "loginIntranetLink": "Mit Intranet-Konto fortfahren",
   "emailLabel": "E-Mail",
   "passwordLabel": "Passwort",
   "loginSubmit": "Anmelden",
   "loginInvalid": "E-Mail oder Passwort stimmt nicht.",
   "loginLegacyPasswordSunset": "Die Passwort-Anmeldung für dieses Konto wurde verschoben — melde dich stattdessen mit deinem Intranet-Konto an.",
-  "loginLegacyPasswordNotice": "Wir verschieben das auf dein Intranet-Konto — melde dich stattdessen damit an. Dein Passwort funktioniert ab {date} nicht mehr.",
+  "loginLegacyPasswordNotice": "Ab dem {date} können sich mit dem Intranet verknüpfte Konten nur noch über ihr Intranet-Konto anmelden.",
   "loginLegacyPasswordNoticeDismiss": "Schließen",
   "setupLink": "Zum ersten Mal hier? Konto einrichten",
   "setupTitle": "Konto einrichten",
@@ -414,5 +413,6 @@
       "title": "Opportunities: Last Activity > 2 Wochen",
       "desc": "Offene Opportunities ohne Aktivität seit mehr als 14 Tagen."
     }
-  }
+  },
+  "loginOr": "oder"
 }

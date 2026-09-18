@@ -4,14 +4,13 @@
   "loginTitle": "Sign in",
   "loginIntro": "Sign in with your Performance account to view sales team KPIs.",
   "reverifyTitle": "Verify it's you to continue",
-  "loginIntranetHint": "Advantis staff can also sign in with their intranet account, no password needed.",
-  "loginIntranetLink": "Continue with your intranet account",
+  "loginIntranetLink": "Continue with intranet account",
   "emailLabel": "Email",
   "passwordLabel": "Password",
   "loginSubmit": "Sign in",
   "loginInvalid": "Email or password is incorrect.",
   "loginLegacyPasswordSunset": "Password sign-in for this account has moved — sign in with your intranet account instead.",
-  "loginLegacyPasswordNotice": "We're moving this to your intranet account — sign in with that instead. Your password stops working on {date}.",
+  "loginLegacyPasswordNotice": "From {date}, accounts linked to the intranet can only sign in with their intranet account.",
   "loginLegacyPasswordNoticeDismiss": "Dismiss",
   "setupLink": "First time here? Set up your account",
   "setupTitle": "Set up your account",
@@ -414,5 +413,6 @@
       "title": "Opportunities: no activity > 2 weeks",
       "desc": "Open opportunities with no activity in over 14 days."
     }
-  }
+  },
+  "loginOr": "or"
 }

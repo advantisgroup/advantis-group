@@ -362,7 +362,7 @@
   "vaultLockedTitle": "Human Resources gesperrt",
   "vaultLockedDescription": "Bitte das Passwort erneut eingeben, um fortzufahren.",
   "vaultReverifyTitle": "Bestätige deine Identität, um fortzufahren",
-  "vaultReverifyDescription": "Deine Intranet-Bestätigung für diesen Bereich ist abgelaufen.",
+  "vaultReverifyDescription": "Deine letzte Bestätigung ist eine Weile her. Bestätige kurz, dass du es bist.",
   "vaultPasswordPlaceholder": "Passwort",
   "vaultConfirmPasswordPlaceholder": "Passwort bestätigen",
   "vaultUnlock": "Entsperren",
@@ -371,7 +371,7 @@
   "vaultPasskeyError": "Entsperren mit diesem Passkey nicht möglich",
   "vaultIncorrectPassword": "Falsches Passwort",
   "vaultLegacyPasswordSunset": "Die Passwort-Entsperrung wurde verschoben — nutze stattdessen deinen Passkey.",
-  "vaultLegacyPasswordNotice": "Wir verschieben die Tresor-Entsperrung auf deinen Passkey — nutze stattdessen den. Die Passwort-Entsperrung funktioniert ab {date} nicht mehr.",
+  "vaultLegacyPasswordNotice": "Die Entsperrung per Passwort endet am {date}. Nutze danach deinen Passkey.",
   "vaultLegacyPasswordNoticeDismiss": "Schließen",
   "vaultSetupTitle": "Zugang absichern",
   "vaultSetupDescription": "Lege ein Passwort fest, das nur du kennst — es ergänzt deinen HR-Zugriff um eine weitere Sicherheitsebene.",
@@ -396,5 +396,6 @@
   "undoHireConfirm": "Einstellung von {name} rückgängig machen?",
   "undoHireBody": "Der angelegte Mitarbeiter-Datensatz wird entfernt und die Person steht wieder in der Bewerberliste.",
   "undoHireDone": "{name} steht wieder in der Bewerberliste",
-  "undoHireBlocked": "An diesem Mitarbeiter-Datensatz hängen bereits Dokumente — das lässt sich nicht automatisch rückgängig machen."
+  "undoHireBlocked": "An diesem Mitarbeiter-Datensatz hängen bereits Dokumente — das lässt sich nicht automatisch rückgängig machen.",
+  "vaultLockedPasskeyDescription": "Nutze deinen Passkey, um fortzufahren."
 }
