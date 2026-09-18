@@ -7,11 +7,19 @@ import { internalMutation, internalQuery, query, type MutationCtx } from "./_gen
 import { hashPassword, verifyPassword } from "./activity/lib/crypto";
 import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import {
+  getUserByClerkId,
   isApplicantAreaMember,
   requireAdmin,
   requireApplicantAreaMember,
   requireUser,
 } from "./lib/auth";
+
+function assertServerKey(serverKey: string): void {
+  const expected = process.env.CONVEX_SERVER_KEY;
+  if (!expected || serverKey !== expected) {
+    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
+  }
+}
 
 /** How long a vault unlock lasts before the password must be re-entered. */
 export const UNLOCK_DURATION_MS = 30 * 60 * 1000;
@@ -55,8 +63,16 @@ export const status = query({
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     const unlocked = !!unlockRow && unlockRow.expiresAt > Date.now();
+    // Phase 4 of docs/future-features/21_auth-consolidation.md: the vault
+    // gate offers a passkey unlock once the member has at least one
+    // registered — the password stays as the fallback either way.
+    const passkey = await ctx.db
+      .query("passkeys")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .first();
     return {
       passwordIsSet: !!passwordRow,
+      hasPasskey: !!passkey,
       unlocked,
       expiresAt: unlocked ? unlockRow.expiresAt : null,
     };
@@ -140,35 +156,60 @@ export const setPassword = action({
   },
 });
 
+/** Shared by the password and passkey unlock paths — plain helper, not a
+ * Convex function, so both `recordUnlock` (internalMutation, called from the
+ * `unlock` action) and `apiUnlockViaPasskey` (a plain mutation, already
+ * inside a transaction) can call it directly. `action` distinguishes how in
+ * the audit trail without adding a second table. */
+async function performUnlock(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  action: "vault_unlocked" | "vault_unlocked_via_passkey",
+): Promise<void> {
+  const now = Date.now();
+  const expiresAt = now + UNLOCK_DURATION_MS;
+  const existing = await ctx.db
+    .query("applicantVaultUnlocks")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .unique();
+  if (existing) {
+    await ctx.db.patch(existing._id, { unlockedAt: now, expiresAt });
+  } else {
+    await ctx.db.insert("applicantVaultUnlocks", {
+      userId,
+      unlockedAt: now,
+      expiresAt,
+    });
+  }
+  await ctx.db.insert("applicantAuditLog", { actorUserId: userId, action, at: now });
+  await recordUnifiedAudit(ctx, { domain: "applicant", actorUserId: userId, action, at: now });
+}
+
 export const recordUnlock = internalMutation({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const now = Date.now();
-    const expiresAt = now + UNLOCK_DURATION_MS;
-    const existing = await ctx.db
-      .query("applicantVaultUnlocks")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .unique();
-    if (existing) {
-      await ctx.db.patch(existing._id, { unlockedAt: now, expiresAt });
-    } else {
-      await ctx.db.insert("applicantVaultUnlocks", {
-        userId,
-        unlockedAt: now,
-        expiresAt,
+    await performUnlock(ctx, userId, "vault_unlocked");
+  },
+});
+
+/** Server-key-gated like every other WebAuthn-adjacent Convex function
+ * (`passkeys.ts`, `stepUp.ts`) — the actual assertion verification needs
+ * `@simplewebauthn/server`, which only runs in `apps/api`; this just records
+ * the outcome once that's already confirmed the assertion resolves to
+ * `clerkUserId`'s own passkey. Phase 4 of
+ * docs/future-features/21_auth-consolidation.md. */
+export const apiUnlockViaPasskey = mutation({
+  args: { serverKey: v.string(), clerkUserId: v.string() },
+  handler: async (ctx, { serverKey, clerkUserId }) => {
+    assertServerKey(serverKey);
+    const user = await getUserByClerkId(ctx, clerkUserId);
+    if (!user || !isApplicantAreaMember(user)) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You do not have permission to do that",
       });
     }
-    await ctx.db.insert("applicantAuditLog", {
-      actorUserId: userId,
-      action: "vault_unlocked",
-      at: now,
-    });
-    await recordUnifiedAudit(ctx, {
-      domain: "applicant",
-      actorUserId: userId,
-      action: "vault_unlocked",
-      at: now,
-    });
+    await performUnlock(ctx, user._id, "vault_unlocked_via_passkey");
   },
 });
 
