@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
   Activity,
   AlertTriangle,
@@ -22,9 +22,11 @@ import {
   Megaphone,
   MessageSquare,
   Newspaper,
+  RotateCcw,
   Rss,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   type LucideIcon,
   UserSearch,
   Users,
@@ -40,6 +42,13 @@ import { AccountMenu } from "@/components/layout/AccountMenu";
 import { ActivitySidebar } from "@/components/layout/ActivitySidebar";
 import { ADMIN_NAV_GROUPS } from "@/components/layout/AdminSidebar";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
+import {
+  resolveSidebarSections,
+  type SidebarSection,
+  type SidebarSectionDef,
+  toSavedSections,
+} from "@/components/layout/sidebar-layout";
+import { SidebarSections } from "@/components/layout/SidebarSections";
 import { Link } from "@/components/Link";
 import { MarkLogo, WordmarkLogo } from "@/components/Logo";
 import {
@@ -49,12 +58,13 @@ import {
   useIsAdmin,
   useIsManager,
 } from "@/components/providers/current-user";
+import { useTour } from "@/components/tour/TourProvider";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar as SidebarShell,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarLabel,
   SidebarMenu,
@@ -64,6 +74,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -91,23 +102,64 @@ interface NavGroup {
 
 type SidebarMode = "workspace" | "organization";
 
-function filterGroups(
-  groups: NavGroup[],
+// Default workspace layout — the everyday things first, then time, reading,
+// help, and the separate apps last. Anyone can rearrange it in edit mode.
+const WORKSPACE_SECTIONS = [
+  { id: "general", labelKey: "groupGeneral" },
+  { id: "planning", labelKey: "groupPlanning" },
+  { id: "knowledge", labelKey: "groupKnowledge" },
+  { id: "support", labelKey: "groupSupport" },
+  { id: "apps", labelKey: "groupApps" },
+] as const;
+
+type WorkspaceSectionId = (typeof WORKSPACE_SECTIONS)[number]["id"];
+
+function isVisible(
+  item: NavItem,
   isManager: boolean,
   isAdmin: boolean,
   disabledFeatures: Set<FeatureFlagKey>,
-): NavGroup[] {
-  return groups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter(
-        (item) =>
-          (!item.managerOnly || isManager) &&
-          (!item.adminOnly || isAdmin) &&
-          (!item.featureKey || isAdmin || !disabledFeatures.has(item.featureKey)),
-      ),
-    }))
-    .filter((group) => group.items.length > 0);
+) {
+  return (
+    (!item.managerOnly || isManager) &&
+    (!item.adminOnly || isAdmin) &&
+    (!item.featureKey || isAdmin || !disabledFeatures.has(item.featureKey))
+  );
+}
+
+function RailIconLink({
+  href,
+  label,
+  icon: Icon,
+  dot,
+  tourAttr,
+}: {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  dot?: boolean;
+  tourAttr?: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Link
+          href={href}
+          aria-label={label}
+          data-tour={tourAttr}
+          className="relative grid size-9 place-items-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        >
+          <Icon className="size-[18px]" />
+          {dot ? (
+            <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-primary ring-2 ring-sidebar" />
+          ) : null}
+        </Link>
+      </TooltipTrigger>
+      <TooltipContent side="right" align="center">
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 export function Sidebar() {
@@ -115,6 +167,7 @@ export function Sidebar() {
   const tAdmin = useTranslations("Admin");
   const pathname = usePathname();
   const router = useRouter();
+  const handleError = useErrorHandler();
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
   const user = useCurrentUser();
@@ -124,11 +177,17 @@ export function Sidebar() {
   const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
   const approvalCover = useQuery(api.approvalDelegations.mine);
   const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
-  const { setOpenMobile, state, isMobile } = useSidebar();
+  const { setOpenMobile, state, isMobile, editing, setEditing } = useSidebar();
   const featureFlags = useFeatureFlags();
   const disabledFeatures = new Set(
     (featureFlags ?? []).filter((f) => !f.enabled).map((f) => f.key),
   );
+
+  const prefs = useQuery(api.userPreferences.getMine);
+  const setPrefs = useMutation(api.userPreferences.setMine).withOptimisticUpdate((store, patch) => {
+    const current = store.getQuery(api.userPreferences.getMine, {});
+    if (current) store.setQuery(api.userPreferences.getMine, {}, { ...current, ...patch });
+  });
 
   const chatConversations = useQuery(api.chat.listConversations);
   const announcementUnread = useQuery(api.announcements.unreadCount);
@@ -136,126 +195,107 @@ export function Sidebar() {
   const chatUnread = chatConversations?.reduce((sum, c) => sum + c.unread, 0) ?? 0;
   const hasGuidebooks = accessibleGuidebooks(user).length > 0;
 
-  const workspaceGroups: NavGroup[] = [
+  const workspaceItems: (NavItem & { section: WorkspaceSectionId })[] = [
     {
-      labelKey: "groupProject",
-      items: [
-        {
-          href: "/",
-          labelKey: "dashboard",
-          icon: LayoutDashboard,
-          tourAttr: "tour-nav-dashboard",
-        },
-        {
-          href: "/directory",
-          labelKey: "directory",
-          icon: Users,
-          tourAttr: "tour-nav-directory",
-        },
-        {
-          href: "/chat",
-          labelKey: "chat",
-          icon: MessageSquare,
-          badge: chatUnread,
-          featureKey: "chat",
-          tourAttr: "tour-nav-chat",
-        },
-      ],
+      section: "general",
+      href: "/",
+      labelKey: "dashboard",
+      icon: LayoutDashboard,
+      tourAttr: "tour-nav-dashboard",
     },
     {
-      labelKey: "groupWorkspace",
-      items: [
-        {
-          href: "/calendar",
-          labelKey: "calendar",
-          icon: Calendar,
-          tourAttr: "tour-nav-calendar",
-        },
-        ...(user.clockodoUserId || hasClockodoTeamAccess || hasApprovalCover
-          ? [
-              {
-                href: "/clockodo",
-                labelKey: "absences",
-                icon: Clock3,
-                tourAttr: "tour-nav-absences",
-              },
-            ]
-          : []),
-        {
-          href: "/announcements",
-          labelKey: "announcements",
-          icon: Megaphone,
-          badge: announcementUnread,
-          tourAttr: "tour-nav-announcements",
-        },
-        {
-          href: "/suggestions",
-          labelKey: "suggestions",
-          icon: Lightbulb,
-          tourAttr: "tour-nav-suggestions",
-        },
-        {
-          href: "/it-tickets",
-          labelKey: "itTickets",
-          icon: Wrench,
-          tourAttr: "tour-nav-it-tickets",
-        },
-        ...(hasGuidebooks
-          ? [
-              {
-                href: "/guidebooks",
-                labelKey: "guidebooks",
-                icon: BookOpen,
-                tourAttr: "tour-nav-guidebooks",
-              },
-            ]
-          : []),
-        ...(hasBlogAccess
-          ? [
-              {
-                href: "/blog",
-                labelKey: "blog",
-                icon: Newspaper,
-              },
-            ]
-          : []),
-        {
-          href: "/fehlermanagement",
-          labelKey: "errorManagement",
-          icon: AlertTriangle,
-        },
-        {
-          href: "/settings",
-          labelKey: "settings",
-          icon: Settings,
-          tourAttr: "tour-nav-settings",
-        },
-      ],
+      section: "general",
+      href: "/announcements",
+      labelKey: "announcements",
+      icon: Megaphone,
+      badge: announcementUnread,
+      tourAttr: "tour-nav-announcements",
     },
     {
-      labelKey: "groupApps",
-      items: [
-        {
-          href: "/performance",
-          labelKey: "performance",
-          icon: LineChart,
-          external: true,
-        },
-        {
-          href: "/activity",
-          labelKey: "activity",
-          icon: Activity,
-          managerOnly: true,
-          featureKey: "activitytrack",
-          external: true,
-        },
-        {
-          href: "/sales-coach-ev",
-          labelKey: "salesCoachEv",
-          icon: Zap,
-        },
-      ],
+      section: "general",
+      href: "/chat",
+      labelKey: "chat",
+      icon: MessageSquare,
+      badge: chatUnread,
+      featureKey: "chat",
+      tourAttr: "tour-nav-chat",
     },
+    {
+      section: "general",
+      href: "/directory",
+      labelKey: "directory",
+      icon: Users,
+      tourAttr: "tour-nav-directory",
+    },
+    {
+      section: "planning",
+      href: "/calendar",
+      labelKey: "calendar",
+      icon: Calendar,
+      tourAttr: "tour-nav-calendar",
+    },
+    ...(user.clockodoUserId || hasClockodoTeamAccess || hasApprovalCover
+      ? [
+          {
+            section: "planning" as const,
+            href: "/clockodo",
+            labelKey: "absences",
+            icon: Clock3,
+            tourAttr: "tour-nav-absences",
+          },
+        ]
+      : []),
+    ...(hasGuidebooks
+      ? [
+          {
+            section: "knowledge" as const,
+            href: "/guidebooks",
+            labelKey: "guidebooks",
+            icon: BookOpen,
+            tourAttr: "tour-nav-guidebooks",
+          },
+        ]
+      : []),
+    ...(hasBlogAccess
+      ? [{ section: "knowledge" as const, href: "/blog", labelKey: "blog", icon: Newspaper }]
+      : []),
+    {
+      section: "support",
+      href: "/it-tickets",
+      labelKey: "itTickets",
+      icon: Wrench,
+      tourAttr: "tour-nav-it-tickets",
+    },
+    {
+      section: "support",
+      href: "/fehlermanagement",
+      labelKey: "errorManagement",
+      icon: AlertTriangle,
+    },
+    {
+      section: "support",
+      href: "/suggestions",
+      labelKey: "suggestions",
+      icon: Lightbulb,
+      tourAttr: "tour-nav-suggestions",
+    },
+    {
+      section: "apps",
+      href: "/performance",
+      labelKey: "performance",
+      icon: LineChart,
+      external: true,
+    },
+    {
+      section: "apps",
+      href: "/activity",
+      labelKey: "activity",
+      icon: Activity,
+      managerOnly: true,
+      featureKey: "activitytrack",
+      external: true,
+    },
+    { section: "apps", href: "/sales-coach-ev", labelKey: "salesCoachEv", icon: Zap },
   ];
 
   const organizationGroups: NavGroup[] = [
@@ -299,13 +339,15 @@ export function Sidebar() {
 
   const close = () => setOpenMobile(false);
 
-  const visibleGroups = filterGroups(workspaceGroups, isManager, isAdmin, disabledFeatures);
-  const visibleOrganizationGroups = filterGroups(
-    organizationGroups,
-    isManager,
-    isAdmin,
-    disabledFeatures,
+  const visibleWorkspace = workspaceItems.filter((item) =>
+    isVisible(item, isManager, isAdmin, disabledFeatures),
   );
+  const visibleOrganizationGroups = organizationGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => isVisible(item, isManager, isAdmin, disabledFeatures)),
+    }))
+    .filter((group) => group.items.length > 0);
   const hasOrganization = visibleOrganizationGroups.length > 0;
   const routeMode: SidebarMode =
     pathname.startsWith("/admin") ||
@@ -321,33 +363,79 @@ export function Sidebar() {
     setMode(routeMode);
   }, [routeMode]);
 
-  // ActivityTrack is its own area with its own nav, the same way /admin used
-  // to be — it just lost the wiring in the workspace/organization split.
+  // Editing only makes sense for the workspace nav, so leaving it (or a tour
+  // starting) ends it.
   const inActivityArea = pathname.startsWith("/activity");
+  const organizationMode = mode === "organization" && hasOrganization;
+  const tourActive = !!useTour().state?.active;
+  const canCustomize = !inActivityArea && !organizationMode && !tourActive;
+  useEffect(() => {
+    if (!canCustomize) setEditing(false);
+  }, [canCustomize, setEditing]);
 
-  const activeGroups =
-    mode === "organization" && hasOrganization ? visibleOrganizationGroups : visibleGroups;
-  const primaryGroups = activeGroups.filter((group) => !group.advanced);
-  const advancedItems = activeGroups.filter((group) => group.advanced).flatMap((g) => g.items);
-  const advancedLabel = tAdmin("nav.groupAdvanced");
-
-  function label(group: NavGroup, key: string) {
-    return group.namespace === "Admin" ? tAdmin(key) : t(key);
+  // Every link either mode can show, keyed by href.
+  const entries = new Map<string, { item: NavItem; label: string }>();
+  for (const item of visibleWorkspace) entries.set(item.href, { item, label: t(item.labelKey) });
+  for (const group of visibleOrganizationGroups) {
+    for (const item of group.items) {
+      entries.set(item.href, {
+        item,
+        label: group.namespace === "Admin" ? tAdmin(item.labelKey) : t(item.labelKey),
+      });
+    }
   }
 
-  function navLink(item: NavItem, itemLabel: string) {
-    const active =
-      item.href === "/"
-        ? pathname === "/"
-        : item.href === "/admin"
-          ? pathname === "/admin"
-          : pathname.startsWith(item.href);
+  const workspaceDefaults: SidebarSectionDef[] = WORKSPACE_SECTIONS.map((s) => ({
+    id: s.id,
+    labelKey: s.labelKey,
+    items: visibleWorkspace.filter((i) => i.section === s.id).map((i) => i.href),
+  })).filter((s) => s.items.length > 0);
+  const workspaceSections = resolveSidebarSections(prefs?.sidebarSections, workspaceDefaults);
+
+  const organizationSections: SidebarSection[] = visibleOrganizationGroups
+    .filter((group) => !group.advanced)
+    .map((group) => ({
+      id: `org:${group.labelKey}`,
+      title: group.namespace === "Admin" ? tAdmin(group.labelKey) : t(group.labelKey),
+      items: group.items.map((i) => i.href),
+    }));
+  const advancedItems = visibleOrganizationGroups
+    .filter((group) => group.advanced)
+    .flatMap((g) => g.items);
+
+  // The tour points at nav items, so while it runs every section is open
+  // (the saved preference is untouched and comes back once it ends).
+  const collapsed = new Set(tourActive ? [] : (prefs?.collapsedSidebarSections ?? []));
+
+  function isActive(href: string) {
+    if (href === "/") return pathname === "/";
+    if (href === "/admin") return pathname === "/admin";
+    return pathname.startsWith(href);
+  }
+
+  function itemContent(href: string): ReactNode {
+    const entry = entries.get(href);
+    if (!entry) return null;
+    const Icon = entry.item.icon;
+    return (
+      <>
+        <Icon />
+        <span className="flex-1 truncate">{entry.label}</span>
+      </>
+    );
+  }
+
+  function navLink(href: string) {
+    const entry = entries.get(href);
+    if (!entry) return null;
+    const { item, label: itemLabel } = entry;
+    const active = isActive(href);
     const Icon = item.icon;
     return (
-      <SidebarMenuItem key={item.href}>
+      <SidebarMenuItem key={href}>
         <SidebarMenuButton asChild active={active} tooltip={itemLabel}>
           <Link
-            href={item.href}
+            href={href}
             onClick={close}
             aria-current={active ? "page" : undefined}
             data-tour={item.tourAttr}
@@ -366,77 +454,119 @@ export function Sidebar() {
     );
   }
 
+  function sectionLabel(section: SidebarSection) {
+    return section.title ?? (section.labelKey ? t(section.labelKey) : "");
+  }
+
+  function toggleSection(id: string) {
+    const next = collapsed.has(id) ? [...collapsed].filter((c) => c !== id) : [...collapsed, id];
+    setPrefs({ collapsedSidebarSections: next }).catch(handleError);
+  }
+
+  function saveSections(next: SidebarSection[]) {
+    setPrefs({ sidebarSections: toSavedSections(next) }).catch(handleError);
+  }
+
   return (
     <SidebarShell ariaLabel="Advantis Intranet" data-tour="tour-sidebar">
       <SidebarHeader className="h-auto flex-col items-stretch justify-start gap-4 border-b border-sidebar-border px-4 pb-4 pt-3 md:gap-3 md:border-0 md:px-4 md:py-4 group-data-[state=collapsed]/sidebar:items-center group-data-[state=collapsed]/sidebar:px-0">
         <Link href="/" onClick={close} aria-label="Advantis Intranet" className="flex items-center">
           {state === "collapsed" ? <MarkLogo size={28} className="size-7" /> : <WordmarkLogo />}
         </Link>
-        {hasOrganization && !inActivityArea && (
-          <div className="grid grid-cols-2 rounded-lg bg-sidebar-accent/70 p-1 group-data-[state=collapsed]/sidebar:hidden">
-            <button
-              type="button"
-              onClick={() => {
-                posthog.capture("sidebar_mode_switched", { mode: "workspace" });
-                setMode("workspace");
-                router.push("/");
-              }}
-              className={cn(
-                "flex h-8 items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-colors",
-                mode === "workspace"
-                  ? "bg-sidebar text-sidebar-foreground shadow-sm"
-                  : "text-sidebar-foreground/60 hover:text-sidebar-foreground",
-              )}
-            >
-              <Grid2X2 className="size-3.5" />
-              {t("workspaceMode")}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                posthog.capture("sidebar_mode_switched", { mode: "organization" });
-                setMode("organization");
-                router.push("/admin");
-              }}
-              className={cn(
-                "flex h-8 items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-colors",
-                mode === "organization"
-                  ? "bg-sidebar text-sidebar-foreground shadow-sm"
-                  : "text-sidebar-foreground/60 hover:text-sidebar-foreground",
-              )}
-            >
-              <ShieldCheck className="size-3.5" />
-              {t("organizationMode")}
-            </button>
+        {editing ? (
+          <div className="rounded-lg border border-sidebar-primary/30 bg-sidebar-primary/5 px-3 py-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold text-sidebar-foreground">
+                {t("customizeSidebar")}
+              </p>
+              <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setEditing(false)}>
+                {t("customizeDone")}
+              </Button>
+            </div>
+            <p className="mt-1 text-[11px] leading-snug text-sidebar-foreground/60">
+              {isMobile ? t("customizeHintTouch") : t("customizeHint")}
+            </p>
+            {(prefs?.sidebarSections?.length ?? 0) > 0 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setPrefs({ sidebarSections: [], collapsedSidebarSections: [] }).catch(handleError)
+                }
+                className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-sidebar-foreground/60 transition-colors hover:text-sidebar-foreground"
+              >
+                <RotateCcw className="size-3" />
+                {t("customizeReset")}
+              </button>
+            )}
           </div>
+        ) : (
+          hasOrganization &&
+          !inActivityArea && (
+            <div className="grid grid-cols-2 rounded-lg bg-sidebar-accent/70 p-1 group-data-[state=collapsed]/sidebar:hidden">
+              <button
+                type="button"
+                onClick={() => {
+                  posthog.capture("sidebar_mode_switched", { mode: "workspace" });
+                  setMode("workspace");
+                  router.push("/");
+                }}
+                className={cn(
+                  "flex h-8 items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-colors",
+                  mode === "workspace"
+                    ? "bg-sidebar text-sidebar-foreground shadow-sm"
+                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground",
+                )}
+              >
+                <Grid2X2 className="size-3.5" />
+                {t("workspaceMode")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  posthog.capture("sidebar_mode_switched", { mode: "organization" });
+                  setMode("organization");
+                  router.push("/admin");
+                }}
+                className={cn(
+                  "flex h-8 items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-colors",
+                  mode === "organization"
+                    ? "bg-sidebar text-sidebar-foreground shadow-sm"
+                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground",
+                )}
+              >
+                <ShieldCheck className="size-3.5" />
+                {t("organizationMode")}
+              </button>
+            </div>
+          )
         )}
       </SidebarHeader>
 
       <SidebarContent>
         {inActivityArea ? (
           <ActivitySidebar />
-        ) : (
+        ) : organizationMode ? (
           <>
             <div className="group-data-[state=collapsed]/sidebar:hidden">
-              {mode === "organization" && hasOrganization && (
-                <div className="mb-2 rounded-lg border border-sidebar-border bg-sidebar-accent/35 px-3 py-2">
-                  <p className="text-xs font-semibold text-sidebar-foreground">
-                    {t("organizationConsole")}
-                  </p>
-                  <p className="mt-0.5 text-[11px] leading-snug text-sidebar-foreground/55">
-                    {t("organizationConsoleHint")}
-                  </p>
-                </div>
-              )}
+              <div className="mb-2 rounded-lg border border-sidebar-border bg-sidebar-accent/35 px-3 py-2">
+                <p className="text-xs font-semibold text-sidebar-foreground">
+                  {t("organizationConsole")}
+                </p>
+                <p className="mt-0.5 text-[11px] leading-snug text-sidebar-foreground/55">
+                  {t("organizationConsoleHint")}
+                </p>
+              </div>
             </div>
-            {primaryGroups.map((group) => (
-              <SidebarGroup key={`${group.namespace ?? "Nav"}-${group.labelKey}`}>
-                <SidebarGroupLabel>{label(group, group.labelKey)}</SidebarGroupLabel>
-                <SidebarMenu>
-                  {group.items.map((item) => navLink(item, label(group, item.labelKey)))}
-                </SidebarMenu>
-              </SidebarGroup>
-            ))}
+            <SidebarSections
+              sections={organizationSections}
+              collapsed={collapsed}
+              sectionLabel={sectionLabel}
+              renderLink={navLink}
+              renderItemContent={itemContent}
+              isActive={isActive}
+              onToggleSection={toggleSection}
+              onChange={() => {}}
+            />
             {advancedItems.length > 0 && (
               <SidebarGroup>
                 {/* The icon rail has no room for a disclosure label, so there
@@ -445,23 +575,34 @@ export function Sidebar() {
                   type="button"
                   onClick={() => setAdvancedOpen((open) => !open)}
                   aria-expanded={advancedOpen}
-                  className="flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/55 transition-colors hover:text-sidebar-foreground group-data-[state=collapsed]/sidebar:hidden"
+                  className="flex w-full items-center gap-1 rounded-md px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 transition-colors hover:text-sidebar-foreground/80 group-data-[state=collapsed]/sidebar:hidden"
                 >
+                  {tAdmin("nav.groupAdvanced")}
                   <ChevronRight
                     className={cn("size-3 transition-transform", advancedOpen && "rotate-90")}
                   />
-                  {advancedLabel}
                 </button>
                 <SidebarMenu
                   className={cn(
                     !advancedOpen && "hidden group-data-[state=collapsed]/sidebar:flex",
                   )}
                 >
-                  {advancedItems.map((item) => navLink(item, tAdmin(item.labelKey)))}
+                  {advancedItems.map((item) => navLink(item.href))}
                 </SidebarMenu>
               </SidebarGroup>
             )}
           </>
+        ) : (
+          <SidebarSections
+            sections={workspaceSections}
+            collapsed={collapsed}
+            sectionLabel={sectionLabel}
+            renderLink={navLink}
+            renderItemContent={itemContent}
+            isActive={isActive}
+            onToggleSection={toggleSection}
+            onChange={saveSections}
+          />
         )}
       </SidebarContent>
 
@@ -495,47 +636,69 @@ export function Sidebar() {
             </TooltipContent>
           </Tooltip>
         </div>
-        {/* Deliberately not a NavGroup item — Updates lives here, tucked next
-            to the footer branding, rather than competing for space in the
-            main tabs. Covers mobile too: this footer is shared by the
-            desktop rail and the mobile drawer opened from BottomNav. */}
-        {/* Its own icon button on the collapsed rail rather than the expanded
-            link with collapsed overrides — the `md:` padding/size utilities
-            outranked those overrides and shrank it to a faint 14px glyph. */}
+        {/* Settings and Updates sit down here rather than competing with the
+            main nav — shared by the desktop rail and the mobile drawer. The
+            rail gets real icon buttons: the `md:` sizing on the expanded
+            links outranked collapsed overrides and shrank them to 14px. */}
         {!isMobile && state === "collapsed" ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href="/updates"
-                aria-label={t("updates")}
-                className="relative grid size-9 place-items-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              >
-                <Rss className="size-[18px]" />
-                {activeUpdate?.top ? (
-                  <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-primary ring-2 ring-sidebar" />
-                ) : null}
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="right" align="center">
-              {t("updates")}
-            </TooltipContent>
-          </Tooltip>
+          <div className="flex flex-col items-center gap-1">
+            <RailIconLink
+              href="/settings"
+              label={t("settings")}
+              icon={Settings}
+              tourAttr="tour-nav-settings"
+            />
+            <RailIconLink
+              href="/updates"
+              label={t("updates")}
+              icon={Rss}
+              dot={!!activeUpdate?.top}
+            />
+          </div>
         ) : (
-          <Link
-            href="/updates"
-            onClick={close}
-            className="flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground md:h-auto md:rounded-md md:px-2 md:py-1.5 md:text-xs"
-          >
-            <Rss className="size-4 shrink-0 md:size-3.5" />
-            <SidebarLabel>{t("updates")}</SidebarLabel>
-            {activeUpdate?.top ? (
-              <span className="size-1.5 shrink-0 rounded-full bg-primary" />
-            ) : null}
-          </Link>
+          <div className="flex flex-col gap-0.5">
+            <Link
+              href="/settings"
+              onClick={close}
+              data-tour="tour-nav-settings"
+              className={cn(
+                "flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground md:h-auto md:rounded-md md:px-2 md:py-1.5 md:text-xs",
+                pathname.startsWith("/settings")
+                  ? "text-sidebar-foreground"
+                  : "text-sidebar-foreground/70",
+              )}
+            >
+              <Settings className="size-4 shrink-0 md:size-3.5" />
+              <SidebarLabel>{t("settings")}</SidebarLabel>
+            </Link>
+            <Link
+              href="/updates"
+              onClick={close}
+              className="flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground md:h-auto md:rounded-md md:px-2 md:py-1.5 md:text-xs"
+            >
+              <Rss className="size-4 shrink-0 md:size-3.5" />
+              <SidebarLabel>{t("updates")}</SidebarLabel>
+              {activeUpdate?.top ? (
+                <span className="size-1.5 shrink-0 rounded-full bg-primary" />
+              ) : null}
+            </Link>
+          </div>
         )}
-        <p className="border-t border-sidebar-border pt-4 text-[11px] font-medium uppercase tracking-[0.16em] text-sidebar-foreground/50 group-data-[state=collapsed]/sidebar:hidden md:border-0 md:pt-0 md:tracking-wider">
-          Advantis Group
-        </p>
+        <div className="flex items-center justify-between gap-2 border-t border-sidebar-border pt-4 group-data-[state=collapsed]/sidebar:hidden md:border-0 md:pt-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-sidebar-foreground/50 md:tracking-wider">
+            Advantis Group
+          </p>
+          {canCustomize && !editing && (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-sidebar-foreground/55 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            >
+              <SlidersHorizontal className="size-3" />
+              {t("customize")}
+            </button>
+          )}
+        </div>
       </SidebarFooter>
     </SidebarShell>
   );

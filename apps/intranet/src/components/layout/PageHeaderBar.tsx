@@ -134,7 +134,7 @@ export function PageHeaderTabsSlot() {
   const { tabs } = usePageHeaderBarState();
   if (!tabs) return null;
   return (
-    <nav className="ml-3 hidden min-w-0 items-center gap-0.5 overflow-x-auto [scrollbar-width:none] md:flex">
+    <nav className="ml-3 hidden min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [mask-image:linear-gradient(to_right,black_calc(100%-24px),transparent)] [scrollbar-width:none] md:flex">
       {tabs.tabs.map((tab) => {
         const active = tab.value === tabs.activeValue;
         return (
@@ -222,14 +222,16 @@ export function PageHeaderBarSlot() {
   useEffect(() => setDescriptionOpen(false), [identity?.description]);
 
   if (!identity) return null;
+  // Never truncated: on desktop it keeps its full width and the tabs beside
+  // it give way instead; on a phone it wraps to a second line.
   return (
-    <div className="flex min-w-0 items-center gap-1.5">
+    <div className="flex min-w-0 items-center gap-1.5 md:shrink-0">
       {identity.icon && (
         <span className="flex shrink-0 items-center justify-center [&_svg]:size-4">
           {identity.icon}
         </span>
       )}
-      <h1 className="min-w-0 truncate font-display text-sm font-semibold tracking-tight md:text-base refreshed:md:text-[15px]">
+      <h1 className="min-w-0 font-display text-sm font-semibold leading-tight tracking-tight [overflow-wrap:anywhere] md:whitespace-nowrap md:text-base refreshed:md:text-[15px]">
         {identity.title}
       </h1>
       {identity.tourCheckpoint && <TourReplayButton checkpointId={identity.tourCheckpoint} />}

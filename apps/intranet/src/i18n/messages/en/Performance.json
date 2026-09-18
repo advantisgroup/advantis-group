@@ -414,5 +414,16 @@
       "desc": "Open opportunities with no activity in over 14 days."
     }
   },
-  "loginOr": "or"
+  "loginOr": "or",
+  "navDashboard": "Dashboard",
+  "navUploads": "Uploads",
+  "back": "Back",
+  "rowActions": "Actions",
+  "usersSearch": "Search by name or email",
+  "usersNoMatch": "No users match your search.",
+  "roleDeleteTitle": "Delete this role?",
+  "roleDeleteWarning": "{name} will be removed. This can't be undone.",
+  "rolePermissionCount": "{count} of {total} permissions",
+  "rolesPermissionsLabel": "Permissions",
+  "passwordTooShort": "At least 8 characters."
 }

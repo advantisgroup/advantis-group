@@ -44,7 +44,7 @@ function NeedsYouRow({ item }: { item: Item }) {
       <Link
         href={item.href}
         data-shortcut-item
-        className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-accent/60"
+        className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-accent/60 active:bg-accent"
       >
         <span
           className={cn(
@@ -261,7 +261,7 @@ export function TodayPanel({
             <li key={e._id}>
               <Link
                 href="/calendar"
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-accent/60"
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-accent/60 active:bg-accent"
               >
                 <span className="w-12 shrink-0 text-xs tabular-nums text-muted-foreground">
                   {e.allDay ? t("todayAllDay") : formatTime(e.start, locale)}

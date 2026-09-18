@@ -414,5 +414,16 @@
       "desc": "Offene Opportunities ohne Aktivität seit mehr als 14 Tagen."
     }
   },
-  "loginOr": "oder"
+  "loginOr": "oder",
+  "navDashboard": "Dashboard",
+  "navUploads": "Uploads",
+  "back": "Zurück",
+  "rowActions": "Aktionen",
+  "usersSearch": "Nach Name oder E-Mail suchen",
+  "usersNoMatch": "Keine Benutzer gefunden.",
+  "roleDeleteTitle": "Diese Rolle löschen?",
+  "roleDeleteWarning": "{name} wird entfernt. Das lässt sich nicht rückgängig machen.",
+  "rolePermissionCount": "{count} von {total} Berechtigungen",
+  "rolesPermissionsLabel": "Berechtigungen",
+  "passwordTooShort": "Mindestens 8 Zeichen."
 }

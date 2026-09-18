@@ -9,6 +9,7 @@ import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { InteractionRecordsTable } from "@/components/performance/InteractionRecordsTable";
+import { PerformanceBackLink } from "@/components/performance/PerformanceBackLink";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
@@ -49,19 +50,13 @@ export default function DashboardInteractionDayPage() {
   if (session === undefined) return <PerformancePageSkeleton />;
   if (!session.valid || !session.permissions.includes("view_all_employees")) return null;
 
-  function exit() {
-    clearPerformanceToken();
-    router.replace("/performance/login");
-  }
-
-  const navItems = [{ href: "/performance/interaktionen", label: t("backToDashboard") }];
-
   return (
     <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader navItems={navItems} onExit={session.viaClerk ? undefined : exit} />
+      <PerformanceHeader />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         <div>
+          <PerformanceBackLink href="/performance/interaktionen" />
           <h1 className="text-xl font-semibold">{formatIsoDate(params.date, locale)}</h1>
           <p className="text-sm text-muted-foreground">{t("interactionsTitle")}</p>
         </div>
@@ -77,7 +72,7 @@ export default function DashboardInteractionDayPage() {
           <InteractionRecordsTable records={data.records} total={data.total} showEmployee />
         )}
       </main>
-      <PerformanceBottomTabs navItems={navItems} onExit={session.viaClerk ? undefined : exit} />
+      <PerformanceBottomTabs />
     </div>
   );
 }

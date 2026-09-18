@@ -186,7 +186,7 @@ export function WikiCarousel() {
                   <Link
                     key={e.slug}
                     href={`/guidebooks/${e.slug}`}
-                    className="flex min-w-0 flex-col justify-center gap-1.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-accent/60"
+                    className="flex min-w-0 flex-col justify-center gap-1.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-accent/60 active:bg-accent"
                   >
                     <div className="flex items-center gap-2">
                       {e.pinned ? (
@@ -208,20 +208,26 @@ export function WikiCarousel() {
         )}
 
         {groups.length > 1 && (
-          <div className="flex shrink-0 items-center justify-center gap-1.5 py-1">
+          <div className="flex shrink-0 items-center justify-center">
+            {/* The dot is tiny, the button around it is thumb-sized. */}
             {groups.map((_, i) => (
               <button
                 key={i}
                 type="button"
                 aria-label={`${t("newWikiTitle")} ${i + 1}`}
+                aria-current={i === active ? "true" : undefined}
                 onClick={() => scrollToGroup(i)}
-                className={cn(
-                  "size-1.5 shrink-0 rounded-full transition-all",
-                  i === active
-                    ? "w-3.5 bg-primary"
-                    : "bg-muted-foreground/30 hover:bg-muted-foreground/60",
-                )}
-              />
+                className="group/dot grid h-8 min-w-6 place-items-center px-1 sm:h-5"
+              >
+                <span
+                  className={cn(
+                    "block size-1.5 rounded-full transition-all",
+                    i === active
+                      ? "w-3.5 bg-primary"
+                      : "bg-muted-foreground/30 group-hover/dot:bg-muted-foreground/60",
+                  )}
+                />
+              </button>
             ))}
           </div>
         )}

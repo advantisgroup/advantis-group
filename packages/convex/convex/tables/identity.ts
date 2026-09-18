@@ -484,6 +484,17 @@ export const identityTables = {
     /** Set the moment the one-off "how's the new design?" prompt shows, so it
      * never shows again whether it was answered, dismissed or ignored. */
     designFeedbackPromptedAt: v.optional(v.number()),
+    /** Custom sidebar layout — sections of nav hrefs. Empty means the default. */
+    sidebarSections: v.optional(
+      v.array(
+        v.object({ id: v.string(), title: v.optional(v.string()), items: v.array(v.string()) }),
+      ),
+    ),
+    collapsedSidebarSections: v.optional(v.array(v.string())),
+    /** Per-card dashboard size, keyed by card id. Replaces `dashboardDensity`. */
+    dashboardCardSizes: v.optional(
+      v.record(v.string(), v.union(v.literal("compact"), v.literal("normal"), v.literal("wide"))),
+    ),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
 };

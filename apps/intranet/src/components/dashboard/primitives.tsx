@@ -1,13 +1,19 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode, type Ref } from "react";
 
 import { Link } from "@/components/Link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
+export type DashCardSize = "compact" | "normal" | "wide";
+
+export const DashCardSizeContext = createContext<DashCardSize>("normal");
+
 /** One block of a dashboard section. No surface of its own — the section it
- * sits in draws the ground and the hairlines between blocks. */
+ * sits in draws the ground and the hairlines between blocks. Its size is set
+ * per card by the person: compact keeps the first three rows on one line
+ * each, wide lays the rows out in two columns. */
 export function DashCard({
   icon,
   title,
@@ -19,9 +25,16 @@ export function DashCard({
   count?: number;
   children: ReactNode;
 }) {
+  const size = useContext(DashCardSizeContext);
   return (
     <section className="flex h-full min-w-0 flex-col">
-      <div data-dashboard-card-header className="flex items-center gap-2 px-4 pb-1.5 pt-4">
+      <div
+        data-dashboard-card-header
+        className={cn(
+          "flex items-center gap-2 px-4",
+          size === "compact" ? "pb-1 pt-3" : "pb-1.5 pt-4",
+        )}
+      >
         <span className="shrink-0 text-muted-foreground [&_svg]:size-4">{icon}</span>
         <h2 className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight">{title}</h2>
         {count ? (
@@ -30,7 +43,16 @@ export function DashCard({
           </span>
         ) : null}
       </div>
-      <div data-dashboard-card-content className="flex-1 px-1.5 pb-2.5">
+      <div
+        data-dashboard-card-content
+        className={cn(
+          "flex-1 px-1.5",
+          size === "compact" &&
+            "pb-1.5 [&_[data-dashboard-row]:nth-child(n+4)]:hidden [&_[data-dashboard-row]]:py-1.5 [&_[data-row-subtitle]]:hidden",
+          size === "normal" && "pb-2.5",
+          size === "wide" && "pb-2.5 sm:grid sm:grid-cols-2 sm:content-start sm:gap-x-1",
+        )}
+      >
         {children}
       </div>
     </section>
@@ -39,13 +61,33 @@ export function DashCard({
 
 /** A dashboard section's single surface: blocks sit side by side, split by
  * hairlines instead of each being its own card. The inner grid overhangs by a
- * pixel so the outer edge's borders get clipped away. */
-export function DashSurface({ children, className }: { children: ReactNode; className?: string }) {
+ * pixel so the outer edge's borders get clipped away. While editing, the
+ * blocks come apart into separate tiles so each reads as something to grab. */
+export function DashSurface({
+  children,
+  className,
+  editing,
+  gridRef,
+}: {
+  children: ReactNode;
+  className?: string;
+  editing?: boolean;
+  gridRef?: Ref<HTMLDivElement>;
+}) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+    <div
+      className={cn(
+        "rounded-2xl transition-colors duration-300",
+        editing ? "border border-transparent" : "overflow-hidden border border-border/70 bg-card",
+      )}
+    >
       <div
+        ref={gridRef}
         className={cn(
-          "-mb-px -mr-px grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 [&>*]:border-b [&>*]:border-r [&>*]:border-border/60",
+          "relative grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3",
+          editing
+            ? "gap-3 [&>*]:rounded-2xl [&>*]:border [&>*]:border-border/70 [&>*]:bg-card"
+            : "-mb-px -mr-px [&>*]:border-b [&>*]:border-r [&>*]:border-border/60",
           className,
         )}
       >
@@ -65,7 +107,7 @@ export function Empty({
   linkLabel?: string;
 }) {
   return (
-    <div className="px-2.5 py-5 text-center">
+    <div className="col-span-full px-2.5 py-3 text-center sm:py-5">
       <p className="text-sm text-muted-foreground">{children}</p>
       {href && linkLabel && (
         <Link
@@ -113,13 +155,15 @@ export function Row({
     <Link
       href={href}
       data-dashboard-row
-      className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-accent/60"
+      className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-accent/60 active:bg-accent"
     >
       {leading}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium leading-tight">{title}</p>
         {subtitle ? (
-          <p className="truncate text-xs leading-tight text-muted-foreground">{subtitle}</p>
+          <p data-row-subtitle className="truncate text-xs leading-tight text-muted-foreground">
+            {subtitle}
+          </p>
         ) : null}
       </div>
       {trailing ? (
@@ -155,7 +199,7 @@ export function StatLine({
       <Link
         href={href}
         data-dashboard-row
-        className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-accent/60"
+        className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-accent/60 active:bg-accent"
       >
         {content}
       </Link>
