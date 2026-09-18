@@ -1,10 +1,10 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
-import { api } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
-import schema from "./schema";
-import { modules } from "./test.setup";
+import { api } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
+import schema from "../schema";
+import { modules } from "../test.setup";
 
 function setup() {
   return convexTest(schema, modules);
@@ -137,7 +137,7 @@ describe("accountLinks.forUser", () => {
     const t = setup();
     const employee = await seedEmployee(t, { clerkUserId: "emp", email: "emp@advantisgroup.de" });
     await expect(
-      asUser(t, "emp").query(api.accountLinks.forUser, { userId: employee }),
+      asUser(t, "emp").query(api.security.accountLinks.forUser, { userId: employee }),
     ).rejects.toThrow();
   });
 
@@ -150,7 +150,9 @@ describe("accountLinks.forUser", () => {
     });
     await t.run(async (ctx) => ctx.db.delete(other));
 
-    const result = await asUser(t, "admin").query(api.accountLinks.forUser, { userId: other });
+    const result = await asUser(t, "admin").query(api.security.accountLinks.forUser, {
+      userId: other,
+    });
     expect(result).toBeNull();
   });
 
@@ -162,7 +164,9 @@ describe("accountLinks.forUser", () => {
       email: "plain@advantisgroup.de",
     });
 
-    const result = await asUser(t, "admin").query(api.accountLinks.forUser, { userId: employee });
+    const result = await asUser(t, "admin").query(api.security.accountLinks.forUser, {
+      userId: employee,
+    });
     expect(result).toEqual({
       performance: { status: "not_linked" },
       applicant: { status: "no_access" },
@@ -187,7 +191,9 @@ describe("accountLinks.forUser", () => {
       autoLinkedVia: "email_match",
     });
 
-    const result = await asUser(t, "admin").query(api.accountLinks.forUser, { userId: employee });
+    const result = await asUser(t, "admin").query(api.security.accountLinks.forUser, {
+      userId: employee,
+    });
     expect(result?.performance).toMatchObject({
       status: "linked",
       email: "linked@advantisgroup.de",
@@ -211,7 +217,9 @@ describe("accountLinks.forUser", () => {
       linkedUserId: employee,
     });
 
-    const result = await asUser(t, "admin").query(api.accountLinks.forUser, { userId: employee });
+    const result = await asUser(t, "admin").query(api.security.accountLinks.forUser, {
+      userId: employee,
+    });
     expect(result?.performance).toMatchObject({
       status: "linked",
       companyName: null,
@@ -235,7 +243,9 @@ describe("accountLinks.forUser", () => {
       }),
     );
 
-    const result = await asUser(t, "admin").query(api.accountLinks.forUser, { userId: admin });
+    const result = await asUser(t, "admin").query(api.security.accountLinks.forUser, {
+      userId: admin,
+    });
     expect(result?.applicant).toEqual({
       status: "granted",
       isDelegate: false,
@@ -271,7 +281,9 @@ describe("accountLinks.forUser", () => {
       });
     });
 
-    const result = await asUser(t, "admin").query(api.accountLinks.forUser, { userId: employee });
+    const result = await asUser(t, "admin").query(api.security.accountLinks.forUser, {
+      userId: employee,
+    });
     expect(result?.applicant).toEqual({
       status: "granted",
       isDelegate: true,
@@ -299,7 +311,9 @@ describe("accountLinks.forUser", () => {
       linkedUserId: employee,
     });
 
-    const result = await asUser(t, "admin").query(api.accountLinks.forUser, { userId: employee });
+    const result = await asUser(t, "admin").query(api.security.accountLinks.forUser, {
+      userId: employee,
+    });
     expect(result?.academies).toHaveLength(2);
     expect(result?.academies).toEqual(
       expect.arrayContaining([

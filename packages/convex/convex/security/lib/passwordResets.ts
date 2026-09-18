@@ -1,6 +1,6 @@
-import { type Doc, type Id } from "../_generated/dataModel";
-import { type MutationCtx, type QueryCtx } from "../_generated/server";
-import { isApplicantAreaMember } from "./auth";
+import { type Doc, type Id } from "../../_generated/dataModel";
+import { type MutationCtx, type QueryCtx } from "../../_generated/server";
+import { isApplicantAreaMember } from "../../lib/auth";
 
 /**
  * Helpers behind `passwordResets.ts`: the audit writer, account lookup for a

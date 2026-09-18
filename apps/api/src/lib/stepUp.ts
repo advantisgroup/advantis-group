@@ -53,7 +53,7 @@ export async function requestStepUpCode(
   sessionId: string,
   context: StepUpContext,
 ): Promise<void> {
-  await getConvex().mutation(api.stepUp.apiRequestEmailCode, {
+  await getConvex().mutation(api.security.stepUp.apiRequestEmailCode, {
     serverKey: getConvexServerKey(),
     clerkUserId,
     sessionId,
@@ -72,7 +72,7 @@ export async function verifyStepUp(
 ): Promise<VerifyResult> {
   if (method === "email_code") {
     try {
-      return await getConvex().mutation(api.stepUp.apiSubmitEmailCode, {
+      return await getConvex().mutation(api.security.stepUp.apiSubmitEmailCode, {
         serverKey: getConvexServerKey(),
         clerkUserId,
         sessionId,
@@ -89,7 +89,7 @@ export async function verifyStepUp(
     method === "totp"
       ? await verifyTotpCode(clerkUserId, code)
       : await verifyTotpRecoveryCode(clerkUserId, code);
-  await getConvex().mutation(api.stepUp.apiRecordVerification, {
+  await getConvex().mutation(api.security.stepUp.apiRecordVerification, {
     serverKey: getConvexServerKey(),
     clerkUserId,
     sessionId,
@@ -120,7 +120,7 @@ export async function verifyStepUpPasskey(
   if (assertion.clerkUserId !== clerkUserId) {
     return { ok: false, message: "That passkey belongs to a different account." };
   }
-  const { ok } = await getConvex().mutation(api.stepUp.apiRecordPasskeyStepUp, {
+  const { ok } = await getConvex().mutation(api.security.stepUp.apiRecordPasskeyStepUp, {
     serverKey: getConvexServerKey(),
     clerkUserId,
     sessionId,
@@ -134,7 +134,7 @@ export async function verifyStepUpPasskey(
  * the client alongside its Clerk sign-in token, so the browser can prove to
  * Convex — once it has a real session — that a passkey really was used. */
 export async function issuePasskeyStepUpTicket(clerkUserId: string): Promise<string> {
-  const { ticket } = await getConvex().mutation(api.stepUp.apiIssuePasskeyTicket, {
+  const { ticket } = await getConvex().mutation(api.security.stepUp.apiIssuePasskeyTicket, {
     serverKey: getConvexServerKey(),
     clerkUserId,
   });
@@ -148,7 +148,7 @@ export async function claimPasskeyTicket(
   sessionId: string,
   ticket: string,
 ): Promise<boolean> {
-  const { ok } = await getConvex().mutation(api.stepUp.apiClaimPasskeyTicket, {
+  const { ok } = await getConvex().mutation(api.security.stepUp.apiClaimPasskeyTicket, {
     serverKey: getConvexServerKey(),
     clerkUserId,
     ticket,
@@ -175,7 +175,7 @@ export async function destructiveStepUpHint(
   clerkUserId: string,
   sessionId: string,
 ): Promise<StepUpHint | null> {
-  const gate = await getConvex().query(api.stepUp.apiDestructiveGate, {
+  const gate = await getConvex().query(api.security.stepUp.apiDestructiveGate, {
     serverKey: getConvexServerKey(),
     clerkUserId,
     sessionId,
@@ -239,7 +239,7 @@ export async function evaluateDevice(
   userAgent: string,
 ): Promise<{ newDevice: boolean }> {
   const { browser, os } = deviceBrowserAndOs(userAgent);
-  return await getConvex().mutation(api.stepUp.apiEvaluateDevice, {
+  return await getConvex().mutation(api.security.stepUp.apiEvaluateDevice, {
     serverKey: getConvexServerKey(),
     clerkUserId,
     sessionId,

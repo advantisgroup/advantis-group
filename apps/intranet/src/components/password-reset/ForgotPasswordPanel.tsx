@@ -36,10 +36,13 @@ export function ForgotPasswordPanel({
 }) {
   const t = useTranslations("PasswordReset");
   const format = useFormatter();
-  const requestReset = useMutation(api.passwordResets.requestReset);
+  const requestReset = useMutation(api.security.passwordResets.requestReset);
   // Only `hr` callers are signed in; a Performance login screen on a tenant
   // domain has no Clerk session to answer this with.
-  const hrState = useQuery(api.passwordResets.myHrRequestState, scope === "hr" ? {} : "skip");
+  const hrState = useQuery(
+    api.security.passwordResets.myHrRequestState,
+    scope === "hr" ? {} : "skip",
+  );
 
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);

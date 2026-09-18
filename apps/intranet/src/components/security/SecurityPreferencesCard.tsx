@@ -21,8 +21,8 @@ const AREA_TITLE_KEY = {
 } as const;
 
 function useAreaPreference(area: Area) {
-  const pref = useQuery(api.stepUp.areaPreference, { area });
-  const setPref = useMutation(api.stepUp.setAreaPreference);
+  const pref = useQuery(api.security.stepUp.areaPreference, { area });
+  const setPref = useMutation(api.security.stepUp.setAreaPreference);
   return { pref, setPref };
 }
 
@@ -68,8 +68,8 @@ function AreaPreferenceRow({
 
 export function SecurityPreferencesCard() {
   const t = useTranslations("Settings");
-  const preference = useQuery(api.stepUp.securityPreference);
-  const setPreference = useMutation(api.stepUp.setSecurityPreference);
+  const preference = useQuery(api.security.stepUp.securityPreference);
+  const setPreference = useMutation(api.security.stepUp.setSecurityPreference);
   const confirm = useConfirm();
   const { passkeys } = useSecurityState();
   const performance = useAreaPreference("performance");

@@ -149,7 +149,7 @@ async function plantEmailCode(
   sessionId = SESSION,
   context: "sign_in" | "destructive" | "admin_reverify" | "area_reverify" = "sign_in",
 ) {
-  await t.mutation(api.stepUp.apiRequestEmailCode, {
+  await t.mutation(api.security.stepUp.apiRequestEmailCode, {
     serverKey,
     clerkUserId,
     sessionId,
@@ -187,7 +187,7 @@ describe("verification levels", () => {
     const userId = await seedUser(t);
     await plantEmailCode(t, "user_alice", userId, "123456");
 
-    const result = await t.mutation(api.stepUp.apiSubmitEmailCode, {
+    const result = await t.mutation(api.security.stepUp.apiSubmitEmailCode, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -206,7 +206,7 @@ describe("verification levels", () => {
     const userId = await seedUser(t);
     await seedTotp(t, userId);
 
-    await t.mutation(api.stepUp.apiRecordVerification, {
+    await t.mutation(api.security.stepUp.apiRecordVerification, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -224,7 +224,7 @@ describe("verification levels", () => {
     const userId = await seedUser(t);
     await seedTotp(t, userId);
 
-    await t.mutation(api.stepUp.apiRecordVerification, {
+    await t.mutation(api.security.stepUp.apiRecordVerification, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -241,11 +241,11 @@ describe("verification levels", () => {
     const t = setup();
     const userId = await seedUser(t);
 
-    const { ticket } = await t.mutation(api.stepUp.apiIssuePasskeyTicket, {
+    const { ticket } = await t.mutation(api.security.stepUp.apiIssuePasskeyTicket, {
       serverKey,
       clerkUserId: "user_alice",
     });
-    const claim = await t.mutation(api.stepUp.apiClaimPasskeyTicket, {
+    const claim = await t.mutation(api.security.stepUp.apiClaimPasskeyTicket, {
       serverKey,
       clerkUserId: "user_alice",
       ticket,
@@ -262,7 +262,7 @@ describe("verification levels", () => {
     const userId = await seedUser(t);
     await seedTotp(t, userId);
 
-    await t.mutation(api.stepUp.apiRecordVerification, {
+    await t.mutation(api.security.stepUp.apiRecordVerification, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -279,18 +279,18 @@ describe("passkey tickets", () => {
   test("a ticket is single-use", async () => {
     const t = setup();
     await seedUser(t);
-    const { ticket } = await t.mutation(api.stepUp.apiIssuePasskeyTicket, {
+    const { ticket } = await t.mutation(api.security.stepUp.apiIssuePasskeyTicket, {
       serverKey,
       clerkUserId: "user_alice",
     });
 
-    const first = await t.mutation(api.stepUp.apiClaimPasskeyTicket, {
+    const first = await t.mutation(api.security.stepUp.apiClaimPasskeyTicket, {
       serverKey,
       clerkUserId: "user_alice",
       ticket,
       sessionId: SESSION,
     });
-    const second = await t.mutation(api.stepUp.apiClaimPasskeyTicket, {
+    const second = await t.mutation(api.security.stepUp.apiClaimPasskeyTicket, {
       serverKey,
       clerkUserId: "user_alice",
       ticket,
@@ -305,12 +305,12 @@ describe("passkey tickets", () => {
     const t = setup();
     await seedUser(t, { clerkUserId: "user_alice" });
     await seedUser(t, { clerkUserId: "user_mallory" });
-    const { ticket } = await t.mutation(api.stepUp.apiIssuePasskeyTicket, {
+    const { ticket } = await t.mutation(api.security.stepUp.apiIssuePasskeyTicket, {
       serverKey,
       clerkUserId: "user_alice",
     });
 
-    const stolen = await t.mutation(api.stepUp.apiClaimPasskeyTicket, {
+    const stolen = await t.mutation(api.security.stepUp.apiClaimPasskeyTicket, {
       serverKey,
       clerkUserId: "user_mallory",
       ticket,
@@ -327,7 +327,7 @@ describe("email codes", () => {
     const userId = await seedUser(t);
     await plantEmailCode(t, "user_alice", userId, "123456");
 
-    const result = await t.mutation(api.stepUp.apiSubmitEmailCode, {
+    const result = await t.mutation(api.security.stepUp.apiSubmitEmailCode, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -346,7 +346,7 @@ describe("email codes", () => {
     await plantEmailCode(t, "user_alice", userId, "123456");
 
     for (let attempt = 0; attempt < 4; attempt++) {
-      await t.mutation(api.stepUp.apiSubmitEmailCode, {
+      await t.mutation(api.security.stepUp.apiSubmitEmailCode, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
@@ -354,7 +354,7 @@ describe("email codes", () => {
         context: "sign_in",
       });
     }
-    const fifth = await t.mutation(api.stepUp.apiSubmitEmailCode, {
+    const fifth = await t.mutation(api.security.stepUp.apiSubmitEmailCode, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -362,7 +362,7 @@ describe("email codes", () => {
       context: "sign_in",
     });
     // Even the right code is dead now — the row is gone.
-    const afterwards = await t.mutation(api.stepUp.apiSubmitEmailCode, {
+    const afterwards = await t.mutation(api.security.stepUp.apiSubmitEmailCode, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -380,7 +380,7 @@ describe("email codes", () => {
     const userId = await seedUser(t);
     await plantEmailCode(t, "user_alice", userId, "123456", "sess_a");
 
-    const wrongSession = await t.mutation(api.stepUp.apiSubmitEmailCode, {
+    const wrongSession = await t.mutation(api.security.stepUp.apiSubmitEmailCode, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: "sess_b",
@@ -396,7 +396,7 @@ describe("email codes", () => {
     const t = setup();
     await seedUser(t);
     const request = () =>
-      t.mutation(api.stepUp.apiRequestEmailCode, {
+      t.mutation(api.security.stepUp.apiRequestEmailCode, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
@@ -413,7 +413,9 @@ describe("the sign-in gate", () => {
     const t = setup();
     await seedUser(t);
 
-    const status = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const status = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
 
     expect(status.state).toBe("satisfied");
   });
@@ -422,7 +424,7 @@ describe("the sign-in gate", () => {
     const t = setup();
     const userId = await seedUser(t);
     const evaluate = (deviceHash: string) =>
-      t.mutation(api.stepUp.apiEvaluateDevice, {
+      t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
@@ -433,11 +435,13 @@ describe("the sign-in gate", () => {
     expect(await evaluate("device_laptop")).toEqual({ newDevice: false });
     expect(await evaluate("device_phone")).toEqual({ newDevice: true });
 
-    const gated = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const gated = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
     expect(gated).toMatchObject({ state: "needs_verification", requiredLevel: 1 });
 
     await plantEmailCode(t, "user_alice", userId, "123456");
-    await t.mutation(api.stepUp.apiSubmitEmailCode, {
+    await t.mutation(api.security.stepUp.apiSubmitEmailCode, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -445,7 +449,9 @@ describe("the sign-in gate", () => {
       context: "sign_in",
     });
 
-    const cleared = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const cleared = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
     expect(cleared.state).toBe("satisfied");
   });
 
@@ -453,7 +459,7 @@ describe("the sign-in gate", () => {
     const t = setup();
     await seedUser(t);
     const evaluate = (deviceHash: string) =>
-      t.mutation(api.stepUp.apiEvaluateDevice, {
+      t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
@@ -465,7 +471,9 @@ describe("the sign-in gate", () => {
     // A page refresh re-fires this route; the device is familiar by now.
     await evaluate("device_phone");
 
-    const status = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const status = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
     expect(status.state).toBe("needs_verification");
   });
 
@@ -474,7 +482,9 @@ describe("the sign-in gate", () => {
     const userId = await seedUser(t);
     await seedPolicy(t, userId, { requireMfaScope: "all" });
 
-    const status = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const status = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
 
     expect(status).toEqual({ state: "needs_enrollment", needsMfa: true, needsPasskey: false });
   });
@@ -486,10 +496,12 @@ describe("the sign-in gate", () => {
     await seedPolicy(t, employeeId, { requireMfaScope: "managers_and_up" });
 
     expect(
-      (await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION })).state,
+      (await asUser(t, "user_alice").query(api.security.stepUp.status, { sessionId: SESSION }))
+        .state,
     ).toBe("satisfied");
     expect(
-      (await asUser(t, "user_boss").query(api.stepUp.status, { sessionId: SESSION })).state,
+      (await asUser(t, "user_boss").query(api.security.stepUp.status, { sessionId: SESSION }))
+        .state,
     ).toBe("needs_enrollment");
   });
 
@@ -499,7 +511,9 @@ describe("the sign-in gate", () => {
     await seedTotp(t, userId);
     await seedPolicy(t, userId, { requireMfaScope: "all" });
 
-    const status = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const status = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
 
     expect(status).toMatchObject({ state: "needs_verification", requiredLevel: 2 });
     // The regression this guards: an offered email code verifies fine and
@@ -515,7 +529,7 @@ describe("the sign-in gate", () => {
     await seedTotp(t, userId);
     await seedPolicy(t, userId, { requireMfaScope: "all" });
 
-    await t.mutation(api.stepUp.apiRecordVerification, {
+    await t.mutation(api.security.stepUp.apiRecordVerification, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -524,7 +538,9 @@ describe("the sign-in gate", () => {
       context: "sign_in",
     });
 
-    const status = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const status = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
     expect(status.state).toBe("satisfied");
   });
 
@@ -534,7 +550,9 @@ describe("the sign-in gate", () => {
     await seedPasskey(t, userId);
     await seedPolicy(t, userId, { requireMfaScope: "all" });
 
-    const status = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const status = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
 
     expect(status).toMatchObject({
       state: "needs_verification",
@@ -549,7 +567,9 @@ describe("the sign-in gate", () => {
     const userId = await seedUser(t);
     await seedPolicy(t, userId, { requireMfaScope: "all", exemptUserIds: [userId] });
 
-    const status = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const status = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
     expect(status.state).toBe("satisfied");
   });
 
@@ -567,7 +587,9 @@ describe("the sign-in gate", () => {
       gracePeriodDays: 7,
     });
 
-    const status = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const status = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
 
     expect(status.state).toBe("warning");
     if (status.state !== "warning") throw new Error("expected warning");
@@ -584,7 +606,9 @@ describe("the sign-in gate", () => {
       gracePeriodDays: 7,
     });
 
-    const status = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const status = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
     expect(status).toEqual({ state: "needs_enrollment", needsMfa: true, needsPasskey: false });
   });
 
@@ -599,7 +623,9 @@ describe("the sign-in gate", () => {
       gracePeriodDays: 7,
     });
 
-    const status = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const status = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
     expect(status.state).toBe("satisfied");
   });
 
@@ -612,7 +638,9 @@ describe("the sign-in gate", () => {
       mfaPolicySetAt: Date.now() - DAY,
     });
 
-    const status = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const status = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
     expect(status.state).toBe("satisfied");
   });
 });
@@ -622,28 +650,28 @@ describe("always-require-MFA preference", () => {
     const t = setup();
     const userId = await seedUser(t);
     await seedPasskey(t, userId);
-    await asUser(t, "user_alice").mutation(api.stepUp.setSecurityPreference, {
+    await asUser(t, "user_alice").mutation(api.security.stepUp.setSecurityPreference, {
       alwaysRequireMfaAtSignIn: true,
     });
 
-    const { ticket } = await t.mutation(api.stepUp.apiIssuePasskeyTicket, {
+    const { ticket } = await t.mutation(api.security.stepUp.apiIssuePasskeyTicket, {
       serverKey,
       clerkUserId: "user_alice",
     });
-    await t.mutation(api.stepUp.apiClaimPasskeyTicket, {
+    await t.mutation(api.security.stepUp.apiClaimPasskeyTicket, {
       serverKey,
       clerkUserId: "user_alice",
       ticket,
       sessionId: SESSION,
     });
 
-    const afterPasskey = await asUser(t, "user_alice").query(api.stepUp.status, {
+    const afterPasskey = await asUser(t, "user_alice").query(api.security.stepUp.status, {
       sessionId: SESSION,
     });
     expect(afterPasskey).toMatchObject({ state: "needs_verification", requiredLevel: 1 });
 
     await plantEmailCode(t, "user_alice", userId, "123456");
-    await t.mutation(api.stepUp.apiSubmitEmailCode, {
+    await t.mutation(api.security.stepUp.apiSubmitEmailCode, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -651,7 +679,7 @@ describe("always-require-MFA preference", () => {
       context: "sign_in",
     });
 
-    const afterCode = await asUser(t, "user_alice").query(api.stepUp.status, {
+    const afterCode = await asUser(t, "user_alice").query(api.security.stepUp.status, {
       sessionId: SESSION,
     });
     expect(afterCode.state).toBe("satisfied");
@@ -665,12 +693,12 @@ describe("recovery codes", () => {
     await seedTotp(t, userId);
     await seedRecoveryCodes(t, userId, ["ABCDE-FGHJK"]);
 
-    const first = await t.mutation(api.totp.apiVerifyRecoveryCode, {
+    const first = await t.mutation(api.security.totp.apiVerifyRecoveryCode, {
       serverKey,
       clerkUserId: "user_alice",
       code: "abcde-fghjk",
     });
-    const second = await t.mutation(api.totp.apiVerifyRecoveryCode, {
+    const second = await t.mutation(api.security.totp.apiVerifyRecoveryCode, {
       serverKey,
       clerkUserId: "user_alice",
       code: "ABCDE-FGHJK",
@@ -687,12 +715,12 @@ describe("recovery codes", () => {
     await seedRecoveryCodes(t, userId, ["ABCDE-FGHJK"]);
     await seedPolicy(t, userId, { requireMfaScope: "all" });
 
-    await t.mutation(api.totp.apiVerifyRecoveryCode, {
+    await t.mutation(api.security.totp.apiVerifyRecoveryCode, {
       serverKey,
       clerkUserId: "user_alice",
       code: "ABCDE-FGHJK",
     });
-    await t.mutation(api.stepUp.apiRecordVerification, {
+    await t.mutation(api.security.stepUp.apiRecordVerification, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -703,10 +731,15 @@ describe("recovery codes", () => {
 
     // The level was high enough to clear the policy, so this is not the old
     // "verified and still locked out" dead end — it's the re-enrollment step.
-    const status = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const status = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
     expect(status).toEqual({ state: "needs_enrollment", needsMfa: true, needsPasskey: false });
 
-    const totpStatus = await t.query(api.totp.apiStatus, { serverKey, clerkUserId: "user_alice" });
+    const totpStatus = await t.query(api.security.totp.apiStatus, {
+      serverKey,
+      clerkUserId: "user_alice",
+    });
     expect(totpStatus).toMatchObject({ enrolled: true, needsRotation: true });
   });
 
@@ -716,13 +749,19 @@ describe("recovery codes", () => {
     await seedTotp(t, userId);
     await seedRecoveryCodes(t, userId, ["ABCDE-FGHJK", "KLMNP-QRSTU", "VWXYZ-23456"]);
 
-    const before = await t.query(api.totp.apiStatus, { serverKey, clerkUserId: "user_alice" });
-    await t.mutation(api.totp.apiVerifyRecoveryCode, {
+    const before = await t.query(api.security.totp.apiStatus, {
+      serverKey,
+      clerkUserId: "user_alice",
+    });
+    await t.mutation(api.security.totp.apiVerifyRecoveryCode, {
       serverKey,
       clerkUserId: "user_alice",
       code: "ABCDE-FGHJK",
     });
-    const after = await t.query(api.totp.apiStatus, { serverKey, clerkUserId: "user_alice" });
+    const after = await t.query(api.security.totp.apiStatus, {
+      serverKey,
+      clerkUserId: "user_alice",
+    });
 
     expect(before).toMatchObject({ recoveryCodesRemaining: 3, recoveryCodesTotal: 3 });
     expect(after).toMatchObject({ recoveryCodesRemaining: 2, recoveryCodesTotal: 3 });
@@ -734,16 +773,16 @@ describe("recovery codes", () => {
     await seedTotp(t, userId);
     await seedRecoveryCodes(t, userId, ["ABCDE-FGHJK"]);
 
-    const { recoveryCodes } = await t.mutation(api.totp.apiRegenerateRecoveryCodes, {
+    const { recoveryCodes } = await t.mutation(api.security.totp.apiRegenerateRecoveryCodes, {
       serverKey,
       clerkUserId: "user_alice",
     });
-    const old = await t.mutation(api.totp.apiVerifyRecoveryCode, {
+    const old = await t.mutation(api.security.totp.apiVerifyRecoveryCode, {
       serverKey,
       clerkUserId: "user_alice",
       code: "ABCDE-FGHJK",
     });
-    const fresh = await t.mutation(api.totp.apiVerifyRecoveryCode, {
+    const fresh = await t.mutation(api.security.totp.apiVerifyRecoveryCode, {
       serverKey,
       clerkUserId: "user_alice",
       code: recoveryCodes[0]!,
@@ -759,7 +798,10 @@ describe("recovery codes", () => {
     await seedUser(t);
 
     await expect(
-      t.mutation(api.totp.apiRegenerateRecoveryCodes, { serverKey, clerkUserId: "user_alice" }),
+      t.mutation(api.security.totp.apiRegenerateRecoveryCodes, {
+        serverKey,
+        clerkUserId: "user_alice",
+      }),
     ).rejects.toThrow();
   });
 });
@@ -772,7 +814,7 @@ describe("security activity", () => {
     await seedRecoveryCodes(t, userId, ["ABCDE-FGHJK"]);
 
     // One event into each table, in a known order.
-    await t.mutation(api.stepUp.apiRecordVerification, {
+    await t.mutation(api.security.stepUp.apiRecordVerification, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -780,7 +822,7 @@ describe("security activity", () => {
       ok: true,
       context: "sign_in",
     });
-    await t.mutation(api.totp.apiVerifyRecoveryCode, {
+    await t.mutation(api.security.totp.apiVerifyRecoveryCode, {
       serverKey,
       clerkUserId: "user_alice",
       code: "ABCDE-FGHJK",
@@ -793,7 +835,7 @@ describe("security activity", () => {
       });
     });
 
-    const activity = await asUser(t, "user_alice").query(api.stepUp.securityActivity, {});
+    const activity = await asUser(t, "user_alice").query(api.security.stepUp.securityActivity, {});
 
     expect(activity[0]).toMatchObject({ source: "passkey", event: "created" });
     expect(activity.map((entry) => entry.source)).toEqual(
@@ -808,7 +850,7 @@ describe("security activity", () => {
     const t = setup();
     const userId = await seedUser(t);
     await seedTotp(t, userId);
-    await t.mutation(api.stepUp.apiRecordVerification, {
+    await t.mutation(api.security.stepUp.apiRecordVerification, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -817,7 +859,7 @@ describe("security activity", () => {
       context: "sign_in",
     });
 
-    const activity = await asUser(t, "user_alice").query(api.stepUp.securityActivity, {});
+    const activity = await asUser(t, "user_alice").query(api.security.stepUp.securityActivity, {});
     const stepUp = activity.find((entry) => entry.source === "step_up");
 
     expect(stepUp).toMatchObject({ event: "verified", detail: "totp" });
@@ -826,7 +868,7 @@ describe("security activity", () => {
   test("housekeeping rows stay out of it", async () => {
     const t = setup();
     const userId = await seedUser(t);
-    await t.mutation(api.stepUp.apiRequestEmailCode, {
+    await t.mutation(api.security.stepUp.apiRequestEmailCode, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -841,7 +883,7 @@ describe("security activity", () => {
       });
     });
 
-    const activity = await asUser(t, "user_alice").query(api.stepUp.securityActivity, {});
+    const activity = await asUser(t, "user_alice").query(api.security.stepUp.securityActivity, {});
 
     // `challenge_issued` is the system talking to itself, and a policy change
     // is about the org, not this account.
@@ -861,7 +903,7 @@ describe("security activity", () => {
       });
     });
 
-    const activity = await asUser(t, "user_alice").query(api.stepUp.securityActivity, {});
+    const activity = await asUser(t, "user_alice").query(api.security.stepUp.securityActivity, {});
     expect(activity).toHaveLength(0);
   });
 
@@ -871,16 +913,16 @@ describe("security activity", () => {
     await seedTotp(t, userId);
     await seedRecoveryCodes(t, userId, ["ABCDE-FGHJK"]);
 
-    const before = await t.query(api.totp.apiEnrollmentContext, {
+    const before = await t.query(api.security.totp.apiEnrollmentContext, {
       serverKey,
       clerkUserId: "user_alice",
     });
-    await t.mutation(api.totp.apiVerifyRecoveryCode, {
+    await t.mutation(api.security.totp.apiVerifyRecoveryCode, {
       serverKey,
       clerkUserId: "user_alice",
       code: "ABCDE-FGHJK",
     });
-    const after = await t.query(api.totp.apiEnrollmentContext, {
+    const after = await t.query(api.security.totp.apiEnrollmentContext, {
       serverKey,
       clerkUserId: "user_alice",
     });
@@ -896,13 +938,13 @@ describe("security activity", () => {
     await seedRecoveryCodes(t, userId, ["ABCDE-FGHJK", "KLMNP-QRSTU"]);
     await seedPolicy(t, userId, { requireMfaForDestructive: true, minDestructiveLevel: 2 });
 
-    await t.mutation(api.totp.apiVerifyRecoveryCode, {
+    await t.mutation(api.security.totp.apiVerifyRecoveryCode, {
       serverKey,
       clerkUserId: "user_alice",
       code: "ABCDE-FGHJK",
     });
 
-    const gate = await t.query(api.stepUp.apiDestructiveGate, {
+    const gate = await t.query(api.security.stepUp.apiDestructiveGate, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -917,7 +959,7 @@ describe("the destructive-action gate", () => {
     const t = setup();
     await seedUser(t);
 
-    const gate = await t.query(api.stepUp.apiDestructiveGate, {
+    const gate = await t.query(api.security.stepUp.apiDestructiveGate, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -931,7 +973,7 @@ describe("the destructive-action gate", () => {
     const t = setup();
     const userId = await seedUser(t);
     await plantEmailCode(t, "user_alice", userId, "123456");
-    await t.mutation(api.stepUp.apiSubmitEmailCode, {
+    await t.mutation(api.security.stepUp.apiSubmitEmailCode, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -939,7 +981,7 @@ describe("the destructive-action gate", () => {
       context: "sign_in",
     });
 
-    const gate = await t.query(api.stepUp.apiDestructiveGate, {
+    const gate = await t.query(api.security.stepUp.apiDestructiveGate, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -954,7 +996,7 @@ describe("the destructive-action gate", () => {
     await seedPolicy(t, userId, { requireMfaForDestructive: true, minDestructiveLevel: 2 });
 
     await plantEmailCode(t, "user_alice", userId, "123456");
-    await t.mutation(api.stepUp.apiSubmitEmailCode, {
+    await t.mutation(api.security.stepUp.apiSubmitEmailCode, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -962,7 +1004,7 @@ describe("the destructive-action gate", () => {
       context: "sign_in",
     });
 
-    const afterEmail = await t.query(api.stepUp.apiDestructiveGate, {
+    const afterEmail = await t.query(api.security.stepUp.apiDestructiveGate, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -970,7 +1012,7 @@ describe("the destructive-action gate", () => {
     expect(afterEmail).toMatchObject({ satisfied: false, requiredLevel: 2 });
     expect(afterEmail.availableMethods).not.toContain("email_code");
 
-    await t.mutation(api.stepUp.apiRecordVerification, {
+    await t.mutation(api.security.stepUp.apiRecordVerification, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -979,7 +1021,7 @@ describe("the destructive-action gate", () => {
       context: "destructive",
     });
 
-    const afterTotp = await t.query(api.stepUp.apiDestructiveGate, {
+    const afterTotp = await t.query(api.security.stepUp.apiDestructiveGate, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -991,7 +1033,7 @@ describe("the destructive-action gate", () => {
     const t = setup();
     const userId = await seedUser(t);
     await plantEmailCode(t, "user_alice", userId, "123456");
-    await t.mutation(api.stepUp.apiSubmitEmailCode, {
+    await t.mutation(api.security.stepUp.apiSubmitEmailCode, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -1009,12 +1051,14 @@ describe("the destructive-action gate", () => {
       await ctx.db.patch(row!._id, { verifiedAt: Date.now() - 30 * 60_000 });
     });
 
-    const gate = await t.query(api.stepUp.apiDestructiveGate, {
+    const gate = await t.query(api.security.stepUp.apiDestructiveGate, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
     });
-    const signIn = await asUser(t, "user_alice").query(api.stepUp.status, { sessionId: SESSION });
+    const signIn = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
 
     expect(gate.satisfied).toBe(false);
     expect(signIn.state).toBe("satisfied");
@@ -1029,7 +1073,7 @@ describe("the destructive-action gate", () => {
       exemptUserIds: [userId],
     });
 
-    const gate = await t.query(api.stepUp.apiDestructiveGate, {
+    const gate = await t.query(api.security.stepUp.apiDestructiveGate, {
       serverKey,
       clerkUserId: "user_alice",
       sessionId: SESSION,
@@ -1045,17 +1089,17 @@ describe("TOTP replay state", () => {
     const userId = await seedUser(t);
     await seedTotp(t, userId);
 
-    const before = await t.query(api.totp.apiSecretForVerification, {
+    const before = await t.query(api.security.totp.apiSecretForVerification, {
       serverKey,
       clerkUserId: "user_alice",
     });
-    await t.mutation(api.totp.apiRecordVerification, {
+    await t.mutation(api.security.totp.apiRecordVerification, {
       serverKey,
       clerkUserId: "user_alice",
       ok: true,
       usedStep: 58_000_000,
     });
-    const after = await t.query(api.totp.apiSecretForVerification, {
+    const after = await t.query(api.security.totp.apiSecretForVerification, {
       serverKey,
       clerkUserId: "user_alice",
     });
@@ -1068,20 +1112,20 @@ describe("TOTP replay state", () => {
     const t = setup();
     const userId = await seedUser(t);
     await seedTotp(t, userId);
-    await t.mutation(api.totp.apiRecordVerification, {
+    await t.mutation(api.security.totp.apiRecordVerification, {
       serverKey,
       clerkUserId: "user_alice",
       ok: true,
       usedStep: 58_000_000,
     });
 
-    await t.mutation(api.totp.apiRecordVerification, {
+    await t.mutation(api.security.totp.apiRecordVerification, {
       serverKey,
       clerkUserId: "user_alice",
       ok: false,
     });
 
-    const after = await t.query(api.totp.apiSecretForVerification, {
+    const after = await t.query(api.security.totp.apiSecretForVerification, {
       serverKey,
       clerkUserId: "user_alice",
     });
@@ -1095,7 +1139,7 @@ describe("server-key guard", () => {
     await seedUser(t);
 
     await expect(
-      t.query(api.stepUp.apiDestructiveGate, {
+      t.query(api.security.stepUp.apiDestructiveGate, {
         serverKey: "not-the-key",
         clerkUserId: "user_alice",
         sessionId: SESSION,
@@ -1125,10 +1169,13 @@ describe("org policy edits", () => {
       legacyPasswordGraceDays: 30,
     };
 
-    await admin.mutation(api.stepUp.setOrgPolicy, base);
+    await admin.mutation(api.security.stepUp.setOrgPolicy, base);
     const first = await t.run(async (ctx) => ctx.db.query("authPolicy").first());
 
-    await admin.mutation(api.stepUp.setOrgPolicy, { ...base, destructiveActionTtlMinutes: 25 });
+    await admin.mutation(api.security.stepUp.setOrgPolicy, {
+      ...base,
+      destructiveActionTtlMinutes: 25,
+    });
     const second = await t.run(async (ctx) => ctx.db.query("authPolicy").first());
 
     expect(second!.mfaPolicySetAt).toBe(first!.mfaPolicySetAt);
@@ -1154,10 +1201,10 @@ describe("org policy edits", () => {
       legacyPasswordGraceDays: 30,
     };
 
-    await admin.mutation(api.stepUp.setOrgPolicy, base);
+    await admin.mutation(api.security.stepUp.setOrgPolicy, base);
     const first = await t.run(async (ctx) => ctx.db.query("authPolicy").first());
 
-    await admin.mutation(api.stepUp.setOrgPolicy, { ...base, requireMfaScope: "all" });
+    await admin.mutation(api.security.stepUp.setOrgPolicy, { ...base, requireMfaScope: "all" });
     const second = await t.run(async (ctx) => ctx.db.query("authPolicy").first());
 
     expect(second!.mfaPolicySetAt).toBeGreaterThanOrEqual(first!.mfaPolicySetAt);
@@ -1168,7 +1215,9 @@ describe("org policy edits", () => {
     const t = setup();
     await seedUser(t, { clerkUserId: "user_alice" });
 
-    await expect(asUser(t, "user_alice").query(api.stepUp.orgPolicy, {})).rejects.toThrow();
+    await expect(
+      asUser(t, "user_alice").query(api.security.stepUp.orgPolicy, {}),
+    ).rejects.toThrow();
   });
 });
 
@@ -1178,7 +1227,7 @@ describe("Area re-verification", () => {
       const t = setup();
       await seedUser(t, { clerkUserId: "user_alice" });
 
-      const status = await asUser(t, "user_alice").query(api.stepUp.areaAccessStatus, {
+      const status = await asUser(t, "user_alice").query(api.security.stepUp.areaAccessStatus, {
         area: "performance",
       });
       expect(status.state).toBe("needs_verification");
@@ -1188,7 +1237,7 @@ describe("Area re-verification", () => {
       const t = setup();
       const userId = await seedUser(t, { clerkUserId: "user_alice" });
       await plantEmailCode(t, "user_alice", userId, "111222", SESSION, "area_reverify");
-      const result = await t.mutation(api.stepUp.apiSubmitEmailCode, {
+      const result = await t.mutation(api.security.stepUp.apiSubmitEmailCode, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
@@ -1198,12 +1247,15 @@ describe("Area re-verification", () => {
       });
       expect(result.ok).toBe(true);
 
-      const performance = await asUser(t, "user_alice").query(api.stepUp.areaAccessStatus, {
-        area: "performance",
-      });
+      const performance = await asUser(t, "user_alice").query(
+        api.security.stepUp.areaAccessStatus,
+        {
+          area: "performance",
+        },
+      );
       expect(performance.state).toBe("satisfied");
 
-      const vault = await asUser(t, "user_alice").query(api.stepUp.areaAccessStatus, {
+      const vault = await asUser(t, "user_alice").query(api.security.stepUp.areaAccessStatus, {
         area: "applicant_vault",
       });
       expect(vault.state).toBe("needs_verification");
@@ -1223,7 +1275,7 @@ describe("Area re-verification", () => {
         }),
       );
 
-      const status = await asUser(t, "user_bob").query(api.stepUp.areaAccessStatus, {
+      const status = await asUser(t, "user_bob").query(api.security.stepUp.areaAccessStatus, {
         area: "performance",
       });
       expect(status.state).toBe("needs_verification");
@@ -1243,7 +1295,7 @@ describe("Area re-verification", () => {
         }),
       );
 
-      const status = await asUser(t, "user_carl").query(api.stepUp.areaAccessStatus, {
+      const status = await asUser(t, "user_carl").query(api.security.stepUp.areaAccessStatus, {
         area: "performance",
       });
       expect(status.state).toBe("needs_verification");
@@ -1255,7 +1307,7 @@ describe("Area re-verification", () => {
       const t = setup();
       await seedUser(t, { clerkUserId: "user_alice" });
 
-      const pref = await asUser(t, "user_alice").query(api.stepUp.areaPreference, {
+      const pref = await asUser(t, "user_alice").query(api.security.stepUp.areaPreference, {
         area: "performance",
       });
       expect(pref.mode).toBe("trust_device");
@@ -1273,12 +1325,12 @@ describe("Area re-verification", () => {
         }),
       );
 
-      await asUser(t, "user_alice").mutation(api.stepUp.setAreaPreference, {
+      await asUser(t, "user_alice").mutation(api.security.stepUp.setAreaPreference, {
         area: "performance",
         mode: "always_step_up",
       });
 
-      const pref = await asUser(t, "user_alice").query(api.stepUp.areaPreference, {
+      const pref = await asUser(t, "user_alice").query(api.security.stepUp.areaPreference, {
         area: "performance",
       });
       expect(pref.mode).toBe("always_step_up");
@@ -1287,7 +1339,7 @@ describe("Area re-verification", () => {
       // the step-up someone just completed would be a permanent lockout,
       // not extra security — the fresh clearance from moments ago still
       // has to grant entry for this visit.
-      const status = await asUser(t, "user_alice").query(api.stepUp.areaAccessStatus, {
+      const status = await asUser(t, "user_alice").query(api.security.stepUp.areaAccessStatus, {
         area: "performance",
       });
       expect(status.state).toBe("satisfied");
@@ -1313,7 +1365,7 @@ describe("Area re-verification", () => {
 
       // Well within the normal 14-day trust_device window, but past
       // always_step_up's much shorter freshness window.
-      const status = await asUser(t, "user_bob").query(api.stepUp.areaAccessStatus, {
+      const status = await asUser(t, "user_bob").query(api.security.stepUp.areaAccessStatus, {
         area: "performance",
       });
       expect(status.state).toBe("needs_verification");
@@ -1325,7 +1377,7 @@ describe("Area re-verification", () => {
       const t = setup();
       const userId = await seedUser(t, { clerkUserId: "user_alice" });
 
-      await t.mutation(api.stepUp.apiEvaluateDevice, {
+      await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
@@ -1334,7 +1386,10 @@ describe("Area re-verification", () => {
         os: "macOS",
       });
 
-      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices } = await asUser(t, "user_alice").query(
+        api.security.stepUp.trustedDevices,
+        {},
+      );
       expect(devices).toHaveLength(1);
       expect(devices[0]!.name).toBe("Chrome on macOS");
       expect(devices[0]!.browser).toBe("Chrome");
@@ -1357,10 +1412,10 @@ describe("Area re-verification", () => {
         }),
       );
 
-      const before = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const before = await asUser(t, "user_alice").query(api.security.stepUp.trustedDevices, {});
       expect(before.devices[0]!.name).toBe("Unrecognized device");
 
-      await t.mutation(api.stepUp.apiEvaluateDevice, {
+      await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
@@ -1369,7 +1424,7 @@ describe("Area re-verification", () => {
         os: "Windows",
       });
 
-      const after = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const after = await asUser(t, "user_alice").query(api.security.stepUp.trustedDevices, {});
       expect(after.devices[0]!.name).toBe("Firefox on Windows");
       expect(after.devices[0]!.browser).toBe("Firefox");
     });
@@ -1377,7 +1432,7 @@ describe("Area re-verification", () => {
     test("a custom name survives a revisit — browser/os still refresh, name doesn't", async () => {
       const t = setup();
       await seedUser(t, { clerkUserId: "user_alice" });
-      await t.mutation(api.stepUp.apiEvaluateDevice, {
+      await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
@@ -1386,15 +1441,15 @@ describe("Area re-verification", () => {
         os: "macOS",
       });
       const { devices: seeded } = await asUser(t, "user_alice").query(
-        api.stepUp.trustedDevices,
+        api.security.stepUp.trustedDevices,
         {},
       );
-      await asUser(t, "user_alice").mutation(api.stepUp.renameDevice, {
+      await asUser(t, "user_alice").mutation(api.security.stepUp.renameDevice, {
         deviceId: seeded[0]!.id,
         name: "My work laptop",
       });
 
-      await t.mutation(api.stepUp.apiEvaluateDevice, {
+      await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
@@ -1403,34 +1458,43 @@ describe("Area re-verification", () => {
         os: "macOS",
       });
 
-      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices } = await asUser(t, "user_alice").query(
+        api.security.stepUp.trustedDevices,
+        {},
+      );
       expect(devices[0]!.name).toBe("My work laptop");
     });
 
     test("opting out forgets stored devices, stores no new ones, and treats every session as untrusted", async () => {
       const t = setup();
       await seedUser(t, { clerkUserId: "user_alice" });
-      await t.mutation(api.stepUp.apiEvaluateDevice, {
+      await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: "sess_before",
         deviceHash: "hash1",
       });
 
-      await asUser(t, "user_alice").mutation(api.stepUp.setSecurityPreference, {
+      await asUser(t, "user_alice").mutation(api.security.stepUp.setSecurityPreference, {
         deviceTrackingOptOut: true,
       });
-      const afterOptOut = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const afterOptOut = await asUser(t, "user_alice").query(
+        api.security.stepUp.trustedDevices,
+        {},
+      );
       expect(afterOptOut.devices).toHaveLength(0);
 
-      const result = await t.mutation(api.stepUp.apiEvaluateDevice, {
+      const result = await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
         deviceHash: "hash1",
       });
       expect(result.newDevice).toBe(true);
-      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices } = await asUser(t, "user_alice").query(
+        api.security.stepUp.trustedDevices,
+        {},
+      );
       expect(devices).toHaveLength(0);
     });
 
@@ -1438,7 +1502,7 @@ describe("Area re-verification", () => {
       const t = setup();
       const userId = await seedUser(t, { clerkUserId: "user_alice" });
       const evaluate = (deviceHash: string, sessionId: string) =>
-        t.mutation(api.stepUp.apiEvaluateDevice, {
+        t.mutation(api.security.stepUp.apiEvaluateDevice, {
           serverKey,
           clerkUserId: "user_alice",
           sessionId,
@@ -1451,7 +1515,7 @@ describe("Area re-verification", () => {
       expect(await evaluate("phone", "sess_phone_2")).toEqual({ newDevice: true });
 
       await plantEmailCode(t, "user_alice", userId, "123456", "sess_phone_2");
-      await t.mutation(api.stepUp.apiSubmitEmailCode, {
+      await t.mutation(api.security.stepUp.apiSubmitEmailCode, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: "sess_phone_2",
@@ -1460,7 +1524,10 @@ describe("Area re-verification", () => {
       });
 
       expect(await evaluate("phone", "sess_phone_3")).toEqual({ newDevice: false });
-      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices } = await asUser(t, "user_alice").query(
+        api.security.stepUp.trustedDevices,
+        {},
+      );
       expect(devices.every((d) => d.trusted)).toBe(true);
     });
 
@@ -1468,7 +1535,7 @@ describe("Area re-verification", () => {
       const t = setup();
       await seedUser(t, { clerkUserId: "user_alice" });
       const evaluate = (deviceHash: string, sessionId: string) =>
-        t.mutation(api.stepUp.apiEvaluateDevice, {
+        t.mutation(api.security.stepUp.apiEvaluateDevice, {
           serverKey,
           clerkUserId: "user_alice",
           sessionId,
@@ -1479,7 +1546,10 @@ describe("Area re-verification", () => {
       await evaluate("home-wifi-chrome-128", "sess_1");
       expect(await evaluate("office-chrome-129", "sess_2")).toEqual({ newDevice: false });
 
-      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices } = await asUser(t, "user_alice").query(
+        api.security.stepUp.trustedDevices,
+        {},
+      );
       expect(devices).toHaveLength(1);
     });
 
@@ -1502,7 +1572,7 @@ describe("Area re-verification", () => {
         });
       });
 
-      const result = await t.mutation(api.stepUp.apiEvaluateDevice, {
+      const result = await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
@@ -1525,7 +1595,7 @@ describe("Area re-verification", () => {
       const t = setup();
       await seedUser(t, { clerkUserId: "user_alice" });
       const evaluate = (clerkClientId: string, sessionId: string) =>
-        t.mutation(api.stepUp.apiEvaluateDevice, {
+        t.mutation(api.security.stepUp.apiEvaluateDevice, {
           serverKey,
           clerkUserId: "user_alice",
           sessionId,
@@ -1536,7 +1606,10 @@ describe("Area re-verification", () => {
       await evaluate("client_a", "sess_a");
       expect(await evaluate("client_b", "sess_b")).toEqual({ newDevice: true });
 
-      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices } = await asUser(t, "user_alice").query(
+        api.security.stepUp.trustedDevices,
+        {},
+      );
       expect(devices).toHaveLength(2);
     });
 
@@ -1544,16 +1617,19 @@ describe("Area re-verification", () => {
       const t = setup();
       await seedUser(t, { clerkUserId: "user_alice" });
       await seedUser(t, { clerkUserId: "user_mallory" });
-      await t.mutation(api.stepUp.apiEvaluateDevice, {
+      await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: "sess_laptop",
         clerkClientId: "client_laptop",
         deviceHash: "laptop",
       });
-      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices } = await asUser(t, "user_alice").query(
+        api.security.stepUp.trustedDevices,
+        {},
+      );
 
-      const mine = await asUser(t, "user_alice").query(api.stepUp.sessionDevices, {
+      const mine = await asUser(t, "user_alice").query(api.security.stepUp.sessionDevices, {
         sessionIds: ["sess_laptop", "sess_unknown"],
       });
       expect(mine).toEqual([
@@ -1561,7 +1637,7 @@ describe("Area re-verification", () => {
         { sessionId: "sess_unknown", deviceId: null },
       ]);
 
-      const theirs = await asUser(t, "user_mallory").query(api.stepUp.sessionDevices, {
+      const theirs = await asUser(t, "user_mallory").query(api.security.stepUp.sessionDevices, {
         sessionIds: ["sess_laptop"],
       });
       expect(theirs).toEqual([{ sessionId: "sess_laptop", deviceId: null }]);
@@ -1580,7 +1656,7 @@ describe("Area re-verification", () => {
         }),
       );
 
-      const result = await t.mutation(api.stepUp.apiEvaluateDevice, {
+      const result = await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
@@ -1593,24 +1669,27 @@ describe("Area re-verification", () => {
       const t = setup();
       await seedUser(t, { clerkUserId: "user_alice" });
       await seedUser(t, { clerkUserId: "user_mallory" });
-      await t.mutation(api.stepUp.apiEvaluateDevice, {
+      await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
         deviceHash: "hash1",
       });
-      const { devices: found } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices: found } = await asUser(t, "user_alice").query(
+        api.security.stepUp.trustedDevices,
+        {},
+      );
       const device = found[0];
 
-      await asUser(t, "user_alice").mutation(api.stepUp.renameDevice, {
+      await asUser(t, "user_alice").mutation(api.security.stepUp.renameDevice, {
         deviceId: device!.id,
         name: "My laptop",
       });
-      const renamed = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const renamed = await asUser(t, "user_alice").query(api.security.stepUp.trustedDevices, {});
       expect(renamed.devices[0]!.name).toBe("My laptop");
 
       await expect(
-        asUser(t, "user_mallory").mutation(api.stepUp.renameDevice, {
+        asUser(t, "user_mallory").mutation(api.security.stepUp.renameDevice, {
           deviceId: device!.id,
           name: "Hijacked",
         }),
@@ -1620,19 +1699,25 @@ describe("Area re-verification", () => {
     test("revokeDeviceTrust forgets the device outright", async () => {
       const t = setup();
       await seedUser(t, { clerkUserId: "user_alice" });
-      await t.mutation(api.stepUp.apiEvaluateDevice, {
+      await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
         deviceHash: "hash1",
       });
-      const { devices: found } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices: found } = await asUser(t, "user_alice").query(
+        api.security.stepUp.trustedDevices,
+        {},
+      );
 
-      await asUser(t, "user_alice").mutation(api.stepUp.revokeDeviceTrust, {
+      await asUser(t, "user_alice").mutation(api.security.stepUp.revokeDeviceTrust, {
         deviceId: found[0]!.id,
       });
 
-      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices } = await asUser(t, "user_alice").query(
+        api.security.stepUp.trustedDevices,
+        {},
+      );
       expect(devices).toHaveLength(0);
     });
 
@@ -1640,7 +1725,7 @@ describe("Area re-verification", () => {
       const t = setup();
       await seedUser(t, { clerkUserId: "user_alice" });
       // A trusted device.
-      await t.mutation(api.stepUp.apiEvaluateDevice, {
+      await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: SESSION,
@@ -1649,23 +1734,29 @@ describe("Area re-verification", () => {
         os: "macOS",
       });
       // Two more that never passed a step-up, so never earned trust.
-      await t.mutation(api.stepUp.apiEvaluateDevice, {
+      await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: "sess_b",
         deviceHash: "hash-stale-1",
       });
-      await t.mutation(api.stepUp.apiEvaluateDevice, {
+      await t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
         clerkUserId: "user_alice",
         sessionId: "sess_c",
         deviceHash: "hash-stale-2",
       });
 
-      const result = await asUser(t, "user_alice").mutation(api.stepUp.forgetUntrustedDevices, {});
+      const result = await asUser(t, "user_alice").mutation(
+        api.security.stepUp.forgetUntrustedDevices,
+        {},
+      );
       expect(result.removed).toBe(2);
 
-      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices } = await asUser(t, "user_alice").query(
+        api.security.stepUp.trustedDevices,
+        {},
+      );
       expect(devices).toHaveLength(1);
       expect(devices[0]!.trusted).toBe(true);
     });
@@ -1685,11 +1776,11 @@ describe("Area re-verification", () => {
           updatedAt: Date.now(),
         }),
       );
-      await asUser(t, "user_bob").mutation(api.stepUp.setSecurityPreference, {
+      await asUser(t, "user_bob").mutation(api.security.stepUp.setSecurityPreference, {
         deviceTrackingOptOut: true,
       });
 
-      const standard = await asUser(t, "user_admin").query(api.stepUp.areaStandard, {});
+      const standard = await asUser(t, "user_admin").query(api.security.stepUp.areaStandard, {});
       expect(standard.areaReverifyDays).toBe(14);
       expect(standard.deviceTrackingOptOutCount).toBe(1);
       const performance = standard.byArea.find((a) => a.area === "performance");
@@ -1729,7 +1820,7 @@ describe("Area re-verification", () => {
         });
       });
 
-      const standard = await asUser(t, "user_admin").query(api.stepUp.areaStandard, {});
+      const standard = await asUser(t, "user_admin").query(api.security.stepUp.areaStandard, {});
       expect(standard.deviceTrackingOptOutCount).toBe(0);
       const performance = standard.byArea.find((a) => a.area === "performance");
       expect(performance?.alwaysStepUpCount).toBe(0);
@@ -1757,7 +1848,7 @@ describe("Legacy password grace period", () => {
     const t = setup();
     await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
 
-    const policy = await asUser(t, "user_admin").query(api.stepUp.orgPolicy, {});
+    const policy = await asUser(t, "user_admin").query(api.security.stepUp.orgPolicy, {});
     expect(policy.performanceLegacyPasswordSunsetEnabled).toBe(false);
     expect(policy.performanceLegacyPasswordSunsetDeadline).toBeNull();
     expect(policy.applicantVaultLegacyPasswordSunsetEnabled).toBe(false);
@@ -1770,7 +1861,7 @@ describe("Legacy password grace period", () => {
     await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
     const admin = asUser(t, "user_admin");
 
-    await admin.mutation(api.stepUp.setOrgPolicy, {
+    await admin.mutation(api.security.stepUp.setOrgPolicy, {
       ...basePolicy,
       performanceLegacyPasswordSunsetEnabled: false,
       applicantVaultLegacyPasswordSunsetEnabled: false,
@@ -1778,10 +1869,10 @@ describe("Legacy password grace period", () => {
     // Still off, so this is exactly "not started yet" whatever SetAt holds
     // internally — `legacyPasswordSunsetDeadline` never reads it while
     // `enabled` is false.
-    const beforeToggle = await asUser(t, "user_admin").query(api.stepUp.orgPolicy, {});
+    const beforeToggle = await asUser(t, "user_admin").query(api.security.stepUp.orgPolicy, {});
     expect(beforeToggle.performanceLegacyPasswordSunsetDeadline).toBeNull();
 
-    await admin.mutation(api.stepUp.setOrgPolicy, {
+    await admin.mutation(api.security.stepUp.setOrgPolicy, {
       ...basePolicy,
       performanceLegacyPasswordSunsetEnabled: true,
       applicantVaultLegacyPasswordSunsetEnabled: false,
@@ -1791,7 +1882,7 @@ describe("Legacy password grace period", () => {
     expect(setAt).toBeDefined();
 
     // An unrelated field changing must not restamp it.
-    await admin.mutation(api.stepUp.setOrgPolicy, {
+    await admin.mutation(api.security.stepUp.setOrgPolicy, {
       ...basePolicy,
       performanceLegacyPasswordSunsetEnabled: true,
       applicantVaultLegacyPasswordSunsetEnabled: false,
@@ -1805,7 +1896,7 @@ describe("Legacy password grace period", () => {
     const t = setup();
     await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
     const admin = asUser(t, "user_admin");
-    await admin.mutation(api.stepUp.setOrgPolicy, {
+    await admin.mutation(api.security.stepUp.setOrgPolicy, {
       ...basePolicy,
       performanceLegacyPasswordSunsetEnabled: true,
       applicantVaultLegacyPasswordSunsetEnabled: false,
@@ -1816,7 +1907,7 @@ describe("Legacy password grace period", () => {
     });
 
     await expect(
-      admin.mutation(api.stepUp.setOrgPolicy, {
+      admin.mutation(api.security.stepUp.setOrgPolicy, {
         ...basePolicy,
         performanceLegacyPasswordSunsetEnabled: true,
         applicantVaultLegacyPasswordSunsetEnabled: false,
@@ -1824,7 +1915,7 @@ describe("Legacy password grace period", () => {
       }),
     ).rejects.toThrow();
 
-    await admin.mutation(api.stepUp.setOrgPolicy, {
+    await admin.mutation(api.security.stepUp.setOrgPolicy, {
       ...basePolicy,
       performanceLegacyPasswordSunsetEnabled: true,
       applicantVaultLegacyPasswordSunsetEnabled: false,
@@ -1876,7 +1967,10 @@ describe("Legacy password grace period", () => {
       });
       await seedPerformanceLogin(t, company, { email: "standalone@acme.example.com" });
 
-      const standard = await asUser(t, "user_admin").query(api.stepUp.legacyPasswordStandard, {});
+      const standard = await asUser(t, "user_admin").query(
+        api.security.stepUp.legacyPasswordStandard,
+        {},
+      );
       expect(standard.performance.accountsStillOnLegacyPassword).toBe(1);
       expect(standard.performance.enabled).toBe(false);
     });
@@ -1900,7 +1994,10 @@ describe("Legacy password grace period", () => {
       });
       await seedPasskey(t, withPasskey);
 
-      const standard = await asUser(t, "user_admin").query(api.stepUp.legacyPasswordStandard, {});
+      const standard = await asUser(t, "user_admin").query(
+        api.security.stepUp.legacyPasswordStandard,
+        {},
+      );
       expect(standard.applicantVault.accountsStillOnLegacyPassword).toBe(1);
     });
 
@@ -1908,13 +2005,13 @@ describe("Legacy password grace period", () => {
       const t = setup();
       await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
       const admin = asUser(t, "user_admin");
-      await admin.mutation(api.stepUp.setOrgPolicy, {
+      await admin.mutation(api.security.stepUp.setOrgPolicy, {
         ...basePolicy,
         performanceLegacyPasswordSunsetEnabled: true,
         applicantVaultLegacyPasswordSunsetEnabled: false,
       });
 
-      const standard = await admin.query(api.stepUp.legacyPasswordStandard, {});
+      const standard = await admin.query(api.security.stepUp.legacyPasswordStandard, {});
       expect(standard.performance.enabled).toBe(true);
       expect(standard.performance.deadlineAt).not.toBeNull();
       expect(standard.applicantVault.enabled).toBe(false);
@@ -1926,7 +2023,7 @@ describe("Legacy password grace period", () => {
       await seedUser(t, { clerkUserId: "user_alice" });
 
       await expect(
-        asUser(t, "user_alice").query(api.stepUp.legacyPasswordStandard, {}),
+        asUser(t, "user_alice").query(api.security.stepUp.legacyPasswordStandard, {}),
       ).rejects.toThrow();
     });
   });

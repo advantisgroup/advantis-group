@@ -62,7 +62,9 @@ export function SecurityActivityCard() {
   const format = useFormatter();
 
   const [expanded, setExpanded] = useState(false);
-  const entries = useQuery(api.stepUp.securityActivity, { limit: 20 }) as Entry[] | undefined;
+  const entries = useQuery(api.security.stepUp.securityActivity, { limit: 20 }) as
+    | Entry[]
+    | undefined;
 
   function label(entry: Entry): string {
     if (entry.source === "step_up" && entry.event === "verified" && entry.detail) {

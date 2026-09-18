@@ -52,7 +52,7 @@ function DeviceIcon({ os, mobile }: { os: string | null; mobile?: boolean }) {
 function RenameDeviceButton({ device }: { device: Device }) {
   const t = useTranslations("Settings");
   const handleError = useErrorHandler();
-  const rename = useMutation(api.stepUp.renameDevice);
+  const rename = useMutation(api.security.stepUp.renameDevice);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(device.name);
   const [saving, setSaving] = useState(false);
@@ -139,13 +139,13 @@ export function DevicesCard() {
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
 
-  const devicesResult = useQuery(api.stepUp.trustedDevices);
+  const devicesResult = useQuery(api.security.stepUp.trustedDevices);
   const sessionDevices = useQuery(
-    api.stepUp.sessionDevices,
+    api.security.stepUp.sessionDevices,
     sessions ? { sessionIds: sessions.map((s) => s.id) } : "skip",
   );
-  const forgetDevice = useMutation(api.stepUp.revokeDeviceTrust);
-  const forgetUntrusted = useMutation(api.stepUp.forgetUntrustedDevices);
+  const forgetDevice = useMutation(api.security.stepUp.revokeDeviceTrust);
+  const forgetUntrusted = useMutation(api.security.stepUp.forgetUntrustedDevices);
 
   const loadSessions = useCallback(async () => {
     if (!user) return;

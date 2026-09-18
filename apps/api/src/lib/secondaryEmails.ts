@@ -25,7 +25,7 @@ export interface SecondaryEmail {
 }
 
 export async function listSecondaryEmails(clerkUserId: string): Promise<SecondaryEmail[]> {
-  return await getConvex().query(api.secondaryEmails.apiList, {
+  return await getConvex().query(api.security.secondaryEmails.apiList, {
     serverKey: getConvexServerKey(),
     clerkUserId,
   });
@@ -36,7 +36,7 @@ export async function requestSecondaryEmailCode(
   email: string,
 ): Promise<{ alreadyVerified: boolean }> {
   try {
-    return await getConvex().mutation(api.secondaryEmails.apiRequestCode, {
+    return await getConvex().mutation(api.security.secondaryEmails.apiRequestCode, {
       serverKey: getConvexServerKey(),
       clerkUserId,
       email,
@@ -51,7 +51,7 @@ export async function verifySecondaryEmailCode(
   email: string,
   code: string,
 ): Promise<{ ok: boolean; message?: string }> {
-  return await getConvex().mutation(api.secondaryEmails.apiVerifyCode, {
+  return await getConvex().mutation(api.security.secondaryEmails.apiVerifyCode, {
     serverKey: getConvexServerKey(),
     clerkUserId,
     email,
@@ -64,7 +64,7 @@ export async function removeSecondaryEmail(
   secondaryEmailId: string,
 ): Promise<void> {
   try {
-    await getConvex().mutation(api.secondaryEmails.apiRemove, {
+    await getConvex().mutation(api.security.secondaryEmails.apiRemove, {
       serverKey: getConvexServerKey(),
       clerkUserId,
       secondaryEmailId: secondaryEmailId as Id<"userSecondaryEmails">,

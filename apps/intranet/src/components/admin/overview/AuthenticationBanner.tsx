@@ -16,8 +16,8 @@ import { Card } from "@/components/ui/card";
  * the console. */
 export function AuthenticationBanner() {
   const t = useTranslations("Admin");
-  const policy = useQuery(api.stepUp.orgPolicy);
-  const standard = useQuery(api.stepUp.orgStandard);
+  const policy = useQuery(api.security.stepUp.orgPolicy);
+  const standard = useQuery(api.security.stepUp.orgStandard);
 
   const summary = (() => {
     if (!policy) return null;

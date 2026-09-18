@@ -736,7 +736,7 @@ function humanizeSlug(slug: string) {
  * them. Granting itself still happens in each area's own admin page. */
 function LinkedAccountsSection({ userId }: { userId: Id<"users"> }) {
   const t = useTranslations("Admin");
-  const links = useQuery(api.accountLinks.forUser, { userId });
+  const links = useQuery(api.security.accountLinks.forUser, { userId });
   if (!links) return null;
 
   const { performance, applicant, academies } = links;

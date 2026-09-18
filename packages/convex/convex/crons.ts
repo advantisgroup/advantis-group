@@ -106,7 +106,7 @@ if (process.env.DISABLE_CRONS !== "true") {
   crons.daily(
     "password resets: purge stale tokens and requests",
     { hourUTC: 3, minuteUTC: 50 },
-    internal.passwordResets.purgeStale,
+    internal.security.passwordResets.purgeStale,
     {},
   );
 
@@ -127,14 +127,14 @@ if (process.env.DISABLE_CRONS !== "true") {
   crons.hourly(
     "passkeys: purge expired challenges",
     { minuteUTC: 55 },
-    internal.passkeys.purgeExpiredChallenges,
+    internal.security.passkeys.purgeExpiredChallenges,
     {},
   );
 
   crons.daily(
     "step-up: purge stale known-device rows",
     { hourUTC: 4, minuteUTC: 10 },
-    internal.stepUp.purgeStaleDevices,
+    internal.security.stepUp.purgeStaleDevices,
     {},
   );
 

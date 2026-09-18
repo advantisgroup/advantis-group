@@ -71,7 +71,10 @@ export function AppGate({ children }: { children: ReactNode }) {
     })();
   }, [isSignedIn, sessionId, getToken]);
 
-  const stepUpStatus = useQuery(api.stepUp.status, me && sessionId ? { sessionId } : "skip");
+  const stepUpStatus = useQuery(
+    api.security.stepUp.status,
+    me && sessionId ? { sessionId } : "skip",
+  );
   const gateRequired =
     !!stepUpStatus &&
     (stepUpStatus.state === "needs_verification" || stepUpStatus.state === "needs_enrollment");

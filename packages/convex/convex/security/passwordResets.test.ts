@@ -10,10 +10,10 @@
 import { convexTest } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import { api } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
-import schema from "./schema";
-import { modules } from "./test.setup";
+import { api } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
+import schema from "../schema";
+import { modules } from "../test.setup";
 
 function setup() {
   return convexTest(schema, modules);
@@ -144,7 +144,7 @@ describe("target-side linked account (typed the wrong side of a linkedUserId pai
 
     // Filed anonymously (no Clerk session) — the trust comes from the link
     // itself, not from who's asking.
-    const result = await t.mutation(api.passwordResets.requestReset, {
+    const result = await t.mutation(api.security.passwordResets.requestReset, {
       scope: "performance",
       email: "alice@intranet.example",
       companySlug: "advantis",
@@ -196,7 +196,7 @@ describe("target-side linked account (typed the wrong side of a linkedUserId pai
       linkedUserId: aliceUserId,
     });
 
-    const result = await t.mutation(api.passwordResets.requestReset, {
+    const result = await t.mutation(api.security.passwordResets.requestReset, {
       scope: "performance",
       email: "alice@intranet.example",
       companySlug: "advantis",
@@ -226,11 +226,14 @@ describe("caller-side linked account (signed in as the linked owner)", () => {
     // Signed in as Alice's intranet account, but typing the login's own
     // (different) address — exactly correct, just not what `selfService`
     // alone would recognize.
-    const result = await asUser(t, "user_alice").mutation(api.passwordResets.requestReset, {
-      scope: "performance",
-      email: "alice.performance@company.example",
-      companySlug: "advantis",
-    });
+    const result = await asUser(t, "user_alice").mutation(
+      api.security.passwordResets.requestReset,
+      {
+        scope: "performance",
+        email: "alice.performance@company.example",
+        companySlug: "advantis",
+      },
+    );
     expect(result).toEqual({ status: "sent" });
 
     const request = (await t.run(async (ctx) => ctx.db.query("passwordResetRequests").first()))!;
@@ -261,7 +264,7 @@ describe("admin-maintained linked-emails fallback", () => {
       }),
     );
 
-    const result = await t.mutation(api.passwordResets.requestReset, {
+    const result = await t.mutation(api.security.passwordResets.requestReset, {
       scope: "performance",
       email: "bob.typo@company.example",
       companySlug: "advantis",
@@ -286,14 +289,17 @@ describe("admin-maintained linked-emails fallback", () => {
     });
     await seedLogin(t, { companyId, email: "carol@company.example" });
 
-    const addResult = await asUser(t, "user_admin").mutation(api.passwordResets.addLinkedEmail, {
-      scope: "performance",
-      // Left blank on purpose — the UI does this for the default tenant.
-      companySlug: undefined,
-      aliasEmail: "carol.typo@company.example",
-      canonicalEmail: "carol@company.example",
-      sessionId: "sess_admin",
-    });
+    const addResult = await asUser(t, "user_admin").mutation(
+      api.security.passwordResets.addLinkedEmail,
+      {
+        scope: "performance",
+        // Left blank on purpose — the UI does this for the default tenant.
+        companySlug: undefined,
+        aliasEmail: "carol.typo@company.example",
+        canonicalEmail: "carol@company.example",
+        sessionId: "sess_admin",
+      },
+    );
     // No step-up satisfied yet in this test — confirms the gate is live,
     // and that we can still reach the row via `t.run` for the next check.
     expect("needsStepUp" in addResult).toBe(true);
@@ -315,7 +321,7 @@ describe("Verified secondary emails", () => {
     });
     await seedVerifiedSecondaryEmail(t, aliceUserId, "alice.sales@company.example");
 
-    const result = await t.mutation(api.passwordResets.requestReset, {
+    const result = await t.mutation(api.security.passwordResets.requestReset, {
       scope: "performance",
       email: "alice.sales@company.example",
       companySlug: "advantis",
@@ -351,7 +357,7 @@ describe("Verified secondary emails", () => {
     });
     await seedVerifiedSecondaryEmail(t, aliceUserId, "alice.sales@company.example", false);
 
-    const result = await t.mutation(api.passwordResets.requestReset, {
+    const result = await t.mutation(api.security.passwordResets.requestReset, {
       scope: "performance",
       email: "alice.sales@company.example",
       companySlug: "advantis",
@@ -379,7 +385,7 @@ describe("Verified secondary emails", () => {
     });
     await seedVerifiedSecondaryEmail(t, aliceUserId, "alice.sales@company.example");
 
-    const result = await t.mutation(api.passwordResets.requestReset, {
+    const result = await t.mutation(api.security.passwordResets.requestReset, {
       scope: "performance",
       email: "alice.sales@company.example",
       companySlug: "advantis",
@@ -424,7 +430,7 @@ describe("Verified secondary emails", () => {
       }),
     );
 
-    const result = await t.mutation(api.passwordResets.requestReset, {
+    const result = await t.mutation(api.security.passwordResets.requestReset, {
       scope: "performance",
       email: "alice.typo@company.example",
       companySlug: "advantis",
@@ -444,11 +450,14 @@ describe("backward compatibility: an unexplained mismatch stays manual", () => {
     await seedUser(t, { clerkUserId: "user_mallory", email: "mallory@intranet.example" });
     await seedLogin(t, { companyId, email: "dave@company.example" });
 
-    const result = await asUser(t, "user_mallory").mutation(api.passwordResets.requestReset, {
-      scope: "performance",
-      email: "dave@company.example",
-      companySlug: "advantis",
-    });
+    const result = await asUser(t, "user_mallory").mutation(
+      api.security.passwordResets.requestReset,
+      {
+        scope: "performance",
+        email: "dave@company.example",
+        companySlug: "advantis",
+      },
+    );
     expect(result).toEqual({ status: "sent" });
 
     const request = (await t.run(async (ctx) => ctx.db.query("passwordResetRequests").first()))!;
@@ -485,7 +494,7 @@ describe("backward compatibility: an unexplained mismatch stays manual", () => {
       email: "admin@intranet.example",
       role: "admin",
     });
-    const rows = await asUser(t, "user_admin").query(api.passwordResets.listRequests, {
+    const rows = await asUser(t, "user_admin").query(api.security.passwordResets.listRequests, {
       status: "pending",
     });
     const row = rows.find((r) => r.id === requestId);
@@ -513,7 +522,7 @@ describe("revoking an issued link", () => {
       linkedUserId: aliceUserId,
     });
 
-    await t.mutation(api.passwordResets.requestReset, {
+    await t.mutation(api.security.passwordResets.requestReset, {
       scope: "performance",
       email: "alice@intranet.example",
       companySlug: "advantis",
@@ -523,10 +532,13 @@ describe("revoking an issued link", () => {
     const request = (await t.run(async (ctx) => ctx.db.query("passwordResetRequests").first()))!;
     expect(request.status).toBe("issued");
 
-    const result = await asUser(t, "user_admin").mutation(api.passwordResets.revokeIssuedLink, {
-      requestId: request._id,
-      sessionId: "sess_admin",
-    });
+    const result = await asUser(t, "user_admin").mutation(
+      api.security.passwordResets.revokeIssuedLink,
+      {
+        requestId: request._id,
+        sessionId: "sess_admin",
+      },
+    );
     expect("needsStepUp" in result).toBe(true);
   });
 });

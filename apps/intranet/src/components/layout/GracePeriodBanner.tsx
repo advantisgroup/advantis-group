@@ -18,7 +18,7 @@ export function GracePeriodBanner() {
   const t = useTranslations("StepUp");
   const format = useFormatter();
   const { sessionId } = useAuth();
-  const status = useQuery(api.stepUp.status, sessionId ? { sessionId } : "skip");
+  const status = useQuery(api.security.stepUp.status, sessionId ? { sessionId } : "skip");
 
   if (!status || status.state !== "warning") return null;
 

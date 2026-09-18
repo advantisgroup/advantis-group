@@ -83,7 +83,7 @@ const AUTO_APPROVED_HINT_KEY = {
 function RequestHistory({ requestId }: { requestId: RequestId }) {
   const t = useTranslations("PasswordReset");
   const format = useFormatter();
-  const rows = useQuery(api.passwordResets.requestHistory, { requestId });
+  const rows = useQuery(api.security.passwordResets.requestHistory, { requestId });
   if (!rows) return null;
 
   const label = (event: string) => {
@@ -191,7 +191,9 @@ function RequestCard({
   request,
   highlighted,
 }: {
-  request: NonNullable<ReturnType<typeof useQuery<typeof api.passwordResets.listRequests>>>[number];
+  request: NonNullable<
+    ReturnType<typeof useQuery<typeof api.security.passwordResets.listRequests>>
+  >[number];
   highlighted: boolean;
 }) {
   const t = useTranslations("PasswordReset");
@@ -215,9 +217,9 @@ function RequestCard({
   // `{ needsStepUp: true }` hint instead of acting when the admin hasn't
   // stepped up recently enough — see `run` below, which opens `StepUpDialog`
   // and retries exactly once.
-  const issue = useAction(api.passwordResets.issueResetLink);
-  const dismiss = useMutation(api.passwordResets.dismissRequest);
-  const revokeLink = useMutation(api.passwordResets.revokeIssuedLink);
+  const issue = useAction(api.security.passwordResets.issueResetLink);
+  const dismiss = useMutation(api.security.passwordResets.dismissRequest);
+  const revokeLink = useMutation(api.security.passwordResets.revokeIssuedLink);
 
   const when = (at: number) =>
     format.dateTime(new Date(at), {
@@ -492,9 +494,9 @@ function LinkedEmailsPanel() {
   const t = useTranslations("PasswordReset");
   const format = useFormatter();
   const { sessionId } = useAuth();
-  const rows = useQuery(api.passwordResets.listLinkedEmails);
-  const addLink = useMutation(api.passwordResets.addLinkedEmail);
-  const removeLink = useMutation(api.passwordResets.removeLinkedEmail);
+  const rows = useQuery(api.security.passwordResets.listLinkedEmails);
+  const addLink = useMutation(api.security.passwordResets.addLinkedEmail);
+  const removeLink = useMutation(api.security.passwordResets.removeLinkedEmail);
 
   const [scope, setScope] = useState<"hr" | "performance">("performance");
   const [companySlug, setCompanySlug] = useState("");
@@ -678,8 +680,8 @@ export function PasswordResetsPanel() {
   const t = useTranslations("PasswordReset");
   const params = useSearchParams();
   const highlighted = params.get("request");
-  const pending = useQuery(api.passwordResets.listRequests, { status: "pending" });
-  const handled = useQuery(api.passwordResets.listRequests, { status: "handled" });
+  const pending = useQuery(api.security.passwordResets.listRequests, { status: "pending" });
+  const handled = useQuery(api.security.passwordResets.listRequests, { status: "handled" });
   const [tab, setTab] = useState("pending");
 
   return (

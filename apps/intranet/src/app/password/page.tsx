@@ -43,8 +43,8 @@ function ResetForm() {
   const t = useTranslations("PasswordReset");
   const format = useFormatter();
   const params = useSearchParams();
-  const checkToken = useAction(api.passwordResets.checkToken);
-  const completeReset = useAction(api.passwordResets.completeReset);
+  const checkToken = useAction(api.security.passwordResets.checkToken);
+  const completeReset = useAction(api.security.passwordResets.completeReset);
 
   const rawScope = params.get("o");
   const scope = SCOPES.includes(rawScope as Scope) ? (rawScope as Scope) : null;

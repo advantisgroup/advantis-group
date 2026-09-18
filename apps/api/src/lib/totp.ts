@@ -37,7 +37,7 @@ export interface EnrollmentStart {
 }
 
 export async function beginEnrollment(clerkUserId: string): Promise<EnrollmentStart> {
-  const context = await getConvex().query(api.totp.apiEnrollmentContext, {
+  const context = await getConvex().query(api.security.totp.apiEnrollmentContext, {
     serverKey: getConvexServerKey(),
     clerkUserId,
   });
@@ -47,7 +47,7 @@ export async function beginEnrollment(clerkUserId: string): Promise<EnrollmentSt
   }
   const secret = new OTPAuth.Secret({ size: 20 }).base32;
   const totp = totpFor(secret, context.email);
-  await getConvex().mutation(api.totp.apiBeginEnrollment, {
+  await getConvex().mutation(api.security.totp.apiBeginEnrollment, {
     serverKey: getConvexServerKey(),
     clerkUserId,
     secretCiphertext: encrypt(secret, ENC_KEY_ENV),
@@ -60,7 +60,7 @@ export async function finishEnrollment(
   clerkUserId: string,
   code: string,
 ): Promise<{ recoveryCodes: string[] }> {
-  const ciphertext = await getConvex().query(api.totp.apiPendingSecret, {
+  const ciphertext = await getConvex().query(api.security.totp.apiPendingSecret, {
     serverKey: getConvexServerKey(),
     clerkUserId,
   });
@@ -72,7 +72,7 @@ export async function finishEnrollment(
   });
   if (delta === null)
     throw Errors.badRequest("That code didn't match — check the time on your device");
-  return await getConvex().mutation(api.totp.apiFinishEnrollment, {
+  return await getConvex().mutation(api.security.totp.apiFinishEnrollment, {
     serverKey: getConvexServerKey(),
     clerkUserId,
     usedStep: stepFromDelta(delta),
@@ -81,7 +81,7 @@ export async function finishEnrollment(
 
 /** Returns false on a wrong/expired code rather than throwing — mistyped 6-digit codes are the normal case, not an error. */
 export async function verifyCode(clerkUserId: string, code: string): Promise<boolean> {
-  const credential = await getConvex().query(api.totp.apiSecretForVerification, {
+  const credential = await getConvex().query(api.security.totp.apiSecretForVerification, {
     serverKey: getConvexServerKey(),
     clerkUserId,
   });
@@ -96,7 +96,7 @@ export async function verifyCode(clerkUserId: string, code: string): Promise<boo
   // replay, not a fresh proof of possession.
   const step = delta === null ? null : stepFromDelta(delta);
   const ok = step !== null && (credential.lastUsedStep === null || step > credential.lastUsedStep);
-  await getConvex().mutation(api.totp.apiRecordVerification, {
+  await getConvex().mutation(api.security.totp.apiRecordVerification, {
     serverKey: getConvexServerKey(),
     clerkUserId,
     ok,
@@ -106,7 +106,7 @@ export async function verifyCode(clerkUserId: string, code: string): Promise<boo
 }
 
 export async function verifyRecoveryCode(clerkUserId: string, code: string): Promise<boolean> {
-  const result = await getConvex().mutation(api.totp.apiVerifyRecoveryCode, {
+  const result = await getConvex().mutation(api.security.totp.apiVerifyRecoveryCode, {
     serverKey: getConvexServerKey(),
     clerkUserId,
     code,
@@ -118,7 +118,7 @@ export async function verifyRecoveryCode(clerkUserId: string, code: string): Pro
 export async function regenerateRecoveryCodes(
   clerkUserId: string,
 ): Promise<{ recoveryCodes: string[] }> {
-  return await getConvex().mutation(api.totp.apiRegenerateRecoveryCodes, {
+  return await getConvex().mutation(api.security.totp.apiRegenerateRecoveryCodes, {
     serverKey: getConvexServerKey(),
     clerkUserId,
   });
@@ -130,12 +130,12 @@ export async function getStatus(clerkUserId: string): Promise<{
   recoveryCodesRemaining: number;
   recoveryCodesTotal: number;
 }> {
-  return await getConvex().query(api.totp.apiStatus, {
+  return await getConvex().query(api.security.totp.apiStatus, {
     serverKey: getConvexServerKey(),
     clerkUserId,
   });
 }
 
 export async function removeMfa(clerkUserId: string): Promise<void> {
-  await getConvex().mutation(api.totp.apiRemove, { serverKey: getConvexServerKey(), clerkUserId });
+  await getConvex().mutation(api.security.totp.apiRemove, { serverKey: getConvexServerKey(), clerkUserId });
 }

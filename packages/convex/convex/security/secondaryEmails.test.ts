@@ -5,11 +5,11 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
-import { api } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
-import schema from "./schema";
-import { modules } from "./test.setup";
-import { sha256hex } from "./activity/lib/crypto";
+import { api } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
+import schema from "../schema";
+import { modules } from "../test.setup";
+import { sha256hex } from "../activity/lib/crypto";
 
 const serverKey = "test-server-key";
 
@@ -37,7 +37,11 @@ async function seedUser(
 }
 
 async function requestCode(t: T, clerkUserId: string, email: string) {
-  return await t.mutation(api.secondaryEmails.apiRequestCode, { serverKey, clerkUserId, email });
+  return await t.mutation(api.security.secondaryEmails.apiRequestCode, {
+    serverKey,
+    clerkUserId,
+    email,
+  });
 }
 
 /** Requests a code, then rewrites the stored hash to `code` so the test can
@@ -61,7 +65,7 @@ async function plantSecondaryEmailCode(
 }
 
 async function listRows(t: T, clerkUserId: string) {
-  return await t.query(api.secondaryEmails.apiList, { serverKey, clerkUserId });
+  return await t.query(api.security.secondaryEmails.apiList, { serverKey, clerkUserId });
 }
 
 describe("requesting a code", () => {
@@ -85,7 +89,7 @@ describe("requesting a code", () => {
     const bobId = await seedUser(t, { clerkUserId: "bob", email: "bob@advantisgroup.de" });
     await seedUser(t, { clerkUserId: "alice", email: "alice@advantisgroup.de" });
     await plantSecondaryEmailCode(t, "bob", bobId, "shared@example.com", "111111");
-    await t.mutation(api.secondaryEmails.apiVerifyCode, {
+    await t.mutation(api.security.secondaryEmails.apiVerifyCode, {
       serverKey,
       clerkUserId: "bob",
       email: "shared@example.com",
@@ -120,7 +124,7 @@ describe("requesting a code", () => {
     const t = setup();
     const aliceId = await seedUser(t, { clerkUserId: "alice", email: "alice@advantisgroup.de" });
     await plantSecondaryEmailCode(t, "alice", aliceId, "work@example.com", "123456");
-    await t.mutation(api.secondaryEmails.apiVerifyCode, {
+    await t.mutation(api.security.secondaryEmails.apiVerifyCode, {
       serverKey,
       clerkUserId: "alice",
       email: "work@example.com",
@@ -157,7 +161,7 @@ describe("verifying a code", () => {
     const aliceId = await seedUser(t, { clerkUserId: "alice", email: "alice@advantisgroup.de" });
     await plantSecondaryEmailCode(t, "alice", aliceId, "work@example.com", "654321");
 
-    const result = await t.mutation(api.secondaryEmails.apiVerifyCode, {
+    const result = await t.mutation(api.security.secondaryEmails.apiVerifyCode, {
       serverKey,
       clerkUserId: "alice",
       email: "work@example.com",
@@ -174,7 +178,7 @@ describe("verifying a code", () => {
     const aliceId = await seedUser(t, { clerkUserId: "alice", email: "alice@advantisgroup.de" });
     await plantSecondaryEmailCode(t, "alice", aliceId, "work@example.com", "111111");
 
-    const result = await t.mutation(api.secondaryEmails.apiVerifyCode, {
+    const result = await t.mutation(api.security.secondaryEmails.apiVerifyCode, {
       serverKey,
       clerkUserId: "alice",
       email: "work@example.com",
@@ -194,7 +198,7 @@ describe("verifying a code", () => {
 
     let last: { ok: boolean; message?: string } | undefined;
     for (let i = 0; i < 5; i++) {
-      last = await t.mutation(api.secondaryEmails.apiVerifyCode, {
+      last = await t.mutation(api.security.secondaryEmails.apiVerifyCode, {
         serverKey,
         clerkUserId: "alice",
         email: "work@example.com",
@@ -203,7 +207,7 @@ describe("verifying a code", () => {
     }
     expect(last?.message).toBe("Too many incorrect attempts. Request a new code.");
 
-    const retry = await t.mutation(api.secondaryEmails.apiVerifyCode, {
+    const retry = await t.mutation(api.security.secondaryEmails.apiVerifyCode, {
       serverKey,
       clerkUserId: "alice",
       email: "work@example.com",
@@ -229,7 +233,7 @@ describe("verifying a code", () => {
       await ctx.db.patch(bob._id, { email: "shared@example.com" });
     });
 
-    const result = await t.mutation(api.secondaryEmails.apiVerifyCode, {
+    const result = await t.mutation(api.security.secondaryEmails.apiVerifyCode, {
       serverKey,
       clerkUserId: "alice",
       email: "shared@example.com",
@@ -244,7 +248,7 @@ describe("removing a secondary email", () => {
     const t = setup();
     const aliceId = await seedUser(t, { clerkUserId: "alice", email: "alice@advantisgroup.de" });
     await plantSecondaryEmailCode(t, "alice", aliceId, "work@example.com", "123123");
-    await t.mutation(api.secondaryEmails.apiVerifyCode, {
+    await t.mutation(api.security.secondaryEmails.apiVerifyCode, {
       serverKey,
       clerkUserId: "alice",
       email: "work@example.com",
@@ -252,7 +256,7 @@ describe("removing a secondary email", () => {
     });
     const [row] = await listRows(t, "alice");
 
-    await t.mutation(api.secondaryEmails.apiRemove, {
+    await t.mutation(api.security.secondaryEmails.apiRemove, {
       serverKey,
       clerkUserId: "alice",
       secondaryEmailId: row!._id,
@@ -274,7 +278,7 @@ describe("removing a secondary email", () => {
     void aliceId;
 
     await expect(
-      t.mutation(api.secondaryEmails.apiRemove, {
+      t.mutation(api.security.secondaryEmails.apiRemove, {
         serverKey,
         clerkUserId: "bob",
         secondaryEmailId: row!._id,

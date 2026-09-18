@@ -199,7 +199,8 @@ export function AdminSidebar() {
     isManager || hasUploadsView ? {} : "skip",
   );
   const pendingCount = pendingUploads?.length ?? 0;
-  const pendingResets = useQuery(api.passwordResets.pendingCount, isAdmin ? {} : "skip") ?? 0;
+  const pendingResets =
+    useQuery(api.security.passwordResets.pendingCount, isAdmin ? {} : "skip") ?? 0;
 
   return (
     <>

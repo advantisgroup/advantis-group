@@ -226,7 +226,7 @@ function AdoptionKpi({
 function SecurityStandardSection() {
   const t = useTranslations("Admin");
   const tRoles = useTranslations("Roles");
-  const standard = useQuery(api.stepUp.orgStandard);
+  const standard = useQuery(api.security.stepUp.orgStandard);
 
   return (
     <section className="space-y-3">
@@ -323,10 +323,10 @@ function appliesRetroactively(scope: Scope, retroactive: boolean) {
 export function AuthenticationPolicyPanel() {
   const t = useTranslations("Admin");
   const format = useFormatter();
-  const policy = useQuery(api.stepUp.orgPolicy);
-  const setPolicy = useMutation(api.stepUp.setOrgPolicy);
-  const areaStandard = useQuery(api.stepUp.areaStandard);
-  const legacy = useQuery(api.stepUp.legacyPasswordStandard);
+  const policy = useQuery(api.security.stepUp.orgPolicy);
+  const setPolicy = useMutation(api.security.stepUp.setOrgPolicy);
+  const areaStandard = useQuery(api.security.stepUp.areaStandard);
+  const legacy = useQuery(api.security.stepUp.legacyPasswordStandard);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
   const [form, setForm] = useState<PolicyForm | null>(null);
