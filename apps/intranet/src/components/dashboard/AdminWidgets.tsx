@@ -20,6 +20,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
+import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { useCurrentUser, useIsAdmin } from "@/components/providers/current-user";
 import { isoToday } from "@/lib/absences";
 import { useAbsencesCalendar, usePendingAbsenceCount } from "@/lib/absences-api";
@@ -242,13 +243,14 @@ export function TeamAvailabilityCard() {
   );
 }
 
-/** Team KPI snapshot — the parent only mounts this for a linked Performance
- * admin account, so `token: ""` resolves via the Clerk-linked fallback. */
+/** Team KPI snapshot — the parent only mounts this for an account with a
+ * valid Performance session and `view_all_employees`, which may be a
+ * password login with no Clerk link, so this needs the real session token
+ * (not a hardcoded "") to resolve. */
 export function TeamPerformanceCard() {
   const t = useTranslations("Dashboard");
-  const dashboard = useQuery(api.performanceQueries.teamDashboard, {
-    token: "",
-  });
+  const { token } = usePerformanceSession();
+  const dashboard = useQuery(api.performanceQueries.teamDashboard, { token });
 
   return (
     <DashCard icon={<TrendingUp />} title={t("teamPerformanceTitle")}>

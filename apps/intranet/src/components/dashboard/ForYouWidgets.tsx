@@ -340,11 +340,11 @@ export function MyTicketsCard() {
  * Performance account (sales team); the parent decides whether to mount it. */
 export function MyPerformanceCard() {
   const t = useTranslations("Dashboard");
-  const { session } = usePerformanceSession();
+  const { token, session } = usePerformanceSession();
   const employeeId = session?.valid ? session.employeeId : null;
   const detail = useQuery(
     api.performanceQueries.employeeDetail,
-    employeeId ? { token: "", employeeId } : "skip",
+    employeeId ? { token, employeeId } : "skip",
   );
 
   const topHighlight = detail?.highlights?.[0];
