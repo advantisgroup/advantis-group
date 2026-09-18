@@ -16,7 +16,7 @@ import {
   requireCanViewEmployee as requireCanView,
   requirePermission,
   requireSessionLogin as requireLogin,
-} from "./performanceAuth";
+} from "./lib/performanceAuth";
 
 async function getEmployeeOrThrow(
   ctx: MutationCtx,

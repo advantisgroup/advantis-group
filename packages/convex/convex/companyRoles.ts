@@ -4,7 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { isPermission } from "./performance/lib/permissions";
-import { requireAdminLogin, requirePermission, resolveActiveSession } from "./performanceAuth";
+import { requireAdminLogin, requirePermission, resolveActiveSession } from "./lib/performanceAuth";
 
 /**
  * Per-company role CRUD — the customization surface behind "edit permissions

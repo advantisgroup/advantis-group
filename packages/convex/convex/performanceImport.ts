@@ -35,7 +35,7 @@ import {
   type SheetRow,
   type SnapshotFields,
 } from "./performance/lib/types";
-import { requirePermission, requireSessionLogin, resolveCompanyId } from "./performanceAuth";
+import { requirePermission, requireSessionLogin, resolveCompanyId } from "./lib/performanceAuth";
 import { toISODate } from "./performance/lib/workdays";
 import { assertServerKey } from "./lib/auth";
 

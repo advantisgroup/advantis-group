@@ -28,7 +28,7 @@ import { v } from "convex/values";
 import { type Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { internalAction, internalMutation } from "../_generated/server";
-import { getSeedAdminEmails, getSuperAdminEmails } from "../performanceAuth";
+import { getSeedAdminEmails, getSuperAdminEmails } from "../lib/performanceAuth";
 import { BUILT_IN_ROLES } from "../performance/lib/permissions";
 
 const BATCH_SIZE = 200;

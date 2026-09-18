@@ -43,7 +43,7 @@ import {
   requirePermission,
   requireSessionLogin as requireSession,
   resolveCompanyId,
-} from "./performanceAuth";
+} from "./lib/performanceAuth";
 
 // ------------------------------------------------------------------ helpers
 
