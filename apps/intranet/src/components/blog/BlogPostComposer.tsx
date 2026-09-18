@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -36,7 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { SplitDivider } from "@/components/ui/split-divider";
+import { SplitDivider, useStoredSplit } from "@/components/ui/split-divider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -62,7 +62,7 @@ export function BlogPostComposer({ entry }: { entry: BlogPostSubject }) {
 
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [mobileView, setMobileView] = useState<"write" | "preview">("write");
-  const [splitPct, setSplitPct] = useState(50);
+  const [splitPct, persistSplit] = useStoredSplit(SPLIT_KEY, 50);
   const splitRef = useRef<HTMLDivElement>(null);
 
   const form = useBlogPostForm({
@@ -70,20 +70,6 @@ export function BlogPostComposer({ entry }: { entry: BlogPostSubject }) {
     onDone: () => router.push("/blog"),
   });
   const { draft, readiness } = form;
-
-  useEffect(() => {
-    const raw = Number(localStorage.getItem(SPLIT_KEY));
-    if (Number.isFinite(raw) && raw >= 25 && raw <= 75) setSplitPct(raw);
-  }, []);
-
-  function persistSplit(pct: number) {
-    setSplitPct(pct);
-    try {
-      localStorage.setItem(SPLIT_KEY, String(pct));
-    } catch {
-      // Storage unavailable — the split just isn't remembered.
-    }
-  }
 
   const checks = form.checks.map((check) => ({
     ...check,

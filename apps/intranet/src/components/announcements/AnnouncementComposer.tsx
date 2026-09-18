@@ -57,7 +57,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { SplitDivider } from "@/components/ui/split-divider";
+import { SplitDivider, useStoredSplit } from "@/components/ui/split-divider";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
@@ -691,7 +691,7 @@ export function AnnouncementComposer(
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [sendPromptOpen, setSendPromptOpen] = useState(false);
   const [mobileView, setMobileView] = useState<"write" | "preview">("write");
-  const [splitPct, setSplitPct] = useState(50);
+  const [splitPct, persistSplit] = useStoredSplit(SPLIT_KEY, 50);
   const splitRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
 
@@ -738,11 +738,6 @@ export function AnnouncementComposer(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverDraft.hydrated]);
 
-  useEffect(() => {
-    const rawSplit = Number(localStorage.getItem(SPLIT_KEY));
-    if (Number.isFinite(rawSplit) && rawSplit >= 25 && rawSplit <= 75) setSplitPct(rawSplit);
-  }, []);
-
   const hasBody = htmlToText(draft.body).trim().length > 0;
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
@@ -774,15 +769,6 @@ export function AnnouncementComposer(
     setAudienceTouched(false);
     attachmentUpload.reset();
     void serverDraft.clear(fresh);
-  }
-
-  function persistSplit(pct: number) {
-    setSplitPct(pct);
-    try {
-      localStorage.setItem(SPLIT_KEY, String(pct));
-    } catch {
-      // Storage unavailable — the split just isn't remembered.
-    }
   }
 
   const mentionCandidates = useMemo(

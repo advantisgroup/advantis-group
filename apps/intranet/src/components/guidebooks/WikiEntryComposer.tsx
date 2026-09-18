@@ -35,7 +35,7 @@ import { Button } from "@/components/ui/button";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { SplitDivider } from "@/components/ui/split-divider";
+import { SplitDivider, useStoredSplit } from "@/components/ui/split-divider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import {
@@ -214,7 +214,8 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
     onDone: (slug) => router.push(`/guidebooks/${slug}`),
   });
   const { isEditing, entryKey, draft, readiness } = entryForm;
-  const composeHref = "draftId" in entry ? `/guidebooks/draft/${entry.draftId}` : `/guidebooks/${entry.slug}/compose`;
+  const composeHref =
+    "draftId" in entry ? `/guidebooks/draft/${entry.draftId}` : `/guidebooks/${entry.slug}/compose`;
   const backHref = "draftId" in entry ? "/guidebooks" : `/guidebooks/${entry.slug}`;
 
   const [stage, setStage] = useState<"choose" | "compose">(isEditing ? "compose" : "choose");
@@ -225,27 +226,13 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [mobileView, setMobileView] = useState<"write" | "preview">("write");
   const [previewTab, setPreviewTab] = useState<PreviewTab>("live");
-  const [splitPct, setSplitPct] = useState(50);
+  const [splitPct, persistSplit] = useStoredSplit(SPLIT_KEY, 50);
   const splitRef = useRef<HTMLDivElement>(null);
   const themaRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (draft.restoredAt) setStage("compose");
   }, [draft.restoredAt]);
-
-  useEffect(() => {
-    const raw = Number(localStorage.getItem(SPLIT_KEY));
-    if (Number.isFinite(raw) && raw >= 25 && raw <= 75) setSplitPct(raw);
-  }, []);
-
-  function persistSplit(pct: number) {
-    setSplitPct(pct);
-    try {
-      localStorage.setItem(SPLIT_KEY, String(pct));
-    } catch {
-      // Storage unavailable — the split just isn't remembered.
-    }
-  }
 
   const formatRun = useWikiFormatRun(entryKey);
   const showAiPane = formatRunNeedsPane(formatRun);

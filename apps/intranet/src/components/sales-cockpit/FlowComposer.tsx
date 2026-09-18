@@ -38,7 +38,7 @@ import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SplitDivider } from "@/components/ui/split-divider";
+import { SplitDivider, useStoredSplit } from "@/components/ui/split-divider";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
@@ -212,7 +212,7 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
 
   const [orientation, setOrientation] = useState<Orientation>("vertical");
   const [order, setOrder] = useState<PaneOrder>("tree-first");
-  const [splitPct, setSplitPct] = useState(62);
+  const [splitPct, persistSplit] = useStoredSplit(SPLIT_KEY, 62);
   const splitRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -221,21 +221,10 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
       if (o === "vertical" || o === "horizontal") setOrientation(o);
       const ord = localStorage.getItem(ORDER_KEY);
       if (ord === "tree-first" || ord === "details-first") setOrder(ord);
-      const pct = Number(localStorage.getItem(SPLIT_KEY));
-      if (Number.isFinite(pct) && pct >= 25 && pct <= 75) setSplitPct(pct);
     } catch {
       // Storage unavailable — defaults stand.
     }
   }, []);
-
-  function persistSplit(pct: number) {
-    setSplitPct(pct);
-    try {
-      localStorage.setItem(SPLIT_KEY, String(pct));
-    } catch {
-      // Storage unavailable — the split just isn't remembered.
-    }
-  }
 
   function toggleOrientation() {
     setOrientation((current) => {

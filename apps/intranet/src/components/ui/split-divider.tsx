@@ -1,6 +1,6 @@
 "use client";
 
-import { type RefObject, useEffect, useRef } from "react";
+import { type RefObject, useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -134,4 +134,29 @@ export function SplitDivider({
       />
     </div>
   );
+}
+
+/** A composer's editor/preview split, remembered in localStorage under `key`. */
+export function useStoredSplit(key: string, initial: number): [number, (pct: number) => void] {
+  const [pct, setPct] = useState(initial);
+
+  useEffect(() => {
+    try {
+      const stored = Number(localStorage.getItem(key));
+      if (Number.isFinite(stored) && stored >= 25 && stored <= 75) setPct(stored);
+    } catch {
+      // Storage unavailable — the default stands.
+    }
+  }, [key]);
+
+  function persist(next: number) {
+    setPct(next);
+    try {
+      localStorage.setItem(key, String(next));
+    } catch {
+      // Storage unavailable — the split just isn't remembered.
+    }
+  }
+
+  return [pct, persist];
 }
