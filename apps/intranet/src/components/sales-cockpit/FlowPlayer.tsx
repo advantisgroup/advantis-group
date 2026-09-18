@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type FlowNode = NonNullable<
-  ReturnType<typeof useQuery<typeof api.salesCockpitFlows.getFlow>>
+  ReturnType<typeof useQuery<typeof api.salesCockpit.flows.getFlow>>
 >["nodes"][number];
 
 /**
@@ -24,7 +24,7 @@ type FlowNode = NonNullable<
  */
 export function FlowPlayer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
   const t = useTranslations("SalesCockpit");
-  const flow = useQuery(api.salesCockpitFlows.getFlow, { flowId });
+  const flow = useQuery(api.salesCockpit.flows.getFlow, { flowId });
   const [currentId, setCurrentId] = useState<Id<"salesCockpitFlowNodes"> | null>(null);
   const [focus, setFocus] = useState(false);
 

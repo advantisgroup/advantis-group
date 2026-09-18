@@ -14,7 +14,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 type Project = NonNullable<
-  ReturnType<typeof useQuery<typeof api.salesCockpit.listProjects>>
+  ReturnType<typeof useQuery<typeof api.salesCockpit.projects.listProjects>>
 >[number];
 
 export default function SalesCockpitProjektePage() {
@@ -22,8 +22,8 @@ export default function SalesCockpitProjektePage() {
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
   const confirm = useConfirm();
-  const projects = useQuery(api.salesCockpit.listProjects);
-  const removeProject = useMutation(api.salesCockpit.removeProject);
+  const projects = useQuery(api.salesCockpit.projects.listProjects);
+  const removeProject = useMutation(api.salesCockpit.projects.removeProject);
 
   const handleDelete = async (project: Project) => {
     const ok = await confirm({

@@ -220,8 +220,8 @@ function FlowLinkSection({
 }) {
   const t = useTranslations("SalesCockpit");
   const handleError = useErrorHandler();
-  const flows = useQuery(api.salesCockpitFlows.listFlows);
-  const createFlow = useMutation(api.salesCockpitFlows.createFlow);
+  const flows = useQuery(api.salesCockpit.flows.listFlows);
+  const createFlow = useMutation(api.salesCockpit.flows.createFlow);
   const [creating, setCreating] = useState(false);
 
   const linked = flows?.find((f) => f._id === flowId);
@@ -309,8 +309,8 @@ export function ProjectForm(
   const tc = useTranslations("Common");
   const router = useRouter();
   const handleError = useErrorHandler();
-  const createProject = useMutation(api.salesCockpit.createProject);
-  const updateProject = useMutation(api.salesCockpit.updateProject);
+  const createProject = useMutation(api.salesCockpit.projects.createProject);
+  const updateProject = useMutation(api.salesCockpit.projects.updateProject);
 
   const [value, setValue] = useState<ProjectFormValue>(initial);
   const [saving, setSaving] = useState(false);

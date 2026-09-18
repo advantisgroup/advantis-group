@@ -43,10 +43,10 @@ export default function SalesCockpitLexikonPage() {
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
   const confirm = useConfirm();
-  const entries = useQuery(api.salesCockpit.listLexikon);
+  const entries = useQuery(api.salesCockpit.lexikon.listLexikon);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
-  const uploadLexikon = useMutation(api.salesCockpit.uploadLexikon);
-  const removeLexikon = useMutation(api.salesCockpit.removeLexikon);
+  const uploadLexikon = useMutation(api.salesCockpit.lexikon.uploadLexikon);
+  const removeLexikon = useMutation(api.salesCockpit.lexikon.removeLexikon);
 
   const [uploadOpen, setUploadOpen] = useState(false);
   const [titel, setTitel] = useState("");
@@ -57,7 +57,7 @@ export default function SalesCockpitLexikonPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const searchHits = useQuery(
-    api.salesCockpit.searchLexikon,
+    api.salesCockpit.lexikon.searchLexikon,
     searchQuery ? { query: searchQuery } : "skip",
   );
 

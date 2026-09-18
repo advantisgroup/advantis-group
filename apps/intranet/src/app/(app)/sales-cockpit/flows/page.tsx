@@ -40,8 +40,8 @@ function NewFlowDialog({
   const t = useTranslations("SalesCockpit");
   const router = useRouter();
   const handleError = useErrorHandler();
-  const projects = useQuery(api.salesCockpit.listProjects);
-  const createFlow = useMutation(api.salesCockpitFlows.createFlow);
+  const projects = useQuery(api.salesCockpit.projects.listProjects);
+  const createFlow = useMutation(api.salesCockpit.flows.createFlow);
 
   const [titel, setTitel] = useState("");
   const [projectId, setProjectId] = useState<string>(NO_PROJECT_VALUE);
@@ -125,8 +125,8 @@ export default function SalesCockpitFlowsPage() {
   const router = useRouter();
   const confirm = useConfirm();
   const handleError = useErrorHandler();
-  const flows = useQuery(api.salesCockpitFlows.listFlows);
-  const removeFlow = useMutation(api.salesCockpitFlows.removeFlow);
+  const flows = useQuery(api.salesCockpit.flows.listFlows);
+  const removeFlow = useMutation(api.salesCockpit.flows.removeFlow);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   async function handleDelete(flow: NonNullable<typeof flows>[number]) {

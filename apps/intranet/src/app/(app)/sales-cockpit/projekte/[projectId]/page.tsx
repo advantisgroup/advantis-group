@@ -19,7 +19,7 @@ export default function EditSalesCockpitProjectPage({
 }) {
   const { projectId } = use(params);
   const t = useTranslations("SalesCockpit");
-  const projects = useQuery(api.salesCockpit.listProjects);
+  const projects = useQuery(api.salesCockpit.projects.listProjects);
   // Whether this project was ever here — if it vanishes after that, someone
   // deleted it mid-edit, which deserves a sentence rather than a 404.
   const seen = useRef(false);

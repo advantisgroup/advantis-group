@@ -28,7 +28,7 @@ import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 type Project = NonNullable<
-  ReturnType<typeof useQuery<typeof api.salesCockpit.listProjects>>
+  ReturnType<typeof useQuery<typeof api.salesCockpit.projects.listProjects>>
 >[number];
 
 function highlight(text: string, q: string) {
@@ -55,7 +55,7 @@ function InstantResults({
   onPick: (projectId: Id<"salesCockpitProjects">, wegId: string) => void;
 }) {
   const t = useTranslations("SalesCockpit");
-  const hits = useQuery(api.salesCockpit.searchLexikon, { query });
+  const hits = useQuery(api.salesCockpit.lexikon.searchLexikon, { query });
   const q = query.toLowerCase();
 
   const objections = useMemo(
@@ -341,7 +341,7 @@ function Cockpit({ project, initialWegId }: { project: Project; initialWegId: st
 
 export default function SalesCockpitHomePage() {
   const t = useTranslations("SalesCockpit");
-  const projects = useQuery(api.salesCockpit.listProjects);
+  const projects = useQuery(api.salesCockpit.projects.listProjects);
   const [activeProjectId, setActiveProjectId] = useState<Id<"salesCockpitProjects"> | null>(null);
   const [pickedWegId, setPickedWegId] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState("");

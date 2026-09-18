@@ -158,11 +158,11 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
   const isMobile = useIsMobile();
   const { resolvedTheme } = useTheme();
 
-  const flow = useQuery(api.salesCockpitFlows.getFlow, { flowId });
-  const renameFlow = useMutation(api.salesCockpitFlows.renameFlow);
-  const upsertNode = useMutation(api.salesCockpitFlows.upsertNode);
-  const moveNode = useMutation(api.salesCockpitFlows.moveNode);
-  const removeNode = useMutation(api.salesCockpitFlows.removeNode);
+  const flow = useQuery(api.salesCockpit.flows.getFlow, { flowId });
+  const renameFlow = useMutation(api.salesCockpit.flows.renameFlow);
+  const upsertNode = useMutation(api.salesCockpit.flows.upsertNode);
+  const moveNode = useMutation(api.salesCockpit.flows.moveNode);
+  const removeNode = useMutation(api.salesCockpit.flows.removeNode);
 
   // Every edit here autosaves (there's no separate "save" action anywhere
   // in this composer), which is easy to miss without some visible
