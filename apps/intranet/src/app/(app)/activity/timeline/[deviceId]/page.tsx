@@ -43,7 +43,13 @@ import {
   type Sample,
   type StateName,
 } from "@/lib/activity/activity";
-import { formatDuration, formatRelativeTime, localDay, todayLocalDay } from "@/lib/activity/fmt";
+import {
+  formatDuration,
+  formatRelativeTime,
+  hhmm,
+  localDay,
+  todayLocalDay,
+} from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 import { useDayParam } from "@/lib/activity/useDayParam";
 import { useNow } from "@/lib/activity/useNow";
@@ -53,13 +59,6 @@ import { cn } from "@/lib/utils";
 const TREND_DAYS = 14;
 /** How many of the day's most recent state changes the "right now" card lists. */
 const RECENT_CHANGES = 6;
-
-function hhmm(ms: number, lang: string): string {
-  return new Date(ms).toLocaleTimeString(lang, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export default function TimelinePage({ params }: { params: Promise<{ deviceId: string }> }) {
   const { deviceId: rawDeviceId } = use(params);

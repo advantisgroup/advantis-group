@@ -16,6 +16,11 @@ export function formatTime(ms: number | null | undefined, lang: Lang): string {
   return new Date(ms).toLocaleString(lang);
 }
 
+/** Just the clock time, e.g. "14:05". */
+export function hhmm(ms: number, lang?: string): string {
+  return new Date(ms).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
+}
+
 /** "in 3 Tagen" / "3d ago" style relative time for a past/future instant. */
 export function formatRelativeTime(ts: number, lang: Lang): string {
   const diff = ts - Date.now();

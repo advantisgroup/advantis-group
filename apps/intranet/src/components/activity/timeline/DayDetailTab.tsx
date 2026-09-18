@@ -17,17 +17,10 @@ import {
   STATE_NAMES,
   type StateName,
 } from "@/lib/activity/activity";
-import { nowMs } from "@/lib/activity/fmt";
+import { hhmm, nowMs } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 
 const DAY_MS = 86_400_000;
-
-function hhmm(ms: number): string {
-  return new Date(ms).toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 /**
  * "Day in detail": a horizontal colour-coded state strip plus a per-minute grid

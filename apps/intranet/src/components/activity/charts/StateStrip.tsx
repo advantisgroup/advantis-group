@@ -2,16 +2,10 @@
 
 import { STATE_COLOR } from "@/components/activity/charts/theme";
 import type { StateName, StateSegment } from "@/lib/activity/activity";
+import { hhmm } from "@/lib/activity/fmt";
 import { cn } from "@/lib/utils";
 
 const DAY_MS = 86_400_000;
-
-function hhmm(ms: number): string {
-  return new Date(ms).toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 /**
  * A horizontal, colour-coded day strip: one block per contiguous state run,

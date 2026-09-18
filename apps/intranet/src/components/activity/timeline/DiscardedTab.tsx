@@ -11,16 +11,10 @@ import { ProviderBadge, type Provider } from "@/components/branding/ProviderMark
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { StateName } from "@/lib/activity/activity";
+import { hhmm } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 
 const DAY_MS = 86_400_000;
-
-function hhmm(ms: number, lang: string): string {
-  return new Date(ms).toLocaleTimeString(lang, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 /**
  * "Discarded" tab: signals the state engine refused to write to the timeline

@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 
 import { STATE_COLOR } from "@/components/activity/charts/theme";
 import type { StateName, StateSegment } from "@/lib/activity/activity";
-import { formatDuration } from "@/lib/activity/fmt";
+import { formatDuration, hhmm } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 import { cn } from "@/lib/utils";
 
@@ -19,13 +19,6 @@ const GUIDE_REACH = 20;
 const EDGE_CLOCKED_OUT_CAP_PCT = 25;
 
 type Layout = { left: number; width: number };
-
-function hhmm(ms: number): string {
-  return new Date(ms).toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 /**
  * Each segment's on-screen [left, width) in percent. Proportional to real
