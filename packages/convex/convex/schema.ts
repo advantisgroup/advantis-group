@@ -983,48 +983,7 @@ export default defineSchema({
     .index("by_email", ["email"])
     .index("by_createdAt", ["createdAt"]),
 
-  // --- Calendar: absences & events ----------------------------------------
-  /**
-   * Deprecated: absences are no longer mirrored here. Clockodo is fetched
-   * live via apps/api on every read instead (see AGENTS.md's Clockodo
-   * section) — nothing writes to this table anymore. Left declared rather
-   * than dropped so old rows aren't orphaned from the schema; safe to
-   * actually remove once confirmed nothing needs the historical rows.
-   */
-  absences: defineTable({
-    userId: v.id("users"),
-    type: v.union(
-      v.literal("vacation"),
-      v.literal("sick"),
-      v.literal("personal"),
-      v.literal("other"),
-    ),
-    startDate: v.string(), // ISO date (YYYY-MM-DD)
-    endDate: v.string(),
-    halfDay: v.optional(v.boolean()),
-    reason: v.optional(v.string()),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("approved"),
-      v.literal("denied"),
-      v.literal("cancelled"),
-    ),
-    reviewedByUserId: v.optional(v.id("users")),
-    reviewedAt: v.optional(v.number()),
-    decisionNote: v.optional(v.string()),
-    // Ingest source. Clockodo is the primary system of record; intranet-filed
-    // requests are secondary. Clockodo rows are read-only mirrors.
-    source: v.union(v.literal("intranet"), v.literal("clockodo")),
-    externalId: v.optional(v.string()), // Clockodo absence id
-    clockodoType: v.optional(v.number()),
-    clockodoStatus: v.optional(v.number()),
-    createdAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_status", ["status"])
-    .index("by_startDate", ["startDate"])
-    .index("by_externalId", ["externalId"]),
-
+  // --- Calendar: events ----------------------------------------------------
   events: defineTable({
     title: v.string(),
     description: v.optional(v.string()),

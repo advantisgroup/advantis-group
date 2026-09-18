@@ -241,9 +241,8 @@ route — has been removed).
   `useAbsencesCalendar` / `usePendingAbsenceCount` hooks every consumer page
   uses. Not reactive like a Convex `useQuery` — each fetches once per
   mount/param change, which is fine given how rarely absences change.
-- The `absences` Convex table (`schema.ts`) is left declared but unused/dead
-  — nothing reads or writes it anymore. Safe to drop once confirmed nothing
-  needs the historical mirrored rows.
+- The old `absences` Convex table is no longer in `schema.ts`. Any old mirrored
+  rows still sit in the deployment's data, but nothing reads them.
 
 ## Third-party product mentions (Genesys, Clockodo)
 
