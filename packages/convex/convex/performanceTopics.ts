@@ -1,4 +1,4 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { mutation } from "./functions";
 /**
  * CRUD for Performance "topics" — admin-set monthly goals/todos for an
  * employee. Ported from the reference script's `topic_save`/`topic_delete`/

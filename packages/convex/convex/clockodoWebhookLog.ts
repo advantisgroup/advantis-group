@@ -1,7 +1,6 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { internalMutation, mutation } from "./functions";
 import { v } from "convex/values";
 
-import { internalMutation } from "./_generated/server";
 import { assertServerKey } from "./lib/auth";
 
 /**

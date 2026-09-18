@@ -1,8 +1,8 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { internalMutation, mutation, query } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { type MutationCtx, internalMutation, query } from "./_generated/server";
+import { type MutationCtx } from "./_generated/server";
 import { assertServerKey, getUserByClerkId, requireActiveUser } from "./lib/auth";
 import { trackEvent } from "./lib/analytics";
 import { notifySecurityChange } from "./lib/stepUp";

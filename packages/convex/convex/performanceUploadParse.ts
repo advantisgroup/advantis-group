@@ -1,6 +1,6 @@
 "use node";
 
-import { sandboxedAction as action } from "./lib/sandbox";
+import { action } from "./functions";
 
 /**
  * Report-file detection/parsing for the Performance upload pipeline —

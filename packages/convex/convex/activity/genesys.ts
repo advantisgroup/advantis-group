@@ -4,7 +4,7 @@ import { v } from "convex/values";
 
 import { api } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
-import { gatedAction } from "../lib/featureGate";
+import { gatedAction } from "../functions";
 import {
   normalizePresence,
   normalizeRoutingStatus,

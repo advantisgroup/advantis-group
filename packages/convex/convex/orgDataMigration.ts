@@ -1,8 +1,8 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { mutation, query } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { type MutationCtx, query } from "./_generated/server";
+import { type MutationCtx } from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
 
 /**

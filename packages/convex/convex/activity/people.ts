@@ -1,8 +1,8 @@
-import { sandboxedMutation as mutation } from "../lib/sandbox";
+import { mutation, query } from "../functions";
 import { v, type Infer } from "convex/values";
 
 import { type Id } from "../_generated/dataModel";
-import { query, type QueryCtx, type MutationCtx } from "../_generated/server";
+import { type QueryCtx, type MutationCtx } from "../_generated/server";
 import { requireUser, requireCapability } from "../lib/auth";
 import { writeAudit } from "./audit";
 import { appError } from "./lib/errors";

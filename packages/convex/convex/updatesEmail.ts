@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Id } from "./_generated/dataModel";
-import { internalAction } from "./_generated/server";
+import { internalAction } from "./functions";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { internalApiFetch } from "./lib/internalApi";
 

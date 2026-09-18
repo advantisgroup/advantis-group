@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { query } from "../_generated/server";
+import { query } from "../functions";
 import type { QueryCtx } from "../_generated/server";
 import { requireCapability } from "../lib/auth";
 import { readConfig } from "./settings";

@@ -1,4 +1,4 @@
-import { query } from "../_generated/server";
+import { query } from "../functions";
 import { getAdminEmails, getAllowedDomains, requireUser } from "../lib/auth";
 
 /**

@@ -1,10 +1,9 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { internalMutation, mutation, query } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
-import { internalMutation, query } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
 import { isOwnerOrAdmin, requireCapability, requireManager, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";

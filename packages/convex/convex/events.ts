@@ -1,8 +1,7 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { mutation, query } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc } from "./_generated/dataModel";
-import { query } from "./_generated/server";
 import { isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
 import { userMatchesAudience } from "./lib/audience";
 import { audienceValidator, richDateKindValidator } from "./schema";

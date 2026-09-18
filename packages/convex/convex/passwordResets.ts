@@ -1,15 +1,16 @@
-import { sandboxedAction as action, sandboxedMutation as mutation } from "./lib/sandbox";
+import {
+  action,
+  internalAction,
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
-import {
-  internalAction,
-  internalMutation,
-  internalQuery,
-  query,
-  type MutationCtx,
-} from "./_generated/server";
+import { type MutationCtx } from "./_generated/server";
 import {
   availableMethodsFor,
   checkSatisfied,

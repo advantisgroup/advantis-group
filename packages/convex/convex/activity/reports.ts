@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { query } from "../_generated/server";
+import { query } from "../functions";
 import { requireUser } from "../lib/auth";
 
 /**

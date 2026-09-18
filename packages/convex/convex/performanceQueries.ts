@@ -12,7 +12,8 @@
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { internalMutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { internalMutation, query } from "./functions";
+import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import {
   addForecast,
   aggregateReasons,

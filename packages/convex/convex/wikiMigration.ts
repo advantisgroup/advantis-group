@@ -1,5 +1,4 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
-import { query } from "./_generated/server";
+import { mutation, query } from "./functions";
 import { requireManager, requireUser } from "./lib/auth";
 import { escapeHtml } from "./lib/text";
 

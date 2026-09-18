@@ -1,8 +1,8 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { mutation, query } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc } from "./_generated/dataModel";
-import { type MutationCtx, type QueryCtx, query } from "./_generated/server";
+import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { effectiveRole, requireUser } from "./lib/auth";
 
 const DEFAULT_PIN = "1234";

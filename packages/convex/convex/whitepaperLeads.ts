@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { mutation } from "./functions";
 
 /**
  * Double opt-in lead capture for the marketing site's whitepaper page.

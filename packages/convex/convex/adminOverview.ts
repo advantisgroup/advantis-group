@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import type { Doc } from "./_generated/dataModel";
-import { query } from "./_generated/server";
+import { query } from "./functions";
 import type { QueryCtx } from "./_generated/server";
 import { readConfig } from "./activity/settings";
 import { effectiveRole, hasCapability, requireManager } from "./lib/auth";

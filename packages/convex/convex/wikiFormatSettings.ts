@@ -1,7 +1,6 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { mutation, query } from "./functions";
 import { v } from "convex/values";
 
-import { query } from "./_generated/server";
 import { requireCapability, requireUser } from "./lib/auth";
 
 const KEY = "default";

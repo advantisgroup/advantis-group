@@ -11,7 +11,7 @@
  * (`internal.migrations.backfillManageClockodoTeam.run`) after this
  * capability split deploys; not wired to any client route.
  */
-import { internalMutation } from "../_generated/server";
+import { internalMutation } from "../functions";
 
 export const run = internalMutation({
   args: {},

@@ -1,8 +1,7 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { internalMutation, mutation, query } from "./functions";
 import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
-import { internalMutation, query } from "./_generated/server";
 import { requireUser } from "./lib/auth";
 
 export const list = query({

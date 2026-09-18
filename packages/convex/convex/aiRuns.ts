@@ -1,8 +1,9 @@
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { internalMutation, mutation, query, type QueryCtx } from "./_generated/server";
-import { isFeatureEnabled } from "./featureFlags";
+import { internalMutation, mutation, query } from "./functions";
+import { type QueryCtx } from "./_generated/server";
+import { isFeatureEnabled } from "./lib/featureFlags";
 import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase, askSubjectType } from "./lib/aiRuns";
 import {
   assertServerKey,
@@ -18,7 +19,6 @@ import {
   userHasCapability,
 } from "./lib/auth";
 import { userMatchesAudience } from "./lib/audience";
-import { sandboxedMutation } from "./lib/sandbox";
 import { displayName } from "./lib/users";
 
 /**
@@ -129,7 +129,7 @@ export const dock = query({
   },
 });
 
-export const cancel = sandboxedMutation({
+export const cancel = mutation({
   args: { runId: v.id("aiRuns") },
   handler: async (ctx, { runId }) => {
     const owned = await ownRun(ctx, runId);
@@ -140,7 +140,7 @@ export const cancel = sandboxedMutation({
   },
 });
 
-export const markSeen = sandboxedMutation({
+export const markSeen = mutation({
   args: { runId: v.id("aiRuns") },
   handler: async (ctx, { runId }) => {
     const owned = await ownRun(ctx, runId);
@@ -180,7 +180,7 @@ export const myFeedback = query({
   },
 });
 
-export const rateRun = sandboxedMutation({
+export const rateRun = mutation({
   args: {
     runId: v.id("aiRuns"),
     rating: v.union(v.literal("up"), v.literal("down")),

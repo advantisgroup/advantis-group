@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import type { MutationCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
-import { gatedInternalMutation } from "../lib/featureGate";
+import { gatedInternalMutation } from "../functions";
 import { readConfig } from "./settings";
 import { logEvent } from "./events";
 import { applyStateSignal } from "./state";

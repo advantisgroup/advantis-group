@@ -1,4 +1,4 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { internalMutation, internalQuery, mutation, query } from "./functions";
 /**
  * Database-side half of the Performance feature's report-upload pipeline.
  * Ported from the reference script's application-level import functions
@@ -18,13 +18,7 @@ import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import {
-  internalMutation,
-  internalQuery,
-  query,
-  type MutationCtx,
-  type QueryCtx,
-} from "./_generated/server";
+import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { monthBounds } from "./performance/lib/kpi";
 import { EXCLUDED_OWNERS } from "./performance/lib/salesforceImport";
 import {

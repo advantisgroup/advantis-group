@@ -1,9 +1,8 @@
-import { sandboxedAction as action, sandboxedMutation as mutation } from "./lib/sandbox";
+import { action, internalMutation, internalQuery, mutation, query } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
-import { internalMutation, internalQuery, query } from "./_generated/server";
 import { hashPassword, randomToken, verifyPassword } from "./activity/lib/crypto";
 import { getCurrentUser } from "./lib/auth";
 import {

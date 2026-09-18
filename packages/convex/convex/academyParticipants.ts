@@ -1,9 +1,8 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { internalMutation, mutation, query } from "./functions";
 import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc } from "./_generated/dataModel";
-import { internalMutation, query } from "./_generated/server";
 import { requireAcademyAdmin } from "./academySettings";
 import { createNotification } from "./lib/notify";
 

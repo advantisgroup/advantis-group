@@ -1,10 +1,8 @@
-import { sandboxedMutation as mutation } from "../lib/sandbox";
+import { gatedInternalMutation, internalMutation, mutation } from "../functions";
 import { v } from "convex/values";
 
-import { internalMutation } from "../_generated/server";
 import type { MutationCtx } from "../_generated/server";
 import { requireAdmin } from "../lib/auth";
-import { gatedInternalMutation } from "../lib/featureGate";
 import { writeAudit } from "./audit";
 import { readConfig } from "./settings";
 import { isWithinBusinessHours, WORK_EVIDENCE_STATES } from "./lib/businessHours";

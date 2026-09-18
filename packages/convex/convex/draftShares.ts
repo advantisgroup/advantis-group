@@ -1,11 +1,11 @@
 import { ConvexError, v } from "convex/values";
 
 import type { Doc, Id } from "./_generated/dataModel";
-import { type MutationCtx, query, type QueryCtx } from "./_generated/server";
+import { mutation, query } from "./functions";
+import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getCurrentUser, requireUser } from "./lib/auth";
 import { draftSurface } from "./lib/drafts";
 import { createNotification } from "./lib/notify";
-import { sandboxedMutation } from "./lib/sandbox";
 import {
   APPLICANT_SURFACES,
   canUseSurface,
@@ -72,7 +72,7 @@ function forkHref(ctx: QueryCtx, draft: Doc<"drafts">, newDraftId?: string): str
   return newDraftId ? draft.href.replace(pageKey, newDraftId) : draft.href;
 }
 
-export const share = sandboxedMutation({
+export const share = mutation({
   args: {
     surface: draftSurface,
     subjectKey: v.string(),
@@ -126,7 +126,7 @@ export const share = sandboxedMutation({
 
 /** Takes one person's access away again. The version keeps its comments —
  *  and stays protected from thinning while it has any. */
-export const unshare = sandboxedMutation({
+export const unshare = mutation({
   args: { versionId: v.id("draftVersions"), userId: v.id("users") },
   handler: async (ctx, { versionId, userId }) => {
     const user = await requireUser(ctx);
@@ -264,7 +264,7 @@ async function notifyParticipants(
   }
 }
 
-export const addComment = sandboxedMutation({
+export const addComment = mutation({
   args: { versionId: v.id("draftVersions"), body: v.string() },
   handler: async (ctx, { versionId, body }) => {
     const user = await requireUser(ctx);
@@ -285,7 +285,7 @@ export const addComment = sandboxedMutation({
   },
 });
 
-export const deleteComment = sandboxedMutation({
+export const deleteComment = mutation({
   args: { commentId: v.id("draftComments") },
   handler: async (ctx, { commentId }) => {
     const user = await requireUser(ctx);
@@ -300,7 +300,7 @@ export const deleteComment = sandboxedMutation({
 
 /** "Continue from this": copies a version someone shared with you into a
  *  draft of your own. Nothing you do there reaches the original. */
-export const continueFrom = sandboxedMutation({
+export const continueFrom = mutation({
   args: { versionId: v.id("draftVersions") },
   handler: async (ctx, { versionId }) => {
     const user = await requireUser(ctx);

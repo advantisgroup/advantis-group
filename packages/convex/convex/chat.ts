@@ -1,14 +1,12 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { gatedMutation, internalMutation, mutation, query } from "./functions";
 import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
-import { internalMutation, query } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
 import { isOwnerOrAdmin, requireUser } from "./lib/auth";
-import { gatedMutation } from "./lib/featureGate";
 import { createNotification } from "./lib/notify";
 import { profileAvatarUrl, profileDisplayName } from "./lib/profile";
 import { attachmentValidator } from "./schema";

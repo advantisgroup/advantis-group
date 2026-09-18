@@ -1,8 +1,7 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { mutation, query } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { safeEqual, sha256hex } from "./activity/lib/crypto";
-import { query } from "./_generated/server";
 import { assertServerKey, getUserByClerkId, requireActiveUser } from "./lib/auth";
 import { trackEvent } from "./lib/analytics";
 import { notifySecurityChange } from "./lib/stepUp";

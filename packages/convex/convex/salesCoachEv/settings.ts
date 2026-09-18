@@ -1,7 +1,6 @@
-import { sandboxedMutation as mutation } from "../lib/sandbox";
+import { mutation, query } from "../functions";
 import { v } from "convex/values";
 
-import { query } from "../_generated/server";
 import { assertServerKey } from "../lib/auth";
 
 /** Per-user KPI/call-guide text for Sales Coach EV, fed into the AI coaching prompts. */

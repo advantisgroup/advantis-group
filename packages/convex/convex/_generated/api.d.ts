@@ -71,6 +71,7 @@ import type * as errorSettings from "../errorSettings.js";
 import type * as events from "../events.js";
 import type * as featureFlags from "../featureFlags.js";
 import type * as files from "../files.js";
+import type * as functions from "../functions.js";
 import type * as guidebookAttachments from "../guidebookAttachments.js";
 import type * as guidebookFeedback from "../guidebookFeedback.js";
 import type * as guidebookHighlights from "../guidebookHighlights.js";
@@ -98,13 +99,18 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_clerk from "../lib/clerk.js";
 import type * as lib_clockodoId from "../lib/clockodoId.js";
 import type * as lib_drafts from "../lib/drafts.js";
-import type * as lib_featureGate from "../lib/featureGate.js";
+import type * as lib_featureFlags from "../lib/featureFlags.js";
+import type * as lib_internalApi from "../lib/internalApi.js";
 import type * as lib_notify from "../lib/notify.js";
+import type * as lib_passwordResets from "../lib/passwordResets.js";
+import type * as lib_performanceAuth from "../lib/performanceAuth.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_profile from "../lib/profile.js";
-import type * as lib_sandbox from "../lib/sandbox.js";
+import type * as lib_reporting from "../lib/reporting.js";
 import type * as lib_stepUp from "../lib/stepUp.js";
+import type * as lib_text from "../lib/text.js";
 import type * as lib_users from "../lib/users.js";
+import type * as lib_validators from "../lib/validators.js";
 import type * as marketingAnalytics from "../marketingAnalytics.js";
 import type * as members from "../members.js";
 import type * as migrations_backfillCustomRoleIds from "../migrations/backfillCustomRoleIds.js";
@@ -146,6 +152,19 @@ import type * as sharing from "../sharing.js";
 import type * as stepUp from "../stepUp.js";
 import type * as suggestionCategories from "../suggestionCategories.js";
 import type * as suggestions from "../suggestions.js";
+import type * as tables_activity from "../tables/activity.js";
+import type * as tables_ai from "../tables/ai.js";
+import type * as tables_chat from "../tables/chat.js";
+import type * as tables_comms from "../tables/comms.js";
+import type * as tables_content from "../tables/content.js";
+import type * as tables_hr from "../tables/hr.js";
+import type * as tables_identity from "../tables/identity.js";
+import type * as tables_integrations from "../tables/integrations.js";
+import type * as tables_itTickets from "../tables/itTickets.js";
+import type * as tables_marketing from "../tables/marketing.js";
+import type * as tables_performance from "../tables/performance.js";
+import type * as tables_sales from "../tables/sales.js";
+import type * as tables_security from "../tables/security.js";
 import type * as totp from "../totp.js";
 import type * as tourProgress from "../tourProgress.js";
 import type * as updates from "../updates.js";
@@ -160,7 +179,11 @@ import type * as wikiEntries from "../wikiEntries.js";
 import type * as wikiFormatSettings from "../wikiFormatSettings.js";
 import type * as wikiMigration from "../wikiMigration.js";
 
-import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 
 declare const fullApi: ApiFromModules<{
   academyParticipants: typeof academyParticipants;
@@ -226,6 +249,7 @@ declare const fullApi: ApiFromModules<{
   events: typeof events;
   featureFlags: typeof featureFlags;
   files: typeof files;
+  functions: typeof functions;
   guidebookAttachments: typeof guidebookAttachments;
   guidebookFeedback: typeof guidebookFeedback;
   guidebookHighlights: typeof guidebookHighlights;
@@ -253,13 +277,18 @@ declare const fullApi: ApiFromModules<{
   "lib/clerk": typeof lib_clerk;
   "lib/clockodoId": typeof lib_clockodoId;
   "lib/drafts": typeof lib_drafts;
-  "lib/featureGate": typeof lib_featureGate;
+  "lib/featureFlags": typeof lib_featureFlags;
+  "lib/internalApi": typeof lib_internalApi;
   "lib/notify": typeof lib_notify;
+  "lib/passwordResets": typeof lib_passwordResets;
+  "lib/performanceAuth": typeof lib_performanceAuth;
   "lib/permissions": typeof lib_permissions;
   "lib/profile": typeof lib_profile;
-  "lib/sandbox": typeof lib_sandbox;
+  "lib/reporting": typeof lib_reporting;
   "lib/stepUp": typeof lib_stepUp;
+  "lib/text": typeof lib_text;
   "lib/users": typeof lib_users;
+  "lib/validators": typeof lib_validators;
   marketingAnalytics: typeof marketingAnalytics;
   members: typeof members;
   "migrations/backfillCustomRoleIds": typeof migrations_backfillCustomRoleIds;
@@ -301,6 +330,19 @@ declare const fullApi: ApiFromModules<{
   stepUp: typeof stepUp;
   suggestionCategories: typeof suggestionCategories;
   suggestions: typeof suggestions;
+  "tables/activity": typeof tables_activity;
+  "tables/ai": typeof tables_ai;
+  "tables/chat": typeof tables_chat;
+  "tables/comms": typeof tables_comms;
+  "tables/content": typeof tables_content;
+  "tables/hr": typeof tables_hr;
+  "tables/identity": typeof tables_identity;
+  "tables/integrations": typeof tables_integrations;
+  "tables/itTickets": typeof tables_itTickets;
+  "tables/marketing": typeof tables_marketing;
+  "tables/performance": typeof tables_performance;
+  "tables/sales": typeof tables_sales;
+  "tables/security": typeof tables_security;
   totp: typeof totp;
   tourProgress: typeof tourProgress;
   updates: typeof updates;
@@ -324,7 +366,10 @@ declare const fullApi: ApiFromModules<{
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>;
+export declare const api: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "public">
+>;
 
 /**
  * A utility for referencing Convex functions in your app's internal API.
@@ -334,6 +379,9 @@ export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "publ
  * const myFunctionReference = internal.myModule.myFunction;
  * ```
  */
-export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>;
+export declare const internal: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "internal">
+>;
 
 export declare const components: {};

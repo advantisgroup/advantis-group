@@ -1,6 +1,6 @@
 "use node";
 
-import { sandboxedAction as action } from "../../lib/sandbox";
+import { action } from "../../functions";
 import { v } from "convex/values";
 
 import { internal } from "../../_generated/api";

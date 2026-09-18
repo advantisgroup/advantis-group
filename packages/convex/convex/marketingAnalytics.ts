@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
-import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
-import { sandboxedMutation } from "./lib/sandbox";
+import { internalMutation, internalQuery, mutation } from "./functions";
+import { type MutationCtx } from "./_generated/server";
 
 /**
  * First-party marketing-site analytics, replacing PostHog. Two writes from
@@ -48,7 +48,7 @@ async function resolveReferrer(ctx: MutationCtx, code: string) {
   return user?._id;
 }
 
-export const recordPageview = sandboxedMutation({
+export const recordPageview = mutation({
   args: {
     path: v.string(),
     locale: v.string(),
@@ -79,7 +79,7 @@ export const recordPageview = sandboxedMutation({
   },
 });
 
-export const recordEvent = sandboxedMutation({
+export const recordEvent = mutation({
   args: { name: v.string(), sessionId: v.string(), locale: v.string() },
   handler: async (ctx, args) => {
     if (args.name.length > 128 || args.sessionId.length > 128) return;

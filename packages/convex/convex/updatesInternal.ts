@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { internalQuery } from "./_generated/server";
+import { internalQuery } from "./functions";
 
 /**
  * internalQuery helpers for updatesEmail.ts — actions can't touch ctx.db

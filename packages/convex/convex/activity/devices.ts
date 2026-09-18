@@ -1,9 +1,7 @@
-import { sandboxedMutation as mutation } from "../lib/sandbox";
+import { gatedMutation, mutation, query } from "../functions";
 import { v } from "convex/values";
 
-import { query } from "../_generated/server";
 import { requireUser, requireManager, requireAdmin } from "../lib/auth";
-import { gatedMutation } from "../lib/featureGate";
 import { writeAudit } from "./audit";
 import { appError } from "./lib/errors";
 import { assertSignalSecret, issueDeviceToken, invalidateDeviceToken } from "./deviceAuth";

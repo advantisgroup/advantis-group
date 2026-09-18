@@ -1,10 +1,9 @@
 import { v } from "convex/values";
 
-import { query } from "../_generated/server";
+import { gatedMutation, query } from "../functions";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
 import { requireUser, requireCapability, hasCapability } from "../lib/auth";
-import { gatedMutation } from "../lib/featureGate";
 import { computeEmployeeState, type StateSignals } from "./lib/state";
 import {
   isWithinBusinessHours,
@@ -179,7 +178,7 @@ export interface StateSignalArgs {
  * authenticated by their own means, so this function itself trusts its input.
  *
  * Only reachable through those two callers, both gated by the
- * `activitytrack` feature flag (see `lib/featureGate.ts`), so this never
+ * `activitytrack` feature flag (see `functions.ts`), so this never
  * runs while it's disabled.
  */
 export async function applyStateSignal(

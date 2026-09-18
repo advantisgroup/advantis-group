@@ -1,7 +1,6 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { internalMutation, mutation, query } from "./functions";
 import { ConvexError, v } from "convex/values";
 
-import { internalMutation, query } from "./_generated/server";
 import { requireCapability } from "./lib/auth";
 import { ensureShareCode } from "./sharing";
 

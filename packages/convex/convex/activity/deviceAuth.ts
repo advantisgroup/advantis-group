@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { query, internalQuery } from "../_generated/server";
+import { internalQuery, query } from "../functions";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { safeEqual, sha256hex, randomToken } from "./lib/crypto";
 import { appError } from "./lib/errors";

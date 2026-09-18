@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { query, type QueryCtx } from "./_generated/server";
+import { query } from "./functions";
+import { type QueryCtx } from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
 
 /**

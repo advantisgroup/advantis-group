@@ -10,7 +10,7 @@ import { z } from "zod";
 import { verifyPassword } from "./activity/lib/crypto";
 import { DEBUG_PASSWORD_SETTING_KEY } from "./activity/settings";
 
-/** True for the ConvexError a feature-gated function throws (see `lib/featureGate.ts`). */
+/** True for the ConvexError a feature-gated function throws (see `functions.ts`). */
 function isFeatureDisabledError(err: unknown): boolean {
   return (
     err instanceof ConvexError &&
@@ -147,7 +147,7 @@ http.route({
         }
       } catch (err) {
         // ActivityTrack disabled: recordSamples is feature-gated (see
-        // lib/featureGate.ts) and throws instead of persisting. The agent has
+        // functions.ts) and throws instead of persisting. The agent has
         // no concept of this flag, so answer exactly like an accepted-but-
         // empty batch instead of surfacing a 500.
         if (!isFeatureDisabledError(err)) throw err;

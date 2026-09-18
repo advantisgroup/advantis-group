@@ -1,9 +1,9 @@
-import { sandboxedMutation as mutation } from "./lib/sandbox";
+import { internalMutation, mutation, query } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Id } from "./_generated/dataModel";
-import { internalMutation, query, type MutationCtx } from "./_generated/server";
+import { type MutationCtx } from "./_generated/server";
 import { sha256hex } from "./activity/lib/crypto";
 import {
   assertServerKey,

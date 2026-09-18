@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { internalMutation } from "../_generated/server";
+import { internalMutation } from "../functions";
 
 /** Persist a raw third-party API response for inspection. Diagnostic only —
  * see the schema comment on `integrationsRawDebugLog`. */

@@ -11,7 +11,7 @@
  * dashboard (`internal.migrations.backfillCustomRoleIds.run`) whenever
  * convenient; not wired to any client route.
  */
-import { internalMutation } from "../_generated/server";
+import { internalMutation } from "../functions";
 
 export const run = internalMutation({
   args: {},

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { query } from "../_generated/server";
+import { query } from "../functions";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { requireManager } from "../lib/auth";

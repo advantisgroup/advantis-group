@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { query } from "../_generated/server";
+import { query } from "../functions";
 import { safeEqual } from "./lib/crypto";
 import { appError } from "./lib/errors";
 

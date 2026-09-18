@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 
 import { type Id } from "../_generated/dataModel";
-import { internalMutation, query, type MutationCtx } from "../_generated/server";
+import { internalMutation, query } from "../functions";
+import { type MutationCtx } from "../_generated/server";
 import { requireCapability } from "../lib/auth";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { batchUserSummaries } from "../lib/users";

@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { api, internal } from "./_generated/api";
 import { requireBlogManageAction } from "./integrations/lib/auth";
-import { sandboxedAction as action } from "./lib/sandbox";
+import { action } from "./functions";
 
 /**
  * Per-post analytics for the blog manage page. Was a PostHog Query API call

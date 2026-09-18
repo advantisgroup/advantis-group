@@ -1,12 +1,11 @@
 "use node";
 
-import { sandboxedAction as action } from "../lib/sandbox";
+import { action, gatedAction } from "../functions";
 
 import { v } from "convex/values";
 
 import { api, internal } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
-import { gatedAction } from "../lib/featureGate";
 import { internalApiFetch } from "../lib/internalApi";
 import {
   signalSecret,

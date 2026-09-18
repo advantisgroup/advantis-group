@@ -2,7 +2,6 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc } from "./_generated/dataModel";
 import { type QueryCtx } from "./_generated/server";
-import { internalMutation, mutation as baseMutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { roleValidator } from "./schema";
 import { clearVaultPasswordForUser } from "./applicantVault";
@@ -20,7 +19,7 @@ import {
   requireUser,
   requireVaultUnlocked,
 } from "./lib/auth";
-import { sandboxedAction as action, sandboxedMutation as mutation } from "./lib/sandbox";
+import { action, internalMutation, mutation, query, sandboxSafeMutation } from "./functions";
 import { listUserPermissions } from "./lib/permissions";
 import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import { loadReportingLookup, reportingLines, resolveManager } from "./lib/reporting";
@@ -104,14 +103,14 @@ export const me = query({
 });
 
 /** Provision the signed-in identity. Called by the intranet on app load. */
-export const ensureCurrentUser = baseMutation({
+export const ensureCurrentUser = sandboxSafeMutation({
   args: {},
   handler: async (ctx) => ensureUser(ctx),
 });
 
 /** Enter or leave a read-only base-role view. This deliberately bypasses the
  * normal write guard so an admin can always leave the sandbox again. */
-export const setSandboxRole = baseMutation({
+export const setSandboxRole = sandboxSafeMutation({
   args: {
     role: v.union(v.literal("manager"), v.literal("employee"), v.null()),
   },

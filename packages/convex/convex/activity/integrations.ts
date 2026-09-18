@@ -1,10 +1,9 @@
 "use node";
 
-import { sandboxedAction as action } from "../lib/sandbox";
+import { action, gatedInternalAction } from "../functions";
 
 import type { ActionCtx } from "../_generated/server";
 import { api } from "../_generated/api";
-import { gatedInternalAction } from "../lib/featureGate";
 import { requireManagerAction } from "../integrations/lib/auth";
 import { signalSecret } from "./lib/integrationsShared";
 import { pollGenesys } from "./genesys";

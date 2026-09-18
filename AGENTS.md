@@ -149,6 +149,13 @@ it deliberately doesn't, and why. Nothing enforces any of it automatically —
 `packages/convex` runs plain `oxlint`, but none of the `@convex-dev/*` ESLint
 rules are installed — so it's on whoever writes the function.
 
+Define every function with the builders from `convex/functions.ts`, never
+`_generated/server` (types like `MutationCtx` still come from there):
+`mutation`/`action` refuse to run in sandbox mode, `server*` are for apps/api
+and check the server key, `gated*(flag)` stop work while a feature flag is
+off. See `docs/future-features/22_convex-restructure.md` for where modules
+are heading.
+
 The four that bite hardest here:
 
 - **`.collect()` only on org-scale tables.** `users`/`presence`/`departments`

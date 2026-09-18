@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { internalAction } from "./_generated/server";
+import { internalAction } from "./functions";
 
 /**
  * Server-side PostHog capture. The browser bundle (`instrumentation-client.ts`)

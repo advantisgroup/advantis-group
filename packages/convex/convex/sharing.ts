@@ -1,9 +1,9 @@
 import { ConvexError, v } from "convex/values";
 
-import { query, type MutationCtx } from "./_generated/server";
+import { mutation, query } from "./functions";
+import { type MutationCtx } from "./_generated/server";
 import { type Id } from "./_generated/dataModel";
 import { getCurrentUser } from "./lib/auth";
-import { sandboxedMutation as mutation } from "./lib/sandbox";
 
 /**
  * Short share links (`/share/blog/{code}`) and the opt-in that credits the

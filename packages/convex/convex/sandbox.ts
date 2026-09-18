@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { internalQuery } from "./_generated/server";
+import { internalQuery } from "./functions";
 import { getUserByClerkId } from "./lib/auth";
 
 /** Used by the public action wrapper before it starts work. */

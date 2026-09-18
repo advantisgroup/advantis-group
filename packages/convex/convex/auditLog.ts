@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { query } from "./_generated/server";
+import { query } from "./functions";
 import { requireAdmin } from "./lib/auth";
 import { batchUserSummaries } from "./lib/users";
 

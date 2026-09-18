@@ -10,7 +10,7 @@
  * delete the fields flagged in `schema.ts`. Idempotent — only touches rows
  * that still have the field set.
  */
-import { internalMutation } from "../_generated/server";
+import { internalMutation } from "../functions";
 
 export const run = internalMutation({
   args: {},

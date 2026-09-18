@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
-import { internalAction, internalMutation, query } from "../_generated/server";
+import { internalAction, internalMutation, query } from "../functions";
 import { requireUser } from "../lib/auth";
 
 /**

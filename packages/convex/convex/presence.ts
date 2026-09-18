@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { sandboxSafeMutation } from "./functions";
 import { requireUser } from "./lib/auth";
 
 /**
@@ -6,7 +6,7 @@ import { requireUser } from "./lib/auth";
  * while the app is open; conversation queries read the latest `lastActiveAt`
  * to show online / last-seen state.
  */
-export const heartbeat = mutation({
+export const heartbeat = sandboxSafeMutation({
   args: {},
   handler: async (ctx) => {
     const user = await requireUser(ctx);

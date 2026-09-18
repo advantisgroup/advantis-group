@@ -1,10 +1,10 @@
 import { ConvexError, v } from "convex/values";
 
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
+import { internalMutation, mutation, query } from "./functions";
+import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getCurrentUser, hasApplicantAccess, requireUser } from "./lib/auth";
 import { draftSurface } from "./lib/drafts";
-import { sandboxedMutation } from "./lib/sandbox";
 
 /**
  * Unsent work from every composer and create/edit dialog, per person.
@@ -242,7 +242,7 @@ export const get = query({
  *  that id becomes its `subjectKey` too, so a URL can point at it right away
  *  and every existing `<kind>:<subjectKey>` AI-run convention keys off it
  *  without any changes on that side. */
-export const create = sandboxedMutation({
+export const create = mutation({
   args: { surface: draftSurface },
   handler: async (ctx, { surface }) => {
     const user = await requireUser(ctx);
@@ -297,7 +297,7 @@ function safeHref(href: string | undefined): string | undefined {
   return href;
 }
 
-export const save = sandboxedMutation({
+export const save = mutation({
   args: {
     surface: draftSurface,
     subjectKey: v.string(),
@@ -336,7 +336,7 @@ export const save = sandboxedMutation({
 });
 
 /** Always allowed, vault or not — throwing away your own draft reveals nothing. */
-export const discard = sandboxedMutation({
+export const discard = mutation({
   args: { surface: draftSurface, subjectKey: v.string() },
   handler: async (ctx, { surface, subjectKey }) => {
     const user = await requireUser(ctx);
@@ -449,7 +449,7 @@ export const listOthers = query({
 
 /** "Start a new draft": moves what's in the form into a draft of its own, set
  *  aside, and leaves this form empty. */
-export const park = sandboxedMutation({
+export const park = mutation({
   args: { surface: draftSurface, subjectKey: v.string() },
   handler: async (ctx, { surface, subjectKey }) => {
     const user = await requireUser(ctx);
@@ -485,7 +485,7 @@ export const park = sandboxedMutation({
 
 /** Brings a set-aside draft back into this form, setting aside whatever the
  *  form held so switching back and forth never loses anything. */
-export const resume = sandboxedMutation({
+export const resume = mutation({
   args: { surface: draftSurface, subjectKey: v.string(), draftId: v.id("drafts") },
   handler: async (ctx, { surface, subjectKey, draftId }) => {
     const user = await requireUser(ctx);
@@ -544,7 +544,7 @@ export const resume = sandboxedMutation({
  *  commit: what was there is kept as a version first, and writing on from
  *  here starts a new branch beside it. `previousVersionId` is what an undo
  *  goes back to. */
-export const restoreVersion = sandboxedMutation({
+export const restoreVersion = mutation({
   args: { surface: draftSurface, subjectKey: v.string(), versionId: v.id("draftVersions") },
   handler: async (ctx, { surface, subjectKey, versionId }) => {
     const user = await requireUser(ctx);
@@ -568,7 +568,7 @@ export const restoreVersion = sandboxedMutation({
 
 /** Names a version so it's easy to find again — or, without `versionId`,
  *  makes what's in the form now a named version. An empty name clears it. */
-export const nameVersion = sandboxedMutation({
+export const nameVersion = mutation({
   args: {
     surface: draftSurface,
     subjectKey: v.string(),

@@ -1,4 +1,4 @@
-import { sandboxedMutation as mutation } from "../lib/sandbox";
+import { mutation } from "../functions";
 import { v } from "convex/values";
 
 import { requireCapability, requireUser } from "../lib/auth";
