@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { internalMutation, internalQuery, query } from "./_generated/server";
+import { slugify } from "./lib/text";
 import { BUILT_IN_ROLES } from "./performance/lib/permissions";
 
 /**
@@ -428,19 +429,6 @@ async function removeVercelDomain(domain: string): Promise<void> {
   }
 }
 
-// ------------------------------------------------------------------- slug
-
-/** Internal identifier only — never itself used for routing (that's
- * `domain`, exact-matched). Derived from the domain so the admin UI doesn't
- * need a separate field; disambiguated with a numeric suffix in the rare
- * case two different domains slugify the same way. */
-function slugify(domain: string): string {
-  return domain
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
 // -------------------------------------------------------------- mutations
 
 export const upsertProvisioningRow = internalMutation({
@@ -473,6 +461,8 @@ export const upsertProvisioningRow = internalMutation({
       return { companyId: existing._id };
     }
 
+    // Internal id only (routing matches `domain`); a numeric suffix covers
+    // two domains that slugify the same way.
     const baseSlug = slugify(domain);
     let slug = baseSlug;
     let suffix = 2;

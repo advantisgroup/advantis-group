@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { type Id } from "./_generated/dataModel";
 import { type MutationCtx, query } from "./_generated/server";
 import { requireAdmin, requireCapability, requireUser } from "./lib/auth";
+import { slugify } from "./lib/text";
 
 /**
  * Ongoing management of the canonical `departments`/`teams` tables (see
@@ -126,16 +127,6 @@ export const listTeams = query({
   },
 });
 
-function slugify(name: string): string {
-  return (
-    name
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "team"
-  );
-}
-
 export const createTeam = mutation({
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
@@ -147,7 +138,7 @@ export const createTeam = mutation({
     await assertUniqueName(ctx, "teams", trimmed);
     return await ctx.db.insert("teams", {
       name: trimmed,
-      slug: slugify(trimmed),
+      slug: slugify(trimmed, "team"),
       createdAt: Date.now(),
       createdBy: admin._id,
     });

@@ -1,12 +1,5 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-/** URL-safe slug; `fallback` covers titles with no usable characters. */
-export function slugify(input: string, fallback = "page"): string {
+/** URL-safe slug; `fallback` covers names with no usable characters. */
+export function slugify(input: string, fallback = ""): string {
   return (
     input
       .trim()
@@ -22,5 +15,6 @@ export function escapeHtml(text: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }

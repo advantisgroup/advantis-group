@@ -10,6 +10,7 @@
  */
 
 import { MAX_ATTACHMENT_BYTES } from "@/lib/upload";
+import { escapeHtml } from "@/lib/utils";
 
 export type ImportExt = "docx" | "pdf" | "txt" | "md";
 
@@ -63,10 +64,6 @@ export function detectImportExt(file: File): ImportExt | null {
   }
   if (name.endsWith(".markdown")) return "md";
   return EXT_BY_MIME[file.type] ?? null;
-}
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 /** Best-effort thema guess: the first heading's text, else the filename

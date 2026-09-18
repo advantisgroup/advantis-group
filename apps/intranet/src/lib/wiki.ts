@@ -32,16 +32,6 @@ export function needsReview(entry: WikiEntryLike, now = Date.now()): boolean {
   return daysUntil(entry.validUntil, now) <= REVIEW_WINDOW_DAYS;
 }
 
-export function slugify(input: string): string {
-  return (
-    input
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "eintrag"
-  );
-}
-
 export function addMonths(ms: number, months: number): number {
   const d = new Date(ms);
   d.setMonth(d.getMonth() + months);

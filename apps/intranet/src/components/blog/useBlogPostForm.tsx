@@ -12,7 +12,7 @@ import { type ReadinessCheck, scoreReadiness } from "@/components/compose/Readin
 import { useDraft } from "@/components/compose/use-draft";
 import { htmlToText } from "@/components/ui/rich-text";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { slugify } from "@/lib/guidebook-blocks";
+import { slugify } from "@/lib/utils";
 import { uploadToConvex } from "@/lib/upload";
 
 /** Mirrors `BLOG_CATEGORIES` in apps/marketing's `lib/blog-categories.ts` —

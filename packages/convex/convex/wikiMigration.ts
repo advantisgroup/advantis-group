@@ -1,6 +1,7 @@
 import { sandboxedMutation as mutation } from "./lib/sandbox";
 import { query } from "./_generated/server";
 import { requireManager, requireUser } from "./lib/auth";
+import { escapeHtml } from "./lib/text";
 
 /** Presence of a row means the one-time `guidebookPages` → `wikiEntries`
  * migration has run. The wiki list page shows a full-screen "migrate now"
@@ -20,10 +21,6 @@ function stripHtml(html: string): string {
     .replace(/&nbsp;/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 /** Flattens the block-editor JSON blob into HTML paragraphs for

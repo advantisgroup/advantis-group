@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { UpdateType } from "@/lib/updates";
-import { cn } from "@/lib/utils";
+import { cn, slugify } from "@/lib/utils";
 
 const VIEW_W = 1200;
 const VIEW_H = 320;
@@ -520,15 +520,6 @@ function ArtMarks({ art }: { art: Art }) {
   }
 }
 
-function slugify(value: string): string {
-  const slug = value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-  return slug || "update";
-}
-
 /**
  * Full-bleed, procedurally generated banner for an update's detail page.
  * Fades to transparent at the bottom via a CSS mask on the *container* (not
@@ -580,7 +571,7 @@ export function UpdateArtBanner({
           const dlUrl = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = dlUrl;
-          a.download = `${slugify(title)}-art.png`;
+          a.download = `${slugify(title, "update")}-art.png`;
           document.body.appendChild(a);
           a.click();
           a.remove();

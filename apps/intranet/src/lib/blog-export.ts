@@ -1,3 +1,5 @@
+import { escapeHtml } from "@/lib/utils";
+
 export interface ExportableBlogPost {
   title: string;
   slug: string;
@@ -16,14 +18,6 @@ function downloadBlob(content: string, filename: string, mimeType: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 function yamlString(value: string): string {

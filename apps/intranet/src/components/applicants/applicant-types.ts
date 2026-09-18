@@ -1,6 +1,8 @@
 import type { api } from "@advantis/convex/api";
 import type { FunctionReturnType } from "convex/server";
 
+import { escapeHtml } from "@/lib/utils";
+
 export type ApplicantDetail = NonNullable<FunctionReturnType<typeof api.applicants.get>>;
 
 export const KONTAKT_ARTEN = ["telefon", "email", "persoenlich", "video", "sonstiges"] as const;
@@ -33,10 +35,6 @@ export function today(): string {
 }
 
 /** Escapes text for safe embedding inside HTML markup. */
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
 /**
  * Converts plain text (as produced by CV extraction or pasted from a PDF)
  * into paragraph HTML for the rich-text fields (summary, experience,

@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { slugify } from "@/lib/guidebook-blocks";
+import { slugify } from "@/lib/utils";
 import { useOneDriveApi } from "@/lib/onedrive-api";
 import { WIKI_FOLDER_BASE } from "@/lib/onedrive-scopes";
 import { isImage } from "@/lib/upload";

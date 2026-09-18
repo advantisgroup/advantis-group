@@ -9,24 +9,11 @@ import { assertAttachmentSizeOk } from "./lib/attachments";
 import { isOwnerOrAdmin, requireCapability, requireManager, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
+import { escapeHtml } from "./lib/text";
 import { displayName } from "./lib/users";
 import { attachmentValidator, audienceValidator, relevantDateValidator } from "./schema";
 
 const INTRANET_BOT_CLERK_USER_ID = "system:intranet-bot";
-
-function escapeHtml(value: string): string {
-  return value.replace(
-    /[&<>"']/g,
-    (character) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;",
-      })[character]!,
-  );
-}
 
 async function getOrCreateIntranetBot(ctx: MutationCtx): Promise<Id<"users">> {
   const existing = await ctx.db
