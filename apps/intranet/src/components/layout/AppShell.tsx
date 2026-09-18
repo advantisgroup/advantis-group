@@ -12,12 +12,12 @@ import { AiDock, AiDockButton } from "@/components/ai/AiDock";
 import { AskProvider } from "@/components/ai/ask-subject";
 import { AskPanel } from "@/components/ai/AskPanel";
 import { PostHogIdentify } from "@/components/analytics/PostHogIdentify";
+import { CommandPalette } from "@/components/CommandPalette";
 import { useSmoothScroll } from "@/components/effects/SmoothScrolling";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { GracePeriodBanner } from "@/components/layout/GracePeriodBanner";
-import { HeaderLeft } from "@/components/layout/HeaderLeft";
 import { KeyboardShortcuts } from "@/components/layout/KeyboardShortcuts";
 import { SandboxBanner } from "@/components/layout/SandboxBanner";
 import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
@@ -275,11 +275,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
           ) : (
             <SidebarTrigger className="-ml-1" />
           )}
-          {/* Page title and tabs, with search folding to an icon when they need the room. */}
-          <HeaderLeft>
+          {/* Page title and tabs get the whole left side — the title never
+              shrinks, the tabs scroll sideways if they run out of room. */}
+          <div className="flex min-w-0 flex-1 items-center">
             {!isUpdatesReading && <PageHeaderBarSlot />}
             {!isUpdatesReading && <PageHeaderTabsSlot />}
-          </HeaderLeft>
+          </div>
           {/* Fixed slot right after the title — same position on every page
               regardless of which/how many actions are active, so actions
               never shift around the way they would sitting under a
@@ -295,6 +296,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           {/* Tour progress — compact checkmark chip; self-hides when finished. */}
           {!isUpdatesReading && <TourProgressChip />}
           {!isUpdatesReading && <OnboardingTrigger />}
+          <CommandPalette className="hidden md:inline-flex" />
           <AiDockButton placement="top" />
           <div data-tour="tour-notifications-btn" className="flex items-center">
             <NotificationsMenu />

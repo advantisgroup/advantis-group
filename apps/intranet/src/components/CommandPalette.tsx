@@ -54,6 +54,8 @@ import {
   useIsManager,
 } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -119,9 +121,9 @@ function HighlightMatch({ label, query }: { label: string; query: string }) {
   );
 }
 
-/** `compact` shows only the search icon — for a header already crowded by a
- *  page's own title and tabs. ⌘K works the same either way. */
-export function CommandPalette({ compact = false }: { compact?: boolean } = {}) {
+/** Just a search icon in the header's tool cluster, so it never competes with
+ *  a page's title and tabs for room. ⌘K opens it from anywhere. */
+export function CommandPalette({ className }: { className?: string } = {}) {
   const t = useTranslations("Command");
   const tNav = useTranslations("Nav");
   const tGuide = useTranslations("Guidebooks");
@@ -539,35 +541,26 @@ export function CommandPalette({ compact = false }: { compact?: boolean } = {}) 
 
   return (
     <>
-      {compact ? (
-        <button
-          type="button"
-          aria-label={t("placeholder")}
-          title={`${t("placeholder")} (⌘K)`}
-          onClick={() => {
-            openSourceRef.current = "trigger";
-            setOpen(true);
-          }}
-          className="grid size-9 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <Search className="size-4" />
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={() => {
-            openSourceRef.current = "trigger";
-            setOpen(true);
-          }}
-          className="flex h-8 w-full max-w-xs items-center gap-2 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:h-9 md:max-w-sm md:px-3"
-        >
-          <Search className="size-4 shrink-0" />
-          <span className="flex-1 truncate text-left">{t("placeholder")}</span>
-          <kbd className="hidden rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium sm:inline">
-            ⌘K
-          </kbd>
-        </button>
-      )}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={className}
+            aria-label={t("placeholder")}
+            onClick={() => {
+              openSourceRef.current = "trigger";
+              setOpen(true);
+            }}
+          >
+            <Search className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className="flex items-center gap-2">
+          {t("placeholder")}
+          <kbd className="rounded border border-border/60 px-1 text-[10px] font-medium">⌘K</kbd>
+        </TooltipContent>
+      </Tooltip>
 
       <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
         <DialogPrimitive.Portal>
