@@ -4,8 +4,6 @@
   "regenerateRecoveryCodes": "Neue Codes",
   "recoveryCodesError": "Neue Wiederherstellungscodes konnten nicht erzeugt werden. Versuche es erneut.",
   "sessions": {
-    "title": "Wo du angemeldet bist",
-    "hint": "Alle Browser und Geräte mit einer aktiven Sitzung für dieses Konto.",
     "thisDevice": "Dieses Gerät",
     "lastActive": "Zuletzt aktiv {when}",
     "unknownDevice": "Unbekanntes Gerät",
@@ -24,16 +22,11 @@
     "openSecurity": "Kontosicherheit öffnen"
   },
   "devices": {
-    "title": "Erkannte Geräte",
-    "hint": "Browser, mit denen du dich angemeldet hast. Eine Bestätigung auf einem Gerät macht es 14 Tage lang vertrauenswürdig; alle anderen werden bei der Anmeldung nach einem Code gefragt.",
-    "empty": "Noch keine Geräte erkannt.",
-    "lastSeen": "Zuletzt gesehen {when}",
+    "title": "Geräte",
+    "hint": "Wo du angemeldet bist und welchen Browsern vertraut wird. Eine Bestätigung auf einem Gerät macht es 14 Tage lang vertrauenswürdig; alle anderen werden bei der Anmeldung nach einem Code gefragt.",
+    "empty": "Noch keine Geräte.",
     "rename": "Umbenennen",
     "saveName": "Speichern",
-    "revokeTitle": "Dieses Gerät vergessen?",
-    "revokeBody": "„{name}“ wird bei der nächsten Anmeldung nach einem Bestätigungscode gefragt.",
-    "revokeConfirm": "Gerät vergessen",
-    "revoked": "Das Gerät wurde vergessen.",
     "truncatedNotice": "Zeigt deine zuletzt gesehenen Geräte — ältere werden nicht aufgeführt.",
     "forgetUntrusted": "{count, plural, one {# nicht vertrautes Gerät vergessen} other {# nicht vertraute Geräte vergessen}}",
     "forgetUntrustedTitle": "Nicht vertraute Geräte vergessen?",
@@ -41,7 +34,12 @@
     "forgetUntrustedConfirm": "Nicht vertraute Geräte vergessen",
     "forgetUntrustedDone": "{count, plural, =0 {Kein Gerät musste vergessen werden} one {# Gerät vergessen} other {# Geräte vergessen}}",
     "trustedUntil": "Vertraut bis {date}",
-    "showAll": "Alle {count} anzeigen"
+    "showAll": "Alle {count} anzeigen",
+    "signedIn": "Angemeldet",
+    "remove": "Gerät entfernen",
+    "removeTitle": "{name} entfernen?",
+    "removeBody": "Das Gerät wird abgemeldet und vergessen und bei der nächsten Anmeldung nach einem Code gefragt.",
+    "removed": "Gerät entfernt."
   },
   "activity": {
     "title": "Sicherheitsaktivität",

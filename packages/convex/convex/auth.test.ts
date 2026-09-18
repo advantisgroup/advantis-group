@@ -1545,6 +1545,33 @@ describe("Area re-verification", () => {
       expect(devices).toHaveLength(2);
     });
 
+    test("sessionDevices maps the caller's own sessions to their device, and nobody else's", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+      await seedUser(t, { clerkUserId: "user_mallory" });
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: "sess_laptop",
+        clerkClientId: "client_laptop",
+        deviceHash: "laptop",
+      });
+      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+
+      const mine = await asUser(t, "user_alice").query(api.stepUp.sessionDevices, {
+        sessionIds: ["sess_laptop", "sess_unknown"],
+      });
+      expect(mine).toEqual([
+        { sessionId: "sess_laptop", deviceId: devices[0]!.id },
+        { sessionId: "sess_unknown", deviceId: null },
+      ]);
+
+      const theirs = await asUser(t, "user_mallory").query(api.stepUp.sessionDevices, {
+        sessionIds: ["sess_laptop"],
+      });
+      expect(theirs).toEqual([{ sessionId: "sess_laptop", deviceId: null }]);
+    });
+
     test("a device whose trust has lapsed asks for a check again", async () => {
       const t = setup();
       const userId = await seedUser(t, { clerkUserId: "user_alice" });

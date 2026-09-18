@@ -4,8 +4,6 @@
   "regenerateRecoveryCodes": "New codes",
   "recoveryCodesError": "Could not generate new recovery codes. Try again.",
   "sessions": {
-    "title": "Where you're signed in",
-    "hint": "Every browser and device with an active session on this account.",
     "thisDevice": "This device",
     "lastActive": "Last active {when}",
     "unknownDevice": "Unknown device",
@@ -24,16 +22,11 @@
     "openSecurity": "Open account security"
   },
   "devices": {
-    "title": "Recognized devices",
-    "hint": "Browsers you've signed in from. Verifying on one trusts it for 14 days; anything else is asked for a code when it signs in.",
-    "empty": "No devices recognized yet.",
-    "lastSeen": "Last seen {when}",
+    "title": "Devices",
+    "hint": "Where you're signed in, and which browsers are trusted. Verifying on one trusts it for 14 days; anything else is asked for a code when it signs in.",
+    "empty": "No devices yet.",
     "rename": "Rename",
     "saveName": "Save",
-    "revokeTitle": "Forget this device?",
-    "revokeBody": "\"{name}\" will be asked for a verification code the next time it signs in.",
-    "revokeConfirm": "Forget device",
-    "revoked": "That device was forgotten.",
     "truncatedNotice": "Showing your most recently seen devices — older ones aren't listed.",
     "forgetUntrusted": "Forget {count, plural, one {# untrusted device} other {# untrusted devices}}",
     "forgetUntrustedTitle": "Forget untrusted devices?",
@@ -41,7 +34,12 @@
     "forgetUntrustedConfirm": "Forget untrusted devices",
     "forgetUntrustedDone": "{count, plural, =0 {No devices needed forgetting} one {# device forgotten} other {# devices forgotten}}",
     "trustedUntil": "Trusted until {date}",
-    "showAll": "Show all {count}"
+    "showAll": "Show all {count}",
+    "signedIn": "Signed in",
+    "remove": "Remove device",
+    "removeTitle": "Remove {name}?",
+    "removeBody": "It's signed out and forgotten, and will be asked for a code the next time it signs in.",
+    "removed": "Device removed."
   },
   "activity": {
     "title": "Security activity",

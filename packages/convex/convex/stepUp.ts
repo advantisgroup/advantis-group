@@ -756,6 +756,29 @@ export const trustedDevices = query({
   },
 });
 
+/** Which device each of the caller's Clerk sessions is on, so settings can
+ * show sessions under their device. `null` for a session with no device
+ * (opted out of recognition, or signed in before devices were tracked). */
+export const sessionDevices = query({
+  args: { sessionIds: v.array(v.string()) },
+  returns: v.array(
+    v.object({ sessionId: v.string(), deviceId: v.union(v.id("knownDevices"), v.null()) }),
+  ),
+  handler: async (ctx, { sessionIds }) => {
+    const user = await requireUser(ctx);
+    return await Promise.all(
+      sessionIds.slice(0, 50).map(async (sessionId) => {
+        const signal = await ctx.db
+          .query("sessionRiskSignals")
+          .withIndex("by_user_session", (q) => q.eq("userId", user._id).eq("sessionId", sessionId))
+          .order("desc")
+          .first();
+        return { sessionId, deviceId: signal?.deviceId ?? null };
+      }),
+    );
+  },
+});
+
 /** `revokeDeviceTrust` for every device that isn't currently trusted. */
 export const forgetUntrustedDevices = mutation({
   args: {},
