@@ -170,11 +170,34 @@ interface ResolvedTarget {
   intranetEmail?: string;
   /** How the typed email led here, when it wasn't a direct match — absent
    * for a plain lookup. `targetLink`: the typed email matched the *linked*
-   * intranet account instead of the login's own address.  `adminLink`: an
+   * intranet account instead of the login's own address. `adminLink`: an
    * admin-registered `passwordResetLinkedEmails` pair pointed at the
-   * account that actually resolved. Read by `requestReset` to decide
-   * whether a mismatch can skip manual review. */
-  resolvedVia?: "targetLink" | "adminLink";
+   * account that actually resolved. `verifiedSecondaryEmail` (Phase 5): the
+   * typed email matched a verified `userSecondaryEmails` row instead of a
+   * primary address. Read by `requestReset` to decide whether a mismatch
+   * can skip manual review. */
+  resolvedVia?: "targetLink" | "adminLink" | "verifiedSecondaryEmail";
+}
+
+/** Phase 5 of docs/future-features/21_auth-consolidation.md: the intranet
+ * account that has *verified* ownership of `email` as a secondary address
+ * (`/settings/account`'s "Secondary emails" card), if any. Deliberately
+ * ignores a still-pending row — an unverified add hasn't proven anything
+ * yet, same as everywhere else `userSecondaryEmails.verifiedAt` gates
+ * usability. At most one account can ever hold a *verified* row for a given
+ * email (`secondaryEmails.ts`'s `isClaimedByAnotherAccount` enforces that at
+ * request and verify time), so `.first()` is as safe as `.unique()` here
+ * without the crash risk if that invariant is ever violated. */
+async function findVerifiedSecondaryEmailOwner(
+  ctx: QueryCtx | MutationCtx,
+  email: string,
+): Promise<Doc<"users"> | null> {
+  const row = await ctx.db
+    .query("userSecondaryEmails")
+    .withIndex("by_email", (q) => q.eq("email", email))
+    .filter((q) => q.neq(q.field("verifiedAt"), undefined))
+    .first();
+  return row ? await ctx.db.get(row.userId) : null;
 }
 
 /** Which account, if any, `scope` + `email` names. A resolution with every id
@@ -222,10 +245,20 @@ async function resolveTarget(
   const resolvedVia = link ? ("adminLink" as const) : undefined;
 
   if (scope === "hr") {
-    const user = await ctx.db
+    let user = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", lookupEmail))
       .unique();
+    // The typed address didn't match anyone's primary email directly — try
+    // it as a verified secondary email instead (Phase 5) before giving up.
+    let viaVerifiedSecondary = false;
+    if (!user) {
+      const owner = await findVerifiedSecondaryEmailOwner(ctx, lookupEmail);
+      if (owner) {
+        user = owner;
+        viaVerifiedSecondary = true;
+      }
+    }
     // A vault password only exists for someone who belongs to the area at
     // all — anyone else is "no such account" as far as this flow goes.
     if (
@@ -234,7 +267,12 @@ async function resolveTarget(
     ) {
       return { targetEmail };
     }
-    return { targetEmail, targetUserId: user._id, sentToEmail: user.email, resolvedVia };
+    return {
+      targetEmail,
+      targetUserId: user._id,
+      sentToEmail: user.email,
+      resolvedVia: viaVerifiedSecondary ? "verifiedSecondaryEmail" : resolvedVia,
+    };
   }
 
   const company = await ctx.db
@@ -263,16 +301,28 @@ async function resolveTarget(
     login = candidates.find((c) => c.isSuperAdmin === true) ?? null;
   }
   let viaTargetLink = false;
+  let viaVerifiedSecondary = false;
   if (!login && company && (opts.bypassFilters || company.status === "active")) {
     // The typed (or admin-linked) email didn't match any login directly —
     // try it as the *intranet* side of a `linkedUserId` pair instead, same
     // shape as `performanceAuth.ts`'s `getLoginLinkedTo`. Someone typing
     // their intranet address into a Performance lock screen by mistake
     // shouldn't dead-end just because that's not the login's own email.
-    const linkedIntranetUser = await ctx.db
+    let linkedIntranetUser = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", lookupEmail))
       .unique();
+    // Nor should typing a *verified secondary* address (Phase 5) — same
+    // idea, just proven by the account holder in `/settings/account`
+    // instead of matching their primary intranet email exactly.
+    let matchedViaSecondary = false;
+    if (!linkedIntranetUser) {
+      const owner = await findVerifiedSecondaryEmailOwner(ctx, lookupEmail);
+      if (owner) {
+        linkedIntranetUser = owner;
+        matchedViaSecondary = true;
+      }
+    }
     if (linkedIntranetUser && linkedIntranetUser.status === "active") {
       const viaLink = await ctx.db
         .query("performanceLogins")
@@ -282,7 +332,8 @@ async function resolveTarget(
       // lookup here — a link to a different tenant's login doesn't count.
       if (viaLink && viaLink.companyId === company._id) {
         login = viaLink;
-        viaTargetLink = true;
+        viaTargetLink = !matchedViaSecondary;
+        viaVerifiedSecondary = matchedViaSecondary;
       }
     }
   }
@@ -294,7 +345,11 @@ async function resolveTarget(
     targetCompanyId: login.companyId,
     sentToEmail: login.email,
     intranetEmail: linkedUser && linkedUser.email !== login.email ? linkedUser.email : undefined,
-    resolvedVia: viaTargetLink ? "targetLink" : resolvedVia,
+    resolvedVia: viaVerifiedSecondary
+      ? "verifiedSecondaryEmail"
+      : viaTargetLink
+        ? "targetLink"
+        : resolvedVia,
   };
 }
 
@@ -372,21 +427,30 @@ export const requestReset = mutation({
     const knownAccount = !!(resolved.targetUserId ?? resolved.targetLoginId);
     // A mismatch an admin would almost certainly wave through anyway,
     // because the system already vouches for it: either the filer is signed
-    // in as the intranet account this login is linked to, or the typed
-    // email itself only resolved *through* a link (an admin-established
-    // `linkedUserId`, or an explicit `passwordResetLinkedEmails` pair).
+    // in as the intranet account this login is linked to, the typed email
+    // itself only resolved *through* a link (an admin-established
+    // `linkedUserId`, an explicit `passwordResetLinkedEmails` pair, or —
+    // Phase 5 of docs/future-features/21_auth-consolidation.md — a verified
+    // `userSecondaryEmails` row the account holder registered themselves).
     // `selfService` itself is untouched by this — it keeps meaning exactly
     // what it always has.
-    const autoApprovedVia: "callerLinkedAccount" | "targetLinkedAccount" | "adminLinkedEmail" | undefined =
+    const autoApprovedVia:
+      | "callerLinkedAccount"
+      | "targetLinkedAccount"
+      | "adminLinkedEmail"
+      | "verifiedSecondaryEmail"
+      | undefined =
       selfService || !knownAccount
         ? undefined
         : resolved.resolvedVia === "targetLink"
           ? "targetLinkedAccount"
           : resolved.resolvedVia === "adminLink"
             ? "adminLinkedEmail"
-            : caller && resolved.intranetEmail && caller.email === resolved.intranetEmail
-              ? "callerLinkedAccount"
-              : undefined;
+            : resolved.resolvedVia === "verifiedSecondaryEmail"
+              ? "verifiedSecondaryEmail"
+              : caller && resolved.intranetEmail && caller.email === resolved.intranetEmail
+                ? "callerLinkedAccount"
+                : undefined;
 
     const previous = await ctx.db
       .query("passwordResetRequests")
@@ -572,7 +636,12 @@ interface AdminRequestRow {
   /** True when this request skipped human review because an existing link
    * (or an admin-registered pair) already explained the mismatch. */
   autoApproved: boolean;
-  autoApprovedVia: "callerLinkedAccount" | "targetLinkedAccount" | "adminLinkedEmail" | null;
+  autoApprovedVia:
+    | "callerLinkedAccount"
+    | "targetLinkedAccount"
+    | "adminLinkedEmail"
+    | "verifiedSecondaryEmail"
+    | null;
   status: "pending" | "issued" | "dismissed";
   createdAt: number;
   handledByName: string | null;
@@ -613,9 +682,7 @@ async function toAdminRow(
   const live = tokens.find(
     (t) => t.requestId === request._id && !t.usedAt && !t.revokedAt && t.expiresAt > Date.now(),
   );
-  const linkRevoked = tokens.some(
-    (t) => t.requestId === request._id && !t.usedAt && !!t.revokedAt,
-  );
+  const linkRevoked = tokens.some((t) => t.requestId === request._id && !t.usedAt && !!t.revokedAt);
 
   const targetExists = !!(request.targetUserId ?? request.targetLoginId);
   let canForceIssue = false;
@@ -779,8 +846,7 @@ export const addLinkedEmail = mutation({
     // Matches `resolveTarget`'s `aliasCompanySlug` default exactly — a
     // performance-scope link left blank still has to resolve for a request
     // that also left `companySlug` unset (both default to "advantis").
-    const companySlug =
-      args.scope === "performance" ? (args.companySlug ?? "advantis") : undefined;
+    const companySlug = args.scope === "performance" ? (args.companySlug ?? "advantis") : undefined;
 
     const satisfied = await checkSatisfied(ctx, {
       userId: admin._id,
@@ -1370,6 +1436,7 @@ export const prepareAutoIssue = internalQuery({
       !selfService &&
       (resolved.resolvedVia === "targetLink" ||
         resolved.resolvedVia === "adminLink" ||
+        resolved.resolvedVia === "verifiedSecondaryEmail" ||
         (!!caller && !!resolved.intranetEmail && caller.email === resolved.intranetEmail));
     if (!stillExplained) {
       return {

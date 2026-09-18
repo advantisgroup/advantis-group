@@ -97,6 +97,25 @@ async function tokensFor(t: T, targetLoginId: Id<"performanceLogins">) {
   );
 }
 
+/** Inserts an already-verified `userSecondaryEmails` row directly, skipping
+ * the code-request/verify round trip `secondaryEmails.test.ts` covers on
+ * its own. */
+async function seedVerifiedSecondaryEmail(
+  t: T,
+  userId: Id<"users">,
+  email: string,
+  verified = true,
+): Promise<void> {
+  await t.run(async (ctx) =>
+    ctx.db.insert("userSecondaryEmails", {
+      userId,
+      email,
+      verifiedAt: verified ? Date.now() : undefined,
+      addedAt: Date.now(),
+    }),
+  );
+}
+
 // Fake timers must be live *before* `requestReset` schedules
 // `autoIssueLinkedReset` (a real `setTimeout` created before fake timers are
 // installed is invisible to `vi.runAllTimers()`), so these run for every
@@ -119,7 +138,10 @@ describe("target-side linked account (typed the wrong side of a linkedUserId pai
   test("typing the linked intranet email resolves to the login and auto-issues", async () => {
     const t = setup();
     const companyId = await seedCompany(t);
-    const aliceUserId = await seedUser(t, { clerkUserId: "user_alice", email: "alice@intranet.example" });
+    const aliceUserId = await seedUser(t, {
+      clerkUserId: "user_alice",
+      email: "alice@intranet.example",
+    });
     const loginId = await seedLogin(t, {
       companyId,
       email: "alice.performance@company.example",
@@ -169,7 +191,10 @@ describe("target-side linked account (typed the wrong side of a linkedUserId pai
     const t = setup();
     const companyA = await seedCompany(t, "advantis");
     const companyB = await seedCompany(t, "other-tenant");
-    const aliceUserId = await seedUser(t, { clerkUserId: "user_alice", email: "alice@intranet.example" });
+    const aliceUserId = await seedUser(t, {
+      clerkUserId: "user_alice",
+      email: "alice@intranet.example",
+    });
     // Alice's linked login lives in companyB, but the request names companyA.
     await seedLogin(t, {
       companyId: companyB,
@@ -194,7 +219,10 @@ describe("caller-side linked account (signed in as the linked owner)", () => {
   test("the filer's own email matching the linked intranet address auto-approves", async () => {
     const t = setup();
     const companyId = await seedCompany(t);
-    const aliceUserId = await seedUser(t, { clerkUserId: "user_alice", email: "alice@intranet.example" });
+    const aliceUserId = await seedUser(t, {
+      clerkUserId: "user_alice",
+      email: "alice@intranet.example",
+    });
     const loginId = await seedLogin(t, {
       companyId,
       email: "alice.performance@company.example",
@@ -222,7 +250,11 @@ describe("admin-maintained linked-emails fallback", () => {
   test("a registered alias pair auto-approves with no linkedUserId involved", async () => {
     const t = setup();
     const companyId = await seedCompany(t);
-    const adminId = await seedUser(t, { clerkUserId: "user_admin", email: "admin@intranet.example", role: "admin" });
+    const adminId = await seedUser(t, {
+      clerkUserId: "user_admin",
+      email: "admin@intranet.example",
+      role: "admin",
+    });
     const loginId = await seedLogin(t, { companyId, email: "bob@company.example" });
     await t.run(async (ctx) =>
       ctx.db.insert("passwordResetLinkedEmails", {
@@ -253,7 +285,11 @@ describe("admin-maintained linked-emails fallback", () => {
   test("a link registered with no companySlug still matches a request that also leaves it unset", async () => {
     const t = setup();
     const companyId = await seedCompany(t, "advantis");
-    const adminId = await seedUser(t, { clerkUserId: "user_admin", email: "admin@intranet.example", role: "admin" });
+    const adminId = await seedUser(t, {
+      clerkUserId: "user_admin",
+      email: "admin@intranet.example",
+      role: "admin",
+    });
     await seedLogin(t, { companyId, email: "carol@company.example" });
 
     const addResult = await asUser(t, "user_admin").mutation(api.passwordResets.addLinkedEmail, {
@@ -267,6 +303,143 @@ describe("admin-maintained linked-emails fallback", () => {
     // No step-up satisfied yet in this test — confirms the gate is live,
     // and that we can still reach the row via `t.run` for the next check.
     expect("needsStepUp" in addResult).toBe(true);
+  });
+});
+
+describe("Phase 5 of docs/future-features/21_auth-consolidation.md: verified secondary emails", () => {
+  test("typing a verified secondary email resolves to the linked login and auto-issues, with no admin-registered pair involved", async () => {
+    const t = setup();
+    const companyId = await seedCompany(t);
+    const aliceUserId = await seedUser(t, {
+      clerkUserId: "user_alice",
+      email: "alice@intranet.example",
+    });
+    const loginId = await seedLogin(t, {
+      companyId,
+      email: "alice.performance@company.example",
+      linkedUserId: aliceUserId,
+    });
+    await seedVerifiedSecondaryEmail(t, aliceUserId, "alice.sales@company.example");
+
+    const result = await t.mutation(api.passwordResets.requestReset, {
+      scope: "performance",
+      email: "alice.sales@company.example",
+      companySlug: "advantis",
+    });
+    expect(result).toEqual({ status: "sent" });
+
+    const request = (await t.run(async (ctx) => ctx.db.query("passwordResetRequests").first()))!;
+    expect(request.selfService).toBe(false);
+    expect(request.autoApproved).toBe(true);
+    expect(request.autoApprovedVia).toBe("verifiedSecondaryEmail");
+    expect(request.targetLoginId).toBe(loginId);
+
+    await runScheduled(t);
+    const after = await requestRow(t, request._id);
+    expect(after?.status).toBe("issued");
+    const tokens = await tokensFor(t, loginId);
+    // Still the login's own address — a verified secondary email is proof
+    // of identity, not a delivery destination.
+    expect(tokens[0]!.sentToEmail).toBe("alice.performance@company.example");
+  });
+
+  test("an unverified (pending) secondary email resolves nothing", async () => {
+    const t = setup();
+    const companyId = await seedCompany(t);
+    const aliceUserId = await seedUser(t, {
+      clerkUserId: "user_alice",
+      email: "alice@intranet.example",
+    });
+    await seedLogin(t, {
+      companyId,
+      email: "alice.performance@company.example",
+      linkedUserId: aliceUserId,
+    });
+    await seedVerifiedSecondaryEmail(t, aliceUserId, "alice.sales@company.example", false);
+
+    const result = await t.mutation(api.passwordResets.requestReset, {
+      scope: "performance",
+      email: "alice.sales@company.example",
+      companySlug: "advantis",
+    });
+    expect(result).toEqual({ status: "sent" });
+
+    const request = (await t.run(async (ctx) => ctx.db.query("passwordResetRequests").first()))!;
+    expect(request.autoApproved).toBeFalsy();
+    expect(request.targetLoginId).toBeUndefined();
+  });
+
+  test("a verified secondary email never crosses a company boundary", async () => {
+    const t = setup();
+    const companyA = await seedCompany(t, "advantis");
+    const companyB = await seedCompany(t, "other-tenant");
+    const aliceUserId = await seedUser(t, {
+      clerkUserId: "user_alice",
+      email: "alice@intranet.example",
+    });
+    // Alice's linked login lives in companyB, but the request names companyA.
+    await seedLogin(t, {
+      companyId: companyB,
+      email: "alice.performance@company.example",
+      linkedUserId: aliceUserId,
+    });
+    await seedVerifiedSecondaryEmail(t, aliceUserId, "alice.sales@company.example");
+
+    const result = await t.mutation(api.passwordResets.requestReset, {
+      scope: "performance",
+      email: "alice.sales@company.example",
+      companySlug: "advantis",
+    });
+    expect(result).toEqual({ status: "sent" });
+
+    const request = (await t.run(async (ctx) => ctx.db.query("passwordResetRequests").first()))!;
+    expect(request.autoApproved).toBeFalsy();
+    expect(request.targetLoginId).toBeUndefined();
+  });
+
+  test("an admin-registered linked-email pair still takes priority when both exist", async () => {
+    const t = setup();
+    const companyId = await seedCompany(t);
+    const adminId = await seedUser(t, {
+      clerkUserId: "user_admin",
+      email: "admin@intranet.example",
+      role: "admin",
+    });
+    const aliceUserId = await seedUser(t, {
+      clerkUserId: "user_alice",
+      email: "alice@intranet.example",
+    });
+    const loginId = await seedLogin(t, {
+      companyId,
+      email: "alice.performance@company.example",
+      linkedUserId: aliceUserId,
+    });
+    // A verified secondary email for a *different* address than the one the
+    // admin-registered pair resolves to — the admin link should still win,
+    // since it's checked (and substitutes `lookupEmail`) before either
+    // secondary-email fallback ever runs.
+    await seedVerifiedSecondaryEmail(t, aliceUserId, "alice.sales@company.example");
+    await t.run(async (ctx) =>
+      ctx.db.insert("passwordResetLinkedEmails", {
+        scope: "performance",
+        companySlug: "advantis",
+        aliasEmail: "alice.typo@company.example",
+        canonicalEmail: "alice.performance@company.example",
+        addedByUserId: adminId,
+        createdAt: Date.now(),
+      }),
+    );
+
+    const result = await t.mutation(api.passwordResets.requestReset, {
+      scope: "performance",
+      email: "alice.typo@company.example",
+      companySlug: "advantis",
+    });
+    expect(result).toEqual({ status: "sent" });
+
+    const request = (await t.run(async (ctx) => ctx.db.query("passwordResetRequests").first()))!;
+    expect(request.autoApprovedVia).toBe("adminLinkedEmail");
+    expect(request.targetLoginId).toBe(loginId);
   });
 });
 
@@ -313,7 +486,11 @@ describe("backward compatibility: an unexplained mismatch stays manual", () => {
       }),
     );
 
-    await seedUser(t, { clerkUserId: "user_admin", email: "admin@intranet.example", role: "admin" });
+    await seedUser(t, {
+      clerkUserId: "user_admin",
+      email: "admin@intranet.example",
+      role: "admin",
+    });
     const rows = await asUser(t, "user_admin").query(api.passwordResets.listRequests, {
       status: "pending",
     });
@@ -327,8 +504,15 @@ describe("revoking an issued link", () => {
   test("is refused without a fresh step-up, same as issuing or dismissing", async () => {
     const t = setup();
     const companyId = await seedCompany(t);
-    const aliceUserId = await seedUser(t, { clerkUserId: "user_alice", email: "alice@intranet.example" });
-    await seedUser(t, { clerkUserId: "user_admin", email: "admin@intranet.example", role: "admin" });
+    const aliceUserId = await seedUser(t, {
+      clerkUserId: "user_alice",
+      email: "alice@intranet.example",
+    });
+    await seedUser(t, {
+      clerkUserId: "user_admin",
+      email: "admin@intranet.example",
+      role: "admin",
+    });
     await seedLogin(t, {
       companyId,
       email: "alice.performance@company.example",

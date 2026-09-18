@@ -2967,12 +2967,18 @@ export default defineSchema({
      * the *typed* email didn't match the login directly, but matched its
      * linked intranet account's email instead. `adminLinkedEmail`: neither
      * of those applied, but an admin explicitly registered this pair in
-     * `passwordResetLinkedEmails`. */
+     * `passwordResetLinkedEmails`. `verifiedSecondaryEmail` (Phase 5 of
+     * docs/future-features/21_auth-consolidation.md): the typed email
+     * matched a *verified* `userSecondaryEmails` row instead — the same
+     * "these two addresses are the same person" proof as an admin-registered
+     * pair, just established by the account holder themselves in
+     * `/settings/account` rather than an admin typing it in by hand. */
     autoApprovedVia: v.optional(
       v.union(
         v.literal("callerLinkedAccount"),
         v.literal("targetLinkedAccount"),
         v.literal("adminLinkedEmail"),
+        v.literal("verifiedSecondaryEmail"),
       ),
     ),
     status: v.union(v.literal("pending"), v.literal("issued"), v.literal("dismissed")),
