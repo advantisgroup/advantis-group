@@ -10,7 +10,7 @@ import { FileStack, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { useRelativeTime } from "@/components/compose/DraftIndicator";
+import { useRelativeTime } from "@/components/compose/use-relative-time";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

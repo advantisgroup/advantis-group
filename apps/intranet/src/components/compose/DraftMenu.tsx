@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { draftPreview } from "@/lib/draft-preview";
 
-import { useRelativeTime } from "./DraftIndicator";
+import { useRelativeTime } from "./use-relative-time";
 import { type Draft } from "./use-draft";
 import { VersionHistory } from "./VersionHistory";
 

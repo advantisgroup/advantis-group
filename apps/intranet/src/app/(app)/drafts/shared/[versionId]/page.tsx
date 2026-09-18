@@ -10,7 +10,7 @@ import { ArrowLeft, Eye, FileStack, GitBranch, PenLine, Share2 } from "lucide-re
 import { useLocale, useTranslations } from "next-intl";
 
 import { DraftComments } from "@/components/compose/DraftComments";
-import { useRelativeTime } from "@/components/compose/DraftIndicator";
+import { useRelativeTime } from "@/components/compose/use-relative-time";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

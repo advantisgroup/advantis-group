@@ -15,7 +15,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-import { useRelativeTime } from "./DraftIndicator";
+import { useRelativeTime } from "./use-relative-time";
 
 function Ago({ ms }: { ms: number }) {
   return <>{useRelativeTime(ms)}</>;
