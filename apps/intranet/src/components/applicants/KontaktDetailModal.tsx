@@ -17,7 +17,7 @@ export function KontaktDetailModal({
   kontakt: ApplicantDetail["kontakte"][number];
 }) {
   const t = useTranslations("Applicants");
-  const removeKontakt = useMutation(api.applicants.removeKontakt);
+  const removeKontakt = useMutation(api.hr.applicants.removeKontakt);
 
   return (
     <EntryDetailModal

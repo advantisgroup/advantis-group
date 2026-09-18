@@ -15,7 +15,7 @@ import { formatIsoDate } from "@/lib/format";
 
 export function Kontakte({ applicant }: { applicant: ApplicantDetail }) {
   const t = useTranslations("Applicants");
-  const removeKontakt = useMutation(api.applicants.removeKontakt);
+  const removeKontakt = useMutation(api.hr.applicants.removeKontakt);
   const handleError = useErrorHandler();
   const [logOpen, setLogOpen] = useState(false);
 

@@ -535,7 +535,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       requireFileBrowserAccess(user);
       await rateLimit("od.hrAttach", user.clerkUserId, 20, "1 h");
 
-      const { folderName } = await getConvex().query(api.humanResources.apiEmployeeFolderName, {
+      const { folderName } = await getConvex().query(api.hr.employees.apiEmployeeFolderName, {
         serverKey: getConvexServerKey(),
         employeeProfileId: params.employeeProfileId as Id<"employeeProfiles">,
       });

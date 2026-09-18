@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 export default function EmployeeApplicantHistoryPage() {
   const t = useTranslations("Applicants");
   const params = useParams<{ id: string }>();
-  const profile = useQuery(api.humanResources.getProfile, {
+  const profile = useQuery(api.hr.employees.getProfile, {
     employeeProfileId: params.id as Id<"employeeProfiles">,
   });
   if (!profile) return null;

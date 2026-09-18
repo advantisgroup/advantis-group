@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
 
-type Applicant = FunctionReturnType<typeof api.applicants.list>[number];
+type Applicant = FunctionReturnType<typeof api.hr.applicants.list>[number];
 type Column = Ampel | "offen";
 
 const COLUMNS: Column[] = ["offen", "gruen", "blau", "rot"];
@@ -34,7 +34,7 @@ export function ApplicantBoard({
   const t = useTranslations("Applicants");
   const locale = useLocale();
   const handleError = useErrorHandler();
-  const update = useMutation(api.applicants.update);
+  const update = useMutation(api.hr.applicants.update);
   const [dragOver, setDragOver] = useState<Column | null>(null);
 
   function move(applicantId: Id<"applicants">, column: Column) {

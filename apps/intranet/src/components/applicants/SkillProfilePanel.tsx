@@ -24,7 +24,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 
 import type { FunctionReturnType } from "convex/server";
 
-type Profile = FunctionReturnType<typeof api.applicants.listProfiles>[number];
+type Profile = FunctionReturnType<typeof api.hr.applicants.listProfiles>[number];
 
 interface ProfileFormState {
   _id?: Id<"applicantSkillProfiles">;
@@ -131,7 +131,7 @@ function ProfileForm({
 function ProfileMatches({ profile }: { profile: Profile }) {
   const t = useTranslations("Applicants");
   const router = useRouter();
-  const applicants = useQuery(api.applicants.list);
+  const applicants = useQuery(api.hr.applicants.list);
   const scored = (applicants ?? [])
     .map((a) => ({ applicant: a, matched: matchSkills(profile.skills, a) }))
     .filter((x) => x.matched.length > 0)
@@ -169,10 +169,10 @@ function ProfileMatches({ profile }: { profile: Profile }) {
 export function SkillProfilePanel() {
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
-  const profiles = useQuery(api.applicants.listProfiles);
-  const createProfile = useMutation(api.applicants.createProfile);
-  const updateProfile = useMutation(api.applicants.updateProfile);
-  const removeProfile = useMutation(api.applicants.removeProfile);
+  const profiles = useQuery(api.hr.applicants.listProfiles);
+  const createProfile = useMutation(api.hr.applicants.createProfile);
+  const updateProfile = useMutation(api.hr.applicants.updateProfile);
+  const removeProfile = useMutation(api.hr.applicants.removeProfile);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
 

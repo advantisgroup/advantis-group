@@ -50,7 +50,10 @@ function calendarDays(count: number) {
   });
 }
 
-type Termin = Omit<FunctionReturnType<typeof api.applicants.listTermine>[number], "applicantName">;
+type Termin = Omit<
+  FunctionReturnType<typeof api.hr.applicants.listTermine>[number],
+  "applicantName"
+>;
 
 export function TerminRow({
   termin,
@@ -65,8 +68,8 @@ export function TerminRow({
   const tc = useTranslations("Common");
   const router = useRouter();
   const confirm = useConfirm();
-  const convertTermin = useMutation(api.applicants.convertTermin);
-  const removeTermin = useMutation(api.applicants.removeTermin);
+  const convertTermin = useMutation(api.hr.applicants.convertTermin);
+  const removeTermin = useMutation(api.hr.applicants.removeTermin);
   const handleError = useErrorHandler();
 
   function handleConvert() {
@@ -157,8 +160,8 @@ export function TerminCalendar() {
     d.setDate(d.getDate() + 365);
     return toISO(d);
   }, []);
-  const termine = useQuery(api.applicants.listTermine, { from, to });
-  const applicants = useQuery(api.applicants.list);
+  const termine = useQuery(api.hr.applicants.listTermine, { from, to });
+  const applicants = useQuery(api.hr.applicants.list);
   const [planOpen, setPlanOpen] = useState(false);
 
   const weeks = [days.slice(0, 7), days.slice(7, 14), days.slice(14, 21), days.slice(21, 28)];

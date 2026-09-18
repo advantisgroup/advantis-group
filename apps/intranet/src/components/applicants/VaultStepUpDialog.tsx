@@ -28,7 +28,7 @@ export function VaultStepUpDialog({
 }) {
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
-  const unlock = useAction(api.applicantVault.unlock);
+  const unlock = useAction(api.hr.vault.unlock);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);

@@ -88,7 +88,7 @@ function resolveItemLabel(
 }
 
 function useApplicantQuery(applicantId: Id<"applicants">) {
-  return useQuery(api.applicants.get, { applicantId });
+  return useQuery(api.hr.applicants.get, { applicantId });
 }
 
 export default function ApplicantDetailLayout({ children }: { children: ReactNode }) {
@@ -101,7 +101,7 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
   const locale = useLocale();
   const applicantId = params.id as Id<"applicants">;
   const applicant = useApplicantQuery(applicantId);
-  const remove = useMutation(api.applicants.remove);
+  const remove = useMutation(api.hr.applicants.remove);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
   const [quickAdd, setQuickAdd] = useState<"termin" | "kontakt" | "email" | "interview" | null>(
@@ -119,7 +119,7 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
   const fromStatus = parseStatusFilter(searchParams.get("status"));
   const fromRating = parseRatingFilter(searchParams.get("rating"));
   const fromSearch = searchParams.get("search") ?? "";
-  const allApplicants = useQuery(api.applicants.list, cameFromList ? {} : "skip");
+  const allApplicants = useQuery(api.hr.applicants.list, cameFromList ? {} : "skip");
   const adjacent = useMemo(() => {
     if (!allApplicants || !cameFromList) return null;
     const sequence = filterApplicants(allApplicants, {

@@ -75,7 +75,7 @@ export default function CvReviewPage({
   const applicantId = (params.applicant ?? null) as Id<"applicants"> | null;
   const fileKey = params.file ?? params.run;
 
-  const applicant = useQuery(api.applicants.get, applicantId ? { applicantId } : "skip");
+  const applicant = useQuery(api.hr.applicants.get, applicantId ? { applicantId } : "skip");
   const run = useAiRun<RunOutput>({ runId }, parseJson);
   // undefined while it might still come back from storage, null once it won't.
   const [file, setFile] = useState<File | null | undefined>(
@@ -99,7 +99,7 @@ export default function CvReviewPage({
     }
     let cancelled = false;
     void (async () => {
-      const url = await convex.query(api.applicants.stagedFileUrl, { storageId: stagedId });
+      const url = await convex.query(api.hr.applicants.stagedFileUrl, { storageId: stagedId });
       if (!url) {
         if (!cancelled) setFile(null);
         return;

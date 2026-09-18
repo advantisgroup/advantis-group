@@ -58,7 +58,7 @@ function KontaktForm({
   showFirstContactHint,
 }: EntryDialogProps & { showFirstContactHint?: boolean }) {
   const t = useTranslations("Applicants");
-  const addKontakt = useMutation(api.applicants.addKontakt);
+  const addKontakt = useMutation(api.hr.applicants.addKontakt);
   const handleError = useErrorHandler();
   const fresh = (): KontaktValues => ({ datum: today(), art: "telefon", notiz: "" });
   const [values, setValues] = useState<KontaktValues>(fresh);
@@ -167,7 +167,7 @@ interface EmailValues {
 
 function EmailForm({ open, onOpenChange, applicantId }: EntryDialogProps) {
   const t = useTranslations("Applicants");
-  const addEmail = useMutation(api.applicants.addEmail);
+  const addEmail = useMutation(api.hr.applicants.addEmail);
   const handleError = useErrorHandler();
   const fresh = (): EmailValues => ({ datum: today(), kategorie: "sonstiges", notiz: "" });
   const [values, setValues] = useState<EmailValues>(fresh);
@@ -276,7 +276,7 @@ interface InterviewValues {
 
 function InterviewForm({ open, onOpenChange, applicantId }: EntryDialogProps) {
   const t = useTranslations("Applicants");
-  const addInterview = useMutation(api.applicants.addInterview);
+  const addInterview = useMutation(api.hr.applicants.addInterview);
   const handleError = useErrorHandler();
   const fresh = (): InterviewValues => ({ datum: today(), interviewer: "", notiz: "" });
   const [values, setValues] = useState<InterviewValues>(fresh);
@@ -402,7 +402,7 @@ interface TerminDialogProps {
 function TerminForm({ open, onOpenChange, applicants = [], fixedApplicantId }: TerminDialogProps) {
   const t = useTranslations("Applicants");
   const locale = useLocale();
-  const createTermin = useMutation(api.applicants.createTermin);
+  const createTermin = useMutation(api.hr.applicants.createTermin);
   const handleError = useErrorHandler();
 
   const [applicantId, setApplicantId] = useState<string>(fixedApplicantId ?? "");

@@ -28,7 +28,7 @@ function CvImportRow({ runId, index }: { runId: Id<"aiRuns">; index: number }) {
   const ta = useTranslations("Ai");
   const router = useRouter();
   const applicantsApi = useApplicantsApi();
-  const addDocument = useMutation(api.applicants.addDocument);
+  const addDocument = useMutation(api.hr.applicants.addDocument);
   const handleError = useErrorHandler();
   const view = useAiRun<CvExtractOutput>({ runId }, parseJson);
   const [busy, setBusy] = useState(false);

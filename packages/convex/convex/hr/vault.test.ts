@@ -5,11 +5,11 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
-import { api } from "./_generated/api";
-import { hashPassword } from "./activity/lib/crypto";
-import type { Id } from "./_generated/dataModel";
-import schema from "./schema";
-import { modules } from "./test.setup";
+import { api } from "../_generated/api";
+import { hashPassword } from "../activity/lib/crypto";
+import type { Id } from "../_generated/dataModel";
+import schema from "../schema";
+import { modules } from "../test.setup";
 
 const serverKey = "test-server-key";
 
@@ -110,11 +110,11 @@ describe("status", () => {
     const t = setup();
     const userId = await seedMember(t, { clerkUserId: "alice" });
 
-    const before = await asUser(t, "alice").query(api.applicantVault.status, {});
+    const before = await asUser(t, "alice").query(api.hr.vault.status, {});
     expect(before.hasPasskey).toBe(false);
 
     await seedPasskey(t, userId);
-    const after = await asUser(t, "alice").query(api.applicantVault.status, {});
+    const after = await asUser(t, "alice").query(api.hr.vault.status, {});
     expect(after.hasPasskey).toBe(true);
   });
 });
@@ -126,12 +126,12 @@ describe("apiUnlockViaPasskey", () => {
     await seedPasskey(t, userId);
     await seedAreaTrust(t, userId);
 
-    await t.mutation(api.applicantVault.apiUnlockViaPasskey, {
+    await t.mutation(api.hr.vault.apiUnlockViaPasskey, {
       serverKey,
       clerkUserId: "alice",
     });
 
-    const status = await asUser(t, "alice").query(api.applicantVault.status, {});
+    const status = await asUser(t, "alice").query(api.hr.vault.status, {});
     expect(status.unlocked).toBe(true);
     expect(status.expiresAt).not.toBeNull();
 
@@ -149,7 +149,7 @@ describe("apiUnlockViaPasskey", () => {
     await seedMember(t, { clerkUserId: "outsider", applicantAccess: false });
 
     await expect(
-      t.mutation(api.applicantVault.apiUnlockViaPasskey, {
+      t.mutation(api.hr.vault.apiUnlockViaPasskey, {
         serverKey,
         clerkUserId: "outsider",
       }),
@@ -160,7 +160,7 @@ describe("apiUnlockViaPasskey", () => {
     const t = setup();
 
     await expect(
-      t.mutation(api.applicantVault.apiUnlockViaPasskey, {
+      t.mutation(api.hr.vault.apiUnlockViaPasskey, {
         serverKey,
         clerkUserId: "nobody",
       }),
@@ -172,7 +172,7 @@ describe("apiUnlockViaPasskey", () => {
     await seedMember(t, { clerkUserId: "alice" });
 
     await expect(
-      t.mutation(api.applicantVault.apiUnlockViaPasskey, {
+      t.mutation(api.hr.vault.apiUnlockViaPasskey, {
         serverKey: "wrong",
         clerkUserId: "alice",
       }),
@@ -189,12 +189,12 @@ describe("apiUnlockViaPasskey", () => {
     await seedPasskey(t, userId);
     await seedAreaTrust(t, userId);
 
-    await t.mutation(api.applicantVault.apiUnlockViaPasskey, {
+    await t.mutation(api.hr.vault.apiUnlockViaPasskey, {
       serverKey,
       clerkUserId: "admin",
     });
 
-    const status = await asUser(t, "admin").query(api.applicantVault.status, {});
+    const status = await asUser(t, "admin").query(api.hr.vault.status, {});
     expect(status.unlocked).toBe(true);
   });
 });
@@ -204,7 +204,7 @@ describe("Area re-verification", () => {
     const t = setup();
     await seedMember(t, { clerkUserId: "alice" });
 
-    const status = await asUser(t, "alice").query(api.applicantVault.status, {});
+    const status = await asUser(t, "alice").query(api.hr.vault.status, {});
     expect(status.needsAreaStepUp).toBe(true);
     expect(status.areaStepUpRequiredLevel).toBe(1);
     expect(status.areaStepUpAvailableMethods).toEqual(["email_code"]);
@@ -215,7 +215,7 @@ describe("Area re-verification", () => {
     const userId = await seedMember(t, { clerkUserId: "alice" });
     await seedAreaTrust(t, userId);
 
-    const status = await asUser(t, "alice").query(api.applicantVault.status, {});
+    const status = await asUser(t, "alice").query(api.hr.vault.status, {});
     expect(status.needsAreaStepUp).toBe(false);
     expect(status.areaStepUpRequiredLevel).toBeNull();
   });
@@ -226,10 +226,10 @@ describe("Area re-verification", () => {
     await seedPasskey(t, userId);
 
     await expect(
-      t.mutation(api.applicantVault.apiUnlockViaPasskey, { serverKey, clerkUserId: "alice" }),
+      t.mutation(api.hr.vault.apiUnlockViaPasskey, { serverKey, clerkUserId: "alice" }),
     ).rejects.toThrow("Re-verify your identity");
 
-    const status = await asUser(t, "alice").query(api.applicantVault.status, {});
+    const status = await asUser(t, "alice").query(api.hr.vault.status, {});
     expect(status.unlocked).toBe(false);
   });
 
@@ -245,7 +245,7 @@ describe("Area re-verification", () => {
       }),
     );
 
-    const status = await asUser(t, "alice").query(api.applicantVault.status, {});
+    const status = await asUser(t, "alice").query(api.hr.vault.status, {});
     expect(status.needsAreaStepUp).toBe(true);
   });
 
@@ -265,7 +265,7 @@ describe("Area re-verification", () => {
     // Rejecting the step-up someone just completed would be a permanent
     // lockout, not extra security — see `isAreaTrusted`'s
     // ALWAYS_STEP_UP_FRESHNESS_MS.
-    const status = await asUser(t, "alice").query(api.applicantVault.status, {});
+    const status = await asUser(t, "alice").query(api.hr.vault.status, {});
     expect(status.needsAreaStepUp).toBe(false);
   });
 
@@ -289,7 +289,7 @@ describe("Area re-verification", () => {
       });
     });
 
-    const status = await asUser(t, "bob").query(api.applicantVault.status, {});
+    const status = await asUser(t, "bob").query(api.hr.vault.status, {});
     expect(status.needsAreaStepUp).toBe(true);
   });
 });
@@ -302,9 +302,9 @@ describe("Legacy password grace period", () => {
     await seedVaultPassword(t, userId, "correct-horse");
     await seedPasskey(t, userId);
 
-    await asUser(t, "rita").action(api.applicantVault.unlock, { password: "correct-horse" });
+    await asUser(t, "rita").action(api.hr.vault.unlock, { password: "correct-horse" });
 
-    const status = await asUser(t, "rita").query(api.applicantVault.status, {});
+    const status = await asUser(t, "rita").query(api.hr.vault.status, {});
     expect(status.unlocked).toBe(true);
   });
 
@@ -318,7 +318,7 @@ describe("Legacy password grace period", () => {
     await seedPasskey(t, userId);
 
     await expect(
-      asUser(t, "tara").action(api.applicantVault.unlock, { password: "correct-horse" }),
+      asUser(t, "tara").action(api.hr.vault.unlock, { password: "correct-horse" }),
     ).rejects.toThrow("Password unlock has moved");
   });
 
@@ -330,9 +330,9 @@ describe("Legacy password grace period", () => {
     await seedAreaTrust(t, userId);
     await seedVaultPassword(t, userId, "correct-horse");
 
-    await asUser(t, "victor").action(api.applicantVault.unlock, { password: "correct-horse" });
+    await asUser(t, "victor").action(api.hr.vault.unlock, { password: "correct-horse" });
 
-    const status = await asUser(t, "victor").query(api.applicantVault.status, {});
+    const status = await asUser(t, "victor").query(api.hr.vault.status, {});
     expect(status.unlocked).toBe(true);
   });
 
@@ -344,12 +344,12 @@ describe("Legacy password grace period", () => {
     await seedAreaTrust(t, userId);
     await seedPasskey(t, userId);
 
-    await t.mutation(api.applicantVault.apiUnlockViaPasskey, {
+    await t.mutation(api.hr.vault.apiUnlockViaPasskey, {
       serverKey,
       clerkUserId: "xavier",
     });
 
-    const status = await asUser(t, "xavier").query(api.applicantVault.status, {});
+    const status = await asUser(t, "xavier").query(api.hr.vault.status, {});
     expect(status.unlocked).toBe(true);
   });
 
@@ -363,7 +363,7 @@ describe("Legacy password grace period", () => {
     await seedPasskey(t, userId);
 
     await expect(
-      asUser(t, "zane").action(api.applicantVault.unlock, { password: "wrong-password" }),
+      asUser(t, "zane").action(api.hr.vault.unlock, { password: "wrong-password" }),
     ).rejects.toThrow("Incorrect password");
   });
 });

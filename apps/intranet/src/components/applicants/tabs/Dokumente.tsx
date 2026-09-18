@@ -26,9 +26,9 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
   const applicantsApi = useApplicantsApi();
-  const generateUploadUrl = useMutation(api.applicants.generateUploadUrl);
-  const addDocument = useMutation(api.applicants.addDocument);
-  const removeDocument = useMutation(api.applicants.removeDocument);
+  const generateUploadUrl = useMutation(api.hr.applicants.generateUploadUrl);
+  const addDocument = useMutation(api.hr.applicants.addDocument);
+  const removeDocument = useMutation(api.hr.applicants.removeDocument);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
   const rescanInputRef = useRef<HTMLInputElement>(null);

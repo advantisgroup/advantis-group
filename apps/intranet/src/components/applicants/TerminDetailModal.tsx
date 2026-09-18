@@ -23,8 +23,8 @@ export function TerminDetailModal({
 }) {
   const t = useTranslations("Applicants");
   const router = useRouter();
-  const convertTermin = useMutation(api.applicants.convertTermin);
-  const removeTermin = useMutation(api.applicants.removeTermin);
+  const convertTermin = useMutation(api.hr.applicants.convertTermin);
+  const removeTermin = useMutation(api.hr.applicants.removeTermin);
   const handleError = useErrorHandler();
 
   function handleConvert() {

@@ -30,7 +30,7 @@ export function OnboardingChecklist({
 }) {
   const t = useTranslations("Applicants");
   const handleError = useErrorHandler();
-  const setOnboarding = useMutation(api.humanResources.setOnboarding);
+  const setOnboarding = useMutation(api.hr.employees.setOnboarding);
   const [draft, setDraft] = useState("");
 
   const list: Item[] = items ?? DEFAULT_KEYS.map((key) => ({ id: key, key }));

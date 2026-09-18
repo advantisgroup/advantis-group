@@ -3,7 +3,7 @@ import type { FunctionReturnType } from "convex/server";
 
 export type ApplicantPipelineHealth = "uncontacted" | "overdue" | "stale";
 
-type Applicant = FunctionReturnType<typeof api.applicants.list>[number];
+type Applicant = FunctionReturnType<typeof api.hr.applicants.list>[number];
 
 export const PIPELINE_HEALTH_OPTIONS: readonly ApplicantPipelineHealth[] = [
   "uncontacted",

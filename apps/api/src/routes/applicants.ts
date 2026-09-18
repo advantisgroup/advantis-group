@@ -137,7 +137,7 @@ async function runExtraction(
 
 /** Stages raw PDF bytes into Convex file storage, returning the storageId. */
 async function stageBytes(bytes: Uint8Array<ArrayBuffer>): Promise<Id<"_storage">> {
-  const uploadUrl = await getConvex().mutation(api.applicants.apiGenerateStagingUrl, {
+  const uploadUrl = await getConvex().mutation(api.hr.applicants.apiGenerateStagingUrl, {
     serverKey: getConvexServerKey(),
   });
   const staged = await fetch(uploadUrl, {
@@ -159,14 +159,14 @@ async function createFromExtraction(
   storageId: Id<"_storage">,
   fileName: string,
 ): Promise<Id<"applicants">> {
-  const profiles = await getConvex().query(api.applicants.apiListProfiles, {
+  const profiles = await getConvex().query(api.hr.applicants.apiListProfiles, {
     serverKey: getConvexServerKey(),
   });
   const profilId = autoProfil(
     profiles.map((p) => ({ id: p._id, name: p.name, skills: p.skills })),
     extracted.position,
   );
-  const { applicantId } = await getConvex().mutation(api.applicants.apiCreateFromExtraction, {
+  const { applicantId } = await getConvex().mutation(api.hr.applicants.apiCreateFromExtraction, {
     serverKey: getConvexServerKey(),
     createdByUserId,
     name: extracted.name,
@@ -187,7 +187,7 @@ async function createFromExtraction(
 }
 
 async function requireApplicantAccess(clerkUserId: string) {
-  const access = await getConvex().query(api.applicants.apiCheckAccess, {
+  const access = await getConvex().query(api.hr.applicants.apiCheckAccess, {
     serverKey: getConvexServerKey(),
     clerkUserId,
   });
@@ -216,7 +216,7 @@ export const applicantsRoute = new Elysia()
           const extracted = await runExtraction(run, bytes);
           run.phase("finishing");
 
-          const duplicate = await getConvex().query(api.applicants.apiFindDuplicateByContact, {
+          const duplicate = await getConvex().query(api.hr.applicants.apiFindDuplicateByContact, {
             serverKey: getConvexServerKey(),
             email: extracted.email || undefined,
             telefon: extracted.telefon || undefined,

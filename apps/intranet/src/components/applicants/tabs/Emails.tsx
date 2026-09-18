@@ -15,7 +15,7 @@ import { formatIsoDate } from "@/lib/format";
 
 export function Emails({ applicant }: { applicant: ApplicantDetail }) {
   const t = useTranslations("Applicants");
-  const removeEmail = useMutation(api.applicants.removeEmail);
+  const removeEmail = useMutation(api.hr.applicants.removeEmail);
   const handleError = useErrorHandler();
   const [logOpen, setLogOpen] = useState(false);
 

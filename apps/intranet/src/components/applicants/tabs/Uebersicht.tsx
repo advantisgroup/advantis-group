@@ -144,8 +144,8 @@ export function Uebersicht({
 }) {
   const t = useTranslations("Applicants");
   const locale = useLocale();
-  const profiles = useQuery(api.applicants.listProfiles);
-  const update = useMutation(api.applicants.update);
+  const profiles = useQuery(api.hr.applicants.listProfiles);
+  const update = useMutation(api.hr.applicants.update);
   const handleError = useErrorHandler();
   const isHighlighted = (skill: string) =>
     highlight.some((h) => h.toLowerCase() === skill.toLowerCase());

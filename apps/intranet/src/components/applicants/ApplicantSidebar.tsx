@@ -64,7 +64,7 @@ export function ApplicantSidebar({
   className?: string;
 }) {
   const t = useTranslations("Applicants");
-  const update = useMutation(api.applicants.update);
+  const update = useMutation(api.hr.applicants.update);
   const handleError = useErrorHandler();
   const [notiz, setNotiz] = useState(() => ensureRichHtml(applicant.notizen ?? ""));
 

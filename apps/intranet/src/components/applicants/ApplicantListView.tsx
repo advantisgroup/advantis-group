@@ -73,8 +73,8 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 
 import type { FunctionReturnType } from "convex/server";
 
-type Applicant = FunctionReturnType<typeof api.applicants.list>[number];
-type SkillProfile = FunctionReturnType<typeof api.applicants.listProfiles>[number];
+type Applicant = FunctionReturnType<typeof api.hr.applicants.list>[number];
+type SkillProfile = FunctionReturnType<typeof api.hr.applicants.listProfiles>[number];
 
 const RATING_OPTIONS: (Ampel | "offen")[] = ["gruen", "blau", "rot", "offen"];
 type HealthFilter = "alle" | ApplicantPipelineHealth;
@@ -177,12 +177,12 @@ export function ApplicantListView() {
   const handleError = useErrorHandler();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const applicants = useQuery(api.applicants.list);
+  const applicants = useQuery(api.hr.applicants.list);
   const preferences = useQuery(api.userPreferences.getMine);
-  const profiles = useQuery(api.applicants.listProfiles);
-  const convertApplicant = useMutation(api.humanResources.convertApplicant);
-  const revertConversion = useMutation(api.humanResources.revertConversion);
-  const archiveApplicant = useMutation(api.humanResources.archiveApplicant);
+  const profiles = useQuery(api.hr.applicants.listProfiles);
+  const convertApplicant = useMutation(api.hr.employees.convertApplicant);
+  const revertConversion = useMutation(api.hr.employees.revertConversion);
+  const archiveApplicant = useMutation(api.hr.employees.archiveApplicant);
   const setPreferences = useMutation(api.userPreferences.setMine);
 
   const status = parseStatusFilter(searchParams.get("status"));

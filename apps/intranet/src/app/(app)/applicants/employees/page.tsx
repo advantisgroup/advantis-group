@@ -56,7 +56,7 @@ function CreateEmployeeDialog({
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
-  const createProfile = useMutation(api.humanResources.createProfile);
+  const createProfile = useMutation(api.hr.employees.createProfile);
   const users = useQuery(api.users.list, {}) ?? [];
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -189,7 +189,7 @@ export default function EmployeesPage() {
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
   const router = useRouter();
-  const profiles = useQuery(api.humanResources.listProfiles, {});
+  const profiles = useQuery(api.hr.employees.listProfiles, {});
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<DirectoryFilter>("all");
   const [createOpen, setCreateOpen] = useState(false);

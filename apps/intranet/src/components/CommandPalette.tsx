@@ -152,9 +152,9 @@ export function CommandPalette({ className }: { className?: string } = {}) {
   const announcements = useQuery(api.announcements.list, open && query.trim() ? {} : "skip");
   // A locked vault makes applicants.list throw, which would take the whole
   // palette down — only search applicants while it's unlocked.
-  const vault = useQuery(api.applicantVault.status, open && hasApplicantAccess ? {} : "skip");
+  const vault = useQuery(api.hr.vault.status, open && hasApplicantAccess ? {} : "skip");
   const applicants = useQuery(
-    api.applicants.list,
+    api.hr.applicants.list,
     open && hasApplicantAccess && vault?.unlocked && query.trim() ? {} : "skip",
   );
 

@@ -15,7 +15,7 @@ export default function ApplicantUebersichtPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const applicantId = params.id as Id<"applicants">;
-  const applicant = useQuery(api.applicants.get, { applicantId });
+  const applicant = useQuery(api.hr.applicants.get, { applicantId });
 
   const highlightParam = searchParams.get("highlight");
   const [highlight] = useState(() =>

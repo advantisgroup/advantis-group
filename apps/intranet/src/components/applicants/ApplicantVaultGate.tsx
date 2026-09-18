@@ -91,8 +91,8 @@ function GatePanel({
 /** Re-lock the vault right away instead of waiting for it to expire. */
 export function LockVaultButton() {
   const t = useTranslations("Applicants");
-  const status = useQuery(api.applicantVault.status);
-  const lockVault = useMutation(api.applicantVault.lock);
+  const status = useQuery(api.hr.vault.status);
+  const lockVault = useMutation(api.hr.vault.lock);
 
   if (!status?.unlocked) return null;
 
@@ -124,9 +124,9 @@ type PasskeyOptionsResponse = {
  */
 export function ApplicantVaultGate({ children }: { children: ReactNode }) {
   const t = useTranslations("Applicants");
-  const status = useQuery(api.applicantVault.status);
-  const unlock = useAction(api.applicantVault.unlock);
-  const setPassword = useAction(api.applicantVault.setPassword);
+  const status = useQuery(api.hr.vault.status);
+  const unlock = useAction(api.hr.vault.unlock);
+  const setPassword = useAction(api.hr.vault.setPassword);
   const handleError = useErrorHandler();
   const { getToken } = useAuth();
 

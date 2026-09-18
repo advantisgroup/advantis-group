@@ -115,10 +115,10 @@ export default function EmployeeDocumentsPage() {
   const { openFileViewer } = useFileViewer();
   const params = useParams<{ id: string }>();
   const employeeProfileId = params.id as Id<"employeeProfiles">;
-  const documents = useQuery(api.humanResources.listDocuments, { employeeProfileId });
-  const folderInfo = useQuery(api.humanResources.employeeFolderName, { employeeProfileId });
-  const addDocument = useMutation(api.humanResources.addDocument);
-  const removeDocument = useMutation(api.humanResources.removeDocument);
+  const documents = useQuery(api.hr.employees.listDocuments, { employeeProfileId });
+  const folderInfo = useQuery(api.hr.employees.employeeFolderName, { employeeProfileId });
+  const addDocument = useMutation(api.hr.employees.addDocument);
+  const removeDocument = useMutation(api.hr.employees.removeDocument);
   const oneDriveApi = useOneDriveApi();
   const [category, setCategory] = useState<DocumentCategory>("documents");
   const [folder, setFolder] = useState("");

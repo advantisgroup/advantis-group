@@ -14,7 +14,7 @@ export async function unlockVaultWithPasskey(
   if (assertion.clerkUserId !== clerkUserId) {
     throw Errors.badRequest("That passkey belongs to a different account.");
   }
-  await getConvex().mutation(api.applicantVault.apiUnlockViaPasskey, {
+  await getConvex().mutation(api.hr.vault.apiUnlockViaPasskey, {
     serverKey: getConvexServerKey(),
     clerkUserId,
   });

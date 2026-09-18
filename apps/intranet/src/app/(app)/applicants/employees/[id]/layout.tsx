@@ -35,7 +35,7 @@ export default function EmployeeDetailLayout({ children }: { children: ReactNode
   const params = useParams<{ id: string }>();
   const pathname = usePathname();
   const employeeProfileId = params.id as Id<"employeeProfiles">;
-  const profile = useQuery(api.humanResources.getProfile, { employeeProfileId });
+  const profile = useQuery(api.hr.employees.getProfile, { employeeProfileId });
   const tail = pathname.split("/").filter(Boolean).at(-1);
   const active = tail === String(employeeProfileId) ? "overview" : (tail ?? "overview");
   const base = `/hr/employees/${employeeProfileId}`;

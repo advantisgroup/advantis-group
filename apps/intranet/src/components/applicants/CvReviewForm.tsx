@@ -292,10 +292,10 @@ export function CvReviewForm({
   const isMobile = useIsMobile();
   const applicantsApi = useApplicantsApi();
   const handleError = useErrorHandler();
-  const createApplicant = useMutation(api.applicants.create);
-  const updateApplicant = useMutation(api.applicants.update);
-  const addDocument = useMutation(api.applicants.addDocument);
-  const generateUploadUrl = useMutation(api.applicants.generateUploadUrl);
+  const createApplicant = useMutation(api.hr.applicants.create);
+  const updateApplicant = useMutation(api.hr.applicants.update);
+  const addDocument = useMutation(api.hr.applicants.addDocument);
+  const generateUploadUrl = useMutation(api.hr.applicants.generateUploadUrl);
 
   const [form, setForm] = useState<CvReviewValues>(initialValues);
   const [origins, setOrigins] = useState<CvReviewOrigins>(initialOrigins ?? {});

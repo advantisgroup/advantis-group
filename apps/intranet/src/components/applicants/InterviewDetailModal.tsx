@@ -17,7 +17,7 @@ export function InterviewDetailModal({
   interview: ApplicantDetail["interviews"][number];
 }) {
   const t = useTranslations("Applicants");
-  const removeInterview = useMutation(api.applicants.removeInterview);
+  const removeInterview = useMutation(api.hr.applicants.removeInterview);
 
   return (
     <EntryDetailModal

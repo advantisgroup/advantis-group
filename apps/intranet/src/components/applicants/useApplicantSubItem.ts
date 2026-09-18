@@ -17,7 +17,7 @@ import { type ApplicantDetail } from "@/components/applicants/applicant-types";
 export function useApplicant(): ApplicantDetail | null | undefined {
   const params = useParams<{ id: string }>();
   const applicantId = params.id as Id<"applicants">;
-  return useQuery(api.applicants.get, { applicantId });
+  return useQuery(api.hr.applicants.get, { applicantId });
 }
 
 type SubItemKey = "kontakte" | "emails" | "interviews" | "termine" | "documents";

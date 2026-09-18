@@ -26,7 +26,7 @@ export const aiRunsRoute = new Elysia().get("/ai/runs/:id", async ({ request, pa
   });
   if (!run) throw Errors.notFound("Run not found");
   if (APPLICANT_KINDS.has(run.kind)) {
-    const access = await convex.query(api.applicants.apiCheckAccess, { serverKey, clerkUserId });
+    const access = await convex.query(api.hr.applicants.apiCheckAccess, { serverKey, clerkUserId });
     if (!access?.hasAccess) throw Errors.forbidden();
   }
   return {

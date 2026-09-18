@@ -288,9 +288,9 @@ export function ApplicantPipelineHealthCard() {
   const user = useCurrentUser();
   const isAdmin = useIsAdmin();
   const canReadApplicants = isAdmin || user.applicantAccess;
-  const vaultStatus = useQuery(api.applicantVault.status, canReadApplicants ? {} : "skip");
+  const vaultStatus = useQuery(api.hr.vault.status, canReadApplicants ? {} : "skip");
   const applicants = useQuery(
-    api.applicants.list,
+    api.hr.applicants.list,
     canReadApplicants && vaultStatus?.unlocked ? {} : "skip",
   );
   const counts = applicants ? applicantPipelineHealthCounts(applicants) : null;
@@ -372,9 +372,9 @@ export function AdminStatsCard() {
   const isAdmin = useIsAdmin();
   const pendingCount = usePendingAbsenceCount(true);
   const hasApplicantAccess = isAdmin || user.applicantAccess || user.applicantAccessDelegate;
-  const vaultStatus = useQuery(api.applicantVault.status, hasApplicantAccess ? {} : "skip");
+  const vaultStatus = useQuery(api.hr.vault.status, hasApplicantAccess ? {} : "skip");
   const pipeline = useQuery(
-    api.applicants.pipelineCount,
+    api.hr.applicants.pipelineCount,
     hasApplicantAccess && vaultStatus?.unlocked ? {} : "skip",
   );
 

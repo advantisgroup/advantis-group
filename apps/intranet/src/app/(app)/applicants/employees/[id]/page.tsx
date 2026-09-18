@@ -36,10 +36,10 @@ export default function EmployeeOverviewPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const employeeProfileId = params.id as Id<"employeeProfiles">;
-  const profile = useQuery(api.humanResources.getProfile, { employeeProfileId });
+  const profile = useQuery(api.hr.employees.getProfile, { employeeProfileId });
   const users = useQuery(api.users.list, {}) ?? [];
-  const update = useMutation(api.humanResources.updateProfile);
-  const archive = useMutation(api.humanResources.archiveProfile);
+  const update = useMutation(api.hr.employees.updateProfile);
+  const archive = useMutation(api.hr.employees.archiveProfile);
 
   if (!profile) return null;
   const profileName = profile.name;

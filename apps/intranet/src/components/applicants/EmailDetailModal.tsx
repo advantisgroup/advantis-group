@@ -17,7 +17,7 @@ export function EmailDetailModal({
   email: ApplicantDetail["emails"][number];
 }) {
   const t = useTranslations("Applicants");
-  const removeEmail = useMutation(api.applicants.removeEmail);
+  const removeEmail = useMutation(api.hr.applicants.removeEmail);
 
   return (
     <EntryDetailModal

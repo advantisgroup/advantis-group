@@ -3,7 +3,7 @@ import type { FunctionReturnType } from "convex/server";
 
 import { escapeHtml } from "@/lib/utils";
 
-export type ApplicantDetail = NonNullable<FunctionReturnType<typeof api.applicants.get>>;
+export type ApplicantDetail = NonNullable<FunctionReturnType<typeof api.hr.applicants.get>>;
 
 export const KONTAKT_ARTEN = ["telefon", "email", "persoenlich", "video", "sonstiges"] as const;
 

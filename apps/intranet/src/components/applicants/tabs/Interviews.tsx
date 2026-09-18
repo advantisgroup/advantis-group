@@ -15,7 +15,7 @@ import { formatIsoDate } from "@/lib/format";
 
 export function Interviews({ applicant }: { applicant: ApplicantDetail }) {
   const t = useTranslations("Applicants");
-  const removeInterview = useMutation(api.applicants.removeInterview);
+  const removeInterview = useMutation(api.hr.applicants.removeInterview);
   const handleError = useErrorHandler();
   const [logOpen, setLogOpen] = useState(false);
 

@@ -4,7 +4,7 @@ import { type Ampel } from "@/components/applicants/AmpelBadge";
 
 import type { FunctionReturnType } from "convex/server";
 
-type Applicant = FunctionReturnType<typeof api.applicants.list>[number];
+type Applicant = FunctionReturnType<typeof api.hr.applicants.list>[number];
 
 export type StatusFilter = "alle" | "neu" | "pool";
 export type RatingFilter = "alle" | Ampel | "offen";
