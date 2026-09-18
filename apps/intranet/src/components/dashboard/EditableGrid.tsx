@@ -158,11 +158,13 @@ export function EditableGrid({
     if (!active) return;
     setDropping(true);
     onReorder(orderRef.current);
-    void physics.drop(tileEls.current.get(active.id)?.getBoundingClientRect()).then(() => {
-      dragRef.current = null;
-      setDrag(null);
-      setDropping(false);
-    });
+    void physics
+      .drop(() => tileEls.current.get(active.id)?.getBoundingClientRect())
+      .then(() => {
+        dragRef.current = null;
+        setDrag(null);
+        setDropping(false);
+      });
   }, [onReorder, physics]);
 
   function resizePreview(r: Resize, cx: number, cy: number): DashCardSize {

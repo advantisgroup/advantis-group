@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 
 import {
   useMotionValue,
@@ -83,36 +83,51 @@ export function usePhysicsDrag({
     [anchorX, anchorY, anchorXS, anchorYS, px, py, x, y, lift],
   );
 
+  // Once dropped, the piece belongs to its slot — pointer moves after release
+  // used to keep re-aiming it at the cursor, so it never settled and just got
+  // swapped in when the timeout ran out.
+  const dropping = useRef(false);
+
   const move = useCallback(
     (clientX: number, clientY: number) => {
+      if (dropping.current) return;
       px.set(clientX);
       py.set(clientY);
     },
     [px, py],
   );
 
-  /** Resolves once the piece has settled into `rect` (or right away without one). */
+  /** Flies the piece into its slot and resolves once it's there. `slot` is
+   * measured every frame, since the slot itself may still be sliding into
+   * place from the reorder. */
   const drop = useCallback(
-    (rect: DOMRect | undefined) =>
+    (slot: () => DOMRect | undefined) =>
       new Promise<void>((resolve) => {
-        if (rect) {
-          anchorX.jump(0);
-          anchorY.jump(0);
-          anchorXS.jump(0);
-          anchorYS.jump(0);
-          px.set(rect.left);
-          py.set(rect.top);
-        }
+        dropping.current = true;
+        anchorX.jump(0);
+        anchorY.jump(0);
+        anchorXS.jump(0);
+        anchorYS.jump(0);
         lift.set(0);
         const started = performance.now();
         const settle = () => {
-          const done =
+          const rect = slot();
+          if (rect) {
+            px.set(rect.left);
+            py.set(rect.top);
+          }
+          const arrived =
             !rect ||
-            (Math.abs(x.get() - rect.left) < 0.6 &&
-              Math.abs(y.get() - rect.top) < 0.6 &&
-              Math.abs(lift.get()) < 0.02);
-          if (done || performance.now() - started > 700) resolve();
-          else requestAnimationFrame(settle);
+            (Math.abs(x.get() - rect.left) < 0.5 &&
+              Math.abs(y.get() - rect.top) < 0.5 &&
+              Math.abs(x.getVelocity()) < 20 &&
+              Math.abs(y.getVelocity()) < 20);
+          if (arrived || performance.now() - started > 1500) {
+            dropping.current = false;
+            resolve();
+          } else {
+            requestAnimationFrame(settle);
+          }
         };
         requestAnimationFrame(settle);
       }),

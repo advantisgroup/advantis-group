@@ -204,13 +204,15 @@ export function SidebarSections({
     document.body.style.cursor = "";
     document.body.style.userSelect = "";
     if (!active) return;
-    const el =
-      active.kind === "item" ? itemEls.current.get(active.id) : sectionEls.current.get(active.id);
+    const slot = () =>
+      (active.kind === "item" ? itemEls : sectionEls).current
+        .get(active.id)
+        ?.getBoundingClientRect();
     setDropping(true);
     onChange(draftRef.current);
 
     // Aim the piece at its slot, let it settle, then swap the real row back in.
-    void physics.drop(el?.getBoundingClientRect()).then(() => {
+    void physics.drop(slot).then(() => {
       dragRef.current = null;
       setDrag(null);
       setDropping(false);
