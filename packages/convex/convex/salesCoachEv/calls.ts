@@ -4,7 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 import { getUserByClerkId } from "../lib/auth";
-import { requireAdminCaller } from "./lib";
+import { requireAdminCaller } from "./lib/auth";
 
 /**
  * Server-key gated CRUD for Sales Coach EV call records, called exclusively

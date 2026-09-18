@@ -1,7 +1,7 @@
 import { serverMutation, serverQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
-import { requireAdminCaller } from "./lib";
+import { requireAdminCaller } from "./lib/auth";
 
 /**
  * Server-key gated CRUD for the Sales Coach EV knowledge base. Reads are

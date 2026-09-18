@@ -1,7 +1,7 @@
 import { ConvexError } from "convex/values";
 
-import { effectiveRole, getUserByClerkId } from "../lib/auth";
-import { type QueryCtx, type MutationCtx } from "../_generated/server";
+import { effectiveRole, getUserByClerkId } from "../../lib/auth";
+import { type QueryCtx, type MutationCtx } from "../../_generated/server";
 
 /**
  * Resolve the calling user by their verified `clerkUserId` and require

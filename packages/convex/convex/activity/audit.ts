@@ -5,7 +5,7 @@ import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { requireManager } from "../lib/auth";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
-import { displayName } from "./lib/users";
+import { displayName } from "../lib/users";
 
 /**
  * Append an entry to the privileged-action audit log. Called from every admin

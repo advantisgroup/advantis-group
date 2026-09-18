@@ -6,7 +6,7 @@ import { requireUser, requireAdmin } from "../lib/auth";
 import { writeAudit } from "./audit";
 import { appError } from "../lib/errors";
 import { safeEqual } from "./lib/crypto";
-import { displayName } from "./lib/users";
+import { displayName } from "../lib/users";
 
 /**
  * Central operational event log. Every surface reports here (backend, tracker,
