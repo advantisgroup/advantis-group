@@ -13,7 +13,7 @@ import { useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
-import { HighlightMatch, ItemIcon } from "./FileBrowser";
+import { HighlightMatch, ItemIcon } from "./FileBrowserParts";
 
 /**
  * Drop-in "attach from OneDrive" dialog. Browses/searches the same drive as
