@@ -38,7 +38,6 @@ interface PendingDrag {
 const START_THRESHOLD = 4;
 const EDGE = 48;
 
-
 function RowVisual({ children, lifted }: { children: ReactNode; lifted?: boolean }) {
   return (
     <div

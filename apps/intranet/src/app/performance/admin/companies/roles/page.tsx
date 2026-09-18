@@ -215,7 +215,10 @@ export default function PerformanceRolesAdminPage() {
   // A super-admin has no companyId of their own (`companyRoles.list`
   // requires one explicitly in that case) — everyone else's own company is
   // resolved server-side from their session, so no company arg is passed.
-  const companies = useQuery(api.performance.companies.listCompanies, isSuperAdmin ? { token } : "skip");
+  const companies = useQuery(
+    api.performance.companies.listCompanies,
+    isSuperAdmin ? { token } : "skip",
+  );
   const roles = useQuery(
     api.performance.roles.list,
     isSuperAdmin ? (companyId ? { token, companyId } : "skip") : { token },

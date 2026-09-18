@@ -15,7 +15,7 @@ import { clearPerformanceToken } from "@/lib/performanceAuth";
 import { cn } from "@/lib/utils";
 
 export type ValidPerformanceSession = Extract<
-  FunctionReturnType<typeof api.performanceAuth.validateSession>,
+  FunctionReturnType<typeof api.performance.auth.validateSession>,
   { valid: true }
 >;
 

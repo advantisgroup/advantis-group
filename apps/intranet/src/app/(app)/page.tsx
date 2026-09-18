@@ -132,10 +132,12 @@ export default function DashboardPage() {
   });
   const newWikiPages = useLatestWikiPages();
   const prefs = useQuery(api.people.preferences.getMine);
-  const setPrefs = useMutation(api.people.preferences.setMine).withOptimisticUpdate((store, patch) => {
-    const current = store.getQuery(api.people.preferences.getMine, {});
-    if (current) store.setQuery(api.people.preferences.getMine, {}, { ...current, ...patch });
-  });
+  const setPrefs = useMutation(api.people.preferences.setMine).withOptimisticUpdate(
+    (store, patch) => {
+      const current = store.getQuery(api.people.preferences.getMine, {});
+      if (current) store.setQuery(api.people.preferences.getMine, {}, { ...current, ...patch });
+    },
+  );
   const save = (patch: Parameters<typeof setPrefs>[0]) => void setPrefs(patch).catch(handleError);
 
   const [editing, setEditing] = useState(false);

@@ -39,8 +39,8 @@ export function usePerformanceNav() {
   const router = useRouter();
   const pathname = usePathname();
   const [token] = useState(() => getPerformanceToken() ?? "");
-  const session = useQuery(api.performanceAuth.validateSession, { token });
-  const logout = useMutation(api.performanceAuth.logout);
+  const session = useQuery(api.performance.auth.validateSession, { token });
+  const logout = useMutation(api.performance.auth.logout);
 
   if (!session?.valid) return { items: [], passwordHref: null, exit: undefined };
 
