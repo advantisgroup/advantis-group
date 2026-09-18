@@ -25,6 +25,10 @@ function setup() {
 
 type T = ReturnType<typeof setup>;
 
+function asUser(t: T, clerkUserId: string) {
+  return t.withIdentity({ subject: clerkUserId });
+}
+
 async function seedCompany(t: T, slug: string): Promise<Id<"companies">> {
   return await t.run(async (ctx) =>
     ctx.db.insert("companies", {
@@ -263,5 +267,153 @@ describe("createLogin — Phase 3: auto-linked accounts skip the password requir
     const login = await t.run(async (ctx) => ctx.db.get(id));
     expect(login?.linkedUserId).toBe(user);
     expect(login?.autoLinkedVia).toBeUndefined();
+  });
+});
+
+describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-verification", () => {
+  test("validateSession reports needsAreaStepUp for a linked account with no prior clearance", async () => {
+    const t = setup();
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "hank", email: "hank@advantisgroup.de" });
+    await seedLogin(t, { companyId: advantis, email: "hank@advantisgroup.de", linkedUserId: user });
+
+    const session = await asUser(t, "hank").query(api.performanceAuth.validateSession, {
+      token: "",
+    });
+    expect(session.valid).toBe(false);
+    expect((session as { needsAreaStepUp?: boolean }).needsAreaStepUp).toBe(true);
+  });
+
+  test("validateSession resolves once the area has a fresh clearance", async () => {
+    const t = setup();
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "iris", email: "iris@advantisgroup.de" });
+    await seedLogin(t, { companyId: advantis, email: "iris@advantisgroup.de", linkedUserId: user });
+    await t.run(async (ctx) =>
+      ctx.db.insert("areaStepUps", {
+        userId: user,
+        area: "performance",
+        verifiedAt: Date.now(),
+        method: "email_code",
+      }),
+    );
+
+    const session = await asUser(t, "iris").query(api.performanceAuth.validateSession, {
+      token: "",
+    });
+    expect(session.valid).toBe(true);
+    if (session.valid) expect(session.viaClerk).toBe(true);
+  });
+
+  test("a clearance older than 14 days no longer resolves the linked login", async () => {
+    const t = setup();
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "jill", email: "jill@advantisgroup.de" });
+    await seedLogin(t, { companyId: advantis, email: "jill@advantisgroup.de", linkedUserId: user });
+    await t.run(async (ctx) =>
+      ctx.db.insert("areaStepUps", {
+        userId: user,
+        area: "performance",
+        verifiedAt: Date.now() - 15 * 86_400_000,
+        method: "email_code",
+      }),
+    );
+
+    const session = await asUser(t, "jill").query(api.performanceAuth.validateSession, {
+      token: "",
+    });
+    expect(session.valid).toBe(false);
+  });
+
+  test("createSessionForLinkedAccount refuses to mint a token without area trust", async () => {
+    const t = setup();
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "kate", email: "kate@advantisgroup.de" });
+    await seedLogin(t, { companyId: advantis, email: "kate@advantisgroup.de", linkedUserId: user });
+
+    const result = await asUser(t, "kate").mutation(
+      api.performanceAuth.createSessionForLinkedAccount,
+      {},
+    );
+    expect(result).toBeNull();
+  });
+
+  test("a promoted token stops resolving once its area trust lapses, even though the token itself hasn't expired", async () => {
+    const t = setup();
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "liam", email: "liam@advantisgroup.de" });
+    await seedLogin(t, { companyId: advantis, email: "liam@advantisgroup.de", linkedUserId: user });
+    await t.run(async (ctx) =>
+      ctx.db.insert("areaStepUps", {
+        userId: user,
+        area: "performance",
+        verifiedAt: Date.now(),
+        method: "email_code",
+      }),
+    );
+
+    const token = await asUser(t, "liam").mutation(
+      api.performanceAuth.createSessionForLinkedAccount,
+      {},
+    );
+    expect(token).not.toBeNull();
+
+    // Trust lapses — the promoted token's own `expiresAt` is untouched, but
+    // it must stop resolving anyway (see `resolveActiveSession`'s
+    // `viaClerk` re-check).
+    await t.run(async (ctx) => {
+      const trust = await ctx.db
+        .query("areaStepUps")
+        .withIndex("by_user_area", (q) => q.eq("userId", user).eq("area", "performance"))
+        .unique();
+      if (trust) await ctx.db.patch(trust._id, { verifiedAt: Date.now() - 15 * 86_400_000 });
+    });
+
+    const session = await t.query(api.performanceAuth.validateSession, { token: token!.token });
+    expect(session.valid).toBe(false);
+  });
+
+  test("a real password login's session is unaffected by area trust", async () => {
+    const t = setup();
+    const loginId = await t.run(async (ctx) =>
+      ctx.db.insert("performanceLogins", {
+        email: "pw@advantisgroup.de",
+        name: "Password Login",
+        passwordHash: "hash",
+        isSuperAdmin: true,
+        active: true,
+        createdAt: Date.now(),
+      }),
+    );
+    const { token } = await t.mutation(internal.performanceAuth.createSession, { loginId });
+
+    const session = await t.query(api.performanceAuth.validateSession, { token });
+    expect(session.valid).toBe(true);
+  });
+
+  test("the 'always require step-up' preference blocks resolution however recent the clearance", async () => {
+    const t = setup();
+    const advantis = await seedCompany(t, "advantis");
+    const user = await seedUser(t, { clerkUserId: "mona", email: "mona@advantisgroup.de" });
+    await seedLogin(t, { companyId: advantis, email: "mona@advantisgroup.de", linkedUserId: user });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("areaStepUps", {
+        userId: user,
+        area: "performance",
+        verifiedAt: Date.now(),
+        method: "email_code",
+      });
+      await ctx.db.insert("areaSecurityPreferences", {
+        userId: user,
+        area: "performance",
+        mode: "always_step_up",
+        updatedAt: Date.now(),
+      });
+    });
+
+    const session = await asUser(t, "mona").query(api.performanceAuth.validateSession, {
+      token: "",
+    });
+    expect(session.valid).toBe(false);
   });
 });

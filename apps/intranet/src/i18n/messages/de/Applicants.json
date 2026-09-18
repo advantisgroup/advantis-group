@@ -361,6 +361,8 @@
   "interviewSaved": "Interview in der Akte gespeichert.",
   "vaultLockedTitle": "Human Resources gesperrt",
   "vaultLockedDescription": "Bitte das Passwort erneut eingeben, um fortzufahren.",
+  "vaultReverifyTitle": "Bestätige deine Identität, um fortzufahren",
+  "vaultReverifyDescription": "Deine Intranet-Bestätigung für diesen Bereich ist abgelaufen.",
   "vaultPasswordPlaceholder": "Passwort",
   "vaultConfirmPasswordPlaceholder": "Passwort bestätigen",
   "vaultUnlock": "Entsperren",

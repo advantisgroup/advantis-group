@@ -3,6 +3,7 @@
   "unknownTenantBody": "Diese Adresse ist keinem aktiven Performance-Unternehmen zugeordnet. Bitte den Link prüfen oder den Administrator kontaktieren.",
   "loginTitle": "Anmelden",
   "loginIntro": "Melde dich mit deinem Performance-Konto an, um die Vertriebs-KPIs zu sehen.",
+  "reverifyTitle": "Bestätige deine Identität, um fortzufahren",
   "loginIntranetHint": "Advantis-Mitarbeitende können sich auch mit ihrem Intranet-Konto anmelden, ganz ohne Passwort.",
   "loginIntranetLink": "Mit Intranet-Konto fortfahren",
   "emailLabel": "E-Mail",

@@ -12,7 +12,8 @@ import {
 } from "./totp.js";
 
 export type VerifyMethod = "email_code" | "totp" | "recovery_code";
-export type StepUpContext = "sign_in" | "destructive" | "admin_reverify";
+export type StepUpContext = "sign_in" | "destructive" | "admin_reverify" | "area_reverify";
+export type Area = "performance" | "applicant_vault";
 
 function serverKey(): string {
   return getConvexServerKey();
@@ -69,6 +70,10 @@ export async function verifyStepUp(
   method: VerifyMethod,
   code: string,
   context: StepUpContext,
+  // Phase 7 of docs/future-features/21_auth-consolidation.md: only
+  // meaningful with context === "area_reverify" — which linked area's
+  // 14-day trust this clearance also renews.
+  area?: Area,
 ): Promise<VerifyResult> {
   if (method === "email_code") {
     try {
@@ -78,6 +83,7 @@ export async function verifyStepUp(
         sessionId,
         code,
         context,
+        area,
       });
     } catch (error) {
       return { ok: false, message: convexErrorMessage(error, "That code didn't work.") };
@@ -95,6 +101,7 @@ export async function verifyStepUp(
     method,
     ok,
     context,
+    area,
   });
   return ok ? { ok: true } : { ok: false, message: "That code didn't match." };
 }
@@ -112,6 +119,7 @@ export async function verifyStepUpPasskey(
   flowId: string,
   response: AuthenticationResponseJSON,
   context: StepUpContext,
+  area?: Area,
 ): Promise<VerifyResult> {
   const assertion = await verifyAuthenticationAssertion(flowId, response);
   if (assertion.clerkUserId !== clerkUserId) {
@@ -122,6 +130,7 @@ export async function verifyStepUpPasskey(
     clerkUserId,
     sessionId,
     context,
+    area,
   });
   return ok ? { ok: true } : { ok: false, message: "That passkey could not be accepted." };
 }
@@ -184,6 +193,37 @@ export async function destructiveStepUpHint(
   };
 }
 
+/** A coarse, human-readable label ("Chrome on macOS") used only as a new
+ * device's default display name in the Phase 7 trusted-devices list — never
+ * parsed for any security decision, just a friendlier default than a raw
+ * user-agent string until the person renames it themselves. */
+function deviceLabel(userAgent: string): string {
+  const ua = userAgent.toLowerCase();
+  const browser = ua.includes("edg/")
+    ? "Edge"
+    : ua.includes("firefox/")
+      ? "Firefox"
+      : ua.includes("chrome/")
+        ? "Chrome"
+        : ua.includes("safari/")
+          ? "Safari"
+          : "Browser";
+  const os = ua.includes("iphone")
+    ? "iOS"
+    : ua.includes("ipad")
+      ? "iPadOS"
+      : ua.includes("android")
+        ? "Android"
+        : ua.includes("mac os x")
+          ? "macOS"
+          : ua.includes("windows")
+            ? "Windows"
+            : ua.includes("linux")
+              ? "Linux"
+              : "an unknown device";
+  return `${browser} on ${os}`;
+}
+
 export async function evaluateDevice(
   clerkUserId: string,
   sessionId: string,
@@ -195,5 +235,6 @@ export async function evaluateDevice(
     clerkUserId,
     sessionId,
     deviceHash: deviceHash(ip, userAgent),
+    deviceLabel: deviceLabel(userAgent),
   });
 }

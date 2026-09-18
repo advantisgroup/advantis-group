@@ -3,6 +3,7 @@
   "unknownTenantBody": "This address isn't linked to an active Performance company. Double-check the link, or contact your administrator.",
   "loginTitle": "Sign in",
   "loginIntro": "Sign in with your Performance account to view sales team KPIs.",
+  "reverifyTitle": "Verify it's you to continue",
   "loginIntranetHint": "Advantis staff can also sign in with their intranet account, no password needed.",
   "loginIntranetLink": "Continue with your intranet account",
   "emailLabel": "Email",

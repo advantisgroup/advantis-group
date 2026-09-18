@@ -13,6 +13,7 @@ import {
   requireApplicantAreaMember,
   requireUser,
 } from "./lib/auth";
+import { AREA_REVERIFY_LEVEL, availableMethodsFor, isAreaTrusted } from "./lib/stepUp";
 
 function assertServerKey(serverKey: string): void {
   const expected = process.env.CONVEX_SERVER_KEY;
@@ -70,11 +71,22 @@ export const status = query({
       .query("passkeys")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .first();
+    // Phase 7: on top of the vault's own (much shorter) unlock above, an
+    // intranet-side re-verification lapsing after 14 days blocks even
+    // attempting an unlock — `performUnlock` enforces this server-side;
+    // this is only what tells the gate to show a step-up form first instead
+    // of a password/passkey prompt that would just fail.
+    const areaTrusted = await isAreaTrusted(ctx, user._id, "applicant_vault");
     return {
       passwordIsSet: !!passwordRow,
       hasPasskey: !!passkey,
       unlocked,
       expiresAt: unlocked ? unlockRow.expiresAt : null,
+      needsAreaStepUp: !areaTrusted,
+      areaStepUpRequiredLevel: areaTrusted ? null : AREA_REVERIFY_LEVEL,
+      areaStepUpAvailableMethods: areaTrusted
+        ? []
+        : await availableMethodsFor(ctx, user._id, AREA_REVERIFY_LEVEL, { includePasskey: true }),
     };
   },
 });
@@ -166,6 +178,17 @@ async function performUnlock(
   userId: Id<"users">,
   action: "vault_unlocked" | "vault_unlocked_via_passkey",
 ): Promise<void> {
+  // Phase 7 of docs/future-features/21_auth-consolidation.md: no silent
+  // grace — an intranet-side re-verification older than the 14-day window
+  // blocks the unlock outright, whichever credential (password or passkey)
+  // the caller is presenting, same as `resolveClerkLinkedLogin`'s equivalent
+  // gate for Performance.
+  if (!(await isAreaTrusted(ctx, userId, "applicant_vault"))) {
+    throw new ConvexError({
+      code: "needs_area_step_up",
+      message: "Re-verify your identity to continue.",
+    });
+  }
   const now = Date.now();
   const expiresAt = now + UNLOCK_DURATION_MS;
   const existing = await ctx.db

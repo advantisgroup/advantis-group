@@ -16,7 +16,11 @@ const contextSchema = t.Union([
   t.Literal("sign_in"),
   t.Literal("destructive"),
   t.Literal("admin_reverify"),
+  t.Literal("area_reverify"),
 ]);
+// Phase 7 of docs/future-features/21_auth-consolidation.md: only meaningful
+// (and only ever sent) alongside context === "area_reverify".
+const areaSchema = t.Optional(t.Union([t.Literal("performance"), t.Literal("applicant_vault")]));
 
 export const stepUpRoute = new Elysia()
   .post(
@@ -38,13 +42,21 @@ export const stepUpRoute = new Elysia()
       const { clerkUserId, sessionId } = await requireAuth(request);
       if (!sessionId) throw Errors.badRequest("No active session");
       await rateLimit("step-up-verify", clerkUserId, 20, "10 m");
-      return await verifyStepUp(clerkUserId, sessionId, body.method, body.code, body.context);
+      return await verifyStepUp(
+        clerkUserId,
+        sessionId,
+        body.method,
+        body.code,
+        body.context,
+        body.area,
+      );
     },
     {
       body: t.Object({
         method: t.Union([t.Literal("email_code"), t.Literal("totp"), t.Literal("recovery_code")]),
         code: t.String(),
         context: contextSchema,
+        area: areaSchema,
       }),
     },
   )
@@ -64,6 +76,7 @@ export const stepUpRoute = new Elysia()
         body.flowId,
         body.response as never,
         body.context,
+        body.area,
       );
     },
     {
@@ -71,6 +84,7 @@ export const stepUpRoute = new Elysia()
         flowId: t.String(),
         response: t.Unknown(),
         context: contextSchema,
+        area: areaSchema,
       }),
     },
   )

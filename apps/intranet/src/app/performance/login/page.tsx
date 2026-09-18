@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useAction } from "convex/react";
-import { LineChart, Loader2 } from "lucide-react";
+import { LineChart, Loader2, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { StepUpForm } from "@/components/auth/StepUpForm";
 import { Link } from "@/components/Link";
 import { ForgotPasswordPanel } from "@/components/password-reset/ForgotPasswordPanel";
 import { PerformanceBrandMark } from "@/components/performance/PerformanceBrandMark";
@@ -67,6 +68,36 @@ export default function PerformanceLoginPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
         <Loader2 className="size-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Phase 7 of docs/future-features/21_auth-consolidation.md: this Clerk
+  // identity IS linked to a Performance login, but its 14-day
+  // re-verification window lapsed — a password form would be a dead end for
+  // an account that may never have set one. `validateSession` is a live
+  // Convex query, so clearing this re-renders straight into the redirect
+  // effect above once it does, with no manual refetch needed.
+  if (session.needsAreaStepUp) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="items-center text-center">
+            <PerformanceBrandMark className="mb-4" />
+            <ShieldCheck className="mb-2 size-6 text-primary" />
+            <CardTitle>{t("reverifyTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <StepUpForm
+              availableMethods={session.availableMethods}
+              context="area_reverify"
+              area="performance"
+              // No-op: `validateSession` above is a live query, so clearing
+              // this re-renders into the redirect effect on its own.
+              onVerified={() => {}}
+            />
+          </CardContent>
+        </Card>
       </div>
     );
   }

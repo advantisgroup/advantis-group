@@ -79,6 +79,7 @@ async function seedPolicy(
     passkeyPolicySetAt: number;
     gracePeriodDays: number;
     exemptUserIds: Id<"users">[];
+    areaReverifyDays: number;
   }> = {},
 ) {
   await t.run(async (ctx) => {
@@ -146,12 +147,13 @@ async function plantEmailCode(
   userId: Id<"users">,
   code: string,
   sessionId = SESSION,
+  context: "sign_in" | "destructive" | "admin_reverify" | "area_reverify" = "sign_in",
 ) {
   await t.mutation(api.stepUp.apiRequestEmailCode, {
     serverKey,
     clerkUserId,
     sessionId,
-    context: "sign_in",
+    context,
   });
   await t.run(async (ctx) => {
     const row = await ctx.db
@@ -1117,6 +1119,7 @@ describe("org policy edits", () => {
       requirePasskeyRetroactive: false,
       gracePeriodDays: 0,
       exemptUserIds: [],
+      areaReverifyDays: 14,
     };
 
     await admin.mutation(api.stepUp.setOrgPolicy, base);
@@ -1142,6 +1145,7 @@ describe("org policy edits", () => {
       requirePasskeyRetroactive: false,
       gracePeriodDays: 0,
       exemptUserIds: [],
+      areaReverifyDays: 14,
     };
 
     await admin.mutation(api.stepUp.setOrgPolicy, base);
@@ -1159,5 +1163,237 @@ describe("org policy edits", () => {
     await seedUser(t, { clerkUserId: "user_alice" });
 
     await expect(asUser(t, "user_alice").query(api.stepUp.orgPolicy, {})).rejects.toThrow();
+  });
+});
+
+describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-verification", () => {
+  describe("areaAccessStatus", () => {
+    test("needs_verification with no prior clearance", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+
+      const status = await asUser(t, "user_alice").query(api.stepUp.areaAccessStatus, {
+        area: "performance",
+      });
+      expect(status.state).toBe("needs_verification");
+    });
+
+    test("clearing an area_reverify email code satisfies it, and only that area", async () => {
+      const t = setup();
+      const userId = await seedUser(t, { clerkUserId: "user_alice" });
+      await plantEmailCode(t, "user_alice", userId, "111222", SESSION, "area_reverify");
+      const result = await t.mutation(api.stepUp.apiSubmitEmailCode, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        code: "111222",
+        context: "area_reverify",
+        area: "performance",
+      });
+      expect(result.ok).toBe(true);
+
+      const performance = await asUser(t, "user_alice").query(api.stepUp.areaAccessStatus, {
+        area: "performance",
+      });
+      expect(performance.state).toBe("satisfied");
+
+      const vault = await asUser(t, "user_alice").query(api.stepUp.areaAccessStatus, {
+        area: "applicant_vault",
+      });
+      expect(vault.state).toBe("needs_verification");
+    });
+
+    test("a clearance older than the org's areaReverifyDays no longer satisfies it", async () => {
+      const t = setup();
+      const admin = await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+      await seedPolicy(t, admin, {});
+      const userId = await seedUser(t, { clerkUserId: "user_bob" });
+      await t.run(async (ctx) =>
+        ctx.db.insert("areaStepUps", {
+          userId,
+          area: "performance",
+          verifiedAt: Date.now() - 15 * DAY,
+          method: "email_code",
+        }),
+      );
+
+      const status = await asUser(t, "user_bob").query(api.stepUp.areaAccessStatus, {
+        area: "performance",
+      });
+      expect(status.state).toBe("needs_verification");
+    });
+
+    test("respects an org-configured areaReverifyDays shorter than the 14-day default", async () => {
+      const t = setup();
+      const admin = await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+      await seedPolicy(t, admin, { areaReverifyDays: 1 });
+      const userId = await seedUser(t, { clerkUserId: "user_carl" });
+      await t.run(async (ctx) =>
+        ctx.db.insert("areaStepUps", {
+          userId,
+          area: "performance",
+          verifiedAt: Date.now() - 2 * DAY,
+          method: "email_code",
+        }),
+      );
+
+      const status = await asUser(t, "user_carl").query(api.stepUp.areaAccessStatus, {
+        area: "performance",
+      });
+      expect(status.state).toBe("needs_verification");
+    });
+  });
+
+  describe("areaPreference / setAreaPreference", () => {
+    test("defaults to trust_device", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+
+      const pref = await asUser(t, "user_alice").query(api.stepUp.areaPreference, {
+        area: "performance",
+      });
+      expect(pref.mode).toBe("trust_device");
+    });
+
+    test("setAreaPreference roundtrips and never trusts the area while always_step_up", async () => {
+      const t = setup();
+      const userId = await seedUser(t, { clerkUserId: "user_alice" });
+      await t.run(async (ctx) =>
+        ctx.db.insert("areaStepUps", {
+          userId,
+          area: "performance",
+          verifiedAt: Date.now(),
+          method: "email_code",
+        }),
+      );
+
+      await asUser(t, "user_alice").mutation(api.stepUp.setAreaPreference, {
+        area: "performance",
+        mode: "always_step_up",
+      });
+
+      const pref = await asUser(t, "user_alice").query(api.stepUp.areaPreference, {
+        area: "performance",
+      });
+      expect(pref.mode).toBe("always_step_up");
+
+      const status = await asUser(t, "user_alice").query(api.stepUp.areaAccessStatus, {
+        area: "performance",
+      });
+      expect(status.state).toBe("needs_verification");
+    });
+  });
+
+  describe("trusted devices", () => {
+    test("apiEvaluateDevice stamps a default name and a trustedUntil window on a new device", async () => {
+      const t = setup();
+      const userId = await seedUser(t, { clerkUserId: "user_alice" });
+
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash: "hash1",
+        deviceLabel: "Chrome on macOS",
+      });
+
+      const devices = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(devices).toHaveLength(1);
+      expect(devices[0]!.name).toBe("Chrome on macOS");
+      expect(devices[0]!.trusted).toBe(true);
+      void userId;
+    });
+
+    test("opting out of device tracking leaves new devices untrusted", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+      await asUser(t, "user_alice").mutation(api.stepUp.setSecurityPreference, {
+        deviceTrackingOptOut: true,
+      });
+
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash: "hash1",
+      });
+
+      const devices = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(devices[0]!.trusted).toBe(false);
+      expect(devices[0]!.trustedUntil).toBeNull();
+    });
+
+    test("renameDevice updates the name; only the device's own owner may", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+      await seedUser(t, { clerkUserId: "user_mallory" });
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash: "hash1",
+      });
+      const [device] = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+
+      await asUser(t, "user_alice").mutation(api.stepUp.renameDevice, {
+        deviceId: device!.id,
+        name: "My laptop",
+      });
+      const renamed = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(renamed[0]!.name).toBe("My laptop");
+
+      await expect(
+        asUser(t, "user_mallory").mutation(api.stepUp.renameDevice, {
+          deviceId: device!.id,
+          name: "Hijacked",
+        }),
+      ).rejects.toThrow("Device not found");
+    });
+
+    test("revokeDeviceTrust forgets the device outright", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash: "hash1",
+      });
+      const [device] = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+
+      await asUser(t, "user_alice").mutation(api.stepUp.revokeDeviceTrust, {
+        deviceId: device!.id,
+      });
+
+      const devices = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(devices).toHaveLength(0);
+    });
+  });
+
+  describe("areaStandard", () => {
+    test("counts the always_step_up split per area and the device-tracking opt-out total", async () => {
+      const t = setup();
+      const admin = await seedUser(t, { clerkUserId: "user_admin", role: "admin" });
+      const alice = await seedUser(t, { clerkUserId: "user_alice" });
+      await seedUser(t, { clerkUserId: "user_bob" });
+      await t.run(async (ctx) =>
+        ctx.db.insert("areaSecurityPreferences", {
+          userId: alice,
+          area: "performance",
+          mode: "always_step_up",
+          updatedAt: Date.now(),
+        }),
+      );
+      await asUser(t, "user_bob").mutation(api.stepUp.setSecurityPreference, {
+        deviceTrackingOptOut: true,
+      });
+
+      const standard = await asUser(t, "user_admin").query(api.stepUp.areaStandard, {});
+      expect(standard.areaReverifyDays).toBe(14);
+      expect(standard.deviceTrackingOptOutCount).toBe(1);
+      const performance = standard.byArea.find((a) => a.area === "performance");
+      expect(performance?.alwaysStepUpCount).toBe(1);
+      void admin;
+    });
   });
 });

@@ -8,7 +8,11 @@ import { effectiveRole, MANAGER_ROLES } from "./auth";
 import { trackEvent } from "./analytics";
 
 export type StepMethod = "email_code" | "totp" | "recovery_code" | "passkey";
-export type StepUpContext = "sign_in" | "destructive" | "admin_reverify";
+export type StepUpContext = "sign_in" | "destructive" | "admin_reverify" | "area_reverify";
+
+/** A password-less linked area gated by Phase 7's 14-day re-verification
+ * ceiling — see docs/future-features/21_auth-consolidation.md. */
+export type Area = "performance" | "applicant_vault";
 
 export const LEVEL: Record<StepMethod, number> = {
   email_code: 1,
@@ -563,4 +567,121 @@ export async function hasNonPasskeyVerification(
     .withIndex("by_user_session", (q) => q.eq("userId", userId).eq("sessionId", sessionId))
     .collect();
   return rows.some((row) => row.method !== "passkey" && row.level >= 1);
+}
+
+// --- Phase 7: per-area 14-day re-verification -------------------------------
+//
+// Once an area lets someone in on the strength of their intranet session
+// instead of a password of its own (Performance's Phase 3, the HR vault's
+// Phase 4 passkey option), that trust can't be permanent — see
+// docs/future-features/21_auth-consolidation.md's Phase 7. This reuses the
+// step-up engine above end to end (same challenge/verify/record functions,
+// just called with `context: "area_reverify"`); what's new here is only
+// *how long a clearance lasts* and *where it's tracked* — per (user, area),
+// not per session, since the whole point is that it has to survive a
+// browser restart or a brand new Clerk session.
+
+/** The bar a fresh area re-verification has to clear — any method at all,
+ * same floor as `destructiveRequirement`: deliberately something every
+ * account can always produce (an email code), so this can never become its
+ * own lockout. */
+export const AREA_REVERIFY_LEVEL = LEVEL.email_code;
+
+export const AREA_REVERIFY_DEFAULT_DAYS = 14;
+
+/** Also the general device-trust duration (see `apiEvaluateDevice`) — one
+ * org-configurable "how long do we trust something without asking again"
+ * number, rather than a second independent setting nobody would think to
+ * keep in sync with the first. */
+export async function areaReverifyWindowMs(ctx: QueryCtx | MutationCtx): Promise<number> {
+  const policy = await getOrDefaultPolicy(ctx);
+  const days = policy.areaReverifyDays ?? AREA_REVERIFY_DEFAULT_DAYS;
+  return Math.max(1, days) * 86_400_000;
+}
+
+/** Whether this account has opted out of device recognition entirely — see
+ * `securityPreferences.deviceTrackingOptOut`. */
+export async function hasOptedOutOfDeviceTracking(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+): Promise<boolean> {
+  const pref = await ctx.db
+    .query("securityPreferences")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .unique();
+  return pref?.deviceTrackingOptOut === true;
+}
+
+/** The account's own "always require step-up here" vs. "trust this device
+ * for 14 days" preference for one area — absent row defaults to trusting,
+ * matching every other per-user preference in this file. */
+export async function getAreaPreference(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+  area: Area,
+): Promise<"always_step_up" | "trust_device"> {
+  const pref = await ctx.db
+    .query("areaSecurityPreferences")
+    .withIndex("by_user_area", (q) => q.eq("userId", userId).eq("area", area))
+    .unique();
+  return pref?.mode ?? "trust_device";
+}
+
+/** Whether this area has ever been cleared for this user, and when. Also
+ * doubles as "has this account ever been through the forced first step-up
+ * onto this area's password-less flow" — a missing row means no, which
+ * `isAreaTrusted` below treats exactly like an expired one: inaccessible
+ * until a step-up clears it. */
+export async function getAreaTrust(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+  area: Area,
+): Promise<Doc<"areaStepUps"> | null> {
+  return await ctx.db
+    .query("areaStepUps")
+    .withIndex("by_user_area", (q) => q.eq("userId", userId).eq("area", area))
+    .unique();
+}
+
+/**
+ * The single gate every area's own entry point calls. No silent grace: an
+ * account whose preference is "always require step-up" is never trusted
+ * here regardless of how recently it last cleared one, and an account past
+ * its 14-day (or org-configured) window is exactly as untrusted as one
+ * that's never stepped up for this area at all.
+ */
+export async function isAreaTrusted(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+  area: Area,
+): Promise<boolean> {
+  const preference = await getAreaPreference(ctx, userId, area);
+  if (preference === "always_step_up") return false;
+  const trust = await getAreaTrust(ctx, userId, area);
+  if (!trust) return false;
+  const windowMs = await areaReverifyWindowMs(ctx);
+  return Date.now() - trust.verifiedAt <= windowMs;
+}
+
+/** Records a fresh area clearance — called right after the shared
+ * `recordVerified`/`recordExternalVerification`/`recordPasskeyVerification`
+ * functions above succeed with `context: "area_reverify"`. Upserts rather
+ * than inserting: there's exactly one live clearance per (user, area), same
+ * convention as `securityPreferences`/`areaSecurityPreferences`. */
+export async function recordAreaStepUp(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  area: Area,
+  method: StepMethod,
+): Promise<void> {
+  const existing = await ctx.db
+    .query("areaStepUps")
+    .withIndex("by_user_area", (q) => q.eq("userId", userId).eq("area", area))
+    .unique();
+  const verifiedAt = Date.now();
+  if (existing) {
+    await ctx.db.patch(existing._id, { verifiedAt, method });
+  } else {
+    await ctx.db.insert("areaStepUps", { userId, area, verifiedAt, method });
+  }
 }

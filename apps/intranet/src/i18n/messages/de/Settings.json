@@ -23,6 +23,20 @@
     "needsVerification": "Aus Sicherheitsgründen ist dafür erst eine erneute Bestätigung nötig.",
     "openSecurity": "Kontosicherheit öffnen"
   },
+  "devices": {
+    "title": "Vertrauenswürdige Geräte",
+    "hint": "Geräte, die gut genug erkannt werden, um die erneute Bestätigung eines verknüpften Bereichs 14 Tage lang zu überspringen.",
+    "empty": "Noch keine Geräte erkannt.",
+    "trusted": "Vertraut",
+    "notTrusted": "Nicht vertraut",
+    "lastSeen": "Zuletzt gesehen {when}",
+    "rename": "Umbenennen",
+    "saveName": "Speichern",
+    "revokeTitle": "Dieses Gerät vergessen?",
+    "revokeBody": "„{name}“ muss beim nächsten Mal erneut erkannt werden — inklusive einer neuen Bestätigung für jeden verknüpften Bereich.",
+    "revokeConfirm": "Gerät vergessen",
+    "revoked": "Das Gerät wurde vergessen."
+  },
   "activity": {
     "title": "Sicherheitsaktivität",
     "hint": "Letzte Änderungen und Prüfungen an diesem Konto.",
@@ -249,5 +263,12 @@
   "securityAlwaysMfaDisabled": "MFA ist nicht mehr bei jeder Anmeldung erforderlich",
   "securityPreferenceError": "Diese Einstellung konnte nicht gespeichert werden",
   "securitySignIn": "Anmeldung",
+  "securityDeviceTracking": "Meine Geräte merken",
+  "securityDeviceTrackingHint": "Lässt ein erkanntes Gerät die erneute Bestätigung eines verknüpften Bereichs 14 Tage lang überspringen. Aus bedeutet, jeder Besuch gilt als nicht erkannt.",
+  "securityAreaTitle": "Verknüpfte Bereiche",
+  "securityAreaHint": "Wie oft du zur erneuten Bestätigung eines passwortlosen verknüpften Bereichs aufgefordert wirst, zusätzlich zur 14-Tage-Standardeinstellung.",
+  "securityAreaPerformance": "Für Performance immer bestätigen",
+  "securityAreaApplicantVault": "Für den HR-Tresor immer bestätigen",
+  "securityAreaAlwaysStepUpHint": "Verlangt jedes Mal eine neue Bestätigung, statt diesem Gerät 14 Tage lang zu vertrauen.",
   "cancel": "Abbrechen"
 }

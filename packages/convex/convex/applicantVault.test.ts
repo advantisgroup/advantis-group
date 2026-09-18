@@ -65,6 +65,21 @@ async function seedPasskey(t: T, userId: Id<"users">): Promise<void> {
   );
 }
 
+/** Phase 7 of docs/future-features/21_auth-consolidation.md: an unlock
+ * attempt is refused outright unless this area's 14-day intranet
+ * re-verification is current — seeded here so `apiUnlockViaPasskey` tests
+ * that aren't themselves testing that gate can get past it. */
+async function seedAreaTrust(t: T, userId: Id<"users">): Promise<void> {
+  await t.run(async (ctx) =>
+    ctx.db.insert("areaStepUps", {
+      userId,
+      area: "applicant_vault",
+      verifiedAt: Date.now(),
+      method: "email_code",
+    }),
+  );
+}
+
 describe("status", () => {
   test("hasPasskey is false with none registered, true once one exists", async () => {
     const t = setup();
@@ -84,6 +99,7 @@ describe("apiUnlockViaPasskey", () => {
     const t = setup();
     const userId = await seedMember(t, { clerkUserId: "alice" });
     await seedPasskey(t, userId);
+    await seedAreaTrust(t, userId);
 
     await t.mutation(api.applicantVault.apiUnlockViaPasskey, {
       serverKey,
@@ -146,6 +162,7 @@ describe("apiUnlockViaPasskey", () => {
       role: "admin",
     });
     await seedPasskey(t, userId);
+    await seedAreaTrust(t, userId);
 
     await t.mutation(api.applicantVault.apiUnlockViaPasskey, {
       serverKey,
@@ -154,5 +171,73 @@ describe("apiUnlockViaPasskey", () => {
 
     const status = await asUser(t, "admin").query(api.applicantVault.status, {});
     expect(status.unlocked).toBe(true);
+  });
+});
+
+describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-verification", () => {
+  test("status reports needsAreaStepUp true with no prior area clearance", async () => {
+    const t = setup();
+    await seedMember(t, { clerkUserId: "alice" });
+
+    const status = await asUser(t, "alice").query(api.applicantVault.status, {});
+    expect(status.needsAreaStepUp).toBe(true);
+    expect(status.areaStepUpRequiredLevel).toBe(1);
+    expect(status.areaStepUpAvailableMethods).toEqual(["email_code"]);
+  });
+
+  test("status reports needsAreaStepUp false once the area was cleared within 14 days", async () => {
+    const t = setup();
+    const userId = await seedMember(t, { clerkUserId: "alice" });
+    await seedAreaTrust(t, userId);
+
+    const status = await asUser(t, "alice").query(api.applicantVault.status, {});
+    expect(status.needsAreaStepUp).toBe(false);
+    expect(status.areaStepUpRequiredLevel).toBeNull();
+  });
+
+  test("an unlock attempt is refused without area trust, even with the right passkey", async () => {
+    const t = setup();
+    const userId = await seedMember(t, { clerkUserId: "alice" });
+    await seedPasskey(t, userId);
+
+    await expect(
+      t.mutation(api.applicantVault.apiUnlockViaPasskey, { serverKey, clerkUserId: "alice" }),
+    ).rejects.toThrow("Re-verify your identity");
+
+    const status = await asUser(t, "alice").query(api.applicantVault.status, {});
+    expect(status.unlocked).toBe(false);
+  });
+
+  test("a clearance older than 14 days no longer trusts the area", async () => {
+    const t = setup();
+    const userId = await seedMember(t, { clerkUserId: "alice" });
+    await t.run(async (ctx) =>
+      ctx.db.insert("areaStepUps", {
+        userId,
+        area: "applicant_vault",
+        verifiedAt: Date.now() - 15 * 86_400_000,
+        method: "email_code",
+      }),
+    );
+
+    const status = await asUser(t, "alice").query(api.applicantVault.status, {});
+    expect(status.needsAreaStepUp).toBe(true);
+  });
+
+  test("an 'always require step-up' preference never trusts the area, however recent the clearance", async () => {
+    const t = setup();
+    const userId = await seedMember(t, { clerkUserId: "alice" });
+    await seedAreaTrust(t, userId);
+    await t.run(async (ctx) =>
+      ctx.db.insert("areaSecurityPreferences", {
+        userId,
+        area: "applicant_vault",
+        mode: "always_step_up",
+        updatedAt: Date.now(),
+      }),
+    );
+
+    const status = await asUser(t, "alice").query(api.applicantVault.status, {});
+    expect(status.needsAreaStepUp).toBe(true);
   });
 });

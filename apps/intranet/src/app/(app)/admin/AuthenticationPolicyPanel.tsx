@@ -45,6 +45,7 @@ interface PolicyForm {
   requirePasskeyRetroactive: boolean;
   gracePeriodDays: number;
   exemptUserIds: Id<"users">[];
+  areaReverifyDays: number;
 }
 
 function ScopeSection({
@@ -286,6 +287,54 @@ function SecurityStandardSection() {
   );
 }
 
+const AREA_LABEL_KEY = {
+  performance: "authenticationAreaPerformance",
+  applicant_vault: "authenticationAreaApplicantVault",
+} as const;
+
+/** Phase 7 of docs/future-features/21_auth-consolidation.md's admin-visible
+ * companion to `SecurityStandardSection` above — the device-trust opt-in/
+ * opt-out split and each area's "always step up" vs. "trust device"
+ * preference split, so the 14-day window set below isn't the only thing
+ * visible here. Read-only, same as the section above it. */
+function AreaReverifyStandardSection() {
+  const t = useTranslations("Admin");
+  const standard = useQuery(api.stepUp.areaStandard);
+
+  if (!standard) return <Skeleton className="h-28 rounded-xl" />;
+
+  return (
+    <section className="space-y-3">
+      <header>
+        <h2 className="text-sm font-semibold tracking-tight">
+          {t("authenticationAreaStandardTitle")}
+        </h2>
+        <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground text-pretty">
+          {t("authenticationAreaStandardHint")}
+        </p>
+      </header>
+      <KpiStrip className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3">
+        <Kpi
+          label={t("authenticationDeviceTrackingOptIn")}
+          value={standard.deviceTrackingOptInCount}
+        />
+        <Kpi
+          label={t("authenticationDeviceTrackingOptOut")}
+          value={standard.deviceTrackingOptOutCount}
+        />
+        {standard.byArea.map((entry) => (
+          <Kpi
+            key={entry.area}
+            label={t("authenticationAlwaysStepUpFor", { area: t(AREA_LABEL_KEY[entry.area]) })}
+            value={entry.alwaysStepUpCount}
+            hint={`${t("authenticationTrustDeviceCount")}: ${entry.trustDeviceCount}`}
+          />
+        ))}
+      </KpiStrip>
+    </section>
+  );
+}
+
 function formOf(policy: PolicyForm): PolicyForm {
   return {
     requireMfaScope: policy.requireMfaScope,
@@ -297,6 +346,7 @@ function formOf(policy: PolicyForm): PolicyForm {
     requirePasskeyRetroactive: policy.requirePasskeyRetroactive,
     gracePeriodDays: policy.gracePeriodDays,
     exemptUserIds: policy.exemptUserIds,
+    areaReverifyDays: policy.areaReverifyDays,
   };
 }
 
@@ -381,7 +431,8 @@ export function AuthenticationPolicyPanel() {
     if (!form || !policy) return;
     if (
       form.gracePeriodDays !== policy.gracePeriodDays ||
-      form.destructiveActionTtlMinutes !== policy.destructiveActionTtlMinutes
+      form.destructiveActionTtlMinutes !== policy.destructiveActionTtlMinutes ||
+      form.areaReverifyDays !== policy.areaReverifyDays
     ) {
       persist(form);
     }
@@ -391,6 +442,7 @@ export function AuthenticationPolicyPanel() {
     <SettingsLayoutProvider value="stacked">
       <div className="space-y-10">
         <SecurityStandardSection />
+        <AreaReverifyStandardSection />
 
         <ScopeSection
           title={t("authenticationMfaTitle")}
@@ -506,6 +558,32 @@ export function AuthenticationPolicyPanel() {
               onChange={(exemptUserIds) => void change({ exemptUserIds })}
             />
           </SettingsRow>
+        </SettingsSection>
+
+        <SettingsSection
+          title={t("authenticationAreaReverifyTitle")}
+          description={t("authenticationAreaReverifyHint")}
+        >
+          <SettingsRow
+            title={t("authenticationAreaReverifyDays")}
+            control={
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={90}
+                className="w-24 tabular-nums"
+                value={form.areaReverifyDays}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    areaReverifyDays: Math.min(90, Math.max(1, Number(e.target.value) || 1)),
+                  })
+                }
+                onBlur={commitNumbers}
+              />
+            }
+          />
         </SettingsSection>
       </div>
     </SettingsLayoutProvider>

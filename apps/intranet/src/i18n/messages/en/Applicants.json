@@ -361,6 +361,8 @@
   "interviewSaved": "Interview saved to the file.",
   "vaultLockedTitle": "Human Resources locked",
   "vaultLockedDescription": "Please re-enter the password to continue.",
+  "vaultReverifyTitle": "Verify it's you to continue",
+  "vaultReverifyDescription": "Your intranet re-verification for this area has expired.",
   "vaultPasswordPlaceholder": "Password",
   "vaultConfirmPasswordPlaceholder": "Confirm password",
   "vaultUnlock": "Unlock",

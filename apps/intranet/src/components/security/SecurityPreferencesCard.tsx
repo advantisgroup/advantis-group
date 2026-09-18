@@ -13,6 +13,48 @@ import { Switch } from "@/components/ui/switch";
 
 import { useSecurityState } from "./security-state";
 
+const AREAS = ["performance", "applicant_vault"] as const;
+
+/** Phase 7 of docs/future-features/21_auth-consolidation.md's per-area
+ * "always step up here" vs. "trust this device for 14 days" preference,
+ * one row per linked area. Separate from the org-wide MFA toggle above —
+ * that one governs signing into the intranet itself; these govern re-entry
+ * into a password-less linked area once already signed in. */
+function AreaPreferenceRow({ area }: { area: (typeof AREAS)[number] }) {
+  const t = useTranslations("Settings");
+  const pref = useQuery(api.stepUp.areaPreference, { area });
+  const setPref = useMutation(api.stepUp.setAreaPreference);
+  const [saving, setSaving] = useState(false);
+
+  async function toggle(checked: boolean) {
+    setSaving(true);
+    try {
+      await setPref({ area, mode: checked ? "always_step_up" : "trust_device" });
+    } catch {
+      toast.error(t("securityPreferenceError"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <SettingsRow
+      title={t(area === "performance" ? "securityAreaPerformance" : "securityAreaApplicantVault")}
+      description={t("securityAreaAlwaysStepUpHint")}
+      control={
+        <Switch
+          checked={pref?.mode === "always_step_up"}
+          disabled={pref === undefined || saving}
+          onCheckedChange={(value) => void toggle(value)}
+          aria-label={t(
+            area === "performance" ? "securityAreaPerformance" : "securityAreaApplicantVault",
+          )}
+        />
+      }
+    />
+  );
+}
+
 export function SecurityPreferencesCard() {
   const t = useTranslations("Settings");
   const preference = useQuery(api.stepUp.securityPreference);
@@ -22,6 +64,7 @@ export function SecurityPreferencesCard() {
   // below, and could contradict the list rendered a few hundred pixels up.
   const { passkeys } = useSecurityState();
   const [saving, setSaving] = useState(false);
+  const [savingDeviceTracking, setSavingDeviceTracking] = useState(false);
 
   async function toggle(checked: boolean) {
     setSaving(true);
@@ -35,7 +78,20 @@ export function SecurityPreferencesCard() {
     }
   }
 
+  async function toggleDeviceTracking(checked: boolean) {
+    setSavingDeviceTracking(true);
+    try {
+      // The switch reads "remember my devices", so unchecked means opting out.
+      await setPreference({ deviceTrackingOptOut: !checked });
+    } catch {
+      toast.error(t("securityPreferenceError"));
+    } finally {
+      setSavingDeviceTracking(false);
+    }
+  }
+
   const checked = preference?.alwaysRequireMfaAtSignIn === true;
+  const deviceTrackingOn = preference?.deviceTrackingOptOut !== true;
   const hasPasskey = (passkeys?.length ?? 0) > 0;
 
   const toggleControl = (
@@ -62,6 +118,23 @@ export function SecurityPreferencesCard() {
             </p>
           )}
         </SettingsRow>
+        <SettingsRow
+          title={t("securityDeviceTracking")}
+          description={t("securityDeviceTrackingHint")}
+          control={
+            <Switch
+              checked={deviceTrackingOn}
+              disabled={preference === undefined || savingDeviceTracking}
+              onCheckedChange={(value) => void toggleDeviceTracking(value)}
+              aria-label={t("securityDeviceTracking")}
+            />
+          }
+        />
+      </SettingsSection>
+      <SettingsSection title={t("securityAreaTitle")} description={t("securityAreaHint")}>
+        {AREAS.map((area) => (
+          <AreaPreferenceRow key={area} area={area} />
+        ))}
       </SettingsSection>
     </div>
   );

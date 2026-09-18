@@ -10,6 +10,7 @@ import { KeyRound, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { StepUpForm } from "@/components/auth/StepUpForm";
 import { ForgotPasswordPanel } from "@/components/password-reset/ForgotPasswordPanel";
 import { jsonOrThrow } from "@/components/security/security-state";
 import { Button } from "@/components/ui/button";
@@ -88,6 +89,34 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
 
   const expired = status.unlocked && status.expiresAt !== null && status.expiresAt <= now;
   if (status.unlocked && !expired) return <>{children}</>;
+
+  // Phase 7 of docs/future-features/21_auth-consolidation.md: on top of the
+  // vault's own (much shorter) unlock above, an intranet-side
+  // re-verification older than 14 days blocks even attempting one — show
+  // that step-up first instead of a password/passkey prompt that would just
+  // fail server-side. `status` is a live Convex query, so clearing this
+  // re-renders straight past it once done, with no manual refetch needed.
+  if (status.needsAreaStepUp) {
+    return (
+      <div className="mx-auto max-w-sm py-16">
+        <Card>
+          <CardContent className="space-y-4 p-6">
+            <div className="space-y-1 text-center">
+              <ShieldCheck className="mx-auto size-6 text-primary" />
+              <p className="font-semibold">{t("vaultReverifyTitle")}</p>
+              <p className="text-sm text-muted-foreground">{t("vaultReverifyDescription")}</p>
+            </div>
+            <StepUpForm
+              availableMethods={status.areaStepUpAvailableMethods}
+              context="area_reverify"
+              area="applicant_vault"
+              onVerified={() => {}}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   async function handleUnlock() {
     if (!password.trim()) return;
