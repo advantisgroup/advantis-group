@@ -24,6 +24,9 @@ type SidebarContextValue = {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+  /** Customizing the nav — the page behind dims and blurs until it's done. */
+  editing: boolean;
+  setEditing: (editing: boolean) => void;
 };
 
 const SidebarContext = React.createContext<SidebarContextValue | null>(null);
@@ -46,6 +49,7 @@ export function SidebarProvider({
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
   const [open, setOpenState] = React.useState(true);
+  const [editing, setEditingState] = React.useState(false);
 
   // Restore the desktop collapsed/expanded preference after mount so the
   // server and first client render agree (avoids a hydration mismatch).
@@ -67,6 +71,23 @@ export function SidebarProvider({
     setOpenState(value);
     window.localStorage.setItem(SIDEBAR_STORAGE_KEY, value ? "expanded" : "collapsed");
   }, []);
+
+  // The icon rail has no room to rearrange anything, so editing opens it up
+  // for the duration without touching the saved collapsed preference.
+  const setEditing = React.useCallback((value: boolean) => {
+    setEditingState(value);
+    if (value) setOpenState(true);
+    else if (window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "collapsed") setOpenState(false);
+  }, []);
+
+  React.useEffect(() => {
+    if (!editing) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setEditing(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [editing, setEditing]);
 
   const toggleSidebar = React.useCallback(() => {
     if (isMobile) {
@@ -100,8 +121,10 @@ export function SidebarProvider({
       setOpenMobile,
       isMobile,
       toggleSidebar,
+      editing,
+      setEditing,
     }),
-    [open, setOpen, openMobile, isMobile, toggleSidebar],
+    [open, setOpen, openMobile, isMobile, toggleSidebar, editing, setEditing],
   );
 
   return (
@@ -149,16 +172,19 @@ export function Sidebar({
   ariaLabel?: string;
   "data-tour"?: string;
 }) {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+  const { isMobile, state, openMobile, setOpenMobile, editing, setEditing } = useSidebar();
 
   if (isMobile) {
     return (
       <MobileDrawer
         open={openMobile}
-        onOpenChange={setOpenMobile}
+        onOpenChange={(value) => {
+          setOpenMobile(value);
+          if (!value) setEditing(false);
+        }}
         ariaLabel={ariaLabel}
         data-tour={dataTour}
-        className="h-[94dvh]"
+        className={cn("h-[94dvh]", editing && "ring-2 ring-sidebar-primary/50")}
       >
         {children}
       </MobileDrawer>
@@ -168,11 +194,14 @@ export function Sidebar({
   return (
     <aside
       data-state={state}
+      data-editing={editing ? "true" : undefined}
       data-tour={dataTour}
       aria-label={ariaLabel}
       className={cn(
-        "group/sidebar z-30 hidden h-full shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-linear print:hidden md:flex",
+        "group/sidebar relative z-30 hidden h-full shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width,box-shadow] duration-200 ease-linear print:hidden md:flex",
         state === "collapsed" ? "w-[var(--sidebar-width-icon)]" : "w-[var(--sidebar-width)]",
+        editing &&
+          "z-50 shadow-[0_24px_64px_-12px_rgb(0_0_0/0.45)] ring-1 ring-inset ring-sidebar-primary/40",
         className,
       )}
     >
@@ -189,9 +218,19 @@ export function SidebarInset({
   children: React.ReactNode;
   className?: string;
 }) {
+  const { editing, setEditing, isMobile } = useSidebar();
   return (
-    <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col print:block", className)}>
+    <div className={cn("relative flex min-h-0 min-w-0 flex-1 flex-col print:block", className)}>
       {children}
+      {/* Clicking the dimmed page counts as "done". */}
+      <div
+        aria-hidden
+        onClick={() => setEditing(false)}
+        className={cn(
+          "absolute inset-0 z-40 bg-background/40 backdrop-blur-[3px] transition-[opacity,backdrop-filter] duration-300",
+          editing && !isMobile ? "opacity-100" : "pointer-events-none opacity-0 backdrop-blur-0",
+        )}
+      />
     </div>
   );
 }
