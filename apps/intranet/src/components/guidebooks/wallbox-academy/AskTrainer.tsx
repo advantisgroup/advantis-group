@@ -31,8 +31,8 @@ export function AskTrainer({
   const pathname = usePathname();
   const [text, setText] = useState("");
   const [justSent, setJustSent] = useState(false);
-  const mine = useQuery(api.academyQuestions.listMine, { participantId });
-  const ask = useMutation(api.academyQuestions.ask);
+  const mine = useQuery(api.academy.questions.listMine, { participantId });
+  const ask = useMutation(api.academy.questions.ask);
   const listRef = useRef<HTMLDivElement>(null);
 
   const forChapter = (mine ?? []).filter((q) => q.chapterId === chapterId);

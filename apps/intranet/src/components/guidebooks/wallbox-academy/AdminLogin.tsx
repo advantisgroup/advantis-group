@@ -25,7 +25,7 @@ export function AdminLogin({ onLogin }: { onLogin: (pin?: string) => void }) {
     setChecking(true);
     setPinError("");
     try {
-      const ok = await convex.query(api.academySettings.checkPin, {
+      const ok = await convex.query(api.academy.settings.checkPin, {
         academyId: ACADEMY_ID,
         pin,
       });

@@ -14,8 +14,8 @@ import type { AcademyProgressData } from "./types";
 export const ACADEMY_ID = "wallbox-sales";
 
 export function useAcademyProgress(participantId: Id<"academyParticipants">) {
-  const remote = useQuery(api.academyResults.getMine, { participantId });
-  const save = useMutation(api.academyResults.saveMine);
+  const remote = useQuery(api.academy.results.getMine, { participantId });
+  const save = useMutation(api.academy.results.saveMine);
 
   const loading = remote === undefined;
   const progress = useMemo(() => parseProgress(remote?.data ?? null), [remote]);

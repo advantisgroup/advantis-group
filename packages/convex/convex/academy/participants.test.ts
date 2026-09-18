@@ -1,10 +1,10 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
-import { api, internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
-import schema from "./schema";
-import { modules } from "./test.setup";
+import { api, internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
+import schema from "../schema";
+import { modules } from "../test.setup";
 
 function setup() {
   return convexTest(schema, modules);
@@ -67,7 +67,7 @@ describe("academy participant auto-linking", () => {
     const admin = await seedAdmin(t);
     await seedEmployee(t, { clerkUserId: "matched", email: "matched@advantisgroup.de" });
 
-    const { participantId } = await asUser(t, "admin").mutation(api.academyParticipants.create, {
+    const { participantId } = await asUser(t, "admin").mutation(api.academy.participants.create, {
       academyId: "wallbox",
       name: "Ignored — resolved from the matched account",
       email: "matched@advantisgroup.de",
@@ -90,7 +90,7 @@ describe("academy participant auto-linking", () => {
       status: "suspended",
     });
 
-    const { participantId } = await asUser(t, "admin").mutation(api.academyParticipants.create, {
+    const { participantId } = await asUser(t, "admin").mutation(api.academy.participants.create, {
       academyId: "wallbox",
       name: "Someone",
       email: "suspended@advantisgroup.de",
@@ -110,7 +110,7 @@ describe("academy participant auto-linking", () => {
       email: "picked@advantisgroup.de",
     });
 
-    const { participantId } = await asUser(t, "admin").mutation(api.academyParticipants.create, {
+    const { participantId } = await asUser(t, "admin").mutation(api.academy.participants.create, {
       academyId: "wallbox",
       name: "ignored",
       email: "ignored@example.com",
@@ -132,7 +132,7 @@ describe("academy participant auto-linking", () => {
       email: "late@advantisgroup.de",
     });
 
-    const { linked } = await t.mutation(internal.academyParticipants.reconcileAutoLinks, {});
+    const { linked } = await t.mutation(internal.academy.participants.reconcileAutoLinks, {});
     expect(linked).toBe(1);
 
     const participant = await t.run(async (ctx) => ctx.db.get(participantId));
@@ -152,7 +152,7 @@ describe("academy participant auto-linking", () => {
       linkedUserId: alreadyLinked,
     });
 
-    const { linked } = await t.mutation(internal.academyParticipants.reconcileAutoLinks, {});
+    const { linked } = await t.mutation(internal.academy.participants.reconcileAutoLinks, {});
     expect(linked).toBe(0);
 
     const participant = await t.run(async (ctx) => ctx.db.get(participantId));
@@ -175,12 +175,12 @@ describe("academy participant auto-linking", () => {
       academyId: "wallbox",
       email: "auto@advantisgroup.de",
     });
-    await t.mutation(internal.academyParticipants.reconcileAutoLinks, {});
+    await t.mutation(internal.academy.participants.reconcileAutoLinks, {});
     let participant = await t.run(async (ctx) => ctx.db.get(participantId));
     expect(participant?.autoLinkedVia).toBe("email_match");
     void autoMatch;
 
-    await asUser(t, "admin").mutation(api.academyParticipants.linkToAccount, {
+    await asUser(t, "admin").mutation(api.academy.participants.linkToAccount, {
       participantId,
       userId: handPicked,
       pin: "unused",

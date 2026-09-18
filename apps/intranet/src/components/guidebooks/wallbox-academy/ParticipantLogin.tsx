@@ -40,7 +40,7 @@ export function ParticipantLogin({
     setChecking(true);
     setCodeError("");
     try {
-      const participant = await convex.query(api.academyParticipants.findByCode, {
+      const participant = await convex.query(api.academy.participants.findByCode, {
         academyId: ACADEMY_ID,
         code,
       });

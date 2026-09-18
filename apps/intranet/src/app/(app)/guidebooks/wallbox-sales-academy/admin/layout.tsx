@@ -37,7 +37,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   // instead of asking for the PIN again.
   const relyingOnPin = hydrated && isAdminSession && !isClerkAdmin;
   const pinValid = useQuery(
-    api.academySettings.checkPin,
+    api.academy.settings.checkPin,
     relyingOnPin ? { academyId: ACADEMY_ID, pin: academyPin } : "skip",
   );
 

@@ -149,7 +149,7 @@ if (process.env.DISABLE_CRONS !== "true") {
   crons.daily(
     "academy: reconcile auto-links",
     { hourUTC: 4, minuteUTC: 18 },
-    internal.academyParticipants.reconcileAutoLinks,
+    internal.academy.participants.reconcileAutoLinks,
     {},
   );
 

@@ -76,7 +76,7 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
   const [email, setEmail] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
   const users = useQuery(api.users.list, {});
-  const create = useMutation(api.academyParticipants.create);
+  const create = useMutation(api.academy.participants.create);
   const { academyPin } = useAcademySession();
 
   const matchedUser =
@@ -246,15 +246,15 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
 export function ParticipantsTab({ focusParticipantId }: { focusParticipantId?: string | null }) {
   const router = useRouter();
   const { academyPin } = useAcademySession();
-  const participants = useQuery(api.academyParticipants.listAll, {
+  const participants = useQuery(api.academy.participants.listAll, {
     academyId: ACADEMY_ID,
     pin: academyPin,
   });
-  const results = useQuery(api.academyResults.listAll, {
+  const results = useQuery(api.academy.results.listAll, {
     academyId: ACADEMY_ID,
     pin: academyPin,
   });
-  const remove = useMutation(api.academyParticipants.remove);
+  const remove = useMutation(api.academy.participants.remove);
   const confirm = useConfirm();
   const rowRef = useRef<HTMLTableRowElement | null>(null);
 
@@ -417,8 +417,8 @@ export function ParticipantsTab({ focusParticipantId }: { focusParticipantId?: s
 
 function LinkAccountControl({ participant }: { participant: Doc<"academyParticipants"> }) {
   const users = useQuery(api.users.list, {});
-  const linkToAccount = useMutation(api.academyParticipants.linkToAccount);
-  const unlinkAccount = useMutation(api.academyParticipants.unlinkAccount);
+  const linkToAccount = useMutation(api.academy.participants.linkToAccount);
+  const unlinkAccount = useMutation(api.academy.participants.unlinkAccount);
   const { academyPin } = useAcademySession();
 
   return (
@@ -582,12 +582,12 @@ function ParticipantDetail({
 
 export function QuestionsTab({ focusQuestionId }: { focusQuestionId?: string | null }) {
   const { academyPin } = useAcademySession();
-  const questions = useQuery(api.academyQuestions.listAll, {
+  const questions = useQuery(api.academy.questions.listAll, {
     academyId: ACADEMY_ID,
     pin: academyPin,
   });
-  const answer = useMutation(api.academyQuestions.answer);
-  const reopen = useMutation(api.academyQuestions.reopen);
+  const answer = useMutation(api.academy.questions.answer);
+  const reopen = useMutation(api.academy.questions.reopen);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -689,8 +689,8 @@ export function QuestionsTab({ focusQuestionId }: { focusQuestionId?: string | n
 
 export function SettingsTab() {
   const router = useRouter();
-  const setPinMutation = useMutation(api.academySettings.setPin);
-  const resetAll = useMutation(api.academySettings.resetAll);
+  const setPinMutation = useMutation(api.academy.settings.setPin);
+  const resetAll = useMutation(api.academy.settings.resetAll);
   const confirm = useConfirm();
   const { academyPin, loginAdmin, logout } = useAcademySession();
   const [pin, setPinValue] = useState("");
