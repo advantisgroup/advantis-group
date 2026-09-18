@@ -404,10 +404,13 @@ export const apiEvaluateDevice = mutation({
     clerkUserId: v.string(),
     sessionId: v.string(),
     deviceHash: v.string(),
-    // Phase 7: a coarse "Chrome on macOS"-style label, used only as the
-    // default `name` on first sight of a device — never overwrites a name
-    // the user picked themselves in /settings.
-    deviceLabel: v.optional(v.string()),
+    // Phase 7: browser/OS, re-derived and re-sent on every visit (see
+    // knownDevices' schema comment) — `browser`/`os` always refresh,
+    // `name` (the default display label built from them) only backfills
+    // when a device has never had one, so it never overwrites a name the
+    // user picked themselves in /settings.
+    browser: v.optional(v.string()),
+    os: v.optional(v.string()),
   },
   returns: v.object({ newDevice: v.boolean() }),
   handler: async (ctx, args) => {
@@ -423,20 +426,32 @@ export const apiEvaluateDevice = mutation({
     // here beyond simply never stamping a `trustedUntil`.
     const trackingOptedOut = await hasOptedOutOfDeviceTracking(ctx, user._id);
     const trustedUntil = trackingOptedOut ? undefined : now + (await areaReverifyWindowMs(ctx));
+    const defaultName = args.browser && args.os ? `${args.browser} on ${args.os}` : undefined;
 
     const existing = await ctx.db
       .query("knownDevices")
       .withIndex("by_user_hash", (q) => q.eq("userId", user._id).eq("deviceHash", args.deviceHash))
       .unique();
     if (existing) {
-      await ctx.db.patch(existing._id, { lastSeenAt: now, trustedUntil });
+      await ctx.db.patch(existing._id, {
+        lastSeenAt: now,
+        trustedUntil,
+        browser: args.browser,
+        os: args.os,
+        // Backfills a device that predates browser/os tracking (or whose
+        // very first sighting had no label for some reason) — never
+        // touches a name the account already has, custom or auto-set.
+        name: existing.name ?? defaultName,
+      });
     } else {
       await ctx.db.insert("knownDevices", {
         userId: user._id,
         deviceHash: args.deviceHash,
         firstSeenAt: now,
         lastSeenAt: now,
-        name: args.deviceLabel,
+        name: defaultName,
+        browser: args.browser,
+        os: args.os,
         trustedUntil,
       });
     }
@@ -654,18 +669,29 @@ export const setAreaPreference = mutation({
 
 // --- Phase 7: trusted devices (/settings) --------------------------------------
 
+// A defensive cap, not an expected ceiling — realistically nobody
+// accumulates this many distinct (IP-prefix, user-agent) combinations, but
+// an unbounded `.collect()` on a table with no natural cap is still worth
+// guarding, same reasoning as `orgStandard`'s `nonCompliant` cap.
+const TRUSTED_DEVICES_LIMIT = 200;
+
 export const trustedDevices = query({
   args: {},
-  returns: v.array(
-    v.object({
-      id: v.id("knownDevices"),
-      name: v.string(),
-      firstSeenAt: v.number(),
-      lastSeenAt: v.number(),
-      trusted: v.boolean(),
-      trustedUntil: v.union(v.number(), v.null()),
-    }),
-  ),
+  returns: v.object({
+    devices: v.array(
+      v.object({
+        id: v.id("knownDevices"),
+        name: v.string(),
+        browser: v.union(v.string(), v.null()),
+        os: v.union(v.string(), v.null()),
+        firstSeenAt: v.number(),
+        lastSeenAt: v.number(),
+        trusted: v.boolean(),
+        trustedUntil: v.union(v.number(), v.null()),
+      }),
+    ),
+    truncated: v.boolean(),
+  }),
   handler: async (ctx) => {
     const user = await requireUser(ctx);
     const rows = await ctx.db
@@ -673,16 +699,49 @@ export const trustedDevices = query({
       .withIndex("by_user_hash", (q) => q.eq("userId", user._id))
       .collect();
     const now = Date.now();
-    return rows
-      .sort((a, b) => b.lastSeenAt - a.lastSeenAt)
-      .map((d) => ({
+    const sorted = rows.sort((a, b) => b.lastSeenAt - a.lastSeenAt);
+    return {
+      devices: sorted.slice(0, TRUSTED_DEVICES_LIMIT).map((d) => ({
         id: d._id,
         name: d.name ?? "Unrecognized device",
+        browser: d.browser ?? null,
+        os: d.os ?? null,
         firstSeenAt: d.firstSeenAt,
         lastSeenAt: d.lastSeenAt,
         trusted: d.trustedUntil !== undefined && d.trustedUntil > now,
         trustedUntil: d.trustedUntil ?? null,
-      }));
+      })),
+      truncated: sorted.length > TRUSTED_DEVICES_LIMIT,
+    };
+  },
+});
+
+/** Bulk equivalent of `revokeDeviceTrust` for every device that isn't
+ * currently trusted — the practical answer to "this list is mostly stale
+ * devices I don't recognize": one click instead of revoking each row by
+ * hand. Never touches a currently-trusted device; use `revokeDeviceTrust`
+ * for that one deliberately. */
+export const forgetUntrustedDevices = mutation({
+  args: {},
+  returns: v.object({ removed: v.number() }),
+  handler: async (ctx) => {
+    const user = await requireUser(ctx);
+    const rows = await ctx.db
+      .query("knownDevices")
+      .withIndex("by_user_hash", (q) => q.eq("userId", user._id))
+      .collect();
+    const now = Date.now();
+    const stale = rows.filter((d) => d.trustedUntil === undefined || d.trustedUntil <= now);
+    await Promise.all(stale.map((d) => ctx.db.delete(d._id)));
+    if (stale.length > 0) {
+      await ctx.db.insert("stepUpAuditLog", {
+        userId: user._id,
+        event: "device_trust_revoked",
+        detail: `bulk:${stale.length}`,
+        at: now,
+      });
+    }
+    return { removed: stale.length };
   },
 });
 

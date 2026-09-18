@@ -617,13 +617,24 @@ export default defineSchema({
    * `name` and `trustedUntil` are set once a device has been recognized and
    * are shown/revocable from `/settings`. A row with no `trustedUntil` (or
    * one older than `Date.now()`) is exactly the original "unrecognized"
-   * state — nothing about the pre-Phase-7 risk signal changes. */
+   * state — nothing about the pre-Phase-7 risk signal changes.
+   *
+   * `browser`/`os` are auto-detected from the user-agent (same source as
+   * `name`'s default) and re-stamped on every visit, never user-edited —
+   * `name` is the one field a person can make their own ("My laptop")
+   * without losing the structured browser/OS a device list can still
+   * filter and sort by. Deliberately still no raw IP or precise location
+   * here: the privacy stance above (coarse, hashed, never raw) extends to
+   * whatever a device list shows a person about their own devices, not
+   * just to what the risk signal computes on. */
   knownDevices: defineTable({
     userId: v.id("users"),
     deviceHash: v.string(),
     firstSeenAt: v.number(),
     lastSeenAt: v.number(),
     name: v.optional(v.string()),
+    browser: v.optional(v.string()),
+    os: v.optional(v.string()),
     trustedUntil: v.optional(v.number()),
   })
     .index("by_user_hash", ["userId", "deviceHash"])

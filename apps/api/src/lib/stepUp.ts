@@ -193,11 +193,13 @@ export async function destructiveStepUpHint(
   };
 }
 
-/** A coarse, human-readable label ("Chrome on macOS") used only as a new
- * device's default display name in the Phase 7 trusted-devices list — never
- * parsed for any security decision, just a friendlier default than a raw
- * user-agent string until the person renames it themselves. */
-function deviceLabel(userAgent: string): string {
+/** Coarse, human-readable browser/OS, parsed from the user-agent — never
+ * used for any security decision, just what the Phase 7 trusted-devices
+ * list shows and lets someone filter by. Re-derived and re-sent on every
+ * visit (see `apiEvaluateDevice`), not just a device's first sighting, so a
+ * device already known before this existed picks it up the next time it's
+ * seen instead of staying unlabeled forever. */
+function deviceBrowserAndOs(userAgent: string): { browser: string; os: string } {
   const ua = userAgent.toLowerCase();
   const browser = ua.includes("edg/")
     ? "Edge"
@@ -207,7 +209,7 @@ function deviceLabel(userAgent: string): string {
         ? "Chrome"
         : ua.includes("safari/")
           ? "Safari"
-          : "Browser";
+          : "Unknown browser";
   const os = ua.includes("iphone")
     ? "iOS"
     : ua.includes("ipad")
@@ -220,8 +222,8 @@ function deviceLabel(userAgent: string): string {
             ? "Windows"
             : ua.includes("linux")
               ? "Linux"
-              : "an unknown device";
-  return `${browser} on ${os}`;
+              : "Unknown OS";
+  return { browser, os };
 }
 
 export async function evaluateDevice(
@@ -230,11 +232,13 @@ export async function evaluateDevice(
   ip: string,
   userAgent: string,
 ): Promise<{ newDevice: boolean }> {
+  const { browser, os } = deviceBrowserAndOs(userAgent);
   return await getConvex().mutation(api.stepUp.apiEvaluateDevice, {
     serverKey: serverKey(),
     clerkUserId,
     sessionId,
     deviceHash: deviceHash(ip, userAgent),
-    deviceLabel: deviceLabel(userAgent),
+    browser,
+    os,
   });
 }

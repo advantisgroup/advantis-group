@@ -1326,7 +1326,7 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
   });
 
   describe("trusted devices", () => {
-    test("apiEvaluateDevice stamps a default name and a trustedUntil window on a new device", async () => {
+    test("apiEvaluateDevice stamps a default name, browser/os, and a trustedUntil window on a new device", async () => {
       const t = setup();
       const userId = await seedUser(t, { clerkUserId: "user_alice" });
 
@@ -1335,14 +1335,81 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
         clerkUserId: "user_alice",
         sessionId: SESSION,
         deviceHash: "hash1",
-        deviceLabel: "Chrome on macOS",
+        browser: "Chrome",
+        os: "macOS",
       });
 
-      const devices = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
       expect(devices).toHaveLength(1);
       expect(devices[0]!.name).toBe("Chrome on macOS");
+      expect(devices[0]!.browser).toBe("Chrome");
+      expect(devices[0]!.os).toBe("macOS");
       expect(devices[0]!.trusted).toBe(true);
       void userId;
+    });
+
+    test("a returning device backfills its name and browser/os instead of staying unlabeled forever", async () => {
+      const t = setup();
+      const userId = await seedUser(t, { clerkUserId: "user_alice" });
+      // Simulates a device row that predates browser/os tracking — no name,
+      // no browser, no os, same as anything created before this shipped.
+      await t.run(async (ctx) =>
+        ctx.db.insert("knownDevices", {
+          userId,
+          deviceHash: "hash1",
+          firstSeenAt: Date.now() - 30 * 86_400_000,
+          lastSeenAt: Date.now() - 30 * 86_400_000,
+        }),
+      );
+
+      const before = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(before.devices[0]!.name).toBe("Unrecognized device");
+
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash: "hash1",
+        browser: "Firefox",
+        os: "Windows",
+      });
+
+      const after = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(after.devices[0]!.name).toBe("Firefox on Windows");
+      expect(after.devices[0]!.browser).toBe("Firefox");
+    });
+
+    test("a custom name survives a revisit — browser/os still refresh, name doesn't", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash: "hash1",
+        browser: "Chrome",
+        os: "macOS",
+      });
+      const { devices: seeded } = await asUser(t, "user_alice").query(
+        api.stepUp.trustedDevices,
+        {},
+      );
+      await asUser(t, "user_alice").mutation(api.stepUp.renameDevice, {
+        deviceId: seeded[0]!.id,
+        name: "My work laptop",
+      });
+
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash: "hash1",
+        browser: "Chrome",
+        os: "macOS",
+      });
+
+      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(devices[0]!.name).toBe("My work laptop");
     });
 
     test("opting out of device tracking leaves new devices untrusted", async () => {
@@ -1359,7 +1426,7 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
         deviceHash: "hash1",
       });
 
-      const devices = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
       expect(devices[0]!.trusted).toBe(false);
       expect(devices[0]!.trustedUntil).toBeNull();
     });
@@ -1374,14 +1441,15 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
         sessionId: SESSION,
         deviceHash: "hash1",
       });
-      const [device] = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices: found } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const device = found[0];
 
       await asUser(t, "user_alice").mutation(api.stepUp.renameDevice, {
         deviceId: device!.id,
         name: "My laptop",
       });
       const renamed = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
-      expect(renamed[0]!.name).toBe("My laptop");
+      expect(renamed.devices[0]!.name).toBe("My laptop");
 
       await expect(
         asUser(t, "user_mallory").mutation(api.stepUp.renameDevice, {
@@ -1400,14 +1468,51 @@ describe("Phase 7 of docs/future-features/21_auth-consolidation.md: area re-veri
         sessionId: SESSION,
         deviceHash: "hash1",
       });
-      const [device] = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices: found } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
 
       await asUser(t, "user_alice").mutation(api.stepUp.revokeDeviceTrust, {
-        deviceId: device!.id,
+        deviceId: found[0]!.id,
       });
 
-      const devices = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
       expect(devices).toHaveLength(0);
+    });
+
+    test("forgetUntrustedDevices removes only devices that aren't currently trusted", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+      // A trusted device.
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash: "hash-trusted",
+        browser: "Chrome",
+        os: "macOS",
+      });
+      // Two stale ones, opted out so they never get a trustedUntil.
+      await asUser(t, "user_alice").mutation(api.stepUp.setSecurityPreference, {
+        deviceTrackingOptOut: true,
+      });
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: "sess_b",
+        deviceHash: "hash-stale-1",
+      });
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: "sess_c",
+        deviceHash: "hash-stale-2",
+      });
+
+      const result = await asUser(t, "user_alice").mutation(api.stepUp.forgetUntrustedDevices, {});
+      expect(result.removed).toBe(2);
+
+      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(devices).toHaveLength(1);
+      expect(devices[0]!.trusted).toBe(true);
     });
   });
 
