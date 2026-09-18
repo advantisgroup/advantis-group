@@ -1,7 +1,7 @@
 import { mutation, query } from "../functions";
 import { ConvexError, v } from "convex/values";
 
-import { DEFAULT_THRESHOLDS } from "./settings";
+import { DEFAULT_THRESHOLDS } from "./lib/thresholds";
 import { requireManager, requireUser } from "../lib/auth";
 
 const severityValidator = v.union(

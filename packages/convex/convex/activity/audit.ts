@@ -1,52 +1,8 @@
 import { v } from "convex/values";
 
 import { query } from "../functions";
-import type { Id } from "../_generated/dataModel";
-import type { MutationCtx } from "../_generated/server";
 import { requireManager } from "../lib/auth";
-import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { displayName } from "../lib/users";
-
-/**
- * Append an entry to the privileged-action audit log. Called from every admin
- * mutation that mutates devices/people/settings so managers can review who did
- * what. Append-only.
- */
-type ActivityAuditAction =
-  | "settings.config"
-  | "settings.update"
-  | "person.create"
-  | "person.update"
-  | "person.remove"
-  | "event.resolve"
-  | "device.approve"
-  | "device.disable"
-  | "device.remove"
-  | "device.link"
-  | "maintenance.quarantineOutOfHours"
-  | "maintenance.pruneNow";
-
-export async function writeAudit(
-  ctx: MutationCtx,
-  actorUserId: Id<"users">,
-  action: ActivityAuditAction,
-  target?: string,
-): Promise<void> {
-  const at = Date.now();
-  await ctx.db.insert("activityAuditLog", {
-    actorUserId,
-    action,
-    target,
-    at,
-  });
-  await recordUnifiedAudit(ctx, {
-    domain: "activity",
-    actorUserId,
-    action,
-    target,
-    at,
-  });
-}
 
 /** Audit log, newest first. Manager+. */
 export const list = query({

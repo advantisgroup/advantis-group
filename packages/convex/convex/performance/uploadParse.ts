@@ -48,7 +48,7 @@ import {
 } from "./lib/types";
 import { normalizeZipLocalHeaders } from "./lib/xlsxZip";
 import { toISODate, todayUTC } from "./lib/workdays";
-import { parseAggregatedTemplate } from "./import";
+import { parseAggregatedTemplate } from "./lib/aggregatedTemplate";
 
 // Safely under Convex's 8192-element array-argument limit, with headroom
 // for the rest of each row's payload size.

@@ -4,7 +4,7 @@ import { type Doc } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { roleValidator } from "../schema";
-import { clearVaultPasswordForUser } from "../hr/vault";
+import { clearVaultPasswordForUser } from "../hr/lib/vault";
 import {
   effectiveCustomRoleIds,
   effectiveRole,

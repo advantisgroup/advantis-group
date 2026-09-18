@@ -1,7 +1,7 @@
 import { mutation, query } from "../functions";
 import { v } from "convex/values";
 
-import { requireAcademyAdmin } from "./settings";
+import { requireAcademyAdmin } from "./lib/auth";
 import { notifyUsers } from "../lib/notify";
 
 function isFinished(raw: string | undefined): boolean {

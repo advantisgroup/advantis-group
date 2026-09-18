@@ -13,7 +13,7 @@ import {
   personName,
   sharedWith,
   versionToUse,
-} from "./drafts";
+} from "./lib/drafts";
 
 /**
  * Sharing one version of a draft with chosen colleagues, for feedback.

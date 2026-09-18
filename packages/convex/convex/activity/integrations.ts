@@ -6,8 +6,8 @@ import type { ActionCtx } from "../_generated/server";
 import { api } from "../_generated/api";
 import { requireCapabilityForAction } from "../lib/auth";
 import { signalSecret } from "./lib/integrationsShared";
-import { pollGenesys } from "./genesys";
-import { pollClockodo } from "./clockodo";
+import { pollGenesys } from "./lib/genesys";
+import { pollClockodo } from "./lib/clockodo";
 
 /**
  * Scheduled poll orchestrator. The per-source HTTP clients live in `genesys.ts`

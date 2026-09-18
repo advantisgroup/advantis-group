@@ -3,7 +3,7 @@ import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { type Doc } from "../_generated/dataModel";
-import { requireAcademyAdmin } from "./settings";
+import { requireAcademyAdmin } from "./lib/auth";
 import { createNotification } from "../lib/notify";
 
 function generateCode(): string {

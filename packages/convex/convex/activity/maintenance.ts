@@ -3,8 +3,8 @@ import { v } from "convex/values";
 
 import type { MutationCtx } from "../_generated/server";
 import { requireAdmin } from "../lib/auth";
-import { writeAudit } from "./audit";
-import { readConfig } from "./settings";
+import { writeAudit } from "./lib/audit";
+import { readConfig } from "./lib/settings";
 import { isWithinBusinessHours, WORK_EVIDENCE_STATES } from "./lib/businessHours";
 import type { EmployeeState } from "./lib/state";
 

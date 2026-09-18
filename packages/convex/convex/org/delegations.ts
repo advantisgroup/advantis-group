@@ -1,28 +1,12 @@
 import { mutation, query } from "../functions";
 import { ConvexError, v } from "convex/values";
 
-import { type Id } from "../_generated/dataModel";
-import { type QueryCtx } from "../_generated/server";
 import { isOwnerOrAdmin, requireCapability, requireUser } from "../lib/auth";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { displayName } from "../lib/users";
 
 const scopeValidator = v.literal("absence_approvals");
 const MAX_DURATION_MS = 90 * 24 * 60 * 60 * 1000;
-
-export async function hasActiveAbsenceApprovalDelegation(
-  ctx: QueryCtx,
-  userId: Id<"users">,
-  now = Date.now(),
-) {
-  const rows = await ctx.db
-    .query("approvalDelegations")
-    .withIndex("by_delegate_and_endsAt", (q) => q.eq("delegateUserId", userId).gt("endsAt", now))
-    .take(20);
-  return rows.some(
-    (row) => row.scope === "absence_approvals" && !row.revokedAt && row.startsAt <= now,
-  );
-}
 
 export const mine = query({
   args: {},

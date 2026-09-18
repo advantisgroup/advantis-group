@@ -2,9 +2,9 @@ import { gatedMutation, mutation, query } from "../functions";
 import { v } from "convex/values";
 
 import { requireUser, requireManager, requireAdmin } from "../lib/auth";
-import { writeAudit } from "./audit";
+import { writeAudit } from "./lib/audit";
 import { appError } from "../lib/errors";
-import { assertSignalSecret, issueDeviceToken, invalidateDeviceToken } from "./deviceAuth";
+import { assertSignalSecret, issueDeviceToken, invalidateDeviceToken } from "./lib/deviceAuth";
 import { hashNonce, safeEqual } from "./lib/crypto";
 
 /** All devices with their linked person's name (if any). Any signed-in user. */

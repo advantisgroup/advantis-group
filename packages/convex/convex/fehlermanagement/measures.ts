@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Id } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
-import { DEFAULT_THRESHOLDS } from "./settings";
+import { DEFAULT_THRESHOLDS } from "./lib/thresholds";
 import { requireManager, requireUser } from "../lib/auth";
 
 const phaseValidator = v.union(

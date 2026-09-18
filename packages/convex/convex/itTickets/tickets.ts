@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
-import { autoLockThreadOnTicketClosed } from "./threads";
+import { autoLockThreadOnTicketClosed } from "./lib/threads";
 import { requireManager, requireUser } from "../lib/auth";
 import { displayName } from "../lib/users";
 

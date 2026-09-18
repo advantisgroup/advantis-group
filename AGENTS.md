@@ -201,7 +201,7 @@ right now" state, combined from three independent sources:
    `employeeId`, so it cannot call the secret-guarded `pushSignal` mutation
    directly. `ingest.ts` resolves `deviceId → devices.personId → people.employeeId`
    itself and feeds the workstation signal into the fused-state cache via
-   `applyStateSignal` (`convex/activity/state.ts`). If you touch device
+   `applyStateSignal` (`convex/activity/lib/signals.ts`). If you touch device
    linking or the ingest path, keep that resolution intact or the
    "Workstation" row on the dashboard silently goes blank again.
 2. **Genesys** — telephony routing status/presence, polled + webhook-relayed

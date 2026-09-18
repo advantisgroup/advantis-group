@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import { requireCapability, requireUser } from "../lib/auth";
 import { toClockodoIdString } from "../lib/clockodoId";
 import { appError } from "../lib/errors";
-import { writeIntegrationsAudit } from "./audit";
+import { writeIntegrationsAudit } from "./lib/audit";
 
 /**
  * Single write path for linking an intranet employee to a Clockodo user id.

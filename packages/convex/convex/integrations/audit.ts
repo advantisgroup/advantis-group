@@ -1,47 +1,9 @@
 import { v } from "convex/values";
 
-import { type Id } from "../_generated/dataModel";
 import { internalMutation, query } from "../functions";
-import { type MutationCtx } from "../_generated/server";
 import { requireCapability } from "../lib/auth";
-import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { batchUserSummaries } from "../lib/users";
-
-type Integration = "clockodo";
-type IntegrationsAuditAction =
-  | "clockodo.link"
-  | "clockodo.unlink"
-  | "clockodo.updateUser"
-  | "clockodo.setTargetHours"
-  | "clockodo.setVacation";
-
-export async function writeIntegrationsAudit(
-  ctx: MutationCtx,
-  actorUserId: Id<"users">,
-  integration: Integration,
-  action: IntegrationsAuditAction,
-  target?: string,
-  detail?: string,
-): Promise<void> {
-  const at = Date.now();
-  await ctx.db.insert("integrationsAuditLog", {
-    actorUserId,
-    integration,
-    action,
-    target,
-    detail,
-    at,
-  });
-  await recordUnifiedAudit(ctx, {
-    domain: "integrations",
-    actorUserId,
-    integration,
-    action,
-    target,
-    detail,
-    at,
-  });
-}
+import { writeIntegrationsAudit } from "./lib/audit";
 
 /**
  * Actions (Clockodo's user-management calls in particular) have no

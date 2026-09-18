@@ -2,62 +2,20 @@ import { action, internalMutation, internalQuery, mutation, query } from "../fun
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
-import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { requireUser, requireManager, requireAdmin } from "../lib/auth";
 import { requireAdminForAction } from "../lib/auth";
-import { writeAudit } from "./audit";
+import { writeAudit } from "./lib/audit";
 import { hashPassword } from "./lib/crypto";
 import { appError } from "../lib/errors";
+import { type AppConfig, CONFIG_KEYS, readConfig } from "./lib/settings";
 
 const DEBUG_PASSWORD_KEY = "debugToolPasswordHash";
-
-/**
- * Operational configuration, persisted as individual `activitySettings` rows.
- * `readConfig` merges stored overrides onto the defaults so every consumer
- * reads one coherent shape.
- */
-const CONFIG_KEYS = {
-  inactivityThresholdSeconds: "config.inactivityThresholdSeconds",
-  offlineThresholdSeconds: "config.offlineThresholdSeconds",
-  retentionDays: "config.retentionDays",
-} as const;
-
-export interface AppConfig {
-  inactivityThresholdSeconds: number;
-  offlineThresholdSeconds: number;
-  retentionDays: number;
-}
-
-export const CONFIG_DEFAULTS: AppConfig = {
-  inactivityThresholdSeconds: 300,
-  // Must stay above the desktop agent's keepalive interval (180s, see
-  // tracker.rs in ActivityTrack) with margin, or "online" flickers offline
-  // between keepalives. Kept equal to MAX_ATTRIBUTION_MS in ingest.ts.
-  offlineThresholdSeconds: 360,
-  retentionDays: 90,
-};
 
 const CONFIG_BOUNDS: Record<keyof AppConfig, { min: number; max: number }> = {
   inactivityThresholdSeconds: { min: 30, max: 7200 },
   offlineThresholdSeconds: { min: 30, max: 3600 },
   retentionDays: { min: 1, max: 3650 },
 };
-
-/** Read the merged operational config (defaults + any stored overrides). */
-export async function readConfig(ctx: QueryCtx | MutationCtx): Promise<AppConfig> {
-  const out: AppConfig = { ...CONFIG_DEFAULTS };
-  for (const [field, key] of Object.entries(CONFIG_KEYS) as [keyof AppConfig, string][]) {
-    const row = await ctx.db
-      .query("activitySettings")
-      .withIndex("by_key", (q) => q.eq("key", key))
-      .unique();
-    if (row) {
-      const n = Number(row.value);
-      if (Number.isFinite(n)) out[field] = n;
-    }
-  }
-  return out;
-}
 
 /** Reactive read of the operational config for the Settings form. */
 export const getConfig = query({

@@ -2,7 +2,7 @@ import { internalMutation, mutation, query } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { requireCapability } from "../lib/auth";
-import { ensureShareCode } from "./sharing";
+import { ensureShareCode } from "./lib/sharing";
 
 const languageValidator = v.union(v.literal("de"), v.literal("en"));
 

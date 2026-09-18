@@ -3,9 +3,9 @@ import { v } from "convex/values";
 import type { MutationCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
 import { gatedInternalMutation } from "../functions";
-import { readConfig } from "./settings";
-import { logEvent } from "./events";
-import { applyStateSignal } from "./state";
+import { readConfig } from "./lib/settings";
+import { logEvent } from "./lib/events";
+import { applyStateSignal } from "./lib/signals";
 
 /**
  * Server-side persistence for agent samples. The ONLY place samples become

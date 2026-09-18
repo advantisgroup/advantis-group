@@ -9,7 +9,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test, vi } from "vitest";
 
 import { api } from "./_generated/api";
-import { versionsToDrop } from "./drafts/drafts";
+import { versionsToDrop } from "./drafts/lib/drafts";
 import schema from "./schema";
 import { modules } from "./test.setup";
 

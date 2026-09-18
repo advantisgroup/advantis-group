@@ -1,19 +1,8 @@
 import { mutation, query } from "../functions";
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 
-import { type Doc } from "../_generated/dataModel";
-import { type MutationCtx, type QueryCtx } from "../_generated/server";
-import { effectiveRole, requireUser } from "../lib/auth";
-
-const DEFAULT_PIN = "1234";
-
-async function resolveCurrentPin(ctx: QueryCtx | MutationCtx, academyId: string): Promise<string> {
-  const row = await ctx.db
-    .query("academySettings")
-    .withIndex("by_academyId", (q) => q.eq("academyId", academyId))
-    .unique();
-  return row?.pin ?? DEFAULT_PIN;
-}
+import { requireUser } from "../lib/auth";
+import { requireAcademyAdmin, resolveCurrentPin } from "./lib/auth";
 
 /** Whether `pin` unlocks the academy's Trainer area — same client-side trust
  * model as the ported tool (knowing the PIN is the whole gate), except the
@@ -26,30 +15,6 @@ export const checkPin = query({
     return current === pin.trim();
   },
 });
-
-/**
- * Gate for every Trainer-area mutation: a real intranet admin bypasses the
- * PIN entirely (same rule the client's `AdminLogin`/`admin/layout` already
- * apply); everyone else must supply the academy's current PIN. Without this,
- * the PIN was only ever checked client-side (via `checkPin`) — any signed-in
- * employee could call the mutations below directly and skip it.
- */
-export async function requireAcademyAdmin(
-  ctx: QueryCtx | MutationCtx,
-  academyId: string,
-  pin: string,
-): Promise<Doc<"users">> {
-  const user = await requireUser(ctx);
-  if (effectiveRole(user) === "admin") return user;
-  const current = await resolveCurrentPin(ctx, academyId);
-  if (current !== pin.trim()) {
-    throw new ConvexError({
-      code: "forbidden",
-      message: "Falsche PIN.",
-    });
-  }
-  return user;
-}
 
 export const setPin = mutation({
   args: { academyId: v.string(), authPin: v.string(), newPin: v.string() },

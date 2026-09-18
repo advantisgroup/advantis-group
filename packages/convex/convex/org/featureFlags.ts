@@ -10,7 +10,7 @@ import {
   getFlagRow,
   isFeatureEnabled,
 } from "../lib/featureFlags";
-import { appendTimeline, insertUpdate } from "../updates/updates";
+import { appendTimeline, insertUpdate } from "../updates/lib/updates";
 
 /** Actions can't touch `ctx.db` directly — this is what `gatedAction`/`gatedInternalAction` call via `ctx.runQuery`. */
 export const isEnabledInternal = internalQuery({

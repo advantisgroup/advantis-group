@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../functions";
 import type { QueryCtx } from "../_generated/server";
-import { readConfig } from "../activity/settings";
+import { readConfig } from "../activity/lib/settings";
 import { effectiveRole, hasCapability, requireManager } from "../lib/auth";
 import { displayName } from "../lib/users";
 

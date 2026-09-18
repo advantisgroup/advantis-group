@@ -116,12 +116,11 @@ phase that moves them.
   the `api.users.me` round-trips; `appError` moved to `lib/errors.ts`;
   shared `test.setup.ts`; every feature in the table above moved, one commit
   each, with shims at the 74 old paths.
-- **Next (2b): helpers out of function modules.** 30 imports still reach
-  into another function module for a helper — e.g. `activity/settings.ts`'s
-  `readConfig`, `activity/audit.ts`'s `writeAudit`, `academy/settings.ts`'s
-  `requireAcademyAdmin`, `updates/updates.ts`'s `insertUpdate`,
-  `hr/vault.ts`'s `clearVaultPasswordForUser`. Each moves to its feature's
-  `lib/`. No `api.*` change.
+- **2026-09-18 — phase 2b done.** Every helper one function module imported
+  from another now lives in its feature's `lib/` (19 new `lib` files, e.g.
+  `activity/lib/signals.ts` for `applyStateSignal`, `activity/lib/settings.ts`,
+  `updates/lib/updates.ts`, `performance/lib/reports.ts`). No function module
+  imports from another function module any more.
 - **Shim removal (phase 3): not before 2026-09-25**, and only once no
   scheduled job targets an old path (check the dashboard's scheduled
   functions for `updates:publishScheduled` first — it can sit for days).

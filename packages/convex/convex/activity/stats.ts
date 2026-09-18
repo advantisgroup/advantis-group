@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { query } from "../functions";
 import type { QueryCtx } from "../_generated/server";
 import { requireCapability } from "../lib/auth";
-import { readConfig } from "./settings";
+import { readConfig } from "./lib/settings";
 
 /**
  * Read models for the dashboard. `teamOverview` exposes org-wide presence

@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { getCurrentUser, hasApplicantAccess, requireUser, requireVaultUnlocked } from "./lib/auth";
+import { type QueryCtx } from "./_generated/server";
 
 /**
  * Issue a short-lived upload URL for chat attachments, avatars and
@@ -33,7 +34,7 @@ export const apiGenerateUploadUrl = serverMutation({
 /** Shared by `getUrl`/`getUrls`: vault-gate a storage id that's an Applicant
  *  Management document, and pass everything else through untouched. */
 async function resolveGatedUrl(
-  ctx: import("./_generated/server").QueryCtx,
+  ctx: QueryCtx,
   user: Doc<"users">,
   storageId: Id<"_storage">,
 ): Promise<string | null> {
@@ -121,7 +122,7 @@ function userCanViewAnnouncement(
 }
 
 async function isConversationMember(
-  ctx: { db: import("./_generated/server").QueryCtx["db"] },
+  ctx: { db: QueryCtx["db"] },
   conversationId: Id<"conversations">,
   userId: Id<"users">,
 ): Promise<boolean> {

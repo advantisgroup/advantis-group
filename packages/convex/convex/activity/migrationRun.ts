@@ -5,7 +5,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../functions";
 import type { FunctionReference } from "convex/server";
-import { MIGRATION_TABLES, type MigrationTable } from "./migration";
+import { MIGRATION_TABLES, type MigrationTable } from "./lib/migration";
 
 /**
  * The resumable migration worker. Reads the OLD ActivityTrack deployment

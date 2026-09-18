@@ -2,13 +2,7 @@ import { mutation, query } from "../functions";
 import { v } from "convex/values";
 
 import { requireManager, requireUser } from "../lib/auth";
-
-const DEFAULTS = {
-  targetResponseDays: 3,
-  warnResponseDays: 7,
-  defaultDueDays: 14,
-  defaultMeasureDueDays: 7,
-};
+import { DEFAULTS } from "./lib/thresholds";
 
 /** Singleton Stammdaten thresholds — defaults when no row has been saved yet. */
 export const get = query({
@@ -46,5 +40,3 @@ export const update = mutation({
     return { ok: true };
   },
 });
-
-export const DEFAULT_THRESHOLDS = DEFAULTS;

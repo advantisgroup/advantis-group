@@ -7,7 +7,7 @@
 import { v } from "convex/values";
 
 import { serverQuery } from "../functions";
-import { teamTotals } from "./queries";
+import { teamTotals } from "./lib/reports";
 
 export interface ExportRow {
   name: string;
