@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo, useState } from "react";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -70,6 +70,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { copyPanelLink, usePanelParam } from "@/hooks/use-panel-param";
 import {
   dateInputToMs,
   MEASURE_PHASES,
@@ -117,7 +118,6 @@ function useDue() {
 
 function MeasuresContent() {
   const t = useTranslations("ErrorManagement");
-  const router = useRouter();
   const params = useSearchParams();
   const measures = useQuery(api.errorMeasures.list, {});
   const reports = useQuery(api.errorReports.list) ?? EMPTY_REPORTS;
@@ -132,7 +132,7 @@ function MeasuresContent() {
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [search, setSearch] = useState("");
 
-  const panelId = params.get("open");
+  const { openId: panelId, openPanel, closePanel } = usePanelParam("/fehlermanagement/measures");
   const all = useMemo(() => measures ?? [], [measures]);
   const reportById = useMemo(() => new Map(reports.map((r) => [String(r._id), r])), [reports]);
   const now = Date.now();
@@ -177,14 +177,6 @@ function MeasuresContent() {
     setOwners([]);
     setOverdueOnly(false);
     setSearch("");
-  }
-
-  function openPanel(id: string) {
-    router.replace(`/fehlermanagement/measures?open=${id}`, { scroll: false });
-  }
-
-  function closePanel() {
-    router.replace("/fehlermanagement/measures", { scroll: false });
   }
 
   return (
@@ -578,9 +570,9 @@ function MeasurePanelHeader({
   }
 
   function copyLink() {
-    void navigator.clipboard
-      .writeText(`${window.location.origin}/fehlermanagement/measures?open=${measure._id}`)
-      .then(() => toast.success(t("linkCopied")));
+    void copyPanelLink("/fehlermanagement/measures", measure._id).then(() =>
+      toast.success(t("linkCopied")),
+    );
   }
 
   return (

@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo, useState } from "react";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -60,6 +60,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { copyPanelLink, usePanelParam } from "@/hooks/use-panel-param";
 import {
   CUSTOMER_FEEDBACKS,
   dateInputToMs,
@@ -120,7 +121,6 @@ function notInformed(report: Report, settings: Settings | undefined, now: number
 
 function ErrorReportsContent() {
   const t = useTranslations("ErrorManagement");
-  const router = useRouter();
   const params = useSearchParams();
   const reports = useQuery(api.errorReports.list);
   const settings = useQuery(api.errorSettings.get);
@@ -141,7 +141,7 @@ function ErrorReportsContent() {
   const [search, setSearch] = useState("");
   const [newOpen, setNewOpen] = useState(() => params.get("new") === "1");
 
-  const panelId = params.get("open");
+  const { openId: panelId, openPanel, closePanel } = usePanelParam("/fehlermanagement");
   const all = useMemo(() => reports ?? [], [reports]);
   const now = Date.now();
   const query = search.trim().toLowerCase();
@@ -183,14 +183,6 @@ function ErrorReportsContent() {
     setOverdueOnly(false);
     setClosedThisMonth(false);
     setSearch("");
-  }
-
-  function openPanel(id: string) {
-    router.replace(`/fehlermanagement?open=${id}`, { scroll: false });
-  }
-
-  function closePanel() {
-    router.replace("/fehlermanagement", { scroll: false });
   }
 
   return (
@@ -566,9 +558,7 @@ function ErrorReportPanelHeader({ report, onDeleted }: { report: Report; onDelet
   }
 
   function copyLink() {
-    void navigator.clipboard
-      .writeText(`${window.location.origin}/fehlermanagement?open=${report._id}`)
-      .then(() => toast.success(t("linkCopied")));
+    void copyPanelLink("/fehlermanagement", report._id).then(() => toast.success(t("linkCopied")));
   }
 
   return (

@@ -77,6 +77,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { usePanelParam } from "@/hooks/use-panel-param";
 import { isoToday } from "@/lib/absences";
 import { formatIsoDate, initials } from "@/lib/format";
 
@@ -253,7 +254,7 @@ function ItTicketsPageContent() {
   const selectedTicketId = params.get("ticket") as Id<"itTickets"> | null;
   // An open ticket is a full-height workspace; the list is a scrolling page.
   useFillPage(!!selectedTicketId);
-  const panelTicketId = params.get("open");
+  const { openId: panelTicketId, openPanel, closePanel } = usePanelParam("/it-tickets");
   const openNewFromUrl = !selectedTicketId && params.get("new") === "1";
   const categoryNames = useMemo(() => (categories ?? []).map((c) => c.name), [categories]);
 
@@ -346,14 +347,6 @@ function ItTicketsPageContent() {
   function openEdit(ticket: Ticket) {
     setEditingTicket(ticket);
     setTicketDialogOpen(true);
-  }
-
-  function openPanel(ticketId: Id<"itTickets">) {
-    router.replace(`/it-tickets?open=${ticketId}`, { scroll: false });
-  }
-
-  function closePanel() {
-    router.replace("/it-tickets", { scroll: false });
   }
 
   async function deleteTicket(ticket: Ticket) {

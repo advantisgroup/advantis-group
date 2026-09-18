@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/side-panel";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { copyPanelLink } from "@/hooks/use-panel-param";
 import { formatDateTime } from "@/lib/format";
 import { formatFileSize } from "@/lib/upload";
 
@@ -118,9 +119,7 @@ function SuggestionPanelHeader({
   }
 
   function copyLink() {
-    void navigator.clipboard
-      .writeText(`${window.location.origin}/suggestions?open=${suggestion._id}`)
-      .then(() => toast.success(t("linkCopied")));
+    void copyPanelLink("/suggestions", suggestion._id).then(() => toast.success(t("linkCopied")));
   }
 
   const chip = (

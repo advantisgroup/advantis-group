@@ -39,6 +39,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { usePanelParam } from "@/hooks/use-panel-param";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -74,7 +75,7 @@ function SuggestionsPageContent() {
   const [mostBacked, setMostBacked] = useState(false);
 
   const openNewFromUrl = params.get("new") === "1";
-  const panelId = params.get("open");
+  const { openId: panelId, openPanel, closePanel } = usePanelParam("/suggestions");
   const currentMonth = monthKey(Date.now());
 
   useEffect(() => {
@@ -138,14 +139,6 @@ function SuggestionsPageContent() {
     setMonthFilter([]);
     setImplementedOnly(false);
     setSearch("");
-  }
-
-  function openPanel(id: string) {
-    router.replace(`/suggestions?open=${id}`, { scroll: false });
-  }
-
-  function closePanel() {
-    router.replace("/suggestions", { scroll: false });
   }
 
   async function onDelete(suggestion: SuggestionListItem) {

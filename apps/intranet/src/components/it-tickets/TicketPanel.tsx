@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/side-panel";
 import { TimelineOrder } from "@/components/ui/timeline";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { copyPanelLink } from "@/hooks/use-panel-param";
 import { formatIsoDate, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -157,9 +158,7 @@ function TicketPanelHeader({
   }
 
   function copyLink() {
-    void navigator.clipboard
-      .writeText(`${window.location.origin}/it-tickets?open=${ticket._id}`)
-      .then(() => toast.success(t("linkCopied")));
+    void copyPanelLink("/it-tickets", ticket._id).then(() => toast.success(t("linkCopied")));
   }
 
   return (
