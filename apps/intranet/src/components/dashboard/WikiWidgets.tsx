@@ -31,7 +31,7 @@ interface LatestWikiEntry {
  * legacy pages, merged), pinned ones first — shared by the dashboard
  * section and its "should we even show that section" check. */
 export function useLatestWikiPages(): LatestWikiEntry[] | undefined {
-  const entries = useQuery(api.wikiEntries.list);
+  const entries = useQuery(api.wiki.entries.list);
   const legacyPages = useQuery(api.guidebooks.pages.list);
   const readSlugs = useQuery(api.guidebooks.reads.listMine) ?? EMPTY_SLUGS;
 

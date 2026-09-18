@@ -151,7 +151,7 @@ export default function GuidebookPage() {
   const staticGuidebook = getGuidebook(params.slug);
   // Only look up wiki/legacy content when the slug isn't one of the
   // hardcoded registry ones — the static registry always wins on a collision.
-  const entry = useQuery(api.wikiEntries.get, staticGuidebook ? "skip" : { slug: params.slug });
+  const entry = useQuery(api.wiki.entries.get, staticGuidebook ? "skip" : { slug: params.slug });
   // A wiki entry with this slug supersedes any legacy page of the same slug
   // (post-migration) — only look up the legacy page once we know there's no
   // wiki entry.
@@ -166,7 +166,7 @@ export default function GuidebookPage() {
     api.guidebooks.attachments.list,
     entry ? { slug: entry.slug } : "skip",
   );
-  const removeEntry = useMutation(api.wikiEntries.remove);
+  const removeEntry = useMutation(api.wiki.entries.remove);
   const removePage = useMutation(api.guidebooks.pages.remove);
   const announceGuidebook = useMutation(api.announcements.announceGuidebook);
   const setPrefs = useMutation(api.userPreferences.setMine);

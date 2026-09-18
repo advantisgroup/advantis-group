@@ -103,7 +103,7 @@ export const wikiChatRoute = new Elysia()
       let title: string;
       let history: StoredMessage[];
       if (body.chatId) {
-        const chat = await convex.query(api.wikiChats.get, {
+        const chat = await convex.query(api.wiki.chats.get, {
           serverKey,
           clerkUserId,
           id: body.chatId,
@@ -114,7 +114,7 @@ export const wikiChatRoute = new Elysia()
         history = readMessages(chat.messages);
         if (message) {
           history = [...history, { role: "user", content: message }];
-          await convex.mutation(api.wikiChats.update, {
+          await convex.mutation(api.wiki.chats.update, {
             serverKey,
             clerkUserId,
             id: chatId,
@@ -125,7 +125,7 @@ export const wikiChatRoute = new Elysia()
         if (!message) throw Errors.badRequest("Empty message");
         title = deriveTitle(message);
         history = [{ role: "user", content: message }];
-        ({ id: chatId } = await convex.mutation(api.wikiChats.create, {
+        ({ id: chatId } = await convex.mutation(api.wiki.chats.create, {
           serverKey,
           clerkUserId,
           title: encrypt(title),
@@ -144,7 +144,7 @@ export const wikiChatRoute = new Elysia()
         },
         async (run) => {
           const question = asked.at(-1)?.content ?? "";
-          const entries = await convex.query(api.wikiEntries.apiSearchForAssistant, {
+          const entries = await convex.query(api.wiki.entries.apiSearchForAssistant, {
             serverKey,
             clerkUserId,
             question,
@@ -179,7 +179,7 @@ export const wikiChatRoute = new Elysia()
             { acceptTruncated: true },
           );
           run.phase("finishing");
-          const current = await convex.query(api.wikiChats.get, {
+          const current = await convex.query(api.wiki.chats.get, {
             serverKey,
             clerkUserId,
             id: chatId,
@@ -191,7 +191,7 @@ export const wikiChatRoute = new Elysia()
               { role: "assistant" as const, content: answer },
               ...stored.slice(asked.length),
             ];
-            await convex.mutation(api.wikiChats.update, {
+            await convex.mutation(api.wiki.chats.update, {
               serverKey,
               clerkUserId,
               id: chatId,
@@ -214,7 +214,7 @@ export const wikiChatRoute = new Elysia()
   // --- Encrypted chat history (per user) ---------------------------------
   .get("/wiki-chat/chats", async ({ request }) => {
     const { clerkUserId } = await requireAuth(request);
-    const rows = await getConvex().query(api.wikiChats.list, {
+    const rows = await getConvex().query(api.wiki.chats.list, {
       serverKey: getConvexServerKey(),
       clerkUserId,
     });
@@ -238,7 +238,7 @@ export const wikiChatRoute = new Elysia()
     "/wiki-chat/chats/:id",
     async ({ request, params, body }) => {
       const { clerkUserId } = await requireAuth(request);
-      await getConvex().mutation(api.wikiChats.update, {
+      await getConvex().mutation(api.wiki.chats.update, {
         serverKey: getConvexServerKey(),
         clerkUserId,
         id: params.id as Id<"wikiChats">,
@@ -250,7 +250,7 @@ export const wikiChatRoute = new Elysia()
   )
   .delete("/wiki-chat/chats/:id", async ({ request, params }) => {
     const { clerkUserId } = await requireAuth(request);
-    await getConvex().mutation(api.wikiChats.remove, {
+    await getConvex().mutation(api.wiki.chats.remove, {
       serverKey: getConvexServerKey(),
       clerkUserId,
       id: params.id as Id<"wikiChats">,

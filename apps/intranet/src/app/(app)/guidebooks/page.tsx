@@ -62,7 +62,7 @@ import {
 } from "@/lib/wiki";
 import { cn } from "@/lib/utils";
 
-const EMPTY_CATEGORIES: NonNullable<ReturnType<typeof useQuery<typeof api.wikiCategories.list>>> =
+const EMPTY_CATEGORIES: NonNullable<ReturnType<typeof useQuery<typeof api.wiki.categories.list>>> =
   [];
 
 /** Unified shape for both wiki-v2 entries and legacy (block-editor)
@@ -95,7 +95,7 @@ interface GridItem {
 const STALE_AFTER_MS = 180 * 24 * 60 * 60 * 1000;
 
 function useGridItems() {
-  const entries = useQuery(api.wikiEntries.list);
+  const entries = useQuery(api.wiki.entries.list);
   const legacyPages = useQuery(api.guidebooks.pages.list);
   const highlightedSlugs = useQuery(api.guidebooks.highlights.list);
 
@@ -176,9 +176,9 @@ function EntryCard({
   const user = useCurrentUser();
   const handleError = useErrorHandler();
   const confirm = useConfirm();
-  const togglePin = useMutation(api.wikiEntries.togglePin);
+  const togglePin = useMutation(api.wiki.entries.togglePin);
   const toggleHighlight = useMutation(api.guidebooks.highlights.toggle);
-  const removeEntry = useMutation(api.wikiEntries.remove);
+  const removeEntry = useMutation(api.wiki.entries.remove);
   const removePage = useMutation(api.guidebooks.pages.remove);
   const color = item.archived ? "#77808A" : item.categoryColor;
   // Pinning is manager-curated (no ownership check, mirrors the server's
@@ -333,11 +333,11 @@ export default function GuidebooksPage() {
 
   const items = useGridItems();
   const users = useQuery(api.users.list, {}) ?? [];
-  const wikiCategoriesRaw = useQuery(api.wikiCategories.list);
+  const wikiCategoriesRaw = useQuery(api.wiki.categories.list);
   const wikiCategories = wikiCategoriesRaw ?? EMPTY_CATEGORIES;
-  const extend = useMutation(api.wikiEntries.update);
-  const setOwner = useMutation(api.wikiEntries.setOwner);
-  const ensureDefaultCategories = useMutation(api.wikiCategories.ensureDefaults);
+  const extend = useMutation(api.wiki.entries.update);
+  const setOwner = useMutation(api.wiki.entries.setOwner);
+  const ensureDefaultCategories = useMutation(api.wiki.categories.ensureDefaults);
 
   // Seed the prototype's default categories the first time anyone loads the
   // wiki with none yet — mirrors the original app's own lazy bootstrap

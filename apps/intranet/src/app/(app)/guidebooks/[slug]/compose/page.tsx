@@ -19,7 +19,7 @@ export default function ComposeWikiEntryPage() {
   const { slug } = useParams<{ slug: string }>();
   const user = useCurrentUser();
   const canManageWiki = useHasCapability("manage_guidebooks");
-  const entry = useQuery(api.wikiEntries.get, { slug });
+  const entry = useQuery(api.wiki.entries.get, { slug });
 
   if (entry === undefined) return null;
 

@@ -74,8 +74,8 @@ export function WikiFormatTrigger({
   const isMobile = useIsMobile();
   const handleError = useErrorHandler();
   const view = useWikiFormatRun(entryKey);
-  const savedDefault = useQuery(api.wikiFormatSettings.get) ?? "";
-  const saveDefault = useMutation(api.wikiFormatSettings.set);
+  const savedDefault = useQuery(api.wiki.formatSettings.get) ?? "";
+  const saveDefault = useMutation(api.wiki.formatSettings.set);
   const start = useStartFormat(entryKey, href);
 
   const [open, setOpen] = useState(false);
@@ -317,7 +317,7 @@ export function WikiFormatReview({
 }) {
   const t = useTranslations("Guidebooks");
   const view = useWikiFormatRun(entryKey);
-  const savedDefault = useQuery(api.wikiFormatSettings.get);
+  const savedDefault = useQuery(api.wiki.formatSettings.get);
   const start = useStartFormat(entryKey, href);
   const runId = view.run?._id ?? null;
 

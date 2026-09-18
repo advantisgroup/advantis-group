@@ -15,7 +15,7 @@ import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 export type WikiEntry = NonNullable<
-  ReturnType<typeof useQuery<typeof api.wikiEntries.list>>
+  ReturnType<typeof useQuery<typeof api.wiki.entries.list>>
 >[number];
 
 // --- Tag input ----------------------------------------------------------------
@@ -83,11 +83,11 @@ export function CategoryManagerDialog({
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
   const confirm = useConfirm();
-  const categories = useQuery(api.wikiCategories.list) ?? [];
-  const createCategory = useMutation(api.wikiCategories.create);
-  const renameCategory = useMutation(api.wikiCategories.rename);
-  const cycleColor = useMutation(api.wikiCategories.cycleColor);
-  const removeCategory = useMutation(api.wikiCategories.remove);
+  const categories = useQuery(api.wiki.categories.list) ?? [];
+  const createCategory = useMutation(api.wiki.categories.create);
+  const renameCategory = useMutation(api.wiki.categories.rename);
+  const cycleColor = useMutation(api.wiki.categories.cycleColor);
+  const removeCategory = useMutation(api.wiki.categories.remove);
   const [newName, setNewName] = useState("");
 
   async function onAdd() {
