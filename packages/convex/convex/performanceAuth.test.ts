@@ -5,13 +5,7 @@ import { api, internal } from "./_generated/api";
 import { hashPassword } from "./activity/lib/crypto";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
-
-const modules = Object.fromEntries(
-  Object.entries({
-    ...import.meta.glob("./**/*.ts"),
-    ...import.meta.glob("./**/*.js"),
-  }).filter(([path]) => !/\.(test|config)\.ts$/.test(path) && !path.endsWith(".d.ts")),
-) as Record<string, () => Promise<unknown>>;
+import { modules } from "./test.setup";
 
 function setup() {
   return convexTest(schema, modules);

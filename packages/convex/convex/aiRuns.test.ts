@@ -11,13 +11,7 @@ import { describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import { versionsToDrop } from "./drafts";
 import schema from "./schema";
-
-const modules = Object.fromEntries(
-  Object.entries({
-    ...import.meta.glob("./**/*.ts"),
-    ...import.meta.glob("./**/*.js"),
-  }).filter(([path]) => !/\.(test|config)\.ts$/.test(path) && !path.endsWith(".d.ts")),
-) as Record<string, () => Promise<unknown>>;
+import { modules } from "./test.setup";
 
 const serverKey = "test-server-key";
 

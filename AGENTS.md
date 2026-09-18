@@ -62,9 +62,10 @@ asserts on what landed in the database.
   narrow and a mismatch fails at the syscall layer with an unhelpful
   `Right-hand side of 'instanceof' is not an object`, not a version warning.
   If you bump `convex`, bump `convex-test` with it.
-- Test files live in `convex/` next to the functions so `import.meta.glob` can
-  build the module map convex-test needs. Anything named `*.test.ts` is
-  excluded from both that map and the Convex deploy bundle.
+- Test files live next to the functions they test and import the module map
+  from `convex/test.setup.ts`. Convex skips any file with more than one dot
+  in its name, so `*.test.ts` and `test.setup.ts` never reach the deploy
+  bundle (or that map).
 
 ## Previewing the marketing site locally (Clerk bypass)
 

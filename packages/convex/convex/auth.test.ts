@@ -21,18 +21,13 @@ import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
+import { modules } from "./test.setup";
 import { sha256hex } from "./activity/lib/crypto";
 
 // convex-test wants every function module plus `_generated`. The extglob
 // pattern from its docs (`!(*.*.*)`) silently misses `_generated/*.js` under
 // this Vite version, and a missing `_generated` is the one thing it can't
 // recover from — so glob broadly and drop the non-modules by hand.
-const modules = Object.fromEntries(
-  Object.entries({
-    ...import.meta.glob("./**/*.ts"),
-    ...import.meta.glob("./**/*.js"),
-  }).filter(([path]) => !/\.(test|config)\.ts$/.test(path) && !path.endsWith(".d.ts")),
-) as Record<string, () => Promise<unknown>>;
 
 const serverKey = "test-server-key";
 const SESSION = "sess_primary";

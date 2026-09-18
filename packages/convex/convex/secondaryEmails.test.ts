@@ -8,14 +8,8 @@ import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
+import { modules } from "./test.setup";
 import { sha256hex } from "./activity/lib/crypto";
-
-const modules = Object.fromEntries(
-  Object.entries({
-    ...import.meta.glob("./**/*.ts"),
-    ...import.meta.glob("./**/*.js"),
-  }).filter(([path]) => !/\.(test|config)\.ts$/.test(path) && !path.endsWith(".d.ts")),
-) as Record<string, () => Promise<unknown>>;
 
 const serverKey = "test-server-key";
 
