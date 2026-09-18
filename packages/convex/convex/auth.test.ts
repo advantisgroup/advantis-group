@@ -1469,6 +1469,109 @@ describe("Area re-verification", () => {
       expect(devices.every((d) => d.trusted)).toBe(true);
     });
 
+    test("a Clerk client stays one device when its IP or browser version changes", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+      const evaluate = (deviceHash: string, sessionId: string) =>
+        t.mutation(api.stepUp.apiEvaluateDevice, {
+          serverKey,
+          clerkUserId: "user_alice",
+          sessionId,
+          clerkClientId: "client_laptop",
+          deviceHash,
+        });
+
+      await evaluate("home-wifi-chrome-128", "sess_1");
+      expect(await evaluate("office-chrome-129", "sess_2")).toEqual({ newDevice: false });
+
+      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(devices).toHaveLength(1);
+    });
+
+    test("an older hash-only device is adopted by the first client that matches, keeping its trust", async () => {
+      const t = setup();
+      const userId = await seedUser(t, { clerkUserId: "user_alice" });
+      await t.run(async (ctx) => {
+        await ctx.db.insert("knownDevices", {
+          userId,
+          deviceHash: "other",
+          firstSeenAt: Date.now() - 30 * DAY,
+          lastSeenAt: Date.now() - 30 * DAY,
+        });
+        await ctx.db.insert("knownDevices", {
+          userId,
+          deviceHash: "laptop",
+          firstSeenAt: Date.now() - 30 * DAY,
+          lastSeenAt: Date.now() - DAY,
+          trustedUntil: Date.now() + 5 * DAY,
+        });
+      });
+
+      const result = await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        clerkClientId: "client_laptop",
+        deviceHash: "laptop",
+      });
+      expect(result.newDevice).toBe(false);
+      const adopted = await t.run(async (ctx) =>
+        ctx.db
+          .query("knownDevices")
+          .withIndex("by_user_client", (q) =>
+            q.eq("userId", userId).eq("clerkClientId", "client_laptop"),
+          )
+          .unique(),
+      );
+      expect(adopted?.deviceHash).toBe("laptop");
+    });
+
+    test("a second browser with the same IP and user-agent is still its own device", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+      const evaluate = (clerkClientId: string, sessionId: string) =>
+        t.mutation(api.stepUp.apiEvaluateDevice, {
+          serverKey,
+          clerkUserId: "user_alice",
+          sessionId,
+          clerkClientId,
+          deviceHash: "same-network-same-browser",
+        });
+
+      await evaluate("client_a", "sess_a");
+      expect(await evaluate("client_b", "sess_b")).toEqual({ newDevice: true });
+
+      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+      expect(devices).toHaveLength(2);
+    });
+
+    test("sessionDevices maps the caller's own sessions to their device, and nobody else's", async () => {
+      const t = setup();
+      await seedUser(t, { clerkUserId: "user_alice" });
+      await seedUser(t, { clerkUserId: "user_mallory" });
+      await t.mutation(api.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: "sess_laptop",
+        clerkClientId: "client_laptop",
+        deviceHash: "laptop",
+      });
+      const { devices } = await asUser(t, "user_alice").query(api.stepUp.trustedDevices, {});
+
+      const mine = await asUser(t, "user_alice").query(api.stepUp.sessionDevices, {
+        sessionIds: ["sess_laptop", "sess_unknown"],
+      });
+      expect(mine).toEqual([
+        { sessionId: "sess_laptop", deviceId: devices[0]!.id },
+        { sessionId: "sess_unknown", deviceId: null },
+      ]);
+
+      const theirs = await asUser(t, "user_mallory").query(api.stepUp.sessionDevices, {
+        sessionIds: ["sess_laptop"],
+      });
+      expect(theirs).toEqual([{ sessionId: "sess_laptop", deviceId: null }]);
+    });
+
     test("a device whose trust has lapsed asks for a check again", async () => {
       const t = setup();
       const userId = await seedUser(t, { clerkUserId: "user_alice" });

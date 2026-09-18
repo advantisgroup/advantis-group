@@ -12,13 +12,12 @@ import posthog from "posthog-js";
 import { Link } from "@/components/Link";
 import { TotpSettingsCard } from "@/components/mfa/TotpSettingsCard";
 import { PasskeySettingsCard } from "@/components/passkeys/PasskeySettingsCard";
-import { ActiveSessionsCard } from "@/components/security/ActiveSessionsCard";
+import { DevicesCard } from "@/components/security/DevicesCard";
 import { SecondaryEmailsCard } from "@/components/security/SecondaryEmailsCard";
 import { SecurityActivityCard } from "@/components/security/SecurityActivityCard";
 import { SecurityPosture } from "@/components/security/SecurityPosture";
 import { SecurityPreferencesCard } from "@/components/security/SecurityPreferencesCard";
 import { SecurityStateProvider } from "@/components/security/security-state";
-import { TrustedDevicesCard } from "@/components/security/TrustedDevicesCard";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -126,10 +125,9 @@ export default function SettingsAccountPage() {
           <SecurityPreferencesCard />
         </SecurityStateProvider>
 
-        {/* Outside the provider: both read from Clerk and Convex directly, not
-            from the credential state the cards above share. */}
-        <ActiveSessionsCard />
-        <TrustedDevicesCard />
+        {/* Outside the provider: reads Clerk and Convex directly, not the
+            credential state the cards above share. */}
+        <DevicesCard />
 
         <SecurityActivityCard />
 
