@@ -7,19 +7,12 @@ import { internal } from "./_generated/api";
 import { query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getUserByClerkId } from "./lib/auth";
 import { trackEvent } from "./lib/analytics";
+import { notifySecurityChange } from "./lib/stepUp";
 
 /**
- * Phase 2 of docs/future-features/21_auth-consolidation.md: an intranet
- * account proving ownership of an additional email address, so a secondary
- * area (Performance, HR) can be reached through either address once linked.
- * Same shape as `lib/stepUp.ts`'s email-code path — a 6-digit code, hashed,
- * short-lived, rate-limited — reused rather than reinvented, just proving a
- * *new* address instead of re-proving the account's existing one.
- *
- * Server-key-gated like every other credential-management function in this
- * codebase (`stepUp.ts`, `totp.ts`, `passkeys.ts`): the browser never calls
- * these directly — `apps/api`'s `/secondary-emails/*` routes resolve the
- * real Clerk session first and forward `clerkUserId` server-to-server.
+ * Extra addresses an intranet account has proven it owns, via the same
+ * 6-digit code flow as `lib/stepUp.ts`. Server-key-gated: only apps/api's
+ * `/secondary-emails/*` routes call these.
  */
 
 const CODE_TTL_MS = 10 * 60_000;
@@ -238,6 +231,14 @@ export const apiVerifyCode = mutation({
 
     await ctx.db.patch(row._id, { verifiedAt: Date.now() });
     await ctx.db.delete(challenge._id);
+    // A verified secondary address can auto-approve password resets for
+    // linked areas, so the account's own inbox hears about every new one.
+    await notifySecurityChange(
+      ctx,
+      user,
+      "An email address was added to your account",
+      `${email} can now be used for sign-in and password resets on your Advantis intranet account.`,
+    );
     await trackEvent(ctx, { event: "secondary_email_verified", distinctId: user.clerkUserId });
     return { ok: true };
   },

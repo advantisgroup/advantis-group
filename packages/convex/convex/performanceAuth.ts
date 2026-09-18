@@ -17,6 +17,7 @@ import {
   availableMethodsFor,
   getOrDefaultPolicy,
   isAreaTrusted,
+  isAreaVisitTrusted,
   isLegacyPasswordSunsetInForce,
   legacyPasswordSunsetDeadline,
 } from "./lib/stepUp";
@@ -299,10 +300,8 @@ export const setupSuperAdminAccount = action({
 export const createSession = internalMutation({
   args: {
     loginId: v.id("performanceLogins"),
-    // Phase 7 of docs/future-features/21_auth-consolidation.md — set only by
-    // `createSessionForLinkedAccount`, never a real password login. Lets
-    // `resolveActiveSession` keep re-checking the 14-day area-trust window
-    // for the life of the token instead of only at mint time.
+    // Minted from an intranet session rather than a password, so it keeps
+    // depending on area trust — see `resolveActiveSession`.
     viaClerk: v.optional(v.boolean()),
   },
   handler: async (ctx, { loginId, viaClerk }): Promise<{ token: string; expiresAt: number }> => {
@@ -369,12 +368,8 @@ export const login = action({
     const ok = await verifyPassword(password, loginRow.passwordHash);
     if (!ok) throw invalid();
 
-    // Phase 8 of docs/future-features/21_auth-consolidation.md: checked only
-    // once the password is already confirmed correct — checking it earlier
-    // would let a guesser learn "this account is linked and past its grace
-    // period" from the email alone, without ever knowing the real password.
-    // An unlinked login (no other way in) is never affected, whatever the
-    // policy says.
+    // Only checked after the password is right, so a guesser can't learn
+    // from the email alone that an account is linked.
     if (
       loginRow.linkedUserId &&
       (await ctx.runQuery(internal.performanceAuth.checkLegacyPasswordSunset, {}))
@@ -420,11 +415,8 @@ export const legacyPasswordSunsetNotice = query({
   },
 });
 
-/** The raw link lookup, with no Phase 7 trust check — `resolveClerkLinkedLogin`
- * below is what every actual access path uses; `validateSession` calls this
- * directly so it can tell "not linked at all" apart from "linked, but this
- * area's 14-day trust window has lapsed" and answer the frontend
- * accordingly instead of collapsing both into the same null. */
+/** The link lookup without the area-trust check — only `validateSession`
+ * uses it, to tell "not linked" apart from "linked but needs to re-verify". */
 async function resolveClerkLinkedLoginRaw(
   ctx: QueryCtx | MutationCtx,
 ): Promise<{ user: Doc<"users">; login: Doc<"performanceLogins"> } | null> {
@@ -443,10 +435,8 @@ async function resolveClerkLinkedLoginRaw(
  * Performance login (`performanceLogins.linkedUserId`, set via the
  * Benutzer page's "Intranet account" field), that login authenticates
  * them without a separate password. Never throws — just returns null when
- * there's no Clerk identity, no matching active login, or (Phase 7 of
- * docs/future-features/21_auth-consolidation.md) this area's 14-day
- * re-verification window has lapsed — callers fall through to "please sign
- * in"/"please re-verify" the same as an invalid password token.
+ * there's no Clerk identity, no matching active login, or the area's
+ * re-verification has lapsed.
  *
  * Generalized to any company's logins (not hardcoded to Advantis) — in
  * practice it only has eligible link targets for companies whose staff
@@ -494,17 +484,12 @@ export async function resolveActiveSession(
     if (session && session.expiresAt >= Date.now()) {
       const login = await ctx.db.get(session.loginId);
       if (login && login.active) {
-        // Phase 7: a promoted token (see `createSessionForLinkedAccount`)
-        // still rides on the caller's intranet trust, not a password — its
-        // own `expiresAt` (also 14 days, `SESSION_DURATION_MS`) runs on an
-        // independent clock from the area-trust window it stands in for, so
-        // without this re-check a token minted right after a step-up would
-        // keep working for its full lifetime even once that trust lapsed.
-        // A real password login's token has no `viaClerk` flag and skips
-        // this entirely — that trust is the password itself, not this.
+        // A promoted token's own expiry runs independently of area trust,
+        // so it has to stop working once that trust lapses.
         const stillTrusted =
           !session.viaClerk ||
-          (login.linkedUserId && (await isAreaTrusted(ctx, login.linkedUserId, "performance")));
+          (login.linkedUserId &&
+            (await isAreaVisitTrusted(ctx, login.linkedUserId, "performance")));
         if (stillTrusted) return { session, login };
       }
     }
@@ -657,12 +642,8 @@ export const validateSession = query({
   handler: async (ctx, { token }) => {
     const resolved = await resolveActiveSession(ctx, token);
     if (!resolved) {
-      // Phase 7 of docs/future-features/21_auth-consolidation.md: distinguish
-      // "not linked at all" (show the password form) from "linked, but this
-      // area's 14-day trust window lapsed" (show a step-up prompt instead —
-      // a password form for an account that may never have had a password
-      // is a dead end). `resolveActiveSession` already collapsed both into
-      // `null`; the raw lookup here is only to tell them apart for display.
+      // Linked but needing to re-verify gets a step-up prompt, not a
+      // password form the account may never have had.
       const raw = await resolveClerkLinkedLoginRaw(ctx);
       if (raw) {
         return {
@@ -785,14 +766,9 @@ export const getLoginLinkedTo = internalQuery({
       .first(),
 });
 
-/** Identity resolution only, never a grant (see
- * `docs/future-features/21_auth-consolidation.md`'s "Authentication vs.
- * authorization" note) — finds the intranet account a login's own email
- * would auto-link to, without touching `roleId`/permissions either way.
- * Only Advantis has intranet (Clerk) accounts at all (see
- * `listIntranetUsersForLink`), the candidate must be active, and it must not
- * already be claimed by a different login — any of those makes this a
- * no-match, left for an admin to resolve by hand instead of guessed at. */
+/** The intranet account a login's email would auto-link to. Identity only —
+ * never touches `roleId`. Anything ambiguous (not Advantis, inactive, already
+ * claimed) is left for an admin to link by hand. */
 async function findAutoLinkCandidate(
   ctx: QueryCtx,
   companyId: Id<"companies">,
@@ -824,11 +800,8 @@ export const findAutoLinkCandidateForCompany = internalQuery({
     await findAutoLinkCandidate(ctx, companyId, email),
 });
 
-/** Nightly reconciliation for logins created before this feature existed, or
- * whose matching intranet account showed up later — see Phase 1 of
- * `docs/future-features/21_auth-consolidation.md`. Scoped to Advantis (the
- * only company `findAutoLinkCandidate` can ever match) so this never scans
- * every company's logins for a match that can't exist. */
+/** Nightly: links logins whose intranet account showed up after they were
+ * created. Advantis only, the one company that has intranet accounts. */
 export const reconcileAutoLinks = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ linked: number }> => {
@@ -1155,13 +1128,8 @@ export const createLogin = action({
       if (conflict) throw alreadyLinked();
     }
 
-    // Auto-link only when the admin didn't already pick an account
-    // themselves — identity resolution, never a grant (see Phase 1 of
-    // docs/future-features/21_auth-consolidation.md). Resolved *before* the
-    // password check below (Phase 3): an auto-linkable account gets to skip
-    // the password requirement exactly like an admin-linked one, instead of
-    // forcing a password onto a login that will immediately go
-    // Clerk-authenticated anyway.
+    // Resolved before the password check: an auto-linked login doesn't
+    // need a password any more than an admin-linked one does.
     const autoLinkedUserId = linkedUserId
       ? null
       : await ctx.runQuery(internal.performanceAuth.findAutoLinkCandidateForCompany, {

@@ -511,34 +511,16 @@ export default defineSchema({
     passkeyPolicySetAt: v.number(),
     gracePeriodDays: v.number(),
     exemptUserIds: v.array(v.id("users")),
-    /** Phase 7 of docs/future-features/21_auth-consolidation.md: the org
-     * default for how long a password-less linked area (Performance, the HR
-     * vault) trusts a step-up before demanding a fresh one. Optional so an
-     * `authPolicy` row written before this field existed still reads as the
-     * documented 14-day default rather than 0 — see `lib/stepUp.ts`'s
-     * `AREA_REVERIFY_DEFAULT_DAYS`. */
+    // Optional so older rows read as the defaults in lib/stepUp.ts.
     areaReverifyDays: v.optional(v.number()),
-    /** Phase 8 of docs/future-features/21_auth-consolidation.md: an admin
-     * opt-in per area, not a default-on migration — turning it on starts
-     * that area's 30-day (or `legacyPasswordGraceDays`) clock from this
-     * moment, after which a linked account's own standalone password
-     * (`performanceLogins.passwordHash`) stops authenticating and it
-     * becomes linked-only. Never affects an *unlinked* login — one with no
-     * `linkedUserId` has no other way in, so its password never sunsets.
-     * `SetAt` absent/0 means "not started yet", same convention as
-     * `mfaPolicySetAt`/`passkeyPolicySetAt` before their first save. */
+    /** Turning a sunset on starts its grace clock (`SetAt`); once it runs
+     * out, the area's own password stops working for accounts that have
+     * another way in — a linked Performance login, a vault member with a
+     * passkey. */
     performanceLegacyPasswordSunsetEnabled: v.optional(v.boolean()),
     performanceLegacyPasswordSunsetSetAt: v.optional(v.number()),
-    /** Same shape, for the HR vault's own password
-     * (`applicantVaultPasswords.hash`) — only ever affects a member who has
-     * a passkey registered (Phase 4's alternative unlock), since that's the
-     * only account this could ever apply to without cutting off someone
-     * with no other way to unlock the vault. */
     applicantVaultLegacyPasswordSunsetEnabled: v.optional(v.boolean()),
     applicantVaultLegacyPasswordSunsetSetAt: v.optional(v.number()),
-    /** Shared by both areas above — optional so an existing row reads as
-     * the documented 30-day default; see `lib/stepUp.ts`'s
-     * `LEGACY_PASSWORD_GRACE_DEFAULT_DAYS`. */
     legacyPasswordGraceDays: v.optional(v.number()),
     updatedAt: v.number(),
     updatedByUserId: v.id("users"),
@@ -548,11 +530,7 @@ export default defineSchema({
   securityPreferences: defineTable({
     userId: v.id("users"),
     alwaysRequireMfaAtSignIn: v.boolean(),
-    /** Phase 7 of docs/future-features/21_auth-consolidation.md: declining
-     * device recognition outright. Not a degraded state — a device that's
-     * never tracked is simply never "known", which the existing new-device
-     * risk signal and the area-trust check below already treat as always
-     * untrusted. Costs convenience (near-universal step-up), not security. */
+    /** No devices are stored, and every sign-in counts as untrusted. */
     deviceTrackingOptOut: v.optional(v.boolean()),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
@@ -586,9 +564,6 @@ export default defineSchema({
       v.literal("sign_in"),
       v.literal("destructive"),
       v.literal("admin_reverify"),
-      // Phase 7 of docs/future-features/21_auth-consolidation.md: the same
-      // "prove it's really you" engine, triggered by a linked area's 14-day
-      // trust window expiring instead of sign-in/destructive/admin.
       v.literal("area_reverify"),
     ),
     verifiedAt: v.number(),
@@ -612,21 +587,8 @@ export default defineSchema({
    * + normalized user-agent, never the raw IP. Purged periodically (see
    * crons.ts) — this is a rolling recognition list, not a permanent log.
    *
-   * Phase 7 of docs/future-features/21_auth-consolidation.md promotes this
-   * from a pure backend signal into a user-facing, per-device trust record:
-   * `name` and `trustedUntil` are set once a device has been recognized and
-   * are shown/revocable from `/settings`. A row with no `trustedUntil` (or
-   * one older than `Date.now()`) is exactly the original "unrecognized"
-   * state — nothing about the pre-Phase-7 risk signal changes.
-   *
-   * `browser`/`os` are auto-detected from the user-agent (same source as
-   * `name`'s default) and re-stamped on every visit, never user-edited —
-   * `name` is the one field a person can make their own ("My laptop")
-   * without losing the structured browser/OS a device list can still
-   * filter and sort by. Deliberately still no raw IP or precise location
-   * here: the privacy stance above (coarse, hashed, never raw) extends to
-   * whatever a device list shows a person about their own devices, not
-   * just to what the risk signal computes on. */
+   * `trustedUntil` is only earned by passing a step-up in a session on this
+   * device (see `recordVerified`); visiting again never extends it. */
   knownDevices: defineTable({
     userId: v.id("users"),
     deviceHash: v.string(),
@@ -642,11 +604,15 @@ export default defineSchema({
 
   /** One-shot result of the device check for a given session, written by
    * apps/api (the one place that sees real request headers) and read by
-   * `resolveSignInRequirement`. */
+   * `resolveSignInRequirement`. `newDevice` really means "untrusted device":
+   * never seen, trust expired, or the account opted out of recognition.
+   * `deviceId` is which device this session is on, so a step-up passed here
+   * can trust that device; absent when the account opted out. */
   sessionRiskSignals: defineTable({
     userId: v.id("users"),
     sessionId: v.string(),
     newDevice: v.boolean(),
+    deviceId: v.optional(v.id("knownDevices")),
     evaluatedAt: v.number(),
   }).index("by_user_session", ["userId", "sessionId"]),
 
@@ -659,7 +625,6 @@ export default defineSchema({
       v.literal("enrollment_prompted"),
       v.literal("policy_changed"),
       v.literal("new_device_detected"),
-      // Phase 7: a device's trust was explicitly revoked from /settings.
       v.literal("device_trust_revoked"),
     ),
     context: v.optional(
@@ -674,13 +639,8 @@ export default defineSchema({
     at: v.number(),
   }).index("by_user_at", ["userId", "at"]),
 
-  /**
-   * Phase 7 of docs/future-features/21_auth-consolidation.md: when a user
-   * last cleared a fresh step-up *for a specific linked area* (Performance,
-   * the HR vault) — deliberately per (user, area), not per session, since
-   * the 14-day trust window this backs has to survive a browser restart or
-   * a brand new Clerk session, unlike `stepUpVerifications` above.
-   */
+  /** Last step-up for a linked area. Per (user, area) rather than per
+   * session, so it survives a new Clerk session. */
   areaStepUps: defineTable({
     userId: v.id("users"),
     area: v.union(v.literal("performance"), v.literal("applicant_vault")),
@@ -693,13 +653,7 @@ export default defineSchema({
     ),
   }).index("by_user_area", ["userId", "area"]),
 
-  /** Phase 7's per-area, per-user step-up preference, asked at the forced
-   * first step-up onto a password-less linked area and editable later in
-   * `/settings`: demand a fresh step-up on every visit to this area
-   * ("always" — see `ALWAYS_STEP_UP_FRESHNESS_MS`, a short grace window
-   * just long enough to act on the step-up someone just completed, not a
-   * standing exemption), or trust it for the 14-day window above ("trust").
-   * Absent row means the default (trust). */
+  /** Absent row means `trust_device`. */
   areaSecurityPreferences: defineTable({
     userId: v.id("users"),
     area: v.union(v.literal("performance"), v.literal("applicant_vault")),
@@ -707,16 +661,8 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_user_area", ["userId", "area"]),
 
-  /**
-   * Phase 2 of docs/future-features/21_auth-consolidation.md: additional
-   * email addresses an intranet account has verified ownership of (a
-   * work-issued Performance address, an HR-only address), so a secondary
-   * area can be reached — sign-in or a password reset — through either
-   * address once linked. `verifiedAt` absent means a pending add: the code
-   * was requested but never confirmed, same convention as
-   * `totpCredentials.verifiedAt`. Only a verified row is usable anywhere
-   * downstream.
-   */
+  /** Extra addresses an account has proven it owns. No `verifiedAt` means
+   * the code was never confirmed, and the row counts for nothing. */
   userSecondaryEmails: defineTable({
     userId: v.id("users"),
     email: v.string(),
@@ -1585,8 +1531,7 @@ export default defineSchema({
     linkedUserId: v.optional(v.id("users")),
     /** Set only when `linkedUserId` was resolved by matching this login's
      * email against `users.by_email` rather than picked by an admin —
-     * absent (with `linkedUserId` set) means a human chose the link. See
-     * `docs/future-features/21_auth-consolidation.md`'s Phase 1. */
+     * absent (with `linkedUserId` set) means a human chose the link. */
     autoLinkedVia: v.optional(v.literal("email_match")),
     active: v.boolean(),
     createdAt: v.number(),
@@ -1605,14 +1550,8 @@ export default defineSchema({
     // (absent for a super-admin session) so session-gated calls don't need
     // an extra `ctx.db.get(loginId)` for the common case.
     companyId: v.optional(v.id("companies")),
-    /** Set only when this token was minted by `createSessionForLinkedAccount`
-     * (promoting a Clerk-linked visitor's session, see
-     * `resolveClerkLinkedLogin`) rather than a real password `login`. Lets
-     * `resolveActiveSession` keep re-checking Phase 7's area-trust window on
-     * every use of the token, not just at mint time — otherwise a promoted
-     * token would outlive the 14-day trust window it stands in for, since
-     * `SESSION_DURATION_MS` is also 14 days but starts its own independent
-     * clock at promotion. */
+    /** Minted from an intranet session, not a password — keeps depending on
+     * area trust for as long as it's used. */
     viaClerk: v.optional(v.boolean()),
     expiresAt: v.number(),
     createdAt: v.number(),
@@ -2553,8 +2492,7 @@ export default defineSchema({
     linkedByUserId: v.optional(v.id("users")),
     /** Set only when `linkedUserId` was resolved by matching `email` against
      * `users.by_email` rather than picked by an admin (`linkedByUserId` set
-     * instead) — see `docs/future-features/21_auth-consolidation.md`'s
-     * Phase 1. */
+     * instead). */
     autoLinkedVia: v.optional(v.literal("email_match")),
   })
     .index("by_academy_code", ["academyId", "code"])
@@ -3079,12 +3017,9 @@ export default defineSchema({
      * the *typed* email didn't match the login directly, but matched its
      * linked intranet account's email instead. `adminLinkedEmail`: neither
      * of those applied, but an admin explicitly registered this pair in
-     * `passwordResetLinkedEmails`. `verifiedSecondaryEmail` (Phase 5 of
-     * docs/future-features/21_auth-consolidation.md): the typed email
-     * matched a *verified* `userSecondaryEmails` row instead — the same
-     * "these two addresses are the same person" proof as an admin-registered
-     * pair, just established by the account holder themselves in
-     * `/settings/account` rather than an admin typing it in by hand. */
+     * `passwordResetLinkedEmails`. `verifiedSecondaryEmail`: the typed email
+     * matched a *verified* `userSecondaryEmails` row the account holder
+     * added themselves. */
     autoApprovedVia: v.optional(
       v.union(
         v.literal("callerLinkedAccount"),

@@ -6,7 +6,9 @@ import {
   requestSecondaryEmailCode,
   verifySecondaryEmailCode,
 } from "../lib/secondaryEmails.js";
+import { Errors } from "../lib/errors.js";
 import { rateLimit } from "../lib/rate-limit.js";
+import { destructiveStepUpHint } from "../lib/stepUp.js";
 import { requireAuth, requireFirstPartyOrigin } from "../lib/middleware.js";
 
 export const secondaryEmailsRoute = new Elysia()
@@ -19,8 +21,13 @@ export const secondaryEmailsRoute = new Elysia()
     "/secondary-emails/request-code",
     async ({ request, body }) => {
       requireFirstPartyOrigin(request);
-      const { clerkUserId } = await requireAuth(request);
+      const { clerkUserId, sessionId } = await requireAuth(request);
+      if (!sessionId) throw Errors.badRequest("No active session");
       await rateLimit("secondary-email-request", clerkUserId, 5, "10 m");
+      // A verified secondary address can receive password resets for linked
+      // areas, so adding one costs the same fresh check as removing a factor.
+      const hint = await destructiveStepUpHint(clerkUserId, sessionId);
+      if (hint) return hint;
       return await requestSecondaryEmailCode(clerkUserId, body.email);
     },
     { body: t.Object({ email: t.String() }) },
