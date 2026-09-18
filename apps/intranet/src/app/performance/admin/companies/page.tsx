@@ -6,11 +6,11 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
 import {
-  Building2,
   Check,
   ChevronDown,
   Copy,
   ExternalLink,
+  MoreHorizontal,
   Pencil,
   Plus,
   RotateCw,
@@ -19,9 +19,10 @@ import {
 import { useTranslations } from "next-intl";
 
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 // Platform-level: creating a company is inherently a cross-company action,
 // so this page (unlike the rest of Performance) is isSuperAdmin-only, not
@@ -575,34 +577,42 @@ function CompanyActions({
 }) {
   const t = useTranslations("Performance");
   return (
-    <div className="flex flex-wrap items-center justify-end gap-1">
+    <div className="flex items-center justify-end gap-1">
       {company.status === "failed" && (
-        <Button variant="ghost" size="sm" onClick={onRetry}>
+        <Button variant="outline" size="sm" onClick={onRetry}>
           <RotateCw className="mr-2 h-3.5 w-3.5" />
           {t("companyRetry")}
         </Button>
       )}
       {(company.status === "pending_dns" || company.status === "pending_routing") && (
-        <Button variant="ghost" size="sm" disabled={checking} onClick={onCheck}>
-          <RotateCw className="mr-2 h-3.5 w-3.5" />
+        <Button variant="outline" size="sm" disabled={checking} onClick={onCheck}>
+          <RotateCw className={cn("mr-2 h-3.5 w-3.5", checking && "animate-spin")} />
           {t("companyCheckVerification")}
         </Button>
       )}
-      <Button variant="ghost" size="sm" onClick={onEdit}>
-        <Pencil className="mr-2 h-3.5 w-3.5" />
-        {t("companyEdit")}
-      </Button>
-      {company.slug !== "advantis" && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-destructive hover:text-destructive"
-          onClick={onDelete}
-        >
-          <Trash2 className="mr-2 h-3.5 w-3.5" />
-          {t("companyDelete")}
-        </Button>
-      )}
+      <ActionMenu
+        ariaLabel={t("rowActions")}
+        trigger={
+          <Button size="icon-sm" variant="ghost" aria-label={t("rowActions")}>
+            <MoreHorizontal />
+          </Button>
+        }
+        items={[
+          { key: "edit", label: t("companyEdit"), icon: <Pencil />, onSelect: onEdit },
+          ...(company.slug !== "advantis"
+            ? [
+                { key: "sep", separator: true as const },
+                {
+                  key: "delete",
+                  label: t("companyDelete"),
+                  icon: <Trash2 />,
+                  onSelect: onDelete,
+                  destructive: true,
+                },
+              ]
+            : []),
+        ]}
+      />
     </div>
   );
 }
@@ -658,140 +668,131 @@ export default function PerformanceCompaniesAdminPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-7xl space-y-6 p-4 pb-24 md:p-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Building2 className="h-4 w-4" />
-                {t("companiesTitle")}
-              </CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">{t("companiesIntro")}</p>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => {
-                setRetrying(null);
-                setCreating(true);
-              }}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {t("companyNew")}
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {companies === undefined ? (
-              <p className="text-sm text-muted-foreground">{t("loading")}</p>
-            ) : companies.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("companiesEmpty")}</p>
-            ) : (
-              <>
-                {/* Mobile: one card per company — a 4-column table with DNS
+      <div className="space-y-4">
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            onClick={() => {
+              setRetrying(null);
+              setCreating(true);
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {t("companyNew")}
+          </Button>
+        </div>
+        {companies === undefined ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">{t("loading")}</p>
+        ) : companies.length === 0 ? (
+          <Card>
+            <p className="py-8 text-center text-sm text-muted-foreground">{t("companiesEmpty")}</p>
+          </Card>
+        ) : (
+          <>
+            {/* Mobile: one card per company — a 4-column table with DNS
                     instructions crammed into one cell doesn't fit a phone
                     (columns overlapped/cut off in practice). */}
-                <div className="space-y-3 md:hidden">
-                  {companies.map((c) => (
-                    <Card key={c.id}>
-                      <CardContent className="space-y-3 p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate font-medium">{c.name}</p>
-                            <p className="truncate text-xs text-muted-foreground">{c.domain}</p>
-                            {c.dnsProvider && <DnsProviderNote provider={c.dnsProvider} />}
-                          </div>
-                          <div className="shrink-0">
-                            <CompanyStatusBadge
-                              domain={c.domain}
-                              status={c.status}
-                              dnsVerification={c.dnsVerification}
-                              dnsRouting={c.dnsRouting}
-                              dnsProvider={c.dnsProvider}
-                            />
-                          </div>
-                        </div>
-                        {c.status === "failed" && c.provisioningError && (
-                          <p className="text-xs text-destructive">{c.provisioningError}</p>
-                        )}
-                        <div className="border-t border-border-soft pt-3">
-                          <CompanyActions
-                            company={c}
-                            checking={checking === c.id}
-                            onRetry={() => {
-                              setRetrying({ name: c.name, domain: c.domain });
-                              setCreating(true);
-                            }}
-                            onCheck={() => void handleCheck(c.id)}
-                            onEdit={() => setEditing(c)}
-                            onDelete={() => void handleDelete(c)}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                <Card className="hidden overflow-x-auto md:block">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("companyNameLabel")}</TableHead>
-                        <TableHead>{t("companyDomainLabel")}</TableHead>
-                        <TableHead>{t("companyStatusLabel")}</TableHead>
-                        <TableHead />
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {companies.map((c) => (
-                        <TableRow key={c.id}>
-                          <TableCell className="font-medium">{c.name}</TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {c.domain}
-                            {c.dnsProvider && (
-                              <div className="mt-1">
-                                <DnsProviderNote provider={c.dnsProvider} />
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell className="max-w-xs">
-                            <CompanyStatusBadge
-                              domain={c.domain}
-                              status={c.status}
-                              dnsVerification={c.dnsVerification}
-                              dnsRouting={c.dnsRouting}
-                              dnsProvider={c.dnsProvider}
-                            />
-                            {c.status === "failed" && c.provisioningError && (
-                              <p className="mt-1 truncate text-xs text-destructive">
-                                {c.provisioningError}
-                              </p>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <CompanyActions
-                              company={c}
-                              checking={checking === c.id}
-                              onRetry={() => {
-                                setRetrying({
-                                  name: c.name,
-                                  domain: c.domain,
-                                });
-                                setCreating(true);
-                              }}
-                              onCheck={() => void handleCheck(c.id)}
-                              onEdit={() => setEditing(c)}
-                              onDelete={() => void handleDelete(c)}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+            <div className="space-y-2 md:hidden">
+              {companies.map((c) => (
+                <Card key={c.id}>
+                  <CardContent className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{c.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{c.domain}</p>
+                        {c.dnsProvider && <DnsProviderNote provider={c.dnsProvider} />}
+                      </div>
+                      <div className="shrink-0">
+                        <CompanyStatusBadge
+                          domain={c.domain}
+                          status={c.status}
+                          dnsVerification={c.dnsVerification}
+                          dnsRouting={c.dnsRouting}
+                          dnsProvider={c.dnsProvider}
+                        />
+                      </div>
+                    </div>
+                    {c.status === "failed" && c.provisioningError && (
+                      <p className="text-xs text-destructive">{c.provisioningError}</p>
+                    )}
+                    <div className="border-t border-border-soft pt-3">
+                      <CompanyActions
+                        company={c}
+                        checking={checking === c.id}
+                        onRetry={() => {
+                          setRetrying({ name: c.name, domain: c.domain });
+                          setCreating(true);
+                        }}
+                        onCheck={() => void handleCheck(c.id)}
+                        onEdit={() => setEditing(c)}
+                        onDelete={() => void handleDelete(c)}
+                      />
+                    </div>
+                  </CardContent>
                 </Card>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+              ))}
+            </div>
+
+            <Card className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("companyNameLabel")}</TableHead>
+                    <TableHead>{t("companyDomainLabel")}</TableHead>
+                    <TableHead>{t("companyStatusLabel")}</TableHead>
+                    <TableHead className="text-right">{t("rowActions")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {companies.map((c) => (
+                    <TableRow key={c.id}>
+                      <TableCell className="font-medium">{c.name}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {c.domain}
+                        {c.dnsProvider && (
+                          <div className="mt-1">
+                            <DnsProviderNote provider={c.dnsProvider} />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="max-w-xs">
+                        <CompanyStatusBadge
+                          domain={c.domain}
+                          status={c.status}
+                          dnsVerification={c.dnsVerification}
+                          dnsRouting={c.dnsRouting}
+                          dnsProvider={c.dnsProvider}
+                        />
+                        {c.status === "failed" && c.provisioningError && (
+                          <p className="mt-1 truncate text-xs text-destructive">
+                            {c.provisioningError}
+                          </p>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <CompanyActions
+                          company={c}
+                          checking={checking === c.id}
+                          onRetry={() => {
+                            setRetrying({
+                              name: c.name,
+                              domain: c.domain,
+                            });
+                            setCreating(true);
+                          }}
+                          onCheck={() => void handleCheck(c.id)}
+                          onEdit={() => setEditing(c)}
+                          onDelete={() => void handleDelete(c)}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          </>
+        )}
+      </div>
       <CreateCompanyDialog
         open={creating}
         onOpenChange={setCreating}

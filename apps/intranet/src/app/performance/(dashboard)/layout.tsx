@@ -6,17 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import {
-  Activity,
-  Building2,
-  Download,
-  LayoutDashboard,
-  Phone,
-  ShieldCheck,
-  TrendingUp,
-  Upload,
-  Users,
-} from "lucide-react";
+import { Activity, Download, LayoutDashboard, Phone, TrendingUp, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
@@ -149,16 +139,10 @@ function DashboardTopSection({
 function DashboardChrome({
   token,
   viaClerk,
-  isSuperAdmin,
-  permissions,
-  onExit,
   children,
 }: {
   token: string;
   viaClerk: boolean;
-  isSuperAdmin: boolean;
-  permissions: string[];
-  onExit: () => void;
   children: ReactNode;
 }) {
   const t = useTranslations("Performance");
@@ -207,41 +191,9 @@ function DashboardChrome({
     },
   ];
 
-  // Company management and role management now live as tabs on one page
-  // (/performance/admin/companies) instead of two competing nav entries —
-  // a super-admin lands on the company list with a Roles tab alongside it,
-  // while a scoped admin who can only manage_roles goes straight to the
-  // Roles tab, since they have no company list to see. A super-admin
-  // always has every permission (see performanceAuth.ts's validateSession),
-  // so checking it first already covers both cases with one link.
-  const navItems = [
-    { href: "/performance/benutzer", label: t("usersLink"), icon: Users },
-    ...(isSuperAdmin
-      ? [
-          {
-            href: "/performance/admin/companies",
-            label: t("companiesLink"),
-            icon: Building2,
-          },
-        ]
-      : permissions.includes("manage_roles")
-        ? [
-            {
-              href: "/performance/admin/companies/roles",
-              label: t("rolesLink"),
-              icon: ShieldCheck,
-            },
-          ]
-        : []),
-    ...(permissions.includes("upload_reports")
-      ? [{ href: "/performance/upload", label: t("uploadLink"), icon: Upload }]
-      : []),
-    ...(viaClerk ? [] : [{ href: "/performance/passwort", label: t("passwordLink") }]),
-  ];
-
   return (
     <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader navItems={navItems} onExit={viaClerk ? undefined : onExit} />
+      <PerformanceHeader />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         {!viaClerk && <SelfLinkPrompt token={token} />}
@@ -304,13 +256,13 @@ function DashboardChrome({
 
         <Card className="overflow-hidden">
           <div className="px-2">
-            <RouteTabs tabs={tabs} activeValue={activeTab} />
+            <RouteTabs tabs={tabs} activeValue={activeTab} inline />
           </div>
         </Card>
 
         <PerformanceDashboardDataProvider data={data}>{children}</PerformanceDashboardDataProvider>
       </main>
-      <PerformanceBottomTabs navItems={navItems} onExit={viaClerk ? undefined : onExit} />
+      <PerformanceBottomTabs />
     </div>
   );
 }
@@ -319,7 +271,6 @@ export default function PerformanceDashboardLayout({ children }: { children: Rea
   const t = useTranslations("Performance");
   const router = useRouter();
   const { token, session } = usePerformanceSession();
-  const logout = useMutation(api.performanceAuth.logout);
   const touchSession = useMutation(api.performanceAuth.touchSession);
 
   useEffect(() => {
@@ -345,12 +296,6 @@ export default function PerformanceDashboardLayout({ children }: { children: Rea
     }
   }, [session, router]);
 
-  function exit() {
-    if (token) void logout({ token });
-    clearPerformanceToken();
-    router.replace("/performance/login");
-  }
-
   if (session === undefined) return <PerformancePageSkeleton />;
   if (!session.valid) return null;
 
@@ -358,7 +303,7 @@ export default function PerformanceDashboardLayout({ children }: { children: Rea
     if (session.employeeId) return null; // redirecting
     return (
       <div className="min-h-screen bg-muted/20">
-        <PerformanceHeader onExit={session.viaClerk ? undefined : exit} />
+        <PerformanceHeader />
         <main className="mx-auto max-w-3xl p-4 pb-24 md:p-6">
           <Card>
             <CardHeader className="items-center text-center">
@@ -369,20 +314,14 @@ export default function PerformanceDashboardLayout({ children }: { children: Rea
             </CardContent>
           </Card>
         </main>
-        <PerformanceBottomTabs onExit={session.viaClerk ? undefined : exit} />
+        <PerformanceBottomTabs />
       </div>
     );
   }
 
   return (
     <PerformanceYmProvider>
-      <DashboardChrome
-        token={token}
-        viaClerk={session.viaClerk}
-        isSuperAdmin={session.isSuperAdmin}
-        permissions={session.permissions}
-        onExit={exit}
-      >
+      <DashboardChrome token={token} viaClerk={session.viaClerk}>
         {children}
       </DashboardChrome>
     </PerformanceYmProvider>

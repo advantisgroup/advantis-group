@@ -6,8 +6,8 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { Activity, LayoutDashboard, ListTodo, Phone, TrendingUp, Upload } from "lucide-react";
+import { useQuery } from "convex/react";
+import { Activity, LayoutDashboard, ListTodo, Phone, TrendingUp } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
@@ -102,16 +102,10 @@ function EmployeeTopSection({
 function EmployeeChrome({
   token,
   employeeId,
-  isAdmin,
-  viaClerk,
-  onExit,
   children,
 }: {
   token: string;
   employeeId: Id<"performanceEmployees">;
-  isAdmin: boolean;
-  viaClerk: boolean;
-  onExit: () => void;
   children: ReactNode;
 }) {
   const t = useTranslations("Performance");
@@ -165,17 +159,9 @@ function EmployeeChrome({
     },
   ];
 
-  const navItems = [
-    ...(isAdmin ? [{ href: "/performance", label: t("backToDashboard") }] : []),
-    ...(isAdmin && !viaClerk
-      ? [{ href: "/performance/upload", label: t("uploadLink"), icon: Upload }]
-      : []),
-    ...(viaClerk ? [] : [{ href: "/performance/passwort", label: t("passwordLink") }]),
-  ];
-
   return (
     <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader navItems={navItems} onExit={viaClerk ? undefined : onExit} />
+      <PerformanceHeader />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         {data && (
@@ -215,7 +201,7 @@ function EmployeeChrome({
 
         <Card className="overflow-hidden">
           <div className="px-2">
-            <RouteTabs tabs={tabs} activeValue={activeTab} />
+            <RouteTabs tabs={tabs} activeValue={activeTab} inline />
           </div>
         </Card>
 
@@ -223,7 +209,7 @@ function EmployeeChrome({
           {children}
         </PerformanceEmployeeDetailProvider>
       </main>
-      <PerformanceBottomTabs navItems={navItems} onExit={viaClerk ? undefined : onExit} />
+      <PerformanceBottomTabs />
     </div>
   );
 }
@@ -234,7 +220,6 @@ export default function EmployeeDetailLayout({ children }: { children: ReactNode
   const params = useParams<{ id: string }>();
   const employeeId = params.id as Id<"performanceEmployees">;
   const { token, session } = usePerformanceSession();
-  const logout = useMutation(api.performanceAuth.logout);
 
   useEffect(() => {
     // Wait for the query to resolve — a visitor with no password cookie may
@@ -245,23 +230,16 @@ export default function EmployeeDetailLayout({ children }: { children: ReactNode
     }
   }, [session, router]);
 
-  const isAdmin = session?.valid && session.permissions.includes("view_all_employees");
   const canView =
     session?.valid &&
     (session.permissions.includes("view_all_employees") || session.employeeId === employeeId);
-
-  function exit() {
-    if (token) void logout({ token });
-    clearPerformanceToken();
-    router.replace("/performance/login");
-  }
 
   if (session === undefined) return <PerformancePageSkeleton />;
   if (!session.valid) return null;
   if (!canView) {
     return (
       <div className="min-h-screen bg-muted/20">
-        <PerformanceHeader onExit={session.viaClerk ? undefined : exit} />
+        <PerformanceHeader />
         <main className="mx-auto max-w-3xl p-4 pb-24 md:p-6">
           <Card>
             <div className="p-6 text-center text-sm text-muted-foreground">
@@ -269,20 +247,14 @@ export default function EmployeeDetailLayout({ children }: { children: ReactNode
             </div>
           </Card>
         </main>
-        <PerformanceBottomTabs onExit={session.viaClerk ? undefined : exit} />
+        <PerformanceBottomTabs />
       </div>
     );
   }
 
   return (
     <PerformanceYmProvider>
-      <EmployeeChrome
-        token={token}
-        employeeId={employeeId}
-        isAdmin={!!isAdmin}
-        viaClerk={session.viaClerk}
-        onExit={exit}
-      >
+      <EmployeeChrome token={token} employeeId={employeeId}>
         {children}
       </EmployeeChrome>
     </PerformanceYmProvider>

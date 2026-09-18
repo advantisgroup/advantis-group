@@ -4,46 +4,32 @@ import { useState } from "react";
 
 import Link from "next/link";
 
-import { ArrowLeft, LogOut, Menu } from "lucide-react";
+import { ArrowLeft, KeyRound, LogOut, Menu } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { BottomNavTabButtons, useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
 import { usePerformanceCompany } from "@/components/performance/PerformanceCompanyProvider";
-import { type PerformanceHeaderNavItem } from "@/components/performance/PerformanceHeader";
-import { Button } from "@/components/ui/button";
+import { usePerformanceNav } from "@/components/performance/usePerformanceNav";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+
+const ROW = "flex items-center gap-3 rounded-md px-2 py-2.5 text-sm hover:bg-accent";
 
 /**
- * Mobile tab switcher for Performance's RouteTabs pages, plus the mobile
- * equivalent of `PerformanceHeader`'s desktop-only nav/account/exit cluster
- * (the header shows only the wordmark on mobile — see its own comment).
- * Same visual pattern as the intranet's global `BottomNav`'s pill+Menu
- * button, but self-contained: Performance lives outside the Clerk-gated
- * `(app)` shell (own auth, own header, no sidebar/chat/announcements), so it
- * can't reuse `BottomNav` or the `Sidebar` sheet the main app's Menu button
- * opens — this owns its own `Sheet` instead.
+ * Mobile tab switcher for Performance's RouteTabs pages, plus the Menu sheet
+ * holding everything `PerformanceHeader` hides on mobile. Same pill+Menu look
+ * as the intranet's `BottomNav`, but self-contained: Performance lives
+ * outside the `(app)` shell, so it can't reuse that or its Sidebar sheet.
  */
-export function PerformanceBottomTabs({
-  navItems = [],
-  onExit,
-}: {
-  navItems?: PerformanceHeaderNavItem[];
-  onExit?: () => void;
-}) {
+export function PerformanceBottomTabs() {
   const t = useTranslations("Performance");
   const { tabs, activeValue } = useBottomNavTabs();
+  const { items, passwordHref, exit } = usePerformanceNav();
   const [menuOpen, setMenuOpen] = useState(false);
-  // "Back to intranet" only makes sense on Advantis's own grandfathered
-  // host — a client's own domain (e.g. salespirates.de) never has a
-  // Clerk-gated intranet to go back to; `/` there just re-resolves to their
-  // own Performance dashboard via proxy.ts, which is confusing, not useful.
   const onAdvantisHost = usePerformanceCompany() === null;
-
-  if ((!tabs || tabs.length === 0) && navItems.length === 0 && !onExit) {
-    return null;
-  }
+  const close = () => setMenuOpen(false);
 
   return (
     <>
@@ -71,46 +57,53 @@ export function PerformanceBottomTabs({
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent side="bottom" className="max-h-[75vh] overflow-y-auto rounded-t-2xl p-4">
           <SheetTitle>{t("menuLabel")}</SheetTitle>
-          <div className="mt-4 flex items-center gap-1 border-b pb-3">
-            <PerformanceAccountMenu />
-            <SettingsMenu />
-          </div>
-          <nav className="flex flex-col py-2">
+          {items.length > 0 && (
+            <nav className="mt-3 flex flex-col border-b pb-2">
+              {items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={close}
+                  aria-current={item.active ? "page" : undefined}
+                  className={cn(ROW, item.active && "bg-muted font-medium")}
+                >
+                  <item.icon className="h-4 w-4 text-muted-foreground" />
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          )}
+          <div className="flex flex-col py-2">
+            {passwordHref && (
+              <Link href={passwordHref} onClick={close} className={ROW}>
+                <KeyRound className="h-4 w-4 text-muted-foreground" />
+                {t("passwordLink")}
+              </Link>
+            )}
             {onAdvantisHost && (
-              <Link
-                href="/"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 rounded-md px-2 py-2.5 text-sm hover:bg-accent"
-              >
+              <Link href="/" onClick={close} className={ROW}>
                 <ArrowLeft className="h-4 w-4 text-muted-foreground" />
                 {t("backToIntranet")}
               </Link>
             )}
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 rounded-md px-2 py-2.5 text-sm hover:bg-accent"
+            {exit && (
+              <button
+                type="button"
+                onClick={() => {
+                  close();
+                  exit();
+                }}
+                className={cn(ROW, "text-left text-destructive")}
               >
-                {item.icon && <item.icon className="h-4 w-4 text-muted-foreground" />}
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          {onExit && (
-            <Button
-              variant="ghost"
-              className="justify-start gap-3 px-2 text-destructive hover:text-destructive"
-              onClick={() => {
-                setMenuOpen(false);
-                onExit();
-              }}
-            >
-              <LogOut className="h-4 w-4" />
-              {t("exit")}
-            </Button>
-          )}
+                <LogOut className="h-4 w-4" />
+                {t("exit")}
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-1 border-t pt-3">
+            <PerformanceAccountMenu />
+            <SettingsMenu />
+          </div>
         </SheetContent>
       </Sheet>
     </>

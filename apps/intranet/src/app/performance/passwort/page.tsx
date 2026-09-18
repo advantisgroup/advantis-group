@@ -1,29 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useAction } from "convex/react";
-import { KeyRound } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
-import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
+import { PerformanceShell, usePerformanceGate } from "@/components/performance/PerformanceShell";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { clearPerformanceToken } from "@/lib/performanceAuth";
 
 export default function PerformancePasswordPage() {
   const t = useTranslations("Performance");
-  const router = useRouter();
   const handleError = useErrorHandler();
-  const { token, session } = usePerformanceSession();
+  // Clerk-linked accounts have no password to change.
+  const { token, loading, session } = usePerformanceGate((s) => !s.viaClerk);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -32,25 +28,7 @@ export default function PerformancePasswordPage() {
 
   const changeOwnPassword = useAction(api.performanceAuth.changeOwnPassword);
 
-  useEffect(() => {
-    // Wait for the query to resolve — a visitor with no password cookie may
-    // still resolve via their linked Clerk identity.
-    if (!session) return;
-    if (!session.valid) {
-      clearPerformanceToken();
-      router.replace("/performance/login");
-      return;
-    }
-    // Clerk-linked accounts have no password to change — this page doesn't
-    // apply to them (the nav entry that links here is already hidden).
-    if (session.viaClerk) router.replace("/performance");
-  }, [session, router]);
-
-  function exit() {
-    clearPerformanceToken();
-    router.replace("/performance/login");
-  }
-
+  const tooShort = newPassword.length > 0 && newPassword.length < 8;
   const mismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
   const canSubmit =
     currentPassword.length > 0 && newPassword.length >= 8 && newPassword === confirmPassword;
@@ -72,81 +50,69 @@ export default function PerformancePasswordPage() {
     }
   }
 
-  if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid || session.viaClerk) return null;
-
-  const navItems = [
-    {
-      href: session.permissions.includes("view_all_employees")
-        ? "/performance"
-        : session.employeeId
-          ? `/performance/mitarbeiter/${session.employeeId}`
-          : "/performance",
-      label: t("backToDashboard"),
-    },
-  ];
+  if (loading) return <PerformancePageSkeleton />;
+  if (!session) return null;
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader navItems={navItems} onExit={exit} />
-
-      <main className="mx-auto max-w-md space-y-6 p-4 pb-24 md:p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <KeyRound className="h-4 w-4 text-primary" />
-              {t("passwordTitle")}
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">{t("passwordIntro")}</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
+    <PerformanceShell title={t("passwordTitle")} description={t("passwordIntro")} width="max-w-xl">
+      <Card>
+        <CardContent className="p-5">
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleSubmit();
+            }}
+          >
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">
-                {t("currentPasswordLabel")}
-              </label>
+              <Label htmlFor="current-password">{t("currentPasswordLabel")}</Label>
               <Input
+                id="current-password"
                 type="password"
+                autoComplete="current-password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">
-                {t("userNewPasswordLabel")}
-              </label>
+            <div className="space-y-1.5 border-t border-border/70 pt-4">
+              <Label htmlFor="new-password">{t("userNewPasswordLabel")}</Label>
               <Input
+                id="new-password"
                 type="password"
+                autoComplete="new-password"
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  setDone(false);
+                }}
               />
+              {tooShort && <p className="text-xs text-muted-foreground">{t("passwordTooShort")}</p>}
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">
-                {t("confirmPasswordLabel")}
-              </label>
+              <Label htmlFor="confirm-password">{t("confirmPasswordLabel")}</Label>
               <Input
+                id="confirm-password"
                 type="password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
               {mismatch && <p className="text-xs text-destructive">{t("passwordMismatch")}</p>}
             </div>
-            {done && (
-              <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                {t("passwordChanged")}
-              </p>
-            )}
-            <Button
-              onClick={() => void handleSubmit()}
-              disabled={!canSubmit || saving}
-              className="w-full"
-            >
-              {t("passwordSubmit")}
-            </Button>
-          </CardContent>
-        </Card>
-      </main>
-      <PerformanceBottomTabs navItems={navItems} onExit={exit} />
-    </div>
+            <div className="flex items-center justify-end gap-3 pt-1">
+              {done && (
+                <p className="mr-auto flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {t("passwordChanged")}
+                </p>
+              )}
+              <Button type="submit" disabled={!canSubmit || saving}>
+                {t("passwordSubmit")}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </PerformanceShell>
   );
 }

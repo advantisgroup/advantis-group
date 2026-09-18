@@ -8,6 +8,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { PerformanceBackLink } from "@/components/performance/PerformanceBackLink";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
@@ -104,18 +105,12 @@ export default function DrilldownPage() {
   if (session === undefined) return <PerformancePageSkeleton />;
   if (!session.valid) return null;
 
-  function exit() {
-    clearPerformanceToken();
-    router.replace("/performance/login");
-  }
-
-  const navItems = [{ href: "/performance", label: t("backToDashboard") }];
-
   return (
     <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader navItems={navItems} onExit={session.viaClerk ? undefined : exit} />
+      <PerformanceHeader />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
+        <PerformanceBackLink href="/performance" />
         {!validKey ? (
           <Card>
             <CardContent className="p-6 text-center text-sm text-muted-foreground">
@@ -251,7 +246,7 @@ export default function DrilldownPage() {
           </>
         )}
       </main>
-      <PerformanceBottomTabs navItems={navItems} onExit={session.viaClerk ? undefined : exit} />
+      <PerformanceBottomTabs />
     </div>
   );
 }

@@ -29,11 +29,21 @@ export interface RouteTab {
  * floating pill — the bottom nav becomes the tab switcher rather than a
  * separate dropdown.
  */
-export function RouteTabs({ tabs, activeValue }: { tabs: RouteTab[]; activeValue: string }) {
+export function RouteTabs({
+  tabs,
+  activeValue,
+  inline = false,
+}: {
+  tabs: RouteTab[];
+  activeValue: string;
+  /** Keep the tab strip in the page on desktop — for areas outside the app
+   * shell (Performance) that have no header bar to hand the tabs to. */
+  inline?: boolean;
+}) {
   const isMobile = useIsMobile();
   const { setTabs } = useBottomNavTabs();
   const setHeaderTabs = useSetPageHeaderTabs();
-  const inHeader = !isMobile;
+  const inHeader = !isMobile && !inline;
 
   // Refreshed design: on desktop the tabs sit as pills beside the page title.
   useEffect(() => {

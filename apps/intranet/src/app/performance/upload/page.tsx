@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-
-import { useRouter } from "next/navigation";
+import { useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -22,7 +20,6 @@ import {
   Layers,
   Loader2,
   RotateCw,
-  Upload,
   UploadCloud,
   X,
   XCircle,
@@ -31,14 +28,12 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { FlaggedRowsDialog } from "@/components/performance/FlaggedRowsDialog";
-import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
-import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
+import { PerformanceShell, usePerformanceGate } from "@/components/performance/PerformanceShell";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { RescanOlderUploads } from "@/components/performance/RescanOlderUploads";
-import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -50,11 +45,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, formatIsoDate, relativeTime } from "@/lib/format";
-import {
-  clearPerformanceToken,
-  downloadPerformanceFile,
-  uploadPerformanceReport,
-} from "@/lib/performanceAuth";
+import { downloadPerformanceFile, uploadPerformanceReport } from "@/lib/performanceAuth";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -332,30 +323,15 @@ function BatchRows({
 export default function PerformanceUploadPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const router = useRouter();
-  const { token, session } = usePerformanceSession();
+  const { token, loading, session } = usePerformanceGate((s) =>
+    s.permissions.includes("upload_reports"),
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [flaggedDialogOpen, setFlaggedDialogOpen] = useState(false);
 
-  useEffect(() => {
-    // Wait for the query to resolve — a visitor with no password cookie may
-    // still resolve via their linked Clerk identity.
-    if (!session) return;
-    if (!session.valid) {
-      clearPerformanceToken();
-      router.replace("/performance/login");
-      return;
-    }
-    if (!session.permissions.includes("upload_reports")) {
-      router.replace("/performance");
-      return;
-    }
-  }, [session, router]);
-
-  const isAdmin = session?.valid && session.permissions.includes("upload_reports");
-  const log = useQuery(api.performanceImport.listUploadLog, isAdmin ? { token } : "skip");
+  const log = useQuery(api.performanceImport.listUploadLog, session ? { token } : "skip");
 
   function updateItem(id: string, patch: Partial<QueueItem>) {
     setQueue((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
@@ -491,296 +467,274 @@ export default function PerformanceUploadPage() {
     return groups;
   }, [log]);
 
-  if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid || !session.permissions.includes("upload_reports")) return null;
-
-  const navItems = [{ href: "/performance", label: t("backToDashboard") }];
-  const exit = () => {
-    clearPerformanceToken();
-    router.replace("/performance/login");
-  };
+  if (loading) return <PerformancePageSkeleton />;
+  if (!session) return null;
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader navItems={navItems} onExit={exit} />
+    <PerformanceShell
+      title={t("uploadTitle")}
+      description={t("uploadIntro")}
+      width="max-w-7xl"
+      actions={
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            void downloadPerformanceFile("/performance/template", token, "performance-vorlage.xlsx")
+          }
+        >
+          <Download className="mr-2 h-4 w-4" />
+          {t("templateDownload")}
+        </Button>
+      }
+    >
+      {token && (
+        <FlaggedRowsDialog
+          token={token}
+          open={flaggedDialogOpen}
+          onOpenChange={setFlaggedDialogOpen}
+        />
+      )}
+      {token && <RescanOlderUploads token={token} />}
 
-      <main className="mx-auto max-w-7xl space-y-6 p-4 pb-24 md:p-6">
-        {token && (
-          <FlaggedRowsDialog
-            token={token}
-            open={flaggedDialogOpen}
-            onOpenChange={setFlaggedDialogOpen}
-          />
-        )}
-        {token && <RescanOlderUploads token={token} />}
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5 text-primary" />
-              {t("uploadTitle")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">{t("uploadIntro")}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                token &&
-                void downloadPerformanceFile(
-                  "/performance/template",
-                  token,
-                  "performance-vorlage.xlsx",
-                )
+      <Card>
+        <CardContent className="space-y-4 p-4">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => inputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                inputRef.current?.click();
               }
-            >
-              <Download className="mr-2 h-4 w-4" />
-              {t("templateDownload")}
-            </Button>
-
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => inputRef.current?.click()}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  inputRef.current?.click();
+            }}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              setDragging(false);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              if (e.dataTransfer.files.length) {
+                void enqueue(Array.from(e.dataTransfer.files));
+              }
+            }}
+            className={cn(
+              "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              dragging
+                ? "border-primary bg-primary/5"
+                : "border-border/70 hover:border-border hover:bg-muted/30",
+            )}
+          >
+            <UploadCloud className="h-8 w-8 text-muted-foreground" />
+            <p className="text-sm font-medium">{t("uploadDropzoneTitle")}</p>
+            <p className="text-xs text-muted-foreground">{t("uploadDropzoneHint")}</p>
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              accept={ACCEPTED_EXTENSIONS.join(",")}
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.length) {
+                  void enqueue(Array.from(e.target.files));
                 }
+                e.target.value = "";
               }}
-              onDragEnter={(e) => {
-                e.preventDefault();
-                setDragging(true);
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragging(true);
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault();
-                setDragging(false);
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragging(false);
-                if (e.dataTransfer.files.length) {
-                  void enqueue(Array.from(e.dataTransfer.files));
-                }
-              }}
-              className={cn(
-                "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                dragging
-                  ? "border-primary bg-primary/5"
-                  : "border-border/70 hover:border-border hover:bg-muted/30",
-              )}
-            >
-              <UploadCloud className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm font-medium">{t("uploadDropzoneTitle")}</p>
-              <p className="text-xs text-muted-foreground">{t("uploadDropzoneHint")}</p>
-              <input
-                ref={inputRef}
-                type="file"
-                multiple
-                accept={ACCEPTED_EXTENSIONS.join(",")}
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files?.length) {
-                    void enqueue(Array.from(e.target.files));
-                  }
-                  e.target.value = "";
-                }}
-              />
-            </div>
+            />
+          </div>
 
-            {queue.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {t("uploadQueueTitle")}
-                  </p>
-                  {hasFinished && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs"
-                      onClick={clearFinished}
-                    >
-                      {t("uploadClearFinished")}
-                    </Button>
-                  )}
-                </div>
-                <ul className="space-y-2">
-                  {queue.map((item) => (
-                    <li key={item.id} className="rounded-md border border-border/70 p-3">
-                      <div className="flex items-center gap-2">
-                        <FileIcon name={item.file.name} />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="truncate text-sm font-medium">{item.file.name}</span>
-                            <span className="shrink-0 text-xs text-muted-foreground">
-                              {formatFileSize(item.file.size)}
-                            </span>
-                          </div>
-                          <div className="mt-0.5 flex items-center gap-1.5 text-xs">
-                            <StatusIcon status={item.status} />
-                            {item.status === "queued" && (
-                              <span className="text-muted-foreground">
-                                {t("uploadStatusQueued")}
-                              </span>
-                            )}
-                            {item.status === "uploading" && (
-                              <span className="text-muted-foreground">
-                                {t("uploadStatusUploading", {
-                                  percent: Math.round(item.progress * 100),
-                                })}
-                              </span>
-                            )}
-                            {item.status === "processing" && (
-                              <span className="text-muted-foreground">
-                                {t("uploadStatusProcessing")}
-                              </span>
-                            )}
-                            {item.status === "done" && (
-                              <span className="text-emerald-600 dark:text-emerald-400">
-                                {t("uploadOk", {
-                                  count: item.rowsImported ?? 0,
-                                })}
-                              </span>
-                            )}
-                            {item.status === "done" && !!item.flaggedCount && (
-                              <button
-                                type="button"
-                                onClick={() => setFlaggedDialogOpen(true)}
-                                className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 font-medium text-warning hover:bg-warning/25"
-                              >
-                                <AlertTriangle className="h-3 w-3 shrink-0" />
-                                {t("uploadFlaggedInline", { count: item.flaggedCount })}
-                              </button>
-                            )}
-                            {item.status === "empty" && (
-                              <span className="text-muted-foreground">{t("uploadEmpty")}</span>
-                            )}
-                            {item.status === "duplicate" && (
-                              <span className="text-amber-600 dark:text-amber-400">
-                                {item.duplicateOf
-                                  ? t("uploadDuplicateDetail", {
-                                      filename: item.duplicateOf.filename,
-                                      date: formatDateTime(item.duplicateOf.uploadedAt, locale),
-                                    })
-                                  : t("uploadDuplicateStatus")}
-                              </span>
-                            )}
-                            {item.status === "error" && (
-                              <span className="text-destructive">{item.error}</span>
-                            )}
-                          </div>
-                        </div>
-                        {item.status === "duplicate" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 shrink-0 px-2 text-xs"
-                            onClick={() => forceItem(item.id)}
-                          >
-                            {t("uploadImportAnyway")}
-                          </Button>
-                        )}
-                        {item.status === "error" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 shrink-0"
-                            title={t("uploadRetry")}
-                            onClick={() => retryItem(item.id)}
-                          >
-                            <RotateCw className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        {(item.status === "queued" ||
-                          item.status === "done" ||
-                          item.status === "empty" ||
-                          item.status === "duplicate" ||
-                          item.status === "error") && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 shrink-0"
-                            onClick={() => removeItem(item.id)}
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                      {item.status === "uploading" && (
-                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                          <div
-                            className="h-full rounded-full bg-primary transition-all"
-                            style={{
-                              width: `${Math.round(item.progress * 100)}%`,
-                            }}
-                          />
-                        </div>
-                      )}
-                      {item.skipped && item.skipped.length > 0 && (
-                        <p className="mt-1 pl-7 text-xs text-muted-foreground">
-                          {t("uploadSkipped", {
-                            names: item.skipped.join(", "),
-                          })}
-                        </p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+          {queue.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("uploadQueueTitle")}
+                </p>
+                {hasFinished && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={clearFinished}
+                  >
+                    {t("uploadClearFinished")}
+                  </Button>
+                )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <ul className="space-y-2">
+                {queue.map((item) => (
+                  <li key={item.id} className="rounded-md border border-border/70 p-3">
+                    <div className="flex items-center gap-2">
+                      <FileIcon name={item.file.name} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-sm font-medium">{item.file.name}</span>
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {formatFileSize(item.file.size)}
+                          </span>
+                        </div>
+                        <div className="mt-0.5 flex items-center gap-1.5 text-xs">
+                          <StatusIcon status={item.status} />
+                          {item.status === "queued" && (
+                            <span className="text-muted-foreground">{t("uploadStatusQueued")}</span>
+                          )}
+                          {item.status === "uploading" && (
+                            <span className="text-muted-foreground">
+                              {t("uploadStatusUploading", {
+                                percent: Math.round(item.progress * 100),
+                              })}
+                            </span>
+                          )}
+                          {item.status === "processing" && (
+                            <span className="text-muted-foreground">
+                              {t("uploadStatusProcessing")}
+                            </span>
+                          )}
+                          {item.status === "done" && (
+                            <span className="text-emerald-600 dark:text-emerald-400">
+                              {t("uploadOk", {
+                                count: item.rowsImported ?? 0,
+                              })}
+                            </span>
+                          )}
+                          {item.status === "done" && !!item.flaggedCount && (
+                            <button
+                              type="button"
+                              onClick={() => setFlaggedDialogOpen(true)}
+                              className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 font-medium text-warning hover:bg-warning/25"
+                            >
+                              <AlertTriangle className="h-3 w-3 shrink-0" />
+                              {t("uploadFlaggedInline", { count: item.flaggedCount })}
+                            </button>
+                          )}
+                          {item.status === "empty" && (
+                            <span className="text-muted-foreground">{t("uploadEmpty")}</span>
+                          )}
+                          {item.status === "duplicate" && (
+                            <span className="text-amber-600 dark:text-amber-400">
+                              {item.duplicateOf
+                                ? t("uploadDuplicateDetail", {
+                                    filename: item.duplicateOf.filename,
+                                    date: formatDateTime(item.duplicateOf.uploadedAt, locale),
+                                  })
+                                : t("uploadDuplicateStatus")}
+                            </span>
+                          )}
+                          {item.status === "error" && (
+                            <span className="text-destructive">{item.error}</span>
+                          )}
+                        </div>
+                      </div>
+                      {item.status === "duplicate" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 shrink-0 px-2 text-xs"
+                          onClick={() => forceItem(item.id)}
+                        >
+                          {t("uploadImportAnyway")}
+                        </Button>
+                      )}
+                      {item.status === "error" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          title={t("uploadRetry")}
+                          onClick={() => retryItem(item.id)}
+                        >
+                          <RotateCw className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      {(item.status === "queued" ||
+                        item.status === "done" ||
+                        item.status === "empty" ||
+                        item.status === "duplicate" ||
+                        item.status === "error") && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                    {item.status === "uploading" && (
+                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all"
+                          style={{
+                            width: `${Math.round(item.progress * 100)}%`,
+                          }}
+                        />
+                      </div>
+                    )}
+                    {item.skipped && item.skipped.length > 0 && (
+                      <p className="mt-1 pl-7 text-xs text-muted-foreground">
+                        {t("uploadSkipped", {
+                          names: item.skipped.join(", "),
+                        })}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium">{t("uploadLogTitle")}</h2>
         <Card>
-          <CardHeader>
-            <CardTitle>{t("uploadLogTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            {!log || log.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("uploadLogEmpty")}</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("uploadLogFile")}</TableHead>
-                    <TableHead>{t("uploadLogType")}</TableHead>
-                    <TableHead>{t("uploadLogDate")}</TableHead>
-                    <TableHead>{t("uploadLogRows")}</TableHead>
-                    <TableHead>{t("uploadLogSize")}</TableHead>
-                    <TableHead>{t("uploadLogWhen")}</TableHead>
-                    <TableHead>{t("uploadLogBy")}</TableHead>
-                    <TableHead />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {logGroups.map((group) =>
-                    group.batched ? (
-                      <BatchRows
-                        key={group.key}
-                        batchId={group.key}
-                        rows={group.rows}
-                        expanded={expandedBatches.has(group.key)}
-                        onToggle={() => toggleBatch(group.key)}
-                        locale={locale}
-                        token={token}
-                      />
-                    ) : (
-                      <LogRow key={group.key} row={group.rows[0]} locale={locale} token={token} />
-                    ),
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
+          {log === undefined ? null : log.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">{t("uploadLogEmpty")}</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("uploadLogFile")}</TableHead>
+                  <TableHead>{t("uploadLogType")}</TableHead>
+                  <TableHead>{t("uploadLogDate")}</TableHead>
+                  <TableHead>{t("uploadLogRows")}</TableHead>
+                  <TableHead>{t("uploadLogSize")}</TableHead>
+                  <TableHead>{t("uploadLogWhen")}</TableHead>
+                  <TableHead>{t("uploadLogBy")}</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logGroups.map((group) =>
+                  group.batched ? (
+                    <BatchRows
+                      key={group.key}
+                      batchId={group.key}
+                      rows={group.rows}
+                      expanded={expandedBatches.has(group.key)}
+                      onToggle={() => toggleBatch(group.key)}
+                      locale={locale}
+                      token={token}
+                    />
+                  ) : (
+                    <LogRow key={group.key} row={group.rows[0]} locale={locale} token={token} />
+                  ),
+                )}
+              </TableBody>
+            </Table>
+          )}
         </Card>
-      </main>
-      <PerformanceBottomTabs navItems={navItems} onExit={exit} />
-    </div>
+      </section>
+    </PerformanceShell>
   );
 }
