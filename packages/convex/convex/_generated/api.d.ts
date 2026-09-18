@@ -103,6 +103,8 @@ import type * as integrations_debug from "../integrations/debug.js";
 import type * as invites from "../invites.js";
 import type * as itTicketThreads from "../itTicketThreads.js";
 import type * as itTickets from "../itTickets.js";
+import type * as itTickets_threads from "../itTickets/threads.js";
+import type * as itTickets_tickets from "../itTickets/tickets.js";
 import type * as lib_aiRuns from "../lib/aiRuns.js";
 import type * as lib_analytics from "../lib/analytics.js";
 import type * as lib_attachments from "../lib/attachments.js";
@@ -305,6 +307,8 @@ declare const fullApi: ApiFromModules<{
   invites: typeof invites;
   itTicketThreads: typeof itTicketThreads;
   itTickets: typeof itTickets;
+  "itTickets/threads": typeof itTickets_threads;
+  "itTickets/tickets": typeof itTickets_tickets;
   "lib/aiRuns": typeof lib_aiRuns;
   "lib/analytics": typeof lib_analytics;
   "lib/attachments": typeof lib_attachments;

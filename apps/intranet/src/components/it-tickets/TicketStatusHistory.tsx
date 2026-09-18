@@ -11,7 +11,7 @@ import { formatDateTime } from "@/lib/format";
 export function TicketStatusHistory({ ticket }: { ticket: Ticket }) {
   const t = useTranslations("ItTickets");
   const locale = useLocale();
-  const history = useQuery(api.itTickets.listStatusHistory, { ticketId: ticket._id });
+  const history = useQuery(api.itTickets.tickets.listStatusHistory, { ticketId: ticket._id });
 
   if (history === undefined) {
     return <p className="text-xs text-muted-foreground">{t("statusHistoryLoading")}</p>;

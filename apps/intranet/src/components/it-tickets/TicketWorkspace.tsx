@@ -51,8 +51,8 @@ export function TicketWorkspace({
   // Coercing undefined to null here would flash a "Start chat" button (and
   // let it be clicked into a conflict error) for tickets that already have
   // one, and flash the detail-only mobile layout before switching to chat.
-  const thread = useQuery(api.itTicketThreads.getForTicket, { ticketId: ticket._id });
-  const startThread = useMutation(api.itTicketThreads.start);
+  const thread = useQuery(api.itTickets.threads.getForTicket, { ticketId: ticket._id });
+  const startThread = useMutation(api.itTickets.threads.start);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   function onStartChat() {

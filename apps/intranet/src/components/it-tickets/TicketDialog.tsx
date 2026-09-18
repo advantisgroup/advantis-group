@@ -87,8 +87,8 @@ function initialValues(
 
 function TicketForm({ open, onOpenChange, categories, ticket }: TicketDialogProps) {
   const t = useTranslations("ItTickets");
-  const createTicket = useMutation(api.itTickets.create);
-  const updateTicket = useMutation(api.itTickets.update);
+  const createTicket = useMutation(api.itTickets.tickets.create);
+  const updateTicket = useMutation(api.itTickets.tickets.update);
   const handleError = useErrorHandler();
 
   const [values, setValues] = useState<TicketValues>(() => {
@@ -132,7 +132,7 @@ function TicketForm({ open, onOpenChange, categories, ticket }: TicketDialogProp
   }, [values.info]);
   const similarTopic = isSF ? (isFreeTopic ? values.topicFree.trim() : values.topicChoice) : "";
   const similar = useQuery(
-    api.itTickets.similar,
+    api.itTickets.tickets.similar,
     !ticket && values.category && similarText.length >= 8
       ? { category: values.category, topic: similarTopic || undefined, text: similarText }
       : "skip",

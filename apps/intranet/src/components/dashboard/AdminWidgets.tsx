@@ -43,7 +43,7 @@ export function ManagerBriefCard() {
   const outToday = useAbsencesCalendar(today, today);
   const pendingAbsences = usePendingAbsenceCount(true);
   const accessRequests = useQuery(api.accessRequests.list, { status: "pending" });
-  const tickets = useQuery(api.itTickets.list);
+  const tickets = useQuery(api.itTickets.tickets.list);
   const measures = useQuery(api.fehlermanagement.measures.list, {});
 
   const staleTickets =

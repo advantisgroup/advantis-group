@@ -128,8 +128,8 @@ function TicketPanelHeader({
   const t = useTranslations("ItTickets");
   const tc = useTranslations("Common");
   const locale = useLocale();
-  const history = useQuery(api.itTickets.listStatusHistory, { ticketId: ticket._id });
-  const setStatus = useMutation(api.itTickets.setStatus);
+  const history = useQuery(api.itTickets.tickets.listStatusHistory, { ticketId: ticket._id });
+  const setStatus = useMutation(api.itTickets.tickets.setStatus);
   const handleError = useErrorHandler();
 
   const attention = ticketAttention(ticket);
@@ -254,8 +254,8 @@ function TicketPanelBody({
   const t = useTranslations("ItTickets");
   const tc = useTranslations("Common");
   const locale = useLocale();
-  const setAssignee = useMutation(api.itTickets.setAssignee);
-  const startThread = useMutation(api.itTicketThreads.start);
+  const setAssignee = useMutation(api.itTickets.tickets.setAssignee);
+  const startThread = useMutation(api.itTickets.threads.start);
   const handleError = useErrorHandler();
 
   const assignee = assignees.find((person) => person._id === ticket.assignedToUserId);

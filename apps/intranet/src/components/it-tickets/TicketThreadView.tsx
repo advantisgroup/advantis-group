@@ -30,7 +30,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type Thread = NonNullable<FunctionReturnType<typeof api.itTicketThreads.getForTicket>>;
+type Thread = NonNullable<FunctionReturnType<typeof api.itTickets.threads.getForTicket>>;
 
 /**
  * The chat window for a ticket's thread — mirrors ConversationView's basic
@@ -58,13 +58,13 @@ export function TicketThreadView({
   const handleError = useErrorHandler();
   const canPost = useHasCapability("manage_it_ticket_threads");
 
-  const messages = useQuery(api.itTicketThreads.listMessages, { threadId: thread._id }) ?? [];
-  const sendMessage = useMutation(api.itTicketThreads.sendMessage);
-  const toggleReaction = useMutation(api.itTicketThreads.toggleReaction);
+  const messages = useQuery(api.itTickets.threads.listMessages, { threadId: thread._id }) ?? [];
+  const sendMessage = useMutation(api.itTickets.threads.sendMessage);
+  const toggleReaction = useMutation(api.itTickets.threads.toggleReaction);
   const attachmentUpload = useAttachmentUpload();
   const { openFileViewer } = useFileViewer();
-  const lockThread = useMutation(api.itTicketThreads.lock);
-  const unlockThread = useMutation(api.itTicketThreads.unlock);
+  const lockThread = useMutation(api.itTickets.threads.lock);
+  const unlockThread = useMutation(api.itTickets.threads.unlock);
 
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);

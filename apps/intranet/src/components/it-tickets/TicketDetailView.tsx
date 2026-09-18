@@ -48,7 +48,7 @@ import { cn } from "@/lib/utils";
 
 // `| undefined` on top of the query's own `| null` — undefined while the
 // query is still loading, null once it's confirmed there's no thread yet.
-type Thread = FunctionReturnType<typeof api.itTicketThreads.getForTicket> | undefined;
+type Thread = FunctionReturnType<typeof api.itTickets.threads.getForTicket> | undefined;
 type RelatedLinkType = "guidebook" | "announcement" | "error_measure" | "other";
 
 const RELATED_LINK_TYPES: RelatedLinkType[] = [
@@ -93,14 +93,14 @@ export function TicketDetailView({
   const t = useTranslations("ItTickets");
   const tc = useTranslations("Common");
   const locale = useLocale();
-  const response = useQuery(api.itTickets.firstResponse, { ticketId: ticket._id });
+  const response = useQuery(api.itTickets.tickets.firstResponse, { ticketId: ticket._id });
   const isManager = useIsManager();
   const router = useRouter();
   const handleError = useErrorHandler();
   const createDraft = useMutation(api.drafts.create);
   const saveDraft = useMutation(api.drafts.save);
   const messages = useQuery(
-    api.itTicketThreads.listMessages,
+    api.itTickets.threads.listMessages,
     isManager && thread ? { threadId: thread._id } : "skip",
   );
 
@@ -298,7 +298,7 @@ export function TicketRelatedLinks({ ticket, className }: { ticket: Ticket; clas
   const t = useTranslations("ItTickets");
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
-  const setRelatedLinks = useMutation(api.itTickets.setRelatedLinks);
+  const setRelatedLinks = useMutation(api.itTickets.tickets.setRelatedLinks);
   const [open, setOpen] = useState(false);
   const [label, setLabel] = useState("");
   const [url, setUrl] = useState("");

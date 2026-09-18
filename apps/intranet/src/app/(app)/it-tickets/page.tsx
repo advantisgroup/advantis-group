@@ -106,7 +106,7 @@ function categoryColor(categories: string[], name: string): string {
 }
 
 const EMPTY_THREADS: NonNullable<
-  ReturnType<typeof useQuery<typeof api.itTicketThreads.listStarted>>
+  ReturnType<typeof useQuery<typeof api.itTickets.threads.listStarted>>
 > = [];
 
 function TicketMonthStrip({ tickets, categories }: { tickets: Ticket[]; categories: string[] }) {
@@ -221,13 +221,13 @@ function ItTicketsPageContent() {
   const canManageThreads = useHasCapability("manage_it_ticket_threads");
   const isManager = useIsManager();
 
-  const tickets = useQuery(api.itTickets.list);
+  const tickets = useQuery(api.itTickets.tickets.list);
   const preferences = useQuery(api.userPreferences.getMine);
   const users = useQuery(api.users.list, {});
-  const categories = useQuery(api.itTickets.listCategories);
-  const startedThreads = useQuery(api.itTicketThreads.listStarted) ?? EMPTY_THREADS;
-  const ensureDefaultCategories = useMutation(api.itTickets.ensureDefaultCategories);
-  const removeTicket = useMutation(api.itTickets.remove);
+  const categories = useQuery(api.itTickets.tickets.listCategories);
+  const startedThreads = useQuery(api.itTickets.threads.listStarted) ?? EMPTY_THREADS;
+  const ensureDefaultCategories = useMutation(api.itTickets.tickets.ensureDefaultCategories);
+  const removeTicket = useMutation(api.itTickets.tickets.remove);
   const setPreferences = useMutation(api.userPreferences.setMine);
 
   useEffect(() => {

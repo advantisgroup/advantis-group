@@ -297,7 +297,7 @@ export function MyDayCard() {
 export function MyTicketsCard() {
   const t = useTranslations("Dashboard");
   const locale = useLocale();
-  const mine = useQuery(api.itTickets.listMineOpen, { limit: 5 });
+  const mine = useQuery(api.itTickets.tickets.listMineOpen, { limit: 5 });
 
   return (
     <DashCard icon={<Wrench />} title={t("myTicketsTitle")} count={mine?.length || undefined}>

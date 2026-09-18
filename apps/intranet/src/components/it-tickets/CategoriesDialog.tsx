@@ -31,8 +31,8 @@ export function CategoriesDialog({
   const t = useTranslations("ItTickets");
   const tc = useTranslations("Common");
   const confirm = useConfirm();
-  const createCategory = useMutation(api.itTickets.createCategory);
-  const removeCategory = useMutation(api.itTickets.removeCategory);
+  const createCategory = useMutation(api.itTickets.tickets.createCategory);
+  const removeCategory = useMutation(api.itTickets.tickets.removeCategory);
   const handleError = useErrorHandler();
   const [name, setName] = useState("");
 
