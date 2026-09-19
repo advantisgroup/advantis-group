@@ -45,7 +45,11 @@ done.
 
 ## Tests
 
-`packages/convex` is currently the only package with tests. They run on
+`apps/api` has route tests on `bun test` (`apps/api/src/app.test.ts`) that
+need no network: health, server-key refusal, `signedIn` refusal and the
+Convex-error → HTTP status mapping.
+
+`packages/convex`'s tests run on
 [`convex-test`](https://docs.convex.dev/testing/convex-test) under Vitest:
 the real Convex functions execute against an in-memory backend, so a test
 seeds rows, calls `api.*` exactly the way apps/api or the browser would, and
@@ -152,21 +156,40 @@ rules are installed — so it's on whoever writes the function.
 
 Define every function with the builders from `convex/functions.ts`, never
 `_generated/server` (types like `MutationCtx` still come from there):
-`mutation`/`action` refuse to run in sandbox mode, `server*` are for apps/api
-and check the server key, `gated*(flag)` stop work while a feature flag is
-off. See `docs/future-features/22_convex-restructure.md` for where modules
-are heading.
 
-The four that bite hardest here:
+- `userQuery`/`userMutation`/`userAction` for anything a signed-in person
+  calls. They resolve the caller once and hand the handler `ctx.caller`
+  (`lib/caller.ts`); declare what's needed up front —
+  `userQuery({ role: "manager", … })`, `can: "manage_blog"`,
+  `applicant: "access"` (also checks the vault) — and use
+  `ctx.caller.owns(id)`, `.can(cap)`, `.isAdmin` inside.
+- `serverUserQuery`/`serverUserMutation`/`serverUserAction` for apps/api
+  calls on behalf of a person: they take `serverKey` + `clerkUserId` and give
+  the same `ctx.caller`. Plain `server*` is for calls with no person behind
+  them (webhooks, pollers).
+- `mutation`/`action` refuse to run in sandbox mode, `gated*(flag)` stop work
+  while a feature flag is off.
+- Every builder hides trashed rows (`lib/trash.ts`) from `ctx.db`;
+  `ctx.unfilteredDb` sees them. Deleting authored content means
+  `moveToTrash`, not `ctx.db.delete` — see `docs/backups.md`.
+
+See `docs/future-features/22_convex-restructure.md` for where modules are
+heading.
+
+The ones that bite hardest here:
 
 - **`.collect()` only on org-scale tables.** `users`/`presence`/`departments`
   are fine; `activitySamples`, `stateSamples`, `messages`, the audit tables
   and `notifications` grow without bound and need `.take()` on an index
   (newest-first) or `.paginate()`.
-- **Access control first, via `lib/auth.ts`.** `requireUser` /
-  `requireManager` / `requireAdmin` / `requireCapability`, plus non-throwing
-  `hasCapability` when the decision is "how much of this record do I reveal."
-  Don't hand-roll a `ctx.auth` check.
+- **Access control through the caller.** Put the requirement on the builder;
+  for "how much of this record do I reveal" ask `ctx.caller.can(…)`. Outside a
+  handler (internal functions, shared helpers) use `requireSessionCaller` /
+  `getSessionCaller` / `requireServerCaller` / `getServerCaller`. Suspended
+  and removed people never get a caller. Don't hand-roll a `ctx.auth` check.
+- **Users are never deleted.** Removing someone sets `status: "removed"`
+  (`markUserRemoved`); 129 fields point at `users`. Lists should skip
+  `removed` rows.
 - **The public `api*` functions are deliberate.** `activity/state.ts`'s
   `pushSignal`/`reportHealth`/`mappings` and every `api*`-prefixed function
   elsewhere are reached from `apps/api` server-to-server behind a server key

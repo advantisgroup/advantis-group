@@ -8,7 +8,7 @@ which layer happens to be convenient to call.
 Use Convex directly from the intranet for data owned by this product when a
 view should update as records change. Client components use `useQuery`,
 `useMutation`, or `useAction` against the generated API; public Convex
-functions authorize with `lib/auth.ts` first.
+functions authorize through the `user*` builders in `functions.ts` first.
 
 Convex remains the source of truth for intranet records, permissions, audit
 data, and reactive ActivityTrack state. An action is appropriate when an

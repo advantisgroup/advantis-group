@@ -9,6 +9,7 @@ flowchart TD
   employee(["Employee"])
   visitor(["Public visitor"])
   agent(["Desktop agent<br/>(Windows tray app)"])
+  backup(["GitHub Action<br/>nightly backup"])
 
   subgraph apps["apps/"]
     intranet["intranet<br/>Next.js"]
@@ -45,14 +46,16 @@ flowchart TD
 
   api -- "outbound calls" --> services
   services -- "webhooks" --> api
-  functions -- "Genesys & Clockodo polling" --> services
+  functions -- "Genesys & Clockodo polling,<br/>Clerk admin calls" --> services
+  backup -- "convex export" --> db
+  backup -- "/internal/backups, server key" --> api
 ```
 
 ## Who talks to whom
 
 - **Browser → Convex directly.** Most intranet reads and writes are Convex
-  queries/mutations authenticated by the Clerk JWT, gated in
-  `lib/auth.ts` (`requireUser`, `requireCapability`, …).
+  queries/mutations authenticated by the Clerk JWT, gated by the builders in
+  `functions.ts` (`userQuery({ role, can })`, `ctx.caller`).
 - **Browser → apps/api.** Anything that needs a secret Convex can't or
   shouldn't hold: AI (Anthropic), OneDrive (Graph), Clockodo absences and
   clock entries, passkeys/TOTP/step-up, the applicant vault, Performance
@@ -65,7 +68,14 @@ flowchart TD
   `ingest.ts` resolves device → person → employee itself (see AGENTS.md's
   ActivityTrack section).
 - **Webhooks land on apps/api** (Clerk, Graph, Resend, Genesys, Clockodo)
-  and are relayed into Convex with the server key.
+  and are relayed into Convex with the server key. Clerk, Resend and Graph
+  deliveries are also recorded in `integrationHealth` for the admin panel.
+- **Convex → Clerk** for invites (inline, so the admin sees a rejection) and
+  for lock, unlock, delete and rename (scheduled from the mutation and
+  retried; `people/clerkSync.ts`).
+- **Nightly backup.** A GitHub Action exports production, encrypts it and
+  uploads it to OneDrive through an upload session apps/api opens; the
+  OneDrive credentials never leave apps/api. See `docs/backups.md`.
 - **Clerk** signs users into all three apps; Convex trusts its JWT and
   apps/api verifies the session itself.
 - **Marketing** also has its own pp/api routes that mail contact and
