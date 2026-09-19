@@ -1572,13 +1572,38 @@ input[type="week"] {
    A white button sitting on a soft rainbow glow. The glow is one blurred
    ring of colour — the colours melt into each other and fade out at the edge
    — and its outline keeps slowly changing, reaching out further in some
-   places than others, like light coming over the horizon.
+   places than others, like light coming over the horizon. The colours also
+   turn slowly and steadily all the way round, and while the pointer is over
+   the button the whole glow leans a few pixels towards it, left or right.
    `Button variant="sunrise"`. The glow reaches past the button, so a parent
    with overflow hidden will clip it. */
 @property --sunrise-turn {
   syntax: "<angle>";
   inherits: false;
   initial-value: 0deg;
+}
+
+/* The slow, steady turn of the colours — one full circle per cycle. The drift
+   above rides on top of it, so the rotation never looks mechanical. */
+@property --sunrise-spin {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* How far the glow's centre sits from the button's, left or right. Set on the
+   button from JS while the pointer is over it; see `Button` in
+   components/ui/button.tsx. */
+@property --sunrise-x {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@keyframes sunrise-spin {
+  to {
+    --sunrise-spin: 360deg;
+  }
 }
 
 /* Uneven on purpose: each corner and side drifts on its own, so the glow
@@ -1640,7 +1665,7 @@ input[type="week"] {
     pointer-events: none;
     border-radius: 48% 52% 55% 45% / 62% 44% 56% 40%;
     background: conic-gradient(
-      from calc(210deg + var(--sunrise-turn)),
+      from calc(210deg + var(--sunrise-spin) + var(--sunrise-turn)),
       #ff5f7e,
       #ff9a4d,
       #ffd84d,
@@ -1652,10 +1677,14 @@ input[type="week"] {
     );
     filter: blur(9px) saturate(1.2);
     opacity: var(--sunrise-glow);
-    animation: sunrise-drift 11s ease-in-out infinite;
+    translate: var(--sunrise-x) 0;
+    animation:
+      sunrise-drift 11s ease-in-out infinite,
+      sunrise-spin 22s linear infinite;
     transition:
       opacity 0.4s ease,
       transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+      translate 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
       filter 0.4s ease;
   }
 
@@ -1668,6 +1697,7 @@ input[type="week"] {
   @media (prefers-reduced-motion: reduce) {
     .btn-sunrise::before {
       animation: none;
+      translate: none;
     }
   }
 }

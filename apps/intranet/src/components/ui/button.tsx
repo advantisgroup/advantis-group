@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -21,7 +23,7 @@ const buttonVariants = cva(
           "border border-border/80 bg-background text-foreground shadow-[-8px_8px_20px_-12px_rgba(244,63,94,0.9),8px_-8px_20px_-12px_rgba(34,211,238,0.9)] hover:border-violet-400/60 hover:bg-accent hover:shadow-[-10px_10px_24px_-10px_rgba(244,63,94,0.95),10px_-10px_24px_-10px_rgba(34,211,238,0.95)]",
         premium:
           "border-violet-400/50 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 text-white shadow-[0_5px_18px_-6px_rgba(192,38,211,0.75)] hover:brightness-110 hover:shadow-[0_9px_24px_-7px_rgba(192,38,211,0.9)]",
-        // White on a soft, drifting rainbow glow — see .btn-sunrise in globals.css.
+        // White on a slowly turning rainbow glow — see .btn-sunrise in globals.css.
         sunrise: "btn-sunrise",
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-[0_0_0_1px_color-mix(in_oklch,var(--destructive)_45%,transparent),0_4px_16px_-4px_color-mix(in_oklch,var(--destructive)_55%,transparent)] refreshed:shadow-none refreshed:hover:shadow-none",
@@ -56,11 +58,47 @@ export interface ButtonProps
   asChild?: boolean;
 }
 
+/* How far the sunrise glow's centre may lean towards the pointer, in px. Small
+   on purpose: enough to notice, not enough to look like the glow came loose. */
+const SUNRISE_LEAN_PX = 5;
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, onPointerMove, onPointerLeave, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
+    const isSunrise = variant === "sunrise";
+
+    // The glow leans towards the pointer on the x axis only — vertical movement
+    // inside the button leaves it where it is. CSS reads --sunrise-x.
+    const handlePointerMove = React.useCallback(
+      (event: React.PointerEvent<HTMLButtonElement>) => {
+        onPointerMove?.(event);
+        if (!isSunrise) return;
+        const target = event.currentTarget;
+        const { left, width } = target.getBoundingClientRect();
+        if (!width) return;
+        const fromCentre = Math.max(-1, Math.min(1, ((event.clientX - left) / width - 0.5) * 2));
+        target.style.setProperty("--sunrise-x", `${(fromCentre * SUNRISE_LEAN_PX).toFixed(2)}px`);
+      },
+      [isSunrise, onPointerMove],
+    );
+
+    const handlePointerLeave = React.useCallback(
+      (event: React.PointerEvent<HTMLButtonElement>) => {
+        onPointerLeave?.(event);
+        if (!isSunrise) return;
+        event.currentTarget.style.removeProperty("--sunrise-x");
+      },
+      [isSunrise, onPointerLeave],
+    );
+
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        onPointerMove={handlePointerMove}
+        onPointerLeave={handlePointerLeave}
+        {...props}
+      />
     );
   },
 );
