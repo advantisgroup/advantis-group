@@ -1569,43 +1569,47 @@ input[type="week"] {
 }
 
 /* ── Sunrise button ──────────────────────────────────────────────────────────
-   A white button with rainbow light around it: a soft glow that shades from
-   warm to cool, and thin rays behind it that fade out as they go, sway a few
-   degrees and breathe — light coming off it, not a spinning gradient.
-   `Button variant="sunrise"`. The rays reach past the button, so a parent
-   with overflow hidden will clip them. */
-@property --sunrise-sway {
+   A white button sitting on a soft rainbow glow. The glow is one blurred
+   ring of colour — the colours melt into each other and fade out at the edge
+   — and its outline keeps slowly changing, reaching out further in some
+   places than others, like light coming over the horizon.
+   `Button variant="sunrise"`. The glow reaches past the button, so a parent
+   with overflow hidden will clip it. */
+@property --sunrise-turn {
   syntax: "<angle>";
   inherits: false;
   initial-value: 0deg;
 }
 
-@keyframes sunrise-sway {
+/* Uneven on purpose: each corner and side drifts on its own, so the glow
+   never pokes out in the same place twice in a row. */
+@keyframes sunrise-drift {
   0%,
   100% {
-    --sunrise-sway: -3deg;
+    inset: -7px -10px -5px -12px;
+    border-radius: 48% 52% 55% 45% / 62% 44% 56% 40%;
+    --sunrise-turn: -8deg;
   }
-  50% {
-    --sunrise-sway: 3deg;
+  23% {
+    inset: -10px -6px -8px -9px;
+    border-radius: 58% 42% 44% 56% / 44% 62% 40% 58%;
+    --sunrise-turn: 6deg;
   }
-}
-
-@keyframes sunrise-breathe {
-  0%,
-  100% {
-    opacity: var(--sunrise-rays, 0.5);
-    transform: scale(0.94);
+  51% {
+    inset: -5px -13px -9px -6px;
+    border-radius: 42% 58% 62% 38% / 56% 40% 62% 44%;
+    --sunrise-turn: -3deg;
   }
-  50% {
-    opacity: calc(var(--sunrise-rays, 0.5) + 0.15);
-    transform: scale(1.04);
+  78% {
+    inset: -9px -8px -4px -14px;
+    border-radius: 55% 45% 40% 60% / 40% 58% 46% 60%;
+    --sunrise-turn: 10deg;
   }
 }
 
 @layer components {
   .btn-sunrise {
-    --sunrise-rainbow: #ff6b8b, #ffa25f, #ffd95f, #7ee8a2, #5fd3ff, #8b7bff, #e57bff, #ff6b8b;
-    --sunrise-rays: 0.5;
+    --sunrise-glow: 0.8;
     position: relative;
     isolation: isolate;
     border-color: transparent;
@@ -1613,77 +1617,52 @@ input[type="week"] {
     color: #18181b;
   }
 
-  /* The face: white, with a hairline of the rainbow as its edge and the glow
-     as coloured shadows pulled in different directions. */
+  /* The face: plain white, with a hint of depth. */
   .btn-sunrise::after {
     content: "";
     position: absolute;
-    inset: -1px;
+    inset: 0;
     z-index: -1;
-    border: 1px solid transparent;
     border-radius: inherit;
-    background:
-      linear-gradient(#fff, #fff) padding-box,
-      conic-gradient(from 200deg, var(--sunrise-rainbow)) border-box;
+    background: #fff;
     box-shadow:
       inset 0 1px 0 #fff,
-      0 1px 2px rgb(24 24 27 / 0.08),
-      -12px 2px 24px -8px rgb(255 107 139 / 0.55),
-      12px -2px 24px -8px rgb(95 211 255 / 0.55),
-      0 -10px 22px -10px rgb(255 217 95 / 0.6),
-      0 10px 22px -10px rgb(139 123 255 / 0.5);
-    transition: box-shadow 0.3s ease;
+      inset 0 -1px 0 rgb(24 24 27 / 0.06),
+      0 1px 2px rgb(24 24 27 / 0.1);
   }
 
-  /* The rays: a rainbow cut into thin wedges, faded out towards the edge. */
+  /* The glow: a rainbow all the way round, blurred until it's just light. */
   .btn-sunrise::before {
     content: "";
     position: absolute;
-    inset: -150% -45%;
+    inset: -7px -10px -5px -12px;
     z-index: -2;
     pointer-events: none;
-    background: conic-gradient(from calc(200deg + var(--sunrise-sway)), var(--sunrise-rainbow));
-    -webkit-mask:
-      repeating-conic-gradient(from var(--sunrise-sway), #000 0deg 1.6deg, transparent 2.6deg 9deg),
-      radial-gradient(closest-side, #000 30%, transparent 100%);
-    -webkit-mask-composite: source-in;
-    mask:
-      repeating-conic-gradient(from var(--sunrise-sway), #000 0deg 1.6deg, transparent 2.6deg 9deg),
-      radial-gradient(closest-side, #000 30%, transparent 100%);
-    mask-composite: intersect;
-    filter: blur(1.5px);
-    opacity: var(--sunrise-rays);
-    animation:
-      sunrise-sway 9s ease-in-out infinite,
-      sunrise-breathe 4.5s ease-in-out infinite;
-    transition: inset 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .btn-sunrise:hover {
-    --sunrise-rays: 0.75;
+    border-radius: 48% 52% 55% 45% / 62% 44% 56% 40%;
+    background: conic-gradient(
+      from calc(210deg + var(--sunrise-turn)),
+      #ff5f7e,
+      #ff9a4d,
+      #ffd84d,
+      #6ee7a0,
+      #4dc9ff,
+      #7c6cff,
+      #e36cff,
+      #ff5f7e
+    );
+    filter: blur(9px) saturate(1.2);
+    opacity: var(--sunrise-glow);
+    animation: sunrise-drift 11s ease-in-out infinite;
+    transition:
+      opacity 0.4s ease,
+      transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+      filter 0.4s ease;
   }
 
   .btn-sunrise:hover::before {
-    inset: -210% -60%;
-  }
-
-  .btn-sunrise:hover::after {
-    box-shadow:
-      inset 0 1px 0 #fff,
-      0 1px 2px rgb(24 24 27 / 0.08),
-      -16px 3px 30px -8px rgb(255 107 139 / 0.7),
-      16px -3px 30px -8px rgb(95 211 255 / 0.7),
-      0 -14px 28px -10px rgb(255 217 95 / 0.75),
-      0 14px 28px -10px rgb(139 123 255 / 0.65);
-  }
-
-  /* Rays read fainter against a dark page, so they get a bit more there. */
-  :root:not(.light) .btn-sunrise {
-    --sunrise-rays: 0.65;
-  }
-
-  :root:not(.light) .btn-sunrise:hover {
-    --sunrise-rays: 0.9;
+    --sunrise-glow: 1;
+    transform: scale(1.12);
+    filter: blur(11px) saturate(1.3);
   }
 
   @media (prefers-reduced-motion: reduce) {
