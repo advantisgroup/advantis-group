@@ -10,6 +10,7 @@
     "lint": "oxlint ./src",
     "lint:fix": "oxlint ./src --fix",
     "type-check": "tsc --noEmit",
+    "e2e": "playwright test",
     "format:check": "oxfmt --check ./src",
     "format": "oxfmt --write ./src"
   },
@@ -69,6 +70,7 @@
   },
   "devDependencies": {
     "@advantis/config": "workspace:*",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.17",
