@@ -169,6 +169,7 @@ import type * as notifications_notifications from "../notifications/notification
 import type * as offboarding from "../offboarding.js";
 import type * as onedrive from "../onedrive.js";
 import type * as org_auditLog from "../org/auditLog.js";
+import type * as org_backups from "../org/backups.js";
 import type * as org_delegations from "../org/delegations.js";
 import type * as org_featureFlags from "../org/featureFlags.js";
 import type * as org_lib_delegations from "../org/lib/delegations.js";
@@ -446,6 +447,7 @@ declare const fullApi: ApiFromModules<{
   offboarding: typeof offboarding;
   onedrive: typeof onedrive;
   "org/auditLog": typeof org_auditLog;
+  "org/backups": typeof org_backups;
   "org/delegations": typeof org_delegations;
   "org/featureFlags": typeof org_featureFlags;
   "org/lib/delegations": typeof org_lib_delegations;

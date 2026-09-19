@@ -172,4 +172,16 @@ export const integrationsTables = {
     refreshToken: v.string(),
     updatedAt: v.number(),
   }),
+
+  /** Offsite backups (the convex-backup GitHub Action) and the restore drills
+   *  that prove them — what the admin backup card reads. */
+  backupRuns: defineTable({
+    kind: v.union(v.literal("backup"), v.literal("restore_test")),
+    status: v.union(v.literal("ok"), v.literal("failed")),
+    fileName: v.optional(v.string()),
+    sizeBytes: v.optional(v.number()),
+    note: v.optional(v.string()),
+    recordedByUserId: v.optional(v.id("users")),
+    at: v.number(),
+  }).index("by_kind_at", ["kind", "at"]),
 };
