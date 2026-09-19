@@ -45,13 +45,18 @@ interface ClerkInvitation {
   email_address: string;
 }
 
-/** Pending Clerk invitations for `email` (empty on any list failure). */
+/** Pending Clerk invitations for `email`. */
 async function pendingInvitations(email: string): Promise<ClerkInvitation[]> {
   const res = await clerkFetch(
     `/invitations?status=pending&query=${encodeURIComponent(email)}&limit=100`,
     { method: "GET" },
   );
-  if (!res.ok) return [];
+  if (!res.ok) {
+    throw new ConvexError({
+      code: "upstream",
+      message: `Clerk could not list invitations (HTTP ${res.status}).`,
+    });
+  }
   const json = (await res.json()) as { data?: ClerkInvitation[] } | ClerkInvitation[];
   const list = Array.isArray(json) ? json : (json.data ?? []);
   return list.filter((i) => i.email_address.toLowerCase() === email);
@@ -171,13 +176,21 @@ export async function deleteClerkUser(clerkUserId: string): Promise<void> {
   }
 }
 
-/** Best-effort revoke of any still-pending Clerk invitations for `email`. */
+/** Revoke any still-pending Clerk invitations for `email`. Throws when Clerk
+ * can't be reached so a scheduled retry picks it up. */
 export async function revokeClerkInvitations(email: string): Promise<void> {
   const addr = email.trim().toLowerCase();
   const pending = await pendingInvitations(addr);
-  await Promise.all(
+  const results = await Promise.all(
     pending.map((i) => clerkFetch(`/invitations/${i.id}/revoke`, { method: "POST" })),
   );
+  const failed = results.find((res) => !res.ok && res.status !== 404);
+  if (failed) {
+    throw new ConvexError({
+      code: "upstream",
+      message: `Clerk could not revoke an invitation (HTTP ${failed.status}).`,
+    });
+  }
 }
 
 /**
