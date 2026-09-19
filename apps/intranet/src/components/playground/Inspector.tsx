@@ -112,11 +112,16 @@ export function Inspector<T>({
   const [selected, setSelected] = useState<string | null>(null);
   const [fields, setFields] = useState<InspectField[]>([]);
   const [flights, setFlights] = useState<Record<string, Flight>>({});
+  // Each open and close gets a fresh element. Reusing one that's still fading
+  // out leaves it stuck invisible.
+  const [round, setRound] = useState(0);
+  const busy = useRef(false);
   const tiles = useRef(new Map<string, HTMLElement>());
   const closeRef = useRef<HTMLButtonElement>(null);
   const item = selected === null ? null : items.find((i) => getKey(i) === selected);
 
   function open(entry: T) {
+    if (busy.current) return;
     const key = getKey(entry);
     const from = tiles.current.get(key)?.getBoundingClientRect();
     const next: Record<string, Flight> = {};
@@ -144,14 +149,29 @@ export function Inspector<T>({
     }
     setFlights(next);
     setFields(getFields(entry));
+    begin();
     setSelected(key);
+  }
+
+  function close() {
+    if (busy.current) return;
+    begin();
+    setSelected(null);
+  }
+
+  // Ignores clicks until the swap has played out, with a fallback in case the
+  // exit never reports back.
+  function begin() {
+    busy.current = true;
+    setRound((r) => r + 1);
+    window.setTimeout(() => (busy.current = false), 900);
   }
 
   useEffect(() => {
     if (selected === null) return;
     closeRef.current?.focus({ preventScroll: true });
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSelected(null);
+      if (event.key === "Escape") close();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -161,10 +181,14 @@ export function Inspector<T>({
     <MotionConfig reducedMotion="user">
       <LayoutGroup id={group}>
         <motion.div layout transition={MOVE} className="relative">
-          <AnimatePresence mode="popLayout" initial={false}>
+          <AnimatePresence
+            mode="popLayout"
+            initial={false}
+            onExitComplete={() => (busy.current = false)}
+          >
             {item ? (
               <motion.div
-                key="focus"
+                key={`focus-${round}`}
                 className="flex flex-col gap-5 sm:flex-row sm:items-start"
                 exit={{ opacity: 0, transition: { duration: 0.15 } }}
               >
@@ -178,7 +202,7 @@ export function Inspector<T>({
                     rotate: [0, -3, 1.5, 0],
                     transition: { duration: 0.7, times: [0, 0.35, 0.7, 1] },
                   }}
-                  onClick={() => setSelected(null)}
+                  onClick={close}
                   aria-label={t("inspector.close")}
                   className={cn(
                     tileClassName,
@@ -204,7 +228,7 @@ export function Inspector<T>({
                     <button
                       ref={closeRef}
                       type="button"
-                      onClick={() => setSelected(null)}
+                      onClick={close}
                       className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       aria-label={t("inspector.close")}
                     >
@@ -238,7 +262,7 @@ export function Inspector<T>({
               </motion.div>
             ) : (
               <motion.div
-                key="grid"
+                key={`grid-${round}`}
                 className={gridClassName}
                 initial="hidden"
                 animate="shown"
