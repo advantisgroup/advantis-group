@@ -17,12 +17,17 @@ export default function PlaygroundLayout({ children }: { children: ReactNode }) 
   const active = pathname.split("/")[2] ?? "overview";
 
   const tabs: RouteTab[] = [
-    { value: "overview", href: "/t", label: t("tabs.overview"), icon: FlaskConical },
-    { value: "drag", href: "/t/drag", label: t("tabs.drag"), icon: Hand },
-    { value: "motion", href: "/t/motion", label: t("tabs.motion"), icon: Orbit },
-    { value: "chat", href: "/t/chat", label: t("tabs.chat"), icon: MessagesSquare },
-    { value: "design", href: "/t/design", label: t("tabs.design"), icon: Palette },
-    { value: "components", href: "/t/components", label: t("tabs.components"), icon: Shapes },
+    { value: "overview", href: "/playground", label: t("tabs.overview"), icon: FlaskConical },
+    { value: "drag", href: "/playground/drag", label: t("tabs.drag"), icon: Hand },
+    { value: "motion", href: "/playground/motion", label: t("tabs.motion"), icon: Orbit },
+    { value: "chat", href: "/playground/chat", label: t("tabs.chat"), icon: MessagesSquare },
+    { value: "design", href: "/playground/design", label: t("tabs.design"), icon: Palette },
+    {
+      value: "components",
+      href: "/playground/components",
+      label: t("tabs.components"),
+      icon: Shapes,
+    },
   ];
 
   return (

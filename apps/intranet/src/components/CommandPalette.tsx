@@ -270,7 +270,7 @@ export function CommandPalette({ className }: { className?: string } = {}) {
         managerOnly: true,
       },
       { href: "/settings", label: tNav("settings"), icon: Settings },
-      { href: "/t", label: tNav("playground"), icon: FlaskConical, searchOnly: true },
+      { href: "/playground", label: tNav("playground"), icon: FlaskConical, searchOnly: true },
     ];
     return all.filter((p) => !p.managerOnly || isManager).filter((p) => !p.hidden);
   }, [

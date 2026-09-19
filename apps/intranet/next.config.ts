@@ -81,6 +81,11 @@ const nextConfig: NextConfig = {
         destination: "/clockodo/manage/:path*",
         permanent: true,
       },
+      {
+        source: "/t/:path*",
+        destination: "/playground/:path*",
+        permanent: true,
+      },
     ];
   },
 };

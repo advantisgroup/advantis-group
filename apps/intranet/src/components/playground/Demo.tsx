@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * One exhibit on a `/t` page: what it is, a line on why it works the way it
+ * One exhibit on a `/playground` page: what it is, a line on why it works the way it
  * does, where the real one lives, and the live thing itself.
  */
 export function Demo({

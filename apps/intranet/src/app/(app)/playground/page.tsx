@@ -6,11 +6,11 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/components/Link";
 
 const SECTIONS = [
-  { key: "drag", href: "/t/drag", icon: Hand },
-  { key: "motion", href: "/t/motion", icon: Orbit },
-  { key: "chat", href: "/t/chat", icon: MessagesSquare },
-  { key: "design", href: "/t/design", icon: Palette },
-  { key: "components", href: "/t/components", icon: Shapes },
+  { key: "drag", href: "/playground/drag", icon: Hand },
+  { key: "motion", href: "/playground/motion", icon: Orbit },
+  { key: "chat", href: "/playground/chat", icon: MessagesSquare },
+  { key: "design", href: "/playground/design", icon: Palette },
+  { key: "components", href: "/playground/components", icon: Shapes },
 ] as const;
 
 export default function PlaygroundOverviewPage() {
