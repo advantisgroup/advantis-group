@@ -1,6 +1,5 @@
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { ConvexError } from "convex/values";
 import { Elysia, t } from "elysia";
 
 import {
@@ -28,17 +27,6 @@ const outcomeSchema = t.Union([
   t.Literal("wiedervorlage"),
   t.Literal("kein_ergebnis"),
 ]);
-
-/** Maps a ConvexError thrown by an admin-gated salesCoachEv function (forbidden/not_found) to the matching ApiError. */
-function mapConvexError(err: unknown) {
-  if (err instanceof ConvexError) {
-    const data = err.data as { code?: string; message?: string } | undefined;
-    if (data?.code === "not_found") return Errors.notFound(data.message);
-    return Errors.forbidden(data?.message);
-  }
-  return Errors.forbidden();
-}
-
 const WIKI_CAT_VALUES = [
   "Produktdaten",
   "Preisliste",
@@ -456,17 +444,13 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
     "/wiki",
     async ({ request, body }) => {
       const { clerkUserId } = await requireAuth(request);
-      try {
-        const { id } = await getConvex().mutation(api.salesCoachEv.wiki.create, {
-          serverKey: getConvexServerKey(),
-          clerkUserId,
-          ...body,
-          storageId: body.storageId as Id<"_storage"> | undefined,
-        });
-        return { id };
-      } catch (err) {
-        throw mapConvexError(err);
-      }
+      const { id } = await getConvex().mutation(api.salesCoachEv.wiki.create, {
+        serverKey: getConvexServerKey(),
+        clerkUserId,
+        ...body,
+        storageId: body.storageId as Id<"_storage"> | undefined,
+      });
+      return { id };
     },
     {
       body: t.Object({
@@ -487,18 +471,14 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
     "/wiki/:id",
     async ({ request, params, body }) => {
       const { clerkUserId } = await requireAuth(request);
-      try {
-        await getConvex().mutation(api.salesCoachEv.wiki.update, {
-          serverKey: getConvexServerKey(),
-          clerkUserId,
-          id: params.id as Id<"salesCoachEvWiki">,
-          ...body,
-          storageId: body.storageId as Id<"_storage"> | undefined,
-        });
-        return { updated: true };
-      } catch (err) {
-        throw mapConvexError(err);
-      }
+      await getConvex().mutation(api.salesCoachEv.wiki.update, {
+        serverKey: getConvexServerKey(),
+        clerkUserId,
+        id: params.id as Id<"salesCoachEvWiki">,
+        ...body,
+        storageId: body.storageId as Id<"_storage"> | undefined,
+      });
+      return { updated: true };
     },
     {
       body: t.Object({
@@ -517,16 +497,12 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
   )
   .delete("/wiki/:id", async ({ request, params }) => {
     const { clerkUserId } = await requireAuth(request);
-    try {
-      await getConvex().mutation(api.salesCoachEv.wiki.remove, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
-        id: params.id as Id<"salesCoachEvWiki">,
-      });
-      return { deleted: true };
-    } catch (err) {
-      throw mapConvexError(err);
-    }
+    await getConvex().mutation(api.salesCoachEv.wiki.remove, {
+      serverKey: getConvexServerKey(),
+      clerkUserId,
+      id: params.id as Id<"salesCoachEvWiki">,
+    });
+    return { deleted: true };
   })
   // Reads a source document (PDF sent as a file; .docx/.txt/.md sent as
   // already-extracted plain text, since the client already has mammoth for
@@ -610,16 +586,12 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
     async ({ request, query }) => {
       const { clerkUserId } = await requireAuth(request);
       const days = query.days ? Number(query.days) : 30;
-      try {
-        const roster = await getConvex().query(api.salesCoachEv.calls.adminRoster, {
-          serverKey: getConvexServerKey(),
-          clerkUserId,
-          sinceMs: Date.now() - days * 86_400_000,
-        });
-        return { roster };
-      } catch (err) {
-        throw mapConvexError(err);
-      }
+      const roster = await getConvex().query(api.salesCoachEv.calls.adminRoster, {
+        serverKey: getConvexServerKey(),
+        clerkUserId,
+        sinceMs: Date.now() - days * 86_400_000,
+      });
+      return { roster };
     },
     { query: t.Object({ days: t.Optional(t.String()) }) },
   )
@@ -631,17 +603,13 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
     async ({ request, params, query }) => {
       const { clerkUserId } = await requireAuth(request);
       const days = query.days ? Number(query.days) : 30;
-      try {
-        const detail = await getConvex().query(api.salesCoachEv.calls.adminUserDetail, {
-          serverKey: getConvexServerKey(),
-          clerkUserId,
-          targetClerkUserId: params.clerkUserId,
-          sinceMs: Date.now() - days * 86_400_000,
-        });
-        return { detail };
-      } catch (err) {
-        throw mapConvexError(err);
-      }
+      const detail = await getConvex().query(api.salesCoachEv.calls.adminUserDetail, {
+        serverKey: getConvexServerKey(),
+        clerkUserId,
+        targetClerkUserId: params.clerkUserId,
+        sinceMs: Date.now() - days * 86_400_000,
+      });
+      return { detail };
     },
     { query: t.Object({ days: t.Optional(t.String()) }) },
   );

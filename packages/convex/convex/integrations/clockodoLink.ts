@@ -23,7 +23,7 @@ export const linkClockodoUser = userMutation({
   handler: async (ctx, { userId, clockodoUserId }) => {
     const actor = ctx.caller.user;
     const user = await ctx.db.get(userId);
-    if (!user) throw appError("notFound.user", "User not found");
+    if (!user) throw appError("not_found", "User not found");
 
     const clockodoUserIdStr = toClockodoIdString(clockodoUserId);
     await ctx.db.patch(userId, { clockodoUserId: clockodoUserIdStr });
@@ -48,7 +48,7 @@ export const unlinkClockodoUser = userMutation({
   handler: async (ctx, { userId }) => {
     const actor = ctx.caller.user;
     const user = await ctx.db.get(userId);
-    if (!user) throw appError("notFound.user", "User not found");
+    if (!user) throw appError("not_found", "User not found");
 
     await ctx.db.patch(userId, { clockodoUserId: undefined });
 

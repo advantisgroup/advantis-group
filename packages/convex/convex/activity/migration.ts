@@ -78,7 +78,7 @@ export const resume = userMutation({
   args: { migrationId: v.id("activityMigrations") },
   handler: async (ctx, { migrationId }) => {
     const migration = await ctx.db.get(migrationId);
-    if (!migration) throw appError("notFound.migration", "Migration not found");
+    if (!migration) throw appError("not_found", "Migration not found");
     await ctx.db.patch(migrationId, {
       status: "running",
       finishedAt: undefined,
@@ -109,7 +109,7 @@ export const retryStep = userMutation({
   args: { stepId: v.id("activityMigrationSteps") },
   handler: async (ctx, { stepId }) => {
     const step = await ctx.db.get(stepId);
-    if (!step) throw appError("notFound.step", "Step not found");
+    if (!step) throw appError("not_found", "Step not found");
     await ctx.db.patch(stepId, {
       status: "pending",
       lastError: undefined,

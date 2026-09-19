@@ -1,5 +1,4 @@
 import { api } from "@advantis/convex/api";
-import { ConvexError } from "convex/values";
 import { Elysia, t } from "elysia";
 
 import { runModelText, startAiRun } from "../lib/ai.js";
@@ -39,23 +38,12 @@ export const askRoute = new Elysia().post(
     const question = body.question.trim();
     if (!question) throw Errors.badRequest("Empty question");
 
-    let context;
-    try {
-      context = await getConvex().query(api.aiRuns.apiAskContext, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
-        type: body.type,
-        id: body.id,
-      });
-    } catch (err) {
-      const code = err instanceof ConvexError ? (err.data as { code?: string })?.code : undefined;
-      if (code === "not_found") throw Errors.notFound("Record not found");
-      if (code === "forbidden") throw Errors.forbidden();
-      if (code === "vault_locked") {
-        throw Errors.forbidden("Applicant Management is locked — please re-enter the password.");
-      }
-      throw err;
-    }
+    const context = await getConvex().query(api.aiRuns.apiAskContext, {
+      serverKey: getConvexServerKey(),
+      clerkUserId,
+      type: body.type,
+      id: body.id,
+    });
 
     const { runId } = await startAiRun(
       {

@@ -31,7 +31,7 @@ const EXPORTABLE = v.union(
 function assertSecret(secret: string): void {
   const expected = process.env.ACTIVITYTRACK_SIGNAL_SECRET;
   if (!expected || !safeEqual(secret, expected)) {
-    throw appError("auth.forbidden", "Invalid migration secret");
+    throw appError("forbidden", "Invalid migration secret");
   }
 }
 

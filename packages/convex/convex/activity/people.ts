@@ -63,7 +63,7 @@ export const update = userMutation({
       args;
     const actor = ctx.caller.user;
     const person = await ctx.db.get(personId);
-    if (!person) throw appError("notFound.person", "Person not found");
+    if (!person) throw appError("not_found", "Person not found");
     // Once a person is linked to an intranet account, `users.clockodoUserId`
     // is canonical (see `integrations/clockodoLink.ts`) — editing the roster
     // copy directly here is exactly how the two fields drifted before (this
@@ -96,7 +96,7 @@ export const remove = userMutation({
   handler: async (ctx, { personId }) => {
     const actor = ctx.caller.user;
     const person = await ctx.db.get(personId);
-    if (!person) throw appError("notFound.person", "Person not found");
+    if (!person) throw appError("not_found", "Person not found");
 
     const linked = await ctx.db
       .query("devices")

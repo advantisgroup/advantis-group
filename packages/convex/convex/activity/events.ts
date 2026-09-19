@@ -141,7 +141,7 @@ export const resolveEvent = userMutation({
   handler: async (ctx, { eventId }) => {
     const actor = ctx.caller.user;
     const event = await ctx.db.get(eventId);
-    if (!event) throw appError("notFound.event", "Event not found");
+    if (!event) throw appError("not_found", "Event not found");
     await ctx.db.patch(eventId, {
       resolvedAt: Date.now(),
       resolvedBy: actor._id,
@@ -176,7 +176,7 @@ export const logFromServer = mutation({
   handler: async (ctx, { secret, severity, code, message, context }) => {
     const expected = process.env.ACTIVITYTRACK_SIGNAL_SECRET;
     if (!expected || !safeEqual(secret, expected)) {
-      throw appError("auth.forbidden", "Invalid signal secret");
+      throw appError("forbidden", "Invalid signal secret");
     }
     await logEvent(ctx, {
       severity,

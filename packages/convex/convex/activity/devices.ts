@@ -47,7 +47,7 @@ export const approve = userMutation({
   handler: async (ctx, { deviceId }) => {
     const actor = ctx.caller.user;
     const device = await ctx.db.get(deviceId);
-    if (!device) throw appError("notFound.device", "Device not found");
+    if (!device) throw appError("not_found", "Device not found");
     await ctx.db.patch(deviceId, {
       status: "active",
       tokenIssued: false,
@@ -64,7 +64,7 @@ export const disable = userMutation({
   handler: async (ctx, { deviceId }) => {
     const actor = ctx.caller.user;
     const device = await ctx.db.get(deviceId);
-    if (!device) throw appError("notFound.device", "Device not found");
+    if (!device) throw appError("not_found", "Device not found");
     await ctx.db.patch(deviceId, { status: "disabled" });
     await invalidateDeviceToken(ctx, deviceId);
     await writeAudit(ctx, actor._id, "device.disable", device.hostname);
@@ -78,7 +78,7 @@ export const remove = userMutation({
   handler: async (ctx, { deviceId }) => {
     const actor = ctx.caller.user;
     const device = await ctx.db.get(deviceId);
-    if (!device) throw appError("notFound.device", "Device not found");
+    if (!device) throw appError("not_found", "Device not found");
     await ctx.db.delete(deviceId);
     await writeAudit(ctx, actor._id, "device.remove", device.hostname);
   },
@@ -94,10 +94,10 @@ export const link = userMutation({
   handler: async (ctx, { deviceId, personId }) => {
     const actor = ctx.caller.user;
     const device = await ctx.db.get(deviceId);
-    if (!device) throw appError("notFound.device", "Device not found");
+    if (!device) throw appError("not_found", "Device not found");
     if (personId) {
       const person = await ctx.db.get(personId);
-      if (!person) throw appError("notFound.person", "Person not found");
+      if (!person) throw appError("not_found", "Person not found");
     }
     await ctx.db.patch(deviceId, { personId: personId ?? undefined });
     await writeAudit(ctx, actor._id, "device.link", `${device.hostname} -> ${personId ?? "none"}`);

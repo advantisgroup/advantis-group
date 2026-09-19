@@ -39,7 +39,7 @@ export const setConfig = userMutation({
       if (value === undefined) continue;
       const { min, max } = CONFIG_BOUNDS[field];
       if (!Number.isFinite(value) || value < min || value > max) {
-        throw appError("validation.out_of_range", `${field} must be between ${min} and ${max}`);
+        throw appError("bad_request", `${field} must be between ${min} and ${max}`);
       }
       const key = CONFIG_KEYS[field];
       const existing = await ctx.db
@@ -123,7 +123,7 @@ export const setDebugPassword = userAction({
   handler: async (ctx, { password }) => {
     const me = ctx.caller.user;
     if (password.length < 6) {
-      throw appError("validation.password_short", "Password must be at least 6 characters");
+      throw appError("bad_request", "Password must be at least 6 characters");
     }
     const hash = await hashPassword(password);
     await ctx.runMutation(internal.activity.settings.store, {

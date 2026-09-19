@@ -56,7 +56,7 @@ const CLOCKODO_STATE_FIELDS = {
 function assertSignalSecret(secret: string): void {
   const expected = process.env.ACTIVITYTRACK_SIGNAL_SECRET;
   if (!expected || !safeEqual(secret, expected)) {
-    throw appError("auth.forbidden", "Invalid signal secret");
+    throw appError("forbidden", "Invalid signal secret");
   }
 }
 
@@ -226,7 +226,7 @@ async function requireSelfOrActivityAdmin(ctx: QueryCtx, employeeId: string): Pr
   const subprofile = await getActivitySubprofile(ctx, caller.id);
   if (subprofile.employeeId === employeeId) return;
   if (caller.can("view_activity_admin")) return;
-  throw appError("auth.forbidden", "You do not have permission to view this employee's data");
+  throw appError("forbidden", "You do not have permission to view this employee's data");
 }
 
 /** Reactive single-employee read (timeline / detail panes). */
