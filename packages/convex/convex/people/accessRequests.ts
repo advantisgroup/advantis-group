@@ -100,7 +100,7 @@ export const myStatus = query({
       // No email claim yet (JWT hasn't caught up with a just-created
       // account) — don't report this as a blocked domain, or the client
       // routes it into the auto-delete screen for no real reason.
-      console.log(`[accessRequests.myStatus] identity ${identity.subject} has no email claim yet`);
+      console.info(`[accessRequests.myStatus] identity ${identity.subject} has no email claim yet`);
     }
     return {
       status: request?.status ?? ("none" as const),
@@ -133,7 +133,7 @@ export const assertUnauthorized = internalMutation({
     }
     const email = (identity.email ?? "").toLowerCase();
     if (!email || isEmailDomainAllowed(email)) {
-      console.log(
+      console.info(
         `[assertUnauthorized] refusing self-delete for ${identity.subject}: ${
           !email ? "no email claim yet" : `domain of ${email} is allowed`
         }`,

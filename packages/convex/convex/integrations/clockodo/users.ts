@@ -1,6 +1,6 @@
 "use node";
 
-import { action, userAction } from "../../functions";
+import { userAction } from "../../functions";
 import { v } from "convex/values";
 
 import { internal } from "../../_generated/api";
@@ -152,7 +152,7 @@ function toHolidaysQuota(row: ClockodoHolidaysQuotaWire): ClockodoHolidaysQuota 
 export const listClockodoUsers = userAction({
   can: "manage_clockodo_team",
   args: {},
-  handler: async (ctx): Promise<ClockodoUser[]> => {
+  handler: async (): Promise<ClockodoUser[]> => {
     const body = await clockodoFetch<{ data?: ClockodoUserWire[] }>(
       "/api/v3/users?items_per_page=1000",
     );

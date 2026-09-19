@@ -342,7 +342,7 @@ export async function sendNotificationEmail(
     // Masked recipient only — a reset link in a log line would be a
     // credential in a log line.
     const [local, domain] = to.split("@");
-    console.log(
+    console.info(
       `[passwordReset] email kind=${kind} to=${local?.slice(0, 1)}***@${domain} ok=${!error}`,
     );
   }
@@ -373,7 +373,7 @@ export async function sendClerkEmail(params: {
     ...(slug ? { tags: [{ name: "clerk_template", value: slug }] } : {}),
   });
   const [local, domain] = to.split("@");
-  console.log(
+  console.info(
     `[clerkEmail] slug=${slug ?? "unknown"} to=${local?.slice(0, 1)}***@${domain} ok=${!error}`,
   );
   if (error) throw Errors.upstream(`Resend error: ${error.message}`);
@@ -427,7 +427,7 @@ export async function sendUpdateBroadcast(
   const CHUNK = 100;
   for (let i = 0; i < recipients.length; i += CHUNK) {
     const chunk = recipients.slice(i, i + CHUNK);
-    console.log(
+    console.info(
       `[resend] sending batch ${i}-${i + chunk.length} of ${recipients.length} for update ${updateId}`,
     );
     let data, error;

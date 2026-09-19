@@ -2,30 +2,15 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
-import { internal } from "../_generated/api";
 import { roleValidator } from "../schema";
 import { clearVaultPasswordForUser } from "../hr/lib/vault";
 import { effectiveCustomRoleIds, effectiveRole, getCurrentUser, isSandboxed } from "../lib/auth";
-import {
-  action,
-  internalQuery,
-  query,
-  sandboxSafeMutation,
-  userQuery,
-  userMutation,
-} from "../functions";
+import { internalQuery, query, sandboxSafeMutation, userQuery, userMutation } from "../functions";
 import { getServerCaller, getSessionCaller, requireSessionCaller } from "../lib/caller";
 import { pushToClerk } from "./clerkSync";
 import { listUserPermissions } from "../lib/permissions";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { loadReportingLookup, reportingLines, resolveManager } from "../lib/reporting";
-import {
-  lockClerkUser,
-  unlockClerkUser,
-  updateClerkPublicMetadata,
-  updateClerkUserAvatar,
-  updateClerkUserName,
-} from "../lib/clerk";
 import { requireVaultUnlocked, isApplicantEligible } from "../hr/lib/access";
 import { ensureUser } from "../people/lib/provisioning";
 

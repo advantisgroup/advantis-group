@@ -321,7 +321,7 @@ export const apiRecordPasskeyStepUp = serverMutation({
 export const apiIssuePasskeyTicket = serverUserMutation({
   args: {},
   returns: v.object({ ticket: v.string() }),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const user = ctx.caller.user;
     const ticket = crypto.randomUUID() + crypto.randomUUID();
     await ctx.db.insert("stepUpPasskeyTickets", {

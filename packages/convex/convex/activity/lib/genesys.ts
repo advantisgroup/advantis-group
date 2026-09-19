@@ -121,7 +121,7 @@ export async function pollGenesys(ctx: ActionCtx, mappings: Mapping[]): Promise<
       await pushGenesys(ctx, p.employeeId, s);
       processed++;
     }
-    console.log(
+    console.info(
       `[genesys:poll] ${genesysPeople.length} people — interacting=${tally.interacting} wrapUp=${tally.wrapUp} available=${tally.available}`,
     );
     await reportHealth(ctx, "genesys", "ok");

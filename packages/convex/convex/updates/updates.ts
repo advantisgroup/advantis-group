@@ -214,7 +214,7 @@ export const publishScheduled = internalMutation({
     });
     if (update.emailRequested) {
       const res = await ctx.scheduler.runAfter(0, internal.updates.email.sendBulk, { updateId });
-      console.log("publishScheduled", res);
+      console.info("publishScheduled", res);
     }
   },
 });

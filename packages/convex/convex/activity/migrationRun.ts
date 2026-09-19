@@ -5,6 +5,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../functions";
 import type { FunctionReference } from "convex/server";
+import type { Id } from "../_generated/dataModel";
 import { MIGRATION_TABLES, type MigrationTable } from "./lib/migration";
 
 /**
@@ -22,7 +23,12 @@ const BATCH_SIZE = 200;
 // Per-table upsert mutation reference.
 const UPSERT: Record<
   MigrationTable,
-  FunctionReference<"mutation", "internal", { migrationId: any; rows: any[] }, { warnings: number }>
+  FunctionReference<
+    "mutation",
+    "internal",
+    { migrationId: Id<"activityMigrations">; rows: unknown[] },
+    { warnings: number }
+  >
 > = {
   people: internal.activity.migration.upsertPeople,
   devices: internal.activity.migration.upsertDevices,
@@ -37,7 +43,7 @@ const UPSERT: Record<
 // Read-only paginated export query on the OLD deployment.
 const EXPORT_PATH = "activity/migrationExport:exportTable";
 
-type ExportBatch = { page: any[]; continueCursor: string; isDone: boolean };
+type ExportBatch = { page: unknown[]; continueCursor: string; isDone: boolean };
 
 /**
  * Read one batch from the OLD deployment via a plain HTTP POST to its
@@ -84,7 +90,7 @@ async function fetchExportBatch(
     throw new Error(`old deployment HTTP ${resp.status}: ${bodyText.slice(0, 200)}`);
   }
 
-  let parsed: any;
+  let parsed: { status?: string; errorMessage?: unknown; value?: unknown };
   try {
     parsed = JSON.parse(bodyText);
   } catch {
@@ -113,7 +119,7 @@ export const run = internalAction({
     const oldUrl = process.env.ACTIVITYTRACK_OLD_CONVEX_URL;
     const secret = process.env.ACTIVITYTRACK_SIGNAL_SECRET;
 
-    console.log("[migration] run invoked", {
+    console.info("[migration] run invoked", {
       migrationId,
       hasOldUrl: !!oldUrl,
       hasSecret: !!secret,
@@ -141,13 +147,13 @@ export const run = internalAction({
         migrationId,
       });
       if (!run || run.migration.status !== "running") {
-        console.log("[migration] stopping — status:", run?.migration.status ?? "not found");
+        console.info("[migration] stopping — status:", run?.migration.status ?? "not found");
         return;
       }
 
       const step = run.steps.find((s) => s.status !== "completed");
       if (!step) {
-        console.log("[migration] all steps completed — finishing");
+        console.info("[migration] all steps completed — finishing");
         await ctx.runMutation(internal.activity.migration.finishMigration, {
           migrationId,
           status: "completed",
@@ -156,7 +162,7 @@ export const run = internalAction({
       }
 
       const table = step.table as MigrationTable;
-      console.log(
+      console.info(
         `[migration] batch ${batches + 1}/${MAX_BATCHES_PER_RUN} — table="${table}" cursor=${JSON.stringify(step.cursor ?? null)} processed=${step.processed}`,
       );
 
@@ -173,7 +179,7 @@ export const run = internalAction({
           BATCH_SIZE,
         );
 
-        console.log(
+        console.info(
           `[migration] fetched ${result.page.length} rows from old deployment — isDone=${result.isDone}`,
         );
 

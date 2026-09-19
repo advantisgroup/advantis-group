@@ -28,7 +28,7 @@ export const apiStatus = serverUserQuery({
     recoveryCodesRemaining: v.number(),
     recoveryCodesTotal: v.number(),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const user = ctx.caller.user;
     const credential = await ctx.db
       .query("totpCredentials")
@@ -54,7 +54,7 @@ export const apiStatus = serverUserQuery({
 export const apiRegenerateRecoveryCodes = serverUserMutation({
   args: {},
   returns: v.object({ recoveryCodes: v.array(v.string()) }),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const user = ctx.caller.user;
     const credential = await ctx.db
       .query("totpCredentials")
@@ -157,7 +157,7 @@ export const apiBeginEnrollment = serverUserMutation({
 export const apiPendingSecret = serverUserQuery({
   args: {},
   returns: v.union(v.null(), v.string()),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const user = ctx.caller.user;
     const credential = await ctx.db
       .query("totpCredentials")
@@ -220,7 +220,7 @@ export const apiSecretForVerification = serverUserQuery({
     v.null(),
     v.object({ secretCiphertext: v.string(), lastUsedStep: v.union(v.number(), v.null()) }),
   ),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const user = ctx.caller.user;
     const credential = await ctx.db
       .query("totpCredentials")
@@ -307,7 +307,7 @@ export const apiVerifyRecoveryCode = serverUserMutation({
 export const apiRemove = serverUserMutation({
   args: {},
   returns: v.object({ ok: v.boolean() }),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const user = ctx.caller.user;
     const credential = await ctx.db
       .query("totpCredentials")

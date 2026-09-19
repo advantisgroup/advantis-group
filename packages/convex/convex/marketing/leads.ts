@@ -52,7 +52,7 @@ export const saveRequest = mutation({
 
     if (existing) {
       const throttled = (existing.confirmationSentAt ?? 0) > now - RESEND_COOLDOWN_MS;
-      const { confirmTokenHash, confirmTokenExpiresAt, ...details } = args;
+      const { confirmTokenHash: _hash, confirmTokenExpiresAt: _expiresAt, ...details } = args;
 
       await ctx.db.patch(existing._id, {
         ...(throttled ? details : args),

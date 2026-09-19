@@ -41,16 +41,6 @@ export function AppGate({ children }: { children: ReactNode }) {
   // it miss a real pending invite, and since this only ever runs once, it
   // never gets a second chance.
   useEffect(() => {
-    if (isSignedIn && userLoaded) {
-      // Client-side Clerk user object, to compare against what the convex
-      // JWT actually claims server-side (logged in ensureUser) when
-      // tracking down the email-claim race.
-      console.log("[AppGate] clerk user:", {
-        id: user?.id,
-        primaryEmailAddress: user?.primaryEmailAddress?.emailAddress ?? null,
-        primaryEmailVerified: user?.primaryEmailAddress?.verification?.status ?? null,
-      });
-    }
     if (!ensured.current && isSignedIn && userLoaded && user?.primaryEmailAddress) {
       ensured.current = true;
       void ensure({});

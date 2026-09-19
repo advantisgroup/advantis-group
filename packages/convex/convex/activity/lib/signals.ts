@@ -47,7 +47,7 @@ export async function collapseIntoClockedOut(
     state: "CLOCKED_OUT",
     at: since,
   });
-  console.log(
+  console.info(
     `[activity:state] ${employeeId} CLOCKED_OUT anchored to ${new Date(since).toISOString()}` +
       (stray.length > 0 ? ` — collapsed ${stray.length} stale sample(s) recorded after that` : ""),
   );
@@ -90,7 +90,7 @@ export async function reclassifyClockedOutAsBreak(
     prevState = s.state;
   }
   if (touched > 0) {
-    console.log(
+    console.info(
       `[activity:state] ${employeeId} CLOCKED_OUT withdrawn — ${touched} sample(s) reclassified to BREAK (clocked back in today)`,
     );
   }
@@ -206,7 +206,7 @@ export async function applyStateSignal(
         reason: "outside_business_hours",
         source: args.source,
       });
-      console.log(
+      console.info(
         `[activity:state] ${args.employeeId} ${existing?.finalState ?? "(new)"} -> ${finalState} DISCARDED (outside business hours, source=${args.source})`,
       );
     }
@@ -223,7 +223,7 @@ export async function applyStateSignal(
     : (existing?.finalStateSince ?? existing?.updatedAt ?? now);
 
   if (stateChanged) {
-    console.log(
+    console.info(
       `[activity:state] ${args.employeeId} ${existing?.finalState ?? "(new)"} -> ${finalState} (source=${args.source})`,
     );
     // Entering CLOCKED_OUT (assumed or certain) is a *reinterpretation* of

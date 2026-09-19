@@ -236,7 +236,7 @@ async function recordIdMap(
 export const upsertPeople = internalMutation({
   args: { migrationId: v.id("activityMigrations"), rows: v.array(v.any()) },
   handler: async (ctx, { migrationId, rows }) => {
-    console.log(`[migration:upsertPeople] upserting ${rows.length} rows`);
+    console.info(`[migration:upsertPeople] upserting ${rows.length} rows`);
     let warnings = 0;
     for (const row of rows) {
       const employeeId: string | undefined = row.employeeId ?? undefined;

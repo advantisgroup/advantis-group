@@ -14,7 +14,7 @@ export const internalUpdatesRoute = new Elysia().post(
   "/internal/updates/broadcast",
   async ({ request, body }) => {
     requireServerKey(request);
-    console.log(
+    console.info(
       `[internal/updates/broadcast] updateId=${body.updateId} type=${body.type} recipients=${body.recipients.length}`,
     );
     try {

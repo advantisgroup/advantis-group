@@ -90,7 +90,7 @@ export async function audit(ctx: MutationCtx, entry: AuditEntry): Promise<void> 
     entry.targetEmail ? `target=${maskEmail(entry.targetEmail)}` : null,
     entry.detail ? `detail=${entry.detail}` : null,
   ].filter(Boolean);
-  console.log(parts.join(" "));
+  console.info(parts.join(" "));
 }
 
 // ------------------------------------------------------------ target lookup

@@ -1,13 +1,15 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { ConvexError } from "convex/values";
 
+import type { app as appType } from "./index.js";
+
 // Clerk only needs keys that parse; no request here carries a session, so it
 // never has to reach Clerk to reject them.
 process.env.CONVEX_SERVER_KEY = "test-server-key";
 process.env.CLERK_SECRET_KEY = "sk_test_placeholder";
 process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = `pk_test_${btoa("clerk.example.com$")}`;
 
-let app: typeof import("./index.js").app;
+let app: typeof appType;
 beforeAll(async () => {
   ({ app } = await import("./index.js"));
 }, 60_000);

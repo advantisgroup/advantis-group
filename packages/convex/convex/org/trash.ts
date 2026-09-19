@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 
-import { type Doc, type Id } from "../_generated/dataModel";
+import { type Id } from "../_generated/dataModel";
 import { internalMutation, userMutation, userQuery } from "../functions";
 import { purge, restoreFromTrash, TRASH_DAYS, TRASH_TABLES, trashLabel } from "../lib/trash";
 import { displayName } from "../lib/users";

@@ -149,6 +149,12 @@
         "node": true
       },
       "plugins": ["typescript", "react", "import"]
+    },
+    {
+      "files": ["packages/convex/**", "apps/api/**"],
+      "rules": {
+        "no-console": ["warn", { "allow": ["info", "warn", "error"] }]
+      }
     }
   ]
 }

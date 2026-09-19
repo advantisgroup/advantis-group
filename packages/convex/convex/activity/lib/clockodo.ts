@@ -264,7 +264,7 @@ export async function pollClockodo(
         clockodoAbsent: absent,
       });
     }
-    console.log(
+    console.info(
       `[clockodo:poll] ${clockodoPeople.length} people — working=${tally.working} onBreak=${tally.onBreak} clockedOut=${tally.clockedOut} absent=${tally.absent}`,
     );
     await reportHealth(ctx, "clockodo", "ok");

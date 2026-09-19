@@ -348,7 +348,7 @@ export const apiCompleteAuthentication = serverMutation({
 export const apiListForUser = serverUserQuery({
   args: {},
   returns: v.array(passkeyValidator),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const user = ctx.caller.user;
     const passkeys = await ctx.db
       .query("passkeys")

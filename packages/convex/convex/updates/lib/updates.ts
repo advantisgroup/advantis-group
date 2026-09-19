@@ -28,13 +28,13 @@ export async function resolveAudienceUserIds(
     .withIndex("by_status", (q) => q.eq("status", "active"))
     .collect();
 
-  console.log(
+  console.info(
     "all:",
     all.map((a) => a._id),
   );
 
   const filtered = all.filter((u) => userMatchesAudience(u, audience)).map((u) => u._id);
-  console.log("filtered:", filtered);
+  console.info("filtered:", filtered);
   return filtered;
 }
 
@@ -45,15 +45,15 @@ export async function schedulePublishSideEffects(
 ): Promise<void> {
   const now = Date.now();
   if (update.publishedAt > now) {
-    console.log("scheduling publish");
+    console.info("scheduling publish");
     await ctx.scheduler.runAt(update.publishedAt, internal.updates.updates.publishScheduled, {
       updateId: update._id,
     });
     return;
   }
-  console.log("sending publish");
+  console.info("sending publish");
   const recipients = await resolveAudienceUserIds(ctx, update.audience);
-  console.log("sending publish to", recipients);
+  console.info("sending publish to", recipients);
   await notifyUsers(ctx, recipients, {
     type: `update:${update.type}`,
     title: NOTIFY_TITLES[update.type],
@@ -64,7 +64,7 @@ export async function schedulePublishSideEffects(
     const res = await ctx.scheduler.runAfter(10000, internal.updates.email.sendBulk, {
       updateId: update._id,
     });
-    console.log("schedulePublishSideEffects", res);
+    console.info("schedulePublishSideEffects", res);
   }
 }
 

@@ -1,4 +1,4 @@
-import { query, userQuery, userMutation } from "../functions";
+import { userQuery, userMutation } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc } from "../_generated/dataModel";

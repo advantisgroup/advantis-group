@@ -188,10 +188,10 @@ async function drainBatches(label: string, step: () => Promise<{ more: boolean }
     ({ more } = await step());
     rounds++;
     if (rounds % 10 === 0) {
-      console.log(`[backfillPerformanceCompanyId] ${label}: ${rounds} batches so far`);
+      console.info(`[backfillPerformanceCompanyId] ${label}: ${rounds} batches so far`);
     }
   }
-  console.log(`[backfillPerformanceCompanyId] ${label}: done (${rounds} batches)`);
+  console.info(`[backfillPerformanceCompanyId] ${label}: done (${rounds} batches)`);
 }
 
 export const run = internalAction({
@@ -228,6 +228,6 @@ export const run = internalAction({
         }),
       );
     }
-    console.log("[backfillPerformanceCompanyId] complete");
+    console.info("[backfillPerformanceCompanyId] complete");
   },
 });

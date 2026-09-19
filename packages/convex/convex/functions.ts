@@ -93,10 +93,13 @@ async function assertActionNotSandboxed(ctx: ActionCtx) {
   if (sandboxed) throw sandboxError();
 }
 
+// Same loose shape Convex's own builders accept.
+/* oxlint-disable typescript/no-explicit-any */
 type FunctionDefinition = {
   handler: (...args: any[]) => any;
   [key: string]: any;
 };
+/* oxlint-enable typescript/no-explicit-any */
 
 /** Every browser-callable write goes through this guard. Server-key callers
  * have no Clerk identity, so integration and scheduled work stay unaffected. */

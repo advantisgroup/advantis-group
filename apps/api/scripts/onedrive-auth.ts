@@ -62,9 +62,9 @@ async function exchangeCode(code: string): Promise<void> {
   if (!res.ok || !json.refresh_token) {
     throw new Error(json.error_description ?? `Token exchange failed (HTTP ${res.status})`);
   }
-  console.log("\n✅ Success! Set this on the API environment:\n");
-  console.log(`ONEDRIVE_REFRESH_TOKEN=${json.refresh_token}\n`);
-  console.log(
+  console.info("\n✅ Success! Set this on the API environment:\n");
+  console.info(`ONEDRIVE_REFRESH_TOKEN=${json.refresh_token}\n`);
+  console.info(
     "The API will rotate + persist it in Convex from here on — you won't need to re-run this unless it's revoked.\n",
   );
 }
@@ -100,9 +100,9 @@ const server = Bun.serve({
   },
 });
 
-console.log(`\nListening on ${REDIRECT_URI}`);
-console.log("Open this URL, sign in as the OneDrive owner (chefsache@), and consent:\n");
-console.log(authorizeUrl + "\n");
+console.info(`\nListening on ${REDIRECT_URI}`);
+console.info("Open this URL, sign in as the OneDrive owner (chefsache@), and consent:\n");
+console.info(authorizeUrl + "\n");
 
 // Keep the process alive until the callback handler exits it.
 void server;

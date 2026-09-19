@@ -63,7 +63,7 @@ export const apiList = serverUserQuery({
       addedAt: v.number(),
     }),
   ),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const user = ctx.caller.user;
     const rows = await ctx.db
       .query("userSecondaryEmails")

@@ -76,7 +76,7 @@ export const refreshClockodo = gatedAction("activitytrack")({
         clockodoClockedOutSince: work.clockedOutSince ?? undefined,
         clockodoAbsent: absent,
       });
-      console.log(
+      console.info(
         `[clockodo:refresh] ${employeeId} — working=${work.working} onBreak=${work.onBreak} clockedOut=${work.clockedOut}${work.clockedOutCertain ? " (certain)" : ""} absent=${absent}`,
       );
       await reportHealth(ctx, "clockodo", "ok");
@@ -116,13 +116,13 @@ export const refreshClockodoByEntry = gatedAction("activitytrack")({
     if (secret !== process.env.ACTIVITYTRACK_SIGNAL_SECRET) {
       return { ok: false, error: "forbidden" as const };
     }
-    console.log(`[clockodo:webhook] received event="${eventName ?? "unknown"}" entry=${entryId}`);
+    console.info(`[clockodo:webhook] received event="${eventName ?? "unknown"}" entry=${entryId}`);
     try {
       const entry = await fetchClockodoEntry(entryId);
       const clockodoUserId = entry.usersId ?? usersId ?? null;
 
       if (!clockodoUserId) {
-        console.log(
+        console.info(
           `[clockodo:webhook] entry=${entryId} has no resolvable user (404 and no usersId in payload) — ignored`,
         );
         await reportHealth(ctx, "clockodo", "ok");
@@ -134,7 +134,7 @@ export const refreshClockodoByEntry = gatedAction("activitytrack")({
         clockodoUserId,
       });
       if (!employeeId) {
-        console.log(
+        console.info(
           `[clockodo:webhook] clockodoUserId=${clockodoUserId} is not mapped to any person — ignored`,
         );
         await reportHealth(ctx, "clockodo", "ok");
@@ -255,7 +255,7 @@ export const troubleshootSanitizeDay = userAction({
       peopleProcessed++;
     }
 
-    console.log(
+    console.info(
       `[clockodo:sanitize] day=${targetDay} people=${peopleProcessed} inserted=${inserted} deleted=${deleted} quarantined=${quarantined}`,
     );
     return { peopleProcessed, inserted, deleted, quarantined };

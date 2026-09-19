@@ -20,11 +20,6 @@ export const getLatestAgentVersion = userQuery({
       .query("activitySettings")
       .withIndex("by_key", (q) => q.eq("key", LATEST_VERSION_KEY))
       .unique();
-    console.debug(
-      "[activity/agentVersion] getLatestAgentVersion ->",
-      row?.value ?? null,
-      row ? `(updated ${new Date(row.updatedAt).toISOString()})` : "(no row yet)",
-    );
     return row?.value ?? null;
   },
 });
@@ -96,7 +91,7 @@ export const refreshLatestAgentVersion = internalAction({
       return;
     }
     const version = tagName.replace(/^v/, "");
-    console.log(`[activity/agentVersion] latest version is now ${version}`);
+    console.info(`[activity/agentVersion] latest version is now ${version}`);
     await ctx.runMutation(internal.activity.agentVersion.storeLatestAgentVersion, { version });
   },
 });

@@ -457,7 +457,7 @@ export const addLinkedEmail = userMutation({
       createdAt: Date.now(),
       note: args.note,
     });
-    console.log(
+    console.info(
       `[passwordReset] linkedEmail added id=${id} scope=${args.scope} company=${companySlug ?? "n/a"} alias=${maskEmail(aliasEmail)} canonical=${maskEmail(canonicalEmail)} by=${admin._id}`,
     );
     return { ok: true };
@@ -470,7 +470,7 @@ export const removeLinkedEmail = userMutation({
   handler: async (ctx, { id }): Promise<{ ok: true }> => {
     const admin = ctx.caller.user;
     await ctx.db.delete(id);
-    console.log(`[passwordReset] linkedEmail removed id=${id} by=${admin._id}`);
+    console.info(`[passwordReset] linkedEmail removed id=${id} by=${admin._id}`);
     return { ok: true };
   },
 });
@@ -1059,7 +1059,7 @@ export const autoIssueLinkedReset = internalAction({
     companySlug: v.optional(v.string()),
   },
   handler: async (ctx, { requestId, companySlug }): Promise<{ ok: true } | { skipped: true }> => {
-    console.log(`[passwordReset:autoIssue] start request=${requestId}`);
+    console.info(`[passwordReset:autoIssue] start request=${requestId}`);
 
     const prepared = await ctx.runQuery(internal.security.passwordResets.prepareAutoIssue, {
       requestId,
@@ -1087,7 +1087,7 @@ export const autoIssueLinkedReset = internalAction({
     try {
       const token = randomToken();
       const expiresAt = Date.now() + TOKEN_TTL_MS;
-      console.log(
+      console.info(
         `[passwordReset:autoIssue] minting request=${requestId} scope=${prepared.scope} sentTo=${maskEmail(
           prepared.sentToEmail,
         )}`,
@@ -1105,7 +1105,7 @@ export const autoIssueLinkedReset = internalAction({
         sendTo: "feature",
       });
 
-      console.log(`[passwordReset:autoIssue] mailing request=${requestId}`);
+      console.info(`[passwordReset:autoIssue] mailing request=${requestId}`);
       await ctx.runAction(internal.notifications.email.sendNotificationEmail, {
         kind: "password-reset-link",
         to: prepared.sentToEmail,
@@ -1115,7 +1115,7 @@ export const autoIssueLinkedReset = internalAction({
           expiresAt,
         },
       });
-      console.log(`[passwordReset:autoIssue] done request=${requestId}`);
+      console.info(`[passwordReset:autoIssue] done request=${requestId}`);
     } catch (error) {
       // The token may or may not have been stored by the time this fires —
       // `storeIssuedToken` already revokes prior tokens and patches the
@@ -1346,7 +1346,7 @@ export const purgeStale = internalMutation({
       .take(500);
     await Promise.all(requests.map((r) => ctx.db.delete(r._id)));
 
-    console.log(
+    console.info(
       `[passwordReset] purge tokens=${tokens.length} requests=${requests.length} codes=${codes.length}`,
     );
     return { tokens: tokens.length, requests: requests.length };

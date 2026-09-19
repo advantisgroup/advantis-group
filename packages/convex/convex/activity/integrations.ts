@@ -22,12 +22,12 @@ async function runPollAll(ctx: ActionCtx): Promise<void> {
   });
   const genesysCount = mappings.filter((p) => p.genesysUserId).length;
   const clockodoCount = mappings.filter((p) => p.clockodoUserId).length;
-  console.log(
+  console.info(
     `[activity:poll] starting — ${mappings.length} mapped people (genesys=${genesysCount}, clockodo=${clockodoCount})`,
   );
   await pollGenesys(ctx, mappings);
   await pollClockodo(ctx, secret, mappings);
-  console.log(`[activity:poll] finished in ${Date.now() - start}ms`);
+  console.info(`[activity:poll] finished in ${Date.now() - start}ms`);
 }
 
 /** Scheduled cron entry point. Gated — the cron itself keeps firing, but does nothing while disabled. */

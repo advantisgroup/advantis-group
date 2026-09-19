@@ -190,7 +190,7 @@ export const activityRoute = new Elysia()
       };
       const entryId = payload.entry?.id;
       if (entryId == null) {
-        console.log(
+        console.info(
           `[activity/clockodo] 200 ignored event with no entry id — event: ${b.event_name}`,
         );
         logClockodoWebhookDelivery({
@@ -202,7 +202,7 @@ export const activityRoute = new Elysia()
         });
         return ok({ ignored: true });
       }
-      console.log(
+      console.info(
         `[activity/clockodo] 200 processing entry event — event: ${b.event_name}, entryId: ${entryId}`,
       );
       logClockodoWebhookDelivery({
@@ -238,7 +238,7 @@ export const activityRoute = new Elysia()
     }
     const raw = b as { employeeId?: string; clockodoUserId?: string };
     if (raw.employeeId && raw.clockodoUserId) {
-      console.log(
+      console.info(
         `[activity/clockodo] 200 legacy refresh — employeeId: ${raw.employeeId}, clockodoUserId: ${raw.clockodoUserId}`,
       );
       return await getConvex().action(api.activity.clockodo.refreshClockodo, {

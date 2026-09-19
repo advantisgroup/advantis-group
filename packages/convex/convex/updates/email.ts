@@ -40,7 +40,7 @@ export const sendBulk = internalAction({
         recipients,
       });
       if (!res) {
-        console.log(
+        console.info(
           `[updatesEmail] skipping bulk send for ${updateId} — API_URL/CONVEX_SERVER_KEY not set`,
         );
         return { sent: false, reason: "skipping cause unset keys" };
@@ -50,7 +50,7 @@ export const sendBulk = internalAction({
         return { sent: false, reason: `Not ok` };
       }
       const body = await res.text();
-      console.log(`[updatesEmail] broadcast response: ${res.status} ${body}`);
+      console.info(`[updatesEmail] broadcast response: ${res.status} ${body}`);
       const { results } = JSON.parse(body) as {
         results: {
           userId: string;

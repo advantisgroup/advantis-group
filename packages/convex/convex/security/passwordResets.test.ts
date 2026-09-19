@@ -183,7 +183,7 @@ describe("target-side linked account (typed the wrong side of a linkedUserId pai
 
   test("a company boundary is never crossed", async () => {
     const t = setup();
-    const companyA = await seedCompany(t, "advantis");
+    await seedCompany(t, "advantis");
     const companyB = await seedCompany(t, "other-tenant");
     const aliceUserId = await seedUser(t, {
       clerkUserId: "user_alice",
@@ -282,7 +282,7 @@ describe("admin-maintained linked-emails fallback", () => {
   test("a link registered with no companySlug still matches a request that also leaves it unset", async () => {
     const t = setup();
     const companyId = await seedCompany(t, "advantis");
-    const adminId = await seedUser(t, {
+    await seedUser(t, {
       clerkUserId: "user_admin",
       email: "admin@intranet.example",
       role: "admin",
@@ -371,7 +371,7 @@ describe("Verified secondary emails", () => {
 
   test("a verified secondary email never crosses a company boundary", async () => {
     const t = setup();
-    const companyA = await seedCompany(t, "advantis");
+    await seedCompany(t, "advantis");
     const companyB = await seedCompany(t, "other-tenant");
     const aliceUserId = await seedUser(t, {
       clerkUserId: "user_alice",
