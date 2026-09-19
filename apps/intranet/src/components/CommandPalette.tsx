@@ -22,6 +22,7 @@ import {
   CalendarPlus,
   Clock,
   Compass,
+  FlaskConical,
   FolderOpen,
   LayoutDashboard,
   Lightbulb,
@@ -269,6 +270,7 @@ export function CommandPalette({ className }: { className?: string } = {}) {
         managerOnly: true,
       },
       { href: "/settings", label: tNav("settings"), icon: Settings },
+      { href: "/t", label: tNav("playground"), icon: FlaskConical, searchOnly: true },
     ];
     return all.filter((p) => !p.managerOnly || isManager).filter((p) => !p.hidden);
   }, [
@@ -374,6 +376,7 @@ export function CommandPalette({ className }: { className?: string } = {}) {
         });
       }
       for (const p of pages) {
+        if (p.searchOnly) continue;
         list.push({
           id: `page:${p.href}`,
           group: t("pages"),
