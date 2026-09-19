@@ -123,6 +123,12 @@ describe("trash", () => {
       .mutation(api.org.trash.restore, { table: "itTickets", id: ticketId });
     const row = await t.run((ctx) => ctx.db.get(ticketId));
     expect(row?.deletedAt).toBeUndefined();
+
+    const audit = await t.run((ctx) => ctx.db.query("auditLog").collect());
+    expect(audit.map((a) => [a.domain, a.action, a.detail])).toEqual([
+      ["content", "trash.delete", "itTickets"],
+      ["content", "trash.restore", "itTickets"],
+    ]);
     expect(await t.withIdentity({ subject: "bob" }).query(api.org.trash.list, {})).toHaveLength(0);
   });
 

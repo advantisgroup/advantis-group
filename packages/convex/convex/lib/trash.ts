@@ -2,6 +2,7 @@ import { type Rules } from "convex-helpers/server/rowLevelSecurity";
 
 import { type DataModel, type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
+import { recordUnifiedAudit } from "./auditLogWrite";
 
 /**
  * Soft delete. Deleting one of these marks it `deletedAt` instead of removing
@@ -40,6 +41,40 @@ export const hideTrashed = Object.fromEntries(
   ]),
 ) as Rules<unknown, DataModel>;
 
+/** How a trashed row is named in lists and the audit log. */
+export function trashLabel(table: TrashTable, doc: Doc<TrashTable>): string {
+  switch (table) {
+    case "errorReports":
+    case "errorMeasures":
+      return (doc as Doc<"errorReports">).description.slice(0, 120);
+    case "itTickets": {
+      const ticket = doc as Doc<"itTickets">;
+      return ticket.topic?.trim() || `#${ticket.nr}`;
+    }
+    case "wikiEntries":
+      return (doc as Doc<"wikiEntries">).thema;
+    default:
+      return (doc as { title: string }).title;
+  }
+}
+
+function audit(
+  ctx: TrashDb,
+  action: "trash.delete" | "trash.restore" | "trash.purge",
+  actorUserId: Id<"users">,
+  table: TrashTable,
+  doc: Doc<TrashTable>,
+) {
+  return recordUnifiedAudit(ctx as MutationCtx, {
+    domain: "content",
+    actorUserId,
+    action,
+    target: trashLabel(table, doc),
+    detail: table,
+    at: Date.now(),
+  });
+}
+
 type TrashDb = Pick<MutationCtx, "db">;
 
 export async function moveToTrash(
@@ -48,8 +83,11 @@ export async function moveToTrash(
   id: Id<TrashTable>,
   deletedBy: Id<"users">,
 ): Promise<void> {
+  const doc = await ctx.db.get(id);
+  if (!doc) return;
   const deletedAt = Date.now();
   await ctx.db.patch(id, { deletedAt, deletedBy });
+  await audit(ctx, "trash.delete", deletedBy, table, doc);
   // A report's measures go with it, and come back with it.
   if (table === "errorReports") {
     const measures = await ctx.db
@@ -65,9 +103,11 @@ export async function moveToTrash(
 export async function restoreFromTrash(
   ctx: TrashDb,
   table: TrashTable,
-  doc: { _id: Id<TrashTable>; deletedAt?: number },
+  doc: Doc<TrashTable>,
+  restoredBy: Id<"users">,
 ): Promise<void> {
   await ctx.db.patch(doc._id, { deletedAt: undefined, deletedBy: undefined });
+  await audit(ctx, "trash.restore", restoredBy, table, doc);
   if (table === "errorReports") {
     const measures = await ctx.db
       .query("errorMeasures")
@@ -87,6 +127,7 @@ export async function purge(
   table: TrashTable,
   doc: Doc<TrashTable>,
 ): Promise<void> {
+  if (doc.deletedBy) await audit(ctx, "trash.purge", doc.deletedBy, table, doc);
   switch (table) {
     case "announcements": {
       const a = doc as Doc<"announcements">;

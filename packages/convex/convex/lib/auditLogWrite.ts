@@ -12,7 +12,7 @@ import { type MutationCtx } from "../_generated/server";
 export async function recordUnifiedAudit(
   ctx: MutationCtx,
   entry: {
-    domain: "activity" | "onedrive" | "integrations" | "applicant";
+    domain: "activity" | "onedrive" | "integrations" | "applicant" | "content";
     actorUserId: Id<"users">;
     action: string;
     integration?: string;

@@ -337,7 +337,8 @@
     "rangeAll": "All time",
     "exportCsv": "Export CSV",
     "resetFilters": "Reset filters",
-    "count": "{count, plural, one {# entry} other {# entries}}"
+    "count": "{count, plural, one {# entry} other {# entries}}",
+    "source_content": "Deleted content"
   },
   "overview": {
     "open": "Open",

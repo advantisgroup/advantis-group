@@ -337,7 +337,8 @@
     "rangeAll": "Gesamter Zeitraum",
     "exportCsv": "CSV exportieren",
     "resetFilters": "Filter zurücksetzen",
-    "count": "{count, plural, one {# Eintrag} other {# Einträge}}"
+    "count": "{count, plural, one {# Eintrag} other {# Einträge}}",
+    "source_content": "Gelöschte Inhalte"
   },
   "overview": {
     "open": "Öffnen",

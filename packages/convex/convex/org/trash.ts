@@ -2,27 +2,11 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { internalMutation, userMutation, userQuery } from "../functions";
-import { purge, restoreFromTrash, TRASH_DAYS, TRASH_TABLES, type TrashTable } from "../lib/trash";
+import { purge, restoreFromTrash, TRASH_DAYS, TRASH_TABLES, trashLabel } from "../lib/trash";
 import { displayName } from "../lib/users";
 
 const DAY_MS = 86_400_000;
 const trashTable = v.union(...TRASH_TABLES.map((t) => v.literal(t)));
-
-function label(table: TrashTable, doc: Doc<TrashTable>): string {
-  switch (table) {
-    case "errorReports":
-    case "errorMeasures":
-      return (doc as Doc<"errorReports">).description.slice(0, 120);
-    case "itTickets": {
-      const ticket = doc as Doc<"itTickets">;
-      return ticket.topic?.trim() || `#${ticket.nr}`;
-    }
-    case "wikiEntries":
-      return (doc as Doc<"wikiEntries">).thema;
-    default:
-      return (doc as { title: string }).title;
-  }
-}
 
 /** Recently deleted: what you deleted yourself, or everything for admins. */
 export const list = userQuery({
@@ -50,7 +34,7 @@ export const list = userQuery({
     return items.map(({ table, doc }) => ({
       table,
       id: doc._id as string,
-      label: label(table, doc),
+      label: trashLabel(table, doc),
       deletedAt: doc.deletedAt!,
       deletedByName: doc.deletedBy ? (deleters.get(doc.deletedBy) ?? null) : null,
       purgesAt: doc.deletedAt! + TRASH_DAYS * DAY_MS,
@@ -68,7 +52,7 @@ export const restore = userMutation({
       throw new ConvexError({ code: "not_found", message: "Nothing to restore" });
     }
     ctx.caller.require(ctx.caller.isAdmin || doc.deletedBy === ctx.caller.id);
-    await restoreFromTrash({ db: ctx.unfilteredDb }, table, doc);
+    await restoreFromTrash({ db: ctx.unfilteredDb }, table, doc, ctx.caller.id);
     return { ok: true };
   },
 });

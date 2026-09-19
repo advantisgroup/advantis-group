@@ -5,7 +5,8 @@ import { batchUserSummaries } from "../lib/users";
 
 /**
  * Read-only merge of the three privileged-action audit tables
- * (`activityAuditLog`, `onedriveAudit`, `integrationsAuditLog`) — each has
+ * (`activityAuditLog`, `onedriveAudit`, `integrationsAuditLog`), plus
+ * deletes and restores from the trash (`auditLog`, domain `content`) — each has
  * its own writer and its own narrower reader (ActivityTrack's settings tab,
  * the OneDrive audit panel), but nothing combines them, so
  * `integrationsAuditLog` in particular has never had a UI to read it at
@@ -14,7 +15,12 @@ import { batchUserSummaries } from "../lib/users";
  */
 
 const sourceArg = v.optional(
-  v.union(v.literal("activity"), v.literal("onedrive"), v.literal("integrations")),
+  v.union(
+    v.literal("activity"),
+    v.literal("onedrive"),
+    v.literal("integrations"),
+    v.literal("content"),
+  ),
 );
 
 export const list = userQuery({
@@ -23,7 +29,7 @@ export const list = userQuery({
   handler: async (ctx, { source, limit }) => {
     const take = Math.min(limit ?? 100, 500);
 
-    const [activityRows, onedriveRows, integrationsRows] = await Promise.all([
+    const [activityRows, onedriveRows, integrationsRows, contentRows] = await Promise.all([
       !source || source === "activity"
         ? ctx.db.query("activityAuditLog").withIndex("by_at").order("desc").take(take)
         : [],
@@ -33,12 +39,20 @@ export const list = userQuery({
       !source || source === "integrations"
         ? ctx.db.query("integrationsAuditLog").withIndex("by_at").order("desc").take(take)
         : [],
+      !source || source === "content"
+        ? ctx.db
+            .query("auditLog")
+            .withIndex("by_domain_at", (q) => q.eq("domain", "content"))
+            .order("desc")
+            .take(take)
+        : [],
     ]);
 
     const merged = [
       ...activityRows.map((r) => ({ ...r, source: "activity" as const })),
       ...onedriveRows.map((r) => ({ ...r, source: "onedrive" as const })),
       ...integrationsRows.map((r) => ({ ...r, source: "integrations" as const })),
+      ...contentRows.map((r) => ({ ...r, source: "content" as const })),
     ]
       .sort((a, b) => b.at - a.at)
       .slice(0, take);

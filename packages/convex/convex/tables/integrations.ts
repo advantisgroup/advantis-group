@@ -118,6 +118,8 @@ export const integrationsTables = {
       v.literal("onedrive"),
       v.literal("integrations"),
       v.literal("applicant"),
+      // Deleting, restoring and purging authored content (lib/trash.ts).
+      v.literal("content"),
     ),
     actorUserId: v.id("users"),
     action: v.string(),
