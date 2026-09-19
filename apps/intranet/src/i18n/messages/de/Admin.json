@@ -466,6 +466,33 @@
       "hint": "Privilegierte Aktionen über alle Subsysteme",
       "empty": "Noch keine Admin-Aktionen erfasst.",
       "unknown": "unbekannt"
+    },
+    "backups": {
+      "title": "Backups",
+      "hint": "Nächtliche verschlüsselte Kopie in OneDrive",
+      "last": {
+        "ok": "Letztes Backup vor {age}",
+        "failed": "Letztes Backup vor {age} fehlgeschlagen"
+      },
+      "nights": "{ok} der letzten {total} Nächte",
+      "none": "Noch kein externes Backup",
+      "noneHint": "Einrichtung in docs/backups.md",
+      "test": {
+        "ok": "Wiederherstellung vor {age} getestet",
+        "failed": "Wiederherstellungstest vor {age} fehlgeschlagen"
+      },
+      "neverTested": "Wiederherstellung nie getestet",
+      "neverTestedHint": "Einmal im Quartal lohnt sich",
+      "logRestoreTest": "Test eintragen",
+      "logHint": "Nachdem das neueste Backup in eine Preview-Umgebung eingespielt wurde (docs/backups.md).",
+      "result": {
+        "ok": "Hat funktioniert",
+        "failed": "Hat nicht funktioniert"
+      },
+      "note": "Notiz",
+      "notePlaceholder": "Was geprüft wurde oder was schiefging",
+      "save": "Speichern",
+      "logged": "Wiederherstellungstest eingetragen"
     }
   },
   "linkedAccountsNoRole": "Verknüpft, noch keine Rolle",
