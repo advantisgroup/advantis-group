@@ -145,6 +145,36 @@ export async function lockClerkUser(clerkUserId: string): Promise<void> {
 }
 
 /**
+ * Sign a user out everywhere: revoke every active Clerk session. Locking only
+ * stops new sign-ins, so a suspension does this too.
+ */
+export async function revokeClerkSessions(clerkUserId: string): Promise<void> {
+  const res = await clerkFetch(
+    `/sessions?user_id=${encodeURIComponent(clerkUserId)}&status=active&limit=100`,
+    { method: "GET" },
+  );
+  if (res.status === 404) return;
+  if (!res.ok) {
+    throw new ConvexError({
+      code: "upstream",
+      message: `Clerk could not list sessions (HTTP ${res.status}). ${await res.text()}`,
+    });
+  }
+  const json = (await res.json()) as { data?: { id: string }[] } | { id: string }[];
+  const sessions = Array.isArray(json) ? json : (json.data ?? []);
+  const results = await Promise.all(
+    sessions.map((s) => clerkFetch(`/sessions/${s.id}/revoke`, { method: "POST" })),
+  );
+  const failed = results.find((r) => !r.ok && r.status !== 404);
+  if (failed) {
+    throw new ConvexError({
+      code: "upstream",
+      message: `Clerk could not revoke a session (HTTP ${failed.status}).`,
+    });
+  }
+}
+
+/**
  * Unlock a previously locked Clerk user account.
  * Treats 404 as success for idempotency.
  */

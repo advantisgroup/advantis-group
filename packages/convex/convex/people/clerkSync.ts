@@ -7,6 +7,7 @@ import {
   deleteClerkUser,
   lockClerkUser,
   revokeClerkInvitations,
+  revokeClerkSessions,
   unlockClerkUser,
   updateClerkUserAvatar,
   updateClerkUserName,
@@ -108,7 +109,8 @@ export const push = internalAction({
     try {
       switch (change.kind) {
         case "lock":
-          return await lockClerkUser(change.clerkUserId);
+          await lockClerkUser(change.clerkUserId);
+          return await revokeClerkSessions(change.clerkUserId);
         case "unlock":
           return await unlockClerkUser(change.clerkUserId);
         case "delete":
