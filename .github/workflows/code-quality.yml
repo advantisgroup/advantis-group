@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Format and lint
+    name: Format, lint, types and tests
     runs-on: ubuntu-latest
     env:
       CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_DEPLOYMENT }}
@@ -46,3 +46,9 @@ jobs:
 
       - name: Check architecture contracts
         run: bun run check:i18n && bun run check:api-boundaries
+
+      - name: Type-check
+        run: bun run type-check
+
+      - name: Run tests
+        run: bun run test
