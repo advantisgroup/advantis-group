@@ -4,7 +4,6 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
-import { effectiveRole } from "../lib/auth";
 import { userMatchesAudience } from "../lib/audience";
 import { notifyUsers } from "../lib/notify";
 import { displayName } from "../lib/users";
@@ -308,7 +307,7 @@ export const list = userQuery({
           .take(args.limit ?? 200);
 
     const search = args.search?.trim().toLowerCase();
-    const isAdmin = effectiveRole(user) === "admin";
+    const isAdmin = ctx.caller.role === "admin";
     const visible = rows.filter((u) => {
       if (!userMatchesAudience(user, u.audience)) return false;
       if (u.publishedAt > now && u.authorUserId !== user._id && !isAdmin) return false;
@@ -377,7 +376,7 @@ export const get = userQuery({
         return { ...entry, authorName: displayName(entryAuthor) };
       }),
     );
-    const isAdmin = effectiveRole(user) === "admin";
+    const isAdmin = ctx.caller.role === "admin";
 
     let emailStats: Record<string, number> | null = null;
     let recipients: EmailRecipientRow[] | null = null;

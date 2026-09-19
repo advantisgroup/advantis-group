@@ -1,8 +1,7 @@
 import { query, serverQuery, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
-
-import { getUserByClerkId, isOwnerOrAdmin } from "../lib/auth";
 import { displayName } from "../lib/users";
+import { getServerCaller } from "../lib/caller";
 
 const MAX_PINS = 5;
 
@@ -20,8 +19,8 @@ function plainText(html: string) {
 export const apiSearchForAssistant = serverQuery({
   args: { clerkUserId: v.string(), question: v.string() },
   handler: async (ctx, { clerkUserId, question }) => {
-    const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status !== "active") return [];
+    const user = (await getServerCaller(ctx, clerkUserId))?.user;
+    if (!user) return [];
     const words = [
       ...new Set(
         question
@@ -192,7 +191,7 @@ export const update = userMutation({
     const user = ctx.caller.user;
     const entry = await ctx.db.get(entryId);
     if (!entry) throw new ConvexError({ code: "not_found", message: "Not found" });
-    if (!isOwnerOrAdmin(user, entry.authorUserId)) {
+    if (!ctx.caller.owns(entry.authorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the author or an admin can edit this",
@@ -241,7 +240,7 @@ export const remove = userMutation({
     const user = ctx.caller.user;
     const entry = await ctx.db.get(entryId);
     if (!entry) return { ok: false };
-    if (!isOwnerOrAdmin(user, entry.authorUserId)) {
+    if (!ctx.caller.owns(entry.authorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the author or an admin can delete this",

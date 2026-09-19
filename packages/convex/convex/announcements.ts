@@ -270,7 +270,7 @@ export const update = userMutation({
     if (!announcement) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
     }
-    if (!isOwnerOrAdmin(user, announcementOwnerUserId(announcement))) {
+    if (!ctx.caller.owns(announcementOwnerUserId(announcement))) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the owner or an admin can edit",
@@ -318,7 +318,7 @@ export const remove = userMutation({
     const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) return { ok: false };
-    if (!isOwnerOrAdmin(user, announcementOwnerUserId(announcement))) {
+    if (!ctx.caller.owns(announcementOwnerUserId(announcement))) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the owner or an admin can delete",
@@ -363,7 +363,7 @@ export const list = userQuery({
     // Scheduled (future) and expired announcements stay visible to their
     // owner and admins (flagged below) but disappear for everyone else.
     const visible = announcements.filter((a) => {
-      const isOwnerOrAdminUser = isOwnerOrAdmin(user, announcementOwnerUserId(a));
+      const isOwnerOrAdminUser = ctx.caller.owns(announcementOwnerUserId(a));
       // The owner/an admin must always see it regardless of audience — a
       // manager targeting a "specific people" audience that excludes
       // themselves would otherwise lose the announcement (and the edit/delete
@@ -776,7 +776,7 @@ export const nonReaders = userQuery({
     const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) return [];
-    if (!isOwnerOrAdmin(user, announcementOwnerUserId(announcement))) {
+    if (!ctx.caller.owns(announcementOwnerUserId(announcement))) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the owner or an admin can see who hasn't read this",

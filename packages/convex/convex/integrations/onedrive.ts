@@ -14,7 +14,6 @@ import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import {
   effectiveCustomRoleIds,
   effectiveRole,
-  getUserByClerkId,
   hasApplicantAccess,
   isSandboxed,
   MANAGER_ROLES,
@@ -23,6 +22,7 @@ import { internalApiFetch } from "../lib/internalApi";
 import { createNotification, notifyUsers } from "../lib/notify";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { batchUserSummaries, displayName } from "../lib/users";
+import { getServerCaller } from "../lib/caller";
 
 /**
  * OneDrive system-of-record. The Elysia API owns the Microsoft Graph credentials
@@ -93,8 +93,8 @@ async function writeAudit(
 export const apiUserContext = serverQuery({
   args: { clerkUserId: v.string() },
   handler: async (ctx, { clerkUserId }) => {
-    const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status !== "active") return null;
+    const user = (await getServerCaller(ctx, clerkUserId))?.user;
+    if (!user) return null;
     const sandboxed = isSandboxed(user);
     const role = effectiveRole(user);
     const customRoles = sandboxed

@@ -13,7 +13,7 @@ import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
-import { isOwnerOrAdmin, requireUser } from "./lib/auth";
+import { requireUser } from "./lib/auth";
 import { createNotification } from "./lib/notify";
 import { profileAvatarUrl, profileDisplayName } from "./lib/profile";
 import { attachmentValidator } from "./schema";
@@ -906,7 +906,7 @@ export const deleteMessage = userMutation({
     const user = ctx.caller.user;
     const message = await ctx.db.get(messageId);
     if (!message || message.deletedAt) return { ok: false };
-    if (!isOwnerOrAdmin(user, message.senderUserId)) {
+    if (!ctx.caller.owns(message.senderUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "You can only delete your own messages",

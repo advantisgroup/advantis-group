@@ -4,7 +4,7 @@ import type { Doc } from "../_generated/dataModel";
 import { query, userQuery } from "../functions";
 import type { QueryCtx } from "../_generated/server";
 import { readConfig } from "../activity/lib/settings";
-import { effectiveRole, hasCapability } from "../lib/auth";
+import { hasCapability } from "../lib/auth";
 import { displayName } from "../lib/users";
 
 /**
@@ -87,7 +87,7 @@ export const queue = userQuery({
   handler: async (ctx) => {
     const me = ctx.caller.user;
     const now = Date.now();
-    const isAdmin = effectiveRole(me) === "admin";
+    const isAdmin = ctx.caller.role === "admin";
 
     const [
       accessRequests,
@@ -370,7 +370,7 @@ export const timelines = userQuery({
   args: { days: v.number(), tzOffsetMinutes: v.number() },
   handler: async (ctx, args) => {
     const me = ctx.caller.user;
-    const isAdmin = effectiveRole(me) === "admin";
+    const isAdmin = ctx.caller.role === "admin";
     const days = Math.min(Math.max(Math.round(args.days), 7), 180);
     const now = Date.now();
     const tz = args.tzOffsetMinutes;
@@ -553,7 +553,7 @@ export const systems = userQuery({
   handler: async (ctx) => {
     const me = ctx.caller.user;
     const now = Date.now();
-    const isAdmin = effectiveRole(me) === "admin";
+    const isAdmin = ctx.caller.role === "admin";
     const canSeeAgents = await hasCapability(ctx, "view_activity_admin");
 
     const [health, flags, publishedUpdates, webhookRows, agents] = await Promise.all([

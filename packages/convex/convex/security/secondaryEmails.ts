@@ -1,11 +1,10 @@
-import { serverMutation, serverQuery } from "../functions";
+import { serverUserMutation, serverUserQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { safeEqual, sha256hex } from "../activity/lib/crypto";
 import { type Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
-import { getUserByClerkId, requireActiveUser } from "../lib/auth";
 import { trackEvent } from "../lib/analytics";
 import { notifySecurityChange } from "../lib/stepUp";
 
@@ -54,8 +53,8 @@ async function isClaimedByAnotherAccount(
   return rows.some((r) => r.userId !== userId && r.verifiedAt !== undefined);
 }
 
-export const apiList = serverQuery({
-  args: { clerkUserId: v.string() },
+export const apiList = serverUserQuery({
+  args: {},
   returns: v.array(
     v.object({
       _id: v.id("userSecondaryEmails"),
@@ -65,7 +64,7 @@ export const apiList = serverQuery({
     }),
   ),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const rows = await ctx.db
       .query("userSecondaryEmails")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -81,11 +80,11 @@ export const apiList = serverQuery({
   },
 });
 
-export const apiRequestCode = serverMutation({
-  args: { clerkUserId: v.string(), email: v.string() },
+export const apiRequestCode = serverUserMutation({
+  args: { email: v.string() },
   returns: v.object({ alreadyVerified: v.boolean() }),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const email = normalizeEmail(args.email);
     if (!email.includes("@") || email.length > 254) {
       throw new ConvexError({ code: "validation", message: "Enter a valid email address." });
@@ -162,11 +161,11 @@ export const apiRequestCode = serverMutation({
   },
 });
 
-export const apiVerifyCode = serverMutation({
-  args: { clerkUserId: v.string(), email: v.string(), code: v.string() },
+export const apiVerifyCode = serverUserMutation({
+  args: { email: v.string(), code: v.string() },
   returns: v.object({ ok: v.boolean(), message: v.optional(v.string()) }),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const email = normalizeEmail(args.email);
 
     const challenge = await ctx.db
@@ -227,14 +226,13 @@ export const apiVerifyCode = serverMutation({
   },
 });
 
-export const apiRemove = serverMutation({
+export const apiRemove = serverUserMutation({
   args: {
-    clerkUserId: v.string(),
     secondaryEmailId: v.id("userSecondaryEmails"),
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const row = await ctx.db.get(args.secondaryEmailId);
     if (!row || row.userId !== user._id) {
       throw new ConvexError({ code: "not_found", message: "Not found." });

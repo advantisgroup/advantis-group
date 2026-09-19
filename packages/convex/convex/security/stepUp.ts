@@ -2,9 +2,10 @@ import {
   internalMutation,
   query,
   serverMutation,
-  serverQuery,
   userQuery,
   userMutation,
+  serverUserMutation,
+  serverUserQuery,
 } from "../functions";
 import { ConvexError, v } from "convex/values";
 
@@ -12,13 +13,7 @@ import { internal } from "../_generated/api";
 import { type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 import { sha256hex } from "../activity/lib/crypto";
-import {
-  effectiveRole,
-  getUserByClerkId,
-  isApplicantAreaMember,
-  MANAGER_ROLES,
-  type Role,
-} from "../lib/auth";
+import { effectiveRole, isApplicantAreaMember, MANAGER_ROLES, type Role } from "../lib/auth";
 import { trackEvent } from "../lib/analytics";
 import { displayName } from "../lib/users";
 import {
@@ -44,6 +39,7 @@ import {
   resolveSignInRequirement,
   verifyEmailCode,
 } from "../lib/stepUp";
+import { getServerCaller } from "../lib/caller";
 
 const scopeValidator = v.union(v.literal("off"), v.literal("all"), v.literal("managers_and_up"));
 
@@ -219,17 +215,14 @@ const areaValidator = v.union(v.literal("performance"), v.literal("applicant_vau
 // frontend's `<StepUpForm>` always talks to apps/api's `/auth/step-up/*`
 // routes, never to these directly.
 
-export const apiRequestEmailCode = serverMutation({
+export const apiRequestEmailCode = serverUserMutation({
   args: {
-    clerkUserId: v.string(),
     sessionId: v.string(),
     context: contextValidator,
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user || user.status !== "active")
-      throw new ConvexError({ code: "not_found", message: "User not found" });
+    const user = ctx.caller.user;
     const code = await issueEmailCode(ctx, user, args.sessionId, args.context);
     await ctx.scheduler.runAfter(0, internal.notifications.email.sendNotificationEmail, {
       kind: "admin-verification-code",
@@ -251,8 +244,8 @@ export const apiSubmitEmailCode = serverMutation({
   },
   returns: v.object({ ok: v.boolean(), message: v.optional(v.string()) }),
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user || user.status !== "active") return { ok: false, message: "User not found" };
+    const user = (await getServerCaller(ctx, args.clerkUserId))?.user;
+    if (!user) return { ok: false, message: "User not found" };
     const result = await verifyEmailCode(ctx, user, args.sessionId, args.code, args.context);
     if (result.ok) {
       if (args.context === "area_reverify" && args.area) {
@@ -285,8 +278,8 @@ export const apiRecordVerification = serverMutation({
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user || user.status !== "active") return { ok: false };
+    const user = (await getServerCaller(ctx, args.clerkUserId))?.user;
+    if (!user) return { ok: false };
     await recordExternalVerification(ctx, {
       userId: user._id,
       sessionId: args.sessionId,
@@ -316,8 +309,8 @@ export const apiRecordPasskeyStepUp = serverMutation({
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user || user.status !== "active") return { ok: false };
+    const user = (await getServerCaller(ctx, args.clerkUserId))?.user;
+    if (!user) return { ok: false };
     await recordPasskeyVerification(ctx, user, args.sessionId, args.context);
     if (args.context === "area_reverify" && args.area) {
       await recordAreaStepUp(ctx, user._id, args.area, "passkey");
@@ -326,13 +319,11 @@ export const apiRecordPasskeyStepUp = serverMutation({
   },
 });
 
-export const apiIssuePasskeyTicket = serverMutation({
-  args: { clerkUserId: v.string() },
+export const apiIssuePasskeyTicket = serverUserMutation({
+  args: {},
   returns: v.object({ ticket: v.string() }),
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user || user.status !== "active")
-      throw new ConvexError({ code: "not_found", message: "User not found" });
+    const user = ctx.caller.user;
     const ticket = crypto.randomUUID() + crypto.randomUUID();
     await ctx.db.insert("stepUpPasskeyTickets", {
       userId: user._id,
@@ -356,8 +347,8 @@ export const apiClaimPasskeyTicket = serverMutation({
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user || user.status !== "active") return { ok: false };
+    const user = (await getServerCaller(ctx, args.clerkUserId))?.user;
+    if (!user) return { ok: false };
     const tokenHash = await sha256hex(args.ticket);
     const row = await ctx.db
       .query("stepUpPasskeyTickets")
@@ -378,17 +369,15 @@ export const apiClaimPasskeyTicket = serverMutation({
  * passkey. Returns the hint shape the frontend already knows from
  * `passwordResets.ts` rather than throwing, so the caller can put a
  * `<StepUpDialog>` in front of the action and retry it. */
-export const apiDestructiveGate = serverQuery({
-  args: { clerkUserId: v.string(), sessionId: v.string() },
+export const apiDestructiveGate = serverUserQuery({
+  args: { sessionId: v.string() },
   returns: v.object({
     satisfied: v.boolean(),
     requiredLevel: v.number(),
     availableMethods: v.array(stepMethodValidator),
   }),
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user || user.status !== "active")
-      throw new ConvexError({ code: "not_found", message: "User not found" });
+    const user = ctx.caller.user;
     const { requiredLevel, freshnessMs } = await destructiveRequirement(ctx, user);
     const satisfied = await checkSatisfied(ctx, {
       userId: user._id,
@@ -431,9 +420,8 @@ async function findKnownDevice(
   return byHash.find((d) => !clerkClientId || d.clerkClientId === undefined) ?? null;
 }
 
-export const apiEvaluateDevice = serverMutation({
+export const apiEvaluateDevice = serverUserMutation({
   args: {
-    clerkUserId: v.string(),
     sessionId: v.string(),
     // The Clerk client this session belongs to, as looked up server-side by
     // apps/api. Absent only if that lookup failed; the hash still works then.
@@ -444,10 +432,7 @@ export const apiEvaluateDevice = serverMutation({
   },
   returns: v.object({ newDevice: v.boolean() }),
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user || user.status !== "active")
-      throw new ConvexError({ code: "not_found", message: "User not found" });
-
+    const user = ctx.caller.user;
     const now = Date.now();
     const defaultName = args.browser && args.os ? `${args.browser} on ${args.os}` : undefined;
 
@@ -667,7 +652,7 @@ export const areaPreference = userQuery({
               .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", user._id))
               .first()
           )?.active === true
-        : isApplicantAreaMember(user);
+        : ctx.caller.isApplicantAreaMember;
     return { mode: await getAreaPreference(ctx, user._id, area), applies };
   },
 });

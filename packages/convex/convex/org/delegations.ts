@@ -1,7 +1,5 @@
 import { query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
-
-import { isOwnerOrAdmin } from "../lib/auth";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { displayName } from "../lib/users";
 
@@ -109,7 +107,7 @@ export const revoke = userMutation({
     const user = ctx.caller.user;
     const delegation = await ctx.db.get(delegationId);
     if (!delegation) return { ok: true };
-    if (!isOwnerOrAdmin(user, delegation.delegatorUserId)) {
+    if (!ctx.caller.owns(delegation.delegatorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the granting manager or an admin can revoke this",

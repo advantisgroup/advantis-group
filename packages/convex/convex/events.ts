@@ -173,7 +173,7 @@ export const update = userMutation({
     if (!event) {
       throw new ConvexError({ code: "not_found", message: "Event not found" });
     }
-    if (!isOwnerOrAdmin(user, event.createdByUserId)) {
+    if (!ctx.caller.owns(event.createdByUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the creator or an admin can edit this event",

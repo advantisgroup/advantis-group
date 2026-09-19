@@ -5,12 +5,7 @@ import { internal } from "../_generated/api";
 import { type Doc } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 import { roleValidator } from "../schema";
-import {
-  canGrantRole,
-  createOrRestoreUser,
-  getUserByClerkId,
-  isEmailDomainAllowed,
-} from "../lib/auth";
+import { createOrRestoreUser, getUserByClerkId, isEmailDomainAllowed } from "../lib/auth";
 import { deleteClerkUser } from "../lib/clerk";
 import { notifyUsers } from "../lib/notify";
 
@@ -191,7 +186,7 @@ export const approve = userMutation({
       });
     }
     const grantedRole = role ?? "employee";
-    if (!canGrantRole(reviewer, grantedRole)) {
+    if (!ctx.caller.canGrant(grantedRole)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only admins can grant manager/admin roles",

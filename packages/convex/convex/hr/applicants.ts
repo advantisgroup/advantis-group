@@ -10,8 +10,9 @@ import {
   terminArtValidator,
   terminTypValidator,
 } from "../schema";
-import { getUserByClerkId, hasApplicantAccess } from "../lib/auth";
+import { hasApplicantAccess } from "../lib/auth";
 import { batchUserSummaries, toUserSummary } from "../lib/users";
+import { getServerCaller } from "../lib/caller";
 
 /**
  * Bewerbermanagement (Applicant Management). Everything below is gated by
@@ -599,8 +600,8 @@ export const convertTermin = userMutation({
 export const apiCheckAccess = serverQuery({
   args: { clerkUserId: v.string() },
   handler: async (ctx, { clerkUserId }) => {
-    const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status !== "active") return null;
+    const user = (await getServerCaller(ctx, clerkUserId))?.user;
+    if (!user) return null;
     if (!hasApplicantAccess(user)) return { userId: user._id, hasAccess: false };
     const unlock = await ctx.db
       .query("applicantVaultUnlocks")

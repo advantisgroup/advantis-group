@@ -1,8 +1,5 @@
 import { query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
-
-import { isOwnerOrAdmin } from "../lib/auth";
-
 const attachmentFields = {
   oneDriveItemId: v.string(),
   oneDrivePath: v.string(),
@@ -74,7 +71,7 @@ export const remove = userMutation({
     const user = ctx.caller.user;
     const row = await ctx.db.get(attachmentId);
     if (!row) return { ok: false, oneDriveItemId: null };
-    if (!isOwnerOrAdmin(user, row.uploadedByUserId)) {
+    if (!ctx.caller.owns(row.uploadedByUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the uploader or an admin can remove this",

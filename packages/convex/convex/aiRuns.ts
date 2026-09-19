@@ -7,22 +7,16 @@ import {
   query,
   serverMutation,
   serverQuery,
+  serverUserMutation,
+  serverUserQuery,
   userQuery,
   userMutation,
 } from "./functions";
 import { type QueryCtx } from "./_generated/server";
 import { isFeatureEnabled } from "./lib/featureFlags";
 import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase, askSubjectType } from "./lib/aiRuns";
-import {
-  effectiveCustomRoleIds,
-  effectiveRole,
-  getCurrentUser,
-  getUserByClerkId,
-  hasApplicantAccess,
-  isOwnerOrAdmin,
-  requireVaultUnlocked,
-  userHasCapability,
-} from "./lib/auth";
+import { requireVaultUnlocked } from "./lib/auth";
+import { type Caller, getSessionCaller } from "./lib/caller";
 import { userMatchesAudience } from "./lib/audience";
 import { displayName } from "./lib/users";
 
@@ -67,7 +61,7 @@ function toMeta(run: Doc<"aiRuns">) {
 export type AiRunMeta = ReturnType<typeof toMeta>;
 
 async function ownRun(ctx: QueryCtx, runId: Id<"aiRuns">) {
-  const user = await getCurrentUser(ctx);
+  const user = (await getSessionCaller(ctx))?.user;
   if (!user) return null;
   const run = await ctx.db.get(runId);
   return run && run.clerkUserId === user.clerkUserId ? { user, run } : null;
@@ -87,7 +81,7 @@ export const get = query({
 export const latest = query({
   args: { subjectKey: v.string() },
   handler: async (ctx, { subjectKey }) => {
-    const user = await getCurrentUser(ctx);
+    const user = (await getSessionCaller(ctx))?.user;
     if (!user) return null;
     const run = await ctx.db
       .query("aiRuns")
@@ -104,7 +98,7 @@ export const latest = query({
 export const recent = query({
   args: { kind: aiRunKind, limit: v.optional(v.number()) },
   handler: async (ctx, { kind, limit }) => {
-    const user = await getCurrentUser(ctx);
+    const user = (await getSessionCaller(ctx))?.user;
     if (!user) return [];
     const runs = await ctx.db
       .query("aiRuns")
@@ -120,7 +114,7 @@ export const recent = query({
 export const dock = query({
   args: {},
   handler: async (ctx) => {
-    const user = await getCurrentUser(ctx);
+    const user = (await getSessionCaller(ctx))?.user;
     if (!user) return [];
     const runs = await ctx.db
       .query("aiRuns")
@@ -175,7 +169,7 @@ export const markSeen = mutation({
 export const myFeedback = query({
   args: { runId: v.id("aiRuns") },
   handler: async (ctx, { runId }) => {
-    const user = await getCurrentUser(ctx);
+    const user = (await getSessionCaller(ctx))?.user;
     if (!user) return null;
     const row = await ctx.db
       .query("aiFeedback")
@@ -294,9 +288,8 @@ export const feedbackList = userQuery({
 
 // --- apps/api ----------------------------------------------------------------
 
-export const apiStart = serverMutation({
+export const apiStart = serverUserMutation({
   args: {
-    clerkUserId: v.string(),
     kind: aiRunKind,
     subjectKey: v.string(),
     href: v.optional(v.string()),
@@ -308,24 +301,16 @@ export const apiStart = serverMutation({
     if (!(await isFeatureEnabled(ctx, "ai"))) {
       throw new ConvexError({ code: "disabled", message: "AI is switched off" });
     }
-    // Same gate, per person. `ctx.auth` isn't the caller here (apps/api calls
-    // this with the server key), so the capability is resolved from the
-    // clerk id it forwarded — managers and admins pass on their tier.
-    const caller = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!caller || caller.status !== "active") {
-      throw new ConvexError({ code: "forbidden", message: "No account" });
-    }
-    const callerRoles = await Promise.all(
-      effectiveCustomRoleIds(caller).map((id) => ctx.db.get(id)),
-    );
-    if (!userHasCapability(caller, callerRoles, "use_ai")) {
+    // Same gate, per person. Its own code so apps/api can say why.
+    if (!ctx.caller.can("use_ai")) {
       throw new ConvexError({ code: "no_capability", message: "AI is not enabled for you" });
     }
+    const clerkUserId = ctx.caller.user.clerkUserId;
     const now = Date.now();
     const previous = await ctx.db
       .query("aiRuns")
       .withIndex("by_user_subject", (q) =>
-        q.eq("clerkUserId", args.clerkUserId).eq("subjectKey", args.subjectKey),
+        q.eq("clerkUserId", clerkUserId).eq("subjectKey", args.subjectKey),
       )
       .order("desc")
       .first();
@@ -341,7 +326,7 @@ export const apiStart = serverMutation({
       });
     }
     return await ctx.db.insert("aiRuns", {
-      clerkUserId: args.clerkUserId,
+      clerkUserId,
       kind: args.kind,
       subjectKey: args.subjectKey,
       href: args.href,
@@ -541,15 +526,9 @@ async function ticketContext(ctx: QueryCtx, id: string): Promise<AskContext> {
   };
 }
 
-async function applicantContext(
-  ctx: QueryCtx,
-  user: Doc<"users">,
-  id: string,
-): Promise<AskContext> {
-  if (!hasApplicantAccess(user)) {
-    throw new ConvexError({ code: "forbidden", message: "You do not have permission to do that" });
-  }
-  await requireVaultUnlocked(ctx, user._id);
+async function applicantContext(ctx: QueryCtx, caller: Caller, id: string): Promise<AskContext> {
+  caller.require(caller.hasApplicantAccess);
+  await requireVaultUnlocked(ctx, caller.id);
 
   const applicantId = ctx.db.normalizeId("applicants", id);
   const applicant = applicantId ? await ctx.db.get(applicantId) : null;
@@ -596,18 +575,14 @@ function plainText(html: string) {
     .trim();
 }
 
-async function announcementContext(
-  ctx: QueryCtx,
-  user: Doc<"users">,
-  id: string,
-): Promise<AskContext> {
+async function announcementContext(ctx: QueryCtx, caller: Caller, id: string): Promise<AskContext> {
   const announcementId = ctx.db.normalizeId("announcements", id);
   const a = announcementId ? await ctx.db.get(announcementId) : null;
   const owner = a ? (a.ownerUserId ?? a.authorUserId) : null;
   const canSee =
     !!a &&
-    (isOwnerOrAdmin(user, owner!) ||
-      (userMatchesAudience(user, a.audience) &&
+    (caller.owns(owner!) ||
+      (userMatchesAudience(caller.user, a.audience) &&
         a.publishedAt <= Date.now() &&
         (!a.expiresAt || a.expiresAt > Date.now())));
   if (!a || !canSee) {
@@ -713,7 +688,7 @@ async function suggestionContext(ctx: QueryCtx, id: string): Promise<AskContext>
  */
 async function askContext(
   ctx: QueryCtx,
-  user: Doc<"users">,
+  caller: Caller,
   type: "itTicket" | "applicant" | "announcement" | "errorReport" | "suggestion",
   id: string,
 ): Promise<AskContext> {
@@ -721,9 +696,9 @@ async function askContext(
     type === "itTicket"
       ? await ticketContext(ctx, id)
       : type === "applicant"
-        ? await applicantContext(ctx, user, id)
+        ? await applicantContext(ctx, caller, id)
         : type === "announcement"
-          ? await announcementContext(ctx, user, id)
+          ? await announcementContext(ctx, caller, id)
           : type === "errorReport"
             ? await errorReportContext(ctx, id)
             : await suggestionContext(ctx, id);
@@ -735,24 +710,14 @@ async function askContext(
 export const askPreview = userQuery({
   args: { type: askSubjectType, id: v.string() },
   handler: async (ctx, { type, id }) => {
-    const user = ctx.caller.user;
-    const { title, href, sources } = await askContext(ctx, user, type, id);
+    const { title, href, sources } = await askContext(ctx, ctx.caller, type, id);
     return { title, href, sources };
   },
 });
 
-export const apiAskContext = serverQuery({
-  args: { clerkUserId: v.string(), type: askSubjectType, id: v.string() },
-  handler: async (ctx, { clerkUserId, type, id }) => {
-    const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status !== "active") {
-      throw new ConvexError({
-        code: "forbidden",
-        message: "You do not have permission to do that",
-      });
-    }
-    return askContext(ctx, user, type, id);
-  },
+export const apiAskContext = serverUserQuery({
+  args: { type: askSubjectType, id: v.string() },
+  handler: async (ctx, { type, id }) => askContext(ctx, ctx.caller, type, id),
 });
 
 const BERLIN = "Europe/Berlin";
@@ -775,7 +740,8 @@ function berlinTime(ms: number) {
  * plain block for the daily brief. Nothing here is beyond what they can
  * already see on the page.
  */
-async function dailyBriefContext(ctx: QueryCtx, user: Doc<"users">) {
+async function dailyBriefContext(ctx: QueryCtx, caller: Caller) {
+  const user = caller.user;
   const now = Date.now();
   const sources: { label: string; href?: string }[] = [];
 
@@ -823,8 +789,7 @@ async function dailyBriefContext(ctx: QueryCtx, user: Doc<"users">) {
     (a) =>
       a.publishedAt <= now &&
       (!a.expiresAt || a.expiresAt > now) &&
-      (isOwnerOrAdmin(user, a.ownerUserId ?? a.authorUserId) ||
-        userMatchesAudience(user, a.audience)),
+      (caller.owns(a.ownerUserId ?? a.authorUserId) || userMatchesAudience(user, a.audience)),
   );
   const openAnnouncements = (
     await Promise.all(
@@ -903,18 +868,9 @@ async function dailyBriefContext(ctx: QueryCtx, user: Doc<"users">) {
   return { text: text.slice(0, ASK_CONTEXT_CHARS), sources };
 }
 
-export const apiDailyBriefContext = serverQuery({
-  args: { clerkUserId: v.string() },
-  handler: async (ctx, { clerkUserId }) => {
-    const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status !== "active") {
-      throw new ConvexError({
-        code: "forbidden",
-        message: "You do not have permission to do that",
-      });
-    }
-    return dailyBriefContext(ctx, user);
-  },
+export const apiDailyBriefContext = serverUserQuery({
+  args: {},
+  handler: async (ctx) => dailyBriefContext(ctx, ctx.caller),
 });
 
 /**
@@ -924,10 +880,10 @@ export const apiDailyBriefContext = serverQuery({
  * `hrefByKey` is how the API route turns that back into a real path, so a
  * garbled model reply can only ever fail closed, not link somewhere unlisted.
  */
-async function navigateContext(ctx: QueryCtx, user: Doc<"users">) {
-  const role = effectiveRole(user);
-  const isManagerOrAdmin = role === "admin" || role === "manager";
-  const applicantAccess = hasApplicantAccess(user);
+async function navigateContext(ctx: QueryCtx, caller: Caller) {
+  const user = caller.user;
+  const isManagerOrAdmin = caller.isManager;
+  const applicantAccess = caller.hasApplicantAccess;
 
   const pages: { href: string; label: string }[] = [
     { href: "/", label: "Startseite / Übersicht" },
@@ -1022,18 +978,9 @@ async function navigateContext(ctx: QueryCtx, user: Doc<"users">) {
   };
 }
 
-export const apiNavigateContext = serverQuery({
-  args: { clerkUserId: v.string() },
-  handler: async (ctx, { clerkUserId }) => {
-    const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status !== "active") {
-      throw new ConvexError({
-        code: "forbidden",
-        message: "You do not have permission to do that",
-      });
-    }
-    return navigateContext(ctx, user);
-  },
+export const apiNavigateContext = serverUserQuery({
+  args: {},
+  handler: async (ctx) => navigateContext(ctx, ctx.caller),
 });
 
 export const pruneOld = internalMutation({

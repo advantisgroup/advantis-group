@@ -1,8 +1,5 @@
 import { query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
-
-import { isOwnerOrAdmin } from "../lib/auth";
-
 const pageFields = {
   title: v.string(),
   description: v.string(),
@@ -91,7 +88,7 @@ export const update = userMutation({
     const user = ctx.caller.user;
     const page = await ctx.db.get(pageId);
     if (!page) throw new ConvexError({ code: "not_found", message: "Not found" });
-    if (!isOwnerOrAdmin(user, page.authorUserId)) {
+    if (!ctx.caller.owns(page.authorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the author or an admin can edit this",
@@ -115,7 +112,7 @@ export const remove = userMutation({
     const user = ctx.caller.user;
     const page = await ctx.db.get(pageId);
     if (!page) return { ok: false };
-    if (!isOwnerOrAdmin(user, page.authorUserId)) {
+    if (!ctx.caller.owns(page.authorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the author or an admin can delete this",
