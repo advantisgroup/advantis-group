@@ -15,9 +15,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
 
 import { Demo } from "@/components/playground/Demo";
+import { Inspector, resolveStyle, styleOfClasses, toHex } from "@/components/playground/Inspector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TogglePill } from "@/components/ui/filter-pill";
@@ -164,15 +164,65 @@ function ThemeTuner() {
     </div>
   );
 }
+function ColorGroup({ tokens }: { tokens: string[] }) {
+  const t = useTranslations("Playground");
+  return (
+    <Inspector
+      items={tokens}
+      getKey={(token) => token}
+      getLabel={(token) => token}
+      gridClassName="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6"
+      tileClassName="block w-full overflow-hidden rounded-lg border border-border/70 bg-card text-left"
+      renderTile={(token) => (
+        <>
+          <span
+            className="block h-14 border-b border-border/60"
+            style={{ background: `var(--color-${token})` }}
+          />
+          <span className="block px-2.5 py-2 font-mono text-[11.5px] text-muted-foreground">
+            {token}
+          </span>
+        </>
+      )}
+      renderFocus={(token) => (
+        <>
+          <span
+            className="block h-32 border-b border-border/60"
+            style={{ background: `var(--color-${token})` }}
+          />
+          <span className="block px-3 py-2.5 font-mono text-[12px]">{token}</span>
+        </>
+      )}
+      getFields={(token) => {
+        const value = resolveStyle("color", `var(--color-${token})`);
+        const hex = toHex(value);
+        return [
+          { label: t("inspector.fields.background"), value: `bg-${token}` },
+          { label: t("inspector.fields.text"), value: `text-${token}` },
+          { label: t("inspector.fields.border"), value: `border-${token}` },
+          { label: t("inspector.fields.variable"), value: `var(--color-${token})` },
+          { label: t("inspector.fields.value"), value },
+          {
+            label: t("inspector.fields.hex"),
+            value: hex,
+            display: (
+              <span className="inline-flex items-center gap-2">
+                <span
+                  className="size-3.5 rounded-sm border border-border/70"
+                  style={{ background: hex }}
+                />
+                {hex}
+              </span>
+            ),
+          },
+        ];
+      }}
+    />
+  );
+}
+
 export default function PlaygroundDesignPage() {
   const t = useTranslations("Playground");
-
-  function copy(text: string) {
-    void navigator.clipboard?.writeText(text).then(
-      () => toast.success(t("design.colors.copied", { text })),
-      () => undefined,
-    );
-  }
 
   return (
     <>
@@ -207,24 +257,7 @@ export default function PlaygroundDesignPage() {
               <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t(`design.colors.groups.${group.key}`)}
               </p>
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-                {group.tokens.map((token) => (
-                  <button
-                    key={token}
-                    type="button"
-                    onClick={() => copy(`bg-${token}`)}
-                    className="group overflow-hidden rounded-lg border border-border/70 text-left transition-transform hover:-translate-y-0.5"
-                  >
-                    <span
-                      className="block h-14 border-b border-border/60"
-                      style={{ background: `var(--color-${token})` }}
-                    />
-                    <span className="block px-2.5 py-2 font-mono text-[11.5px] text-muted-foreground group-hover:text-foreground">
-                      {token}
-                    </span>
-                  </button>
-                ))}
-              </div>
+              <ColorGroup tokens={group.tokens} />
             </div>
           ))}
         </div>
@@ -274,41 +307,73 @@ export default function PlaygroundDesignPage() {
       </Demo>
 
       <Demo title={t("design.radius.title")} description={t("design.radius.description")}>
-        <div className="flex flex-wrap items-end gap-4">
-          {RADII.map((radius) => (
-            <button
-              key={radius}
-              type="button"
-              onClick={() => copy(`rounded-${radius}`)}
-              className="flex flex-col items-center gap-2"
-            >
+        <Inspector
+          items={RADII}
+          getKey={(radius) => radius}
+          getLabel={(radius) => `rounded-${radius}`}
+          gridClassName="flex flex-wrap items-end gap-3"
+          tileClassName="rounded-lg p-2"
+          renderTile={(radius) => (
+            <span className="flex flex-col items-center gap-2">
               <span
                 className="block size-16 border border-border bg-muted"
                 style={{ borderRadius: `var(--radius-${radius})` }}
               />
               <span className="font-mono text-[11.5px] text-muted-foreground">{radius}</span>
-            </button>
-          ))}
-        </div>
+            </span>
+          )}
+          renderFocus={(radius) => (
+            <span className="grid place-items-center py-4">
+              <span
+                className="block size-32 border border-border bg-muted"
+                style={{ borderRadius: `var(--radius-${radius})` }}
+              />
+            </span>
+          )}
+          getFields={(radius) => [
+            { label: t("inspector.fields.class"), value: `rounded-${radius}` },
+            { label: t("inspector.fields.variable"), value: `var(--radius-${radius})` },
+            {
+              label: t("inspector.fields.value"),
+              value: resolveStyle("border-top-left-radius", `var(--radius-${radius})`),
+            },
+          ]}
+        />
       </Demo>
 
-      <Demo
-        title={t("design.type.title")}
-        description={t("design.type.description")}
-        className="p-0"
-      >
-        <ul className="divide-y divide-border/60">
-          {TYPE_SCALE.map(({ key, className }) => (
-            <li key={key} className="flex items-baseline gap-4 px-5 py-3.5">
+      <Demo title={t("design.type.title")} description={t("design.type.description")}>
+        <Inspector
+          items={TYPE_SCALE}
+          getKey={(entry) => entry.key}
+          getLabel={(entry) => entry.key}
+          gridClassName="divide-y divide-border/60 overflow-hidden rounded-lg border border-border/70"
+          tileClassName="flex w-full items-baseline gap-4 bg-card px-4 py-3 text-left"
+          renderTile={({ key, className }) => (
+            <span className="flex min-w-0 items-baseline gap-4">
               <span className="w-20 shrink-0 font-mono text-[11px] text-muted-foreground/80">
                 {key}
               </span>
               <span className={cn("min-w-0 truncate", className)}>
                 {t(`design.type.samples.${key}`)}
               </span>
-            </li>
-          ))}
-        </ul>
+            </span>
+          )}
+          renderFocus={({ key, className }) => (
+            <span className={cn("block whitespace-normal text-pretty", className)}>
+              {t(`design.type.samples.${key}`)}
+            </span>
+          )}
+          getFields={({ className }) => {
+            const style = styleOfClasses(className);
+            return [
+              { label: t("inspector.fields.class"), value: className },
+              { label: t("inspector.fields.size"), value: style.fontSize },
+              { label: t("inspector.fields.weight"), value: style.fontWeight },
+              { label: t("inspector.fields.lineHeight"), value: style.lineHeight },
+              { label: t("inspector.fields.tracking"), value: style.letterSpacing },
+            ];
+          }}
+        />
       </Demo>
     </>
   );

@@ -14,7 +14,7 @@
     "intro": "Ein Lernort dafür, wie das Intranet gebaut ist. Nichts hier ist nachgebaut – jede Demo nutzt dieselbe Komponente wie die echte Seite. Was du siehst, ist das, was live geht.",
     "drag": "Das Physik-Ziehen aus dem Seitenleisten-Editor, ein Board zum Verschieben von Karten und das Ablegen von Dateien.",
     "design": "Die Regeln der Oberfläche, die Farbtokens, ein Theme-Regler, Radien und Schriftgrößen.",
-    "components": "Buttons, Zahlen, Filter, leere Zustände, Dialoge, Toasts, Benachrichtigungsarten, Logos und ein Deutsch-Vergleich.",
+    "components": "Buttons (auch der Sonnenaufgang), Zahlen, Filter, leere Zustände, Dialoge, Toasts, Benachrichtigungsarten, Logos und ein Deutsch-Vergleich.",
     "footnote": "Auf diesen Seiten wird nichts gespeichert.",
     "motion": "Die Federn einstellen, die die Oberfläche wirklich nutzt, und Wischen-zum-Antworten und langes Drücken ausprobieren.",
     "chat": "Ein erfundener Chat aus den echten Chat-Bausteinen — schreib etwas, und jemand antwortet."
@@ -87,8 +87,7 @@
     },
     "colors": {
       "title": "Farb-Tokens",
-      "description": "Immer das Token, nie einen Hex-Wert – dann funktionieren Hell und Dunkel. Klick kopiert die Klasse.",
-      "copied": "{text} kopiert",
+      "description": "Immer das Token nehmen, nie einen Hex-Wert, damit Hell und Dunkel funktionieren. Eins anklicken, um seine Klassen und seinen aktuellen Wert zu sehen.",
       "groups": {
         "surfaces": "Flächen",
         "text": "Text",
@@ -108,11 +107,11 @@
     },
     "radius": {
       "title": "Eckenradius",
-      "description": "Klein für Bedienelemente, größer für Flächen. Klick kopiert die Klasse."
+      "description": "Klein für Bedienelemente, größer für Flächen. Eins anklicken für Klasse und Größe."
     },
     "type": {
       "title": "Schriftgrößen",
-      "description": "Eine Handvoll Größen, überall gleich eingesetzt.",
+      "description": "Eine Handvoll Größen, überall gleich eingesetzt. Eine anklicken für Klassen und Maße.",
       "samples": {
         "display": "Seiten- und Datensatztitel",
         "section": "Abschnittsüberschriften",
@@ -157,7 +156,7 @@
     },
     "badges": {
       "title": "Badges",
-      "description": "Kleine Beschriftungen für Zustand oder Kategorie. Status-Badges immer mit Symbol."
+      "description": "Kleine Labels für einen Zustand oder eine Kategorie. Ein Status-Badge immer mit Symbol. Eins anklicken für den Code."
     },
     "kpis": {
       "title": "Kennzahlen",
@@ -258,15 +257,27 @@
     },
     "notifications": {
       "title": "Benachrichtigungsarten",
-      "description": "Jede Art von Benachrichtigung, die irgendwo geschrieben wird, mit dem Symbol und der Farbe aus der Liste. Eine neue Art bekommt eine schlichte Glocke, bis sie ein eigenes Symbol hat."
+      "description": "Jede Art von Benachrichtigung, die irgendwo geschrieben wird, mit dem Symbol und der Farbe aus der Liste. Eine neue Art bekommt eine schlichte Glocke, bis sie ein eigenes Symbol hat. Eine anklicken für die Details."
     },
     "logos": {
       "title": "Logo-Wand",
-      "description": "Integrationen zeigen ihr echtes Logo, nie ihren Namen in einem Kasten. So kommt Farbe auf eine ruhige Seite."
+      "description": "Integrationen zeigen ihr echtes Logo, nie ihren Namen in einem Kasten. So kommt Farbe auf eine ruhige Seite. Eins anklicken für den Code."
     },
     "language": {
       "title": "Englisch und Deutsch nebeneinander",
       "description": "Dieselben Bausteine mit den echten Texten in Handybreite. Deutsch läuft länger, also fallen umbrechende oder abgeschnittene Beschriftungen hier zuerst auf."
+    },
+    "sunrise": {
+      "title": "Sonnenaufgang-Button",
+      "description": "Weiß, mit Regenbogenlicht drumherum — ein Schein von warm nach kühl und Strahlen, die schwingen und atmen, statt sich zu drehen. Beim Drüberfahren reicht das Licht weiter. Nur für das eine Ding auf einer Seite, das es verdient.",
+      "cta": "Kostenlos testen",
+      "small": "Upgrade",
+      "light": "Auf heller Seite",
+      "dark": "Auf dunkler Seite"
+    },
+    "variants": {
+      "title": "Alle Buttons",
+      "description": "Alle Varianten nebeneinander. Eine anklicken, um sie herauszuziehen und nur die Klassen zu sehen, die sie zur Basis hinzufügt."
     }
   },
   "motion": {
@@ -331,6 +342,34 @@
       "two": "Mach ich.",
       "three": "Können wir nach dem Mittag drüber reden?",
       "four": "Haha, fair."
+    }
+  },
+  "inspector": {
+    "open": "{name} ansehen",
+    "close": "Zurück zu allen",
+    "copy": "{name} kopieren",
+    "copied": "Kopiert",
+    "fields": {
+      "background": "Hintergrund",
+      "text": "Text",
+      "border": "Rahmen",
+      "variable": "CSS-Variable",
+      "value": "Gerade",
+      "hex": "Hex",
+      "class": "Klasse",
+      "size": "Größe",
+      "weight": "Stärke",
+      "lineHeight": "Zeilenhöhe",
+      "tracking": "Laufweite",
+      "variant": "Variante",
+      "jsx": "JSX",
+      "classes": "Eigene Klassen",
+      "type": "Art",
+      "icon": "Symbol",
+      "tint": "Farbe",
+      "code": "Code",
+      "key": "Schlüssel",
+      "name": "Name"
     }
   }
 }

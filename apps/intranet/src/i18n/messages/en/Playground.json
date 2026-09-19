@@ -14,7 +14,7 @@
     "intro": "A learning ground for how the intranet is built. Nothing here is a copy — every demo uses the same component the real page does, so what you see is what ships.",
     "drag": "The physics drag from the sidebar editor, a board you can move cards across, and a file drop.",
     "design": "The rules the interface follows, the colour tokens, a theme tuner, radii and type scale.",
-    "components": "Buttons, numbers, filters, empty states, dialogs, toasts, notification kinds, logos and a side-by-side German check.",
+    "components": "Buttons (including the sunrise one), numbers, filters, empty states, dialogs, toasts, notification kinds, logos and a side-by-side German check.",
     "footnote": "Nothing on these pages saves anything.",
     "motion": "Tune the springs the interface really uses, and try swipe-to-reply and long-press.",
     "chat": "A fake conversation built from the real chat pieces — send something and someone answers."
@@ -87,8 +87,7 @@
     },
     "colors": {
       "title": "Colour tokens",
-      "description": "Use the token, never a hex value, so light and dark mode both work. Click one to copy its class.",
-      "copied": "Copied {text}",
+      "description": "Use the token, never a hex value, so light and dark mode both work. Click one to see its classes and what it comes out as right now.",
       "groups": {
         "surfaces": "Surfaces",
         "text": "Text",
@@ -108,11 +107,11 @@
     },
     "radius": {
       "title": "Corner radius",
-      "description": "Small for controls, larger for surfaces. Click one to copy its class."
+      "description": "Small for controls, larger for surfaces. Click one for its class and size."
     },
     "type": {
       "title": "Type scale",
-      "description": "A handful of sizes, used the same way everywhere.",
+      "description": "A handful of sizes, used the same way everywhere. Click one for its classes and measurements.",
       "samples": {
         "display": "Page and record titles",
         "section": "Section headings",
@@ -157,7 +156,7 @@
     },
     "badges": {
       "title": "Badges",
-      "description": "Small labels for a state or a category. Pair a status badge with an icon."
+      "description": "Small labels for a state or a category. Pair a status badge with an icon. Click one for its code."
     },
     "kpis": {
       "title": "Headline numbers",
@@ -258,15 +257,27 @@
     },
     "notifications": {
       "title": "Notification kinds",
-      "description": "Every notification type something writes, with the icon and tint the list draws it with. A new type falls back to a plain bell until it gets one."
+      "description": "Every notification type something writes, with the icon and tint the list draws it with. A new type falls back to a plain bell until it gets one. Click one for the details."
     },
     "logos": {
       "title": "Logo wall",
-      "description": "Integrations show their real mark, never their name in a box. It's where a quiet page gets its colour."
+      "description": "Integrations show their real mark, never their name in a box. It's where a quiet page gets its colour. Click one for its code."
     },
     "language": {
       "title": "English and German side by side",
       "description": "The same components with the real copy at phone width. German runs longer, so labels that wrap or clip show up here first."
+    },
+    "sunrise": {
+      "title": "Sunrise button",
+      "description": "White, with rainbow light coming off it — a glow that shades from warm to cool and rays that sway and breathe instead of spinning. Hover it and the light reaches further. Save it for the one thing on a page that deserves it.",
+      "cta": "Try it free",
+      "small": "Upgrade",
+      "light": "On a light page",
+      "dark": "On a dark page"
+    },
+    "variants": {
+      "title": "Every button",
+      "description": "All the variants side by side. Click one to pull it out and see only the classes it adds on top of the base."
     }
   },
   "motion": {
@@ -331,6 +342,34 @@
       "two": "On it.",
       "three": "Can we talk about it after lunch?",
       "four": "Ha, fair enough."
+    }
+  },
+  "inspector": {
+    "open": "Look at {name}",
+    "close": "Back to all",
+    "copy": "Copy {name}",
+    "copied": "Copied",
+    "fields": {
+      "background": "Background",
+      "text": "Text",
+      "border": "Border",
+      "variable": "CSS variable",
+      "value": "Right now",
+      "hex": "Hex",
+      "class": "Class",
+      "size": "Size",
+      "weight": "Weight",
+      "lineHeight": "Line height",
+      "tracking": "Letter spacing",
+      "variant": "Variant",
+      "jsx": "JSX",
+      "classes": "Its own classes",
+      "type": "Type",
+      "icon": "Icon",
+      "tint": "Tint",
+      "code": "Code",
+      "key": "Key",
+      "name": "Name"
     }
   }
 }

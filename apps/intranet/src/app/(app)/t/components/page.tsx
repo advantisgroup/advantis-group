@@ -20,9 +20,10 @@ import { MetricRow, Panel } from "@/components/admin/overview/primitives";
 import { Mark, PROVIDERS_LIST, providerName } from "@/components/branding/ProviderMark";
 import { FieldLabel, FormDialog } from "@/components/compose/FormDialog";
 import { Demo } from "@/components/playground/Demo";
+import { Inspector } from "@/components/playground/Inspector";
 import { LanguageCheck } from "@/components/playground/LanguageCheck";
 import { Badge } from "@/components/ui/badge";
-import { Button, type ButtonProps } from "@/components/ui/button";
+import { Button, buttonVariants, type ButtonProps } from "@/components/ui/button";
 import { CountTabs } from "@/components/ui/count-tabs";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TogglePill } from "@/components/ui/filter-pill";
@@ -51,8 +52,18 @@ const VARIANTS: Variant[] = [
   "emerald",
   "prism",
   "premium",
+  "sunrise",
 ];
 const SIZES: Size[] = ["xs", "sm", "default", "lg", "xl"];
+
+/** The classes only this variant adds — everything every variant shares is the base. */
+function variantClasses(variant: Variant) {
+  const all = VARIANTS.map((v) => new Set(buttonVariants({ variant: v }).split(" ")));
+  return buttonVariants({ variant })
+    .split(" ")
+    .filter((cls) => !all.every((set) => set.has(cls)))
+    .join(" ");
+}
 const MILESTONES = [10, 25, 50, 100];
 
 const BADGES = [
@@ -160,17 +171,93 @@ export default function PlaygroundComponentsPage() {
       </Demo>
 
       <Demo
+        title={t("components.sunrise.title")}
+        description={t("components.sunrise.description")}
+        source="components/ui/button.tsx · .btn-sunrise in app/globals.css"
+        className="grid gap-0 overflow-visible p-0 sm:grid-cols-2"
+      >
+        {(["light", "dark"] as const).map((ground) => (
+          <div
+            key={ground}
+            className={cn(
+              "flex flex-col items-center justify-center gap-10 px-6 py-14",
+              ground === "light"
+                ? "rounded-t-xl bg-white sm:rounded-l-xl sm:rounded-tr-none"
+                : "rounded-b-xl bg-zinc-950 sm:rounded-r-xl sm:rounded-bl-none",
+            )}
+          >
+            <Button variant="sunrise" size="lg">
+              <Sparkles />
+              {t("components.sunrise.cta")}
+            </Button>
+            <div className="flex items-center gap-6">
+              <Button variant="sunrise">{t("components.sunrise.small")}</Button>
+              <Button variant="sunrise" size="sm">
+                {t("components.sunrise.small")}
+              </Button>
+            </div>
+            <p
+              className={cn("text-[12px]", ground === "light" ? "text-zinc-500" : "text-zinc-400")}
+            >
+              {t(`components.sunrise.${ground}`)}
+            </p>
+          </div>
+        ))}
+      </Demo>
+
+      <Demo
+        title={t("components.variants.title")}
+        description={t("components.variants.description")}
+        source="components/ui/button.tsx"
+      >
+        <Inspector
+          items={VARIANTS}
+          getKey={(v) => v}
+          getLabel={(v) => v}
+          gridClassName="flex flex-wrap gap-3"
+          tileClassName="rounded-lg p-2"
+          renderTile={(v) => (
+            <span className={buttonVariants({ variant: v, size: "sm" })}>{v}</span>
+          )}
+          renderFocus={(v) => (
+            <span className="grid place-items-center px-4 py-10">
+              <span className={buttonVariants({ variant: v, size: "lg" })}>
+                <Sparkles />
+                {v}
+              </span>
+            </span>
+          )}
+          getFields={(v) => [
+            { label: t("inspector.fields.variant"), value: v },
+            { label: t("inspector.fields.jsx"), value: `<Button variant="${v}">…</Button>` },
+            { label: t("inspector.fields.classes"), value: variantClasses(v) },
+          ]}
+        />
+      </Demo>
+      <Demo
         title={t("components.badges.title")}
         description={t("components.badges.description")}
         source="components/ui/badge.tsx"
       >
-        <div className="flex flex-wrap gap-2">
-          {BADGES.map((b) => (
-            <Badge key={b} variant={b}>
-              {b}
-            </Badge>
-          ))}
-        </div>
+        <Inspector
+          items={BADGES}
+          getKey={(b) => b}
+          getLabel={(b) => b}
+          gridClassName="flex flex-wrap gap-1.5"
+          tileClassName="rounded-md p-1"
+          renderTile={(b) => <Badge variant={b}>{b}</Badge>}
+          renderFocus={(b) => (
+            <span className="grid place-items-center py-8">
+              <Badge variant={b} className="scale-125">
+                {b}
+              </Badge>
+            </span>
+          )}
+          getFields={(b) => [
+            { label: t("inspector.fields.variant"), value: b },
+            { label: t("inspector.fields.jsx"), value: `<Badge variant="${b}">…</Badge>` },
+          ]}
+        />
       </Demo>
 
       <Demo
@@ -471,22 +558,44 @@ export default function PlaygroundComponentsPage() {
         description={t("components.notifications.description")}
         source="lib/notification-kinds.ts"
       >
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-          {NOTIFICATION_TYPES.map((type) => {
+        <Inspector
+          items={NOTIFICATION_TYPES}
+          getKey={(type) => type}
+          getLabel={(type) => type}
+          gridClassName="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4"
+          tileClassName="w-full rounded-lg border border-border/60 bg-card px-2.5 py-2 text-left"
+          renderTile={(type) => {
             const { icon: Icon, tint } = notificationVisual(type);
             return (
-              <div
-                key={type}
-                className="flex items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2"
-              >
+              <span className="flex items-center gap-2.5">
                 <span className={cn("grid size-7 shrink-0 place-items-center rounded-full", tint)}>
                   <Icon className="size-3.5" />
                 </span>
                 <span className="min-w-0 truncate font-mono text-[11.5px]">{type}</span>
-              </div>
+              </span>
             );
-          })}
-        </div>
+          }}
+          renderFocus={(type) => {
+            const { icon: Icon, tint } = notificationVisual(type);
+            return (
+              <span className="flex flex-col items-center gap-3 py-5">
+                <span className={cn("grid size-14 place-items-center rounded-full", tint)}>
+                  <Icon className="size-6" />
+                </span>
+                <span className="font-mono text-[12px]">{type}</span>
+              </span>
+            );
+          }}
+          getFields={(type) => {
+            const { icon: Icon, tint } = notificationVisual(type);
+            return [
+              { label: t("inspector.fields.type"), value: type },
+              { label: t("inspector.fields.icon"), value: Icon.displayName ?? "Bell" },
+              { label: t("inspector.fields.tint"), value: tint },
+              { label: t("inspector.fields.code"), value: `notificationVisual("${type}")` },
+            ];
+          }}
+        />{" "}
       </Demo>
 
       <Demo
@@ -494,17 +603,30 @@ export default function PlaygroundComponentsPage() {
         description={t("components.logos.description")}
         source="components/branding/ProviderMark.tsx"
       >
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">
-          {PROVIDERS_LIST.map((provider) => (
-            <div
-              key={provider}
-              className="flex flex-col items-center gap-2 rounded-lg border border-border/60 px-2 py-4"
-            >
+        <Inspector
+          items={PROVIDERS_LIST}
+          getKey={(provider) => provider}
+          getLabel={(provider) => providerName(provider)}
+          gridClassName="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6"
+          tileClassName="w-full rounded-lg border border-border/60 bg-card px-2 py-4"
+          renderTile={(provider) => (
+            <span className="flex flex-col items-center gap-2">
               <Mark provider={provider} className="size-7" />
               <span className="text-[12px] text-muted-foreground">{providerName(provider)}</span>
-            </div>
-          ))}
-        </div>
+            </span>
+          )}
+          renderFocus={(provider) => (
+            <span className="flex flex-col items-center gap-3 py-5">
+              <Mark provider={provider} className="size-14" />
+              <span className="text-[13px] font-medium">{providerName(provider)}</span>
+            </span>
+          )}
+          getFields={(provider) => [
+            { label: t("inspector.fields.key"), value: provider },
+            { label: t("inspector.fields.name"), value: providerName(provider) },
+            { label: t("inspector.fields.jsx"), value: `<Mark provider="${provider}" />` },
+          ]}
+        />{" "}
       </Demo>
 
       <Demo
