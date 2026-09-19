@@ -1,3 +1,4 @@
+import { type WithoutSystemFields } from "convex/server";
 import { ConvexError } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
@@ -134,7 +135,7 @@ export async function requireUser(ctx: QueryCtx | MutationCtx): Promise<Doc<"use
       message: "Not signed in",
     });
   }
-  if (user.status === "suspended") {
+  if (user.status !== "active") {
     throw new ConvexError({ code: "forbidden", message: "Account suspended" });
   }
   return user;
@@ -392,16 +393,45 @@ export type EnsureUserResult =
   | { status: "needs_request"; email: string; domainAllowed: boolean }
   | { status: "unauthenticated" };
 
+type NewUser = Omit<WithoutSystemFields<Doc<"users">>, "status" | "removedAt" | "removedBy">;
+
+/**
+ * Add someone to the intranet. If they were removed before, their old row
+ * comes back instead of a new one, so their history stays attached to them.
+ */
+export async function createOrRestoreUser(ctx: MutationCtx, user: NewUser): Promise<Id<"users">> {
+  const removed = await ctx.db
+    .query("users")
+    .withIndex("by_email", (q) => q.eq("email", user.email))
+    .filter((q) => q.eq(q.field("status"), "removed"))
+    .first();
+  if (!removed) return ctx.db.insert("users", { ...user, status: "active" });
+
+  const { createdAt: _createdAt, ...rest } = user;
+  const defined = Object.fromEntries(
+    Object.entries(rest).filter(([, value]) => value !== undefined),
+  );
+  await ctx.db.patch(removed._id, {
+    ...defined,
+    status: "active",
+    removedAt: undefined,
+    removedBy: undefined,
+  });
+  return removed._id;
+}
+
 /**
  * Idempotently provision the signed-in Clerk identity into an intranet `users`
  * row. Promotion rules, in order:
  *   1. existing user → refresh profile + lastSeenAt
- *   2. email in ADMIN_EMAILS → create admin
- *   3. matching pending invite → consume it, create user with the invited role
- *   4. otherwise → no row; caller routes the user to "request access"
+ *   2. same verified email on another Clerk id → relink the row to this one
+ *   3. email in ADMIN_EMAILS → create admin
+ *   4. matching pending invite → consume it, create user with the invited role
+ *   5. otherwise → no row; caller routes the user to "request access"
  *
- * The email is read from the verified JWT `email` claim, never from client
- * input, so admin seeding cannot be spoofed.
+ * Removed members only come back through 3 or 4. The email is read from the
+ * verified JWT `email` claim, never from client input, so admin seeding
+ * cannot be spoofed.
  */
 export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
   const identity = await ctx.auth.getUserIdentity();
@@ -420,10 +450,22 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
   // Externals are full members; the flag only drives the admin grouping.
   const external = email ? !isEmailDomainAllowed(email) : false;
 
-  const existing = await getUserByClerkId(ctx, clerkUserId);
-  if (existing) {
+  // Rows from before the Clerk instance merge carry the old instance's id —
+  // relinking here is what lets getCurrentUser's email fallback retire.
+  const byClerkId = await getUserByClerkId(ctx, clerkUserId);
+  const existing =
+    byClerkId ??
+    (email
+      ? await ctx.db
+          .query("users")
+          .withIndex("by_email", (q) => q.eq("email", email))
+          .filter((q) => q.neq(q.field("status"), "removed"))
+          .first()
+      : null);
+  if (existing && existing.status !== "removed") {
     await ctx.db.patch(existing._id, {
       lastSeenAt: Date.now(),
+      ...(existing.clerkUserId !== clerkUserId ? { clerkUserId } : {}),
       // keep profile fresh from the identity provider when fields are present
       ...(firstName && !existing.firstName ? { firstName } : {}),
       ...(lastName && !existing.lastName ? { lastName } : {}),
@@ -436,15 +478,13 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
 
   const now = Date.now();
 
-  // 2. Admin seeding from env.
   if (email && isAdminEmail(email)) {
-    const userId = await ctx.db.insert("users", {
+    const userId = await createOrRestoreUser(ctx, {
       clerkUserId,
       email,
       firstName,
       lastName,
       role: "admin",
-      status: "active",
       external,
       createdAt: now,
       lastSeenAt: now,
@@ -452,7 +492,6 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
     return { status: "active", userId, role: "admin" };
   }
 
-  // 3. Pending invite for this email.
   if (email) {
     const invite = await ctx.db
       .query("invites")
@@ -467,13 +506,12 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
     }
 
     if (invite && invite.expiresAt > now) {
-      const userId = await ctx.db.insert("users", {
+      const userId = await createOrRestoreUser(ctx, {
         clerkUserId,
         email,
         firstName,
         lastName,
         role: invite.role,
-        status: "active",
         external,
         createdAt: now,
         lastSeenAt: now,
@@ -496,7 +534,6 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
     }
   }
 
-  // 4. No automatic access.
   return {
     status: "needs_request",
     email,

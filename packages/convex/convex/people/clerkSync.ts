@@ -1,6 +1,8 @@
 import { serverMutation } from "../functions";
 import { v } from "convex/values";
 
+import { markUserRemoved } from "../lib/users";
+
 /**
  * Server-key gated mutations invoked by the Elysia API's Clerk webhook handler
  * (api.advantisgroup.de). These keep the intranet `users` table in sync with
@@ -40,7 +42,7 @@ export const deactivateFromClerk = serverMutation({
       .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", args.clerkUserId))
       .unique();
     if (!user) return { deactivated: false };
-    await ctx.db.delete(user._id);
+    await markUserRemoved(ctx, user);
     return { deactivated: true };
   },
 });

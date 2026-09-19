@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { requireAdmin } from "../lib/auth";
 import { createClerkInvitation, deleteClerkUser } from "../lib/clerk";
+import { markUserRemoved } from "../lib/users";
 
 /**
  * Admin-side member lifecycle actions that reach Clerk's Backend API. Kept
@@ -13,9 +14,10 @@ import { createClerkInvitation, deleteClerkUser } from "../lib/clerk";
 
 /**
  * Auth + locally revoke access, returning what the action needs to delete the
- * Clerk account. We suspend (rather than hard-delete the row) so historical
- * references — announcement authors, invite inviters, presence — stay intact;
- * deleting the Clerk user is what actually removes their ability to sign in.
+ * Clerk account. The row is marked removed rather than deleted so historical
+ * references — announcement authors, invite inviters, audit rows — stay
+ * intact; deleting the Clerk user is what actually removes their ability to
+ * sign in.
  */
 export const prepareRemove = internalMutation({
   args: { userId: v.id("users") },
@@ -37,7 +39,7 @@ export const prepareRemove = internalMutation({
         message: "Admins cannot be removed — change their role first",
       });
     }
-    await ctx.db.delete(userId);
+    await markUserRemoved(ctx, target, admin._id);
     return { clerkUserId: target.clerkUserId };
   },
 });

@@ -21,7 +21,7 @@ export const apiSearchForAssistant = serverQuery({
   args: { clerkUserId: v.string(), question: v.string() },
   handler: async (ctx, { clerkUserId, question }) => {
     const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status === "suspended") return [];
+    if (!user || user.status !== "active") return [];
     const words = [
       ...new Set(
         question

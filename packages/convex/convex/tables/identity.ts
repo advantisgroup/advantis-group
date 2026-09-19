@@ -51,7 +51,13 @@ export const identityTables = {
     /** Managing director (Geschäftsführer): a distinction on top of their role
      *  and reporting lines, not a line of its own. Admins set it. */
     managingDirector: v.optional(v.boolean()),
-    status: v.union(v.literal("active"), v.literal("suspended")),
+    /**
+     * `removed` replaces deleting the row: everything that points at a user
+     * (authors, audit rows, chat members…) keeps resolving to a real name.
+     */
+    status: v.union(v.literal("active"), v.literal("suspended"), v.literal("removed")),
+    removedAt: v.optional(v.number()),
+    removedBy: v.optional(v.id("users")),
     /**
      * True when the user's email domain is outside `ALLOWED_EMAIL_DOMAINS`.
      * Externals are full members (their role applies normally); the flag only

@@ -158,7 +158,7 @@ async function queryUsers(
   // suspended rows at the DB layer rather than fetching everyone and
   // filtering in JS.
   let users = args.includeSuspended
-    ? await ctx.db.query("users").collect()
+    ? (await ctx.db.query("users").collect()).filter((u) => u.status !== "removed")
     : await ctx.db
         .query("users")
         .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -555,7 +555,7 @@ export const applyStatus = internalMutation({
       });
     }
     const target = await ctx.db.get(userId);
-    if (!target) {
+    if (!target || target.status === "removed") {
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     if (status === "suspended" && target.role === "admin") {

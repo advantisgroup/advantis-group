@@ -306,7 +306,7 @@ export const apiStart = serverMutation({
     // this with the server key), so the capability is resolved from the
     // clerk id it forwarded — managers and admins pass on their tier.
     const caller = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!caller || caller.status === "suspended") {
+    if (!caller || caller.status !== "active") {
       throw new ConvexError({ code: "forbidden", message: "No account" });
     }
     const callerRoles = await Promise.all(
@@ -739,7 +739,7 @@ export const apiAskContext = serverQuery({
   args: { clerkUserId: v.string(), type: askSubjectType, id: v.string() },
   handler: async (ctx, { clerkUserId, type, id }) => {
     const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status === "suspended") {
+    if (!user || user.status !== "active") {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",
@@ -901,7 +901,7 @@ export const apiDailyBriefContext = serverQuery({
   args: { clerkUserId: v.string() },
   handler: async (ctx, { clerkUserId }) => {
     const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status === "suspended") {
+    if (!user || user.status !== "active") {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",
@@ -1020,7 +1020,7 @@ export const apiNavigateContext = serverQuery({
   args: { clerkUserId: v.string() },
   handler: async (ctx, { clerkUserId }) => {
     const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status === "suspended") {
+    if (!user || user.status !== "active") {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",

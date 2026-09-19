@@ -333,7 +333,9 @@ export const memberPasswordStatuses = query({
   args: {},
   handler: async (ctx) => {
     await requireApplicantAreaMember(ctx);
-    const members = (await ctx.db.query("users").collect()).filter(isApplicantAreaMember);
+    const members = (await ctx.db.query("users").collect()).filter(
+      (u) => u.status !== "removed" && isApplicantAreaMember(u),
+    );
     const rows = await ctx.db.query("applicantVaultPasswords").collect();
     const setByUser = new Set(rows.map((r) => r.userId));
     return members.map((u) => ({

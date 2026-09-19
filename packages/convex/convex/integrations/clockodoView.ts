@@ -31,7 +31,7 @@ export const listWithLinks = query({
   ),
   handler: async (ctx) => {
     await requireCapability(ctx, "manage_clockodo_team");
-    const users = await ctx.db.query("users").collect();
+    const users = (await ctx.db.query("users").collect()).filter((u) => u.status !== "removed");
 
     return await Promise.all(
       users.map(async (u) => {
