@@ -15,6 +15,7 @@
     "build": "bash ../../scripts/vercel-preview-convex-api-build.sh \"tsc --noEmit\"",
     "onedrive:auth": "bun run scripts/onedrive-auth.ts",
     "type-check": "tsc --noEmit",
+    "test": "bun test",
     "lint": "oxlint ./src",
     "lint:fix": "oxlint ./src --fix",
     "format:check": "oxfmt --check ./src",
