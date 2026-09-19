@@ -201,7 +201,7 @@ export const apiUnlockViaPasskey = serverMutation({
   args: { clerkUserId: v.string() },
   handler: async (ctx, { clerkUserId }) => {
     const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || !isApplicantAreaMember(user)) {
+    if (!user || user.status !== "active" || !isApplicantAreaMember(user)) {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",

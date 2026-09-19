@@ -12,7 +12,7 @@ import { type QueryCtx, type MutationCtx } from "../../_generated/server";
  */
 export async function requireAdminCaller(ctx: QueryCtx | MutationCtx, clerkUserId: string) {
   const user = await getUserByClerkId(ctx, clerkUserId);
-  if (!user || effectiveRole(user) !== "admin") {
+  if (!user || user.status !== "active" || effectiveRole(user) !== "admin") {
     throw new ConvexError({ code: "forbidden", message: "You do not have permission to do that" });
   }
   return user;

@@ -222,7 +222,8 @@ export const apiRequestEmailCode = serverMutation({
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
     const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
+    if (!user || user.status !== "active")
+      throw new ConvexError({ code: "not_found", message: "User not found" });
     const code = await issueEmailCode(ctx, user, args.sessionId, args.context);
     await ctx.scheduler.runAfter(0, internal.notifications.email.sendNotificationEmail, {
       kind: "admin-verification-code",
@@ -245,7 +246,7 @@ export const apiSubmitEmailCode = serverMutation({
   returns: v.object({ ok: v.boolean(), message: v.optional(v.string()) }),
   handler: async (ctx, args) => {
     const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user) return { ok: false, message: "User not found" };
+    if (!user || user.status !== "active") return { ok: false, message: "User not found" };
     const result = await verifyEmailCode(ctx, user, args.sessionId, args.code, args.context);
     if (result.ok) {
       if (args.context === "area_reverify" && args.area) {
@@ -279,7 +280,7 @@ export const apiRecordVerification = serverMutation({
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
     const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user) return { ok: false };
+    if (!user || user.status !== "active") return { ok: false };
     await recordExternalVerification(ctx, {
       userId: user._id,
       sessionId: args.sessionId,
@@ -310,7 +311,7 @@ export const apiRecordPasskeyStepUp = serverMutation({
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
     const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user) return { ok: false };
+    if (!user || user.status !== "active") return { ok: false };
     await recordPasskeyVerification(ctx, user, args.sessionId, args.context);
     if (args.context === "area_reverify" && args.area) {
       await recordAreaStepUp(ctx, user._id, args.area, "passkey");
@@ -324,7 +325,8 @@ export const apiIssuePasskeyTicket = serverMutation({
   returns: v.object({ ticket: v.string() }),
   handler: async (ctx, args) => {
     const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
+    if (!user || user.status !== "active")
+      throw new ConvexError({ code: "not_found", message: "User not found" });
     const ticket = crypto.randomUUID() + crypto.randomUUID();
     await ctx.db.insert("stepUpPasskeyTickets", {
       userId: user._id,
@@ -349,7 +351,7 @@ export const apiClaimPasskeyTicket = serverMutation({
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
     const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user) return { ok: false };
+    if (!user || user.status !== "active") return { ok: false };
     const tokenHash = await sha256hex(args.ticket);
     const row = await ctx.db
       .query("stepUpPasskeyTickets")
@@ -379,7 +381,8 @@ export const apiDestructiveGate = serverQuery({
   }),
   handler: async (ctx, args) => {
     const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
+    if (!user || user.status !== "active")
+      throw new ConvexError({ code: "not_found", message: "User not found" });
     const { requiredLevel, freshnessMs } = await destructiveRequirement(ctx, user);
     const satisfied = await checkSatisfied(ctx, {
       userId: user._id,
@@ -436,7 +439,8 @@ export const apiEvaluateDevice = serverMutation({
   returns: v.object({ newDevice: v.boolean() }),
   handler: async (ctx, args) => {
     const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
+    if (!user || user.status !== "active")
+      throw new ConvexError({ code: "not_found", message: "User not found" });
 
     const now = Date.now();
     const defaultName = args.browser && args.os ? `${args.browser} on ${args.os}` : undefined;

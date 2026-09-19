@@ -58,7 +58,7 @@ export const resolveCaller = serverQuery({
       .query("users")
       .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", clerkUserId))
       .unique();
-    if (!user) return { status: "no_account" as const };
+    if (!user || user.status !== "active") return { status: "no_account" as const };
 
     const name = user.firstName ?? user.email;
     const sandboxed = isSandboxed(user);

@@ -116,7 +116,7 @@ export const callerForAction = internalQuery({
   args: {},
   handler: async (ctx) => {
     const user = await getCurrentUser(ctx);
-    if (!user) return null;
+    if (!user || user.status !== "active") return null;
     const customRoles = isSandboxed(user)
       ? []
       : await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));

@@ -260,7 +260,7 @@ export async function hasCapability(
   capability: Capability,
 ): Promise<boolean> {
   const user = await getCurrentUser(ctx);
-  if (!user) return false;
+  if (!user || user.status !== "active") return false;
   const customRoles = await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
   return userHasCapability(user, customRoles, capability);
 }
