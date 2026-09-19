@@ -1,0 +1,229 @@
+{
+  "title": "Spielwiese",
+  "subtitle": "Die Bausteine des Intranets, live. Einfach ausprobieren.",
+  "reset": "Zurücksetzen",
+  "tabs": {
+    "overview": "Übersicht",
+    "drag": "Drag & Drop",
+    "design": "Design",
+    "components": "Komponenten"
+  },
+  "overview": {
+    "intro": "Ein Lernort dafür, wie das Intranet gebaut ist. Nichts hier ist nachgebaut – jede Demo nutzt dieselbe Komponente wie die echte Seite. Was du siehst, ist das, was live geht.",
+    "drag": "Das Physik-Ziehen aus dem Seitenleisten-Editor, ein Board zum Verschieben von Karten und das Ablegen von Dateien.",
+    "design": "Die Regeln der Oberfläche, die Farb-Tokens, Radien und Schriftgrößen.",
+    "components": "Buttons, Kennzahlen, Filter, leere Zustände, Dialoge und Toasts – alles klickbar.",
+    "footnote": "Auf diesen Seiten wird nichts gespeichert."
+  },
+  "drag": {
+    "physics": {
+      "title": "Physik-Ziehen",
+      "description": "Hebt sich an, schwingt mit der Geschwindigkeit wie etwas Getragenes und fliegt beim Loslassen an seinen Platz. Überall, wo sortiert wird.",
+      "wobbly": "Extra wackelig",
+      "hint": "Zeile greifen und ziehen. Auf dem Handy am Griff, damit die Seite weiter scrollt.",
+      "tasks": {
+        "coffee": "Kaffee holen",
+        "inbox": "Posteingang leeren",
+        "standup": "Stand-up",
+        "review": "Pull Request prüfen",
+        "ship": "Veröffentlichen",
+        "celebrate": "Leise feiern"
+      }
+    },
+    "board": {
+      "title": "Zwischen Spalten verschieben",
+      "description": "Einfaches Browser-Drag-&-Drop wie im Bewerberboard. Der gestrichelte Platz zeigt, wo die Karte landet.",
+      "columns": { "todo": "Offen", "doing": "In Arbeit", "done": "Erledigt" },
+      "cards": {
+        "logo": "Neues Logo auf der Anmeldeseite",
+        "tickets": "Alte IT-Tickets aufräumen",
+        "onboarding": "Onboarding-Checkliste",
+        "backup": "Nächtliches Backup"
+      }
+    },
+    "files": {
+      "title": "Dateien ablegen",
+      "description": "Die Ablagefläche für Anhänge. Zieh Dateien vom Desktop hierher – sie werden nur aufgelistet, nie hochgeladen.",
+      "hint": "Zum Hinzufügen loslassen",
+      "empty": "Datei hierher ziehen"
+    }
+  },
+  "design": {
+    "principles": {
+      "title": "Wie sich die Oberfläche verhält",
+      "description": "Die Regeln, denen jede Seite folgt, damit sich das Intranet wie ein Produkt anfühlt.",
+      "hairlines": {
+        "title": "Feine Trennlinien statt Kartenstapel",
+        "body": "Zusammengehörige Zeilen in einem umrandeten Block mit dünnen Linien, nicht eine Karte pro Eintrag."
+      },
+      "status": {
+        "title": "Status nie nur über Farbe",
+        "body": "Ein Zustand kommt immer mit Symbol und Wort – so ist er für alle lesbar, auch neben Diagrammfarben."
+      },
+      "dialogs": {
+        "title": "Erstellen öffnet einen Dialog",
+        "body": "Etwas anlegen oder erfassen öffnet einen Dialog (auf dem Handy ein Sheet) oder eine eigene Seite – nie ein Formular über einer Liste."
+      },
+      "saves": {
+        "title": "Einstellungen speichern sofort",
+        "body": "Keine Speicherleisten und kein Speichern-Button unten. Umschalten, fertig."
+      },
+      "tabs": {
+        "title": "Tabs wandern auf dem Handy nach unten",
+        "body": "Seiten mit Tabs nutzen RouteTabs, das sie auf kleinen Bildschirmen an die untere Navigation übergibt."
+      },
+      "pages": {
+        "title": "Große Abläufe bekommen eine eigene Seite",
+        "body": "Editoren, Prüfungen und Berichte bekommen eine ganze Seite. Dialoge sind für Kleines und Schnelles."
+      }
+    },
+    "colors": {
+      "title": "Farb-Tokens",
+      "description": "Immer das Token, nie einen Hex-Wert – dann funktionieren Hell und Dunkel. Klick kopiert die Klasse.",
+      "copied": "{text} kopiert",
+      "groups": {
+        "surfaces": "Flächen",
+        "text": "Text",
+        "status": "Status",
+        "charts": "Diagramme"
+      }
+    },
+    "status": {
+      "title": "Einen Zustand zeigen",
+      "description": "Symbol, Wort und Farbe zusammen.",
+      "do": "So",
+      "dont": "Nicht so",
+      "dontWhy": "Welcher Punkt bedeutet was? Farbe allein sagt es nicht, und nicht alle sehen sie.",
+      "healthy": "In Ordnung",
+      "degraded": "Eingeschränkt",
+      "down": "Ausgefallen"
+    },
+    "radius": {
+      "title": "Eckenradius",
+      "description": "Klein für Bedienelemente, größer für Flächen. Klick kopiert die Klasse."
+    },
+    "type": {
+      "title": "Schriftgrößen",
+      "description": "Eine Handvoll Größen, überall gleich eingesetzt.",
+      "samples": {
+        "display": "Seiten- und Datensatztitel",
+        "section": "Abschnittsüberschriften",
+        "row": "Die Hauptzeile einer Zeile",
+        "body": "Beschreibungen und Begleittext, kurz gehalten",
+        "eyebrow": "Beschriftungen über einer Gruppe",
+        "mono": "components/ui/button.tsx"
+      }
+    }
+  },
+  "components": {
+    "buttons": {
+      "title": "Button-Labor",
+      "description": "Jede Variante und Größe. Kombination wählen, der Code wandert mit.",
+      "pressMe": "Drück mich",
+      "presses": "{count, plural, =0 {Noch nicht gedrückt} one {Einmal gedrückt} other {# Mal gedrückt}}",
+      "milestones": {
+        "10": "Zehnmal. Sehr gründlich.",
+        "25": "Fünfundzwanzig. Der Button funktioniert, versprochen.",
+        "50": "Fünfzigmal. Du hast dir einen Kaffee verdient.",
+        "100": "Hundert. Dieser Button vertraut dir jetzt blind."
+      }
+    },
+    "badges": {
+      "title": "Badges",
+      "description": "Kleine Beschriftungen für Zustand oder Kategorie. Status-Badges immer mit Symbol."
+    },
+    "kpis": {
+      "title": "Kennzahlen",
+      "description": "Ein zusammenhängender Streifen statt vier Karten. Eine Zahl, die Aufmerksamkeit braucht, ändert ihren Ton.",
+      "shuffle": "Mischen",
+      "people": "Anwesend",
+      "tickets": "Offene Tickets",
+      "absences": "Heute abwesend",
+      "uptime": "Verfügbarkeit",
+      "busy": "Volle Woche"
+    },
+    "loading": {
+      "title": "Laden, dann geladen",
+      "description": "Skelette behalten die Form dessen, was kommt – nichts springt, wenn es ankommt.",
+      "toggle": "Lädt",
+      "name": "Advantis Group",
+      "line": "Alles ist dort angekommen, wo das Skelett es angekündigt hat."
+    },
+    "filters": {
+      "title": "Tabs und Filter",
+      "description": "Tabs teilen eine Liste und zeigen ihre Anzahl; Pills grenzen weiter ein. Beides wirkt auf die Liste unten.",
+      "all": "Alle",
+      "nothing": "Nichts passt",
+      "status": { "open": "Offen", "waiting": "Wartet", "done": "Erledigt" },
+      "tickets": {
+        "printer": "Drucker im 2. Stock",
+        "vpn": "VPN bricht ab",
+        "laptop": "Neuer Laptop für Anna",
+        "badge": "Türausweis",
+        "headset": "Headset knackt",
+        "monitor": "Zweiter Monitor"
+      }
+    },
+    "empty": {
+      "title": "Leere Zustände",
+      "description": "Eine leere Liste sagt, was sie ist, und bietet die Aktion an, die sie füllt.",
+      "emptyTitle": "Noch keine Ideen",
+      "emptyHint": "Sammle, was das Büro schöner machen würde.",
+      "add": "Idee hinzufügen",
+      "clear": "Leeren",
+      "ideas": {
+        "plants": "Mehr Pflanzen",
+        "music": "Musik am Freitag",
+        "standing": "Stehtische",
+        "snacks": "Eine Snack-Schublade",
+        "quiet": "Ein Ruheraum"
+      }
+    },
+    "settings": {
+      "title": "Einstellungszeilen",
+      "description": "Beschriftung links, Bedienelement rechts, gespeichert im Moment der Änderung.",
+      "saved": "Gespeichert",
+      "digest": {
+        "title": "Morgendliche Zusammenfassung",
+        "hint": "Eine E-Mail am Tag statt vieler"
+      },
+      "sounds": {
+        "title": "Chat-Töne",
+        "hint": "Ein leiser Ton bei neuen Nachrichten"
+      }
+    },
+    "feedback": {
+      "title": "Dialoge, Toasts und Tooltips",
+      "description": "Erstellen öffnet einen Dialog, Ergebnisse erscheinen als Toast, Erklärungen stehen im Tooltip.",
+      "openDialog": "Neuer Gruß",
+      "success": "Erfolg",
+      "error": "Fehler",
+      "withUndo": "Mit Rückgängig",
+      "toastSuccess": "Hat geklappt.",
+      "toastError": "Hat nicht geklappt. Nichts wurde geändert.",
+      "toastDeleted": "Gelöscht",
+      "undo": "Rückgängig",
+      "toastRestored": "Wieder da",
+      "tooltipLabel": "Mehr Informationen",
+      "tooltip": "Längere Erklärungen stehen hier, nicht im Layout.",
+      "dialogTitle": "Neuer Gruß",
+      "dialogHint": "Wer soll gegrüßt werden?",
+      "dialogSubmit": "Grüßen",
+      "name": "Name",
+      "hello": "Hallo, {name}!"
+    },
+    "panel": {
+      "title": "Übersichts-Panels",
+      "description": "Woraus die Admin-Übersicht gebaut ist: ein Panel mit Titel und Zeilen mit Ton.",
+      "panelTitle": "Systeme",
+      "panelHint": "Integrationen und ihr Zustand",
+      "rows": {
+        "ok": "Clockodo",
+        "okHint": "Vor einer Minute synchronisiert",
+        "warn": "Genesys",
+        "warnHint": "Antwortet langsam",
+        "neutral": "Agents online"
+      }
+    }
+  }
+}
