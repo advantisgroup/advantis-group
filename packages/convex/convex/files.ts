@@ -1,4 +1,4 @@
-import { query, serverMutation, userQuery, userMutation } from "./functions";
+import { internalMutation, query, serverMutation, userMutation, userQuery } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
@@ -73,20 +73,44 @@ export const getUrls = userQuery({
   },
 });
 
-/** Long enough to cover "uploaded, then the save failed or was discarded". */
-const ROLLBACK_WINDOW_MS = 60 * 60 * 1000;
+/** A claim has to follow the upload closely, so nobody can claim someone
+ *  else's older file by its id. */
+const CLAIM_WINDOW_MS = 10 * 60 * 1000;
+const CLAIM_KEEP_MS = 7 * 86_400_000;
+
+/** Record that the caller uploaded this file, right after uploading it.
+ *  First claim wins. */
+export const claimUpload = userMutation({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, { storageId }) => {
+    const file = await ctx.db.system.get(storageId);
+    if (!file || Date.now() - file._creationTime > CLAIM_WINDOW_MS) {
+      throw new ConvexError({ code: "forbidden", message: "This upload can't be claimed" });
+    }
+    const existing = await ctx.db
+      .query("uploadClaims")
+      .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
+      .first();
+    if (existing) return { claimed: existing.userId === ctx.caller.id };
+    await ctx.db.insert("uploadClaims", { storageId, userId: ctx.caller.id, at: Date.now() });
+    return { claimed: true };
+  },
+});
 
 /**
- * Roll back an upload that never got saved. Storage doesn't know who uploaded
- * a file, so this only reaches fresh uploads, and never HR documents — deleting
- * anything that's already part of a record happens through that record's own
- * delete, which knows who owns it.
+ * Roll back an upload that never got saved. Only whoever claimed it can, and
+ * never an HR document — deleting anything that's part of a record happens
+ * through that record's own delete, which knows who owns it.
  */
 export const deleteFile = userMutation({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, { storageId }) => {
     const file = await ctx.db.system.get(storageId);
     if (!file) return { deleted: false };
+    const claim = await ctx.db
+      .query("uploadClaims")
+      .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
+      .first();
     const isHrDocument =
       (await ctx.db
         .query("applicantDocuments")
@@ -96,11 +120,25 @@ export const deleteFile = userMutation({
         .query("employeeDocuments")
         .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
         .first());
-    if (isHrDocument || Date.now() - file._creationTime > ROLLBACK_WINDOW_MS) {
+    if (isHrDocument || claim?.userId !== ctx.caller.id) {
       throw new ConvexError({ code: "forbidden", message: "This file can't be deleted here" });
     }
     await ctx.storage.delete(storageId);
+    await ctx.db.delete(claim._id);
     return { deleted: true };
+  },
+});
+
+/** Daily: claims only matter while an upload might still be rolled back. */
+export const pruneUploadClaims = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const old = await ctx.db
+      .query("uploadClaims")
+      .withIndex("by_at", (q) => q.lt("at", Date.now() - CLAIM_KEEP_MS))
+      .take(500);
+    for (const row of old) await ctx.db.delete(row._id);
+    return { pruned: old.length };
   },
 });
 

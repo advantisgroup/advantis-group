@@ -126,6 +126,7 @@ export function WikiArticleEditor({ article }: { article: WikiArticle | { draftI
   const { openFileViewer } = useFileViewer();
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const deleteFile = useMutation(api.files.deleteFile);
+  const claimUpload = useMutation(api.files.claimUpload);
 
   const isEditing = !("draftId" in article);
   const subjectKey: string = isEditing ? article._id : article.draftId;
@@ -202,6 +203,7 @@ export function WikiArticleEditor({ article }: { article: WikiArticle | { draftI
     setUploading(true);
     try {
       const storageId = await uploadToConvex(() => generateUploadUrl({}), file);
+      await claimUpload({ storageId });
       discardUnsaved(values.doc);
       set("doc", {
         storageId,

@@ -35,6 +35,7 @@ export interface AttachmentEntry {
 export function useAttachmentUpload() {
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const deleteFile = useMutation(api.files.deleteFile);
+  const claimUpload = useMutation(api.files.claimUpload);
 
   const [entries, setEntries] = useState<AttachmentEntry[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -155,8 +156,10 @@ export function useAttachmentUpload() {
               setEntries((prev) =>
                 prev.map((e) => (e.file === entry.file ? { ...e, progress: fraction } : e)),
               ),
-          ).then(
-            (storageId): UploadedAttachment => ({
+          ).then(async (storageId): Promise<UploadedAttachment> => {
+            // So this upload can be rolled back if the send fails.
+            await claimUpload({ storageId });
+            return {
               storageId,
               kind: isImage(entry.file) ? "image" : "file",
               name: entry.file.name,
@@ -164,8 +167,8 @@ export function useAttachmentUpload() {
               contentType: entry.file.type || undefined,
               oneDriveItemId: entry.oneDriveSource?.driveItemId,
               oneDrivePath: entry.oneDriveSource?.path,
-            }),
-          ),
+            };
+          }),
         ),
       );
 
@@ -181,7 +184,7 @@ export function useAttachmentUpload() {
     } finally {
       setUploading(false);
     }
-  }, [entries, generateUploadUrl, rollback]);
+  }, [claimUpload, entries, generateUploadUrl, rollback]);
 
   return {
     entries,

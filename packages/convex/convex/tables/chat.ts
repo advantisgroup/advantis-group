@@ -70,6 +70,16 @@ export const chatTables = {
     .index("by_conversation_pinnedAt", ["conversationId", "pinnedAt"])
     .index("by_sender", ["senderUserId"]),
 
+  /** Who uploaded a file, recorded by the client right after uploading.
+   *  Storage itself doesn't know, and `files.deleteFile` only lets the
+   *  uploader roll a file back. Pruned after a week. */
+  uploadClaims: defineTable({
+    storageId: v.id("_storage"),
+    userId: v.id("users"),
+    at: v.number(),
+  })
+    .index("by_storageId", ["storageId"])
+    .index("by_at", ["at"]),
   /**
    * Reverse index from an attachment's storage id to whatever owns it
    * (a chat message or an announcement), maintained on every write that adds

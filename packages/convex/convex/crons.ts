@@ -69,6 +69,12 @@ if (process.env.DISABLE_CRONS !== "true") {
     {},
   );
   crons.daily(
+    "files: forget upload claims older than a week",
+    { hourUTC: 2, minuteUTC: 50 },
+    internal.files.pruneUploadClaims,
+    {},
+  );
+  crons.daily(
     "trash: purge items deleted over 30 days ago",
     { hourUTC: 2, minuteUTC: 30 },
     internal.org.trash.purgeExpired,
