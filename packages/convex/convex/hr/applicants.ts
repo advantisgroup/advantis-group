@@ -12,7 +12,7 @@ import {
 } from "../schema";
 import { batchUserSummaries, toUserSummary } from "../lib/users";
 import { getServerCaller } from "../lib/caller";
-import { purgeApplicant } from "../hr/lib/retention";
+import { moveToTrash } from "../lib/trash";
 
 /**
  * Bewerbermanagement (Applicant Management). Everything below is gated by
@@ -342,8 +342,7 @@ export const remove = userMutation({
   args: { applicantId: v.id("applicants") },
   handler: async (ctx, { applicantId }) => {
     await requireApplicant(ctx, applicantId);
-
-    await purgeApplicant(ctx, applicantId);
+    await moveToTrash(ctx, "applicants", applicantId, ctx.caller.id);
     return { ok: true };
   },
 });

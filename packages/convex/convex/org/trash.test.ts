@@ -157,3 +157,101 @@ describe("trash", () => {
     expect(left.history).toHaveLength(1);
   });
 });
+
+describe("group chats in the trash", () => {
+  async function seedGroup(
+    t: ReturnType<typeof convexTest>,
+    ownerId: Id<"users">,
+    otherId: Id<"users">,
+  ) {
+    return t.run(async (ctx) => {
+      const conversationId = await ctx.db.insert("conversations", {
+        type: "group",
+        name: "Lunch",
+        createdByUserId: ownerId,
+        lastMessageAt: 0,
+        createdAt: 0,
+      });
+      for (const userId of [ownerId, otherId]) {
+        await ctx.db.insert("conversationMembers", {
+          conversationId,
+          userId,
+          lastReadAt: 0,
+          joinedAt: 0,
+          unreadCount: 2,
+        });
+      }
+      await ctx.db.insert("messages", {
+        conversationId,
+        senderUserId: ownerId,
+        body: "pizza?",
+        attachments: [],
+        linkPreviews: [],
+        createdAt: 0,
+      });
+      return conversationId;
+    });
+  }
+
+  test("deleting a group closes it for everyone, and restoring brings it all back", async () => {
+    const { t, aliceId, bobId } = await setup();
+    const conversationId = await seedGroup(t, aliceId, bobId);
+    const alice = t.withIdentity({ subject: "alice" });
+    const bob = t.withIdentity({ subject: "bob" });
+
+    await alice.mutation(api.chat.deleteGroup, { conversationId });
+    expect(await bob.query(api.chat.listConversations, {})).toHaveLength(0);
+    expect(await bob.query(api.chat.searchMessages, { conversationId, term: "pizza" })).toEqual([]);
+    await expect(
+      bob.mutation(api.chat.sendMessage, { conversationId, body: "hello?" } as never),
+    ).rejects.toThrow("not a member");
+
+    await alice.mutation(api.org.trash.restore, { table: "conversations", id: conversationId });
+    expect(await bob.query(api.chat.listConversations, {})).toHaveLength(1);
+    expect(
+      await bob.query(api.chat.searchMessages, { conversationId, term: "pizza" }),
+    ).toHaveLength(1);
+  });
+
+  test("the purge takes the messages and memberships with it", async () => {
+    const { t, aliceId, bobId } = await setup();
+    const conversationId = await seedGroup(t, aliceId, bobId);
+    await t.run((ctx) =>
+      ctx.db.patch(conversationId, {
+        deletedAt: Date.now() - (TRASH_DAYS + 1) * 86_400_000,
+        deletedBy: aliceId,
+      }),
+    );
+    await t.mutation(internal.org.trash.purgeExpired, {});
+    const left = await t.run(async (ctx) => ({
+      members: await ctx.db.query("conversationMembers").collect(),
+      messages: await ctx.db.query("messages").collect(),
+    }));
+    expect(left).toEqual({ members: [], messages: [] });
+  });
+});
+
+describe("applicants in the trash", () => {
+  test("only people with applicant access see or restore them, whoever deleted them", async () => {
+    const { t, aliceId } = await setup();
+    await t.run((ctx) => ctx.db.patch(aliceId, { applicantAccess: true }));
+    const applicantId = await t.run((ctx) =>
+      ctx.db.insert("applicants", {
+        name: "Jane Doe",
+        skills: [],
+        createdByUserId: aliceId,
+        createdAt: 0,
+        deletedAt: Date.now(),
+        deletedBy: aliceId,
+      }),
+    );
+    const alice = t.withIdentity({ subject: "alice" });
+    expect(await alice.query(api.org.trash.list, {})).toMatchObject([{ label: "Jane Doe" }]);
+
+    await t.run((ctx) => ctx.db.patch(aliceId, { applicantAccess: false }));
+    expect(await alice.query(api.org.trash.list, {})).toEqual([]);
+    await expect(
+      alice.mutation(api.org.trash.restore, { table: "applicants", id: applicantId }),
+    ).rejects.toThrow("You do not have permission");
+  });
+});

@@ -180,7 +180,7 @@ async function isConversationMember(
       q.eq("userId", userId).eq("conversationId", conversationId),
     )
     .unique();
-  return row !== null;
+  return row !== null && (await ctx.db.get(conversationId)) !== null;
 }
 
 /**

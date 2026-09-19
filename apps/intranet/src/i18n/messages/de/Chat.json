@@ -60,7 +60,7 @@
   "leaveChat": "Chat verlassen",
   "leaveChatHint": "Die andere Person behält den Verlauf, aber der Chat wird nach 48 Stunden gelöscht, sofern sie dich nicht erneut einlädt und du wieder beitrittst.",
   "deleteGroup": "Gruppe löschen",
-  "deleteGroupHint": "Dies löscht die Gruppe und alle Nachrichten dauerhaft für alle. Das kann nicht rückgängig gemacht werden.",
+  "deleteGroupHint": "Dies löscht die Gruppe und alle Nachrichten für alle. 30 Tage lang lässt sie sich unter Einstellungen → Zuletzt gelöscht wiederherstellen.",
   "sharedMedia": "Medien",
   "noMedia": "Noch keine Fotos oder Dateien geteilt",
   "loadMoreMedia": "Mehr laden",

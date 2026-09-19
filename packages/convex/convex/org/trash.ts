@@ -2,13 +2,28 @@ import { ConvexError, v } from "convex/values";
 
 import { type Id } from "../_generated/dataModel";
 import { internalMutation, userMutation, userQuery } from "../functions";
-import { purge, restoreFromTrash, TRASH_DAYS, TRASH_TABLES, trashLabel } from "../lib/trash";
+import { type Caller } from "../lib/caller";
+import {
+  purge,
+  restoreFromTrash,
+  TRASH_DAYS,
+  TRASH_TABLES,
+  trashLabel,
+  type TrashTable,
+} from "../lib/trash";
 import { displayName } from "../lib/users";
 
 const DAY_MS = 86_400_000;
 const trashTable = v.union(...TRASH_TABLES.map((t) => v.literal(t)));
 
-/** Recently deleted: what you deleted yourself, or everything for admins. */
+/** Your own deletes, or everything for admins — but applicants only ever for
+ *  people with applicant access, whoever deleted them. */
+function canSee(caller: Caller, table: TrashTable, doc: { deletedBy?: Id<"users"> }) {
+  if (table === "applicants" && !caller.hasApplicantAccess) return false;
+  return caller.isAdmin || doc.deletedBy === caller.id;
+}
+
+/** Recently deleted, as far as canSee allows. */
 export const list = userQuery({
   args: {},
   handler: async (ctx) => {
@@ -19,9 +34,7 @@ export const list = userQuery({
           .withIndex("by_deletedAt", (q) => q.gt("deletedAt", 0))
           .order("desc")
           .take(100);
-        return docs
-          .filter((doc) => ctx.caller.isAdmin || doc.deletedBy === ctx.caller.id)
-          .map((doc) => ({ table, doc }));
+        return docs.filter((doc) => canSee(ctx.caller, table, doc)).map((doc) => ({ table, doc }));
       }),
     );
     const items = rows.flat().sort((a, b) => b.doc.deletedAt! - a.doc.deletedAt!);
@@ -42,7 +55,7 @@ export const list = userQuery({
   },
 });
 
-/** Bring something back. Whoever deleted it can, and admins can. */
+/** Bring something back — anyone who can see it in the trash. */
 export const restore = userMutation({
   args: { table: trashTable, id: v.string() },
   handler: async (ctx, { table, id }) => {
@@ -51,7 +64,7 @@ export const restore = userMutation({
     if (!doc || doc.deletedAt === undefined) {
       throw new ConvexError({ code: "not_found", message: "Nothing to restore" });
     }
-    ctx.caller.require(ctx.caller.isAdmin || doc.deletedBy === ctx.caller.id);
+    ctx.caller.require(canSee(ctx.caller, table, doc));
     await restoreFromTrash({ db: ctx.unfilteredDb }, table, doc, ctx.caller.id);
     return { ok: true };
   },

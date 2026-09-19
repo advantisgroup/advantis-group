@@ -259,7 +259,7 @@
   "tabEmails": "E-Mails",
   "tabInterviews": "Interviews",
   "deleteApplicant": "Akte löschen",
-  "deleteApplicantConfirm": "Dies löscht die Akte von {name} endgültig — inklusive aller Dokumente, Kontakte, E-Mails, Interviews und Termine. Zum Bestätigen den Namen des Bewerbers eingeben.",
+  "deleteApplicantConfirm": "Dies löscht die Akte von {name} — inklusive aller Dokumente, Kontakte, E-Mails, Interviews und Termine. 30 Tage lang lässt sie sich unter Einstellungen → Zuletzt gelöscht wiederherstellen. Zum Bestätigen den Namen des Bewerbers eingeben.",
   "applicantDeleted": "Akte gelöscht",
   "applicantNotFound": "Diese Bewerberakte konnte nicht gefunden werden.",
   "masterData": "Stammdaten",

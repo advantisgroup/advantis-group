@@ -10,13 +10,18 @@ Three layers, each covering what the one before can't.
 
 ## Trash
 
-Deleting an announcement, blog post, error report or measure, event, guidebook
-page, IT ticket, suggestion, update, wiki entry or Sales Coach wiki article
-only marks it deleted. It disappears from every read at once (the builders in
+Deleting an announcement, applicant, blog post, error report or measure, event,
+group chat, guidebook page, IT ticket, suggestion, update, wiki entry or Sales
+Coach wiki article only marks it deleted. It disappears from every read at once (the builders in
 `packages/convex/convex/functions.ts` hide it), shows up under **Recently
 deleted**, and whoever deleted it — or an admin — can restore it. The daily
 `trash: purge` cron removes it for good after 30 days, together with what hangs
 off it (read receipts, votes, attachments). See `lib/trash.ts`.
+
+Two exceptions: a trashed applicant only shows up for people with applicant
+access, even if they deleted it themselves; and a trashed group chat keeps its
+members so a restore puts everyone back, but nobody can read or write in it
+meanwhile. Direct messages still disappear for good.
 
 Adding a table to the trash: give it `deletedAt`, `deletedBy` and a
 `by_deletedAt` index, add it to `TRASH_TABLES`, and give `purge()` whatever
@@ -30,7 +35,8 @@ Security tokens, sessions, telemetry and caches are hard-deleted on purpose.
 Archived applicants who weren't hired are deleted, with everything recorded
 about them, `APPLICANT_RETENTION_DAYS` (183) after archiving — unless they
 agreed to stay in the talent pool (`hr.retention.setPoolConsent`, up to 24
-months). **Confirm the 183 days with whoever handles data protection.**
+months). **Confirm the 183 days with whoever handles data protection.** This
+retention delete skips the trash: it's the legal deadline, not a mistake to undo.
 
 ## Convex scheduled backups (one-time setup)
 

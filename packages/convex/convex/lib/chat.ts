@@ -20,6 +20,8 @@ export async function getMembership(
   conversationId: Id<"conversations">,
   userId: Id<"users">,
 ): Promise<Doc<"conversationMembers"> | null> {
+  // A group in the trash keeps its members for a restore, but is closed meanwhile.
+  if (!(await ctx.db.get(conversationId))) return null;
   return ctx.db
     .query("conversationMembers")
     .withIndex("by_user_conversation", (q) =>

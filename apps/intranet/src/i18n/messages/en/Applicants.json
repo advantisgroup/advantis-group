@@ -259,7 +259,7 @@
   "tabEmails": "Emails",
   "tabInterviews": "Interviews",
   "deleteApplicant": "Delete file",
-  "deleteApplicantConfirm": "This permanently deletes {name}'s file, including all documents, contacts, emails, interviews, and appointments. Type the applicant's name to confirm.",
+  "deleteApplicantConfirm": "This deletes {name}'s file, including all documents, contacts, emails, interviews, and appointments. It stays in Settings → Recently deleted for 30 days in case you need it back. Type the applicant's name to confirm.",
   "applicantDeleted": "File deleted",
   "applicantNotFound": "This applicant file could not be found.",
   "masterData": "Master data",

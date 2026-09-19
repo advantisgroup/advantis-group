@@ -60,7 +60,7 @@
   "leaveChat": "Leave chat",
   "leaveChatHint": "The other person keeps the history, but the chat is deleted after 48 hours unless they re-invite you and you re-join.",
   "deleteGroup": "Delete group",
-  "deleteGroupHint": "This permanently deletes the group and all its messages for everyone. This can't be undone.",
+  "deleteGroupHint": "This deletes the group and all its messages for everyone. You can restore it from Settings → Recently deleted for 30 days.",
   "sharedMedia": "Media",
   "noMedia": "No photos or files shared yet",
   "loadMoreMedia": "Load more",

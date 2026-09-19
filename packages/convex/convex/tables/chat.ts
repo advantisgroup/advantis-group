@@ -23,10 +23,13 @@ export const chatTables = {
      *  separate `messages.order("desc").first()` query per conversation. */
     lastMessagePreview: v.optional(v.string()),
     createdAt: v.number(),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
   })
     .index("by_dmKey", ["dmKey"])
     .index("by_deleteAt", ["deleteAt"])
-    .index("by_avatarStorageId", ["avatarStorageId"]),
+    .index("by_avatarStorageId", ["avatarStorageId"])
+    .index("by_deletedAt", ["deletedAt"]),
 
   conversationMembers: defineTable({
     conversationId: v.id("conversations"),

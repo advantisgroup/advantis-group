@@ -2,7 +2,9 @@ import { type Rules } from "convex-helpers/server/rowLevelSecurity";
 
 import { type DataModel, type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
+import { purgeApplicant } from "../hr/lib/retention";
 import { recordUnifiedAudit } from "./auditLogWrite";
+import { purgeConversation } from "./chat";
 
 /**
  * Soft delete. Deleting one of these marks it `deletedAt` instead of removing
@@ -18,7 +20,9 @@ export const TRASH_DAYS = 30;
 
 export const TRASH_TABLES = [
   "announcements",
+  "applicants",
   "blogPosts",
+  "conversations",
   "errorReports",
   "errorMeasures",
   "events",
@@ -53,6 +57,10 @@ export function trashLabel(table: TrashTable, doc: Doc<TrashTable>): string {
     }
     case "wikiEntries":
       return (doc as Doc<"wikiEntries">).thema;
+    case "applicants":
+      return (doc as Doc<"applicants">).name;
+    case "conversations":
+      return (doc as Doc<"conversations">).name ?? "Group";
     default:
       return (doc as { title: string }).title;
   }
@@ -98,6 +106,14 @@ export async function moveToTrash(
       if (m.deletedAt === undefined) await ctx.db.patch(m._id, { deletedAt, deletedBy });
     }
   }
+  // Unread counts from a chat nobody can open any more would just linger.
+  if (table === "conversations") {
+    const members = await ctx.db
+      .query("conversationMembers")
+      .withIndex("by_conversation", (q) => q.eq("conversationId", id as Id<"conversations">))
+      .collect();
+    for (const m of members) if (m.unreadCount) await ctx.db.patch(m._id, { unreadCount: 0 });
+  }
 }
 
 export async function restoreFromTrash(
@@ -128,6 +144,9 @@ export async function purge(
   doc: Doc<TrashTable>,
 ): Promise<void> {
   if (doc.deletedBy) await audit(ctx, "trash.purge", doc.deletedBy, table, doc);
+  // These two already know how to remove themselves with everything attached.
+  if (table === "applicants") return purgeApplicant(ctx, doc._id as Id<"applicants">);
+  if (table === "conversations") return purgeConversation(ctx, doc._id as Id<"conversations">);
   switch (table) {
     case "announcements": {
       const a = doc as Doc<"announcements">;

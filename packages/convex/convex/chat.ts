@@ -22,6 +22,7 @@ import {
   userAvatar,
 } from "./lib/chat";
 import { createNotification } from "./lib/notify";
+import { moveToTrash } from "./lib/trash";
 import { attachmentValidator } from "./schema";
 
 const TYPING_WINDOW_MS = 6000;
@@ -955,7 +956,7 @@ export const deleteGroup = userMutation({
         message: "Only the group creator can delete this group",
       });
     }
-    await purgeConversation(ctx, conversationId);
+    await moveToTrash(ctx, "conversations", conversationId, user._id);
     return { ok: true };
   },
 });

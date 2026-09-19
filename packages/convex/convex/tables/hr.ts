@@ -42,11 +42,14 @@ export const hrTables = {
     convertedEmployeeProfileId: v.optional(v.id("employeeProfiles")),
     createdByUserId: v.id("users"),
     createdAt: v.number(),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
   })
     .index("by_createdAt", ["createdAt"])
     .index("by_profil", ["profilId"])
     .index("by_email", ["email"])
-    .index("by_archivedAt", ["archivedAt"]),
+    .index("by_archivedAt", ["archivedAt"])
+    .index("by_deletedAt", ["deletedAt"]),
 
   employeeProfiles: defineTable({
     userId: v.optional(v.id("users")),

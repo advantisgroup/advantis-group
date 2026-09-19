@@ -302,6 +302,8 @@
     "suggestions": "Suggestion",
     "updates": "Update",
     "wikiEntries": "Wiki entry",
-    "salesCoachEvWiki": "Sales Coach article"
+    "salesCoachEvWiki": "Sales Coach article",
+    "applicants": "Applicant",
+    "conversations": "Group chat"
   }
 }
