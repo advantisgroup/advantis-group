@@ -2,6 +2,7 @@ import { serverQuery, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 import { displayName } from "../lib/users";
 import { getServerCaller } from "../lib/caller";
+import { moveToTrash } from "../lib/trash";
 
 const MAX_PINS = 5;
 
@@ -244,7 +245,7 @@ export const remove = userMutation({
         message: "Only the author or an admin can delete this",
       });
     }
-    await ctx.db.delete(entryId);
+    await moveToTrash(ctx, "wikiEntries", entryId, ctx.caller.id);
     return { ok: true };
   },
 });

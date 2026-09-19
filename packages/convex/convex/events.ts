@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { type Doc } from "./_generated/dataModel";
 import { userMatchesAudience } from "./lib/audience";
 import { audienceValidator, richDateKindValidator } from "./schema";
+import { moveToTrash } from "./lib/trash";
 
 function displayName(user: Doc<"users"> | null): string {
   if (!user) return "Unknown";
@@ -200,7 +201,7 @@ export const remove = userMutation({
         message: "Only the creator or an admin can delete this event",
       });
     }
-    await ctx.db.delete(eventId);
+    await moveToTrash(ctx, "events", eventId, ctx.caller.id);
     return { ok: true };
   },
 });

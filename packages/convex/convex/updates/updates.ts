@@ -15,6 +15,8 @@ import {
   insertUpdate,
   resolveAudienceUserIds,
 } from "./lib/updates";
+import { moveToTrash } from "../lib/trash";
+
 const CHANGELOG_BANNER_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 const RESOLVED_BANNER_GRACE_MS = 24 * 60 * 60 * 1000;
 const INTRANET_BOT_CLERK_USER_ID = "system:intranet-bot";
@@ -266,17 +268,7 @@ export const remove = userMutation({
   handler: async (ctx, { updateId }) => {
     const existing = await ctx.db.get(updateId);
     if (!existing) return { ok: false };
-    const dismissals = await ctx.db
-      .query("updateDismissals")
-      .withIndex("by_update_user", (q) => q.eq("updateId", updateId))
-      .collect();
-    await Promise.all(dismissals.map((d) => ctx.db.delete(d._id)));
-    const emailRows = await ctx.db
-      .query("updateEmailRecipients")
-      .withIndex("by_update", (q) => q.eq("updateId", updateId))
-      .collect();
-    await Promise.all(emailRows.map((r) => ctx.db.delete(r._id)));
-    await ctx.db.delete(updateId);
+    await moveToTrash(ctx, "updates", updateId, ctx.caller.id);
     return { ok: true };
   },
 });

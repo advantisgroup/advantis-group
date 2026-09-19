@@ -30,9 +30,12 @@ export const commsTables = {
     guestVisible: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
   })
     .index("by_start", ["start"])
-    .index("by_personal_rich_date", ["personalForUserId", "sourceRichDateId"]),
+    .index("by_personal_rich_date", ["personalForUserId", "sourceRichDateId"])
+    .index("by_deletedAt", ["deletedAt"]),
 
   // --- Announcements -------------------------------------------------------
   announcements: defineTable({
@@ -64,7 +67,11 @@ export const commsTables = {
     /** Who saved the most recent edit — distinct from `authorUserId` when an
      * admin edits someone else's announcement. */
     updatedByUserId: v.optional(v.id("users")),
-  }).index("by_publishedAt", ["publishedAt"]),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
+  })
+    .index("by_publishedAt", ["publishedAt"])
+    .index("by_deletedAt", ["deletedAt"]),
 
   announcementReads: defineTable({
     announcementId: v.id("announcements"),
@@ -117,9 +124,12 @@ export const commsTables = {
     decisionNote: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
   })
     .index("by_createdAt", ["createdAt"])
-    .index("by_outcome", ["outcome"]),
+    .index("by_outcome", ["outcome"])
+    .index("by_deletedAt", ["deletedAt"]),
 
   /** One row per person backing a suggestion; voters hear when it ships. */
   suggestionVotes: defineTable({
@@ -197,10 +207,13 @@ export const commsTables = {
     source: v.union(v.literal("ui"), v.literal("markdown"), v.literal("system")),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
   })
     .index("by_publishedAt", ["publishedAt"])
     .index("by_type_publishedAt", ["type", "publishedAt"])
-    .index("by_slug", ["slug"]),
+    .index("by_slug", ["slug"])
+    .index("by_deletedAt", ["deletedAt"]),
 
   /**
    * Per-user banner dismissals. `dismissedRevision` lets a status-changing

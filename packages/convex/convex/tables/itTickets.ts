@@ -50,6 +50,8 @@ export const itTicketsTables = {
     ),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
   })
     .index("by_nr", ["nr"])
     .index("by_creator", ["createdByUserId"])
@@ -59,7 +61,8 @@ export const itTicketsTables = {
     // Without the second one a ticket opened before the window but closed
     // inside it would be invisible to the closed-per-day series.
     .index("by_createdAt", ["createdAt"])
-    .index("by_status_updatedAt", ["status", "updatedAt"]),
+    .index("by_status_updatedAt", ["status", "updatedAt"])
+    .index("by_deletedAt", ["deletedAt"]),
 
   itTicketStatusHistory: defineTable({
     ticketId: v.id("itTickets"),

@@ -65,7 +65,9 @@ export const salesTables = {
     authorClerkUserId: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
+  }).index("by_deletedAt", ["deletedAt"]),
 
   // Per-user KPI/call-guide text, fed into the AI coaching prompts.
   salesCoachEvSettings: defineTable({
@@ -114,13 +116,16 @@ export const salesTables = {
     createdAt: v.number(),
     closedAt: v.optional(v.number()),
     updatedAt: v.optional(v.number()),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
   })
     .index("by_status", ["status"])
     .index("by_category", ["categoryId"])
     .index("by_createdAt", ["createdAt"])
     // "Closed in window" for the resolution timeline — an error opened before
     // the window but closed inside it has to land in the closed series.
-    .index("by_closedAt", ["closedAt"]),
+    .index("by_closedAt", ["closedAt"])
+    .index("by_deletedAt", ["deletedAt"]),
 
   // 8D-PDCA corrective measures linked to an error report. `phase` walks
   // through the standard 8D steps: immediate containment (D3) → root cause
@@ -158,9 +163,12 @@ export const salesTables = {
     createdByUserId: v.id("users"),
     createdAt: v.number(),
     completedAt: v.optional(v.number()),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
   })
     .index("by_error", ["errorReportId"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_deletedAt", ["deletedAt"]),
 
   errorMeasureDocuments: defineTable({
     measureId: v.id("errorMeasures"),

@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { ensureShareCode } from "./lib/sharing";
+import { moveToTrash } from "../lib/trash";
 
 const languageValidator = v.union(v.literal("de"), v.literal("en"));
 
@@ -163,10 +164,7 @@ export const remove = userMutation({
   handler: async (ctx, { postId }) => {
     const post = await ctx.db.get(postId);
     if (!post) return { ok: false };
-    if (post.mainImageStorageId) {
-      await ctx.storage.delete(post.mainImageStorageId);
-    }
-    await ctx.db.delete(postId);
+    await moveToTrash(ctx, "blogPosts", postId, ctx.caller.id);
     return { ok: true };
   },
 });

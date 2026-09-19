@@ -1,6 +1,7 @@
 import { serverQuery, serverUserMutation } from "../functions";
 import { ConvexError, v } from "convex/values";
 import { getServerCaller } from "../lib/caller";
+import { moveToTrash } from "../lib/trash";
 
 /**
  * Server-key gated CRUD for the Sales Coach EV knowledge base. Reads are
@@ -131,9 +132,7 @@ export const remove = serverUserMutation({
   role: "admin",
   args: { id: v.id("salesCoachEvWiki") },
   handler: async (ctx, args) => {
-    const existing = await ctx.db.get(args.id);
-    if (existing?.storageId) await ctx.storage.delete(existing.storageId);
-    await ctx.db.delete(args.id);
+    await moveToTrash(ctx, "salesCoachEvWiki", args.id, ctx.caller.id);
     return { deleted: true };
   },
 });

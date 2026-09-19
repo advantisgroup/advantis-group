@@ -11,6 +11,7 @@ import { notifyUsers } from "./lib/notify";
 import { escapeHtml } from "./lib/text";
 import { displayName } from "./lib/users";
 import { attachmentValidator, audienceValidator, relevantDateValidator } from "./schema";
+import { moveToTrash } from "./lib/trash";
 
 const INTRANET_BOT_CLERK_USER_ID = "system:intranet-bot";
 
@@ -323,27 +324,7 @@ export const remove = userMutation({
         message: "Only the owner or an admin can delete",
       });
     }
-    for (const sid of announcement.attachmentStorageIds) {
-      await ctx.storage.delete(sid);
-    }
-    // Remove read receipts.
-    const reads = await ctx.db
-      .query("announcementReads")
-      .withIndex("by_announcement_user", (q) => q.eq("announcementId", announcementId))
-      .collect();
-    await Promise.all(reads.map((r) => ctx.db.delete(r._id)));
-    // Remove reactions.
-    const reactions = await ctx.db
-      .query("announcementReactions")
-      .withIndex("by_announcement", (q) => q.eq("announcementId", announcementId))
-      .collect();
-    await Promise.all(reactions.map((r) => ctx.db.delete(r._id)));
-    const acks = await ctx.db
-      .query("announcementAcks")
-      .withIndex("by_announcement", (q) => q.eq("announcementId", announcementId))
-      .collect();
-    await Promise.all(acks.map((r) => ctx.db.delete(r._id)));
-    await ctx.db.delete(announcementId);
+    await moveToTrash(ctx, "announcements", announcementId, ctx.caller.id);
     return { ok: true };
   },
 });

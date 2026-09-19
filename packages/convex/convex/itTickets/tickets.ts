@@ -5,6 +5,7 @@ import { type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 import { autoLockThreadOnTicketClosed } from "./lib/threads";
 import { displayName } from "../lib/users";
+import { moveToTrash } from "../lib/trash";
 
 /**
  * IT-Meldesystem: a shared IT issue log. Every active intranet user can file,
@@ -429,7 +430,11 @@ export const setRelatedLinks = userMutation({
 export const remove = userMutation({
   args: { ticketId: v.id("itTickets") },
   handler: async (ctx, { ticketId }) => {
-    await ctx.db.delete(ticketId);
+    const ticket = await ctx.db.get(ticketId);
+    if (!ticket) return { ok: false };
+    // The person who opened it, or a manager.
+    ctx.caller.require(ticket.createdByUserId === ctx.caller.id || ctx.caller.isManager);
+    await moveToTrash(ctx, "itTickets", ticketId, ctx.caller.id);
     return { ok: true };
   },
 });

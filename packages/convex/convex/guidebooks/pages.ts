@@ -1,5 +1,7 @@
 import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
+import { moveToTrash } from "../lib/trash";
+
 const pageFields = {
   title: v.string(),
   description: v.string(),
@@ -116,10 +118,7 @@ export const remove = userMutation({
         message: "Only the author or an admin can delete this",
       });
     }
-    for (const sid of page.imageStorageIds) {
-      await ctx.storage.delete(sid);
-    }
-    await ctx.db.delete(pageId);
+    await moveToTrash(ctx, "guidebookPages", pageId, ctx.caller.id);
     return { ok: true };
   },
 });

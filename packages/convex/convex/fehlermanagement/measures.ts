@@ -4,6 +4,8 @@ import { ConvexError, v } from "convex/values";
 import { type Id } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
 import { DEFAULT_THRESHOLDS } from "./lib/thresholds";
+import { moveToTrash } from "../lib/trash";
+
 const phaseValidator = v.union(
   v.literal("d3_sofort"),
   v.literal("d4_ursache"),
@@ -215,7 +217,7 @@ export const remove = userMutation({
   role: "manager",
   args: { measureId: v.id("errorMeasures") },
   handler: async (ctx, { measureId }) => {
-    await ctx.db.delete(measureId);
+    await moveToTrash(ctx, "errorMeasures", measureId, ctx.caller.id);
     return { ok: true };
   },
 });

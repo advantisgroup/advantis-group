@@ -2,6 +2,8 @@ import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { DEFAULT_THRESHOLDS } from "./lib/thresholds";
+import { moveToTrash } from "../lib/trash";
+
 const severityValidator = v.union(
   v.literal("niedrig"),
   v.literal("mittel"),
@@ -120,12 +122,7 @@ export const remove = userMutation({
   role: "manager",
   args: { reportId: v.id("errorReports") },
   handler: async (ctx, { reportId }) => {
-    const measures = await ctx.db
-      .query("errorMeasures")
-      .withIndex("by_error", (q) => q.eq("errorReportId", reportId))
-      .collect();
-    for (const m of measures) await ctx.db.delete(m._id);
-    await ctx.db.delete(reportId);
+    await moveToTrash(ctx, "errorReports", reportId, ctx.caller.id);
     return { ok: true };
   },
 });

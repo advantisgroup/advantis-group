@@ -9,6 +9,7 @@ import {
   suggestionOutcomeValidator,
   suggestionStatusValidator,
 } from "../schema";
+import { moveToTrash } from "../lib/trash";
 
 export const create = userMutation({
   args: {
@@ -183,15 +184,7 @@ export const remove = userMutation({
   handler: async (ctx, { suggestionId }) => {
     const existing = await ctx.db.get(suggestionId);
     if (!existing) return { ok: false };
-    for (const a of existing.attachments ?? []) {
-      await ctx.storage.delete(a.storageId);
-    }
-    const votes = await ctx.db
-      .query("suggestionVotes")
-      .withIndex("by_suggestion", (q) => q.eq("suggestionId", suggestionId))
-      .collect();
-    await Promise.all(votes.map((vote) => ctx.db.delete(vote._id)));
-    await ctx.db.delete(suggestionId);
+    await moveToTrash(ctx, "suggestions", suggestionId, ctx.caller.id);
     return { ok: true };
   },
 });
