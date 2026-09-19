@@ -1,8 +1,9 @@
-import { internalMutation, mutation, query } from "../functions";
+import { internalMutation, query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
-import { requireCapability } from "../lib/auth";
+import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { ensureShareCode } from "./lib/sharing";
+import { moveToTrash } from "../lib/trash";
 
 const languageValidator = v.union(v.literal("de"), v.literal("en"));
 
@@ -12,18 +13,18 @@ const EXCERPT_MAX_LENGTH = 200;
 
 /** Everything (incl. drafts) — the intranet blog list page manages
  * filtering/sorting itself. Mirrors wikiEntries.list. */
-export const list = query({
+export const list = userQuery({
+  can: "manage_blog",
   args: {},
   handler: async (ctx) => {
-    await requireCapability(ctx, "manage_blog");
     return ctx.db.query("blogPosts").order("desc").collect();
   },
 });
 
-export const get = query({
+export const get = userQuery({
+  can: "manage_blog",
   args: { postId: v.id("blogPosts") },
   handler: async (ctx, { postId }) => {
-    await requireCapability(ctx, "manage_blog");
     return ctx.db.get(postId);
   },
 });
@@ -63,7 +64,7 @@ function assertExcerptLength(excerpt: string) {
 }
 
 async function assertSlugAvailable(
-  ctx: Parameters<typeof requireCapability>[0],
+  ctx: QueryCtx | MutationCtx,
   slug: string,
   language: "de" | "en",
   ignorePostId?: string,
@@ -77,10 +78,11 @@ async function assertSlugAvailable(
   }
 }
 
-export const create = mutation({
+export const create = userMutation({
+  can: "manage_blog",
   args: postFields,
   handler: async (ctx, args) => {
-    const user = await requireCapability(ctx, "manage_blog");
+    const user = ctx.caller.user;
     assertExcerptLength(args.excerpt);
     await assertSlugAvailable(ctx, args.slug, args.language);
     const now = Date.now();
@@ -97,10 +99,10 @@ export const create = mutation({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
+  can: "manage_blog",
   args: { postId: v.id("blogPosts"), ...postFields },
   handler: async (ctx, { postId, ...patch }) => {
-    await requireCapability(ctx, "manage_blog");
     const post = await ctx.db.get(postId);
     if (!post) throw new ConvexError({ code: "not_found", message: "Not found" });
     assertExcerptLength(patch.excerpt);
@@ -117,10 +119,10 @@ export const update = mutation({
 /** Resolves mainImageUrl from mainImageStorageId (if set) so an
  * unauthenticated marketing-site read never needs the auth-gated
  * files.getUrl — Convex storage URLs are publicly fetchable once obtained. */
-export const publish = mutation({
+export const publish = userMutation({
+  can: "manage_blog",
   args: { postId: v.id("blogPosts") },
   handler: async (ctx, { postId }) => {
-    await requireCapability(ctx, "manage_blog");
     const post = await ctx.db.get(postId);
     if (!post) throw new ConvexError({ code: "not_found", message: "Not found" });
     const mainImageUrl = post.mainImageStorageId
@@ -145,10 +147,10 @@ export const publish = mutation({
   },
 });
 
-export const unpublish = mutation({
+export const unpublish = userMutation({
+  can: "manage_blog",
   args: { postId: v.id("blogPosts") },
   handler: async (ctx, { postId }) => {
-    await requireCapability(ctx, "manage_blog");
     const post = await ctx.db.get(postId);
     if (!post) throw new ConvexError({ code: "not_found", message: "Not found" });
     await ctx.db.patch(postId, { status: "draft", updatedAt: Date.now() });
@@ -156,16 +158,13 @@ export const unpublish = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
+  can: "manage_blog",
   args: { postId: v.id("blogPosts") },
   handler: async (ctx, { postId }) => {
-    await requireCapability(ctx, "manage_blog");
     const post = await ctx.db.get(postId);
     if (!post) return { ok: false };
-    if (post.mainImageStorageId) {
-      await ctx.storage.delete(post.mainImageStorageId);
-    }
-    await ctx.db.delete(postId);
+    await moveToTrash(ctx, "blogPosts", postId, ctx.caller.id);
     return { ok: true };
   },
 });

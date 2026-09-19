@@ -1,5 +1,25 @@
 import { type Doc, type Id } from "../_generated/dataModel";
-import { type QueryCtx } from "../_generated/server";
+import { type MutationCtx, type QueryCtx } from "../_generated/server";
+
+/** Take someone out of the intranet without deleting their row. */
+export async function markUserRemoved(
+  ctx: MutationCtx,
+  user: Doc<"users">,
+  removedBy?: Id<"users">,
+): Promise<void> {
+  if (user.status === "removed") return;
+  await ctx.db.patch(user._id, {
+    status: "removed",
+    removedAt: Date.now(),
+    removedBy,
+    sandboxRole: undefined,
+  });
+  const presence = await ctx.db
+    .query("presence")
+    .withIndex("by_user", (q) => q.eq("userId", user._id))
+    .unique();
+  if (presence) await ctx.db.delete(presence._id);
+}
 
 /**
  * Best-effort human display name for an intranet user: "First Last", falling

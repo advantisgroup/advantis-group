@@ -1,9 +1,8 @@
-import { mutation, query } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
-import { requireAdmin, requireUser } from "../lib/auth";
 
 /**
  * Admin-managed taxonomy for `suggestions.categoryId` — mirrors
@@ -33,10 +32,9 @@ async function assertUniqueName(
   }
 }
 
-export const list = query({
+export const list = userQuery({
   args: { includeArchived: v.optional(v.boolean()) },
   handler: async (ctx, { includeArchived }) => {
-    await requireUser(ctx);
     const rows = await ctx.db.query("suggestionCategories").collect();
     return rows
       .filter((r) => includeArchived || r.archivedAt === undefined)
@@ -44,10 +42,11 @@ export const list = query({
   },
 });
 
-export const create = mutation({
+export const create = userMutation({
+  role: "admin",
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     const trimmed = name.trim();
     if (!trimmed) {
       throw new ConvexError({ code: "bad_request", message: "Name required" });
@@ -61,10 +60,10 @@ export const create = mutation({
   },
 });
 
-export const rename = mutation({
+export const rename = userMutation({
+  role: "admin",
   args: { categoryId: v.id("suggestionCategories"), name: v.string() },
   handler: async (ctx, { categoryId, name }) => {
-    await requireAdmin(ctx);
     const trimmed = name.trim();
     if (!trimmed) {
       throw new ConvexError({ code: "bad_request", message: "Name required" });
@@ -78,10 +77,10 @@ export const rename = mutation({
   },
 });
 
-export const archive = mutation({
+export const archive = userMutation({
+  role: "admin",
   args: { categoryId: v.id("suggestionCategories"), archived: v.boolean() },
   handler: async (ctx, { categoryId, archived }) => {
-    await requireAdmin(ctx);
     await ctx.db.patch(categoryId, {
       archivedAt: archived ? Date.now() : undefined,
     });

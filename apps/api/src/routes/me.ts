@@ -1,15 +1,16 @@
 import { Elysia, t } from "elysia";
 
-import { requireAuth } from "../lib/middleware.js";
+import { authed } from "../lib/middleware.js";
 
 /** GET /me — the authenticated intranet identity (verified Clerk session). */
-export const meRoute = new Elysia().get(
+export const meRoute = new Elysia().use(authed).get(
   "/me",
-  async ({ request }) => {
-    const { clerkUserId, sessionId } = await requireAuth(request);
+  async ({ caller }) => {
+    const { clerkUserId, sessionId } = caller;
     return { clerkUserId, sessionId };
   },
   {
+    signedIn: true,
     response: {
       200: t.Object({
         clerkUserId: t.String(),

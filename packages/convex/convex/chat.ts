@@ -1,14 +1,27 @@
-import { gatedMutation, internalMutation, mutation, query } from "./functions";
 import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
+import { gatedUserMutation, internalMutation, userMutation, userQuery } from "./functions";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
-import { type MutationCtx, type QueryCtx } from "./_generated/server";
+import { type MutationCtx } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
-import { isOwnerOrAdmin, requireUser } from "./lib/auth";
+import {
+  aggregateReactions,
+  attachmentUrls,
+  dmKeyFor,
+  dmPartnerId,
+  getMembership,
+  legacyLastMessagePreview,
+  legacyUnreadCount,
+  memberDisplay,
+  messagePreview,
+  purgeConversation,
+  requireGroup,
+  requireMembership,
+  userAvatar,
+} from "./lib/chat";
 import { createNotification } from "./lib/notify";
-import { profileAvatarUrl, profileDisplayName } from "./lib/profile";
 import { attachmentValidator } from "./schema";
 
 const TYPING_WINDOW_MS = 6000;
@@ -22,162 +35,12 @@ const linkPreviewArg = v.object({
   image: v.optional(v.string()),
   siteName: v.optional(v.string()),
 });
-
-/** Chat's own return shapes use `_id`/`avatar` field names throughout (not
- *  `PartialProfile`'s `userId`/`avatarUrl`) to stay consistent with the rest
- *  of this file's conventions — but the actual name/avatar resolution
- *  delegates to the one canonical implementation in `lib/profile.ts` instead
- *  of maintaining its own copy. */
-function memberDisplay(user: Doc<"users"> | null): string {
-  return user ? profileDisplayName(user) : "Unknown";
-}
-
-async function getMembership(
-  ctx: QueryCtx | MutationCtx,
-  conversationId: Id<"conversations">,
-  userId: Id<"users">,
-): Promise<Doc<"conversationMembers"> | null> {
-  return ctx.db
-    .query("conversationMembers")
-    .withIndex("by_user_conversation", (q) =>
-      q.eq("userId", userId).eq("conversationId", conversationId),
-    )
-    .unique();
-}
-
-async function requireMembership(
-  ctx: QueryCtx | MutationCtx,
-  conversationId: Id<"conversations">,
-  userId: Id<"users">,
-): Promise<Doc<"conversationMembers">> {
-  const membership = await getMembership(ctx, conversationId, userId);
-  if (!membership) {
-    throw new ConvexError({
-      code: "forbidden",
-      message: "You are not a member of this conversation",
-    });
-  }
-  return membership;
-}
-
-function dmKeyFor(a: Id<"users">, b: Id<"users">): string {
-  return [a, b].sort().join(":");
-}
-
-async function attachmentUrls(ctx: QueryCtx, attachments: Doc<"messages">["attachments"]) {
-  return Promise.all(
-    attachments.map(async (a) => ({
-      ...a,
-      url: await ctx.storage.getUrl(a.storageId),
-    })),
-  );
-}
-
-/** Resolve a user's display avatar (uploaded image first, else external URL). */
-async function userAvatar(ctx: QueryCtx, user: Doc<"users"> | null): Promise<string | null> {
-  return user ? profileAvatarUrl(ctx, user) : null;
-}
-
-/** The other participant of a DM, derived from its immutable `dmKey`. Works
- *  even after that person has left (their membership row is gone). */
-function dmPartnerId(conversation: Doc<"conversations">, meId: Id<"users">): Id<"users"> | null {
-  if (conversation.type !== "dm" || !conversation.dmKey) return null;
-  const ids = conversation.dmKey.split(":") as Id<"users">[];
-  return ids.find((id) => id !== meId) ?? null;
-}
-
-/** Sidebar preview text for a message — mirrors what listConversations used
- *  to compute on the fly from the live row before it was denormalized onto
- *  conversations.lastMessagePreview. */
-function messagePreview(body: string, attachmentCount: number): string {
-  return body || (attachmentCount > 0 ? "📎 Attachment" : "");
-}
-
-/** Pre-migration fallback for conversations.lastMessagePreview: the exact
- *  query listConversations used to run on every single execution. */
-async function legacyLastMessagePreview(
-  ctx: QueryCtx,
-  conversationId: Id<"conversations">,
-): Promise<string> {
-  const lastMessage = await ctx.db
-    .query("messages")
-    .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
-    .order("desc")
-    .first();
-  if (!lastMessage) return "";
-  return lastMessage.deletedAt
-    ? "Message deleted"
-    : messagePreview(lastMessage.body, lastMessage.attachments.length);
-}
-
-/** Pre-migration fallback for conversationMembers.unreadCount: the exact
- *  `.take(50)` scan listConversations used to run on every single execution. */
-async function legacyUnreadCount(
-  ctx: QueryCtx,
-  conversationId: Id<"conversations">,
-  lastReadAt: number,
-  meId: Id<"users">,
-): Promise<number> {
-  const recent = await ctx.db
-    .query("messages")
-    .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
-    .order("desc")
-    .take(50);
-  return recent.filter((m) => m.createdAt > lastReadAt && m.senderUserId !== meId).length;
-}
-
-function requireGroup(conversation: Doc<"conversations"> | null): void {
-  if (!conversation || conversation.type !== "group") {
-    throw new ConvexError({
-      code: "bad_request",
-      message: "This action is only available for group chats",
-    });
-  }
-}
-
-/** Tear a conversation down completely: messages (+ their storage & reactions),
- *  typing rows, memberships, any group photo, then the conversation itself.
- *  Shared by leave (last member), delete-group and the expired-DM cron. */
-async function purgeConversation(
-  ctx: MutationCtx,
-  conversationId: Id<"conversations">,
-): Promise<void> {
-  const messages = await ctx.db
-    .query("messages")
-    .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
-    .collect();
-  for (const m of messages) {
-    for (const a of m.attachments) await ctx.storage.delete(a.storageId);
-    const reactions = await ctx.db
-      .query("messageReactions")
-      .withIndex("by_message", (q) => q.eq("messageId", m._id))
-      .collect();
-    await Promise.all(reactions.map((r) => ctx.db.delete(r._id)));
-    await ctx.db.delete(m._id);
-  }
-  const typing = await ctx.db
-    .query("typing")
-    .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
-    .collect();
-  await Promise.all(typing.map((t) => ctx.db.delete(t._id)));
-  const members = await ctx.db
-    .query("conversationMembers")
-    .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
-    .collect();
-  await Promise.all(members.map((m) => ctx.db.delete(m._id)));
-  const conversation = await ctx.db.get(conversationId);
-  if (conversation?.avatarStorageId) {
-    await ctx.storage.delete(conversation.avatarStorageId);
-  }
-  await ctx.db.delete(conversationId);
-}
-
 // --- Conversations -----------------------------------------------------------
 
-export const listConversations = query({
+export const listConversations = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const memberships = await ctx.db
       .query("conversationMembers")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -273,10 +136,10 @@ export const listConversations = query({
  * the "mutual chats & groups" shown on a colleague's profile card. Returns the
  * shared DM (if any) plus every group they both belong to.
  */
-export const mutualConversations = query({
+export const mutualConversations = userQuery({
   args: { otherUserId: v.id("users") },
   handler: async (ctx, { otherUserId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (otherUserId === user._id) return [];
 
     const theirConvIds = new Set(
@@ -329,10 +192,10 @@ export const mutualConversations = query({
   },
 });
 
-export const getOrCreateDm = gatedMutation("chat")({
+export const getOrCreateDm = gatedUserMutation("chat")({
   args: { otherUserId: v.id("users") },
   handler: async (ctx, { otherUserId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (otherUserId === user._id) {
       throw new ConvexError({
         code: "bad_request",
@@ -388,10 +251,10 @@ export const getOrCreateDm = gatedMutation("chat")({
   },
 });
 
-export const createGroup = gatedMutation("chat")({
+export const createGroup = gatedUserMutation("chat")({
   args: { name: v.string(), memberIds: v.array(v.id("users")) },
   handler: async (ctx, { name, memberIds }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const conversationId = await ctx.db.insert("conversations", {
       type: "group",
@@ -414,10 +277,10 @@ export const createGroup = gatedMutation("chat")({
   },
 });
 
-export const getConversation = query({
+export const getConversation = userQuery({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, { conversationId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
 
     // A stale `?c=<id>` link (leave/delete happened here or in another tab)
     // must degrade gracefully instead of throwing, since this query is live
@@ -497,32 +360,13 @@ export const getConversation = query({
 });
 
 // --- Messages ----------------------------------------------------------------
-
-function aggregateReactions(
-  rows: { emoji: string; userId: Id<"users"> }[],
-  meId: Id<"users">,
-): { emoji: string; count: number; mine: boolean }[] {
-  const map = new Map<string, { count: number; mine: boolean }>();
-  for (const r of rows) {
-    const entry = map.get(r.emoji) ?? { count: 0, mine: false };
-    entry.count += 1;
-    if (r.userId === meId) entry.mine = true;
-    map.set(r.emoji, entry);
-  }
-  return [...map.entries()].map(([emoji, e]) => ({
-    emoji,
-    count: e.count,
-    mine: e.mine,
-  }));
-}
-
-export const getMessages = query({
+export const getMessages = userQuery({
   args: {
     conversationId: v.id("conversations"),
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, { conversationId, paginationOpts }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     // Reactive query: don't throw on a stale link (left/deleted mid-session) —
     // the UI already shows a graceful state via getConversation's status.
     const membership = await getMembership(ctx, conversationId, user._id);
@@ -616,10 +460,10 @@ export const getMessages = query({
 });
 
 /** Messages in one conversation whose text contains `term`, newest first. */
-export const searchMessages = query({
+export const searchMessages = userQuery({
   args: { conversationId: v.id("conversations"), term: v.string() },
   handler: async (ctx, { conversationId, term }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const needle = term.trim().toLowerCase();
     if (needle.length < 2 || !(await getMembership(ctx, conversationId, user._id))) return [];
     const rows = await ctx.db
@@ -644,10 +488,10 @@ export const searchMessages = query({
   },
 });
 
-export const listPinnedMessages = query({
+export const listPinnedMessages = userQuery({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, { conversationId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (!(await getMembership(ctx, conversationId, user._id))) return [];
     const rows = await ctx.db
       .query("messages")
@@ -670,10 +514,10 @@ export const listPinnedMessages = query({
   },
 });
 
-export const togglePinMessage = mutation({
+export const togglePinMessage = userMutation({
   args: { messageId: v.id("messages") },
   handler: async (ctx, { messageId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const message = await ctx.db.get(messageId);
     if (!message || message.deletedAt) {
       throw new ConvexError({ code: "not_found", message: "Message not found" });
@@ -689,10 +533,10 @@ export const togglePinMessage = mutation({
   },
 });
 
-export const toggleReaction = mutation({
+export const toggleReaction = userMutation({
   args: { messageId: v.id("messages"), emoji: v.string() },
   handler: async (ctx, { messageId, emoji }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const message = await ctx.db.get(messageId);
     if (!message || message.deletedAt) {
       throw new ConvexError({
@@ -727,7 +571,7 @@ export const toggleReaction = mutation({
   },
 });
 
-export const sendMessage = gatedMutation("chat")({
+export const sendMessage = gatedUserMutation("chat")({
   args: {
     conversationId: v.id("conversations"),
     body: v.string(),
@@ -737,7 +581,7 @@ export const sendMessage = gatedMutation("chat")({
     mentions: v.optional(v.array(v.id("users"))),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const membership = await requireMembership(ctx, args.conversationId, user._id);
 
     const body = args.body.trim();
@@ -841,14 +685,14 @@ export const sendMessage = gatedMutation("chat")({
   },
 });
 
-export const editMessage = mutation({
+export const editMessage = userMutation({
   args: {
     messageId: v.id("messages"),
     body: v.string(),
     attachments: v.optional(v.array(attachmentValidator)),
   },
   handler: async (ctx, { messageId, body, attachments }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const message = await ctx.db.get(messageId);
     if (!message || message.deletedAt) {
       throw new ConvexError({
@@ -893,13 +737,12 @@ export const editMessage = mutation({
   },
 });
 
-export const deleteMessage = mutation({
+export const deleteMessage = userMutation({
   args: { messageId: v.id("messages") },
   handler: async (ctx, { messageId }) => {
-    const user = await requireUser(ctx);
     const message = await ctx.db.get(messageId);
     if (!message || message.deletedAt) return { ok: false };
-    if (!isOwnerOrAdmin(user, message.senderUserId)) {
+    if (!ctx.caller.owns(message.senderUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "You can only delete your own messages",
@@ -935,10 +778,10 @@ export const deleteMessage = mutation({
   },
 });
 
-export const markRead = mutation({
+export const markRead = userMutation({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, { conversationId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const membership = await getMembership(ctx, conversationId, user._id);
     if (membership) {
       await ctx.db.patch(membership._id, {
@@ -952,10 +795,10 @@ export const markRead = mutation({
 
 // --- Typing indicator --------------------------------------------------------
 
-export const setTyping = mutation({
+export const setTyping = userMutation({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, { conversationId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     await requireMembership(ctx, conversationId, user._id);
     const existing = await ctx.db
       .query("typing")
@@ -977,10 +820,10 @@ export const setTyping = mutation({
   },
 });
 
-export const whoIsTyping = query({
+export const whoIsTyping = userQuery({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, { conversationId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     // Reactive query — degrade gracefully instead of throwing on a stale link.
     const membership = await getMembership(ctx, conversationId, user._id);
     if (!membership) return [];
@@ -999,10 +842,10 @@ export const whoIsTyping = query({
 
 // --- Group management --------------------------------------------------------
 
-export const renameGroup = mutation({
+export const renameGroup = userMutation({
   args: { conversationId: v.id("conversations"), name: v.string() },
   handler: async (ctx, { conversationId, name }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     await requireMembership(ctx, conversationId, user._id);
     const conversation = await ctx.db.get(conversationId);
     requireGroup(conversation);
@@ -1018,13 +861,13 @@ export const renameGroup = mutation({
   },
 });
 
-export const setGroupAvatar = mutation({
+export const setGroupAvatar = userMutation({
   args: {
     conversationId: v.id("conversations"),
     avatarStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, { conversationId, avatarStorageId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     await requireMembership(ctx, conversationId, user._id);
     const conversation = await ctx.db.get(conversationId);
     requireGroup(conversation);
@@ -1037,13 +880,13 @@ export const setGroupAvatar = mutation({
   },
 });
 
-export const addGroupMembers = mutation({
+export const addGroupMembers = userMutation({
   args: {
     conversationId: v.id("conversations"),
     memberIds: v.array(v.id("users")),
   },
   handler: async (ctx, { conversationId, memberIds }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     await requireMembership(ctx, conversationId, user._id);
     const conversation = await ctx.db.get(conversationId);
     requireGroup(conversation);
@@ -1073,10 +916,10 @@ export const addGroupMembers = mutation({
   },
 });
 
-export const removeGroupMember = mutation({
+export const removeGroupMember = userMutation({
   args: { conversationId: v.id("conversations"), userId: v.id("users") },
   handler: async (ctx, { conversationId, userId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     await requireMembership(ctx, conversationId, user._id);
     const conversation = await ctx.db.get(conversationId);
     requireGroup(conversation);
@@ -1099,10 +942,10 @@ export const removeGroupMember = mutation({
   },
 });
 
-export const deleteGroup = mutation({
+export const deleteGroup = userMutation({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, { conversationId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     await requireMembership(ctx, conversationId, user._id);
     const conversation = await ctx.db.get(conversationId);
     requireGroup(conversation);
@@ -1119,10 +962,10 @@ export const deleteGroup = mutation({
 
 // --- Leaving & DM re-invites -------------------------------------------------
 
-export const leaveConversation = mutation({
+export const leaveConversation = userMutation({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, { conversationId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const membership = await requireMembership(ctx, conversationId, user._id);
     const conversation = await ctx.db.get(conversationId);
     if (!conversation) return { ok: true };
@@ -1150,10 +993,10 @@ export const leaveConversation = mutation({
   },
 });
 
-export const reinviteDm = mutation({
+export const reinviteDm = userMutation({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, { conversationId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     await requireMembership(ctx, conversationId, user._id);
     const conversation = await ctx.db.get(conversationId);
     if (!conversation || conversation.type !== "dm") {
@@ -1201,10 +1044,10 @@ export const reinviteDm = mutation({
   },
 });
 
-export const rejoinDm = mutation({
+export const rejoinDm = userMutation({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, { conversationId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const conversation = await ctx.db.get(conversationId);
     if (!conversation || conversation.type !== "dm" || !conversation.dmKey) {
       throw new ConvexError({
@@ -1250,41 +1093,44 @@ export const rejoinDm = mutation({
 
 async function toggleTimestamp(
   ctx: MutationCtx,
+  userId: Id<"users">,
   conversationId: Id<"conversations">,
   field: "pinnedAt" | "archivedAt" | "mutedAt",
 ) {
-  const user = await requireUser(ctx);
-  const membership = await requireMembership(ctx, conversationId, user._id);
+  const membership = await requireMembership(ctx, conversationId, userId);
   await ctx.db.patch(membership._id, {
     [field]: membership[field] ? undefined : Date.now(),
   });
   return { ok: true };
 }
 
-export const togglePin = mutation({
+export const togglePin = userMutation({
   args: { conversationId: v.id("conversations") },
-  handler: (ctx, { conversationId }) => toggleTimestamp(ctx, conversationId, "pinnedAt"),
+  handler: (ctx, { conversationId }) =>
+    toggleTimestamp(ctx, ctx.caller.id, conversationId, "pinnedAt"),
 });
 
-export const toggleArchive = mutation({
+export const toggleArchive = userMutation({
   args: { conversationId: v.id("conversations") },
-  handler: (ctx, { conversationId }) => toggleTimestamp(ctx, conversationId, "archivedAt"),
+  handler: (ctx, { conversationId }) =>
+    toggleTimestamp(ctx, ctx.caller.id, conversationId, "archivedAt"),
 });
 
-export const toggleMute = mutation({
+export const toggleMute = userMutation({
   args: { conversationId: v.id("conversations") },
-  handler: (ctx, { conversationId }) => toggleTimestamp(ctx, conversationId, "mutedAt"),
+  handler: (ctx, { conversationId }) =>
+    toggleTimestamp(ctx, ctx.caller.id, conversationId, "mutedAt"),
 });
 
 // --- Shared media ------------------------------------------------------------
 
-export const listSharedMedia = query({
+export const listSharedMedia = userQuery({
   args: {
     conversationId: v.id("conversations"),
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, { conversationId, paginationOpts }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     // Reactive query — degrade gracefully instead of throwing on a stale link.
     const membership = await getMembership(ctx, conversationId, user._id);
     if (!membership) {

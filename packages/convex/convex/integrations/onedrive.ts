@@ -1,23 +1,14 @@
-import { internalAction, mutation, query, serverMutation, serverQuery } from "../functions";
+import { internalAction, serverMutation, serverQuery, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
-import {
-  effectiveCustomRoleIds,
-  effectiveRole,
-  getUserByClerkId,
-  hasApplicantAccess,
-  isSandboxed,
-  MANAGER_ROLES,
-  requireCapability,
-  requireUser,
-} from "../lib/auth";
 import { internalApiFetch } from "../lib/internalApi";
 import { createNotification, notifyUsers } from "../lib/notify";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { batchUserSummaries, displayName } from "../lib/users";
+import { getServerCaller } from "../lib/caller";
 
 /**
  * OneDrive system-of-record. The Elysia API owns the Microsoft Graph credentials
@@ -88,32 +79,21 @@ async function writeAudit(
 export const apiUserContext = serverQuery({
   args: { clerkUserId: v.string() },
   handler: async (ctx, { clerkUserId }) => {
-    const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status !== "active") return null;
-    const sandboxed = isSandboxed(user);
-    const role = effectiveRole(user);
-    const customRoles = sandboxed
-      ? []
-      : await Promise.all(
-          effectiveCustomRoleIds(user).map((customRoleId) => ctx.db.get(customRoleId)),
-        );
+    const caller = await getServerCaller(ctx, clerkUserId);
+    if (!caller) return null;
     return {
-      userId: user._id,
-      role,
-      name: displayName(user),
-      email: user.email,
-      gfAccess: sandboxed ? false : (user.gfAccess ?? false),
-      uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
-      canAccessFiles:
-        MANAGER_ROLES.includes(role) ||
-        customRoles.some((customRole) => customRole?.capabilities.includes("access_files")),
+      userId: caller.id,
+      role: caller.role,
+      name: displayName(caller.user),
+      email: caller.user.email,
+      gfAccess: caller.hasGfAccess,
+      uploadRequestsEnabled: caller.canRequestUploads,
+      canAccessFiles: caller.can("access_files"),
       // Indirect permission: anyone who can manage wikis/HR gets write access
       // to that one OneDrive subtree (Team/Wiki, Team/HR) even without full
       // file-browser access — see apps/api's `access.ts` for the scoping.
-      canWriteWiki:
-        MANAGER_ROLES.includes(role) ||
-        customRoles.some((customRole) => customRole?.capabilities.includes("manage_guidebooks")),
-      canWriteHR: !sandboxed && hasApplicantAccess(user),
+      canWriteWiki: caller.can("manage_guidebooks"),
+      canWriteHR: caller.hasApplicantAccess,
     };
   },
 });
@@ -443,10 +423,10 @@ export const apiClearTeamAccess = serverMutation({
  * Pending approval queue for the admin panel (newest first). Manager+, or an
  * employee whose custom role grants `manage_uploads`.
  */
-export const listPending = query({
+export const listPending = userQuery({
+  can: "manage_uploads",
   args: {},
   handler: async (ctx) => {
-    await requireCapability(ctx, "manage_uploads");
     const rows = await ctx.db
       .query("onedriveUploads")
       .withIndex("by_status", (q) => q.eq("status", "pending"))
@@ -469,10 +449,10 @@ export const listPending = query({
 });
 
 /** The signed-in user's own upload history / request statuses. */
-export const myUploads = query({
+export const myUploads = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     return ctx.db
       .query("onedriveUploads")
       .withIndex("by_user", (q) => q.eq("requesterUserId", user._id))
@@ -485,10 +465,10 @@ export const myUploads = query({
  * OneDrive audit feed (who did what), newest first. Manager+, or an employee
  * whose custom role grants `manage_uploads`.
  */
-export const auditFeed = query({
+export const auditFeed = userQuery({
+  can: "manage_uploads",
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
-    await requireCapability(ctx, "manage_uploads");
     const rows = await ctx.db
       .query("onedriveAudit")
       .withIndex("by_at")
@@ -506,10 +486,10 @@ export const auditFeed = query({
 });
 
 /** Requester cancels their own still-pending upload request. */
-export const cancelRequest = mutation({
+export const cancelRequest = userMutation({
   args: { uploadId: v.id("onedriveUploads") },
   handler: async (ctx, { uploadId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const upload = await ctx.db.get(uploadId);
     if (!upload || upload.requesterUserId !== user._id) {
       throw new ConvexError({

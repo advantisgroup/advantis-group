@@ -1,14 +1,13 @@
 import { v } from "convex/values";
 
-import { query } from "../functions";
-import { requireManager } from "../lib/auth";
+import { userQuery } from "../functions";
 import { displayName } from "../lib/users";
 
 /** Audit log, newest first. Manager+. */
-export const list = query({
+export const list = userQuery({
+  role: "manager",
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
-    await requireManager(ctx);
     const rows = await ctx.db
       .query("activityAuditLog")
       .withIndex("by_at")

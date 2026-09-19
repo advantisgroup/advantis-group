@@ -1,10 +1,12 @@
-import { action, internalMutation, query } from "../functions";
+import { internalMutation, query, userAction, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { roleValidator } from "../schema";
-import { canGrantRole, getAllowedDomains, isEmailDomainAllowed, requireManager } from "../lib/auth";
-import { createClerkInvitation, revokeClerkInvitations } from "../lib/clerk";
+import { getAllowedDomains, isEmailDomainAllowed } from "../lib/auth";
+import { createClerkInvitation } from "../lib/clerk";
+import { displayName } from "../lib/users";
+import { pushToClerk } from "./clerkSync";
 
 const roleArg = roleValidator;
 
@@ -16,11 +18,11 @@ function newToken(): string {
 
 /**
  * Validate + persist the invite row. Internal: only ever called from the
- * `create` action below, which then hands delivery to Clerk. Auth is propagated
- * from the action, so `requireManager` resolves the calling admin/manager.
+ * `create` action below, which has already checked who is inviting whom.
  */
 export const createInviteRecord = internalMutation({
   args: {
+    invitedByUserId: v.id("users"),
     email: v.string(),
     role: roleArg,
     departmentId: v.optional(v.id("departments")),
@@ -29,18 +31,10 @@ export const createInviteRecord = internalMutation({
     phone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const inviter = await requireManager(ctx);
     const email = args.email.trim().toLowerCase();
 
     if (!email.includes("@")) {
       throw new ConvexError({ code: "bad_request", message: "Invalid email" });
-    }
-    // Only admins may grant admin/manager; managers can only invite employees.
-    if (!canGrantRole(inviter, args.role)) {
-      throw new ConvexError({
-        code: "forbidden",
-        message: "Only admins can invite admins or managers",
-      });
     }
     // Emails outside the company domains are invited the same way as
     // company ones — a personal address works just as well for the intranet
@@ -52,6 +46,7 @@ export const createInviteRecord = internalMutation({
     const existingUser = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", email))
+      .filter((q) => q.neq(q.field("status"), "removed"))
       .first();
     if (existingUser) {
       throw new ConvexError({
@@ -81,7 +76,7 @@ export const createInviteRecord = internalMutation({
       await ctx.db.patch(existingInvite._id, {
         role: args.role,
         token,
-        invitedByUserId: inviter._id,
+        invitedByUserId: args.invitedByUserId,
         external,
         status: "pending",
         expiresAt: now + INVITE_TTL_MS,
@@ -93,7 +88,7 @@ export const createInviteRecord = internalMutation({
       inviteId = await ctx.db.insert("invites", {
         email,
         role: args.role,
-        invitedByUserId: inviter._id,
+        invitedByUserId: args.invitedByUserId,
         external,
         token,
         status: "pending",
@@ -103,10 +98,7 @@ export const createInviteRecord = internalMutation({
       });
     }
 
-    const invitedByName =
-      [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") || inviter.email;
-
-    return { inviteId, token, email, role: args.role, invitedByName };
+    return { inviteId, token, email, role: args.role };
   },
 });
 
@@ -116,7 +108,8 @@ export const createInviteRecord = internalMutation({
  * action so the Clerk call is awaited and any failure surfaces to the admin
  * rather than disappearing into a background job.
  */
-export const create = action({
+export const create = userAction({
+  role: "manager",
   args: {
     email: v.string(),
     role: roleArg,
@@ -126,11 +119,21 @@ export const create = action({
     phone: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ inviteId: string; token: string }> => {
-    const rec = await ctx.runMutation(internal.people.invites.createInviteRecord, args);
+    // Only admins may grant admin/manager; managers can only invite employees.
+    if (!ctx.caller.canGrant(args.role)) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "Only admins can invite admins or managers",
+      });
+    }
+    const rec = await ctx.runMutation(internal.people.invites.createInviteRecord, {
+      ...args,
+      invitedByUserId: ctx.caller.id,
+    });
     await createClerkInvitation({
       email: rec.email,
       role: rec.role,
-      invitedByName: rec.invitedByName,
+      invitedByName: displayName(ctx.caller.user),
     });
     return { inviteId: rec.inviteId, token: rec.token };
   },
@@ -140,7 +143,6 @@ export const create = action({
 export const refreshInviteToken = internalMutation({
   args: { inviteId: v.id("invites") },
   handler: async (ctx, { inviteId }) => {
-    const inviter = await requireManager(ctx);
     const invite = await ctx.db.get(inviteId);
     if (!invite || invite.status !== "pending") {
       throw new ConvexError({
@@ -153,64 +155,39 @@ export const refreshInviteToken = internalMutation({
       token,
       expiresAt: Date.now() + INVITE_TTL_MS,
     });
-    return {
-      email: invite.email,
-      role: invite.role,
-      invitedByName:
-        [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") || inviter.email,
-    };
+    return { email: invite.email, role: invite.role };
   },
 });
 
-export const resend = action({
+export const resend = userAction({
+  role: "manager",
   args: { inviteId: v.id("invites") },
   handler: async (ctx, { inviteId }): Promise<{ ok: true }> => {
     const rec = await ctx.runMutation(internal.people.invites.refreshInviteToken, {
       inviteId,
     });
-    await createClerkInvitation({
-      email: rec.email,
-      role: rec.role,
-      invitedByName: rec.invitedByName,
-    });
+    await createClerkInvitation({ ...rec, invitedByName: displayName(ctx.caller.user) });
     return { ok: true };
   },
 });
 
-/** Mark an invite revoked and return its email so Clerk can be revoked too. */
-export const markRevoked = internalMutation({
+/** Revoke an invite here and kill its Clerk-side link too. */
+export const revoke = userMutation({
+  role: "manager",
   args: { inviteId: v.id("invites") },
   handler: async (ctx, { inviteId }) => {
-    await requireManager(ctx);
     const invite = await ctx.db.get(inviteId);
-    if (!invite) return { ok: false, email: null as string | null };
+    if (!invite) return { ok: false };
     await ctx.db.patch(inviteId, { status: "revoked" });
-    return { ok: true, email: invite.email };
+    await pushToClerk(ctx, { kind: "revokeInvitations", email: invite.email });
+    return { ok: true };
   },
 });
 
-export const revoke = action({
-  args: { inviteId: v.id("invites") },
-  handler: async (ctx, { inviteId }): Promise<{ ok: boolean }> => {
-    const res = await ctx.runMutation(internal.people.invites.markRevoked, {
-      inviteId,
-    });
-    // Kill the Clerk-side invitation link too (best-effort).
-    if (res.email) {
-      try {
-        await revokeClerkInvitations(res.email);
-      } catch {
-        // Local revoke already succeeded; Clerk cleanup is non-critical.
-      }
-    }
-    return { ok: res.ok };
-  },
-});
-
-export const list = query({
+export const list = userQuery({
+  role: "manager",
   args: { status: v.optional(v.string()) },
   handler: async (ctx, { status }) => {
-    await requireManager(ctx);
     const invites = await ctx.db.query("invites").order("desc").take(200);
     const filtered = status ? invites.filter((i) => i.status === status) : invites;
     return Promise.all(
@@ -232,12 +209,10 @@ export const list = query({
  * tell whether an entered address is external (and gate/confirm accordingly).
  * Empty list means no allowlist is configured (nothing is treated as external).
  */
-export const config = query({
+export const config = userQuery({
+  role: "manager",
   args: {},
-  handler: async (ctx) => {
-    await requireManager(ctx);
-    return { allowedDomains: getAllowedDomains() };
-  },
+  handler: async () => ({ allowedDomains: getAllowedDomains() }),
 });
 
 /** Public-ish: validate an invite token for the sign-up landing screen. */

@@ -4,7 +4,7 @@ import type { ChangeEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
-import { useAction, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
 import { ArrowLeft, Camera, Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -58,7 +58,7 @@ type ProfileFields = ReturnType<typeof fieldsOf>;
 export default function EditProfilePage() {
   const t = useTranslations("Settings");
   const user = useCurrentUser();
-  const updateProfile = useAction(api.people.users.updateProfile);
+  const updateProfile = useMutation(api.people.users.updateProfile);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const handleError = useErrorHandler();
   const [fields, setFields] = useState<ProfileFields>(() => fieldsOf(user));

@@ -5,28 +5,17 @@ import { type QueryCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { roleValidator } from "../schema";
 import { clearVaultPasswordForUser } from "../hr/lib/vault";
-import {
-  effectiveCustomRoleIds,
-  effectiveRole,
-  ensureUser,
-  getCurrentUser,
-  isApplicantEligible,
-  isSandboxed,
-  requireAdmin,
-  requireApplicantDelegateOrAdmin,
-  requireManager,
-  requireRealAdmin,
-  requireUser,
-  requireVaultUnlocked,
-} from "../lib/auth";
+import { effectiveCustomRoleIds, effectiveRole, getCurrentUser, isSandboxed } from "../lib/auth";
 import {
   action,
-  internalMutation,
   internalQuery,
-  mutation,
   query,
   sandboxSafeMutation,
+  userQuery,
+  userMutation,
 } from "../functions";
+import { getServerCaller, getSessionCaller, requireSessionCaller } from "../lib/caller";
+import { pushToClerk } from "./clerkSync";
 import { listUserPermissions } from "../lib/permissions";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { loadReportingLookup, reportingLines, resolveManager } from "../lib/reporting";
@@ -37,6 +26,8 @@ import {
   updateClerkUserAvatar,
   updateClerkUserName,
 } from "../lib/clerk";
+import { requireVaultUnlocked, isApplicantEligible } from "../hr/lib/access";
+import { ensureUser } from "../people/lib/provisioning";
 
 const roleArg = roleValidator;
 
@@ -109,20 +100,18 @@ export const me = query({
   },
 });
 
-/** The signed-in caller, for actions, which have no `ctx.db` to look them up
- * themselves — see `requireCapabilityForAction` in `lib/auth.ts`. Custom-role
- * capabilities don't count while sandboxed, same as `me`. */
+/** The session's caller, for actions, which have no `ctx.db` to build one
+ * themselves — see `userAction` in `functions.ts`. */
 export const callerForAction = internalQuery({
   args: {},
-  handler: async (ctx) => {
-    const user = await getCurrentUser(ctx);
-    if (!user) return null;
-    const customRoles = isSandboxed(user)
-      ? []
-      : await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
-    const capabilities = [...new Set(customRoles.flatMap((role) => role?.capabilities ?? []))];
-    return { user, capabilities };
-  },
+  handler: async (ctx) => (await getSessionCaller(ctx))?.toJSON() ?? null,
+});
+
+/** `callerForAction` for `serverUserAction`, where apps/api names the person. */
+export const callerForClerkUser = internalQuery({
+  args: { clerkUserId: v.string() },
+  handler: async (ctx, { clerkUserId }) =>
+    (await getServerCaller(ctx, clerkUserId))?.toJSON() ?? null,
 });
 
 /** Provision the signed-in identity. Called by the intranet on app load. */
@@ -138,8 +127,9 @@ export const setSandboxRole = sandboxSafeMutation({
     role: v.union(v.literal("manager"), v.literal("employee"), v.null()),
   },
   handler: async (ctx, { role }) => {
-    const user = await requireRealAdmin(ctx);
-    await ctx.db.patch(user._id, { sandboxRole: role ?? undefined });
+    const caller = await requireSessionCaller(ctx);
+    caller.require(caller.isRealAdmin);
+    await ctx.db.patch(caller.id, { sandboxRole: role ?? undefined });
     return { ok: true };
   },
 });
@@ -158,7 +148,7 @@ async function queryUsers(
   // suspended rows at the DB layer rather than fetching everyone and
   // filtering in JS.
   let users = args.includeSuspended
-    ? await ctx.db.query("users").collect()
+    ? (await ctx.db.query("users").collect()).filter((u) => u.status !== "removed")
     : await ctx.db
         .query("users")
         .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -204,10 +194,9 @@ async function queryUsers(
  * subscriber on every heartbeat from anyone. See `directoryList` for the
  * variant that needs that data.
  */
-export const list = query({
+export const list = userQuery({
   args: listArgs,
   handler: async (ctx, args) => {
-    await requireUser(ctx);
     const { users, nameById } = await queryUsers(ctx, args);
     const lookup = await loadReportingLookup(ctx);
     return Promise.all(
@@ -231,10 +220,9 @@ export const list = query({
  * queries have no HTTP access, and absences aren't mirrored into Convex
  * anymore; see AGENTS.md's Clockodo section).
  */
-export const directoryList = query({
+export const directoryList = userQuery({
   args: listArgs,
   handler: async (ctx, args) => {
-    await requireUser(ctx);
     const { users, nameById } = await queryUsers(ctx, args);
 
     const presenceRows = await ctx.db.query("presence").collect();
@@ -255,10 +243,9 @@ export const directoryList = query({
   },
 });
 
-export const get = query({
+export const get = userQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    await requireUser(ctx);
     const user = await ctx.db.get(userId);
     if (!user) return null;
     const presence = await ctx.db
@@ -277,10 +264,10 @@ export const get = query({
  * viewer's Clockodo absences can be mirrored (directly via
  * users.clockodoUserId, or through their ActivityTrack person record).
  */
-export const myConnections = query({
+export const myConnections = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const person = await ctx.db
       .query("people")
       .withIndex("by_userId", (q) => q.eq("userId", user._id))
@@ -295,10 +282,9 @@ export const myConnections = query({
 });
 
 /** Manager + direct reports for the profile card's organisation section. */
-export const orgContext = query({
+export const orgContext = userQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    await requireUser(ctx);
     const user = await ctx.db.get(userId);
     if (!user) return { lines: [], reports: [], manualManagerId: null, departmentId: null };
     const lookup = await loadReportingLookup(ctx);
@@ -353,10 +339,10 @@ const profileArgs = {
   showBirthdayPublicly: v.optional(v.boolean()),
 };
 
-export const applyProfileUpdate = internalMutation({
+export const updateProfile = userMutation({
   args: profileArgs,
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (
       args.avatarStorageId &&
       user.avatarStorageId &&
@@ -384,30 +370,23 @@ export const applyProfileUpdate = internalMutation({
         ? { showBirthdayPublicly: args.showBirthdayPublicly }
         : {}),
     });
-    const avatarUrl = args.avatarStorageId ? await ctx.storage.getUrl(args.avatarStorageId) : null;
-    return { clerkUserId: user.clerkUserId, avatarUrl };
-  },
-});
-
-export const updateProfile = action({
-  args: profileArgs,
-  handler: async (ctx, args): Promise<{ ok: true }> => {
-    const { clerkUserId, avatarUrl } = await ctx.runMutation(
-      internal.people.users.applyProfileUpdate,
-      args,
-    );
-    if (clerkUserId) {
-      if (args.firstName !== undefined || args.lastName !== undefined) {
-        await updateClerkUserName(clerkUserId, {
-          firstName: args.firstName,
-          lastName: args.lastName,
-        });
-      }
-      if (avatarUrl) {
-        await updateClerkUserAvatar(clerkUserId, avatarUrl);
-      }
+    if (args.firstName !== undefined || args.lastName !== undefined) {
+      await pushToClerk(ctx, {
+        kind: "rename",
+        clerkUserId: user.clerkUserId,
+        firstName: args.firstName,
+        lastName: args.lastName,
+      });
     }
-    return { ok: true };
+    const avatarUrl = args.avatarStorageId ? await ctx.storage.getUrl(args.avatarStorageId) : null;
+    if (avatarUrl) {
+      await pushToClerk(ctx, {
+        kind: "avatar",
+        clerkUserId: user.clerkUserId,
+        imageUrl: avatarUrl,
+      });
+    }
+    return { ok: true as const };
   },
 });
 
@@ -416,10 +395,10 @@ export const updateProfile = action({
  * toggle this — internal employees are always eligible and have no consent
  * to withdraw (see `updatesEmailConsent` on the `users` table).
  */
-export const setExpertise = mutation({
+export const setExpertise = userMutation({
   args: { tags: v.array(v.string()) },
   handler: async (ctx, { tags }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const clean = [...new Set(tags.map((tag) => tag.trim().slice(0, 32)).filter(Boolean))].slice(
       0,
       12,
@@ -429,10 +408,10 @@ export const setExpertise = mutation({
   },
 });
 
-export const setUpdatesEmailConsent = mutation({
+export const setUpdatesEmailConsent = userMutation({
   args: { consent: v.boolean() },
   handler: async (ctx, { consent }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (!user.external) {
       throw new ConvexError({
         code: "forbidden",
@@ -444,10 +423,11 @@ export const setUpdatesEmailConsent = mutation({
   },
 });
 
-export const setRole = mutation({
+export const setRole = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), role: roleArg },
   handler: async (ctx, { userId, role }) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     if (userId === admin._id && role !== "admin") {
       throw new ConvexError({
         code: "bad_request",
@@ -465,13 +445,13 @@ export const setRole = mutation({
 
 /** Replace a member's full set of custom roles. Manager+. Same full-array-
  * replace convention as `setTeams` below. */
-export const setCustomRoles = mutation({
+export const setCustomRoles = userMutation({
+  role: "manager",
   args: {
     userId: v.id("users"),
     customRoleIds: v.array(v.id("customRoles")),
   },
   handler: async (ctx, { userId, customRoleIds }) => {
-    await requireManager(ctx);
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -487,10 +467,10 @@ export const setCustomRoles = mutation({
   },
 });
 
-export const setTeams = mutation({
+export const setTeams = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), teams: v.array(v.string()) },
   handler: async (ctx, { userId, teams }) => {
-    await requireAdmin(ctx);
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -502,13 +482,13 @@ export const setTeams = mutation({
   },
 });
 
-export const setManager = mutation({
+export const setManager = userMutation({
+  role: "admin",
   args: {
     userId: v.id("users"),
     managerId: v.optional(v.id("users")),
   },
   handler: async (ctx, { userId, managerId }) => {
-    await requireAdmin(ctx);
     if (managerId === userId) {
       throw new ConvexError({ code: "bad_request", message: "Nobody can report to themselves" });
     }
@@ -518,20 +498,20 @@ export const setManager = mutation({
 });
 
 /** Admin: mark someone as managing director (Geschäftsführer). */
-export const setManagingDirector = mutation({
+export const setManagingDirector = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), managingDirector: v.boolean() },
   handler: async (ctx, { userId, managingDirector }) => {
-    await requireAdmin(ctx);
     await ctx.db.patch(userId, { managingDirector: managingDirector || undefined });
     return { ok: true };
   },
 });
 
 /** Manager+: set another user's hire date, for work-anniversary shoutouts. */
-export const setHireDate = mutation({
+export const setHireDate = userMutation({
+  role: "manager",
   args: { userId: v.id("users"), hireDate: v.optional(v.string()) },
   handler: async (ctx, { userId, hireDate }) => {
-    await requireManager(ctx);
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -541,21 +521,22 @@ export const setHireDate = mutation({
   },
 });
 
-export const applyStatus = internalMutation({
+/** Suspend or re-activate a member; Clerk's lock follows. */
+export const setStatus = userMutation({
+  role: "admin",
   args: {
     userId: v.id("users"),
     status: v.union(v.literal("active"), v.literal("suspended")),
   },
   handler: async (ctx, { userId, status }) => {
-    const admin = await requireAdmin(ctx);
-    if (userId === admin._id && status === "suspended") {
+    if (userId === ctx.caller.id && status === "suspended") {
       throw new ConvexError({
         code: "bad_request",
         message: "You cannot suspend yourself",
       });
     }
     const target = await ctx.db.get(userId);
-    if (!target) {
+    if (!target || target.status === "removed") {
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     if (status === "suspended" && target.role === "admin") {
@@ -565,38 +546,24 @@ export const applyStatus = internalMutation({
       });
     }
     await ctx.db.patch(userId, { status });
-    return { clerkUserId: target.clerkUserId };
-  },
-});
-
-/** Suspend or re-activate a member using Clerk's lock feature. */
-export const setStatus = action({
-  args: {
-    userId: v.id("users"),
-    status: v.union(v.literal("active"), v.literal("suspended")),
-  },
-  handler: async (ctx, { userId, status }): Promise<{ ok: true }> => {
-    const { clerkUserId } = await ctx.runMutation(internal.people.users.applyStatus, {
-      userId,
-      status,
-    });
-    if (clerkUserId) {
-      if (status === "suspended") {
-        await lockClerkUser(clerkUserId);
-      } else {
-        await unlockClerkUser(clerkUserId);
-      }
+    if (target.clerkUserId) {
+      await pushToClerk(ctx, {
+        kind: status === "suspended" ? "lock" : "unlock",
+        clerkUserId: target.clerkUserId,
+      });
     }
-    return { ok: true };
+    return { ok: true as const };
   },
 });
 
-// --- OneDrive permission flags (synced into Clerk public metadata) ----------
+// --- OneDrive permission flags -------------------------------------------------
 
-export const applyGfAccess = internalMutation({
+/** Grant/revoke Geschäftsführung access (admin only). */
+export const setGfAccess = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), gfAccess: v.boolean() },
   handler: async (ctx, { userId, gfAccess }) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -616,29 +583,16 @@ export const applyGfAccess = internalMutation({
       target: target.email,
       at: auditAt,
     });
-    return { clerkUserId: target.clerkUserId, gfAccess };
+    return { ok: true as const };
   },
 });
 
-/** Grant/revoke Geschäftsführung access (admin only). Mirrors into Clerk. */
-export const setGfAccess = action({
-  args: { userId: v.id("users"), gfAccess: v.boolean() },
-  handler: async (ctx, args): Promise<{ ok: true }> => {
-    const { clerkUserId, gfAccess } = await ctx.runMutation(
-      internal.people.users.applyGfAccess,
-      args,
-    );
-    if (clerkUserId) {
-      await updateClerkPublicMetadata(clerkUserId, { gfAccess });
-    }
-    return { ok: true };
-  },
-});
-
-export const applyUploadPermission = internalMutation({
+/** Enable/disable a user's ability to submit upload requests (manager+). */
+export const setUploadPermission = userMutation({
+  role: "manager",
   args: { userId: v.id("users"), enabled: v.boolean() },
   handler: async (ctx, { userId, enabled }) => {
-    const actor = await requireManager(ctx);
+    const actor = ctx.caller.user;
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -658,24 +612,7 @@ export const applyUploadPermission = internalMutation({
       target: target.email,
       at: auditAt,
     });
-    return { clerkUserId: target.clerkUserId, enabled };
-  },
-});
-
-/** Enable/disable a user's ability to submit upload requests (manager+). */
-export const setUploadPermission = action({
-  args: { userId: v.id("users"), enabled: v.boolean() },
-  handler: async (ctx, args): Promise<{ ok: true }> => {
-    const { clerkUserId, enabled } = await ctx.runMutation(
-      internal.people.users.applyUploadPermission,
-      args,
-    );
-    if (clerkUserId) {
-      await updateClerkPublicMetadata(clerkUserId, {
-        uploadRequestsEnabled: enabled,
-      });
-    }
-    return { ok: true };
+    return { ok: true as const };
   },
 });
 
@@ -685,10 +622,9 @@ export const setUploadPermission = action({
  * sensitive); birthdays only for users who set `showBirthdayPublicly`. Only
  * matches month/day, not year — `dateOfBirth`/`hireDate` are "YYYY-MM-DD".
  */
-export const todaysCelebrations = query({
+export const todaysCelebrations = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const now = new Date();
     const todayMonthDay = now.toISOString().slice(5, 10);
     const currentYear = now.getUTCFullYear();
@@ -741,10 +677,9 @@ export const todaysCelebrations = query({
 });
 
 /** Distinct department names for filters. */
-export const departments = query({
+export const departments = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const users = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -758,10 +693,11 @@ export const departments = query({
 // --- Applicant Management (Bewerbermanagement) access -----------------------
 
 /** Admin-only: designate/undesignate a user as an Applicant Access delegate. */
-export const setApplicantDelegate = mutation({
+export const setApplicantDelegate = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), delegate: v.boolean() },
   handler: async (ctx, { userId, delegate }) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     await requireVaultUnlocked(ctx, admin._id);
     const target = await ctx.db.get(userId);
     if (!target) {
@@ -799,10 +735,11 @@ export const setApplicantDelegate = mutation({
  * custom role with `manage_members`) — enforced here even for admins, since
  * it's a data-sensitivity rule, not an authority one.
  */
-export const setApplicantAccess = mutation({
+export const setApplicantAccess = userMutation({
+  applicant: "delegate",
   args: { userId: v.id("users"), access: v.boolean() },
   handler: async (ctx, { userId, access }) => {
-    const actor = await requireApplicantDelegateOrAdmin(ctx);
+    const actor = ctx.caller.user;
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -846,10 +783,10 @@ export const setApplicantAccess = mutation({
 });
 
 /** Users eligible to be granted Applicant Management access, for the picker. */
-export const eligibleForApplicantAccess = query({
+export const eligibleForApplicantAccess = userQuery({
+  applicant: "delegate",
   args: {},
   handler: async (ctx) => {
-    await requireApplicantDelegateOrAdmin(ctx);
     const users = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -875,10 +812,10 @@ export const eligibleForApplicantAccess = query({
 });
 
 /** Admin-only: set a cosmetic display-name override for a user's role badge. */
-export const setRoleLabel = mutation({
+export const setRoleLabel = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), roleLabel: v.optional(v.string()) },
   handler: async (ctx, { userId, roleLabel }) => {
-    await requireAdmin(ctx);
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -891,10 +828,10 @@ export const setRoleLabel = mutation({
 /** Everyone holding more than plain employee access, for the periodic access
  * review: who they are, what they hold, when they were last around, and when
  * someone last confirmed they still need it. */
-export const accessReviewList = query({
+export const accessReviewList = userQuery({
+  role: "admin",
   args: {},
   handler: async (ctx) => {
-    await requireAdmin(ctx);
     const users = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -943,10 +880,11 @@ export const accessReviewList = query({
   },
 });
 
-export const markAccessReviewed = mutation({
+export const markAccessReviewed = userMutation({
+  role: "admin",
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     const user = await ctx.db.get(userId);
     if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
     await ctx.db.patch(userId, { accessReviewedAt: Date.now(), accessReviewedByUserId: admin._id });
@@ -956,10 +894,10 @@ export const markAccessReviewed = mutation({
 
 /** Everything the intranet keeps that belongs to the caller, for "download my
  * data". Other people's content (chat replies, comments) stays out. */
-export const exportMine = query({
+export const exportMine = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const strip = <T extends { _id: unknown; _creationTime: number }>(row: T) => {
       const { _id, _creationTime, ...rest } = row;
       return rest;
@@ -996,6 +934,34 @@ export const exportMine = query({
     const suggestions = (await ctx.db.query("suggestions").collect()).filter(
       (s) => s.authorUserId === user._id,
     );
+    const [messages, announcements, wikiEntries, activityPerson, passkeys, devices] =
+      await Promise.all([
+        ctx.db
+          .query("messages")
+          .withIndex("by_sender", (q) => q.eq("senderUserId", user._id))
+          .order("desc")
+          .take(5000),
+        ctx.db
+          .query("announcements")
+          .withIndex("by_author", (q) => q.eq("authorUserId", user._id))
+          .collect(),
+        ctx.db
+          .query("wikiEntries")
+          .withIndex("by_author", (q) => q.eq("authorUserId", user._id))
+          .collect(),
+        ctx.db
+          .query("people")
+          .withIndex("by_userId", (q) => q.eq("userId", user._id))
+          .first(),
+        ctx.db
+          .query("passkeys")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .collect(),
+        ctx.db
+          .query("knownDevices")
+          .withIndex("by_user_hash", (q) => q.eq("userId", user._id))
+          .collect(),
+      ]);
     const {
       clerkUserId: _clerk,
       webauthnUserId: _webauthn,
@@ -1010,6 +976,26 @@ export const exportMine = query({
       notifications: notifications.map(strip),
       itTickets: tickets.map(strip),
       suggestions: suggestions.map(({ attachments: _a, ...s }) => strip(s)),
+      chatMessages: messages.map(
+        ({ conversationId, body, _creationTime, editedAt, deletedAt }) => ({
+          conversationId,
+          body: deletedAt ? null : body,
+          sentAt: _creationTime,
+          editedAt: editedAt ?? null,
+        }),
+      ),
+      announcements: announcements.map(strip),
+      wikiEntries: wikiEntries.map(strip),
+      activityProfile: activityPerson ? strip(activityPerson) : null,
+      // Names and dates only — never the key material.
+      passkeys: passkeys.map((p) => ({ name: p.name ?? null, createdAt: p._creationTime })),
+      devices: devices.map((d) => ({
+        name: d.name ?? null,
+        browser: d.browser ?? null,
+        os: d.os ?? null,
+        firstSeenAt: d.firstSeenAt,
+        lastSeenAt: d.lastSeenAt,
+      })),
       guidebookReads: guidebookReads.map(({ slug, readAt }) => ({ slug, readAt })),
       aiRuns: aiRuns.map((run) => ({
         kind: run.kind,

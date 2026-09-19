@@ -1,16 +1,17 @@
-import { internalMutation, mutation, query } from "./functions";
+import { internalMutation, userQuery, userMutation } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
-import { isOwnerOrAdmin, requireCapability, requireManager, requireUser } from "./lib/auth";
+import { type Caller } from "./lib/caller";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
 import { escapeHtml } from "./lib/text";
 import { displayName } from "./lib/users";
 import { attachmentValidator, audienceValidator, relevantDateValidator } from "./schema";
+import { moveToTrash } from "./lib/trash";
 
 const INTRANET_BOT_CLERK_USER_ID = "system:intranet-bot";
 
@@ -86,8 +87,8 @@ function announcementOwnerUserId(announcement: Doc<"announcements">): Id<"users"
 }
 
 /** The owner and admins can always see an announcement, regardless of audience. */
-function isVisibleToUser(user: Doc<"users">, a: Doc<"announcements">): boolean {
-  return isOwnerOrAdmin(user, announcementOwnerUserId(a)) || userMatchesAudience(user, a.audience);
+function isVisibleTo(caller: Caller, a: Doc<"announcements">): boolean {
+  return caller.owns(announcementOwnerUserId(a)) || userMatchesAudience(caller.user, a.audience);
 }
 
 /** Read-only: works from both query and mutation handlers (MutationCtx is a QueryCtx plus write access). */
@@ -99,7 +100,8 @@ async function resolveAudienceUserIds(ctx: QueryCtx, audience: Audience): Promis
   return all.filter((u) => userMatchesAudience(u, audience)).map((u) => u._id);
 }
 
-export const create = mutation({
+export const create = userMutation({
+  can: "manage_announcements",
   args: {
     title: v.string(),
     body: v.string(),
@@ -115,7 +117,7 @@ export const create = mutation({
     expiresAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const author = await requireCapability(ctx, "manage_announcements");
+    const author = ctx.caller.user;
     assertAttachmentSizeOk(args.attachments ?? []);
     const now = Date.now();
     // Keep the flat storage-id list in sync (used for cleanup on edit/delete).
@@ -169,7 +171,8 @@ export const create = mutation({
   },
 });
 
-export const announceGuidebook = mutation({
+export const announceGuidebook = userMutation({
+  role: "manager",
   args: {
     guideTitle: v.string(),
     guideDescription: v.optional(v.string()),
@@ -177,7 +180,7 @@ export const announceGuidebook = mutation({
     locale: v.union(v.literal("en"), v.literal("de")),
   },
   handler: async (ctx, args) => {
-    const publisher = await requireManager(ctx);
+    const publisher = ctx.caller.user;
     const botUserId = await getOrCreateIntranetBot(ctx);
     const publisherName = displayName(publisher);
     const description = args.guideDescription?.trim();
@@ -248,7 +251,8 @@ export const notifyPublished = internalMutation({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
+  can: "manage_announcements",
   args: {
     announcementId: v.id("announcements"),
     title: v.optional(v.string()),
@@ -262,12 +266,12 @@ export const update = mutation({
     expiresAt: v.optional(v.union(v.number(), v.null())),
   },
   handler: async (ctx, { announcementId, expiresAt, category, relevantDate, ...patch }) => {
-    const user = await requireCapability(ctx, "manage_announcements");
+    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
     }
-    if (!isOwnerOrAdmin(user, announcementOwnerUserId(announcement))) {
+    if (!ctx.caller.owns(announcementOwnerUserId(announcement))) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the owner or an admin can edit",
@@ -308,47 +312,27 @@ export const update = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
+  can: "manage_announcements",
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = await requireCapability(ctx, "manage_announcements");
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) return { ok: false };
-    if (!isOwnerOrAdmin(user, announcementOwnerUserId(announcement))) {
+    if (!ctx.caller.owns(announcementOwnerUserId(announcement))) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the owner or an admin can delete",
       });
     }
-    for (const sid of announcement.attachmentStorageIds) {
-      await ctx.storage.delete(sid);
-    }
-    // Remove read receipts.
-    const reads = await ctx.db
-      .query("announcementReads")
-      .withIndex("by_announcement_user", (q) => q.eq("announcementId", announcementId))
-      .collect();
-    await Promise.all(reads.map((r) => ctx.db.delete(r._id)));
-    // Remove reactions.
-    const reactions = await ctx.db
-      .query("announcementReactions")
-      .withIndex("by_announcement", (q) => q.eq("announcementId", announcementId))
-      .collect();
-    await Promise.all(reactions.map((r) => ctx.db.delete(r._id)));
-    const acks = await ctx.db
-      .query("announcementAcks")
-      .withIndex("by_announcement", (q) => q.eq("announcementId", announcementId))
-      .collect();
-    await Promise.all(acks.map((r) => ctx.db.delete(r._id)));
-    await ctx.db.delete(announcementId);
+    await moveToTrash(ctx, "announcements", announcementId, ctx.caller.id);
     return { ok: true };
   },
 });
 
-export const list = query({
+export const list = userQuery({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const announcements = await ctx.db
       .query("announcements")
@@ -359,7 +343,7 @@ export const list = query({
     // Scheduled (future) and expired announcements stay visible to their
     // owner and admins (flagged below) but disappear for everyone else.
     const visible = announcements.filter((a) => {
-      const isOwnerOrAdminUser = isOwnerOrAdmin(user, announcementOwnerUserId(a));
+      const isOwnerOrAdminUser = ctx.caller.owns(announcementOwnerUserId(a));
       // The owner/an admin must always see it regardless of audience — a
       // manager targeting a "specific people" audience that excludes
       // themselves would otherwise lose the announcement (and the edit/delete
@@ -500,10 +484,10 @@ export const list = query({
   },
 });
 
-export const markRead = mutation({
+export const markRead = userMutation({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     // An author/admin can view an announcement outside its own audience (see
     // isVisibleToUser in `list`) — that's a management view, not audience
@@ -529,10 +513,10 @@ export const markRead = mutation({
   },
 });
 
-export const unreadCount = query({
+export const unreadCount = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const announcements = await ctx.db
       .query("announcements")
@@ -541,7 +525,7 @@ export const unreadCount = query({
       .take(100);
     const visible = announcements.filter(
       (a) =>
-        isVisibleToUser(user, a) && a.publishedAt <= now && (!a.expiresAt || a.expiresAt > now),
+        isVisibleTo(ctx.caller, a) && a.publishedAt <= now && (!a.expiresAt || a.expiresAt > now),
     );
     const myReads = await ctx.db
       .query("announcementReads")
@@ -554,10 +538,10 @@ export const unreadCount = query({
 
 /** Announcements waiting on the caller: ones asking for a read confirmation
  * they haven't given, and pinned ones they haven't opened. */
-export const needsAttention = query({
+export const needsAttention = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const announcements = await ctx.db
       .query("announcements")
@@ -567,7 +551,7 @@ export const needsAttention = query({
     const pinned = announcements.filter(
       (a) =>
         (a.pinned || a.requiresAck) &&
-        isVisibleToUser(user, a) &&
+        isVisibleTo(ctx.caller, a) &&
         a.publishedAt <= now &&
         (!a.expiresAt || a.expiresAt > now),
     );
@@ -592,12 +576,12 @@ export const needsAttention = query({
   },
 });
 
-export const acknowledge = mutation({
+export const acknowledge = userMutation({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
-    if (!announcement || !isVisibleToUser(user, announcement)) {
+    if (!announcement || !isVisibleTo(ctx.caller, announcement)) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
     }
     const existing = await ctx.db
@@ -617,10 +601,10 @@ export const acknowledge = mutation({
   },
 });
 
-export const markAllRead = mutation({
+export const markAllRead = userMutation({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const announcements = await ctx.db
       .query("announcements")
@@ -633,7 +617,7 @@ export const markAllRead = mutation({
       .collect();
     const readSet = new Set(myReads.map((r) => r.announcementId));
     const unread = announcements.filter(
-      (a) => isVisibleToUser(user, a) && a.publishedAt <= now && !readSet.has(a._id),
+      (a) => isVisibleTo(ctx.caller, a) && a.publishedAt <= now && !readSet.has(a._id),
     );
     await Promise.all(
       unread.map((a) =>
@@ -649,10 +633,10 @@ export const markAllRead = mutation({
 });
 
 /** How many active users a draft's audience would reach (create-dialog preview). */
-export const audienceSize = query({
+export const audienceSize = userQuery({
+  can: "manage_announcements",
   args: { audience: audienceValidator },
   handler: async (ctx, { audience }) => {
-    await requireCapability(ctx, "manage_announcements");
     const activeUsers = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -661,12 +645,12 @@ export const audienceSize = query({
   },
 });
 
-export const toggleReaction = mutation({
+export const toggleReaction = userMutation({
   args: { announcementId: v.id("announcements"), emoji: v.string() },
   handler: async (ctx, { announcementId, emoji }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
-    if (!announcement || !isVisibleToUser(user, announcement)) {
+    if (!announcement || !isVisibleTo(ctx.caller, announcement)) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
     }
     // WhatsApp-style: one reaction per user per announcement.
@@ -700,12 +684,11 @@ export const toggleReaction = mutation({
  * capped avatar sample per emoji for the inline stack, so this is fetched
  * separately, lazily, once the drawer is actually opened.
  */
-export const reactors = query({
+export const reactors = userQuery({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = await requireUser(ctx);
     const announcement = await ctx.db.get(announcementId);
-    if (!announcement || !isVisibleToUser(user, announcement)) {
+    if (!announcement || !isVisibleTo(ctx.caller, announcement)) {
       return [];
     }
     const rows = await ctx.db
@@ -731,12 +714,11 @@ export const reactors = query({
 });
 
 /** Users who have viewed (read) an announcement — for the "seen by" popover. */
-export const viewers = query({
+export const viewers = userQuery({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = await requireUser(ctx);
     const announcement = await ctx.db.get(announcementId);
-    if (!announcement || !isVisibleToUser(user, announcement)) {
+    if (!announcement || !isVisibleTo(ctx.caller, announcement)) {
       return [];
     }
     const reads = await ctx.db
@@ -766,13 +748,12 @@ export const viewers = query({
  * (unlike `viewers`, this is a nudge-to-follow-up tool, not something every
  * reader should see about their colleagues).
  */
-export const nonReaders = query({
+export const nonReaders = userQuery({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = await requireUser(ctx);
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) return [];
-    if (!isOwnerOrAdmin(user, announcementOwnerUserId(announcement))) {
+    if (!ctx.caller.owns(announcementOwnerUserId(announcement))) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the owner or an admin can see who hasn't read this",

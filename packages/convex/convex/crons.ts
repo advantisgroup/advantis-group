@@ -63,6 +63,18 @@ if (process.env.DISABLE_CRONS !== "true") {
   );
 
   crons.daily(
+    "hr: delete archived applicants past their retention period",
+    { hourUTC: 2, minuteUTC: 40 },
+    internal.hr.retention.purgeExpiredApplicants,
+    {},
+  );
+  crons.daily(
+    "trash: purge items deleted over 30 days ago",
+    { hourUTC: 2, minuteUTC: 30 },
+    internal.org.trash.purgeExpired,
+    {},
+  );
+  crons.daily(
     "activity: prune old raw samples",
     { hourUTC: 3, minuteUTC: 0 },
     internal.activity.maintenance.pruneOldSamples,

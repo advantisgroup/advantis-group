@@ -1,8 +1,7 @@
-import { mutation, query } from "../functions";
+import { query, userQuery, userMutation } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc } from "../_generated/dataModel";
-import { requireUser } from "../lib/auth";
 
 function toLexikonSummary(entry: Doc<"salesCockpitLexikon">) {
   return {
@@ -17,16 +16,15 @@ function toLexikonSummary(entry: Doc<"salesCockpitLexikon">) {
   };
 }
 
-export const listLexikon = query({
+export const listLexikon = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const entries = await ctx.db.query("salesCockpitLexikon").withIndex("by_createdAt").collect();
     return entries.sort((a, b) => b.createdAt - a.createdAt).map(toLexikonSummary);
   },
 });
 
-export const uploadLexikon = mutation({
+export const uploadLexikon = userMutation({
   args: {
     titel: v.string(),
     tags: v.array(v.string()),
@@ -37,7 +35,7 @@ export const uploadLexikon = mutation({
     content: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (!args.titel.trim()) {
       throw new ConvexError({ code: "bad_request", message: "Bitte einen Titel eingeben" });
     }
@@ -56,10 +54,9 @@ export const uploadLexikon = mutation({
   },
 });
 
-export const removeLexikon = mutation({
+export const removeLexikon = userMutation({
   args: { entryId: v.id("salesCockpitLexikon") },
   handler: async (ctx, { entryId }) => {
-    await requireUser(ctx);
     const entry = await ctx.db.get(entryId);
     if (!entry) return { ok: false };
     await ctx.db.delete(entryId);
@@ -71,10 +68,9 @@ export const removeLexikon = mutation({
 /** Case-insensitive substring match over title, tags, file name and (for
  *  text files) extracted content — mirrors the prototype's `lexSearchAll`,
  *  scoring and snippet extraction included, just moved server-side. */
-export const searchLexikon = query({
+export const searchLexikon = userQuery({
   args: { query: v.string() },
   handler: async (ctx, { query: rawQuery }) => {
-    await requireUser(ctx);
     const q = rawQuery.trim().toLowerCase();
     if (!q) return [];
     const entries = await ctx.db.query("salesCockpitLexikon").collect();

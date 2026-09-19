@@ -438,7 +438,10 @@
       "flagOff": "{key} is switched off",
       "source": {
         "genesys": "Genesys",
-        "clockodo": "Clockodo"
+        "clockodo": "Clockodo",
+        "clerk": "Clerk webhooks",
+        "resend": "Resend webhooks",
+        "onedrive": "OneDrive webhooks"
       },
       "status": {
         "ok": "Healthy",
@@ -466,6 +469,33 @@
       "hint": "Privileged actions across every subsystem",
       "empty": "No admin actions recorded yet.",
       "unknown": "unknown"
+    },
+    "backups": {
+      "title": "Backups",
+      "hint": "Nightly encrypted copy in OneDrive",
+      "last": {
+        "ok": "Last backup {age} ago",
+        "failed": "Last backup failed {age} ago"
+      },
+      "nights": "{ok} of the last {total} nights",
+      "none": "No offsite backup yet",
+      "noneHint": "Set it up with docs/backups.md",
+      "test": {
+        "ok": "Restore tested {age} ago",
+        "failed": "Restore test failed {age} ago"
+      },
+      "neverTested": "Restore never tested",
+      "neverTestedHint": "Worth doing once a quarter",
+      "logRestoreTest": "Log restore test",
+      "logHint": "After restoring the latest backup into a preview deployment (docs/backups.md).",
+      "result": {
+        "ok": "Worked",
+        "failed": "Didn't work"
+      },
+      "note": "Note",
+      "notePlaceholder": "What you checked, or what went wrong",
+      "save": "Save",
+      "logged": "Restore test logged"
     }
   },
   "linkedAccountsNoRole": "Linked, no role yet",

@@ -1,8 +1,7 @@
 import { v } from "convex/values";
 
-import { query } from "../functions";
+import { userQuery } from "../functions";
 import type { QueryCtx } from "../_generated/server";
-import { requireCapability } from "../lib/auth";
 import { readConfig } from "./lib/settings";
 
 /**
@@ -30,10 +29,10 @@ async function latestSample(ctx: QueryCtx, deviceId: string) {
  * Team overview: every approved device, who it belongs to, whether the person
  * is active right now, and how much active time they've logged today.
  */
-export const teamOverview = query({
+export const teamOverview = userQuery({
+  can: "view_activity_admin",
   args: {},
   handler: async (ctx) => {
-    await requireCapability(ctx, "view_activity_admin");
     const now = Date.now();
     const config = await readConfig(ctx);
     const onlineThresholdMs = config.offlineThresholdSeconds * 1000;
@@ -135,10 +134,10 @@ export const teamOverview = query({
  * data as `teamOverview`, reduced to totals so the widget doesn't pull the
  * full per-device payload just to render a few numbers.
  */
-export const dashboardSummary = query({
+export const dashboardSummary = userQuery({
+  can: "view_activity_admin",
   args: {},
   handler: async (ctx) => {
-    await requireCapability(ctx, "view_activity_admin");
     const now = Date.now();
     const config = await readConfig(ctx);
     const onlineThresholdMs = config.offlineThresholdSeconds * 1000;
@@ -193,14 +192,14 @@ export const dashboardSummary = query({
 });
 
 /** Daily stats for one device across a [startDay, endDay] inclusive range. */
-export const dailyRange = query({
+export const dailyRange = userQuery({
+  can: "view_activity_admin",
   args: {
     deviceId: v.string(),
     startDay: v.string(),
     endDay: v.string(),
   },
   handler: async (ctx, { deviceId, startDay, endDay }) => {
-    await requireCapability(ctx, "view_activity_admin");
     return await ctx.db
       .query("dailyStats")
       .withIndex("by_device_day", (q) =>
@@ -211,13 +210,13 @@ export const dailyRange = query({
 });
 
 /** Recent raw samples for a device (per-person timeline). Capped. */
-export const recentSamples = query({
+export const recentSamples = userQuery({
+  can: "view_activity_admin",
   args: {
     deviceId: v.string(),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { deviceId, limit }) => {
-    await requireCapability(ctx, "view_activity_admin");
     return await ctx.db
       .query("activitySamples")
       .withIndex("by_device_time", (q) => q.eq("deviceId", deviceId))
@@ -232,14 +231,14 @@ export const recentSamples = query({
  * new inserts never invalidate it, so Convex serves repeat visits from the
  * query cache without re-reading the table. "Today" reads only today's rows.
  */
-export const samplesForDay = query({
+export const samplesForDay = userQuery({
+  can: "view_activity_admin",
   args: {
     deviceId: v.string(),
     startMs: v.number(),
     endMs: v.number(),
   },
   handler: async (ctx, { deviceId, startMs, endMs }) => {
-    await requireCapability(ctx, "view_activity_admin");
     return await ctx.db
       .query("activitySamples")
       .withIndex("by_device_time", (q) =>
@@ -251,7 +250,8 @@ export const samplesForDay = query({
 });
 
 /** Per-employee export bundle for a [startDay, endDay] range. Capped. */
-export const exportDevice = query({
+export const exportDevice = userQuery({
+  can: "view_activity_admin",
   args: {
     deviceId: v.string(),
     startDay: v.string(),
@@ -259,8 +259,6 @@ export const exportDevice = query({
     sampleLimit: v.optional(v.number()),
   },
   handler: async (ctx, { deviceId, startDay, endDay, sampleLimit }) => {
-    await requireCapability(ctx, "view_activity_admin");
-
     const daily = await ctx.db
       .query("dailyStats")
       .withIndex("by_device_day", (q) =>

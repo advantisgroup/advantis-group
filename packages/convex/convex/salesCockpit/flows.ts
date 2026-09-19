@@ -1,9 +1,8 @@
-import { mutation, query } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
-import { requireUser } from "../lib/auth";
 
 function toFlowSummary(flow: Doc<"salesCockpitFlows">) {
   return {
@@ -27,10 +26,9 @@ function toNode(node: Doc<"salesCockpitFlowNodes">) {
   };
 }
 
-export const listFlows = query({
+export const listFlows = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const flows = await ctx.db.query("salesCockpitFlows").withIndex("by_createdAt").collect();
     const projects = await ctx.db.query("salesCockpitProjects").collect();
     const projectTitleById = new Map(projects.map((p) => [p._id, p.titel]));
@@ -53,10 +51,9 @@ export const listFlows = query({
   },
 });
 
-export const getFlow = query({
+export const getFlow = userQuery({
   args: { flowId: v.id("salesCockpitFlows") },
   handler: async (ctx, { flowId }) => {
-    await requireUser(ctx);
     const flow = await ctx.db.get(flowId);
     if (!flow) throw new ConvexError({ code: "not_found", message: "Flow nicht gefunden" });
     const project = flow.projectId ? await ctx.db.get(flow.projectId) : null;
@@ -72,10 +69,10 @@ export const getFlow = query({
   },
 });
 
-export const createFlow = mutation({
+export const createFlow = userMutation({
   args: { titel: v.string(), projectId: v.optional(v.id("salesCockpitProjects")) },
   handler: async (ctx, { titel, projectId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const trimmed = titel.trim();
     if (!trimmed)
       throw new ConvexError({ code: "bad_request", message: "Bitte einen Titel eingeben" });
@@ -106,10 +103,9 @@ export const createFlow = mutation({
   },
 });
 
-export const renameFlow = mutation({
+export const renameFlow = userMutation({
   args: { flowId: v.id("salesCockpitFlows"), titel: v.string() },
   handler: async (ctx, { flowId, titel }) => {
-    await requireUser(ctx);
     const trimmed = titel.trim();
     if (!trimmed)
       throw new ConvexError({ code: "bad_request", message: "Bitte einen Titel eingeben" });
@@ -120,10 +116,9 @@ export const renameFlow = mutation({
   },
 });
 
-export const removeFlow = mutation({
+export const removeFlow = userMutation({
   args: { flowId: v.id("salesCockpitFlows") },
   handler: async (ctx, { flowId }) => {
-    await requireUser(ctx);
     const nodes = await ctx.db
       .query("salesCockpitFlowNodes")
       .withIndex("by_flow", (q) => q.eq("flowId", flowId))
@@ -134,7 +129,7 @@ export const removeFlow = mutation({
   },
 });
 
-export const upsertNode = mutation({
+export const upsertNode = userMutation({
   args: {
     flowId: v.id("salesCockpitFlows"),
     nodeId: v.optional(v.id("salesCockpitFlowNodes")),
@@ -146,7 +141,6 @@ export const upsertNode = mutation({
     y: v.number(),
   },
   handler: async (ctx, { flowId, nodeId, parentId, branchLabel, title, body, x, y }) => {
-    await requireUser(ctx);
     const flow = await ctx.db.get(flowId);
     if (!flow) throw new ConvexError({ code: "not_found", message: "Flow nicht gefunden" });
     const now = Date.now();
@@ -193,10 +187,9 @@ export const upsertNode = mutation({
   },
 });
 
-export const moveNode = mutation({
+export const moveNode = userMutation({
   args: { nodeId: v.id("salesCockpitFlowNodes"), x: v.number(), y: v.number() },
   handler: async (ctx, { nodeId, x, y }) => {
-    await requireUser(ctx);
     const node = await ctx.db.get(nodeId);
     if (!node) return { ok: false };
     await ctx.db.patch(nodeId, { x, y });
@@ -217,10 +210,9 @@ async function deleteSubtree(ctx: MutationCtx, nodeId: Id<"salesCockpitFlowNodes
   await ctx.db.delete(nodeId);
 }
 
-export const removeNode = mutation({
+export const removeNode = userMutation({
   args: { nodeId: v.id("salesCockpitFlowNodes") },
   handler: async (ctx, { nodeId }) => {
-    await requireUser(ctx);
     const node = await ctx.db.get(nodeId);
     if (!node) return { ok: false };
     if (!node.parentId) {

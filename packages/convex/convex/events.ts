@@ -1,17 +1,18 @@
-import { mutation, query } from "./functions";
+import { userQuery, userMutation } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc } from "./_generated/dataModel";
-import { isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
 import { userMatchesAudience } from "./lib/audience";
 import { audienceValidator, richDateKindValidator } from "./schema";
+import { moveToTrash } from "./lib/trash";
 
 function displayName(user: Doc<"users"> | null): string {
   if (!user) return "Unknown";
   return [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
 }
 
-export const create = mutation({
+export const create = userMutation({
+  can: "manage_announcements",
   args: {
     title: v.string(),
     description: v.optional(v.string()),
@@ -23,7 +24,7 @@ export const create = mutation({
     audience: audienceValidator,
   },
   handler: async (ctx, args) => {
-    const user = await requireCapability(ctx, "manage_announcements");
+    const user = ctx.caller.user;
     if (args.end < args.start) {
       throw new ConvexError({
         code: "bad_request",
@@ -41,7 +42,8 @@ export const create = mutation({
 
 /** Creates a short, explicit weekly series. Each occurrence stays a normal
  * event so editing or deleting one never needs recurrence-rule machinery. */
-export const createWeeklySeries = mutation({
+export const createWeeklySeries = userMutation({
+  can: "manage_announcements",
   args: {
     title: v.string(),
     description: v.optional(v.string()),
@@ -54,7 +56,7 @@ export const createWeeklySeries = mutation({
     occurrences: v.number(),
   },
   handler: async (ctx, { occurrences, ...event }) => {
-    const user = await requireCapability(ctx, "manage_announcements");
+    const user = ctx.caller.user;
     if (!Number.isInteger(occurrences) || occurrences < 2 || occurrences > 12) {
       throw new ConvexError({ code: "bad_request", message: "Choose 2 to 12 occurrences" });
     }
@@ -78,7 +80,7 @@ export const createWeeklySeries = mutation({
   },
 });
 
-export const addRichDateToMine = mutation({
+export const addRichDateToMine = userMutation({
   args: {
     richDateId: v.string(),
     title: v.string(),
@@ -91,7 +93,7 @@ export const addRichDateToMine = mutation({
     automatic: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const richDateId = args.richDateId.trim();
     const title = args.title.trim();
     if (!richDateId || !title) {
@@ -152,7 +154,8 @@ export const addRichDateToMine = mutation({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
+  can: "manage_announcements",
   args: {
     eventId: v.id("events"),
     title: v.optional(v.string()),
@@ -165,12 +168,11 @@ export const update = mutation({
     audience: v.optional(audienceValidator),
   },
   handler: async (ctx, { eventId, ...patch }) => {
-    const user = await requireCapability(ctx, "manage_announcements");
     const event = await ctx.db.get(eventId);
     if (!event) {
       throw new ConvexError({ code: "not_found", message: "Event not found" });
     }
-    if (!isOwnerOrAdmin(user, event.createdByUserId)) {
+    if (!ctx.caller.owns(event.createdByUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the creator or an admin can edit this event",
@@ -181,10 +183,10 @@ export const update = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
   args: { eventId: v.id("events") },
   handler: async (ctx, { eventId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const event = await ctx.db.get(eventId);
     if (!event) return { ok: false };
     if (event.personalForUserId === user._id) {
@@ -192,23 +194,23 @@ export const remove = mutation({
       await ctx.db.patch(eventId, { dismissedAt: Date.now(), updatedAt: Date.now() });
       return { ok: true };
     }
-    const manager = await requireCapability(ctx, "manage_announcements");
-    if (!isOwnerOrAdmin(manager, event.createdByUserId)) {
+    ctx.caller.require("manage_announcements");
+    if (!ctx.caller.owns(event.createdByUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the creator or an admin can delete this event",
       });
     }
-    await ctx.db.delete(eventId);
+    await moveToTrash(ctx, "events", eventId, ctx.caller.id);
     return { ok: true };
   },
 });
 
 /** Events overlapping [start, end] visible to the current user's audience. */
-export const listForRange = query({
+export const listForRange = userQuery({
   args: { start: v.number(), end: v.number() },
   handler: async (ctx, { start, end }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const events = await ctx.db
       .query("events")
       .withIndex("by_start", (q) => q.lte("start", end))

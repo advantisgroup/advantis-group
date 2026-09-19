@@ -428,7 +428,9 @@ export async function uploadFile(
   return uploadLarge(parentId, name, bytes);
 }
 
-async function uploadLarge(parentId: string, name: string, bytes: Uint8Array): Promise<GraphItem> {
+/** A pre-authorised URL the file's bytes can be PUT to in chunks, by anyone
+ * holding it, for about a day. */
+export async function createUploadSession(parentId: string, name: string): Promise<string> {
   const session = await graphFetch<{ uploadUrl: string }>(
     itemUrl(parentId, `:/${encodeURIComponent(name)}:/createUploadSession`),
     {
@@ -440,6 +442,11 @@ async function uploadLarge(parentId: string, name: string, bytes: Uint8Array): P
     },
     "createUploadSession",
   );
+  return session.uploadUrl;
+}
+
+async function uploadLarge(parentId: string, name: string, bytes: Uint8Array): Promise<GraphItem> {
+  const uploadUrl = await createUploadSession(parentId, name);
   const total = bytes.byteLength;
   let offset = 0;
   let lastBody: GraphItem | null = null;
@@ -449,7 +456,7 @@ async function uploadLarge(parentId: string, name: string, bytes: Uint8Array): P
     // The upload URL is pre-authorised — no bearer token, talk to it directly.
     let res: Response;
     try {
-      res = await fetch(session.uploadUrl, {
+      res = await fetch(uploadUrl, {
         method: "PUT",
         headers: {
           "content-length": String(chunk.byteLength),

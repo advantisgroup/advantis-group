@@ -3,13 +3,13 @@ import { Elysia, t } from "elysia";
 
 import { unlockVaultWithPasskey } from "../lib/applicantVault.js";
 import { rateLimit } from "../lib/rate-limit.js";
-import { requireAuth, requireFirstPartyOrigin } from "../lib/middleware.js";
+import { requireFirstPartyOrigin, authed } from "../lib/middleware.js";
 
-export const applicantVaultRoute = new Elysia().post(
+export const applicantVaultRoute = new Elysia().use(authed).post(
   "/applicant-vault/unlock-passkey",
-  async ({ request, body }) => {
+  async ({ caller, request, body }) => {
     requireFirstPartyOrigin(request);
-    const { clerkUserId } = await requireAuth(request);
+    const { clerkUserId } = caller;
     await rateLimit("applicant-vault-unlock-passkey", clerkUserId, 20, "10 m");
     await unlockVaultWithPasskey(
       clerkUserId,
@@ -18,5 +18,8 @@ export const applicantVaultRoute = new Elysia().post(
     );
     return { ok: true };
   },
-  { body: t.Object({ flowId: t.String(), response: t.Any() }) },
+  {
+    signedIn: true,
+    body: t.Object({ flowId: t.String(), response: t.Any() }),
+  },
 );

@@ -1,9 +1,9 @@
 import { v } from "convex/values";
 
-import { gatedMutation, query } from "../functions";
+import { gatedMutation, query, userQuery } from "../functions";
 import type { QueryCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
-import { requireUser, requireCapability, hasCapability } from "../lib/auth";
+import { requireSessionCaller } from "../lib/caller";
 import { appError } from "../lib/errors";
 import { safeEqual } from "./lib/crypto";
 import { getActivitySubprofile } from "./lib/people";
@@ -56,7 +56,7 @@ const CLOCKODO_STATE_FIELDS = {
 function assertSignalSecret(secret: string): void {
   const expected = process.env.ACTIVITYTRACK_SIGNAL_SECRET;
   if (!expected || !safeEqual(secret, expected)) {
-    throw appError("auth.forbidden", "Invalid signal secret");
+    throw appError("forbidden", "Invalid signal secret");
   }
 }
 
@@ -147,12 +147,12 @@ export const reportHealth = gatedMutation("activitytrack")({
   },
 });
 
-/** Reactive read of every integration's health, for the dashboard banner. */
-export const health = query({
+/** Reactive read of Genesys and Clockodo health, for the dashboard banner. */
+export const health = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
-    return await ctx.db.query("integrationHealth").collect();
+    const rows = await ctx.db.query("integrationHealth").collect();
+    return rows.filter((row) => row.source === "genesys" || row.source === "clockodo");
   },
 });
 
@@ -178,11 +178,10 @@ export const mappings = query({
  * a custom role granted the capability) rather than just being signed in —
  * use `myState` for a caller's own status.
  */
-export const overview = query({
+export const overview = userQuery({
+  can: "view_activity_admin",
   args: {},
   handler: async (ctx) => {
-    await requireCapability(ctx, "view_activity_admin");
-
     const rows = await ctx.db.query("employeeStates").take(2000);
 
     const people = await ctx.db.query("people").take(2000);
@@ -224,11 +223,11 @@ export const overview = query({
  * nothing in between is legitimate.
  */
 async function requireSelfOrActivityAdmin(ctx: QueryCtx, employeeId: string): Promise<void> {
-  const user = await requireUser(ctx);
-  const subprofile = await getActivitySubprofile(ctx, user._id);
+  const caller = await requireSessionCaller(ctx);
+  const subprofile = await getActivitySubprofile(ctx, caller.id);
   if (subprofile.employeeId === employeeId) return;
-  if (await hasCapability(ctx, "view_activity_admin")) return;
-  throw appError("auth.forbidden", "You do not have permission to view this employee's data");
+  if (caller.can("view_activity_admin")) return;
+  throw appError("forbidden", "You do not have permission to view this employee's data");
 }
 
 /** Reactive single-employee read (timeline / detail panes). */
@@ -246,7 +245,7 @@ export const get = query({
  * regardless of `view_activity_admin`. Returns `null` for callers with no
  * `people` roster row (not everyone is on the ActivityTrack roster).
  */
-export const myState = query({
+export const myState = userQuery({
   args: {},
   returns: v.union(
     v.null(),
@@ -258,7 +257,7 @@ export const myState = query({
     }),
   ),
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const subprofile = await getActivitySubprofile(ctx, user._id);
     if (!subprofile.employeeId) return null;
     const state = await getStateRow(ctx, subprofile.employeeId);
@@ -276,7 +275,7 @@ export const myState = query({
   },
 });
 
-export const stateBatch = query({
+export const stateBatch = userQuery({
   args: {
     employeeIds: v.optional(v.array(v.string())),
     since: v.number(),
@@ -296,13 +295,13 @@ export const stateBatch = query({
     }),
   ),
   handler: async (ctx, { employeeIds = [], since }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
 
     const subprofile = await getActivitySubprofile(ctx, user._id);
     // Requesting anyone else's employeeId requires view_activity_admin; a
     // caller without it only ever gets their own state back, same as if
     // they'd asked for nothing at all (see requireSelfOrActivityAdmin above).
-    const canViewOthers = await hasCapability(ctx, "view_activity_admin");
+    const canViewOthers = ctx.caller.can("view_activity_admin");
     const requested = canViewOthers ? employeeIds : [];
 
     const ids = [
@@ -367,7 +366,7 @@ export const stateBatch = query({
  * is on the roster, and the caller should fall back to a different signal
  * rather than showing a false "not in office".
  */
-export const inOfficeForUsers = query({
+export const inOfficeForUsers = userQuery({
   args: { userIds: v.array(v.id("users")) },
   returns: v.array(
     v.object({
@@ -376,7 +375,6 @@ export const inOfficeForUsers = query({
     }),
   ),
   handler: async (ctx, { userIds }) => {
-    await requireUser(ctx);
     const ids = userIds.slice(0, 500);
     return await Promise.all(
       ids.map(async (userId) => {
@@ -404,7 +402,8 @@ export const inOfficeForUsers = query({
  * stored as a string — converted internally) so the admin panel doesn't
  * need its own copy of that conversion.
  */
-export const clockodoStatusForRoster = query({
+export const clockodoStatusForRoster = userQuery({
+  can: "view_clockodo_team",
   args: { clockodoUserIds: v.array(v.number()) },
   returns: v.array(
     v.object({
@@ -413,7 +412,6 @@ export const clockodoStatusForRoster = query({
     }),
   ),
   handler: async (ctx, { clockodoUserIds }) => {
-    await requireCapability(ctx, "view_clockodo_team");
     const ids = clockodoUserIds.slice(0, 500);
     return await Promise.all(
       ids.map(async (clockodoUserId) => {
@@ -440,7 +438,7 @@ export const clockodoStatusForRoster = query({
  * not open one subscription per card. No prior-day row is prepended — the
  * strips are today-only and must not extend yesterday's state from midnight.
  */
-export const historyBatch = query({
+export const historyBatch = userQuery({
   args: { employeeIds: v.optional(v.array(v.string())), since: v.number() },
   returns: v.array(
     v.object({
@@ -449,11 +447,11 @@ export const historyBatch = query({
     }),
   ),
   handler: async (ctx, { employeeIds, since }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const subprofile = await getActivitySubprofile(ctx, user._id);
     // Same rule as stateBatch: only an admin-capable caller can pull other
     // employees' history, e.g. the overview grid's per-card strips.
-    const canViewOthers = await hasCapability(ctx, "view_activity_admin");
+    const canViewOthers = ctx.caller.can("view_activity_admin");
     const requested = canViewOthers ? (employeeIds ?? []) : [];
 
     const ids = [
@@ -546,10 +544,10 @@ export const discardedHistory = query({
  * rejected signals in one list is what makes systemic patterns visible (e.g.
  * "every PC 'woke up' at 02:00" = an integration bug, not people working).
  */
-export const discardedRecent = query({
+export const discardedRecent = userQuery({
+  can: "view_activity_admin",
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
-    await requireCapability(ctx, "view_activity_admin");
     const rows = await ctx.db
       .query("discardedStateSamples")
       .withIndex("by_at")

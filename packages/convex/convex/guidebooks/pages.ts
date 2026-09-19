@@ -1,7 +1,6 @@
-import { mutation, query } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
-
-import { isOwnerOrAdmin, requireCapability, requireUser } from "../lib/auth";
+import { moveToTrash } from "../lib/trash";
 
 const pageFields = {
   title: v.string(),
@@ -15,10 +14,9 @@ const pageFields = {
 
 /** Everything (unfiltered) — the guidebooks list page applies the same
  * team/role access check to these as it does to the hardcoded registry. */
-export const list = query({
+export const list = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const rows = await ctx.db.query("guidebookPages").collect();
     return rows.map((p) => ({
       _id: p._id,
@@ -35,10 +33,9 @@ export const list = query({
   },
 });
 
-export const get = query({
+export const get = userQuery({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
-    await requireUser(ctx);
     const page = await ctx.db
       .query("guidebookPages")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
@@ -65,10 +62,11 @@ export const get = query({
 /** Requires the manage_guidebooks capability — the frontend computes a unique slug (checked against both this
  * table and the static registry, which Convex doesn't know about) before
  * calling this; the uniqueness check here is just a defensive race guard. */
-export const create = mutation({
+export const create = userMutation({
+  can: "manage_guidebooks",
   args: { slug: v.string(), ...pageFields },
   handler: async (ctx, args) => {
-    const user = await requireCapability(ctx, "manage_guidebooks");
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("guidebookPages")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
@@ -85,13 +83,13 @@ export const create = mutation({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
+  can: "manage_guidebooks",
   args: { pageId: v.id("guidebookPages"), ...pageFields },
   handler: async (ctx, { pageId, ...patch }) => {
-    const user = await requireCapability(ctx, "manage_guidebooks");
     const page = await ctx.db.get(pageId);
     if (!page) throw new ConvexError({ code: "not_found", message: "Not found" });
-    if (!isOwnerOrAdmin(user, page.authorUserId)) {
+    if (!ctx.caller.owns(page.authorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the author or an admin can edit this",
@@ -108,22 +106,19 @@ export const update = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
+  can: "manage_guidebooks",
   args: { pageId: v.id("guidebookPages") },
   handler: async (ctx, { pageId }) => {
-    const user = await requireCapability(ctx, "manage_guidebooks");
     const page = await ctx.db.get(pageId);
     if (!page) return { ok: false };
-    if (!isOwnerOrAdmin(user, page.authorUserId)) {
+    if (!ctx.caller.owns(page.authorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the author or an admin can delete this",
       });
     }
-    for (const sid of page.imageStorageIds) {
-      await ctx.storage.delete(sid);
-    }
-    await ctx.db.delete(pageId);
+    await moveToTrash(ctx, "guidebookPages", pageId, ctx.caller.id);
     return { ok: true };
   },
 });

@@ -1,10 +1,10 @@
-import { mutation, query } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Id } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
 import { DEFAULT_THRESHOLDS } from "./lib/thresholds";
-import { requireManager, requireUser } from "../lib/auth";
+import { moveToTrash } from "../lib/trash";
 
 const phaseValidator = v.union(
   v.literal("d3_sofort"),
@@ -51,10 +51,9 @@ function validateRelatedLinks(links: Array<{ label: string; url: string }>) {
 }
 
 /** All 8D-PDCA measures, newest first. `errorReportId` narrows to one error. */
-export const list = query({
+export const list = userQuery({
   args: { errorReportId: v.optional(v.id("errorReports")) },
   handler: async (ctx, { errorReportId }) => {
-    await requireUser(ctx);
     const rows = errorReportId
       ? await ctx.db
           .query("errorMeasures")
@@ -86,10 +85,9 @@ export const list = query({
 
 /** Same-category error reports in the 30 days before a measure was completed
  * versus the 30 days after — a quick read on whether it worked. */
-export const effectiveness = query({
+export const effectiveness = userQuery({
   args: { measureId: v.id("errorMeasures") },
   handler: async (ctx, { measureId }) => {
-    await requireUser(ctx);
     const measure = await ctx.db.get(measureId);
     if (!measure?.completedAt) return null;
     const report = await ctx.db.get(measure.errorReportId);
@@ -116,10 +114,10 @@ export const effectiveness = query({
 });
 
 /** Open measures the caller owns, earliest due first. */
-export const listMineOpen = query({
+export const listMineOpen = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const rows = await ctx.db
       .query("errorMeasures")
       .withIndex("by_status", (q) => q.eq("status", "offen"))
@@ -136,7 +134,7 @@ export const listMineOpen = query({
   },
 });
 
-export const create = mutation({
+export const create = userMutation({
   args: {
     errorReportId: v.id("errorReports"),
     description: v.string(),
@@ -147,7 +145,7 @@ export const create = mutation({
     dueAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const description = args.description.trim();
     if (!description)
       throw new ConvexError({ code: "bad_request", message: "Description required" });
@@ -180,7 +178,7 @@ export const create = mutation({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
   args: {
     measureId: v.id("errorMeasures"),
     patch: v.object({
@@ -195,7 +193,6 @@ export const update = mutation({
     }),
   },
   handler: async (ctx, { measureId, patch }) => {
-    await requireUser(ctx);
     const measure = await ctx.db.get(measureId);
     if (!measure) throw new ConvexError({ code: "not_found", message: "Not found" });
     if (patch.ownerUserId) {
@@ -216,16 +213,16 @@ export const update = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
+  role: "manager",
   args: { measureId: v.id("errorMeasures") },
   handler: async (ctx, { measureId }) => {
-    await requireManager(ctx);
-    await ctx.db.delete(measureId);
+    await moveToTrash(ctx, "errorMeasures", measureId, ctx.caller.id);
     return { ok: true };
   },
 });
 
-export const addDocument = mutation({
+export const addDocument = userMutation({
   args: {
     measureId: v.id("errorMeasures"),
     storageId: v.id("_storage"),
@@ -234,7 +231,7 @@ export const addDocument = mutation({
     size: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const measure = await ctx.db.get(args.measureId);
     if (!measure) throw new ConvexError({ code: "not_found", message: "Measure not found" });
     return ctx.db.insert("errorMeasureDocuments", {
@@ -249,10 +246,9 @@ export const addDocument = mutation({
   },
 });
 
-export const listDocuments = query({
+export const listDocuments = userQuery({
   args: { measureId: v.id("errorMeasures") },
   handler: async (ctx, { measureId }) => {
-    await requireUser(ctx);
     const measure = await ctx.db.get(measureId);
     if (!measure) throw new ConvexError({ code: "not_found", message: "Measure not found" });
     const documents = await ctx.db
@@ -271,10 +267,10 @@ export const listDocuments = query({
   },
 });
 
-export const removeDocument = mutation({
+export const removeDocument = userMutation({
+  role: "manager",
   args: { documentId: v.id("errorMeasureDocuments") },
   handler: async (ctx, { documentId }) => {
-    await requireManager(ctx);
     const document = await ctx.db.get(documentId);
     if (!document) return { ok: true };
     await ctx.storage.delete(document.storageId);

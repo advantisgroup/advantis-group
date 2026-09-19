@@ -1,4 +1,4 @@
-import { mutation, query, serverMutation, serverQuery } from "../functions";
+import { serverMutation, serverQuery, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
@@ -10,8 +10,9 @@ import {
   terminArtValidator,
   terminTypValidator,
 } from "../schema";
-import { getUserByClerkId, hasApplicantAccess, requireApplicantAccess } from "../lib/auth";
 import { batchUserSummaries, toUserSummary } from "../lib/users";
+import { getServerCaller } from "../lib/caller";
+import { purgeApplicant } from "../hr/lib/retention";
 
 /**
  * Bewerbermanagement (Applicant Management). Everything below is gated by
@@ -47,19 +48,20 @@ function kontaktArtFromTerminArt(
 // Skill profiles
 // ===========================================================================
 
-export const listProfiles = query({
+export const listProfiles = userQuery({
+  applicant: "access",
   args: {},
   handler: async (ctx) => {
-    await requireApplicantAccess(ctx);
     const profiles = await ctx.db.query("applicantSkillProfiles").collect();
     return profiles.sort((a, b) => a.name.localeCompare(b.name));
   },
 });
 
-export const createProfile = mutation({
+export const createProfile = userMutation({
+  applicant: "access",
   args: { name: v.string(), skills: v.array(v.string()) },
   handler: async (ctx, { name, skills }) => {
-    const user = await requireApplicantAccess(ctx);
+    const user = ctx.caller.user;
     const trimmed = name.trim();
     const existing = await ctx.db.query("applicantSkillProfiles").collect();
     if (existing.some((p) => p.name.toLowerCase() === trimmed.toLowerCase())) {
@@ -77,14 +79,14 @@ export const createProfile = mutation({
   },
 });
 
-export const updateProfile = mutation({
+export const updateProfile = userMutation({
+  applicant: "access",
   args: {
     profilId: v.id("applicantSkillProfiles"),
     name: v.optional(v.string()),
     skills: v.optional(v.array(v.string())),
   },
   handler: async (ctx, { profilId, name, skills }) => {
-    await requireApplicantAccess(ctx);
     await ctx.db.patch(profilId, {
       ...(name !== undefined ? { name: name.trim() } : {}),
       ...(skills !== undefined ? { skills } : {}),
@@ -93,10 +95,10 @@ export const updateProfile = mutation({
   },
 });
 
-export const removeProfile = mutation({
+export const removeProfile = userMutation({
+  applicant: "access",
   args: { profilId: v.id("applicantSkillProfiles") },
   handler: async (ctx, { profilId }) => {
-    await requireApplicantAccess(ctx);
     const linked = await ctx.db
       .query("applicants")
       .withIndex("by_profil", (q) => q.eq("profilId", profilId))
@@ -118,10 +120,10 @@ export const removeProfile = mutation({
  * Same access gate as `list`, but skips the per-applicant document/interview
  * fan-out since only the count is needed here.
  */
-export const pipelineCount = query({
+export const pipelineCount = userQuery({
+  applicant: "access",
   args: {},
   handler: async (ctx) => {
-    await requireApplicantAccess(ctx);
     // Both tables are still fully scanned here — there's no aggregate/
     // counter table backing applicant counts, so a true index-only count
     // isn't available yet. Flagged as a follow-up (would need a maintained
@@ -146,10 +148,10 @@ export const pipelineCount = query({
 // minimal, per the "minimal mechanical caller updates only" constraint.
 const LIST_HARD_CAP = 2000;
 
-export const list = query({
+export const list = userQuery({
+  applicant: "access",
   args: {},
   handler: async (ctx) => {
-    await requireApplicantAccess(ctx);
     const applicants = await ctx.db
       .query("applicants")
       .withIndex("by_createdAt")
@@ -231,10 +233,10 @@ export const list = query({
   },
 });
 
-export const get = query({
+export const get = userQuery({
+  applicant: "access",
   args: { applicantId: v.id("applicants") },
   handler: async (ctx, { applicantId }) => {
-    await requireApplicantAccess(ctx);
     const applicant = await requireApplicant(ctx, applicantId);
     const createdByUser = toUserSummary(await ctx.db.get(applicant.createdByUserId));
     const [kontakte, emails, interviews, termine, documents] = await Promise.all([
@@ -278,7 +280,8 @@ export const get = query({
   },
 });
 
-export const create = mutation({
+export const create = userMutation({
+  applicant: "access",
   args: {
     name: v.string(),
     email: v.optional(v.string()),
@@ -294,7 +297,7 @@ export const create = mutation({
     notizen: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await requireApplicantAccess(ctx);
+    const user = ctx.caller.user;
     return ctx.db.insert("applicants", {
       ...args,
       name: args.name.trim(),
@@ -305,7 +308,8 @@ export const create = mutation({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
+  applicant: "access",
   args: {
     applicantId: v.id("applicants"),
     name: v.optional(v.string()),
@@ -323,7 +327,6 @@ export const update = mutation({
     notizen: v.optional(v.string()),
   },
   handler: async (ctx, { applicantId, rating, profilId, ...rest }) => {
-    await requireApplicantAccess(ctx);
     await requireApplicant(ctx, applicantId);
     await ctx.db.patch(applicantId, {
       ...rest,
@@ -334,47 +337,21 @@ export const update = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
+  applicant: "access",
   args: { applicantId: v.id("applicants") },
   handler: async (ctx, { applicantId }) => {
-    await requireApplicantAccess(ctx);
     await requireApplicant(ctx, applicantId);
 
-    const [kontakte, emails, interviews, termine, documents] = await Promise.all([
-      ctx.db
-        .query("applicantContacts")
-        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantEmails")
-        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantInterviews")
-        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantAppointments")
-        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantDocuments")
-        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
-        .collect(),
-    ]);
-
-    for (const doc of documents) await ctx.storage.delete(doc.storageId);
-    for (const rows of [kontakte, emails, interviews, termine, documents]) {
-      for (const row of rows) await ctx.db.delete(row._id);
-    }
-    await ctx.db.delete(applicantId);
+    await purgeApplicant(ctx, applicantId);
     return { ok: true };
   },
 });
 
 // --- Kontakte / E-Mails / Interviews -----------------------------------------
 
-export const addKontakt = mutation({
+export const addKontakt = userMutation({
+  applicant: "access",
   args: {
     applicantId: v.id("applicants"),
     datum: v.string(),
@@ -382,7 +359,6 @@ export const addKontakt = mutation({
     notiz: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireApplicantAccess(ctx);
     await requireApplicant(ctx, args.applicantId);
     return ctx.db.insert("applicantContacts", {
       ...args,
@@ -391,16 +367,17 @@ export const addKontakt = mutation({
   },
 });
 
-export const removeKontakt = mutation({
+export const removeKontakt = userMutation({
+  applicant: "access",
   args: { kontaktId: v.id("applicantContacts") },
   handler: async (ctx, { kontaktId }) => {
-    await requireApplicantAccess(ctx);
     await ctx.db.delete(kontaktId);
     return { ok: true };
   },
 });
 
-export const addEmail = mutation({
+export const addEmail = userMutation({
+  applicant: "access",
   args: {
     applicantId: v.id("applicants"),
     datum: v.string(),
@@ -408,22 +385,22 @@ export const addEmail = mutation({
     notiz: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireApplicantAccess(ctx);
     await requireApplicant(ctx, args.applicantId);
     return ctx.db.insert("applicantEmails", { ...args, createdAt: Date.now() });
   },
 });
 
-export const removeEmail = mutation({
+export const removeEmail = userMutation({
+  applicant: "access",
   args: { emailId: v.id("applicantEmails") },
   handler: async (ctx, { emailId }) => {
-    await requireApplicantAccess(ctx);
     await ctx.db.delete(emailId);
     return { ok: true };
   },
 });
 
-export const addInterview = mutation({
+export const addInterview = userMutation({
+  applicant: "access",
   args: {
     applicantId: v.id("applicants"),
     datum: v.string(),
@@ -431,7 +408,6 @@ export const addInterview = mutation({
     notiz: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireApplicantAccess(ctx);
     await requireApplicant(ctx, args.applicantId);
     return ctx.db.insert("applicantInterviews", {
       ...args,
@@ -440,10 +416,10 @@ export const addInterview = mutation({
   },
 });
 
-export const removeInterview = mutation({
+export const removeInterview = userMutation({
+  applicant: "access",
   args: { interviewId: v.id("applicantInterviews") },
   handler: async (ctx, { interviewId }) => {
-    await requireApplicantAccess(ctx);
     await ctx.db.delete(interviewId);
     return { ok: true };
   },
@@ -451,32 +427,32 @@ export const removeInterview = mutation({
 
 // --- Documents ---------------------------------------------------------------
 
-export const generateUploadUrl = mutation({
+export const generateUploadUrl = userMutation({
+  applicant: "access",
   args: {},
   handler: async (ctx) => {
-    await requireApplicantAccess(ctx);
     return ctx.storage.generateUploadUrl();
   },
 });
 
 /** The CV a rescan run staged, so its review can show the PDF again after a
  * refresh — by then the File picked in the browser is gone. */
-export const stagedFileUrl = query({
+export const stagedFileUrl = userQuery({
+  applicant: "access",
   args: { storageId: v.id("_storage") },
   handler: async (ctx, { storageId }) => {
-    await requireApplicantAccess(ctx);
     return await ctx.storage.getUrl(storageId);
   },
 });
 
-export const addDocument = mutation({
+export const addDocument = userMutation({
+  applicant: "access",
   args: {
     applicantId: v.id("applicants"),
     storageId: v.id("_storage"),
     fileName: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireApplicantAccess(ctx);
     await requireApplicant(ctx, args.applicantId);
     return ctx.db.insert("applicantDocuments", {
       ...args,
@@ -485,10 +461,10 @@ export const addDocument = mutation({
   },
 });
 
-export const removeDocument = mutation({
+export const removeDocument = userMutation({
+  applicant: "access",
   args: { documentId: v.id("applicantDocuments") },
   handler: async (ctx, { documentId }) => {
-    await requireApplicantAccess(ctx);
     const doc = await ctx.db.get(documentId);
     if (!doc) return { ok: true };
     await ctx.storage.delete(doc.storageId);
@@ -499,7 +475,8 @@ export const removeDocument = mutation({
 
 // --- Termine (appointments) ---------------------------------------------------
 
-export const createTermin = mutation({
+export const createTermin = userMutation({
+  applicant: "access",
   args: {
     applicantId: v.id("applicants"),
     datum: v.string(),
@@ -509,7 +486,6 @@ export const createTermin = mutation({
     notiz: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireApplicantAccess(ctx);
     await requireApplicant(ctx, args.applicantId);
     return ctx.db.insert("applicantAppointments", {
       ...args,
@@ -519,10 +495,10 @@ export const createTermin = mutation({
   },
 });
 
-export const listTermine = query({
+export const listTermine = userQuery({
+  applicant: "access",
   args: { from: v.string(), to: v.string() },
   handler: async (ctx, { from, to }) => {
-    await requireApplicantAccess(ctx);
     const termine = await ctx.db
       .query("applicantAppointments")
       .withIndex("by_datum", (q) => q.gte("datum", from).lte("datum", to))
@@ -540,20 +516,20 @@ export const listTermine = query({
   },
 });
 
-export const removeTermin = mutation({
+export const removeTermin = userMutation({
+  applicant: "access",
   args: { terminId: v.id("applicantAppointments") },
   handler: async (ctx, { terminId }) => {
-    await requireApplicantAccess(ctx);
     await ctx.db.delete(terminId);
     return { ok: true };
   },
 });
 
 /** Converts a past/current Termin into a Kontakt entry (and an Interview entry when typ === "interview"). */
-export const convertTermin = mutation({
+export const convertTermin = userMutation({
+  applicant: "access",
   args: { terminId: v.id("applicantAppointments") },
   handler: async (ctx, { terminId }) => {
-    await requireApplicantAccess(ctx);
     const termin = await ctx.db.get(terminId);
     if (!termin) {
       throw new ConvexError({ code: "not_found", message: "Termin not found" });
@@ -597,9 +573,10 @@ export const convertTermin = mutation({
 export const apiCheckAccess = serverQuery({
   args: { clerkUserId: v.string() },
   handler: async (ctx, { clerkUserId }) => {
-    const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status !== "active") return null;
-    if (!hasApplicantAccess(user)) return { userId: user._id, hasAccess: false };
+    const caller = await getServerCaller(ctx, clerkUserId);
+    if (!caller) return null;
+    const user = caller.user;
+    if (!caller.hasApplicantAccess) return { userId: user._id, hasAccess: false };
     const unlock = await ctx.db
       .query("applicantVaultUnlocks")
       .withIndex("by_user", (q) => q.eq("userId", user._id))

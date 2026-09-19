@@ -1,7 +1,5 @@
-import { internalQuery, mutation, query } from "../functions";
+import { internalQuery, userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
-
-import { requireAdmin, requireUser } from "../lib/auth";
 import {
   FEATURE_FLAG_KEYS,
   FEATURE_FLAG_REGISTRY,
@@ -19,10 +17,9 @@ export const isEnabledInternal = internalQuery({
 });
 
 /** Reactive read for UI gating (FeatureGate) and the admin toggle panel. */
-export const list = query({
+export const list = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const rows = await ctx.db.query("featureFlags").collect();
     const byKey = new Map(rows.map((row) => [row.key, row]));
     return FEATURE_FLAG_KEYS.map((key) => {
@@ -45,14 +42,15 @@ export const list = query({
  * custom `reason`); re-enabling posts a follow-up on that same Update
  * instead of a second post, so toggling isn't spammy. Admin only.
  */
-export const setFlag = mutation({
+export const setFlag = userMutation({
+  role: "admin",
   args: {
     key: featureKeyValidator,
     enabled: v.boolean(),
     reason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const me = await requireAdmin(ctx);
+    const me = ctx.caller.user;
     const key = args.key as FeatureFlagKey;
     const meta = FEATURE_FLAG_REGISTRY[key];
     const existing = await getFlagRow(ctx, key);

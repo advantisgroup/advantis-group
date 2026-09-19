@@ -1,8 +1,5 @@
-import { mutation, query } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
-
-import { requireUser } from "../lib/auth";
-
 const preferenceFields = {
   hiddenDashboardCards: v.optional(v.array(v.string())),
   dashboardCardOrder: v.optional(v.array(v.string())),
@@ -89,10 +86,10 @@ const preferenceFields = {
   ),
 };
 
-export const getMine = query({
+export const getMine = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const prefs = await ctx.db
       .query("userPreferences")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -101,10 +98,10 @@ export const getMine = query({
   },
 });
 
-export const setMine = mutation({
+export const setMine = userMutation({
   args: preferenceFields,
   handler: async (ctx, patch) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("userPreferences")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -130,10 +127,10 @@ export const setMine = mutation({
  * passed from the client are dropped before reaching here, so there's no way
  * to *unset* `onboardingCompletedAt`/`onboardingDismissedAt` through it.
  */
-export const resetOnboarding = mutation({
+export const resetOnboarding = userMutation({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("userPreferences")
       .withIndex("by_user", (q) => q.eq("userId", user._id))

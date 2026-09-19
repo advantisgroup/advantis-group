@@ -5,7 +5,7 @@ import { useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { type Role } from "@advantis/types";
-import { useAction, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { Ellipsis, Mail, RotateCw, XCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -39,7 +39,7 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
   // create/resend/revoke are Convex actions: they call Clerk's Backend API
   // directly and await it, so failures surface here as a rejected promise.
   const create = useAction(api.people.invites.create);
-  const revoke = useAction(api.people.invites.revoke);
+  const revoke = useMutation(api.people.invites.revoke);
   const resend = useAction(api.people.invites.resend);
   const handleError = useErrorHandler();
   const allowedDomains = config?.allowedDomains ?? [];

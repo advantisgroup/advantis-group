@@ -1,8 +1,8 @@
-import { mutation, query, serverQuery } from "../functions";
+import { serverQuery, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
-
-import { getUserByClerkId, isOwnerOrAdmin, requireCapability, requireUser } from "../lib/auth";
 import { displayName } from "../lib/users";
+import { getServerCaller } from "../lib/caller";
+import { moveToTrash } from "../lib/trash";
 
 const MAX_PINS = 5;
 
@@ -20,8 +20,8 @@ function plainText(html: string) {
 export const apiSearchForAssistant = serverQuery({
   args: { clerkUserId: v.string(), question: v.string() },
   handler: async (ctx, { clerkUserId, question }) => {
-    const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status === "suspended") return [];
+    const user = (await getServerCaller(ctx, clerkUserId))?.user;
+    if (!user) return [];
     const words = [
       ...new Set(
         question
@@ -62,10 +62,9 @@ export const apiSearchForAssistant = serverQuery({
 
 /** Everything (unfiltered) — the wiki list page applies filtering/sorting
  * (category, tags, search, pinned-first, expired archive) itself. */
-export const list = query({
+export const list = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const rows = await ctx.db.query("wikiEntries").collect();
     const categories = await ctx.db.query("wikiCategories").collect();
     const catById = new Map(categories.map((c) => [c._id, c]));
@@ -102,10 +101,9 @@ export const list = query({
   },
 });
 
-export const get = query({
+export const get = userQuery({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
-    await requireUser(ctx);
     const row = await ctx.db
       .query("wikiEntries")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
@@ -154,10 +152,11 @@ const entryFields = {
 /** Requires the manage_guidebooks capability — the frontend computes a
  * unique slug (checked against this table and the static registry, which
  * Convex doesn't know about) before calling this. */
-export const create = mutation({
+export const create = userMutation({
+  can: "manage_guidebooks",
   args: { slug: v.string(), ...entryFields },
   handler: async (ctx, args) => {
-    const user = await requireCapability(ctx, "manage_guidebooks");
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("wikiEntries")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
@@ -186,13 +185,13 @@ export const create = mutation({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
+  can: "manage_guidebooks",
   args: { entryId: v.id("wikiEntries"), ...entryFields },
   handler: async (ctx, { entryId, ...patch }) => {
-    const user = await requireCapability(ctx, "manage_guidebooks");
     const entry = await ctx.db.get(entryId);
     if (!entry) throw new ConvexError({ code: "not_found", message: "Not found" });
-    if (!isOwnerOrAdmin(user, entry.authorUserId)) {
+    if (!ctx.caller.owns(entry.authorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the author or an admin can edit this",
@@ -219,10 +218,10 @@ export const update = mutation({
 /** Ownership is a narrow management action: a guidebook manager can hand the
  * upkeep responsibility to an active colleague without gaining permission to
  * rewrite that colleague's content. */
-export const setOwner = mutation({
+export const setOwner = userMutation({
+  can: "manage_guidebooks",
   args: { entryId: v.id("wikiEntries"), ownerUserId: v.id("users") },
   handler: async (ctx, { entryId, ownerUserId }) => {
-    await requireCapability(ctx, "manage_guidebooks");
     const entry = await ctx.db.get(entryId);
     if (!entry) throw new ConvexError({ code: "not_found", message: "Entry not found" });
     const owner = await ctx.db.get(ownerUserId);
@@ -234,28 +233,28 @@ export const setOwner = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
+  can: "manage_guidebooks",
   args: { entryId: v.id("wikiEntries") },
   handler: async (ctx, { entryId }) => {
-    const user = await requireCapability(ctx, "manage_guidebooks");
     const entry = await ctx.db.get(entryId);
     if (!entry) return { ok: false };
-    if (!isOwnerOrAdmin(user, entry.authorUserId)) {
+    if (!ctx.caller.owns(entry.authorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the author or an admin can delete this",
       });
     }
-    await ctx.db.delete(entryId);
+    await moveToTrash(ctx, "wikiEntries", entryId, ctx.caller.id);
     return { ok: true };
   },
 });
 
 /** Max 5 pinned entries at once, enforced here (not just client-side). */
-export const togglePin = mutation({
+export const togglePin = userMutation({
+  can: "manage_guidebooks",
   args: { entryId: v.id("wikiEntries") },
   handler: async (ctx, { entryId }) => {
-    await requireCapability(ctx, "manage_guidebooks");
     const entry = await ctx.db.get(entryId);
     if (!entry) throw new ConvexError({ code: "not_found", message: "Not found" });
     if (!entry.pinned) {

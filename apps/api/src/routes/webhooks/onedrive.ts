@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 
 import { invalidateAll } from "../../lib/onedrive/cache.js";
+import { withWebhookHealth } from "../../lib/webhook-health.js";
 
 /**
  * Microsoft Graph change-notification receiver. Two jobs:
@@ -38,7 +39,7 @@ export const onedriveWebhookRoute = new Elysia().post(
         console.error("[onedrive] webhook notification error:", error);
       }
     }
-    if (anyValid) await invalidateAll();
+    if (anyValid) await withWebhookHealth("onedrive", invalidateAll);
 
     set.status = 202;
     return { ok: true };

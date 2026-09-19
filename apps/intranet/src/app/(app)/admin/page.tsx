@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { ActionQueue } from "@/components/admin/overview/ActionQueue";
 import { AuditFeed, JumpTo } from "@/components/admin/overview/AuditFeed";
 import { AuthenticationBanner } from "@/components/admin/overview/AuthenticationBanner";
+import { BackupsPanel } from "@/components/admin/overview/BackupsPanel";
 import { NewEmployeeBanner } from "@/components/admin/overview/NewEmployeeBanner";
 import { AccountsRadar, OrgComposition } from "@/components/admin/overview/PeoplePanels";
 import { SystemsPanel } from "@/components/admin/overview/SystemsPanel";
@@ -71,7 +72,12 @@ export default function AdminOverviewPage() {
         {isAdmin ? <AuditFeed /> : <JumpTo />}
       </div>
 
-      {isAdmin && <JumpTo />}
+      {isAdmin && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <BackupsPanel />
+          <JumpTo />
+        </div>
+      )}
     </div>
   );
 }

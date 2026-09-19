@@ -1,8 +1,7 @@
-import { mutation, query } from "../functions";
+import { userQuery, userMutation } from "../functions";
 import { v } from "convex/values";
 
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import { requireUser } from "../lib/auth";
 import {
   addDaysToDay,
   buildFindings,
@@ -80,10 +79,10 @@ function dailyBreakdown(
 }
 
 /** Generate (or regenerate) the pattern report for one employee's ISO week. */
-export const generate = mutation({
+export const generate = userMutation({
   args: { employeeId: v.string(), weekStart: v.string() },
   handler: async (ctx, { employeeId, weekStart }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (weekStart !== weekStartOf(weekStart)) {
       throw new Error("weekStart must be a Monday (YYYY-MM-DD)");
     }
@@ -150,10 +149,9 @@ export const generate = mutation({
 });
 
 /** The stored report for one employee/week, or null if never generated. */
-export const get = query({
+export const get = userQuery({
   args: { employeeId: v.string(), weekStart: v.string() },
   handler: async (ctx, { employeeId, weekStart }) => {
-    await requireUser(ctx);
     return await ctx.db
       .query("activityPatternReports")
       .withIndex("by_employee_week", (q) =>
@@ -164,10 +162,9 @@ export const get = query({
 });
 
 /** Recently generated reports for one employee, newest week first. */
-export const list = query({
+export const list = userQuery({
   args: { employeeId: v.string(), limit: v.optional(v.number()) },
   handler: async (ctx, { employeeId, limit }) => {
-    await requireUser(ctx);
     return await ctx.db
       .query("activityPatternReports")
       .withIndex("by_employee_week", (q) => q.eq("employeeId", employeeId))

@@ -6,7 +6,6 @@ export {
   create,
   refreshInviteToken,
   resend,
-  markRevoked,
   revoke,
   list,
   config,

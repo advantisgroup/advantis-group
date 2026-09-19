@@ -1,14 +1,12 @@
-import { mutation, query } from "../functions";
+import { userQuery, userMutation } from "../functions";
 import { v } from "convex/values";
-
-import { requireCapability, requireUser } from "../lib/auth";
 import { profileDisplayName } from "../lib/profile";
 
 /** Slugs the current user has confirmed reading. */
-export const listMine = query({
+export const listMine = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const rows = await ctx.db
       .query("guidebookReads")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -21,10 +19,10 @@ export const listMine = query({
  * understood this," not a side effect of opening the page. Idempotent
  * (unique `by_user_slug`), so a re-confirm after the content changes is
  * just a no-op rather than a second row. */
-export const markRead = mutation({
+export const markRead = userMutation({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("guidebookReads")
       .withIndex("by_user_slug", (q) => q.eq("userId", user._id).eq("slug", slug))
@@ -38,10 +36,10 @@ export const markRead = mutation({
 /** Who has confirmed reading this wiki entry, newest first — for the page's
  * editors to see who has (and hasn't, relative to the roster) acknowledged
  * it. Gated the same way as editing the page itself. */
-export const listConfirmersForSlug = query({
+export const listConfirmersForSlug = userQuery({
+  can: "manage_guidebooks",
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
-    await requireCapability(ctx, "manage_guidebooks");
     const rows = await ctx.db
       .query("guidebookReads")
       .withIndex("by_slug", (q) => q.eq("slug", slug))

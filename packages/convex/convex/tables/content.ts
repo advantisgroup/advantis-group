@@ -83,7 +83,11 @@ export const contentTables = {
     authorUserId: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
-  }).index("by_slug", ["slug"]),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_deletedAt", ["deletedAt"]),
 
   // --- Guidebook read receipts -------------------------------------------------
   // One row per user per slug, written when the user explicitly confirms
@@ -138,9 +142,13 @@ export const contentTables = {
     ownerUserId: v.optional(v.id("users")),
     createdAt: v.number(),
     updatedAt: v.number(),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
   })
     .index("by_slug", ["slug"])
-    .index("by_category", ["categoryId"]),
+    .index("by_category", ["categoryId"])
+    .index("by_author", ["authorUserId"])
+    .index("by_deletedAt", ["deletedAt"]),
 
   // Org-wide default instructions for the "format with AI" wiki-entry
   // assist (apps/api's /wiki/format-assist) — singleton-by-key, same shape
@@ -196,10 +204,13 @@ export const contentTables = {
     version: v.number(),
     createdAt: v.number(),
     updatedAt: v.number(),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
   })
     .index("by_slug_language", ["slug", "language"])
     .index("by_shareCode", ["shareCode"])
-    .index("by_language_status_publishedAt", ["language", "status", "publishedAt"]),
+    .index("by_language_status_publishedAt", ["language", "status", "publishedAt"])
+    .index("by_deletedAt", ["deletedAt"]),
 
   /**
    * First-party pageview log for the marketing site — replaces PostHog.

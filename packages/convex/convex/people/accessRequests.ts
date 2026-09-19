@@ -1,13 +1,14 @@
-import { action, internalMutation, mutation, query } from "../functions";
+import { action, internalMutation, mutation, query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { type Doc } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 import { roleValidator } from "../schema";
-import { canGrantRole, getUserByClerkId, isEmailDomainAllowed, requireManager } from "../lib/auth";
+import { getUserByClerkId, isEmailDomainAllowed } from "../lib/auth";
 import { deleteClerkUser } from "../lib/clerk";
 import { notifyUsers } from "../lib/notify";
+import { createOrRestoreUser } from "../people/lib/provisioning";
 
 const roleArg = roleValidator;
 
@@ -37,10 +38,9 @@ export const create = mutation({
         message: "Not signed in",
       });
     }
-    console.log(`[accessRequests.create] identity: ${JSON.stringify(identity)}`);
     // Already provisioned? Nothing to request.
     const existing = await getUserByClerkId(ctx, identity.subject);
-    if (existing) return { status: "already_member" as const };
+    if (existing && existing.status !== "removed") return { status: "already_member" as const };
 
     const email = (identity.email ?? "").toLowerCase();
     if (!email) {
@@ -89,9 +89,8 @@ export const myStatus = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
-    console.log(`[accessRequests.myStatus] identity: ${JSON.stringify(identity)}`);
     const member = await getUserByClerkId(ctx, identity.subject);
-    if (member) return { status: "member" as const };
+    if (member && member.status !== "removed") return { status: "member" as const };
     const request = await ctx.db
       .query("accessRequests")
       .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", identity.subject))
@@ -126,7 +125,6 @@ export const assertUnauthorized = internalMutation({
         message: "Not signed in",
       });
     }
-    console.log(`[assertUnauthorized] identity: ${JSON.stringify(identity)}`);
     if (await getUserByClerkId(ctx, identity.subject)) {
       throw new ConvexError({
         code: "bad_request",
@@ -167,19 +165,20 @@ export const selfDeleteUnauthorized = action({
   },
 });
 
-export const list = query({
+export const list = userQuery({
+  role: "manager",
   args: { status: v.optional(v.string()) },
   handler: async (ctx, { status }) => {
-    await requireManager(ctx);
     const requests = await ctx.db.query("accessRequests").order("desc").take(200);
     return status ? requests.filter((r) => r.status === status) : requests;
   },
 });
 
-export const approve = mutation({
+export const approve = userMutation({
+  role: "manager",
   args: { requestId: v.id("accessRequests"), role: v.optional(roleArg) },
   handler: async (ctx, { requestId, role }) => {
-    const reviewer = await requireManager(ctx);
+    const reviewer = ctx.caller.user;
     const request = await ctx.db.get(requestId);
     if (!request || request.status !== "pending") {
       throw new ConvexError({
@@ -188,7 +187,7 @@ export const approve = mutation({
       });
     }
     const grantedRole = role ?? "employee";
-    if (!canGrantRole(reviewer, grantedRole)) {
+    if (!ctx.caller.canGrant(grantedRole)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only admins can grant manager/admin roles",
@@ -197,17 +196,15 @@ export const approve = mutation({
 
     // Create the user row keyed to their Clerk id so ensureUser picks it up.
     const existing = await getUserByClerkId(ctx, request.clerkUserId);
-    if (!existing) {
-      const now = Date.now();
-      await ctx.db.insert("users", {
+    if (!existing || existing.status === "removed") {
+      await createOrRestoreUser(ctx, {
         clerkUserId: request.clerkUserId,
         email: request.email,
         firstName: request.name?.split(" ")[0],
         lastName: request.name?.split(" ").slice(1).join(" ") || undefined,
         role: grantedRole,
-        status: "active",
         external: !isEmailDomainAllowed(request.email),
-        createdAt: now,
+        createdAt: Date.now(),
       });
     }
 
@@ -227,10 +224,11 @@ export const approve = mutation({
   },
 });
 
-export const deny = mutation({
+export const deny = userMutation({
+  role: "manager",
   args: { requestId: v.id("accessRequests") },
   handler: async (ctx, { requestId }) => {
-    const reviewer = await requireManager(ctx);
+    const reviewer = ctx.caller.user;
     const request = await ctx.db.get(requestId);
     if (!request || request.status !== "pending") {
       throw new ConvexError({

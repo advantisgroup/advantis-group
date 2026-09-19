@@ -1,9 +1,8 @@
-import { mutation, query } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
-import { requireAdmin, requireCapability, requireUser } from "../lib/auth";
 import { slugify } from "../lib/text";
 
 /**
@@ -44,10 +43,9 @@ async function assertUniqueName(
   }
 }
 
-export const listDepartments = query({
+export const listDepartments = userQuery({
   args: { includeArchived: v.optional(v.boolean()) },
   handler: async (ctx, { includeArchived }) => {
-    await requireUser(ctx);
     const rows = await ctx.db.query("departments").collect();
     return rows
       .filter((r) => includeArchived || r.archivedAt === undefined)
@@ -55,10 +53,11 @@ export const listDepartments = query({
   },
 });
 
-export const createDepartment = mutation({
+export const createDepartment = userMutation({
+  role: "admin",
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     const trimmed = name.trim();
     if (!trimmed) {
       throw new ConvexError({ code: "bad_request", message: "Name required" });
@@ -72,10 +71,10 @@ export const createDepartment = mutation({
   },
 });
 
-export const renameDepartment = mutation({
+export const renameDepartment = userMutation({
+  role: "admin",
   args: { departmentId: v.id("departments"), name: v.string() },
   handler: async (ctx, { departmentId, name }) => {
-    await requireAdmin(ctx);
     const trimmed = name.trim();
     if (!trimmed) {
       throw new ConvexError({ code: "bad_request", message: "Name required" });
@@ -92,28 +91,27 @@ export const renameDepartment = mutation({
   },
 });
 
-export const archiveDepartment = mutation({
+export const archiveDepartment = userMutation({
+  role: "admin",
   args: { departmentId: v.id("departments"), archived: v.boolean() },
   handler: async (ctx, { departmentId, archived }) => {
-    await requireAdmin(ctx);
     await ctx.db.patch(departmentId, {
       archivedAt: archived ? Date.now() : undefined,
     });
   },
 });
 
-export const setDepartmentReportsTo = mutation({
+export const setDepartmentReportsTo = userMutation({
+  role: "admin",
   args: { departmentId: v.id("departments"), userId: v.union(v.id("users"), v.null()) },
   handler: async (ctx, { departmentId, userId }) => {
-    await requireAdmin(ctx);
     await ctx.db.patch(departmentId, { reportsToUserId: userId ?? undefined });
   },
 });
 
-export const listTeams = query({
+export const listTeams = userQuery({
   args: { includeArchived: v.optional(v.boolean()) },
   handler: async (ctx, { includeArchived }) => {
-    await requireUser(ctx);
     const rows = await ctx.db.query("teams").collect();
     const filtered = rows.filter((r) => includeArchived || r.archivedAt === undefined);
     const memberships = await ctx.db.query("userTeams").collect();
@@ -127,10 +125,11 @@ export const listTeams = query({
   },
 });
 
-export const createTeam = mutation({
+export const createTeam = userMutation({
+  role: "admin",
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     const trimmed = name.trim();
     if (!trimmed) {
       throw new ConvexError({ code: "bad_request", message: "Name required" });
@@ -145,10 +144,10 @@ export const createTeam = mutation({
   },
 });
 
-export const renameTeam = mutation({
+export const renameTeam = userMutation({
+  role: "admin",
   args: { teamId: v.id("teams"), name: v.string() },
   handler: async (ctx, { teamId, name }) => {
-    await requireAdmin(ctx);
     const trimmed = name.trim();
     if (!trimmed) {
       throw new ConvexError({ code: "bad_request", message: "Name required" });
@@ -164,20 +163,20 @@ export const renameTeam = mutation({
   },
 });
 
-export const setTeamReportsTo = mutation({
+export const setTeamReportsTo = userMutation({
+  role: "admin",
   args: { teamId: v.id("teams"), userId: v.union(v.id("users"), v.null()) },
   handler: async (ctx, { teamId, userId }) => {
-    await requireAdmin(ctx);
     await ctx.db.patch(teamId, { reportsToUserId: userId ?? undefined });
   },
 });
 
 /** Adds someone to a team — the membership row and the slug on the user, so
  * both the access checks and older readers of `users.teams` see it. */
-export const addUserToTeam = mutation({
+export const addUserToTeam = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), teamId: v.id("teams") },
   handler: async (ctx, { userId, teamId }) => {
-    await requireAdmin(ctx);
     const [user, team] = await Promise.all([ctx.db.get(userId), ctx.db.get(teamId)]);
     if (!user || !team) {
       throw new ConvexError({ code: "not_found", message: "User or team not found" });
@@ -193,10 +192,10 @@ export const addUserToTeam = mutation({
   },
 });
 
-export const removeUserFromTeam = mutation({
+export const removeUserFromTeam = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), teamId: v.id("teams") },
   handler: async (ctx, { userId, teamId }) => {
-    await requireAdmin(ctx);
     const [user, team] = await Promise.all([ctx.db.get(userId), ctx.db.get(teamId)]);
     if (!user || !team) {
       throw new ConvexError({ code: "not_found", message: "User or team not found" });
@@ -216,10 +215,10 @@ export const removeUserFromTeam = mutation({
 
 /** Managers and people who manage members place someone in a department —
  *  it isn't something people pick for themselves. */
-export const setUserDepartment = mutation({
+export const setUserDepartment = userMutation({
+  can: "manage_members",
   args: { userId: v.id("users"), departmentId: v.union(v.id("departments"), v.null()) },
   handler: async (ctx, { userId, departmentId }) => {
-    await requireCapability(ctx, "manage_members");
     if (!departmentId) {
       await ctx.db.patch(userId, { departmentId: undefined, department: undefined });
       return;
@@ -232,18 +231,18 @@ export const setUserDepartment = mutation({
   },
 });
 
-export const setTeamDepartment = mutation({
+export const setTeamDepartment = userMutation({
+  role: "admin",
   args: { teamId: v.id("teams"), departmentId: v.union(v.id("departments"), v.null()) },
   handler: async (ctx, { teamId, departmentId }) => {
-    await requireAdmin(ctx);
     await ctx.db.patch(teamId, { departmentId: departmentId ?? undefined });
   },
 });
 
-export const archiveTeam = mutation({
+export const archiveTeam = userMutation({
+  role: "admin",
   args: { teamId: v.id("teams"), archived: v.boolean() },
   handler: async (ctx, { teamId, archived }) => {
-    await requireAdmin(ctx);
     await ctx.db.patch(teamId, {
       archivedAt: archived ? Date.now() : undefined,
     });

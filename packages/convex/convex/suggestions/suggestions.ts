@@ -1,8 +1,7 @@
-import { mutation, query } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { assertAttachmentSizeOk } from "../lib/attachments";
-import { requireManager, requireUser } from "../lib/auth";
 import { notifyUsers } from "../lib/notify";
 import { displayName } from "../lib/users";
 import {
@@ -10,8 +9,9 @@ import {
   suggestionOutcomeValidator,
   suggestionStatusValidator,
 } from "../schema";
+import { moveToTrash } from "../lib/trash";
 
-export const create = mutation({
+export const create = userMutation({
   args: {
     categoryId: v.id("suggestionCategories"),
     title: v.string(),
@@ -20,7 +20,7 @@ export const create = mutation({
     attachments: v.optional(v.array(attachmentValidator)),
   },
   handler: async (ctx, args) => {
-    const author = await requireUser(ctx);
+    const author = ctx.caller.user;
     const title = args.title.trim();
     if (!title) {
       throw new ConvexError({ code: "bad_request", message: "Title required" });
@@ -53,10 +53,10 @@ export const create = mutation({
   },
 });
 
-export const list = query({
+export const list = userQuery({
   args: {},
   handler: async (ctx) => {
-    const me = await requireUser(ctx);
+    const me = ctx.caller.user;
     const rows = await ctx.db
       .query("suggestions")
       .withIndex("by_createdAt")
@@ -104,7 +104,8 @@ export const list = query({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
+  role: "manager",
   args: {
     suggestionId: v.id("suggestions"),
     status: v.optional(suggestionStatusValidator),
@@ -113,7 +114,6 @@ export const update = mutation({
     decisionNote: v.optional(v.union(v.string(), v.null())),
   },
   handler: async (ctx, { suggestionId, status, outcome, decisionNote }) => {
-    await requireManager(ctx);
     const existing = await ctx.db.get(suggestionId);
     if (!existing) {
       throw new ConvexError({ code: "not_found", message: "Suggestion not found" });
@@ -151,10 +151,10 @@ export const update = mutation({
   },
 });
 
-export const toggleVote = mutation({
+export const toggleVote = userMutation({
   args: { suggestionId: v.id("suggestions") },
   handler: async (ctx, { suggestionId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const suggestion = await ctx.db.get(suggestionId);
     if (!suggestion) {
       throw new ConvexError({ code: "not_found", message: "Suggestion not found" });
@@ -178,21 +178,13 @@ export const toggleVote = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
+  role: "manager",
   args: { suggestionId: v.id("suggestions") },
   handler: async (ctx, { suggestionId }) => {
-    await requireManager(ctx);
     const existing = await ctx.db.get(suggestionId);
     if (!existing) return { ok: false };
-    for (const a of existing.attachments ?? []) {
-      await ctx.storage.delete(a.storageId);
-    }
-    const votes = await ctx.db
-      .query("suggestionVotes")
-      .withIndex("by_suggestion", (q) => q.eq("suggestionId", suggestionId))
-      .collect();
-    await Promise.all(votes.map((vote) => ctx.db.delete(vote._id)));
-    await ctx.db.delete(suggestionId);
+    await moveToTrash(ctx, "suggestions", suggestionId, ctx.caller.id);
     return { ok: true };
   },
 });

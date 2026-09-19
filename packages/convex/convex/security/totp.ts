@@ -1,10 +1,10 @@
-import { serverMutation, serverQuery } from "../functions";
+import { serverQuery, serverUserMutation, serverUserQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { safeEqual, sha256hex } from "../activity/lib/crypto";
-import { getUserByClerkId, requireActiveUser } from "../lib/auth";
 import { trackEvent } from "../lib/analytics";
 import { notifySecurityChange } from "../lib/stepUp";
+import { getServerCaller } from "../lib/caller";
 
 const RECOVERY_CODE_COUNT = 8;
 // Avoids 0/O/1/I/L so a printed code isn't ambiguous to read back.
@@ -20,8 +20,8 @@ function randomRecoveryCode(): string {
   return out;
 }
 
-export const apiStatus = serverQuery({
-  args: { clerkUserId: v.string() },
+export const apiStatus = serverUserQuery({
+  args: {},
   returns: v.object({
     enrolled: v.boolean(),
     needsRotation: v.boolean(),
@@ -29,7 +29,7 @@ export const apiStatus = serverQuery({
     recoveryCodesTotal: v.number(),
   }),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const credential = await ctx.db
       .query("totpCredentials")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -51,11 +51,11 @@ export const apiStatus = serverQuery({
 /** Burns every existing code and issues a fresh set. Used both for "I've
  * spent a few and want a clean sheet" and for "I'm not sure where that
  * printout ended up" — which is why it replaces rather than tops up. */
-export const apiRegenerateRecoveryCodes = serverMutation({
-  args: { clerkUserId: v.string() },
+export const apiRegenerateRecoveryCodes = serverUserMutation({
+  args: {},
   returns: v.object({ recoveryCodes: v.array(v.string()) }),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const credential = await ctx.db
       .query("totpCredentials")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -104,8 +104,8 @@ export const apiEnrollmentContext = serverQuery({
   args: { clerkUserId: v.string() },
   returns: v.union(v.null(), v.object({ email: v.string(), hasVerified: v.boolean() })),
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user || user.status !== "active") return null;
+    const user = (await getServerCaller(ctx, args.clerkUserId))?.user;
+    if (!user) return null;
     const credential = await ctx.db
       .query("totpCredentials")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -120,11 +120,11 @@ export const apiEnrollmentContext = serverQuery({
   },
 });
 
-export const apiBeginEnrollment = serverMutation({
-  args: { clerkUserId: v.string(), secretCiphertext: v.string() },
+export const apiBeginEnrollment = serverUserMutation({
+  args: { secretCiphertext: v.string() },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("totpCredentials")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -154,11 +154,11 @@ export const apiBeginEnrollment = serverMutation({
   },
 });
 
-export const apiPendingSecret = serverQuery({
-  args: { clerkUserId: v.string() },
+export const apiPendingSecret = serverUserQuery({
+  args: {},
   returns: v.union(v.null(), v.string()),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const credential = await ctx.db
       .query("totpCredentials")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -168,11 +168,11 @@ export const apiPendingSecret = serverQuery({
   },
 });
 
-export const apiFinishEnrollment = serverMutation({
-  args: { clerkUserId: v.string(), usedStep: v.optional(v.number()) },
+export const apiFinishEnrollment = serverUserMutation({
+  args: { usedStep: v.optional(v.number()) },
   returns: v.object({ recoveryCodes: v.array(v.string()) }),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const credential = await ctx.db
       .query("totpCredentials")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -214,14 +214,14 @@ export const apiFinishEnrollment = serverMutation({
   },
 });
 
-export const apiSecretForVerification = serverQuery({
-  args: { clerkUserId: v.string() },
+export const apiSecretForVerification = serverUserQuery({
+  args: {},
   returns: v.union(
     v.null(),
     v.object({ secretCiphertext: v.string(), lastUsedStep: v.union(v.number(), v.null()) }),
   ),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const credential = await ctx.db
       .query("totpCredentials")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -234,9 +234,8 @@ export const apiSecretForVerification = serverQuery({
   },
 });
 
-export const apiRecordVerification = serverMutation({
+export const apiRecordVerification = serverUserMutation({
   args: {
-    clerkUserId: v.string(),
     ok: v.boolean(),
     /** The TOTP step the accepted code belonged to — burns that step so the
      * same digits can't be replayed for the rest of the drift window. */
@@ -244,7 +243,7 @@ export const apiRecordVerification = serverMutation({
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const credential = await ctx.db
       .query("totpCredentials")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -264,11 +263,11 @@ export const apiRecordVerification = serverMutation({
   },
 });
 
-export const apiVerifyRecoveryCode = serverMutation({
-  args: { clerkUserId: v.string(), code: v.string() },
+export const apiVerifyRecoveryCode = serverUserMutation({
+  args: { code: v.string() },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const candidateHash = await sha256hex(args.code.trim().toUpperCase());
     const unused = await ctx.db
       .query("totpRecoveryCodes")
@@ -305,11 +304,11 @@ export const apiVerifyRecoveryCode = serverMutation({
   },
 });
 
-export const apiRemove = serverMutation({
-  args: { clerkUserId: v.string() },
+export const apiRemove = serverUserMutation({
+  args: {},
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const credential = await ctx.db
       .query("totpCredentials")
       .withIndex("by_user", (q) => q.eq("userId", user._id))

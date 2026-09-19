@@ -75,8 +75,32 @@ export interface ErrorContext {
   path: string;
 }
 
+/** Convex's shared error codes, as the HTTP answer the browser should get.
+ *  Anything else a Convex function throws stays a 500. */
+const CONVEX_ERRORS: Record<string, () => ApiError> = {
+  unauthenticated: () => new ApiError(401, "unauthorized", "Please sign in again."),
+  forbidden: () => new ApiError(403, "forbidden", "You don't have access to this."),
+  vault_locked: () => new ApiError(403, "forbidden", "Applicant Management is locked."),
+  not_found: () => new ApiError(404, "not_found", "That couldn't be found."),
+  bad_request: () => new ApiError(400, "bad_request", "Some of the details look off."),
+  validation: () => new ApiError(400, "bad_request", "Some of the details look off."),
+  conflict: () => new ApiError(409, "conflict", "That changed in the meantime. Please retry."),
+};
+
 function normalizeApiError(error: unknown): ApiError {
   if (error instanceof ApiError) return error;
+  if (error instanceof ConvexError && typeof error.data === "object" && error.data !== null) {
+    const { code, message } = error.data as { code?: unknown; message?: unknown };
+    const mapped = typeof code === "string" ? CONVEX_ERRORS[code]?.() : undefined;
+    if (mapped) {
+      return new ApiError(
+        mapped.status,
+        mapped.code,
+        mapped.message,
+        typeof message === "string" ? message : undefined,
+      );
+    }
+  }
   return new ApiError(
     500,
     "internal",

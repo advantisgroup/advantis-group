@@ -1,15 +1,9 @@
 import { v } from "convex/values";
 
 import { serverQuery } from "../functions";
-import {
-  effectiveCustomRoleIds,
-  effectiveRole,
-  isSandboxed,
-  MANAGER_ROLES,
-  userHasCapability,
-} from "../lib/auth";
 import { toClockodoIdString } from "../lib/clockodoId";
 import { hasActiveAbsenceApprovalDelegation } from "../org/lib/delegations";
+import { getServerCaller } from "../lib/caller";
 
 /**
  * Server-key gated lookups the Elysia API uses to join live-fetched Clockodo
@@ -54,22 +48,18 @@ export const resolveCaller = serverQuery({
   args: { clerkUserId: v.string() },
   returns: clockodoCallerValidator,
   handler: async (ctx, { clerkUserId }) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", clerkUserId))
-      .unique();
-    if (!user) return { status: "no_account" as const };
+    const caller = await getServerCaller(ctx, clerkUserId);
+    if (!caller) return { status: "no_account" as const };
 
+    const user = caller.user;
     const name = user.firstName ?? user.email;
-    const sandboxed = isSandboxed(user);
-    const isManager = MANAGER_ROLES.includes(effectiveRole(user));
-    const customRoles = sandboxed
-      ? []
-      : await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
-    const canManageTeam = userHasCapability(user, customRoles, "manage_clockodo_team");
+    const isManager = caller.isManager;
+    const canManageTeam = caller.can("manage_clockodo_team");
     const hasApprovalCover =
-      !sandboxed && !canManageTeam && (await hasActiveAbsenceApprovalDelegation(ctx, user._id));
-    const canViewTeam = canManageTeam || userHasCapability(user, customRoles, "view_clockodo_team");
+      !caller.sandboxed &&
+      !canManageTeam &&
+      (await hasActiveAbsenceApprovalDelegation(ctx, user._id));
+    const canViewTeam = canManageTeam || caller.can("view_clockodo_team");
     const clockodoUserId =
       typeof user.clockodoUserId === "number"
         ? toClockodoIdString(user.clockodoUserId)

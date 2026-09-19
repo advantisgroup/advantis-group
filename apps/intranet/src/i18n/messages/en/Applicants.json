@@ -397,5 +397,11 @@
   "undoHireBody": "This removes the employee record that was created and puts them back in the applicant list.",
   "undoHireDone": "{name} is back in the applicant list",
   "undoHireBlocked": "This employee record already has documents attached, so it can't be undone automatically.",
-  "vaultLockedPasskeyDescription": "Use your passkey to continue."
+  "vaultLockedPasskeyDescription": "Use your passkey to continue.",
+  "poolConsent": "Talent pool",
+  "poolConsentUntil": "Agreed to stay until {date}",
+  "poolConsentNone": "No consent — deleted 6 months after archiving",
+  "poolConsentRecord": "Record consent",
+  "poolConsentMonths": "{months} months",
+  "poolConsentWithdraw": "Withdrawn"
 }

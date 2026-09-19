@@ -1,8 +1,5 @@
-import { mutation, query } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
-
-import { isOwnerOrAdmin, requireCapability, requireUser } from "../lib/auth";
-
 const attachmentFields = {
   oneDriveItemId: v.string(),
   oneDrivePath: v.string(),
@@ -17,10 +14,9 @@ const attachmentFields = {
  * content through apps/api's /onedrive/download/:id). Rows from before that
  * change are still Convex-storage-backed — those get a direct `url` instead
  * so they keep working without a migration. */
-export const list = query({
+export const list = userQuery({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
-    await requireUser(ctx);
     const rows = await ctx.db
       .query("guidebookAttachments")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
@@ -48,10 +44,11 @@ export const list = query({
 
 /** Requires the manage_guidebooks capability — records a reference to a file
  * already uploaded to OneDrive (see apps/api POST /onedrive/wiki/:slug/attach). */
-export const add = mutation({
+export const add = userMutation({
+  can: "manage_guidebooks",
   args: { slug: v.string(), attachment: v.object(attachmentFields) },
   handler: async (ctx, { slug, attachment }) => {
-    const user = await requireCapability(ctx, "manage_guidebooks");
+    const user = ctx.caller.user;
     const id = await ctx.db.insert("guidebookAttachments", {
       slug,
       ...attachment,
@@ -67,13 +64,13 @@ export const add = mutation({
  * unauthorized or failed call never leaves a live file with a dangling (or
  * wrongly-removed) reference. Legacy Convex-storage rows are cleaned up
  * here directly, since Convex — not OneDrive — is the sole owner of those bytes. */
-export const remove = mutation({
+export const remove = userMutation({
+  can: "manage_guidebooks",
   args: { attachmentId: v.id("guidebookAttachments") },
   handler: async (ctx, { attachmentId }) => {
-    const user = await requireCapability(ctx, "manage_guidebooks");
     const row = await ctx.db.get(attachmentId);
     if (!row) return { ok: false, oneDriveItemId: null };
-    if (!isOwnerOrAdmin(user, row.uploadedByUserId)) {
+    if (!ctx.caller.owns(row.uploadedByUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the uploader or an admin can remove this",

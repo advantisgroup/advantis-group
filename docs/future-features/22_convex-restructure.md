@@ -124,3 +124,7 @@ phase that moves them.
 - **Shim removal (phase 3): not before 2026-09-25**, and only once no
   scheduled job targets an old path (check the dashboard's scheduled
   functions for `updates:publishScheduled` first — it can sit for days).
+  `notifications:resurface` (snoozed notifications) can sit for weeks too;
+  if either still has queued runs, keep just that one re-export and delete
+  the rest. As of 2026-09-19 no code in the apps, apps/api, Convex or
+  scripts calls any of the old paths.

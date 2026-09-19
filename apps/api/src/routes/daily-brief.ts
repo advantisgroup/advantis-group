@@ -3,8 +3,7 @@ import { Elysia, t } from "elysia";
 
 import { runModelText, startAiRun } from "../lib/ai.js";
 
-import { getConvex, getConvexServerKey } from "../lib/convex.js";
-import { requireAuth } from "../lib/middleware.js";
+import { authed } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
 const BRIEF_SYSTEM = `You write the short overview at the top of someone's intranet start page.
@@ -15,16 +14,13 @@ const BRIEF_SYSTEM = `You write the short overview at the top of someone's intra
 - If there's nothing much going on, say so in one friendly sentence.
 - 2 to 4 short sentences, addressed to the person directly by first name at most once. Plain text only — no headings, lists, bold or emoji.`;
 
-export const dailyBriefRoute = new Elysia().post(
+export const dailyBriefRoute = new Elysia().use(authed).post(
   "/daily-brief",
-  async ({ request, body }) => {
-    const { clerkUserId } = await requireAuth(request);
+  async ({ caller, body }) => {
+    const { clerkUserId } = caller;
     await rateLimit("ai.dailyBrief", clerkUserId, 6, "1 h");
 
-    const context = await getConvex().query(api.aiRuns.apiDailyBriefContext, {
-      serverKey: getConvexServerKey(),
-      clerkUserId,
-    });
+    const context = await caller.convex.query(api.aiRuns.apiDailyBriefContext, {});
     const language = body.locale === "en" ? "English" : "German";
 
     const { runId } = await startAiRun(
@@ -57,6 +53,7 @@ export const dailyBriefRoute = new Elysia().post(
     return { runId };
   },
   {
+    signedIn: true,
     body: t.Object({
       day: t.String({ pattern: "^\\d{4}-\\d{2}-\\d{2}$" }),
       locale: t.String({ maxLength: 8 }),

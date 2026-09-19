@@ -1,11 +1,17 @@
-import { internalMutation, serverMutation, serverQuery } from "../functions";
+import {
+  internalMutation,
+  serverMutation,
+  serverQuery,
+  serverUserMutation,
+  serverUserQuery,
+} from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
-import { getUserByClerkId, requireActiveUser } from "../lib/auth";
 import { trackEvent } from "../lib/analytics";
 import { notifySecurityChange } from "../lib/stepUp";
+import { getServerCaller, loadCaller, requireServerCaller } from "../lib/caller";
 
 const transportValidator = v.union(
   v.literal("ble"),
@@ -74,8 +80,8 @@ export const apiRegistrationContext = serverMutation({
     }),
   ),
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user || user.status !== "active") return null;
+    const user = (await getServerCaller(ctx, args.clerkUserId))?.user;
+    if (!user) return null;
     const webauthnUserId = user.webauthnUserId ?? args.webauthnUserId;
     if (!user.webauthnUserId) {
       await ctx.db.patch(user._id, { webauthnUserId });
@@ -109,7 +115,7 @@ export const apiCreateChallenge = serverMutation({
   handler: async (ctx, args) => {
     let userId: Id<"users"> | undefined;
     if (args.clerkUserId) {
-      userId = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId))._id;
+      userId = (await requireServerCaller(ctx, args.clerkUserId)).id;
     }
     await ctx.db.insert("passkeyChallenges", {
       flowId: args.flowId,
@@ -169,8 +175,8 @@ export const apiRegistrationChallenge = serverQuery({
   args: { flowId: v.string(), clerkUserId: v.string() },
   returns: v.union(v.string(), v.null()),
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
-    if (!user || user.status !== "active") return null;
+    const user = (await getServerCaller(ctx, args.clerkUserId))?.user;
+    if (!user) return null;
     const challenge = await ctx.db
       .query("passkeyChallenges")
       .withIndex("by_flowId", (q) => q.eq("flowId", args.flowId))
@@ -187,10 +193,9 @@ export const apiRegistrationChallenge = serverQuery({
   },
 });
 
-export const apiCompleteRegistration = serverMutation({
+export const apiCompleteRegistration = serverUserMutation({
   args: {
     flowId: v.string(),
-    clerkUserId: v.string(),
     credentialId: v.string(),
     publicKey: v.string(),
     counter: v.number(),
@@ -201,7 +206,7 @@ export const apiCompleteRegistration = serverMutation({
   },
   returns: passkeyValidator,
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const name = args.name.trim();
     if (!name || name.length > 80) {
       throw new ConvexError({ code: "invalid", message: "Enter a passkey name" });
@@ -306,7 +311,8 @@ export const apiCompleteAuthentication = serverMutation({
     ) {
       throw new ConvexError({ code: "invalid", message: "Passkey could not be verified" });
     }
-    const user = requireActiveUser(await ctx.db.get(passkey.userId));
+    const user = (await loadCaller(ctx, await ctx.db.get(passkey.userId)))?.user;
+    if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
     const now = Date.now();
     await ctx.db.patch(passkey._id, {
       counter: args.newCounter,
@@ -339,11 +345,11 @@ export const apiCompleteAuthentication = serverMutation({
   },
 });
 
-export const apiListForUser = serverQuery({
-  args: { clerkUserId: v.string() },
+export const apiListForUser = serverUserQuery({
+  args: {},
   returns: v.array(passkeyValidator),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const passkeys = await ctx.db
       .query("passkeys")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -352,15 +358,14 @@ export const apiListForUser = serverQuery({
   },
 });
 
-export const apiRenameForUser = serverMutation({
+export const apiRenameForUser = serverUserMutation({
   args: {
-    clerkUserId: v.string(),
     passkeyId: v.id("passkeys"),
     name: v.string(),
   },
   returns: passkeyValidator,
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const name = args.name.trim();
     if (!name || name.length > 80) {
       throw new ConvexError({ code: "invalid", message: "Enter a passkey name" });
@@ -377,11 +382,11 @@ export const apiRenameForUser = serverMutation({
   },
 });
 
-export const apiRemoveForUser = serverMutation({
-  args: { clerkUserId: v.string(), passkeyId: v.id("passkeys") },
+export const apiRemoveForUser = serverUserMutation({
+  args: { passkeyId: v.id("passkeys") },
   returns: v.object({ ok: v.boolean(), signal: v.optional(acceptedCredentialsSignalValidator) }),
   handler: async (ctx, args) => {
-    const user = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId));
+    const user = ctx.caller.user;
     const passkey = await readPasskeyForUser(ctx, user._id, args.passkeyId);
     await ctx.db.delete(passkey._id);
     await ctx.db.insert("passkeyAuditLog", {

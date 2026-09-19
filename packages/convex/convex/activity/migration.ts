@@ -1,9 +1,8 @@
-import { internalMutation, internalQuery, mutation, query } from "../functions";
+import { internalMutation, internalQuery, userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
-import { requireManager, requireAdmin } from "../lib/auth";
 import { appError } from "../lib/errors";
 import { MIGRATION_TABLES, type MigrationTable } from "./lib/migration";
 import { type MutationCtx } from "../_generated/server";
@@ -11,10 +10,10 @@ import { type MutationCtx } from "../_generated/server";
 // --- Control surface (status UI) --------------------------------------------
 
 /** The most recent migration run with its per-table steps. Manager+. */
-export const latest = query({
+export const latest = userQuery({
+  role: "manager",
   args: {},
   handler: async (ctx) => {
-    await requireManager(ctx);
     const migration = await ctx.db
       .query("activityMigrations")
       .withIndex("by_startedAt")
@@ -36,10 +35,11 @@ export const latest = query({
 });
 
 /** Start a fresh migration run. Admin-only. */
-export const start = mutation({
+export const start = userMutation({
+  role: "admin",
   args: { note: v.optional(v.string()) },
   handler: async (ctx, { note }) => {
-    const actor = await requireAdmin(ctx);
+    const actor = ctx.caller.user;
     if (!process.env.ACTIVITYTRACK_OLD_CONVEX_URL) {
       throw appError(
         "migration.unconfigured",
@@ -73,12 +73,12 @@ export const start = mutation({
 });
 
 /** Resume a paused/failed migration from where each step left off. Admin. */
-export const resume = mutation({
+export const resume = userMutation({
+  role: "admin",
   args: { migrationId: v.id("activityMigrations") },
   handler: async (ctx, { migrationId }) => {
-    await requireAdmin(ctx);
     const migration = await ctx.db.get(migrationId);
-    if (!migration) throw appError("notFound.migration", "Migration not found");
+    if (!migration) throw appError("not_found", "Migration not found");
     await ctx.db.patch(migrationId, {
       status: "running",
       finishedAt: undefined,
@@ -104,12 +104,12 @@ export const resume = mutation({
 });
 
 /** Retry a single failed step (keeps its resume cursor). Admin. */
-export const retryStep = mutation({
+export const retryStep = userMutation({
+  role: "admin",
   args: { stepId: v.id("activityMigrationSteps") },
   handler: async (ctx, { stepId }) => {
-    await requireAdmin(ctx);
     const step = await ctx.db.get(stepId);
-    if (!step) throw appError("notFound.step", "Step not found");
+    if (!step) throw appError("not_found", "Step not found");
     await ctx.db.patch(stepId, {
       status: "pending",
       lastError: undefined,

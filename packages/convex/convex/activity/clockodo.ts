@@ -1,6 +1,6 @@
 "use node";
 
-import { action, gatedAction } from "../functions";
+import { gatedAction, userAction } from "../functions";
 
 import { v } from "convex/values";
 
@@ -18,7 +18,6 @@ import {
   startOfBusinessDayUtcMs,
 } from "./lib/businessHours";
 import { deriveClockodoDaySegments } from "./lib/clockodoDay";
-import { requireAdminForAction } from "../lib/auth";
 import {
   ASSUMED_CLOCKED_OUT_AFTER_MS,
   CLOCKODO_BASE,
@@ -201,11 +200,10 @@ export const refreshClockodoByEntry = gatedAction("activitytrack")({
  * `maintenance.reconcileClockodoDayForEmployee`; this action only owns the
  * HTTP fetch, which mutations can't do.
  */
-export const troubleshootSanitizeDay = action({
+export const troubleshootSanitizeDay = userAction({
+  role: "admin",
   args: { day: v.optional(v.string()) },
   handler: async (ctx, { day }) => {
-    await requireAdminForAction(ctx);
-
     const secret = signalSecret();
     const targetDay = day ?? today();
     const dayStartMs = startOfBusinessDayUtcMs(targetDay);

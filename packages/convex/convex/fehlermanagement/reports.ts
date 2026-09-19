@@ -1,8 +1,8 @@
-import { mutation, query } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { DEFAULT_THRESHOLDS } from "./lib/thresholds";
-import { requireManager, requireUser } from "../lib/auth";
+import { moveToTrash } from "../lib/trash";
 
 const severityValidator = v.union(
   v.literal("niedrig"),
@@ -18,10 +18,9 @@ const statusValidator = v.union(
 const feedbackValidator = v.union(v.literal("positiv"), v.literal("neutral"), v.literal("negativ"));
 
 /** Everything, newest first — the list page does its own scope/severity/search filtering. */
-export const list = query({
+export const list = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const rows = await ctx.db.query("errorReports").collect();
     const categories = await ctx.db.query("errorCategories").collect();
     const categoryName = new Map(categories.map((c) => [c._id, c.name]));
@@ -54,7 +53,7 @@ export const list = query({
 
 /** Quick-add: description + category + severity is enough to log an error —
  * everything else (due date, status) is defaulted and refined later via `update`. */
-export const create = mutation({
+export const create = userMutation({
   args: {
     description: v.string(),
     categoryId: v.optional(v.id("errorCategories")),
@@ -63,7 +62,7 @@ export const create = mutation({
     responsibleName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const description = args.description.trim();
     if (!description)
       throw new ConvexError({ code: "bad_request", message: "Description required" });
@@ -101,10 +100,9 @@ const updatableFields = {
   effectivenessChecked: v.optional(v.boolean()),
 };
 
-export const update = mutation({
+export const update = userMutation({
   args: { reportId: v.id("errorReports"), patch: v.object(updatableFields) },
   handler: async (ctx, { reportId, patch }) => {
-    await requireUser(ctx);
     const report = await ctx.db.get(reportId);
     if (!report) throw new ConvexError({ code: "not_found", message: "Not found" });
     // Closing snapshots closedAt; reopening clears it so it doesn't read as
@@ -120,16 +118,11 @@ export const update = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
+  role: "manager",
   args: { reportId: v.id("errorReports") },
   handler: async (ctx, { reportId }) => {
-    await requireManager(ctx);
-    const measures = await ctx.db
-      .query("errorMeasures")
-      .withIndex("by_error", (q) => q.eq("errorReportId", reportId))
-      .collect();
-    for (const m of measures) await ctx.db.delete(m._id);
-    await ctx.db.delete(reportId);
+    await moveToTrash(ctx, "errorReports", reportId, ctx.caller.id);
     return { ok: true };
   },
 });

@@ -1,10 +1,9 @@
-import { internalMutation, mutation, query, serverMutation } from "../functions";
+import { internalMutation, serverMutation, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
-import { effectiveRole, requireAdmin, requireUser } from "../lib/auth";
 import { userMatchesAudience } from "../lib/audience";
 import { notifyUsers } from "../lib/notify";
 import { displayName } from "../lib/users";
@@ -16,6 +15,8 @@ import {
   insertUpdate,
   resolveAudienceUserIds,
 } from "./lib/updates";
+import { moveToTrash } from "../lib/trash";
+
 const CHANGELOG_BANNER_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 const RESOLVED_BANNER_GRACE_MS = 24 * 60 * 60 * 1000;
 const INTRANET_BOT_CLERK_USER_ID = "system:intranet-bot";
@@ -73,10 +74,10 @@ async function resolveMarkdownAuthor(
  * go to right now — same matching + consent rules as `updatesEmail.sendBulk`
  * — so the compose UI can show "who gets emailed" before publishing.
  */
-export const previewEmailRecipients = query({
+export const previewEmailRecipients = userQuery({
+  role: "admin",
   args: { audience: audienceValidator },
   handler: async (ctx, { audience }) => {
-    await requireAdmin(ctx);
     const activeUsers = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -98,7 +99,8 @@ export const previewEmailRecipients = query({
   },
 });
 
-export const create = mutation({
+export const create = userMutation({
+  role: "admin",
   args: {
     type: v.union(v.literal("incident"), v.literal("maintenance"), v.literal("changelog")),
     title: v.string(),
@@ -114,7 +116,7 @@ export const create = mutation({
     emailRequested: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const author = await requireAdmin(ctx);
+    const author = ctx.caller.user;
     const id = await insertUpdate(ctx, {
       ...args,
       authorUserId: author._id,
@@ -218,14 +220,15 @@ export const publishScheduled = internalMutation({
 });
 
 /** Post a status/timeline entry — the incident.io-style running log. No email. */
-export const addTimelineEntry = mutation({
+export const addTimelineEntry = userMutation({
+  role: "admin",
   args: {
     updateId: v.id("updates"),
     status: v.optional(statusValidator),
     message: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await requireAdmin(ctx);
+    const user = ctx.caller.user;
     const update = await ctx.db.get(args.updateId);
     if (!update) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
@@ -239,7 +242,8 @@ export const addTimelineEntry = mutation({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
+  role: "admin",
   args: {
     updateId: v.id("updates"),
     title: v.optional(v.string()),
@@ -249,7 +253,6 @@ export const update = mutation({
     affectedSystems: v.optional(v.array(v.string())),
   },
   handler: async (ctx, { updateId, ...patch }) => {
-    await requireAdmin(ctx);
     const existing = await ctx.db.get(updateId);
     if (!existing) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
@@ -259,28 +262,18 @@ export const update = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
+  role: "admin",
   args: { updateId: v.id("updates") },
   handler: async (ctx, { updateId }) => {
-    await requireAdmin(ctx);
     const existing = await ctx.db.get(updateId);
     if (!existing) return { ok: false };
-    const dismissals = await ctx.db
-      .query("updateDismissals")
-      .withIndex("by_update_user", (q) => q.eq("updateId", updateId))
-      .collect();
-    await Promise.all(dismissals.map((d) => ctx.db.delete(d._id)));
-    const emailRows = await ctx.db
-      .query("updateEmailRecipients")
-      .withIndex("by_update", (q) => q.eq("updateId", updateId))
-      .collect();
-    await Promise.all(emailRows.map((r) => ctx.db.delete(r._id)));
-    await ctx.db.delete(updateId);
+    await moveToTrash(ctx, "updates", updateId, ctx.caller.id);
     return { ok: true };
   },
 });
 
-export const list = query({
+export const list = userQuery({
   args: {
     type: v.optional(
       v.union(v.literal("incident"), v.literal("maintenance"), v.literal("changelog")),
@@ -291,7 +284,7 @@ export const list = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const rows = args.type
       ? await ctx.db
@@ -306,7 +299,7 @@ export const list = query({
           .take(args.limit ?? 200);
 
     const search = args.search?.trim().toLowerCase();
-    const isAdmin = effectiveRole(user) === "admin";
+    const isAdmin = ctx.caller.isAdmin;
     const visible = rows.filter((u) => {
       if (!userMatchesAudience(user, u.audience)) return false;
       if (u.publishedAt > now && u.authorUserId !== user._id && !isAdmin) return false;
@@ -360,10 +353,10 @@ interface EmailRecipientRow {
   clickedAt: number | null;
 }
 
-export const get = query({
+export const get = userQuery({
   args: { updateId: v.id("updates") },
   handler: async (ctx, { updateId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const update = await ctx.db.get(updateId);
     if (!update || !userMatchesAudience(user, update.audience)) {
       return null;
@@ -375,7 +368,7 @@ export const get = query({
         return { ...entry, authorName: displayName(entryAuthor) };
       }),
     );
-    const isAdmin = effectiveRole(user) === "admin";
+    const isAdmin = ctx.caller.isAdmin;
 
     let emailStats: Record<string, number> | null = null;
     let recipients: EmailRecipientRow[] | null = null;
@@ -432,10 +425,10 @@ export const get = query({
   },
 });
 
-export const bannerActive = query({
+export const bannerActive = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const recent = await ctx.db.query("updates").withIndex("by_publishedAt").order("desc").take(50);
 
@@ -491,10 +484,10 @@ export const bannerActive = query({
   },
 });
 
-export const dismissBanner = mutation({
+export const dismissBanner = userMutation({
   args: { updateId: v.id("updates") },
   handler: async (ctx, { updateId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const update = await ctx.db.get(updateId);
     if (!update) return { ok: false };
     const existing = await ctx.db

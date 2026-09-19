@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 
-import { query } from "../functions";
-import { requireAdmin } from "../lib/auth";
+import { userQuery } from "../functions";
 import { batchUserSummaries } from "../lib/users";
 
 /**
@@ -18,10 +17,10 @@ const sourceArg = v.optional(
   v.union(v.literal("activity"), v.literal("onedrive"), v.literal("integrations")),
 );
 
-export const list = query({
+export const list = userQuery({
+  role: "admin",
   args: { source: sourceArg, limit: v.optional(v.number()) },
   handler: async (ctx, { source, limit }) => {
-    await requireAdmin(ctx);
     const take = Math.min(limit ?? 100, 500);
 
     const [activityRows, onedriveRows, integrationsRows] = await Promise.all([

@@ -1,4 +1,7 @@
+import { Elysia } from "elysia";
+
 import { type AuthedUser } from "./clerk.js";
+import { convexAs } from "./convex.js";
 import { isAllowedOrigin } from "./env.js";
 import { Errors } from "./errors.js";
 import { getRequestContext } from "./request-context.js";
@@ -28,6 +31,20 @@ export async function requireAuth(request: Request): Promise<AuthedUser> {
   if (!user) throw Errors.unauthorized();
   return user;
 }
+
+/**
+ * `{ signedIn: true }` on a route requires a Clerk session and hands the
+ * handler `caller`: who is asking, plus a Convex client that calls
+ * `serverUser*` functions on their behalf.
+ */
+export const authed = new Elysia({ name: "authed" }).macro({
+  signedIn: {
+    async resolve({ request }) {
+      const user = await requireAuth(request);
+      return { caller: { ...user, convex: convexAs(user.clerkUserId) } };
+    },
+  },
+});
 
 /** Guard internal endpoints with the shared Convex server key header. */
 export function requireServerKey(request: Request): void {

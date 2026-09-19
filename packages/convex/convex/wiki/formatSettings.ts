@@ -1,16 +1,12 @@
-import { mutation, query } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
-
-import { requireCapability, requireUser } from "../lib/auth";
-
 const KEY = "default";
 
 /** The org-wide default formatting instructions for the "format with AI"
  *  wiki assist — empty string until a manager has ever saved one. */
-export const get = query({
+export const get = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const row = await ctx.db
       .query("wikiFormatSettings")
       .withIndex("by_key", (q) => q.eq("key", KEY))
@@ -19,10 +15,11 @@ export const get = query({
   },
 });
 
-export const set = mutation({
+export const set = userMutation({
+  can: "manage_guidebooks",
   args: { value: v.string() },
   handler: async (ctx, { value }) => {
-    const user = await requireCapability(ctx, "manage_guidebooks");
+    const user = ctx.caller.user;
     const row = await ctx.db
       .query("wikiFormatSettings")
       .withIndex("by_key", (q) => q.eq("key", KEY))

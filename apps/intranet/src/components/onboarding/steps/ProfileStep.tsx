@@ -4,7 +4,7 @@ import type { ChangeEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
-import { useAction, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
 import { Camera } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -23,7 +23,7 @@ export function ProfileStep() {
   const t = useTranslations("Onboarding");
   const ts = useTranslations("Settings");
   const user = useCurrentUser();
-  const updateProfile = useAction(api.people.users.updateProfile);
+  const updateProfile = useMutation(api.people.users.updateProfile);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const handleError = useErrorHandler();
 

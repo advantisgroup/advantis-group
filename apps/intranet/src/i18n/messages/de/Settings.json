@@ -281,5 +281,27 @@
   "removeSecondaryEmailTitle": "{email} entfernen?",
   "securityDeviceTrackingOffTitle": "Geräte nicht mehr merken?",
   "securityDeviceTrackingOffBody": "Deine erkannten Geräte werden vergessen, und jede neue Anmeldung fragt nach einem Bestätigungscode.",
-  "securityDeviceTrackingOffConfirm": "Ausschalten"
+  "securityDeviceTrackingOffConfirm": "Ausschalten",
+  "trash": "Zuletzt gelöscht",
+  "trashHint": "Hol zurück, was in den letzten 30 Tagen gelöscht wurde.",
+  "trashSectionHint": "Wird 30 Tage aufbewahrt, danach endgültig entfernt.",
+  "trashEmpty": "Nichts kürzlich gelöscht",
+  "trashEmptyHint": "Gelöschte Ankündigungen, Tickets, Seiten und Beiträge bleiben hier 30 Tage.",
+  "trashDeletedBy": "Gelöscht am {date} von {name}",
+  "trashGoneOn": "endgültig weg am {date}",
+  "trashRestore": "Wiederherstellen",
+  "trashRestored": "„{label}“ wiederhergestellt",
+  "trashTypes": {
+    "announcements": "Ankündigung",
+    "blogPosts": "Blogbeitrag",
+    "errorReports": "Fehlermeldung",
+    "errorMeasures": "Maßnahme",
+    "events": "Termin",
+    "guidebookPages": "Guidebook-Seite",
+    "itTickets": "IT-Ticket",
+    "suggestions": "Vorschlag",
+    "updates": "Update",
+    "wikiEntries": "Wiki-Eintrag",
+    "salesCoachEvWiki": "Sales-Coach-Artikel"
+  }
 }

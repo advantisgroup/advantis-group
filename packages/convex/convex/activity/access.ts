@@ -1,5 +1,5 @@
-import { query } from "../functions";
-import { getAdminEmails, getAllowedDomains, requireUser } from "../lib/auth";
+import { userQuery } from "../functions";
+import { getAdminEmails, getAllowedDomains } from "../lib/auth";
 
 /**
  * Read-only view of the intranet's email-domain access control, surfaced in the
@@ -16,11 +16,9 @@ import { getAdminEmails, getAllowedDomains, requireUser } from "../lib/auth";
  * adjusted via the Convex env var, and access is granted through the
  * intranet-wide admin area (invites / access requests).
  */
-export const getAccessControl = query({
+export const getAccessControl = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
-
     // Permanent admins are seeded from the env var; additionally surface anyone
     // currently holding the `admin` role so the list reflects live state.
     const roleAdmins = await ctx.db

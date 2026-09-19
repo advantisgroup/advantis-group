@@ -1,17 +1,14 @@
-import { gatedMutation, mutation, query } from "../functions";
+import { gatedMutation, userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
-
-import { requireUser, requireManager, requireAdmin } from "../lib/auth";
 import { writeAudit } from "./lib/audit";
 import { appError } from "../lib/errors";
 import { assertSignalSecret, issueDeviceToken, invalidateDeviceToken } from "./lib/deviceAuth";
 import { hashNonce, safeEqual } from "./lib/crypto";
 
 /** All devices with their linked person's name (if any). Any signed-in user. */
-export const list = query({
+export const list = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const devices = await ctx.db.query("devices").take(2000);
 
     const personIds = [...new Set(devices.flatMap((d) => (d.personId ? [d.personId] : [])))];
@@ -29,10 +26,9 @@ export const list = query({
 });
 
 /** Devices awaiting approval (the registration queue). */
-export const listPending = query({
+export const listPending = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     return await ctx.db
       .query("devices")
       .withIndex("by_status", (q) => q.eq("status", "pending"))
@@ -45,12 +41,13 @@ export const listPending = query({
  * Clears `tokenIssued` so a freshly approved (or re-approved after disable)
  * device mints a new token on its next poll — see `claimToken`.
  */
-export const approve = mutation({
+export const approve = userMutation({
+  role: "manager",
   args: { deviceId: v.id("devices") },
   handler: async (ctx, { deviceId }) => {
-    const actor = await requireManager(ctx);
+    const actor = ctx.caller.user;
     const device = await ctx.db.get(deviceId);
-    if (!device) throw appError("notFound.device", "Device not found");
+    if (!device) throw appError("not_found", "Device not found");
     await ctx.db.patch(deviceId, {
       status: "active",
       tokenIssued: false,
@@ -61,12 +58,13 @@ export const approve = mutation({
 });
 
 /** Disable a device, revoking its token immediately. Admin (destructive). */
-export const disable = mutation({
+export const disable = userMutation({
+  role: "admin",
   args: { deviceId: v.id("devices") },
   handler: async (ctx, { deviceId }) => {
-    const actor = await requireAdmin(ctx);
+    const actor = ctx.caller.user;
     const device = await ctx.db.get(deviceId);
-    if (!device) throw appError("notFound.device", "Device not found");
+    if (!device) throw appError("not_found", "Device not found");
     await ctx.db.patch(deviceId, { status: "disabled" });
     await invalidateDeviceToken(ctx, deviceId);
     await writeAudit(ctx, actor._id, "device.disable", device.hostname);
@@ -74,30 +72,32 @@ export const disable = mutation({
 });
 
 /** Permanently delete a device. Admin (destructive, irreversible). */
-export const remove = mutation({
+export const remove = userMutation({
+  role: "admin",
   args: { deviceId: v.id("devices") },
   handler: async (ctx, { deviceId }) => {
-    const actor = await requireAdmin(ctx);
+    const actor = ctx.caller.user;
     const device = await ctx.db.get(deviceId);
-    if (!device) throw appError("notFound.device", "Device not found");
+    if (!device) throw appError("not_found", "Device not found");
     await ctx.db.delete(deviceId);
     await writeAudit(ctx, actor._id, "device.remove", device.hostname);
   },
 });
 
 /** Link a device to a coworker (or pass null to unlink). Manager+. */
-export const link = mutation({
+export const link = userMutation({
+  role: "manager",
   args: {
     deviceId: v.id("devices"),
     personId: v.union(v.id("people"), v.null()),
   },
   handler: async (ctx, { deviceId, personId }) => {
-    const actor = await requireManager(ctx);
+    const actor = ctx.caller.user;
     const device = await ctx.db.get(deviceId);
-    if (!device) throw appError("notFound.device", "Device not found");
+    if (!device) throw appError("not_found", "Device not found");
     if (personId) {
       const person = await ctx.db.get(personId);
-      if (!person) throw appError("notFound.person", "Person not found");
+      if (!person) throw appError("not_found", "Person not found");
     }
     await ctx.db.patch(deviceId, { personId: personId ?? undefined });
     await writeAudit(ctx, actor._id, "device.link", `${device.hostname} -> ${personId ?? "none"}`);

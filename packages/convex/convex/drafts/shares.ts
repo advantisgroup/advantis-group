@@ -1,9 +1,9 @@
 import { ConvexError, v } from "convex/values";
 
 import type { Doc, Id } from "../_generated/dataModel";
-import { mutation, query } from "../functions";
+import { query, userMutation } from "../functions";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
-import { getCurrentUser, requireUser } from "../lib/auth";
+import { getCurrentUser } from "../lib/auth";
 import { draftSurface } from "./lib/surfaces";
 import { createNotification } from "../lib/notify";
 import {
@@ -72,7 +72,7 @@ function forkHref(ctx: QueryCtx, draft: Doc<"drafts">, newDraftId?: string): str
   return newDraftId ? draft.href.replace(pageKey, newDraftId) : draft.href;
 }
 
-export const share = mutation({
+export const share = userMutation({
   args: {
     surface: draftSurface,
     subjectKey: v.string(),
@@ -83,8 +83,8 @@ export const share = mutation({
     name: v.optional(v.string()),
   },
   handler: async (ctx, { surface, subjectKey, versionId, userIds, name }) => {
-    const user = await requireUser(ctx);
-    if (APPLICANT_SURFACES.has(surface) || !(await canUseSurface(ctx, user, surface))) {
+    const user = ctx.caller.user;
+    if (APPLICANT_SURFACES.has(surface) || !(await canUseSurface(ctx, ctx.caller, surface))) {
       throw new ConvexError({ code: "forbidden", message: "This draft can't be shared" });
     }
     if (userIds.length === 0 || userIds.length > MAX_RECIPIENTS) {
@@ -126,10 +126,10 @@ export const share = mutation({
 
 /** Takes one person's access away again. The version keeps its comments —
  *  and stays protected from thinning while it has any. */
-export const unshare = mutation({
+export const unshare = userMutation({
   args: { versionId: v.id("draftVersions"), userId: v.id("users") },
   handler: async (ctx, { versionId, userId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const version = await ctx.db.get(versionId);
     if (!version || version.userId !== user._id) {
       throw new ConvexError({ code: "not_found", message: "Version not found" });
@@ -264,10 +264,10 @@ async function notifyParticipants(
   }
 }
 
-export const addComment = mutation({
+export const addComment = userMutation({
   args: { versionId: v.id("draftVersions"), body: v.string() },
   handler: async (ctx, { versionId, body }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const { version } = await requireAccess(ctx, user, versionId);
     const text = body.trim();
     if (!text) throw new ConvexError({ code: "bad_request", message: "Write something first" });
@@ -285,10 +285,10 @@ export const addComment = mutation({
   },
 });
 
-export const deleteComment = mutation({
+export const deleteComment = userMutation({
   args: { commentId: v.id("draftComments") },
   handler: async (ctx, { commentId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const comment = await ctx.db.get(commentId);
     if (!comment || comment.authorId !== user._id) {
       throw new ConvexError({ code: "not_found", message: "Comment not found" });
@@ -300,10 +300,10 @@ export const deleteComment = mutation({
 
 /** "Continue from this": copies a version someone shared with you into a
  *  draft of your own. Nothing you do there reaches the original. */
-export const continueFrom = mutation({
+export const continueFrom = userMutation({
   args: { versionId: v.id("draftVersions") },
   handler: async (ctx, { versionId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const { version, draft, isOwner } = await requireAccess(ctx, user, versionId);
     if (isOwner || !forkHref(ctx, draft)) {
       throw new ConvexError({ code: "bad_request", message: "This draft can't be copied" });

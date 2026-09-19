@@ -1,16 +1,13 @@
-import { mutation, query } from "../functions";
+import { mutation, userQuery } from "../functions";
 import { v } from "convex/values";
-
-import { requireUser } from "../lib/auth";
 import { requireAcademyAdmin, resolveCurrentPin } from "./lib/auth";
 
 /** Whether `pin` unlocks the academy's Trainer area — same client-side trust
  * model as the ported tool (knowing the PIN is the whole gate), except the
  * PIN itself is compared server-side and never sent to the client. */
-export const checkPin = query({
+export const checkPin = userQuery({
   args: { academyId: v.string(), pin: v.string() },
   handler: async (ctx, { academyId, pin }) => {
-    await requireUser(ctx);
     const current = await resolveCurrentPin(ctx, academyId);
     return current === pin.trim();
   },

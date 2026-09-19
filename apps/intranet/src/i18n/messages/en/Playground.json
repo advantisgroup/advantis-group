@@ -1,0 +1,229 @@
+{
+  "title": "Playground",
+  "subtitle": "The intranet's own pieces, live. Poke at them.",
+  "reset": "Reset",
+  "tabs": {
+    "overview": "Overview",
+    "drag": "Drag and drop",
+    "design": "Design",
+    "components": "Components"
+  },
+  "overview": {
+    "intro": "A learning ground for how the intranet is built. Nothing here is a copy — every demo uses the same component the real page does, so what you see is what ships.",
+    "drag": "The physics drag from the sidebar editor, a board you can move cards across, and a file drop.",
+    "design": "The rules the interface follows, the colour tokens, radii and type scale.",
+    "components": "Buttons, numbers, filters, empty states, dialogs and toasts — all clickable.",
+    "footnote": "Nothing on these pages saves anything."
+  },
+  "drag": {
+    "physics": {
+      "title": "Physics drag",
+      "description": "Lifts, swings with its speed like something carried, and flies into its slot on drop. Used wherever things get reordered.",
+      "wobbly": "Extra wobbly",
+      "hint": "Grab a row and pull. On a phone, grab the handle so the page still scrolls.",
+      "tasks": {
+        "coffee": "Get coffee",
+        "inbox": "Clear the inbox",
+        "standup": "Stand-up",
+        "review": "Review the pull request",
+        "ship": "Ship it",
+        "celebrate": "Celebrate quietly"
+      }
+    },
+    "board": {
+      "title": "Moving between columns",
+      "description": "Plain browser drag and drop, like the applicant board. The dashed slot shows where a card will land.",
+      "columns": { "todo": "To do", "doing": "Doing", "done": "Done" },
+      "cards": {
+        "logo": "New logo on the login page",
+        "tickets": "Tidy up old IT tickets",
+        "onboarding": "Onboarding checklist",
+        "backup": "Nightly backup"
+      }
+    },
+    "files": {
+      "title": "Dropping files",
+      "description": "The drop zone attachments use. Drag files from your desktop onto it — here they're only listed, never uploaded.",
+      "hint": "Drop to add",
+      "empty": "Drag a file here"
+    }
+  },
+  "design": {
+    "principles": {
+      "title": "How the interface behaves",
+      "description": "The rules every page follows, so the intranet feels like one product.",
+      "hairlines": {
+        "title": "Hairline sections, not card stacks",
+        "body": "Group related rows in one bordered block with thin dividers instead of a card per item."
+      },
+      "status": {
+        "title": "Status is never colour alone",
+        "body": "A state always comes with an icon and a word, so it reads for everyone and next to chart colours."
+      },
+      "dialogs": {
+        "title": "Creating opens a dialog",
+        "body": "Adding or logging something opens a dialog (a sheet on phones) or its own page — never a form sitting on top of a list."
+      },
+      "saves": {
+        "title": "Settings save as you change them",
+        "body": "No save bars and no Save button at the bottom of a form. Flip it and it's done."
+      },
+      "tabs": {
+        "title": "Tabs move to the bottom on phones",
+        "body": "Pages with tabs use RouteTabs, which hands them to the bottom navigation on small screens."
+      },
+      "pages": {
+        "title": "Big flows get their own page",
+        "body": "Editors, reviews and reports get a full page. Dialogs are for small, quick things."
+      }
+    },
+    "colors": {
+      "title": "Colour tokens",
+      "description": "Use the token, never a hex value, so light and dark mode both work. Click one to copy its class.",
+      "copied": "Copied {text}",
+      "groups": {
+        "surfaces": "Surfaces",
+        "text": "Text",
+        "status": "Status",
+        "charts": "Charts"
+      }
+    },
+    "status": {
+      "title": "Showing a state",
+      "description": "Icon, word and colour together.",
+      "do": "Do",
+      "dont": "Don't",
+      "dontWhy": "Which dot means what? Colour alone can't say it, and not everyone sees it.",
+      "healthy": "Healthy",
+      "degraded": "Degraded",
+      "down": "Down"
+    },
+    "radius": {
+      "title": "Corner radius",
+      "description": "Small for controls, larger for surfaces. Click one to copy its class."
+    },
+    "type": {
+      "title": "Type scale",
+      "description": "A handful of sizes, used the same way everywhere.",
+      "samples": {
+        "display": "Page and record titles",
+        "section": "Section headings",
+        "row": "The main line of a row",
+        "body": "Descriptions and supporting text, kept short",
+        "eyebrow": "Labels above a group",
+        "mono": "components/ui/button.tsx"
+      }
+    }
+  },
+  "components": {
+    "buttons": {
+      "title": "Button lab",
+      "description": "Every variant and size. Pick a combination and the code updates with it.",
+      "pressMe": "Press me",
+      "presses": "{count, plural, =0 {Not pressed yet} one {Pressed once} other {Pressed # times}}",
+      "milestones": {
+        "10": "Ten presses. Very thorough.",
+        "25": "Twenty-five. The button is fine, promise.",
+        "50": "Fifty presses. You've earned a coffee.",
+        "100": "One hundred. This button now trusts you completely."
+      }
+    },
+    "badges": {
+      "title": "Badges",
+      "description": "Small labels for a state or a category. Pair a status badge with an icon."
+    },
+    "kpis": {
+      "title": "Headline numbers",
+      "description": "One joined strip instead of four cards. A figure that needs attention changes tone.",
+      "shuffle": "Shuffle",
+      "people": "People here",
+      "tickets": "Open tickets",
+      "absences": "Out today",
+      "uptime": "Uptime",
+      "busy": "Busy week"
+    },
+    "loading": {
+      "title": "Loading, then loaded",
+      "description": "Skeletons keep the shape of what's coming, so nothing jumps when it arrives.",
+      "toggle": "Loading",
+      "name": "Advantis Group",
+      "line": "Everything arrived where the skeleton said it would."
+    },
+    "filters": {
+      "title": "Tabs and filters",
+      "description": "Tabs split a list and show their counts; pills narrow it further. Both work on the list below.",
+      "all": "All",
+      "nothing": "Nothing matches",
+      "status": { "open": "Open", "waiting": "Waiting", "done": "Done" },
+      "tickets": {
+        "printer": "Printer on floor 2",
+        "vpn": "VPN keeps dropping",
+        "laptop": "New laptop for Anna",
+        "badge": "Door badge",
+        "headset": "Headset crackles",
+        "monitor": "Second monitor"
+      }
+    },
+    "empty": {
+      "title": "Empty states",
+      "description": "An empty list says what it is and offers the action that fills it.",
+      "emptyTitle": "No ideas yet",
+      "emptyHint": "Collect what would make the office nicer.",
+      "add": "Add an idea",
+      "clear": "Clear",
+      "ideas": {
+        "plants": "More plants",
+        "music": "Friday music",
+        "standing": "Standing desks",
+        "snacks": "A snack drawer",
+        "quiet": "A quiet room"
+      }
+    },
+    "settings": {
+      "title": "Settings rows",
+      "description": "Label left, control right, saved the moment it changes.",
+      "saved": "Saved",
+      "digest": {
+        "title": "Morning summary",
+        "hint": "One email a day instead of many"
+      },
+      "sounds": {
+        "title": "Chat sounds",
+        "hint": "A soft ping for new messages"
+      }
+    },
+    "feedback": {
+      "title": "Dialogs, toasts and tooltips",
+      "description": "Creating opens a dialog, results show as a toast, extra explanation sits behind a tooltip.",
+      "openDialog": "New greeting",
+      "success": "Success",
+      "error": "Error",
+      "withUndo": "With undo",
+      "toastSuccess": "That worked.",
+      "toastError": "That didn't work. Nothing was changed.",
+      "toastDeleted": "Deleted",
+      "undo": "Undo",
+      "toastRestored": "Back again",
+      "tooltipLabel": "More information",
+      "tooltip": "Longer explanations live here, not in the layout.",
+      "dialogTitle": "New greeting",
+      "dialogHint": "Who should be greeted?",
+      "dialogSubmit": "Greet",
+      "name": "Name",
+      "hello": "Hello, {name}!"
+    },
+    "panel": {
+      "title": "Overview panels",
+      "description": "What the admin overview is built from: a titled panel and rows with a tone.",
+      "panelTitle": "Systems",
+      "panelHint": "Integrations and their health",
+      "rows": {
+        "ok": "Clockodo",
+        "okHint": "Last synced a minute ago",
+        "warn": "Genesys",
+        "warnHint": "Slow to answer",
+        "neutral": "Agents online"
+      }
+    }
+  }
+}

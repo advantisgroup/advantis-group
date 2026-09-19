@@ -1,19 +1,20 @@
-import { mutation, query, serverMutation } from "./functions";
+import { query, serverMutation, userQuery, userMutation } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { getCurrentUser, hasApplicantAccess, requireUser, requireVaultUnlocked } from "./lib/auth";
+import { getCurrentUser } from "./lib/auth";
+import { type Caller } from "./lib/caller";
 import { type QueryCtx } from "./_generated/server";
+import { requireVaultUnlocked } from "./hr/lib/access";
 
 /**
  * Issue a short-lived upload URL for chat attachments, avatars and
  * announcement files. The client POSTs the file to this URL and receives a
  * `storageId` which it then attaches to the relevant document.
  */
-export const generateUploadUrl = mutation({
+export const generateUploadUrl = userMutation({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     return ctx.storage.generateUploadUrl();
   },
 });
@@ -35,7 +36,7 @@ export const apiGenerateUploadUrl = serverMutation({
  *  Management document, and pass everything else through untouched. */
 async function resolveGatedUrl(
   ctx: QueryCtx,
-  user: Doc<"users">,
+  caller: Caller,
   storageId: Id<"_storage">,
 ): Promise<string | null> {
   const applicantDocument = await ctx.db
@@ -47,47 +48,56 @@ async function resolveGatedUrl(
     .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
     .first();
   if (applicantDocument || employeeDocument) {
-    if (!hasApplicantAccess(user)) return null;
-    await requireVaultUnlocked(ctx, user._id);
+    if (!caller.hasApplicantAccess) return null;
+    await requireVaultUnlocked(ctx, caller.id);
   }
   return ctx.storage.getUrl(storageId);
 }
 
 /** Resolve a single storage id to a served URL (null if missing). */
-export const getUrl = query({
+export const getUrl = userQuery({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, { storageId }) => {
-    const user = await requireUser(ctx);
-    return resolveGatedUrl(ctx, user, storageId);
+    return resolveGatedUrl(ctx, ctx.caller, storageId);
   },
 });
 
 /** Resolve many storage ids at once. */
-export const getUrls = query({
+export const getUrls = userQuery({
   args: { storageIds: v.array(v.id("_storage")) },
   handler: async (ctx, { storageIds }) => {
-    const user = await requireUser(ctx);
     const entries = await Promise.all(
-      storageIds.map(async (id) => [id, await resolveGatedUrl(ctx, user, id)] as const),
+      storageIds.map(async (id) => [id, await resolveGatedUrl(ctx, ctx.caller, id)] as const),
     );
     return Object.fromEntries(entries) as Record<Id<"_storage">, string | null>;
   },
 });
 
+/** Long enough to cover "uploaded, then the save failed or was discarded". */
+const ROLLBACK_WINDOW_MS = 60 * 60 * 1000;
+
 /**
- * Delete a storage object. Only the uploader's own attachments or
- * admin/manager callers may delete; enforced loosely here (any active user)
- * and tightly at the call sites that know ownership (e.g. chat.deleteMessage).
+ * Roll back an upload that never got saved. Storage doesn't know who uploaded
+ * a file, so this only reaches fresh uploads, and never HR documents — deleting
+ * anything that's already part of a record happens through that record's own
+ * delete, which knows who owns it.
  */
-export const deleteFile = mutation({
+export const deleteFile = userMutation({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, { storageId }) => {
-    const user = await getCurrentUser(ctx);
-    if (!user) {
-      throw new ConvexError({
-        code: "unauthenticated",
-        message: "Not signed in",
-      });
+    const file = await ctx.db.system.get(storageId);
+    if (!file) return { deleted: false };
+    const isHrDocument =
+      (await ctx.db
+        .query("applicantDocuments")
+        .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
+        .first()) ??
+      (await ctx.db
+        .query("employeeDocuments")
+        .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
+        .first());
+    if (isHrDocument || Date.now() - file._creationTime > ROLLBACK_WINDOW_MS) {
+      throw new ConvexError({ code: "forbidden", message: "This file can't be deleted here" });
     }
     await ctx.storage.delete(storageId);
     return { deleted: true };

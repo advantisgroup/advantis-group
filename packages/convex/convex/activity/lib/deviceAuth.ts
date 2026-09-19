@@ -47,6 +47,6 @@ export async function invalidateDeviceToken(
 export function assertSignalSecret(secret: string): void {
   const expected = process.env.ACTIVITYTRACK_SIGNAL_SECRET;
   if (!expected || !safeEqual(secret, expected)) {
-    throw appError("auth.forbidden", "Invalid signal secret");
+    throw appError("forbidden", "Invalid signal secret");
   }
 }

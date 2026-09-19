@@ -10,7 +10,7 @@ import {
 import { clientIp } from "../lib/client-ip.js";
 import { Errors } from "../lib/errors.js";
 import { rateLimit } from "../lib/rate-limit.js";
-import { requireAuth, requireFirstPartyOrigin } from "../lib/middleware.js";
+import { requireFirstPartyOrigin, authed } from "../lib/middleware.js";
 
 const contextSchema = t.Union([
   t.Literal("sign_in"),
@@ -22,23 +22,27 @@ const contextSchema = t.Union([
 const areaSchema = t.Optional(t.Union([t.Literal("performance"), t.Literal("applicant_vault")]));
 
 export const stepUpRoute = new Elysia()
+  .use(authed)
   .post(
     "/auth/step-up/request-code",
-    async ({ request, body }) => {
+    async ({ caller, request, body }) => {
       requireFirstPartyOrigin(request);
-      const { clerkUserId, sessionId } = await requireAuth(request);
+      const { clerkUserId, sessionId } = caller;
       if (!sessionId) throw Errors.badRequest("No active session");
       await rateLimit("step-up-request", clerkUserId, 5, "10 m");
       await requestStepUpCode(clerkUserId, sessionId, body.context);
       return { ok: true };
     },
-    { body: t.Object({ context: contextSchema }) },
+    {
+      signedIn: true,
+      body: t.Object({ context: contextSchema }),
+    },
   )
   .post(
     "/auth/step-up/verify",
-    async ({ request, body }) => {
+    async ({ caller, request, body }) => {
       requireFirstPartyOrigin(request);
-      const { clerkUserId, sessionId } = await requireAuth(request);
+      const { clerkUserId, sessionId } = caller;
       if (!sessionId) throw Errors.badRequest("No active session");
       await rateLimit("step-up-verify", clerkUserId, 20, "10 m");
       return await verifyStepUp(
@@ -51,6 +55,7 @@ export const stepUpRoute = new Elysia()
       );
     },
     {
+      signedIn: true,
       body: t.Object({
         method: t.Union([t.Literal("email_code"), t.Literal("totp"), t.Literal("recovery_code")]),
         code: t.String(),
@@ -64,9 +69,9 @@ export const stepUpRoute = new Elysia()
    * step-up specific. */
   .post(
     "/auth/step-up/verify-passkey",
-    async ({ request, body }) => {
+    async ({ caller, request, body }) => {
       requireFirstPartyOrigin(request);
-      const { clerkUserId, sessionId } = await requireAuth(request);
+      const { clerkUserId, sessionId } = caller;
       if (!sessionId) throw Errors.badRequest("No active session");
       await rateLimit("step-up-verify", clerkUserId, 20, "10 m");
       return await verifyStepUpPasskey(
@@ -79,6 +84,7 @@ export const stepUpRoute = new Elysia()
       );
     },
     {
+      signedIn: true,
       body: t.Object({
         flowId: t.String(),
         response: t.Unknown(),
@@ -89,18 +95,25 @@ export const stepUpRoute = new Elysia()
   )
   .post(
     "/auth/step-up/claim-passkey",
-    async ({ request, body }) => {
+    async ({ caller, request, body }) => {
       requireFirstPartyOrigin(request);
-      const { clerkUserId, sessionId } = await requireAuth(request);
+      const { clerkUserId, sessionId } = caller;
       if (!sessionId) throw Errors.badRequest("No active session");
       return { ok: await claimPasskeyTicket(clerkUserId, sessionId, body.ticket) };
     },
-    { body: t.Object({ ticket: t.String() }) },
+    {
+      signedIn: true,
+      body: t.Object({ ticket: t.String() }),
+    },
   )
-  .get("/auth/step-up/evaluate-device", async ({ request }) => {
-    requireFirstPartyOrigin(request);
-    const { clerkUserId, sessionId } = await requireAuth(request);
-    if (!sessionId) throw Errors.badRequest("No active session");
-    const userAgent = request.headers.get("user-agent") ?? "unknown";
-    return await evaluateDevice(clerkUserId, sessionId, clientIp(request), userAgent);
-  });
+  .get(
+    "/auth/step-up/evaluate-device",
+    async ({ caller, request }) => {
+      requireFirstPartyOrigin(request);
+      const { clerkUserId, sessionId } = caller;
+      if (!sessionId) throw Errors.badRequest("No active session");
+      const userAgent = request.headers.get("user-agent") ?? "unknown";
+      return await evaluateDevice(clerkUserId, sessionId, clientIp(request), userAgent);
+    },
+    { signedIn: true },
+  );

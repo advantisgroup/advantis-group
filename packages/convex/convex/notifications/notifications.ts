@@ -1,13 +1,11 @@
-import { internalMutation, mutation, query } from "../functions";
+import { internalMutation, userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
-import { requireUser } from "../lib/auth";
-
-export const list = query({
+export const list = userQuery({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const rows = await ctx.db
       .query("notifications")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -20,10 +18,10 @@ export const list = query({
   },
 });
 
-export const unreadCount = query({
+export const unreadCount = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const recent = await ctx.db
       .query("notifications")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -33,10 +31,10 @@ export const unreadCount = query({
   },
 });
 
-export const markRead = mutation({
+export const markRead = userMutation({
   args: { notificationId: v.id("notifications") },
   handler: async (ctx, { notificationId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const notification = await ctx.db.get(notificationId);
     if (!notification || notification.userId !== user._id) return { ok: false };
     if (!notification.readAt) {
@@ -46,10 +44,10 @@ export const markRead = mutation({
   },
 });
 
-export const markAllRead = mutation({
+export const markAllRead = userMutation({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const unread = await ctx.db
       .query("notifications")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -63,10 +61,10 @@ export const markAllRead = mutation({
   },
 });
 
-export const markUnread = mutation({
+export const markUnread = userMutation({
   args: { notificationId: v.id("notifications") },
   handler: async (ctx, { notificationId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const notification = await ctx.db.get(notificationId);
     if (!notification || notification.userId !== user._id) return { ok: false };
     if (notification.readAt) {
@@ -76,10 +74,10 @@ export const markUnread = mutation({
   },
 });
 
-export const snooze = mutation({
+export const snooze = userMutation({
   args: { notificationId: v.id("notifications"), until: v.number() },
   handler: async (ctx, { notificationId, until }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const notification = await ctx.db.get(notificationId);
     if (!notification || notification.userId !== user._id) return { ok: false };
     const now = Date.now();
@@ -106,10 +104,10 @@ export const resurface = internalMutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
   args: { notificationId: v.id("notifications") },
   handler: async (ctx, { notificationId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const notification = await ctx.db.get(notificationId);
     if (!notification || notification.userId !== user._id) return { ok: false };
     await ctx.db.delete(notificationId);
@@ -117,10 +115,10 @@ export const remove = mutation({
   },
 });
 
-export const getPreferences = query({
+export const getPreferences = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const prefs = await ctx.db
       .query("notificationPreferences")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -133,10 +131,10 @@ export const getPreferences = query({
   },
 });
 
-export const setPreferences = mutation({
+export const setPreferences = userMutation({
   args: { mutedTypes: v.array(v.string()) },
   handler: async (ctx, { mutedTypes }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("notificationPreferences")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -155,13 +153,13 @@ export const setPreferences = mutation({
   },
 });
 
-export const setDeliveryOption = mutation({
+export const setDeliveryOption = userMutation({
   args: {
     option: v.union(v.literal("dailyDigest"), v.literal("weeklyReport")),
     enabled: v.boolean(),
   },
   handler: async (ctx, { option, enabled }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("notificationPreferences")
       .withIndex("by_user", (q) => q.eq("userId", user._id))

@@ -146,6 +146,7 @@ export function Uebersicht({
   const locale = useLocale();
   const profiles = useQuery(api.hr.applicants.listProfiles);
   const update = useMutation(api.hr.applicants.update);
+  const setPoolConsent = useMutation(api.hr.retention.setPoolConsent);
   const handleError = useErrorHandler();
   const isHighlighted = (skill: string) =>
     highlight.some((h) => h.toLowerCase() === skill.toLowerCase());
@@ -283,6 +284,43 @@ export function Uebersicht({
             )}
           </div>
 
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">{t("poolConsent")}</p>
+              <p className="text-[12.5px] text-muted-foreground">
+                {applicant.poolConsentUntil
+                  ? t("poolConsentUntil", {
+                      date: formatIsoDate(
+                        new Date(applicant.poolConsentUntil).toISOString().slice(0, 10),
+                        locale,
+                      ),
+                    })
+                  : t("poolConsentNone")}
+              </p>
+            </div>
+            <Select
+              value=""
+              onValueChange={(value) =>
+                setPoolConsent({ applicantId: applicant._id, months: Number(value) }).catch(
+                  handleError,
+                )
+              }
+            >
+              <SelectTrigger className="w-auto">
+                <SelectValue placeholder={t("poolConsentRecord")} />
+              </SelectTrigger>
+              <SelectContent>
+                {[6, 12, 24].map((months) => (
+                  <SelectItem key={months} value={String(months)}>
+                    {t("poolConsentMonths", { months })}
+                  </SelectItem>
+                ))}
+                {applicant.poolConsentUntil && (
+                  <SelectItem value="0">{t("poolConsentWithdraw")}</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-3 border-t border-border/60 pt-4">
             <p className="text-sm font-semibold">{t("profileFromDocuments")}</p>
             <RichField

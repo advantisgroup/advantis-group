@@ -6,7 +6,7 @@ import { runModelText, startAiRun } from "../lib/ai.js";
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { decrypt, encrypt } from "../lib/crypto.js";
 import { Errors } from "../lib/errors.js";
-import { requireAuth } from "../lib/middleware.js";
+import { authed } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
 const WIKI_SYSTEM = `Du bist ein interner Wissensassistent für UTA Edenred Kundenberater. Antworte präzise, freundlich und auf Deutsch. Nutze Aufzählungen, wenn es die Übersicht verbessert.
@@ -84,6 +84,7 @@ interface ChatDTO {
 }
 
 export const wikiChatRoute = new Elysia()
+  .use(authed)
   /**
    * Asks (or, without `message`, re-asks the unanswered last question). The
    * question is written to the chat before the run starts, so a refresh a
@@ -92,8 +93,8 @@ export const wikiChatRoute = new Elysia()
    */
   .post(
     "/wiki-chat",
-    async ({ request, body }) => {
-      const { clerkUserId } = await requireAuth(request);
+    async ({ caller, body }) => {
+      const { clerkUserId } = caller;
       await rateLimit("wikiChat.ask", clerkUserId, 20, "1 m");
       const convex = getConvex();
       const serverKey = getConvexServerKey();
@@ -205,6 +206,7 @@ export const wikiChatRoute = new Elysia()
       return { chatId, title, runId };
     },
     {
+      signedIn: true,
       body: t.Object({
         chatId: t.Optional(t.String()),
         message: t.Optional(t.String({ maxLength: 8000 })),
@@ -212,48 +214,49 @@ export const wikiChatRoute = new Elysia()
     },
   )
   // --- Encrypted chat history (per user) ---------------------------------
-  .get("/wiki-chat/chats", async ({ request }) => {
-    const { clerkUserId } = await requireAuth(request);
-    const rows = await getConvex().query(api.wiki.chats.list, {
-      serverKey: getConvexServerKey(),
-      clerkUserId,
-    });
-    const chats: ChatDTO[] = [];
-    for (const row of rows) {
-      try {
-        chats.push({
-          id: row.id,
-          title: decrypt(row.title),
-          messages: readMessages(row.messages),
-          createdAt: row.createdAt,
-          updatedAt: row.updatedAt,
-        });
-      } catch {
-        // Skip rows that fail to decrypt (e.g. key rotation) rather than 500.
+  .get(
+    "/wiki-chat/chats",
+    async ({ caller }) => {
+      const rows = await caller.convex.query(api.wiki.chats.list, {});
+      const chats: ChatDTO[] = [];
+      for (const row of rows) {
+        try {
+          chats.push({
+            id: row.id,
+            title: decrypt(row.title),
+            messages: readMessages(row.messages),
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+          });
+        } catch {
+          // Skip rows that fail to decrypt (e.g. key rotation) rather than 500.
+        }
       }
-    }
-    return { chats };
-  })
+      return { chats };
+    },
+    { signedIn: true },
+  )
   .patch(
     "/wiki-chat/chats/:id",
-    async ({ request, params, body }) => {
-      const { clerkUserId } = await requireAuth(request);
-      await getConvex().mutation(api.wiki.chats.update, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
+    async ({ caller, params, body }) => {
+      await caller.convex.mutation(api.wiki.chats.update, {
         id: params.id as Id<"wikiChats">,
         title: encrypt(body.title),
       });
       return { updated: true };
     },
-    { body: t.Object({ title: t.String({ minLength: 1, maxLength: 120 }) }) },
+    {
+      signedIn: true,
+      body: t.Object({ title: t.String({ minLength: 1, maxLength: 120 }) }),
+    },
   )
-  .delete("/wiki-chat/chats/:id", async ({ request, params }) => {
-    const { clerkUserId } = await requireAuth(request);
-    await getConvex().mutation(api.wiki.chats.remove, {
-      serverKey: getConvexServerKey(),
-      clerkUserId,
-      id: params.id as Id<"wikiChats">,
-    });
-    return { deleted: true };
-  });
+  .delete(
+    "/wiki-chat/chats/:id",
+    async ({ caller, params }) => {
+      await caller.convex.mutation(api.wiki.chats.remove, {
+        id: params.id as Id<"wikiChats">,
+      });
+      return { deleted: true };
+    },
+    { signedIn: true },
+  );

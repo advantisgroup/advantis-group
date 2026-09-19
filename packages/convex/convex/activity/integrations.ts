@@ -1,10 +1,9 @@
 "use node";
 
-import { action, gatedInternalAction } from "../functions";
+import { gatedInternalAction, userAction } from "../functions";
 
 import type { ActionCtx } from "../_generated/server";
 import { api } from "../_generated/api";
-import { requireCapabilityForAction } from "../lib/auth";
 import { signalSecret } from "./lib/integrationsShared";
 import { pollGenesys } from "./lib/genesys";
 import { pollClockodo } from "./lib/clockodo";
@@ -45,10 +44,10 @@ export const pollAll = gatedInternalAction("activitytrack")({
  * when a live state looks stuck or stale. Manager+, via `requireCapabilityForAction`
  * (actions have no direct db access).
  */
-export const troubleshootSyncNow = action({
+export const troubleshootSyncNow = userAction({
+  can: "access_integrations",
   args: {},
   handler: async (ctx) => {
-    await requireCapabilityForAction(ctx, "access_integrations");
     await runPollAll(ctx);
     return { ok: true as const };
   },

@@ -1,12 +1,9 @@
 import { api } from "@advantis/convex/api";
-import { ConvexError } from "convex/values";
 import { Elysia, t } from "elysia";
 
 import { runModelText, startAiRun } from "../lib/ai.js";
-
-import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { Errors } from "../lib/errors.js";
-import { requireAuth } from "../lib/middleware.js";
+import { authed } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
 const ASK_SYSTEM = `You answer one question about one internal record of an intranet.
@@ -31,31 +28,18 @@ function askPrompt(context: string, question: string) {
   ];
 }
 
-export const askRoute = new Elysia().post(
+export const askRoute = new Elysia().use(authed).post(
   "/ask",
-  async ({ request, body }) => {
-    const { clerkUserId } = await requireAuth(request);
+  async ({ caller, body }) => {
+    const { clerkUserId } = caller;
     await rateLimit("ai.ask", clerkUserId, 15, "1 m");
     const question = body.question.trim();
     if (!question) throw Errors.badRequest("Empty question");
 
-    let context;
-    try {
-      context = await getConvex().query(api.aiRuns.apiAskContext, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
-        type: body.type,
-        id: body.id,
-      });
-    } catch (err) {
-      const code = err instanceof ConvexError ? (err.data as { code?: string })?.code : undefined;
-      if (code === "not_found") throw Errors.notFound("Record not found");
-      if (code === "forbidden") throw Errors.forbidden();
-      if (code === "vault_locked") {
-        throw Errors.forbidden("Applicant Management is locked — please re-enter the password.");
-      }
-      throw err;
-    }
+    const context = await caller.convex.query(api.aiRuns.apiAskContext, {
+      type: body.type,
+      id: body.id,
+    });
 
     const { runId } = await startAiRun(
       {
@@ -81,6 +65,7 @@ export const askRoute = new Elysia().post(
     return { runId, title: context.title };
   },
   {
+    signedIn: true,
     body: t.Object({
       type: t.Union([
         t.Literal("itTicket"),

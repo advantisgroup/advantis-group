@@ -1,14 +1,12 @@
-import { mutation, query } from "../functions";
-import { requireManager, requireUser } from "../lib/auth";
+import { userMutation, userQuery } from "../functions";
 import { escapeHtml } from "../lib/text";
 
 /** Presence of a row means the one-time `guidebookPages` → `wikiEntries`
  * migration has run. The wiki list page shows a full-screen "migrate now"
  * gate until this resolves to non-null. */
-export const status = query({
+export const status = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const row = await ctx.db.query("wikiMigrationStatus").first();
     return row ? { migratedAt: row.migratedAt, migratedCount: row.migratedCount } : null;
   },
@@ -65,10 +63,11 @@ const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
  * hardcoded registry guidebooks (interactive tools/components, not content)
  * are left alone — there's nothing there to migrate. Idempotent per slug,
  * but rejects a second full run once `wikiMigrationStatus` exists. */
-export const run = mutation({
+export const run = userMutation({
+  role: "manager",
   args: {},
   handler: async (ctx) => {
-    const user = await requireManager(ctx);
+    const user = ctx.caller.user;
     const already = await ctx.db.query("wikiMigrationStatus").first();
     if (already) return { migratedCount: already.migratedCount, alreadyDone: true as const };
 

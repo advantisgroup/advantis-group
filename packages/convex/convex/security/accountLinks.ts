@@ -1,10 +1,8 @@
 import { v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
-import { query } from "../functions";
+import { userQuery } from "../functions";
 import { type QueryCtx } from "../_generated/server";
-import { requireAdmin } from "../lib/auth";
-
 /**
  * Read-only: every area a profile is linked into and what that area has
  * granted. Each area keeps its own authorization model; granting still
@@ -106,10 +104,10 @@ export async function getAcademyLinks(ctx: QueryCtx, userId: Id<"users">): Promi
   }));
 }
 
-export const forUser = query({
+export const forUser = userQuery({
+  role: "admin",
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    await requireAdmin(ctx);
     const user = await ctx.db.get(userId);
     if (!user) return null;
     const [performance, applicant, academies] = await Promise.all([

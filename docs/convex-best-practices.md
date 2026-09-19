@@ -23,7 +23,7 @@ are deliberate. Re-audit rather than trusting the counts if it matters.
 | Practice | State |
 | --- | --- |
 | Argument validators on public functions | Followed — every `query`/`mutation`/`action` in `convex/` declares `args`. |
-| Access control on public functions | Followed — `lib/auth.ts`'s `requireUser`/`requireManager`/`requireAdmin`/`requireCapability` is the first line of essentially every handler. |
+| Access control on public functions | Followed — the `user*`/`serverUser*` builders in `functions.ts` resolve the caller and check the declared `role`/`can`/`applicant` requirement before the handler runs. |
 | Avoid `.filter` on db queries | Mostly followed — 9 remaining call sites (`people/accessRequests.ts`, `people/invites.ts`, `lib/auth.ts`, `performance/companies.ts`, `org/structureMigration.ts`, `performance/import.ts`, `migrations/backfillPerformanceCompanyId.ts`). |
 | `.collect` only on small result sets | ~265 `.collect()` calls. Fine for the org-scale tables (`users`, `departments`, `presence`); worth checking before adding one on an append-only table (`activitySamples`, `stateSamples`, `auditLog`, `messages`). |
 | Only schedule/`ctx.run*` **internal** functions | Deliberate exception: `activity/state.ts`'s `pushSignal`/`reportHealth`/`mappings` are public *by design* — `apps/api` calls them server-to-server behind `ACTIVITYTRACK_SIGNAL_SECRET` (see AGENTS.md's ActivityTrack section). Action-side access checks go through the internal `users.callerForAction` (`lib/auth.ts`'s `requireCapabilityForAction` / `requireAdminForAction`). |
@@ -330,12 +330,14 @@ this from being repetitive. Some apps use
 [row-level security](https://stack.convex.dev/row-level-security) instead of
 per-function checks.
 
-> **In this repo:** this is already the established pattern —
-> `lib/auth.ts` exports `requireUser`, `requireRole`, `requireManager`,
-> `requireAdmin`, `requireCapability`, plus non-throwing `hasCapability` for
-> "reveal more of the record" decisions and `requireVaultUnlocked` /
-> `requireApplicantAccess` for the applicant area. Call one of those first in
-> the handler; don't hand-roll a `ctx.auth` check.
+> **In this repo:** both, in one place. The builders in `functions.ts`
+> (`userQuery`, `userMutation`, `userAction` and their `serverUser*` twins)
+> resolve the person once into `ctx.caller` (`lib/caller.ts`) and check what
+> the function declares — `role: "manager"`, `can: "manage_blog"`,
+> `applicant: "access"` — before the handler runs. Inside, ask
+> `ctx.caller.can(…)` / `.owns(id)` for "reveal more of the record" decisions.
+> The same builders apply a row-level rule that hides trashed rows
+> (`lib/trash.ts`). Don't hand-roll a `ctx.auth` check.
 >
 > Two areas layer their own gate on top and are worth reading before touching:
 > `apps/api`'s server-key-gated endpoints (the only holder of
@@ -411,8 +413,8 @@ crons.daily(
 > The genuinely reviewable ones are the intra-Convex `ctx.runQuery(api.…)`
 > calls: `blog/analytics.ts` reading `api.blog.posts.get` is the one left (the
 > `activity/state.ts` ones are deliberate). The action-side access checks
-> that used to round-trip through `api.users.me` now use the internal
-> `users.callerForAction` via `lib/auth.ts`'s `getCallerForAction`.
+> that used to round-trip through `api.users.me` now go through `userAction`,
+> which reads the internal `users.callerForAction`.
 
 ## Use helper functions to write shared code
 

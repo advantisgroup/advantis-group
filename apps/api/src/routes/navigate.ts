@@ -2,10 +2,8 @@ import { api } from "@advantis/convex/api";
 import { Elysia, t } from "elysia";
 
 import { parseModelJson, runModelText, safeHref, startAiRun, str } from "../lib/ai.js";
-
-import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { Errors } from "../lib/errors.js";
-import { requireAuth } from "../lib/middleware.js";
+import { authed } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
 const NAVIGATE_SYSTEM = `You turn one sentence into a link inside an internal company intranet.
@@ -26,18 +24,15 @@ function navigatePrompt(context: string, question: string) {
   ];
 }
 
-export const navigateRoute = new Elysia().post(
+export const navigateRoute = new Elysia().use(authed).post(
   "/ai/navigate",
-  async ({ request, body }) => {
-    const { clerkUserId } = await requireAuth(request);
+  async ({ caller, body }) => {
+    const { clerkUserId } = caller;
     await rateLimit("ai.navigate", clerkUserId, 20, "1 m");
     const question = body.query.trim();
     if (!question) throw Errors.badRequest("Empty query");
 
-    const context = await getConvex().query(api.aiRuns.apiNavigateContext, {
-      serverKey: getConvexServerKey(),
-      clerkUserId,
-    });
+    const context = await caller.convex.query(api.aiRuns.apiNavigateContext, {});
 
     const { runId } = await startAiRun(
       { clerkUserId, kind: "navigate", subjectKey: "navigate" },
@@ -59,6 +54,7 @@ export const navigateRoute = new Elysia().post(
     return { runId };
   },
   {
+    signedIn: true,
     body: t.Object({
       query: t.String({ minLength: 1, maxLength: 300 }),
     }),

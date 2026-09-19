@@ -25,6 +25,7 @@ import { totpRoute } from "./routes/totp.js";
 import { wikiChatRoute } from "./routes/wiki-chat.js";
 import { wikiFormatAssistRoute } from "./routes/wiki-format-assist.js";
 import { wikiImportRoute } from "./routes/wiki-import.js";
+import { internalBackupsRoute } from "./routes/internal/backups.js";
 import { internalClockodoRoute } from "./routes/internal/clockodo.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
 import { internalOnedriveRoute } from "./routes/internal/onedrive.js";
@@ -52,9 +53,11 @@ export const app = new Elysia()
       return errorEnvelope(failure, context.requestId);
     }
 
+    // Elysia's own 4xx (a body that fails validation) carries a status but no
+    // code of ours; an ApiError already says exactly what went wrong.
     const status = (error as { status?: number }).status;
     const failure = await reportApiFailure(
-      typeof status === "number" && status >= 400 && status < 500
+      !(error instanceof ApiError) && typeof status === "number" && status >= 400 && status < 500
         ? new ApiError(
             status,
             "bad_request",
@@ -74,6 +77,7 @@ export const app = new Elysia()
   .use(clerkWebhookRoute)
   .use(onedriveWebhookRoute)
   .use(resendWebhookRoute)
+  .use(internalBackupsRoute)
   .use(internalNotificationsRoute)
   .use(internalClockodoRoute)
   .use(internalOnedriveRoute)

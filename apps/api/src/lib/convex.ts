@@ -1,4 +1,10 @@
 import { ConvexHttpClient } from "convex/browser";
+import {
+  type FunctionArgs,
+  type FunctionReference,
+  type FunctionReturnType,
+  type OptionalRestArgs,
+} from "convex/server";
 
 import { CONVEX_PREVIEW_URL } from "./convexPreviewUrl.generated.js";
 import { optionalEnv, requireEnv } from "./env.js";
@@ -33,4 +39,29 @@ export function getConvex(): ConvexHttpClient {
 /** Shared server key used to authorize server-key-gated Convex mutations. */
 export function getConvexServerKey(): string {
   return requireEnv("CONVEX_SERVER_KEY");
+}
+
+type OnBehalf = { serverKey: string; clerkUserId: string };
+type Rest<F extends FunctionReference<"query" | "mutation" | "action">> = Omit<
+  FunctionArgs<F>,
+  keyof OnBehalf
+>;
+
+/**
+ * Convex calls made on behalf of one signed-in person: every `serverUser*`
+ * function needs the server key and whose request this is, so this fills
+ * both in.
+ */
+export function convexAs(clerkUserId: string) {
+  const withCaller = <F extends FunctionReference<"query" | "mutation" | "action">>(
+    args: Rest<F>,
+  ) => [{ ...args, serverKey: getConvexServerKey(), clerkUserId }] as OptionalRestArgs<F>;
+  return {
+    query: <F extends FunctionReference<"query", "public", OnBehalf>>(fn: F, args: Rest<F>) =>
+      getConvex().query(fn, ...withCaller<F>(args)) as Promise<FunctionReturnType<F>>,
+    mutation: <F extends FunctionReference<"mutation", "public", OnBehalf>>(fn: F, args: Rest<F>) =>
+      getConvex().mutation(fn, ...withCaller<F>(args)) as Promise<FunctionReturnType<F>>,
+    action: <F extends FunctionReference<"action", "public", OnBehalf>>(fn: F, args: Rest<F>) =>
+      getConvex().action(fn, ...withCaller<F>(args)) as Promise<FunctionReturnType<F>>,
+  };
 }

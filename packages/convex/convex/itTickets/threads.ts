@@ -1,9 +1,8 @@
-import { mutation, query } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
-import { requireCapability, requireUser } from "../lib/auth";
 import { attachmentValidator } from "../schema";
 
 /**
@@ -28,10 +27,9 @@ async function requireThread(ctx: MutationCtx, threadId: Id<"itTicketThreads">) 
   return thread;
 }
 
-export const getForTicket = query({
+export const getForTicket = userQuery({
   args: { ticketId: v.id("itTickets") },
   handler: async (ctx, { ticketId }) => {
-    await requireUser(ctx);
     const thread = await ctx.db
       .query("itTicketThreads")
       .withIndex("by_ticket", (q) => q.eq("ticketId", ticketId))
@@ -58,10 +56,9 @@ export const getForTicket = query({
 
 /** Every ticket that already has a thread — the quick-nav list in the ticket
  * detail view, sorted by most recently active. */
-export const listStarted = query({
+export const listStarted = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const threads = await ctx.db.query("itTicketThreads").collect();
     return threads
       .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
@@ -74,10 +71,11 @@ export const listStarted = query({
   },
 });
 
-export const start = mutation({
+export const start = userMutation({
+  can: "manage_it_ticket_threads",
   args: { ticketId: v.id("itTickets") },
   handler: async (ctx, { ticketId }) => {
-    const user = await requireCapability(ctx, "manage_it_ticket_threads");
+    const user = ctx.caller.user;
     const ticket = await ctx.db.get(ticketId);
     if (!ticket) {
       throw new ConvexError({ code: "not_found", message: "Ticket not found" });
@@ -100,10 +98,10 @@ export const start = mutation({
   },
 });
 
-export const listMessages = query({
+export const listMessages = userQuery({
   args: { threadId: v.id("itTicketThreads") },
   handler: async (ctx, { threadId }) => {
-    const viewer = await requireUser(ctx);
+    const viewer = ctx.caller.user;
     const rows = await ctx.db
       .query("itTicketMessages")
       .withIndex("by_thread", (q) => q.eq("threadId", threadId))
@@ -169,14 +167,15 @@ export const listMessages = query({
   },
 });
 
-export const sendMessage = mutation({
+export const sendMessage = userMutation({
+  can: "manage_it_ticket_threads",
   args: {
     threadId: v.id("itTicketThreads"),
     body: v.string(),
     attachments: v.optional(v.array(attachmentValidator)),
   },
   handler: async (ctx, { threadId, body, attachments }) => {
-    const user = await requireCapability(ctx, "manage_it_ticket_threads");
+    const user = ctx.caller.user;
     const thread = await requireThread(ctx, threadId);
     if (thread.lockedAt) {
       throw new ConvexError({ code: "locked", message: "This chat is locked" });
@@ -201,10 +200,11 @@ export const sendMessage = mutation({
   },
 });
 
-export const lock = mutation({
+export const lock = userMutation({
+  can: "manage_it_ticket_threads",
   args: { threadId: v.id("itTicketThreads") },
   handler: async (ctx, { threadId }) => {
-    const user = await requireCapability(ctx, "manage_it_ticket_threads");
+    const user = ctx.caller.user;
     const thread = await requireThread(ctx, threadId);
     if (thread.lockedAt) return { ok: true };
     const now = Date.now();
@@ -224,10 +224,11 @@ export const lock = mutation({
   },
 });
 
-export const unlock = mutation({
+export const unlock = userMutation({
+  can: "manage_it_ticket_threads",
   args: { threadId: v.id("itTicketThreads") },
   handler: async (ctx, { threadId }) => {
-    const user = await requireCapability(ctx, "manage_it_ticket_threads");
+    const user = ctx.caller.user;
     const thread = await requireThread(ctx, threadId);
     if (!thread.lockedAt) return { ok: true };
     const now = Date.now();
@@ -249,10 +250,10 @@ export const unlock = mutation({
 
 /** One reaction per user per message, same rule as chat's `toggleReaction`.
  *  Reacting is open to any reader — it's a read-side signal, not a post. */
-export const toggleReaction = mutation({
+export const toggleReaction = userMutation({
   args: { messageId: v.id("itTicketMessages"), emoji: v.string() },
   handler: async (ctx, { messageId, emoji }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const message = await ctx.db.get(messageId);
     if (!message || message.kind !== "message" || message.deletedAt) {
       throw new ConvexError({ code: "not_found", message: "Message not found" });

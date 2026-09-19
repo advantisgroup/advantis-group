@@ -1,7 +1,5 @@
-import { internalMutation, mutation, query } from "../functions";
+import { internalMutation, mutation, userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
-
-import { requireUser, requireAdmin } from "../lib/auth";
 import { writeAudit } from "./lib/audit";
 import { appError } from "../lib/errors";
 import { safeEqual } from "./lib/crypto";
@@ -35,10 +33,9 @@ export const record = internalMutation({
 const OFFLINE_THRESHOLD_MS = 30 * 60 * 1000;
 
 /** Plain-language health summary for the whole team. Any signed-in user. */
-export const health = query({
+export const health = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const now = Date.now();
 
     const activeDevices = await ctx.db
@@ -101,13 +98,13 @@ export const health = query({
 });
 
 /** Full technical event log with the raw message/context. Admin. */
-export const listEvents = query({
+export const listEvents = userQuery({
+  role: "admin",
   args: {
     onlyOpen: v.optional(v.boolean()),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { onlyOpen, limit }) => {
-    await requireAdmin(ctx);
     const take = Math.min(limit ?? 200, 1000);
 
     let rows;
@@ -138,12 +135,13 @@ export const listEvents = query({
 });
 
 /** Mark an event resolved (acknowledged/fixed). Admin. */
-export const resolveEvent = mutation({
+export const resolveEvent = userMutation({
+  role: "admin",
   args: { eventId: v.id("activitySystemEvents") },
   handler: async (ctx, { eventId }) => {
-    const actor = await requireAdmin(ctx);
+    const actor = ctx.caller.user;
     const event = await ctx.db.get(eventId);
-    if (!event) throw appError("notFound.event", "Event not found");
+    if (!event) throw appError("not_found", "Event not found");
     await ctx.db.patch(eventId, {
       resolvedAt: Date.now(),
       resolvedBy: actor._id,
@@ -153,10 +151,9 @@ export const resolveEvent = mutation({
 });
 
 /** Report a client-side dashboard crash (from the ErrorBoundary). */
-export const logFromDashboard = mutation({
+export const logFromDashboard = userMutation({
   args: { message: v.string(), context: v.optional(v.string()) },
   handler: async (ctx, { message, context }) => {
-    await requireUser(ctx);
     await logEvent(ctx, {
       severity: "error",
       code: "dashboard.crash",
@@ -179,7 +176,7 @@ export const logFromServer = mutation({
   handler: async (ctx, { secret, severity, code, message, context }) => {
     const expected = process.env.ACTIVITYTRACK_SIGNAL_SECRET;
     if (!expected || !safeEqual(secret, expected)) {
-      throw appError("auth.forbidden", "Invalid signal secret");
+      throw appError("forbidden", "Invalid signal secret");
     }
     await logEvent(ctx, {
       severity,
