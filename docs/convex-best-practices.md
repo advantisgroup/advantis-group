@@ -11,9 +11,10 @@ Upstream: <https://docs.convex.dev/understanding/best-practices/>. When the
 two disagree, upstream wins — but keep the repo notes in this file up to date
 rather than deleting them, since they record deliberate local decisions.
 
-Installed `convex` is **1.42.3** (the `^1.34.0` range in
-`packages/convex/package.json` resolves up), so every API mentioned below,
-including the table-name-first `ctx.db` argument, is available.
+Installed `convex` is **1.46.0**, so every API mentioned below, including the
+table-name-first `ctx.db` argument, is available. Keep every package on the
+same `convex` version: since 1.46 validators from different versions don't mix
+in TypeScript.
 
 ## Where this repo currently stands
 
