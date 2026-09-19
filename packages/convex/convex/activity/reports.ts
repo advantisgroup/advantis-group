@@ -1,20 +1,16 @@
 import { v } from "convex/values";
 
-import { query } from "../functions";
-import { requireUser } from "../lib/auth";
-
+import { query, userQuery } from "../functions";
 /**
  * Read models for the cross-device Reports page. Returns each active device's
  * daily rollups over a [startDay, endDay] window joined to its person.
  */
-export const weeklyOverview = query({
+export const weeklyOverview = userQuery({
   args: {
     startDay: v.string(),
     endDay: v.string(),
   },
   handler: async (ctx, { startDay, endDay }) => {
-    await requireUser(ctx);
-
     const devices = await ctx.db
       .query("devices")
       .withIndex("by_status", (q) => q.eq("status", "active"))

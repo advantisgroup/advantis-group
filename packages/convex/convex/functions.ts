@@ -21,7 +21,7 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { type Capability, assertServerKey, getCurrentUser } from "./lib/auth";
+import { type Capability, assertServerKey, getCurrentUser, requireVaultUnlocked } from "./lib/auth";
 import {
   Caller,
   type CallerData,
@@ -156,14 +156,35 @@ export function serverAction<Args extends PropertyValidators, Output>(definition
 
 // --- Callers ------------------------------------------------------------------
 
-type Requirement = { role?: RoleRequirement; can?: Capability };
+type Requirement = {
+  role?: RoleRequirement;
+  can?: Capability;
+  /** Applicant Management: `access` and `delegate` also need the vault
+   *  unlocked; `member` doesn't, for the vault's own unlock screens. */
+  applicant?: "access" | "delegate" | "member";
+};
 
 type CallerInput = { ctx: { caller: Caller }; args: {} };
 
-function check(caller: Caller, { role, can }: Requirement): CallerInput {
+function check(caller: Caller, { role, can, applicant }: Requirement): CallerInput {
   if (role) caller.require(role);
   if (can) caller.require(can);
+  if (applicant === "access") caller.require(caller.hasApplicantAccess);
+  if (applicant === "delegate") caller.require(caller.isApplicantDelegate);
+  if (applicant === "member") caller.require(caller.isApplicantAreaMember);
   return { ctx: { caller }, args: {} };
+}
+
+async function checkWithVault(
+  ctx: QueryCtx | MutationCtx,
+  caller: Caller,
+  requirement: Requirement,
+): Promise<CallerInput> {
+  const input = check(caller, requirement);
+  if (requirement.applicant === "access" || requirement.applicant === "delegate") {
+    await requireVaultUnlocked(ctx, caller.id);
+  }
+  return input;
 }
 
 function refuseSandbox(caller: Caller): Caller {
@@ -174,13 +195,13 @@ function refuseSandbox(caller: Caller): Caller {
 export const userQuery = customQuery(query, {
   args: {},
   input: async (ctx, _args, requirement: Requirement) =>
-    check(await requireSessionCaller(ctx), requirement),
+    checkWithVault(ctx, await requireSessionCaller(ctx), requirement),
 });
 
 export const userMutation = customMutation(rawMutation, {
   args: {},
   input: async (ctx, _args, requirement: Requirement) =>
-    check(refuseSandbox(await requireSessionCaller(ctx)), requirement),
+    checkWithVault(ctx, refuseSandbox(await requireSessionCaller(ctx)), requirement),
 });
 
 export const userAction = customAction(rawAction, {
@@ -198,7 +219,7 @@ export const serverUserQuery = customQuery(query, {
   args: serverCallerArgs,
   input: async (ctx, { serverKey, clerkUserId }, requirement: Requirement) => {
     assertServerKey(serverKey);
-    return check(await requireServerCaller(ctx, clerkUserId), requirement);
+    return checkWithVault(ctx, await requireServerCaller(ctx, clerkUserId), requirement);
   },
 });
 
@@ -206,7 +227,7 @@ export const serverUserMutation = customMutation(rawMutation, {
   args: serverCallerArgs,
   input: async (ctx, { serverKey, clerkUserId }, requirement: Requirement) => {
     assertServerKey(serverKey);
-    return check(await requireServerCaller(ctx, clerkUserId), requirement);
+    return checkWithVault(ctx, await requireServerCaller(ctx, clerkUserId), requirement);
   },
 });
 

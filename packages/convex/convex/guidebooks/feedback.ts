@@ -1,12 +1,12 @@
-import { mutation, query } from "../functions";
+import { query, userQuery, userMutation } from "../functions";
 import { v } from "convex/values";
 
-import { effectiveRole, MANAGER_ROLES, requireUser } from "../lib/auth";
+import { effectiveRole, MANAGER_ROLES } from "../lib/auth";
 
-export const getMine = query({
+export const getMine = userQuery({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const row = await ctx.db
       .query("guidebookFeedback")
       .withIndex("by_user_slug", (q) => q.eq("userId", user._id).eq("slug", slug))
@@ -15,10 +15,10 @@ export const getMine = query({
   },
 });
 
-export const set = mutation({
+export const set = userMutation({
   args: { slug: v.string(), helpful: v.boolean() },
   handler: async (ctx, { slug, helpful }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("guidebookFeedback")
       .withIndex("by_user_slug", (q) => q.eq("userId", user._id).eq("slug", slug))
@@ -39,10 +39,10 @@ export const set = mutation({
 });
 
 /** Helpful/total counts per guidebook, for managers reviewing content. */
-export const stats = query({
+export const stats = userQuery({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (!MANAGER_ROLES.includes(effectiveRole(user))) return null;
     const rows = await ctx.db
       .query("guidebookFeedback")

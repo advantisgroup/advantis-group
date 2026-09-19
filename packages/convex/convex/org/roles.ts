@@ -1,8 +1,8 @@
-import { mutation, query } from "../functions";
+import { query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { capabilityValidator } from "../schema";
-import { effectiveCustomRoleIds, requireManager, type Capability } from "../lib/auth";
+import { effectiveCustomRoleIds, type Capability } from "../lib/auth";
 
 /**
  * Manager-defined roles (e.g. "Team Lead") that grant a scoped set of
@@ -32,21 +32,22 @@ function normalizeCapabilities(capabilities: Capability[]): Capability[] {
   return [...set];
 }
 
-export const list = query({
+export const list = userQuery({
+  role: "manager",
   args: {},
   handler: async (ctx) => {
-    await requireManager(ctx);
     return ctx.db.query("customRoles").collect();
   },
 });
 
-export const create = mutation({
+export const create = userMutation({
+  role: "manager",
   args: {
     name: v.string(),
     capabilities: v.array(capabilityValidator),
   },
   handler: async (ctx, { name, capabilities }) => {
-    const actor = await requireManager(ctx);
+    const actor = ctx.caller.user;
     const trimmed = name.trim();
     if (!trimmed) {
       throw new ConvexError({
@@ -63,14 +64,14 @@ export const create = mutation({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
+  role: "manager",
   args: {
     customRoleId: v.id("customRoles"),
     name: v.optional(v.string()),
     capabilities: v.optional(v.array(capabilityValidator)),
   },
   handler: async (ctx, { customRoleId, name, capabilities }) => {
-    await requireManager(ctx);
     const role = await ctx.db.get(customRoleId);
     if (!role) {
       throw new ConvexError({ code: "not_found", message: "Role not found" });
@@ -82,10 +83,10 @@ export const update = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
+  role: "manager",
   args: { customRoleId: v.id("customRoles") },
   handler: async (ctx, { customRoleId }) => {
-    await requireManager(ctx);
     const role = await ctx.db.get(customRoleId);
     if (!role) {
       throw new ConvexError({ code: "not_found", message: "Role not found" });

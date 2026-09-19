@@ -1,9 +1,7 @@
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
-import { internalAction, internalMutation, query } from "../functions";
-import { requireUser } from "../lib/auth";
-
+import { internalAction, internalMutation, query, userQuery } from "../functions";
 /**
  * Latest published ActivityTrack desktop-agent version, mirrored from GitHub
  * releases so the overview can flag devices running an older build.
@@ -15,10 +13,9 @@ const LATEST_VERSION_KEY = "meta.latestAgentVersion";
 const REPO = "Bluejutzu/ActivityTrack";
 
 /** Reactive read for the dashboard. `null` until the first cron run lands. */
-export const getLatestAgentVersion = query({
+export const getLatestAgentVersion = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const row = await ctx.db
       .query("activitySettings")
       .withIndex("by_key", (q) => q.eq("key", LATEST_VERSION_KEY))

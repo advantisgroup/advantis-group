@@ -1,10 +1,9 @@
 "use node";
 
-import { action } from "../../functions";
+import { action, userAction } from "../../functions";
 import { v } from "convex/values";
 
 import { internal } from "../../_generated/api";
-import { requireCapabilityForAction } from "../../lib/auth";
 import { clockodoFetch } from "./client";
 
 /**
@@ -150,10 +149,10 @@ function toHolidaysQuota(row: ClockodoHolidaysQuotaWire): ClockodoHolidaysQuota 
 }
 
 /** All Clockodo users. Manager+. */
-export const listClockodoUsers = action({
+export const listClockodoUsers = userAction({
+  can: "manage_clockodo_team",
   args: {},
   handler: async (ctx): Promise<ClockodoUser[]> => {
-    await requireCapabilityForAction(ctx, "manage_clockodo_team");
     const body = await clockodoFetch<{ data?: ClockodoUserWire[] }>(
       "/api/v3/users?items_per_page=1000",
     );
@@ -162,7 +161,8 @@ export const listClockodoUsers = action({
 });
 
 /** One Clockodo user plus their target-hours and holidays-quota history. Manager+. */
-export const getClockodoUserDetail = action({
+export const getClockodoUserDetail = userAction({
+  can: "manage_clockodo_team",
   args: { clockodoUserId: v.number() },
   handler: async (
     ctx,
@@ -172,7 +172,6 @@ export const getClockodoUserDetail = action({
     targetHours: ClockodoTargetHour[];
     holidaysQuota: ClockodoHolidaysQuota[];
   }> => {
-    await requireCapabilityForAction(ctx, "manage_clockodo_team");
     const userBody = await clockodoFetch<{ data: ClockodoUserWire }>(
       `/api/v3/users/${clockodoUserId}`,
     );
@@ -213,7 +212,8 @@ export const getClockodoUserDetail = action({
  * separate dated-history writes in Clockodo, done right after creation so a
  * manager gets the full "create + configure" flow in one form submit.
  */
-export const createClockodoUser = action({
+export const createClockodoUser = userAction({
+  can: "manage_clockodo_team",
   args: {
     name: v.string(),
     email: v.string(),
@@ -229,7 +229,6 @@ export const createClockodoUser = action({
     vacationDaysPerYear: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<{ clockodoUserId: number }> => {
-    await requireCapabilityForAction(ctx, "manage_clockodo_team");
     const created = await clockodoFetch<{ data: ClockodoUserWire }>("/api/v3/users", {
       method: "POST",
       body: { name: args.name, email: args.email, number: args.number },
@@ -299,7 +298,8 @@ function describeUserChanges(before: ClockodoUser, patch: Record<string, unknown
  * Manager+. Only the fields provided are sent (a PUT with a partial body),
  * so this never clobbers fields the caller didn't mean to touch.
  */
-export const updateClockodoUser = action({
+export const updateClockodoUser = userAction({
+  can: "manage_clockodo_team",
   args: {
     clockodoUserId: v.number(),
     name: v.optional(v.string()),
@@ -317,7 +317,7 @@ export const updateClockodoUser = action({
     exemptFromFlextime: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<void> => {
-    const actor = await requireCapabilityForAction(ctx, "manage_clockodo_team");
+    const actor = ctx.caller.user;
     const { clockodoUserId, ...patch } = args;
     const body: Record<string, unknown> = {};
     if (patch.name !== undefined) body.name = patch.name;
@@ -370,7 +370,8 @@ export const updateClockodoUser = action({
  * to schedule a change rather than apply it immediately). Earlier periods
  * stay in the history untouched.
  */
-export const setTargetHours = action({
+export const setTargetHours = userAction({
+  can: "manage_clockodo_team",
   args: {
     clockodoUserId: v.number(),
     dateSince: v.optional(v.string()),
@@ -383,7 +384,7 @@ export const setTargetHours = action({
     sunday: v.number(),
   },
   handler: async (ctx, { clockodoUserId, dateSince, ...days }): Promise<void> => {
-    const actor = await requireCapabilityForAction(ctx, "manage_clockodo_team");
+    const actor = ctx.caller.user;
     const effectiveDate = dateSince ?? new Date().toISOString().slice(0, 10);
     await clockodoFetch("/api/targethours", {
       method: "POST",
@@ -405,14 +406,15 @@ export const setTargetHours = action({
 });
 
 /** Start a new holidays-quota (Urlaubsanspruch) entitlement year for a user. Manager+. */
-export const setVacationEntitlement = action({
+export const setVacationEntitlement = userAction({
+  can: "manage_clockodo_team",
   args: {
     clockodoUserId: v.number(),
     daysPerYear: v.number(),
     yearSince: v.optional(v.number()),
   },
   handler: async (ctx, { clockodoUserId, daysPerYear, yearSince }): Promise<void> => {
-    const actor = await requireCapabilityForAction(ctx, "manage_clockodo_team");
+    const actor = ctx.caller.user;
     const effectiveYear = yearSince ?? new Date().getFullYear();
     await clockodoFetch("/api/v2/holidaysQuota", {
       method: "POST",
@@ -456,13 +458,13 @@ function mondayOfWeek(date: Date): Date {
  * truth here and the roster is a manager-only, occasionally-viewed page,
  * not a hot path worth adding cache-invalidation complexity for.
  */
-export const getClockodoRosterHours = action({
+export const getClockodoRosterHours = userAction({
+  can: "manage_clockodo_team",
   args: { clockodoUserIds: v.array(v.number()) },
   handler: async (
     ctx,
     { clockodoUserIds },
   ): Promise<{ clockodoUserId: number; hoursThisWeek: number }[]> => {
-    await requireCapabilityForAction(ctx, "manage_clockodo_team");
     const ids = clockodoUserIds.slice(0, 200);
     const since = toClockodoTimestamp(mondayOfWeek(new Date()));
     const until = toClockodoTimestamp(new Date());

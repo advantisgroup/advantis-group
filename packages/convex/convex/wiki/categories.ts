@@ -1,8 +1,5 @@
-import { mutation, query } from "../functions";
+import { query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
-
-import { requireManager, requireUser } from "../lib/auth";
-
 export const PALETTE = [
   "#4A5AB8",
   "#0E8A83",
@@ -33,10 +30,9 @@ const DEFAULT_CATEGORIES = [
 ];
 
 /** Wiki categories (Kategorien), alphabetical. */
-export const list = query({
+export const list = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const rows = await ctx.db.query("wikiCategories").collect();
     return rows
       .map((c) => ({ _id: c._id, name: c.name, color: c.color }))
@@ -47,10 +43,10 @@ export const list = query({
 /** Idempotent — only inserts the defaults when the table is empty (i.e.
  * nobody has created or migrated any category yet). Safe to call from any
  * signed-in session on load; a no-op otherwise. */
-export const ensureDefaults = mutation({
+export const ensureDefaults = userMutation({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db.query("wikiCategories").first();
     if (existing) return { seeded: false };
     const now = Date.now();
@@ -66,10 +62,11 @@ export const ensureDefaults = mutation({
   },
 });
 
-export const create = mutation({
+export const create = userMutation({
+  role: "manager",
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
-    const user = await requireManager(ctx);
+    const user = ctx.caller.user;
     const trimmed = name.trim();
     if (!trimmed) throw new ConvexError({ code: "bad_request", message: "Name required" });
     const existing = await ctx.db.query("wikiCategories").collect();
@@ -89,10 +86,10 @@ export const create = mutation({
   },
 });
 
-export const rename = mutation({
+export const rename = userMutation({
+  role: "manager",
   args: { categoryId: v.id("wikiCategories"), name: v.string() },
   handler: async (ctx, { categoryId, name }) => {
-    await requireManager(ctx);
     const trimmed = name.trim();
     if (!trimmed) throw new ConvexError({ code: "bad_request", message: "Name required" });
     await ctx.db.patch(categoryId, { name: trimmed });
@@ -102,10 +99,10 @@ export const rename = mutation({
 
 /** Cycles to the next palette colour — mirrors the ported prototype's
  * "click the dot to change colour" interaction. */
-export const cycleColor = mutation({
+export const cycleColor = userMutation({
+  role: "manager",
   args: { categoryId: v.id("wikiCategories") },
   handler: async (ctx, { categoryId }) => {
-    await requireManager(ctx);
     const category = await ctx.db.get(categoryId);
     if (!category) return { ok: false };
     const next = PALETTE[(PALETTE.indexOf(category.color) + 1) % PALETTE.length];
@@ -117,10 +114,10 @@ export const cycleColor = mutation({
 /** Deleting a category snapshots its name onto affected entries
  * (`categoryName`) and unpins them, moving them into the "expired" archive
  * view instead of pointing at nothing. */
-export const remove = mutation({
+export const remove = userMutation({
+  role: "manager",
   args: { categoryId: v.id("wikiCategories") },
   handler: async (ctx, { categoryId }) => {
-    await requireManager(ctx);
     const category = await ctx.db.get(categoryId);
     if (!category) return { ok: false };
     const affected = await ctx.db

@@ -1,10 +1,9 @@
-import { mutation, query } from "../functions";
+import { query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 import { autoLockThreadOnTicketClosed } from "./lib/threads";
-import { requireManager, requireUser } from "../lib/auth";
 import { displayName } from "../lib/users";
 
 /**
@@ -71,10 +70,9 @@ function validateRelatedLinks(links: Array<{ label: string; url: string }>) {
 
 // --- Categories --------------------------------------------------------------
 
-export const listCategories = query({
+export const listCategories = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const rows = await ctx.db.query("itTicketCategories").collect();
     return rows
       .sort((a, b) => a.createdAt - b.createdAt)
@@ -83,10 +81,10 @@ export const listCategories = query({
 });
 
 /** Seeds the default category set the first time anyone opens the tool. */
-export const ensureDefaultCategories = mutation({
+export const ensureDefaultCategories = userMutation({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db.query("itTicketCategories").take(1);
     if (existing.length > 0) return { seeded: false };
     const now = Date.now();
@@ -97,10 +95,10 @@ export const ensureDefaultCategories = mutation({
   },
 });
 
-export const createCategory = mutation({
+export const createCategory = userMutation({
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const trimmed = name.trim();
     if (!trimmed) {
       throw new ConvexError({ code: "bad_request", message: "Name is required" });
@@ -117,10 +115,9 @@ export const createCategory = mutation({
   },
 });
 
-export const removeCategory = mutation({
+export const removeCategory = userMutation({
   args: { categoryId: v.id("itTicketCategories") },
   handler: async (ctx, { categoryId }) => {
-    await requireUser(ctx);
     // Existing tickets reference a category by its name (string), so deleting
     // the category row here is purely cosmetic — their history stays intact.
     await ctx.db.delete(categoryId);
@@ -140,10 +137,9 @@ const ticketFields = {
   info: v.optional(v.string()),
 };
 
-export const list = query({
+export const list = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     return ctx.db.query("itTickets").order("desc").take(500);
   },
 });
@@ -155,10 +151,10 @@ export const list = query({
  * ones exist — and every dashboard session would subscribe to hundreds of
  * unrelated documents to render five rows.
  */
-export const listMineOpen = query({
+export const listMineOpen = userQuery({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const rows = await ctx.db
       .query("itTickets")
       .withIndex("by_creator", (q) => q.eq("createdByUserId", user._id))
@@ -170,10 +166,9 @@ export const listMineOpen = query({
 
 /** Earlier tickets that look like the one being filed — same category, and
  * sharing a topic or words from the description. Resolved ones rank first. */
-export const similar = query({
+export const similar = userQuery({
   args: { category: v.string(), topic: v.optional(v.string()), text: v.string() },
   handler: async (ctx, { category, topic, text }) => {
-    await requireUser(ctx);
     const words = new Set(
       text
         .toLowerCase()
@@ -208,10 +203,10 @@ export const similar = query({
 });
 
 /** Open tickets someone handed to the caller — the home page's "Needs you". */
-export const listAssignedOpen = query({
+export const listAssignedOpen = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const rows = await ctx.db
       .query("itTickets")
       .withIndex("by_assignee", (q) => q.eq("assignedToUserId", user._id))
@@ -233,10 +228,9 @@ export const listAssignedOpen = query({
 
 /** When someone other than the reporter first reacted — a status change or a
  * chat reply, whichever came first. `respondedAt` stays null while waiting. */
-export const firstResponse = query({
+export const firstResponse = userQuery({
   args: { ticketId: v.id("itTickets") },
   handler: async (ctx, { ticketId }) => {
-    await requireUser(ctx);
     const ticket = await ctx.db.get(ticketId);
     if (!ticket) return null;
     const history = await ctx.db
@@ -270,10 +264,9 @@ export const firstResponse = query({
   },
 });
 
-export const listStatusHistory = query({
+export const listStatusHistory = userQuery({
   args: { ticketId: v.id("itTickets") },
   handler: async (ctx, { ticketId }) => {
-    await requireUser(ctx);
     const ticket = await ctx.db.get(ticketId);
     if (!ticket) throw new ConvexError({ code: "not_found", message: "Ticket not found" });
     const rows = await ctx.db
@@ -296,10 +289,10 @@ export const listStatusHistory = query({
   },
 });
 
-export const create = mutation({
+export const create = userMutation({
   args: ticketFields,
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const createdByName = args.createdByName.trim();
     if (!createdByName) {
       throw new ConvexError({ code: "bad_request", message: '"Angelegt von" is required' });
@@ -329,10 +322,10 @@ export const create = mutation({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
   args: { ticketId: v.id("itTickets"), ...ticketFields },
   handler: async (ctx, { ticketId, ...args }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const ticket = await ctx.db.get(ticketId);
     if (!ticket) {
       throw new ConvexError({ code: "not_found", message: "Ticket not found" });
@@ -365,10 +358,10 @@ export const update = mutation({
 });
 
 /** Lightweight status-only change for the inline select in the ticket list. */
-export const setStatus = mutation({
+export const setStatus = userMutation({
   args: { ticketId: v.id("itTickets"), status: statusValidator },
   handler: async (ctx, { ticketId, status }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const ticket = await ctx.db.get(ticketId);
     if (!ticket) {
       throw new ConvexError({ code: "not_found", message: "Ticket not found" });
@@ -391,13 +384,13 @@ export const setStatus = mutation({
 
 /** Managers own the queue assignment, while the shared-log status and detail
  * edits intentionally remain available to every active intranet user. */
-export const setAssignee = mutation({
+export const setAssignee = userMutation({
+  role: "manager",
   args: {
     ticketId: v.id("itTickets"),
     assignedToUserId: v.optional(v.id("users")),
   },
   handler: async (ctx, { ticketId, assignedToUserId }) => {
-    await requireManager(ctx);
     const ticket = await ctx.db.get(ticketId);
     if (!ticket) {
       throw new ConvexError({ code: "not_found", message: "Ticket not found" });
@@ -419,13 +412,12 @@ export const setAssignee = mutation({
 
 /** Related context stays on the ticket itself rather than becoming a separate
  * task or relation system. It follows the shared-log access rule above. */
-export const setRelatedLinks = mutation({
+export const setRelatedLinks = userMutation({
   args: {
     ticketId: v.id("itTickets"),
     relatedLinks: relatedLinksValidator,
   },
   handler: async (ctx, { ticketId, relatedLinks }) => {
-    await requireUser(ctx);
     const ticket = await ctx.db.get(ticketId);
     if (!ticket) throw new ConvexError({ code: "not_found", message: "Ticket not found" });
     validateRelatedLinks(relatedLinks);
@@ -434,10 +426,9 @@ export const setRelatedLinks = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
   args: { ticketId: v.id("itTickets") },
   handler: async (ctx, { ticketId }) => {
-    await requireUser(ctx);
     await ctx.db.delete(ticketId);
     return { ok: true };
   },

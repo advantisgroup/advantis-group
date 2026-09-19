@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 
-import { query } from "../functions";
-import { requireCapability } from "../lib/auth";
+import { query, userQuery } from "../functions";
 import { toClockodoIdString } from "../lib/clockodoId";
 
 /**
@@ -16,7 +15,8 @@ import { toClockodoIdString } from "../lib/clockodoId";
  * subprofile enrichment convention (`docs/architecture/profiles.md`): every
  * user gets a row, `linked` says whether the Clockodo fields are populated.
  */
-export const listWithLinks = query({
+export const listWithLinks = userQuery({
+  can: "manage_clockodo_team",
   args: {},
   returns: v.array(
     v.object({
@@ -30,7 +30,6 @@ export const listWithLinks = query({
     }),
   ),
   handler: async (ctx) => {
-    await requireCapability(ctx, "manage_clockodo_team");
     const users = (await ctx.db.query("users").collect()).filter((u) => u.status !== "removed");
 
     return await Promise.all(

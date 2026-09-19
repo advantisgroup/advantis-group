@@ -1,15 +1,14 @@
-import { mutation, query } from "../functions";
+import { mutation, query, userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
 
-import { requireUser, requireCapability } from "../lib/auth";
+import { requireCapability } from "../lib/auth";
 import { writeAudit } from "./lib/audit";
 import { appError } from "../lib/errors";
 
 /** All people (coworkers being tracked). Any signed-in user. */
-export const list = query({
+export const list = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     return await ctx.db.query("people").take(2000);
   },
 });
@@ -22,7 +21,8 @@ function normalizeId(value: string | undefined): string | undefined {
 }
 
 /** Add a coworker. Manager+, or a `manage_members` custom role. */
-export const create = mutation({
+export const create = userMutation({
+  can: "manage_members",
   args: {
     name: v.string(),
     email: v.optional(v.string()),
@@ -32,7 +32,7 @@ export const create = mutation({
     clockodoUserId: v.optional(v.string()),
   },
   handler: async (ctx, { name, email, userId, employeeId, genesysUserId, clockodoUserId }) => {
-    const actor = await requireCapability(ctx, "manage_members");
+    const actor = ctx.caller.user;
     const id = await ctx.db.insert("people", {
       name,
       email,
@@ -91,10 +91,11 @@ export const update = mutation({
 });
 
 /** Remove a coworker and unlink any devices pointing at them. Manager+, or a `manage_members` custom role. */
-export const remove = mutation({
+export const remove = userMutation({
+  can: "manage_members",
   args: { personId: v.id("people") },
   handler: async (ctx, { personId }) => {
-    const actor = await requireCapability(ctx, "manage_members");
+    const actor = ctx.caller.user;
     const person = await ctx.db.get(personId);
     if (!person) throw appError("notFound.person", "Person not found");
 

@@ -5,6 +5,8 @@ import {
   internalQuery,
   mutation,
   query,
+  userMutation,
+  userQuery,
 } from "../functions";
 import { ConvexError, v } from "convex/values";
 
@@ -307,10 +309,10 @@ export const myHrRequestState = query({
 
 // ------------------------------------------------------------- admin review
 
-export const listRequests = query({
+export const listRequests = userQuery({
+  role: "admin",
   args: { status: v.optional(v.union(v.literal("pending"), v.literal("handled"))) },
   handler: async (ctx, { status }): Promise<AdminRequestRow[]> => {
-    await requireAdmin(ctx);
     const requests = await ctx.db.query("passwordResetRequests").order("desc").take(200);
     const filtered =
       status === "pending"
@@ -325,10 +327,10 @@ export const listRequests = query({
 /** The audit trail behind one request, newest first — shown inline in the
  * admin queue so "who asked, who approved, when" doesn't require a trip to
  * the Convex dashboard. */
-export const requestHistory = query({
+export const requestHistory = userQuery({
+  role: "admin",
   args: { requestId: v.id("passwordResetRequests") },
   handler: async (ctx, { requestId }) => {
-    await requireAdmin(ctx);
     const rows = await ctx.db
       .query("passwordResetAuditLog")
       .withIndex("by_request", (q) => q.eq("requestId", requestId))
@@ -381,10 +383,10 @@ interface LinkedEmailRow {
  * same person when no existing account link (`performanceLogins.linkedUserId`)
  * already explains a mismatch. See `passwordResetLinkedEmails` in
  * `schema.ts`. */
-export const listLinkedEmails = query({
+export const listLinkedEmails = userQuery({
+  role: "admin",
   args: {},
   handler: async (ctx): Promise<LinkedEmailRow[]> => {
-    await requireAdmin(ctx);
     const rows = await ctx.db.query("passwordResetLinkedEmails").order("desc").collect();
     const addedBy = await Promise.all(rows.map((r) => ctx.db.get(r.addedByUserId)));
     return rows.map((r, i) => ({
@@ -404,7 +406,8 @@ export const listLinkedEmails = query({
  * on — this pre-authorizes every future reset request between the two to
  * skip manual review, so it's step-up gated the same as issuing or
  * dismissing a request. */
-export const addLinkedEmail = mutation({
+export const addLinkedEmail = userMutation({
+  role: "admin",
   args: {
     scope: passwordResetScopeValidator,
     companySlug: v.optional(v.string()),
@@ -414,7 +417,7 @@ export const addLinkedEmail = mutation({
     sessionId: v.string(),
   },
   handler: async (ctx, args): Promise<{ ok: true } | StepUpHint> => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     const aliasEmail = normalizeEmail(args.aliasEmail);
     const canonicalEmail = normalizeEmail(args.canonicalEmail);
     if (!aliasEmail || !canonicalEmail || aliasEmail === canonicalEmail) {
@@ -470,10 +473,11 @@ export const addLinkedEmail = mutation({
   },
 });
 
-export const removeLinkedEmail = mutation({
+export const removeLinkedEmail = userMutation({
+  role: "admin",
   args: { id: v.id("passwordResetLinkedEmails") },
   handler: async (ctx, { id }): Promise<{ ok: true }> => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     await ctx.db.delete(id);
     console.log(`[passwordReset] linkedEmail removed id=${id} by=${admin._id}`);
     return { ok: true };
@@ -491,10 +495,11 @@ export const removeLinkedEmail = mutation({
  * request an admin has resolved out-of-band. Step-up gated like issuing is:
  * silently burying "someone is trying to get into the CFO's account" is its
  * own kind of damage. */
-export const dismissRequest = mutation({
+export const dismissRequest = userMutation({
+  role: "admin",
   args: { requestId: v.id("passwordResetRequests"), sessionId: v.string() },
   handler: async (ctx, { requestId, sessionId }): Promise<{ ok: true } | StepUpHint> => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     const request = await ctx.db.get(requestId);
     if (!request || request.status !== "pending") {
       throw new ConvexError({ code: "not_found", message: "No pending request." });
@@ -559,10 +564,11 @@ export const dismissRequest = mutation({
  * suspicious, without a trip to the Convex dashboard. Step-up gated like
  * `dismissRequest`/`issueResetLink`: denying someone a reset they're
  * entitled to is just as much a real action as granting one. */
-export const revokeIssuedLink = mutation({
+export const revokeIssuedLink = userMutation({
+  role: "admin",
   args: { requestId: v.id("passwordResetRequests"), sessionId: v.string() },
   handler: async (ctx, { requestId, sessionId }): Promise<{ ok: true } | StepUpHint> => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     const request = await ctx.db.get(requestId);
     if (!request || request.status !== "issued") {
       throw new ConvexError({ code: "not_found", message: "No issued link for this request." });

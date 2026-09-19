@@ -1,7 +1,5 @@
-import { mutation } from "../functions";
+import { userMutation } from "../functions";
 import { v } from "convex/values";
-
-import { requireCapability, requireUser } from "../lib/auth";
 import { toClockodoIdString } from "../lib/clockodoId";
 import { appError } from "../lib/errors";
 import { writeIntegrationsAudit } from "./lib/audit";
@@ -16,13 +14,14 @@ import { writeIntegrationsAudit } from "./lib/audit";
  * `userId` — contractors tracked without an intranet login) are untouched by
  * this mutation; they keep using the roster's own free-text editor.
  */
-export const linkClockodoUser = mutation({
+export const linkClockodoUser = userMutation({
+  can: "manage_clockodo_team",
   args: {
     userId: v.id("users"),
     clockodoUserId: v.number(),
   },
   handler: async (ctx, { userId, clockodoUserId }) => {
-    const actor = await requireCapability(ctx, "manage_clockodo_team");
+    const actor = ctx.caller.user;
     const user = await ctx.db.get(userId);
     if (!user) throw appError("notFound.user", "User not found");
 
@@ -43,10 +42,11 @@ export const linkClockodoUser = mutation({
   },
 });
 
-export const unlinkClockodoUser = mutation({
+export const unlinkClockodoUser = userMutation({
+  can: "manage_clockodo_team",
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const actor = await requireCapability(ctx, "manage_clockodo_team");
+    const actor = ctx.caller.user;
     const user = await ctx.db.get(userId);
     if (!user) throw appError("notFound.user", "User not found");
 
@@ -64,10 +64,10 @@ export const unlinkClockodoUser = mutation({
   },
 });
 
-export const migrateLegacyClockodoLink = mutation({
+export const migrateLegacyClockodoLink = userMutation({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (user.clockodoUserId != null) {
       return { status: "already_linked" as const };
     }

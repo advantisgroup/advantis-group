@@ -1,15 +1,12 @@
-import { mutation, query } from "../functions";
+import { query, userQuery, userMutation } from "../functions";
 import { v } from "convex/values";
-
-import { requireManager, requireUser } from "../lib/auth";
-
-export const upsertMyProgress = mutation({
+export const upsertMyProgress = userMutation({
   args: {
     checkpointStatuses: v.string(),
     completedAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("tourProgress")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -32,10 +29,10 @@ export const upsertMyProgress = mutation({
   },
 });
 
-export const getMyProgress = query({
+export const getMyProgress = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     return ctx.db
       .query("tourProgress")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -43,10 +40,10 @@ export const getMyProgress = query({
   },
 });
 
-export const getMemberProgress = query({
+export const getMemberProgress = userQuery({
+  role: "manager",
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    await requireManager(ctx);
     return ctx.db
       .query("tourProgress")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -54,10 +51,10 @@ export const getMemberProgress = query({
   },
 });
 
-export const listMemberProgress = query({
+export const listMemberProgress = userQuery({
+  role: "manager",
   args: {},
   handler: async (ctx) => {
-    await requireManager(ctx);
     const rows = await ctx.db.query("tourProgress").collect();
     const results = await Promise.all(
       rows.map(async (row) => {

@@ -1,4 +1,4 @@
-import { action, internalMutation, query } from "../functions";
+import { action, internalMutation, query, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "../_generated/api";
@@ -207,10 +207,10 @@ export const revoke = action({
   },
 });
 
-export const list = query({
+export const list = userQuery({
+  role: "manager",
   args: { status: v.optional(v.string()) },
   handler: async (ctx, { status }) => {
-    await requireManager(ctx);
     const invites = await ctx.db.query("invites").order("desc").take(200);
     const filtered = status ? invites.filter((i) => i.status === status) : invites;
     return Promise.all(
@@ -232,10 +232,10 @@ export const list = query({
  * tell whether an entered address is external (and gate/confirm accordingly).
  * Empty list means no allowlist is configured (nothing is treated as external).
  */
-export const config = query({
+export const config = userQuery({
+  role: "manager",
   args: {},
   handler: async (ctx) => {
-    await requireManager(ctx);
     return { allowedDomains: getAllowedDomains() };
   },
 });

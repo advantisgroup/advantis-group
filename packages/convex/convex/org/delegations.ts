@@ -1,17 +1,17 @@
-import { mutation, query } from "../functions";
+import { query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
-import { isOwnerOrAdmin, requireCapability, requireUser } from "../lib/auth";
+import { isOwnerOrAdmin } from "../lib/auth";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { displayName } from "../lib/users";
 
 const scopeValidator = v.literal("absence_approvals");
 const MAX_DURATION_MS = 90 * 24 * 60 * 60 * 1000;
 
-export const mine = query({
+export const mine = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const rows = await ctx.db
       .query("approvalDelegations")
@@ -33,10 +33,11 @@ export const mine = query({
   },
 });
 
-export const listGranted = query({
+export const listGranted = userQuery({
+  can: "manage_clockodo_team",
   args: {},
   handler: async (ctx) => {
-    const user = await requireCapability(ctx, "manage_clockodo_team");
+    const user = ctx.caller.user;
     const now = Date.now();
     const rows = await ctx.db
       .query("approvalDelegations")
@@ -58,7 +59,8 @@ export const listGranted = query({
   },
 });
 
-export const create = mutation({
+export const create = userMutation({
+  can: "manage_clockodo_team",
   args: {
     delegateUserId: v.id("users"),
     scope: scopeValidator,
@@ -66,7 +68,7 @@ export const create = mutation({
     endsAt: v.number(),
   },
   handler: async (ctx, args) => {
-    const user = await requireCapability(ctx, "manage_clockodo_team");
+    const user = ctx.caller.user;
     const now = Date.now();
     if (args.delegateUserId === user._id) {
       throw new ConvexError({ code: "bad_request", message: "Choose a different person" });
@@ -100,10 +102,11 @@ export const create = mutation({
   },
 });
 
-export const revoke = mutation({
+export const revoke = userMutation({
+  can: "manage_clockodo_team",
   args: { delegationId: v.id("approvalDelegations") },
   handler: async (ctx, { delegationId }) => {
-    const user = await requireCapability(ctx, "manage_clockodo_team");
+    const user = ctx.caller.user;
     const delegation = await ctx.db.get(delegationId);
     if (!delegation) return { ok: true };
     if (!isOwnerOrAdmin(user, delegation.delegatorUserId)) {

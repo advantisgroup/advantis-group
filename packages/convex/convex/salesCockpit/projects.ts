@@ -1,10 +1,8 @@
-import { mutation, query } from "../functions";
+import { query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
-import { requireUser } from "../lib/auth";
-
 const fileInputValidator = v.object({
   storageId: v.id("_storage"),
   name: v.string(),
@@ -133,10 +131,9 @@ async function hydrateProject(ctx: QueryCtx | MutationCtx, project: Doc<"salesCo
   };
 }
 
-export const listProjects = query({
+export const listProjects = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const projects = await ctx.db.query("salesCockpitProjects").withIndex("by_createdAt").collect();
     return Promise.all(
       projects.sort((a, b) => b.createdAt - a.createdAt).map((p) => hydrateProject(ctx, p)),
@@ -144,10 +141,10 @@ export const listProjects = query({
   },
 });
 
-export const createProject = mutation({
+export const createProject = userMutation({
   args: projectFieldsValidator,
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const projectId = await ctx.db.insert("salesCockpitProjects", {
       titel: args.titel,
@@ -165,10 +162,10 @@ export const createProject = mutation({
   },
 });
 
-export const updateProject = mutation({
+export const updateProject = userMutation({
   args: { projectId: v.id("salesCockpitProjects"), ...projectFieldsValidator },
   handler: async (ctx, { projectId, ...args }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db.get(projectId);
     if (!existing) throw new ConvexError({ code: "not_found", message: "Projekt nicht gefunden" });
     await ctx.db.patch(projectId, {
@@ -186,10 +183,9 @@ export const updateProject = mutation({
   },
 });
 
-export const removeProject = mutation({
+export const removeProject = userMutation({
   args: { projectId: v.id("salesCockpitProjects") },
   handler: async (ctx, { projectId }) => {
-    await requireUser(ctx);
     const [wege, files] = await Promise.all([
       ctx.db
         .query("salesCockpitWege")

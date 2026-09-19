@@ -1,8 +1,7 @@
-import { gatedInternalMutation, internalMutation, mutation } from "../functions";
+import { gatedInternalMutation, internalMutation, userMutation } from "../functions";
 import { v } from "convex/values";
 
 import type { MutationCtx } from "../_generated/server";
-import { requireAdmin } from "../lib/auth";
 import { writeAudit } from "./lib/audit";
 import { readConfig } from "./lib/settings";
 import { isWithinBusinessHours, WORK_EVIDENCE_STATES } from "./lib/businessHours";
@@ -155,10 +154,11 @@ export const quarantineOutOfHoursStateSamples = internalMutation({
  * existed: each call processes one batch. Start with no `cursor` (audits the
  * run and begins at 0), then keep calling with the returned `cursorAt`.
  */
-export const troubleshootQuarantineOutOfHours = mutation({
+export const troubleshootQuarantineOutOfHours = userMutation({
+  role: "admin",
   args: { cursor: v.optional(v.number()) },
   handler: async (ctx, { cursor }) => {
-    const me = await requireAdmin(ctx);
+    const me = ctx.caller.user;
     if (cursor === undefined) {
       await writeAudit(
         ctx,
@@ -177,10 +177,11 @@ export const troubleshootQuarantineOutOfHours = mutation({
  * discarded rows). Pass `continuation: true` on follow-up calls so only the
  * first one lands in the audit log.
  */
-export const troubleshootPruneNow = mutation({
+export const troubleshootPruneNow = userMutation({
+  role: "admin",
   args: { continuation: v.optional(v.boolean()) },
   handler: async (ctx, { continuation }) => {
-    const me = await requireAdmin(ctx);
+    const me = ctx.caller.user;
     if (!continuation) {
       await writeAudit(ctx, me._id, "maintenance.pruneNow", "retention pruning");
     }

@@ -1,11 +1,11 @@
-import { internalMutation, mutation, query } from "./functions";
+import { internalMutation, query, userQuery, userMutation } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
-import { isOwnerOrAdmin, requireCapability, requireManager, requireUser } from "./lib/auth";
+import { isOwnerOrAdmin } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
 import { escapeHtml } from "./lib/text";
@@ -99,7 +99,8 @@ async function resolveAudienceUserIds(ctx: QueryCtx, audience: Audience): Promis
   return all.filter((u) => userMatchesAudience(u, audience)).map((u) => u._id);
 }
 
-export const create = mutation({
+export const create = userMutation({
+  can: "manage_announcements",
   args: {
     title: v.string(),
     body: v.string(),
@@ -115,7 +116,7 @@ export const create = mutation({
     expiresAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const author = await requireCapability(ctx, "manage_announcements");
+    const author = ctx.caller.user;
     assertAttachmentSizeOk(args.attachments ?? []);
     const now = Date.now();
     // Keep the flat storage-id list in sync (used for cleanup on edit/delete).
@@ -169,7 +170,8 @@ export const create = mutation({
   },
 });
 
-export const announceGuidebook = mutation({
+export const announceGuidebook = userMutation({
+  role: "manager",
   args: {
     guideTitle: v.string(),
     guideDescription: v.optional(v.string()),
@@ -177,7 +179,7 @@ export const announceGuidebook = mutation({
     locale: v.union(v.literal("en"), v.literal("de")),
   },
   handler: async (ctx, args) => {
-    const publisher = await requireManager(ctx);
+    const publisher = ctx.caller.user;
     const botUserId = await getOrCreateIntranetBot(ctx);
     const publisherName = displayName(publisher);
     const description = args.guideDescription?.trim();
@@ -248,7 +250,8 @@ export const notifyPublished = internalMutation({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
+  can: "manage_announcements",
   args: {
     announcementId: v.id("announcements"),
     title: v.optional(v.string()),
@@ -262,7 +265,7 @@ export const update = mutation({
     expiresAt: v.optional(v.union(v.number(), v.null())),
   },
   handler: async (ctx, { announcementId, expiresAt, category, relevantDate, ...patch }) => {
-    const user = await requireCapability(ctx, "manage_announcements");
+    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
@@ -308,10 +311,11 @@ export const update = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
+  can: "manage_announcements",
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = await requireCapability(ctx, "manage_announcements");
+    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) return { ok: false };
     if (!isOwnerOrAdmin(user, announcementOwnerUserId(announcement))) {
@@ -345,10 +349,10 @@ export const remove = mutation({
   },
 });
 
-export const list = query({
+export const list = userQuery({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const announcements = await ctx.db
       .query("announcements")
@@ -500,10 +504,10 @@ export const list = query({
   },
 });
 
-export const markRead = mutation({
+export const markRead = userMutation({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     // An author/admin can view an announcement outside its own audience (see
     // isVisibleToUser in `list`) — that's a management view, not audience
@@ -529,10 +533,10 @@ export const markRead = mutation({
   },
 });
 
-export const unreadCount = query({
+export const unreadCount = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const announcements = await ctx.db
       .query("announcements")
@@ -554,10 +558,10 @@ export const unreadCount = query({
 
 /** Announcements waiting on the caller: ones asking for a read confirmation
  * they haven't given, and pinned ones they haven't opened. */
-export const needsAttention = query({
+export const needsAttention = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const announcements = await ctx.db
       .query("announcements")
@@ -592,10 +596,10 @@ export const needsAttention = query({
   },
 });
 
-export const acknowledge = mutation({
+export const acknowledge = userMutation({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     if (!announcement || !isVisibleToUser(user, announcement)) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
@@ -617,10 +621,10 @@ export const acknowledge = mutation({
   },
 });
 
-export const markAllRead = mutation({
+export const markAllRead = userMutation({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const announcements = await ctx.db
       .query("announcements")
@@ -649,10 +653,10 @@ export const markAllRead = mutation({
 });
 
 /** How many active users a draft's audience would reach (create-dialog preview). */
-export const audienceSize = query({
+export const audienceSize = userQuery({
+  can: "manage_announcements",
   args: { audience: audienceValidator },
   handler: async (ctx, { audience }) => {
-    await requireCapability(ctx, "manage_announcements");
     const activeUsers = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -661,10 +665,10 @@ export const audienceSize = query({
   },
 });
 
-export const toggleReaction = mutation({
+export const toggleReaction = userMutation({
   args: { announcementId: v.id("announcements"), emoji: v.string() },
   handler: async (ctx, { announcementId, emoji }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     if (!announcement || !isVisibleToUser(user, announcement)) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
@@ -700,10 +704,10 @@ export const toggleReaction = mutation({
  * capped avatar sample per emoji for the inline stack, so this is fetched
  * separately, lazily, once the drawer is actually opened.
  */
-export const reactors = query({
+export const reactors = userQuery({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     if (!announcement || !isVisibleToUser(user, announcement)) {
       return [];
@@ -731,10 +735,10 @@ export const reactors = query({
 });
 
 /** Users who have viewed (read) an announcement — for the "seen by" popover. */
-export const viewers = query({
+export const viewers = userQuery({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     if (!announcement || !isVisibleToUser(user, announcement)) {
       return [];
@@ -766,10 +770,10 @@ export const viewers = query({
  * (unlike `viewers`, this is a nudge-to-follow-up tool, not something every
  * reader should see about their colleagues).
  */
-export const nonReaders = query({
+export const nonReaders = userQuery({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) return [];
     if (!isOwnerOrAdmin(user, announcementOwnerUserId(announcement))) {

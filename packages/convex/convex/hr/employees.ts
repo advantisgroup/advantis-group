@@ -1,9 +1,8 @@
-import { mutation, query, serverQuery } from "../functions";
+import { query, serverQuery, userQuery, userMutation } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
-import { requireApplicantAccess } from "../lib/auth";
 import {
   partialProfileValidator,
   profileDisplayName,
@@ -63,7 +62,8 @@ function compact(value: string | undefined): string | undefined {
   return trimmed ? trimmed : undefined;
 }
 
-export const listProfiles = query({
+export const listProfiles = userQuery({
+  applicant: "access",
   args: { includeArchived: v.optional(v.boolean()) },
   returns: v.array(
     employeeProfileValidator.extend({
@@ -72,7 +72,6 @@ export const listProfiles = query({
     }),
   ),
   handler: async (ctx, { includeArchived }) => {
-    await requireApplicantAccess(ctx);
     const profiles = includeArchived
       ? await ctx.db.query("employeeProfiles").withIndex("by_createdAt").order("desc").take(1000)
       : await ctx.db
@@ -98,7 +97,8 @@ export const listProfiles = query({
   },
 });
 
-export const getProfile = query({
+export const getProfile = userQuery({
+  applicant: "access",
   args: { employeeProfileId: v.id("employeeProfiles") },
   returns: employeeProfileValidator.extend({
     linkedProfile: v.union(partialProfileValidator, v.null()),
@@ -112,7 +112,6 @@ export const getProfile = query({
     ),
   }),
   handler: async (ctx, { employeeProfileId }) => {
-    await requireApplicantAccess(ctx);
     const profile = await requireProfile(ctx, employeeProfileId);
     const linkedUser = profile.userId ? await ctx.db.get(profile.userId) : null;
     const sourceApplicant = profile.sourceApplicantId
@@ -132,7 +131,8 @@ export const getProfile = query({
   },
 });
 
-export const createProfile = mutation({
+export const createProfile = userMutation({
+  applicant: "access",
   args: {
     userId: v.optional(v.id("users")),
     name: v.string(),
@@ -143,7 +143,7 @@ export const createProfile = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await requireApplicantAccess(ctx);
+    const user = ctx.caller.user;
     const name = compact(args.name);
     if (!name) throw new ConvexError({ code: "bad_request", message: "Name required" });
     if (args.userId) {
@@ -167,7 +167,8 @@ export const createProfile = mutation({
   },
 });
 
-export const updateProfile = mutation({
+export const updateProfile = userMutation({
+  applicant: "access",
   args: {
     employeeProfileId: v.id("employeeProfiles"),
     userId: v.optional(v.union(v.id("users"), v.null())),
@@ -179,7 +180,6 @@ export const updateProfile = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, { employeeProfileId, userId, ...patch }) => {
-    await requireApplicantAccess(ctx);
     await requireProfile(ctx, employeeProfileId);
     if (userId) {
       const linked = await ctx.db.get(userId);
@@ -199,13 +199,13 @@ export const updateProfile = mutation({
   },
 });
 
-export const setOnboarding = mutation({
+export const setOnboarding = userMutation({
+  applicant: "access",
   args: {
     employeeProfileId: v.id("employeeProfiles"),
     items: v.array(onboardingItemValidator),
   },
   handler: async (ctx, { employeeProfileId, items }) => {
-    await requireApplicantAccess(ctx);
     await requireProfile(ctx, employeeProfileId);
     if (items.length > 40) {
       throw new ConvexError({ code: "bad_request", message: "Too many onboarding steps" });
@@ -215,10 +215,10 @@ export const setOnboarding = mutation({
   },
 });
 
-export const archiveProfile = mutation({
+export const archiveProfile = userMutation({
+  applicant: "access",
   args: { employeeProfileId: v.id("employeeProfiles"), archived: v.boolean() },
   handler: async (ctx, { employeeProfileId, archived }) => {
-    await requireApplicantAccess(ctx);
     await requireProfile(ctx, employeeProfileId);
     await ctx.db.patch(employeeProfileId, {
       status: archived ? "archived" : "active",
@@ -229,10 +229,11 @@ export const archiveProfile = mutation({
   },
 });
 
-export const convertApplicant = mutation({
+export const convertApplicant = userMutation({
+  applicant: "access",
   args: { applicantId: v.id("applicants"), userId: v.optional(v.id("users")) },
   handler: async (ctx, { applicantId, userId }) => {
-    const user = await requireApplicantAccess(ctx);
+    const user = ctx.caller.user;
     const applicant = await ctx.db.get(applicantId);
     if (!applicant)
       throw new ConvexError({
@@ -277,10 +278,10 @@ export const convertApplicant = mutation({
  * the empty shell the conversion produced, and deleting it would take real
  * data with it. That's a manual call, not something to guess at here.
  */
-export const revertConversion = mutation({
+export const revertConversion = userMutation({
+  applicant: "access",
   args: { applicantId: v.id("applicants") },
   handler: async (ctx, { applicantId }) => {
-    await requireApplicantAccess(ctx);
     const applicant = await ctx.db.get(applicantId);
     if (!applicant)
       throw new ConvexError({
@@ -313,10 +314,10 @@ export const revertConversion = mutation({
   },
 });
 
-export const archiveApplicant = mutation({
+export const archiveApplicant = userMutation({
+  applicant: "access",
   args: { applicantId: v.id("applicants") },
   handler: async (ctx, { applicantId }) => {
-    await requireApplicantAccess(ctx);
     const applicant = await ctx.db.get(applicantId);
     if (!applicant)
       throw new ConvexError({
@@ -330,7 +331,8 @@ export const archiveApplicant = mutation({
 
 /** New documents are OneDrive-backed — Convex only stores the reference
  * (see `employeeDocuments` in schema.ts). */
-export const addDocument = mutation({
+export const addDocument = userMutation({
+  applicant: "access",
   args: {
     employeeProfileId: v.id("employeeProfiles"),
     oneDriveItemId: v.string(),
@@ -341,7 +343,7 @@ export const addDocument = mutation({
     category: employeeDocumentCategoryValidator,
   },
   handler: async (ctx, args) => {
-    const user = await requireApplicantAccess(ctx);
+    const user = ctx.caller.user;
     await requireProfile(ctx, args.employeeProfileId);
     return ctx.db.insert("employeeDocuments", {
       employeeProfileId: args.employeeProfileId,
@@ -357,10 +359,10 @@ export const addDocument = mutation({
   },
 });
 
-export const listDocuments = query({
+export const listDocuments = userQuery({
+  applicant: "access",
   args: { employeeProfileId: v.id("employeeProfiles") },
   handler: async (ctx, { employeeProfileId }) => {
-    await requireApplicantAccess(ctx);
     await requireProfile(ctx, employeeProfileId);
     const documents = await ctx.db
       .query("employeeDocuments")
@@ -384,10 +386,10 @@ export const listDocuments = query({
   },
 });
 
-export const removeDocument = mutation({
+export const removeDocument = userMutation({
+  applicant: "access",
   args: { documentId: v.id("employeeDocuments") },
   handler: async (ctx, { documentId }) => {
-    await requireApplicantAccess(ctx);
     const document = await ctx.db.get(documentId);
     if (!document) return { ok: true, oneDriveItemId: null };
     if (document.storageId) await ctx.storage.delete(document.storageId);
@@ -407,10 +409,10 @@ function employeeFolderNameFor(profile: Doc<"employeeProfiles">): string {
 /** Clerk-authenticated — lets the documents page resolve its own OneDrive
  * folder path so it can list/browse it (the attach route resolves this
  * itself server-side too, via `apiEmployeeFolderName` below). */
-export const employeeFolderName = query({
+export const employeeFolderName = userQuery({
+  applicant: "access",
   args: { employeeProfileId: v.id("employeeProfiles") },
   handler: async (ctx, { employeeProfileId }) => {
-    await requireApplicantAccess(ctx);
     const profile = await requireProfile(ctx, employeeProfileId);
     return { folderName: employeeFolderNameFor(profile) };
   },

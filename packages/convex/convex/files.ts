@@ -1,8 +1,8 @@
-import { mutation, query, serverMutation } from "./functions";
+import { mutation, query, serverMutation, userQuery, userMutation } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { getCurrentUser, hasApplicantAccess, requireUser, requireVaultUnlocked } from "./lib/auth";
+import { getCurrentUser, hasApplicantAccess, requireVaultUnlocked } from "./lib/auth";
 import { type QueryCtx } from "./_generated/server";
 
 /**
@@ -10,10 +10,9 @@ import { type QueryCtx } from "./_generated/server";
  * announcement files. The client POSTs the file to this URL and receives a
  * `storageId` which it then attaches to the relevant document.
  */
-export const generateUploadUrl = mutation({
+export const generateUploadUrl = userMutation({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     return ctx.storage.generateUploadUrl();
   },
 });
@@ -54,19 +53,19 @@ async function resolveGatedUrl(
 }
 
 /** Resolve a single storage id to a served URL (null if missing). */
-export const getUrl = query({
+export const getUrl = userQuery({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, { storageId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     return resolveGatedUrl(ctx, user, storageId);
   },
 });
 
 /** Resolve many storage ids at once. */
-export const getUrls = query({
+export const getUrls = userQuery({
   args: { storageIds: v.array(v.id("_storage")) },
   handler: async (ctx, { storageIds }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const entries = await Promise.all(
       storageIds.map(async (id) => [id, await resolveGatedUrl(ctx, user, id)] as const),
     );

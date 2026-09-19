@@ -1,9 +1,14 @@
-import { action, internalMutation, internalQuery, mutation, query } from "../functions";
+import {
+  internalMutation,
+  internalQuery,
+  query,
+  userAction,
+  userQuery,
+  userMutation,
+} from "../functions";
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
-import { requireUser, requireManager, requireAdmin } from "../lib/auth";
-import { requireAdminForAction } from "../lib/auth";
 import { writeAudit } from "./lib/audit";
 import { hashPassword } from "./lib/crypto";
 import { appError } from "../lib/errors";
@@ -18,23 +23,23 @@ const CONFIG_BOUNDS: Record<keyof AppConfig, { min: number; max: number }> = {
 };
 
 /** Reactive read of the operational config for the Settings form. */
-export const getConfig = query({
+export const getConfig = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     return await readConfig(ctx);
   },
 });
 
 /** Update one or more operational config values. Manager+, range-validated. */
-export const setConfig = mutation({
+export const setConfig = userMutation({
+  role: "manager",
   args: {
     inactivityThresholdSeconds: v.optional(v.number()),
     offlineThresholdSeconds: v.optional(v.number()),
     retentionDays: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const me = await requireManager(ctx);
+    const me = ctx.caller.user;
     const now = Date.now();
     for (const field of Object.keys(CONFIG_KEYS) as (keyof AppConfig)[]) {
       const value = args[field];
@@ -77,10 +82,10 @@ export const getByKey = internalQuery({
 });
 
 /** Whether the tray-app debug password has been configured. Admin. */
-export const debugPasswordIsSet = query({
+export const debugPasswordIsSet = userQuery({
+  role: "admin",
   args: {},
   handler: async (ctx) => {
-    await requireAdmin(ctx);
     const row = await ctx.db
       .query("activitySettings")
       .withIndex("by_key", (q) => q.eq("key", DEBUG_PASSWORD_KEY))
@@ -119,10 +124,11 @@ export const store = internalMutation({
  * Set the tray-app debug login password. Runs as an action so it can use Web
  * Crypto to hash; admin-gated via `requireAdminForAction`.
  */
-export const setDebugPassword = action({
+export const setDebugPassword = userAction({
+  role: "admin",
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
-    const me = await requireAdminForAction(ctx);
+    const me = ctx.caller.user;
     if (password.length < 6) {
       throw appError("validation.password_short", "Password must be at least 6 characters");
     }

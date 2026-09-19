@@ -1,10 +1,8 @@
-import { mutation, query } from "../functions";
+import { query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
-import { requireAdmin } from "../lib/auth";
-
 /**
  * One-time cleanup of the free-text `users.department`/`users.teams` into
  * real `departments`/`teams` rows. Unlike the ActivityTrack import
@@ -26,10 +24,10 @@ function normalize(raw: string): string {
 }
 
 /** Scan `users` and (re-)populate the review queue from current raw values. */
-export const populateReview = mutation({
+export const populateReview = userMutation({
+  role: "admin",
   args: {},
   handler: async (ctx) => {
-    await requireAdmin(ctx);
     const users = await ctx.db.query("users").collect();
 
     const buckets = new Map<
@@ -94,10 +92,10 @@ export const populateReview = mutation({
   },
 });
 
-export const listReview = query({
+export const listReview = userQuery({
+  role: "admin",
   args: { kind: kindArg },
   handler: async (ctx, { kind }) => {
-    await requireAdmin(ctx);
     const rows = await ctx.db
       .query("orgDataMigrationReview")
       .withIndex("by_kind_normalized", (q) => q.eq("kind", kind))
@@ -106,10 +104,10 @@ export const listReview = query({
   },
 });
 
-export const setCanonicalName = mutation({
+export const setCanonicalName = userMutation({
+  role: "admin",
   args: { bucketId: v.id("orgDataMigrationReview"), canonicalName: v.string() },
   handler: async (ctx, { bucketId, canonicalName }) => {
-    await requireAdmin(ctx);
     const trimmed = canonicalName.trim();
     if (!trimmed) {
       throw new ConvexError({
@@ -124,25 +122,25 @@ export const setCanonicalName = mutation({
   },
 });
 
-export const setStatus = mutation({
+export const setStatus = userMutation({
+  role: "admin",
   args: {
     bucketId: v.id("orgDataMigrationReview"),
     status: v.union(v.literal("pending"), v.literal("approved"), v.literal("rejected")),
   },
   handler: async (ctx, { bucketId, status }) => {
-    await requireAdmin(ctx);
     await ctx.db.patch(bucketId, { status, updatedAt: Date.now() });
   },
 });
 
 /** Merge `sourceId` into `targetId` (same kind) — never automatic. */
-export const mergeBucket = mutation({
+export const mergeBucket = userMutation({
+  role: "admin",
   args: {
     sourceId: v.id("orgDataMigrationReview"),
     targetId: v.id("orgDataMigrationReview"),
   },
   handler: async (ctx, { sourceId, targetId }) => {
-    await requireAdmin(ctx);
     if (sourceId === targetId) {
       throw new ConvexError({
         code: "bad_request",
@@ -196,10 +194,11 @@ async function rawValuesForBackfill(
  * `materializedDepartmentId`/`materializedTeamId` are skipped, and a user
  * already carrying the right `departmentId`/`userTeams` row is left alone.
  */
-export const runBackfill = mutation({
+export const runBackfill = userMutation({
+  role: "admin",
   args: {},
   handler: async (ctx) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     const approved = await ctx.db
       .query("orgDataMigrationReview")
       .withIndex("by_status", (q) => q.eq("status", "approved"))
@@ -293,10 +292,10 @@ export const runBackfill = mutation({
  * paths in `clockodoSync.ts` / `integrations/clockodoView.ts`) can be
  * deleted.
  */
-export const backfillClockodoUserIdStrings = mutation({
+export const backfillClockodoUserIdStrings = userMutation({
+  role: "admin",
   args: {},
   handler: async (ctx) => {
-    await requireAdmin(ctx);
     const users = await ctx.db.query("users").collect();
     let updated = 0;
     for (const u of users) {

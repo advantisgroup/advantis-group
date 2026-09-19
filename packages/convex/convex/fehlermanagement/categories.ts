@@ -1,13 +1,9 @@
-import { mutation, query } from "../functions";
+import { query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
-
-import { requireManager, requireUser } from "../lib/auth";
-
 /** Fehlerkategorien (Stammdaten), alphabetical. */
-export const list = query({
+export const list = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const rows = await ctx.db.query("errorCategories").collect();
     return rows
       .map((c) => ({ _id: c._id, name: c.name }))
@@ -15,10 +11,11 @@ export const list = query({
   },
 });
 
-export const create = mutation({
+export const create = userMutation({
+  role: "manager",
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
-    const user = await requireManager(ctx);
+    const user = ctx.caller.user;
     const trimmed = name.trim();
     if (!trimmed) throw new ConvexError({ code: "bad_request", message: "Name required" });
     const existing = await ctx.db.query("errorCategories").collect();
@@ -34,10 +31,10 @@ export const create = mutation({
   },
 });
 
-export const rename = mutation({
+export const rename = userMutation({
+  role: "manager",
   args: { categoryId: v.id("errorCategories"), name: v.string() },
   handler: async (ctx, { categoryId, name }) => {
-    await requireManager(ctx);
     const trimmed = name.trim();
     if (!trimmed) throw new ConvexError({ code: "bad_request", message: "Name required" });
     await ctx.db.patch(categoryId, { name: trimmed });
@@ -47,10 +44,10 @@ export const rename = mutation({
 
 /** Deleting a category snapshots its name onto affected reports (`categoryName`)
  * so their history stays legible instead of pointing at nothing. */
-export const remove = mutation({
+export const remove = userMutation({
+  role: "manager",
   args: { categoryId: v.id("errorCategories") },
   handler: async (ctx, { categoryId }) => {
-    await requireManager(ctx);
     const category = await ctx.db.get(categoryId);
     if (!category) return { ok: false };
     const affected = await ctx.db

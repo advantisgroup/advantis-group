@@ -1,7 +1,5 @@
-import { mutation, query } from "./functions";
+import { query, userQuery, userMutation } from "./functions";
 import { v } from "convex/values";
-
-import { requireManager, requireUser } from "./lib/auth";
 import { displayName } from "./lib/users";
 
 const sentimentValidator = v.union(
@@ -10,10 +8,10 @@ const sentimentValidator = v.union(
   v.literal("negative"),
 );
 
-export const submit = mutation({
+export const submit = userMutation({
   args: { sentiment: sentimentValidator, message: v.string(), path: v.string() },
   handler: async (ctx, { sentiment, message, path }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     await ctx.db.insert("designFeedback", {
       userId: user._id,
       sentiment,
@@ -25,10 +23,10 @@ export const submit = mutation({
   },
 });
 
-export const list = query({
+export const list = userQuery({
+  role: "manager",
   args: {},
   handler: async (ctx) => {
-    await requireManager(ctx);
     const rows = await ctx.db
       .query("designFeedback")
       .withIndex("by_createdAt")

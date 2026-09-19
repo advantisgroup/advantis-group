@@ -2,9 +2,10 @@ import {
   action,
   internalMutation,
   internalQuery,
-  mutation,
   query,
   serverMutation,
+  userQuery,
+  userMutation,
 } from "../functions";
 import { ConvexError, v } from "convex/values";
 
@@ -13,14 +14,7 @@ import { internal } from "../_generated/api";
 import { type MutationCtx } from "../_generated/server";
 import { hashPassword, verifyPassword } from "../activity/lib/crypto";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
-import {
-  getCallerForAction,
-  getUserByClerkId,
-  isApplicantAreaMember,
-  requireAdmin,
-  requireApplicantAreaMember,
-  requireUser,
-} from "../lib/auth";
+import { getCallerForAction, getUserByClerkId, isApplicantAreaMember } from "../lib/auth";
 import {
   AREA_REVERIFY_LEVEL,
   availableMethodsFor,
@@ -38,10 +32,11 @@ export const UNLOCK_DURATION_MS = 30 * 60 * 1000;
  * their unlock (if any) is still valid. Deliberately does NOT require the
  * vault to already be unlocked — this is what the lock screen itself reads
  * to decide what to show. */
-export const status = query({
+export const status = userQuery({
+  applicant: "member",
   args: {},
   handler: async (ctx) => {
-    const user = await requireApplicantAreaMember(ctx);
+    const user = ctx.caller.user;
     const passwordRow = await ctx.db
       .query("applicantVaultPasswords")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -270,10 +265,10 @@ export const checkLegacyPasswordSunset = internalQuery({
 
 /** Re-lock immediately (e.g. a "lock now" button), instead of waiting for the
  * unlock to expire on its own. */
-export const lock = mutation({
+export const lock = userMutation({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("applicantVaultUnlocks")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -299,10 +294,11 @@ export const lock = mutation({
  * doesn't let the admin choose or see the new password — resetting only
  * clears the old one, it never hands the admin a way to impersonate the
  * user's unlock. */
-export const resetPassword = mutation({
+export const resetPassword = userMutation({
+  role: "admin",
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -329,10 +325,10 @@ export const resetPassword = mutation({
  * Management access or delegate rights, whether they've set a vault
  * password yet — so the access panel can offer a reset only where one
  * exists. */
-export const memberPasswordStatuses = query({
+export const memberPasswordStatuses = userQuery({
+  applicant: "member",
   args: {},
   handler: async (ctx) => {
-    await requireApplicantAreaMember(ctx);
     const members = (await ctx.db.query("users").collect()).filter(
       (u) => u.status !== "removed" && isApplicantAreaMember(u),
     );

@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 
-import { internalMutation, query } from "../functions";
-import { requireCapability } from "../lib/auth";
+import { internalMutation, query, userQuery } from "../functions";
 import { batchUserSummaries } from "../lib/users";
 import { writeIntegrationsAudit } from "./lib/audit";
 
@@ -34,10 +33,10 @@ export const recordClockodoAudit = internalMutation({
  * merging both keeps existing history visible rather than only showing
  * changes made after this query was added.
  */
-export const getClockodoUserAuditHistory = query({
+export const getClockodoUserAuditHistory = userQuery({
+  can: "view_clockodo_team",
   args: { clockodoUserId: v.number(), email: v.optional(v.string()) },
   handler: async (ctx, { clockodoUserId, email }) => {
-    await requireCapability(ctx, "view_clockodo_team");
     const byId = await ctx.db
       .query("integrationsAuditLog")
       .withIndex("by_integration_target", (q) =>

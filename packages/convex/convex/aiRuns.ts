@@ -1,7 +1,15 @@
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { internalMutation, mutation, query, serverMutation, serverQuery } from "./functions";
+import {
+  internalMutation,
+  mutation,
+  query,
+  serverMutation,
+  serverQuery,
+  userQuery,
+  userMutation,
+} from "./functions";
 import { type QueryCtx } from "./_generated/server";
 import { isFeatureEnabled } from "./lib/featureFlags";
 import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase, askSubjectType } from "./lib/aiRuns";
@@ -12,8 +20,6 @@ import {
   getUserByClerkId,
   hasApplicantAccess,
   isOwnerOrAdmin,
-  requireManager,
-  requireUser,
   requireVaultUnlocked,
   userHasCapability,
 } from "./lib/auth";
@@ -179,14 +185,14 @@ export const myFeedback = query({
   },
 });
 
-export const rateRun = mutation({
+export const rateRun = userMutation({
   args: {
     runId: v.id("aiRuns"),
     rating: v.union(v.literal("up"), v.literal("down")),
     note: v.optional(v.string()),
   },
   handler: async (ctx, { runId, rating, note }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const run = await ctx.db.get(runId);
     // Only your own run — nobody rates an answer they never saw.
     if (!run || run.clerkUserId !== user.clerkUserId) return null;
@@ -221,10 +227,10 @@ const STATS_SCAN_LIMIT = 2000;
  * volume, what failed and why, and what it cost in tokens. Never any content —
  * the output stays ciphertext this layer can't read anyway.
  */
-export const stats = query({
+export const stats = userQuery({
+  role: "manager",
   args: {},
   handler: async (ctx) => {
-    await requireManager(ctx);
     const runs = await ctx.db
       .query("aiRuns")
       .withIndex("by_started", (q) => q.gt("startedAt", Date.now() - STATS_WINDOW_MS))
@@ -267,10 +273,10 @@ export const stats = query({
   },
 });
 
-export const feedbackList = query({
+export const feedbackList = userQuery({
+  role: "manager",
   args: {},
   handler: async (ctx) => {
-    await requireManager(ctx);
     const rows = await ctx.db.query("aiFeedback").withIndex("by_created").order("desc").take(200);
     return Promise.all(
       rows.map(async (row) => ({
@@ -726,10 +732,10 @@ async function askContext(
 
 /** What the ask panel lists before you send anything — the same sources the
  * finished run records, so the chips aren't a separate claim from the truth. */
-export const askPreview = query({
+export const askPreview = userQuery({
   args: { type: askSubjectType, id: v.string() },
   handler: async (ctx, { type, id }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const { title, href, sources } = await askContext(ctx, user, type, id);
     return { title, href, sources };
   },

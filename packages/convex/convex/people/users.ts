@@ -13,7 +13,6 @@ import {
   isApplicantEligible,
   isSandboxed,
   requireAdmin,
-  requireApplicantDelegateOrAdmin,
   requireManager,
   requireRealAdmin,
   requireUser,
@@ -23,9 +22,10 @@ import {
   action,
   internalMutation,
   internalQuery,
-  mutation,
   query,
   sandboxSafeMutation,
+  userQuery,
+  userMutation,
 } from "../functions";
 import { getServerCaller, getSessionCaller } from "../lib/caller";
 import { listUserPermissions } from "../lib/permissions";
@@ -203,10 +203,9 @@ async function queryUsers(
  * subscriber on every heartbeat from anyone. See `directoryList` for the
  * variant that needs that data.
  */
-export const list = query({
+export const list = userQuery({
   args: listArgs,
   handler: async (ctx, args) => {
-    await requireUser(ctx);
     const { users, nameById } = await queryUsers(ctx, args);
     const lookup = await loadReportingLookup(ctx);
     return Promise.all(
@@ -230,10 +229,9 @@ export const list = query({
  * queries have no HTTP access, and absences aren't mirrored into Convex
  * anymore; see AGENTS.md's Clockodo section).
  */
-export const directoryList = query({
+export const directoryList = userQuery({
   args: listArgs,
   handler: async (ctx, args) => {
-    await requireUser(ctx);
     const { users, nameById } = await queryUsers(ctx, args);
 
     const presenceRows = await ctx.db.query("presence").collect();
@@ -254,10 +252,9 @@ export const directoryList = query({
   },
 });
 
-export const get = query({
+export const get = userQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    await requireUser(ctx);
     const user = await ctx.db.get(userId);
     if (!user) return null;
     const presence = await ctx.db
@@ -276,10 +273,10 @@ export const get = query({
  * viewer's Clockodo absences can be mirrored (directly via
  * users.clockodoUserId, or through their ActivityTrack person record).
  */
-export const myConnections = query({
+export const myConnections = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const person = await ctx.db
       .query("people")
       .withIndex("by_userId", (q) => q.eq("userId", user._id))
@@ -294,10 +291,9 @@ export const myConnections = query({
 });
 
 /** Manager + direct reports for the profile card's organisation section. */
-export const orgContext = query({
+export const orgContext = userQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    await requireUser(ctx);
     const user = await ctx.db.get(userId);
     if (!user) return { lines: [], reports: [], manualManagerId: null, departmentId: null };
     const lookup = await loadReportingLookup(ctx);
@@ -415,10 +411,10 @@ export const updateProfile = action({
  * toggle this — internal employees are always eligible and have no consent
  * to withdraw (see `updatesEmailConsent` on the `users` table).
  */
-export const setExpertise = mutation({
+export const setExpertise = userMutation({
   args: { tags: v.array(v.string()) },
   handler: async (ctx, { tags }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const clean = [...new Set(tags.map((tag) => tag.trim().slice(0, 32)).filter(Boolean))].slice(
       0,
       12,
@@ -428,10 +424,10 @@ export const setExpertise = mutation({
   },
 });
 
-export const setUpdatesEmailConsent = mutation({
+export const setUpdatesEmailConsent = userMutation({
   args: { consent: v.boolean() },
   handler: async (ctx, { consent }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (!user.external) {
       throw new ConvexError({
         code: "forbidden",
@@ -443,10 +439,11 @@ export const setUpdatesEmailConsent = mutation({
   },
 });
 
-export const setRole = mutation({
+export const setRole = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), role: roleArg },
   handler: async (ctx, { userId, role }) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     if (userId === admin._id && role !== "admin") {
       throw new ConvexError({
         code: "bad_request",
@@ -464,13 +461,13 @@ export const setRole = mutation({
 
 /** Replace a member's full set of custom roles. Manager+. Same full-array-
  * replace convention as `setTeams` below. */
-export const setCustomRoles = mutation({
+export const setCustomRoles = userMutation({
+  role: "manager",
   args: {
     userId: v.id("users"),
     customRoleIds: v.array(v.id("customRoles")),
   },
   handler: async (ctx, { userId, customRoleIds }) => {
-    await requireManager(ctx);
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -486,10 +483,10 @@ export const setCustomRoles = mutation({
   },
 });
 
-export const setTeams = mutation({
+export const setTeams = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), teams: v.array(v.string()) },
   handler: async (ctx, { userId, teams }) => {
-    await requireAdmin(ctx);
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -501,13 +498,13 @@ export const setTeams = mutation({
   },
 });
 
-export const setManager = mutation({
+export const setManager = userMutation({
+  role: "admin",
   args: {
     userId: v.id("users"),
     managerId: v.optional(v.id("users")),
   },
   handler: async (ctx, { userId, managerId }) => {
-    await requireAdmin(ctx);
     if (managerId === userId) {
       throw new ConvexError({ code: "bad_request", message: "Nobody can report to themselves" });
     }
@@ -517,20 +514,20 @@ export const setManager = mutation({
 });
 
 /** Admin: mark someone as managing director (Geschäftsführer). */
-export const setManagingDirector = mutation({
+export const setManagingDirector = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), managingDirector: v.boolean() },
   handler: async (ctx, { userId, managingDirector }) => {
-    await requireAdmin(ctx);
     await ctx.db.patch(userId, { managingDirector: managingDirector || undefined });
     return { ok: true };
   },
 });
 
 /** Manager+: set another user's hire date, for work-anniversary shoutouts. */
-export const setHireDate = mutation({
+export const setHireDate = userMutation({
+  role: "manager",
   args: { userId: v.id("users"), hireDate: v.optional(v.string()) },
   handler: async (ctx, { userId, hireDate }) => {
-    await requireManager(ctx);
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -684,10 +681,9 @@ export const setUploadPermission = action({
  * sensitive); birthdays only for users who set `showBirthdayPublicly`. Only
  * matches month/day, not year — `dateOfBirth`/`hireDate` are "YYYY-MM-DD".
  */
-export const todaysCelebrations = query({
+export const todaysCelebrations = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const now = new Date();
     const todayMonthDay = now.toISOString().slice(5, 10);
     const currentYear = now.getUTCFullYear();
@@ -740,10 +736,9 @@ export const todaysCelebrations = query({
 });
 
 /** Distinct department names for filters. */
-export const departments = query({
+export const departments = userQuery({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx);
     const users = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -757,10 +752,11 @@ export const departments = query({
 // --- Applicant Management (Bewerbermanagement) access -----------------------
 
 /** Admin-only: designate/undesignate a user as an Applicant Access delegate. */
-export const setApplicantDelegate = mutation({
+export const setApplicantDelegate = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), delegate: v.boolean() },
   handler: async (ctx, { userId, delegate }) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     await requireVaultUnlocked(ctx, admin._id);
     const target = await ctx.db.get(userId);
     if (!target) {
@@ -798,10 +794,11 @@ export const setApplicantDelegate = mutation({
  * custom role with `manage_members`) — enforced here even for admins, since
  * it's a data-sensitivity rule, not an authority one.
  */
-export const setApplicantAccess = mutation({
+export const setApplicantAccess = userMutation({
+  applicant: "delegate",
   args: { userId: v.id("users"), access: v.boolean() },
   handler: async (ctx, { userId, access }) => {
-    const actor = await requireApplicantDelegateOrAdmin(ctx);
+    const actor = ctx.caller.user;
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -845,10 +842,10 @@ export const setApplicantAccess = mutation({
 });
 
 /** Users eligible to be granted Applicant Management access, for the picker. */
-export const eligibleForApplicantAccess = query({
+export const eligibleForApplicantAccess = userQuery({
+  applicant: "delegate",
   args: {},
   handler: async (ctx) => {
-    await requireApplicantDelegateOrAdmin(ctx);
     const users = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -874,10 +871,10 @@ export const eligibleForApplicantAccess = query({
 });
 
 /** Admin-only: set a cosmetic display-name override for a user's role badge. */
-export const setRoleLabel = mutation({
+export const setRoleLabel = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), roleLabel: v.optional(v.string()) },
   handler: async (ctx, { userId, roleLabel }) => {
-    await requireAdmin(ctx);
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -890,10 +887,10 @@ export const setRoleLabel = mutation({
 /** Everyone holding more than plain employee access, for the periodic access
  * review: who they are, what they hold, when they were last around, and when
  * someone last confirmed they still need it. */
-export const accessReviewList = query({
+export const accessReviewList = userQuery({
+  role: "admin",
   args: {},
   handler: async (ctx) => {
-    await requireAdmin(ctx);
     const users = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -942,10 +939,11 @@ export const accessReviewList = query({
   },
 });
 
-export const markAccessReviewed = mutation({
+export const markAccessReviewed = userMutation({
+  role: "admin",
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     const user = await ctx.db.get(userId);
     if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
     await ctx.db.patch(userId, { accessReviewedAt: Date.now(), accessReviewedByUserId: admin._id });
@@ -955,10 +953,10 @@ export const markAccessReviewed = mutation({
 
 /** Everything the intranet keeps that belongs to the caller, for "download my
  * data". Other people's content (chat replies, comments) stays out. */
-export const exportMine = query({
+export const exportMine = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const strip = <T extends { _id: unknown; _creationTime: number }>(row: T) => {
       const { _id, _creationTime, ...rest } = row;
       return rest;

@@ -1,10 +1,10 @@
 import { v } from "convex/values";
 
 import type { Doc } from "../_generated/dataModel";
-import { query } from "../functions";
+import { query, userQuery } from "../functions";
 import type { QueryCtx } from "../_generated/server";
 import { readConfig } from "../activity/lib/settings";
-import { effectiveRole, hasCapability, requireManager } from "../lib/auth";
+import { effectiveRole, hasCapability } from "../lib/auth";
 import { displayName } from "../lib/users";
 
 /**
@@ -81,10 +81,11 @@ function item(key: string, rows: { at: number; overdue: boolean }[]): QueueItem 
  * The point of the overview is that a manager shouldn't have to visit nine
  * subpages to find out whether any of them needs them today.
  */
-export const queue = query({
+export const queue = userQuery({
+  role: "manager",
   args: {},
   handler: async (ctx) => {
-    const me = await requireManager(ctx);
+    const me = ctx.caller.user;
     const now = Date.now();
     const isAdmin = effectiveRole(me) === "admin";
 
@@ -229,10 +230,10 @@ function departmentLabel(user: Doc<"users">, departmentNames: Map<string, string
 }
 
 /** Org composition and who is around right now. */
-export const pulse = query({
+export const pulse = userQuery({
+  role: "manager",
   args: { tzOffsetMinutes: v.number() },
   handler: async (ctx, { tzOffsetMinutes }) => {
-    await requireManager(ctx);
     const now = Date.now();
     const todayStart = localDayStart(now, tzOffsetMinutes);
 
@@ -364,10 +365,11 @@ function toSeries(
  * so each series can show a real delta instead of a bare count. Reads span
  * two windows for that reason.
  */
-export const timelines = query({
+export const timelines = userQuery({
+  role: "manager",
   args: { days: v.number(), tzOffsetMinutes: v.number() },
   handler: async (ctx, args) => {
-    const me = await requireManager(ctx);
+    const me = ctx.caller.user;
     const isAdmin = effectiveRole(me) === "admin";
     const days = Math.min(Math.max(Math.round(args.days), 7), 180);
     const now = Date.now();
@@ -545,10 +547,11 @@ async function agentFleet(ctx: QueryCtx, now: number) {
 }
 
 /** Integration, agent-fleet, killswitch and live-incident health. */
-export const systems = query({
+export const systems = userQuery({
+  role: "manager",
   args: {},
   handler: async (ctx) => {
-    const me = await requireManager(ctx);
+    const me = ctx.caller.user;
     const now = Date.now();
     const isAdmin = effectiveRole(me) === "admin";
     const canSeeAgents = await hasCapability(ctx, "view_activity_admin");

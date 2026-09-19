@@ -1,9 +1,9 @@
 import { ConvexError, v } from "convex/values";
 
 import type { Doc, Id } from "../_generated/dataModel";
-import { internalMutation, mutation, query } from "../functions";
+import { internalMutation, query, userMutation } from "../functions";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
-import { getCurrentUser, requireUser } from "../lib/auth";
+import { getCurrentUser } from "../lib/auth";
 import { draftSurface } from "./lib/surfaces";
 import {
   APPLICANT_SURFACES,
@@ -97,10 +97,10 @@ export const get = query({
  *  that id becomes its `subjectKey` too, so a URL can point at it right away
  *  and every existing `<kind>:<subjectKey>` AI-run convention keys off it
  *  without any changes on that side. */
-export const create = mutation({
+export const create = userMutation({
   args: { surface: draftSurface },
   handler: async (ctx, { surface }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (!(await canUseSurface(ctx, user, surface))) {
       throw new ConvexError({
         code: "forbidden",
@@ -152,7 +152,7 @@ function safeHref(href: string | undefined): string | undefined {
   return href;
 }
 
-export const save = mutation({
+export const save = userMutation({
   args: {
     surface: draftSurface,
     subjectKey: v.string(),
@@ -160,7 +160,7 @@ export const save = mutation({
     href: v.optional(v.string()),
   },
   handler: async (ctx, { surface, subjectKey, data, href }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (!(await canUseSurface(ctx, user, surface))) {
       throw new ConvexError({
         code: "forbidden",
@@ -191,10 +191,10 @@ export const save = mutation({
 });
 
 /** Always allowed, vault or not — throwing away your own draft reveals nothing. */
-export const discard = mutation({
+export const discard = userMutation({
   args: { surface: draftSurface, subjectKey: v.string() },
   handler: async (ctx, { surface, subjectKey }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("drafts")
       .withIndex("by_user_subject", (q) =>
@@ -282,10 +282,10 @@ export const listOthers = query({
 
 /** "Start a new draft": moves what's in the form into a draft of its own, set
  *  aside, and leaves this form empty. */
-export const park = mutation({
+export const park = userMutation({
   args: { surface: draftSurface, subjectKey: v.string() },
   handler: async (ctx, { surface, subjectKey }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (!(await canUseSurface(ctx, user, surface))) {
       throw new ConvexError({
         code: "forbidden",
@@ -318,10 +318,10 @@ export const park = mutation({
 
 /** Brings a set-aside draft back into this form, setting aside whatever the
  *  form held so switching back and forth never loses anything. */
-export const resume = mutation({
+export const resume = userMutation({
   args: { surface: draftSurface, subjectKey: v.string(), draftId: v.id("drafts") },
   handler: async (ctx, { surface, subjectKey, draftId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (!(await canUseSurface(ctx, user, surface))) {
       throw new ConvexError({
         code: "forbidden",
@@ -377,10 +377,10 @@ export const resume = mutation({
  *  commit: what was there is kept as a version first, and writing on from
  *  here starts a new branch beside it. `previousVersionId` is what an undo
  *  goes back to. */
-export const restoreVersion = mutation({
+export const restoreVersion = userMutation({
   args: { surface: draftSurface, subjectKey: v.string(), versionId: v.id("draftVersions") },
   handler: async (ctx, { surface, subjectKey, versionId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (!(await canUseSurface(ctx, user, surface))) {
       throw new ConvexError({
         code: "forbidden",
@@ -401,7 +401,7 @@ export const restoreVersion = mutation({
 
 /** Names a version so it's easy to find again — or, without `versionId`,
  *  makes what's in the form now a named version. An empty name clears it. */
-export const nameVersion = mutation({
+export const nameVersion = userMutation({
   args: {
     surface: draftSurface,
     subjectKey: v.string(),
@@ -409,7 +409,7 @@ export const nameVersion = mutation({
     name: v.string(),
   },
   handler: async (ctx, { surface, subjectKey, versionId, name }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (!(await canUseSurface(ctx, user, surface))) {
       throw new ConvexError({
         code: "forbidden",

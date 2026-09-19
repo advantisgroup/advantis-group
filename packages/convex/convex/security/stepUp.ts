@@ -1,4 +1,11 @@
-import { internalMutation, mutation, query, serverMutation, serverQuery } from "../functions";
+import {
+  internalMutation,
+  query,
+  serverMutation,
+  serverQuery,
+  userQuery,
+  userMutation,
+} from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "../_generated/api";
@@ -10,8 +17,6 @@ import {
   getUserByClerkId,
   isApplicantAreaMember,
   MANAGER_ROLES,
-  requireAdmin,
-  requireUser,
   type Role,
 } from "../lib/auth";
 import { trackEvent } from "../lib/analytics";
@@ -61,7 +66,8 @@ const policyFieldsValidator = {
 
 // --- Org-wide policy (admin only) ---------------------------------------------
 
-export const orgPolicy = query({
+export const orgPolicy = userQuery({
+  role: "admin",
   args: {},
   returns: v.object({
     ...policyFieldsValidator,
@@ -71,7 +77,6 @@ export const orgPolicy = query({
     updatedAt: v.number(),
   }),
   handler: async (ctx) => {
-    await requireAdmin(ctx);
     const policy = await getOrDefaultPolicy(ctx);
     return {
       requireMfaScope: policy.requireMfaScope,
@@ -99,11 +104,12 @@ export const orgPolicy = query({
   },
 });
 
-export const setOrgPolicy = mutation({
+export const setOrgPolicy = userMutation({
+  role: "admin",
   args: policyFieldsValidator,
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     const existing = await ctx.db.query("authPolicy").first();
     const now = Date.now();
 
@@ -542,7 +548,7 @@ export const apiEvaluateDevice = serverMutation({
 
 // --- The status the client gate polls -----------------------------------------
 
-export const status = query({
+export const status = userQuery({
   args: { sessionId: v.string() },
   returns: v.union(
     v.object({ state: v.literal("satisfied") }),
@@ -567,7 +573,7 @@ export const status = query({
     }),
   ),
   handler: async (ctx, { sessionId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const req = await resolveSignInRequirement(ctx, user, sessionId);
 
     if (req.needsMfaEnrollment || req.needsPasskeyEnrollment) {
@@ -622,7 +628,7 @@ export const status = query({
 // Enforcement lives in performanceAuth.ts/applicantVault.ts; these only tell
 // the frontend why it's blocked so it can show a step-up form.
 
-export const areaAccessStatus = query({
+export const areaAccessStatus = userQuery({
   args: { area: areaValidator },
   returns: v.union(
     v.object({ state: v.literal("satisfied") }),
@@ -633,7 +639,7 @@ export const areaAccessStatus = query({
     }),
   ),
   handler: async (ctx, { area }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (await isAreaTrusted(ctx, user._id, area)) return { state: "satisfied" as const };
     return {
       state: "needs_verification" as const,
@@ -645,14 +651,14 @@ export const areaAccessStatus = query({
   },
 });
 
-export const areaPreference = query({
+export const areaPreference = userQuery({
   args: { area: areaValidator },
   returns: v.object({
     mode: v.union(v.literal("always_step_up"), v.literal("trust_device")),
     applies: v.boolean(),
   }),
   handler: async (ctx, { area }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const applies =
       area === "performance"
         ? (
@@ -666,14 +672,14 @@ export const areaPreference = query({
   },
 });
 
-export const setAreaPreference = mutation({
+export const setAreaPreference = userMutation({
   args: {
     area: areaValidator,
     mode: v.union(v.literal("always_step_up"), v.literal("trust_device")),
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, { area, mode }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("areaSecurityPreferences")
       .withIndex("by_user_area", (q) => q.eq("userId", user._id).eq("area", area))
@@ -698,7 +704,7 @@ export const setAreaPreference = mutation({
 // A defensive cap, not an expected ceiling.
 const TRUSTED_DEVICES_LIMIT = 200;
 
-export const trustedDevices = query({
+export const trustedDevices = userQuery({
   args: {},
   returns: v.object({
     devices: v.array(
@@ -716,7 +722,7 @@ export const trustedDevices = query({
     truncated: v.boolean(),
   }),
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const rows = await ctx.db
       .query("knownDevices")
       .withIndex("by_user_hash", (q) => q.eq("userId", user._id))
@@ -742,13 +748,13 @@ export const trustedDevices = query({
 /** Which device each of the caller's Clerk sessions is on, so settings can
  * show sessions under their device. `null` for a session with no device
  * (opted out of recognition, or signed in before devices were tracked). */
-export const sessionDevices = query({
+export const sessionDevices = userQuery({
   args: { sessionIds: v.array(v.string()) },
   returns: v.array(
     v.object({ sessionId: v.string(), deviceId: v.union(v.id("knownDevices"), v.null()) }),
   ),
   handler: async (ctx, { sessionIds }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     return await Promise.all(
       sessionIds.slice(0, 50).map(async (sessionId) => {
         const signal = await ctx.db
@@ -763,11 +769,11 @@ export const sessionDevices = query({
 });
 
 /** `revokeDeviceTrust` for every device that isn't currently trusted. */
-export const forgetUntrustedDevices = mutation({
+export const forgetUntrustedDevices = userMutation({
   args: {},
   returns: v.object({ removed: v.number() }),
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const rows = await ctx.db
       .query("knownDevices")
       .withIndex("by_user_hash", (q) => q.eq("userId", user._id))
@@ -787,11 +793,11 @@ export const forgetUntrustedDevices = mutation({
   },
 });
 
-export const renameDevice = mutation({
+export const renameDevice = userMutation({
   args: { deviceId: v.id("knownDevices"), name: v.string() },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, { deviceId, name }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const device = await ctx.db.get(deviceId);
     if (!device || device.userId !== user._id) {
       throw new ConvexError({ code: "not_found", message: "Device not found" });
@@ -804,11 +810,11 @@ export const renameDevice = mutation({
 
 /** Deletes the device rather than clearing `trustedUntil`, so its next
  * sign-in looks genuinely new again. */
-export const revokeDeviceTrust = mutation({
+export const revokeDeviceTrust = userMutation({
   args: { deviceId: v.id("knownDevices") },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, { deviceId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const device = await ctx.db.get(deviceId);
     if (!device || device.userId !== user._id) {
       throw new ConvexError({ code: "not_found", message: "Device not found" });
@@ -829,14 +835,14 @@ export const revokeDeviceTrust = mutation({
 // notifications.ts's getPreferences/setPreferences — called directly from
 // the browser, not routed through apps/api like the step-up flows above.
 
-export const securityPreference = query({
+export const securityPreference = userQuery({
   args: {},
   returns: v.object({
     alwaysRequireMfaAtSignIn: v.boolean(),
     deviceTrackingOptOut: v.boolean(),
   }),
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const pref = await ctx.db
       .query("securityPreferences")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -848,14 +854,14 @@ export const securityPreference = query({
   },
 });
 
-export const setSecurityPreference = mutation({
+export const setSecurityPreference = userMutation({
   args: {
     alwaysRequireMfaAtSignIn: v.optional(v.boolean()),
     deviceTrackingOptOut: v.optional(v.boolean()),
   },
   returns: v.object({ ok: v.boolean() }),
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const existing = await ctx.db
       .query("securityPreferences")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -896,7 +902,7 @@ export const setSecurityPreference = mutation({
  * `_generated/api.d.ts`. Reads are per-user and indexed; the tables grow
  * without bound, so this takes a bounded slice of each rather than collecting.
  */
-export const securityActivity = query({
+export const securityActivity = userQuery({
   args: { limit: v.optional(v.number()) },
   returns: v.array(
     v.object({
@@ -908,7 +914,7 @@ export const securityActivity = query({
     }),
   ),
   handler: async (ctx, { limit }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const take = Math.min(Math.max(limit ?? 20, 1), 50);
 
     // Each table is read newest-first on its own index, then the three are
@@ -972,7 +978,8 @@ export const securityActivity = query({
  * behavioral/funnel side (enrollment drop-off, step-up pass rate over time);
  * this carries the live compliance answer, which needs to be exact, not a
  * round trip through an analytics query. */
-export const orgStandard = query({
+export const orgStandard = userQuery({
+  role: "admin",
   args: {},
   returns: v.object({
     totalActive: v.number(),
@@ -990,7 +997,6 @@ export const orgStandard = query({
     ),
   }),
   handler: async (ctx) => {
-    await requireAdmin(ctx);
     const users = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -1047,7 +1053,8 @@ export const orgStandard = query({
 });
 
 /** Device-recognition opt-outs and each area's "always step up" count. */
-export const areaStandard = query({
+export const areaStandard = userQuery({
+  role: "admin",
   args: {},
   returns: v.object({
     areaReverifyDays: v.number(),
@@ -1062,7 +1069,6 @@ export const areaStandard = query({
     ),
   }),
   handler: async (ctx) => {
-    await requireAdmin(ctx);
     const users = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -1096,7 +1102,8 @@ export const areaStandard = query({
 });
 
 /** Per area: the sunset deadline and how many accounts it still affects. */
-export const legacyPasswordStandard = query({
+export const legacyPasswordStandard = userQuery({
+  role: "admin",
   args: {},
   returns: v.object({
     performance: v.object({
@@ -1111,7 +1118,6 @@ export const legacyPasswordStandard = query({
     }),
   }),
   handler: async (ctx) => {
-    await requireAdmin(ctx);
     const policy = await getOrDefaultPolicy(ctx);
 
     // Only accounts with another way in are affected: a linked login, or a

@@ -1,4 +1,4 @@
-import { action, internalMutation, mutation, query } from "../functions";
+import { action, internalMutation, mutation, query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "../_generated/api";
@@ -10,7 +10,6 @@ import {
   createOrRestoreUser,
   getUserByClerkId,
   isEmailDomainAllowed,
-  requireManager,
 } from "../lib/auth";
 import { deleteClerkUser } from "../lib/clerk";
 import { notifyUsers } from "../lib/notify";
@@ -170,19 +169,20 @@ export const selfDeleteUnauthorized = action({
   },
 });
 
-export const list = query({
+export const list = userQuery({
+  role: "manager",
   args: { status: v.optional(v.string()) },
   handler: async (ctx, { status }) => {
-    await requireManager(ctx);
     const requests = await ctx.db.query("accessRequests").order("desc").take(200);
     return status ? requests.filter((r) => r.status === status) : requests;
   },
 });
 
-export const approve = mutation({
+export const approve = userMutation({
+  role: "manager",
   args: { requestId: v.id("accessRequests"), role: v.optional(roleArg) },
   handler: async (ctx, { requestId, role }) => {
-    const reviewer = await requireManager(ctx);
+    const reviewer = ctx.caller.user;
     const request = await ctx.db.get(requestId);
     if (!request || request.status !== "pending") {
       throw new ConvexError({
@@ -228,10 +228,11 @@ export const approve = mutation({
   },
 });
 
-export const deny = mutation({
+export const deny = userMutation({
+  role: "manager",
   args: { requestId: v.id("accessRequests") },
   handler: async (ctx, { requestId }) => {
-    const reviewer = await requireManager(ctx);
+    const reviewer = ctx.caller.user;
     const request = await ctx.db.get(requestId);
     if (!request || request.status !== "pending") {
       throw new ConvexError({

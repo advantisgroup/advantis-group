@@ -1,4 +1,11 @@
-import { internalAction, mutation, query, serverMutation, serverQuery } from "../functions";
+import {
+  internalAction,
+  query,
+  serverMutation,
+  serverQuery,
+  userMutation,
+  userQuery,
+} from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "../_generated/api";
@@ -11,8 +18,6 @@ import {
   hasApplicantAccess,
   isSandboxed,
   MANAGER_ROLES,
-  requireCapability,
-  requireUser,
 } from "../lib/auth";
 import { internalApiFetch } from "../lib/internalApi";
 import { createNotification, notifyUsers } from "../lib/notify";
@@ -443,10 +448,10 @@ export const apiClearTeamAccess = serverMutation({
  * Pending approval queue for the admin panel (newest first). Manager+, or an
  * employee whose custom role grants `manage_uploads`.
  */
-export const listPending = query({
+export const listPending = userQuery({
+  can: "manage_uploads",
   args: {},
   handler: async (ctx) => {
-    await requireCapability(ctx, "manage_uploads");
     const rows = await ctx.db
       .query("onedriveUploads")
       .withIndex("by_status", (q) => q.eq("status", "pending"))
@@ -469,10 +474,10 @@ export const listPending = query({
 });
 
 /** The signed-in user's own upload history / request statuses. */
-export const myUploads = query({
+export const myUploads = userQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     return ctx.db
       .query("onedriveUploads")
       .withIndex("by_user", (q) => q.eq("requesterUserId", user._id))
@@ -485,10 +490,10 @@ export const myUploads = query({
  * OneDrive audit feed (who did what), newest first. Manager+, or an employee
  * whose custom role grants `manage_uploads`.
  */
-export const auditFeed = query({
+export const auditFeed = userQuery({
+  can: "manage_uploads",
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
-    await requireCapability(ctx, "manage_uploads");
     const rows = await ctx.db
       .query("onedriveAudit")
       .withIndex("by_at")
@@ -506,10 +511,10 @@ export const auditFeed = query({
 });
 
 /** Requester cancels their own still-pending upload request. */
-export const cancelRequest = mutation({
+export const cancelRequest = userMutation({
   args: { uploadId: v.id("onedriveUploads") },
   handler: async (ctx, { uploadId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const upload = await ctx.db.get(uploadId);
     if (!upload || upload.requesterUserId !== user._id) {
       throw new ConvexError({
