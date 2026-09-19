@@ -58,7 +58,7 @@ describe("convex errors become the right status", () => {
     ["not_found", 404, "not_found"],
     ["bad_request", 400, "bad_request"],
     ["conflict", 409, "conflict"],
-  ])("%s → %i", async (code, status, apiCode) => {
+  ] as const)("%s → %i", async (code, status, apiCode) => {
     const { reportApiFailure } = await import("./lib/errors.js");
     const failure = await reportApiFailure(new ConvexError({ code, message: "detail" }), context);
     expect(failure.status).toBe(status);
