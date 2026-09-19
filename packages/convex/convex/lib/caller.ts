@@ -2,6 +2,7 @@ import { ConvexError } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
+import { hasApplicantAccess, isApplicantAreaMember, isApplicantDelegate } from "../hr/lib/access";
 import {
   type Capability,
   type Role,
@@ -81,15 +82,15 @@ export class Caller {
   }
 
   get hasApplicantAccess(): boolean {
-    return !this.sandboxed && (this.isAdmin || this.user.applicantAccess === true);
+    return hasApplicantAccess(this.user);
   }
 
   get isApplicantDelegate(): boolean {
-    return this.isAdmin || (!this.sandboxed && this.user.applicantAccessDelegate === true);
+    return isApplicantDelegate(this.user);
   }
 
   get isApplicantAreaMember(): boolean {
-    return this.hasApplicantAccess || this.isApplicantDelegate;
+    return isApplicantAreaMember(this.user);
   }
 
   meets(requirement: RoleRequirement): boolean {

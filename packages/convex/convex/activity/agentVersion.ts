@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
-import { internalAction, internalMutation, query, userQuery } from "../functions";
+import { internalAction, internalMutation, userQuery } from "../functions";
 /**
  * Latest published ActivityTrack desktop-agent version, mirrored from GitHub
  * releases so the overview can flag devices running an older build.

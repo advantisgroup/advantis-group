@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { query, userQuery } from "../functions";
+import { userQuery } from "../functions";
 /**
  * Read models for the cross-device Reports page. Returns each active device's
  * daily rollups over a [startDay, endDay] window joined to its person.

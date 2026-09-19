@@ -1,4 +1,4 @@
-import { query, userQuery } from "../functions";
+import { userQuery } from "../functions";
 import { getAdminEmails, getAllowedDomains } from "../lib/auth";
 
 /**

@@ -1,7 +1,5 @@
-import { mutation, query, userMutation, userQuery } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
-
-import { requireCapability } from "../lib/auth";
 import { writeAudit } from "./lib/audit";
 import { appError } from "../lib/errors";
 
@@ -48,7 +46,8 @@ export const create = userMutation({
 });
 
 /** Edit a coworker's details / active flag / integration mappings. Manager+, or a `manage_members` custom role. */
-export const update = mutation({
+export const update = userMutation({
+  can: "manage_members",
   args: {
     personId: v.id("people"),
     name: v.optional(v.string()),
@@ -62,7 +61,7 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const { personId, name, email, userId, active, employeeId, genesysUserId, clockodoUserId } =
       args;
-    const actor = await requireCapability(ctx, "manage_members");
+    const actor = ctx.caller.user;
     const person = await ctx.db.get(personId);
     if (!person) throw appError("notFound.person", "Person not found");
     // Once a person is linked to an intranet account, `users.clockodoUserId`

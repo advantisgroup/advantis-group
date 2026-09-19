@@ -1,4 +1,4 @@
-import { query, userMutation, userQuery } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { displayName } from "../lib/users";

@@ -1,4 +1,4 @@
-import { query, serverQuery, userMutation, userQuery } from "../functions";
+import { serverQuery, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 import { displayName } from "../lib/users";
 import { getServerCaller } from "../lib/caller";
@@ -188,7 +188,6 @@ export const update = userMutation({
   can: "manage_guidebooks",
   args: { entryId: v.id("wikiEntries"), ...entryFields },
   handler: async (ctx, { entryId, ...patch }) => {
-    const user = ctx.caller.user;
     const entry = await ctx.db.get(entryId);
     if (!entry) throw new ConvexError({ code: "not_found", message: "Not found" });
     if (!ctx.caller.owns(entry.authorUserId)) {
@@ -237,7 +236,6 @@ export const remove = userMutation({
   can: "manage_guidebooks",
   args: { entryId: v.id("wikiEntries") },
   handler: async (ctx, { entryId }) => {
-    const user = ctx.caller.user;
     const entry = await ctx.db.get(entryId);
     if (!entry) return { ok: false };
     if (!ctx.caller.owns(entry.authorUserId)) {

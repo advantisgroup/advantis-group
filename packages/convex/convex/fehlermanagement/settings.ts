@@ -1,4 +1,4 @@
-import { query, userMutation, userQuery } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
 import { DEFAULTS } from "./lib/thresholds";
 

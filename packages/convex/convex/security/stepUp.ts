@@ -1,6 +1,5 @@
 import {
   internalMutation,
-  query,
   serverMutation,
   userQuery,
   userMutation,
@@ -13,7 +12,7 @@ import { internal } from "../_generated/api";
 import { type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 import { sha256hex } from "../activity/lib/crypto";
-import { effectiveRole, isApplicantAreaMember, MANAGER_ROLES, type Role } from "../lib/auth";
+import { effectiveRole, MANAGER_ROLES, type Role } from "../lib/auth";
 import { trackEvent } from "../lib/analytics";
 import { displayName } from "../lib/users";
 import {

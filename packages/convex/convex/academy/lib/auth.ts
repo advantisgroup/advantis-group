@@ -1,7 +1,7 @@
 import { ConvexError } from "convex/values";
 import { type Doc } from "../../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../../_generated/server";
-import { effectiveRole, requireUser } from "../../lib/auth";
+import { requireSessionCaller } from "../../lib/caller";
 
 export const DEFAULT_PIN = "1234";
 
@@ -28,8 +28,9 @@ export async function requireAcademyAdmin(
   academyId: string,
   pin: string,
 ): Promise<Doc<"users">> {
-  const user = await requireUser(ctx);
-  if (effectiveRole(user) === "admin") return user;
+  const caller = await requireSessionCaller(ctx);
+  const user = caller.user;
+  if (caller.isAdmin) return user;
   const current = await resolveCurrentPin(ctx, academyId);
   if (current !== pin.trim()) {
     throw new ConvexError({

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { query, userQuery } from "../functions";
+import { userQuery } from "../functions";
 import { toClockodoIdString } from "../lib/clockodoId";
 
 /**

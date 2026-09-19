@@ -1,4 +1,4 @@
-import { mutation, query, userQuery } from "../functions";
+import { mutation, userQuery } from "../functions";
 import { v } from "convex/values";
 import { requireAcademyAdmin, resolveCurrentPin } from "./lib/auth";
 

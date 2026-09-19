@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
-import { query, userQuery } from "../functions";
+import { userQuery } from "../functions";
 import { type QueryCtx } from "../_generated/server";
 /**
  * Read-only: every area a profile is linked into and what that area has

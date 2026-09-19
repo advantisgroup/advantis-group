@@ -9,10 +9,9 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
-import { getUserByClerkId, requireActiveUser } from "../lib/auth";
 import { trackEvent } from "../lib/analytics";
 import { notifySecurityChange } from "../lib/stepUp";
-import { getServerCaller } from "../lib/caller";
+import { getServerCaller, loadCaller, requireServerCaller } from "../lib/caller";
 
 const transportValidator = v.union(
   v.literal("ble"),
@@ -116,7 +115,7 @@ export const apiCreateChallenge = serverMutation({
   handler: async (ctx, args) => {
     let userId: Id<"users"> | undefined;
     if (args.clerkUserId) {
-      userId = requireActiveUser(await getUserByClerkId(ctx, args.clerkUserId))._id;
+      userId = (await requireServerCaller(ctx, args.clerkUserId)).id;
     }
     await ctx.db.insert("passkeyChallenges", {
       flowId: args.flowId,
@@ -312,7 +311,8 @@ export const apiCompleteAuthentication = serverMutation({
     ) {
       throw new ConvexError({ code: "invalid", message: "Passkey could not be verified" });
     }
-    const user = requireActiveUser(await ctx.db.get(passkey.userId));
+    const user = (await loadCaller(ctx, await ctx.db.get(passkey.userId)))?.user;
+    if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
     const now = Date.now();
     await ctx.db.patch(passkey._id, {
       counter: args.newCounter,

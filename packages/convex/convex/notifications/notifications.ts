@@ -1,4 +1,4 @@
-import { internalMutation, query, userMutation, userQuery } from "../functions";
+import { internalMutation, userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";

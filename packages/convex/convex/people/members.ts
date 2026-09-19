@@ -1,36 +1,26 @@
-import { action, internalMutation } from "../functions";
+import { internalQuery, userAction, userMutation } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "../_generated/api";
-import { requireAdmin } from "../lib/auth";
-import { createClerkInvitation, deleteClerkUser } from "../lib/clerk";
-import { markUserRemoved } from "../lib/users";
+import { createClerkInvitation } from "../lib/clerk";
+import { displayName, markUserRemoved } from "../lib/users";
+import { pushToClerk } from "./clerkSync";
 
 /**
- * Admin-side member lifecycle actions that reach Clerk's Backend API. Kept
- * separate from the plain `users` mutations because, like invites, they run as
- * actions so the Clerk call is awaited and failures surface to the admin.
+ * Revoke a member's intranet access and delete their Clerk account. The row
+ * is marked removed rather than deleted so historical references —
+ * announcement authors, invite inviters, audit rows — stay intact; deleting
+ * the Clerk user is what actually removes their ability to sign in.
  */
-
-/**
- * Auth + locally revoke access, returning what the action needs to delete the
- * Clerk account. The row is marked removed rather than deleted so historical
- * references — announcement authors, invite inviters, audit rows — stay
- * intact; deleting the Clerk user is what actually removes their ability to
- * sign in.
- */
-export const prepareRemove = internalMutation({
+export const remove = userMutation({
+  role: "admin",
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const admin = await requireAdmin(ctx);
-    if (userId === admin._id) {
-      throw new ConvexError({
-        code: "bad_request",
-        message: "You cannot remove yourself",
-      });
+    if (userId === ctx.caller.id) {
+      throw new ConvexError({ code: "bad_request", message: "You cannot remove yourself" });
     }
     const target = await ctx.db.get(userId);
-    if (!target) {
+    if (!target || target.status === "removed") {
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     if (target.role === "admin") {
@@ -39,39 +29,22 @@ export const prepareRemove = internalMutation({
         message: "Admins cannot be removed — change their role first",
       });
     }
-    await markUserRemoved(ctx, target, admin._id);
-    return { clerkUserId: target.clerkUserId };
-  },
-});
-
-/** Remove a member: revoke intranet access and delete their Clerk account. */
-export const remove = action({
-  args: { userId: v.id("users") },
-  handler: async (ctx, { userId }): Promise<{ ok: true }> => {
-    const rec = await ctx.runMutation(internal.people.members.prepareRemove, {
-      userId,
-    });
-    if (rec.clerkUserId) {
-      await deleteClerkUser(rec.clerkUserId);
+    await markUserRemoved(ctx, target, ctx.caller.id);
+    if (target.clerkUserId) {
+      await pushToClerk(ctx, { kind: "delete", clerkUserId: target.clerkUserId });
     }
     return { ok: true };
   },
 });
 
-/** Auth + fetch the address/role needed to re-send a member's invitation. */
-export const inviteInfo = internalMutation({
+export const inviteTarget = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const admin = await requireAdmin(ctx);
     const target = await ctx.db.get(userId);
-    if (!target) {
+    if (!target || target.status === "removed") {
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
-    return {
-      email: target.email,
-      role: target.role,
-      invitedByName: [admin.firstName, admin.lastName].filter(Boolean).join(" ") || admin.email,
-    };
+    return { email: target.email, role: target.role };
   },
 });
 
@@ -79,16 +52,14 @@ export const inviteInfo = internalMutation({
  * Re-send a member their Clerk invitation / sign-up link. Useful to re-onboard
  * a member who hasn't finished setup. (Clerk's Backend API has no "email a
  * password reset" endpoint, so re-inviting is the supported recovery path.)
+ * An action so a Clerk rejection reaches the admin straight away.
  */
-export const reinvite = action({
+export const reinvite = userAction({
+  role: "admin",
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }): Promise<{ ok: true }> => {
-    const rec = await ctx.runMutation(internal.people.members.inviteInfo, { userId });
-    await createClerkInvitation({
-      email: rec.email,
-      role: rec.role,
-      invitedByName: rec.invitedByName,
-    });
+    const target = await ctx.runQuery(internal.people.members.inviteTarget, { userId });
+    await createClerkInvitation({ ...target, invitedByName: displayName(ctx.caller.user) });
     return { ok: true };
   },
 });

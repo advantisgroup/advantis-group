@@ -15,10 +15,11 @@ import {
 import { type QueryCtx } from "./_generated/server";
 import { isFeatureEnabled } from "./lib/featureFlags";
 import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase, askSubjectType } from "./lib/aiRuns";
-import { requireVaultUnlocked } from "./lib/auth";
+
 import { type Caller, getSessionCaller } from "./lib/caller";
 import { userMatchesAudience } from "./lib/audience";
 import { displayName } from "./lib/users";
+import { requireVaultUnlocked } from "./hr/lib/access";
 
 /**
  * One row per AI call anywhere in the intranet, so an answer outlives the tab

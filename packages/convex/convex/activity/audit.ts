@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { query, userQuery } from "../functions";
+import { userQuery } from "../functions";
 import { displayName } from "../lib/users";
 
 /** Audit log, newest first. Manager+. */

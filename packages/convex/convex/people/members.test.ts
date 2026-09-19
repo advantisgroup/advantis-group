@@ -1,7 +1,7 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
-import { api, internal } from "../_generated/api";
+import { api } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import schema from "../schema";
 import { modules } from "../test.setup";
@@ -59,7 +59,7 @@ describe("removing a member", () => {
 
     await t
       .withIdentity({ subject: "admin" })
-      .mutation(internal.people.members.prepareRemove, { userId: bobId });
+      .mutation(api.people.members.remove, { userId: bobId });
 
     const bob = await t.run((ctx) => ctx.db.get(bobId));
     expect(bob?.status).toBe("removed");
@@ -81,7 +81,7 @@ describe("removing a member", () => {
     const bobId = await seedUser(t, "bob");
     await t
       .withIdentity({ subject: "admin" })
-      .mutation(internal.people.members.prepareRemove, { userId: bobId });
+      .mutation(api.people.members.remove, { userId: bobId });
 
     await expect(
       t.withIdentity({ subject: "bob" }).query(api.people.users.list, {}),
@@ -111,7 +111,7 @@ describe("removing a member", () => {
     const bobId = await seedUser(t, "bob");
     await t
       .withIdentity({ subject: "admin" })
-      .mutation(internal.people.members.prepareRemove, { userId: bobId });
+      .mutation(api.people.members.remove, { userId: bobId });
     await invite(t, "bob@advantisgroup.de", adminId);
 
     const result = await t

@@ -1,10 +1,9 @@
-import { serverMutation, serverQuery } from "../functions";
+import { serverMutation, serverQuery, serverUserQuery, serverUserMutation } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
-import { getUserByClerkId } from "../lib/auth";
-import { requireAdminCaller } from "./lib/auth";
+import { displayName } from "../lib/users";
 
 /**
  * Server-key gated CRUD for Sales Coach EV call records, called exclusively
@@ -62,9 +61,8 @@ export const get = serverQuery({
   },
 });
 
-export const create = serverMutation({
+export const create = serverUserMutation({
   args: {
-    clerkUserId: v.string(),
     startedAt: v.number(),
     durationSec: v.number(),
     callerSpeakPct: v.number(),
@@ -72,14 +70,9 @@ export const create = serverMutation({
     transcriptEnc: v.string(),
   },
   handler: async (ctx, args) => {
-    // Resolved from the authoritative users table, not trusted client input.
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
-    const userName = user
-      ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email
-      : args.clerkUserId;
     const id = await ctx.db.insert("salesCoachEvCalls", {
-      clerkUserId: args.clerkUserId,
-      userName,
+      clerkUserId: ctx.caller.user.clerkUserId,
+      userName: displayName(ctx.caller.user),
       startedAt: args.startedAt,
       durationSec: args.durationSec,
       callerSpeakPct: args.callerSpeakPct,
@@ -120,11 +113,10 @@ export const attachReport = serverMutation({
  * index range bound here is a plain argument, never `Date.now()` evaluated
  * inside the query itself.
  */
-export const adminRoster = serverQuery({
-  args: { clerkUserId: v.string(), sinceMs: v.number() },
+export const adminRoster = serverUserQuery({
+  role: "admin",
+  args: { sinceMs: v.number() },
   handler: async (ctx, args) => {
-    await requireAdminCaller(ctx, args.clerkUserId);
-
     const calls = await ctx.db
       .query("salesCoachEvCalls")
       .withIndex("by_startedAt", (q) => q.gte("startedAt", args.sinceMs))
@@ -179,15 +171,13 @@ export const adminRoster = serverQuery({
  * view surfaces scores and outcomes, not the rep's raw call content, same
  * privacy line `adminRoster` already draws.
  */
-export const adminUserDetail = serverQuery({
+export const adminUserDetail = serverUserQuery({
+  role: "admin",
   args: {
-    clerkUserId: v.string(),
     targetClerkUserId: v.string(),
     sinceMs: v.number(),
   },
   handler: async (ctx, args) => {
-    await requireAdminCaller(ctx, args.clerkUserId);
-
     const calls = await ctx.db
       .query("salesCoachEvCalls")
       .withIndex("by_user_time", (q) =>

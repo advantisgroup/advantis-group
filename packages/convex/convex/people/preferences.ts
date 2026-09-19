@@ -1,4 +1,4 @@
-import { query, userMutation, userQuery } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
 const preferenceFields = {
   hiddenDashboardCards: v.optional(v.array(v.string())),

@@ -5,29 +5,17 @@ import { type QueryCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { roleValidator } from "../schema";
 import { clearVaultPasswordForUser } from "../hr/lib/vault";
-import {
-  effectiveCustomRoleIds,
-  effectiveRole,
-  ensureUser,
-  getCurrentUser,
-  isApplicantEligible,
-  isSandboxed,
-  requireAdmin,
-  requireManager,
-  requireRealAdmin,
-  requireUser,
-  requireVaultUnlocked,
-} from "../lib/auth";
+import { effectiveCustomRoleIds, effectiveRole, getCurrentUser, isSandboxed } from "../lib/auth";
 import {
   action,
-  internalMutation,
   internalQuery,
   query,
   sandboxSafeMutation,
   userQuery,
   userMutation,
 } from "../functions";
-import { getServerCaller, getSessionCaller } from "../lib/caller";
+import { getServerCaller, getSessionCaller, requireSessionCaller } from "../lib/caller";
+import { pushToClerk } from "./clerkSync";
 import { listUserPermissions } from "../lib/permissions";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { loadReportingLookup, reportingLines, resolveManager } from "../lib/reporting";
@@ -38,6 +26,8 @@ import {
   updateClerkUserAvatar,
   updateClerkUserName,
 } from "../lib/clerk";
+import { requireVaultUnlocked, isApplicantEligible } from "../hr/lib/access";
+import { ensureUser } from "../people/lib/provisioning";
 
 const roleArg = roleValidator;
 
@@ -137,8 +127,9 @@ export const setSandboxRole = sandboxSafeMutation({
     role: v.union(v.literal("manager"), v.literal("employee"), v.null()),
   },
   handler: async (ctx, { role }) => {
-    const user = await requireRealAdmin(ctx);
-    await ctx.db.patch(user._id, { sandboxRole: role ?? undefined });
+    const caller = await requireSessionCaller(ctx);
+    caller.require(caller.isRealAdmin);
+    await ctx.db.patch(caller.id, { sandboxRole: role ?? undefined });
     return { ok: true };
   },
 });
@@ -348,10 +339,10 @@ const profileArgs = {
   showBirthdayPublicly: v.optional(v.boolean()),
 };
 
-export const applyProfileUpdate = internalMutation({
+export const updateProfile = userMutation({
   args: profileArgs,
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (
       args.avatarStorageId &&
       user.avatarStorageId &&
@@ -379,30 +370,23 @@ export const applyProfileUpdate = internalMutation({
         ? { showBirthdayPublicly: args.showBirthdayPublicly }
         : {}),
     });
-    const avatarUrl = args.avatarStorageId ? await ctx.storage.getUrl(args.avatarStorageId) : null;
-    return { clerkUserId: user.clerkUserId, avatarUrl };
-  },
-});
-
-export const updateProfile = action({
-  args: profileArgs,
-  handler: async (ctx, args): Promise<{ ok: true }> => {
-    const { clerkUserId, avatarUrl } = await ctx.runMutation(
-      internal.people.users.applyProfileUpdate,
-      args,
-    );
-    if (clerkUserId) {
-      if (args.firstName !== undefined || args.lastName !== undefined) {
-        await updateClerkUserName(clerkUserId, {
-          firstName: args.firstName,
-          lastName: args.lastName,
-        });
-      }
-      if (avatarUrl) {
-        await updateClerkUserAvatar(clerkUserId, avatarUrl);
-      }
+    if (args.firstName !== undefined || args.lastName !== undefined) {
+      await pushToClerk(ctx, {
+        kind: "rename",
+        clerkUserId: user.clerkUserId,
+        firstName: args.firstName,
+        lastName: args.lastName,
+      });
     }
-    return { ok: true };
+    const avatarUrl = args.avatarStorageId ? await ctx.storage.getUrl(args.avatarStorageId) : null;
+    if (avatarUrl) {
+      await pushToClerk(ctx, {
+        kind: "avatar",
+        clerkUserId: user.clerkUserId,
+        imageUrl: avatarUrl,
+      });
+    }
+    return { ok: true as const };
   },
 });
 
@@ -537,14 +521,15 @@ export const setHireDate = userMutation({
   },
 });
 
-export const applyStatus = internalMutation({
+/** Suspend or re-activate a member; Clerk's lock follows. */
+export const setStatus = userMutation({
+  role: "admin",
   args: {
     userId: v.id("users"),
     status: v.union(v.literal("active"), v.literal("suspended")),
   },
   handler: async (ctx, { userId, status }) => {
-    const admin = await requireAdmin(ctx);
-    if (userId === admin._id && status === "suspended") {
+    if (userId === ctx.caller.id && status === "suspended") {
       throw new ConvexError({
         code: "bad_request",
         message: "You cannot suspend yourself",
@@ -561,38 +546,24 @@ export const applyStatus = internalMutation({
       });
     }
     await ctx.db.patch(userId, { status });
-    return { clerkUserId: target.clerkUserId };
-  },
-});
-
-/** Suspend or re-activate a member using Clerk's lock feature. */
-export const setStatus = action({
-  args: {
-    userId: v.id("users"),
-    status: v.union(v.literal("active"), v.literal("suspended")),
-  },
-  handler: async (ctx, { userId, status }): Promise<{ ok: true }> => {
-    const { clerkUserId } = await ctx.runMutation(internal.people.users.applyStatus, {
-      userId,
-      status,
-    });
-    if (clerkUserId) {
-      if (status === "suspended") {
-        await lockClerkUser(clerkUserId);
-      } else {
-        await unlockClerkUser(clerkUserId);
-      }
+    if (target.clerkUserId) {
+      await pushToClerk(ctx, {
+        kind: status === "suspended" ? "lock" : "unlock",
+        clerkUserId: target.clerkUserId,
+      });
     }
-    return { ok: true };
+    return { ok: true as const };
   },
 });
 
-// --- OneDrive permission flags (synced into Clerk public metadata) ----------
+// --- OneDrive permission flags -------------------------------------------------
 
-export const applyGfAccess = internalMutation({
+/** Grant/revoke Geschäftsführung access (admin only). */
+export const setGfAccess = userMutation({
+  role: "admin",
   args: { userId: v.id("users"), gfAccess: v.boolean() },
   handler: async (ctx, { userId, gfAccess }) => {
-    const admin = await requireAdmin(ctx);
+    const admin = ctx.caller.user;
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -612,29 +583,16 @@ export const applyGfAccess = internalMutation({
       target: target.email,
       at: auditAt,
     });
-    return { clerkUserId: target.clerkUserId, gfAccess };
+    return { ok: true as const };
   },
 });
 
-/** Grant/revoke Geschäftsführung access (admin only). Mirrors into Clerk. */
-export const setGfAccess = action({
-  args: { userId: v.id("users"), gfAccess: v.boolean() },
-  handler: async (ctx, args): Promise<{ ok: true }> => {
-    const { clerkUserId, gfAccess } = await ctx.runMutation(
-      internal.people.users.applyGfAccess,
-      args,
-    );
-    if (clerkUserId) {
-      await updateClerkPublicMetadata(clerkUserId, { gfAccess });
-    }
-    return { ok: true };
-  },
-});
-
-export const applyUploadPermission = internalMutation({
+/** Enable/disable a user's ability to submit upload requests (manager+). */
+export const setUploadPermission = userMutation({
+  role: "manager",
   args: { userId: v.id("users"), enabled: v.boolean() },
   handler: async (ctx, { userId, enabled }) => {
-    const actor = await requireManager(ctx);
+    const actor = ctx.caller.user;
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
@@ -654,24 +612,7 @@ export const applyUploadPermission = internalMutation({
       target: target.email,
       at: auditAt,
     });
-    return { clerkUserId: target.clerkUserId, enabled };
-  },
-});
-
-/** Enable/disable a user's ability to submit upload requests (manager+). */
-export const setUploadPermission = action({
-  args: { userId: v.id("users"), enabled: v.boolean() },
-  handler: async (ctx, args): Promise<{ ok: true }> => {
-    const { clerkUserId, enabled } = await ctx.runMutation(
-      internal.people.users.applyUploadPermission,
-      args,
-    );
-    if (clerkUserId) {
-      await updateClerkPublicMetadata(clerkUserId, {
-        uploadRequestsEnabled: enabled,
-      });
-    }
-    return { ok: true };
+    return { ok: true as const };
   },
 });
 

@@ -1,4 +1,4 @@
-import { query, userMutation, userQuery } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 const attachmentFields = {
   oneDriveItemId: v.string(),
@@ -68,7 +68,6 @@ export const remove = userMutation({
   can: "manage_guidebooks",
   args: { attachmentId: v.id("guidebookAttachments") },
   handler: async (ctx, { attachmentId }) => {
-    const user = ctx.caller.user;
     const row = await ctx.db.get(attachmentId);
     if (!row) return { ok: false, oneDriveItemId: null };
     if (!ctx.caller.owns(row.uploadedByUserId)) {

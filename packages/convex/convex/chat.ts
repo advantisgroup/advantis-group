@@ -1,11 +1,4 @@
-import {
-  gatedMutation,
-  internalMutation,
-  mutation,
-  query,
-  userQuery,
-  userMutation,
-} from "./functions";
+import { gatedUserMutation, internalMutation, userQuery, userMutation } from "./functions";
 import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
@@ -13,7 +6,6 @@ import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
-import { requireUser } from "./lib/auth";
 import { createNotification } from "./lib/notify";
 import { profileAvatarUrl, profileDisplayName } from "./lib/profile";
 import { attachmentValidator } from "./schema";
@@ -336,10 +328,10 @@ export const mutualConversations = userQuery({
   },
 });
 
-export const getOrCreateDm = gatedMutation("chat")({
+export const getOrCreateDm = gatedUserMutation("chat")({
   args: { otherUserId: v.id("users") },
   handler: async (ctx, { otherUserId }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     if (otherUserId === user._id) {
       throw new ConvexError({
         code: "bad_request",
@@ -395,10 +387,10 @@ export const getOrCreateDm = gatedMutation("chat")({
   },
 });
 
-export const createGroup = gatedMutation("chat")({
+export const createGroup = gatedUserMutation("chat")({
   args: { name: v.string(), memberIds: v.array(v.id("users")) },
   handler: async (ctx, { name, memberIds }) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const now = Date.now();
     const conversationId = await ctx.db.insert("conversations", {
       type: "group",
@@ -734,7 +726,7 @@ export const toggleReaction = userMutation({
   },
 });
 
-export const sendMessage = gatedMutation("chat")({
+export const sendMessage = gatedUserMutation("chat")({
   args: {
     conversationId: v.id("conversations"),
     body: v.string(),
@@ -744,7 +736,7 @@ export const sendMessage = gatedMutation("chat")({
     mentions: v.optional(v.array(v.id("users"))),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const user = ctx.caller.user;
     const membership = await requireMembership(ctx, args.conversationId, user._id);
 
     const body = args.body.trim();
@@ -903,7 +895,6 @@ export const editMessage = userMutation({
 export const deleteMessage = userMutation({
   args: { messageId: v.id("messages") },
   handler: async (ctx, { messageId }) => {
-    const user = ctx.caller.user;
     const message = await ctx.db.get(messageId);
     if (!message || message.deletedAt) return { ok: false };
     if (!ctx.caller.owns(message.senderUserId)) {
@@ -1257,30 +1248,33 @@ export const rejoinDm = userMutation({
 
 async function toggleTimestamp(
   ctx: MutationCtx,
+  userId: Id<"users">,
   conversationId: Id<"conversations">,
   field: "pinnedAt" | "archivedAt" | "mutedAt",
 ) {
-  const user = await requireUser(ctx);
-  const membership = await requireMembership(ctx, conversationId, user._id);
+  const membership = await requireMembership(ctx, conversationId, userId);
   await ctx.db.patch(membership._id, {
     [field]: membership[field] ? undefined : Date.now(),
   });
   return { ok: true };
 }
 
-export const togglePin = mutation({
+export const togglePin = userMutation({
   args: { conversationId: v.id("conversations") },
-  handler: (ctx, { conversationId }) => toggleTimestamp(ctx, conversationId, "pinnedAt"),
+  handler: (ctx, { conversationId }) =>
+    toggleTimestamp(ctx, ctx.caller.id, conversationId, "pinnedAt"),
 });
 
-export const toggleArchive = mutation({
+export const toggleArchive = userMutation({
   args: { conversationId: v.id("conversations") },
-  handler: (ctx, { conversationId }) => toggleTimestamp(ctx, conversationId, "archivedAt"),
+  handler: (ctx, { conversationId }) =>
+    toggleTimestamp(ctx, ctx.caller.id, conversationId, "archivedAt"),
 });
 
-export const toggleMute = mutation({
+export const toggleMute = userMutation({
   args: { conversationId: v.id("conversations") },
-  handler: (ctx, { conversationId }) => toggleTimestamp(ctx, conversationId, "mutedAt"),
+  handler: (ctx, { conversationId }) =>
+    toggleTimestamp(ctx, ctx.caller.id, conversationId, "mutedAt"),
 });
 
 // --- Shared media ------------------------------------------------------------

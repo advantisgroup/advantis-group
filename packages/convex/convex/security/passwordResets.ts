@@ -24,13 +24,7 @@ import {
 } from "../lib/stepUp";
 import { hashPassword, randomToken, sha256hex } from "../activity/lib/crypto";
 import { trackEvent } from "../lib/analytics";
-import {
-  effectiveRole,
-  getCurrentUser,
-  isApplicantAreaMember,
-  requireAdmin,
-  requireUser,
-} from "../lib/auth";
+import { effectiveRole, getCurrentUser } from "../lib/auth";
 import { notifyUsers } from "../lib/notify";
 import {
   adminIds,
@@ -51,6 +45,7 @@ import {
   userLabel,
 } from "./lib/passwordResets";
 import { passwordResetScopeValidator } from "../schema";
+import { requireSessionCaller } from "../lib/caller";
 
 /** Action-side entry point to the same trail — actions have no `ctx.db`. */
 export const recordAudit = internalMutation({
@@ -112,13 +107,9 @@ export const requestReset = mutation({
 
     let resolved: ResolvedTarget;
     if (scope === "hr") {
-      const user = await requireUser(ctx);
-      if (!isApplicantAreaMember(user)) {
-        throw new ConvexError({
-          code: "forbidden",
-          message: "You do not have permission to do that",
-        });
-      }
+      const member = await requireSessionCaller(ctx);
+      member.require(member.isApplicantAreaMember);
+      const user = member.user;
       resolved = { targetEmail: user.email, targetUserId: user._id, sentToEmail: user.email };
     } else {
       if (!email || !normalizeEmail(email)) {
@@ -713,7 +704,7 @@ export const prepareIssue = internalQuery({
     linkBase: string;
     createdAt: number;
   }> => {
-    const admin = await requireAdmin(ctx);
+    const admin = (await requireSessionCaller(ctx)).require("admin").user;
     const reverified = await checkSatisfied(ctx, {
       userId: admin._id,
       sessionId,

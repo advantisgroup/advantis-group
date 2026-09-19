@@ -58,6 +58,8 @@ export const identityTables = {
     status: v.union(v.literal("active"), v.literal("suspended"), v.literal("removed")),
     removedAt: v.optional(v.number()),
     removedBy: v.optional(v.id("users")),
+    /** `updated_at` of the newest Clerk event applied, to skip older ones. */
+    clerkUpdatedAt: v.optional(v.number()),
     /**
      * True when the user's email domain is outside `ALLOWED_EMAIL_DOMAINS`.
      * Externals are full members (their role applies normally); the flag only

@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { gatedMutation, query, userQuery } from "../functions";
 import type { QueryCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
-import { requireUser, hasCapability } from "../lib/auth";
+import { requireSessionCaller } from "../lib/caller";
 import { appError } from "../lib/errors";
 import { safeEqual } from "./lib/crypto";
 import { getActivitySubprofile } from "./lib/people";
@@ -222,10 +222,10 @@ export const overview = userQuery({
  * nothing in between is legitimate.
  */
 async function requireSelfOrActivityAdmin(ctx: QueryCtx, employeeId: string): Promise<void> {
-  const user = await requireUser(ctx);
-  const subprofile = await getActivitySubprofile(ctx, user._id);
+  const caller = await requireSessionCaller(ctx);
+  const subprofile = await getActivitySubprofile(ctx, caller.id);
   if (subprofile.employeeId === employeeId) return;
-  if (await hasCapability(ctx, "view_activity_admin")) return;
+  if (caller.can("view_activity_admin")) return;
   throw appError("auth.forbidden", "You do not have permission to view this employee's data");
 }
 
@@ -300,7 +300,7 @@ export const stateBatch = userQuery({
     // Requesting anyone else's employeeId requires view_activity_admin; a
     // caller without it only ever gets their own state back, same as if
     // they'd asked for nothing at all (see requireSelfOrActivityAdmin above).
-    const canViewOthers = await hasCapability(ctx, "view_activity_admin");
+    const canViewOthers = ctx.caller.can("view_activity_admin");
     const requested = canViewOthers ? employeeIds : [];
 
     const ids = [
@@ -450,7 +450,7 @@ export const historyBatch = userQuery({
     const subprofile = await getActivitySubprofile(ctx, user._id);
     // Same rule as stateBatch: only an admin-capable caller can pull other
     // employees' history, e.g. the overview grid's per-card strips.
-    const canViewOthers = await hasCapability(ctx, "view_activity_admin");
+    const canViewOthers = ctx.caller.can("view_activity_admin");
     const requested = canViewOthers ? (employeeIds ?? []) : [];
 
     const ids = [

@@ -5,9 +5,10 @@ import { internal } from "../_generated/api";
 import { type Doc } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 import { roleValidator } from "../schema";
-import { createOrRestoreUser, getUserByClerkId, isEmailDomainAllowed } from "../lib/auth";
+import { getUserByClerkId, isEmailDomainAllowed } from "../lib/auth";
 import { deleteClerkUser } from "../lib/clerk";
 import { notifyUsers } from "../lib/notify";
+import { createOrRestoreUser } from "../people/lib/provisioning";
 
 const roleArg = roleValidator;
 

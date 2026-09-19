@@ -1,4 +1,4 @@
-import { query, userMutation, userQuery } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { escapeHtml } from "../lib/text";
 
 /** Presence of a row means the one-time `guidebookPages` → `wikiEntries`

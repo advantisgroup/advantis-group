@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { internalMutation, query, userQuery } from "../functions";
+import { internalMutation, userQuery } from "../functions";
 import { batchUserSummaries } from "../lib/users";
 import { writeIntegrationsAudit } from "./lib/audit";
 

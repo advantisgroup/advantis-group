@@ -164,7 +164,7 @@ describe("apiUnlockViaPasskey", () => {
         serverKey,
         clerkUserId: "nobody",
       }),
-    ).rejects.toThrow("You do not have permission");
+    ).rejects.toThrow("User not found");
   });
 
   test("rejects a wrong server key", async () => {

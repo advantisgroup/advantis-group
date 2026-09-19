@@ -1,13 +1,12 @@
-import { serverMutation, serverQuery } from "../functions";
+import { serverQuery, serverUserMutation } from "../functions";
 import { ConvexError, v } from "convex/values";
-
-import { requireAdminCaller } from "./lib/auth";
+import { getServerCaller } from "../lib/caller";
 
 /**
  * Server-key gated CRUD for the Sales Coach EV knowledge base. Reads are
  * open to any authenticated intranet user (apps/api's requireAuth already
  * gates the request before it gets here); writes require the caller to be
- * an intranet admin, checked via `requireAdminCaller`.
+ * an intranet admin (`role: "admin"` on each builder).
  */
 
 const catValidator = v.union(
@@ -29,23 +28,15 @@ export const list = serverQuery({
 });
 
 /** Lets apps/api gate the document-analysis endpoint on the same
- * admin-only rule as every other wiki write, without duplicating
- * `requireAdminCaller`'s throw-based check into a boolean itself. */
+ * admin-only rule as every other wiki write. */
 export const isAdmin = serverQuery({
   args: { clerkUserId: v.string() },
-  handler: async (ctx, args) => {
-    try {
-      await requireAdminCaller(ctx, args.clerkUserId);
-      return true;
-    } catch {
-      return false;
-    }
-  },
+  handler: async (ctx, args) => (await getServerCaller(ctx, args.clerkUserId))?.isAdmin ?? false,
 });
 
-export const create = serverMutation({
+export const create = serverUserMutation({
+  role: "admin",
   args: {
-    clerkUserId: v.string(),
     title: v.string(),
     cat: catValidator,
     tags: v.string(),
@@ -58,7 +49,6 @@ export const create = serverMutation({
     fileSize: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    await requireAdminCaller(ctx, args.clerkUserId);
     const now = Date.now();
     const id = await ctx.db.insert("salesCoachEvWiki", {
       title: args.title,
@@ -71,7 +61,7 @@ export const create = serverMutation({
       fileName: args.fileName,
       fileContentType: args.fileContentType,
       fileSize: args.fileSize,
-      authorClerkUserId: args.clerkUserId,
+      authorClerkUserId: ctx.caller.user.clerkUserId,
       createdAt: now,
       updatedAt: now,
     });
@@ -79,9 +69,9 @@ export const create = serverMutation({
   },
 });
 
-export const update = serverMutation({
+export const update = serverUserMutation({
+  role: "admin",
   args: {
-    clerkUserId: v.string(),
     id: v.id("salesCoachEvWiki"),
     title: v.optional(v.string()),
     cat: v.optional(catValidator),
@@ -97,7 +87,6 @@ export const update = serverMutation({
     removeFile: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await requireAdminCaller(ctx, args.clerkUserId);
     const existing = await ctx.db.get(args.id);
     if (!existing) throw new ConvexError({ code: "not_found", message: "Article not found" });
 
@@ -138,10 +127,10 @@ export const update = serverMutation({
   },
 });
 
-export const remove = serverMutation({
-  args: { clerkUserId: v.string(), id: v.id("salesCoachEvWiki") },
+export const remove = serverUserMutation({
+  role: "admin",
+  args: { id: v.id("salesCoachEvWiki") },
   handler: async (ctx, args) => {
-    await requireAdminCaller(ctx, args.clerkUserId);
     const existing = await ctx.db.get(args.id);
     if (existing?.storageId) await ctx.storage.delete(existing.storageId);
     await ctx.db.delete(args.id);

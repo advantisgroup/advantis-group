@@ -1,23 +1,9 @@
-import {
-  internalAction,
-  query,
-  serverMutation,
-  serverQuery,
-  userMutation,
-  userQuery,
-} from "../functions";
+import { internalAction, serverMutation, serverQuery, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
-import {
-  effectiveCustomRoleIds,
-  effectiveRole,
-  hasApplicantAccess,
-  isSandboxed,
-  MANAGER_ROLES,
-} from "../lib/auth";
 import { internalApiFetch } from "../lib/internalApi";
 import { createNotification, notifyUsers } from "../lib/notify";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
@@ -93,32 +79,21 @@ async function writeAudit(
 export const apiUserContext = serverQuery({
   args: { clerkUserId: v.string() },
   handler: async (ctx, { clerkUserId }) => {
-    const user = (await getServerCaller(ctx, clerkUserId))?.user;
-    if (!user) return null;
-    const sandboxed = isSandboxed(user);
-    const role = effectiveRole(user);
-    const customRoles = sandboxed
-      ? []
-      : await Promise.all(
-          effectiveCustomRoleIds(user).map((customRoleId) => ctx.db.get(customRoleId)),
-        );
+    const caller = await getServerCaller(ctx, clerkUserId);
+    if (!caller) return null;
     return {
-      userId: user._id,
-      role,
-      name: displayName(user),
-      email: user.email,
-      gfAccess: sandboxed ? false : (user.gfAccess ?? false),
-      uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
-      canAccessFiles:
-        MANAGER_ROLES.includes(role) ||
-        customRoles.some((customRole) => customRole?.capabilities.includes("access_files")),
+      userId: caller.id,
+      role: caller.role,
+      name: displayName(caller.user),
+      email: caller.user.email,
+      gfAccess: caller.hasGfAccess,
+      uploadRequestsEnabled: caller.canRequestUploads,
+      canAccessFiles: caller.can("access_files"),
       // Indirect permission: anyone who can manage wikis/HR gets write access
       // to that one OneDrive subtree (Team/Wiki, Team/HR) even without full
       // file-browser access — see apps/api's `access.ts` for the scoping.
-      canWriteWiki:
-        MANAGER_ROLES.includes(role) ||
-        customRoles.some((customRole) => customRole?.capabilities.includes("manage_guidebooks")),
-      canWriteHR: !sandboxed && hasApplicantAccess(user),
+      canWriteWiki: caller.can("manage_guidebooks"),
+      canWriteHR: caller.hasApplicantAccess,
     };
   },
 });

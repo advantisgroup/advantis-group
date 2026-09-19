@@ -1,4 +1,4 @@
-import { query, userMutation, userQuery } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 const pageFields = {
   title: v.string(),
@@ -85,7 +85,6 @@ export const update = userMutation({
   can: "manage_guidebooks",
   args: { pageId: v.id("guidebookPages"), ...pageFields },
   handler: async (ctx, { pageId, ...patch }) => {
-    const user = ctx.caller.user;
     const page = await ctx.db.get(pageId);
     if (!page) throw new ConvexError({ code: "not_found", message: "Not found" });
     if (!ctx.caller.owns(page.authorUserId)) {
@@ -109,7 +108,6 @@ export const remove = userMutation({
   can: "manage_guidebooks",
   args: { pageId: v.id("guidebookPages") },
   handler: async (ctx, { pageId }) => {
-    const user = ctx.caller.user;
     const page = await ctx.db.get(pageId);
     if (!page) return { ok: false };
     if (!ctx.caller.owns(page.authorUserId)) {

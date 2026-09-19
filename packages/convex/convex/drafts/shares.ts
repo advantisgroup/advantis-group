@@ -84,7 +84,7 @@ export const share = userMutation({
   },
   handler: async (ctx, { surface, subjectKey, versionId, userIds, name }) => {
     const user = ctx.caller.user;
-    if (APPLICANT_SURFACES.has(surface) || !(await canUseSurface(ctx, user, surface))) {
+    if (APPLICANT_SURFACES.has(surface) || !(await canUseSurface(ctx, ctx.caller, surface))) {
       throw new ConvexError({ code: "forbidden", message: "This draft can't be shared" });
     }
     if (userIds.length === 0 || userIds.length > MAX_RECIPIENTS) {

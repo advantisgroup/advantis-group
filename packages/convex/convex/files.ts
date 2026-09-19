@@ -1,10 +1,11 @@
-import { mutation, query, serverMutation, userQuery, userMutation } from "./functions";
+import { query, serverMutation, userQuery, userMutation } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { getCurrentUser, requireVaultUnlocked } from "./lib/auth";
+import { getCurrentUser } from "./lib/auth";
 import { type Caller } from "./lib/caller";
 import { type QueryCtx } from "./_generated/server";
+import { requireVaultUnlocked } from "./hr/lib/access";
 
 /**
  * Issue a short-lived upload URL for chat attachments, avatars and

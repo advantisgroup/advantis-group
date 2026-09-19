@@ -2,10 +2,10 @@ import {
   action,
   internalMutation,
   internalQuery,
-  query,
-  serverMutation,
   userQuery,
   userMutation,
+  userAction,
+  serverUserMutation,
 } from "../functions";
 import { ConvexError, v } from "convex/values";
 
@@ -14,7 +14,7 @@ import { internal } from "../_generated/api";
 import { type MutationCtx } from "../_generated/server";
 import { hashPassword, verifyPassword } from "../activity/lib/crypto";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
-import { getCallerForAction, getUserByClerkId, isApplicantAreaMember } from "../lib/auth";
+
 import {
   AREA_REVERIFY_LEVEL,
   availableMethodsFor,
@@ -24,6 +24,7 @@ import {
   legacyPasswordSunsetDeadline,
 } from "../lib/stepUp";
 import { clearVaultPasswordForUser } from "./lib/vault";
+import { isApplicantAreaMember } from "../hr/lib/access";
 
 /** How long a vault unlock lasts before the password must be re-entered. */
 export const UNLOCK_DURATION_MS = 30 * 60 * 1000;
@@ -127,16 +128,11 @@ export const storePasswordHash = internalMutation({
 /** Set or rotate the caller's own vault password. Runs as an action so it
  * can use Web Crypto (PBKDF2) to hash, matching the tray-app debug
  * password's existing pattern. */
-export const setPassword = action({
+export const setPassword = userAction({
+  applicant: "member",
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
-    const me = (await getCallerForAction(ctx))?.user;
-    if (!me || !isApplicantAreaMember(me)) {
-      throw new ConvexError({
-        code: "forbidden",
-        message: "You do not have permission to do that",
-      });
-    }
+    const me = ctx.caller.user;
     if (password.length < 8) {
       throw new ConvexError({
         code: "validation",
@@ -192,32 +188,21 @@ export const recordUnlock = internalMutation({
 
 /** Called by apps/api once it has verified the passkey assertion belongs to
  * `clerkUserId` (WebAuthn verification only runs there). */
-export const apiUnlockViaPasskey = serverMutation({
-  args: { clerkUserId: v.string() },
-  handler: async (ctx, { clerkUserId }) => {
-    const user = await getUserByClerkId(ctx, clerkUserId);
-    if (!user || user.status !== "active" || !isApplicantAreaMember(user)) {
-      throw new ConvexError({
-        code: "forbidden",
-        message: "You do not have permission to do that",
-      });
-    }
-    await performUnlock(ctx, user._id, "vault_unlocked_via_passkey");
+export const apiUnlockViaPasskey = serverUserMutation({
+  applicant: "member",
+  args: {},
+  handler: async (ctx) => {
+    await performUnlock(ctx, ctx.caller.id, "vault_unlocked_via_passkey");
   },
 });
 
 /** Verify the caller's own vault password and, if correct, unlock it for
  * them. */
-export const unlock = action({
+export const unlock = userAction({
+  applicant: "member",
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
-    const me = (await getCallerForAction(ctx))?.user;
-    if (!me || !isApplicantAreaMember(me)) {
-      throw new ConvexError({
-        code: "forbidden",
-        message: "You do not have permission to do that",
-      });
-    }
+    const me = ctx.caller.user;
     const row = await ctx.runQuery(internal.hr.vault.getPasswordRow, {
       userId: me._id,
     });

@@ -1,4 +1,4 @@
-import { query, userQuery, userMutation } from "./functions";
+import { userQuery, userMutation } from "./functions";
 import { v } from "convex/values";
 import { displayName } from "./lib/users";
 

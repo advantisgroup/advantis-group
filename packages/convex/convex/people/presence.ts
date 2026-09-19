@@ -1,5 +1,5 @@
 import { sandboxSafeMutation } from "../functions";
-import { requireUser } from "../lib/auth";
+import { requireSessionCaller } from "../lib/caller";
 
 /**
  * Lightweight presence heartbeat. The web client pings this on an interval
@@ -9,7 +9,7 @@ import { requireUser } from "../lib/auth";
 export const heartbeat = sandboxSafeMutation({
   args: {},
   handler: async (ctx) => {
-    const user = await requireUser(ctx);
+    const user = (await requireSessionCaller(ctx)).user;
     const existing = await ctx.db
       .query("presence")
       .withIndex("by_user", (q) => q.eq("userId", user._id))

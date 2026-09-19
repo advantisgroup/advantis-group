@@ -1,4 +1,4 @@
-import { internalMutation, mutation, query, userMutation, userQuery } from "../functions";
+import { internalMutation, mutation, userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
 import { writeAudit } from "./lib/audit";
 import { appError } from "../lib/errors";

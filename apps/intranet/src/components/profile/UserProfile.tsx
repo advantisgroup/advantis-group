@@ -832,11 +832,11 @@ function AdminControls({
   const confirm = useConfirm();
   const [stepUpOpen, setStepUpOpen] = useState(false);
   const setRole = useMutation(api.people.users.setRole);
-  const setStatus = useAction(api.people.users.setStatus);
-  const removeMember = useAction(api.people.members.remove);
+  const setStatus = useMutation(api.people.users.setStatus);
+  const removeMember = useMutation(api.people.members.remove);
   const reinvite = useAction(api.people.members.reinvite);
-  const setUploadPermission = useAction(api.people.users.setUploadPermission);
-  const setGfAccess = useAction(api.people.users.setGfAccess);
+  const setUploadPermission = useMutation(api.people.users.setUploadPermission);
+  const setGfAccess = useMutation(api.people.users.setGfAccess);
   const setApplicantDelegate = useMutation(api.people.users.setApplicantDelegate);
   const setManagingDirector = useMutation(api.people.users.setManagingDirector);
   const handleError = useErrorHandler();

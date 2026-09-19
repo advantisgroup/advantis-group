@@ -1,4 +1,4 @@
-import { internalMutation, query, serverMutation, userMutation, userQuery } from "../functions";
+import { internalMutation, serverMutation, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "../_generated/api";
@@ -307,7 +307,7 @@ export const list = userQuery({
           .take(args.limit ?? 200);
 
     const search = args.search?.trim().toLowerCase();
-    const isAdmin = ctx.caller.role === "admin";
+    const isAdmin = ctx.caller.isAdmin;
     const visible = rows.filter((u) => {
       if (!userMatchesAudience(user, u.audience)) return false;
       if (u.publishedAt > now && u.authorUserId !== user._id && !isAdmin) return false;
@@ -376,7 +376,7 @@ export const get = userQuery({
         return { ...entry, authorName: displayName(entryAuthor) };
       }),
     );
-    const isAdmin = ctx.caller.role === "admin";
+    const isAdmin = ctx.caller.isAdmin;
 
     let emailStats: Record<string, number> | null = null;
     let recipients: EmailRecipientRow[] | null = null;

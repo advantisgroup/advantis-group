@@ -1,8 +1,7 @@
-import { query, userQuery, userMutation } from "./functions";
+import { userQuery, userMutation } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc } from "./_generated/dataModel";
-import { isOwnerOrAdmin, requireCapability } from "./lib/auth";
 import { userMatchesAudience } from "./lib/audience";
 import { audienceValidator, richDateKindValidator } from "./schema";
 
@@ -168,7 +167,6 @@ export const update = userMutation({
     audience: v.optional(audienceValidator),
   },
   handler: async (ctx, { eventId, ...patch }) => {
-    const user = ctx.caller.user;
     const event = await ctx.db.get(eventId);
     if (!event) {
       throw new ConvexError({ code: "not_found", message: "Event not found" });
@@ -195,8 +193,8 @@ export const remove = userMutation({
       await ctx.db.patch(eventId, { dismissedAt: Date.now(), updatedAt: Date.now() });
       return { ok: true };
     }
-    const manager = await requireCapability(ctx, "manage_announcements");
-    if (!isOwnerOrAdmin(manager, event.createdByUserId)) {
+    ctx.caller.require("manage_announcements");
+    if (!ctx.caller.owns(event.createdByUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the creator or an admin can delete this event",

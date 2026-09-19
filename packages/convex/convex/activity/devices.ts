@@ -1,4 +1,4 @@
-import { gatedMutation, query, userMutation, userQuery } from "../functions";
+import { gatedMutation, userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
 import { writeAudit } from "./lib/audit";
 import { appError } from "../lib/errors";

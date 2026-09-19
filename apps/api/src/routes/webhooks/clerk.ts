@@ -5,6 +5,7 @@ import { api } from "@advantis/convex/api";
 
 import { getConvex, getConvexServerKey } from "../../lib/convex.js";
 import { Errors } from "../../lib/errors.js";
+import { getRedis } from "../../lib/redis.js";
 import { sendClerkEmail } from "../../lib/resend.js";
 
 interface ClerkEmail {
@@ -18,6 +19,8 @@ interface ClerkUserData {
   first_name?: string | null;
   last_name?: string | null;
   image_url?: string | null;
+  updated_at?: number;
+  banned?: boolean;
 }
 // Matches @clerk/backend's EmailJSON — sent only for templates where
 // "Delivered by Clerk" has been turned off in the Clerk Dashboard.
@@ -75,6 +78,8 @@ export const clerkWebhookRoute = new Elysia().post("/webhooks/clerk", async ({ r
     await convex.mutation(api.people.clerkSync.syncFromClerk, {
       serverKey,
       clerkUserId: user.id,
+      updatedAt: user.updated_at,
+      banned: user.banned,
       email: primaryEmail(user),
       firstName: user.first_name ?? undefined,
       lastName: user.last_name ?? undefined,
@@ -92,6 +97,12 @@ export const clerkWebhookRoute = new Elysia().post("/webhooks/clerk", async ({ r
     // template's toggle is off, but never double-send if it does.
     if (email.delivered_by_clerk) return { ok: true };
     if (!email.to_email_address || !email.subject || !email.body) return { ok: true };
+    // Svix retries until it sees a 2xx, so the same email can arrive twice.
+    const firstDelivery = await getRedis()?.set(`clerk-email:${headers["svix-id"]}`, 1, {
+      nx: true,
+      ex: 86_400,
+    });
+    if (firstDelivery === null) return { ok: true };
     await sendClerkEmail({
       to: email.to_email_address,
       subject: email.subject,

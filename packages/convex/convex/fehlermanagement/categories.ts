@@ -1,4 +1,4 @@
-import { query, userMutation, userQuery } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 /** Fehlerkategorien (Stammdaten), alphabetical. */
 export const list = userQuery({

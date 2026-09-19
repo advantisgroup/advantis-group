@@ -21,7 +21,7 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { type Capability, assertServerKey, getCurrentUser, requireVaultUnlocked } from "./lib/auth";
+import { type Capability, assertServerKey, getCurrentUser } from "./lib/auth";
 import {
   Caller,
   type CallerData,
@@ -30,6 +30,7 @@ import {
   requireSessionCaller,
 } from "./lib/caller";
 import { type FeatureFlagKey, isFeatureEnabled } from "./lib/featureFlags";
+import { requireVaultUnlocked } from "./hr/lib/access";
 
 /**
  * The builders every module defines its functions with — import from here,
@@ -164,7 +165,7 @@ type Requirement = {
   applicant?: "access" | "delegate" | "member";
 };
 
-type CallerInput = { ctx: { caller: Caller }; args: {} };
+type CallerInput = { ctx: { caller: Caller }; args: Record<string, never> };
 
 function check(caller: Caller, { role, can, applicant }: Requirement): CallerInput {
   if (role) caller.require(role);
@@ -290,6 +291,8 @@ function gate<Builder extends (config: never) => unknown>(
 
 export const gatedMutation = (key: FeatureFlagKey): typeof mutation =>
   gate(mutation, key, checkDirect);
+export const gatedUserMutation = (key: FeatureFlagKey): typeof userMutation =>
+  gate(userMutation, key, checkDirect);
 export const gatedAction = (key: FeatureFlagKey): typeof action => gate(action, key, checkViaQuery);
 export const gatedInternalMutation = (key: FeatureFlagKey): typeof internalMutation =>
   gate(internalMutation, key, checkDirect);

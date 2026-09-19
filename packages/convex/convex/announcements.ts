@@ -1,11 +1,11 @@
-import { internalMutation, query, userQuery, userMutation } from "./functions";
+import { internalMutation, userQuery, userMutation } from "./functions";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
-import { isOwnerOrAdmin } from "./lib/auth";
+import { type Caller } from "./lib/caller";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
 import { escapeHtml } from "./lib/text";
@@ -86,8 +86,8 @@ function announcementOwnerUserId(announcement: Doc<"announcements">): Id<"users"
 }
 
 /** The owner and admins can always see an announcement, regardless of audience. */
-function isVisibleToUser(user: Doc<"users">, a: Doc<"announcements">): boolean {
-  return isOwnerOrAdmin(user, announcementOwnerUserId(a)) || userMatchesAudience(user, a.audience);
+function isVisibleTo(caller: Caller, a: Doc<"announcements">): boolean {
+  return caller.owns(announcementOwnerUserId(a)) || userMatchesAudience(caller.user, a.audience);
 }
 
 /** Read-only: works from both query and mutation handlers (MutationCtx is a QueryCtx plus write access). */
@@ -315,7 +315,6 @@ export const remove = userMutation({
   can: "manage_announcements",
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) return { ok: false };
     if (!ctx.caller.owns(announcementOwnerUserId(announcement))) {
@@ -545,7 +544,7 @@ export const unreadCount = userQuery({
       .take(100);
     const visible = announcements.filter(
       (a) =>
-        isVisibleToUser(user, a) && a.publishedAt <= now && (!a.expiresAt || a.expiresAt > now),
+        isVisibleTo(ctx.caller, a) && a.publishedAt <= now && (!a.expiresAt || a.expiresAt > now),
     );
     const myReads = await ctx.db
       .query("announcementReads")
@@ -571,7 +570,7 @@ export const needsAttention = userQuery({
     const pinned = announcements.filter(
       (a) =>
         (a.pinned || a.requiresAck) &&
-        isVisibleToUser(user, a) &&
+        isVisibleTo(ctx.caller, a) &&
         a.publishedAt <= now &&
         (!a.expiresAt || a.expiresAt > now),
     );
@@ -601,7 +600,7 @@ export const acknowledge = userMutation({
   handler: async (ctx, { announcementId }) => {
     const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
-    if (!announcement || !isVisibleToUser(user, announcement)) {
+    if (!announcement || !isVisibleTo(ctx.caller, announcement)) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
     }
     const existing = await ctx.db
@@ -637,7 +636,7 @@ export const markAllRead = userMutation({
       .collect();
     const readSet = new Set(myReads.map((r) => r.announcementId));
     const unread = announcements.filter(
-      (a) => isVisibleToUser(user, a) && a.publishedAt <= now && !readSet.has(a._id),
+      (a) => isVisibleTo(ctx.caller, a) && a.publishedAt <= now && !readSet.has(a._id),
     );
     await Promise.all(
       unread.map((a) =>
@@ -670,7 +669,7 @@ export const toggleReaction = userMutation({
   handler: async (ctx, { announcementId, emoji }) => {
     const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
-    if (!announcement || !isVisibleToUser(user, announcement)) {
+    if (!announcement || !isVisibleTo(ctx.caller, announcement)) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
     }
     // WhatsApp-style: one reaction per user per announcement.
@@ -707,9 +706,8 @@ export const toggleReaction = userMutation({
 export const reactors = userQuery({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
-    if (!announcement || !isVisibleToUser(user, announcement)) {
+    if (!announcement || !isVisibleTo(ctx.caller, announcement)) {
       return [];
     }
     const rows = await ctx.db
@@ -738,9 +736,8 @@ export const reactors = userQuery({
 export const viewers = userQuery({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
-    if (!announcement || !isVisibleToUser(user, announcement)) {
+    if (!announcement || !isVisibleTo(ctx.caller, announcement)) {
       return [];
     }
     const reads = await ctx.db
@@ -773,7 +770,6 @@ export const viewers = userQuery({
 export const nonReaders = userQuery({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = ctx.caller.user;
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) return [];
     if (!ctx.caller.owns(announcementOwnerUserId(announcement))) {

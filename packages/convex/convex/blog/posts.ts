@@ -1,7 +1,7 @@
 import { internalMutation, query, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
-import { requireCapability } from "../lib/auth";
+import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { ensureShareCode } from "./lib/sharing";
 
 const languageValidator = v.union(v.literal("de"), v.literal("en"));
@@ -63,7 +63,7 @@ function assertExcerptLength(excerpt: string) {
 }
 
 async function assertSlugAvailable(
-  ctx: Parameters<typeof requireCapability>[0],
+  ctx: QueryCtx | MutationCtx,
   slug: string,
   language: "de" | "en",
   ignorePostId?: string,

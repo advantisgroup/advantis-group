@@ -1,7 +1,7 @@
 import { ConvexError } from "convex/values";
 import { type Doc, type Id } from "../../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../../_generated/server";
-import { hasApplicantAccess } from "../../lib/auth";
+import { type Caller } from "../../lib/caller";
 
 /** What a box holds between being opened and the first keystroke. */
 export const PLACEHOLDER_DATA = "{}";
@@ -151,14 +151,14 @@ export const APPLICANT_SURFACES = new Set<string>([
 
 export async function canUseSurface(
   ctx: QueryCtx | MutationCtx,
-  user: Doc<"users">,
+  caller: Caller,
   surface: string,
 ): Promise<boolean> {
   if (!APPLICANT_SURFACES.has(surface)) return true;
-  if (!hasApplicantAccess(user)) return false;
+  if (!caller.hasApplicantAccess) return false;
   const unlock = await ctx.db
     .query("applicantVaultUnlocks")
-    .withIndex("by_user", (q) => q.eq("userId", user._id))
+    .withIndex("by_user", (q) => q.eq("userId", caller.id))
     .unique();
   return !!unlock && unlock.expiresAt > Date.now();
 }

@@ -1,4 +1,4 @@
-import { internalQuery, query, userMutation, userQuery } from "../functions";
+import { internalQuery, userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
 import {
   FEATURE_FLAG_KEYS,

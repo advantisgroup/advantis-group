@@ -4,6 +4,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { internalMutation, query, userMutation } from "../functions";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { getCurrentUser } from "../lib/auth";
+import { getSessionCaller } from "../lib/caller";
 import { draftSurface } from "./lib/surfaces";
 import {
   APPLICANT_SURFACES,
@@ -79,10 +80,11 @@ async function deleteVersions(ctx: MutationCtx, draftId: Id<"drafts">) {
 export const get = query({
   args: { surface: draftSurface, subjectKey: v.string() },
   handler: async (ctx, { surface, subjectKey }) => {
-    const user = await getCurrentUser(ctx);
+    const caller = await getSessionCaller(ctx);
     // Null rather than an error when locked: the vault can time out while a
     // form is open, and a throwing query would take the whole page down.
-    if (!user || !(await canUseSurface(ctx, user, surface))) return null;
+    if (!caller || !(await canUseSurface(ctx, caller, surface))) return null;
+    const user = caller.user;
     const draft = await ctx.db
       .query("drafts")
       .withIndex("by_user_subject", (q) =>
@@ -101,7 +103,7 @@ export const create = userMutation({
   args: { surface: draftSurface },
   handler: async (ctx, { surface }) => {
     const user = ctx.caller.user;
-    if (!(await canUseSurface(ctx, user, surface))) {
+    if (!(await canUseSurface(ctx, ctx.caller, surface))) {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",
@@ -161,7 +163,7 @@ export const save = userMutation({
   },
   handler: async (ctx, { surface, subjectKey, data, href }) => {
     const user = ctx.caller.user;
-    if (!(await canUseSurface(ctx, user, surface))) {
+    if (!(await canUseSurface(ctx, ctx.caller, surface))) {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",
@@ -216,8 +218,9 @@ export const listVersions = query({
   args: { surface: draftSurface, subjectKey: v.string() },
   handler: async (ctx, { surface, subjectKey }) => {
     const empty = { headId: null, versions: [] };
-    const user = await getCurrentUser(ctx);
-    if (!user || !(await canUseSurface(ctx, user, surface))) return empty;
+    const caller = await getSessionCaller(ctx);
+    if (!caller || !(await canUseSurface(ctx, caller, surface))) return empty;
+    const user = caller.user;
     const draft = await findDraft(ctx, user._id, surface, subjectKey);
     if (!draft) return empty;
     const versions = await listDraftVersions(ctx, draft._id);
@@ -253,8 +256,9 @@ async function commentCount(ctx: QueryCtx, versionId: Id<"draftVersions">) {
 export const listOthers = query({
   args: { surface: draftSurface, subjectKey: v.string() },
   handler: async (ctx, { surface, subjectKey }) => {
-    const user = await getCurrentUser(ctx);
-    if (!user || !(await canUseSurface(ctx, user, surface))) return [];
+    const caller = await getSessionCaller(ctx);
+    if (!caller || !(await canUseSurface(ctx, caller, surface))) return [];
+    const user = caller.user;
     const drafts = await ctx.db
       .query("drafts")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -286,7 +290,7 @@ export const park = userMutation({
   args: { surface: draftSurface, subjectKey: v.string() },
   handler: async (ctx, { surface, subjectKey }) => {
     const user = ctx.caller.user;
-    if (!(await canUseSurface(ctx, user, surface))) {
+    if (!(await canUseSurface(ctx, ctx.caller, surface))) {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",
@@ -322,7 +326,7 @@ export const resume = userMutation({
   args: { surface: draftSurface, subjectKey: v.string(), draftId: v.id("drafts") },
   handler: async (ctx, { surface, subjectKey, draftId }) => {
     const user = ctx.caller.user;
-    if (!(await canUseSurface(ctx, user, surface))) {
+    if (!(await canUseSurface(ctx, ctx.caller, surface))) {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",
@@ -381,7 +385,7 @@ export const restoreVersion = userMutation({
   args: { surface: draftSurface, subjectKey: v.string(), versionId: v.id("draftVersions") },
   handler: async (ctx, { surface, subjectKey, versionId }) => {
     const user = ctx.caller.user;
-    if (!(await canUseSurface(ctx, user, surface))) {
+    if (!(await canUseSurface(ctx, ctx.caller, surface))) {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",
@@ -410,7 +414,7 @@ export const nameVersion = userMutation({
   },
   handler: async (ctx, { surface, subjectKey, versionId, name }) => {
     const user = ctx.caller.user;
-    if (!(await canUseSurface(ctx, user, surface))) {
+    if (!(await canUseSurface(ctx, ctx.caller, surface))) {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",

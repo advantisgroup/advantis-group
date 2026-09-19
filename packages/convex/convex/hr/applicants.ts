@@ -1,4 +1,4 @@
-import { query, serverMutation, serverQuery, userMutation, userQuery } from "../functions";
+import { serverMutation, serverQuery, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
@@ -10,7 +10,6 @@ import {
   terminArtValidator,
   terminTypValidator,
 } from "../schema";
-import { hasApplicantAccess } from "../lib/auth";
 import { batchUserSummaries, toUserSummary } from "../lib/users";
 import { getServerCaller } from "../lib/caller";
 
@@ -600,9 +599,10 @@ export const convertTermin = userMutation({
 export const apiCheckAccess = serverQuery({
   args: { clerkUserId: v.string() },
   handler: async (ctx, { clerkUserId }) => {
-    const user = (await getServerCaller(ctx, clerkUserId))?.user;
-    if (!user) return null;
-    if (!hasApplicantAccess(user)) return { userId: user._id, hasAccess: false };
+    const caller = await getServerCaller(ctx, clerkUserId);
+    if (!caller) return null;
+    const user = caller.user;
+    if (!caller.hasApplicantAccess) return { userId: user._id, hasAccess: false };
     const unlock = await ctx.db
       .query("applicantVaultUnlocks")
       .withIndex("by_user", (q) => q.eq("userId", user._id))

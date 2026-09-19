@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { query, userQuery } from "../functions";
+import { userQuery } from "../functions";
 import type { QueryCtx } from "../_generated/server";
 import { readConfig } from "./lib/settings";
 

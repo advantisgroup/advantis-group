@@ -1,4 +1,4 @@
-import { query, userMutation, userQuery } from "../functions";
+import { userMutation, userQuery } from "../functions";
 import { v } from "convex/values";
 /** Currently highlighted guidebook slugs, most recently featured first. */
 export const list = userQuery({

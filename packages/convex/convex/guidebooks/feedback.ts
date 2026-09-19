@@ -1,7 +1,5 @@
-import { query, userQuery, userMutation } from "../functions";
+import { userQuery, userMutation } from "../functions";
 import { v } from "convex/values";
-
-import { MANAGER_ROLES } from "../lib/auth";
 
 export const getMine = userQuery({
   args: { slug: v.string() },
@@ -42,8 +40,7 @@ export const set = userMutation({
 export const stats = userQuery({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
-    const user = ctx.caller.user;
-    if (!MANAGER_ROLES.includes(ctx.caller.role)) return null;
+    if (!ctx.caller.isManager) return null;
     const rows = await ctx.db
       .query("guidebookFeedback")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
