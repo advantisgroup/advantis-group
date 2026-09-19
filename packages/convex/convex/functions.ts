@@ -6,6 +6,7 @@ import {
   v,
 } from "convex/values";
 import type { ActionBuilder, MutationBuilder } from "convex/server";
+import { customAction, customMutation, customQuery } from "convex-helpers/server/customFunctions";
 
 import { internal } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
@@ -20,18 +21,32 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { assertServerKey, getCurrentUser } from "./lib/auth";
+import { type Capability, assertServerKey, getCurrentUser } from "./lib/auth";
+import {
+  Caller,
+  type CallerData,
+  type RoleRequirement,
+  requireServerCaller,
+  requireSessionCaller,
+} from "./lib/caller";
 import { type FeatureFlagKey, isFeatureEnabled } from "./lib/featureFlags";
 
 /**
  * The builders every module defines its functions with — import from here,
  * never from `_generated/server`.
  *
+ * - `userQuery`, `userMutation`, `userAction`: a signed-in, active person.
+ *   The handler gets `ctx.caller`; pass `role: "manager" | "admin"` or
+ *   `can: <capability>` to require more before it runs. Writes refuse to run
+ *   in sandbox mode.
+ * - `serverUserQuery`, `serverUserMutation`, `serverUserAction`: the same,
+ *   for apps/api — they take `serverKey` + `clerkUserId`, check the key and
+ *   resolve the person apps/api already signed in.
+ * - `serverQuery`, `serverMutation`, `serverAction`: apps/api calls that
+ *   aren't on behalf of a person (webhooks, pollers).
  * - `query`, `internalQuery`, `internalMutation`, `internalAction`: plain Convex.
- * - `mutation`, `action`: refuse to run while the caller is in sandbox mode
+ * - `mutation`, `action`: plain Convex that refuses to run in sandbox mode
  *   (`sandboxSafeMutation` for the few writes that must not).
- * - `serverQuery`, `serverMutation`, `serverAction`: only for apps/api — they
- *   add a `serverKey` argument and check it before the handler runs.
  * - `gated*(flag)`: stop producing data while a feature flag is off.
  */
 export { internalAction, internalMutation, internalQuery, query };
@@ -138,6 +153,78 @@ export function serverAction<Args extends PropertyValidators, Output>(definition
     },
   });
 }
+
+// --- Callers ------------------------------------------------------------------
+
+type Requirement = { role?: RoleRequirement; can?: Capability };
+
+type CallerInput = { ctx: { caller: Caller }; args: {} };
+
+function check(caller: Caller, { role, can }: Requirement): CallerInput {
+  if (role) caller.require(role);
+  if (can) caller.require(can);
+  return { ctx: { caller }, args: {} };
+}
+
+function refuseSandbox(caller: Caller): Caller {
+  if (caller.sandboxed) throw sandboxError();
+  return caller;
+}
+
+export const userQuery = customQuery(query, {
+  args: {},
+  input: async (ctx, _args, requirement: Requirement) =>
+    check(await requireSessionCaller(ctx), requirement),
+});
+
+export const userMutation = customMutation(rawMutation, {
+  args: {},
+  input: async (ctx, _args, requirement: Requirement) =>
+    check(refuseSandbox(await requireSessionCaller(ctx)), requirement),
+});
+
+export const userAction = customAction(rawAction, {
+  args: {},
+  input: async (ctx, _args, requirement: Requirement): Promise<CallerInput> => {
+    const data: CallerData | null = await ctx.runQuery(internal.people.users.callerForAction, {});
+    if (!data) throw new ConvexError({ code: "unauthenticated", message: "Not signed in" });
+    return check(refuseSandbox(Caller.fromJSON(data)), requirement);
+  },
+});
+
+const serverCallerArgs = { serverKey: v.string(), clerkUserId: v.string() };
+
+export const serverUserQuery = customQuery(query, {
+  args: serverCallerArgs,
+  input: async (ctx, { serverKey, clerkUserId }, requirement: Requirement) => {
+    assertServerKey(serverKey);
+    return check(await requireServerCaller(ctx, clerkUserId), requirement);
+  },
+});
+
+export const serverUserMutation = customMutation(rawMutation, {
+  args: serverCallerArgs,
+  input: async (ctx, { serverKey, clerkUserId }, requirement: Requirement) => {
+    assertServerKey(serverKey);
+    return check(await requireServerCaller(ctx, clerkUserId), requirement);
+  },
+});
+
+export const serverUserAction = customAction(rawAction, {
+  args: serverCallerArgs,
+  input: async (
+    ctx,
+    { serverKey, clerkUserId },
+    requirement: Requirement,
+  ): Promise<CallerInput> => {
+    assertServerKey(serverKey);
+    const data: CallerData | null = await ctx.runQuery(internal.people.users.callerForClerkUser, {
+      clerkUserId,
+    });
+    if (!data) throw new ConvexError({ code: "not_found", message: "User not found" });
+    return check(Caller.fromJSON(data), requirement);
+  },
+});
 
 // --- Feature flags -------------------------------------------------------------
 

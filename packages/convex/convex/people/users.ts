@@ -27,6 +27,7 @@ import {
   query,
   sandboxSafeMutation,
 } from "../functions";
+import { getServerCaller, getSessionCaller } from "../lib/caller";
 import { listUserPermissions } from "../lib/permissions";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { loadReportingLookup, reportingLines, resolveManager } from "../lib/reporting";
@@ -109,20 +110,18 @@ export const me = query({
   },
 });
 
-/** The signed-in caller, for actions, which have no `ctx.db` to look them up
- * themselves — see `requireCapabilityForAction` in `lib/auth.ts`. Custom-role
- * capabilities don't count while sandboxed, same as `me`. */
+/** The session's caller, for actions, which have no `ctx.db` to build one
+ * themselves — see `userAction` in `functions.ts`. */
 export const callerForAction = internalQuery({
   args: {},
-  handler: async (ctx) => {
-    const user = await getCurrentUser(ctx);
-    if (!user || user.status !== "active") return null;
-    const customRoles = isSandboxed(user)
-      ? []
-      : await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
-    const capabilities = [...new Set(customRoles.flatMap((role) => role?.capabilities ?? []))];
-    return { user, capabilities };
-  },
+  handler: async (ctx) => (await getSessionCaller(ctx))?.toJSON() ?? null,
+});
+
+/** `callerForAction` for `serverUserAction`, where apps/api names the person. */
+export const callerForClerkUser = internalQuery({
+  args: { clerkUserId: v.string() },
+  handler: async (ctx, { clerkUserId }) =>
+    (await getServerCaller(ctx, clerkUserId))?.toJSON() ?? null,
 });
 
 /** Provision the signed-in identity. Called by the intranet on app load. */
