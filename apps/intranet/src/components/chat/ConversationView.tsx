@@ -26,7 +26,6 @@ import {
   Check,
   CheckCheck,
   Copy,
-  ExternalLink,
   Loader2,
   LogOut,
   MoreVertical,
@@ -48,13 +47,13 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { AttachmentList } from "@/components/attachments/AttachmentList";
-import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { Mark } from "@/components/branding/ProviderMark";
+import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { CHAT_COLUMN, ChatDayDivider, chatBubbleClass } from "@/components/chat/chat-surface";
 import { ConversationSearch, PinnedMessagesBar } from "@/components/chat/ConversationTools";
 import { TICKET_PREFILL_KEY } from "@/components/it-tickets/TicketDialog";
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
-import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
+import { MessageAttachments } from "@/components/chat/MessageAttachments";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
 import { ONLINE_WINDOW_MS, UserProfile } from "@/components/profile/UserProfile";
 import { useCurrentUser } from "@/components/providers/current-user";
@@ -71,7 +70,6 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatTime, initials, relativeTime } from "@/lib/format";
-import { pathToUrl } from "@/lib/onedrive-path";
 import { MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 import {
@@ -134,7 +132,6 @@ export function ConversationView({
   const { getToken } = useAuth();
   const isMobile = useIsMobile();
   const keyboardInset = useKeyboardInset();
-  const { openFileViewer } = useFileViewer();
 
   // Reactive: this re-runs the moment access changes (left, removed, deleted,
   // or a stale `?c=` link), so it never throws — it reports a status instead.
@@ -936,109 +933,7 @@ export function ConversationView({
                                     {highlightBody(m.body, m.mentions)}
                                   </p>
                                 )}
-                                {m.attachments.map((a) => {
-                                  const fromOneDrive = Boolean(a.oneDrivePath);
-                                  if (a.kind === "image" && a.url) {
-                                    return (
-                                      <button
-                                        type="button"
-                                        key={a.storageId}
-                                        onClick={() =>
-                                          fromOneDrive
-                                            ? (window.location.href = pathToUrl(a.oneDrivePath!))
-                                            : openFileViewer({
-                                                storageId: a.storageId,
-                                                name: a.name,
-                                                contentType: a.contentType,
-                                                size: a.size,
-                                                width: a.width,
-                                                height: a.height,
-                                                modifiedAt: m.createdAt,
-                                                url: a.url ?? undefined,
-                                              })
-                                        }
-                                        className="relative mt-1 block"
-                                      >
-                                        <img
-                                          src={a.url}
-                                          alt={a.name}
-                                          className="max-h-64 rounded-lg"
-                                        />
-                                        {fromOneDrive && (
-                                          <span
-                                            title={tc("fromOneDrive")}
-                                            className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-background/90 shadow ring-1 ring-border"
-                                          >
-                                            <Mark provider="onedrive" className="size-3.5" />
-                                          </span>
-                                        )}
-                                      </button>
-                                    );
-                                  }
-                                  if (!a.url) return null;
-                                  if (fromOneDrive) {
-                                    return (
-                                      <a
-                                        key={a.storageId}
-                                        href={pathToUrl(a.oneDrivePath!)}
-                                        className="mt-1 flex items-center gap-1 underline"
-                                      >
-                                        <Mark provider="onedrive" className="size-3" />
-                                        {a.name}
-                                        <ExternalLink className="h-3 w-3 text-blue-500" />
-                                      </a>
-                                    );
-                                  }
-                                  return (
-                                    <button
-                                      type="button"
-                                      key={a.storageId}
-                                      onClick={() =>
-                                        openFileViewer({
-                                          storageId: a.storageId,
-                                          name: a.name,
-                                          contentType: a.contentType,
-                                          size: a.size,
-                                          width: a.width,
-                                          height: a.height,
-                                          modifiedAt: m.createdAt,
-                                          url: a.url ?? undefined,
-                                        })
-                                      }
-                                      className="mt-1 flex items-center gap-1 text-left underline"
-                                    >
-                                      <Paperclip className="h-3 w-3" />
-                                      {a.name}
-                                    </button>
-                                  );
-                                })}
-                                {m.linkPreviews.map((lp) => (
-                                  <a
-                                    key={lp.url}
-                                    href={lp.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="mt-1 block overflow-hidden rounded-lg border bg-background text-foreground"
-                                  >
-                                    {lp.image && (
-                                      <img
-                                        src={lp.image}
-                                        alt=""
-                                        className="h-28 w-full object-cover"
-                                      />
-                                    )}
-                                    <span className="block p-2">
-                                      <span className="block text-xs font-semibold">
-                                        {lp.title}
-                                      </span>
-                                      {lp.description && (
-                                        <span className="line-clamp-2 text-xs text-muted-foreground">
-                                          {lp.description}
-                                        </span>
-                                      )}
-                                    </span>
-                                  </a>
-                                ))}
+                                <MessageAttachments message={m} />
                               </>
                             )}
                             <div
