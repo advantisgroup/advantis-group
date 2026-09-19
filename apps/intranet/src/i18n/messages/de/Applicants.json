@@ -397,5 +397,11 @@
   "undoHireBody": "Der angelegte Mitarbeiter-Datensatz wird entfernt und die Person steht wieder in der Bewerberliste.",
   "undoHireDone": "{name} steht wieder in der Bewerberliste",
   "undoHireBlocked": "An diesem Mitarbeiter-Datensatz hängen bereits Dokumente — das lässt sich nicht automatisch rückgängig machen.",
-  "vaultLockedPasskeyDescription": "Nutze deinen Passkey, um fortzufahren."
+  "vaultLockedPasskeyDescription": "Nutze deinen Passkey, um fortzufahren.",
+  "poolConsent": "Talentpool",
+  "poolConsentUntil": "Einverstanden bis {date}",
+  "poolConsentNone": "Keine Einwilligung – 6 Monate nach Archivierung gelöscht",
+  "poolConsentRecord": "Einwilligung eintragen",
+  "poolConsentMonths": "{months} Monate",
+  "poolConsentWithdraw": "Widerrufen"
 }
