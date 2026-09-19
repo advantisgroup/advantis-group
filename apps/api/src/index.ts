@@ -53,9 +53,11 @@ export const app = new Elysia()
       return errorEnvelope(failure, context.requestId);
     }
 
+    // Elysia's own 4xx (a body that fails validation) carries a status but no
+    // code of ours; an ApiError already says exactly what went wrong.
     const status = (error as { status?: number }).status;
     const failure = await reportApiFailure(
-      typeof status === "number" && status >= 400 && status < 500
+      !(error instanceof ApiError) && typeof status === "number" && status >= 400 && status < 500
         ? new ApiError(
             status,
             "bad_request",
