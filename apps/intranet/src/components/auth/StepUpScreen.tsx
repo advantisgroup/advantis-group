@@ -252,7 +252,11 @@ export function StepUpScreen({
                 <Button
                   variant={status.availableMethods.length > 0 ? "outline" : "default"}
                   className="w-full"
-                  onClick={() => void clerk.signOut({ redirectUrl: "/sign-in/passkey" })}
+                  onClick={() =>
+                    void clerk.signOut({
+                      redirectUrl: `/sign-in/passkey?redirect_url=${encodeURIComponent(window.location.href)}`,
+                    })
+                  }
                 >
                   <KeyRound className="size-4" />
                   {t("usePasskeyInstead")}

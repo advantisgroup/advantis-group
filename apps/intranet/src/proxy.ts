@@ -141,10 +141,15 @@ const clerkHandler = clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
     // Land signed-out visitors on sign-up rather than Clerk's configured
     // sign-in default — it's the better-designed entry point, and existing
-    // members can still reach sign-in from the link inside it.
-    await auth.protect({
-      unauthenticatedUrl: new URL("/sign-up", req.url).toString(),
-    });
+    // members can still reach sign-in from the link inside it. The page they
+    // asked for rides along as `redirect_url`, which Clerk carries across to
+    // sign-in and follows once they're in.
+    const signUp = new URL("/sign-up", req.url);
+    const requested = req.nextUrl.pathname + req.nextUrl.search;
+    if (requested !== "/") {
+      signUp.searchParams.set("redirect_url", new URL(requested, req.url).toString());
+    }
+    await auth.protect({ unauthenticatedUrl: signUp.toString() });
   }
 });
 

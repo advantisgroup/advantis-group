@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { returnPathFromLocation, useKeepReturnTo } from "@/lib/return-to";
 import { signalAcceptedPasskeys, signalUnknownPasskey } from "./passkey-signal";
 
 type OptionsResponse = {
@@ -53,6 +54,7 @@ async function jsonOrThrow(response: Response) {
 export function PasskeySignIn() {
   const t = useTranslations("Settings");
   const { isLoaded, signIn, setActive } = useSignIn();
+  const signInHref = useKeepReturnTo("/sign-in");
   const { getToken } = useAuth();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -116,7 +118,7 @@ export function PasskeySignIn() {
           console.warn("[passkeys] credential sync signal failed", error);
         }
       }
-      router.replace("/");
+      router.replace(returnPathFromLocation());
     } catch (error) {
       console.error("[passkeys] sign-in failed", error);
       toast.error(t("passkeySignInError"));
@@ -144,7 +146,7 @@ export function PasskeySignIn() {
           {t("signInWithPasskey")}
         </Button>
         <Button asChild variant="ghost" className="w-full">
-          <Link href="/sign-in">{t("useAnotherSignInMethod")}</Link>
+          <Link href={signInHref}>{t("useAnotherSignInMethod")}</Link>
         </Button>
       </CardContent>
     </Card>
