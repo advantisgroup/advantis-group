@@ -147,11 +147,12 @@ export const reportHealth = gatedMutation("activitytrack")({
   },
 });
 
-/** Reactive read of every integration's health, for the dashboard banner. */
+/** Reactive read of Genesys and Clockodo health, for the dashboard banner. */
 export const health = userQuery({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("integrationHealth").collect();
+    const rows = await ctx.db.query("integrationHealth").collect();
+    return rows.filter((row) => row.source === "genesys" || row.source === "clockodo");
   },
 });
 

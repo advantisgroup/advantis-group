@@ -28,13 +28,17 @@ function ClockodoMark({ className }: { className?: string }) {
   return <Mark provider="clockodo" className={className} />;
 }
 
-function GenesysMark({ className }: { className?: string }) {
-  return <Mark provider="genesys" className={className} />;
-}
+const markFor = (provider: "genesys" | "clerk" | "resend" | "onedrive") =>
+  function ProviderRowMark({ className }: { className?: string }) {
+    return <Mark provider={provider} className={className} />;
+  };
 
 const PROVIDER_MARKS: Record<string, ComponentType<{ className?: string }>> = {
   clockodo: ClockodoMark,
-  genesys: GenesysMark,
+  genesys: markFor("genesys"),
+  clerk: markFor("clerk"),
+  resend: markFor("resend"),
+  onedrive: markFor("onedrive"),
 };
 
 /**

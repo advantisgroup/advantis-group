@@ -7,6 +7,7 @@ import { getConvex, getConvexServerKey } from "../../lib/convex.js";
 import { Errors } from "../../lib/errors.js";
 import { getRedis } from "../../lib/redis.js";
 import { sendClerkEmail } from "../../lib/resend.js";
+import { withWebhookHealth } from "../../lib/webhook-health.js";
 
 interface ClerkEmail {
   id: string;
@@ -70,47 +71,48 @@ export const clerkWebhookRoute = new Elysia().post("/webhooks/clerk", async ({ r
     return { ok: false, error: "invalid signature" };
   }
 
-  const convex = getConvex();
-  const serverKey = getConvexServerKey();
+  return withWebhookHealth("clerk", async () => {
+    const convex = getConvex();
+    const serverKey = getConvexServerKey();
 
-  if (event.type === "user.created" || event.type === "user.updated") {
-    const user = event.data as ClerkUserData;
-    await convex.mutation(api.people.clerkSync.syncFromClerk, {
-      serverKey,
-      clerkUserId: user.id,
-      updatedAt: user.updated_at,
-      banned: user.banned,
-      email: primaryEmail(user),
-      firstName: user.first_name ?? undefined,
-      lastName: user.last_name ?? undefined,
-      avatarUrl: user.image_url ?? undefined,
-    });
-  } else if (event.type === "user.deleted") {
-    const user = event.data as ClerkUserData;
-    await convex.mutation(api.people.clerkSync.deactivateFromClerk, {
-      serverKey,
-      clerkUserId: user.id,
-    });
-  } else if (event.type === "email.created") {
-    const email = event.data as ClerkEmailData;
-    // Already delivered by Clerk — nothing to do. Shouldn't happen once a
-    // template's toggle is off, but never double-send if it does.
-    if (email.delivered_by_clerk) return { ok: true };
-    if (!email.to_email_address || !email.subject || !email.body) return { ok: true };
-    // Svix retries until it sees a 2xx, so the same email can arrive twice.
-    const firstDelivery = await getRedis()?.set(`clerk-email:${headers["svix-id"]}`, 1, {
-      nx: true,
-      ex: 86_400,
-    });
-    if (firstDelivery === null) return { ok: true };
-    await sendClerkEmail({
-      to: email.to_email_address,
-      subject: email.subject,
-      html: email.body,
-      text: email.body_plain,
-      slug: email.slug,
-    });
-  }
-
-  return { ok: true };
+    if (event.type === "user.created" || event.type === "user.updated") {
+      const user = event.data as ClerkUserData;
+      await convex.mutation(api.people.clerkSync.syncFromClerk, {
+        serverKey,
+        clerkUserId: user.id,
+        updatedAt: user.updated_at,
+        banned: user.banned,
+        email: primaryEmail(user),
+        firstName: user.first_name ?? undefined,
+        lastName: user.last_name ?? undefined,
+        avatarUrl: user.image_url ?? undefined,
+      });
+    } else if (event.type === "user.deleted") {
+      const user = event.data as ClerkUserData;
+      await convex.mutation(api.people.clerkSync.deactivateFromClerk, {
+        serverKey,
+        clerkUserId: user.id,
+      });
+    } else if (event.type === "email.created") {
+      const email = event.data as ClerkEmailData;
+      // Already delivered by Clerk — nothing to do. Shouldn't happen once a
+      // template's toggle is off, but never double-send if it does.
+      if (email.delivered_by_clerk) return { ok: true };
+      if (!email.to_email_address || !email.subject || !email.body) return { ok: true };
+      // Svix retries until it sees a 2xx, so the same email can arrive twice.
+      const firstDelivery = await getRedis()?.set(`clerk-email:${headers["svix-id"]}`, 1, {
+        nx: true,
+        ex: 86_400,
+      });
+      if (firstDelivery === null) return { ok: true };
+      await sendClerkEmail({
+        to: email.to_email_address,
+        subject: email.subject,
+        html: email.body,
+        text: email.body_plain,
+        slug: email.slug,
+      });
+    }
+    return { ok: true };
+  });
 });

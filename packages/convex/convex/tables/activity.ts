@@ -225,7 +225,14 @@ export const activityTables = {
 
   // Integration health, one row per external source.
   integrationHealth: defineTable({
-    source: v.union(v.literal("genesys"), v.literal("clockodo")),
+    source: v.union(
+      v.literal("genesys"),
+      v.literal("clockodo"),
+      // Webhooks apps/api receives; see integrations/health.ts.
+      v.literal("clerk"),
+      v.literal("resend"),
+      v.literal("onedrive"),
+    ),
     status: v.union(v.literal("ok"), v.literal("unavailable"), v.literal("unconfigured")),
     message: v.optional(v.string()),
     lastOkAt: v.optional(v.number()),

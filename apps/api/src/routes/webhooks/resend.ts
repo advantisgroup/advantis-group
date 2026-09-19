@@ -5,6 +5,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 
 import { getConvex, getConvexServerKey } from "../../lib/convex.js";
+import { withWebhookHealth } from "../../lib/webhook-health.js";
 import { Errors } from "../../lib/errors.js";
 
 interface ResendTag {
@@ -68,15 +69,16 @@ export const resendWebhookRoute = new Elysia().post(
     const userId = tagValue(event.data.tags, "user_id");
     if (!event.data.email_id && !(updateId && userId)) return { ok: true };
 
-    const convex = getConvex();
-    await convex.mutation(api.updates.updates.recordEmailEvent, {
-      serverKey: getConvexServerKey(),
-      resendEmailId: event.data.email_id,
-      updateId: updateId as Id<"updates"> | undefined,
-      userId: userId as Id<"users"> | undefined,
-      eventType: event.type,
-      occurredAt: event.created_at ? Date.parse(event.created_at) : Date.now(),
-    });
+    await withWebhookHealth("resend", () =>
+      getConvex().mutation(api.updates.updates.recordEmailEvent, {
+        serverKey: getConvexServerKey(),
+        resendEmailId: event.data.email_id,
+        updateId: updateId as Id<"updates"> | undefined,
+        userId: userId as Id<"users"> | undefined,
+        eventType: event.type,
+        occurredAt: event.created_at ? Date.parse(event.created_at) : Date.now(),
+      }),
+    );
 
     return { ok: true };
   },

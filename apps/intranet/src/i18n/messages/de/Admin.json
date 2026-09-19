@@ -438,7 +438,10 @@
       "flagOff": "{key} ist abgeschaltet",
       "source": {
         "genesys": "Genesys",
-        "clockodo": "Clockodo"
+        "clockodo": "Clockodo",
+        "clerk": "Clerk-Webhooks",
+        "resend": "Resend-Webhooks",
+        "onedrive": "OneDrive-Webhooks"
       },
       "status": {
         "ok": "Gesund",
