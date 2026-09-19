@@ -934,6 +934,34 @@ export const exportMine = userQuery({
     const suggestions = (await ctx.db.query("suggestions").collect()).filter(
       (s) => s.authorUserId === user._id,
     );
+    const [messages, announcements, wikiEntries, activityPerson, passkeys, devices] =
+      await Promise.all([
+        ctx.db
+          .query("messages")
+          .withIndex("by_sender", (q) => q.eq("senderUserId", user._id))
+          .order("desc")
+          .take(5000),
+        ctx.db
+          .query("announcements")
+          .withIndex("by_author", (q) => q.eq("authorUserId", user._id))
+          .collect(),
+        ctx.db
+          .query("wikiEntries")
+          .withIndex("by_author", (q) => q.eq("authorUserId", user._id))
+          .collect(),
+        ctx.db
+          .query("people")
+          .withIndex("by_userId", (q) => q.eq("userId", user._id))
+          .first(),
+        ctx.db
+          .query("passkeys")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .collect(),
+        ctx.db
+          .query("knownDevices")
+          .withIndex("by_user_hash", (q) => q.eq("userId", user._id))
+          .collect(),
+      ]);
     const {
       clerkUserId: _clerk,
       webauthnUserId: _webauthn,
@@ -948,6 +976,26 @@ export const exportMine = userQuery({
       notifications: notifications.map(strip),
       itTickets: tickets.map(strip),
       suggestions: suggestions.map(({ attachments: _a, ...s }) => strip(s)),
+      chatMessages: messages.map(
+        ({ conversationId, body, _creationTime, editedAt, deletedAt }) => ({
+          conversationId,
+          body: deletedAt ? null : body,
+          sentAt: _creationTime,
+          editedAt: editedAt ?? null,
+        }),
+      ),
+      announcements: announcements.map(strip),
+      wikiEntries: wikiEntries.map(strip),
+      activityProfile: activityPerson ? strip(activityPerson) : null,
+      // Names and dates only — never the key material.
+      passkeys: passkeys.map((p) => ({ name: p.name ?? null, createdAt: p._creationTime })),
+      devices: devices.map((d) => ({
+        name: d.name ?? null,
+        browser: d.browser ?? null,
+        os: d.os ?? null,
+        firstSeenAt: d.firstSeenAt,
+        lastSeenAt: d.lastSeenAt,
+      })),
       guidebookReads: guidebookReads.map(({ slug, readAt }) => ({ slug, readAt })),
       aiRuns: aiRuns.map((run) => ({
         kind: run.kind,

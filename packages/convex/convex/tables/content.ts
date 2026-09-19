@@ -147,6 +147,7 @@ export const contentTables = {
   })
     .index("by_slug", ["slug"])
     .index("by_category", ["categoryId"])
+    .index("by_author", ["authorUserId"])
     .index("by_deletedAt", ["deletedAt"]),
 
   // Org-wide default instructions for the "format with AI" wiki-entry

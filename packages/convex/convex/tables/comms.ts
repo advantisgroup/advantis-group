@@ -71,6 +71,7 @@ export const commsTables = {
     deletedBy: v.optional(v.id("users")),
   })
     .index("by_publishedAt", ["publishedAt"])
+    .index("by_author", ["authorUserId"])
     .index("by_deletedAt", ["deletedAt"]),
 
   announcementReads: defineTable({

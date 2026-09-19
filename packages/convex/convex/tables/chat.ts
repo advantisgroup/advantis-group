@@ -67,7 +67,8 @@ export const chatTables = {
     createdAt: v.number(),
   })
     .index("by_conversation", ["conversationId"])
-    .index("by_conversation_pinnedAt", ["conversationId", "pinnedAt"]),
+    .index("by_conversation_pinnedAt", ["conversationId", "pinnedAt"])
+    .index("by_sender", ["senderUserId"]),
 
   /**
    * Reverse index from an attachment's storage id to whatever owns it
