@@ -12,6 +12,7 @@ import {
 } from "../schema";
 import { batchUserSummaries, toUserSummary } from "../lib/users";
 import { getServerCaller } from "../lib/caller";
+import { purgeApplicant } from "../hr/lib/retention";
 
 /**
  * Bewerbermanagement (Applicant Management). Everything below is gated by
@@ -342,34 +343,7 @@ export const remove = userMutation({
   handler: async (ctx, { applicantId }) => {
     await requireApplicant(ctx, applicantId);
 
-    const [kontakte, emails, interviews, termine, documents] = await Promise.all([
-      ctx.db
-        .query("applicantContacts")
-        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantEmails")
-        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantInterviews")
-        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantAppointments")
-        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantDocuments")
-        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
-        .collect(),
-    ]);
-
-    for (const doc of documents) await ctx.storage.delete(doc.storageId);
-    for (const rows of [kontakte, emails, interviews, termine, documents]) {
-      for (const row of rows) await ctx.db.delete(row._id);
-    }
-    await ctx.db.delete(applicantId);
+    await purgeApplicant(ctx, applicantId);
     return { ok: true };
   },
 });

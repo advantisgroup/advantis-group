@@ -36,13 +36,17 @@ export const hrTables = {
     profilId: v.optional(v.id("applicantSkillProfiles")),
     notizen: v.optional(v.string()),
     archivedAt: v.optional(v.number()),
+    /** The applicant agreed to stay in the talent pool until then; see
+     *  hr/retention.ts. */
+    poolConsentUntil: v.optional(v.number()),
     convertedEmployeeProfileId: v.optional(v.id("employeeProfiles")),
     createdByUserId: v.id("users"),
     createdAt: v.number(),
   })
     .index("by_createdAt", ["createdAt"])
     .index("by_profil", ["profilId"])
-    .index("by_email", ["email"]),
+    .index("by_email", ["email"])
+    .index("by_archivedAt", ["archivedAt"]),
 
   employeeProfiles: defineTable({
     userId: v.optional(v.id("users")),
