@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 
 import { serverMutation, userMutation, userQuery } from "../functions";
+import { alertAdmins } from "../lib/notify";
 import { displayName } from "../lib/users";
 
 /** Called by apps/api when the backup GitHub Action finishes, either way. */
@@ -13,6 +14,12 @@ export const apiRecord = serverMutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("backupRuns", { kind: "backup", ...args, at: Date.now() });
+    if (args.status === "failed") {
+      await alertAdmins(ctx, {
+        title: "Last night's backup failed",
+        body: args.note?.slice(0, 200),
+      });
+    }
   },
 });
 

@@ -47,6 +47,7 @@ const ACTION_REQUIRED_TYPES = new Set([
   "access_request",
   "academy_answer",
   "password_reset_request",
+  "system_alert",
 ]);
 
 interface NotificationDoc {

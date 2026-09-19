@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 
 import { serverMutation } from "../functions";
+import { alertAdmins } from "../lib/notify";
 
 /**
  * apps/api reports each webhook delivery it handles (Clerk, Resend, OneDrive)
@@ -29,5 +30,12 @@ export const apiRecordWebhook = serverMutation({
         };
     if (existing) await ctx.db.patch(existing._id, patch);
     else await ctx.db.insert("integrationHealth", { source, ...patch });
+    // Only on the switch from working to broken, so a flood of failures is one alert.
+    if (!ok && existing?.status !== "unavailable") {
+      await alertAdmins(ctx, {
+        title: `${source[0].toUpperCase()}${source.slice(1)} webhooks are failing`,
+        body: message?.slice(0, 200),
+      });
+    }
   },
 });

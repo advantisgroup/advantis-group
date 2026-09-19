@@ -10,6 +10,7 @@ import {
   Plane,
   Share2,
   ShieldCheck,
+  TriangleAlert,
   UploadCloud,
   Wrench,
   type LucideIcon,
@@ -68,6 +69,7 @@ const VISUALS: Record<string, { icon: LucideIcon; tint: string }> = {
   },
   suggestion: { icon: Lightbulb, tint: "bg-amber-500/15 text-amber-600 dark:text-amber-300" },
   incident: { icon: Wrench, tint: "bg-destructive/10 text-destructive" },
+  system_alert: { icon: TriangleAlert, tint: "bg-destructive/10 text-destructive" },
   maintenance: { icon: Wrench, tint: "bg-amber-500/15 text-amber-600 dark:text-amber-300" },
 };
 

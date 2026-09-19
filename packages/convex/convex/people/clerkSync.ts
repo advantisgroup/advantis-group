@@ -1,4 +1,4 @@
-import { internalAction, serverMutation } from "../functions";
+import { internalAction, internalMutation, serverMutation } from "../functions";
 import { type Infer, v } from "convex/values";
 
 import { internal } from "../_generated/api";
@@ -12,7 +12,8 @@ import {
   updateClerkUserAvatar,
   updateClerkUserName,
 } from "../lib/clerk";
-import { markUserRemoved } from "../lib/users";
+import { alertAdmins } from "../lib/notify";
+import { displayName, markUserRemoved } from "../lib/users";
 
 /**
  * Both directions of the Clerk ↔ `users` sync.
@@ -126,6 +127,7 @@ export const push = internalAction({
       const wait = RETRY_MINUTES[attempt];
       if (wait === undefined) {
         console.error(`[clerkSync] giving up on ${change.kind} after ${attempt} retries`, error);
+        await ctx.runMutation(internal.people.clerkSync.alertGaveUp, { change });
         return;
       }
       await ctx.scheduler.runAfter(wait * 60_000, internal.people.clerkSync.push, {
@@ -133,5 +135,33 @@ export const push = internalAction({
         attempt: attempt + 1,
       });
     }
+  },
+});
+
+const GAVE_UP_TITLES: Record<ClerkChange["kind"], string> = {
+  lock: "Couldn't sign a suspended member out of Clerk",
+  unlock: "Couldn't unlock a member in Clerk",
+  delete: "Couldn't delete a removed member from Clerk",
+  rename: "Couldn't update a name in Clerk",
+  avatar: "Couldn't update a profile photo in Clerk",
+  revokeInvitations: "Couldn't revoke a Clerk invitation",
+};
+
+export const alertGaveUp = internalMutation({
+  args: { change: clerkChange },
+  handler: async (ctx, { change }) => {
+    const who =
+      "email" in change
+        ? change.email
+        : displayName(
+            await ctx.db
+              .query("users")
+              .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", change.clerkUserId))
+              .unique(),
+          );
+    await alertAdmins(ctx, {
+      title: GAVE_UP_TITLES[change.kind],
+      body: `${who}: Clerk kept failing for about 14 hours, so it has to be done in the Clerk dashboard.`,
+    });
   },
 });

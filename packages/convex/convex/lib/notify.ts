@@ -43,3 +43,19 @@ export async function notifyUsers(
 ): Promise<void> {
   await Promise.all(userIds.map((userId) => createNotification(ctx, { ...args, userId })));
 }
+
+/** Something broke that nobody would otherwise notice — tell every active admin. */
+export async function alertAdmins(
+  ctx: MutationCtx,
+  args: { title: string; body?: string; link?: string },
+): Promise<void> {
+  const admins = await ctx.db
+    .query("users")
+    .withIndex("by_role", (q) => q.eq("role", "admin"))
+    .collect();
+  await notifyUsers(
+    ctx,
+    admins.filter((u) => u.status === "active").map((u) => u._id),
+    { type: "system_alert", link: "/admin", ...args },
+  );
+}
