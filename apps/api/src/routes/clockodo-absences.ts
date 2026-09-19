@@ -11,7 +11,7 @@ import {
 import { resolveClockodoCaller } from "../lib/clockodo-caller.js";
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { Errors } from "../lib/errors.js";
-import { requireAuth } from "../lib/middleware.js";
+import { authed } from "../lib/middleware.js";
 
 /**
  * Live Clockodo absence reads — no Convex mirror. Absences change rarely and
@@ -110,21 +110,22 @@ function recentWindow() {
 }
 
 export const clockodoAbsencesRoute = new Elysia()
+  .use(authed)
   .get("/clockodo/clock/me", async ({ request }) => {
-    const caller = await resolveClockodoCaller(request);
+    const me = await resolveClockodoCaller(request);
     const [{ timeSince, timeUntil }, account] = [
       recentWindow(),
-      await clockodo.getUser(caller.clockodoUserId),
+      await clockodo.getUser(me.clockodoUserId),
     ];
     const entries = await clockodo.listEntries({
-      userId: caller.clockodoUserId,
+      userId: me.clockodoUserId,
       timeSince,
       timeUntil,
     });
     const running = entries.find((entry) => entry.time_until === null);
     if (running?.time_since) {
       return {
-        accountName: account?.name ?? caller.name,
+        accountName: account?.name ?? me.name,
         status: "working" as const,
         since: running.time_since,
         entryId: running.id,
@@ -137,18 +138,18 @@ export const clockodoAbsencesRoute = new Elysia()
       .reduce((latest, end) => Math.max(latest, end), 0);
     const onBreak = lastEnd > 0 && Date.now() - lastEnd <= 60 * 60 * 1000;
     return {
-      accountName: account?.name ?? caller.name,
+      accountName: account?.name ?? me.name,
       status: onBreak ? ("break" as const) : ("clockedOut" as const),
       since: lastEnd ? new Date(lastEnd).toISOString() : null,
       entryId: null,
     };
   })
   .get("/clockodo/clock/options", async ({ request }) => {
-    const caller = await resolveClockodoCaller(request);
+    const me = await resolveClockodoCaller(request);
     const [customers, services, rights] = await Promise.all([
       clockodo.listCustomers(),
       clockodo.listServices(),
-      clockodo.getClockOptionsRights(caller.clockodoUserId),
+      clockodo.getClockOptionsRights(me.clockodoUserId),
     ]);
     const canUse = (value: boolean | Record<string, unknown>, id: number) =>
       value === true || (typeof value === "object" && value !== null && String(id) in value);
@@ -160,19 +161,19 @@ export const clockodoAbsencesRoute = new Elysia()
   .post(
     "/clockodo/clock/me",
     async ({ request, body }) => {
-      const caller = await resolveClockodoCaller(request);
-      const rights = await clockodo.getClockOptionsRights(caller.clockodoUserId);
+      const me = await resolveClockodoCaller(request);
+      const rights = await clockodo.getClockOptionsRights(me.clockodoUserId);
       const canUse = (value: boolean | Record<string, unknown>, id: number) =>
         value === true || (typeof value === "object" && value !== null && String(id) in value);
       if (!canUse(rights.customers, body.customerId) || !canUse(rights.services, body.serviceId)) {
         throw Errors.forbidden();
       }
-      const running = await clockodo.getRunningClock(caller.clockodoUserId);
-      if (running?.users_id === caller.clockodoUserId) {
+      const running = await clockodo.getRunningClock(me.clockodoUserId);
+      if (running?.users_id === me.clockodoUserId) {
         throw Errors.badRequest("Clockodo timer is already running");
       }
       const entry = await clockodo.startClock({
-        userId: caller.clockodoUserId,
+        userId: me.clockodoUserId,
         customerId: body.customerId,
         serviceId: body.serviceId,
       });
@@ -188,42 +189,38 @@ export const clockodoAbsencesRoute = new Elysia()
   .delete(
     "/clockodo/clock/me/:entryId",
     async ({ request, params }) => {
-      const caller = await resolveClockodoCaller(request);
+      const me = await resolveClockodoCaller(request);
       const entryId = Number(params.entryId);
       if (!Number.isSafeInteger(entryId)) throw Errors.badRequest("Invalid Clockodo entry id");
-      const running = await clockodo.getRunningClock(caller.clockodoUserId);
-      if (!running || running.id !== entryId || running.users_id !== caller.clockodoUserId) {
+      const running = await clockodo.getRunningClock(me.clockodoUserId);
+      if (!running || running.id !== entryId || running.users_id !== me.clockodoUserId) {
         throw Errors.forbidden();
       }
-      await clockodo.stopClock(entryId, caller.clockodoUserId);
+      await clockodo.stopClock(entryId, me.clockodoUserId);
       return { ok: true };
     },
     { params: t.Object({ entryId: t.String() }) },
   )
-  .get("/clockodo/absences/me", async ({ request }) => {
-    const { clerkUserId } = await requireAuth(request);
-    const caller = await getConvex().query(api.integrations.clockodoAbsences.resolveCaller, {
-      serverKey: getConvexServerKey(),
-      clerkUserId,
-    });
-    if (caller.status !== "linked") return { absences: [] };
+  .get(
+    "/clockodo/absences/me",
+    async ({ caller }) => {
+      const me = await caller.convex.query(api.integrations.clockodoAbsences.resolveCaller, {});
+      if (me.status !== "linked") return { absences: [] };
 
-    const all = await clockodo.listCurrentAbsences();
-    const mine = all
-      .filter((a) => String(a.users_id) === caller.clockodoUserId)
-      .map(toDto)
-      .sort((a, b) => b.startDate.localeCompare(a.startDate));
-    return { absences: mine };
-  })
+      const all = await clockodo.listCurrentAbsences();
+      const mine = all
+        .filter((a) => String(a.users_id) === me.clockodoUserId)
+        .map(toDto)
+        .sort((a, b) => b.startDate.localeCompare(a.startDate));
+      return { absences: mine };
+    },
+    { signedIn: true },
+  )
   .get(
     "/clockodo/absences/calendar",
-    async ({ request, query }) => {
-      const { clerkUserId } = await requireAuth(request);
-      const [caller, roster] = await Promise.all([
-        getConvex().query(api.integrations.clockodoAbsences.resolveCaller, {
-          serverKey: getConvexServerKey(),
-          clerkUserId,
-        }),
+    async ({ caller, query }) => {
+      const [me, roster] = await Promise.all([
+        caller.convex.query(api.integrations.clockodoAbsences.resolveCaller, {}),
         getConvex().query(api.integrations.clockodoAbsences.roster, {
           serverKey: getConvexServerKey(),
         }),
@@ -242,8 +239,8 @@ export const clockodoAbsencesRoute = new Elysia()
         .map((a) => {
           const person = rosterByClockodoId.get(a.clockodoUserId);
           if (!person) return null;
-          const isSelf = caller.status === "linked" && caller.clockodoUserId === a.clockodoUserId;
-          const canViewTeam = caller.status !== "no_account" && caller.canViewTeam;
+          const isSelf = me.status === "linked" && me.clockodoUserId === a.clockodoUserId;
+          const canViewTeam = me.status !== "no_account" && me.canViewTeam;
           // Privacy: colleagues only see that someone is on vacation, not why
           // — sick/personal/other absences stay visible to that person alone
           // and to view_clockodo_team holders/managers, never the note/reason
@@ -267,69 +264,66 @@ export const clockodoAbsencesRoute = new Elysia()
       return { absences: visible };
     },
     {
+      signedIn: true,
       query: t.Object({ start: t.String(), end: t.String() }),
     },
   )
   /** Admin dashboard quick stat — count only, no identities. */
-  .get("/clockodo/absences/pending-count", async ({ request }) => {
-    const { clerkUserId } = await requireAuth(request);
-    const caller = await getConvex().query(api.integrations.clockodoAbsences.resolveCaller, {
-      serverKey: getConvexServerKey(),
-      clerkUserId,
-    });
-    if (caller.status === "no_account" || !caller.canViewTeam) throw Errors.forbidden();
+  .get(
+    "/clockodo/absences/pending-count",
+    async ({ caller }) => {
+      const me = await caller.convex.query(api.integrations.clockodoAbsences.resolveCaller, {});
+      if (me.status === "no_account" || !me.canViewTeam) throw Errors.forbidden();
 
-    const all = await clockodo.listCurrentAbsences();
-    const count = all.filter((a) => mapAbsenceStatus(a.status) === "pending").length;
-    return { count };
-  })
+      const all = await clockodo.listCurrentAbsences();
+      const count = all.filter((a) => mapAbsenceStatus(a.status) === "pending").length;
+      return { count };
+    },
+    { signedIn: true },
+  )
   /** Manager+/canManageTeam-only queue of pending requests to approve or
    *  deny — org-wide, unlike /me. */
-  .get("/clockodo/absences/pending", async ({ request }) => {
-    const { clerkUserId } = await requireAuth(request);
-    const [caller, roster] = await Promise.all([
-      getConvex().query(api.integrations.clockodoAbsences.resolveCaller, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
-      }),
-      getConvex().query(api.integrations.clockodoAbsences.roster, {
-        serverKey: getConvexServerKey(),
-      }),
-    ]);
-    if (caller.status === "no_account" || !caller.canManageTeam) {
-      throw Errors.forbidden();
-    }
+  .get(
+    "/clockodo/absences/pending",
+    async ({ caller }) => {
+      const [me, roster] = await Promise.all([
+        caller.convex.query(api.integrations.clockodoAbsences.resolveCaller, {}),
+        getConvex().query(api.integrations.clockodoAbsences.roster, {
+          serverKey: getConvexServerKey(),
+        }),
+      ]);
+      if (me.status === "no_account" || !me.canManageTeam) {
+        throw Errors.forbidden();
+      }
 
-    const rosterByClockodoId = new Map(
-      roster.filter((r) => r.linked).map((r) => [r.clockodoUserId, r]),
-    );
-    const all = await clockodo.listCurrentAbsences();
-    const pending = all
-      .filter((a) => mapAbsenceStatus(a.status) === "pending")
-      .map(toDto)
-      .map((dto): PendingApprovalDTO | null => {
-        const person = rosterByClockodoId.get(dto.clockodoUserId);
-        if (!person) return null;
-        return {
-          ...dto,
-          userId: String(person.userId),
-          userName: person.name,
-          userDepartment: person.department,
-        };
-      })
-      .filter((a): a is PendingApprovalDTO => a !== null)
-      .sort((a, b) => a.startDate.localeCompare(b.startDate));
-    return { absences: pending };
-  })
+      const rosterByClockodoId = new Map(
+        roster.filter((r) => r.linked).map((r) => [r.clockodoUserId, r]),
+      );
+      const all = await clockodo.listCurrentAbsences();
+      const pending = all
+        .filter((a) => mapAbsenceStatus(a.status) === "pending")
+        .map(toDto)
+        .map((dto): PendingApprovalDTO | null => {
+          const person = rosterByClockodoId.get(dto.clockodoUserId);
+          if (!person) return null;
+          return {
+            ...dto,
+            userId: String(person.userId),
+            userName: person.name,
+            userDepartment: person.department,
+          };
+        })
+        .filter((a): a is PendingApprovalDTO => a !== null)
+        .sort((a, b) => a.startDate.localeCompare(b.startDate));
+      return { absences: pending };
+    },
+    { signedIn: true },
+  )
   .put(
     "/clockodo/absences/:id/status",
-    async ({ request, params, body }) => {
-      const { clerkUserId } = await requireAuth(request);
-      const caller = await getConvex().query(api.integrations.clockodoAbsences.resolveCaller, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
-      });
-      if (caller.status === "no_account" || !caller.canManageTeam) {
+    async ({ caller, params, body }) => {
+      const me = await caller.convex.query(api.integrations.clockodoAbsences.resolveCaller, {});
+      if (me.status === "no_account" || !me.canManageTeam) {
         throw Errors.forbidden();
       }
 
@@ -339,7 +333,7 @@ export const clockodoAbsencesRoute = new Elysia()
       const absence = await clockodo.getAbsence(id);
       // Self-approval safeguard: an approver can't action their own request
       // — someone else with the permission has to.
-      if (caller.status === "linked" && String(absence.users_id) === caller.clockodoUserId) {
+      if (me.status === "linked" && String(absence.users_id) === me.clockodoUserId) {
         throw Errors.forbidden("Cannot approve or deny your own absence request");
       }
 
@@ -347,6 +341,7 @@ export const clockodoAbsencesRoute = new Elysia()
       return { absence: toDto(updated) };
     },
     {
+      signedIn: true,
       params: t.Object({ id: t.String() }),
       body: t.Object({
         status: t.Union([t.Literal("approved"), t.Literal("denied")]),
@@ -356,9 +351,9 @@ export const clockodoAbsencesRoute = new Elysia()
   .post(
     "/clockodo/absences/me",
     async ({ request, body }) => {
-      const caller = await resolveClockodoCaller(request);
+      const me = await resolveClockodoCaller(request);
       const absence = await clockodo.createAbsence({
-        users_id: caller.clockodoUserId,
+        users_id: me.clockodoUserId,
         date_since: body.dateSince,
         date_until: body.dateUntil,
         type: body.clockodoType,
@@ -381,10 +376,10 @@ export const clockodoAbsencesRoute = new Elysia()
   .put(
     "/clockodo/absences/me/:id",
     async ({ request, params, body }) => {
-      const caller = await resolveClockodoCaller(request);
+      const me = await resolveClockodoCaller(request);
       const id = Number(params.id);
       if (!Number.isSafeInteger(id)) throw Errors.badRequest("Invalid absence id");
-      await requireOwnAbsence(id, caller.clockodoUserId);
+      await requireOwnAbsence(id, me.clockodoUserId);
       const absence = await clockodo.updateAbsence(id, {
         date_since: body.dateSince,
         date_until: body.dateUntil,

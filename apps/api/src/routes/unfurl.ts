@@ -3,7 +3,7 @@ import { Elysia, t } from "elysia";
 import type { UnfurlResult } from "@advantis/types";
 
 import { Errors } from "../lib/errors.js";
-import { requireAuth } from "../lib/middleware.js";
+import { authed } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
 const MAX_BYTES = 512 * 1024; // only read the first 512KB of <head>
@@ -34,10 +34,10 @@ function ogPattern(prop: string): RegExp {
 }
 
 /** GET /unfurl?url= — fetch Open Graph metadata for a link preview. */
-export const unfurlRoute = new Elysia().get(
+export const unfurlRoute = new Elysia().use(authed).get(
   "/unfurl",
-  async ({ request, query }) => {
-    const { clerkUserId } = await requireAuth(request);
+  async ({ caller, query }) => {
+    const { clerkUserId } = caller;
     await rateLimit("unfurl", clerkUserId, 30, "1 m");
 
     let target: URL;
@@ -101,6 +101,7 @@ export const unfurlRoute = new Elysia().get(
     return result;
   },
   {
+    signedIn: true,
     query: t.Object({ url: t.String() }),
     response: {
       200: t.Object({

@@ -18,7 +18,7 @@ import {
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { decrypt } from "../lib/crypto.js";
 import { Errors } from "../lib/errors.js";
-import { requireAuth } from "../lib/middleware.js";
+import { authed } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
 /** Suggests a skill profile whose name matches the applicant's stated position. */
@@ -196,12 +196,13 @@ async function requireApplicantAccess(clerkUserId: string) {
 }
 
 export const applicantsRoute = new Elysia()
+  .use(authed)
   /** One run per PDF, so a batch can be dropped in and left alone — each
    * file lands in the import tray on its own as it finishes. */
   .post(
     "/applicants/extract",
-    async ({ request, body }) => {
-      const { clerkUserId } = await requireAuth(request);
+    async ({ caller, body }) => {
+      const { clerkUserId } = caller;
       await rateLimit("applicants.extract", clerkUserId, 20, "1 m");
       const access = await requireApplicantAccess(clerkUserId);
 
@@ -245,33 +246,38 @@ export const applicantsRoute = new Elysia()
         },
       );
     },
-    { body: t.Object({ file: t.File() }) },
+    {
+      signedIn: true,
+      body: t.Object({ file: t.File() }),
+    },
   )
   /** The "not the same person, create a new record" answer to a duplicate —
    * reuses what the run already read instead of paying for it again. */
-  .post("/applicants/extract/:runId/create", async ({ request, params }) => {
-    const { clerkUserId } = await requireAuth(request);
-    const access = await requireApplicantAccess(clerkUserId);
-    const run = await getConvex().query(api.aiRuns.apiGet, {
-      serverKey: getConvexServerKey(),
-      clerkUserId,
-      runId: params.runId,
-    });
-    if (!run || run.kind !== "cvExtract" || run.status !== "done" || !run.output) {
-      throw Errors.notFound("Import not found");
-    }
-    const result = JSON.parse(
-      decrypt(run.output, runEncryptionKey("cvExtract")),
-    ) as CvExtractOutput;
-    if (result.kind !== "duplicate") throw Errors.badRequest("Already created");
-    const applicantId = await createFromExtraction(
-      access.userId,
-      result.extractedFields,
-      result.pendingStorageId,
-      result.fileName,
-    );
-    return { applicantId };
-  })
+  .post(
+    "/applicants/extract/:runId/create",
+    async ({ caller, params }) => {
+      const { clerkUserId } = caller;
+      const access = await requireApplicantAccess(clerkUserId);
+      const run = await caller.convex.query(api.aiRuns.apiGet, {
+        runId: params.runId,
+      });
+      if (!run || run.kind !== "cvExtract" || run.status !== "done" || !run.output) {
+        throw Errors.notFound("Import not found");
+      }
+      const result = JSON.parse(
+        decrypt(run.output, runEncryptionKey("cvExtract")),
+      ) as CvExtractOutput;
+      if (result.kind !== "duplicate") throw Errors.badRequest("Already created");
+      const applicantId = await createFromExtraction(
+        access.userId,
+        result.extractedFields,
+        result.pendingStorageId,
+        result.fileName,
+      );
+      return { applicantId };
+    },
+    { signedIn: true },
+  )
   /**
    * Re-runs extraction against a CV for an EXISTING applicant, without
    * persisting anything — the client reviews the result (merged with the
@@ -281,8 +287,8 @@ export const applicantsRoute = new Elysia()
    */
   .post(
     "/applicants/rescan",
-    async ({ request, body }) => {
-      const { clerkUserId } = await requireAuth(request);
+    async ({ caller, body }) => {
+      const { clerkUserId } = caller;
       await rateLimit("applicants.rescan", clerkUserId, 20, "1 m");
       await requireApplicantAccess(clerkUserId);
 
@@ -306,5 +312,8 @@ export const applicantsRoute = new Elysia()
         },
       );
     },
-    { body: t.Object({ file: t.File(), applicantId: t.String({ maxLength: 64 }) }) },
+    {
+      signedIn: true,
+      body: t.Object({ file: t.File(), applicantId: t.String({ maxLength: 64 }) }),
+    },
   );

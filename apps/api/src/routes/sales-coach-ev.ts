@@ -16,7 +16,7 @@ import { anthropic } from "../lib/anthropic.js";
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { decrypt, encrypt } from "../lib/crypto.js";
 import { Errors } from "../lib/errors.js";
-import { requireAuth } from "../lib/middleware.js";
+import { authed } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
 /** Sales Coach EV transcripts/feedback get their own rotatable key, separate from Wiki Chat. */
@@ -260,44 +260,42 @@ function decryptCall(call: {
 }
 
 export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
+  .use(authed)
   // --- Calls ---------------------------------------------------------------
   .get(
     "/calls",
-    async ({ request, query }) => {
-      const { clerkUserId } = await requireAuth(request);
+    async ({ caller, query }) => {
       const days = query.period === "7" ? 7 : query.period === "30" ? 30 : null;
       const sinceMs = days ? Date.now() - days * 86_400_000 : undefined;
-      const calls = await getConvex().query(api.salesCoachEv.calls.list, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
+      const calls = await caller.convex.query(api.salesCoachEv.calls.list, {
         sinceMs,
       });
       return { calls: calls.map(decryptCall) };
     },
     {
+      signedIn: true,
       query: t.Object({
         period: t.Optional(t.Union([t.Literal("7"), t.Literal("30"), t.Literal("all")])),
       }),
     },
   )
-  .get("/calls/:id", async ({ request, params }) => {
-    const { clerkUserId } = await requireAuth(request);
-    const call = await getConvex().query(api.salesCoachEv.calls.get, {
-      serverKey: getConvexServerKey(),
-      clerkUserId,
-      id: params.id as Id<"salesCoachEvCalls">,
-    });
-    if (!call) throw Errors.notFound("Call not found");
-    return { call: decryptCall(call) };
-  })
+  .get(
+    "/calls/:id",
+    async ({ caller, params }) => {
+      const call = await caller.convex.query(api.salesCoachEv.calls.get, {
+        id: params.id as Id<"salesCoachEvCalls">,
+      });
+      if (!call) throw Errors.notFound("Call not found");
+      return { call: decryptCall(call) };
+    },
+    { signedIn: true },
+  )
   .post(
     "/calls",
-    async ({ request, body }) => {
-      const { clerkUserId } = await requireAuth(request);
+    async ({ caller, body }) => {
+      const { clerkUserId } = caller;
       await rateLimit("salesCoachEv.saveCall", clerkUserId, 30, "1 m");
-      const { id } = await getConvex().mutation(api.salesCoachEv.calls.create, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
+      const { id } = await caller.convex.mutation(api.salesCoachEv.calls.create, {
         startedAt: Date.now() - body.durationSec * 1000,
         durationSec: body.durationSec,
         callerSpeakPct: body.callerSpeakPct,
@@ -307,6 +305,7 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       return { id };
     },
     {
+      signedIn: true,
       body: t.Object({
         transcript: t.String(),
         durationSec: t.Number(),
@@ -319,8 +318,8 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
    * attaches to it when the run finishes whether or not anyone is watching. */
   .post(
     "/report",
-    async ({ request, body }) => {
-      const { clerkUserId } = await requireAuth(request);
+    async ({ caller, body }) => {
+      const { clerkUserId } = caller;
       await rateLimit("salesCoachEv.report", clerkUserId, 10, "1 m");
       const kpiText = await getKpiText(clerkUserId);
       const userMsg = `Dauer: ${fmt(body.durationSec)}, Anrufer: ${body.callerSpeakPct}%, Ergebnis: ${body.outcome}\n\nTranskript:\n${body.transcript}`;
@@ -349,9 +348,7 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
           );
           const feedback = readFeedback(raw);
           run.phase("finishing");
-          await getConvex().mutation(api.salesCoachEv.calls.attachReport, {
-            serverKey: getConvexServerKey(),
-            clerkUserId,
+          await caller.convex.mutation(api.salesCoachEv.calls.attachReport, {
             id: body.callId as Id<"salesCoachEvCalls">,
             scores,
             skillLevel,
@@ -362,6 +359,7 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       );
     },
     {
+      signedIn: true,
       body: t.Object({
         callId: t.String(),
         transcript: t.String(),
@@ -373,8 +371,8 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
   )
   .post(
     "/live-hint",
-    async ({ request, body }) => {
-      const { clerkUserId } = await requireAuth(request);
+    async ({ caller, body }) => {
+      const { clerkUserId } = caller;
       await rateLimit("salesCoachEv.liveHint", clerkUserId, 6, "1 m");
       const kpiText = await getKpiText(clerkUserId);
       const userMsg = `Gespraechszeit: ${fmt(body.elapsedSec)}\n\n${body.transcriptTail}`;
@@ -391,14 +389,17 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
           : [false, false, false, false, false];
       return { hints, evChecks, detectedPath: Number(raw.detectedPath) || 0 };
     },
-    { body: t.Object({ transcriptTail: t.String(), elapsedSec: t.Number() }) },
+    {
+      signedIn: true,
+      body: t.Object({ transcriptTail: t.String(), elapsedSec: t.Number() }),
+    },
   )
   /** `key` names the set of calls being summarised, so reopening the dialog
    * on the same day and call count shows the summary already written. */
   .post(
     "/eod-summary",
-    async ({ request, body }) => {
-      const { clerkUserId } = await requireAuth(request);
+    async ({ caller, body }) => {
+      const { clerkUserId } = caller;
       await rateLimit("salesCoachEv.eodSummary", clerkUserId, 5, "1 m");
       const userMsg = `Staerken:\n${body.strengths.slice(0, 15).join("\n")}\n\nVerbesserungen:\n${body.improvements.slice(0, 15).join("\n")}`;
 
@@ -425,6 +426,7 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       );
     },
     {
+      signedIn: true,
       body: t.Object({
         strengths: t.Array(t.String()),
         improvements: t.Array(t.String()),
@@ -433,26 +435,27 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
     },
   )
   // --- Wiki ------------------------------------------------------------------
-  .get("/wiki", async ({ request }) => {
-    await requireAuth(request);
-    const articles = await getConvex().query(api.salesCoachEv.wiki.list, {
-      serverKey: getConvexServerKey(),
-    });
-    return { articles };
-  })
+  .get(
+    "/wiki",
+    async () => {
+      const articles = await getConvex().query(api.salesCoachEv.wiki.list, {
+        serverKey: getConvexServerKey(),
+      });
+      return { articles };
+    },
+    { signedIn: true },
+  )
   .post(
     "/wiki",
-    async ({ request, body }) => {
-      const { clerkUserId } = await requireAuth(request);
-      const { id } = await getConvex().mutation(api.salesCoachEv.wiki.create, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
+    async ({ caller, body }) => {
+      const { id } = await caller.convex.mutation(api.salesCoachEv.wiki.create, {
         ...body,
         storageId: body.storageId as Id<"_storage"> | undefined,
       });
       return { id };
     },
     {
+      signedIn: true,
       body: t.Object({
         title: t.String(),
         cat: wikiCatSchema,
@@ -469,11 +472,8 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
   )
   .patch(
     "/wiki/:id",
-    async ({ request, params, body }) => {
-      const { clerkUserId } = await requireAuth(request);
-      await getConvex().mutation(api.salesCoachEv.wiki.update, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
+    async ({ caller, params, body }) => {
+      await caller.convex.mutation(api.salesCoachEv.wiki.update, {
         id: params.id as Id<"salesCoachEvWiki">,
         ...body,
         storageId: body.storageId as Id<"_storage"> | undefined,
@@ -481,6 +481,7 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       return { updated: true };
     },
     {
+      signedIn: true,
       body: t.Object({
         title: t.Optional(t.String()),
         cat: t.Optional(wikiCatSchema),
@@ -495,28 +496,26 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       }),
     },
   )
-  .delete("/wiki/:id", async ({ request, params }) => {
-    const { clerkUserId } = await requireAuth(request);
-    await getConvex().mutation(api.salesCoachEv.wiki.remove, {
-      serverKey: getConvexServerKey(),
-      clerkUserId,
-      id: params.id as Id<"salesCoachEvWiki">,
-    });
-    return { deleted: true };
-  })
+  .delete(
+    "/wiki/:id",
+    async ({ caller, params }) => {
+      await caller.convex.mutation(api.salesCoachEv.wiki.remove, {
+        id: params.id as Id<"salesCoachEvWiki">,
+      });
+      return { deleted: true };
+    },
+    { signedIn: true },
+  )
   // Reads a source document (PDF sent as a file; .docx/.txt/.md sent as
   // already-extracted plain text, since the client already has mammoth for
   // that) and returns wiki-field suggestions — admin-gated same as every
   // other wiki write, since only admins can save the result anyway.
   .post(
     "/wiki/extract",
-    async ({ request, body }) => {
-      const { clerkUserId } = await requireAuth(request);
+    async ({ caller, body }) => {
+      const { clerkUserId } = caller;
       await rateLimit("salesCoachEv.wikiExtract", clerkUserId, 15, "1 m");
-      const isAdmin = await getConvex().query(api.salesCoachEv.wiki.isAdmin, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
-      });
+      const isAdmin = await caller.convex.query(api.salesCoachEv.wiki.isAdmin, {});
       if (!isAdmin) throw Errors.forbidden();
 
       const { file, text } = body;
@@ -549,6 +548,7 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       );
     },
     {
+      signedIn: true,
       body: t.Object({
         file: t.Optional(t.File()),
         text: t.Optional(t.String()),
@@ -559,57 +559,57 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
     },
   )
   // --- Settings ----------------------------------------------------------
-  .get("/settings", async ({ request }) => {
-    const { clerkUserId } = await requireAuth(request);
-    const settings = await getConvex().query(api.salesCoachEv.settings.get, {
-      serverKey: getConvexServerKey(),
-      clerkUserId,
-    });
-    return settings;
-  })
+  .get(
+    "/settings",
+    async ({ caller }) => {
+      const settings = await caller.convex.query(api.salesCoachEv.settings.get, {});
+      return settings;
+    },
+    { signedIn: true },
+  )
   .patch(
     "/settings",
-    async ({ request, body }) => {
-      const { clerkUserId } = await requireAuth(request);
-      await getConvex().mutation(api.salesCoachEv.settings.upsert, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
+    async ({ caller, body }) => {
+      await caller.convex.mutation(api.salesCoachEv.settings.upsert, {
         kpiText: body.kpiText,
       });
       return { updated: true };
     },
-    { body: t.Object({ kpiText: t.String() }) },
+    {
+      signedIn: true,
+      body: t.Object({ kpiText: t.String() }),
+    },
   )
   // --- Admin roster --------------------------------------------------------
   .get(
     "/admin/roster",
-    async ({ request, query }) => {
-      const { clerkUserId } = await requireAuth(request);
+    async ({ caller, query }) => {
       const days = query.days ? Number(query.days) : 30;
-      const roster = await getConvex().query(api.salesCoachEv.calls.adminRoster, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
+      const roster = await caller.convex.query(api.salesCoachEv.calls.adminRoster, {
         sinceMs: Date.now() - days * 86_400_000,
       });
       return { roster };
     },
-    { query: t.Object({ days: t.Optional(t.String()) }) },
+    {
+      signedIn: true,
+      query: t.Object({ days: t.Optional(t.String()) }),
+    },
   )
   // Team tab's detail view: one rep's own call history/score breakdown over
   // the same trailing window as the roster, never the transcript/feedback
   // ciphertext (see adminUserDetail's own comment).
   .get(
     "/admin/user/:clerkUserId",
-    async ({ request, params, query }) => {
-      const { clerkUserId } = await requireAuth(request);
+    async ({ caller, params, query }) => {
       const days = query.days ? Number(query.days) : 30;
-      const detail = await getConvex().query(api.salesCoachEv.calls.adminUserDetail, {
-        serverKey: getConvexServerKey(),
-        clerkUserId,
+      const detail = await caller.convex.query(api.salesCoachEv.calls.adminUserDetail, {
         targetClerkUserId: params.clerkUserId,
         sinceMs: Date.now() - days * 86_400_000,
       });
       return { detail };
     },
-    { query: t.Object({ days: t.Optional(t.String()) }) },
+    {
+      signedIn: true,
+      query: t.Object({ days: t.Optional(t.String()) }),
+    },
   );
