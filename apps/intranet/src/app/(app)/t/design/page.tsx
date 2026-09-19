@@ -1,7 +1,10 @@
 "use client";
 
+import { useState, type CSSProperties } from "react";
+
 import {
   CircleCheck,
+  RotateCcw,
   LayoutList,
   MousePointerClick,
   PanelsTopLeft,
@@ -16,6 +19,10 @@ import { toast } from "sonner";
 
 import { Demo } from "@/components/playground/Demo";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { TogglePill } from "@/components/ui/filter-pill";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 const PRINCIPLES: { key: string; icon: LucideIcon }[] = [
@@ -48,6 +55,115 @@ const TYPE_SCALE = [
   { key: "mono", className: "font-mono text-[12px] text-muted-foreground" },
 ];
 
+const ACCENTS = [
+  { key: "brand", value: null, foreground: null },
+  { key: "blue", value: "oklch(0.62 0.19 255)", foreground: "oklch(0.99 0 0)" },
+  { key: "green", value: "oklch(0.64 0.16 150)", foreground: "oklch(0.99 0 0)" },
+  { key: "violet", value: "oklch(0.6 0.22 295)", foreground: "oklch(0.99 0 0)" },
+  { key: "amber", value: "oklch(0.8 0.16 80)", foreground: "oklch(0.22 0.02 80)" },
+] as const;
+
+const RADIUS_STEPS: [string, number][] = [
+  ["sm", -4],
+  ["md", -2],
+  ["lg", 4],
+  ["xl", 8],
+  ["xxl", 16],
+];
+
+/** Overrides a few tokens on one box only, so the rest of the page stays put. */
+function ThemeTuner() {
+  const t = useTranslations("Playground");
+  const [accent, setAccent] = useState<(typeof ACCENTS)[number]>(ACCENTS[0]);
+  const [radius, setRadius] = useState<number | null>(null);
+
+  const vars: Record<string, string> = {};
+  if (accent.value) {
+    vars["--primary"] = vars["--color-primary"] = accent.value;
+    vars["--primary-foreground"] = vars["--color-primary-foreground"] = accent.foreground!;
+  }
+  if (radius !== null) {
+    vars["--radius"] = `${radius}px`;
+    for (const [name, offset] of RADIUS_STEPS) {
+      vars[`--radius-${name}`] = `${Math.max(0, radius + offset)}px`;
+    }
+  }
+  const css = Object.keys(vars).length
+    ? Object.entries(vars)
+        .filter(([name]) => !name.startsWith("--color-") && !/--radius-/.test(name))
+        .map(([name, value]) => `${name}: ${value};`)
+        .join("\n")
+    : t("design.tuner.untouched");
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {ACCENTS.map((a) => (
+          <TogglePill key={a.key} active={accent.key === a.key} onClick={() => setAccent(a)}>
+            <span
+              className="size-2.5 rounded-full"
+              style={{ background: a.value ?? "var(--color-primary)" }}
+            />
+            {t(`design.tuner.accents.${a.key}`)}
+          </TogglePill>
+        ))}
+      </div>
+      <label className="block max-w-sm space-y-1.5">
+        <span className="flex items-baseline justify-between text-[12.5px]">
+          <span className="text-muted-foreground">{t("design.tuner.radius")}</span>
+          <span className="font-mono tabular-nums">{radius ?? 12}px</span>
+        </span>
+        <input
+          type="range"
+          min={0}
+          max={24}
+          value={radius ?? 12}
+          onChange={(event) => setRadius(Number(event.target.value))}
+          className="w-full accent-primary"
+        />
+      </label>
+
+      <div
+        style={vars as CSSProperties}
+        className="space-y-4 rounded-xl border border-border/70 bg-background p-5"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm">{t("design.tuner.primary")}</Button>
+          <Button size="sm" variant="outline">
+            {t("design.tuner.secondary")}
+          </Button>
+          <Badge>{t("design.tuner.badge")}</Badge>
+          <Switch defaultChecked aria-label={t("design.tuner.badge")} />
+        </div>
+        <Input placeholder={t("design.tuner.input")} className="max-w-xs" />
+        <div className="rounded-lg border border-border/70 bg-card p-4">
+          <p className="text-sm font-semibold">{t("design.tuner.cardTitle")}</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{t("design.tuner.cardBody")}</p>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+            <div className="h-full w-2/3 rounded-full bg-primary" />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <pre className="min-w-0 whitespace-pre-wrap rounded-md bg-muted px-2.5 py-1.5 font-mono text-[12px]">
+          {css}
+        </pre>
+        <Button
+          variant="ghost"
+          size="xs"
+          onClick={() => {
+            setAccent(ACCENTS[0]);
+            setRadius(null);
+          }}
+        >
+          <RotateCcw />
+          {t("reset")}
+        </Button>
+      </div>
+    </div>
+  );
+}
 export default function PlaygroundDesignPage() {
   const t = useTranslations("Playground");
 
@@ -147,6 +263,14 @@ export default function PlaygroundDesignPage() {
             <p className="text-[12.5px] text-muted-foreground">{t("design.status.dontWhy")}</p>
           </div>
         </div>
+      </Demo>
+
+      <Demo
+        title={t("design.tuner.title")}
+        description={t("design.tuner.description")}
+        source="app/globals.css"
+      >
+        <ThemeTuner />
       </Demo>
 
       <Demo title={t("design.radius.title")} description={t("design.radius.description")}>

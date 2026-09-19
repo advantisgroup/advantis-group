@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { usePathname } from "next/navigation";
 
-import { FlaskConical, Hand, Palette, Shapes } from "lucide-react";
+import { FlaskConical, Hand, MessagesSquare, Orbit, Palette, Shapes } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
@@ -19,6 +19,8 @@ export default function PlaygroundLayout({ children }: { children: ReactNode }) 
   const tabs: RouteTab[] = [
     { value: "overview", href: "/t", label: t("tabs.overview"), icon: FlaskConical },
     { value: "drag", href: "/t/drag", label: t("tabs.drag"), icon: Hand },
+    { value: "motion", href: "/t/motion", label: t("tabs.motion"), icon: Orbit },
+    { value: "chat", href: "/t/chat", label: t("tabs.chat"), icon: MessagesSquare },
     { value: "design", href: "/t/design", label: t("tabs.design"), icon: Palette },
     { value: "components", href: "/t/components", label: t("tabs.components"), icon: Shapes },
   ];

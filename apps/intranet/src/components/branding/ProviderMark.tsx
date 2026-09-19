@@ -71,6 +71,8 @@ const PROVIDERS: Record<Provider, ProviderDef> = {
   vercel: { name: "Vercel", glyph: siVercel },
 };
 
+export const PROVIDERS_LIST = Object.keys(PROVIDERS) as Provider[];
+
 export function providerName(provider: Provider) {
   return PROVIDERS[provider].name;
 }

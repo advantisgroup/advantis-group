@@ -49,7 +49,13 @@ import { toast } from "sonner";
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { Mark } from "@/components/branding/ProviderMark";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
-import { CHAT_COLUMN, ChatDayDivider, chatBubbleClass } from "@/components/chat/chat-surface";
+import {
+  CHAT_COLUMN,
+  ChatDayDivider,
+  chatBubbleClass,
+  LONG_PRESS_MS,
+  SWIPE_REPLY_THRESHOLD,
+} from "@/components/chat/chat-surface";
 import { ConversationSearch, PinnedMessagesBar } from "@/components/chat/ConversationTools";
 import { TICKET_PREFILL_KEY } from "@/components/it-tickets/TicketDialog";
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
@@ -82,10 +88,6 @@ import {
 const URL_RE = /https?:\/\/[^\s]+/i;
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
-/** Touch-and-hold duration before the mobile message action sheet opens. */
-const LONG_PRESS_MS = 450;
-/** Horizontal drag distance that counts as a swipe-to-reply on mobile. */
-const SWIPE_REPLY_THRESHOLD = 56;
 const COMPOSER_EMOJIS = [
   "😀",
   "😂",

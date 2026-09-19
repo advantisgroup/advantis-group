@@ -17,8 +17,10 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { MetricRow, Panel } from "@/components/admin/overview/primitives";
+import { Mark, PROVIDERS_LIST, providerName } from "@/components/branding/ProviderMark";
 import { FieldLabel, FormDialog } from "@/components/compose/FormDialog";
 import { Demo } from "@/components/playground/Demo";
+import { LanguageCheck } from "@/components/playground/LanguageCheck";
 import { Badge } from "@/components/ui/badge";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { CountTabs } from "@/components/ui/count-tabs";
@@ -30,6 +32,8 @@ import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { NOTIFICATION_TYPES, notificationVisual } from "@/lib/notification-kinds";
+import { cn } from "@/lib/utils";
 
 type Variant = NonNullable<ButtonProps["variant"]>;
 type Size = NonNullable<ButtonProps["size"]>;
@@ -460,6 +464,55 @@ export default function PlaygroundComponentsPage() {
           />
           <MetricRow icon={Sparkles} label={t("components.panel.rows.neutral")} value={42} />
         </Panel>
+      </Demo>
+
+      <Demo
+        title={t("components.notifications.title")}
+        description={t("components.notifications.description")}
+        source="lib/notification-kinds.ts"
+      >
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+          {NOTIFICATION_TYPES.map((type) => {
+            const { icon: Icon, tint } = notificationVisual(type);
+            return (
+              <div
+                key={type}
+                className="flex items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2"
+              >
+                <span className={cn("grid size-7 shrink-0 place-items-center rounded-full", tint)}>
+                  <Icon className="size-3.5" />
+                </span>
+                <span className="min-w-0 truncate font-mono text-[11.5px]">{type}</span>
+              </div>
+            );
+          })}
+        </div>
+      </Demo>
+
+      <Demo
+        title={t("components.logos.title")}
+        description={t("components.logos.description")}
+        source="components/branding/ProviderMark.tsx"
+      >
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+          {PROVIDERS_LIST.map((provider) => (
+            <div
+              key={provider}
+              className="flex flex-col items-center gap-2 rounded-lg border border-border/60 px-2 py-4"
+            >
+              <Mark provider={provider} className="size-7" />
+              <span className="text-[12px] text-muted-foreground">{providerName(provider)}</span>
+            </div>
+          ))}
+        </div>
+      </Demo>
+
+      <Demo
+        title={t("components.language.title")}
+        description={t("components.language.description")}
+        className="border-0 bg-transparent p-0"
+      >
+        <LanguageCheck />
       </Demo>
     </>
   );

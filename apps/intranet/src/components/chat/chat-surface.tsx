@@ -13,6 +13,11 @@ import { cn } from "@/lib/utils";
  * is a card inside a card), and dividers that are a hairline, not a pill.
  */
 
+/** Touch-and-hold duration before the mobile message action sheet opens. */
+export const LONG_PRESS_MS = 450;
+/** Horizontal drag distance that counts as a swipe-to-reply on mobile. */
+export const SWIPE_REPLY_THRESHOLD = 56;
+
 /** Keeps a conversation to a readable measure on a wide screen. */
 export const CHAT_COLUMN = "refreshed:mx-auto refreshed:w-full refreshed:max-w-3xl";
 

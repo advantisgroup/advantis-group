@@ -1,12 +1,14 @@
 "use client";
 
-import { ArrowRight, Hand, Palette, Shapes } from "lucide-react";
+import { ArrowRight, Hand, MessagesSquare, Orbit, Palette, Shapes } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 
 const SECTIONS = [
   { key: "drag", href: "/t/drag", icon: Hand },
+  { key: "motion", href: "/t/motion", icon: Orbit },
+  { key: "chat", href: "/t/chat", icon: MessagesSquare },
   { key: "design", href: "/t/design", icon: Palette },
   { key: "components", href: "/t/components", icon: Shapes },
 ] as const;

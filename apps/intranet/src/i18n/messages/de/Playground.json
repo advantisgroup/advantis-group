@@ -6,14 +6,18 @@
     "overview": "Übersicht",
     "drag": "Drag & Drop",
     "design": "Design",
-    "components": "Komponenten"
+    "components": "Komponenten",
+    "motion": "Bewegung",
+    "chat": "Chat"
   },
   "overview": {
     "intro": "Ein Lernort dafür, wie das Intranet gebaut ist. Nichts hier ist nachgebaut – jede Demo nutzt dieselbe Komponente wie die echte Seite. Was du siehst, ist das, was live geht.",
     "drag": "Das Physik-Ziehen aus dem Seitenleisten-Editor, ein Board zum Verschieben von Karten und das Ablegen von Dateien.",
-    "design": "Die Regeln der Oberfläche, die Farb-Tokens, Radien und Schriftgrößen.",
-    "components": "Buttons, Kennzahlen, Filter, leere Zustände, Dialoge und Toasts – alles klickbar.",
-    "footnote": "Auf diesen Seiten wird nichts gespeichert."
+    "design": "Die Regeln der Oberfläche, die Farbtokens, ein Theme-Regler, Radien und Schriftgrößen.",
+    "components": "Buttons, Zahlen, Filter, leere Zustände, Dialoge, Toasts, Benachrichtigungsarten, Logos und ein Deutsch-Vergleich.",
+    "footnote": "Auf diesen Seiten wird nichts gespeichert.",
+    "motion": "Die Federn einstellen, die die Oberfläche wirklich nutzt, und Wischen-zum-Antworten und langes Drücken ausprobieren.",
+    "chat": "Ein erfundener Chat aus den echten Chat-Bausteinen — schreib etwas, und jemand antwortet."
   },
   "drag": {
     "physics": {
@@ -33,7 +37,11 @@
     "board": {
       "title": "Zwischen Spalten verschieben",
       "description": "Einfaches Browser-Drag-&-Drop wie im Bewerberboard. Der gestrichelte Platz zeigt, wo die Karte landet.",
-      "columns": { "todo": "Offen", "doing": "In Arbeit", "done": "Erledigt" },
+      "columns": {
+        "todo": "Offen",
+        "doing": "In Arbeit",
+        "done": "Erledigt"
+      },
       "cards": {
         "logo": "Neues Logo auf der Anmeldeseite",
         "tickets": "Alte IT-Tickets aufräumen",
@@ -113,6 +121,25 @@
         "eyebrow": "Beschriftungen über einer Gruppe",
         "mono": "components/ui/button.tsx"
       }
+    },
+    "tuner": {
+      "title": "Theme-Regler",
+      "description": "Akzentfarbe und Eckenradius nur für den Kasten unten ändern. Darunter steht das CSS, das es dafür bräuchte.",
+      "radius": "Eckenradius",
+      "untouched": "Noch nichts geändert.",
+      "primary": "Speichern",
+      "secondary": "Abbrechen",
+      "badge": "Neu",
+      "input": "Etwas eintippen",
+      "cardTitle": "Onboarding",
+      "cardBody": "Vier von sechs Schritten erledigt.",
+      "accents": {
+        "brand": "Marke",
+        "blue": "Blau",
+        "green": "Grün",
+        "violet": "Violett",
+        "amber": "Bernstein"
+      }
     }
   },
   "components": {
@@ -154,7 +181,11 @@
       "description": "Tabs teilen eine Liste und zeigen ihre Anzahl; Pills grenzen weiter ein. Beides wirkt auf die Liste unten.",
       "all": "Alle",
       "nothing": "Nichts passt",
-      "status": { "open": "Offen", "waiting": "Wartet", "done": "Erledigt" },
+      "status": {
+        "open": "Offen",
+        "waiting": "Wartet",
+        "done": "Erledigt"
+      },
       "tickets": {
         "printer": "Drucker im 2. Stock",
         "vpn": "VPN bricht ab",
@@ -224,6 +255,82 @@
         "warnHint": "Antwortet langsam",
         "neutral": "Agents online"
       }
+    },
+    "notifications": {
+      "title": "Benachrichtigungsarten",
+      "description": "Jede Art von Benachrichtigung, die irgendwo geschrieben wird, mit dem Symbol und der Farbe aus der Liste. Eine neue Art bekommt eine schlichte Glocke, bis sie ein eigenes Symbol hat."
+    },
+    "logos": {
+      "title": "Logo-Wand",
+      "description": "Integrationen zeigen ihr echtes Logo, nie ihren Namen in einem Kasten. So kommt Farbe auf eine ruhige Seite."
+    },
+    "language": {
+      "title": "Englisch und Deutsch nebeneinander",
+      "description": "Dieselben Bausteine mit den echten Texten in Handybreite. Deutsch läuft länger, also fallen umbrechende oder abgeschnittene Beschriftungen hier zuerst auf."
+    }
+  },
+  "motion": {
+    "spring": {
+      "title": "Feder-Regler",
+      "description": "Jede Animation hier ist eine Feder, keine feste Zeitkurve. Starte mit einer, die das Intranet nutzt, und zieh an den Reglern, um zu spüren, was jede Zahl bewirkt.",
+      "hint": "Klicken, um sie rüberzuschicken",
+      "stiffness": "Steifigkeit",
+      "damping": "Dämpfung",
+      "mass": "Masse",
+      "copy": "Transition kopieren",
+      "copied": "Transition kopiert",
+      "presets": {
+        "follow": "Ziehen folgen",
+        "lift": "Ziehen anheben",
+        "tabs": "Untere Tabs",
+        "tour": "Tour-Spotlight"
+      }
+    },
+    "swipe": {
+      "title": "Wischen zum Antworten",
+      "description": "Auf dem Handy eine Nachricht zur Seite ziehen, um darauf zu antworten. Sie springt immer zurück; es zählt nur, wenn sie über die Schwelle gezogen wurde.",
+      "message": "Zieh mich zur Seite →",
+      "hint": "Die Blase mehr als {px}px ziehen.",
+      "replying": "Antwort auf „Zieh mich zur Seite“"
+    },
+    "press": {
+      "title": "Gedrückt halten",
+      "description": "Eine Nachricht gedrückt halten öffnet auf dem Handy ihre Aktionen — ein kleines Menüsymbol trifft man dort zu leicht daneben.",
+      "message": "Halt mich gedrückt",
+      "hint": "{ms}ms gedrückt halten. Früher loslassen, und nichts passiert.",
+      "actions": {
+        "reply": "Antworten",
+        "copy": "Kopieren",
+        "edit": "Bearbeiten",
+        "delete": "Löschen"
+      }
+    }
+  },
+  "chat": {
+    "title": "Chat-Labor",
+    "description": "Die echten Blasen, Anhänge, Reaktionen und Trenner mit erfundenen Nachrichten. Schreib etwas, und eine Kollegin antwortet. Nichts verlässt diese Seite.",
+    "phone": "Handybreite",
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "you": "Du",
+    "deleted": "Diese Nachricht wurde gelöscht",
+    "edited": "bearbeitet",
+    "typing": "{name} schreibt…",
+    "placeholder": "Nachricht schreiben",
+    "send": "Senden",
+    "seed": {
+      "morning": "Moin! Wer ist heute im Büro?",
+      "photo": "Fotos vom Teamtag 📸",
+      "agenda": "Die Agenda für Donnerstag hängt an, das Budget liegt auf OneDrive.",
+      "agendaFile": "1. Kaffee\n2. Zahlen\n3. Mehr Kaffee",
+      "link": "Gut. Hab das hier auf dem Weg gefunden:",
+      "linkDescription": "Ein Unternehmen für KI-Sicherheit und -Forschung."
+    },
+    "replies": {
+      "one": "Klingt gut 👍",
+      "two": "Mach ich.",
+      "three": "Können wir nach dem Mittag drüber reden?",
+      "four": "Haha, fair."
     }
   }
 }

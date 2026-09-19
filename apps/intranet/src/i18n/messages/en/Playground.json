@@ -6,14 +6,18 @@
     "overview": "Overview",
     "drag": "Drag and drop",
     "design": "Design",
-    "components": "Components"
+    "components": "Components",
+    "motion": "Motion",
+    "chat": "Chat"
   },
   "overview": {
     "intro": "A learning ground for how the intranet is built. Nothing here is a copy — every demo uses the same component the real page does, so what you see is what ships.",
     "drag": "The physics drag from the sidebar editor, a board you can move cards across, and a file drop.",
-    "design": "The rules the interface follows, the colour tokens, radii and type scale.",
-    "components": "Buttons, numbers, filters, empty states, dialogs and toasts — all clickable.",
-    "footnote": "Nothing on these pages saves anything."
+    "design": "The rules the interface follows, the colour tokens, a theme tuner, radii and type scale.",
+    "components": "Buttons, numbers, filters, empty states, dialogs, toasts, notification kinds, logos and a side-by-side German check.",
+    "footnote": "Nothing on these pages saves anything.",
+    "motion": "Tune the springs the interface really uses, and try swipe-to-reply and long-press.",
+    "chat": "A fake conversation built from the real chat pieces — send something and someone answers."
   },
   "drag": {
     "physics": {
@@ -33,7 +37,11 @@
     "board": {
       "title": "Moving between columns",
       "description": "Plain browser drag and drop, like the applicant board. The dashed slot shows where a card will land.",
-      "columns": { "todo": "To do", "doing": "Doing", "done": "Done" },
+      "columns": {
+        "todo": "To do",
+        "doing": "Doing",
+        "done": "Done"
+      },
       "cards": {
         "logo": "New logo on the login page",
         "tickets": "Tidy up old IT tickets",
@@ -113,6 +121,25 @@
         "eyebrow": "Labels above a group",
         "mono": "components/ui/button.tsx"
       }
+    },
+    "tuner": {
+      "title": "Theme tuner",
+      "description": "Change the accent and corner radius on the box below only. The CSS it would take appears underneath.",
+      "radius": "Corner radius",
+      "untouched": "Nothing changed yet.",
+      "primary": "Save",
+      "secondary": "Cancel",
+      "badge": "New",
+      "input": "Type something",
+      "cardTitle": "Onboarding",
+      "cardBody": "Four of six steps done.",
+      "accents": {
+        "brand": "Brand",
+        "blue": "Blue",
+        "green": "Green",
+        "violet": "Violet",
+        "amber": "Amber"
+      }
     }
   },
   "components": {
@@ -154,7 +181,11 @@
       "description": "Tabs split a list and show their counts; pills narrow it further. Both work on the list below.",
       "all": "All",
       "nothing": "Nothing matches",
-      "status": { "open": "Open", "waiting": "Waiting", "done": "Done" },
+      "status": {
+        "open": "Open",
+        "waiting": "Waiting",
+        "done": "Done"
+      },
       "tickets": {
         "printer": "Printer on floor 2",
         "vpn": "VPN keeps dropping",
@@ -224,6 +255,82 @@
         "warnHint": "Slow to answer",
         "neutral": "Agents online"
       }
+    },
+    "notifications": {
+      "title": "Notification kinds",
+      "description": "Every notification type something writes, with the icon and tint the list draws it with. A new type falls back to a plain bell until it gets one."
+    },
+    "logos": {
+      "title": "Logo wall",
+      "description": "Integrations show their real mark, never their name in a box. It's where a quiet page gets its colour."
+    },
+    "language": {
+      "title": "English and German side by side",
+      "description": "The same components with the real copy at phone width. German runs longer, so labels that wrap or clip show up here first."
+    }
+  },
+  "motion": {
+    "spring": {
+      "title": "Spring tuner",
+      "description": "Every animation here is a spring, not a timed curve. Start from one the intranet uses and drag the sliders to feel what each number does.",
+      "hint": "Click to send it across",
+      "stiffness": "Stiffness",
+      "damping": "Damping",
+      "mass": "Mass",
+      "copy": "Copy transition",
+      "copied": "Copied the transition",
+      "presets": {
+        "follow": "Drag follow",
+        "lift": "Drag lift",
+        "tabs": "Bottom tabs",
+        "tour": "Tour spotlight"
+      }
+    },
+    "swipe": {
+      "title": "Swipe to reply",
+      "description": "On a phone, pull a message sideways to reply to it. It snaps back either way; only a pull past the threshold counts.",
+      "message": "Pull me sideways →",
+      "hint": "Drag the bubble more than {px}px.",
+      "replying": "Replying to “Pull me sideways”"
+    },
+    "press": {
+      "title": "Touch and hold",
+      "description": "Holding a message opens its actions on a phone, where a small menu icon is too easy to miss.",
+      "message": "Hold me",
+      "hint": "Press and hold for {ms}ms. Let go early and nothing happens.",
+      "actions": {
+        "reply": "Reply",
+        "copy": "Copy",
+        "edit": "Edit",
+        "delete": "Delete"
+      }
+    }
+  },
+  "chat": {
+    "title": "Chat lab",
+    "description": "The real bubbles, attachments, reactions and dividers with made-up messages. Send one and a colleague answers. Nothing leaves this page.",
+    "phone": "Phone width",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "you": "You",
+    "deleted": "This message was deleted",
+    "edited": "edited",
+    "typing": "{name} is typing…",
+    "placeholder": "Write a message",
+    "send": "Send",
+    "seed": {
+      "morning": "Morning! Who's in the office today?",
+      "photo": "Photos from the team day 📸",
+      "agenda": "Agenda for Thursday is attached, budget is on OneDrive.",
+      "agendaFile": "1. Coffee\n2. Numbers\n3. More coffee",
+      "link": "Nice. Found this on the way in:",
+      "linkDescription": "An AI safety and research company."
+    },
+    "replies": {
+      "one": "Sounds good 👍",
+      "two": "On it.",
+      "three": "Can we talk about it after lunch?",
+      "four": "Ha, fair enough."
     }
   }
 }

@@ -12,7 +12,11 @@ import { pathToUrl } from "@/lib/onedrive-path";
 type Message = FunctionReturnType<typeof api.chat.getMessages>["page"][number];
 
 /** A message's files and link cards, under its text. */
-export function MessageAttachments({ message }: { message: Message }) {
+export function MessageAttachments({
+  message,
+}: {
+  message: Pick<Message, "attachments" | "linkPreviews" | "createdAt">;
+}) {
   const tc = useTranslations("Common");
   const { openFileViewer } = useFileViewer();
 

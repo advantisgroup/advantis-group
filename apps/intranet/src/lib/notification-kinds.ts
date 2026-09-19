@@ -73,6 +73,8 @@ const VISUALS: Record<string, { icon: LucideIcon; tint: string }> = {
   maintenance: { icon: Wrench, tint: "bg-amber-500/15 text-amber-600 dark:text-amber-300" },
 };
 
+export const NOTIFICATION_TYPES = Object.keys(VISUALS);
+
 const FALLBACK = { icon: Bell, tint: "bg-muted text-muted-foreground" };
 
 export function notificationVisual(type: string): { icon: LucideIcon; tint: string } {
