@@ -281,5 +281,27 @@
   "removeSecondaryEmailTitle": "Remove {email}?",
   "securityDeviceTrackingOffTitle": "Stop remembering devices?",
   "securityDeviceTrackingOffBody": "Your recognized devices will be forgotten, and every new sign-in will ask for a verification code.",
-  "securityDeviceTrackingOffConfirm": "Turn off"
+  "securityDeviceTrackingOffConfirm": "Turn off",
+  "trash": "Recently deleted",
+  "trashHint": "Bring back something deleted in the last 30 days.",
+  "trashSectionHint": "Kept for 30 days, then removed for good.",
+  "trashEmpty": "Nothing deleted recently",
+  "trashEmptyHint": "Deleted announcements, tickets, pages and posts wait here for 30 days.",
+  "trashDeletedBy": "Deleted {date} by {name}",
+  "trashGoneOn": "gone for good {date}",
+  "trashRestore": "Restore",
+  "trashRestored": "Restored “{label}”",
+  "trashTypes": {
+    "announcements": "Announcement",
+    "blogPosts": "Blog post",
+    "errorReports": "Error report",
+    "errorMeasures": "Measure",
+    "events": "Event",
+    "guidebookPages": "Guidebook page",
+    "itTickets": "IT ticket",
+    "suggestions": "Suggestion",
+    "updates": "Update",
+    "wikiEntries": "Wiki entry",
+    "salesCoachEvWiki": "Sales Coach article"
+  }
 }
