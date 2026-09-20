@@ -4,6 +4,7 @@ import Image from "next/image";
 
 import { useTranslations } from "next-intl";
 
+import { BrandEmphasis } from "@/components/effects/BrandEmphasis";
 import { Display, PageHeader, Section, SectionHead } from "@/components/frame";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -103,7 +104,12 @@ export default function Team() {
       </Section>
 
       <Section size="loose">
-        <SectionHead align="left" size="md" title={t("grid.title")} lede={t("grid.subtitle")} />
+        <SectionHead
+          align="left"
+          size="md"
+          title={<BrandEmphasis tint="start">{t("grid.title")}</BrandEmphasis>}
+          lede={t("grid.subtitle")}
+        />
 
         <ul className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
           {teamMembers.slice(1).map((member) => (
@@ -134,7 +140,10 @@ export default function Team() {
        * once — the photos are worth looking at, and that made them hard to.
        */}
       <Section size="loose">
-        <SectionHead title={t("office.title")} lede={t("office.subtitle")} />
+        <SectionHead
+          title={<BrandEmphasis tint="dynamic">{t("office.title")}</BrandEmphasis>}
+          lede={t("office.subtitle")}
+        />
 
         <div className="mt-14 grid gap-4 sm:grid-cols-2">
           {OFFICE_PHOTOS.map((src) => (
