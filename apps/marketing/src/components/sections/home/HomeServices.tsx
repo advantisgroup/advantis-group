@@ -3,6 +3,7 @@
 import { ArrowUpRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { BrandEmphasis } from "@/components/effects/BrandEmphasis";
 import { Section, SectionHead } from "@/components/frame";
 import { ServiceGlyph } from "@/components/icons/ServiceGlyph";
 import { Link } from "@/i18n/navigation";
@@ -41,7 +42,10 @@ export const HomeServices = () => {
 
   return (
     <Section id="leistungen" size="loose">
-      <SectionHead title={t("title")} lede={t("subtitle")} />
+      <SectionHead
+        title={<BrandEmphasis tint="end">{t("title")}</BrandEmphasis>}
+        lede={t("subtitle")}
+      />
 
       <ul className="mt-16 grid gap-x-10 md:grid-cols-2 lg:grid-cols-3">
         {entries.map((entry) => (

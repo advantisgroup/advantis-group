@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { Logo } from "@/components/brand/Logo";
+import { BrandEmphasis } from "@/components/effects/BrandEmphasis";
 import { Display, PageHeader, Section, SectionHead, StatRow } from "@/components/frame";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -96,7 +97,7 @@ export default function UberUns() {
       </Section>
 
       <Section size="loose">
-        <SectionHead title={t("values.badge")} />
+        <SectionHead title={<BrandEmphasis tint="end">{t("values.badge")}</BrandEmphasis>} />
 
         <div className="mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
           {values.map((value) => (
