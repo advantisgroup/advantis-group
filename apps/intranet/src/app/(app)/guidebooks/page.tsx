@@ -407,8 +407,10 @@ export default function GuidebooksPage() {
   );
 
   // Every filterable category/topic in play: manageable wikiCategories plus
-  // whichever legacy topics still have unmigrated pages — always visible,
-  // not gated on migration.
+  // whichever topics are in use. Both the unmigrated block pages and the
+  // component-backed guides file themselves under a topic, so this can't only
+  // look at legacy pages — once they're all migrated there'd be no chip left
+  // for the guides, and no chip means no group to render them in.
   const categoryChips = useMemo(() => {
     const chips = wikiCategories.map((c) => ({
       key: `cat:${c._id}`,
@@ -416,7 +418,7 @@ export default function GuidebooksPage() {
       color: c.color,
     }));
     const legacyTopics = new Set(
-      (items ?? []).filter((i) => i.kind === "legacy").map((i) => i.categoryKey),
+      (items ?? []).filter((i) => i.categoryKey.startsWith("topic:")).map((i) => i.categoryKey),
     );
     for (const key of legacyTopics) {
       const topic = key.slice("topic:".length);
@@ -490,18 +492,32 @@ export default function GuidebooksPage() {
       else byCategory.set(item.categoryKey, [item]);
     }
 
+    // Chips give the order; the buckets decide what's shown. Anything without
+    // a chip (a category that was deleted out from under its entries) still
+    // gets a heading of its own rather than disappearing from the list.
+    const chipOrder = new Map(categoryChips.map((chip, index) => [chip.key, index]));
+    const categorized = [...byCategory.entries()]
+      .filter(([key]) => key !== "none")
+      .sort(
+        ([a], [b]) =>
+          (chipOrder.get(a) ?? Number.MAX_SAFE_INTEGER) -
+            (chipOrder.get(b) ?? Number.MAX_SAFE_INTEGER) || a.localeCompare(b),
+      )
+      .map(([key, group]) => {
+        const chip = categoryChips.find((c) => c.key === key);
+        return {
+          key,
+          label: chip?.label || group[0].categoryLabel || t("uncategorizedGroup"),
+          color: chip?.color ?? group[0].categoryColor,
+          items: group,
+        };
+      });
+
     return [
       ...(pinned.length > 0
         ? [{ key: "pinned", label: t("pinnedGroup"), color: "#77808A", items: pinned }]
         : []),
-      ...categoryChips
-        .filter((chip) => byCategory.has(chip.key))
-        .map((chip) => ({
-          key: chip.key,
-          label: chip.label,
-          color: chip.color,
-          items: byCategory.get(chip.key)!,
-        })),
+      ...categorized,
       ...(byCategory.has("none")
         ? [
             {
