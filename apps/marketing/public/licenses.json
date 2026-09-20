@@ -1,3102 +1,2131 @@
 {
   "@alloc/quick-lru@5.2.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/sindresorhus/quick-lru",
+    "repository": "sindresorhus/quick-lru",
     "publisher": "Sindre Sorhus",
     "email": "sindresorhus@gmail.com",
-    "url": "https://sindresorhus.com",
-    "path": "/workspaces/advantis-group/node_modules/@alloc/quick-lru",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@alloc/quick-lru/license"
+    "url": "https://sindresorhus.com"
   },
   "@babel/helper-string-parser@7.27.1": {
     "licenses": "MIT",
     "repository": "https://github.com/babel/babel",
     "publisher": "The Babel Team",
-    "url": "https://babel.dev/team",
-    "path": "/workspaces/advantis-group/node_modules/@babel/helper-string-parser",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@babel/helper-string-parser/LICENSE"
+    "url": "https://babel.dev/team"
   },
   "@babel/helper-validator-identifier@7.28.5": {
     "licenses": "MIT",
     "repository": "https://github.com/babel/babel",
     "publisher": "The Babel Team",
-    "url": "https://babel.dev/team",
-    "path": "/workspaces/advantis-group/node_modules/@babel/helper-validator-identifier",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@babel/helper-validator-identifier/LICENSE"
+    "url": "https://babel.dev/team"
   },
   "@babel/runtime@7.28.6": {
     "licenses": "MIT",
     "repository": "https://github.com/babel/babel",
     "publisher": "The Babel Team",
-    "url": "https://babel.dev/team",
-    "path": "/workspaces/advantis-group/node_modules/@babel/runtime",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@babel/runtime/LICENSE"
+    "url": "https://babel.dev/team"
   },
   "@babel/types@7.29.0": {
     "licenses": "MIT",
     "repository": "https://github.com/babel/babel",
     "publisher": "The Babel Team",
-    "url": "https://babel.dev/team",
-    "path": "/workspaces/advantis-group/node_modules/@babel/types",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@babel/types/LICENSE"
+    "url": "https://babel.dev/team"
   },
-  "@borewit/text-codec@0.2.1": {
+  "@clerk/backend@3.13.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/Borewit/text-codec",
-    "publisher": "Borewit",
-    "url": "https://github.com/Borewit",
-    "path": "/workspaces/advantis-group/node_modules/@borewit/text-codec",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@borewit/text-codec/LICENSE.txt"
+    "repository": "https://github.com/clerk/javascript"
   },
-  "@clerk/backend@2.33.0": {
+  "@clerk/nextjs@7.6.1": {
     "licenses": "MIT",
     "repository": "https://github.com/clerk/javascript",
-    "path": "/workspaces/advantis-group/node_modules/@clerk/backend",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@clerk/backend/LICENSE"
+    "publisher": "Clerk"
   },
-  "@clerk/clerk-react@5.61.3": {
+  "@clerk/react@6.12.8": {
     "licenses": "MIT",
     "repository": "https://github.com/clerk/javascript",
-    "publisher": "Clerk",
-    "path": "/workspaces/advantis-group/node_modules/@clerk/clerk-react",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@clerk/clerk-react/LICENSE"
+    "publisher": "Clerk"
   },
-  "@clerk/nextjs@6.39.0": {
+  "@clerk/shared@4.25.8": {
     "licenses": "MIT",
     "repository": "https://github.com/clerk/javascript",
-    "publisher": "Clerk",
-    "path": "/workspaces/advantis-group/node_modules/@clerk/nextjs",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@clerk/nextjs/LICENSE"
+    "publisher": "Clerk"
   },
-  "@clerk/shared@3.47.2": {
-    "licenses": "MIT",
-    "repository": "https://github.com/clerk/javascript",
-    "publisher": "Clerk",
-    "path": "/workspaces/advantis-group/node_modules/@clerk/shared",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@clerk/shared/LICENSE"
-  },
-  "@clerk/types@4.101.20": {
-    "licenses": "MIT",
-    "repository": "https://github.com/clerk/javascript",
-    "publisher": "Clerk",
-    "path": "/workspaces/advantis-group/node_modules/@clerk/types",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@clerk/types/LICENSE"
-  },
-  "@elysiajs/eden@1.4.8": {
+  "@elysiajs/eden@1.4.9": {
     "licenses": "MIT",
     "repository": "https://github.com/elysiajs/eden",
     "publisher": "saltyAom",
     "email": "saltyaom@gmail.com",
-    "url": "https://github.com/SaltyAom",
-    "path": "/workspaces/advantis-group/node_modules/@elysiajs/eden",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@elysiajs/eden/LICENSE"
+    "url": "https://github.com/SaltyAom"
   },
-  "@esbuild/linux-x64@0.27.0": {
+  "@esbuild/win32-x64@0.27.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/evanw/esbuild",
-    "path": "/workspaces/advantis-group/node_modules/@esbuild/linux-x64",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@esbuild/linux-x64/README.md"
+    "repository": "https://github.com/evanw/esbuild"
   },
   "@floating-ui/core@1.7.4": {
     "licenses": "MIT",
     "repository": "https://github.com/floating-ui/floating-ui",
-    "publisher": "atomiks",
-    "path": "/workspaces/advantis-group/node_modules/@floating-ui/core",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@floating-ui/core/LICENSE"
+    "publisher": "atomiks"
   },
   "@floating-ui/dom@1.7.5": {
     "licenses": "MIT",
     "repository": "https://github.com/floating-ui/floating-ui",
-    "publisher": "atomiks",
-    "path": "/workspaces/advantis-group/node_modules/@floating-ui/dom",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@floating-ui/dom/LICENSE"
+    "publisher": "atomiks"
   },
   "@floating-ui/react-dom@2.1.7": {
     "licenses": "MIT",
     "repository": "https://github.com/floating-ui/floating-ui",
-    "publisher": "atomiks",
-    "path": "/workspaces/advantis-group/node_modules/@floating-ui/react-dom",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@floating-ui/react-dom/LICENSE"
+    "publisher": "atomiks"
   },
   "@floating-ui/utils@0.2.10": {
     "licenses": "MIT",
     "repository": "https://github.com/floating-ui/floating-ui",
-    "publisher": "atomiks",
-    "path": "/workspaces/advantis-group/node_modules/@floating-ui/utils",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@floating-ui/utils/LICENSE"
+    "publisher": "atomiks"
   },
   "@formatjs/ecma402-abstract@3.1.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/formatjs/formatjs",
-    "publisher": "Long Ho",
-    "path": "/workspaces/advantis-group/node_modules/@formatjs/ecma402-abstract",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@formatjs/ecma402-abstract/LICENSE.md"
+    "repository": "git@github.com:formatjs/formatjs"
   },
   "@formatjs/fast-memoize@3.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/formatjs/formatjs",
+    "repository": "formatjs/formatjs",
     "publisher": "Long Ho",
-    "email": "holevietlong@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/@formatjs/fast-memoize",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@formatjs/fast-memoize/LICENSE.md"
+    "email": "holevietlong@gmail.com"
   },
   "@formatjs/icu-messageformat-parser@3.5.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/formatjs/formatjs",
-    "path": "/workspaces/advantis-group/node_modules/@formatjs/icu-messageformat-parser",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@formatjs/icu-messageformat-parser/LICENSE.md"
+    "repository": "https://github.com/formatjs/formatjs"
   },
   "@formatjs/icu-skeleton-parser@2.1.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/formatjs/formatjs",
-    "path": "/workspaces/advantis-group/node_modules/@formatjs/icu-skeleton-parser",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@formatjs/icu-skeleton-parser/LICENSE.md"
+    "repository": "https://github.com/formatjs/formatjs"
   },
   "@formatjs/intl-localematcher@0.8.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/formatjs/formatjs",
+    "repository": "formatjs/formatjs",
     "publisher": "Long Ho",
-    "email": "holevietlong@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/@formatjs/intl-localematcher",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@formatjs/intl-localematcher/LICENSE.md"
+    "email": "holevietlong@gmail.com"
   },
   "@gsap/react@2.1.2": {
-    "licenses": "MIT*",
+    "licenses": "SEE LICENSE AT https://gsap.com/standard-license",
     "repository": "https://github.com/greensock/react",
     "publisher": "Jack Doyle",
-    "url": "jack@greensock.com",
-    "path": "/workspaces/advantis-group/node_modules/@gsap/react",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@gsap/react/README.md"
+    "url": "jack@greensock.com"
   },
   "@img/colour@1.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/lovell/colour",
-    "path": "/workspaces/advantis-group/node_modules/@img/colour",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@img/colour/LICENSE.md"
+    "repository": "https://github.com/lovell/colour"
   },
-  "@img/sharp-libvips-linux-x64@1.2.4": {
-    "licenses": "LGPL-3.0-or-later",
-    "repository": "https://github.com/lovell/sharp-libvips",
-    "publisher": "Lovell Fuller",
-    "email": "npm@lovell.info",
-    "path": "/workspaces/advantis-group/node_modules/@img/sharp-libvips-linux-x64",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@img/sharp-libvips-linux-x64/README.md"
-  },
-  "@img/sharp-libvips-linuxmusl-x64@1.2.4": {
-    "licenses": "LGPL-3.0-or-later",
-    "repository": "https://github.com/lovell/sharp-libvips",
-    "publisher": "Lovell Fuller",
-    "email": "npm@lovell.info",
-    "path": "/workspaces/advantis-group/node_modules/@img/sharp-libvips-linuxmusl-x64",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@img/sharp-libvips-linuxmusl-x64/README.md"
-  },
-  "@img/sharp-linux-x64@0.34.5": {
-    "licenses": "Apache-2.0",
+  "@img/sharp-win32-x64@0.34.5": {
+    "licenses": "Apache-2.0 AND LGPL-3.0-or-later",
     "repository": "https://github.com/lovell/sharp",
     "publisher": "Lovell Fuller",
-    "email": "npm@lovell.info",
-    "path": "/workspaces/advantis-group/node_modules/@img/sharp-linux-x64",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@img/sharp-linux-x64/LICENSE"
-  },
-  "@img/sharp-linuxmusl-x64@0.34.5": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/lovell/sharp",
-    "publisher": "Lovell Fuller",
-    "email": "npm@lovell.info",
-    "path": "/workspaces/advantis-group/node_modules/@img/sharp-linuxmusl-x64",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@img/sharp-linuxmusl-x64/LICENSE"
+    "email": "npm@lovell.info"
   },
   "@jridgewell/gen-mapping@0.3.13": {
     "licenses": "MIT",
     "repository": "https://github.com/jridgewell/sourcemaps",
     "publisher": "Justin Ridgewell",
-    "email": "justin@ridgewell.name",
-    "path": "/workspaces/advantis-group/node_modules/@jridgewell/gen-mapping",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@jridgewell/gen-mapping/LICENSE"
+    "email": "justin@ridgewell.name"
   },
   "@jridgewell/remapping@2.3.5": {
     "licenses": "MIT",
     "repository": "https://github.com/jridgewell/sourcemaps",
     "publisher": "Justin Ridgewell",
-    "email": "justin@ridgewell.name",
-    "path": "/workspaces/advantis-group/node_modules/@jridgewell/remapping",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@jridgewell/remapping/LICENSE"
+    "email": "justin@ridgewell.name"
   },
   "@jridgewell/resolve-uri@3.1.2": {
     "licenses": "MIT",
     "repository": "https://github.com/jridgewell/resolve-uri",
     "publisher": "Justin Ridgewell",
-    "email": "justin@ridgewell.name",
-    "path": "/workspaces/advantis-group/node_modules/@jridgewell/resolve-uri",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@jridgewell/resolve-uri/LICENSE"
+    "email": "justin@ridgewell.name"
   },
   "@jridgewell/sourcemap-codec@1.5.5": {
     "licenses": "MIT",
     "repository": "https://github.com/jridgewell/sourcemaps",
     "publisher": "Justin Ridgewell",
-    "email": "justin@ridgewell.name",
-    "path": "/workspaces/advantis-group/node_modules/@jridgewell/sourcemap-codec",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@jridgewell/sourcemap-codec/LICENSE"
+    "email": "justin@ridgewell.name"
   },
   "@jridgewell/trace-mapping@0.3.31": {
     "licenses": "MIT",
     "repository": "https://github.com/jridgewell/sourcemaps",
     "publisher": "Justin Ridgewell",
-    "email": "justin@ridgewell.name",
-    "path": "/workspaces/advantis-group/node_modules/@jridgewell/trace-mapping",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@jridgewell/trace-mapping/LICENSE"
+    "email": "justin@ridgewell.name"
   },
-  "@next/env@16.1.6": {
+  "@next/env@16.2.12": {
     "licenses": "MIT",
     "repository": "https://github.com/vercel/next.js",
     "publisher": "Next.js Team",
-    "email": "support@vercel.com",
-    "path": "/workspaces/advantis-group/node_modules/@next/env",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@next/env/README.md"
+    "email": "support@vercel.com"
   },
-  "@next/swc-linux-x64-gnu@16.1.6": {
+  "@next/swc-win32-x64-msvc@16.2.12": {
     "licenses": "MIT",
-    "repository": "https://github.com/vercel/next.js",
-    "path": "/workspaces/advantis-group/node_modules/@next/swc-linux-x64-gnu",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@next/swc-linux-x64-gnu/README.md"
+    "repository": "https://github.com/vercel/next.js"
   },
-  "@next/swc-linux-x64-musl@16.1.6": {
+  "@parcel/watcher-win32-x64@2.5.6": {
     "licenses": "MIT",
-    "repository": "https://github.com/vercel/next.js",
-    "path": "/workspaces/advantis-group/node_modules/@next/swc-linux-x64-musl",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@next/swc-linux-x64-musl/README.md"
-  },
-  "@opentelemetry/api-logs@0.208.0": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/open-telemetry/opentelemetry-js",
-    "publisher": "OpenTelemetry Authors",
-    "path": "/workspaces/advantis-group/node_modules/@opentelemetry/api-logs",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@opentelemetry/api-logs/LICENSE"
-  },
-  "@opentelemetry/api@1.9.0": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/open-telemetry/opentelemetry-js",
-    "publisher": "OpenTelemetry Authors",
-    "path": "/workspaces/advantis-group/node_modules/@opentelemetry/api",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@opentelemetry/api/LICENSE"
-  },
-  "@opentelemetry/core@2.2.0": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/open-telemetry/opentelemetry-js",
-    "publisher": "OpenTelemetry Authors",
-    "path": "/workspaces/advantis-group/node_modules/@opentelemetry/core",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@opentelemetry/core/LICENSE"
-  },
-  "@opentelemetry/core@2.5.1": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/open-telemetry/opentelemetry-js",
-    "publisher": "OpenTelemetry Authors",
-    "path": "/workspaces/advantis-group/node_modules/@opentelemetry/resources/node_modules/@opentelemetry/core",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@opentelemetry/resources/node_modules/@opentelemetry/core/LICENSE"
-  },
-  "@opentelemetry/exporter-logs-otlp-http@0.208.0": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/open-telemetry/opentelemetry-js",
-    "publisher": "OpenTelemetry Authors",
-    "path": "/workspaces/advantis-group/node_modules/@opentelemetry/exporter-logs-otlp-http",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@opentelemetry/exporter-logs-otlp-http/LICENSE"
-  },
-  "@opentelemetry/otlp-exporter-base@0.208.0": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/open-telemetry/opentelemetry-js",
-    "publisher": "OpenTelemetry Authors",
-    "path": "/workspaces/advantis-group/node_modules/@opentelemetry/otlp-exporter-base",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@opentelemetry/otlp-exporter-base/LICENSE"
-  },
-  "@opentelemetry/otlp-transformer@0.208.0": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/open-telemetry/opentelemetry-js",
-    "publisher": "OpenTelemetry Authors",
-    "path": "/workspaces/advantis-group/node_modules/@opentelemetry/otlp-transformer",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@opentelemetry/otlp-transformer/LICENSE"
-  },
-  "@opentelemetry/resources@2.2.0": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/open-telemetry/opentelemetry-js",
-    "publisher": "OpenTelemetry Authors",
-    "path": "/workspaces/advantis-group/node_modules/@opentelemetry/otlp-transformer/node_modules/@opentelemetry/resources",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@opentelemetry/otlp-transformer/node_modules/@opentelemetry/resources/LICENSE"
-  },
-  "@opentelemetry/resources@2.5.1": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/open-telemetry/opentelemetry-js",
-    "publisher": "OpenTelemetry Authors",
-    "path": "/workspaces/advantis-group/node_modules/@opentelemetry/resources",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@opentelemetry/resources/LICENSE"
-  },
-  "@opentelemetry/sdk-logs@0.208.0": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/open-telemetry/opentelemetry-js",
-    "publisher": "OpenTelemetry Authors",
-    "path": "/workspaces/advantis-group/node_modules/@opentelemetry/sdk-logs",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@opentelemetry/sdk-logs/LICENSE"
-  },
-  "@opentelemetry/sdk-metrics@2.2.0": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/open-telemetry/opentelemetry-js",
-    "publisher": "OpenTelemetry Authors",
-    "path": "/workspaces/advantis-group/node_modules/@opentelemetry/sdk-metrics",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@opentelemetry/sdk-metrics/LICENSE"
-  },
-  "@opentelemetry/sdk-trace-base@2.2.0": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/open-telemetry/opentelemetry-js",
-    "publisher": "OpenTelemetry Authors",
-    "path": "/workspaces/advantis-group/node_modules/@opentelemetry/sdk-trace-base",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@opentelemetry/sdk-trace-base/LICENSE"
-  },
-  "@opentelemetry/semantic-conventions@1.39.0": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/open-telemetry/opentelemetry-js",
-    "publisher": "OpenTelemetry Authors",
-    "path": "/workspaces/advantis-group/node_modules/@opentelemetry/semantic-conventions",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@opentelemetry/semantic-conventions/LICENSE"
-  },
-  "@parcel/watcher-linux-x64-glibc@2.5.6": {
-    "licenses": "MIT",
-    "repository": "https://github.com/parcel-bundler/watcher",
-    "path": "/workspaces/advantis-group/node_modules/@parcel/watcher-linux-x64-glibc",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@parcel/watcher-linux-x64-glibc/LICENSE"
-  },
-  "@parcel/watcher-linux-x64-musl@2.5.6": {
-    "licenses": "MIT",
-    "repository": "https://github.com/parcel-bundler/watcher",
-    "path": "/workspaces/advantis-group/node_modules/@parcel/watcher-linux-x64-musl",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@parcel/watcher-linux-x64-musl/LICENSE"
+    "repository": "https://github.com/parcel-bundler/watcher"
   },
   "@parcel/watcher@2.5.6": {
     "licenses": "MIT",
-    "repository": "https://github.com/parcel-bundler/watcher",
-    "path": "/workspaces/advantis-group/node_modules/@parcel/watcher",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@parcel/watcher/LICENSE"
+    "repository": "https://github.com/parcel-bundler/watcher"
   },
-  "@posthog/core@1.23.1": {
+  "@radix-ui/primitive@1.1.7": {
     "licenses": "MIT",
-    "repository": "https://github.com/PostHog/posthog-js",
-    "path": "/workspaces/advantis-group/node_modules/@posthog/core"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@posthog/types@1.353.0": {
+  "@radix-ui/react-arrow@1.1.15": {
     "licenses": "MIT",
-    "repository": "https://github.com/PostHog/posthog-js",
-    "path": "/workspaces/advantis-group/node_modules/@posthog/types",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@posthog/types/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@protobufjs/aspromise@1.1.2": {
-    "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/dcodeIO/protobuf.js",
-    "publisher": "Daniel Wirtz",
-    "email": "dcode+protobufjs@dcode.io",
-    "path": "/workspaces/advantis-group/node_modules/@protobufjs/aspromise",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@protobufjs/aspromise/LICENSE"
-  },
-  "@protobufjs/base64@1.1.2": {
-    "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/dcodeIO/protobuf.js",
-    "publisher": "Daniel Wirtz",
-    "email": "dcode+protobufjs@dcode.io",
-    "path": "/workspaces/advantis-group/node_modules/@protobufjs/base64",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@protobufjs/base64/LICENSE"
-  },
-  "@protobufjs/codegen@2.0.4": {
-    "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/dcodeIO/protobuf.js",
-    "publisher": "Daniel Wirtz",
-    "email": "dcode+protobufjs@dcode.io",
-    "path": "/workspaces/advantis-group/node_modules/@protobufjs/codegen",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@protobufjs/codegen/LICENSE"
-  },
-  "@protobufjs/eventemitter@1.1.0": {
-    "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/dcodeIO/protobuf.js",
-    "publisher": "Daniel Wirtz",
-    "email": "dcode+protobufjs@dcode.io",
-    "path": "/workspaces/advantis-group/node_modules/@protobufjs/eventemitter",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@protobufjs/eventemitter/LICENSE"
-  },
-  "@protobufjs/fetch@1.1.0": {
-    "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/dcodeIO/protobuf.js",
-    "publisher": "Daniel Wirtz",
-    "email": "dcode+protobufjs@dcode.io",
-    "path": "/workspaces/advantis-group/node_modules/@protobufjs/fetch",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@protobufjs/fetch/LICENSE"
-  },
-  "@protobufjs/float@1.0.2": {
-    "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/dcodeIO/protobuf.js",
-    "publisher": "Daniel Wirtz",
-    "email": "dcode+protobufjs@dcode.io",
-    "path": "/workspaces/advantis-group/node_modules/@protobufjs/float",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@protobufjs/float/LICENSE"
-  },
-  "@protobufjs/inquire@1.1.0": {
-    "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/dcodeIO/protobuf.js",
-    "publisher": "Daniel Wirtz",
-    "email": "dcode+protobufjs@dcode.io",
-    "path": "/workspaces/advantis-group/node_modules/@protobufjs/inquire",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@protobufjs/inquire/LICENSE"
-  },
-  "@protobufjs/path@1.1.2": {
-    "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/dcodeIO/protobuf.js",
-    "publisher": "Daniel Wirtz",
-    "email": "dcode+protobufjs@dcode.io",
-    "path": "/workspaces/advantis-group/node_modules/@protobufjs/path",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@protobufjs/path/LICENSE"
-  },
-  "@protobufjs/pool@1.1.0": {
-    "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/dcodeIO/protobuf.js",
-    "publisher": "Daniel Wirtz",
-    "email": "dcode+protobufjs@dcode.io",
-    "path": "/workspaces/advantis-group/node_modules/@protobufjs/pool",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@protobufjs/pool/LICENSE"
-  },
-  "@protobufjs/utf8@1.1.0": {
-    "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/dcodeIO/protobuf.js",
-    "publisher": "Daniel Wirtz",
-    "email": "dcode+protobufjs@dcode.io",
-    "path": "/workspaces/advantis-group/node_modules/@protobufjs/utf8",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@protobufjs/utf8/LICENSE"
-  },
-  "@radix-ui/primitive@1.1.3": {
+  "@radix-ui/react-avatar@1.2.6": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/primitive",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/primitive/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-arrow@1.1.7": {
+  "@radix-ui/react-collection@1.1.15": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-arrow",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-arrow/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-collection@1.1.7": {
+  "@radix-ui/react-compose-refs@1.1.5": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-collection",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-collection/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-compose-refs@1.1.2": {
+  "@radix-ui/react-context@1.2.2": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-compose-refs",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-compose-refs/README.md"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-context@1.1.2": {
+  "@radix-ui/react-dialog@1.1.23": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-context",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-context/README.md"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-dialog@1.1.15": {
+  "@radix-ui/react-direction@1.1.4": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-dialog",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-dialog/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-direction@1.1.1": {
+  "@radix-ui/react-dismissable-layer@1.1.19": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-direction",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-direction/README.md"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-dismissable-layer@1.1.11": {
+  "@radix-ui/react-dropdown-menu@2.1.24": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-dismissable-layer",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-dismissable-layer/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-dropdown-menu@2.1.16": {
+  "@radix-ui/react-focus-guards@1.1.6": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-dropdown-menu",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-dropdown-menu/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-focus-guards@1.1.3": {
+  "@radix-ui/react-focus-scope@1.1.16": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-focus-guards",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-focus-guards/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-focus-scope@1.1.7": {
+  "@radix-ui/react-id@1.1.4": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-focus-scope",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-focus-scope/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-id@1.1.1": {
+  "@radix-ui/react-label@2.1.15": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-id",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-id/README.md"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-label@2.1.8": {
+  "@radix-ui/react-menu@2.1.24": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-label",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-label/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-menu@2.1.16": {
+  "@radix-ui/react-popper@1.3.7": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-menu",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-menu/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-popper@1.2.8": {
+  "@radix-ui/react-portal@1.1.17": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-popper",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-popper/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-portal@1.1.9": {
+  "@radix-ui/react-presence@1.1.10": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-portal",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-portal/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-presence@1.1.5": {
+  "@radix-ui/react-primitive@2.1.10": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-presence",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-presence/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-primitive@2.1.3": {
+  "@radix-ui/react-roving-focus@1.1.19": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-primitive",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-primitive/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-primitive@2.1.4": {
+  "@radix-ui/react-slot@1.3.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-label/node_modules/@radix-ui/react-primitive",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-label/node_modules/@radix-ui/react-primitive/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-roving-focus@1.1.11": {
+  "@radix-ui/react-switch@1.3.7": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-roving-focus",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-roving-focus/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-slot@1.2.3": {
+  "@radix-ui/react-tabs@1.1.21": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-primitive/node_modules/@radix-ui/react-slot",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-primitive/node_modules/@radix-ui/react-slot/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-slot@1.2.4": {
+  "@radix-ui/react-use-callback-ref@1.1.4": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-slot",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-slot/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-use-callback-ref@1.1.1": {
+  "@radix-ui/react-use-controllable-state@1.2.6": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-callback-ref",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-callback-ref/README.md"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-use-controllable-state@1.2.2": {
+  "@radix-ui/react-use-effect-event@0.0.5": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-controllable-state",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-controllable-state/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-use-effect-event@0.0.2": {
+  "@radix-ui/react-use-is-hydrated@0.1.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-effect-event",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-effect-event/LICENSE"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-use-escape-keydown@1.1.1": {
+  "@radix-ui/react-use-layout-effect@1.1.4": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-escape-keydown",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-escape-keydown/README.md"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-use-layout-effect@1.1.1": {
+  "@radix-ui/react-use-rect@1.1.4": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-layout-effect",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-layout-effect/README.md"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-use-rect@1.1.1": {
+  "@radix-ui/react-use-size@1.1.4": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-rect",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-rect/README.md"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/react-use-size@1.1.1": {
+  "@radix-ui/rect@1.1.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-size",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/react-use-size/README.md"
+    "repository": "https://github.com/radix-ui/primitives"
   },
-  "@radix-ui/rect@1.1.1": {
+  "@react-email/render@2.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/radix-ui/primitives",
-    "path": "/workspaces/advantis-group/node_modules/@radix-ui/rect",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@radix-ui/rect/README.md"
-  },
-  "@react-email/render@2.0.4": {
-    "licenses": "MIT",
-    "repository": "https://github.com/resend/react-email",
-    "path": "/workspaces/advantis-group/node_modules/@react-email/render",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@react-email/render/license.md"
+    "repository": "https://github.com/resend/react-email"
   },
   "@schummar/icu-type-parser@1.21.5": {
     "licenses": "MIT",
-    "repository": "https://github.com/schummar/schummar-translate",
+    "repository": "schummar/schummar-translate",
     "publisher": "Marco Schumacher",
-    "email": "marco@schumacher.dev",
-    "path": "/workspaces/advantis-group/node_modules/@schummar/icu-type-parser"
+    "email": "marco@schumacher.dev"
   },
   "@selderee/plugin-htmlparser2@0.11.0": {
     "licenses": "MIT",
     "repository": "https://github.com/mxxii/selderee",
-    "publisher": "KillyMXI",
-    "path": "/workspaces/advantis-group/node_modules/@selderee/plugin-htmlparser2",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@selderee/plugin-htmlparser2/LICENSE"
-  },
-  "@sinclair/typebox@0.34.48": {
-    "licenses": "MIT",
-    "repository": "https://github.com/sinclairzx81/typebox-legacy",
-    "publisher": "sinclairzx81",
-    "path": "/workspaces/advantis-group/node_modules/@sinclair/typebox",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@sinclair/typebox/license"
+    "publisher": "KillyMXI"
   },
   "@stablelib/base64@1.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/StableLib/stablelib",
-    "publisher": "Dmitry Chestnykh",
-    "path": "/workspaces/advantis-group/node_modules/@stablelib/base64",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@stablelib/base64/LICENSE"
+    "publisher": "Dmitry Chestnykh"
   },
-  "@supabase/auth-js@2.97.0": {
+  "@supabase/auth-js@2.110.9": {
     "licenses": "MIT",
     "repository": "https://github.com/supabase/supabase-js",
-    "publisher": "Supabase",
-    "path": "/workspaces/advantis-group/node_modules/@supabase/auth-js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@supabase/auth-js/LICENSE"
+    "publisher": "Supabase"
   },
-  "@supabase/functions-js@2.97.0": {
+  "@supabase/functions-js@2.110.9": {
     "licenses": "MIT",
     "repository": "https://github.com/supabase/supabase-js",
-    "publisher": "Supabase",
-    "path": "/workspaces/advantis-group/node_modules/@supabase/functions-js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@supabase/functions-js/README.md"
+    "publisher": "Supabase"
   },
-  "@supabase/postgrest-js@2.97.0": {
+  "@supabase/phoenix@0.4.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/supabase/phoenix",
+    "publisher": "Chris McCord",
+    "email": "chris@chrismccord.com",
+    "url": "https://www.phoenixframework.org"
+  },
+  "@supabase/postgrest-js@2.110.9": {
     "licenses": "MIT",
     "repository": "https://github.com/supabase/supabase-js",
-    "publisher": "Supabase",
-    "path": "/workspaces/advantis-group/node_modules/@supabase/postgrest-js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@supabase/postgrest-js/README.md"
+    "publisher": "Supabase"
   },
-  "@supabase/realtime-js@2.97.0": {
+  "@supabase/realtime-js@2.110.9": {
     "licenses": "MIT",
     "repository": "https://github.com/supabase/supabase-js",
-    "publisher": "Supabase",
-    "path": "/workspaces/advantis-group/node_modules/@supabase/realtime-js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@supabase/realtime-js/README.md"
+    "publisher": "Supabase"
   },
-  "@supabase/ssr@0.8.0": {
+  "@supabase/ssr@0.12.3": {
     "licenses": "MIT",
     "repository": "https://github.com/supabase/ssr",
-    "publisher": "Supabase, Inc.",
-    "path": "/workspaces/advantis-group/node_modules/@supabase/ssr",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@supabase/ssr/LICENSE"
+    "publisher": "Supabase, Inc."
   },
-  "@supabase/storage-js@2.97.0": {
+  "@supabase/storage-js@2.110.9": {
     "licenses": "MIT",
     "repository": "https://github.com/supabase/supabase-js",
-    "publisher": "Supabase",
-    "path": "/workspaces/advantis-group/node_modules/@supabase/storage-js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@supabase/storage-js/README.md"
+    "publisher": "Supabase"
   },
-  "@supabase/supabase-js@2.97.0": {
+  "@supabase/supabase-js@2.110.9": {
     "licenses": "MIT",
     "repository": "https://github.com/supabase/supabase-js",
-    "publisher": "Supabase",
-    "path": "/workspaces/advantis-group/node_modules/@supabase/supabase-js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@supabase/supabase-js/README.md"
+    "publisher": "Supabase"
   },
-  "@swc/core-linux-x64-gnu@1.15.13": {
+  "@swc/core-win32-x64-msvc@1.15.13": {
     "licenses": "Apache-2.0 AND MIT",
     "repository": "https://github.com/swc-project/swc",
     "publisher": "강동윤",
-    "email": "kdy1997.dev@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/@swc/core-linux-x64-gnu",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@swc/core-linux-x64-gnu/README.md"
-  },
-  "@swc/core-linux-x64-musl@1.15.13": {
-    "licenses": "Apache-2.0 AND MIT",
-    "repository": "https://github.com/swc-project/swc",
-    "publisher": "강동윤",
-    "email": "kdy1997.dev@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/@swc/core-linux-x64-musl",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@swc/core-linux-x64-musl/README.md"
+    "email": "kdy1997.dev@gmail.com"
   },
   "@swc/core@1.15.13": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/swc-project/swc",
     "publisher": "강동윤",
-    "email": "kdy1997.dev@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/@swc/core",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@swc/core/README.md"
+    "email": "kdy1997.dev@gmail.com"
   },
   "@swc/counter@0.1.3": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/swc-project/pkgs",
     "publisher": "강동윤",
-    "email": "kdy1997.dev@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/@swc/counter",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@swc/counter/README.md"
+    "email": "kdy1997.dev@gmail.com"
   },
   "@swc/helpers@0.5.15": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/swc-project/swc",
     "publisher": "강동윤",
-    "email": "kdy1997.dev@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/@swc/helpers",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@swc/helpers/LICENSE"
+    "email": "kdy1997.dev@gmail.com"
   },
   "@swc/types@0.1.25": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/swc-project/swc",
     "publisher": "강동윤",
-    "email": "kdy1997.dev@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/@swc/types",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@swc/types/LICENSE"
+    "email": "kdy1997.dev@gmail.com"
   },
-  "@tailwindcss/node@4.2.1": {
+  "@tailwindcss/node@4.3.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/tailwindlabs/tailwindcss",
-    "path": "/workspaces/advantis-group/node_modules/@tailwindcss/node",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tailwindcss/node/LICENSE"
+    "repository": "https://github.com/tailwindlabs/tailwindcss"
   },
-  "@tailwindcss/oxide-linux-x64-gnu@4.2.1": {
+  "@tailwindcss/oxide-win32-x64-msvc@4.3.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/tailwindlabs/tailwindcss",
-    "path": "/workspaces/advantis-group/node_modules/@tailwindcss/oxide-linux-x64-gnu",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tailwindcss/oxide-linux-x64-gnu/LICENSE"
+    "repository": "https://github.com/tailwindlabs/tailwindcss"
   },
-  "@tailwindcss/oxide-linux-x64-musl@4.2.1": {
+  "@tailwindcss/oxide@4.3.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/tailwindlabs/tailwindcss",
-    "path": "/workspaces/advantis-group/node_modules/@tailwindcss/oxide-linux-x64-musl",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tailwindcss/oxide-linux-x64-musl/LICENSE"
+    "repository": "https://github.com/tailwindlabs/tailwindcss"
   },
-  "@tailwindcss/oxide@4.2.1": {
+  "@tailwindcss/postcss@4.3.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/tailwindlabs/tailwindcss",
-    "path": "/workspaces/advantis-group/node_modules/@tailwindcss/oxide",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tailwindcss/oxide/LICENSE"
+    "repository": "https://github.com/tailwindlabs/tailwindcss"
   },
-  "@tailwindcss/postcss@4.2.1": {
+  "@tanstack/query-core@5.101.4": {
     "licenses": "MIT",
-    "repository": "https://github.com/tailwindlabs/tailwindcss",
-    "path": "/workspaces/advantis-group/node_modules/@tailwindcss/postcss",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tailwindcss/postcss/LICENSE"
+    "repository": "https://github.com/TanStack/query",
+    "publisher": "tannerlinsley"
   },
-  "@tokenizer/inflate@0.4.1": {
-    "licenses": "MIT",
-    "repository": "https://github.com/Borewit/tokenizer-inflate",
-    "publisher": "Borewit",
-    "url": "https://github.com/Borewit",
-    "path": "/workspaces/advantis-group/node_modules/@tokenizer/inflate",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tokenizer/inflate/LICENSE"
-  },
-  "@tokenizer/token@0.3.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/Borewit/tokenizer-token",
-    "publisher": "Borewit",
-    "url": "https://github.com/Borewit",
-    "path": "/workspaces/advantis-group/node_modules/@tokenizer/token",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tokenizer/token/README.md"
-  },
-  "@tsparticles/basic@3.9.1": {
+  "@tsparticles/animation-utils@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/basic",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/basic/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/engine@3.9.1": {
+  "@tsparticles/basic@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/engine",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/engine/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-external-attract@3.9.1": {
+  "@tsparticles/canvas-utils@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-attract",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-attract/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-external-bounce@3.9.1": {
+  "@tsparticles/engine@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-bounce",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-bounce/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-external-bubble@3.9.1": {
+  "@tsparticles/interaction-external-attract@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-bubble",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-bubble/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-external-connect@3.9.1": {
+  "@tsparticles/interaction-external-bounce@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-connect",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-connect/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-external-grab@3.9.1": {
+  "@tsparticles/interaction-external-bubble@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-grab",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-grab/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-external-pause@3.9.1": {
+  "@tsparticles/interaction-external-connect@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-pause",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-pause/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-external-push@3.9.1": {
+  "@tsparticles/interaction-external-destroy@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-push",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-push/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-external-remove@3.9.1": {
+  "@tsparticles/interaction-external-drag@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-remove",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-remove/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-external-repulse@3.9.1": {
+  "@tsparticles/interaction-external-grab@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-repulse",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-repulse/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-external-slow@3.9.1": {
+  "@tsparticles/interaction-external-parallax@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-slow",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-slow/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-external-trail@3.9.1": {
+  "@tsparticles/interaction-external-pause@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-trail",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-external-trail/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-particles-attract@3.9.1": {
+  "@tsparticles/interaction-external-push@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-particles-attract",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-particles-attract/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-particles-collisions@3.9.1": {
+  "@tsparticles/interaction-external-remove@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-particles-collisions",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-particles-collisions/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/interaction-particles-links@3.9.1": {
+  "@tsparticles/interaction-external-repulse@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-particles-links",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/interaction-particles-links/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/move-base@3.9.1": {
+  "@tsparticles/interaction-external-slow@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/move-base",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/move-base/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/move-parallax@3.9.1": {
+  "@tsparticles/interaction-external-trail@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/move-parallax",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/move-parallax/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/plugin-absorbers@3.9.1": {
+  "@tsparticles/interaction-particles-attract@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-absorbers",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-absorbers/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/plugin-easing-quad@3.9.1": {
+  "@tsparticles/interaction-particles-collisions@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-easing-quad",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-easing-quad/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/plugin-emitters-shape-circle@3.9.1": {
+  "@tsparticles/interaction-particles-links@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-emitters-shape-circle",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-emitters-shape-circle/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/plugin-emitters-shape-square@3.9.1": {
+  "@tsparticles/plugin-absorbers@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-emitters-shape-square",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-emitters-shape-square/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/plugin-emitters@3.9.1": {
+  "@tsparticles/plugin-blend@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-emitters",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-emitters/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/plugin-hex-color@3.9.1": {
+  "@tsparticles/plugin-easing-quad@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-hex-color",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-hex-color/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/plugin-hsl-color@3.9.1": {
+  "@tsparticles/plugin-emitters-shape-circle@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-hsl-color",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-hsl-color/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/plugin-rgb-color@3.9.1": {
+  "@tsparticles/plugin-emitters-shape-square@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-rgb-color",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/plugin-rgb-color/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/react@3.0.0": {
-    "licenses": "MIT*",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/react",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/react/LICENSE"
-  },
-  "@tsparticles/shape-circle@3.9.1": {
+  "@tsparticles/plugin-emitters@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/shape-circle",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/shape-circle/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/shape-emoji@3.9.1": {
+  "@tsparticles/plugin-hex-color@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/shape-emoji",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/shape-emoji/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/shape-image@3.9.1": {
+  "@tsparticles/plugin-hsl-color@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/shape-image",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/shape-image/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/shape-line@3.9.1": {
+  "@tsparticles/plugin-interactivity@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/shape-line",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/shape-line/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/shape-polygon@3.9.1": {
+  "@tsparticles/plugin-move@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/shape-polygon",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/shape-polygon/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/shape-square@3.9.1": {
+  "@tsparticles/plugin-rgb-color@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/shape-square",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/shape-square/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/shape-star@3.9.1": {
+  "@tsparticles/react@4.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles"
+  },
+  "@tsparticles/shape-circle@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/shape-star",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/shape-star/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/shape-text@3.9.1": {
+  "@tsparticles/shape-emoji@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/shape-text",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/shape-text/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/slim@3.9.1": {
+  "@tsparticles/shape-image@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/slim",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/slim/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/updater-color@3.9.1": {
+  "@tsparticles/shape-line@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/updater-color",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/updater-color/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/updater-destroy@3.9.1": {
+  "@tsparticles/shape-polygon@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/updater-destroy",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/updater-destroy/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/updater-life@3.9.1": {
+  "@tsparticles/shape-square@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/updater-life",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/updater-life/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/updater-opacity@3.9.1": {
+  "@tsparticles/shape-star@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/updater-opacity",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/updater-opacity/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/updater-out-modes@3.9.1": {
+  "@tsparticles/shape-text@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/updater-out-modes",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/updater-out-modes/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/updater-roll@3.9.1": {
+  "@tsparticles/slim@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/updater-roll",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/updater-roll/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/updater-rotate@3.9.1": {
+  "@tsparticles/updater-destroy@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/updater-rotate",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/updater-rotate/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/updater-size@3.9.1": {
+  "@tsparticles/updater-life@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/updater-size",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/updater-size/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/updater-stroke-color@3.9.1": {
+  "@tsparticles/updater-opacity@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/updater-stroke-color",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/updater-stroke-color/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/updater-tilt@3.9.1": {
+  "@tsparticles/updater-out-modes@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/updater-tilt",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/updater-tilt/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/updater-twinkle@3.9.1": {
+  "@tsparticles/updater-paint@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/updater-twinkle",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/updater-twinkle/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
-  "@tsparticles/updater-wobble@3.9.1": {
+  "@tsparticles/updater-roll@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/@tsparticles/updater-wobble",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@tsparticles/updater-wobble/LICENSE"
+    "email": "matteo.bruni@me.com"
+  },
+  "@tsparticles/updater-rotate@4.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com"
+  },
+  "@tsparticles/updater-size@4.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com"
+  },
+  "@tsparticles/updater-tilt@4.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com"
+  },
+  "@tsparticles/updater-twinkle@4.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com"
+  },
+  "@tsparticles/updater-wobble@4.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com"
   },
   "@types/debug@4.1.12": {
     "licenses": "MIT",
     "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/@types/debug",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@types/debug/LICENSE"
+    "publisher": "Seon-Wook Park",
+    "url": "https://github.com/swook"
   },
   "@types/estree-jsx@1.0.5": {
     "licenses": "MIT",
     "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/@types/estree-jsx",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@types/estree-jsx/LICENSE"
+    "publisher": "Tony Ross",
+    "url": "https://github.com/antross"
   },
   "@types/estree@1.0.8": {
     "licenses": "MIT",
     "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/@types/estree",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@types/estree/LICENSE"
+    "publisher": "RReverser",
+    "url": "https://github.com/RReverser"
   },
   "@types/hast@3.0.4": {
     "licenses": "MIT",
     "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/@types/hast",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@types/hast/LICENSE"
+    "publisher": "lukeggchapman",
+    "url": "https://github.com/lukeggchapman"
   },
   "@types/mdast@4.0.4": {
     "licenses": "MIT",
     "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/@types/mdast",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@types/mdast/LICENSE"
+    "publisher": "Christian Murphy",
+    "url": "https://github.com/ChristianMurphy"
   },
   "@types/ms@2.1.0": {
     "licenses": "MIT",
     "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/@types/ms",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@types/ms/LICENSE"
+    "publisher": "Zhiyuan Wang",
+    "url": "https://github.com/danny8002"
   },
-  "@types/node@25.3.0": {
+  "@types/node@26.1.2": {
     "licenses": "MIT",
     "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/@types/node",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@types/node/LICENSE"
-  },
-  "@types/phoenix@1.6.7": {
-    "licenses": "MIT",
-    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/@types/phoenix",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@types/phoenix/LICENSE"
-  },
-  "@types/react-dom@19.2.3": {
-    "licenses": "MIT",
-    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/@types/react-dom",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@types/react-dom/LICENSE"
-  },
-  "@types/react@19.2.14": {
-    "licenses": "MIT",
-    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/@types/react",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@types/react/LICENSE"
-  },
-  "@types/trusted-types@2.0.7": {
-    "licenses": "MIT",
-    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/@types/trusted-types",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@types/trusted-types/LICENSE"
+    "publisher": "Microsoft TypeScript",
+    "url": "https://github.com/Microsoft"
   },
   "@types/unist@2.0.11": {
     "licenses": "MIT",
     "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/parse-entities/node_modules/@types/unist",
-    "licenseFile": "/workspaces/advantis-group/node_modules/parse-entities/node_modules/@types/unist/LICENSE"
+    "publisher": "bizen241",
+    "url": "https://github.com/bizen241"
   },
   "@types/unist@3.0.3": {
     "licenses": "MIT",
     "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/@types/unist",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@types/unist/LICENSE"
-  },
-  "@types/ws@8.18.1": {
-    "licenses": "MIT",
-    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "/workspaces/advantis-group/node_modules/@types/ws",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@types/ws/LICENSE"
+    "publisher": "bizen241",
+    "url": "https://github.com/bizen241"
   },
   "@ungap/structured-clone@1.3.0": {
     "licenses": "ISC",
     "repository": "https://github.com/ungap/structured-clone",
-    "publisher": "Andrea Giammarchi",
-    "path": "/workspaces/advantis-group/node_modules/@ungap/structured-clone",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@ungap/structured-clone/LICENSE"
+    "publisher": "Andrea Giammarchi"
   },
-  "@upstash/core-analytics@0.0.10": {
+  "@upstash/core-analytics@v0.0.10": {
     "licenses": "MIT",
     "publisher": "Andreas Thomas",
-    "email": "andreas@upstash.com",
-    "path": "/workspaces/advantis-group/node_modules/@upstash/core-analytics",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@upstash/core-analytics/README.md"
+    "email": "andreas@upstash.com"
   },
-  "@upstash/ratelimit@2.0.8": {
+  "@upstash/ratelimit@v2.0.8": {
+    "licenses": "MIT"
+  },
+  "@upstash/redis@1.38.0": {
     "licenses": "MIT",
-    "path": "/workspaces/advantis-group/node_modules/@upstash/ratelimit",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@upstash/ratelimit/LICENSE"
+    "repository": "git@github.com:upstash/redis-js",
+    "publisher": "Andreas Thomas",
+    "email": "dev@chronark.com"
   },
-  "@upstash/redis@1.36.2": {
+  "@upstash/redis@v1.36.2": {
     "licenses": "MIT",
     "repository": "https://github.com/upstash/upstash-redis",
     "publisher": "Andreas Thomas",
-    "email": "dev@chronark.com",
-    "path": "/workspaces/advantis-group/node_modules/@upstash/redis",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@upstash/redis/LICENSE"
+    "email": "dev@chronark.com"
   },
-  "ag_homepage@0.0.0": {
-    "licenses": "UNLICENSED",
-    "private": true,
-    "path": "/workspaces/advantis-group"
+  "adler-32@1.3.1": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/SheetJS/js-adler32",
+    "publisher": "sheetjs"
   },
   "aria-hidden@1.2.6": {
     "licenses": "MIT",
     "repository": "https://github.com/theKashey/aria-hidden",
     "publisher": "Anton Korzunov",
-    "email": "thekashey@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/aria-hidden",
-    "licenseFile": "/workspaces/advantis-group/node_modules/aria-hidden/LICENSE"
+    "email": "thekashey@gmail.com"
   },
   "babel-plugin-react-compiler@1.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/facebook/react",
-    "path": "/workspaces/advantis-group/node_modules/babel-plugin-react-compiler",
-    "licenseFile": "/workspaces/advantis-group/node_modules/babel-plugin-react-compiler/README.md"
+    "repository": "https://github.com/facebook/react"
   },
   "bail@2.0.2": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/bail",
+    "repository": "wooorm/bail",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/bail",
-    "licenseFile": "/workspaces/advantis-group/node_modules/bail/license"
+    "url": "https://wooorm.com"
   },
   "baseline-browser-mapping@2.10.0": {
     "licenses": "Apache-2.0",
-    "repository": "https://github.com/web-platform-dx/baseline-browser-mapping",
-    "path": "/workspaces/advantis-group/node_modules/baseline-browser-mapping",
-    "licenseFile": "/workspaces/advantis-group/node_modules/baseline-browser-mapping/LICENSE.txt"
+    "repository": "https://github.com/web-platform-dx/baseline-browser-mapping"
   },
   "caniuse-lite@1.0.30001774": {
     "licenses": "CC-BY-4.0",
-    "repository": "https://github.com/browserslist/caniuse-lite",
+    "repository": "browserslist/caniuse-lite",
     "publisher": "Ben Briggs",
     "email": "beneb.info@gmail.com",
-    "url": "http://beneb.info",
-    "path": "/workspaces/advantis-group/node_modules/caniuse-lite",
-    "licenseFile": "/workspaces/advantis-group/node_modules/caniuse-lite/LICENSE"
+    "url": "http://beneb.info"
   },
   "ccount@2.0.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/ccount",
+    "repository": "wooorm/ccount",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/ccount",
-    "licenseFile": "/workspaces/advantis-group/node_modules/ccount/license"
+    "url": "https://wooorm.com"
+  },
+  "cfb@1.2.2": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/SheetJS/js-cfb",
+    "publisher": "sheetjs"
   },
   "character-entities-html4@2.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/character-entities-html4",
+    "repository": "wooorm/character-entities-html4",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/character-entities-html4",
-    "licenseFile": "/workspaces/advantis-group/node_modules/character-entities-html4/license"
+    "url": "https://wooorm.com"
   },
   "character-entities-legacy@3.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/character-entities-legacy",
+    "repository": "wooorm/character-entities-legacy",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/character-entities-legacy",
-    "licenseFile": "/workspaces/advantis-group/node_modules/character-entities-legacy/license"
+    "url": "https://wooorm.com"
   },
   "character-entities@2.0.2": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/character-entities",
+    "repository": "wooorm/character-entities",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/character-entities",
-    "licenseFile": "/workspaces/advantis-group/node_modules/character-entities/license"
+    "url": "https://wooorm.com"
   },
   "character-reference-invalid@2.0.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/character-reference-invalid",
+    "repository": "wooorm/character-reference-invalid",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/character-reference-invalid",
-    "licenseFile": "/workspaces/advantis-group/node_modules/character-reference-invalid/license"
+    "url": "https://wooorm.com"
   },
   "class-variance-authority@0.7.1": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/joe-bell/cva",
     "publisher": "Joe Bell",
-    "url": "https://joebell.co.uk",
-    "path": "/workspaces/advantis-group/node_modules/class-variance-authority",
-    "licenseFile": "/workspaces/advantis-group/node_modules/class-variance-authority/LICENSE"
+    "url": "https://joebell.co.uk"
   },
   "client-only@0.0.1": {
-    "licenses": "MIT",
-    "path": "/workspaces/advantis-group/node_modules/client-only"
+    "licenses": "MIT"
   },
   "clsx@2.1.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/lukeed/clsx",
+    "repository": "lukeed/clsx",
     "publisher": "Luke Edwards",
     "email": "luke.edwards05@gmail.com",
-    "url": "https://lukeed.com",
-    "path": "/workspaces/advantis-group/node_modules/clsx",
-    "licenseFile": "/workspaces/advantis-group/node_modules/clsx/license"
+    "url": "https://lukeed.com"
+  },
+  "codepage@1.15.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/SheetJS/js-codepage",
+    "publisher": "SheetJS"
   },
   "comma-separated-tokens@2.0.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/comma-separated-tokens",
+    "repository": "wooorm/comma-separated-tokens",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/comma-separated-tokens",
-    "licenseFile": "/workspaces/advantis-group/node_modules/comma-separated-tokens/license"
+    "url": "https://wooorm.com"
   },
   "complex.js@2.4.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/rawify/Complex.js",
+    "repository": "git@github.com:rawify/Complex.js",
     "publisher": "Robert Eisele",
     "email": "robert@raw.org",
-    "url": "https://raw.org/",
-    "path": "/workspaces/advantis-group/node_modules/complex.js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/complex.js/LICENSE"
+    "url": "https://raw.org/"
   },
-  "convex@1.32.0": {
+  "convex-helpers@0.1.124": {
     "licenses": "Apache-2.0",
-    "repository": "https://github.com/get-convex/convex-js",
+    "repository": "https://github.com/get-convex/convex-helpers",
+    "publisher": "Ian Macartney",
+    "email": "ian@convex.dev"
+  },
+  "convex@1.46.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/get-convex/convex-backend",
     "publisher": "Convex, Inc.",
-    "email": "no-reply@convex.dev",
-    "path": "/workspaces/advantis-group/node_modules/convex",
-    "licenseFile": "/workspaces/advantis-group/node_modules/convex/LICENSE"
+    "email": "no-reply@convex.dev"
   },
   "cookie@1.1.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/jshttp/cookie",
+    "repository": "jshttp/cookie",
     "publisher": "Roman Shtylman",
-    "email": "shtylman@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/cookie",
-    "licenseFile": "/workspaces/advantis-group/node_modules/cookie/LICENSE"
+    "email": "shtylman@gmail.com"
   },
-  "core-js@3.48.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/zloirock/core-js",
-    "publisher": "Denis Pushkarev",
-    "email": "zloirock@zloirock.ru",
-    "url": "http://zloirock.ru",
-    "path": "/workspaces/advantis-group/node_modules/core-js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/core-js/LICENSE"
+  "crc-32@1.2.2": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/SheetJS/js-crc32",
+    "publisher": "sheetjs"
   },
-  "cross-spawn@7.0.6": {
+  "dayjs@1.11.23": {
     "licenses": "MIT",
-    "repository": "https://github.com/moxystudio/node-cross-spawn",
-    "publisher": "André Cruz",
-    "email": "andre@moxy.studio",
-    "path": "/workspaces/advantis-group/node_modules/cross-spawn",
-    "licenseFile": "/workspaces/advantis-group/node_modules/cross-spawn/LICENSE"
-  },
-  "csstype@3.1.3": {
-    "licenses": "MIT",
-    "repository": "https://github.com/frenic/csstype",
-    "publisher": "Fredrik Nicol",
-    "email": "fredrik.nicol@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/@clerk/shared/node_modules/csstype",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@clerk/shared/node_modules/csstype/LICENSE"
-  },
-  "csstype@3.2.3": {
-    "licenses": "MIT",
-    "repository": "https://github.com/frenic/csstype",
-    "publisher": "Fredrik Nicol",
-    "email": "fredrik.nicol@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/csstype",
-    "licenseFile": "/workspaces/advantis-group/node_modules/csstype/LICENSE"
+    "repository": "https://github.com/iamkun/dayjs",
+    "publisher": "iamkun"
   },
   "debug@4.4.3": {
     "licenses": "MIT",
     "repository": "https://github.com/debug-js/debug",
     "publisher": "Josh Junon",
-    "url": "https://github.com/qix-",
-    "path": "/workspaces/advantis-group/node_modules/debug",
-    "licenseFile": "/workspaces/advantis-group/node_modules/debug/LICENSE"
+    "url": "https://github.com/qix-"
   },
   "decimal.js@10.6.0": {
     "licenses": "MIT",
     "repository": "https://github.com/MikeMcl/decimal.js",
     "publisher": "Michael Mclaughlin",
-    "email": "M8ch88l@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/decimal.js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/decimal.js/LICENCE.md"
+    "email": "M8ch88l@gmail.com"
   },
   "decode-named-character-reference@1.3.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/decode-named-character-reference",
+    "repository": "wooorm/decode-named-character-reference",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/decode-named-character-reference",
-    "licenseFile": "/workspaces/advantis-group/node_modules/decode-named-character-reference/license"
+    "url": "https://wooorm.com"
   },
   "deepmerge@4.3.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/TehShrike/deepmerge",
-    "path": "/workspaces/advantis-group/node_modules/deepmerge",
-    "licenseFile": "/workspaces/advantis-group/node_modules/deepmerge/license.txt"
+    "repository": "https://github.com/TehShrike/deepmerge"
   },
   "dequal@2.0.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/lukeed/dequal",
+    "repository": "lukeed/dequal",
     "publisher": "Luke Edwards",
     "email": "luke.edwards05@gmail.com",
-    "url": "https://lukeed.com",
-    "path": "/workspaces/advantis-group/node_modules/dequal",
-    "licenseFile": "/workspaces/advantis-group/node_modules/dequal/license"
+    "url": "https://lukeed.com"
   },
   "detect-libc@2.1.2": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/lovell/detect-libc",
     "publisher": "Lovell Fuller",
-    "email": "npm@lovell.info",
-    "path": "/workspaces/advantis-group/node_modules/detect-libc",
-    "licenseFile": "/workspaces/advantis-group/node_modules/detect-libc/LICENSE"
+    "email": "npm@lovell.info"
   },
   "detect-node-es@1.1.0": {
     "licenses": "MIT",
     "repository": "https://github.com/thekashey/detect-node",
-    "publisher": "Ilya Kantor",
-    "path": "/workspaces/advantis-group/node_modules/detect-node-es",
-    "licenseFile": "/workspaces/advantis-group/node_modules/detect-node-es/LICENSE"
+    "publisher": "Ilya Kantor"
   },
   "devlop@1.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/devlop",
+    "repository": "wooorm/devlop",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/devlop",
-    "licenseFile": "/workspaces/advantis-group/node_modules/devlop/license"
+    "url": "https://wooorm.com"
   },
   "dom-serializer@2.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/cheeriojs/dom-serializer",
     "publisher": "Felix Boehm",
-    "email": "me@feedic.com",
-    "path": "/workspaces/advantis-group/node_modules/dom-serializer",
-    "licenseFile": "/workspaces/advantis-group/node_modules/dom-serializer/LICENSE"
+    "email": "me@feedic.com"
+  },
+  "dom-serializer@3.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/cheeriojs/dom-serializer",
+    "publisher": "Felix Boehm",
+    "email": "me@feedic.com"
   },
   "domelementtype@2.3.0": {
     "licenses": "BSD-2-Clause",
     "repository": "https://github.com/fb55/domelementtype",
     "publisher": "Felix Boehm",
-    "email": "me@feedic.com",
-    "path": "/workspaces/advantis-group/node_modules/domelementtype",
-    "licenseFile": "/workspaces/advantis-group/node_modules/domelementtype/LICENSE"
+    "email": "me@feedic.com"
+  },
+  "domelementtype@3.0.0": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/fb55/domelementtype",
+    "publisher": "Felix Boehm",
+    "email": "me@feedic.com"
   },
   "domhandler@5.0.3": {
     "licenses": "BSD-2-Clause",
     "repository": "https://github.com/fb55/domhandler",
     "publisher": "Felix Boehm",
-    "email": "me@feedic.com",
-    "path": "/workspaces/advantis-group/node_modules/domhandler",
-    "licenseFile": "/workspaces/advantis-group/node_modules/domhandler/LICENSE"
+    "email": "me@feedic.com"
   },
-  "dompurify@3.3.1": {
-    "licenses": "(MPL-2.0 OR Apache-2.0)",
-    "repository": "https://github.com/cure53/DOMPurify",
-    "publisher": "Dr.-Ing. Mario Heiderich, Cure53",
-    "email": "mario@cure53.de",
-    "url": "https://cure53.de/",
-    "path": "/workspaces/advantis-group/node_modules/dompurify",
-    "licenseFile": "/workspaces/advantis-group/node_modules/dompurify/LICENSE"
+  "domhandler@6.0.1": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/fb55/domhandler",
+    "publisher": "Felix Boehm",
+    "email": "me@feedic.com"
   },
   "domutils@3.2.2": {
     "licenses": "BSD-2-Clause",
     "repository": "https://github.com/fb55/domutils",
     "publisher": "Felix Boehm",
-    "email": "me@feedic.com",
-    "path": "/workspaces/advantis-group/node_modules/domutils",
-    "licenseFile": "/workspaces/advantis-group/node_modules/domutils/LICENSE"
+    "email": "me@feedic.com"
   },
-  "elysia@1.4.25": {
+  "domutils@4.0.2": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/fb55/domutils",
+    "publisher": "Felix Boehm",
+    "email": "me@feedic.com"
+  },
+  "elysia@1.4.29": {
     "licenses": "MIT",
     "repository": "https://github.com/elysiajs/elysia",
     "publisher": "saltyAom",
     "email": "saltyaom@gmail.com",
-    "url": "https://github.com/SaltyAom",
-    "path": "/workspaces/advantis-group/node_modules/elysia",
-    "licenseFile": "/workspaces/advantis-group/node_modules/elysia/LICENSE"
+    "url": "https://github.com/SaltyAom"
   },
-  "enhanced-resolve@5.19.0": {
+  "embla-carousel-react@8.6.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/davidjerleke/embla-carousel",
+    "publisher": "David Jerleke"
+  },
+  "embla-carousel-reactive-utils@8.6.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/davidjerleke/embla-carousel",
+    "publisher": "David Jerleke"
+  },
+  "embla-carousel@8.6.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/davidjerleke/embla-carousel",
+    "publisher": "David Jerleke"
+  },
+  "enhanced-resolve@5.24.3": {
     "licenses": "MIT",
     "repository": "https://github.com/webpack/enhanced-resolve",
-    "publisher": "Tobias Koppers @sokra",
-    "path": "/workspaces/advantis-group/node_modules/enhanced-resolve",
-    "licenseFile": "/workspaces/advantis-group/node_modules/enhanced-resolve/LICENSE"
+    "publisher": "Tobias Koppers @sokra"
   },
   "entities@4.5.0": {
     "licenses": "BSD-2-Clause",
     "repository": "https://github.com/fb55/entities",
     "publisher": "Felix Boehm",
-    "email": "me@feedic.com",
-    "path": "/workspaces/advantis-group/node_modules/entities",
-    "licenseFile": "/workspaces/advantis-group/node_modules/entities/LICENSE"
+    "email": "me@feedic.com"
+  },
+  "entities@8.0.0": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/fb55/entities",
+    "publisher": "Felix Boehm",
+    "email": "me@feedic.com"
   },
   "esbuild@0.27.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/evanw/esbuild",
-    "path": "/workspaces/advantis-group/node_modules/esbuild",
-    "licenseFile": "/workspaces/advantis-group/node_modules/esbuild/LICENSE.md"
+    "repository": "https://github.com/evanw/esbuild"
   },
   "escape-latex@1.2.0": {
     "licenses": "MIT",
     "repository": "https://github.com/dangmai/escape-latex",
-    "publisher": "Dang Mai",
-    "path": "/workspaces/advantis-group/node_modules/escape-latex",
-    "licenseFile": "/workspaces/advantis-group/node_modules/escape-latex/LICENSE.md"
+    "publisher": "Dang Mai"
+  },
+  "escape-string-regexp@4.0.0": {
+    "licenses": "MIT",
+    "repository": "sindresorhus/escape-string-regexp",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "https://sindresorhus.com"
   },
   "escape-string-regexp@5.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/sindresorhus/escape-string-regexp",
+    "repository": "sindresorhus/escape-string-regexp",
     "publisher": "Sindre Sorhus",
     "email": "sindresorhus@gmail.com",
-    "url": "https://sindresorhus.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-find-and-replace/node_modules/escape-string-regexp",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-find-and-replace/node_modules/escape-string-regexp/license"
+    "url": "https://sindresorhus.com"
   },
   "estree-util-is-identifier-name@3.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/estree-util-is-identifier-name",
+    "repository": "syntax-tree/estree-util-is-identifier-name",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/estree-util-is-identifier-name",
-    "licenseFile": "/workspaces/advantis-group/node_modules/estree-util-is-identifier-name/license"
+    "url": "https://wooorm.com"
   },
   "exact-mirror@0.2.7": {
     "licenses": "MIT",
     "repository": "https://github.com/elysiajs/exact-mirror",
     "publisher": "saltyAom",
     "email": "saltyaom@gmail.com",
-    "url": "https://github.com/SaltyAom",
-    "path": "/workspaces/advantis-group/node_modules/exact-mirror",
-    "licenseFile": "/workspaces/advantis-group/node_modules/exact-mirror/LICENSE"
+    "url": "https://github.com/SaltyAom"
   },
   "extend@3.0.2": {
     "licenses": "MIT",
     "repository": "https://github.com/justmoon/node-extend",
     "publisher": "Stefan Thomas",
     "email": "justmoon@members.fsf.org",
-    "url": "http://www.justmoon.net",
-    "path": "/workspaces/advantis-group/node_modules/extend",
-    "licenseFile": "/workspaces/advantis-group/node_modules/extend/LICENSE"
+    "url": "http://www.justmoon.net"
   },
   "fast-decode-uri-component@1.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/delvedor/fast-decode-uri-component",
     "publisher": "Tomas Della Vedova - @delvedor",
-    "url": "http://delved.org",
-    "path": "/workspaces/advantis-group/node_modules/fast-decode-uri-component",
-    "licenseFile": "/workspaces/advantis-group/node_modules/fast-decode-uri-component/LICENSE"
+    "url": "http://delved.org"
   },
   "fast-sha256@1.3.0": {
     "licenses": "Unlicense",
     "repository": "https://github.com/dchest/fast-sha256-js",
-    "publisher": "Dmitry Chestnykh",
-    "path": "/workspaces/advantis-group/node_modules/fast-sha256",
-    "licenseFile": "/workspaces/advantis-group/node_modules/fast-sha256/LICENSE"
+    "publisher": "Dmitry Chestnykh"
   },
-  "fflate@0.4.8": {
-    "licenses": "MIT",
-    "repository": "https://github.com/101arrowz/fflate",
-    "publisher": "Arjun Barrett",
-    "path": "/workspaces/advantis-group/node_modules/fflate",
-    "licenseFile": "/workspaces/advantis-group/node_modules/fflate/LICENSE"
-  },
-  "file-type@21.3.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/sindresorhus/file-type",
-    "publisher": "Sindre Sorhus",
-    "email": "sindresorhus@gmail.com",
-    "url": "https://sindresorhus.com",
-    "path": "/workspaces/advantis-group/node_modules/file-type",
-    "licenseFile": "/workspaces/advantis-group/node_modules/file-type/license"
+  "frac@1.1.2": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/SheetJS/frac",
+    "publisher": "SheetJS"
   },
   "fraction.js@5.3.4": {
     "licenses": "MIT",
-    "repository": "https://github.com/rawify/Fraction.js",
+    "repository": "ssh://git@github.com/rawify/Fraction.js",
     "publisher": "Robert Eisele",
     "email": "robert@raw.org",
-    "url": "https://raw.org/",
-    "path": "/workspaces/advantis-group/node_modules/fraction.js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/fraction.js/LICENSE"
+    "url": "https://raw.org/"
   },
-  "framer-motion@12.34.3": {
+  "framer-motion@12.42.2": {
     "licenses": "MIT",
-    "repository": "https://github.com/motiondivision/motion",
-    "publisher": "Matt Perry",
-    "path": "/workspaces/advantis-group/node_modules/framer-motion",
-    "licenseFile": "/workspaces/advantis-group/node_modules/framer-motion/LICENSE.md"
+    "repository": "https://github.com/motiondivision/motion/",
+    "publisher": "Matt Perry"
   },
   "get-nonce@1.0.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/theKashey/get-nonce",
+    "repository": "git@github.com:theKashey/get-nonce",
     "publisher": "Anton Korzunov",
-    "email": "thekashey@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/get-nonce",
-    "licenseFile": "/workspaces/advantis-group/node_modules/get-nonce/LICENSE"
+    "email": "thekashey@gmail.com"
   },
   "glob-to-regexp@0.4.1": {
     "licenses": "BSD-2-Clause",
     "repository": "https://github.com/fitzgen/glob-to-regexp",
     "publisher": "Nick Fitzgerald",
-    "email": "fitzgen@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/glob-to-regexp",
-    "licenseFile": "/workspaces/advantis-group/node_modules/glob-to-regexp/README.md"
+    "email": "fitzgen@gmail.com"
   },
   "graceful-fs@4.2.11": {
     "licenses": "ISC",
-    "repository": "https://github.com/isaacs/node-graceful-fs",
-    "path": "/workspaces/advantis-group/node_modules/graceful-fs",
-    "licenseFile": "/workspaces/advantis-group/node_modules/graceful-fs/LICENSE"
+    "repository": "https://github.com/isaacs/node-graceful-fs"
   },
-  "gsap@3.14.2": {
-    "licenses": "Custom: https://gsap.com/GSAP-share-image.png",
-    "repository": "https://github.com/greensock/GSAP",
-    "path": "/workspaces/advantis-group/node_modules/gsap",
-    "licenseFile": "/workspaces/advantis-group/node_modules/gsap/README.md"
+  "gsap@3.15.0": {
+    "licenses": "Standard 'no charge' license: https://gsap.com/standard-license.",
+    "repository": "https://github.com/greensock/GSAP"
   },
   "hast-util-to-jsx-runtime@2.3.6": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/hast-util-to-jsx-runtime",
+    "repository": "syntax-tree/hast-util-to-jsx-runtime",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/hast-util-to-jsx-runtime",
-    "licenseFile": "/workspaces/advantis-group/node_modules/hast-util-to-jsx-runtime/license"
+    "url": "https://wooorm.com"
   },
   "hast-util-whitespace@3.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/hast-util-whitespace",
+    "repository": "syntax-tree/hast-util-whitespace",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/hast-util-whitespace",
-    "licenseFile": "/workspaces/advantis-group/node_modules/hast-util-whitespace/license"
+    "url": "https://wooorm.com"
   },
   "html-to-text@9.0.5": {
     "licenses": "MIT",
     "repository": "https://github.com/html-to-text/node-html-to-text",
     "publisher": "Malte Legenhausen",
-    "email": "legenhausen@werk85.de",
-    "path": "/workspaces/advantis-group/node_modules/html-to-text",
-    "licenseFile": "/workspaces/advantis-group/node_modules/html-to-text/LICENSE"
+    "email": "legenhausen@werk85.de"
   },
   "html-url-attributes@3.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/rehypejs/rehype-minify/tree/main/packages/html-url-attributes",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/html-url-attributes",
-    "licenseFile": "/workspaces/advantis-group/node_modules/html-url-attributes/license"
+    "url": "https://wooorm.com"
+  },
+  "html5parser@3.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/acrazing/html5parser",
+    "publisher": "acrazing",
+    "email": "joking.young@gmail.com"
+  },
+  "htmlparser2@12.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/fb55/htmlparser2",
+    "publisher": "Felix Boehm",
+    "email": "me@feedic.com"
   },
   "htmlparser2@8.0.2": {
     "licenses": "MIT",
     "repository": "https://github.com/fb55/htmlparser2",
     "publisher": "Felix Boehm",
-    "email": "me@feedic.com",
-    "path": "/workspaces/advantis-group/node_modules/htmlparser2",
-    "licenseFile": "/workspaces/advantis-group/node_modules/htmlparser2/LICENSE"
+    "email": "me@feedic.com"
   },
   "iceberg-js@0.8.1": {
     "licenses": "MIT",
     "repository": "https://github.com/supabase/iceberg-js",
-    "publisher": "mandarini",
-    "path": "/workspaces/advantis-group/node_modules/iceberg-js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/iceberg-js/LICENSE"
+    "publisher": "mandarini"
   },
-  "icu-minify@4.8.3": {
+  "icu-minify@4.13.4": {
     "licenses": "MIT",
     "repository": "https://github.com/amannn/next-intl",
     "publisher": "Jan Amann",
-    "email": "jan@amann.work",
-    "path": "/workspaces/advantis-group/node_modules/icu-minify",
-    "licenseFile": "/workspaces/advantis-group/node_modules/icu-minify/LICENSE"
-  },
-  "ieee754@1.2.1": {
-    "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/feross/ieee754",
-    "publisher": "Feross Aboukhadijeh",
-    "email": "feross@feross.org",
-    "url": "https://feross.org",
-    "path": "/workspaces/advantis-group/node_modules/ieee754",
-    "licenseFile": "/workspaces/advantis-group/node_modules/ieee754/LICENSE"
+    "email": "jan@amann.work"
   },
   "inline-style-parser@0.2.7": {
     "licenses": "MIT",
-    "repository": "https://github.com/remarkablemark/inline-style-parser",
-    "path": "/workspaces/advantis-group/node_modules/inline-style-parser",
-    "licenseFile": "/workspaces/advantis-group/node_modules/inline-style-parser/LICENSE"
+    "repository": "https://github.com/remarkablemark/inline-style-parser"
   },
   "intl-messageformat@11.1.2": {
     "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/formatjs/formatjs",
+    "repository": "git@github.com:formatjs/formatjs",
     "publisher": "Eric Ferraiuolo",
-    "email": "eferraiuolo@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/intl-messageformat",
-    "licenseFile": "/workspaces/advantis-group/node_modules/intl-messageformat/LICENSE.md"
+    "email": "eferraiuolo@gmail.com"
   },
   "is-alphabetical@2.0.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/is-alphabetical",
+    "repository": "wooorm/is-alphabetical",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/is-alphabetical",
-    "licenseFile": "/workspaces/advantis-group/node_modules/is-alphabetical/license"
+    "url": "https://wooorm.com"
   },
   "is-alphanumerical@2.0.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/is-alphanumerical",
+    "repository": "wooorm/is-alphanumerical",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/is-alphanumerical",
-    "licenseFile": "/workspaces/advantis-group/node_modules/is-alphanumerical/license"
+    "url": "https://wooorm.com"
   },
   "is-decimal@2.0.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/is-decimal",
+    "repository": "wooorm/is-decimal",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/is-decimal",
-    "licenseFile": "/workspaces/advantis-group/node_modules/is-decimal/license"
+    "url": "https://wooorm.com"
   },
   "is-extglob@2.1.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/jonschlinkert/is-extglob",
+    "repository": "jonschlinkert/is-extglob",
     "publisher": "Jon Schlinkert",
-    "url": "https://github.com/jonschlinkert",
-    "path": "/workspaces/advantis-group/node_modules/is-extglob",
-    "licenseFile": "/workspaces/advantis-group/node_modules/is-extglob/LICENSE"
+    "url": "https://github.com/jonschlinkert"
   },
   "is-glob@4.0.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/micromatch/is-glob",
+    "repository": "micromatch/is-glob",
     "publisher": "Jon Schlinkert",
-    "url": "https://github.com/jonschlinkert",
-    "path": "/workspaces/advantis-group/node_modules/is-glob",
-    "licenseFile": "/workspaces/advantis-group/node_modules/is-glob/LICENSE"
+    "url": "https://github.com/jonschlinkert"
   },
   "is-hexadecimal@2.0.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/is-hexadecimal",
+    "repository": "wooorm/is-hexadecimal",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/is-hexadecimal",
-    "licenseFile": "/workspaces/advantis-group/node_modules/is-hexadecimal/license"
+    "url": "https://wooorm.com"
   },
   "is-plain-obj@4.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/sindresorhus/is-plain-obj",
+    "repository": "sindresorhus/is-plain-obj",
     "publisher": "Sindre Sorhus",
     "email": "sindresorhus@gmail.com",
-    "url": "https://sindresorhus.com",
-    "path": "/workspaces/advantis-group/node_modules/is-plain-obj",
-    "licenseFile": "/workspaces/advantis-group/node_modules/is-plain-obj/license"
+    "url": "https://sindresorhus.com"
   },
-  "isexe@2.0.0": {
-    "licenses": "ISC",
-    "repository": "https://github.com/isaacs/isexe",
-    "publisher": "Isaac Z. Schlueter",
-    "email": "i@izs.me",
-    "url": "http://blog.izs.me/",
-    "path": "/workspaces/advantis-group/node_modules/isexe",
-    "licenseFile": "/workspaces/advantis-group/node_modules/isexe/LICENSE"
+  "is-plain-object@5.0.0": {
+    "licenses": "MIT",
+    "repository": "jonschlinkert/is-plain-object",
+    "publisher": "Jon Schlinkert",
+    "url": "https://github.com/jonschlinkert"
   },
   "javascript-natural-sort@0.7.1": {
     "licenses": "MIT",
     "repository": "https://github.com/Bill4Time/javascript-natural-sort",
     "publisher": "Jim Palmer",
-    "url": "based on chunking idea from Dave Koelle, packaged by @khous of Bill4Time",
-    "path": "/workspaces/advantis-group/node_modules/javascript-natural-sort",
-    "licenseFile": "/workspaces/advantis-group/node_modules/javascript-natural-sort/README.md"
+    "url": "based on chunking idea from Dave Koelle, packaged by @khous of Bill4Time"
   },
-  "jiti@2.6.1": {
+  "jiti@2.7.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/unjs/jiti",
-    "path": "/workspaces/advantis-group/node_modules/jiti",
-    "licenseFile": "/workspaces/advantis-group/node_modules/jiti/LICENSE"
+    "repository": "unjs/jiti"
   },
-  "js-cookie@3.0.5": {
+  "js-cookie@3.0.7": {
     "licenses": "MIT",
     "repository": "https://github.com/js-cookie/js-cookie",
-    "publisher": "Klaus Hartl",
-    "path": "/workspaces/advantis-group/node_modules/js-cookie",
-    "licenseFile": "/workspaces/advantis-group/node_modules/js-cookie/LICENSE"
+    "publisher": "Klaus Hartl"
+  },
+  "launder@1.7.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/apostrophecms/apostrophe",
+    "publisher": "Apostrophe Technologies, Inc."
   },
   "leac@0.6.0": {
     "licenses": "MIT",
     "repository": "https://github.com/mxxii/leac",
-    "publisher": "KillyMXI",
-    "path": "/workspaces/advantis-group/node_modules/leac",
-    "licenseFile": "/workspaces/advantis-group/node_modules/leac/LICENSE"
+    "publisher": "KillyMXI"
   },
-  "lenis@1.3.17": {
+  "lenis@1.3.25": {
     "licenses": "MIT",
     "repository": "https://github.com/darkroomengineering/lenis",
-    "publisher": "darkroom.engineering",
-    "path": "/workspaces/advantis-group/node_modules/lenis",
-    "licenseFile": "/workspaces/advantis-group/node_modules/lenis/LICENSE"
+    "publisher": "darkroom.engineering"
   },
-  "lightningcss-linux-x64-gnu@1.31.1": {
+  "lightningcss-win32-x64-msvc@1.32.0": {
     "licenses": "MPL-2.0",
-    "repository": "https://github.com/parcel-bundler/lightningcss",
-    "path": "/workspaces/advantis-group/node_modules/lightningcss-linux-x64-gnu",
-    "licenseFile": "/workspaces/advantis-group/node_modules/lightningcss-linux-x64-gnu/LICENSE"
+    "repository": "https://github.com/parcel-bundler/lightningcss"
   },
-  "lightningcss-linux-x64-musl@1.31.1": {
+  "lightningcss@1.32.0": {
     "licenses": "MPL-2.0",
-    "repository": "https://github.com/parcel-bundler/lightningcss",
-    "path": "/workspaces/advantis-group/node_modules/lightningcss-linux-x64-musl",
-    "licenseFile": "/workspaces/advantis-group/node_modules/lightningcss-linux-x64-musl/LICENSE"
-  },
-  "lightningcss@1.31.1": {
-    "licenses": "MPL-2.0",
-    "repository": "https://github.com/parcel-bundler/lightningcss",
-    "path": "/workspaces/advantis-group/node_modules/lightningcss",
-    "licenseFile": "/workspaces/advantis-group/node_modules/lightningcss/LICENSE"
-  },
-  "long@5.3.2": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/dcodeIO/long.js",
-    "publisher": "Daniel Wirtz",
-    "email": "dcode@dcode.io",
-    "path": "/workspaces/advantis-group/node_modules/long",
-    "licenseFile": "/workspaces/advantis-group/node_modules/long/LICENSE"
+    "repository": "https://github.com/parcel-bundler/lightningcss"
   },
   "longest-streak@3.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/longest-streak",
+    "repository": "wooorm/longest-streak",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/longest-streak",
-    "licenseFile": "/workspaces/advantis-group/node_modules/longest-streak/license"
+    "url": "https://wooorm.com"
   },
-  "lucide-react@0.563.0": {
+  "lucide-react@1.27.0": {
     "licenses": "ISC",
     "repository": "https://github.com/lucide-icons/lucide",
-    "publisher": "Eric Fennis",
-    "path": "/workspaces/advantis-group/node_modules/lucide-react",
-    "licenseFile": "/workspaces/advantis-group/node_modules/lucide-react/LICENSE"
+    "publisher": "Eric Fennis"
   },
   "magic-string@0.30.21": {
     "licenses": "MIT",
     "repository": "https://github.com/Rich-Harris/magic-string",
-    "publisher": "Rich Harris",
-    "path": "/workspaces/advantis-group/node_modules/magic-string",
-    "licenseFile": "/workspaces/advantis-group/node_modules/magic-string/LICENSE"
+    "publisher": "Rich Harris"
   },
   "markdown-table@3.0.4": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/markdown-table",
+    "repository": "wooorm/markdown-table",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/markdown-table",
-    "licenseFile": "/workspaces/advantis-group/node_modules/markdown-table/license"
+    "url": "https://wooorm.com"
   },
-  "mathjs@15.1.1": {
+  "mathjs@15.2.0": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/josdejong/mathjs",
     "publisher": "Jos de Jong",
     "email": "wjosdejong@gmail.com",
-    "url": "https://github.com/josdejong",
-    "path": "/workspaces/advantis-group/node_modules/mathjs",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mathjs/LICENSE",
-    "noticeFile": "/workspaces/advantis-group/node_modules/mathjs/NOTICE"
+    "url": "https://github.com/josdejong"
   },
   "mdast-util-find-and-replace@3.0.2": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-find-and-replace",
+    "repository": "syntax-tree/mdast-util-find-and-replace",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-find-and-replace",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-find-and-replace/license"
+    "url": "https://wooorm.com"
   },
   "mdast-util-from-markdown@2.0.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-from-markdown",
+    "repository": "syntax-tree/mdast-util-from-markdown",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-from-markdown",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-from-markdown/license"
+    "url": "https://wooorm.com"
   },
   "mdast-util-gfm-autolink-literal@2.0.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-gfm-autolink-literal",
+    "repository": "syntax-tree/mdast-util-gfm-autolink-literal",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-gfm-autolink-literal",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-gfm-autolink-literal/license"
+    "url": "https://wooorm.com"
   },
   "mdast-util-gfm-footnote@2.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-gfm-footnote",
+    "repository": "syntax-tree/mdast-util-gfm-footnote",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-gfm-footnote",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-gfm-footnote/license"
+    "url": "https://wooorm.com"
   },
   "mdast-util-gfm-strikethrough@2.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-gfm-strikethrough",
+    "repository": "syntax-tree/mdast-util-gfm-strikethrough",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-gfm-strikethrough",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-gfm-strikethrough/license"
+    "url": "https://wooorm.com"
   },
   "mdast-util-gfm-table@2.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-gfm-table",
+    "repository": "syntax-tree/mdast-util-gfm-table",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-gfm-table",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-gfm-table/license"
+    "url": "https://wooorm.com"
   },
   "mdast-util-gfm-task-list-item@2.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-gfm-task-list-item",
+    "repository": "syntax-tree/mdast-util-gfm-task-list-item",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-gfm-task-list-item",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-gfm-task-list-item/license"
+    "url": "https://wooorm.com"
   },
   "mdast-util-gfm@3.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-gfm",
+    "repository": "syntax-tree/mdast-util-gfm",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-gfm",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-gfm/license"
+    "url": "https://wooorm.com"
   },
   "mdast-util-mdx-expression@2.0.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-mdx-expression",
+    "repository": "syntax-tree/mdast-util-mdx-expression",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-mdx-expression",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-mdx-expression/license"
+    "url": "https://wooorm.com"
   },
   "mdast-util-mdx-jsx@3.2.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-mdx-jsx",
+    "repository": "syntax-tree/mdast-util-mdx-jsx",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-mdx-jsx",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-mdx-jsx/license"
+    "url": "https://wooorm.com"
   },
   "mdast-util-mdxjs-esm@2.0.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-mdxjs-esm",
+    "repository": "syntax-tree/mdast-util-mdxjs-esm",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-mdxjs-esm",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-mdxjs-esm/license"
+    "url": "https://wooorm.com"
   },
   "mdast-util-phrasing@4.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-phrasing",
+    "repository": "syntax-tree/mdast-util-phrasing",
     "publisher": "Victor Felder",
     "email": "victor@draft.li",
-    "url": "https://draft.li",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-phrasing",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-phrasing/license"
+    "url": "https://draft.li"
   },
   "mdast-util-to-hast@13.2.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-to-hast",
+    "repository": "syntax-tree/mdast-util-to-hast",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-to-hast",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-to-hast/license"
+    "url": "https://wooorm.com"
   },
   "mdast-util-to-markdown@2.1.2": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-to-markdown",
+    "repository": "syntax-tree/mdast-util-to-markdown",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-to-markdown",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-to-markdown/license"
+    "url": "https://wooorm.com"
   },
   "mdast-util-to-string@4.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/mdast-util-to-string",
+    "repository": "syntax-tree/mdast-util-to-string",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/mdast-util-to-string",
-    "licenseFile": "/workspaces/advantis-group/node_modules/mdast-util-to-string/license"
+    "url": "https://wooorm.com"
   },
   "memoirist@0.4.0": {
     "licenses": "MIT",
     "repository": "https://github.com/SaltyAom/memoirist",
     "publisher": "saltyAom",
     "email": "saltyaom@gmail.com",
-    "url": "https://github.com/SaltyAom",
-    "path": "/workspaces/advantis-group/node_modules/memoirist",
-    "licenseFile": "/workspaces/advantis-group/node_modules/memoirist/LICENSE"
+    "url": "https://github.com/SaltyAom"
   },
   "micromark-core-commonmark@2.0.3": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-core-commonmark",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-core-commonmark",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-core-commonmark/license"
+    "url": "https://wooorm.com"
   },
   "micromark-extension-gfm-autolink-literal@2.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/micromark/micromark-extension-gfm-autolink-literal",
+    "repository": "micromark/micromark-extension-gfm-autolink-literal",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-extension-gfm-autolink-literal",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-extension-gfm-autolink-literal/license"
+    "url": "https://wooorm.com"
   },
   "micromark-extension-gfm-footnote@2.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/micromark/micromark-extension-gfm-footnote",
+    "repository": "micromark/micromark-extension-gfm-footnote",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-extension-gfm-footnote",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-extension-gfm-footnote/license"
+    "url": "https://wooorm.com"
   },
   "micromark-extension-gfm-strikethrough@2.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/micromark/micromark-extension-gfm-strikethrough",
+    "repository": "micromark/micromark-extension-gfm-strikethrough",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-extension-gfm-strikethrough",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-extension-gfm-strikethrough/license"
+    "url": "https://wooorm.com"
   },
   "micromark-extension-gfm-table@2.1.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/micromark/micromark-extension-gfm-table",
+    "repository": "micromark/micromark-extension-gfm-table",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-extension-gfm-table",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-extension-gfm-table/license"
+    "url": "https://wooorm.com"
   },
   "micromark-extension-gfm-tagfilter@2.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/micromark/micromark-extension-gfm-tagfilter",
+    "repository": "micromark/micromark-extension-gfm-tagfilter",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-extension-gfm-tagfilter",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-extension-gfm-tagfilter/license"
+    "url": "https://wooorm.com"
   },
   "micromark-extension-gfm-task-list-item@2.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/micromark/micromark-extension-gfm-task-list-item",
+    "repository": "micromark/micromark-extension-gfm-task-list-item",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-extension-gfm-task-list-item",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-extension-gfm-task-list-item/license"
+    "url": "https://wooorm.com"
   },
   "micromark-extension-gfm@3.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/micromark/micromark-extension-gfm",
+    "repository": "micromark/micromark-extension-gfm",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-extension-gfm",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-extension-gfm/license"
+    "url": "https://wooorm.com"
   },
   "micromark-factory-destination@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-factory-destination",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-factory-destination",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-factory-destination/license"
+    "url": "https://wooorm.com"
   },
   "micromark-factory-label@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-factory-label",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-factory-label",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-factory-label/license"
+    "url": "https://wooorm.com"
   },
   "micromark-factory-space@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-factory-space",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-factory-space",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-factory-space/license"
+    "url": "https://wooorm.com"
   },
   "micromark-factory-title@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-factory-title",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-factory-title",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-factory-title/license"
+    "url": "https://wooorm.com"
   },
   "micromark-factory-whitespace@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-factory-whitespace",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-factory-whitespace",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-factory-whitespace/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-character@2.1.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-character",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-character",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-character/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-chunked@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-chunked",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-chunked",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-chunked/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-classify-character@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-classify-character",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-classify-character",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-classify-character/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-combine-extensions@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-combine-extensions",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-combine-extensions",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-combine-extensions/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-decode-numeric-character-reference@2.0.2": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-decode-numeric-character-reference",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-decode-numeric-character-reference",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-decode-numeric-character-reference/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-decode-string@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-decode-string",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-decode-string",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-decode-string/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-encode@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-encode",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-encode",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-encode/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-html-tag-name@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-html-tag-name",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-html-tag-name",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-html-tag-name/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-normalize-identifier@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-normalize-identifier",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-normalize-identifier",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-normalize-identifier/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-resolve-all@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-resolve-all",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-resolve-all",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-resolve-all/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-sanitize-uri@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-sanitize-uri",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-sanitize-uri",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-sanitize-uri/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-subtokenize@2.1.0": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-subtokenize",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-subtokenize",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-subtokenize/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-symbol@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-symbol",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-symbol",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-symbol/license"
+    "url": "https://wooorm.com"
   },
   "micromark-util-types@2.0.2": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark-util-types",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark-util-types",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark-util-types/license"
+    "url": "https://wooorm.com"
   },
   "micromark@4.0.2": {
     "licenses": "MIT",
     "repository": "https://github.com/micromark/micromark/tree/main/packages/micromark",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/micromark",
-    "licenseFile": "/workspaces/advantis-group/node_modules/micromark/license"
+    "url": "https://wooorm.com"
   },
-  "motion-dom@12.34.3": {
+  "motion-dom@12.42.2": {
     "licenses": "MIT",
     "repository": "https://github.com/motiondivision/motion",
-    "publisher": "Matt Perry",
-    "path": "/workspaces/advantis-group/node_modules/motion-dom",
-    "licenseFile": "/workspaces/advantis-group/node_modules/motion-dom/LICENSE.md"
+    "publisher": "Matt Perry"
   },
-  "motion-utils@12.29.2": {
+  "motion-utils@12.39.0": {
     "licenses": "MIT",
     "repository": "https://github.com/motiondivision/motion",
-    "publisher": "Matt Perry",
-    "path": "/workspaces/advantis-group/node_modules/motion-utils",
-    "licenseFile": "/workspaces/advantis-group/node_modules/motion-utils/LICENSE.md"
+    "publisher": "Matt Perry"
   },
   "ms@2.1.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/vercel/ms",
-    "path": "/workspaces/advantis-group/node_modules/ms",
-    "licenseFile": "/workspaces/advantis-group/node_modules/ms/license.md"
+    "repository": "vercel/ms"
   },
   "nanoid@3.3.11": {
     "licenses": "MIT",
-    "repository": "https://github.com/ai/nanoid",
+    "repository": "ai/nanoid",
     "publisher": "Andrey Sitnik",
-    "email": "andrey@sitnik.ru",
-    "path": "/workspaces/advantis-group/node_modules/nanoid",
-    "licenseFile": "/workspaces/advantis-group/node_modules/nanoid/LICENSE"
+    "email": "andrey@sitnik.ru"
+  },
+  "nanoid@3.3.16": {
+    "licenses": "MIT",
+    "repository": "ai/nanoid",
+    "publisher": "Andrey Sitnik",
+    "email": "andrey@sitnik.ru"
+  },
+  "nanoid@3.3.18": {
+    "licenses": "MIT",
+    "repository": "ai/nanoid",
+    "publisher": "Andrey Sitnik",
+    "email": "andrey@sitnik.ru"
   },
   "negotiator@1.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/jshttp/negotiator",
-    "path": "/workspaces/advantis-group/node_modules/negotiator",
-    "licenseFile": "/workspaces/advantis-group/node_modules/negotiator/LICENSE"
+    "repository": "jshttp/negotiator",
+    "publisher": "Douglas Christopher Wilson",
+    "email": "doug@somethingdoug.com"
   },
-  "next-intl-swc-plugin-extractor@4.8.3": {
+  "next-intl-swc-plugin-extractor@4.13.4": {
     "licenses": "MIT",
     "repository": "https://github.com/amannn/next-intl",
     "publisher": "강동윤",
-    "email": "kdy1997.dev@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/next-intl-swc-plugin-extractor",
-    "licenseFile": "/workspaces/advantis-group/node_modules/next-intl-swc-plugin-extractor/LICENSE"
+    "email": "kdy1997.dev@gmail.com"
   },
-  "next-intl@4.8.3": {
+  "next-intl@4.13.4": {
     "licenses": "MIT",
     "repository": "https://github.com/amannn/next-intl",
     "publisher": "Jan Amann",
-    "email": "jan@amann.work",
-    "path": "/workspaces/advantis-group/node_modules/next-intl",
-    "licenseFile": "/workspaces/advantis-group/node_modules/next-intl/LICENSE"
+    "email": "jan@amann.work"
   },
   "next-themes@0.4.6": {
     "licenses": "MIT",
-    "repository": "https://github.com/pacocoursey/next-themes",
-    "path": "/workspaces/advantis-group/node_modules/next-themes",
-    "licenseFile": "/workspaces/advantis-group/node_modules/next-themes/license.md"
+    "repository": "https://github.com/pacocoursey/next-themes"
   },
-  "next@16.1.6": {
+  "next@16.2.12": {
     "licenses": "MIT",
-    "repository": "https://github.com/vercel/next.js",
-    "path": "/workspaces/advantis-group/node_modules/next",
-    "licenseFile": "/workspaces/advantis-group/node_modules/next/license.md"
+    "repository": "vercel/next.js"
   },
   "node-addon-api@7.1.1": {
     "licenses": "MIT",
     "repository": "https://github.com/nodejs/node-addon-api",
-    "path": "/workspaces/advantis-group/node_modules/node-addon-api",
-    "licenseFile": "/workspaces/advantis-group/node_modules/node-addon-api/LICENSE.md"
-  },
-  "openapi-types@12.1.3": {
-    "licenses": "MIT",
-    "repository": "https://github.com/kogosoftwarellc/open-api/tree/master/packages/openapi-types",
-    "publisher": "Joseph Spencer",
-    "path": "/workspaces/advantis-group/node_modules/openapi-types",
-    "licenseFile": "/workspaces/advantis-group/node_modules/openapi-types/LICENSE"
+    "publisher": "Abhishek Kumar Singh",
+    "url": "https://github.com/abhi11210646"
   },
   "parse-entities@4.0.2": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/parse-entities",
+    "repository": "wooorm/parse-entities",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/parse-entities",
-    "licenseFile": "/workspaces/advantis-group/node_modules/parse-entities/license"
+    "url": "https://wooorm.com"
+  },
+  "parse-srcset@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/albell/parse-srcset",
+    "publisher": "Alex Bell",
+    "email": "alex@bellandwhistle.net"
   },
   "parseley@0.12.1": {
     "licenses": "MIT",
     "repository": "https://github.com/mxxii/parseley",
-    "publisher": "KillyMXI",
-    "path": "/workspaces/advantis-group/node_modules/parseley",
-    "licenseFile": "/workspaces/advantis-group/node_modules/parseley/LICENSE"
-  },
-  "path-key@3.1.1": {
-    "licenses": "MIT",
-    "repository": "https://github.com/sindresorhus/path-key",
-    "publisher": "Sindre Sorhus",
-    "email": "sindresorhus@gmail.com",
-    "url": "sindresorhus.com",
-    "path": "/workspaces/advantis-group/node_modules/path-key",
-    "licenseFile": "/workspaces/advantis-group/node_modules/path-key/license"
+    "publisher": "KillyMXI"
   },
   "peberminta@0.9.0": {
     "licenses": "MIT",
     "repository": "https://github.com/mxxii/peberminta",
-    "publisher": "KillyMXI",
-    "path": "/workspaces/advantis-group/node_modules/peberminta",
-    "licenseFile": "/workspaces/advantis-group/node_modules/peberminta/LICENSE"
+    "publisher": "KillyMXI"
   },
   "picocolors@1.1.1": {
     "licenses": "ISC",
-    "repository": "https://github.com/alexeyraspopov/picocolors",
-    "publisher": "Alexey Raspopov",
-    "path": "/workspaces/advantis-group/node_modules/picocolors",
-    "licenseFile": "/workspaces/advantis-group/node_modules/picocolors/LICENSE"
+    "repository": "alexeyraspopov/picocolors",
+    "publisher": "Alexey Raspopov"
   },
   "picomatch@4.0.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/micromatch/picomatch",
+    "repository": "micromatch/picomatch",
     "publisher": "Jon Schlinkert",
-    "url": "https://github.com/jonschlinkert",
-    "path": "/workspaces/advantis-group/node_modules/picomatch",
-    "licenseFile": "/workspaces/advantis-group/node_modules/picomatch/LICENSE"
+    "url": "https://github.com/jonschlinkert"
   },
   "po-parser@2.1.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/amannn/po-parser",
+    "repository": "git@github.com:amannn/po-parser",
     "publisher": "Jan Amann",
-    "email": "jan@amann.work",
-    "path": "/workspaces/advantis-group/node_modules/po-parser",
-    "licenseFile": "/workspaces/advantis-group/node_modules/po-parser/LICENSE"
+    "email": "jan@amann.work"
   },
-  "postal-mime@2.7.3": {
+  "postal-mime@2.7.5": {
     "licenses": "MIT-0",
     "repository": "https://github.com/postalsys/postal-mime",
-    "publisher": "Andris Reinman",
-    "path": "/workspaces/advantis-group/node_modules/postal-mime",
-    "licenseFile": "/workspaces/advantis-group/node_modules/postal-mime/LICENSE.txt"
+    "publisher": "Andris Reinman"
   },
   "postcss@8.4.31": {
     "licenses": "MIT",
-    "repository": "https://github.com/postcss/postcss",
+    "repository": "postcss/postcss",
     "publisher": "Andrey Sitnik",
-    "email": "andrey@sitnik.ru",
-    "path": "/workspaces/advantis-group/node_modules/next/node_modules/postcss",
-    "licenseFile": "/workspaces/advantis-group/node_modules/next/node_modules/postcss/LICENSE"
+    "email": "andrey@sitnik.ru"
   },
-  "postcss@8.5.6": {
+  "postcss@8.5.23": {
     "licenses": "MIT",
-    "repository": "https://github.com/postcss/postcss",
+    "repository": "postcss/postcss",
     "publisher": "Andrey Sitnik",
-    "email": "andrey@sitnik.ru",
-    "path": "/workspaces/advantis-group/node_modules/postcss",
-    "licenseFile": "/workspaces/advantis-group/node_modules/postcss/LICENSE"
+    "email": "andrey@sitnik.es"
   },
-  "posthog-js@1.353.0": {
-    "licenses": "MIT*",
-    "repository": "https://github.com/PostHog/posthog-js",
-    "publisher": "hey@posthog.com",
-    "path": "/workspaces/advantis-group/node_modules/posthog-js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/posthog-js/LICENSE"
-  },
-  "posthog-node@5.25.0": {
+  "postcss@8.5.26": {
     "licenses": "MIT",
-    "repository": "https://github.com/PostHog/posthog-js",
-    "publisher": "PostHog",
-    "email": "hey@posthog.com",
-    "url": "https://posthog.com",
-    "path": "/workspaces/advantis-group/node_modules/posthog-node",
-    "licenseFile": "/workspaces/advantis-group/node_modules/posthog-node/LICENSE"
+    "repository": "postcss/postcss",
+    "publisher": "Andrey Sitnik",
+    "email": "andrey@sitnik.es"
   },
-  "preact@10.28.4": {
+  "prettier@3.9.6": {
     "licenses": "MIT",
-    "repository": "https://github.com/preactjs/preact",
-    "path": "/workspaces/advantis-group/node_modules/preact",
-    "licenseFile": "/workspaces/advantis-group/node_modules/preact/LICENSE"
-  },
-  "prettier@3.8.1": {
-    "licenses": "MIT",
-    "repository": "https://github.com/prettier/prettier",
-    "publisher": "James Long",
-    "path": "/workspaces/advantis-group/node_modules/prettier",
-    "licenseFile": "/workspaces/advantis-group/node_modules/prettier/LICENSE"
+    "repository": "prettier/prettier",
+    "publisher": "James Long"
   },
   "property-information@7.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/property-information",
+    "repository": "wooorm/property-information",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/property-information",
-    "licenseFile": "/workspaces/advantis-group/node_modules/property-information/license"
+    "url": "https://wooorm.com"
   },
-  "protobufjs@7.5.4": {
-    "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/protobufjs/protobuf.js",
-    "publisher": "Daniel Wirtz",
-    "email": "dcode+protobufjs@dcode.io",
-    "path": "/workspaces/advantis-group/node_modules/protobufjs",
-    "licenseFile": "/workspaces/advantis-group/node_modules/protobufjs/LICENSE"
-  },
-  "query-selector-shadow-dom@1.0.1": {
+  "react-dom@19.2.8": {
     "licenses": "MIT",
-    "repository": "https://github.com/webdriverio/query-selector-shadow-dom",
-    "publisher": "George Griffiths",
-    "email": "GeorgeGriff",
-    "path": "/workspaces/advantis-group/node_modules/query-selector-shadow-dom",
-    "licenseFile": "/workspaces/advantis-group/node_modules/query-selector-shadow-dom/LICENSE"
-  },
-  "react-dom@19.2.4": {
-    "licenses": "MIT",
-    "repository": "https://github.com/facebook/react",
-    "path": "/workspaces/advantis-group/node_modules/react-dom",
-    "licenseFile": "/workspaces/advantis-group/node_modules/react-dom/LICENSE"
+    "repository": "https://github.com/react/react"
   },
   "react-markdown@10.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/remarkjs/react-markdown",
+    "repository": "remarkjs/react-markdown",
     "publisher": "Espen Hovlandsdal",
-    "email": "espen@hovlandsdal.com",
-    "path": "/workspaces/advantis-group/node_modules/react-markdown",
-    "licenseFile": "/workspaces/advantis-group/node_modules/react-markdown/license"
+    "email": "espen@hovlandsdal.com"
   },
   "react-remove-scroll-bar@2.3.8": {
     "licenses": "MIT",
     "repository": "https://github.com/theKashey/react-remove-scroll-bar",
     "publisher": "Anton Korzunov",
-    "email": "thekashey@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/react-remove-scroll-bar",
-    "licenseFile": "/workspaces/advantis-group/node_modules/react-remove-scroll-bar/README.md"
+    "email": "thekashey@gmail.com"
   },
   "react-remove-scroll@2.7.2": {
     "licenses": "MIT",
     "repository": "https://github.com/theKashey/react-remove-scroll",
     "publisher": "Anton Korzunov",
-    "email": "thekashey@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/react-remove-scroll",
-    "licenseFile": "/workspaces/advantis-group/node_modules/react-remove-scroll/LICENSE"
+    "email": "thekashey@gmail.com"
   },
   "react-style-singleton@2.2.3": {
     "licenses": "MIT",
     "repository": "https://github.com/theKashey/react-style-singleton",
     "publisher": "Anton Korzunov",
-    "url": "thekashey@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/react-style-singleton",
-    "licenseFile": "/workspaces/advantis-group/node_modules/react-style-singleton/LICENSE"
+    "url": "thekashey@gmail.com"
   },
-  "react@19.2.4": {
+  "react@19.2.8": {
     "licenses": "MIT",
-    "repository": "https://github.com/facebook/react",
-    "path": "/workspaces/advantis-group/node_modules/react",
-    "licenseFile": "/workspaces/advantis-group/node_modules/react/LICENSE"
+    "repository": "https://github.com/react/react"
   },
   "remark-gfm@4.0.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/remarkjs/remark-gfm",
+    "repository": "remarkjs/remark-gfm",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/remark-gfm",
-    "licenseFile": "/workspaces/advantis-group/node_modules/remark-gfm/license"
+    "url": "https://wooorm.com"
   },
   "remark-parse@11.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/remarkjs/remark/tree/main/packages/remark-parse",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/remark-parse",
-    "licenseFile": "/workspaces/advantis-group/node_modules/remark-parse/license"
+    "url": "https://wooorm.com"
   },
   "remark-rehype@11.1.2": {
     "licenses": "MIT",
-    "repository": "https://github.com/remarkjs/remark-rehype",
+    "repository": "remarkjs/remark-rehype",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/remark-rehype",
-    "licenseFile": "/workspaces/advantis-group/node_modules/remark-rehype/license"
+    "url": "https://wooorm.com"
   },
   "remark-stringify@11.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/remarkjs/remark/tree/main/packages/remark-stringify",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/remark-stringify",
-    "licenseFile": "/workspaces/advantis-group/node_modules/remark-stringify/license"
+    "url": "https://wooorm.com"
   },
-  "resend@6.9.2": {
+  "resend@6.18.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/resend/resend-node",
-    "path": "/workspaces/advantis-group/node_modules/resend",
-    "licenseFile": "/workspaces/advantis-group/node_modules/resend/LICENSE"
+    "repository": "https://github.com/resend/resend-node"
+  },
+  "sanitize-html@2.17.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/apostrophecms/apostrophe",
+    "publisher": "Apostrophe Technologies, Inc."
   },
   "scheduler@0.27.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/facebook/react",
-    "path": "/workspaces/advantis-group/node_modules/scheduler",
-    "licenseFile": "/workspaces/advantis-group/node_modules/scheduler/LICENSE"
+    "repository": "https://github.com/facebook/react"
   },
   "seedrandom@3.0.5": {
     "licenses": "MIT",
     "repository": "https://github.com/davidbau/seedrandom",
-    "publisher": "David Bau",
-    "path": "/workspaces/advantis-group/node_modules/seedrandom",
-    "licenseFile": "/workspaces/advantis-group/node_modules/seedrandom/README.md"
+    "publisher": "David Bau"
   },
   "selderee@0.11.0": {
     "licenses": "MIT",
     "repository": "https://github.com/mxxii/selderee",
-    "publisher": "KillyMXI",
-    "path": "/workspaces/advantis-group/node_modules/selderee",
-    "licenseFile": "/workspaces/advantis-group/node_modules/selderee/LICENSE"
+    "publisher": "KillyMXI"
   },
   "semver@7.7.4": {
     "licenses": "ISC",
     "repository": "https://github.com/npm/node-semver",
-    "publisher": "GitHub Inc.",
-    "path": "/workspaces/advantis-group/node_modules/sharp/node_modules/semver",
-    "licenseFile": "/workspaces/advantis-group/node_modules/sharp/node_modules/semver/LICENSE"
+    "publisher": "GitHub Inc."
   },
   "server-only@0.0.1": {
-    "licenses": "MIT",
-    "path": "/workspaces/advantis-group/node_modules/server-only"
+    "licenses": "MIT"
   },
   "sharp@0.34.5": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/lovell/sharp",
     "publisher": "Lovell Fuller",
-    "email": "npm@lovell.info",
-    "path": "/workspaces/advantis-group/node_modules/sharp",
-    "licenseFile": "/workspaces/advantis-group/node_modules/sharp/LICENSE"
-  },
-  "shebang-command@2.0.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/kevva/shebang-command",
-    "publisher": "Kevin Mårtensson",
-    "email": "kevinmartensson@gmail.com",
-    "url": "github.com/kevva",
-    "path": "/workspaces/advantis-group/node_modules/shebang-command",
-    "licenseFile": "/workspaces/advantis-group/node_modules/shebang-command/license"
-  },
-  "shebang-regex@3.0.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/sindresorhus/shebang-regex",
-    "publisher": "Sindre Sorhus",
-    "email": "sindresorhus@gmail.com",
-    "url": "sindresorhus.com",
-    "path": "/workspaces/advantis-group/node_modules/shebang-regex",
-    "licenseFile": "/workspaces/advantis-group/node_modules/shebang-regex/license"
+    "email": "npm@lovell.info"
   },
   "sonner@2.0.7": {
     "licenses": "MIT",
     "repository": "https://github.com/emilkowalski/sonner",
     "publisher": "Emil Kowalski",
-    "email": "e@emilkowal.ski",
-    "path": "/workspaces/advantis-group/node_modules/sonner",
-    "licenseFile": "/workspaces/advantis-group/node_modules/sonner/LICENSE.md"
+    "email": "e@emilkowal.ski"
   },
   "source-map-js@1.2.1": {
     "licenses": "BSD-3-Clause",
-    "repository": "https://github.com/7rulnik/source-map-js",
+    "repository": "7rulnik/source-map-js",
     "publisher": "Valentin 7rulnik Semirulnik",
-    "email": "v7rulnik@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/source-map-js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/source-map-js/LICENSE"
+    "email": "v7rulnik@gmail.com"
   },
   "space-separated-tokens@2.0.2": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/space-separated-tokens",
+    "repository": "wooorm/space-separated-tokens",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/space-separated-tokens",
-    "licenseFile": "/workspaces/advantis-group/node_modules/space-separated-tokens/license"
+    "url": "https://wooorm.com"
+  },
+  "ssf@0.11.2": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/SheetJS/ssf",
+    "publisher": "sheetjs"
   },
   "standardwebhooks@1.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/standard-webhooks/standard-webhooks",
-    "publisher": "Standard Webhooks",
-    "path": "/workspaces/advantis-group/node_modules/standardwebhooks",
-    "licenseFile": "/workspaces/advantis-group/node_modules/standardwebhooks/README.md"
-  },
-  "std-env@3.10.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/unjs/std-env",
-    "path": "/workspaces/advantis-group/node_modules/std-env",
-    "licenseFile": "/workspaces/advantis-group/node_modules/std-env/LICENCE"
+    "publisher": "Standard Webhooks"
   },
   "stringify-entities@4.0.4": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/stringify-entities",
+    "repository": "wooorm/stringify-entities",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/stringify-entities",
-    "licenseFile": "/workspaces/advantis-group/node_modules/stringify-entities/license"
-  },
-  "strtok3@10.3.4": {
-    "licenses": "MIT",
-    "repository": "https://github.com/Borewit/strtok3",
-    "publisher": "Borewit",
-    "url": "https://github.com/Borewit",
-    "path": "/workspaces/advantis-group/node_modules/strtok3",
-    "licenseFile": "/workspaces/advantis-group/node_modules/strtok3/LICENSE.txt"
+    "url": "https://wooorm.com"
   },
   "style-to-js@1.1.21": {
     "licenses": "MIT",
     "repository": "https://github.com/remarkablemark/style-to-js",
     "publisher": "Mark",
-    "email": "mark@remarkablemark.org",
-    "path": "/workspaces/advantis-group/node_modules/style-to-js",
-    "licenseFile": "/workspaces/advantis-group/node_modules/style-to-js/LICENSE"
+    "email": "mark@remarkablemark.org"
   },
   "style-to-object@1.0.14": {
     "licenses": "MIT",
     "repository": "https://github.com/remarkablemark/style-to-object",
     "publisher": "Mark",
-    "email": "mark@remarkablemark.org",
-    "path": "/workspaces/advantis-group/node_modules/style-to-object",
-    "licenseFile": "/workspaces/advantis-group/node_modules/style-to-object/LICENSE"
+    "email": "mark@remarkablemark.org"
   },
   "styled-jsx@5.1.6": {
     "licenses": "MIT",
-    "repository": "https://github.com/vercel/styled-jsx",
-    "path": "/workspaces/advantis-group/node_modules/styled-jsx",
-    "licenseFile": "/workspaces/advantis-group/node_modules/styled-jsx/license.md"
+    "repository": "vercel/styled-jsx"
   },
-  "svix@1.84.1": {
-    "licenses": "MIT",
-    "repository": "https://github.com/svix/svix-webhooks",
-    "publisher": "svix",
-    "path": "/workspaces/advantis-group/node_modules/svix",
-    "licenseFile": "/workspaces/advantis-group/node_modules/svix/README.md"
-  },
-  "swr@2.3.4": {
-    "licenses": "MIT",
-    "repository": "https://github.com/vercel/swr",
-    "path": "/workspaces/advantis-group/node_modules/swr",
-    "licenseFile": "/workspaces/advantis-group/node_modules/swr/LICENSE"
-  },
-  "tailwind-merge@3.5.0": {
+  "tailwind-merge@3.6.0": {
     "licenses": "MIT",
     "repository": "https://github.com/dcastil/tailwind-merge",
-    "publisher": "Dany Castillo",
-    "path": "/workspaces/advantis-group/node_modules/tailwind-merge",
-    "licenseFile": "/workspaces/advantis-group/node_modules/tailwind-merge/LICENSE.md"
+    "publisher": "Dany Castillo"
   },
   "tailwindcss-animate@1.0.7": {
     "licenses": "MIT",
     "publisher": "Jamie Kyle",
-    "email": "me@thejameskyle.com",
-    "path": "/workspaces/advantis-group/node_modules/tailwindcss-animate",
-    "licenseFile": "/workspaces/advantis-group/node_modules/tailwindcss-animate/LICENSE"
+    "email": "me@thejameskyle.com"
   },
-  "tailwindcss@4.2.1": {
+  "tailwindcss@4.3.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/tailwindlabs/tailwindcss",
-    "path": "/workspaces/advantis-group/node_modules/tailwindcss",
-    "licenseFile": "/workspaces/advantis-group/node_modules/tailwindcss/LICENSE"
+    "repository": "https://github.com/tailwindlabs/tailwindcss"
   },
-  "tapable@2.3.0": {
+  "tapable@2.3.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/webpack/tapable",
-    "publisher": "Tobias Koppers @sokra",
-    "path": "/workspaces/advantis-group/node_modules/tapable",
-    "licenseFile": "/workspaces/advantis-group/node_modules/tapable/LICENSE"
+    "repository": "http://github.com/webpack/tapable",
+    "publisher": "Tobias Koppers @sokra"
   },
   "tiny-emitter@2.1.0": {
     "licenses": "MIT",
     "repository": "https://github.com/scottcorgan/tiny-emitter",
-    "publisher": "Scott Corgan",
-    "path": "/workspaces/advantis-group/node_modules/tiny-emitter",
-    "licenseFile": "/workspaces/advantis-group/node_modules/tiny-emitter/LICENSE"
-  },
-  "token-types@6.1.2": {
-    "licenses": "MIT",
-    "repository": "https://github.com/Borewit/token-types",
-    "publisher": "Borewit",
-    "url": "https://github.com/Borewit",
-    "path": "/workspaces/advantis-group/node_modules/token-types",
-    "licenseFile": "/workspaces/advantis-group/node_modules/token-types/LICENSE.txt"
+    "publisher": "Scott Corgan"
   },
   "trim-lines@3.0.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/trim-lines",
+    "repository": "wooorm/trim-lines",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/trim-lines",
-    "licenseFile": "/workspaces/advantis-group/node_modules/trim-lines/license"
+    "url": "https://wooorm.com"
   },
   "trough@2.2.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/trough",
+    "repository": "wooorm/trough",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/trough",
-    "licenseFile": "/workspaces/advantis-group/node_modules/trough/license"
+    "url": "https://wooorm.com"
   },
   "tslib@2.8.1": {
     "licenses": "0BSD",
     "repository": "https://github.com/Microsoft/tslib",
-    "publisher": "Microsoft Corp.",
-    "path": "/workspaces/advantis-group/node_modules/tslib",
-    "licenseFile": "/workspaces/advantis-group/node_modules/tslib/LICENSE.txt"
+    "publisher": "Microsoft Corp."
   },
-  "tsparticles@3.9.1": {
+  "tsparticles@4.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/tsparticles/tsparticles",
     "publisher": "Matteo Bruni",
-    "email": "matteo.bruni@me.com",
-    "path": "/workspaces/advantis-group/node_modules/tsparticles",
-    "licenseFile": "/workspaces/advantis-group/node_modules/tsparticles/LICENSE"
+    "email": "matteo.bruni@me.com"
   },
   "typed-function@4.2.2": {
     "licenses": "MIT",
     "repository": "https://github.com/josdejong/typed-function",
     "publisher": "Jos de Jong",
     "email": "wjosdejong@gmail.com",
-    "url": "https://github.com/josdejong",
-    "path": "/workspaces/advantis-group/node_modules/typed-function",
-    "licenseFile": "/workspaces/advantis-group/node_modules/typed-function/LICENSE"
-  },
-  "typescript@5.9.3": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/microsoft/TypeScript",
-    "publisher": "Microsoft Corp.",
-    "path": "/workspaces/advantis-group/node_modules/typescript",
-    "licenseFile": "/workspaces/advantis-group/node_modules/typescript/LICENSE.txt"
-  },
-  "uint8array-extras@1.5.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/sindresorhus/uint8array-extras",
-    "publisher": "Sindre Sorhus",
-    "email": "sindresorhus@gmail.com",
-    "url": "https://sindresorhus.com",
-    "path": "/workspaces/advantis-group/node_modules/uint8array-extras",
-    "licenseFile": "/workspaces/advantis-group/node_modules/uint8array-extras/license"
+    "url": "https://github.com/josdejong"
   },
   "uncrypto@0.1.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/unjs/uncrypto",
-    "path": "/workspaces/advantis-group/node_modules/uncrypto",
-    "licenseFile": "/workspaces/advantis-group/node_modules/uncrypto/LICENSE"
+    "repository": "unjs/uncrypto"
   },
-  "undici-types@7.18.2": {
+  "undici-types@8.3.0": {
     "licenses": "MIT",
     "repository": "https://github.com/nodejs/undici",
-    "path": "/workspaces/advantis-group/node_modules/undici-types",
-    "licenseFile": "/workspaces/advantis-group/node_modules/undici-types/LICENSE"
+    "publisher": "Daniele Belardi",
+    "url": "https://github.com/dnlup"
   },
   "unified@11.0.5": {
     "licenses": "MIT",
-    "repository": "https://github.com/unifiedjs/unified",
+    "repository": "unifiedjs/unified",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/unified",
-    "licenseFile": "/workspaces/advantis-group/node_modules/unified/license"
+    "url": "https://wooorm.com"
   },
   "unist-util-is@6.0.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/unist-util-is",
+    "repository": "syntax-tree/unist-util-is",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/unist-util-is",
-    "licenseFile": "/workspaces/advantis-group/node_modules/unist-util-is/license"
+    "url": "https://wooorm.com"
   },
   "unist-util-position@5.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/unist-util-position",
+    "repository": "syntax-tree/unist-util-position",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/unist-util-position",
-    "licenseFile": "/workspaces/advantis-group/node_modules/unist-util-position/license"
+    "url": "https://wooorm.com"
   },
   "unist-util-stringify-position@4.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/unist-util-stringify-position",
+    "repository": "syntax-tree/unist-util-stringify-position",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/unist-util-stringify-position",
-    "licenseFile": "/workspaces/advantis-group/node_modules/unist-util-stringify-position/license"
+    "url": "https://wooorm.com"
   },
   "unist-util-visit-parents@6.0.2": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/unist-util-visit-parents",
+    "repository": "syntax-tree/unist-util-visit-parents",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/unist-util-visit-parents",
-    "licenseFile": "/workspaces/advantis-group/node_modules/unist-util-visit-parents/license"
+    "url": "https://wooorm.com"
   },
   "unist-util-visit@5.1.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/syntax-tree/unist-util-visit",
+    "repository": "syntax-tree/unist-util-visit",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/unist-util-visit",
-    "licenseFile": "/workspaces/advantis-group/node_modules/unist-util-visit/license"
+    "url": "https://wooorm.com"
   },
   "use-callback-ref@1.3.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/theKashey/use-callback-ref",
+    "repository": "https://github.com/theKashey/use-callback-ref/",
     "publisher": "theKashey",
-    "email": "thekashey@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/use-callback-ref",
-    "licenseFile": "/workspaces/advantis-group/node_modules/use-callback-ref/LICENSE"
+    "email": "thekashey@gmail.com"
   },
-  "use-intl@4.8.3": {
+  "use-intl@4.13.4": {
     "licenses": "MIT",
     "repository": "https://github.com/amannn/next-intl",
     "publisher": "Jan Amann",
-    "email": "jan@amann.work",
-    "path": "/workspaces/advantis-group/node_modules/use-intl",
-    "licenseFile": "/workspaces/advantis-group/node_modules/use-intl/LICENSE"
+    "email": "jan@amann.work"
   },
   "use-sidecar@1.1.3": {
     "licenses": "MIT",
     "repository": "https://github.com/theKashey/use-sidecar",
     "publisher": "theKashey",
-    "email": "thekashey@gmail.com",
-    "path": "/workspaces/advantis-group/node_modules/use-sidecar",
-    "licenseFile": "/workspaces/advantis-group/node_modules/use-sidecar/LICENSE"
+    "email": "thekashey@gmail.com"
   },
-  "use-sync-external-store@1.6.0": {
+  "vaul@1.1.2": {
     "licenses": "MIT",
-    "repository": "https://github.com/facebook/react",
-    "path": "/workspaces/advantis-group/node_modules/use-sync-external-store",
-    "licenseFile": "/workspaces/advantis-group/node_modules/use-sync-external-store/LICENSE"
-  },
-  "uuid@10.0.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/uuidjs/uuid",
-    "path": "/workspaces/advantis-group/node_modules/uuid",
-    "licenseFile": "/workspaces/advantis-group/node_modules/uuid/LICENSE.md"
+    "repository": "https://github.com/emilkowalski/vaul",
+    "publisher": "Emil Kowalski",
+    "email": "e@emilkowal.ski"
   },
   "vfile-message@4.0.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/vfile/vfile-message",
+    "repository": "vfile/vfile-message",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/vfile-message",
-    "licenseFile": "/workspaces/advantis-group/node_modules/vfile-message/license"
+    "url": "https://wooorm.com"
   },
   "vfile@6.0.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/vfile/vfile",
+    "repository": "vfile/vfile",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/vfile",
-    "licenseFile": "/workspaces/advantis-group/node_modules/vfile/license"
+    "url": "https://wooorm.com"
   },
-  "web-vitals@5.1.0": {
+  "wmf@1.0.2": {
     "licenses": "Apache-2.0",
-    "repository": "https://github.com/GoogleChrome/web-vitals",
-    "publisher": "Philip Walton",
-    "email": "philip@philipwalton.com",
-    "url": "http://philipwalton.com",
-    "path": "/workspaces/advantis-group/node_modules/web-vitals",
-    "licenseFile": "/workspaces/advantis-group/node_modules/web-vitals/LICENSE"
+    "repository": "https://github.com/SheetJS/js-wmf",
+    "publisher": "sheetjs"
   },
-  "which@2.0.2": {
-    "licenses": "ISC",
-    "repository": "https://github.com/isaacs/node-which",
-    "publisher": "Isaac Z. Schlueter",
-    "email": "i@izs.me",
-    "url": "http://blog.izs.me",
-    "path": "/workspaces/advantis-group/node_modules/which",
-    "licenseFile": "/workspaces/advantis-group/node_modules/which/LICENSE"
+  "word@0.3.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/SheetJS/js-word",
+    "publisher": "sheetjs"
   },
-  "ws@8.18.0": {
+  "ws@8.21.0": {
     "licenses": "MIT",
     "repository": "https://github.com/websockets/ws",
     "publisher": "Einar Otto Stangvik",
     "email": "einaros@gmail.com",
-    "url": "http://2x.io",
-    "path": "/workspaces/advantis-group/node_modules/ws",
-    "licenseFile": "/workspaces/advantis-group/node_modules/ws/LICENSE"
+    "url": "http://2x.io"
   },
-  "ws@8.19.0": {
+  "xlsx@0.18.5": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/SheetJS/sheetjs",
+    "publisher": "sheetjs"
+  },
+  "zod@4.4.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/websockets/ws",
-    "publisher": "Einar Otto Stangvik",
-    "email": "einaros@gmail.com",
-    "url": "http://2x.io",
-    "path": "/workspaces/advantis-group/node_modules/@supabase/realtime-js/node_modules/ws",
-    "licenseFile": "/workspaces/advantis-group/node_modules/@supabase/realtime-js/node_modules/ws/LICENSE"
+    "repository": "https://github.com/colinhacks/zod",
+    "publisher": "Colin McDonnell",
+    "email": "zod@colinhacks.com"
   },
   "zwitch@2.0.4": {
     "licenses": "MIT",
-    "repository": "https://github.com/wooorm/zwitch",
+    "repository": "wooorm/zwitch",
     "publisher": "Titus Wormer",
     "email": "tituswormer@gmail.com",
-    "url": "https://wooorm.com",
-    "path": "/workspaces/advantis-group/node_modules/zwitch",
-    "licenseFile": "/workspaces/advantis-group/node_modules/zwitch/license"
+    "url": "https://wooorm.com"
   }
 }

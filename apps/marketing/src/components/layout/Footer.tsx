@@ -64,7 +64,7 @@ const LiftingWordmark = ({ progress }: { progress: number }) => {
   };
 
   return (
-    <div aria-label="ADVANTIS GROUP" className="overflow-hidden pb-2 text-center">
+    <div aria-label="ADVANTIS GROUP" className="overflow-x-clip pb-2 text-center">
       <span
         aria-hidden
         className="block text-[13vw] font-semibold leading-none tracking-[-0.04em] md:text-[12vw] lg:text-[8rem]"

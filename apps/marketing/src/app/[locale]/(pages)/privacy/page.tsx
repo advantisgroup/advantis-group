@@ -1,28 +1,19 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
-import { Shield, Lock, User, Database, Mail, FileText, Menu, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { Button } from "@/components/ui/button";
-import { Display } from "@/components/frame";
-import { TableOfContents } from "@/components/ui/TableOfContents";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { LegalLayout } from "@/components/legal/LegalLayout";
 import { COMPANY_ADDRESS } from "@/lib/company";
-import { cn } from "@/lib/utils";
 
 export default function Datenschutz() {
-  const isMobile = useIsMobile();
-  const [activeSection, setActiveSection] = useState("overview");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const t = useTranslations("privacy");
 
   const sections = useMemo(
     () => [
       {
         id: "overview",
-        icon: Shield,
         title: t("sections.overview.title"),
         content: (
           <div className="prose prose-base max-w-none">
@@ -32,7 +23,6 @@ export default function Datenschutz() {
       },
       {
         id: "general",
-        icon: Lock,
         title: t("sections.general.title"),
         content: (
           <div className="prose prose-base max-w-none space-y-4">
@@ -43,7 +33,6 @@ export default function Datenschutz() {
       },
       {
         id: "responsible",
-        icon: User,
         title: t("sections.responsible.title"),
         content: (
           <div className="prose prose-base max-w-none">
@@ -63,7 +52,6 @@ export default function Datenschutz() {
       },
       {
         id: "collection",
-        icon: Database,
         title: t("sections.collection.title"),
         content: (
           <div className="prose prose-base max-w-none space-y-4">
@@ -84,7 +72,6 @@ export default function Datenschutz() {
       },
       {
         id: "contact",
-        icon: Mail,
         title: t("sections.contact.title"),
         content: (
           <div className="prose prose-base max-w-none space-y-4">
@@ -95,7 +82,6 @@ export default function Datenschutz() {
       },
       {
         id: "rights",
-        icon: FileText,
         title: t("sections.rights.title"),
         content: (
           <div className="prose prose-base max-w-none space-y-4">
@@ -137,132 +123,5 @@ export default function Datenschutz() {
     [t],
   );
 
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      const offset = 100;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.scrollY - offset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth",
-      });
-      setActiveSection(id);
-      setSidebarOpen(false);
-    }
-  };
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + 150;
-
-      for (const section of sections) {
-        const element = document.getElementById(section.id);
-        if (element) {
-          const { offsetTop, offsetHeight } = element;
-          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-            setActiveSection(section.id);
-            break;
-          }
-        }
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [sections]);
-
-  return (
-    <div className="relative min-h-screen bg-background">
-      {/* Mobile TOC Button */}
-      {isMobile && (
-        <Button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="fixed bottom-6 right-6 z-50 size-14 rounded-full shadow-lg"
-          size="icon"
-        >
-          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </Button>
-      )}
-
-      {/* Mobile Sidebar Overlay */}
-      {isMobile && sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <main className="relative mx-auto w-full max-w-[1200px] px-5 pt-32 pb-24 md:px-10 md:pt-44">
-        <section className="space-y-12">
-          <div>
-            <Display as="h1" size="lg" className="max-w-[18ch]">
-              {t("title")}
-            </Display>
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              {t("subtitle")}
-            </p>
-          </div>
-
-          <div className="flex gap-8 relative">
-            {/* Desktop Sidebar */}
-            {!isMobile && (
-              <aside className="sticky top-28 w-72 shrink-0 self-start">
-                <p className="text-[13px] font-medium text-muted-foreground">
-                  {t("tableOfContents")}
-                </p>
-                <div className="mt-5">
-                  <TableOfContents
-                    sections={sections}
-                    activeSection={activeSection}
-                    onSectionClick={scrollToSection}
-                  />
-                </div>
-              </aside>
-            )}
-
-            {/* Mobile Sidebar */}
-            {isMobile && (
-              <aside
-                className={cn(
-                  "fixed top-24 right-0 z-50 h-[calc(100vh-6rem)] w-80 max-w-[85vw] overflow-y-auto border-l border-rule bg-background p-6 transition-transform duration-300",
-                  sidebarOpen ? "translate-x-0" : "translate-x-full",
-                )}
-              >
-                <p className="text-[13px] font-medium text-muted-foreground">
-                  {t("tableOfContents")}
-                </p>
-                <div className="mt-5">
-                  <TableOfContents
-                    sections={sections}
-                    activeSection={activeSection}
-                    onSectionClick={scrollToSection}
-                  />
-                </div>
-              </aside>
-            )}
-
-            {/* Main Content */}
-            <div className="flex-1 space-y-12">
-              {sections.map((section) => {
-                return (
-                  <section
-                    key={section.id}
-                    id={section.id}
-                    className="scroll-mt-28 border-t border-rule pt-8 first:border-t-0 first:pt-0"
-                  >
-                    <h2 className="text-2xl font-semibold tracking-[-0.015em]">{section.title}</h2>
-                    <div className="mt-5 leading-relaxed text-muted-foreground">
-                      {section.content}
-                    </div>
-                  </section>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
-  );
+  return <LegalLayout title={t("title")} description={t("subtitle")} sections={sections} />;
 }

@@ -13,7 +13,7 @@
     "type-check": "tsc --noEmit",
     "format:check": "oxfmt --check ./src",
     "format": "oxfmt --write ./src",
-    "licenses": "bunx license-checker --json --production --out ./public/licenses.json"
+    "licenses": "node ./scripts/licenses.mjs"
   },
   "dependencies": {
     "@advantis/convex": "workspace:*",

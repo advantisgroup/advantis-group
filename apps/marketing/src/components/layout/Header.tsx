@@ -9,7 +9,7 @@ import { useTranslations } from "next-intl";
 
 import { Logo, logoWidth } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname as useLocalePathname } from "@/i18n/navigation";
 import { cn, isAuthRoute } from "@/lib/utils";
 
 import { MobileNavFab } from "./MobileNavFab";
@@ -37,6 +37,7 @@ const MARK_HEIGHT = 15;
  */
 export const Header = () => {
   const pathname = usePathname();
+  const localePathname = useLocalePathname();
   const t = useTranslations("nav");
   const [compact, setCompact] = React.useState(false);
 
@@ -59,6 +60,14 @@ export const Header = () => {
     { key: "whitepaper", label: t("whitepaper"), path: "/whitepaper", icon: FileText },
     { key: "contact", label: t("contact"), path: "/contact", icon: Mail },
   ];
+
+  const legalLinks = [
+    { label: t("imprint"), path: "/imprint" },
+    { label: t("privacy"), path: "/privacy" },
+    { label: t("licenses"), path: "/licenses" },
+    { label: t("cookies"), path: "/cookies" },
+  ];
+  const legalPath = legalLinks.find((link) => link.path === localePathname)?.path;
 
   // Contact is the one call to action on the bar, so it leaves the link row
   // and becomes the button on the right.
@@ -144,6 +153,28 @@ export const Header = () => {
             <AccountMenu />
           </div>
         </nav>
+
+        {/* On the legal pages the four documents sit under the bar, so you can
+            hop between them without going back through the footer. */}
+        {legalPath ? (
+          <div className="mx-auto flex w-full max-w-[1200px] gap-1 overflow-x-auto px-5 pb-2 md:px-10">
+            {legalLinks.map((link) => (
+              <Link
+                key={link.path}
+                href={link.path}
+                aria-current={legalPath === link.path ? "page" : undefined}
+                className={cn(
+                  "shrink-0 rounded-lg px-3 py-1.5 text-[13px] transition-colors",
+                  legalPath === link.path
+                    ? "bg-accent font-medium text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        ) : null}
       </header>
       <MobileNavFab navLinks={navLinks} />
     </>
