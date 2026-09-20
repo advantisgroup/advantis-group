@@ -3,6 +3,8 @@
 import { type ReactNode, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { useTranslations } from "next-intl";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -13,7 +15,12 @@ import {
   type RichTextController,
   useRichTextController,
 } from "./rich-text-controller";
-import { type FileLinkCandidate, RichDateEditor, RichTextToolbar } from "./rich-text-toolbar";
+import {
+  type FileLinkCandidate,
+  RichDateEditor,
+  RichLinkEditor,
+  RichTextToolbar,
+} from "./rich-text-toolbar";
 
 /** The contentEditable surface — placeable independently of the toolbar. */
 export function RichTextSurface({
@@ -29,6 +36,7 @@ export function RichTextSurface({
   onBlur?: () => void;
   className?: string;
 }) {
+  const t = useTranslations("RichText");
   return (
     <>
       <div
@@ -37,14 +45,16 @@ export function RichTextSurface({
         data-placeholder={placeholder}
         contentEditable
         suppressContentEditableWarning
-        onInput={controller.emit}
+        onInput={controller.handleInput}
         onFocus={onFocus}
         onBlur={() => {
           controller.emit();
           onBlur?.();
         }}
         onKeyDown={(e) => {
-          if (controller.handleMentionKeyDown(e.key)) e.preventDefault();
+          if (controller.handleMentionKeyDown(e.key) || controller.handleSlashKeyDown(e.key)) {
+            e.preventDefault();
+          }
         }}
         onKeyUp={controller.refreshActive}
         onMouseUp={controller.refreshActive}
@@ -91,7 +101,39 @@ export function RichTextSurface({
           ))}
         </div>
       )}
+      {controller.slash && controller.slashMatches.length > 0 && (
+        <div
+          role="listbox"
+          aria-label={t("slashMenu")}
+          className="fixed z-50 w-64 overflow-hidden rounded-lg border border-border/70 bg-popover py-1 shadow-overlay"
+          style={{
+            top: Math.min(controller.slash.rect.bottom + 6, window.innerHeight - 260),
+            left: controller.slash.rect.left,
+          }}
+        >
+          {controller.slashMatches.map((command, index) => (
+            <button
+              key={command.key}
+              type="button"
+              role="option"
+              aria-selected={index === controller.slashActiveIndex}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                controller.runSlashCommand(command);
+              }}
+              className={cn(
+                "flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-sm",
+                index === controller.slashActiveIndex ? "bg-accent" : "hover:bg-accent/60",
+              )}
+            >
+              <command.icon className="size-4 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 flex-1 truncate">{t(command.labelKey)}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <RichDateEditor controller={controller} />
+      <RichLinkEditor controller={controller} />
     </>
   );
 }

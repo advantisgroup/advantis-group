@@ -1,6 +1,6 @@
 "use client";
 
-import { Paperclip, Table2 } from "lucide-react";
+import { Info, OctagonAlert, Paperclip, Table2, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -46,7 +46,15 @@ export function TablePicker({ controller }: { controller: RichTextController }) 
   const [rows, setRows] = useState(3);
   const [cols, setCols] = useState(3);
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        // The popover steals focus, so remember where the caret was before
+        // it did — otherwise the table lands at the end of the document.
+        if (next) controller.captureRange();
+        setOpen(next);
+      }}
+    >
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -110,6 +118,76 @@ export function TablePicker({ controller }: { controller: RichTextController }) 
   );
 }
 
+const CALLOUT_OPTIONS = [
+  { variant: "info", icon: Info, labelKey: "calloutInfo", accent: "text-info" },
+  { variant: "warning", icon: TriangleAlert, labelKey: "calloutWarning", accent: "text-warn" },
+  { variant: "danger", icon: OctagonAlert, labelKey: "calloutDanger", accent: "text-destructive" },
+] as const;
+
+/** "Callout" toolbar button — a variant picker rather than a plain command,
+ *  and the trigger reflects the block the caret is in so the same click that
+ *  made it can take it away again. */
+export function CalloutPicker({ controller }: { controller: RichTextController }) {
+  const t = useTranslations("RichText");
+  const [open, setOpen] = useState(false);
+  const current = CALLOUT_OPTIONS.find((o) => o.variant === controller.calloutVariant);
+  const TriggerIcon = current?.icon ?? TriangleAlert;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title={t("callout")}
+          aria-label={t("callout")}
+          aria-pressed={!!current}
+          onPointerDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => e.preventDefault()}
+          className={cn(
+            "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors [&_svg]:size-[17px]",
+            current
+              ? "bg-signal/15 text-signal"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground",
+          )}
+        >
+          <TriggerIcon />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56 p-1">
+        <p className="px-2 pb-1 pt-1.5 text-xs font-medium text-muted-foreground">{t("callout")}</p>
+        {CALLOUT_OPTIONS.map((option) => (
+          <button
+            key={option.variant}
+            type="button"
+            onClick={() => {
+              controller.toggleCallout(option.variant);
+              setOpen(false);
+            }}
+            className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+          >
+            <option.icon className={cn("size-3.5 shrink-0", option.accent)} />
+            <span className="min-w-0 flex-1 truncate">{t(option.labelKey)}</span>
+            {controller.calloutVariant === option.variant && (
+              <span className="shrink-0 text-xs text-muted-foreground">{t("calloutRemove")}</span>
+            )}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/** `TOOLS` carries English labels for `execCommand` bookkeeping; the two that
+ *  open their own editor get a translated one for the tooltip. */
+function toolLabel(
+  tool: Exclude<(typeof TOOLS)[number], "divider">,
+  t: (key: string) => string,
+): string {
+  if (!("action" in tool)) return tool.label;
+  if (tool.action === "date") return t("insertDate");
+  if (tool.action === "link") return t("insertLink");
+  return tool.label;
+}
+
 /** The formatting button row — placeable independently of the editable surface. */
 export function RichTextToolbar({
   controller,
@@ -136,8 +214,8 @@ export function RichTextToolbar({
           <button
             key={tool.label}
             type="button"
-            title={"action" in tool && tool.action === "date" ? t("insertDate") : tool.label}
-            aria-label={"action" in tool && tool.action === "date" ? t("insertDate") : tool.label}
+            title={toolLabel(tool, t)}
+            aria-label={toolLabel(tool, t)}
             aria-pressed={!!controller.active[tool.label]}
             // Keep the caret (and the keyboard) where they are — a plain tap
             // would blur the surface and close the docked bar mid-format.
@@ -156,13 +234,82 @@ export function RichTextToolbar({
         ),
       )}
       <span className="mx-1 h-5 w-px bg-border/70" aria-hidden />
+      <CalloutPicker controller={controller} />
       <TablePicker controller={controller} />
       {fileLinkCandidates && fileLinkCandidates.length > 0 && (
         <FileLinkPicker
           candidates={fileLinkCandidates}
+          onOpen={controller.captureRange}
           onPick={(name) => controller.insertFileLink(name)}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * Link text + URL, floating at the selection — the same fixed-position
+ * treatment the mention dropdown uses, rather than a dialog, because two
+ * fields don't warrant taking over the screen. Replaces the `window.prompt`
+ * this used to be.
+ */
+export function RichLinkEditor({ controller }: { controller: RichTextController }) {
+  const t = useTranslations("RichText");
+  const tc = useTranslations("Common");
+  const state = controller.linkEditor;
+  if (!state) return null;
+
+  function update(patch: Partial<typeof state>) {
+    controller.setLinkEditor((current) => (current ? { ...current, ...patch } : current));
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-label={t("insertLink")}
+      className="fixed z-50 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-border/70 bg-popover p-3 shadow-overlay"
+      style={{
+        top: Math.min(state.rect.bottom + 8, window.innerHeight - 200),
+        left: Math.min(state.rect.left, window.innerWidth - 336),
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") controller.setLinkEditor(null);
+        if (event.key === "Enter") {
+          event.preventDefault();
+          controller.saveLinkEditor();
+        }
+      }}
+    >
+      <div className="space-y-2">
+        <Input
+          autoFocus
+          value={state.url}
+          onChange={(event) => update({ url: event.target.value })}
+          placeholder="https://…"
+          aria-label={t("linkUrl")}
+          className="h-8 text-sm"
+        />
+        <Input
+          value={state.text}
+          onChange={(event) => update({ text: event.target.value })}
+          placeholder={t("linkTextPlaceholder")}
+          aria-label={t("linkText")}
+          className="h-8 text-sm"
+        />
+      </div>
+      <div className="mt-2.5 flex items-center justify-end gap-1.5">
+        {state.element && (
+          <Button size="sm" variant="ghost" className="mr-auto" onClick={controller.removeLink}>
+            {t("linkRemove")}
+          </Button>
+        )}
+        <Button size="sm" variant="ghost" onClick={() => controller.setLinkEditor(null)}>
+          {tc("cancel")}
+        </Button>
+        <Button size="sm" disabled={!state.url.trim()} onClick={controller.saveLinkEditor}>
+          {t("linkApply")}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -351,14 +498,24 @@ export interface FileLinkCandidate {
 export function FileLinkPicker({
   candidates,
   onPick,
+  onOpen,
 }: {
   candidates: FileLinkCandidate[];
   onPick: (name: string) => void;
+  /** Called as the popover opens, so the caret can be remembered before focus
+   *  moves into it (see `captureRange`). */
+  onOpen: () => void;
 }) {
   const t = useTranslations("RichText");
   const [open, setOpen] = useState(false);
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        if (next) onOpen();
+        setOpen(next);
+      }}
+    >
       <PopoverTrigger asChild>
         <button
           type="button"

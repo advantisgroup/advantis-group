@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 
 import { type Id } from "@advantis/convex/dataModel";
 
-import { CHAPTERS } from "@/components/guidebooks/wallbox-academy/data";
 import { setLastChapter } from "@/components/guidebooks/wallbox-academy/mutators";
 import { Overview } from "@/components/guidebooks/wallbox-academy/Overview";
 import { useAcademySession } from "@/components/guidebooks/wallbox-academy/session";
+import { useAcademyContent } from "@/components/guidebooks/wallbox-academy/use-academy-content";
 import { useAcademyProgress } from "@/components/guidebooks/wallbox-academy/use-academy-progress";
 import { WhoBar } from "@/components/guidebooks/wallbox-academy/WhoBar";
 
@@ -40,15 +40,16 @@ function TrainingOverview({
   onLogout: () => void;
 }) {
   const router = useRouter();
-  const { progress, loading, mutate } = useAcademyProgress(participantId);
+  const { chapters, segments, loading: contentLoading } = useAcademyContent();
+  const { progress, loading, mutate } = useAcademyProgress(participantId, chapters);
 
-  if (loading) {
+  if (loading || contentLoading) {
     return <p className="text-sm text-muted-foreground">Lade Trainingsstand …</p>;
   }
 
   function openChapter(index: number) {
     void mutate((p) => setLastChapter(p, index));
-    router.push(`${HOME}/training/${CHAPTERS[index].id}`);
+    router.push(`${HOME}/training/${chapters[index].id}`);
   }
 
   return (
@@ -60,7 +61,12 @@ function TrainingOverview({
           router.push(HOME);
         }}
       />
-      <Overview progress={progress} onOpenChapter={openChapter} />
+      <Overview
+        chapters={chapters}
+        segments={segments}
+        progress={progress}
+        onOpenChapter={openChapter}
+      />
     </div>
   );
 }

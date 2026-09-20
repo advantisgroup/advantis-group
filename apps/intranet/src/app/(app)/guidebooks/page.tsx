@@ -10,8 +10,6 @@ import { useMutation, useQuery } from "convex/react";
 import {
   Archive,
   ChevronRight,
-  FileText,
-  FolderOpen,
   Pencil,
   Pin,
   PinOff,
@@ -24,7 +22,13 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { accessibleGuidebooks, guidebookTitle } from "@/components/guidebooks/registry";
+import { RouteTabs } from "@/components/applicants/RouteTabs";
+import { useKnowledgeTabs } from "@/components/guidebooks/knowledge-tabs";
+import {
+  accessibleGuidebooks,
+  guidebookDescription,
+  guidebookTitle,
+} from "@/components/guidebooks/registry";
 import { CategoryManagerDialog, type WikiEntry } from "@/components/guidebooks/WikiEntryDialogs";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
@@ -35,11 +39,10 @@ import {
 } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { CountTabs } from "@/components/ui/count-tabs";
 import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { FilterPill } from "@/components/ui/filter-pill";
+import { type FilterGroup, FilterPill, FilterSheet } from "@/components/ui/filter-pill";
 import { Input } from "@/components/ui/input";
 import { htmlToText } from "@/components/ui/rich-text";
 import {
@@ -65,11 +68,14 @@ import { cn } from "@/lib/utils";
 const EMPTY_CATEGORIES: NonNullable<ReturnType<typeof useQuery<typeof api.wiki.categories.list>>> =
   [];
 
-/** Unified shape for both wiki-v2 entries and legacy (block-editor)
- * guidebook pages, so the grid, filters, search and sort treat them the
- * same — only edit/delete/pin dispatch differently underneath. */
+/** Unified shape for everything readable in the knowledge base, whichever of
+ * the three backends it lives in: authored wiki entries, not-yet-migrated
+ * block-editor pages, and the guides that ship as React components. A reader
+ * is looking for a subject, not a storage layer, so they share one grid, one
+ * search and one set of filters — only edit/delete/pin dispatch differently
+ * underneath, and `editable` says which of those apply. */
 interface GridItem {
-  kind: "wiki" | "legacy";
+  kind: "wiki" | "legacy" | "static";
   key: string;
   slug: string;
   title: string;
@@ -87,14 +93,19 @@ interface GridItem {
   authorUserId: string;
   ownerName: string | null;
   ownerAssigned: boolean;
+  /** 0 for the component-backed guides, which have no edit history — they
+   *  sort after dated entries rather than pretending to be brand new. */
   updatedAt: number;
+  /** Component-backed guides are code, not content: they can be pinned but
+   *  never edited or deleted from here. */
+  editable: boolean;
   wikiEntry: WikiEntry | null;
 }
 
 /** An entry nobody has touched in half a year probably deserves a look. */
 const STALE_AFTER_MS = 180 * 24 * 60 * 60 * 1000;
 
-function useGridItems() {
+function useGridItems(user: ReturnType<typeof useCurrentUser>, t: (key: string) => string) {
   const entries = useQuery(api.wiki.entries.list);
   const legacyPages = useQuery(api.guidebooks.pages.list);
   const highlightedSlugs = useQuery(api.guidebooks.highlights.list);
@@ -126,6 +137,7 @@ function useGridItems() {
       ownerName: e.ownerName,
       ownerAssigned: e.ownerAssigned,
       updatedAt: e.updatedAt,
+      editable: true,
       wikiEntry: e,
     }));
 
@@ -153,22 +165,58 @@ function useGridItems() {
         ownerName: null,
         ownerAssigned: true,
         updatedAt: p.updatedAt,
+        editable: true,
         wikiEntry: null,
       }));
 
-    return [...wikiItems, ...legacyItems];
-  }, [entries, legacyPages, highlightedSlugs]);
+    // Guides that ship as components. They used to sit behind a collapsed
+    // "Interactive tools & guides" drawer — 14 articles hidden under a label
+    // that described the two tools beside them — and couldn't be searched or
+    // filtered with everything else. Their registry `topic` maps onto the
+    // same chips legacy pages already use, so one taxonomy covers all three.
+    const staticItems: GridItem[] = accessibleGuidebooks(user)
+      .filter((gb) => gb.category === "guide")
+      .map((gb) => ({
+        kind: "static",
+        key: `static:${gb.slug}`,
+        slug: gb.slug,
+        title: guidebookTitle(gb, t),
+        snippet: guidebookDescription(gb, t),
+        tags: [],
+        categoryKey: gb.topic ? `topic:${gb.topic}` : "none",
+        categoryLabel: gb.topic ? legacyTopicLabel(gb.topic) : "",
+        categoryColor: gb.topic ? legacyTopicColor(gb.topic) : "#77808A",
+        categoryDeleted: false,
+        pinned: highlighted.has(gb.slug),
+        version: null,
+        archived: false,
+        reviewDue: false,
+        validUntil: null,
+        authorUserId: "",
+        ownerName: null,
+        ownerAssigned: true,
+        updatedAt: 0,
+        editable: false,
+        wikiEntry: null,
+      }));
+
+    return [...wikiItems, ...legacyItems, ...staticItems];
+  }, [entries, legacyPages, highlightedSlugs, user, t]);
 }
 
-// --- Entry card -----------------------------------------------------------
+// --- Entry row ------------------------------------------------------------
 
-function EntryCard({
+function EntryRow({
   item,
   canManage,
+  showCategory,
   onEdit,
 }: {
   item: GridItem;
   canManage: boolean;
+  /** Ungrouped listings (search results, archive) carry the category dot on
+   *  the row itself, since there's no heading above it to say which it is. */
+  showCategory?: boolean;
   onEdit: () => void;
 }) {
   const t = useTranslations("Guidebooks");
@@ -185,7 +233,7 @@ function EntryCard({
   // `togglePin`/`guidebookHighlights.toggle`); edit/delete require owning the
   // entry (or being admin) — showing those buttons more broadly would just
   // surface an action that fails server-side.
-  const canEditThis = canManage && isOwnerOrAdmin(user, item.authorUserId);
+  const canEditThis = item.editable && canManage && isOwnerOrAdmin(user, item.authorUserId);
 
   async function onTogglePin() {
     try {
@@ -225,63 +273,56 @@ function EntryCard({
     }
   }
 
+  // The category colour is carried by the group heading above, so a row only
+  // shows it when it's standing on its own (search results, archive).
+  const meta = [
+    item.ownerName ? t("ownerLabel", { name: item.ownerName }) : null,
+    item.version !== null ? t("versionMeta", { version: item.version }) : null,
+    ...item.tags.slice(0, 3).map((tag) => `#${tag}`),
+  ].filter(Boolean);
+
   return (
-    <Card
-      className="group relative h-full overflow-hidden transition-shadow hover:shadow-md refreshed:transition-colors refreshed:hover:border-foreground/20 refreshed:hover:shadow-none"
-      style={{ borderLeft: `4px solid ${color}` }}
-    >
-      <Link href={`/guidebooks/${item.slug}`} className="block h-full">
-        <CardContent className="space-y-2 p-4">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <p
-                className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider refreshed:font-medium refreshed:normal-case refreshed:tracking-normal"
-                style={{ color }}
-              >
-                {item.kind === "legacy" && <FileText className="size-3" />}
-                {item.archived ? t("archiveChip") : item.categoryLabel}
-                {item.archived && item.categoryLabel && (
-                  <span className="ml-1 font-normal normal-case text-muted-foreground">
-                    · {t("wasCategory", { name: item.categoryLabel })}
-                  </span>
-                )}
-              </p>
-              <p className="font-display font-semibold tracking-tight">{item.title}</p>
-            </div>
-          </div>
-          <p className="line-clamp-2 text-sm text-muted-foreground">{item.snippet}</p>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {item.tags.map((tag) => (
-              <Badge key={tag} variant="muted" className="font-normal">
-                #{tag}
+    <div className="group relative">
+      <Link
+        href={`/guidebooks/${item.slug}`}
+        className="block rounded-lg px-3 py-2.5 transition-colors hover:bg-accent/60"
+      >
+        <div className="flex items-baseline gap-2 pr-16">
+          {showCategory && (
+            <span
+              className="size-2 shrink-0 translate-y-[-1px] rounded-full"
+              style={{ backgroundColor: color }}
+              aria-hidden
+            />
+          )}
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">{item.title}</span>
+          {item.reviewDue && !item.archived && (
+            <Badge variant="warning" className="shrink-0">
+              {t("reviewDueBadge")}
+            </Badge>
+          )}
+          {!item.reviewDue &&
+            !item.archived &&
+            item.kind === "wiki" &&
+            Date.now() - item.updatedAt > STALE_AFTER_MS && (
+              <Badge variant="muted" className="shrink-0" title={t("staleHint")}>
+                {t("staleBadge")}
               </Badge>
-            ))}
-            {item.reviewDue && !item.archived && (
-              <Badge variant="warning">{t("reviewDueBadge")}</Badge>
             )}
-            {!item.reviewDue &&
-              !item.archived &&
-              item.kind === "wiki" &&
-              Date.now() - item.updatedAt > STALE_AFTER_MS && (
-                <Badge variant="muted" title={t("staleHint")}>
-                  {t("staleBadge")}
-                </Badge>
-              )}
-            {item.archived && !item.categoryDeleted && (
-              <Badge variant="muted">{t("expiredBadge")}</Badge>
-            )}
-          </div>
-          {item.version !== null && (
-            <p className="text-xs text-muted-foreground">
-              {t("versionMeta", { version: item.version })}
-            </p>
+          {item.archived && !item.categoryDeleted && (
+            <Badge variant="muted" className="shrink-0">
+              {t("expiredBadge")}
+            </Badge>
           )}
-          {item.ownerName && (
-            <p className="text-xs text-muted-foreground">
-              {t("ownerLabel", { name: item.ownerName })}
-            </p>
-          )}
-        </CardContent>
+        </div>
+        {item.snippet && (
+          <p className="mt-0.5 truncate pr-16 text-[13px] text-muted-foreground">{item.snippet}</p>
+        )}
+        {meta.length > 0 && (
+          <p className="mt-0.5 truncate pr-16 text-[11px] text-muted-foreground/80">
+            {meta.join(" · ")}
+          </p>
+        )}
       </Link>
       <div className="absolute right-2 top-2 flex items-center gap-0.5">
         {canManage && !item.archived && (
@@ -290,8 +331,10 @@ function EntryCard({
             onClick={() => void onTogglePin()}
             aria-label={item.pinned ? t("unpinAction") : t("pinAction")}
             className={cn(
-              "rounded-full p-1.5 transition-colors hover:bg-accent",
-              item.pinned ? "text-primary" : "text-muted-foreground/50",
+              "rounded-full p-1.5 transition-colors hover:bg-background",
+              item.pinned
+                ? "text-primary"
+                : "text-muted-foreground/50 opacity-100 md:opacity-0 md:group-hover:opacity-100",
             )}
           >
             {item.pinned ? <Pin className="size-4" /> : <PinOff className="size-4" />}
@@ -303,7 +346,7 @@ function EntryCard({
               type="button"
               onClick={onEdit}
               aria-label={tc("edit")}
-              className="rounded-full p-1.5 text-muted-foreground opacity-100 transition-opacity hover:bg-accent hover:text-foreground md:opacity-0 md:group-hover:opacity-100"
+              className="rounded-full p-1.5 text-muted-foreground opacity-100 transition-opacity hover:bg-background hover:text-foreground md:opacity-0 md:group-hover:opacity-100"
             >
               <Pencil className="size-3.5" />
             </button>
@@ -311,14 +354,14 @@ function EntryCard({
               type="button"
               onClick={() => void onDelete()}
               aria-label={tc("delete")}
-              className="rounded-full p-1.5 text-muted-foreground opacity-100 transition-opacity hover:bg-accent hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
+              className="rounded-full p-1.5 text-muted-foreground opacity-100 transition-opacity hover:bg-background hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
             >
               <Trash2 className="size-3.5" />
             </button>
           </>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -331,7 +374,8 @@ export default function GuidebooksPage() {
   const canManage = useHasCapability("manage_guidebooks");
   const handleError = useErrorHandler();
 
-  const items = useGridItems();
+  const items = useGridItems(user, t);
+  const knowledgeTabs = useKnowledgeTabs();
   const users = useQuery(api.people.users.list, {}) ?? [];
   const wikiCategoriesRaw = useQuery(api.wiki.categories.list);
   const wikiCategories = wikiCategoriesRaw ?? EMPTY_CATEGORIES;
@@ -351,9 +395,16 @@ export default function GuidebooksPage() {
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
   const [showArchive, setShowArchive] = useState(false);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
-  const [toolsOpen, setToolsOpen] = useState(false);
 
-  const interactiveTools = useMemo(() => accessibleGuidebooks(user), [user]);
+  // Live tools, not articles — they operate rather than explain, so they sit
+  // above the library as their own short row instead of being filed among the
+  // documents (or hidden in a drawer with them). The ones big enough to have
+  // earned a sidebar spot of their own aren't repeated here.
+  const interactiveTools = useMemo(
+    () =>
+      accessibleGuidebooks(user).filter((gb) => gb.category === "interactive" && !gb.sidebarApp),
+    [user],
+  );
 
   // Every filterable category/topic in play: manageable wikiCategories plus
   // whichever legacy topics still have unmigrated pages — always visible,
@@ -409,22 +460,96 @@ export default function GuidebooksPage() {
     });
   }, [items, showArchive, activeCategoryKeys, activeTags, search]);
 
+  // Component-backed guides carry no timestamp (updatedAt 0), so they tie on
+  // the date comparison and fall back to alphabetical among themselves —
+  // after the dated entries rather than jumbled through them.
   const sorted = useMemo(
     () =>
       [...filtered].sort(
-        (a, b) => Number(b.pinned) - Number(a.pinned) || b.updatedAt - a.updatedAt,
+        (a, b) =>
+          Number(b.pinned) - Number(a.pinned) ||
+          b.updatedAt - a.updatedAt ||
+          a.title.localeCompare(b.title, "de"),
       ),
     [filtered],
   );
+
+  // Subject headings, so the list reads as a library rather than a pile.
+  // A search is already a filtered answer, so results stay flat — a heading
+  // per hit would be noise, and the archive is small enough to leave alone.
+  const groups = useMemo(() => {
+    const flat = [{ key: "all", label: null, color: "", items: sorted }];
+    if (search.trim() || showArchive || sorted.length === 0) return flat;
+
+    const pinned = sorted.filter((i) => i.pinned);
+    const byCategory = new Map<string, GridItem[]>();
+    for (const item of sorted) {
+      if (item.pinned) continue;
+      const bucket = byCategory.get(item.categoryKey);
+      if (bucket) bucket.push(item);
+      else byCategory.set(item.categoryKey, [item]);
+    }
+
+    return [
+      ...(pinned.length > 0
+        ? [{ key: "pinned", label: t("pinnedGroup"), color: "#77808A", items: pinned }]
+        : []),
+      ...categoryChips
+        .filter((chip) => byCategory.has(chip.key))
+        .map((chip) => ({
+          key: chip.key,
+          label: chip.label,
+          color: chip.color,
+          items: byCategory.get(chip.key)!,
+        })),
+      ...(byCategory.has("none")
+        ? [
+            {
+              key: "none",
+              label: t("uncategorizedGroup"),
+              color: "#77808A",
+              items: byCategory.get("none")!,
+            },
+          ]
+        : []),
+    ];
+  }, [sorted, search, showArchive, categoryChips, t]);
 
   const availableTags = useMemo(() => {
     const pool = (items ?? []).filter((i) => (showArchive ? i.archived : !i.archived));
     return [...new Set(pool.flatMap((i) => i.tags))].sort((a, b) => a.localeCompare(b, "de"));
   }, [items, showArchive]);
-  // Legacy (block-editor) pages render in their own collapsed section rather
-  // than interleaved with wiki entries — see the grid below.
-  const currentEntries = useMemo(() => sorted.filter((i) => i.kind !== "legacy"), [sorted]);
-  const legacyEntries = useMemo(() => sorted.filter((i) => i.kind === "legacy"), [sorted]);
+
+  // One definition, two renderings: pills on desktop, a sheet on a phone.
+  const filterGroups: FilterGroup[] = useMemo(() => {
+    const result: FilterGroup[] = [];
+    if (!showArchive && categoryChips.length > 0) {
+      result.push({
+        key: "category",
+        label: t("fieldCategory"),
+        options: categoryChips.map((c) => ({
+          value: c.key,
+          label: c.label,
+          count: (items ?? []).filter((i) => !i.archived && i.categoryKey === c.key).length,
+          leading: (
+            <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: c.color }} />
+          ),
+        })),
+        selected: [...activeCategoryKeys],
+        onChange: (next) => setActiveCategoryKeys(new Set(next)),
+      });
+    }
+    if (availableTags.length > 0) {
+      result.push({
+        key: "tags",
+        label: t("tagsFilterLabel"),
+        options: availableTags.map((tag) => ({ value: tag, label: `#${tag}` })),
+        selected: [...activeTags],
+        onChange: (next) => setActiveTags(new Set(next)),
+      });
+    }
+    return result;
+  }, [showArchive, categoryChips, items, activeCategoryKeys, availableTags, activeTags, t]);
 
   async function onExtend(item: GridItem) {
     if (!item.wikiEntry) return;
@@ -448,22 +573,14 @@ export default function GuidebooksPage() {
   return (
     <div className="mx-auto max-w-5xl" data-tour="tour-guidebooks-list">
       <PageHeaderBar title={t("title")} description={t("subtitle")} tourCheckpoint="guidebooks" />
-      {/* Manage categories + new entry are the two primary actions and move
-          into the header/bottom-nav pill; "Browse files" is a shortcut to a
-          different tool entirely, not a page action, so it stays a plain
-          in-page link instead of crowding that fixed slot with a third
-          icon. */}
+      {/* Files used to be a third header action competing for the fixed slot
+          (and, on a phone, a third unlabelled icon in the thumb pill). It's a
+          view of this same section, so it's a tab now — leaving "new entry"
+          as the one primary action. */}
       <PageHeaderActions
         actions={
           canManage
             ? [
-                {
-                  key: "browse-files",
-                  label: t("browseFiles"),
-                  icon: FolderOpen,
-                  onClick: () => router.push("/guidebooks/files"),
-                  variant: "outline" as const,
-                },
                 {
                   key: "categories",
                   label: t("categoryManagerTitle"),
@@ -481,24 +598,14 @@ export default function GuidebooksPage() {
             : []
         }
       />
+      <RouteTabs tabs={knowledgeTabs} activeValue="library" />
 
       {interactiveTools.length > 0 && (
-        <details
-          className="group mb-6"
-          open={toolsOpen}
-          onToggle={(e) => setToolsOpen(e.currentTarget.open)}
-        >
-          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
-            <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
-            <Sparkles className="size-3.5" />
+        <div className="mb-6">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
             {t("interactiveToolsTitle")}
-            <span className="tabular-nums">· {interactiveTools.length}</span>
-          </summary>
-          {/* Fifteen full-width rows is most of a phone screen, so opening
-              this pushed the actual wiki entries out of view. Capped and
-              scrolled instead — single column on mobile so the longer
-              titles stay readable rather than truncating to nothing. */}
-          <div className="mt-2 grid max-h-72 gap-2 overflow-y-auto overscroll-contain pr-1 sm:max-h-none sm:grid-cols-2 sm:overflow-visible sm:pr-0">
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
             {interactiveTools.map((gb) => (
               <Link
                 key={gb.slug}
@@ -513,7 +620,7 @@ export default function GuidebooksPage() {
               </Link>
             ))}
           </div>
-        </details>
+        </div>
       )}
 
       <div className="space-y-4">
@@ -545,37 +652,28 @@ export default function GuidebooksPage() {
                 className="h-9 pl-8 text-sm md:h-8 md:text-[13px]"
               />
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {!showArchive && categoryChips.length > 0 && (
+            {/* Pills on a wide screen, one sheet on a phone — two small
+                popover targets stacked above the list is the worst of both. */}
+            <div className="hidden flex-wrap items-center gap-2 md:flex">
+              {filterGroups.map((group) => (
                 <FilterPill
-                  label={t("fieldCategory")}
-                  options={categoryChips.map((c) => ({
-                    value: c.key,
-                    label: c.label,
-                    count: (items ?? []).filter((i) => !i.archived && i.categoryKey === c.key)
-                      .length,
-                    leading: (
-                      <span
-                        className="size-2 shrink-0 rounded-full"
-                        style={{ backgroundColor: c.color }}
-                      />
-                    ),
-                  }))}
-                  selected={[...activeCategoryKeys]}
-                  onChange={(next) => setActiveCategoryKeys(new Set(next))}
-                  clearLabel={t("clearFilter", { label: t("fieldCategory") })}
+                  key={group.key}
+                  label={group.label}
+                  options={group.options}
+                  selected={group.selected}
+                  onChange={group.onChange}
+                  clearLabel={t("clearFilter", { label: group.label })}
                 />
-              )}
-              {availableTags.length > 0 && (
-                <FilterPill
-                  label={t("tagsFilterLabel")}
-                  options={availableTags.map((tag) => ({ value: tag, label: `#${tag}` }))}
-                  selected={[...activeTags]}
-                  onChange={(next) => setActiveTags(new Set(next))}
-                  clearLabel={t("clearFilter", { label: t("tagsFilterLabel") })}
-                />
-              )}
+              ))}
             </div>
+            {filterGroups.length > 0 && (
+              <FilterSheet
+                className="md:hidden"
+                groups={filterGroups}
+                label={t("filtersLabel")}
+                clearLabel={tc("clearAll")}
+              />
+            )}
           </div>
         </div>
 
@@ -674,47 +772,38 @@ export default function GuidebooksPage() {
             }
           />
         ) : (
-          <>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {currentEntries.map((i) => (
-                <EntryCard
-                  key={i.key}
-                  item={i}
-                  canManage={canManage}
-                  onEdit={() => {
-                    if (i.kind === "wiki" && i.wikiEntry) {
-                      router.push(`/guidebooks/${i.wikiEntry.slug}/compose`);
-                    } else router.push(`/guidebooks/${i.slug}/edit`);
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Not-yet-migrated block-editor pages. They outnumbered the real
-                entries in the shared grid and pushed them off the first
-                screen, so they get their own collapsed section — still
-                searchable and filterable, just not competing for attention. */}
-            {legacyEntries.length > 0 && (
-              <details className="group mt-4">
-                <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
-                  <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
-                  <FileText className="size-3.5" />
-                  {t("legacySectionTitle")}
-                  <span className="tabular-nums">· {legacyEntries.length}</span>
-                </summary>
-                <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                  {legacyEntries.map((i) => (
-                    <EntryCard
-                      key={i.key}
-                      item={i}
-                      canManage={canManage}
-                      onEdit={() => router.push(`/guidebooks/${i.slug}/edit`)}
+          <div className="-mx-3 divide-y divide-border/50">
+            {groups.map((group) => (
+              <div key={group.key} className="py-2 first:pt-0">
+                {group.label && (
+                  <p className="flex items-center gap-2 px-3 pb-1 pt-2 text-xs font-medium text-muted-foreground">
+                    <span
+                      className="size-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: group.color }}
+                      aria-hidden
                     />
-                  ))}
-                </div>
-              </details>
-            )}
-          </>
+                    {group.label}
+                    <span className="tabular-nums text-muted-foreground/60">
+                      {group.items.length}
+                    </span>
+                  </p>
+                )}
+                {group.items.map((i) => (
+                  <EntryRow
+                    key={i.key}
+                    item={i}
+                    canManage={canManage}
+                    showCategory={!group.label}
+                    onEdit={() => {
+                      if (i.kind === "wiki" && i.wikiEntry) {
+                        router.push(`/guidebooks/${i.wikiEntry.slug}/compose`);
+                      } else router.push(`/guidebooks/${i.slug}/edit`);
+                    }}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

@@ -1,9 +1,9 @@
-import { today } from "./progress";
+import { now, questionKey } from "./progress";
 
 import type { AcademyProgressData, CallAttempt, Chapter, DataKey, Scenario } from "./types";
 
 function ensureStarted(p: AcademyProgressData): AcademyProgressData {
-  return p.started ? p : { ...p, started: today() };
+  return p.started ? p : { ...p, started: now() };
 }
 
 export function markChapterVisited(
@@ -34,11 +34,12 @@ export function answerQuizQuestion(
     attempts: 1,
     history: [],
   };
-  if (existing.answers?.[questionIndex] !== undefined) return progress;
+  const key = questionKey(chapter, questionIndex);
+  if (existing.answers?.[key] !== undefined) return progress;
 
-  const answers = { ...(existing.answers ?? {}), [questionIndex]: optionIndex };
+  const answers = { ...(existing.answers ?? {}), [key]: optionIndex };
   const correct = chapter.quiz.reduce(
-    (sum, q, i) => sum + (answers[i] === q.correctIndex ? 1 : 0),
+    (sum, q, i) => sum + (answers[questionKey(chapter, i)] === q.correctIndex ? 1 : 0),
     0,
   );
   const state = {
@@ -59,7 +60,7 @@ export function retryQuiz(progress: AcademyProgressData, chapterId: string): Aca
   if (!state) return progress;
   const history = [
     ...(state.history ?? []),
-    { correct: state.correct ?? 0, total: state.total ?? 0, date: today() },
+    { correct: state.correct ?? 0, total: state.total ?? 0, date: now() },
   ];
   return {
     ...progress,
@@ -99,7 +100,7 @@ export function recordCallAttempt(
     score,
     max,
     data: dataKeys,
-    date: today(),
+    date: now(),
     attempts: prev ? (prev.attempts ?? 1) + 1 : 1,
     history: prev
       ? [...(prev.history ?? []), { score: prev.score, max: prev.max, date: prev.date }]

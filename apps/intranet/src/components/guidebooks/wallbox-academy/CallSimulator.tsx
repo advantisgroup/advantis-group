@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 import { SCENARIOS } from "./data";
 import { recordCallAttempt } from "./mutators";
-import { DLAB } from "./progress";
+import { DLAB, formatProgressDate } from "./progress";
 
 import type { AcademyProgressData, DataKey, Scenario } from "./types";
 
@@ -219,7 +219,7 @@ function ScenarioList({
                   {attempt.score}/{attempt.max} Punkte
                 </Badge>{" "}
                 · Daten {attempt.data.length}/{scenario.targets.length} · Versuch{" "}
-                {attempt.attempts ?? 1} · {attempt.date}
+                {attempt.attempts ?? 1} · {formatProgressDate(attempt.date)}
                 {attempt.history?.length ? (
                   <span className="block text-muted-foreground">
                     frühere Versuche: {attempt.history.map((h) => `${h.score}/${h.max}`).join(", ")}

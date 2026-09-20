@@ -1103,6 +1103,41 @@ input[type="week"] {
     margin: 0.75rem 0;
   }
 
+  /* Callout blocks. Deliberately close to blockquote's restraint — a coloured
+     hairline and a wash, not a filled panel with an icon tile — but upright
+     and full-contrast so a warning never reads as someone being quoted. */
+  .rich-text [data-callout] {
+    margin: 0.75rem 0;
+    border-left: 2px solid var(--callout-accent);
+    border-radius: 0 0.5rem 0.5rem 0;
+    background: color-mix(in oklch, var(--callout-accent) 8%, transparent);
+    padding: 0.6rem 0.9rem;
+  }
+
+  .rich-text [data-callout] > :first-child {
+    margin-top: 0;
+  }
+
+  .rich-text [data-callout] > :last-child {
+    margin-bottom: 0;
+  }
+
+  .rich-text [data-callout] strong {
+    color: color-mix(in oklch, var(--callout-accent) 70%, var(--foreground));
+  }
+
+  .rich-text [data-callout="info"] {
+    --callout-accent: var(--info);
+  }
+
+  .rich-text [data-callout="warning"] {
+    --callout-accent: var(--warn);
+  }
+
+  .rich-text [data-callout="danger"] {
+    --callout-accent: var(--destructive);
+  }
+
   .rich-text .mention {
     display: inline;
     font-weight: 600;

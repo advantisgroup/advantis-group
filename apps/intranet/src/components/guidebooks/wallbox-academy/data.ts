@@ -1,3 +1,14 @@
+/**
+ * The course's original content. `SEG` and `CHAPTERS` are now a **seed**: the
+ * one-time migration in `academy/content.ts` copies them into Convex, and from
+ * then on the database is what renders (`use-academy-content.ts` falls back
+ * here until it has run). Editing them after the migration changes nothing —
+ * edit the content in Admin → Inhalte instead.
+ *
+ * `SCENARIOS`, `RESEARCH_TASKS` and `DLAB` are not migrated yet and are still
+ * the live source for the call simulator and research tasks.
+ */
+
 import type { Chapter, DataKey, ResearchTask, Scenario, SegmentKey } from "./types";
 
 export const SEG: Record<SegmentKey, string> = {

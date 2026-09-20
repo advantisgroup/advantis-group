@@ -5,21 +5,22 @@ import { Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-import { CHAPTERS } from "./data";
 import { isChapterDone } from "./progress";
 
-import type { AcademyProgressData } from "./types";
+import type { AcademyProgressData, Chapter } from "./types";
 
 function shortTitle(title: string): string {
   return title.split(":")[0].split(" - ")[0];
 }
 
 export function ChapterNav({
+  chapters,
   progress,
   current,
   onOverview,
   onSelect,
 }: {
+  chapters: Chapter[];
   progress: AcademyProgressData;
   current: number;
   onOverview: () => void;
@@ -31,7 +32,7 @@ export function ChapterNav({
         <Home className="size-3.5" />
         Übersicht
       </Button>
-      {CHAPTERS.map((chapter, index) => {
+      {chapters.map((chapter, index) => {
         const done = isChapterDone(progress, chapter);
         const active = index === current;
         return (

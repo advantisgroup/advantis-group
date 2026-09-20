@@ -1,13 +1,13 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Doc, type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Link2, Plus } from "lucide-react";
+import { ArrowLeft, Link2, MoreHorizontal, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -22,8 +22,15 @@ import {
   DialogTrigger,
   useConfirm,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Link } from "@/components/Link";
 import {
   Select,
   SelectContent,
@@ -40,13 +47,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { useErrorHandler } from "@/hooks/use-error-handler";
+import { cn } from "@/lib/utils";
 
 import { CHAPTERS, SCENARIOS, SEG } from "./data";
-import { chapterResultLabel, DLAB, parseProgress, recommendations } from "./progress";
+import {
+  chapterResultLabel,
+  DLAB,
+  formatProgressDate,
+  parseProgress,
+  questionKey,
+  recommendations,
+} from "./progress";
 import { useAcademySession } from "./session";
+import { useAcademyContent } from "./use-academy-content";
 import { ACADEMY_ID } from "./use-academy-progress";
 
-import type { AcademyProgressData } from "./types";
+import type { AcademyProgressData, Chapter } from "./types";
 
 export const ADMIN_BASE = "/guidebooks/wallbox-sales-academy/admin";
 
@@ -237,15 +254,13 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-/**
- * Detail expand/collapse is real navigation (`/admin/teilnehmer` <->
- * `/admin/teilnehmer/<id>`), not local component state — so "Details" opens
- * an actual, bookmarkable/shareable URL instead of leaving you stuck on the
- * list URL with hidden UI state.
- */
-export function ParticipantsTab({ focusParticipantId }: { focusParticipantId?: string | null }) {
+/** The roster. Opening someone goes to `/admin/teilnehmer/<id>`, a real page
+ *  with its own URL, rather than expanding a second document inside a cell of
+ *  this table. */
+export function ParticipantsTab() {
   const router = useRouter();
   const { academyPin } = useAcademySession();
+  const { chapters } = useAcademyContent();
   const participants = useQuery(api.academy.participants.listAll, {
     academyId: ACADEMY_ID,
     pin: academyPin,
@@ -256,13 +271,6 @@ export function ParticipantsTab({ focusParticipantId }: { focusParticipantId?: s
   });
   const remove = useMutation(api.academy.participants.remove);
   const confirm = useConfirm();
-  const rowRef = useRef<HTMLTableRowElement | null>(null);
-
-  useEffect(() => {
-    if (focusParticipantId && rowRef.current) {
-      rowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [focusParticipantId]);
 
   if (participants === undefined || results === undefined) {
     return <p className="text-sm text-muted-foreground">Lade Teilnehmer …</p>;
@@ -301,110 +309,91 @@ export function ParticipantsTab({ focusParticipantId }: { focusParticipantId?: s
               {participants.map((p) => {
                 const resultRow = resultsByParticipant.get(p._id);
                 const progress = parseProgress(resultRow?.data);
-                const quiz = CHAPTERS.filter((c) => c.quiz).reduce(
-                  (acc, c) => {
-                    const state = progress.chapters[c.id];
-                    return {
-                      correct: acc.correct + (state?.correct ?? 0),
-                      total: acc.total + (state?.total ?? 0),
-                    };
-                  },
-                  { correct: 0, total: 0 },
-                );
+                const quiz = chapters
+                  .filter((c) => c.quiz)
+                  .reduce(
+                    (acc, c) => {
+                      const state = progress.chapters[c.id];
+                      return {
+                        correct: acc.correct + (state?.correct ?? 0),
+                        total: acc.total + (state?.total ?? 0),
+                      };
+                    },
+                    { correct: 0, total: 0 },
+                  );
                 const status = progress.finished
                   ? "abgeschlossen"
                   : progress.started
                     ? "in Bearbeitung"
                     : "eingeladen";
-                const open = focusParticipantId === p._id;
                 return (
-                  <Fragment key={p._id}>
-                    <TableRow ref={open && focusParticipantId === p._id ? rowRef : undefined}>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-medium">{p.name}</span>
-                          {p.linkedUserId ? (
-                            <Badge variant="secondary">
-                              {p.autoLinkedVia === "email_match"
-                                ? "automatisch verknüpft"
-                                : "verknüpft"}
-                            </Badge>
-                          ) : null}
-                        </div>
-                        <div className="text-xs text-muted-foreground">{p.email}</div>
-                      </TableCell>
-                      <TableCell>
-                        <code className="text-xs">{p.code}</code>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={progress.finished ? "success" : "secondary"}>
-                          {status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {quiz.total
-                          ? `${quiz.correct}/${quiz.total} (${Math.round((quiz.correct / quiz.total) * 100)} %)`
-                          : "–"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-1.5">
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            aria-label="Link kopieren"
-                            onClick={() => copyParticipantLink(p._id)}
-                          >
-                            <Link2 className="size-3.5" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => sendMailtoInvite(p.name, p.email, p.code)}
-                          >
-                            Einladung
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              router.push(
-                                open
-                                  ? `${ADMIN_BASE}/teilnehmer`
-                                  : `${ADMIN_BASE}/teilnehmer/${p._id}`,
-                              )
-                            }
-                          >
-                            {open ? "Schließen" : "Details"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={async () => {
-                              const ok = await confirm({
-                                title: "Teilnehmer löschen?",
-                                description: `${p.name} samt Ergebnissen und Fragen wird endgültig gelöscht.`,
-                                confirmLabel: "Löschen",
-                              });
-                              if (ok)
-                                await remove({
-                                  participantId: p._id,
-                                  pin: academyPin,
+                  // The row is the link; the four buttons that used to sit in
+                  // every row (and the accordion that unpacked a whole second
+                  // document into one table cell) are gone — details are a
+                  // page of their own now.
+                  <TableRow
+                    key={p._id}
+                    className="cursor-pointer"
+                    onClick={() => router.push(`${ADMIN_BASE}/teilnehmer/${p._id}`)}
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium">{p.name}</span>
+                        {p.linkedUserId ? (
+                          <Badge variant="secondary">
+                            {p.autoLinkedVia === "email_match"
+                              ? "automatisch verknüpft"
+                              : "verknüpft"}
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{p.email}</div>
+                    </TableCell>
+                    <TableCell>
+                      <code className="text-xs">{p.code}</code>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{status}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {quiz.total
+                        ? `${quiz.correct}/${quiz.total} (${Math.round((quiz.correct / quiz.total) * 100)} %)`
+                        : "–"}
+                    </TableCell>
+                    <TableCell onClick={(event) => event.stopPropagation()}>
+                      <div className="flex justify-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon-sm" variant="ghost" aria-label="Weitere Aktionen">
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => sendMailtoInvite(p.name, p.email, p.code)}
+                            >
+                              Einladung senden
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => copyParticipantLink(p._id)}>
+                              <Link2 className="size-3.5" />
+                              Link kopieren
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={async () => {
+                                const ok = await confirm({
+                                  title: "Teilnehmer löschen?",
+                                  description: `${p.name} samt Ergebnissen und Fragen wird endgültig gelöscht.`,
+                                  confirmLabel: "Löschen",
                                 });
-                            }}
-                          >
-                            Löschen
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    {open ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="bg-muted/30">
-                          <ParticipantDetail participant={p} progress={progress} />
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-                  </Fragment>
+                                if (ok) await remove({ participantId: p._id, pin: academyPin });
+                              }}
+                            >
+                              Löschen
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
             </TableBody>
@@ -453,6 +442,134 @@ function LinkAccountControl({ participant }: { participant: Doc<"academyParticip
   );
 }
 
+/**
+ * One chapter's line in a participant's history: the attempts in order, and —
+ * for a quiz chapter they've answered — which option they picked per question
+ * against the right one. That last part is the single most useful thing a
+ * trainer has before a coaching conversation, and it was stored all along
+ * without ever being rendered.
+ */
+function ChapterHistory({
+  index,
+  chapter,
+  segmentLabel,
+  progress,
+}: {
+  index: number;
+  chapter: Chapter;
+  segmentLabel: string;
+  progress: AcademyProgressData;
+}) {
+  const [open, setOpen] = useState(false);
+  const state = progress.chapters[chapter.id];
+  const attempts = [...(state?.history ?? [])];
+  const answers = state?.answers ?? {};
+  const answered = Object.keys(answers).length > 0;
+
+  return (
+    <div className="py-2.5">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="text-sm font-medium">
+          {index + 1}. {chapter.title}
+        </span>
+        <span className="text-xs text-muted-foreground">{segmentLabel}</span>
+        <span className="ml-auto text-sm text-muted-foreground">
+          {chapterResultLabel(progress, chapter)}
+        </span>
+      </div>
+      {attempts.length > 0 && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          {attempts
+            .map((h) => `${h.correct}/${h.total} am ${formatProgressDate(h.date)}`)
+            .join(" → ")}
+          {state?.total ? ` → ${state.correct ?? 0}/${state.total} (aktuell)` : ""}
+        </p>
+      )}
+      {chapter.quiz && answered && (
+        <>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="mt-1 text-xs font-medium text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+          >
+            {open ? "Antworten ausblenden" : "Antworten ansehen"}
+          </button>
+          {open && (
+            <ol className="mt-2 space-y-2">
+              {chapter.quiz.map((question, qi) => {
+                const given = answers[questionKey(chapter, qi)];
+                const right = given === question.correctIndex;
+                return (
+                  <li key={question.id ?? qi} className="text-xs">
+                    <p className="text-foreground">
+                      {qi + 1}. {question.question}
+                    </p>
+                    <p className={cn("mt-0.5", right ? "text-muted-foreground" : "text-warn")}>
+                      {given === undefined
+                        ? "nicht beantwortet"
+                        : right
+                          ? `richtig — ${question.options[given]}`
+                          : `gewählt: ${question.options[given]} · richtig wäre: ${question.options[question.correctIndex]}`}
+                    </p>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/** The participant detail as a page of its own. It used to render inside a
+ *  `colSpan` cell of the roster table — a nested chapter table, the
+ *  recommendations, every scenario and every research answer, all at
+ *  table-cell size. */
+export function ParticipantDetailPage({
+  participantId,
+}: {
+  participantId: Id<"academyParticipants">;
+}) {
+  const { academyPin } = useAcademySession();
+  const participants = useQuery(api.academy.participants.listAll, {
+    academyId: ACADEMY_ID,
+    pin: academyPin,
+  });
+  const results = useQuery(api.academy.results.listAll, {
+    academyId: ACADEMY_ID,
+    pin: academyPin,
+  });
+
+  if (participants === undefined || results === undefined) {
+    return <p className="text-sm text-muted-foreground">Lade Teilnehmer …</p>;
+  }
+  const participant = participants.find((p) => p._id === participantId);
+  if (!participant) {
+    return <p className="text-sm text-muted-foreground">Teilnehmer nicht gefunden.</p>;
+  }
+  const progress = parseProgress(results.find((r) => r.participantId === participantId)?.data);
+
+  return (
+    <div className="space-y-5">
+      <Link
+        href={`${ADMIN_BASE}/teilnehmer`}
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Teilnehmer
+      </Link>
+      <div>
+        <h2 className="font-display text-2xl font-semibold tracking-tight">{participant.name}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {participant.email} · Code <code className="text-xs">{participant.code}</code>
+        </p>
+      </div>
+      <ParticipantDetail participant={participant} progress={progress} />
+    </div>
+  );
+}
+
 function ParticipantDetail({
   participant,
   progress,
@@ -460,12 +577,14 @@ function ParticipantDetail({
   participant: Doc<"academyParticipants">;
   progress: AcademyProgressData;
 }) {
-  const rec = recommendations(progress);
+  const { chapters, segments } = useAcademyContent();
+  const rec = recommendations(progress, chapters, segments);
 
   return (
     <div className="space-y-4 py-2">
       <p className="text-xs text-muted-foreground">
-        Gestartet: {progress.started ?? "–"} · Abgeschlossen: {progress.finished ?? "–"}
+        Gestartet: {formatProgressDate(progress.started)} · Abgeschlossen:{" "}
+        {formatProgressDate(progress.finished)}
       </p>
 
       {progress.finished ? (
@@ -479,30 +598,24 @@ function ParticipantDetail({
         </div>
       ) : null}
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Kapitel</TableHead>
-            <TableHead>Segment</TableHead>
-            <TableHead>Ergebnis</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {CHAPTERS.map((chapter, i) => (
-            <TableRow key={chapter.id}>
-              <TableCell className="text-sm">
-                {i + 1}. {chapter.title}
-              </TableCell>
-              <TableCell>
-                <Badge variant="secondary">{SEG[chapter.segment]}</Badge>
-              </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {chapterResultLabel(progress, chapter)}
-              </TableCell>
-            </TableRow>
+      {/* Every attempt this person made, in order, with what they actually
+          picked. The stored `history` and `answers` were always there and
+          never shown — "Versuch 3" told a trainer far less than seeing the
+          third attempt fix the two questions the first one got wrong. */}
+      <div>
+        <h4 className="mb-2 text-sm font-semibold">Verlauf</h4>
+        <div className="divide-y divide-border/60">
+          {chapters.map((chapter, i) => (
+            <ChapterHistory
+              key={chapter.id}
+              index={i}
+              chapter={chapter}
+              segmentLabel={segments[chapter.segment]}
+              progress={progress}
+            />
           ))}
-        </TableBody>
-      </Table>
+        </div>
+      </div>
 
       <div>
         <h4 className="mb-1.5 text-sm font-semibold">Empfehlung weiterer Schulungsbedarf</h4>
@@ -551,7 +664,7 @@ function ParticipantDetail({
                 <span className="text-xs text-muted-foreground">
                   Datenerfassung {d.data.length}/{s.targets.length}
                   {missing.length ? ` - fehlend: ${missing.join(", ")}` : " - vollständig"} ·
-                  Versuch(e): {d.attempts ?? 1} · {d.date}
+                  Versuch(e): {d.attempts ?? 1} · {formatProgressDate(d.date)}
                 </span>
               </p>
             );
@@ -687,6 +800,94 @@ export function QuestionsTab({ focusQuestionId }: { focusQuestionId?: string | n
 
 // ─── Einstellungen ─────────────────────────────────────────────────────────
 
+/**
+ * Copies the bundled course content into the database, once. Until it runs the
+ * chapters, answers and segment names only exist in `data.ts`, so correcting a
+ * wrong answer means a deploy. The same run rewrites stored results onto stable
+ * question ids — see `academy/content.ts` for why that can't be deferred.
+ */
+function ContentMigrationCard() {
+  const { academyPin } = useAcademySession();
+  const status = useQuery(api.academy.content.status, { academyId: ACADEMY_ID });
+  const migrate = useMutation(api.academy.content.migrate);
+  const confirm = useConfirm();
+  const handleError = useErrorHandler();
+  const [busy, setBusy] = useState(false);
+
+  async function run() {
+    const ok = await confirm({
+      title: "Inhalte in die Datenbank übernehmen?",
+      description:
+        "Kapitel, Fragen und Antworten werden einmalig aus dem Code übernommen. Danach sind sie hier bearbeitbar. Bestehende Teilnehmer-Ergebnisse werden dabei auf feste Fragen-IDs umgeschrieben.",
+      confirmLabel: "Übernehmen",
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const result = await migrate({
+        academyId: ACADEMY_ID,
+        pin: academyPin,
+        segments: (Object.keys(SEG) as (keyof typeof SEG)[]).map((key) => ({
+          key,
+          label: SEG[key],
+        })),
+        chapters: CHAPTERS.map((chapter) => ({
+          chapterId: chapter.id,
+          title: chapter.title,
+          segment: chapter.segment,
+          body: JSON.stringify(chapter.body ?? []),
+          glossary: chapter.glossary ? JSON.stringify(chapter.glossary) : undefined,
+          research: chapter.research,
+          sim: chapter.sim,
+          quiz: (chapter.quiz ?? []).map((q) => ({
+            question: q.question,
+            options: q.options,
+            correctIndex: q.correctIndex,
+          })),
+        })),
+      });
+      toast.success(
+        result.alreadyDone
+          ? "Inhalte waren bereits übernommen."
+          : `${result.chapterCount} Kapitel und ${result.questionCount} Fragen übernommen.`,
+      );
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (status === undefined) return null;
+
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <h3 className="mb-2 font-semibold">Kursinhalte</h3>
+        {status ? (
+          <p className="text-sm text-muted-foreground">
+            {status.chapterCount} Kapitel und {status.questionCount} Fragen liegen in der Datenbank
+            {status.rewrittenResults > 0
+              ? ` · ${status.rewrittenResults} Ergebnisse umgeschrieben`
+              : ""}
+            .
+          </p>
+        ) : (
+          <>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Kapitel, Fragen und Antworten stehen noch fest im Code. Einmalig übernehmen, um sie
+              hier bearbeiten zu können.
+            </p>
+            <Button disabled={busy} onClick={() => void run()}>
+              Inhalte übernehmen
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function SettingsTab() {
   const router = useRouter();
   const setPinMutation = useMutation(api.academy.settings.setPin);
@@ -698,6 +899,7 @@ export function SettingsTab() {
 
   return (
     <div className="space-y-4">
+      <ContentMigrationCard />
       <Card>
         <CardContent className="p-5">
           <h3 className="mb-3 font-semibold">Einstellungen</h3>

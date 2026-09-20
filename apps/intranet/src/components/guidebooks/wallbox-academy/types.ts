@@ -1,9 +1,14 @@
 /**
  * Content + progress types for the Wallbox Sales Academy interactive
- * guidebook. Content (chapters/quiz/scenarios/glossary) is German-only
- * hardcoded copy, same convention as the rest of `guidebooks/docs` — see
- * `data.ts`. Progress types describe the JSON blob persisted per user in
- * Convex (`academyProgress.data`).
+ * guidebook.
+ *
+ * Chapters, quiz questions and segment names live in Convex once an admin has
+ * run the one-time content migration; `data.ts` is the seed it copies in and
+ * the fallback until then (see `use-academy-content.ts`). Scenarios, research
+ * tasks and the glossary are still German-only hardcoded copy in `data.ts`.
+ *
+ * Progress types describe the JSON blob persisted per participant in Convex
+ * (`academyResults.data`).
  */
 
 export type SegmentKey =
@@ -26,6 +31,10 @@ export type ChapterBlock =
   | { type: "diagram" };
 
 export interface QuizQuestion {
+  /** Stable id, present once the content has been migrated into Convex.
+   *  Undefined for the bundled seed, where the array position is still what an
+   *  answer is filed under — see `questionKey` in progress.ts. */
+  id?: string;
   question: string;
   options: string[];
   correctIndex: number;
@@ -77,22 +86,32 @@ export interface Scenario {
 
 // --- Progress (persisted per user, JSON-encoded in Convex) -----------------
 
+/**
+ * Epoch milliseconds. These used to be `toLocaleDateString("de-DE")` strings,
+ * which can't be sorted, diffed or charted — so no duration, no time-to-
+ * complete, no ordering. `parseProgress` converts any old string it finds on
+ * the way in, so stored blobs from before the change still read.
+ */
+export type ProgressTime = number;
+
 export interface ChapterProgress {
   visited?: boolean;
-  answers?: Record<number, number>;
+  /** Keyed by `questionKey` — a question id once migrated, the array index
+   *  before that. JSON object keys are strings either way. */
+  answers?: Record<string, number>;
   correct?: number;
   total?: number;
   attempts?: number;
-  history?: { correct: number; total: number; date: string }[];
+  history?: { correct: number; total: number; date: ProgressTime }[];
 }
 
 export interface CallAttempt {
   score: number;
   max: number;
   data: DataKey[];
-  date: string;
+  date: ProgressTime;
   attempts?: number;
-  history?: { score: number; max: number; date: string }[];
+  history?: { score: number; max: number; date: ProgressTime }[];
 }
 
 export interface AcademyProgressData {
@@ -100,8 +119,8 @@ export interface AcademyProgressData {
   research: Record<string, string>;
   calls: Record<string, CallAttempt>;
   lastCh?: number;
-  started?: string;
-  finished?: string | null;
+  started?: ProgressTime;
+  finished?: ProgressTime | null;
 }
 
 export const EMPTY_PROGRESS: AcademyProgressData = {

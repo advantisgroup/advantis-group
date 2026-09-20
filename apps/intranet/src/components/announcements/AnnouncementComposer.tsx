@@ -32,7 +32,6 @@ import { useRichTextController } from "@/components/ui/rich-text-controller";
 import { RichTextSurface } from "@/components/ui/rich-text-editor";
 import { RichTextToolbar } from "@/components/ui/rich-text-toolbar";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { SplitDivider, useStoredSplit } from "@/components/ui/split-divider";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -62,8 +61,6 @@ import { ComposerOptionsFields } from "./ComposerOptionsFields";
 
 // Where drafts lived before they moved to the server — read once, then removed.
 const LEGACY_DRAFT_SAVED_AT_KEY = "announcements:draftSavedAt";
-const SPLIT_KEY = "announcements:composerSplit";
-
 /** Every legacy exclusive audience kind (single department, or a plain user
  *  list) folds into the additive "mixed" model — saving afterwards naturally
  *  migrates the announcement to the new shape. */
@@ -174,9 +171,7 @@ export function AnnouncementComposer(
   const [peopleSearch, setPeopleSearch] = useState("");
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [sendPromptOpen, setSendPromptOpen] = useState(false);
-  const [mobileView, setMobileView] = useState<"write" | "preview">("write");
-  const [splitPct, persistSplit] = useStoredSplit(SPLIT_KEY, 50);
-  const splitRef = useRef<HTMLDivElement>(null);
+  const [view, setView] = useState<"write" | "preview">("write");
   const titleRef = useRef<HTMLInputElement>(null);
 
   // Whether the audience control was actually touched this session. An
@@ -347,7 +342,7 @@ export function AnnouncementComposer(
       done: draft.title.trim().length > 0,
       onFix: () => {
         setSendPromptOpen(false);
-        setMobileView("write");
+        setView("write");
         requestAnimationFrame(() => titleRef.current?.focus());
       },
     },
@@ -461,7 +456,7 @@ export function AnnouncementComposer(
 
   const backHref = editing ? `/announcements?id=${editing._id}` : "/announcements";
   const sendLabel = editing ? tc("save") : tc("send");
-  const showingPreview = isMobile && mobileView === "preview";
+  const showingPreview = view === "preview";
   const showDraftLine = serverDraft.savedAt !== null || serverDraft.status !== "idle";
 
   const optionsFields = (
@@ -515,6 +510,26 @@ export function AnnouncementComposer(
     </Button>
   );
 
+  const viewToggle = (
+    <div className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-muted/40 p-0.5">
+      {(["write", "preview"] as const).map((v) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => setView(v)}
+          className={cn(
+            "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+            view === v
+              ? "bg-foreground text-background"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {v === "write" ? t("write") : t("preview")}
+        </button>
+      ))}
+    </div>
+  );
+
   const preview = (
     <AnnouncementPreview
       title={draft.title}
@@ -545,6 +560,7 @@ export function AnnouncementComposer(
 
         {!isMobile && (
           <>
+            {viewToggle}
             {optionsButton}
             <Popover open={sendPromptOpen} onOpenChange={setSendPromptOpen}>
               <PopoverTrigger asChild>
@@ -563,22 +579,20 @@ export function AnnouncementComposer(
         )}
       </header>
 
-      <div ref={splitRef} className="flex min-h-0 flex-1">
-        <div
-          className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-none"
-          style={!isMobile ? { width: `${splitPct}%` } : undefined}
-        >
+      {/* One column at reading width, not a permanent 50/50 split. The editor
+          is unstyled and set at the size the announcement is read at, so a
+          side-by-side preview was mostly a second copy of the left pane —
+          it's a toggle now, and the page gets the other half of the screen. */}
+      <div className="flex min-h-0 flex-1">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {showingPreview ? (
-            <div className="flex-1 overflow-y-auto px-4 py-4">{preview}</div>
+            <div className="flex-1 overflow-y-auto px-4 py-6 md:px-10 md:py-8">
+              <div className="mx-auto w-full md:max-w-2xl">{preview}</div>
+            </div>
           ) : (
             <>
               <div className="flex-1 overflow-y-auto">
-                <div
-                  className={cn(
-                    "mx-auto w-full px-4 py-5 md:px-10 md:py-8",
-                    !isMobile && "max-w-2xl",
-                  )}
-                >
+                <div className="mx-auto w-full px-4 py-5 md:max-w-2xl md:px-10 md:py-8">
                   <DraftOfferBanner draft={serverDraft} className="mb-4" />
                   <DraftRestoredNote
                     draft={serverDraft}
@@ -625,45 +639,11 @@ export function AnnouncementComposer(
             </>
           )}
         </div>
-
-        {!isMobile && (
-          <SplitDivider
-            containerRef={splitRef}
-            value={splitPct}
-            onResize={persistSplit}
-            onReset={() => persistSplit(50)}
-            ariaLabel="Resize editor and preview"
-          />
-        )}
-        {!isMobile && (
-          <div
-            className="hidden min-h-0 flex-col overflow-y-auto border-l border-border/60 bg-muted/10 md:flex"
-            style={{ width: `${100 - splitPct}%` }}
-          >
-            <div className="mx-auto w-full max-w-2xl px-6 py-8">{preview}</div>
-          </div>
-        )}
       </div>
 
       {isMobile && (
         <MobileActionBar inline>
-          <div className="flex items-center gap-1 rounded-full border border-border bg-muted/40 p-0.5">
-            {(["write", "preview"] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => setMobileView(v)}
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                  mobileView === v
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {v === "write" ? t("write") : t("preview")}
-              </button>
-            ))}
-          </div>
+          {viewToggle}
           {optionsButton}
           <span className="flex-1" />
           <Button disabled={busy} onClick={() => setSendPromptOpen(true)}>

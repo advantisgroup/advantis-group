@@ -72,10 +72,15 @@ function cachedThumbUrl(oneDriveItemId: string): string | null | undefined {
   return hit.url;
 }
 
-/** Resolves an image attachment's preview URL — Convex-storage `legacyUrl`
+/** Kinds OneDrive renders a page image for. It was images only, which is why
+ *  a PDF whose whole point is being read showed up as a coloured square with
+ *  a generic icon on it. */
+const THUMBNAILABLE = new Set<FileKind["kind"]>(["image", "pdf", "docx"]);
+
+/** Resolves an attachment's preview URL — Convex-storage `legacyUrl`
  *  directly, or a fetched-and-cached OneDrive thumbnail. Returns `null` for
  *  everything else (caller falls back to a kind icon). */
-function useImageThumbnailUrl(
+function useThumbnailUrl(
   oneDriveItemId: string | null | undefined,
   legacyUrl: string | null | undefined,
 ): string | null {
@@ -134,15 +139,24 @@ export function AttachmentThumb({
   iconClassName?: string;
 }) {
   const kind = detectFileKind(attachment.name, attachment.contentType ?? undefined);
-  const thumbUrl = useImageThumbnailUrl(
-    kind.kind === "image" ? attachment.oneDriveItemId : null,
+  const thumbUrl = useThumbnailUrl(
+    THUMBNAILABLE.has(kind.kind) ? attachment.oneDriveItemId : null,
+    // `legacyUrl` points at the file itself, which only renders as an <img>
+    // when it actually is one.
     kind.kind === "image" ? attachment.legacyUrl : null,
   );
 
-  if (kind.kind === "image" && thumbUrl) {
+  if (thumbUrl) {
+    const isImage = kind.kind === "image";
     return (
-      <span className={cn("block overflow-hidden bg-muted", className)}>
-        <img src={thumbUrl} alt="" className="h-full w-full object-cover" />
+      <span className={cn("block overflow-hidden", isImage ? "bg-muted" : "bg-card", className)}>
+        <img
+          src={thumbUrl}
+          alt=""
+          // A page thumbnail cropped to fill would cut the top off the
+          // document; an image cropped to fit would sit in a letterbox.
+          className={cn("h-full w-full", isImage ? "object-cover" : "object-contain")}
+        />
       </span>
     );
   }

@@ -37,7 +37,11 @@ import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
 
 import { type FeatureFlagKey, useFeatureFlags } from "@/components/feature-flags/FeatureGate";
-import { accessibleGuidebooks } from "@/components/guidebooks/registry";
+import {
+  accessibleGuidebooks,
+  guidebookTitle,
+  sidebarAppGuidebooks,
+} from "@/components/guidebooks/registry";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { ActivitySidebar } from "@/components/layout/ActivitySidebar";
 import { ADMIN_NAV_GROUPS } from "@/components/layout/AdminSidebar";
@@ -80,6 +84,9 @@ import { cn } from "@/lib/utils";
 interface NavItem {
   href: string;
   labelKey: string;
+  /** Already-resolved label, for items whose name comes from data rather than
+   *  the Nav namespace (see the guidebook-backed apps below). */
+  label?: string;
   icon: LucideIcon;
   badge?: number;
   managerOnly?: boolean;
@@ -165,6 +172,7 @@ function RailIconLink({
 export function Sidebar() {
   const t = useTranslations("Nav");
   const tAdmin = useTranslations("Admin");
+  const tGuidebooks = useTranslations("Guidebooks");
   const pathname = usePathname();
   const router = useRouter();
   const handleError = useErrorHandler();
@@ -298,6 +306,16 @@ export function Sidebar() {
       external: true,
     },
     { section: "apps", href: "/sales-coach-ev", labelKey: "salesCoachEv", icon: Zap },
+    // Products that happen to be registered as guidebooks — their own route
+    // tree, their own admin area, sometimes their own auth. They were buried
+    // in a drawer on the knowledge base list; here they read as what they are.
+    ...sidebarAppGuidebooks(user).map((gb) => ({
+      section: "apps" as const,
+      href: `/guidebooks/${gb.slug}`,
+      labelKey: gb.slug,
+      label: guidebookTitle(gb, tGuidebooks),
+      icon: gb.icon,
+    })),
   ];
 
   const organizationGroups: NavGroup[] = [
@@ -377,7 +395,9 @@ export function Sidebar() {
 
   // Every link either mode can show, keyed by href.
   const entries = new Map<string, { item: NavItem; label: string }>();
-  for (const item of visibleWorkspace) entries.set(item.href, { item, label: t(item.labelKey) });
+  for (const item of visibleWorkspace) {
+    entries.set(item.href, { item, label: item.label ?? t(item.labelKey) });
+  }
   for (const group of visibleOrganizationGroups) {
     for (const item of group.items) {
       entries.set(item.href, {

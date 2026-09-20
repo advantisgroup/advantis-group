@@ -2,9 +2,13 @@
 
 import { useParams } from "next/navigation";
 
-import { ParticipantsTab } from "@/components/guidebooks/wallbox-academy/TrainerView";
+import { type Id } from "@advantis/convex/dataModel";
 
-export default function AdminParticipantDetailPage() {
+import { ParticipantDetailPage } from "@/components/guidebooks/wallbox-academy/TrainerView";
+
+export default function AdminParticipantPage() {
   const params = useParams<{ participantId: string }>();
-  return <ParticipantsTab focusParticipantId={params.participantId} />;
+  return (
+    <ParticipantDetailPage participantId={params.participantId as Id<"academyParticipants">} />
+  );
 }

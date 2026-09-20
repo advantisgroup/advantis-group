@@ -7,20 +7,23 @@ import { usePathname, useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 
+import { BookOpen, ChartNoAxesColumn, MessageCircleQuestion, Settings2, Users } from "lucide-react";
+
+import { RouteTabs } from "@/components/applicants/RouteTabs";
 import { useAcademySession } from "@/components/guidebooks/wallbox-academy/session";
 import { ADMIN_BASE } from "@/components/guidebooks/wallbox-academy/TrainerView";
 import { ACADEMY_ID } from "@/components/guidebooks/wallbox-academy/use-academy-progress";
 import { WhoBar } from "@/components/guidebooks/wallbox-academy/WhoBar";
-import { Link } from "@/components/Link";
 import { useIsAdmin } from "@/components/providers/current-user";
-import { cn } from "@/lib/utils";
 
 const HOME = "/guidebooks/wallbox-sales-academy";
 
 const TABS = [
-  { slug: "teilnehmer", label: "Teilnehmer & Ergebnisse" },
-  { slug: "fragen", label: "Fragen" },
-  { slug: "einstellungen", label: "Einstellungen" },
+  { slug: "teilnehmer", label: "Teilnehmer", icon: Users },
+  { slug: "auswertung", label: "Auswertung", icon: ChartNoAxesColumn },
+  { slug: "inhalte", label: "Inhalte", icon: BookOpen },
+  { slug: "fragen", label: "Fragen", icon: MessageCircleQuestion },
+  { slug: "einstellungen", label: "Einstellungen", icon: Settings2 },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -72,25 +75,21 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           router.push(HOME);
         }}
       />
-      <div className="mb-4 inline-flex h-10 max-w-full items-center justify-center overflow-x-auto overscroll-x-contain rounded-lg border border-border/70 bg-muted/50 p-1 text-muted-foreground [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [touch-action:pan-x] [&::-webkit-scrollbar]:hidden">
-        {TABS.map((tab) => {
-          const href = `${ADMIN_BASE}/${tab.slug}`;
-          const active = pathname.startsWith(href);
-          return (
-            <Link
-              key={tab.slug}
-              href={href}
-              className={cn(
-                "inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap rounded-md px-3.5 py-1.5 text-sm font-medium ring-offset-background transition-all hover:text-foreground",
-                active && "bg-card text-foreground shadow-sm",
-              )}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
-      </div>
-      {children}
+      {/* RouteTabs rather than a hand-rolled strip, so these behave like every
+          other tabbed page: pills beside the page title on desktop, and the
+          bottom nav on a phone instead of a second control floating over it. */}
+      <RouteTabs
+        tabs={TABS.map((tab) => ({
+          value: tab.slug,
+          href: `${ADMIN_BASE}/${tab.slug}`,
+          label: tab.label,
+          icon: tab.icon,
+        }))}
+        activeValue={
+          TABS.find((tab) => pathname.startsWith(`${ADMIN_BASE}/${tab.slug}`))?.slug ?? "teilnehmer"
+        }
+      />
+      <div className="mt-4">{children}</div>
     </div>
   );
 }

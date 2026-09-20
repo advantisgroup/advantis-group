@@ -11,7 +11,6 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { AskTrainer } from "./AskTrainer";
 import { CallSimulator } from "./CallSimulator";
-import { CHAPTERS, SEG } from "./data";
 import { Glossary } from "./Glossary";
 import { markChapterVisited } from "./mutators";
 import { downloadChapterPdf } from "./pdf";
@@ -19,9 +18,11 @@ import { ProcessDiagram } from "./ProcessDiagram";
 import { Quiz } from "./Quiz";
 import { Research } from "./Research";
 
-import type { AcademyProgressData } from "./types";
+import type { AcademyProgressData, Chapter } from "./types";
 
 export function ChapterView({
+  chapters,
+  segments,
   index,
   participantId,
   progress,
@@ -30,6 +31,8 @@ export function ChapterView({
   onNext,
   focusQuestionId,
 }: {
+  chapters: Chapter[];
+  segments: Record<string, string>;
   index: number;
   participantId: Id<"academyParticipants">;
   progress: AcademyProgressData;
@@ -38,7 +41,7 @@ export function ChapterView({
   onNext: () => void;
   focusQuestionId?: string | null;
 }) {
-  const chapter = CHAPTERS[index];
+  const chapter = chapters[index];
   const [pdfBusy, setPdfBusy] = useState(false);
 
   useEffect(() => {
@@ -55,7 +58,7 @@ export function ChapterView({
         <CardContent className="p-5">
           <div className="mb-2 flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <Badge variant="secondary">{SEG[chapter.segment]}</Badge>
+              <Badge variant="secondary">{segments[chapter.segment]}</Badge>
               <h2 className="mt-2 text-lg font-semibold">
                 Kapitel {index + 1}: {chapter.title}
               </h2>
@@ -68,7 +71,7 @@ export function ChapterView({
               onClick={async () => {
                 setPdfBusy(true);
                 try {
-                  await downloadChapterPdf(chapter, index);
+                  await downloadChapterPdf(chapter, index, segments[chapter.segment]);
                 } finally {
                   setPdfBusy(false);
                 }
@@ -146,7 +149,7 @@ export function ChapterView({
           <ArrowLeft className="size-4" />
           Zurück
         </Button>
-        <Button variant="ghost" disabled={index === CHAPTERS.length - 1} onClick={onNext}>
+        <Button variant="ghost" disabled={index === chapters.length - 1} onClick={onNext}>
           Weiter
           <ArrowRight className="size-4" />
         </Button>

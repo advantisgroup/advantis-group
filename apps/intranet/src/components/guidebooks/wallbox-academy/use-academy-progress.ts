@@ -6,14 +6,15 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 
-import { CHAPTERS } from "./data";
-import { isChapterDone, parseProgress, today } from "./progress";
+import { isChapterDone, now, parseProgress } from "./progress";
 
-import type { AcademyProgressData } from "./types";
+import type { AcademyProgressData, Chapter } from "./types";
 
 export const ACADEMY_ID = "wallbox-sales";
 
-export function useAcademyProgress(participantId: Id<"academyParticipants">) {
+/** `chapters` comes from `useAcademyContent` rather than the bundled file, so
+ *  "finished the course" follows whatever chapters actually exist. */
+export function useAcademyProgress(participantId: Id<"academyParticipants">, chapters: Chapter[]) {
   const remote = useQuery(api.academy.results.getMine, { participantId });
   const save = useMutation(api.academy.results.saveMine);
 
@@ -23,9 +24,10 @@ export function useAcademyProgress(participantId: Id<"academyParticipants">) {
   const mutate = useCallback(
     async (fn: (current: AcademyProgressData) => AcademyProgressData) => {
       let next = fn(progress);
-      const allDone = CHAPTERS.every((chapter) => isChapterDone(next, chapter));
+      const allDone =
+        chapters.length > 0 && chapters.every((chapter) => isChapterDone(next, chapter));
       if (allDone && !next.finished) {
-        next = { ...next, finished: today() };
+        next = { ...next, finished: now() };
       }
       await save({
         academyId: ACADEMY_ID,
@@ -33,7 +35,7 @@ export function useAcademyProgress(participantId: Id<"academyParticipants">) {
         data: JSON.stringify(next),
       });
     },
-    [progress, save, participantId],
+    [progress, save, participantId, chapters],
   );
 
   return { progress, loading, mutate };

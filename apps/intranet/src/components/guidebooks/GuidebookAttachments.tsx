@@ -115,44 +115,41 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
       disabled={!canManage || busy}
       className="mt-6 space-y-2 rounded-lg border-t border-border/60 pt-6 print:hidden"
     >
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
-            {t("attachmentsTitle")}
-          </p>
-          {canManage && (
-            <div className="flex flex-wrap items-center gap-2">
-              <OneDriveFolderPicker
-                basePath={`${WIKI_FOLDER_BASE}/${slug}`}
-                value={folder}
-                onChange={setFolder}
-              />
-              <input
-                ref={inputRef}
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  void onFilesSelected(Array.from(e.target.files ?? []));
-                  e.target.value = "";
-                }}
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={busy}
-                onClick={() => inputRef.current?.click()}
-              >
-                <Paperclip className="mr-1.5 size-3.5" />
-                {t("addAttachment")}
-              </Button>
-            </div>
-          )}
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+          {t("attachmentsTitle")}
+        </p>
         {canManage && (
-          <p className="break-all text-[11px] text-muted-foreground">
-            {t("savingTo", { path: destinationPath })}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <OneDriveFolderPicker
+              basePath={`${WIKI_FOLDER_BASE}/${slug}`}
+              value={folder}
+              onChange={setFolder}
+            />
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                void onFilesSelected(Array.from(e.target.files ?? []));
+                e.target.value = "";
+              }}
+            />
+            {/* The storage path is editor plumbing, not something a reader
+                needs at the top of the attachments — it hangs off the upload
+                button it describes instead of taking its own line. */}
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              title={t("savingTo", { path: destinationPath })}
+              onClick={() => inputRef.current?.click()}
+            >
+              <Paperclip className="mr-1.5 size-3.5" />
+              {t("addAttachment")}
+            </Button>
+          </div>
         )}
       </div>
       {inFlight.length > 0 && (

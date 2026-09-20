@@ -33,9 +33,11 @@ import { Link } from "@/components/Link";
 import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { useRichTextController } from "@/components/ui/rich-text-controller";
+import { RichTextSurface } from "@/components/ui/rich-text-editor";
+import { RichTextToolbar } from "@/components/ui/rich-text-toolbar";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { SplitDivider, useStoredSplit } from "@/components/ui/split-divider";
+import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import {
@@ -54,8 +56,6 @@ const DocxPreview = dynamic(
   () => import("@/components/file-viewer/DocxPreview").then((mod) => mod.DocxPreview),
   { ssr: false, loading: () => <Loader2 className="size-6 animate-spin text-white/70" /> },
 );
-
-const SPLIT_KEY = "guidebooks:composerSplit";
 
 type PreviewTab = "live" | "original" | "ai";
 
@@ -115,55 +115,40 @@ function importErrorMessageKey(code: WikiImportErrorCode): string {
   }
 }
 
-/** The very first decision for a new entry — write from scratch, or import a
- *  document and start from its extracted text. Skipped entirely when there's
- *  a draft to pick back up. */
-function ChooseSourceStep({
-  onManual,
+/**
+ * "Import a document" as a toolbar command rather than a gate in front of the
+ * composer. It used to be one half of a one-way fork on a screen of its own:
+ * picking "write manually" meant the extraction could never be reached again,
+ * and a file with no text layer left you stranded there with an error.
+ */
+function ImportButton({
   onFile,
   importing,
-  importError,
+  compact,
 }: {
-  onManual: () => void;
   onFile: (file: File) => void;
   importing: boolean;
-  importError: WikiImportErrorCode | null;
+  /** Icon only — the mobile bar has no room for the label. */
+  compact?: boolean;
 }) {
   const t = useTranslations("Guidebooks");
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-1 flex-col items-center justify-center gap-4 px-4 py-10">
-      <div className="grid w-full gap-3 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={onManual}
-          disabled={importing}
-          className="flex flex-col items-start gap-2 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/40 hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
-        >
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary refreshed:bg-muted refreshed:text-foreground">
-            <PenLine className="size-4" />
-          </span>
-          <span className="font-display font-semibold">{t("sourceManualTitle")}</span>
-          <span className="text-xs text-muted-foreground">{t("sourceManualHint")}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={importing}
-          className="flex flex-col items-start gap-2 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/40 hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
-        >
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary refreshed:bg-muted refreshed:text-foreground">
-            {importing ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <FileUp className="size-4" />
-            )}
-          </span>
-          <span className="font-display font-semibold">{t("sourceImportTitle")}</span>
-          <span className="text-xs text-muted-foreground">{t("sourceImportHint")}</span>
-        </button>
-      </div>
+    <>
+      <Button
+        type="button"
+        variant="ghost"
+        size={compact ? "icon" : "sm"}
+        disabled={importing}
+        title={t("sourceImportTitle")}
+        aria-label={t("sourceImportTitle")}
+        className="shrink-0 text-muted-foreground"
+        onClick={() => inputRef.current?.click()}
+      >
+        {importing ? <Loader2 className="size-4 animate-spin" /> : <FileUp className="size-4" />}
+        {!compact && t("importAction")}
+      </Button>
       {/* Sibling of the trigger button, not nested inside it — a <button>
           containing an <input> is invalid HTML and unreliable on mobile
           browsers (same pattern GuidebookAttachments already uses). */}
@@ -178,15 +163,7 @@ function ChooseSourceStep({
           if (file) onFile(file);
         }}
       />
-      {importError && (
-        <div
-          role="alert"
-          className="w-full rounded-lg border border-destructive/30 bg-destructive/5 px-3.5 py-2.5 text-sm text-destructive"
-        >
-          {t(importErrorMessageKey(importError))}
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 
@@ -208,31 +185,28 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
   const me = useCurrentUser();
   const canUseAi = useHasCapability("manage_guidebooks");
   const isMobile = useIsMobile();
+  const keyboardInset = useKeyboardInset();
 
   const entryForm = useWikiEntryForm({
     entry,
     onDone: (slug) => router.push(`/guidebooks/${slug}`),
+  });
+  const controller = useRichTextController({
+    value: entryForm.erklaerung,
+    onChange: entryForm.setErklaerung,
   });
   const { isEditing, entryKey, draft, readiness } = entryForm;
   const composeHref =
     "draftId" in entry ? `/guidebooks/draft/${entry.draftId}` : `/guidebooks/${entry.slug}/compose`;
   const backHref = "draftId" in entry ? "/guidebooks" : `/guidebooks/${entry.slug}`;
 
-  const [stage, setStage] = useState<"choose" | "compose">(isEditing ? "compose" : "choose");
   const [importing, setImporting] = useState(false);
-  const [importError, setImportError] = useState<WikiImportErrorCode | null>(null);
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [sourceExt, setSourceExt] = useState<ImportExt | null>(null);
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [mobileView, setMobileView] = useState<"write" | "preview">("write");
+  const [view, setView] = useState<"write" | "preview">("write");
   const [previewTab, setPreviewTab] = useState<PreviewTab>("live");
-  const [splitPct, persistSplit] = useStoredSplit(SPLIT_KEY, 50);
-  const splitRef = useRef<HTMLDivElement>(null);
   const themaRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (draft.restoredAt) setStage("compose");
-  }, [draft.restoredAt]);
 
   const formatRun = useWikiFormatRun(entryKey);
   const showAiPane = formatRunNeedsPane(formatRun);
@@ -242,7 +216,7 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
 
   function showReview() {
     setPreviewTab("ai");
-    if (isMobile) setMobileView("preview");
+    setView("preview");
   }
 
   // The source file stays the "original" preview's subject only as long as
@@ -257,18 +231,21 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
 
   async function onFileImported(file: File) {
     setImporting(true);
-    setImportError(null);
     try {
       const result = await importFile(file);
-      entryForm.setThema(result.thema);
-      entryForm.setErklaerung(result.html);
+      // Import can now happen mid-draft, so it appends rather than replacing —
+      // overwriting a body someone already wrote would be unrecoverable.
+      if (!entryForm.thema.trim()) entryForm.setThema(result.thema);
+      const existing = entryForm.erklaerung.trim();
+      entryForm.setErklaerung(existing ? `${existing}${result.html}` : result.html);
       entryForm.attachmentUpload.add([file]);
       setSourceFile(file);
       setSourceExt(result.ext);
       if (result.hadImages) toast.info(t("importImagesDropped"));
-      setStage("compose");
     } catch (e) {
-      setImportError(e instanceof WikiImportError ? e.code : "extract-failed");
+      toast.error(
+        t(importErrorMessageKey(e instanceof WikiImportError ? e.code : "extract-failed")),
+      );
     } finally {
       setImporting(false);
     }
@@ -279,7 +256,7 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
     onFix:
       check.key === "thema"
         ? () => {
-            setMobileView("write");
+            setView("write");
             requestAnimationFrame(() => themaRef.current?.focus());
           }
         : check.key === "erklaerung"
@@ -313,16 +290,6 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
       )}
       {entryForm.optionsFields}
       <div className="border-t border-border/60 pt-4">{entryForm.attachmentsSlot}</div>
-      {!isEditing && (
-        <div className="border-t border-border/60 pt-4">
-          <Link
-            href="/guidebooks/new/advanced"
-            className="text-xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
-          >
-            {t("composerSwitchToAdvanced")}
-          </Link>
-        </div>
-      )}
     </div>
   );
 
@@ -396,6 +363,25 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
       )}
     </Button>
   );
+  const viewToggle = (
+    <div className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-muted/40 p-0.5">
+      {(["write", "preview"] as const).map((v) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => setView(v)}
+          className={cn(
+            "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+            view === v
+              ? "bg-foreground text-background"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {v === "write" ? t("write") : t("preview")}
+        </button>
+      ))}
+    </div>
+  );
   const submitButton = (
     <ReadinessSubmit
       checks={checks}
@@ -407,7 +393,7 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
     </ReadinessSubmit>
   );
 
-  const showDraftLine = stage === "compose" && (draft.savedAt !== null || draft.status !== "idle");
+  const showDraftLine = draft.savedAt !== null || draft.status !== "idle";
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -430,39 +416,27 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
           )}
         </div>
 
-        {stage === "compose" && !isMobile && (
+        {!isMobile && (
           <>
-            {!isEditing && (
-              <Link
-                href="/guidebooks/new/advanced"
-                className="hidden shrink-0 text-xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline sm:inline"
-              >
-                {t("composerSwitchToAdvanced")}
-              </Link>
-            )}
+            {viewToggle}
             {optionsButton}
             {submitButton}
           </>
         )}
       </header>
 
-      {stage === "choose" ? (
-        <ChooseSourceStep
-          onManual={() => setStage("compose")}
-          onFile={(file) => void onFileImported(file)}
-          importing={importing}
-          importError={importError}
-        />
-      ) : (
-        <div ref={splitRef} className="flex min-h-0 flex-1">
-          <div
-            className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-none"
-            style={!isMobile ? { width: `${splitPct}%` } : undefined}
-          >
-            {isMobile && mobileView === "preview" ? (
-              <div className="flex-1 overflow-y-auto px-4 py-4">{previewPane}</div>
-            ) : (
-              <div className="mx-auto w-full max-w-2xl px-4 py-5 md:px-10 md:py-8">
+      {/* One column at reading width rather than a permanent 50/50 split — see
+          the same change in AnnouncementComposer. The imported original and
+          the AI review live as tabs inside the preview. */}
+      <div className="flex min-h-0 flex-1">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          {view === "preview" ? (
+            <div className="flex-1 overflow-y-auto px-4 py-6 md:px-10 md:py-8">
+              <div className="mx-auto w-full md:max-w-2xl">{previewPane}</div>
+            </div>
+          ) : (
+            <>
+              <div className="mx-auto w-full flex-1 px-4 py-5 md:max-w-2xl md:px-10 md:py-8">
                 <DraftOfferBanner draft={draft} className="mb-4" />
                 <DraftRestoredNote
                   draft={draft}
@@ -478,61 +452,81 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
                   autoFocus={!isEditing}
                   className="w-full border-0 border-b border-transparent bg-transparent pb-2 font-display text-2xl font-semibold tracking-tight text-foreground placeholder:text-muted-foreground/50 focus:border-border focus:outline-none md:text-3xl"
                 />
-                <div className="mt-4">
-                  <RichTextEditor
-                    value={entryForm.erklaerung}
-                    onChange={entryForm.setErklaerung}
-                    placeholder={t("fieldErklaerungPlaceholder")}
-                    minHeight="40vh"
-                    fileLinkCandidates={entryForm.fileLinkCandidates}
-                    aiFormatSlot={
-                      canUseAi
-                        ? ({ inline }) => (
-                            <WikiFormatTrigger
-                              html={entryForm.erklaerung}
-                              entryKey={entryKey}
-                              href={composeHref}
-                              inline={inline}
-                              onShowReview={showReview}
-                            />
-                          )
-                        : undefined
-                    }
-                  />
-                </div>
+                {!isMobile && (
+                  <div className="sticky top-0 z-10 -mx-1 mt-4 flex items-center gap-1 border-b border-border/60 bg-background/95 px-1 py-2 backdrop-blur">
+                    <RichTextToolbar
+                      controller={controller}
+                      fileLinkCandidates={entryForm.fileLinkCandidates}
+                      className="min-w-0 flex-1"
+                    />
+                    <ImportButton
+                      onFile={(file) => void onFileImported(file)}
+                      importing={importing}
+                    />
+                    {canUseAi && (
+                      <WikiFormatTrigger
+                        html={entryForm.erklaerung}
+                        entryKey={entryKey}
+                        href={composeHref}
+                        inline
+                        onShowReview={showReview}
+                      />
+                    )}
+                  </div>
+                )}
+                {/* Same measure and padding as the title above it — the body
+                      is a page, not a field, so nothing boxes it in. */}
+                <RichTextSurface
+                  controller={controller}
+                  placeholder={t("fieldErklaerungPlaceholder")}
+                  className="min-h-[50vh] px-0 pt-4"
+                />
               </div>
-            )}
-          </div>
-
-          {!isMobile && (
-            <SplitDivider
-              containerRef={splitRef}
-              value={splitPct}
-              onResize={persistSplit}
-              onReset={() => persistSplit(50)}
-              ariaLabel="Resize editor and preview"
-            />
-          )}
-          {!isMobile && (
-            <div
-              className="hidden min-h-0 flex-col overflow-y-auto border-l border-border/60 bg-muted/10 md:flex"
-              style={{ width: `${100 - splitPct}%` }}
-            >
-              <div className="mx-auto w-full max-w-2xl px-6 py-8">{previewPane}</div>
-            </div>
+              {isMobile && (
+                <div
+                  className="shrink-0 border-t border-border/70 bg-background/95 backdrop-blur"
+                  // The layout viewport doesn't shrink for the keyboard, so
+                  // sitting at the bottom of the column puts this bar behind
+                  // it. Lift it by however much the keyboard covers.
+                  style={{ marginBottom: keyboardInset }}
+                >
+                  <div className="flex items-center gap-1 px-2 py-1.5">
+                    <RichTextToolbar
+                      controller={controller}
+                      fileLinkCandidates={entryForm.fileLinkCandidates}
+                      className="min-w-0 flex-1 flex-nowrap overflow-x-auto"
+                    />
+                    <ImportButton
+                      compact
+                      onFile={(file) => void onFileImported(file)}
+                      importing={importing}
+                    />
+                    {canUseAi && (
+                      <WikiFormatTrigger
+                        html={entryForm.erklaerung}
+                        entryKey={entryKey}
+                        href={composeHref}
+                        inline
+                        onShowReview={showReview}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
-      )}
+      </div>
 
-      {stage === "compose" && isMobile && (
+      {isMobile && (
         <MobileActionBar inline>
           <Button
             variant="ghost"
             size="icon"
-            aria-label={mobileView === "write" ? t("preview") : t("write")}
-            onClick={() => setMobileView((v) => (v === "write" ? "preview" : "write"))}
+            aria-label={view === "write" ? t("preview") : t("write")}
+            onClick={() => setView((v) => (v === "write" ? "preview" : "write"))}
           >
-            {mobileView === "write" ? <Eye className="size-4" /> : <PenLine className="size-4" />}
+            {view === "write" ? <Eye className="size-4" /> : <PenLine className="size-4" />}
           </Button>
           {optionsButton}
           <span className="flex-1" />

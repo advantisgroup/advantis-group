@@ -1,9 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
-import { Check, Plus, X } from "lucide-react";
+import { Check, Plus, SlidersHorizontal, X } from "lucide-react";
 
+import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
@@ -112,6 +113,113 @@ export function FilterPill({
         })}
       </PopoverContent>
     </Popover>
+  );
+}
+
+export interface FilterGroup {
+  key: string;
+  label: string;
+  options: FilterOption[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+}
+
+/**
+ * The same filters as one button and a sheet, for phones. A row of pills that
+ * each open their own popover works on a wide screen; on a 360px one it wraps,
+ * eats the space above the content, and puts two small tap targets where a
+ * thumb has to reach past the list to get at them.
+ */
+export function FilterSheet({
+  groups,
+  label,
+  clearLabel,
+  className,
+}: {
+  groups: FilterGroup[];
+  label: string;
+  clearLabel: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const activeCount = groups.reduce((sum, group) => sum + group.selected.length, 0);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={cn(
+          "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-medium transition-colors",
+          activeCount > 0
+            ? "border-border bg-card text-foreground"
+            : "border-dashed border-border text-muted-foreground",
+          className,
+        )}
+      >
+        <SlidersHorizontal className="size-3.5" />
+        {label}
+        {activeCount > 0 && (
+          <span className="tabular-nums font-semibold text-primary">{activeCount}</span>
+        )}
+      </button>
+      <MobileDrawer open={open} onOpenChange={setOpen} ariaLabel={label}>
+        <div className="flex items-center justify-between border-b border-border/70 px-5 pb-3">
+          <p className="font-display text-lg font-semibold leading-tight tracking-tight">{label}</p>
+          {activeCount > 0 && (
+            <button
+              type="button"
+              onClick={() => groups.forEach((group) => group.onChange([]))}
+              className="text-sm text-muted-foreground underline-offset-2 hover:underline"
+            >
+              {clearLabel}
+            </button>
+          )}
+        </div>
+        <div className="space-y-5 overflow-y-auto px-5 py-4">
+          {groups.map((group) => (
+            <div key={group.key}>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">{group.label}</p>
+              {group.options.map((option) => {
+                const on = group.selected.includes(option.value);
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="menuitemcheckbox"
+                    aria-checked={on}
+                    onClick={() =>
+                      group.onChange(
+                        on
+                          ? group.selected.filter((v) => v !== option.value)
+                          : [...group.selected, option.value],
+                      )
+                    }
+                    className="flex min-h-10 w-full items-center gap-2.5 rounded-md text-left text-sm transition-colors hover:bg-accent"
+                  >
+                    <span
+                      className={cn(
+                        "grid size-4 shrink-0 place-items-center rounded border transition-colors",
+                        on ? "border-foreground bg-foreground text-background" : "border-border",
+                      )}
+                    >
+                      {on && <Check className="size-3" strokeWidth={3} />}
+                    </span>
+                    {option.leading}
+                    <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                    {option.count !== undefined && (
+                      <span className="text-xs tabular-nums text-muted-foreground">
+                        {option.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </MobileDrawer>
+    </>
   );
 }
 

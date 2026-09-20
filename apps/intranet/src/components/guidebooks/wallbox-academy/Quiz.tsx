@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { answerQuizQuestion, retryQuiz } from "./mutators";
-import { lastQuizResult } from "./progress";
+import { lastQuizResult, questionKey } from "./progress";
 
 import type { AcademyProgressData, Chapter } from "./types";
 
@@ -43,9 +43,9 @@ export function Quiz({
 
       <div className="space-y-4">
         {chapter.quiz.map((question, qi) => {
-          const given = answers[qi];
+          const given = answers[questionKey(chapter, qi)];
           return (
-            <div key={qi} className="rounded-lg bg-muted/40 p-3.5">
+            <div key={question.id ?? qi} className="rounded-lg bg-muted/40 p-3.5">
               <p className="mb-2 text-sm font-semibold">
                 {qi + 1}. {question.question}
               </p>

@@ -5,18 +5,21 @@ import { useEffect, useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useConvex } from "convex/react";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 
 import { ACADEMY_ID } from "./use-academy-progress";
 
 /** Participant entry: an access code is the whole credential — no intranet
  * account needed, so external invitees (candidates, partners, ...) can take
- * the training too, same as the original standalone tool. */
+ * the training too, same as the original standalone tool.
+ *
+ * Treated like a verification code rather than a text field: one large,
+ * letter-spaced, auto-uppercasing input. Someone is copying six characters out
+ * of an email, often on a phone. */
 export function ParticipantLogin({
   onLogin,
 }: {
@@ -37,6 +40,7 @@ export function ParticipantLogin({
   }, [codeFromInvite]);
 
   async function submit() {
+    if (!code.trim() || checking) return;
     setChecking(true);
     setCodeError("");
     try {
@@ -55,31 +59,37 @@ export function ParticipantLogin({
   }
 
   return (
-    <Card className="mx-auto max-w-md">
-      <CardHeader>
-        <CardTitle>Ich bin Teilnehmer</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <p className="mb-2.5 text-sm text-muted-foreground">
-          Gib den Zugangscode aus deiner Einladung ein.
+    <div className="space-y-3">
+      <label htmlFor="pcode" className="block text-sm font-medium">
+        Zugangscode aus deiner Einladung
+      </label>
+      <Input
+        id="pcode"
+        autoFocus
+        autoComplete="off"
+        autoCapitalize="characters"
+        spellCheck={false}
+        placeholder="K7M2QX"
+        maxLength={10}
+        value={code}
+        aria-invalid={!!codeError}
+        aria-describedby={codeError ? "pcode-error" : undefined}
+        onChange={(e) => {
+          setCode(e.target.value.toUpperCase());
+          setCodeError("");
+        }}
+        onKeyDown={(e) => e.key === "Enter" && void submit()}
+        className="h-14 max-w-xs text-center font-mono text-2xl tracking-[0.35em] placeholder:tracking-[0.35em] placeholder:text-muted-foreground/40"
+      />
+      {codeError ? (
+        <p id="pcode-error" className="text-sm text-destructive">
+          {codeError}
         </p>
-        <Label htmlFor="pcode">Zugangscode</Label>
-        <div className="mt-1 flex gap-2">
-          <Input
-            id="pcode"
-            className="max-w-[220px]"
-            placeholder="z. B. K7M2QX"
-            maxLength={10}
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && void submit()}
-          />
-          <Button onClick={() => void submit()} disabled={checking || !code.trim()}>
-            Training starten
-          </Button>
-        </div>
-        {codeError ? <p className="mt-1.5 text-sm text-destructive">{codeError}</p> : null}
-      </CardContent>
-    </Card>
+      ) : null}
+      <Button size="lg" disabled={checking || !code.trim()} onClick={() => void submit()}>
+        {checking ? <Loader2 className="size-4 animate-spin" /> : null}
+        Training starten
+      </Button>
+    </div>
   );
 }

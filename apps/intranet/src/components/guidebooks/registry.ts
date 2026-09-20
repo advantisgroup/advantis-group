@@ -9,6 +9,7 @@ import {
   Cloud,
   Fingerprint,
   FileSearch,
+  GraduationCap,
   KeyRound,
   ListChecks,
   type LucideIcon,
@@ -19,7 +20,6 @@ import {
   UploadCloud,
   UserCog,
   Wrench,
-  Zap,
 } from "lucide-react";
 
 import { type TeamId } from "@/lib/teams";
@@ -87,6 +87,13 @@ export interface Guidebook {
   /** Teams allowed to open this guidebook. Empty = everyone signed in. */
   teams: TeamId[];
   /**
+   * Surfaced as its own entry under the sidebar's Apps group rather than as a
+   * row in the knowledge base. For the handful of entries that are really
+   * products — their own route tree, their own admin area, sometimes their own
+   * auth — rather than something you read.
+   */
+  sidebarApp?: boolean;
+  /**
    * Skip the reading-doc furniture (table of contents, "was this helpful"
    * feedback, related-guidebooks chips, prev/next pager) around the
    * component. For a self-contained tool with its own internal navigation
@@ -129,9 +136,10 @@ export const GUIDEBOOKS: Guidebook[] = [
     slug: "wallbox-sales-academy",
     titleKey: "wallboxSalesAcademy.title",
     descriptionKey: "wallboxSalesAcademy.description",
-    icon: Zap,
+    icon: GraduationCap,
     category: "interactive",
     teams: [],
+    sidebarApp: true,
     // Owns its own route tree — see app/(app)/guidebooks/wallbox-sales-academy/.
   },
   {
@@ -301,6 +309,11 @@ export function canAccessGuidebook(
 
 export function accessibleGuidebooks(user: AccessUser): Guidebook[] {
   return GUIDEBOOKS.filter((gb) => canAccessGuidebook(user, gb));
+}
+
+/** Entries that get their own sidebar spot under Apps (see `sidebarApp`). */
+export function sidebarAppGuidebooks(user: AccessUser): Guidebook[] {
+  return accessibleGuidebooks(user).filter((gb) => gb.sidebarApp);
 }
 
 export function getGuidebook(slug: string): Guidebook | undefined {

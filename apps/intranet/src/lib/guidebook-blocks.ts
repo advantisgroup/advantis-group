@@ -1,8 +1,11 @@
 /**
- * The block model behind the guidebook page editor (`/guidebooks/new/advanced`) — a
- * Notion-style page is just an ordered list of these, stored as one JSON
- * string (`guidebookPages.blocks`) rather than a modeled Convex union, so a
- * new block type is a client-only change.
+ * The block model behind the older guidebook pages: an ordered list of these,
+ * stored as one JSON string (`guidebookPages.blocks`) rather than a modeled
+ * Convex union, so a new block type is a client-only change.
+ *
+ * Creating new ones is retired — the wiki composer covers the same ground,
+ * callouts included. `/guidebooks/<slug>/edit` still edits the pages that
+ * already exist.
  */
 
 export type CalloutVariant = "info" | "warning";

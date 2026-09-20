@@ -13,6 +13,7 @@ import {
   type RichDateValue,
 } from "@/lib/rich-date";
 import { headingAnchor, intranetLinkLabel } from "@/lib/intranet-links";
+import { isCalloutVariant } from "@/lib/rich-callout";
 import { cn } from "@/lib/utils";
 
 const ALLOWED = new Set([
@@ -84,6 +85,13 @@ function cleanInto(node: Node, out: Node, doc: Document, headingIds: Set<string>
       const safe = doc.createElement(tag);
       if (tag === "TH" || tag === "TD") {
         setSpanAttributes(safe, el);
+      }
+      // Callout block written by the rich-text editor. Only the validated
+      // variant survives — styling hangs off the attribute itself, so there's
+      // no class to forge (see lib/rich-callout.ts).
+      if (tag === "DIV") {
+        const variant = el.getAttribute("data-callout");
+        if (isCalloutVariant(variant)) safe.setAttribute("data-callout", variant);
       }
       if (tag === "A") {
         const href = el.getAttribute("href") ?? "";

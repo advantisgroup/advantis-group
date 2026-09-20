@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as academy_analytics from "../academy/analytics.js";
+import type * as academy_content from "../academy/content.js";
 import type * as academy_lib_auth from "../academy/lib/auth.js";
 import type * as academy_participants from "../academy/participants.js";
 import type * as academy_questions from "../academy/questions.js";
@@ -289,6 +291,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "academy/analytics": typeof academy_analytics;
+  "academy/content": typeof academy_content;
   "academy/lib/auth": typeof academy_lib_auth;
   "academy/participants": typeof academy_participants;
   "academy/questions": typeof academy_questions;

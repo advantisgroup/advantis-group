@@ -1,4 +1,4 @@
-import { RESEARCH_TASKS, SCENARIOS, SEG } from "./data";
+import { RESEARCH_TASKS, SCENARIOS } from "./data";
 import { DLAB } from "./progress";
 
 import type { Chapter } from "./types";
@@ -10,7 +10,9 @@ function slug(title: string): string {
 /** Client-only PDF export of a single chapter — mirrors the original tool's
  * "Kapitel als PDF" download. jsPDF is dynamically imported so it never
  * lands in the main bundle. */
-export async function downloadChapterPdf(chapter: Chapter, index: number) {
+/** `segmentLabel` is passed in rather than looked up from the bundled `SEG`,
+ *  which goes stale as soon as a segment is renamed in the database. */
+export async function downloadChapterPdf(chapter: Chapter, index: number, segmentLabel: string) {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const width = 210 - 30;
@@ -33,7 +35,7 @@ export async function downloadChapterPdf(chapter: Chapter, index: number) {
 
   line("Wallbox Sales Academy", 10, true, 1);
   line(`Kapitel ${index + 1}: ${chapter.title}`, 16, true, 2);
-  line(`Segment: ${SEG[chapter.segment]}`, 10, false, 4);
+  line(`Segment: ${segmentLabel}`, 10, false, 4);
 
   chapter.body?.forEach((block) => {
     if (block.type === "diagram") {

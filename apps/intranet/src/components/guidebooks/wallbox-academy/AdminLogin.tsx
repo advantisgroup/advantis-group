@@ -7,9 +7,7 @@ import { useConvex } from "convex/react";
 
 import { useIsAdmin } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 import { ACADEMY_ID } from "./use-academy-progress";
 
@@ -40,45 +38,51 @@ export function AdminLogin({ onLogin }: { onLogin: (pin?: string) => void }) {
   }
 
   return (
-    <Card className="mx-auto max-w-md">
-      <CardHeader>
-        <CardTitle>Admin-Bereich</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
-        {isAdmin ? (
-          <>
-            <p className="mb-2.5 text-sm text-muted-foreground">
-              Du bist Intranet-Admin und hast automatisch Zugriff, ohne PIN.
+    <div className="mx-auto max-w-md py-10">
+      <h1 className="font-display text-2xl font-semibold tracking-tight">Trainer-Bereich</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Teilnehmer anlegen, Einladungen erstellen, Ergebnisse und Fragen einsehen.
+      </p>
+
+      {isAdmin ? (
+        <div className="mt-6">
+          <p className="mb-3 text-sm text-muted-foreground">
+            Du bist Intranet-Admin und hast automatisch Zugriff.
+          </p>
+          <Button onClick={() => onLogin()}>Öffnen</Button>
+        </div>
+      ) : (
+        <div className="mt-6 space-y-3">
+          <label htmlFor="apin" className="block text-sm font-medium">
+            Admin-PIN
+          </label>
+          {/* The PIN is a shared secret, so it isn't printed next to the field
+              it unlocks any more — a trainer who needs it asks an admin. */}
+          <Input
+            id="apin"
+            type="password"
+            autoComplete="off"
+            placeholder="••••"
+            value={pin}
+            aria-invalid={!!pinError}
+            aria-describedby={pinError ? "apin-error" : undefined}
+            onChange={(e) => {
+              setPin(e.target.value);
+              setPinError("");
+            }}
+            onKeyDown={(e) => e.key === "Enter" && void submit()}
+            className="h-11 max-w-[200px] text-center font-mono text-lg tracking-[0.3em]"
+          />
+          {pinError ? (
+            <p id="apin-error" className="text-sm text-destructive">
+              {pinError}
             </p>
-            <Button onClick={() => onLogin()}>Trainer-Bereich öffnen</Button>
-          </>
-        ) : (
-          <>
-            <p className="mb-2.5 text-sm text-muted-foreground">
-              Teilnehmer anlegen, Einladungen erstellen, Ergebnisse und Fragen einsehen.
-            </p>
-            <Label htmlFor="apin">Admin-PIN</Label>
-            <div className="mt-1 flex gap-2">
-              <Input
-                id="apin"
-                type="password"
-                className="max-w-[220px]"
-                placeholder="PIN"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && void submit()}
-              />
-              <Button onClick={() => void submit()} disabled={checking || !pin.trim()}>
-                Anmelden
-              </Button>
-            </div>
-            {pinError ? <p className="mt-1.5 text-sm text-destructive">{pinError}</p> : null}
-            <p className="mt-2 text-sm text-muted-foreground">
-              Standard-PIN: 1234 (im Admin-Bereich änderbar).
-            </p>
-          </>
-        )}
-      </CardContent>
-    </Card>
+          ) : null}
+          <Button disabled={checking || !pin.trim()} onClick={() => void submit()}>
+            Anmelden
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

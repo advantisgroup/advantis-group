@@ -333,4 +333,76 @@ export const contentTables = {
     pin: v.string(),
     updatedAt: v.number(),
   }).index("by_academyId", ["academyId"]),
+
+  // --- Academy course content ------------------------------------------------
+  // Chapters, quiz questions and segment names used to be a 1300-line
+  // `data.ts` in the frontend bundle, so fixing a typo in an answer meant a
+  // deploy. `academy/content.ts`'s one-time `migrate` copies that file in here
+  // once; from then on this is the source of truth and the file is only a
+  // seed. Ordering is an explicit `order` rather than array position, and
+  // nothing is hard-deleted (`archived`) — a question someone already answered
+  // has to stay resolvable for their stored result to still mean anything.
+  academySegments: defineTable({
+    academyId: v.string(),
+    key: v.string(),
+    label: v.string(),
+    order: v.number(),
+  })
+    .index("by_academy", ["academyId"])
+    .index("by_academy_key", ["academyId", "key"]),
+
+  academyChapters: defineTable({
+    academyId: v.string(),
+    /** Stable across edits and reorders — results key on this, never on the
+     *  chapter's position. */
+    chapterId: v.string(),
+    title: v.string(),
+    segment: v.string(),
+    order: v.number(),
+    /** `ChapterBlock[]`, JSON-encoded like `guidebookPages.blocks`. */
+    body: v.string(),
+    /** `[term, definition][]`, JSON-encoded. */
+    glossary: v.optional(v.string()),
+    /** Chapter renders the research tasks / call simulator instead of a body. */
+    research: v.optional(v.boolean()),
+    sim: v.optional(v.boolean()),
+    archived: v.optional(v.boolean()),
+    updatedAt: v.number(),
+  })
+    .index("by_academy", ["academyId"])
+    .index("by_academy_chapter", ["academyId", "chapterId"]),
+
+  // One row per question rather than a blob on the chapter, because questions
+  // are edited, reordered and retired one at a time — and because per-question
+  // analytics ("which question does everyone get wrong") needs them addressable.
+  academyQuizQuestions: defineTable({
+    academyId: v.string(),
+    chapterId: v.string(),
+    /** Stable id a stored answer refers to. Minted once by the migration as
+     *  `<chapterId>-q<n>` from the original array position, which is what makes
+     *  rewriting existing results deterministic. */
+    questionId: v.string(),
+    question: v.string(),
+    options: v.array(v.string()),
+    correctIndex: v.number(),
+    order: v.number(),
+    archived: v.optional(v.boolean()),
+    updatedAt: v.number(),
+  })
+    .index("by_academy", ["academyId"])
+    .index("by_academy_chapter", ["academyId", "chapterId"])
+    .index("by_academy_question", ["academyId", "questionId"]),
+
+  /** Presence of a row means the content migration has run for this academy;
+   *  the admin area's "migrate" button disappears once it exists. */
+  academyContentStatus: defineTable({
+    academyId: v.string(),
+    migratedAt: v.number(),
+    migratedByUserId: v.id("users"),
+    chapterCount: v.number(),
+    questionCount: v.number(),
+    /** How many stored participant results had their answer keys rewritten
+     *  from array indices to question ids. */
+    rewrittenResults: v.number(),
+  }).index("by_academy", ["academyId"]),
 };

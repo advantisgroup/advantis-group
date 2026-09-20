@@ -1,21 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
-
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-import { CHAPTERS, SCENARIOS, SEG } from "./data";
+import { SCENARIOS } from "./data";
 import {
   chapterResultLabel,
   chapterStatus,
@@ -24,7 +12,7 @@ import {
   totalQuizScore,
 } from "./progress";
 
-import type { AcademyProgressData } from "./types";
+import type { AcademyProgressData, Chapter } from "./types";
 
 const STATUS_LABEL: Record<"done" | "started" | "open", string> = {
   done: "erledigt",
@@ -32,142 +20,96 @@ const STATUS_LABEL: Record<"done" | "started" | "open", string> = {
   open: "offen",
 };
 
-const STATUS_VARIANT: Record<"done" | "started" | "open", "success" | "secondary" | "warning"> = {
-  done: "success",
-  started: "secondary",
-  open: "warning",
-};
-
+/**
+ * The participant's own view of the course. It used to be five bordered stat
+ * boxes over a table of badges — a dashboard shape for what is really a
+ * syllabus, and three of the five numbers read 0 on day one. Now it's one
+ * progress line, then the chapters as plain rows, with the chapter to continue
+ * from as the only filled button on the page.
+ */
 export function Overview({
+  chapters,
+  segments,
   progress,
   onOpenChapter,
 }: {
+  chapters: Chapter[];
+  segments: Record<string, string>;
   progress: AcademyProgressData;
   onOpenChapter: (index: number) => void;
 }) {
-  const done = CHAPTERS.filter((c) => isChapterDone(progress, c)).length;
-  const open = CHAPTERS.length - done;
-  const pct = Math.round((done / CHAPTERS.length) * 100);
-  const quizScore = totalQuizScore(progress);
+  const done = chapters.filter((c) => isChapterDone(progress, c)).length;
+  const pct = chapters.length ? Math.round((done / chapters.length) * 100) : 0;
+  const quizScore = totalQuizScore(progress, chapters);
+  const quizPct = quizScore.total ? Math.round((quizScore.correct / quizScore.total) * 100) : null;
   const nSim = Object.keys(progress.calls).length;
   const research = countResearchAnswered(progress.research);
-  const nextChapter = Math.min(progress.lastCh ?? 0, CHAPTERS.length - 1);
+  const nextChapter = Math.min(progress.lastCh ?? 0, chapters.length - 1);
+
+  const summary = [
+    `${done} von ${chapters.length} Kapiteln`,
+    quizPct === null ? null : `${quizPct} % im Wissens-Check`,
+    nSim > 0 ? `${nSim}/${SCENARIOS.length} Call-Szenarien` : null,
+    research.answered > 0 ? `${research.answered}/${research.total} Recherchefragen` : null,
+  ].filter(Boolean);
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Deine Lernübersicht</h2>
-          <p className="text-sm text-muted-foreground">
-            Dein Fortschritt wird automatisch mit deinem Intranet-Konto gespeichert — du kannst
-            jederzeit unterbrechen und später weitermachen. Wiederholungen sind beliebig möglich;
-            alle Versuche bleiben für den Trainer sichtbar.
-          </p>
+    <div className="space-y-6">
+      <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="font-display text-xl font-semibold tracking-tight">Dein Training</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{summary.join(" · ")}</p>
+          <div className="mt-3 h-1 w-full max-w-sm overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-foreground transition-[width] duration-300"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
         </div>
-        <Button className="w-full sm:w-auto" onClick={() => onOpenChapter(nextChapter)}>
+        <Button className="shrink-0" onClick={() => onOpenChapter(nextChapter)}>
           Weiterlernen: Kapitel {nextChapter + 1}
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="Fortschritt" value={`${pct} %`}>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-[width] duration-300"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-        </StatCard>
-        <StatCard label="Kapitel" value={`${done} erledigt`} hint={`${open} offen`} />
-        <StatCard
-          label="Wissens-Check"
-          value={
-            quizScore.total ? `${Math.round((quizScore.correct / quizScore.total) * 100)} %` : "–"
-          }
-          hint={`${quizScore.correct}/${quizScore.total || 0} richtig`}
-        />
-        <StatCard
-          label="Call-Simulator"
-          value={`${nSim}/${SCENARIOS.length}`}
-          hint="Szenarien absolviert"
-        />
-        <StatCard
-          label="Recherche"
-          value={`${research.answered}/${research.total}`}
-          hint="Fragen beantwortet"
-        />
+      <div className="-mx-3 divide-y divide-border/50">
+        {chapters.map((chapter, index) => {
+          const status = chapterStatus(progress, chapter);
+          const isNext = index === nextChapter;
+          return (
+            <button
+              key={chapter.id}
+              type="button"
+              onClick={() => onOpenChapter(index)}
+              className="flex w-full items-baseline gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent/60"
+            >
+              <span
+                className={cn(
+                  "w-5 shrink-0 text-xs tabular-nums",
+                  status === "done" ? "text-muted-foreground" : "text-muted-foreground/60",
+                )}
+              >
+                {index + 1}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span
+                  className={cn(
+                    "block truncate text-sm",
+                    isNext ? "font-medium text-foreground" : "text-foreground",
+                  )}
+                >
+                  {chapter.title}
+                </span>
+                <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                  {segments[chapter.segment]} · {STATUS_LABEL[status]}
+                </span>
+              </span>
+              <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                {chapterResultLabel(progress, chapter)}
+              </span>
+            </button>
+          );
+        })}
       </div>
-
-      <Card>
-        <CardContent className="p-5">
-          <h3 className="mb-3 font-semibold">Alle Module</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Modul</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ergebnis</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {CHAPTERS.map((chapter, index) => {
-                const status = chapterStatus(progress, chapter);
-                return (
-                  <TableRow key={chapter.id}>
-                    <TableCell>
-                      <div className="font-medium">
-                        {index + 1}. {chapter.title}
-                      </div>
-                      <Badge variant="secondary" className="mt-1">
-                        {SEG[chapter.segment]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status]}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {chapterResultLabel(progress, chapter)}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant={index === nextChapter ? "default" : "outline"}
-                        onClick={() => onOpenChapter(index)}
-                      >
-                        Öffnen
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  hint,
-  children,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  children?: ReactNode;
-}) {
-  return (
-    <Card className={cn("p-4")}>
-      <CardContent className="p-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-xl font-semibold">{value}</p>
-        {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
-        {children}
-      </CardContent>
-    </Card>
   );
 }

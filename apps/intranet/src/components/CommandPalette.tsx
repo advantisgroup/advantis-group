@@ -154,6 +154,10 @@ export function CommandPalette({ className }: { className?: string } = {}) {
     open && query.trim() ? { search: query.trim() } : "skip",
   );
   const announcements = useQuery(api.announcements.list, open && query.trim() ? {} : "skip");
+  // The palette used to search only the hardcoded guidebooks' titles, so the
+  // authored knowledge base — the part that actually grows — was unreachable
+  // from here.
+  const wikiEntries = useQuery(api.wiki.entries.list, open && query.trim() ? {} : "skip");
   // A locked vault makes applicants.list throw, which would take the whole
   // palette down — only search applicants while it's unlocked.
   const vault = useQuery(api.hr.vault.status, open && hasApplicantAccess ? {} : "skip");
@@ -447,6 +451,21 @@ export function CommandPalette({ className }: { className?: string } = {}) {
       }
     }
 
+    for (const entry of wikiEntries ?? []) {
+      const haystack = `${entry.thema} ${entry.tags.join(" ")} ${entry.categoryName ?? ""}`;
+      if (haystack.toLowerCase().includes(q)) {
+        list.push({
+          id: `wiki:${entry._id}`,
+          group: t("guidebooks"),
+          label: entry.thema,
+          sublabel: entry.categoryName ?? undefined,
+          icon: BookOpen,
+          href: `/guidebooks/${entry.slug}`,
+          run: () => go(`/guidebooks/${entry.slug}`),
+        });
+      }
+    }
+
     for (const u of people ?? []) {
       list.push({
         id: `user:${u._id}`,
@@ -507,6 +526,7 @@ export function CommandPalette({ className }: { className?: string } = {}) {
     applicants,
     hasApplicantAccess,
     guidebooks,
+    wikiEntries,
     t,
     tGuide,
   ]);

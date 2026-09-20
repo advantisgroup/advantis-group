@@ -4,18 +4,24 @@ import {
   Bold,
   CalendarPlus,
   Heading2,
+  Info,
   Italic,
   Keyboard,
   Link2,
   List,
   ListOrdered,
+  type LucideIcon,
+  OctagonAlert,
   Quote,
   RemoveFormatting,
   Strikethrough,
+  Table2,
+  TriangleAlert,
   Underline,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { type CalloutVariant } from "@/lib/rich-callout";
 import {
   formatRichDate,
   readRichDateElement,
@@ -69,6 +75,17 @@ export const TOOLS: (Cmd | "divider")[] = [
   },
 ];
 
+export interface LinkEditorState {
+  /** The anchor being edited, or null when creating a new one. */
+  element: HTMLAnchorElement | null;
+  /** Where to insert — the popover takes focus, so the live selection is gone
+   *  by the time the user hits apply. Same trick as `DateEditorState.range`. */
+  range: Range | null;
+  rect: DOMRect;
+  text: string;
+  url: string;
+}
+
 export interface DateEditorState {
   id: string;
   element: HTMLElement | null;
@@ -96,6 +113,21 @@ function isInsideTag(root: HTMLElement, node: Node | null, tag: string): boolean
   return !!closestAncestorTag(root, node, tag);
 }
 
+function closestCallout(root: HTMLElement, node: Node | null): HTMLElement | null {
+  const element =
+    node?.nodeType === Node.ELEMENT_NODE ? (node as HTMLElement) : node?.parentElement;
+  const callout = element?.closest<HTMLElement>("[data-callout]") ?? null;
+  return callout && root.contains(callout) ? callout : null;
+}
+
+/** The direct child of `root` that contains `node` — the block a callout
+ *  wraps. Null when the caret sits in loose text directly under the root. */
+function topLevelBlock(root: HTMLElement, node: Node | null): HTMLElement | null {
+  let cur: Node | null = node;
+  while (cur && cur.parentNode && cur.parentNode !== root) cur = cur.parentNode;
+  return cur?.nodeType === 1 && cur.parentNode === root ? (cur as HTMLElement) : null;
+}
+
 function closestRichDate(root: HTMLElement, node: Node | null): HTMLElement | null {
   const element =
     node?.nodeType === Node.ELEMENT_NODE ? (node as HTMLElement) : node?.parentElement;
@@ -103,16 +135,115 @@ function closestRichDate(root: HTMLElement, node: Node | null): HTMLElement | nu
   return date && root.contains(date) ? date : null;
 }
 
+/**
+ * The "/" menu. The toolbar is thirteen icons plus three pickers and already
+ * wraps to two rows on a phone, so every format added to it costs more than it
+ * gives — this scales instead, and keeps the freeflowing page free of chrome.
+ *
+ * `labelKey` resolves in the `RichText` namespace; `keywords` are matched
+ * alongside the label so "bullet" finds the list and "warnung" the callout.
+ */
+export type SlashCommand = {
+  key: string;
+  labelKey: string;
+  icon: LucideIcon;
+  keywords: string[];
+} & (
+  | { command: string; value?: string }
+  | { action: "callout"; variant: CalloutVariant }
+  | { action: "table" | "date" | "link" }
+);
+
+export const SLASH_COMMANDS: SlashCommand[] = [
+  {
+    key: "heading",
+    labelKey: "slashHeading",
+    icon: Heading2,
+    keywords: ["heading", "überschrift", "h2", "title"],
+    command: "formatBlock",
+    value: "h2",
+  },
+  {
+    key: "bullets",
+    labelKey: "slashBullets",
+    icon: List,
+    keywords: ["list", "liste", "bullet", "punkte"],
+    command: "insertUnorderedList",
+  },
+  {
+    key: "numbers",
+    labelKey: "slashNumbers",
+    icon: ListOrdered,
+    keywords: ["numbered", "nummeriert", "ordered", "list"],
+    command: "insertOrderedList",
+  },
+  {
+    key: "quote",
+    labelKey: "slashQuote",
+    icon: Quote,
+    keywords: ["quote", "zitat"],
+    command: "formatBlock",
+    value: "blockquote",
+  },
+  {
+    key: "note",
+    labelKey: "calloutInfo",
+    icon: Info,
+    keywords: ["note", "hinweis", "callout", "info"],
+    action: "callout",
+    variant: "info",
+  },
+  {
+    key: "warning",
+    labelKey: "calloutWarning",
+    icon: TriangleAlert,
+    keywords: ["warning", "achtung", "warnung", "callout"],
+    action: "callout",
+    variant: "warning",
+  },
+  {
+    key: "danger",
+    labelKey: "calloutDanger",
+    icon: OctagonAlert,
+    keywords: ["critical", "kritisch", "danger", "callout"],
+    action: "callout",
+    variant: "danger",
+  },
+  {
+    key: "table",
+    labelKey: "insertTable",
+    icon: Table2,
+    keywords: ["table", "tabelle"],
+    action: "table",
+  },
+  {
+    key: "date",
+    labelKey: "insertDate",
+    icon: CalendarPlus,
+    keywords: ["date", "datum", "termin", "calendar"],
+    action: "date",
+  },
+  {
+    key: "link",
+    labelKey: "insertLink",
+    icon: Link2,
+    keywords: ["link", "url"],
+    action: "link",
+  },
+];
+
+const INPUT_RULES: { marker: string; command: string; value?: string }[] = [
+  { marker: "# ", command: "formatBlock", value: "h2" },
+  { marker: "- ", command: "insertUnorderedList" },
+  { marker: "* ", command: "insertUnorderedList" },
+  { marker: "1. ", command: "insertOrderedList" },
+  { marker: "> ", command: "formatBlock", value: "blockquote" },
+];
+
 /** Inline formatting wrappers a caret can end up "trapped" inside after a command runs. */
 const INLINE_FORMAT_TAGS = new Set(["B", "STRONG", "I", "EM", "U", "STRIKE", "S", "A", "KBD"]);
 /** Commands whose result is an inline wrapper (as opposed to a block-level or stripping change). */
-const INLINE_ESCAPE_COMMANDS = new Set([
-  "bold",
-  "italic",
-  "underline",
-  "strikeThrough",
-  "createLink",
-]);
+const INLINE_ESCAPE_COMMANDS = new Set(["bold", "italic", "underline", "strikeThrough"]);
 
 function isInlineFormatEl(node: Node | null): node is HTMLElement {
   return !!node && node.nodeType === 1 && INLINE_FORMAT_TAGS.has((node as HTMLElement).tagName);
@@ -178,6 +309,14 @@ export function useRichTextController({
   const [mention, setMention] = useState<{ query: string; rect: DOMRect } | null>(null);
   const [mentionActiveIndex, setMentionActiveIndex] = useState(0);
   const [dateEditor, setDateEditor] = useState<DateEditorState | null>(null);
+  const [linkEditor, setLinkEditor] = useState<LinkEditorState | null>(null);
+  const [slash, setSlash] = useState<{ query: string; rect: DOMRect } | null>(null);
+  const [slashActiveIndex, setSlashActiveIndex] = useState(0);
+  const savedRangeRef = useRef<Range | null>(null);
+  // Separate from `active` (a flat Record<string, boolean>) because the
+  // toolbar needs to know *which* variant the caret is in, not just whether
+  // it's in one — clicking the same variant again removes the block.
+  const [calloutVariant, setCalloutVariant] = useState<CalloutVariant | null>(null);
 
   const syncValue = useCallback(() => {
     const el = elRef.current;
@@ -227,6 +366,8 @@ export function useRichTextController({
     next["Insert link"] = isInsideTag(el, sel.anchorNode, "A");
     next["Keyboard key"] = isInsideTag(el, sel.anchorNode, "KBD");
     setActive(next);
+    const callout = closestCallout(el, sel.anchorNode);
+    setCalloutVariant((callout?.getAttribute("data-callout") as CalloutVariant) ?? null);
   }, []);
 
   // Track selection changes globally; cheap because we early-out unless the
@@ -236,12 +377,151 @@ export function useRichTextController({
     return () => document.removeEventListener("selectionchange", refreshActive);
   }, [refreshActive]);
 
+  /**
+   * Markdown-ish shortcuts at the start of a block — "# ", "- ", "1. ", "> ".
+   * Only at the very start, so "a - b" mid-sentence never turns into a list.
+   * There's no "## " rule because "# " has already fired by then.
+   */
+  function applyInputRule(): boolean {
+    const el = elRef.current;
+    const sel = window.getSelection();
+    if (!el || !sel || sel.rangeCount === 0 || !sel.isCollapsed) return false;
+    const range = sel.getRangeAt(0);
+    const node = range.startContainer;
+    // The caret can be in a completely different editable by the time this
+    // runs — never rewrite a node that isn't ours.
+    if (node.nodeType !== Node.TEXT_NODE || !el.contains(node)) return false;
+
+    const typed = (node.textContent ?? "").slice(0, range.startOffset);
+    const rule = INPUT_RULES.find((r) => r.marker === typed);
+    if (!rule) return false;
+    const block = topLevelBlock(el, node) ?? el;
+    if (!(block.textContent ?? "").startsWith(typed)) return false;
+
+    (node as Text).deleteData(0, rule.marker.length);
+    const caret = document.createRange();
+    caret.setStart(node, 0);
+    caret.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(caret);
+    exec(rule.command, rule.value);
+    return true;
+  }
+
   function emit() {
     const el = elRef.current;
     if (!el) return;
     el.setAttribute("data-empty", el.textContent ? "false" : "true");
     onChange(el.innerHTML);
     detectMention();
+    detectSlash();
+  }
+
+  /** Same shape as `detectMention`: looks at the text right before the caret
+   *  for an in-progress "/query". Requires a preceding space (or start of the
+   *  block) so a URL or a date never opens the menu. */
+  function detectSlash() {
+    const el = elRef.current;
+    const sel = window.getSelection();
+    if (!el || !sel || sel.rangeCount === 0 || !sel.isCollapsed) {
+      setSlash(null);
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    if (!el.contains(range.startContainer) || range.startContainer.nodeType !== Node.TEXT_NODE) {
+      setSlash(null);
+      return;
+    }
+    const before = (range.startContainer.textContent ?? "").slice(0, range.startOffset);
+    const match = /(?:^|\s)\/([^\s/]{0,24})$/.exec(before);
+    if (!match) {
+      setSlash(null);
+      return;
+    }
+    setSlashActiveIndex(0);
+    setSlash({ query: match[1], rect: range.getBoundingClientRect() });
+  }
+
+  /** Removes the typed "/query" and applies the command in its place. */
+  function runSlashCommand(command: SlashCommand) {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      const container = range.startContainer;
+      if (container.nodeType === Node.TEXT_NODE) {
+        const text = container.textContent ?? "";
+        const slashIndex = text.slice(0, range.startOffset).lastIndexOf("/");
+        if (slashIndex !== -1) {
+          (container as Text).deleteData(slashIndex, range.startOffset - slashIndex);
+          const caret = document.createRange();
+          caret.setStart(container, slashIndex);
+          caret.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(caret);
+        }
+      }
+    }
+    setSlash(null);
+
+    if ("command" in command) {
+      exec(command.command, command.value);
+      return;
+    }
+    switch (command.action) {
+      case "callout":
+        toggleCallout(command.variant);
+        return;
+      case "table":
+        captureRange();
+        insertTable(3, 3);
+        return;
+      case "date":
+        openDateEditor();
+        return;
+      case "link":
+        openLinkEditor();
+    }
+  }
+
+  /** What the surface calls on `input`. Separate from `emit` because the input
+   *  rules must only run for something the user just typed — `emit` also fires
+   *  on blur and after programmatic edits, where rewriting the block under the
+   *  caret would come out of nowhere. */
+  function handleInput() {
+    // A rule applies its command through `exec`, which emits on its own.
+    if (applyInputRule()) return;
+    emit();
+  }
+
+  /** The caret as it was before a popover took focus — the table and file-link
+   *  pickers insert there instead of at the end of the document. */
+  function captureRange() {
+    const el = elRef.current;
+    const sel = window.getSelection();
+    if (!el || !sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    if (el.contains(range.commonAncestorContainer)) savedRangeRef.current = range.cloneRange();
+  }
+
+  /** Returns false when there's no usable saved caret, so the caller can fall
+   *  back to appending rather than dropping what the user asked for. */
+  function insertAtSavedRange(node: Node): boolean {
+    const el = elRef.current;
+    const range = savedRangeRef.current;
+    if (!el || !range || !el.contains(range.commonAncestorContainer)) return false;
+    range.deleteContents();
+    range.insertNode(node);
+    const after = document.createTextNode("​");
+    node.parentNode?.insertBefore(after, node.nextSibling);
+    const caret = document.createRange();
+    caret.setStart(after, 1);
+    caret.collapse(true);
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(caret);
+    savedRangeRef.current = null;
+    emit();
+    return true;
   }
 
   /** Looks at the text right before the caret for an in-progress "@query" and
@@ -278,6 +558,15 @@ export function useRichTextController({
       : mentionCandidates;
     return pool.slice(0, 6);
   }, [mention, mentionCandidates]);
+
+  const slashMatches = useMemo(() => {
+    if (!slash) return [];
+    const q = slash.query.trim().toLowerCase();
+    if (!q) return SLASH_COMMANDS;
+    return SLASH_COMMANDS.filter(
+      (c) => c.key.includes(q) || c.keywords.some((keyword) => keyword.includes(q)),
+    );
+  }, [slash]);
 
   /** Replaces the in-progress "@query" text with an atomic, non-editable
    *  mention chip plus a trailing space, and parks the caret right after it. */
@@ -376,28 +665,23 @@ export function useRichTextController({
     refreshActive();
   }
 
-  /**
-   * Appends a non-editable "linked file" chip to the end of the content
-   * rather than inserting at the live caret — the picker that calls this
-   * lives in a popover, and by the time a candidate is clicked the
-   * contentEditable's selection may already be gone. Simpler and more
-   * robust than trying to preserve an exact mid-text insertion point for
-   * what's fundamentally a "reference this attachment" action.
-   */
+  /** Inserts a non-editable "linked file" chip at the caret the picker was
+   *  opened from (see `captureRange`), falling back to the end of the content
+   *  when there wasn't one. */
   function insertFileLink(name: string) {
     const span = document.createElement("span");
     span.className = "wiki-file-chip";
     span.setAttribute("contenteditable", "false");
     span.setAttribute("data-wiki-file-name", name);
     span.textContent = `\u{1F4CE} ${name}`;
+    if (insertAtSavedRange(span)) return;
     onChange(`${value}${value && !/\s$/.test(value) ? " " : ""}${span.outerHTML} `);
   }
 
-  /** Appends a basic `rows` × `cols` table skeleton (first row as headers) to
-   *  the end of the content — same append-only reasoning as `insertFileLink`
-   *  above. Row/column *editing* after that (add/remove) has no dedicated
-   *  toolbar of its own yet; cell text itself is directly editable since the
-   *  table lands in a real contentEditable. */
+  /** A basic `rows` × `cols` table skeleton (first row as headers), inserted
+   *  at the caret the picker was opened from. Row/column *editing* after that
+   *  (add/remove) has no dedicated toolbar of its own yet; cell text itself is
+   *  directly editable since the table lands in a real contentEditable. */
   function insertTable(rows: number, cols: number) {
     const table = document.createElement("table");
     const thead = document.createElement("thead");
@@ -420,6 +704,7 @@ export function useRichTextController({
       tbody.appendChild(row);
     }
     table.appendChild(tbody);
+    if (insertAtSavedRange(table)) return;
     onChange(`${value}${value && !/\s$/.test(value) ? " " : ""}${table.outerHTML}<p><br></p>`);
   }
 
@@ -509,6 +794,30 @@ export function useRichTextController({
     return false;
   }
 
+  /** Same contract as `handleMentionKeyDown`. Only one of the two popups can
+   *  be open at a time in practice — "@" and "/" can't both be the character
+   *  right before the caret. */
+  function handleSlashKeyDown(key: string): boolean {
+    if (!slash || slashMatches.length === 0) return false;
+    if (key === "ArrowDown") {
+      setSlashActiveIndex((i) => (i + 1) % slashMatches.length);
+      return true;
+    }
+    if (key === "ArrowUp") {
+      setSlashActiveIndex((i) => (i - 1 + slashMatches.length) % slashMatches.length);
+      return true;
+    }
+    if (key === "Enter" || key === "Tab") {
+      runSlashCommand(slashMatches[slashActiveIndex]);
+      return true;
+    }
+    if (key === "Escape") {
+      setSlash(null);
+      return true;
+    }
+    return false;
+  }
+
   function exec(command: string, val?: string) {
     const el = elRef.current;
     el?.focus();
@@ -519,6 +828,129 @@ export function useRichTextController({
     // not for a bare toggle-for-next-keystroke click on a collapsed caret,
     // which should keep behaving like every other editor's "type in bold now".
     if (hadRange && el && INLINE_ESCAPE_COMMANDS.has(command)) placeEscapeAnchor(el);
+    emit();
+    refreshActive();
+  }
+
+  function openLinkEditor() {
+    const el = elRef.current;
+    if (!el) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || !el.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    const existing = closestAncestorTag(
+      el,
+      range.commonAncestorContainer,
+      "A",
+    ) as HTMLAnchorElement | null;
+    setLinkEditor({
+      element: existing,
+      range: range.cloneRange(),
+      rect: (existing ?? range).getBoundingClientRect(),
+      text: existing?.textContent ?? range.toString(),
+      url: existing?.getAttribute("href") ?? "",
+    });
+  }
+
+  /** Builds the anchor by hand rather than via `execCommand("createLink")` —
+   *  that command can only wrap a live selection, which the popover has
+   *  already taken away, and it can't set the link's text. */
+  function saveLinkEditor() {
+    const el = elRef.current;
+    if (!el || !linkEditor) return;
+    const url = linkEditor.url.trim();
+    if (!url) return;
+    const text = linkEditor.text.trim() || url;
+
+    if (linkEditor.element) {
+      linkEditor.element.setAttribute("href", url);
+      linkEditor.element.textContent = text;
+    } else {
+      const anchor = document.createElement("a");
+      anchor.setAttribute("href", url);
+      anchor.textContent = text;
+      const range = linkEditor.range;
+      if (range && el.contains(range.commonAncestorContainer)) {
+        range.deleteContents();
+        range.insertNode(anchor);
+      } else {
+        el.appendChild(anchor);
+      }
+      const after = document.createTextNode("​");
+      anchor.after(after);
+      const caret = document.createRange();
+      caret.setStart(after, 1);
+      caret.collapse(true);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(caret);
+    }
+    setLinkEditor(null);
+    emit();
+    refreshActive();
+  }
+
+  function removeLink() {
+    const anchor = linkEditor?.element;
+    const parent = anchor?.parentNode;
+    if (anchor && parent) {
+      while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
+      parent.removeChild(anchor);
+    }
+    setLinkEditor(null);
+    emit();
+    refreshActive();
+  }
+
+  /**
+   * Wraps the block at the caret in a callout, swaps its variant, or — when
+   * it's already this variant — unwraps it again. Same toggle-don't-nest rule
+   * as `wrapSelectionInKbd`: clicking twice used to stack wrappers forever.
+   */
+  function toggleCallout(variant: CalloutVariant) {
+    const el = elRef.current;
+    el?.focus();
+    const sel = window.getSelection();
+    if (!el || !sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    if (!el.contains(range.commonAncestorContainer)) return;
+
+    const existing = closestCallout(el, range.commonAncestorContainer);
+    if (existing) {
+      if (existing.getAttribute("data-callout") === variant) {
+        const parent = existing.parentNode;
+        while (existing.firstChild && parent) parent.insertBefore(existing.firstChild, existing);
+        parent?.removeChild(existing);
+      } else {
+        existing.setAttribute("data-callout", variant);
+      }
+      emit();
+      refreshActive();
+      return;
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.setAttribute("data-callout", variant);
+    const block = topLevelBlock(el, range.commonAncestorContainer);
+    if (block) {
+      block.parentNode?.insertBefore(wrapper, block);
+      wrapper.appendChild(block);
+    } else {
+      // Loose text directly under the root (no paragraph yet) — give the
+      // callout a paragraph of its own so Enter inside it behaves normally.
+      const paragraph = document.createElement("p");
+      paragraph.appendChild(range.extractContents());
+      if (!paragraph.textContent) paragraph.appendChild(document.createElement("br"));
+      wrapper.appendChild(paragraph);
+      range.insertNode(wrapper);
+      const caret = document.createRange();
+      caret.selectNodeContents(paragraph);
+      caret.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(caret);
+    }
     emit();
     refreshActive();
   }
@@ -562,8 +994,7 @@ export function useRichTextController({
       return;
     }
     if (tool.action === "link") {
-      const url = window.prompt("Link URL", "https://");
-      if (url && url !== "https://") exec("createLink", url);
+      openLinkEditor();
     } else if (tool.action === "kbd") {
       elRef.current?.focus();
       wrapSelectionInKbd();
@@ -578,11 +1009,18 @@ export function useRichTextController({
     run,
     refreshActive,
     emit,
+    handleInput,
     mention,
     mentionMatches,
     mentionActiveIndex,
     insertMention,
     handleMentionKeyDown,
+    slash,
+    slashMatches,
+    slashActiveIndex,
+    runSlashCommand,
+    handleSlashKeyDown,
+    setSlash,
     dateEditor,
     setDateEditor,
     openDateEditor,
@@ -590,6 +1028,14 @@ export function useRichTextController({
     insertTable,
     insertDate,
     insertFileLink,
+    captureRange,
+    calloutVariant,
+    toggleCallout,
+    linkEditor,
+    setLinkEditor,
+    openLinkEditor,
+    saveLinkEditor,
+    removeLink,
   };
 }
 

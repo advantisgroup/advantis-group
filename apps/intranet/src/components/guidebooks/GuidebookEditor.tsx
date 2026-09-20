@@ -67,11 +67,10 @@ const BLANK_PAGE: GuidebookFormData = {
 };
 
 /**
- * Shared form for both /guidebooks/new/advanced (create) and
- * /guidebooks/[slug]/edit (update) — the actual persistence differs per
- * caller (create needs a unique slug computed up front; edit already has a
- * pageId), so this only owns the fields + BlockEditor and hands a finished
- * payload to `onSave`.
+ * The block editor, now reached only from `/guidebooks/[slug]/edit` to update
+ * a page that already exists — creating new ones is retired. It owns the
+ * fields + BlockEditor and hands a finished payload to `onSave` rather than
+ * persisting anything itself.
  */
 export function GuidebookEditor({
   initial,
