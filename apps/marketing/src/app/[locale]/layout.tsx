@@ -9,6 +9,26 @@ import { AnalyticsTracker } from "@/components/analytics/AnalyticsTracker";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { type Locale, locales } from "@/i18n/request";
+import { COMPANY_ADDRESS } from "@/lib/company";
+import { SITE_URL } from "@/lib/seo";
+
+const [streetAddress, postalAndCity] = COMPANY_ADDRESS.split(", ");
+const [postalCode, addressLocality] = postalAndCity.split(/ (.+)/);
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "ADVANTIS GROUP",
+  url: SITE_URL,
+  logo: `${SITE_URL}/base_logo_transparent_background.png`,
+  address: {
+    "@type": "PostalAddress",
+    streetAddress,
+    postalCode,
+    addressLocality,
+    addressCountry: "DE",
+  },
+};
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function generateStaticParams() {
@@ -32,6 +52,10 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
       <Header />
       {children}
       <Footer />

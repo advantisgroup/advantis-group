@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 
 import { ServiceLandingPage } from "@/components/sections/services/ServiceLandingPage";
 import { locales } from "@/i18n/request";
+import { localeAlternates } from "@/lib/seo";
 import { isServiceSlug, SERVICE_SLUGS } from "@/lib/services";
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -32,6 +33,7 @@ export async function generateMetadata({
   return {
     title: t("metaTitle"),
     description: t("metaDescription"),
+    alternates: localeAlternates(locale, `/services/${slug}`),
     openGraph: {
       title: t("metaTitle"),
       description: t("metaDescription"),

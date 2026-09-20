@@ -14,6 +14,7 @@ import { type Locale } from "@/i18n/request";
 import { addHeadingIds } from "@/lib/blog-headings";
 import { isBlogCategory } from "@/lib/blog-categories";
 import { getPost } from "@/lib/blog";
+import { localePath, SITE_URL } from "@/lib/seo";
 
 // Re-fetch from Convex periodically instead of freezing the post at build time.
 export const revalidate = 60;
@@ -49,6 +50,9 @@ export async function generateMetadata({
   return {
     title: post.title,
     description: post.excerpt,
+    // A post exists in one language only (fr/zh show the English one), so it
+    // gets a canonical and no hreflang siblings.
+    alternates: { canonical: localePath(post.language, `/blog/${post.slug}`) },
     openGraph: {
       type: "article",
       title: post.title,
@@ -87,8 +91,25 @@ export default async function BlogPostPage({
     ? addHeadingIds(sanitizeHtml(post.body, sanitizeOptions))
     : { html: "", headings: [] };
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: new Date(post.publishedAt).toISOString(),
+    inLanguage: post.language,
+    mainEntityOfPage: `${SITE_URL}${localePath(post.language, `/blog/${post.slug}`)}`,
+    ...(post.mainImageUrl && { image: post.mainImageUrl }),
+    ...(post.author && { author: { "@type": "Person", name: post.author } }),
+    publisher: { "@type": "Organization", name: "ADVANTIS GROUP", url: SITE_URL },
+  };
+
   return (
     <div className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       <main className="relative container mx-auto max-w-3xl px-4 pt-28 pb-24">
         <div className="absolute left-full top-0 ml-10 w-56">
           <BlogTableOfContents headings={headings} />

@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 
 import { WhitepaperConfirm } from "@/components/whitepaper/WhitepaperConfirm";
 import { type Locale } from "@/i18n/request";
+import { localeAlternates } from "@/lib/seo";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export async function generateMetadata({
@@ -15,7 +16,11 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "whitepaper.confirm" });
 
-  return { title: t("title"), description: t("description") };
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: localeAlternates(locale, "/whitepaper/confirm"),
+  };
 }
 
 export default function WhitepaperConfirmPage() {

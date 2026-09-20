@@ -11,6 +11,7 @@ import { Link } from "@/i18n/navigation";
 import { type Locale } from "@/i18n/request";
 import { BLOG_CATEGORIES, isBlogCategory } from "@/lib/blog-categories";
 import { getPosts, type BlogPostSummary } from "@/lib/blog";
+import { localeAlternates } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 // Re-fetch from Convex periodically instead of freezing the list at build time.
@@ -39,7 +40,11 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "blog" });
 
-  return { title: t("title"), description: t("subtitle") };
+  return {
+    title: t("title"),
+    description: t("subtitle"),
+    alternates: localeAlternates(locale, "/blog"),
+  };
 }
 
 /**
