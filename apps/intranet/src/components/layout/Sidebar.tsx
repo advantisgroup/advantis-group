@@ -45,7 +45,6 @@ import {
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { ActivitySidebar } from "@/components/layout/ActivitySidebar";
 import { ADMIN_NAV_GROUPS } from "@/components/layout/AdminSidebar";
-import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import {
   resolveSidebarSections,
   type SidebarSection,
@@ -629,15 +628,29 @@ export function Sidebar() {
       </SidebarContent>
 
       <SidebarFooter className="gap-4 py-5 md:gap-3 md:py-3">
-        {/* The top bar stays minimal on mobile, so the account and preferences
-            controls live here at the bottom-left of the sidebar. On desktop
-            they remain in the header, so this row is hidden there. */}
+        {/* The top bar stays minimal on mobile, so the account, preferences
+            and settings controls all live here, folded into one dropdown —
+            profile, language/theme and the settings link — plus a slim
+            icon-only Updates button. On desktop they remain in the header
+            (account/preferences) and the rail/footer links below
+            (settings/updates), so this row is hidden there. */}
         <div className="flex items-center gap-2 rounded-xl bg-sidebar-accent/60 p-1.5 md:hidden">
           <AccountMenu
             triggerClassName="h-11 flex-1 justify-start px-2 hover:bg-sidebar"
             onNavigate={close}
+            showPreferences
           />
-          <SettingsMenu className="size-11 shrink-0 hover:bg-sidebar" />
+          <Link
+            href="/updates"
+            onClick={close}
+            aria-label={t("updates")}
+            className="relative flex size-11 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-sidebar hover:text-sidebar-foreground"
+          >
+            <Rss className="size-4 shrink-0" />
+            {activeUpdate?.top ? (
+              <span className="absolute right-2.5 top-2.5 size-1.5 rounded-full bg-primary" />
+            ) : null}
+          </Link>
         </div>
         {/* Collapsed desktop rail has no room for the header's account
             trigger to be reachable at a glance, so it gets its own
@@ -659,53 +672,57 @@ export function Sidebar() {
           </Tooltip>
         </div>
         {/* Settings and Updates sit down here rather than competing with the
-            main nav — shared by the desktop rail and the mobile drawer. The
-            rail gets real icon buttons: the `md:` sizing on the expanded
-            links outranked collapsed overrides and shrank them to 14px. */}
-        {!isMobile && state === "collapsed" ? (
-          <div className="flex flex-col items-center gap-1">
-            <RailIconLink
-              href="/settings"
-              label={t("settings")}
-              icon={Settings}
-              tourAttr="tour-nav-settings"
-            />
-            <RailIconLink
-              href="/updates"
-              label={t("updates")}
-              icon={Rss}
-              dot={!!activeUpdate?.top}
-            />
-          </div>
-        ) : (
-          <div className="flex flex-col gap-0.5">
-            <Link
-              href="/settings"
-              onClick={close}
-              data-tour="tour-nav-settings"
-              className={cn(
-                "flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground md:h-auto md:rounded-md md:px-2 md:py-1.5 md:text-xs",
-                pathname.startsWith("/settings")
-                  ? "text-sidebar-foreground"
-                  : "text-sidebar-foreground/70",
-              )}
-            >
-              <Settings className="size-4 shrink-0 md:size-3.5" />
-              <SidebarLabel>{t("settings")}</SidebarLabel>
-            </Link>
-            <Link
-              href="/updates"
-              onClick={close}
-              className="flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground md:h-auto md:rounded-md md:px-2 md:py-1.5 md:text-xs"
-            >
-              <Rss className="size-4 shrink-0 md:size-3.5" />
-              <SidebarLabel>{t("updates")}</SidebarLabel>
-              {activeUpdate?.top ? (
-                <span className="size-1.5 shrink-0 rounded-full bg-primary" />
-              ) : null}
-            </Link>
-          </div>
-        )}
+            main nav — shared by the desktop rail and expanded desktop
+            sidebar. On mobile both are folded into the account row above
+            (Settings into the dropdown, Updates as the slim icon button),
+            so this block is desktop-only. The rail gets real icon buttons:
+            the `md:` sizing on the expanded links outranked collapsed
+            overrides and shrank them to 14px. */}
+        {!isMobile &&
+          (state === "collapsed" ? (
+            <div className="flex flex-col items-center gap-1">
+              <RailIconLink
+                href="/settings"
+                label={t("settings")}
+                icon={Settings}
+                tourAttr="tour-nav-settings"
+              />
+              <RailIconLink
+                href="/updates"
+                label={t("updates")}
+                icon={Rss}
+                dot={!!activeUpdate?.top}
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-0.5">
+              <Link
+                href="/settings"
+                onClick={close}
+                data-tour="tour-nav-settings"
+                className={cn(
+                  "flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground md:h-auto md:rounded-md md:px-2 md:py-1.5 md:text-xs",
+                  pathname.startsWith("/settings")
+                    ? "text-sidebar-foreground"
+                    : "text-sidebar-foreground/70",
+                )}
+              >
+                <Settings className="size-4 shrink-0 md:size-3.5" />
+                <SidebarLabel>{t("settings")}</SidebarLabel>
+              </Link>
+              <Link
+                href="/updates"
+                onClick={close}
+                className="flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground md:h-auto md:rounded-md md:px-2 md:py-1.5 md:text-xs"
+              >
+                <Rss className="size-4 shrink-0 md:size-3.5" />
+                <SidebarLabel>{t("updates")}</SidebarLabel>
+                {activeUpdate?.top ? (
+                  <span className="size-1.5 shrink-0 rounded-full bg-primary" />
+                ) : null}
+              </Link>
+            </div>
+          ))}
         <div className="flex items-center justify-between gap-2 border-t border-sidebar-border pt-4 group-data-[state=collapsed]/sidebar:hidden md:border-0 md:pt-0">
           <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-sidebar-foreground/50 md:tracking-wider">
             Advantis Group
