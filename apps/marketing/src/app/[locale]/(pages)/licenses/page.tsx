@@ -2,7 +2,7 @@ import { useTranslations } from "next-intl";
 
 import licensesData from "../../../../../public/licenses.json";
 
-import { Display, PageField } from "@/components/frame";
+import { Display } from "@/components/frame";
 import { LicenseDirectory } from "@/components/licenses/LicenseDirectory";
 
 export default function LicensesPage() {
@@ -25,9 +25,7 @@ export default function LicensesPage() {
 
   return (
     <div className="relative min-h-screen bg-background">
-      <PageField />
-
-      <main className="relative mx-auto w-full max-w-[1440px] px-5 pb-24 pt-32 md:px-10 md:pt-44">
+      <main className="relative mx-auto w-full max-w-[1200px] px-5 pb-24 pt-32 md:px-10 md:pt-44">
         <header className="max-w-3xl">
           <Display as="h1" size="lg">
             {t("title")}

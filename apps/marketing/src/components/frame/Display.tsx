@@ -3,11 +3,13 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Editorial display heading. Tighter tracking and leading than the global `h2`
- * rule, because at these sizes the default `-0.02em` leaves the line looking
- * loose. `size` maps to the three scales the site actually uses — anything
- * outside them is a sign the section wants a different structure, not a
- * different font size.
+ * Editorial display heading, set in the serif at book weight.
+ *
+ * Tracking stays at normal. The face is drawn for reading, and tightening it
+ * at display size closes the counters — which is what makes a big line look
+ * cramped rather than composed. `size` maps to the four scales the site
+ * actually uses; anything outside them means the section wants a different
+ * structure, not a different font size.
  */
 export const Display = ({
   children,
@@ -21,20 +23,14 @@ export const Display = ({
   size?: "sm" | "md" | "lg" | "xl";
 }) => {
   const scale = {
-    sm: "text-2xl md:text-3xl",
-    md: "text-3xl md:text-5xl",
-    lg: "text-4xl md:text-6xl",
-    xl: "text-5xl leading-[0.92] md:text-7xl lg:text-[5.5rem]",
+    sm: "text-xl leading-[1.25] md:text-2xl",
+    md: "text-[1.75rem] leading-[1.15] md:text-[2.25rem]",
+    lg: "text-[2rem] leading-[1.1] md:text-[2.75rem] lg:text-5xl",
+    xl: "text-[2.5rem] leading-[1.05] md:text-[3.75rem] lg:text-[4.5rem]",
   }[size];
 
   return (
-    <Tag
-      className={cn(
-        "font-[family-name:var(--font-outfit)] font-bold leading-[1.02] tracking-[-0.035em] text-balance",
-        scale,
-        className,
-      )}
-    >
+    <Tag className={cn("font-display font-medium tracking-normal text-balance", scale, className)}>
       {children}
     </Tag>
   );

@@ -23,13 +23,13 @@ const STATUS_BY_CODE: Record<number, Outcome> = {
 const TONE = {
   neutral: {
     icon: MailCheck,
-    ring: "bg-advantis/10 ring-advantis/5",
-    accent: "text-advantis",
+    ring: "bg-muted",
+    accent: "text-muted-foreground",
   },
   success: {
     icon: Check,
-    ring: "bg-emerald-500/10 ring-emerald-500/5",
-    accent: "text-emerald-600 dark:text-emerald-400",
+    ring: "bg-success/15",
+    accent: "text-success-foreground dark:text-success",
   },
   error: {
     icon: AlertCircle,
@@ -145,16 +145,14 @@ function Panel({
   const { icon: Icon, ring, accent } = TONE[tone];
 
   return (
-    <div className="space-y-6 rounded-[2rem] border border-border/60 bg-card/70 p-8 text-center shadow-2xl shadow-black/5 backdrop-blur-sm md:p-12">
+    <div className="space-y-6 rounded-xl border border-rule bg-card p-8 text-center md:p-12">
       <span
         className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ring-8 ${ring}`}
       >
         <Icon className={`h-7 w-7 ${accent}`} />
       </span>
       <div className="space-y-3">
-        <h1 className="font-[family-name:var(--font-outfit)] text-3xl leading-tight md:text-4xl">
-          {title}
-        </h1>
+        <h1 className="text-3xl leading-tight md:text-4xl">{title}</h1>
         <p className="text-base leading-relaxed text-muted-foreground">{description}</p>
       </div>
       {children}

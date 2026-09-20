@@ -3,16 +3,7 @@
 import { useMemo } from "react";
 
 import { SignInButton, SignOutButton, SignUpButton, useClerk, useUser } from "@clerk/nextjs";
-import {
-  Building2,
-  ChevronRight,
-  Cookie,
-  LogIn,
-  LogOut,
-  ReceiptText,
-  Settings2,
-  UserRound,
-} from "lucide-react";
+import { Building2, Cookie, LogOut, ReceiptText, Settings2, UserRound } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
@@ -30,14 +21,24 @@ import { Link } from "@/i18n/navigation";
 
 const getInitials = (fullName: string, email?: string | null) => {
   const source = fullName.trim() || email?.trim() || "Guest";
-  const parts = source.split(/\s+/).filter(Boolean);
 
-  return parts
+  return source
+    .split(/\s+/)
+    .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("");
 };
 
+/**
+ * The "you" menu: who you are signed in as, the two things you can do about
+ * it, how the site is set up, and the door to the intranet.
+ *
+ * Everything is one column of equal rows at one padding and one radius. The
+ * previous version mixed three radii, put a 4-up grid of flag pills inside a
+ * dropdown, and gave the identity block its own inset card — which is why it
+ * read as three menus stacked on top of each other rather than one.
+ */
 export const AccountMenu = ({
   isMobile = false,
   onMobileNavigate,
@@ -61,89 +62,84 @@ export const AccountMenu = ({
   const email = user?.primaryEmailAddress?.emailAddress;
   const initials = getInitials(displayName, email);
 
-  if (isMobile) {
-    return isSignedIn ? (
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-11 w-11 border-advantis/20 bg-advantis/10">
-            <AvatarImage src={user.imageUrl} alt={displayName} />
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
-            {email ? <p className="truncate text-sm text-muted-foreground">{email}</p> : null}
-          </div>
-        </div>
-
-        <div className="grid gap-2">
-          <Button
-            type="button"
-            className="w-full justify-between"
-            onClick={() => {
-              onMobileNavigate?.();
-              void openUserProfile();
-            }}
-          >
-            <span className="flex items-center gap-2">
-              <Settings2 className="h-4 w-4" />
-              {t("accountCta")}
-            </span>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button asChild variant="outline" className="w-full justify-between">
-            <Link href="/account/submissions" locale={locale} onClick={() => onMobileNavigate?.()}>
-              <span className="flex items-center gap-2">
-                <ReceiptText className="h-4 w-4" />
-                {t("submissionsCta")}
-              </span>
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </Button>
-          <SignOutButton>
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="h-4 w-4" />
-              {t("signOut")}
-            </Button>
-          </SignOutButton>
-        </div>
+  const identity = (
+    <div className="flex items-center gap-3">
+      <Avatar className="size-10">
+        {isSignedIn ? <AvatarImage src={user.imageUrl} alt={displayName} /> : null}
+        <AvatarFallback className="bg-muted text-sm font-medium text-muted-foreground">
+          {isSignedIn ? initials : <UserRound className="size-4" />}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium text-foreground">
+          {isSignedIn ? displayName : t("menuLabel")}
+        </p>
+        <p className="truncate text-[13px] text-muted-foreground">
+          {isSignedIn ? email : t("providerHint")}
+        </p>
       </div>
-    ) : (
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-11 w-11">
-            <AvatarFallback>
-              <UserRound className="h-4 w-4" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">{t("menuLabel")}</p>
-            <p className="text-sm text-muted-foreground">{t("providerHint")}</p>
-          </div>
-        </div>
+    </div>
+  );
 
-        <div className="grid grid-cols-2 gap-2">
-          <SignInButton>
-            <Button type="button" className="w-full" onClick={() => onMobileNavigate?.()}>
-              <LogIn className="h-4 w-4" />
-              {t("signIn")}
-            </Button>
-          </SignInButton>
-          <SignUpButton>
+  const signedOutActions = (
+    <div className="grid grid-cols-2 gap-2">
+      <SignInButton>
+        <Button type="button" size="sm" className="w-full" onClick={() => onMobileNavigate?.()}>
+          {t("signIn")}
+        </Button>
+      </SignInButton>
+      <SignUpButton>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="w-full"
+          onClick={() => onMobileNavigate?.()}
+        >
+          {t("signUp")}
+        </Button>
+      </SignUpButton>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        {identity}
+        {isSignedIn ? (
+          <div className="grid gap-2">
             <Button
               type="button"
               variant="outline"
-              className="w-full"
-              onClick={() => onMobileNavigate?.()}
+              className="w-full justify-start"
+              onClick={() => {
+                onMobileNavigate?.();
+                void openUserProfile();
+              }}
             >
-              <UserRound className="h-4 w-4" />
-              {t("signUp")}
+              <Settings2 />
+              {t("accountCta")}
             </Button>
-          </SignUpButton>
-        </div>
+            <Button asChild variant="outline" className="w-full justify-start">
+              <Link
+                href="/account/submissions"
+                locale={locale}
+                onClick={() => onMobileNavigate?.()}
+              >
+                <ReceiptText />
+                {t("submissionsCta")}
+              </Link>
+            </Button>
+            <SignOutButton>
+              <Button type="button" variant="ghost" className="w-full justify-start">
+                <LogOut />
+                {t("signOut")}
+              </Button>
+            </SignOutButton>
+          </div>
+        ) : (
+          signedOutActions
+        )}
       </div>
     );
   }
@@ -153,115 +149,73 @@ export const AccountMenu = ({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="group/account relative inline-flex h-8 w-8 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="inline-flex size-9 items-center justify-center rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           aria-label={t("menuLabel")}
         >
-          <span className="absolute inset-0 rounded-full bg-advantis/10 opacity-0 blur-md transition-opacity duration-300 group-hover/account:opacity-100" />
-          <Avatar className="relative z-10 h-8 w-8 border-border/80 bg-background transition-colors duration-200 group-hover/account:border-advantis/40">
+          <Avatar className="size-8">
             {isSignedIn ? <AvatarImage src={user.imageUrl} alt={displayName} /> : null}
-            <AvatarFallback
-              className={
-                isSignedIn
-                  ? "bg-advantis/10 text-xs text-advantis"
-                  : "bg-muted text-muted-foreground"
-              }
-            >
-              {isSignedIn ? initials : <UserRound className="h-3.5 w-3.5" />}
+            <AvatarFallback className="bg-muted text-[11px] font-medium text-muted-foreground">
+              {isSignedIn ? initials : <UserRound className="size-3.5" />}
             </AvatarFallback>
           </Avatar>
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent
-        align="end"
-        className="w-80 rounded-2xl border border-border/80 bg-popover p-2 shadow-md"
-      >
+      <DropdownMenuContent align="end" className="w-[19rem]">
+        <div className="px-2.5 py-2">{identity}</div>
+
+        <DropdownMenuSeparator />
+
         {isSignedIn ? (
           <>
-            <div className="flex items-center gap-3 rounded-xl px-3 py-3">
-              <Avatar className="h-11 w-11 border-advantis/20 bg-advantis/10">
-                <AvatarImage src={user.imageUrl} alt={displayName} />
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
-                {email ? <p className="truncate text-sm text-muted-foreground">{email}</p> : null}
-              </div>
-            </div>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem
-              className="cursor-pointer rounded-xl px-3 py-3"
-              onSelect={() => void openUserProfile()}
-            >
-              <Settings2 className="h-4 w-4" />
-              <span>{t("accountCta")}</span>
+            <DropdownMenuItem onSelect={() => void openUserProfile()}>
+              <Settings2 />
+              {t("accountCta")}
             </DropdownMenuItem>
-            <DropdownMenuItem asChild className="rounded-xl px-3 py-3">
+            <DropdownMenuItem asChild>
               <Link href="/account/submissions" locale={locale}>
-                <ReceiptText className="h-4 w-4" />
-                <span>{t("submissionsCta")}</span>
+                <ReceiptText />
+                {t("submissionsCta")}
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <SignOutButton>
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>{t("signOut")}</span>
-              </button>
-            </SignOutButton>
           </>
         ) : (
-          <div className="space-y-4 p-3">
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-foreground">{t("menuLabel")}</p>
-              <p className="text-sm leading-6 text-muted-foreground">{t("providerHint")}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <SignInButton>
-                <Button type="button" size="sm" className="w-full">
-                  {t("signIn")}
-                </Button>
-              </SignInButton>
-              <SignUpButton>
-                <Button type="button" size="sm" variant="outline" className="w-full">
-                  {t("signUp")}
-                </Button>
-              </SignUpButton>
-            </div>
-          </div>
+          <div className="px-1 py-1">{signedOutActions}</div>
         )}
 
-        {/*
-         * Language, appearance and the intranet link live here rather than in
-         * the navigation dropdown: that one is for destinations, this one is
-         * for you and how the site is set up.
-         */}
-        <DropdownMenuSeparator />
-        <div className="px-3 py-3">
-          <SettingsMenu inline />
-        </div>
-
-        <DropdownMenuItem asChild className="rounded-xl px-3 py-3">
+        <DropdownMenuItem asChild>
           <Link href="/cookies" locale={locale}>
-            <Cookie className="h-4 w-4" />
-            <span>{tNav("cookies")}</span>
+            <Cookie />
+            {tNav("cookies")}
           </Link>
         </DropdownMenuItem>
 
         {intranetUrl ? (
+          <DropdownMenuItem asChild>
+            <Link href={intranetUrl}>
+              <Building2 />
+              {tNav("intranet")}
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
+
+        <DropdownMenuSeparator />
+
+        {/* Language and appearance: how the site is set up for you, which is
+            the same question as who you are signed in as. */}
+        <div className="px-2.5 py-2">
+          <SettingsMenu />
+        </div>
+
+        {isSignedIn ? (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="rounded-xl px-3 py-3">
-              <Link href={intranetUrl}>
-                <Building2 className="h-4 w-4" />
-                <span>{tNav("intranet")}</span>
-              </Link>
-            </DropdownMenuItem>
+            <SignOutButton>
+              <DropdownMenuItem>
+                <LogOut />
+                {t("signOut")}
+              </DropdownMenuItem>
+            </SignOutButton>
           </>
         ) : null}
       </DropdownMenuContent>

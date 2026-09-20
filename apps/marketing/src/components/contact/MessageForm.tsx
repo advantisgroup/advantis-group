@@ -28,7 +28,7 @@ export function MessageForm({
           id="company"
           value={formData.company}
           onChange={(e) => onFormDataChange({ ...formData, company: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
         />
         {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company[0]}</p>}
       </div>
@@ -43,7 +43,7 @@ export function MessageForm({
             id="firstName"
             value={formData.firstName}
             onChange={(e) => onFormDataChange({ ...formData, firstName: e.target.value })}
-            className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+            className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
           />
           {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName[0]}</p>}
         </div>
@@ -56,7 +56,7 @@ export function MessageForm({
             id="lastName"
             value={formData.lastName}
             onChange={(e) => onFormDataChange({ ...formData, lastName: e.target.value })}
-            className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+            className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
           />
           {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName[0]}</p>}
         </div>
@@ -71,7 +71,7 @@ export function MessageForm({
           id="email"
           value={formData.email}
           onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
         />
         {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
       </div>
@@ -85,7 +85,7 @@ export function MessageForm({
           id="phone"
           value={formData.phone}
           onChange={(e) => onFormDataChange({ ...formData, phone: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
         />
       </div>
 
@@ -98,7 +98,7 @@ export function MessageForm({
           value={formData.message}
           onChange={(e) => onFormDataChange({ ...formData, message: e.target.value })}
           rows={6}
-          className="min-h-28 md:min-h-40 w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
+          className="min-h-28 md:min-h-40 w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
         />
         {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message[0]}</p>}
       </div>

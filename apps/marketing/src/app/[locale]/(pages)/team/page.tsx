@@ -1,55 +1,21 @@
 "use client";
 
-import { useRef } from "react";
-
 import Image from "next/image";
 
-import { motion, useScroll, useTransform } from "framer-motion";
-import { Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { Display, PageField, Section } from "@/components/frame";
+import { Display, PageHeader, Section, SectionHead } from "@/components/frame";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
-const OFFICE_PHOTOS: { src: string; alt: string; size?: "sm" | "lg" }[] = [
-  { src: "/office/office-teamwork.png", alt: "Team ADVANTIS GROUP", size: "lg" },
-  { src: "/office/office-andrea-reichl.png", alt: "Team ADVANTIS GROUP" },
-  { src: "/office/office-whiteboard.png", alt: "Team ADVANTIS GROUP" },
-  { src: "/office/office-andrea-lautenbacher.png", alt: "Team ADVANTIS GROUP" },
-  { src: "/office/office-morena-azzuro.png", alt: "Team ADVANTIS GROUP" },
-];
-
-function ParallaxPhoto({
-  src,
-  alt,
-  className,
-  speed,
-}: {
-  src: string;
-  alt: string;
-  className: string;
-  speed: number;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], [`-${speed}%`, `${speed}%`]);
-
-  return (
-    <div ref={ref} className={`${className} relative overflow-hidden`}>
-      <motion.div style={{ y }} className="absolute inset-[-15%]">
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          sizes="(min-width: 768px) 33vw, 50vw"
-          className="object-cover"
-        />
-      </motion.div>
-    </div>
-  );
-}
+/* office-teamwork is the homepage's hero photograph, so it sits this one out. */
+const OFFICE_PHOTOS = [
+  "/office/office-whiteboard.png",
+  "/office/office-andrea-reichl.png",
+  "/office/office-andrea-lautenbacher.png",
+  "/office/office-morena-azzuro.png",
+] as const;
 
 export default function Team() {
   const t = useTranslations("team");
@@ -60,7 +26,8 @@ export default function Team() {
       role: t("founder.role"),
       initials: "AR",
       bio: t("founder.bio"),
-      email: `${process.env.NEXT_PUBLIC_EMAIL_ADRESS}`,
+      email: process.env.NEXT_PUBLIC_EMAIL_ADRESS,
+      photo: undefined as string | undefined,
     },
     { name: "Andrea Lautenbacher", role: t("roles.inbound"), initials: "AL" },
     {
@@ -93,115 +60,96 @@ export default function Team() {
   const founder = teamMembers[0];
 
   return (
-    <div className="relative min-h-screen bg-background">
-      <PageField />
+    <div className="min-h-screen bg-background">
+      <PageHeader
+        title={
+          <>
+            {t("hero.titlePart1")} <span className="text-primary">ADVANTIS GROUP</span>
+          </>
+        }
+        lede={t("hero.subtitle")}
+      />
 
-      <div className="relative">
-        <section className="relative pt-32 pb-20 md:pt-44 md:pb-28">
-          <div className="mx-auto w-full max-w-[1440px] px-5 md:px-10">
-            <Display as="h1" size="xl" className="max-w-[14ch]">
-              {t("hero.titlePart1")} <span className="text-primary">ADVANTIS GROUP</span>
+      {/* The founder, and what she says the company is for. The quote leads;
+          the portrait and the contact button sit beside it. */}
+      <Section>
+        <div className="grid gap-10 md:grid-cols-[minmax(0,auto)_minmax(0,1fr)] md:gap-16">
+          <div>
+            <Avatar className="size-36 md:size-44">
+              {founder.photo ? (
+                <AvatarImage src={founder.photo} alt={founder.name} className="object-cover" />
+              ) : null}
+              <AvatarFallback className="font-display text-4xl font-medium text-muted-foreground">
+                {founder.initials}
+              </AvatarFallback>
+            </Avatar>
+            <h2 className="mt-6 text-xl font-semibold tracking-[-0.015em]">{founder.name}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{founder.role}</p>
+
+            {founder.email ? (
+              <Button asChild variant="outline" size="sm" className="mt-5">
+                <Link href={`mailto:${founder.email}`}>{t("founder.contactBtn")}</Link>
+              </Button>
+            ) : null}
+          </div>
+
+          <div>
+            <Display size="md" as="p" className="max-w-[26ch]">
+              {t("founder.quote")}
             </Display>
-            <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-2xl">
-              {t("hero.subtitle")}
-            </p>
+            <p className="reading mt-8 max-w-[60ch] text-muted-foreground">{founder.bio}</p>
           </div>
-        </section>
+        </div>
+      </Section>
 
-        <Section>
-          <div className="rounded-xl border border-rule bg-card/30 p-6 md:p-10">
-            <div className="grid gap-10 md:grid-cols-[auto_minmax(0,1fr)] md:gap-14">
-              <div>
-                <Avatar className="size-40 border-0 bg-primary/10 text-primary md:size-48">
-                  {founder.photo ? (
-                    <AvatarImage src={founder.photo} alt={founder.name} className="object-cover" />
-                  ) : null}
-                  <AvatarFallback className="bg-transparent font-[family-name:var(--font-outfit)] text-4xl font-bold tracking-[-0.02em] text-primary md:text-5xl">
-                    {founder.initials}
-                  </AvatarFallback>
-                </Avatar>
-                <h2 className="mt-6 font-[family-name:var(--font-outfit)] text-2xl font-bold tracking-[-0.025em]">
-                  {founder.name}
-                </h2>
-                <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
-                  {founder.role}
-                </p>
+      <Section size="loose">
+        <SectionHead align="left" size="md" title={t("grid.title")} lede={t("grid.subtitle")} />
 
-                {founder.email ? (
-                  <Button asChild variant="outline" className="mt-6 rounded-lg border-rule-strong">
-                    <Link href={`mailto:${founder.email}`}>
-                      <Mail className="size-4" />
-                      {t("founder.contactBtn")}
-                    </Link>
-                  </Button>
+        <ul className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+          {teamMembers.slice(1).map((member) => (
+            <li key={member.name} className="flex items-center gap-4 border-t border-rule pt-6">
+              <Avatar className="size-14 shrink-0">
+                {member.photo ? (
+                  <AvatarImage src={member.photo} alt={member.name} className="object-cover" />
                 ) : null}
+                <AvatarFallback className="text-sm font-medium text-muted-foreground">
+                  {member.initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <h3 className="truncate text-base font-semibold tracking-[-0.01em]">
+                  {member.name}
+                </h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">{member.role}</p>
               </div>
+            </li>
+          ))}
+        </ul>
+      </Section>
 
-              <div className="md:border-l md:border-rule md:pl-14">
-                <Display size="md" as="p">
-                  {t("founder.quote")}
-                </Display>
-                <p className="mt-8 text-base leading-[1.75] text-muted-foreground md:text-lg">
-                  {founder.bio}
-                </p>
-              </div>
+      {/*
+       * The office, as photographs rather than as a parallax mosaic. Each one
+       * used to sit inside its own scroll-linked transform at one of three
+       * speeds, which meant five pictures drifting against each other at
+       * once — the photos are worth looking at, and that made them hard to.
+       */}
+      <Section size="loose">
+        <SectionHead title={t("office.title")} lede={t("office.subtitle")} />
+
+        <div className="mt-14 grid gap-4 sm:grid-cols-2">
+          {OFFICE_PHOTOS.map((src) => (
+            <div key={src} className="relative aspect-[4/3] overflow-hidden rounded-xl">
+              <Image
+                src={src}
+                alt={t("office.photoAlt")}
+                fill
+                sizes="(min-width: 640px) 50vw, 100vw"
+                className="object-cover"
+              />
             </div>
-          </div>
-        </Section>
-
-        <Section>
-          <Display size="md">{t("grid.title")}</Display>
-          <p className="mt-4 text-lg text-muted-foreground">{t("grid.subtitle")}</p>
-
-          <div className="mt-12 grid gap-px overflow-hidden rounded-xl bg-rule sm:grid-cols-2 lg:grid-cols-3">
-            {teamMembers.slice(1).map((member, index) => (
-              <div
-                key={member.name}
-                className="group flex items-center gap-5 bg-background p-6 transition-colors duration-300 hover:bg-card/60"
-              >
-                <Avatar className="size-20 shrink-0 border-0 bg-muted/10 text-muted-foreground transition-colors duration-300 group-hover:text-primary">
-                  {member.photo ? (
-                    <AvatarImage src={member.photo} alt={member.name} className="object-cover" />
-                  ) : null}
-                  <AvatarFallback className="bg-transparent font-[family-name:var(--font-outfit)] text-xl font-bold tracking-[-0.02em]">
-                    {member.initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <span className="font-mono text-[11px] tracking-[0.24em] text-muted-foreground/40">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className="mt-2 font-[family-name:var(--font-outfit)] text-lg font-bold tracking-[-0.02em]">
-                    {member.name}
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{member.role}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        {OFFICE_PHOTOS.length > 0 ? (
-          <Section size="loose">
-            <div className="mx-auto max-w-2xl text-center">
-              <Display size="md">{t("office.title")}</Display>
-              <p className="mt-4 text-lg text-muted-foreground">{t("office.subtitle")}</p>
-            </div>
-
-            <div className="mt-14 grid auto-rows-[10rem] grid-cols-2 gap-px overflow-hidden rounded-xl bg-rule md:auto-rows-[12rem] md:grid-cols-3">
-              {OFFICE_PHOTOS.map((photo, index) => (
-                <ParallaxPhoto
-                  key={photo.src}
-                  src={photo.src}
-                  alt={photo.alt}
-                  speed={8 + (index % 3) * 4}
-                  className={photo.size === "lg" ? "col-span-2 row-span-2" : "row-span-2"}
-                />
-              ))}
-            </div>
-          </Section>
-        ) : null}
-      </div>
+          ))}
+        </div>
+      </Section>
     </div>
   );
 }

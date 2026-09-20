@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 
-import { Display, PageField } from "@/components/frame";
+import { Display } from "@/components/frame";
 import { CookiePreferences } from "@/components/privacy/CookiePreferences";
 import { Link } from "@/i18n/navigation";
 
@@ -9,8 +9,6 @@ export default function CookiesPage() {
 
   return (
     <div className="relative min-h-screen bg-background">
-      <PageField />
-
       <main className="relative mx-auto w-full max-w-3xl px-5 pb-24 pt-32 md:px-10 md:pt-44">
         <header>
           <Display as="h1" size="lg">

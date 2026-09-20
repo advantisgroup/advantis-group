@@ -5,7 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { CategoryEyebrow, PostMeta } from "@/components/blog/PostMeta";
-import { Display, PageField } from "@/components/frame";
+import { PageHeader } from "@/components/frame";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { type Locale } from "@/i18n/request";
@@ -61,7 +61,7 @@ function HeroPost({ post, locale, t }: { post: BlogPostSummary; locale: Locale; 
           {category ? <CategoryEyebrow label={category} /> : null}
           <h2
             className={cn(
-              "font-[family-name:var(--font-outfit)] font-bold leading-[1.05] tracking-tight transition-colors group-hover:text-primary",
+              "font-semibold leading-[1.15] tracking-[-0.02em] transition-colors group-hover:text-primary",
               post.mainImageUrl ? "text-3xl md:text-5xl" : "text-4xl md:text-6xl",
             )}
           >
@@ -82,7 +82,7 @@ function HeroPost({ post, locale, t }: { post: BlogPostSummary; locale: Locale; 
         </div>
 
         {post.mainImageUrl ? (
-          <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border/60 lg:order-last">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-rule lg:order-last">
             <Image
               src={post.mainImageUrl}
               alt=""
@@ -112,7 +112,7 @@ function PostRow({ post, locale, t }: { post: BlogPostSummary; locale: Locale; t
       <article className="grid gap-5 md:grid-cols-[1fr_13rem] md:items-start md:gap-8">
         <div className="order-2 space-y-3 md:order-1">
           {category ? <CategoryEyebrow label={category} /> : null}
-          <h2 className="font-[family-name:var(--font-outfit)] text-2xl font-bold leading-snug tracking-tight transition-colors group-hover:text-primary md:text-[1.75rem]">
+          <h2 className="text-xl font-semibold leading-snug tracking-[-0.015em] transition-colors group-hover:text-primary md:text-2xl">
             {post.title}
           </h2>
           <p className="line-clamp-2 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
@@ -129,7 +129,7 @@ function PostRow({ post, locale, t }: { post: BlogPostSummary; locale: Locale; t
         </div>
 
         {post.mainImageUrl ? (
-          <div className="relative order-1 aspect-[16/9] overflow-hidden rounded-lg border border-border/60 md:order-2 md:aspect-[4/3]">
+          <div className="relative order-1 aspect-[16/9] overflow-hidden rounded-lg border border-rule md:order-2 md:aspect-[4/3]">
             <Image
               src={post.mainImageUrl}
               alt=""
@@ -168,7 +168,7 @@ function CategoryFilter({
           pill,
           active === null
             ? "border-foreground bg-foreground text-background"
-            : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+            : "border-rule text-muted-foreground hover:border-foreground/40 hover:text-foreground",
         )}
       >
         {t("filterAll")}
@@ -181,7 +181,7 @@ function CategoryFilter({
             pill,
             active === category
               ? "border-foreground bg-foreground text-background"
-              : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+              : "border-rule text-muted-foreground hover:border-foreground/40 hover:text-foreground",
           )}
         >
           {t(`categories.${category}`)}
@@ -191,10 +191,9 @@ function CategoryFilter({
   );
 }
 
-const OTHER_LANGUAGE_LABELS: Record<"de" | "en", { flag: string; code: string }> = {
-  de: { flag: "🇩🇪", code: "DE" },
-  en: { flag: "🇬🇧", code: "EN" },
-};
+/* No flag emoji: a flag is not a language, and Windows has no font behind the
+   regional-indicator glyphs, so 🇩🇪 renders there as the bare letters "DE". */
+const OTHER_LANGUAGE_CODES: Record<"de" | "en", string> = { de: "DE", en: "EN" };
 
 /** Cross-language discovery footer — posts only exist in whichever single
  * language they were authored in (see blogLanguage), so without this a post
@@ -211,13 +210,11 @@ function OtherLanguagePosts({
   t: Translator;
 }) {
   if (posts.length === 0) return null;
-  const { flag, code } = OTHER_LANGUAGE_LABELS[language];
+  const code = OTHER_LANGUAGE_CODES[language];
 
   return (
     <section className="mt-16 border-t border-rule pt-6">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {t("otherLanguages")}
-      </p>
+      <p className="text-[13px] font-medium text-muted-foreground">{t("otherLanguages")}</p>
       <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
         {posts.map((post) => (
           <li key={post._id}>
@@ -226,8 +223,9 @@ function OtherLanguagePosts({
               locale={language}
               className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              <span aria-hidden>{flag}</span>
-              <span className="text-xs font-medium">{code}</span>
+              <span className="rounded border border-rule px-1.5 py-0.5 text-[11px] font-medium">
+                {code}
+              </span>
               <span>{post.title}</span>
             </Link>
           </li>
@@ -239,8 +237,8 @@ function OtherLanguagePosts({
 
 function EmptyState({ t, filtered }: { t: Translator; filtered: boolean }) {
   return (
-    <div className="border-t border-border py-24 text-center">
-      <p className="font-[family-name:var(--font-outfit)] text-2xl font-bold tracking-tight">
+    <div className="border-t border-rule py-24 text-center">
+      <p className="text-xl font-semibold tracking-[-0.015em]">
         {filtered ? t("emptyFiltered") : t("empty")}
       </p>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
@@ -292,21 +290,17 @@ export default async function BlogPage({
   const [hero, ...rest] = posts;
 
   return (
-    <div className="relative min-h-screen bg-background">
-      <PageField />
+    <div className="min-h-screen bg-background">
+      <PageHeader title={t("title")} lede={t("subtitle")} className="md:pb-12" />
 
-      <main className="relative mx-auto w-full max-w-5xl px-5 pt-32 pb-24 md:px-10 md:pt-40">
-        <header className="space-y-4 border-b border-rule pb-10">
-          <Display as="h1" size="lg">
-            {t("title")}
-          </Display>
-          <p className="max-w-2xl text-lg text-muted-foreground">{t("subtitle")}</p>
-          {usedCategories.length > 1 ? (
-            <div className="pt-2">
-              <CategoryFilter categories={usedCategories} active={activeCategory} t={t} />
-            </div>
-          ) : null}
-        </header>
+      <main className="mx-auto w-full max-w-5xl px-5 pb-24 md:px-10">
+        {usedCategories.length > 1 ? (
+          <div className="border-b border-rule pb-8">
+            <CategoryFilter categories={usedCategories} active={activeCategory} t={t} />
+          </div>
+        ) : (
+          <div className="border-b border-rule" />
+        )}
 
         {posts.length === 0 ? (
           <EmptyState t={t} filtered={activeCategory !== null} />

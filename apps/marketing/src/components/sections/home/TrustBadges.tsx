@@ -9,8 +9,10 @@ import { Display, Section } from "@/components/frame";
 const SALES_CLUB_YEARS = ["2024", "2025", "2026"] as const;
 
 /**
- * The proof bar: the claims spelled out as a ledger, the badges themselves as
- * the evidence beside them.
+ * The proof bar: the badges as evidence, the claims spelled out beside them.
+ *
+ * The badges are no longer desaturated-until-hover. A greyed-out award is a
+ * strange thing to print — either it counts or it doesn't.
  */
 export const TrustBadges = () => {
   const t = useTranslations("trustBadges");
@@ -25,43 +27,37 @@ export const TrustBadges = () => {
   ];
 
   return (
-    <Section size="tight">
-      <Display size="sm" className="max-w-[16ch]">
-        {t("title")}
-      </Display>
-
-      <div className="mt-10 grid gap-10 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-16">
-        <ul className="border-t border-rule">
-          {ledger.map((entry) => (
-            <li
-              key={entry.key}
-              className="flex items-center gap-3 border-b border-rule py-3 font-mono text-xs tracking-wide text-muted-foreground"
-            >
-              <span aria-hidden className="text-primary">
-                ✓
-              </span>
-              {entry.text}
-            </li>
-          ))}
-        </ul>
-
+    <Section size="normal">
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center lg:gap-20">
         <div>
-          <div className="flex flex-wrap items-center gap-6 sm:gap-8">
+          <Display size="md" className="max-w-[18ch]">
+            {t("title")}
+          </Display>
+
+          <ul className="mt-8">
             {ledger.map((entry) => (
-              <div
+              <li
                 key={entry.key}
-                className="relative size-20 opacity-70 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0 sm:size-24"
+                className="border-t border-rule py-3 text-sm text-muted-foreground last:border-b"
               >
-                <Image
-                  src={entry.src}
-                  alt={entry.text}
-                  fill
-                  sizes="96px"
-                  className="object-contain"
-                />
-              </div>
+                {entry.text}
+              </li>
             ))}
-          </div>
+          </ul>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-8 lg:justify-end">
+          {ledger.map((entry) => (
+            <div key={entry.key} className="relative size-20 sm:size-24">
+              <Image
+                src={entry.src}
+                alt={entry.text}
+                fill
+                sizes="96px"
+                className="object-contain"
+              />
+            </div>
+          ))}
         </div>
       </div>
     </Section>

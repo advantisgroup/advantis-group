@@ -1,14 +1,15 @@
-import { JetBrains_Mono, Manrope, Outfit } from "next/font/google";
+import { JetBrains_Mono, Manrope, Newsreader } from "next/font/google";
 
 import "./global.css";
 import { type Metadata } from "next";
 
 import GlobalNotFoundClient from "@/components/layout/GlobalNotFoundClient";
 
-const outfit = Outfit({
+const newsreader = Newsreader({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  variable: "--font-serif",
   display: "swap",
+  style: ["normal", "italic"],
 });
 
 const manrope = Manrope({
@@ -31,7 +32,10 @@ export const metadata: Metadata = {
 
 export default function GlobalNotFound() {
   return (
-    <html lang="en" className={`${manrope.variable} ${outfit.variable} ${jetbrainsMono.variable}`}>
+    <html
+      lang="en"
+      className={`${manrope.variable} ${newsreader.variable} ${jetbrainsMono.variable}`}
+    >
       <body className="bg-background antialiased">
         <GlobalNotFoundClient />
       </body>

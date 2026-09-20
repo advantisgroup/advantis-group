@@ -68,6 +68,7 @@
     }
   },
   "hero": {
+    "imageAlt": "Das Team der ADVANTIS GROUP bei der Arbeit im Nürnberger Büro",
     "title": "Mehr als ein Unternehmen, komplette",
     "titleHighlight": "Sales Power",
     "ctaPrimary": "Jetzt Kontakt aufnehmen",
@@ -148,6 +149,8 @@
     }
   },
   "brands": {
+    "comingSoon": "In Vorbereitung",
+    "groupLabel": "Die Marken der Gruppe",
     "title": "Unsere",
     "titleHighlight": "Marken",
     "subtitle": "Vier starke Marken, ein gemeinsames Ziel: dein Vertriebserfolg",
@@ -391,11 +394,13 @@
       "subtitle": "Die Experten an deiner Seite"
     },
     "office": {
+      "photoAlt": "Das Team der ADVANTIS GROUP bei der Arbeit im Büro",
       "title": "Einblicke in unseren Alltag",
       "subtitle": "Ein paar Momente aus dem Büro und von unterwegs."
     }
   },
   "brandsPage": {
+    "comingSoon": "In Vorbereitung",
     "hero": {
       "badge": "Vier Premium Marken – Ein Ziel",
       "titlePrefix": "Unsere",

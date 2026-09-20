@@ -48,7 +48,7 @@ export function BlogTableOfContents({ headings }: { headings: BlogHeading[] }) {
         <p className="text-xs font-medium tracking-wide text-muted-foreground/70">
           {t("tableOfContents")}
         </p>
-        <ul className="space-y-2 border-l border-border/60 text-sm">
+        <ul className="space-y-2 border-l border-rule text-sm">
           {headings.map((heading) => (
             <li key={heading.id} className={cn(heading.level === 3 && "pl-3")}>
               <a

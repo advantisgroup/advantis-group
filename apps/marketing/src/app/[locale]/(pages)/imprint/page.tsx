@@ -4,7 +4,7 @@ import { Building2, Mail, FileText } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { BrandText } from "@/components/effects/BrandText";
-import { Display, PageField } from "@/components/frame";
+import { Display } from "@/components/frame";
 import { COMPANY_ADDRESS } from "@/lib/company";
 
 export default function Impressum() {
@@ -53,10 +53,8 @@ export default function Impressum() {
 
   return (
     <div className="relative min-h-screen bg-background">
-      <PageField />
-
-      <main className="relative mx-auto w-full max-w-[1440px] px-5 pt-32 pb-24 md:px-10 md:pt-44">
-        <Display as="h1" size="xl">
+      <main className="relative mx-auto w-full max-w-[1200px] px-5 pt-32 pb-24 md:px-10 md:pt-44">
+        <Display as="h1" size="lg">
           {t("title")}
         </Display>
 
@@ -66,9 +64,7 @@ export default function Impressum() {
             return (
               <div key={section.title} className="bg-background p-6 md:p-8">
                 <Icon className="size-6 text-primary" strokeWidth={1.5} />
-                <h2 className="mt-6 font-[family-name:var(--font-outfit)] text-xl font-bold tracking-[-0.02em]">
-                  {section.title}
-                </h2>
+                <h2 className="mt-6 text-xl font-semibold tracking-[-0.015em]">{section.title}</h2>
                 <div className="mt-4 text-sm leading-relaxed md:text-base">{section.content}</div>
               </div>
             );
@@ -77,7 +73,7 @@ export default function Impressum() {
 
         <div className="mt-px grid gap-px overflow-hidden rounded-b-xl bg-rule md:grid-cols-2">
           <div className="bg-background p-6 md:p-8">
-            <h2 className="font-[family-name:var(--font-outfit)] text-xl font-bold tracking-[-0.02em]">
+            <h2 className="text-xl font-semibold tracking-[-0.015em]">
               {t("sections.register.title")}
             </h2>
             <div className="mt-4 space-y-2 text-sm text-muted-foreground md:text-base">
@@ -88,7 +84,7 @@ export default function Impressum() {
           </div>
 
           <div className="bg-background p-6 md:p-8">
-            <h2 className="font-[family-name:var(--font-outfit)] text-xl font-bold tracking-[-0.02em]">
+            <h2 className="text-xl font-semibold tracking-[-0.015em]">
               {t("sections.responsible.title")}
             </h2>
             <div className="mt-4 space-y-2 text-sm text-muted-foreground md:text-base">

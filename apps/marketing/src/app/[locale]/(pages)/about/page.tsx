@@ -1,193 +1,138 @@
 "use client";
 
-import Image from "next/image";
-
-import { ArrowRight, Heart, Target, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { CountUp } from "@/components/effects/CountUp";
-import { Display, PageField, Section } from "@/components/frame";
+import { Logo } from "@/components/brand/Logo";
+import { Display, PageHeader, Section, SectionHead, StatRow } from "@/components/frame";
 import { Button } from "@/components/ui/button";
-import { useSingleLetterLogo } from "@/hooks/use-logo";
 import { Link } from "@/i18n/navigation";
 
 export default function UberUns() {
   const t = useTranslations("about");
-  const logo = useSingleLetterLogo();
 
   const values = [
-    { icon: Target, title: t("values.experienceTitle"), description: t("values.experienceDesc") },
-    { icon: Zap, title: t("values.innovationTitle"), description: t("values.innovationDesc") },
-    { icon: Heart, title: t("values.passionTitle"), description: t("values.passionDesc") },
+    { title: t("values.experienceTitle"), description: t("values.experienceDesc") },
+    { title: t("values.innovationTitle"), description: t("values.innovationDesc") },
+    { title: t("values.passionTitle"), description: t("values.passionDesc") },
   ];
 
   const stats = [
     { value: 15, suffix: "+", label: t("stats.experience") },
     { value: 150, suffix: "+", label: t("stats.projects") },
-    { value: 4, suffix: "", label: t("stats.brands") },
+    { value: 4, label: t("stats.brands") },
   ];
 
   return (
-    <div className="relative min-h-screen bg-background">
-      <PageField />
+    <div className="min-h-screen bg-background">
+      <PageHeader
+        title={
+          <>
+            {t("hero.titlePart1")} <span className="text-primary">{t("hero.titlePart2")}</span>
+          </>
+        }
+        lede={t.rich("hero.subtitle", {
+          brand: (chunks) => <span className="text-foreground">{chunks}</span>,
+        })}
+      />
 
-      <div className="relative">
-        <section className="relative pt-32 pb-20 md:pt-44 md:pb-28">
-          <div className="mx-auto w-full max-w-[1440px] px-5 md:px-10">
-            <Display as="h1" size="xl" className="max-w-[14ch]">
-              {t("hero.titlePart1")} <span className="text-primary">{t("hero.titlePart2")}</span>
-            </Display>
-            <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-2xl">
-              {t.rich("hero.subtitle", {
-                brand: (chunks) => <span className="text-foreground">{chunks}</span>,
+      {/* Mission and vision, side by side behind hairlines. The oversized
+          watermark icons that used to sit in the corner of each are gone —
+          a 224px icon at 4% opacity is a smudge, not a graphic. */}
+      <Section>
+        <div className="grid gap-12 md:grid-cols-2 md:gap-16">
+          {[
+            {
+              badge: t("mission.badge"),
+              title: t("mission.title"),
+              text: t("mission.description"),
+            },
+            { badge: t("vision.badge"), title: t("vision.title"), text: t("vision.description") },
+          ].map((panel) => (
+            <div key={panel.badge} className="border-t border-rule pt-6">
+              <span className="text-[0.8125rem] font-medium text-muted-foreground">
+                {panel.badge}
+              </span>
+              <Display size="md" className="mt-4">
+                {panel.title}
+              </Display>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
+                {panel.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* The story, set as an article: serif at reading size, one column. */}
+      <Section>
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] lg:gap-20">
+          <div className="lg:sticky lg:top-28 lg:self-start">
+            <span className="text-[0.8125rem] font-medium text-muted-foreground">
+              {t("story.badge")}
+            </span>
+          </div>
+
+          <div className="reading max-w-[65ch]">
+            <p className="text-[1.375rem] leading-[1.5] text-foreground">
+              {t.rich("story.text1", {
+                brand: (chunks) => <>{chunks}</>,
+                founder: (chunks) => <span className="text-primary">{chunks}</span>,
               })}
             </p>
-          </div>
-        </section>
+            <p className="mt-6 text-muted-foreground">
+              {t.rich("story.text2", { brand: (chunks) => <>{chunks}</> })}
+            </p>
+            <p className="mt-6 text-muted-foreground">{t("story.text3")}</p>
 
-        {/* Mission and vision, as two cells of one grid rather than two floating cards. */}
-        <Section>
-          <div className="grid gap-px overflow-hidden rounded-xl bg-rule md:grid-cols-2">
-            {[
-              {
-                badge: t("mission.badge"),
-                title: t("mission.title"),
-                text: t("mission.description"),
-                Icon: Target,
-              },
-              {
-                badge: t("vision.badge"),
-                title: t("vision.title"),
-                text: t("vision.description"),
-                Icon: Zap,
-              },
-            ].map((panel) => (
-              <div
-                key={panel.badge}
-                className="group relative overflow-hidden bg-background p-8 md:p-12"
-              >
-                <panel.Icon
-                  aria-hidden
-                  className="pointer-events-none absolute -bottom-12 -right-10 size-56 rotate-12 text-primary/[0.04] transition-colors duration-500 group-hover:text-primary/[0.08]"
-                  strokeWidth={1}
-                />
-                <div className="relative">
-                  <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
-                    {panel.badge}
-                  </span>
-                  <Display size="sm" className="mt-6">
-                    {panel.title}
-                  </Display>
-                  <p className="mt-5 text-base leading-relaxed text-muted-foreground md:text-lg">
-                    {panel.text}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        <Section>
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] lg:gap-20">
-            <div className="lg:sticky lg:top-28 lg:self-start">
-              <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                {t("story.badge")}
-              </span>
-              <span aria-hidden className="mt-4 block h-px w-16 bg-primary" />
-            </div>
-
-            <div className="max-w-3xl">
-              <p className="text-xl leading-[1.6] text-foreground md:text-2xl">
-                {t.rich("story.text1", {
-                  brand: (chunks) => <>{chunks}</>,
-                  founder: (chunks) => <span className="text-primary">{chunks}</span>,
-                })}
-              </p>
-              <p className="mt-6 text-base leading-[1.75] text-muted-foreground md:text-lg">
-                {t.rich("story.text2", { brand: (chunks) => <>{chunks}</> })}
-              </p>
-              <p className="mt-6 text-base leading-[1.75] text-muted-foreground md:text-lg">
-                {t("story.text3")}
-              </p>
-
-              <div className="mt-12 border-t border-rule pt-10">
-                <div className="relative h-14 w-40 opacity-60 grayscale transition-all duration-500 hover:opacity-100 hover:grayscale-0">
-                  <Image
-                    src={logo}
-                    alt="ADVANTIS GROUP"
-                    fill
-                    className="object-contain object-left"
-                  />
-                </div>
-              </div>
+            <div className="mt-12 border-t border-rule pt-10">
+              <Logo height={22} />
             </div>
           </div>
-        </Section>
+        </div>
+      </Section>
 
-        <Section size="tight">
-          <dl className="grid gap-px overflow-hidden rounded-xl bg-rule md:grid-cols-3">
-            {stats.map((stat) => (
-              <div key={stat.label} className="bg-background p-8 md:p-10">
-                <dd className="font-[family-name:var(--font-outfit)] text-5xl font-bold tabular-nums tracking-[-0.03em] text-primary md:text-6xl">
-                  <CountUp value={stat.value} />
-                  {stat.suffix}
-                </dd>
-                <dt className="mt-4 font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                  {stat.label}
-                </dt>
-              </div>
-            ))}
-          </dl>
-        </Section>
+      <Section size="tight">
+        <StatRow items={stats} />
+      </Section>
 
-        {/* Centred here, against the left-set sections above and below. */}
-        <Section>
-          <Display size="md" className="mx-auto max-w-[18ch] text-center">
-            {t("values.badge")}
+      <Section size="loose">
+        <SectionHead title={t("values.badge")} />
+
+        <div className="mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
+          {values.map((value) => (
+            <div key={value.title} className="border-t border-rule pt-6">
+              <h2 className="text-lg font-semibold tracking-[-0.01em]">{value.title}</h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {value.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/*
+       * The page's full stop. It used to be a solid field of the Advantis red
+       * with a diagonal hatch over it — a whole band spending the one colour
+       * the site keeps for marking single things. Inverting the ground ends
+       * the page just as firmly and costs no accent.
+       */}
+      <section className="border-t border-rule bg-foreground text-background">
+        <div className="mx-auto w-full max-w-[1200px] px-5 py-20 text-center md:px-10 md:py-32">
+          <Display as="h2" size="lg" className="mx-auto max-w-[20ch]">
+            {t("cta.title")}
           </Display>
-
-          <div className="mt-14 grid gap-px overflow-hidden rounded-xl bg-rule md:grid-cols-3">
-            {values.map((value, index) => (
-              <div key={value.title} className="bg-background p-8">
-                <div className="flex items-center justify-between">
-                  <value.icon className="size-7 text-primary" strokeWidth={1.5} />
-                  <span className="font-mono text-[11px] tracking-[0.24em] text-muted-foreground/50">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                </div>
-                <h3 className="mt-8 font-[family-name:var(--font-outfit)] text-xl font-bold tracking-[-0.02em]">
-                  {value.title}
-                </h3>
-                <p className="mt-3 leading-relaxed text-muted-foreground">{value.description}</p>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        {/*
-         * The one inverted block on the site — a solid primary field. It is the
-         * page's full stop, and being the only one of its kind is the point.
-         */}
-        <section className="grain relative overflow-hidden border-t border-rule bg-primary py-24 text-primary-foreground md:py-32">
-          <div aria-hidden className="hatch-strong absolute inset-0 opacity-30" />
-          <div className="relative mx-auto w-full max-w-[1440px] px-5 md:px-10">
-            <div className="mx-auto max-w-3xl text-center">
-              <Display as="h2" size="lg">
-                {t("cta.title")}
-              </Display>
-              <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-primary-foreground/80 md:text-xl">
-                {t("cta.description")}
-              </p>
-              <Button asChild size="lg" variant="secondary" className="mt-10 rounded-lg">
-                <Link href="/contact">
-                  {t("cta.button")}
-                  <ArrowRight className="size-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-      </div>
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-background/70 md:text-lg">
+            {t("cta.description")}
+          </p>
+          <Button
+            asChild
+            size="lg"
+            className="mt-9 bg-background text-foreground hover:bg-background/90"
+          >
+            <Link href="/contact">{t("cta.button")}</Link>
+          </Button>
+        </div>
+      </section>
     </div>
   );
 }

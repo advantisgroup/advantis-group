@@ -6,7 +6,7 @@ import { Shield, Lock, User, Database, Mail, FileText, Menu, X } from "lucide-re
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { Display, PageField } from "@/components/frame";
+import { Display } from "@/components/frame";
 import { TableOfContents } from "@/components/ui/TableOfContents";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { COMPANY_ADDRESS } from "@/lib/company";
@@ -175,8 +175,6 @@ export default function Datenschutz() {
 
   return (
     <div className="relative min-h-screen bg-background">
-      <PageField />
-
       {/* Mobile TOC Button */}
       {isMobile && (
         <Button
@@ -196,13 +194,13 @@ export default function Datenschutz() {
         />
       )}
 
-      <main className="relative mx-auto w-full max-w-[1440px] px-5 pt-32 pb-24 md:px-10 md:pt-44">
+      <main className="relative mx-auto w-full max-w-[1200px] px-5 pt-32 pb-24 md:px-10 md:pt-44">
         <section className="space-y-12">
           <div>
-            <Display as="h1" size="xl" className="max-w-[14ch]">
+            <Display as="h1" size="lg" className="max-w-[18ch]">
               {t("title")}
             </Display>
-            <p className="mt-8 max-w-2xl text-lg text-muted-foreground md:text-2xl">
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
               {t("subtitle")}
             </p>
           </div>
@@ -211,7 +209,7 @@ export default function Datenschutz() {
             {/* Desktop Sidebar */}
             {!isMobile && (
               <aside className="sticky top-28 w-72 shrink-0 self-start">
-                <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                <p className="text-[13px] font-medium text-muted-foreground">
                   {t("tableOfContents")}
                 </p>
                 <div className="mt-5">
@@ -232,7 +230,7 @@ export default function Datenschutz() {
                   sidebarOpen ? "translate-x-0" : "translate-x-full",
                 )}
               >
-                <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                <p className="text-[13px] font-medium text-muted-foreground">
                   {t("tableOfContents")}
                 </p>
                 <div className="mt-5">
@@ -254,9 +252,7 @@ export default function Datenschutz() {
                     id={section.id}
                     className="scroll-mt-28 border-t border-rule pt-8 first:border-t-0 first:pt-0"
                   >
-                    <h2 className="font-[family-name:var(--font-outfit)] text-2xl font-bold tracking-[-0.025em]">
-                      {section.title}
-                    </h2>
+                    <h2 className="text-2xl font-semibold tracking-[-0.015em]">{section.title}</h2>
                     <div className="mt-5 leading-relaxed text-muted-foreground">
                       {section.content}
                     </div>

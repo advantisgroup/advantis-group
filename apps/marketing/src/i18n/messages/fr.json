@@ -68,6 +68,7 @@
     }
   },
   "hero": {
+    "imageAlt": "L'équipe d'ADVANTIS GROUP au travail dans les bureaux de Nuremberg",
     "title": "Plus qu'une entreprise, une",
     "titleHighlight": "Puissance Commerciale",
     "ctaPrimary": "Contactez-nous Maintenant",
@@ -148,6 +149,8 @@
     }
   },
   "brands": {
+    "comingSoon": "Bientôt disponible",
+    "groupLabel": "Les marques du groupe",
     "title": "Nos",
     "titleHighlight": "Marques",
     "subtitle": "Quatre marques fortes, un objectif commun : Votre succès commercial",
@@ -391,11 +394,13 @@
       "subtitle": "Les experts à vos côtés"
     },
     "office": {
+      "photoAlt": "L'équipe d'ADVANTIS GROUP au travail au bureau",
       "title": "Un Aperçu de Notre Quotidien",
       "subtitle": "Quelques instants du bureau et sur le terrain."
     }
   },
   "brandsPage": {
+    "comingSoon": "Bientôt disponible",
     "hero": {
       "badge": "Quatre marques premium – Un objectif",
       "titlePrefix": "Nos",

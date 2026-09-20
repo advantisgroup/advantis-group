@@ -1,4 +1,4 @@
-import { PageField } from "@/components/frame";
+import { ProcessSteps, Section } from "@/components/frame";
 import { RememberLocale } from "@/components/layout/RememberLocale";
 import { Hero } from "@/components/sections/home/Hero";
 import { HomeBrands } from "@/components/sections/home/HomeBrands";
@@ -13,31 +13,32 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   const { locale } = await params;
 
   /*
-   * `PageField` draws the boundary rules and the hero wash once for the whole
-   * document, so the wash fades out gradually across the sections under the
-   * hero instead of stopping at its edge.
+   * Section order is the argument: who we are, how the work runs, what we do,
+   * why us, the brands that deliver it, the proof, the ask.
    *
-   * Section order is also the argument: who we are, what we do, why us, the
-   * brands that deliver it, the proof, the ask. "Why us" sits after the
-   * capability explorer so the claims land on a reader who already knows what
-   * is being claimed about.
+   * "How it works" used to be a schematic crammed into the bottom of the
+   * hero, where it competed with the headline for the first screen. It is a
+   * section now, between the claim and the list of services, because that is
+   * the question a reader has after the claim and before the list.
    */
   return (
-    <div className="relative min-h-screen bg-background">
-      <PageField animated />
+    <div className="min-h-screen bg-background">
       <RememberLocale locale={locale} />
 
-      <div className="relative">
-        <Hero />
-        <HomeServices />
-        <HomeFeatures />
-        {/* Never advertise a download that isn't in the repo yet — same gate as
-            the /whitepaper page itself. */}
-        {whitepaperExists() && <HomeWhitepaper />}
-        <HomeBrands />
-        <TrustBadges />
-        <HomeCTA />
-      </div>
+      <Hero />
+
+      <Section size="loose">
+        <ProcessSteps />
+      </Section>
+
+      <HomeServices />
+      <HomeFeatures />
+      {/* Never advertise a download that isn't in the repo yet — same gate as
+          the /whitepaper page itself. */}
+      {whitepaperExists() && <HomeWhitepaper />}
+      <HomeBrands />
+      <TrustBadges />
+      <HomeCTA />
     </div>
   );
 }

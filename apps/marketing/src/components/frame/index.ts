@@ -1,5 +1,6 @@
 export { Display } from "./Display";
-export { HatchBand, PageField } from "./PageField";
+export { Eyebrow } from "./Eyebrow";
 export { Marquee } from "./Marquee";
-export { MonoLabel } from "./MonoLabel";
-export { Section } from "./Section";
+export { ProcessSteps } from "./ProcessSteps";
+export { PageHeader, Section, SectionHead } from "./Section";
+export { Figure, StatRow, type StatItem } from "./Stat";

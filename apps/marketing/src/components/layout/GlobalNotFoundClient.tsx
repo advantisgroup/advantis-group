@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 
 import { ArrowLeft, Mail } from "lucide-react";
 
-import { Display, PageField } from "@/components/frame";
+import { Logo } from "@/components/brand/Logo";
+import { Display } from "@/components/frame";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -20,15 +21,11 @@ export default function GlobalNotFoundClient() {
   const pathname = usePathname();
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-background">
-      <PageField />
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="mx-auto w-full max-w-lg px-5 text-center">
+        <Logo height={18} className="mx-auto" />
 
-      <div className="relative mx-auto w-full max-w-lg px-5 text-center">
-        <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
-          ADVANTIS GROUP
-        </span>
-
-        <Display as="h1" size="xl" className="mt-6">
+        <Display as="h1" size="xl" className="mt-10">
           404
         </Display>
 
@@ -37,21 +34,21 @@ export default function GlobalNotFoundClient() {
         </p>
 
         {pathname ? (
-          <div className="mt-6 inline-flex items-center rounded-lg border border-rule bg-card/40 px-4 py-2">
+          <div className="mt-6 inline-flex items-center rounded-lg border border-rule bg-card px-4 py-2">
             <code className="break-all font-mono text-sm text-muted-foreground">{pathname}</code>
           </div>
         ) : null}
 
         <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-          <Button asChild size="lg" className="rounded-lg">
+          <Button asChild size="lg">
             <Link href="/">
-              <ArrowLeft className="size-4" />
+              <ArrowLeft />
               Back to homepage
             </Link>
           </Button>
-          <Button asChild size="lg" variant="outline" className="rounded-lg border-rule-strong">
+          <Button asChild size="lg" variant="outline">
             <Link href="/contact">
-              <Mail className="size-4" />
+              <Mail />
               Contact us
             </Link>
           </Button>

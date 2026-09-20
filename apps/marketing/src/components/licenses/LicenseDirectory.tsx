@@ -122,7 +122,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
             onClick={() => setActiveFilter(null)}
             aria-pressed={activeFilter === null}
             className={cn(
-              "inline-flex min-h-11 items-center rounded-full border px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:min-h-0 md:py-1.5",
+              "inline-flex min-h-11 items-center rounded-full border px-4 text-[13px] font-medium transition-colors md:min-h-0 md:py-1.5",
               activeFilter === null
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-rule bg-card text-muted-foreground hover:text-foreground",
@@ -137,10 +137,10 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
               onClick={() => setActiveFilter((current) => (current === license ? null : license))}
               aria-pressed={activeFilter === license}
               className={cn(
-                "inline-flex min-h-11 items-center rounded-full border px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:min-h-0 md:py-1.5",
+                "inline-flex min-h-11 items-center rounded-full border px-4 text-[13px] font-medium transition-colors md:min-h-0 md:py-1.5",
                 activeFilter === license
                   ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-card text-muted-foreground hover:text-foreground",
+                  : "border-rule bg-card text-muted-foreground hover:text-foreground",
               )}
             >
               {license} ({count})
@@ -153,7 +153,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
             }
             aria-pressed={activeFilter === "__other__"}
             className={cn(
-              "inline-flex min-h-11 items-center rounded-full border px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:min-h-0 md:py-1.5",
+              "inline-flex min-h-11 items-center rounded-full border px-4 text-[13px] font-medium transition-colors md:min-h-0 md:py-1.5",
               activeFilter === "__other__"
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-rule bg-card text-muted-foreground hover:text-foreground",
@@ -186,7 +186,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
                     <BrandIcon src={packageIconUrl(record.repository)} alt="" className="size-6" />
                     <Badge
                       variant="outline"
-                      className="shrink-0 font-mono text-[11px] uppercase tracking-[0.14em] text-primary"
+                      className="shrink-0 text-[13px] font-medium text-primary"
                     >
                       {record.license}
                     </Badge>
@@ -205,7 +205,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
                   </h2>
 
                   {version ? (
-                    <p className="mt-1 font-mono text-[11px] text-muted-foreground/70">{version}</p>
+                    <p className="mt-1 text-[13px] text-muted-foreground/70">{version}</p>
                   ) : null}
 
                   {record.publisher ? (
@@ -217,7 +217,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
                   <button
                     type="button"
                     onClick={() => setDetailsFor(record)}
-                    className="mt-auto flex min-h-11 items-center gap-1.5 pt-4 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-primary md:min-h-0"
+                    className="mt-auto flex min-h-11 items-center gap-1.5 pt-4 text-[13px] font-medium text-muted-foreground transition-colors hover:text-primary md:min-h-0"
                   >
                     {t("details")}
                     <ExternalLink className="size-3" />
@@ -231,7 +231,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
             <button
               type="button"
               onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
-              className="flex min-h-14 w-full items-center justify-center gap-2 border-t border-rule bg-background font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+              className="flex min-h-14 w-full items-center justify-center gap-2 border-t border-rule bg-background text-[13px] font-medium text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
             >
               {t("showMore", { count: filteredLicenses.length - visibleCount })}
             </button>
@@ -328,7 +328,7 @@ function PackageDetailsDialog({
         <dl className="border-t border-rule">
           {rows.map((row) => (
             <div key={row.label} className="flex items-baseline gap-4 border-b border-rule py-2.5">
-              <dt className="w-28 shrink-0 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              <dt className="w-28 shrink-0 text-[13px] font-medium text-muted-foreground">
                 {row.label}
               </dt>
               <dd className="min-w-0 break-words text-sm">{row.value}</dd>

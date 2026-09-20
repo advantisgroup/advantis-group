@@ -30,7 +30,7 @@ export function CallbackForm({
           id="callback-company"
           value={formData.company}
           onChange={(e) => onFormDataChange({ ...formData, company: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
           required
         />
         {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company[0]}</p>}
@@ -46,7 +46,7 @@ export function CallbackForm({
             id="callback-firstName"
             value={formData.firstName}
             onChange={(e) => onFormDataChange({ ...formData, firstName: e.target.value })}
-            className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+            className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
             required
           />
           {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName[0]}</p>}
@@ -60,7 +60,7 @@ export function CallbackForm({
             id="callback-lastName"
             value={formData.lastName}
             onChange={(e) => onFormDataChange({ ...formData, lastName: e.target.value })}
-            className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+            className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
             required
           />
           {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName[0]}</p>}
@@ -76,7 +76,7 @@ export function CallbackForm({
           id="callback-phone"
           value={formData.phone}
           onChange={(e) => onFormDataChange({ ...formData, phone: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
           placeholder={process.env.NEXT_PUBLIC_PHONE_NUMBER}
           required
         />
@@ -92,7 +92,7 @@ export function CallbackForm({
           id="callback-email"
           value={formData.email}
           onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
           required
         />
         {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
@@ -108,7 +108,7 @@ export function CallbackForm({
           id="callback-datetime"
           value={formData.dateTime}
           onChange={(e) => onFormDataChange({ ...formData, dateTime: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
           required
         />
         {errors.dateTime && <p className="text-red-500 text-sm mt-1">{errors.dateTime[0]}</p>}
@@ -124,7 +124,7 @@ export function CallbackForm({
           value={formData.notes || ""}
           onChange={(e) => onFormDataChange({ ...formData, notes: e.target.value })}
           rows={3}
-          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
+          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
           placeholder={t("notesPlaceholder")}
         />
       </div>

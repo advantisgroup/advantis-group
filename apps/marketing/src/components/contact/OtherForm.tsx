@@ -36,7 +36,7 @@ export function OtherForm({
             id="firstName"
             value={formData.firstName}
             onChange={(e) => onFormDataChange({ ...formData, firstName: e.target.value })}
-            className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+            className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
           />
           {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName[0]}</p>}
         </div>
@@ -50,7 +50,7 @@ export function OtherForm({
             id="lastName"
             value={formData.lastName || ""}
             onChange={(e) => onFormDataChange({ ...formData, lastName: e.target.value })}
-            className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+            className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
           />
         </div>
       </div>
@@ -64,7 +64,7 @@ export function OtherForm({
           id="email"
           value={formData.email}
           onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
         />
         {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
       </div>
@@ -78,7 +78,7 @@ export function OtherForm({
           id="phone"
           value={formData.phone || ""}
           onChange={(e) => onFormDataChange({ ...formData, phone: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
         />
       </div>
 
@@ -95,7 +95,7 @@ export function OtherForm({
               topic: e.target.value as InquiryTopic,
             })
           }
-          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
         >
           <option value="">{tOther("selectTopic")}</option>
           {topics.map((topic) => (
@@ -117,7 +117,7 @@ export function OtherForm({
           value={formData.subject}
           onChange={(e) => onFormDataChange({ ...formData, subject: e.target.value })}
           placeholder={tOther("subjectPlaceholder")}
-          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
         />
         {errors.subject && <p className="text-red-500 text-sm mt-1">{errors.subject[0]}</p>}
       </div>
@@ -131,7 +131,7 @@ export function OtherForm({
           value={formData.message}
           onChange={(e) => onFormDataChange({ ...formData, message: e.target.value })}
           rows={6}
-          className="min-h-28 md:min-h-40 w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
+          className="min-h-28 md:min-h-40 w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
         />
         {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message[0]}</p>}
       </div>

@@ -39,19 +39,13 @@ const Row = ({
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-3">
-          <h2 className="font-[family-name:var(--font-outfit)] text-base font-semibold tracking-[-0.01em]">
-            {title}
-          </h2>
-          <span className="ml-auto shrink-0 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            {badge}
-          </span>
+          <h2 className="text-base font-semibold tracking-[-0.01em]">{title}</h2>
+          <span className="ml-auto shrink-0 text-xs text-muted-foreground">{badge}</span>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
 
         <div className="mt-4">
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
-            {usedForLabel}
-          </span>
+          <span className="text-xs text-muted-foreground/70">{usedForLabel}</span>
           <ul className="mt-2 flex flex-wrap gap-1.5">
             {items.map((item) => (
               <li
@@ -94,9 +88,7 @@ export const CookiePreferences = () => {
       <p className="px-1 pt-2 text-sm text-muted-foreground">{t("localOnly")}</p>
 
       <div className="mt-6 rounded-xl border border-rule bg-background/40 p-5 sm:p-6">
-        <h2 className="font-[family-name:var(--font-outfit)] text-base font-semibold tracking-[-0.01em]">
-          {t("commitments.title")}
-        </h2>
+        <h2 className="text-base font-semibold tracking-[-0.01em]">{t("commitments.title")}</h2>
         <ul className="mt-3 space-y-2">
           {COMMITMENTS.map((key) => (
             <li key={key} className="flex items-start gap-2.5 text-sm text-muted-foreground">

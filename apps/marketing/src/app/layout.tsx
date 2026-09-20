@@ -1,6 +1,6 @@
 import React from "react";
 
-import { JetBrains_Mono, Outfit, Manrope } from "next/font/google";
+import { JetBrains_Mono, Manrope, Newsreader } from "next/font/google";
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { type Metadata } from "next";
@@ -11,10 +11,18 @@ import SmoothScrolling from "@/components/effects/SmoothScrolling";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
-const outfit = Outfit({
+/**
+ * The site runs on two faces with strict roles: a bookish serif for anything
+ * the page is actually *saying* — headlines, pull quotes, figures — and a
+ * neutral sans for everything that is chrome around it: navigation, buttons,
+ * labels, body copy. Mixing the two roles is what makes a page look busy, so
+ * the serif never appears in UI and the sans never appears at display size.
+ */
+const newsreader = Newsreader({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  variable: "--font-serif",
   display: "swap",
+  style: ["normal", "italic"],
 });
 
 const manrope = Manrope({
@@ -23,11 +31,7 @@ const manrope = Manrope({
   display: "swap",
 });
 
-/**
- * The technical micro-labels (section indices, schematic node names, spec
- * rows) are set in mono. It is load-bearing for the layout language, not
- * decoration — the grid reads as a technical drawing because of it.
- */
+// Code blocks in blog posts, and nothing else.
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
@@ -102,10 +106,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html suppressHydrationWarning>
       <body
-        className={`bg-background antialiased scroll-smooth ${manrope.variable} ${outfit.variable} ${jetbrainsMono.variable}`}
+        className={`bg-background antialiased scroll-smooth ${manrope.variable} ${newsreader.variable} ${jetbrainsMono.variable}`}
       >
         <ClerkProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {/* Ivory is the designed canvas; dark is the alternate, not a coin flip
+              on the visitor's OS setting. "System" is still offered in settings. */}
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
             <SmoothScrolling>
               <ConvexClientProvider>
                 {children}

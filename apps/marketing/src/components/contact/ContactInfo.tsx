@@ -12,10 +12,10 @@ export function ContactInfoMobile({ items }: { items: ContactInfoItem[] }) {
           <Link
             key={info.label}
             href={info.href}
-            className="flex items-center gap-4 p-4 border border-border rounded-lg hover:border-foreground/40 transition-colors"
+            className="flex items-center gap-4 p-4 border border-rule rounded-lg hover:border-foreground/40 transition-colors"
           >
-            <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-              <Icon className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+              <Icon className="w-5 h-5 text-muted-foreground" />
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium text-muted-foreground">{info.label}</p>
@@ -30,16 +30,16 @@ export function ContactInfoMobile({ items }: { items: ContactInfoItem[] }) {
 
 export function ContactInfoDesktop({ items }: { items: ContactInfoItem[] }) {
   return (
-    <div className="border border-border overflow-hidden rounded-lg">
-      <div className="grid md:grid-cols-3 divide-x divide-border">
+    <div className="border border-rule overflow-hidden rounded-lg">
+      <div className="grid md:grid-cols-3 divide-x divide-rule">
         {items.map((info) => {
           const Icon = info.icon;
           return (
             <Card key={info.label} className="border-0 rounded-none">
               <CardHeader style={{ paddingBottom: "0px" }}>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-                    <Icon className="w-4 h-4 text-primary" />
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4 text-muted-foreground" />
                   </div>
                   {info.label}
                 </CardTitle>

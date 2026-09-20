@@ -211,7 +211,7 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 pt-2">
             {/* Mode segmented toggle */}
-            <div className="flex rounded-lg border border-border/50 bg-muted/30 p-0.5 text-xs">
+            <div className="flex rounded-lg border border-rule bg-muted/30 p-0.5 text-xs">
               <button
                 type="button"
                 disabled={state === "loading"}

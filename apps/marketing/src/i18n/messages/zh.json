@@ -68,6 +68,7 @@
     }
   },
   "hero": {
+    "imageAlt": "ADVANTIS GROUP 团队在纽伦堡办公室协作",
     "title": "不仅仅是一家公司，完整的",
     "titleHighlight": "销售力量",
     "ctaPrimary": "立即联系我们",
@@ -142,6 +143,8 @@
     }
   },
   "brands": {
+    "comingSoon": "即将推出",
+    "groupLabel": "集团旗下品牌",
     "title": "我们的",
     "titleHighlight": "品牌",
     "subtitle": "四个强大的品牌，一个共同的目标：您的销售成功",
@@ -385,11 +388,13 @@
       "subtitle": "您身边的专家"
     },
     "office": {
+      "photoAlt": "ADVANTIS GROUP 团队在办公室工作",
       "title": "走进我们的日常",
       "subtitle": "来自办公室和外出途中的一些瞬间。"
     }
   },
   "brandsPage": {
+    "comingSoon": "即将推出",
     "hero": {
       "badge": "四个优质品牌——一个目标",
       "titlePrefix": "我们的",

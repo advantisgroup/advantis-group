@@ -41,7 +41,7 @@ export function WhyAdvantisSidebar({ contactMode }: WhyAdvantisSidebarProps) {
         <p className="text-base leading-7 text-muted-foreground">{getDescription()}</p>
       </div>
 
-      <div className="mt-8 border-t border-border/70 pt-5">
+      <div className="mt-8 border-t border-rule pt-5">
         <p className="text-sm leading-6 text-muted-foreground">{getClosing()}</p>
       </div>
     </aside>

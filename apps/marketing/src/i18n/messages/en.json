@@ -68,6 +68,7 @@
     }
   },
   "hero": {
+    "imageAlt": "The ADVANTIS GROUP team working together in the Nuremberg office",
     "title": "More than a company, complete",
     "titleHighlight": "Sales Power",
     "ctaPrimary": "Contact Us Now",
@@ -145,6 +146,8 @@
     }
   },
   "brands": {
+    "comingSoon": "Coming soon",
+    "groupLabel": "The brands of the group",
     "title": "Our",
     "titleHighlight": "Brands",
     "subtitle": "Four strong brands, one common goal: Your sales success",
@@ -388,11 +391,13 @@
       "subtitle": "The experts by your side"
     },
     "office": {
+      "photoAlt": "The ADVANTIS GROUP team at work in the office",
       "title": "A Glimpse Into Our Everyday",
       "subtitle": "A few moments from the office and on the road."
     }
   },
   "brandsPage": {
+    "comingSoon": "Coming soon",
     "hero": {
       "badge": "Four Premium Brands – One Goal",
       "titlePrefix": "Our",

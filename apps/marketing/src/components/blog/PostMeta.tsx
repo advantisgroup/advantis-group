@@ -51,9 +51,9 @@ export function PostMeta({
       )}
     >
       {author ? (
-        <Avatar style={{ width: avatarPx, height: avatarPx }} className="border-0 bg-primary/10">
+        <Avatar style={{ width: avatarPx, height: avatarPx }} className="bg-muted">
           {authorAvatarUrl ? <AvatarImage src={authorAvatarUrl} alt="" /> : null}
-          <AvatarFallback className="bg-transparent text-[10px] font-semibold text-primary">
+          <AvatarFallback className="bg-transparent text-[10px] font-medium text-muted-foreground">
             {authorInitials(author)}
           </AvatarFallback>
         </Avatar>
@@ -71,14 +71,10 @@ export function PostMeta({
   );
 }
 
-/** Small caps category label. One accent for every category on purpose — see
- *  the note in `lib/blog-categories.ts`. */
+/** The category a post sits in. Quiet on purpose: it labels the headline, it
+ *  does not compete with it — see the note in `lib/blog-categories.ts`. */
 export function CategoryEyebrow({ label, className }: { label: string; className?: string }) {
   return (
-    <span
-      className={cn("text-xs font-semibold uppercase tracking-[0.12em] text-primary", className)}
-    >
-      {label}
-    </span>
+    <span className={cn("text-[13px] font-medium text-muted-foreground", className)}>{label}</span>
   );
 }

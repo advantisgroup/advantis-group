@@ -6,7 +6,7 @@ import { CheckCircle2, Mail, MapPin, Phone, Sparkles } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { CallbackForm } from "@/components/contact/CallbackForm";
-import { Display, PageField } from "@/components/frame";
+import { PageHeader } from "@/components/frame";
 import { ContactInfoDesktop, ContactInfoMobile } from "@/components/contact/ContactInfo";
 import { MessageForm } from "@/components/contact/MessageForm";
 import { NotifyModal } from "@/components/contact/NotifyModal";
@@ -164,19 +164,10 @@ export default function Kontakt() {
   };
 
   return (
-    <div className="relative min-h-screen bg-background">
-      <PageField />
+    <div className="min-h-screen bg-background">
+      <PageHeader title={t("title")} lede={t("subtitle")} className="md:pb-16" />
 
-      <main className="relative mx-auto w-full max-w-[1440px] space-y-16 px-5 pb-24 pt-32 md:space-y-20 md:px-10 md:pt-44">
-        <section className="max-w-4xl">
-          <Display as="h1" size="xl" className="max-w-[14ch]">
-            {t("title")}
-          </Display>
-          <p className="mt-8 max-w-2xl text-lg text-muted-foreground md:text-2xl">
-            {t("subtitle")}
-          </p>
-        </section>
-
+      <main className="mx-auto w-full max-w-[1200px] px-5 pb-24 md:px-10">
         <section className="space-y-8 md:space-y-12">
           <div className="md:hidden">
             <ContactInfoMobile items={contactInfoData} />
@@ -191,14 +182,14 @@ export default function Kontakt() {
 
           <section
             ref={formSectionRef}
-            className="overflow-hidden rounded-xl border border-rule bg-card/30"
+            className="overflow-hidden rounded-xl border border-rule bg-card"
           >
             <TabNavigation contactMode={contactMode} onModeChange={setContactMode} />
 
             <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
               <div className="space-y-6 p-6 md:p-8">
                 <div className="space-y-2">
-                  <h2 className="font-[family-name:var(--font-outfit)] text-2xl font-bold tracking-[-0.025em] text-foreground md:text-3xl">
+                  <h2 className="text-xl font-semibold tracking-[-0.015em] md:text-2xl">
                     {getFormTitle()}
                   </h2>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -211,8 +202,8 @@ export default function Kontakt() {
                           className={cn(
                             "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                             accountPrefillState === "success"
-                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                              : "border-advantis/25 bg-advantis/8 text-advantis hover:bg-advantis/15",
+                              ? "border-success/40 bg-success/10 text-success-foreground dark:text-success"
+                              : "border-rule-strong text-muted-foreground hover:bg-accent hover:text-foreground",
                           )}
                         >
                           {accountPrefillState === "success" ? (
@@ -231,7 +222,7 @@ export default function Kontakt() {
                         <SignInButton>
                           <button
                             type="button"
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-rule-strong px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                           >
                             <Sparkles className="h-3 w-3" />
                             {tAccountHelper("signInCta")}

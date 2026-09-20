@@ -1,76 +1,64 @@
 "use client";
 
-import { ArrowRight, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Display } from "@/components/frame";
+import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
-import { Button } from "../../ui/button";
-
+/**
+ * The page's full stop: the one inverted band on it.
+ *
+ * It used to be a radial wash rising from the bottom edge under a heading
+ * that was the same size as the hero's — two identical opening statements,
+ * one at each end of the page. Inverting the band instead ends the page on a
+ * change of ground rather than a repeat.
+ */
 export const HomeCTA = () => {
   const t = useTranslations("cta");
 
   // Every locale writes this line as bullet-separated items; split it so the
-  // three promises sit in the grid as separate cells rather than as one
-  // run-on line of small grey text.
+  // three promises sit in a row rather than in one run-on line of grey text.
   const benefits = t("benefits")
     .split("•")
     .map((benefit) => benefit.trim())
     .filter(Boolean);
 
   return (
-    <section className="grain relative overflow-hidden border-t border-rule py-16 md:py-36">
-      {/* Wash rising from the foot of the page, mirroring the hero's. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(80% 70% at 50% 108%, color-mix(in oklch, var(--primary) 24%, transparent), transparent 70%)",
-        }}
-      />
-
-      <div className="relative mx-auto w-full max-w-[1440px] px-5 md:px-10">
-        <div className="mx-auto max-w-4xl text-center">
-          <Display as="h2" size="xl">
-            {t("title")} <span className="text-primary">{t("titleHighlight")}</span>
+    <section className="border-t border-rule bg-foreground text-background">
+      <div className="mx-auto w-full max-w-[1200px] px-5 py-20 md:px-10 md:py-32">
+        <div className="mx-auto max-w-3xl text-center">
+          <Display as="h2" size="lg">
+            {t("title")} {t("titleHighlight")}
           </Display>
 
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground md:mt-8 md:text-xl">
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-background/70 md:text-lg">
             {t("subtitle")}
           </p>
 
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row md:mt-10">
-            <Button asChild size="lg" className="rounded-lg">
-              <Link href="/contact">
-                {t("primary")}
-                <ArrowRight className="size-4" />
-              </Link>
+          <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button
+              asChild
+              size="lg"
+              className="bg-background text-foreground hover:bg-background/90"
+            >
+              <Link href="/contact">{t("primary")}</Link>
             </Button>
             <Button
               asChild
               size="lg"
               variant="outline"
-              className="rounded-lg border-rule-strong bg-background/40 backdrop-blur-sm"
+              className="border-background/30 text-background hover:bg-background/10"
             >
-              <Link href={`mailto:${process.env.NEXT_PUBLIC_EMAIL_ADRESS}`}>
-                <Mail className="size-4" />
-                {t("secondary")}
-              </Link>
+              <Link href={`mailto:${process.env.NEXT_PUBLIC_EMAIL_ADRESS}`}>{t("secondary")}</Link>
             </Button>
           </div>
         </div>
 
-        <ul className="mt-12 grid border-t border-rule sm:grid-cols-3 md:mt-28">
+        <ul className="mx-auto mt-16 grid max-w-3xl gap-y-3 text-center sm:grid-cols-3 md:mt-24">
           {benefits.map((benefit) => (
-            <li
-              key={benefit}
-              className="border-b border-rule py-5 text-center sm:border-b-0 sm:border-l sm:px-6 sm:first:border-l-0"
-            >
-              <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground/80">
-                {benefit}
-              </span>
+            <li key={benefit} className="text-sm text-background/70">
+              {benefit}
             </li>
           ))}
         </ul>

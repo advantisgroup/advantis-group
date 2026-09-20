@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { type WhitepaperFormData } from "@/types/contact";
 
 const FIELD_CLASS =
-  "h-11 w-full rounded-xl border border-border/80 bg-background px-4 text-base transition-[border-color,box-shadow] placeholder:text-muted-foreground/50 focus:border-advantis/50 focus:outline-none focus:ring-4 focus:ring-advantis/10";
+  "h-11 w-full rounded-lg border border-input bg-card px-4 text-base transition-[border-color,box-shadow] placeholder:text-muted-foreground/60 focus:border-rule-strong focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background";
 
 const LABEL_CLASS = "mb-2 block text-sm font-medium text-foreground";
 
@@ -40,11 +40,11 @@ export function WhitepaperForm() {
   if (submittedEmail) {
     return (
       <div className="space-y-5 text-center">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 ring-8 ring-emerald-500/5">
-          <MailCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-success/15">
+          <MailCheck className="h-6 w-6 text-success-foreground dark:text-success" />
         </span>
         <div className="space-y-2">
-          <h3 className="font-[family-name:var(--font-outfit)] text-2xl">{tSuccess("title")}</h3>
+          <h3 className="text-2xl">{tSuccess("title")}</h3>
           <p className="text-base leading-relaxed text-muted-foreground">
             {tSuccess.rich("description", {
               email: submittedEmail,
@@ -52,7 +52,7 @@ export function WhitepaperForm() {
             })}
           </p>
         </div>
-        <p className="rounded-xl border border-border/60 bg-muted/40 p-3 text-sm text-muted-foreground">
+        <p className="rounded-xl border border-rule bg-muted/40 p-3 text-sm text-muted-foreground">
           {tSuccess("spamHint")}
         </p>
         <Button type="button" variant="ghost" onClick={reset} className="text-muted-foreground">
@@ -116,7 +116,7 @@ export function WhitepaperForm() {
       <div
         className={cn(
           "rounded-xl border p-4 transition-colors",
-          errors.consent ? "border-red-500/50 bg-red-500/5" : "border-border/70 bg-muted/30",
+          errors.consent ? "border-red-500/50 bg-red-500/5" : "border-rule bg-muted/30",
         )}
       >
         <label htmlFor="wp-consent" className="flex cursor-pointer items-start gap-3">
@@ -129,7 +129,10 @@ export function WhitepaperForm() {
           />
           <span className="text-xs leading-relaxed text-muted-foreground">
             {t("consent")} {t("consentSuffix")}{" "}
-            <Link href="/privacy" className="text-advantis underline-offset-2 hover:underline">
+            <Link
+              href="/privacy"
+              className="underline underline-offset-2 decoration-rule-strong hover:decoration-foreground"
+            >
               {t("consentLink")}
             </Link>
             .
@@ -182,7 +185,7 @@ function Field({
   return (
     <div>
       <label htmlFor={id} className={LABEL_CLASS}>
-        {label} <span className="text-advantis">*</span>
+        {label} <span className="text-primary">*</span>
       </label>
       <input
         id={id}
@@ -204,11 +207,11 @@ export function WhitepaperUnavailable() {
 
   return (
     <div className="space-y-5 text-center">
-      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-advantis/10 ring-8 ring-advantis/5">
-        <Download className="h-6 w-6 text-advantis" />
+      <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-muted">
+        <Download className="size-6 text-muted-foreground" />
       </span>
       <div className="space-y-2">
-        <h3 className="font-[family-name:var(--font-outfit)] text-2xl">{t("title")}</h3>
+        <h3 className="text-2xl">{t("title")}</h3>
         <p className="text-base leading-relaxed text-muted-foreground">{t("description")}</p>
       </div>
       <Button asChild variant="outline" className="group">

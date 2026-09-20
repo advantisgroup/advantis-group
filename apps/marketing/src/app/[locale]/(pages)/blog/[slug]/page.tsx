@@ -103,9 +103,9 @@ export default async function BlogPostPage({
         </Link>
 
         <article className="mt-10">
-          <header className="space-y-6 border-b border-border pb-10">
+          <header className="space-y-6 border-b border-rule pb-10">
             {category ? <CategoryEyebrow label={category} /> : null}
-            <h1 className="font-[family-name:var(--font-outfit)] text-4xl font-bold leading-[1.1] tracking-tight md:text-5xl">
+            <h1 className="text-[2.25rem] font-semibold leading-[1.1] tracking-[-0.02em] md:text-5xl">
               {post.title}
             </h1>
             {/*
@@ -134,7 +134,7 @@ export default async function BlogPostPage({
           </header>
 
           {post.mainImageUrl ? (
-            <div className="relative mt-12 aspect-[16/9] overflow-hidden rounded-xl border border-border/60">
+            <div className="relative mt-12 aspect-[16/9] overflow-hidden rounded-xl border border-rule">
               <Image
                 src={post.mainImageUrl}
                 alt=""
@@ -158,7 +158,10 @@ export default async function BlogPostPage({
              * column narrows.
              */
             <div
-              className="prose prose-neutral mt-12 max-w-[50ch] scroll-mt-24 dark:prose-invert prose-headings:font-[family-name:var(--font-outfit)] prose-headings:tracking-tight prose-h2:mt-14 prose-h2:mb-4 prose-h3:mt-10 prose-h3:mb-3 prose-p:leading-[1.75] prose-a:text-primary prose-img:rounded-lg md:prose-lg [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24"
+              // `reading` puts the body into the serif at reading size, the way
+              // an article is set; the heading and code resets inside it keep
+              // the structure in the sans.
+              className="reading prose prose-neutral mt-12 max-w-[50ch] scroll-mt-24 dark:prose-invert prose-headings:tracking-[-0.015em] prose-h2:mt-14 prose-h2:mb-4 prose-h3:mt-10 prose-h3:mb-3 prose-a:text-foreground prose-a:decoration-rule-strong prose-img:rounded-lg [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24"
               // The composer's RichTextEditor only ever produces constrained
               // HTML through normal use, but the stored string is a raw
               // Convex mutation arg with no server-side sanitization in

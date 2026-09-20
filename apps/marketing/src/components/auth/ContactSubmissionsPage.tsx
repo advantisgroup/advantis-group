@@ -187,7 +187,7 @@ export const ContactSubmissionsPage = () => {
     <section className="min-h-[calc(100vh-4rem)] bg-background px-4 py-28">
       <div className="mx-auto max-w-6xl space-y-8">
         <div className="space-y-3">
-          <span className="inline-flex rounded-full border border-advantis/30 bg-advantis/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-advantis">
+          <span className="inline-flex rounded-full border border-rule-strong px-4 py-1 text-[13px] font-medium text-muted-foreground">
             {t("badge")}
           </span>
           <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
@@ -210,18 +210,18 @@ export const ContactSubmissionsPage = () => {
         </div>
 
         {status === "loading" ? (
-          <div className="rounded-4xl border border-border bg-card/70 p-8 text-sm text-muted-foreground shadow-2xl shadow-black/20 backdrop-blur">
+          <div className="rounded-xl border border-rule bg-card p-8 text-sm text-muted-foreground">
             {t("loading")}
           </div>
         ) : status === "error" ? (
-          <div className="rounded-4xl border border-destructive/30 bg-destructive/8 p-8 shadow-2xl shadow-black/20 backdrop-blur">
+          <div className="rounded-xl border border-destructive/30 bg-destructive/8 p-8">
             <div className="flex items-start gap-3 text-destructive">
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
               <div>
                 <p className="font-medium">{t("errorTitle")}</p>
                 <p className="mt-1 text-sm text-destructive/80">{t("errorDescription")}</p>
                 {errorDetail ? (
-                  <p className="mt-2 rounded-md border border-destructive/20 bg-card/60 px-3 py-2 font-mono text-xs text-destructive/90">
+                  <p className="mt-2 rounded-md border border-destructive/20 bg-card px-3 py-2 font-mono text-xs text-destructive/90">
                     {errorDetail}
                   </p>
                 ) : null}
@@ -229,7 +229,7 @@ export const ContactSubmissionsPage = () => {
             </div>
           </div>
         ) : submissions.length === 0 ? (
-          <div className="rounded-4xl border border-border bg-card/70 p-8 shadow-2xl shadow-black/20 backdrop-blur">
+          <div className="rounded-xl border border-rule bg-card p-8">
             <p className="text-lg font-medium text-foreground">{t("emptyTitle")}</p>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               {t("emptyDescription")}
@@ -261,15 +261,15 @@ export const ContactSubmissionsPage = () => {
                 <motion.article
                   key={submission._id}
                   variants={submissionItemVariants}
-                  className="rounded-4xl border border-border bg-card/70 p-6 shadow-2xl shadow-black/20 backdrop-blur"
+                  className="rounded-xl border border-rule bg-card p-6"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border border-advantis/30 bg-advantis/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-advantis">
+                        <span className="rounded-full border border-rule-strong px-3 py-1 text-[13px] font-medium text-muted-foreground">
                           {submissionTypeLabel}
                         </span>
-                        <span className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
+                        <span className="rounded-full border border-rule px-3 py-1 text-xs font-medium text-muted-foreground">
                           {submissionStatusLabel}
                         </span>
                       </div>
@@ -323,9 +323,9 @@ export const ContactSubmissionsPage = () => {
                     </div>
                   </div>
 
-                  <div className="mt-5 grid gap-4 border-t border-border/70 pt-5 lg:grid-cols-[1.5fr_1fr]">
+                  <div className="mt-5 grid gap-4 border-t border-rule pt-5 lg:grid-cols-[1.5fr_1fr]">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                      <p className="text-[13px] font-medium text-muted-foreground">
                         {t("message")}
                       </p>
                       <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
@@ -336,7 +336,7 @@ export const ContactSubmissionsPage = () => {
                     <div className="space-y-3">
                       {submission.topic ? (
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                          <p className="text-[13px] font-medium text-muted-foreground">
                             {t("topic")}
                           </p>
                           <p className="mt-1 text-sm text-foreground">{submission.topic}</p>
@@ -344,7 +344,7 @@ export const ContactSubmissionsPage = () => {
                       ) : null}
                       {submission.notes ? (
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                          <p className="text-[13px] font-medium text-muted-foreground">
                             {t("notes")}
                           </p>
                           <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">
@@ -354,7 +354,7 @@ export const ContactSubmissionsPage = () => {
                       ) : null}
                       {submission.error ? (
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                          <p className="text-[13px] font-medium text-muted-foreground">
                             {t("deliveryIssue")}
                           </p>
                           <p className="mt-1 text-sm text-destructive">{submission.error}</p>
