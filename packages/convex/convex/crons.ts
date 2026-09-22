@@ -29,26 +29,15 @@ import { internal } from "./_generated/api";
 const crons = cronJobs();
 
 if (process.env.DISABLE_CRONS !== "true") {
-  // Poll integrations around the clock, every day. The webhooks are the fast
-  // path for state changes; this poll is the safety net that keeps the fused
-  // state honest when a webhook is slow, misconfigured, or disabled server-side
-  // (which has happened) — a webhook-only gap used to leave people frozen in
-  // whatever state they were last seen in (e.g. "clocked in and working" hours
-  // after they actually clocked out). Since webhooks carry most of the
-  // freshness, a relaxed cadence suffices: every 15 min during the day, every
-  // 2 h overnight where less changes but staleness still must resolve
-  // eventually — the off-hours pass is also what lets the 20:00 "assumed →
-  // certain clocked-out" transition (see clockodo.ts) fire in the evening
-  // instead of depending on a webhook that may not be there.
+  // Poll integrations hourly during business hours, weekdays only. The
+  // webhooks are the fast path for state changes; this poll is the safety
+  // net that keeps the fused state honest when a webhook is slow, misconfigured,
+  // or disabled server-side (which has happened) — a webhook-only gap used to
+  // leave people frozen in whatever state they were last seen in (e.g.
+  // "clocked in and working" hours after they actually clocked out).
   crons.cron(
-    "activity: poll integrations (daytime)",
-    "*/15 5-18 * * *",
-    internal.activity.integrations.pollAll,
-    {},
-  );
-  crons.cron(
-    "activity: poll integrations (midnight)",
-    "0 0 * * *",
+    "activity: poll integrations",
+    "0 7-20 * * 1-5",
     internal.activity.integrations.pollAll,
     {},
   );
