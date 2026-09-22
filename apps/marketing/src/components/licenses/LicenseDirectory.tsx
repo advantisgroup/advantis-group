@@ -99,17 +99,30 @@ const FADE_EDGES = {
  * hover hands control back, and the drift picks up from wherever they left
  * it a few seconds later. Holds at the bottom, glides back to the top and
  * starts over. Off entirely under reduced motion.
+ *
+ * `readerHolding` says whether the reader is what's stopping it right now, so
+ * the pause button can show what's actually happening.
  */
 function useAutoScroll(ref: RefObject<HTMLDivElement | null>, enabled: boolean) {
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [readerHolding, setReaderHolding] = useState(false);
+  const resumeRef = useRef(() => {});
+
+  useEffect(() => {
+    setReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }, []);
+
   useEffect(() => {
     const element = ref.current;
-    if (!element || !enabled) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!element || !enabled || reducedMotion) return;
 
     let hovering = false;
     let focused = false;
     let visible = true;
-    let pausedUntil = performance.now() + HOLD_AT_ENDS_MS;
+    let heldByReaderUntil = 0;
+    let reported = false;
+    // A short beat at the top before it starts moving, but not when resuming mid-list.
+    let holdUntil = element.scrollTop === 0 ? performance.now() + HOLD_AT_ENDS_MS : 0;
     let returnToTop = false;
     let position = element.scrollTop;
     let last = performance.now();
@@ -119,11 +132,17 @@ function useAutoScroll(ref: RefObject<HTMLDivElement | null>, enabled: boolean) 
       const elapsed = Math.min(now - last, 100);
       last = now;
 
-      if (!hovering && !focused && visible && !document.hidden && now >= pausedUntil) {
+      const holding = hovering || focused || now < heldByReaderUntil;
+      if (holding !== reported) {
+        reported = holding;
+        setReaderHolding(holding);
+      }
+
+      if (!holding && visible && !document.hidden && now >= holdUntil) {
         if (returnToTop) {
           returnToTop = false;
           element.scrollTo({ top: 0, behavior: "smooth" });
-          pausedUntil = now + HOLD_AT_ENDS_MS;
+          holdUntil = now + HOLD_AT_ENDS_MS;
         } else {
           // Someone (or a smooth scroll) moved it since the last frame — carry on from there.
           if (Math.abs(element.scrollTop - position) > 2) position = element.scrollTop;
@@ -131,7 +150,7 @@ function useAutoScroll(ref: RefObject<HTMLDivElement | null>, enabled: boolean) 
           const end = element.scrollHeight - element.clientHeight;
           if (position >= end - 1) {
             returnToTop = true;
-            pausedUntil = now + HOLD_AT_ENDS_MS;
+            holdUntil = now + HOLD_AT_ENDS_MS;
           } else {
             position = Math.min(end, position + (SCROLL_SPEED * elapsed) / 1000);
             element.scrollTop = position;
@@ -144,7 +163,7 @@ function useAutoScroll(ref: RefObject<HTMLDivElement | null>, enabled: boolean) 
 
     const handBack = () => {
       returnToTop = false;
-      pausedUntil = performance.now() + RESUME_AFTER_MS;
+      heldByReaderUntil = performance.now() + RESUME_AFTER_MS;
     };
     const onPointerEnter = (event: PointerEvent) => {
       if (event.pointerType === "mouse") hovering = true;
@@ -157,6 +176,10 @@ function useAutoScroll(ref: RefObject<HTMLDivElement | null>, enabled: boolean) 
     const onFocusOut = () => {
       focused = false;
       handBack();
+    };
+    resumeRef.current = () => {
+      heldByReaderUntil = 0;
+      holdUntil = 0;
     };
 
     const observer = new IntersectionObserver(([entry]) => (visible = entry.isIntersecting));
@@ -185,8 +208,12 @@ function useAutoScroll(ref: RefObject<HTMLDivElement | null>, enabled: boolean) 
       element.removeEventListener("pointerleave", onPointerLeave);
       element.removeEventListener("focusin", onFocusIn);
       element.removeEventListener("focusout", onFocusOut);
+      resumeRef.current = () => {};
+      setReaderHolding(false);
     };
-  }, [ref, enabled]);
+  }, [ref, enabled, reducedMotion]);
+
+  return { canDrift: !reducedMotion, readerHolding, resume: () => resumeRef.current() };
 }
 
 export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
@@ -259,10 +286,11 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
 
   // The scroller unmounts on an empty search, so its count is part of the
   // switch — otherwise the drift wouldn't restart once results come back.
-  useAutoScroll(
+  const drift = useAutoScroll(
     scrollerRef,
     view === "gallery" && drifting && !detailsFor && filteredLicenses.length > 0,
   );
+  const moving = drifting && !drift.readerHolding;
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: 0 });
@@ -397,14 +425,21 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
         <p aria-live="polite" className="text-[13px] text-muted-foreground">
           {t("resultCount", { count: filteredLicenses.length })}
         </p>
-        {view === "gallery" ? (
+        {view === "gallery" && drift.canDrift && filteredLicenses.length > 0 ? (
           <button
             type="button"
-            onClick={() => setDrifting((current) => !current)}
+            onClick={() => {
+              if (moving) {
+                setDrifting(false);
+              } else {
+                setDrifting(true);
+                drift.resume();
+              }
+            }}
             className="flex min-h-11 items-center gap-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground md:min-h-0"
           >
-            {drifting ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
-            {drifting ? t("pauseScroll") : t("resumeScroll")}
+            {moving ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
+            {moving ? t("pauseScroll") : t("resumeScroll")}
           </button>
         ) : null}
       </div>
@@ -427,6 +462,11 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
         <div
           ref={scrollerRef}
           style={FADE_EDGES}
+          // Lenis owns the page's wheel events, so without this the wheel
+          // scrolls the page instead of the list. Wheel only — plain
+          // `data-lenis-prevent` also turns on overscroll containment, which
+          // would stop a phone swipe from carrying on to the page at the ends.
+          data-lenis-prevent-wheel
           // Kept well short of the viewport so there's always page left to
           // swipe on around it — a full-height inner scroller is what trapped
           // phones on the first version of this page.
