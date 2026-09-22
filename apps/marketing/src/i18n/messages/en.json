@@ -1151,7 +1151,26 @@
     "publisher": "Publisher",
     "license": "License",
     "noLinks": "No further links recorded.",
-    "showMore": "Show more ({count} remaining)"
+    "package": "Package",
+    "viewLabel": "View",
+    "viewGallery": "Gallery",
+    "viewPlain": "Plain list",
+    "pauseScroll": "Pause scrolling",
+    "resumeScroll": "Resume scrolling",
+    "mixHint": "Pick a license to filter the list and see what it allows, in plain words.",
+    "surprise": "Surprise me",
+    "another": "Another one",
+    "clearSearch": "Clear search",
+    "thanks": "Thank you to the {count} maintainers and teams whose work this site is built on.",
+    "summaries": {
+      "mit": "use, change and share it freely, as long as the copyright notice comes along.",
+      "isc": "MIT in fewer words: use it freely, keep the notice.",
+      "apache": "use it freely, keep the notice, say what you changed — and it grants patent rights too.",
+      "bsd2": "use it freely and keep the copyright notice in source and binaries.",
+      "bsd3": "like BSD-2, plus: don't use the authors' names to promote your product.",
+      "mpl": "use it freely, but changes to its own files have to stay open source.",
+      "noNotice": "do whatever you like — not even the notice is required."
+    }
   },
   "whitepaper": {
     "meta": {

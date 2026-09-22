@@ -1154,7 +1154,26 @@
     "publisher": "Éditeur",
     "license": "Licence",
     "noLinks": "Aucun lien complémentaire enregistré.",
-    "showMore": "Afficher plus ({count} restants)"
+    "package": "Paquet",
+    "viewLabel": "Affichage",
+    "viewGallery": "Galerie",
+    "viewPlain": "Liste simple",
+    "pauseScroll": "Mettre le défilement en pause",
+    "resumeScroll": "Reprendre le défilement",
+    "mixHint": "Choisissez une licence pour filtrer la liste et voir, en termes simples, ce qu'elle autorise.",
+    "surprise": "Surprenez-moi",
+    "another": "Un autre",
+    "clearSearch": "Effacer la recherche",
+    "thanks": "Merci aux {count} mainteneurs et équipes dont le travail fait tourner ce site.",
+    "summaries": {
+      "mit": "utilisation, modification et partage libres, tant que la mention de copyright est conservée.",
+      "isc": "la MIT en moins de mots : utilisation libre, mention conservée.",
+      "apache": "utilisation libre, mention conservée, modifications signalées — et elle accorde aussi des droits de brevet.",
+      "bsd2": "utilisation libre, en conservant la mention de copyright dans les sources et les binaires.",
+      "bsd3": "comme la BSD-2, et en plus : ne pas utiliser le nom des auteurs pour promouvoir votre produit.",
+      "mpl": "utilisation libre, mais les modifications de ses propres fichiers doivent rester open source.",
+      "noNotice": "faites ce que vous voulez — même la mention n'est pas obligatoire."
+    }
   },
   "whitepaper": {
     "meta": {

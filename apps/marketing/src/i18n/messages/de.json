@@ -1154,7 +1154,26 @@
     "publisher": "Herausgeber",
     "license": "Lizenz",
     "noLinks": "Keine weiterführenden Links hinterlegt.",
-    "showMore": "Mehr anzeigen ({count} weitere)"
+    "package": "Paket",
+    "viewLabel": "Ansicht",
+    "viewGallery": "Galerie",
+    "viewPlain": "Einfache Liste",
+    "pauseScroll": "Scrollen pausieren",
+    "resumeScroll": "Scrollen fortsetzen",
+    "mixHint": "Wähle eine Lizenz, um die Liste zu filtern und in einfachen Worten zu sehen, was sie erlaubt.",
+    "surprise": "Überrasch mich",
+    "another": "Noch eins",
+    "clearSearch": "Suche zurücksetzen",
+    "thanks": "Danke an die {count} Maintainer und Teams, auf deren Arbeit diese Website aufbaut.",
+    "summaries": {
+      "mit": "frei nutzen, ändern und weitergeben, solange der Copyright-Hinweis mitkommt.",
+      "isc": "MIT in weniger Worten: frei nutzen, Hinweis behalten.",
+      "apache": "frei nutzen, Hinweis behalten, Änderungen kennzeichnen — und sie gewährt zusätzlich Patentrechte.",
+      "bsd2": "frei nutzen und den Copyright-Hinweis in Quellcode und Binärdateien behalten.",
+      "bsd3": "wie BSD-2, plus: die Namen der Autoren nicht zur Werbung für das eigene Produkt nutzen.",
+      "mpl": "frei nutzen, aber Änderungen an den eigenen Dateien müssen Open Source bleiben.",
+      "noNotice": "mach, was du willst — nicht einmal der Hinweis ist Pflicht."
+    }
   },
   "whitepaper": {
     "meta": {
