@@ -158,7 +158,7 @@ export function SystemsPanel() {
                 <MetricRow
                   key={flag.key}
                   icon={PowerOff}
-                  label={t("overview.systems.flagOff", { key: flag.key })}
+                  label={t("overview.systems.flagOff", { key: flag.label })}
                   sublabel={flag.reason}
                   trailing={
                     <span className="whitespace-nowrap">{relativeTime(flag.updatedAt)}</span>

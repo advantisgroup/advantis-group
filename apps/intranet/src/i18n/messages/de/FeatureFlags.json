@@ -45,5 +45,22 @@
     "description": "Alle sehen, warum {label} deaktiviert ist. Wird es später wieder aktiviert, kommt eine Folgenachricht zu diesem Update.",
     "current": "Aktuelle Nachricht verwenden",
     "confirm": "Update posten"
+  },
+  "on": "An",
+  "off": "Aus",
+  "turnedOff": "Abgeschaltet am {date}",
+  "updatePosted": "Update veröffentlicht",
+  "toggleLabel": "{label} an- oder ausschalten",
+  "summaryAllOn": "Alle Funktionen sind an.",
+  "summaryOff": "{count, plural, one {# von {total} Funktionen ist aus} other {# von {total} Funktionen sind aus}}",
+  "summaryNoUpdate": "{count, plural, one {# ohne Update} other {# ohne Update}}",
+  "descriptions": {
+    "activitytrack": "Erfasst Desktop-, Telefon- und Zeiterfassungsaktivität und zeigt sie auf den Aktivitätsseiten.",
+    "chat": "Direkt- und Gruppennachrichten zwischen Kolleg:innen.",
+    "ai": "Alles, was Anfragen an das KI-Modell schickt.",
+    "marketingSubmissions": "Die Kontaktformulare auf der öffentlichen Website. Solange sie aus sind, können Besucher:innen ihre E-Mail hinterlassen und werden informiert, wenn sie zurück sind."
+  },
+  "panel": {
+    "manage": "Verwalten"
   }
 }

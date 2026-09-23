@@ -4,6 +4,7 @@ import type { Doc } from "../_generated/dataModel";
 import { userQuery } from "../functions";
 import type { QueryCtx } from "../_generated/server";
 import { readConfig } from "../activity/lib/settings";
+import { FEATURE_FLAG_REGISTRY, type FeatureFlagKey } from "../lib/featureFlags";
 import { displayName } from "../lib/users";
 
 /**
@@ -585,7 +586,12 @@ export const systems = userQuery({
       // the normal state and says nothing.
       disabledFlags: flags
         .filter((f) => !f.enabled)
-        .map((f) => ({ key: f.key, reason: f.reason ?? null, updatedAt: f.updatedAt }))
+        .map((f) => ({
+          key: f.key,
+          label: FEATURE_FLAG_REGISTRY[f.key as FeatureFlagKey]?.label ?? f.key,
+          reason: f.reason ?? null,
+          updatedAt: f.updatedAt,
+        }))
         .sort((a, b) => b.updatedAt - a.updatedAt),
       flagsTotal: flags.length,
       liveUpdates: live.map((u) => ({

@@ -45,5 +45,22 @@
     "description": "Everyone will see why {label} is off. Re-enabling it later adds a follow-up to this update.",
     "current": "Use the current message",
     "confirm": "Post update"
+  },
+  "on": "On",
+  "off": "Off",
+  "turnedOff": "Turned off {date}",
+  "updatePosted": "update posted",
+  "toggleLabel": "Turn {label} on or off",
+  "summaryAllOn": "All features are on.",
+  "summaryOff": "{count, plural, one {# of {total} features is off} other {# of {total} features are off}}",
+  "summaryNoUpdate": "{count, plural, one {# without an update} other {# without an update}}",
+  "descriptions": {
+    "activitytrack": "Records desktop, phone and time-tracking activity and shows it on the activity pages.",
+    "chat": "Direct and group messages between colleagues.",
+    "ai": "Everything that sends requests to the AI model.",
+    "marketingSubmissions": "The contact forms on the public website. While off, visitors can leave their email to be told when they're back."
+  },
+  "panel": {
+    "manage": "Manage"
   }
 }
