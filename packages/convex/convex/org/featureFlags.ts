@@ -8,6 +8,8 @@ import {
   getFlagRow,
   isFeatureEnabled,
 } from "../lib/featureFlags";
+import type { Id } from "../_generated/dataModel";
+import type { MutationCtx } from "../_generated/server";
 import { appendTimeline, insertUpdate } from "../updates/lib/updates";
 
 /** Actions can't touch `ctx.db` directly — this is what `gatedAction`/`gatedInternalAction` call via `ctx.runQuery`. */
@@ -31,16 +33,42 @@ export const list = userQuery({
         premadeReason: FEATURE_FLAG_REGISTRY[key].premadeReason,
         enabled,
         reason: enabled ? undefined : row?.reason,
+        // off but nobody told yet — the admin panel offers to post the update now
+        hasUpdate: Boolean(row?.updateId),
         updatedAt: row?.updatedAt,
       };
     });
   },
 });
 
+/** The "X disabled" maintenance Update everyone sees. */
+async function postDisabledUpdate(
+  ctx: MutationCtx,
+  key: FeatureFlagKey,
+  reason: string,
+  authorUserId: Id<"users">,
+) {
+  const meta = FEATURE_FLAG_REGISTRY[key];
+  return await insertUpdate(ctx, {
+    type: "maintenance",
+    title: `${meta.label} disabled`,
+    summary: reason.length > 140 ? `${reason.slice(0, 137)}...` : reason,
+    bodyFormat: "markdown",
+    body: reason,
+    authorUserId,
+    audience: { kind: "all" },
+    affectedSystems: [meta.label],
+    status: "in_progress",
+    emailRequested: false,
+    source: "system",
+  });
+}
+
 /**
  * Enable or disable a feature. Disabling posts a new Update (premade or
- * custom `reason`); re-enabling posts a follow-up on that same Update
- * instead of a second post, so toggling isn't spammy. Admin only.
+ * custom `reason`) unless `postUpdate` is false — then it can still be
+ * posted later with `postFlagUpdate`. Re-enabling posts a follow-up on that
+ * same Update instead of a second post, so toggling isn't spammy. Admin only.
  */
 export const setFlag = userMutation({
   role: "admin",
@@ -48,6 +76,7 @@ export const setFlag = userMutation({
     key: featureKeyValidator,
     enabled: v.boolean(),
     reason: v.optional(v.string()),
+    postUpdate: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const me = ctx.caller.user;
@@ -77,19 +106,8 @@ export const setFlag = userMutation({
     if (existing?.enabled === false) return { ok: true };
 
     const reason = args.reason?.trim() || meta.premadeReason;
-    const updateId = await insertUpdate(ctx, {
-      type: "maintenance",
-      title: `${meta.label} disabled`,
-      summary: reason.length > 140 ? `${reason.slice(0, 137)}...` : reason,
-      bodyFormat: "markdown",
-      body: reason,
-      authorUserId: me._id,
-      audience: { kind: "all" },
-      affectedSystems: [meta.label],
-      status: "in_progress",
-      emailRequested: false,
-      source: "system",
-    });
+    const updateId =
+      args.postUpdate === false ? undefined : await postDisabledUpdate(ctx, key, reason, me._id);
 
     if (existing) {
       await ctx.db.patch(existing._id, {
@@ -109,6 +127,29 @@ export const setFlag = userMutation({
         updateId,
       });
     }
+    return { ok: true };
+  },
+});
+
+/**
+ * Posts the Update for a feature that was disabled without one. The re-enable
+ * follow-up then lands on it like it would have otherwise. Admin only.
+ */
+export const postFlagUpdate = userMutation({
+  role: "admin",
+  args: {
+    key: featureKeyValidator,
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const key = args.key as FeatureFlagKey;
+    const existing = await getFlagRow(ctx, key);
+    if (!existing || existing.enabled || existing.updateId) return { ok: true };
+
+    const reason =
+      args.reason?.trim() || existing.reason || FEATURE_FLAG_REGISTRY[key].premadeReason;
+    const updateId = await postDisabledUpdate(ctx, key, reason, ctx.caller.user._id);
+    await ctx.db.patch(existing._id, { reason, updateId });
     return { ok: true };
   },
 });

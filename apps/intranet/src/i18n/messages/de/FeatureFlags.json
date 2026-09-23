@@ -1,6 +1,6 @@
 {
   "title": "Feature-Flags",
-  "subtitle": "Ganze Funktionen für alle deaktivieren. Beim Deaktivieren wird ein Update veröffentlicht, das erklärt, was los ist; Admins behalten Zugriff, um es wieder zu aktivieren.",
+  "subtitle": "Ganze Funktionen für alle deaktivieren, mit oder ohne Update dazu; Admins behalten Zugriff, um sie wieder zu aktivieren.",
   "enabled": "Aktiviert",
   "disabled": "Deaktiviert",
   "lastChanged": "Zuletzt geändert am {date}",
@@ -14,18 +14,36 @@
     "premade": "Vorgefertigte Nachricht verwenden",
     "custom": "Eigene Nachricht schreiben",
     "customPlaceholder": "Erkläre, was los ist und warum…",
-    "confirm": "Deaktivieren"
+    "confirm": "Deaktivieren",
+    "descriptionSilent": "Dies nimmt {label} für Nicht-Admins sofort offline, ohne ein Update zu veröffentlichen.",
+    "postUpdate": "Update veröffentlichen",
+    "postUpdateHint": "Alle sehen ein Update, das erklärt, was los ist.",
+    "postUpdateLaterHint": "Vorerst wird niemand informiert. Das Update kannst du später auf dieser Seite noch posten.",
+    "silentTitle": "Ohne Update deaktivieren?",
+    "silentBody": "Niemand erfährt, warum {label} nicht mehr funktioniert. Das Update kannst du später auf dieser Seite noch posten, die gewählte Nachricht bleibt dafür gespeichert.",
+    "silentConfirm": "Ohne Update deaktivieren",
+    "back": "Zurück"
   },
   "enableDialog": {
     "title": "{label} wieder aktivieren?",
     "description": "Optional eine Folgenachricht zum selben Update hinzufügen. Leer lassen, um die Standard-\"wieder online\"-Nachricht zu verwenden.",
     "placeholder": "Optionale Folgenachricht…",
-    "confirm": "Aktivieren"
+    "confirm": "Aktivieren",
+    "descriptionSilent": "{label} ist für alle wieder da. Beim Deaktivieren wurde kein Update gepostet, deshalb auch jetzt nicht."
   },
   "disabledScreen": {
     "code": "Nicht verfügbar",
     "title": "{label} ist deaktiviert",
     "description": "Diese Funktion wurde von einem Administrator deaktiviert. Bitte wende dich für weitere Fragen an deine Administration.",
     "backToDashboard": "Zurück zur Übersicht"
+  },
+  "noUpdate": "kein Update veröffentlicht",
+  "postUpdateAction": "Update posten",
+  "postedToast": "Update veröffentlicht",
+  "postDialog": {
+    "title": "Update zu {label} posten",
+    "description": "Alle sehen, warum {label} deaktiviert ist. Wird es später wieder aktiviert, kommt eine Folgenachricht zu diesem Update.",
+    "current": "Aktuelle Nachricht verwenden",
+    "confirm": "Update posten"
   }
 }

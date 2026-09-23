@@ -1,6 +1,6 @@
 {
   "title": "Feature flags",
-  "subtitle": "Turn whole features off for everyone. Disabling posts an update explaining what's happening; admins keep access so they can turn it back on.",
+  "subtitle": "Turn whole features off for everyone, with or without an update explaining it; admins keep access so they can turn it back on.",
   "enabled": "Enabled",
   "disabled": "Disabled",
   "lastChanged": "Last changed {date}",
@@ -14,18 +14,36 @@
     "premade": "Use the premade message",
     "custom": "Write a custom message",
     "customPlaceholder": "Explain what's happening and why…",
-    "confirm": "Disable"
+    "confirm": "Disable",
+    "descriptionSilent": "This takes {label} offline for non-admins immediately, without posting an update.",
+    "postUpdate": "Post an update",
+    "postUpdateHint": "Everyone sees an update explaining what's happening.",
+    "postUpdateLaterHint": "Nobody is told for now. You can still post the update later from this page.",
+    "silentTitle": "Disable without an update?",
+    "silentBody": "Nobody will be told why {label} stopped working. You can still post the update later from this page, and the message you picked is kept for it.",
+    "silentConfirm": "Disable without update",
+    "back": "Back"
   },
   "enableDialog": {
     "title": "Re-enable {label}?",
     "description": "Optionally add a follow-up message posted to the same update. Leave blank to use the default \"back online\" message.",
     "placeholder": "Optional follow-up message…",
-    "confirm": "Enable"
+    "confirm": "Enable",
+    "descriptionSilent": "{label} comes back for everyone. No update was posted when it was turned off, so none is posted now either."
   },
   "disabledScreen": {
     "code": "Unavailable",
     "title": "{label} is disabled",
     "description": "This feature has been disabled by an administrator. Please contact your administrator for further inquiries.",
     "backToDashboard": "Back to Dashboard"
+  },
+  "noUpdate": "no update posted",
+  "postUpdateAction": "Post update",
+  "postedToast": "Update posted",
+  "postDialog": {
+    "title": "Post an update about {label}",
+    "description": "Everyone will see why {label} is off. Re-enabling it later adds a follow-up to this update.",
+    "current": "Use the current message",
+    "confirm": "Post update"
   }
 }

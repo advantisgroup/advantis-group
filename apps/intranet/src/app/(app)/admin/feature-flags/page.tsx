@@ -25,11 +25,61 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime } from "@/lib/format";
 
 type Flag = NonNullable<ReturnType<typeof useFeatureFlags>>[number];
+
+type ReasonMode = "premade" | "custom";
+
+function ReasonPicker({
+  premadeLabel,
+  premadeText,
+  mode,
+  onModeChange,
+  custom,
+  onCustomChange,
+}: {
+  premadeLabel: string;
+  premadeText: string;
+  mode: ReasonMode;
+  onModeChange: (mode: ReasonMode) => void;
+  custom: string;
+  onCustomChange: (value: string) => void;
+}) {
+  const t = useTranslations("FeatureFlags");
+
+  return (
+    <>
+      <RadioGroup value={mode} onValueChange={(v) => onModeChange(v as ReasonMode)}>
+        <div className="flex items-start gap-2.5">
+          <RadioGroupItem value="premade" id="reason-premade" className="mt-1" />
+          <Label htmlFor="reason-premade" className="flex-1 cursor-pointer font-normal">
+            <span className="block text-sm">{premadeLabel}</span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">{premadeText}</span>
+          </Label>
+        </div>
+        <div className="flex items-start gap-2.5">
+          <RadioGroupItem value="custom" id="reason-custom" className="mt-1" />
+          <Label htmlFor="reason-custom" className="flex-1 cursor-pointer text-sm font-normal">
+            {t("disableDialog.custom")}
+          </Label>
+        </div>
+      </RadioGroup>
+      {mode === "custom" && (
+        <Textarea
+          autoFocus
+          value={custom}
+          onChange={(e) => onCustomChange(e.target.value)}
+          placeholder={t("disableDialog.customPlaceholder")}
+          rows={3}
+        />
+      )}
+    </>
+  );
+}
 
 function ToggleDialog({
   flag,
@@ -44,14 +94,22 @@ function ToggleDialog({
   const tc = useTranslations("Common");
   const setFlag = useMutation(api.org.featureFlags.setFlag);
   const handleError = useErrorHandler();
-  const [reasonMode, setReasonMode] = useState<"premade" | "custom">("premade");
+  const [reasonMode, setReasonMode] = useState<ReasonMode>("premade");
   const [customReason, setCustomReason] = useState("");
+  const [postUpdate, setPostUpdate] = useState(true);
+  // turning a feature off silently gets one extra "are you sure" step
+  const [confirmingSilent, setConfirmingSilent] = useState(false);
   const [followUp, setFollowUp] = useState("");
   const [busy, setBusy] = useState(false);
 
   const confirmBlocked = mode === "disable" && reasonMode === "custom" && !customReason.trim();
 
   async function confirm() {
+    if (mode === "disable" && !postUpdate && !confirmingSilent) {
+      setConfirmingSilent(true);
+      return;
+    }
+
     setBusy(true);
     try {
       if (mode === "disable") {
@@ -59,6 +117,7 @@ function ToggleDialog({
           key: flag.key,
           enabled: false,
           reason: reasonMode === "custom" ? customReason.trim() : undefined,
+          postUpdate,
         });
         toast.success(t("disabledToast", { label: flag.label }));
       } else {
@@ -77,6 +136,27 @@ function ToggleDialog({
     }
   }
 
+  if (confirmingSilent) {
+    return (
+      <Dialog open onOpenChange={(o) => !busy && onOpenChange(o)}>
+        <DialogContent className="max-w-md">
+          <DialogTitle>{t("disableDialog.silentTitle")}</DialogTitle>
+          <DialogDescription>
+            {t("disableDialog.silentBody", { label: flag.label })}
+          </DialogDescription>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setConfirmingSilent(false)} disabled={busy}>
+              {t("disableDialog.back")}
+            </Button>
+            <Button variant="destructive" onClick={() => void confirm()} disabled={busy}>
+              {t("disableDialog.silentConfirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open onOpenChange={(o) => !busy && onOpenChange(o)}>
       <DialogContent className="max-w-md">
@@ -86,53 +166,46 @@ function ToggleDialog({
             : t("enableDialog.title", { label: flag.label })}
         </DialogTitle>
         <DialogDescription>
-          {mode === "disable" ? t("disableDialog.description") : t("enableDialog.description")}
+          {mode === "disable"
+            ? t(postUpdate ? "disableDialog.description" : "disableDialog.descriptionSilent", {
+                label: flag.label,
+              })
+            : flag.hasUpdate
+              ? t("enableDialog.description")
+              : t("enableDialog.descriptionSilent", { label: flag.label })}
         </DialogDescription>
 
         <div className="space-y-4">
           {mode === "disable" ? (
             <>
-              <RadioGroup
-                value={reasonMode}
-                onValueChange={(v) => setReasonMode(v as "premade" | "custom")}
-              >
-                <div className="flex items-start gap-2.5">
-                  <RadioGroupItem value="premade" id="reason-premade" className="mt-1" />
-                  <Label htmlFor="reason-premade" className="flex-1 cursor-pointer font-normal">
-                    <span className="block text-sm">{t("disableDialog.premade")}</span>
-                    <span className="mt-0.5 block text-xs text-muted-foreground">
-                      {flag.premadeReason}
-                    </span>
-                  </Label>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <RadioGroupItem value="custom" id="reason-custom" className="mt-1" />
-                  <Label
-                    htmlFor="reason-custom"
-                    className="flex-1 cursor-pointer text-sm font-normal"
-                  >
-                    {t("disableDialog.custom")}
-                  </Label>
-                </div>
-              </RadioGroup>
-              {reasonMode === "custom" && (
-                <Textarea
-                  autoFocus
-                  value={customReason}
-                  onChange={(e) => setCustomReason(e.target.value)}
-                  placeholder={t("disableDialog.customPlaceholder")}
-                  rows={3}
-                />
-              )}
+              <ReasonPicker
+                premadeLabel={t("disableDialog.premade")}
+                premadeText={flag.premadeReason}
+                mode={reasonMode}
+                onModeChange={setReasonMode}
+                custom={customReason}
+                onCustomChange={setCustomReason}
+              />
+              <div className="flex items-start justify-between gap-4 border-t pt-4">
+                <Label htmlFor="post-update" className="cursor-pointer font-normal">
+                  <span className="block text-sm">{t("disableDialog.postUpdate")}</span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {postUpdate
+                      ? t("disableDialog.postUpdateHint")
+                      : t("disableDialog.postUpdateLaterHint")}
+                  </span>
+                </Label>
+                <Switch id="post-update" checked={postUpdate} onCheckedChange={setPostUpdate} />
+              </div>
             </>
-          ) : (
+          ) : flag.hasUpdate ? (
             <Textarea
               value={followUp}
               onChange={(e) => setFollowUp(e.target.value)}
               placeholder={t("enableDialog.placeholder")}
               rows={3}
             />
-          )}
+          ) : null}
         </div>
 
         <DialogFooter>
@@ -152,10 +225,72 @@ function ToggleDialog({
   );
 }
 
+/** For a feature that was turned off without telling anyone: tell them now. */
+function PostUpdateDialog({
+  flag,
+  onOpenChange,
+}: {
+  flag: Flag;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useTranslations("FeatureFlags");
+  const tc = useTranslations("Common");
+  const postFlagUpdate = useMutation(api.org.featureFlags.postFlagUpdate);
+  const handleError = useErrorHandler();
+  const [reasonMode, setReasonMode] = useState<ReasonMode>("premade");
+  const [customReason, setCustomReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function confirm() {
+    setBusy(true);
+    try {
+      await postFlagUpdate({
+        key: flag.key,
+        reason: reasonMode === "custom" ? customReason.trim() : undefined,
+      });
+      toast.success(t("postedToast"));
+      onOpenChange(false);
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !busy && onOpenChange(o)}>
+      <DialogContent className="max-w-md">
+        <DialogTitle>{t("postDialog.title", { label: flag.label })}</DialogTitle>
+        <DialogDescription>{t("postDialog.description", { label: flag.label })}</DialogDescription>
+        <div className="space-y-4">
+          <ReasonPicker
+            premadeLabel={t("postDialog.current")}
+            premadeText={flag.reason ?? flag.premadeReason}
+            mode={reasonMode}
+            onModeChange={setReasonMode}
+            custom={customReason}
+            onCustomChange={setCustomReason}
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>
+            {tc("cancel")}
+          </Button>
+          <Button
+            onClick={() => void confirm()}
+            disabled={busy || (reasonMode === "custom" && !customReason.trim())}
+          >
+            {t("postDialog.confirm")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 function FlagRow({ flag }: { flag: Flag }) {
   const t = useTranslations("FeatureFlags");
   const locale = useLocale();
-  const [dialogMode, setDialogMode] = useState<"disable" | "enable" | null>(null);
+  const [dialogMode, setDialogMode] = useState<"disable" | "enable" | "post" | null>(null);
 
   return (
     <Card nested>
@@ -175,19 +310,29 @@ function FlagRow({ flag }: { flag: Flag }) {
               {t("lastChanged", {
                 date: formatDateTime(flag.updatedAt, locale),
               })}
+              {!flag.enabled && !flag.hasUpdate ? ` · ${t("noUpdate")}` : null}
             </p>
           )}
         </div>
-        <Button
-          variant={flag.enabled ? "destructive" : "secondary"}
-          size="sm"
-          className="shrink-0"
-          onClick={() => setDialogMode(flag.enabled ? "disable" : "enable")}
-        >
-          {flag.enabled ? t("disableAction") : t("enableAction")}
-        </Button>
+        <div className="flex shrink-0 gap-2">
+          {!flag.enabled && !flag.hasUpdate && (
+            <Button variant="outline" size="sm" onClick={() => setDialogMode("post")}>
+              {t("postUpdateAction")}
+            </Button>
+          )}
+          <Button
+            variant={flag.enabled ? "destructive" : "secondary"}
+            size="sm"
+            onClick={() => setDialogMode(flag.enabled ? "disable" : "enable")}
+          >
+            {flag.enabled ? t("disableAction") : t("enableAction")}
+          </Button>
+        </div>
       </CardContent>
-      {dialogMode && (
+      {dialogMode === "post" && (
+        <PostUpdateDialog flag={flag} onOpenChange={(o) => !o && setDialogMode(null)} />
+      )}
+      {(dialogMode === "disable" || dialogMode === "enable") && (
         <ToggleDialog
           flag={flag}
           mode={dialogMode}
