@@ -8,6 +8,7 @@ import { Resend } from "resend";
 import { NotifyCodeEmail, notifyCodeCopy } from "@/components/email/notify-code-email";
 import { convex, serverKey } from "@/lib/convex-server";
 import { allow, clientIp, limits } from "@/lib/rate-limit";
+import { submissionsOpen } from "@/lib/submissions";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -84,7 +85,7 @@ export const notify = new Elysia()
   .post(
     "/notify",
     async ({ body, headers, set }) => {
-      if (process.env.NEXT_PUBLIC_ALLOW_SUBMISSIONS === "true") {
+      if (await submissionsOpen()) {
         set.status = 400;
         return { error: "Submissions are currently open — use the contact form directly." };
       }

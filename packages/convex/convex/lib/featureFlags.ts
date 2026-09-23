@@ -16,7 +16,7 @@ import type { MutationCtx, QueryCtx } from "../_generated/server";
  * This is the only list of flag keys — the intranet derives its
  * `FeatureFlagKey` type from `setFlag`'s args.
  */
-export const FEATURE_FLAG_KEYS = ["activitytrack", "chat", "ai"] as const;
+export const FEATURE_FLAG_KEYS = ["activitytrack", "chat", "ai", "marketingSubmissions"] as const;
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
 export const FEATURE_FLAG_REGISTRY: Record<
   FeatureFlagKey,
@@ -36,6 +36,12 @@ export const FEATURE_FLAG_REGISTRY: Record<
     label: "AI",
     premadeReason:
       "AI has been disabled by an administrator. Nothing new can be sent to the model while it's off; runs that already finished stay where they are.",
+  },
+  // read by apps/marketing through marketing/forms.ts, takes effect without a redeploy
+  marketingSubmissions: {
+    label: "Website contact forms",
+    premadeReason:
+      "The contact forms on the website have been closed by an administrator. Visitors can still leave their email to be told when they reopen.",
   },
 };
 

@@ -6,6 +6,7 @@ import { Resend } from "resend";
 import { EmailTemplate } from "@/components/email/email-template";
 import { convex, serverKey } from "@/lib/convex-server";
 import { allow, clientIp, limits } from "@/lib/rate-limit";
+import { submissionsOpen } from "@/lib/submissions";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -19,7 +20,7 @@ export const email = new Elysia().post(
   "/send",
   async ({ body, headers, set }) => {
     // the page greys the form out, but that alone never stopped a direct request
-    if (process.env.NEXT_PUBLIC_ALLOW_SUBMISSIONS !== "true") {
+    if (!(await submissionsOpen())) {
       set.status = 503;
       return { error: "Submissions are currently closed." };
     }

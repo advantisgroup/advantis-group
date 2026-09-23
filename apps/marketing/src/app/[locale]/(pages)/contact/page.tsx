@@ -13,12 +13,11 @@ import { SubmissionBanner } from "@/components/contact/SubmissionBanner";
 import { Display } from "@/components/frame";
 import { Button } from "@/components/ui/button";
 import { useContactForm } from "@/hooks/use-contact-form";
+import { useSubmissionsOpen } from "@/hooks/use-submissions-open";
 import { Link } from "@/i18n/navigation";
 import { COMPANY_ADDRESS } from "@/lib/company";
 import { cn } from "@/lib/utils";
 import { type ContactInfoItem, type ContactMode } from "@/types/contact";
-
-const ALLOW_SUBMISSIONS = process.env.NEXT_PUBLIC_ALLOW_SUBMISSIONS === "true";
 
 const SUBMISSION_TEXT_BY_LOCALE: Record<string, string | undefined> = {
   en: process.env.NEXT_PUBLIC_SUBMISSION_TEXT,
@@ -48,6 +47,7 @@ export default function Kontakt() {
   const tAuth = useTranslations("auth");
   const locale = useLocale();
   const { isSignedIn } = useUser();
+  const submissionsOpen = useSubmissionsOpen();
   const formRef = useRef<HTMLDivElement | null>(null);
 
   const submissionText =
@@ -118,7 +118,7 @@ export default function Kontakt() {
             formData={formData}
             errors={errors}
             buttonState={getButtonState("message")}
-            disabled={!ALLOW_SUBMISSIONS}
+            disabled={!submissionsOpen}
             onFormDataChange={setFormData}
             onSubmit={handleMessageSubmit}
           />
@@ -129,7 +129,7 @@ export default function Kontakt() {
             formData={callbackFormData}
             errors={callbackErrors}
             buttonState={getButtonState("callback")}
-            disabled={!ALLOW_SUBMISSIONS}
+            disabled={!submissionsOpen}
             onFormDataChange={setCallbackFormData}
             onSubmit={handleCallbackSubmit}
           />
@@ -140,7 +140,7 @@ export default function Kontakt() {
             formData={otherFormData}
             errors={otherErrors}
             buttonState={getButtonState("other")}
-            disabled={!ALLOW_SUBMISSIONS}
+            disabled={!submissionsOpen}
             onFormDataChange={setOtherFormData}
             onSubmit={handleOtherSubmit}
           />
@@ -187,7 +187,7 @@ export default function Kontakt() {
         </aside>
 
         <div ref={formRef} className="scroll-mt-28">
-          {!ALLOW_SUBMISSIONS ? (
+          {!submissionsOpen ? (
             <SubmissionBanner
               text={submissionText}
               onNotifyClick={() => setNotifyOpen(true)}
@@ -255,7 +255,7 @@ export default function Kontakt() {
                 <h2 className="text-xl font-medium text-foreground">{tMessages(copy.title)}</h2>
                 <p className="mt-1.5 text-[15px] text-muted-foreground">{tMessages(copy.desc)}</p>
 
-                {ALLOW_SUBMISSIONS ? (
+                {submissionsOpen ? (
                   <p className="mt-4 text-[13px] text-muted-foreground">
                     {accountProfile ? (
                       tAccount.rich("signedInNote", {

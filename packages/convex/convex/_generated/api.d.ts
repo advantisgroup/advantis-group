@@ -161,6 +161,7 @@ import type * as lib_users from "../lib/users.js";
 import type * as lib_validators from "../lib/validators.js";
 import type * as marketing_analytics from "../marketing/analytics.js";
 import type * as marketing_emails from "../marketing/emails.js";
+import type * as marketing_forms from "../marketing/forms.js";
 import type * as marketing_leads from "../marketing/leads.js";
 import type * as marketingAnalytics from "../marketingAnalytics.js";
 import type * as members from "../members.js";
@@ -444,6 +445,7 @@ declare const fullApi: ApiFromModules<{
   "lib/validators": typeof lib_validators;
   "marketing/analytics": typeof marketing_analytics;
   "marketing/emails": typeof marketing_emails;
+  "marketing/forms": typeof marketing_forms;
   "marketing/leads": typeof marketing_leads;
   marketingAnalytics: typeof marketingAnalytics;
   members: typeof members;
