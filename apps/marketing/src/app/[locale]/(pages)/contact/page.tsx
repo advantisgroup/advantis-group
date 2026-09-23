@@ -148,42 +148,49 @@ export default function Kontakt() {
     }
   };
 
+  // Beside the form on wide screens; below it on phones, so the form isn't a
+  // whole screen down behind the address and phone number.
+  const reachUs = (
+    <>
+      <p className="max-w-md text-[15px] leading-relaxed text-muted-foreground lg:mt-6">
+        {tSidebar(copy.side)}
+      </p>
+      <ul className="mt-8 max-w-md border-t border-rule lg:mt-10">
+        {channels.map(({ icon: Icon, label, value, href }) => (
+          <li key={label} className="border-b border-rule">
+            <a
+              href={href}
+              target={href.startsWith("http") ? "_blank" : undefined}
+              rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+              className="group flex items-start gap-3 py-4"
+            >
+              <Icon aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <span className="min-w-0">
+                <span className="block text-[13px] text-muted-foreground">{label}</span>
+                <span className="block break-words text-[15px] text-foreground underline-offset-4 group-hover:underline">
+                  {value}
+                </span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto grid w-full max-w-[1200px] gap-14 px-5 pt-32 pb-24 md:px-10 md:pt-44 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20">
+      <main className="mx-auto grid w-full max-w-[1200px] gap-10 px-5 pt-28 pb-20 md:gap-14 md:px-10 md:pt-44 md:pb-24 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20">
         {/* The pitch and the ways to reach us without a form. Sticky on wide
             screens so it stays beside a long form instead of scrolling off. */}
         <aside className="lg:sticky lg:top-28 lg:self-start">
           <Display as="h1" size="xl">
             {t("title")}
           </Display>
-          <p className="mt-6 max-w-md text-lg leading-relaxed text-muted-foreground">
+          <p className="mt-5 max-w-md text-base leading-relaxed text-muted-foreground md:mt-6 md:text-lg">
             {t("subtitle")}
           </p>
-          <p className="mt-6 max-w-md text-[15px] leading-relaxed text-muted-foreground">
-            {tSidebar(copy.side)}
-          </p>
-
-          <ul className="mt-10 max-w-md border-t border-rule">
-            {channels.map(({ icon: Icon, label, value, href }) => (
-              <li key={label} className="border-b border-rule">
-                <a
-                  href={href}
-                  target={href.startsWith("http") ? "_blank" : undefined}
-                  rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-                  className="group flex items-start gap-3 py-4"
-                >
-                  <Icon aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0">
-                    <span className="block text-[13px] text-muted-foreground">{label}</span>
-                    <span className="block break-words text-[15px] text-foreground underline-offset-4 group-hover:underline">
-                      {value}
-                    </span>
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
+          <div className="hidden lg:block">{reachUs}</div>
         </aside>
 
         <div ref={formRef} className="scroll-mt-28">
@@ -207,7 +214,7 @@ export default function Kontakt() {
                 aria-pressed={contactMode === mode}
                 onClick={() => switchMode(mode)}
                 className={cn(
-                  "inline-flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2 text-sm transition-colors sm:flex-none sm:px-4",
+                  "inline-flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm transition-colors sm:flex-none sm:px-4 sm:py-2",
                   contactMode === mode
                     ? "bg-foreground text-background"
                     : "text-muted-foreground hover:text-foreground",
@@ -221,7 +228,7 @@ export default function Kontakt() {
           </div>
 
           {sent && sent.mode === contactMode ? (
-            <div role="status" className="mt-10 border-t border-rule pt-10">
+            <div role="status" className="mt-8 border-t border-rule pt-8 sm:mt-10 sm:pt-10">
               <CheckCircle2 aria-hidden className="size-6 text-success" />
               <Display as="h2" size="md" className="mt-5">
                 {sent.mode === "callback"
@@ -251,7 +258,7 @@ export default function Kontakt() {
             </div>
           ) : (
             <>
-              <div className="mt-10">
+              <div className="mt-8 sm:mt-10">
                 <h2 className="text-xl font-medium text-foreground">{tMessages(copy.title)}</h2>
                 <p className="mt-1.5 text-[15px] text-muted-foreground">{tMessages(copy.desc)}</p>
 
@@ -288,6 +295,8 @@ export default function Kontakt() {
             </>
           )}
         </div>
+
+        <div className="lg:hidden">{reachUs}</div>
       </main>
 
       <NotifyModal open={notifyOpen} onOpenChange={setNotifyOpen} />

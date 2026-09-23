@@ -28,7 +28,7 @@ export function OtherForm({
           {TOPICS.map((topic) => (
             <label
               key={topic}
-              className="cursor-pointer rounded-full border border-rule-strong px-3.5 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground has-checked:border-foreground has-checked:bg-foreground has-checked:text-background has-focus-visible:ring-2 has-focus-visible:ring-ring"
+              className="cursor-pointer rounded-full border border-rule-strong px-3.5 py-2 text-sm sm:py-1.5 text-muted-foreground transition-colors hover:text-foreground has-checked:border-foreground has-checked:bg-foreground has-checked:text-background has-focus-visible:ring-2 has-focus-visible:ring-ring"
             >
               <input
                 type="radio"

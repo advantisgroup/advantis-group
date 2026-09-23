@@ -105,7 +105,8 @@ export function CallbackForm({
           value={formData.dateTime}
           onChange={(e) => onFormDataChange({ ...formData, dateTime: e.target.value })}
           aria-invalid={Boolean(errors.dateTime)}
-          className={controlClassName}
+          // iOS centres the value and draws it as a pill otherwise
+          className={`${controlClassName} appearance-none text-left [&::-webkit-date-and-time-value]:text-left`}
         />
       </Field>
 

@@ -1,9 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type ComponentType, useCallback, useEffect, useMemo, useState } from "react";
 
 import { useClerk } from "@clerk/nextjs";
-import { ChevronDown } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock3,
+  HelpCircle,
+  Inbox,
+  Mail,
+  MessageSquare,
+  Phone,
+  Search,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Display, Eyebrow } from "@/components/frame";
@@ -13,6 +23,12 @@ import { cn } from "@/lib/utils";
 import { type ContactMode, type ContactSubmissionRecord } from "@/types/contact";
 
 const TYPES: readonly ContactMode[] = ["message", "callback", "other"];
+
+const TYPE_ICON: Record<ContactMode, ComponentType<{ className?: string }>> = {
+  message: MessageSquare,
+  callback: Phone,
+  other: HelpCircle,
+};
 
 // callback times come in as whatever the form sent: epoch seconds/ms or a local datetime string
 const parseSubmissionDate = (value: string) => {
@@ -25,6 +41,11 @@ const parseSubmissionDate = (value: string) => {
 
   const date = new Date(trimmed);
   return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const isUpcoming = (submission: ContactSubmissionRecord) => {
+  const at = submission.desiredDateTime ? parseSubmissionDate(submission.desiredDateTime) : null;
+  return at !== null && at.getTime() > Date.now();
 };
 
 const relativeTime = (from: number, locale: string) => {
@@ -45,6 +66,18 @@ const relativeTime = (from: number, locale: string) => {
   return rtf.format(0, "minute");
 };
 
+const matches = (submission: ContactSubmissionRecord, query: string) =>
+  [submission.subject, submission.message, submission.notes, submission.company, submission.topic]
+    .filter(Boolean)
+    .some((field) => field!.toLowerCase().includes(query));
+
+/**
+ * The customer's own panel: everything they sent us while signed in.
+ *
+ * Built like an inbox — numbers up top, the list on the left, the open
+ * inquiry on the right. On a phone the pane has nowhere to go, so the open
+ * inquiry unfolds under its own row instead.
+ */
 export const ContactSubmissionsPage = () => {
   const locale = useLocale();
   const t = useTranslations("auth.submissions");
@@ -52,6 +85,8 @@ export const ContactSubmissionsPage = () => {
   const [submissions, setSubmissions] = useState<ContactSubmissionRecord[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [filter, setFilter] = useState<ContactMode | null>(null);
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setStatus("loading");
@@ -60,7 +95,9 @@ export const ContactSubmissionsPage = () => {
       if (!response.ok) throw new Error(`Failed with status ${response.status}`);
 
       const data = (await response.json()) as { submissions?: ContactSubmissionRecord[] };
-      setSubmissions([...(data.submissions ?? [])].sort((a, b) => b.sentAt - a.sentAt));
+      const sorted = [...(data.submissions ?? [])].sort((a, b) => b.sentAt - a.sentAt);
+      setSubmissions(sorted);
+      setSelectedId((current) => current ?? sorted[0]?._id ?? null);
       setStatus("ready");
     } catch (error) {
       console.error("Failed to load contact submissions", error);
@@ -76,24 +113,23 @@ export const ContactSubmissionsPage = () => {
     () => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }),
     [locale],
   );
+  const shortDate = useMemo(
+    () => new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }),
+    [locale],
+  );
   const monthFormat = useMemo(
     () => new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }),
     [locale],
   );
 
   const summary = useMemo(() => {
-    const now = Date.now();
     const callbacks = submissions.filter((s) => s.submissionType === "callback");
-
     return {
       counts: Object.fromEntries(
         TYPES.map((type) => [type, submissions.filter((s) => s.submissionType === type).length]),
       ) as Record<ContactMode, number>,
       callbacks: callbacks.length,
-      upcoming: callbacks.filter((s) => {
-        const at = s.desiredDateTime ? parseSubmissionDate(s.desiredDateTime) : null;
-        return at !== null && at.getTime() > now;
-      }).length,
+      upcoming: callbacks.filter(isUpcoming).length,
       failed: submissions.filter((s) => s.status === "failed").length,
       lastSentAt: submissions[0]?.sentAt,
     };
@@ -101,7 +137,10 @@ export const ContactSubmissionsPage = () => {
 
   // grouped by month so a long history reads like a log, newest first
   const groups = useMemo(() => {
-    const visible = filter ? submissions.filter((s) => s.submissionType === filter) : submissions;
+    const needle = query.trim().toLowerCase();
+    const visible = submissions.filter(
+      (s) => (!filter || s.submissionType === filter) && (!needle || matches(s, needle)),
+    );
     const byMonth = new Map<string, ContactSubmissionRecord[]>();
 
     for (const submission of visible) {
@@ -109,26 +148,36 @@ export const ContactSubmissionsPage = () => {
       byMonth.set(key, [...(byMonth.get(key) ?? []), submission]);
     }
     return [...byMonth.entries()];
-  }, [filter, submissions, monthFormat]);
+  }, [filter, query, submissions, monthFormat]);
+
+  const selected = submissions.find((s) => s._id === selectedId) ?? null;
+
+  const select = (id: string) => {
+    // on a phone tapping the open row folds it away; the desktop pane always shows one
+    const wide = window.matchMedia("(min-width: 1024px)").matches;
+    setSelectedId((current) => (current === id && !wide ? null : id));
+  };
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-5 pt-32 pb-24 md:px-10 md:pt-40">
-      <header>
-        <Eyebrow>{t("badge")}</Eyebrow>
-        <Display as="h1" size="md" className="mt-3">
-          {t("title")}
-        </Display>
-        <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
-          {t("subtitle")}
-        </p>
-        <div className="mt-6 flex flex-wrap gap-2">
+    <main className="mx-auto w-full max-w-6xl px-5 pt-28 pb-20 md:px-10 md:pt-36 md:pb-24">
+      <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <Eyebrow>{t("badge")}</Eyebrow>
+          <Display as="h1" size="md" className="mt-3">
+            {t("title")}
+          </Display>
+          <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+            {t("subtitle")}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
           <Button asChild size="sm" className="rounded-full px-4">
             <Link href="/contact">{t("newSubmissionCta")}</Link>
           </Button>
           <Button
             type="button"
             size="sm"
-            variant="ghost"
+            variant="outline"
             className="rounded-full px-4"
             onClick={() => void openUserProfile()}
           >
@@ -138,17 +187,17 @@ export const ContactSubmissionsPage = () => {
       </header>
 
       {status === "loading" ? (
-        <ul aria-busy className="mt-14 border-t border-rule">
-          {[0, 1, 2].map((i) => (
-            <li key={i} className="flex flex-col gap-2.5 border-b border-rule py-5">
-              <span className="h-3 w-32 animate-pulse rounded bg-muted" />
-              <span className="h-4 w-2/3 animate-pulse rounded bg-muted" />
-            </li>
-          ))}
+        <div aria-busy className="mt-10 space-y-6">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-24 animate-pulse rounded-xl bg-muted" />
+            ))}
+          </div>
+          <div className="h-72 animate-pulse rounded-xl bg-muted" />
           <span className="sr-only">{t("loading")}</span>
-        </ul>
+        </div>
       ) : status === "error" ? (
-        <div className="mt-14 border-t border-rule pt-8">
+        <div className="mt-10 rounded-xl border border-rule bg-card p-6">
           <p className="font-medium text-foreground">{t("errorTitle")}</p>
           <p className="mt-1 text-sm text-muted-foreground">{t("errorDescription")}</p>
           <Button type="button" size="sm" variant="outline" className="mt-4" onClick={load}>
@@ -156,27 +205,34 @@ export const ContactSubmissionsPage = () => {
           </Button>
         </div>
       ) : submissions.length === 0 ? (
-        <div className="mt-14 border-t border-rule pt-8">
-          <p className="font-medium text-foreground">{t("emptyTitle")}</p>
-          <p className="mt-1 max-w-lg text-sm leading-relaxed text-muted-foreground">
+        <div className="mt-10 rounded-xl border border-dashed border-rule-strong p-8 text-center sm:p-12">
+          <Inbox aria-hidden className="mx-auto size-6 text-muted-foreground" />
+          <p className="mt-4 font-medium text-foreground">{t("emptyTitle")}</p>
+          <p className="mx-auto mt-1 max-w-md text-sm leading-relaxed text-muted-foreground">
             {t("emptyDescription")}
           </p>
+          <Button asChild size="sm" className="mt-6 rounded-full px-4">
+            <Link href="/contact">{t("newSubmissionCta")}</Link>
+          </Button>
         </div>
       ) : (
         <>
-          <dl className="mt-14 grid grid-cols-2 border-y border-rule sm:grid-cols-4">
-            <SummaryItem label={t("summary.total")} value={submissions.length} />
-            <SummaryItem
+          <dl className="mt-10 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatTile icon={Inbox} label={t("summary.total")} value={submissions.length} />
+            <StatTile
+              icon={Clock3}
               label={t("summary.lastSent")}
               value={summary.lastSentAt ? relativeTime(summary.lastSentAt, locale) : "—"}
               small
             />
-            <SummaryItem
+            <StatTile
+              icon={Phone}
               label={t("summary.callbacks")}
               value={summary.callbacks}
               note={summary.upcoming ? t("summary.upcoming", { count: summary.upcoming }) : null}
             />
-            <SummaryItem
+            <StatTile
+              icon={summary.failed ? AlertCircle : CheckCircle2}
               label={t("summary.delivery")}
               value={
                 summary.failed
@@ -188,80 +244,198 @@ export const ContactSubmissionsPage = () => {
             />
           </dl>
 
-          <div role="group" className="-mx-2 mt-8 flex flex-wrap gap-1">
-            {([null, ...TYPES] as const).map((type) => {
-              const count = type ? summary.counts[type] : submissions.length;
-              if (type && count === 0) return null;
-              return (
-                <button
-                  key={type ?? "all"}
-                  type="button"
-                  aria-pressed={filter === type}
-                  onClick={() => setFilter(type)}
-                  className={cn(
-                    "inline-flex min-h-9 items-center gap-2 rounded-md px-2.5 text-[13px] transition-colors",
-                    filter === type
-                      ? "bg-accent font-medium text-foreground"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {type ? t(`types.${type}`) : t("filterAll")}
-                  <span className="tabular-nums text-muted-foreground/70">{count}</span>
-                </button>
-              );
-            })}
-          </div>
+          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+            <section className="min-w-0 overflow-hidden rounded-xl border border-rule bg-card">
+              <div className="space-y-3 border-b border-rule p-3">
+                <label className="relative block">
+                  <span className="sr-only">{t("search")}</span>
+                  <Search
+                    aria-hidden
+                    className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={t("search")}
+                    className="h-10 w-full rounded-lg border border-input bg-background pr-3 pl-9 text-base placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:text-sm"
+                  />
+                </label>
+                <div role="group" className="flex flex-wrap gap-1">
+                  {([null, ...TYPES] as const).map((type) => {
+                    const count = type ? summary.counts[type] : submissions.length;
+                    if (type && count === 0) return null;
+                    return (
+                      <button
+                        key={type ?? "all"}
+                        type="button"
+                        aria-pressed={filter === type}
+                        onClick={() => setFilter(type)}
+                        className={cn(
+                          "inline-flex min-h-9 items-center gap-2 rounded-md px-2.5 text-[13px] transition-colors",
+                          filter === type
+                            ? "bg-accent font-medium text-foreground"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {type ? t(`types.${type}`) : t("filterAll")}
+                        <span className="tabular-nums text-muted-foreground/70">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          {groups.map(([month, items]) => (
-            <section key={month} className="mt-8">
-              <h2 className="text-[13px] font-medium text-muted-foreground">{month}</h2>
-              <ul className="mt-2 border-t border-rule">
-                {items.map((submission) => (
-                  <SubmissionRow key={submission._id} submission={submission} dateTime={dateTime} />
-                ))}
-              </ul>
+              {groups.length === 0 ? (
+                <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  {t("noMatches")}
+                </p>
+              ) : (
+                groups.map(([month, items]) => (
+                  <div key={month}>
+                    <h2 className="border-b border-rule bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground">
+                      {month}
+                    </h2>
+                    <ul>
+                      {items.map((submission) => {
+                        const open = submission._id === selectedId;
+                        return (
+                          <li key={submission._id} className="border-b border-rule last:border-b-0">
+                            <ListRow
+                              submission={submission}
+                              date={shortDate.format(new Date(submission.sentAt))}
+                              open={open}
+                              onSelect={() => select(submission._id)}
+                            />
+                            {open ? (
+                              <div className="border-t border-rule px-4 pt-4 pb-5 lg:hidden">
+                                <SubmissionDetail submission={submission} dateTime={dateTime} />
+                              </div>
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ))
+              )}
             </section>
-          ))}
+
+            <aside className="hidden min-w-0 lg:block">
+              <div className="sticky top-24 rounded-xl border border-rule bg-card p-6">
+                {selected ? (
+                  <SubmissionDetail submission={selected} dateTime={dateTime} />
+                ) : (
+                  <p className="py-16 text-center text-sm text-muted-foreground">
+                    {t("selectHint")}
+                  </p>
+                )}
+              </div>
+            </aside>
+          </div>
         </>
       )}
     </main>
   );
 };
 
-const SummaryItem = ({
+const StatTile = ({
+  icon: Icon,
   label,
   value,
   note,
   tone,
   small = false,
 }: {
+  icon: ComponentType<{ className?: string }>;
   label: string;
   value: string | number;
   note?: string | null;
   tone?: "ok" | "failed";
   small?: boolean;
 }) => (
-  <div className="py-5 pr-4 sm:border-l sm:border-rule sm:pl-4 sm:first:border-l-0 sm:first:pl-0">
-    <dt className="text-[13px] text-muted-foreground">{label}</dt>
+  <div className="min-w-0 rounded-xl border border-rule bg-card p-4 md:p-5">
+    <div className="flex items-start justify-between gap-2">
+      <dt className="text-[13px] text-muted-foreground">{label}</dt>
+      <Icon
+        aria-hidden
+        className={cn(
+          "size-4 shrink-0",
+          tone === "failed"
+            ? "text-destructive"
+            : tone === "ok"
+              ? "text-success"
+              : "text-muted-foreground",
+        )}
+      />
+    </div>
     <dd
       className={cn(
-        "mt-2 flex items-center gap-2 font-display font-medium leading-tight",
-        small ? "text-lg" : "text-3xl tabular-nums",
+        "mt-3 font-display font-medium leading-tight",
+        small ? "text-base md:text-lg" : "text-2xl tabular-nums md:text-3xl",
       )}
     >
-      {tone ? (
-        <span
-          aria-hidden
-          className={cn("size-2 rounded-full", tone === "failed" ? "bg-destructive" : "bg-success")}
-        />
-      ) : null}
       {value}
     </dd>
-    {note ? <p className="mt-1 text-[13px] text-muted-foreground">{note}</p> : null}
+    {note ? <p className="mt-1 text-xs text-muted-foreground">{note}</p> : null}
   </div>
 );
 
-const SubmissionRow = ({
+const ListRow = ({
+  submission,
+  date,
+  open,
+  onSelect,
+}: {
+  submission: ContactSubmissionRecord;
+  date: string;
+  open: boolean;
+  onSelect: () => void;
+}) => {
+  const t = useTranslations("auth.submissions");
+  const Icon = TYPE_ICON[submission.submissionType];
+  const failed = submission.status === "failed";
+
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      onClick={onSelect}
+      className={cn(
+        "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors",
+        open ? "bg-accent" : "hover:bg-muted/50",
+      )}
+    >
+      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+        <Icon className="size-4 text-muted-foreground" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-baseline justify-between gap-3">
+          <span className="truncate text-sm font-medium text-foreground">{submission.subject}</span>
+          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{date}</span>
+        </span>
+        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+          <span>{t(`types.${submission.submissionType}`)}</span>
+          <span aria-hidden>·</span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              aria-hidden
+              className={cn("size-1.5 rounded-full", failed ? "bg-destructive" : "bg-success")}
+            />
+            {t(`status.${submission.status}`)}
+          </span>
+          {isUpcoming(submission) ? (
+            <span className="rounded-full bg-background px-2 py-0.5 font-medium text-foreground">
+              {t("upcoming")}
+            </span>
+          ) : null}
+        </span>
+      </span>
+    </button>
+  );
+};
+
+const SubmissionDetail = ({
   submission,
   dateTime,
 }: {
@@ -272,10 +446,11 @@ const SubmissionRow = ({
   const desired = submission.desiredDateTime
     ? parseSubmissionDate(submission.desiredDateTime)
     : null;
-  const upcoming = desired !== null && desired.getTime() > Date.now();
   const failed = submission.status === "failed";
   const isCallback = submission.submissionType === "callback";
   const name = `${submission.firstName} ${submission.lastName}`.trim();
+  const inbox = process.env.NEXT_PUBLIC_EMAIL_ADRESS;
+  const followUpSubject = `Re: ${submission.subject}${submission.messageId ? ` (${submission.messageId})` : ""}`;
 
   const details = [
     { label: t("name"), value: name },
@@ -296,77 +471,72 @@ const SubmissionRow = ({
   ].filter((item): item is { label: string; value: string } => Boolean(item.value));
 
   return (
-    <li className="border-b border-rule">
-      <details className="group">
-        <summary className="flex cursor-pointer list-none items-start gap-4 py-5 [&::-webkit-details-marker]:hidden">
-          <div className="min-w-0 flex-1">
-            <p className="flex flex-wrap items-center gap-x-2 text-[13px] text-muted-foreground">
-              <span>{t(`types.${submission.submissionType}`)}</span>
-              <span aria-hidden>·</span>
-              <time dateTime={new Date(submission.sentAt).toISOString()}>
-                {dateTime.format(new Date(submission.sentAt))}
-              </time>
-              {upcoming ? (
-                <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-foreground">
-                  {t("upcoming")}
-                </span>
-              ) : null}
-            </p>
-            <h3 className="mt-1 truncate text-base font-medium text-foreground group-open:whitespace-normal">
-              {submission.subject}
-            </h3>
-          </div>
-          <span className="mt-0.5 inline-flex shrink-0 items-center gap-1.5 text-[13px] text-muted-foreground">
-            <span
-              aria-hidden
-              className={cn("size-1.5 rounded-full", failed ? "bg-destructive" : "bg-success")}
-            />
-            {t(`status.${submission.status}`)}
-          </span>
-          <ChevronDown
+    <article>
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
+        <span>{t(`types.${submission.submissionType}`)}</span>
+        <span aria-hidden>·</span>
+        <span className="inline-flex items-center gap-1.5">
+          <span
             aria-hidden
-            className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+            className={cn("size-1.5 rounded-full", failed ? "bg-destructive" : "bg-success")}
           />
-        </summary>
+          {t(`status.${submission.status}`)}
+        </span>
+        <span aria-hidden>·</span>
+        <time dateTime={new Date(submission.sentAt).toISOString()}>
+          {dateTime.format(new Date(submission.sentAt))}
+        </time>
+      </p>
+      <h2 className="mt-2 text-lg font-medium text-foreground [overflow-wrap:anywhere] md:text-xl">
+        {submission.subject}
+      </h2>
 
-        <div className="pb-6">
-          {/* a callback's `message` is the summary we mail the team; the details
-              below already cover it, so only the person's own notes are shown */}
-          {isCallback ? (
-            submission.notes ? (
-              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">
+      {/* a callback's `message` is the summary we mail the team; the details
+          below already cover it, so only the person's own notes are shown */}
+      <div className="mt-4">
+        {isCallback ? (
+          submission.notes ? (
+            <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">
+              {submission.notes}
+            </p>
+          ) : null
+        ) : (
+          <>
+            <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground [overflow-wrap:anywhere]">
+              {submission.message}
+            </p>
+            {submission.notes ? (
+              <p className="mt-4 whitespace-pre-wrap border-l-2 border-rule pl-4 text-sm leading-relaxed text-muted-foreground">
                 {submission.notes}
               </p>
-            ) : null
-          ) : (
-            <>
-              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">
-                {submission.message}
-              </p>
-              {submission.notes ? (
-                <p className="mt-4 whitespace-pre-wrap border-l-2 border-rule pl-4 text-sm leading-relaxed text-muted-foreground">
-                  {submission.notes}
-                </p>
-              ) : null}
-            </>
-          )}
+            ) : null}
+          </>
+        )}
+      </div>
 
-          <dl className="mt-6 first:mt-0 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
-            {details.map((item) => (
-              <div key={item.label} className="min-w-0">
-                <dt className="text-[13px] text-muted-foreground">{item.label}</dt>
-                <dd className="mt-0.5 truncate text-foreground">{item.value}</dd>
-              </div>
-            ))}
-          </dl>
+      <dl className="mt-6 grid gap-x-8 gap-y-3 border-t border-rule pt-5 text-sm sm:grid-cols-2">
+        {details.map((item) => (
+          <div key={item.label} className="min-w-0">
+            <dt className="text-[13px] text-muted-foreground">{item.label}</dt>
+            <dd className="mt-0.5 text-foreground [overflow-wrap:anywhere]">{item.value}</dd>
+          </div>
+        ))}
+      </dl>
 
-          {submission.error ? (
-            <p className="mt-5 text-sm text-destructive">
-              <span className="font-medium">{t("deliveryIssue")}:</span> {submission.error}
-            </p>
-          ) : null}
-        </div>
-      </details>
-    </li>
+      {submission.error ? (
+        <p className="mt-5 rounded-lg bg-destructive/8 px-3 py-2 text-sm text-destructive">
+          <span className="font-medium">{t("deliveryIssue")}:</span> {submission.error}
+        </p>
+      ) : null}
+
+      {inbox ? (
+        <Button asChild size="sm" variant="outline" className="mt-6 rounded-full px-4">
+          <a href={`mailto:${inbox}?subject=${encodeURIComponent(followUpSubject)}`}>
+            <Mail />
+            {t("followUp")}
+          </a>
+        </Button>
+      ) : null}
+    </article>
   );
 };
