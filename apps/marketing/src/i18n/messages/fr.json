@@ -225,7 +225,11 @@
       "privacySuffix": "utilise les données fournies pour traiter votre demande. Vos données ne seront stockées que pour répondre à votre demande et ne seront pas transmises à des tiers.",
       "privacySuffixCallback": "utilise les données fournies pour organiser le rappel.",
       "privacyLink": "Plus d'informations dans notre politique de confidentialité.",
-      "privacyNoteLabel": "AVIS DE CONFIDENTIALITÉ :"
+      "privacyNoteLabel": "AVIS DE CONFIDENTIALITÉ :",
+      "errors": {
+        "required": "Champ obligatoire",
+        "email": "Saisissez une adresse e-mail valide"
+      }
     },
     "sidebar": {
       "title": "Pourquoi",
@@ -249,7 +253,12 @@
       "callSuccessTitle": "Rappel demandé !",
       "callSuccessDesc": "Nous vous appellerons à l'heure souhaitée.",
       "errorTitle": "Une erreur s'est produite",
-      "errorDesc": "Veuillez vérifier vos saisies"
+      "errorDesc": "Veuillez vérifier vos saisies",
+      "serverErrorDesc": "Si le problème persiste, veuillez réessayer plus tard.",
+      "rateLimitTitle": "Trop de demandes",
+      "rateLimitDesc": "Vous avez envoyé beaucoup de demandes. Veuillez réessayer plus tard.",
+      "copySent": "Une copie a été envoyée à {email}.",
+      "sendAnother": "Envoyer une autre demande"
     },
     "submissionBanner": {
       "title": "Formulaires temporairement indisponibles",
@@ -264,6 +273,29 @@
       "emailPlaceholder": "vous@example.com",
       "switchToRemove": "Retirer l'e-mail de la liste",
       "switchToSubscribe": "← Retour aux notifications",
+      "signedInHint": "Vous êtes connecté avec cette adresse, aucun code nécessaire.",
+      "unsubscribeLink": "Se désinscrire plutôt",
+      "subscribeLink": "Être prévenu plutôt",
+      "code": {
+        "title": "Consultez votre boîte de réception",
+        "description": "Nous avons envoyé un code à 6 chiffres à {email}.",
+        "label": "Code",
+        "cta": "Confirmer",
+        "loading": "Vérification…",
+        "resend": "Envoyer un nouveau code",
+        "resendIn": "Nouveau code dans {seconds} s",
+        "resent": "Nouveau code envoyé.",
+        "changeEmail": "Utiliser une autre adresse"
+      },
+      "codeEmail": {
+        "subject": "{code} est votre code ADVANTIS GROUP",
+        "subscribeTitle": "Confirmez votre adresse e-mail",
+        "unsubscribeTitle": "Confirmez la désinscription",
+        "subscribeBody": "Saisissez ce code sur notre site et nous vous préviendrons dès que nos formulaires de contact seront de retour.",
+        "unsubscribeBody": "Saisissez ce code sur notre site pour retirer votre adresse de la liste de notification.",
+        "expiry": "Le code est valable 10 minutes.",
+        "disclaimer": "Vous n'êtes pas à l'origine de cette demande ? Ignorez simplement cet e-mail."
+      },
       "tabs": {
         "subscribe": "S'abonner",
         "remove": "Se désabonner"
@@ -271,7 +303,11 @@
       "errors": {
         "generic": "Une erreur s'est produite. Veuillez réessayer.",
         "network": "Erreur réseau. Vérifiez votre connexion puis réessayez.",
-        "invalidEmail": "Saisissez une adresse e-mail valide."
+        "invalidEmail": "Saisissez une adresse e-mail valide.",
+        "codeInvalid": "Ce code ne correspond pas. Vérifiez-le et réessayez.",
+        "codeExpired": "Ce code a expiré. Demandez-en un nouveau.",
+        "codeLocked": "Trop de codes erronés. Demandez-en un nouveau.",
+        "rateLimited": "Trop de tentatives. Veuillez réessayer plus tard."
       },
       "subscribe": {
         "title": "Restez informé",
@@ -323,7 +359,8 @@
       "signInCta": "Se connecter pour préremplir",
       "storedAccountNote": "Lorsque vous envoyez une demande en étant connecté, nous enregistrons à la fois votre compte connecté et l’e-mail saisi dans le formulaire pour éviter toute ambiguïté.",
       "successNotice": "Vos informations de compte figurent maintenant dans le formulaire ci-dessous.",
-      "scrollNotice": "Vos informations de compte ont été ajoutées au formulaire ci-dessous."
+      "scrollNotice": "Vos informations de compte ont été ajoutées au formulaire ci-dessous.",
+      "signedInNote": "Connecté en tant que {email}. Cette demande apparaîtra aussi dans <link>vos demandes</link>."
     }
   },
   "about": {
@@ -642,6 +679,21 @@
       "loading": "Chargement de vos demandes…",
       "errorTitle": "Impossible de charger vos demandes.",
       "errorDescription": "Veuillez réessayer dans un instant.",
+      "retry": "Réessayer",
+      "filterAll": "Toutes",
+      "upcoming": "À venir",
+      "name": "Nom",
+      "phone": "Téléphone",
+      "reference": "Référence",
+      "summary": {
+        "total": "Demandes",
+        "lastSent": "Dernier envoi",
+        "callbacks": "Rappels demandés",
+        "upcoming": "{count} à venir",
+        "delivery": "Distribution",
+        "allDelivered": "Tout est distribué",
+        "issues": "{count, plural, one {# à vérifier} other {# à vérifier}}"
+      },
       "emptyTitle": "Aucune demande pour le moment",
       "emptyDescription": "Dès que vous envoyez un formulaire de contact en étant connecté, il apparaîtra ici avec son statut et les détails transmis.",
       "contactEmail": "E-mail de contact utilisé",

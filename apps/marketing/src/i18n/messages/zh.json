@@ -219,7 +219,11 @@
       "privacySuffix": "将您提供的数据用于处理您的请求。您的数据仅用于回复您的查询，不会传递给第三方。",
       "privacySuffixCallback": "将您提供的数据用于安排回电。",
       "privacyLink": "更多信息请参阅我们的隐私政策。",
-      "privacyNoteLabel": "隐私声明："
+      "privacyNoteLabel": "隐私声明：",
+      "errors": {
+        "required": "必填",
+        "email": "请输入有效的电子邮件地址"
+      }
     },
     "sidebar": {
       "title": "为什么选择",
@@ -243,7 +247,12 @@
       "callSuccessTitle": "已请求回电！",
       "callSuccessDesc": "我们将按您要求的时间给您致电。",
       "errorTitle": "出错了",
-      "errorDesc": "请检查您的输入"
+      "errorDesc": "请检查您的输入",
+      "serverErrorDesc": "如果问题仍然存在，请稍后再试。",
+      "rateLimitTitle": "请求过多",
+      "rateLimitDesc": "您发送的请求过多，请稍后再试。",
+      "copySent": "我们已将副本发送至 {email}。",
+      "sendAnother": "再发送一条"
     },
     "submissionBanner": {
       "title": "表单暂时不可用",
@@ -258,6 +267,29 @@
       "emailPlaceholder": "you@example.com",
       "switchToRemove": "从列表中移除邮箱",
       "switchToSubscribe": "← 返回通知",
+      "signedInHint": "您已使用此地址登录，无需验证码。",
+      "unsubscribeLink": "改为取消订阅",
+      "subscribeLink": "改为订阅通知",
+      "code": {
+        "title": "请查看您的收件箱",
+        "description": "我们已向 {email} 发送了 6 位验证码。",
+        "label": "验证码",
+        "cta": "确认",
+        "loading": "正在验证…",
+        "resend": "重新发送验证码",
+        "resendIn": "{seconds} 秒后可重新发送",
+        "resent": "新验证码已发送。",
+        "changeEmail": "使用其他邮箱"
+      },
+      "codeEmail": {
+        "subject": "{code} 是您的 ADVANTIS GROUP 验证码",
+        "subscribeTitle": "确认您的电子邮件",
+        "unsubscribeTitle": "确认取消订阅",
+        "subscribeBody": "在我们的网站上输入此验证码，联系表单恢复后我们会第一时间通知您。",
+        "unsubscribeBody": "在我们的网站上输入此验证码，即可将您的地址从通知列表中移除。",
+        "expiry": "验证码 10 分钟内有效。",
+        "disclaimer": "如果这不是您本人的操作，请忽略此邮件。"
+      },
       "tabs": {
         "subscribe": "订阅",
         "remove": "取消订阅"
@@ -265,7 +297,11 @@
       "errors": {
         "generic": "发生了一些问题。请再试一次。",
         "network": "网络错误。请检查连接后重试。",
-        "invalidEmail": "请输入有效的电子邮件地址。"
+        "invalidEmail": "请输入有效的电子邮件地址。",
+        "codeInvalid": "验证码不正确，请检查后重试。",
+        "codeExpired": "验证码已过期，请重新获取。",
+        "codeLocked": "错误次数过多，请重新获取验证码。",
+        "rateLimited": "尝试次数过多，请稍后再试。"
       },
       "subscribe": {
         "title": "保持关注",
@@ -317,7 +353,8 @@
       "signInCta": "登录并预填",
       "storedAccountNote": "登录后提交时，我们会同时记录你的登录账户和你在表单中填写的联系邮箱，方便后续跟进。",
       "successNotice": "你的登录信息现在已经填写到下方表单中。",
-      "scrollNotice": "你的登录信息已添加到下方表单。"
+      "scrollNotice": "你的登录信息已添加到下方表单。",
+      "signedInNote": "已以 {email} 登录。此咨询也会显示在<link>您的提交记录</link>中。"
     }
   },
   "about": {
@@ -636,6 +673,21 @@
       "loading": "正在加载你的提交记录…",
       "errorTitle": "无法加载你的提交记录。",
       "errorDescription": "请稍后再试。",
+      "retry": "重试",
+      "filterAll": "全部",
+      "upcoming": "即将进行",
+      "name": "姓名",
+      "phone": "电话",
+      "reference": "参考编号",
+      "summary": {
+        "total": "咨询",
+        "lastSent": "最近发送",
+        "callbacks": "已申请回电",
+        "upcoming": "{count} 个即将进行",
+        "delivery": "送达情况",
+        "allDelivered": "全部已送达",
+        "issues": "{count} 条需要处理"
+      },
       "emptyTitle": "还没有提交记录",
       "emptyDescription": "当你登录后发送联系表单，它会显示在这里，并附带状态和提交详情。",
       "contactEmail": "提交时使用的联系邮箱",

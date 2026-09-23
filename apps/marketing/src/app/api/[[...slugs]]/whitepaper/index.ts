@@ -1,7 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 
 import { api } from "@advantis/convex/api";
-import { ConvexHttpClient } from "convex/browser";
 import { Elysia, t } from "elysia";
 import { Resend } from "resend";
 
@@ -17,12 +16,10 @@ import {
   WHITEPAPER_FILENAME,
   whitepaperExists,
 } from "@/lib/whitepaper";
+import { convex, serverKey } from "@/lib/convex-server";
+import { clientIp } from "@/lib/rate-limit";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-const convex = process.env.NEXT_PUBLIC_CONVEX_URL
-  ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
-  : null;
 
 const FROM = `ADVANTIS GROUP <${process.env.NEXT_PUBLIC_EMAIL_ADRESS}>`;
 
@@ -55,10 +52,6 @@ const sha256 = (value: string) => createHash("sha256").update(value).digest("hex
 
 const asLocale = (value: string): Locale =>
   locales.includes(value as Locale) ? (value as Locale) : defaultLocale;
-
-/** Vercel puts the caller first in `x-forwarded-for`; kept as double opt-in proof. */
-const clientIp = (headers: Record<string, string | undefined>) =>
-  headers["x-forwarded-for"]?.split(",")[0]?.trim() || undefined;
 
 const siteOrigin = () => {
   const configured = process.env.NEXT_PUBLIC_DOMAIN?.trim().replace(/\/+$/, "");
@@ -98,6 +91,7 @@ export const whitepaper = new Elysia({ prefix: "/whitepaper" })
 
       try {
         const { leadId, throttled } = await convex.mutation(api.marketing.leads.saveRequest, {
+          serverKey: serverKey(),
           email,
           company: body.company.trim(),
           firstName: body.firstName.trim(),
@@ -139,6 +133,7 @@ export const whitepaper = new Elysia({ prefix: "/whitepaper" })
         }
 
         await convex.mutation(api.marketing.leads.markConfirmationSent, {
+          serverKey: serverKey(),
           leadId,
           emailId: data?.id,
         });
@@ -186,6 +181,7 @@ export const whitepaper = new Elysia({ prefix: "/whitepaper" })
 
       try {
         const result = await convex.mutation(api.marketing.leads.confirmRequest, {
+          serverKey: serverKey(),
           confirmTokenHash: sha256(body.token),
           confirmIp: clientIp(headers),
         });
@@ -223,6 +219,7 @@ export const whitepaper = new Elysia({ prefix: "/whitepaper" })
         });
 
         await convex.mutation(api.marketing.leads.markDelivered, {
+          serverKey: serverKey(),
           leadId: result.leadId,
           emailId: data?.id,
           error: error?.message,

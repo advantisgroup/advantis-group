@@ -1,5 +1,5 @@
 "use client";
-import { type FormEvent, useState, useCallback, useMemo } from "react";
+import { type FormEvent, useState, useCallback, useEffect, useMemo } from "react";
 
 import { useUser } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
@@ -64,8 +64,8 @@ export function useContactForm() {
   const [callbackErrors, setCallbackErrors] = useState<
     z.ZodFlattenedError<CallbackFormData>["fieldErrors"]
   >({});
-  const [accountPrefillState, setAccountPrefillState] = useState<"idle" | "success">("idle");
-
+  // what just went out, so the page can swap the form for a confirmation
+  const [sent, setSent] = useState<{ mode: ContactMode; email: string } | null>(null);
   const messageSubmit = useEmailSubmit();
   const callbackSubmit = useEmailSubmit();
   const otherSubmit = useEmailSubmit();
@@ -83,38 +83,41 @@ export function useContactForm() {
     };
   }, [isSignedIn, user]);
 
-  const applyAccountProfile = useCallback(() => {
-    if (!accountProfile) {
-      return false;
-    }
+  // fill name/email from the account once it loads, without touching anything already typed
+  useEffect(() => {
+    if (!accountProfile) return;
 
-    setFormData((current) => ({
+    const fill = <T extends { firstName: string; lastName?: string; email: string }>(
+      current: T,
+    ) => ({
       ...current,
-      firstName: accountProfile.firstName || current.firstName,
-      lastName: accountProfile.lastName || current.lastName,
-      email: accountProfile.email || current.email,
-    }));
+      firstName: current.firstName || accountProfile.firstName,
+      lastName: current.lastName || accountProfile.lastName,
+      email: current.email || accountProfile.email,
+    });
 
-    setOtherFormData((current) => ({
-      ...current,
-      firstName: accountProfile.firstName || current.firstName,
-      lastName: accountProfile.lastName || current.lastName,
-      email: accountProfile.email || current.email,
-    }));
-
-    setCallbackFormData((current) => ({
-      ...current,
-      firstName: accountProfile.firstName || current.firstName,
-      lastName: accountProfile.lastName || current.lastName,
-      email: accountProfile.email || current.email,
-    }));
-
-    setAccountPrefillState("success");
-    window.setTimeout(() => setAccountPrefillState("idle"), 2500);
-
-    return true;
+    setFormData(fill);
+    setOtherFormData(fill);
+    setCallbackFormData(fill);
   }, [accountProfile]);
 
+  const markSent = useCallback(
+    (mode: ContactMode, email: string) => {
+      setSent({ mode, email });
+
+      const keepAccount = <T>(initial: T) => ({
+        ...initial,
+        firstName: accountProfile?.firstName ?? "",
+        lastName: accountProfile?.lastName ?? "",
+        email: accountProfile?.email ?? "",
+      });
+
+      if (mode === "message") setFormData(keepAccount(initialFormData));
+      if (mode === "callback") setCallbackFormData(keepAccount(initialCallbackFormData));
+      if (mode === "other") setOtherFormData(keepAccount(initialOtherFormData));
+    },
+    [accountProfile],
+  );
   const getButtonState = useCallback(
     (mode: ContactMode) => {
       switch (mode) {
@@ -170,7 +173,7 @@ export function useContactForm() {
         return;
       }
 
-      await messageSubmit.sendEmail(
+      const ok = await messageSubmit.sendEmail(
         {
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -183,8 +186,9 @@ export function useContactForm() {
         },
         "User - Message Submitted",
       );
+      if (ok) markSent("message", formData.email);
     },
-    [formData, messageSubmit, validateAndShowError, tMessages],
+    [formData, messageSubmit, validateAndShowError, tMessages, markSent],
   );
 
   const handleCallbackSubmit = useCallback(
@@ -203,7 +207,7 @@ export function useContactForm() {
 
       const message = `Rückruf Anfrage\n\nFirma: ${callbackFormData.company}\nGewünschte Zeit: ${callbackFormData.dateTime}\nTelefon: ${callbackFormData.phone}\n\nNotizen:\n${callbackFormData.notes || "Keine"}`;
 
-      await callbackSubmit.sendEmail(
+      const ok = await callbackSubmit.sendEmail(
         {
           firstName: callbackFormData.firstName,
           lastName: callbackFormData.lastName,
@@ -218,8 +222,9 @@ export function useContactForm() {
         },
         "User - Callback Submitted",
       );
+      if (ok) markSent("callback", callbackFormData.email);
     },
-    [callbackFormData, callbackSubmit, validateAndShowError, tMessages],
+    [callbackFormData, callbackSubmit, validateAndShowError, tMessages, markSent],
   );
 
   const handleOtherSubmit = useCallback(
@@ -240,7 +245,7 @@ export function useContactForm() {
 
       const topicValue = tOtherForm(`topics.${otherFormData.topic}`);
 
-      await otherSubmit.sendEmail(
+      const ok = await otherSubmit.sendEmail(
         {
           firstName: otherFormData.firstName,
           lastName: otherFormData.lastName || "",
@@ -253,8 +258,9 @@ export function useContactForm() {
         },
         "User - Other Submitted",
       );
+      if (ok) markSent("other", otherFormData.email);
     },
-    [otherFormData, otherSubmit, validateAndShowError, tMessages, tOtherForm],
+    [otherFormData, otherSubmit, validateAndShowError, tMessages, tOtherForm, markSent],
   );
 
   return {
@@ -273,8 +279,8 @@ export function useContactForm() {
     otherButtonState: otherSubmit.buttonState,
     isSignedIn,
     accountProfile,
-    accountPrefillState,
-    applyAccountProfile,
+    sent,
+    clearSent: () => setSent(null),
     handleMessageSubmit,
     handleCallbackSubmit,
     handleOtherSubmit,

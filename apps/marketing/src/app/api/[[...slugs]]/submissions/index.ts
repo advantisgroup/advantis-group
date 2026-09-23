@@ -1,7 +1,8 @@
 import { api } from "@advantis/convex/api";
 import { currentUser } from "@clerk/nextjs/server";
-import { ConvexHttpClient } from "convex/browser";
 import { Elysia, t } from "elysia";
+
+import { convex, serverKey } from "@/lib/convex-server";
 
 const submissionSchema = t.Object({
   _id: t.String(),
@@ -43,9 +44,7 @@ export const submissions = new Elysia().get(
       return { error: "Unauthorized" };
     }
 
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-
-    if (!convexUrl) {
+    if (!convex) {
       set.status = 500;
       return {
         error: "Server configuration error.",
@@ -54,10 +53,9 @@ export const submissions = new Elysia().get(
       };
     }
 
-    const convex = new ConvexHttpClient(convexUrl);
-
     try {
       const submissions = await convex.query(api.marketing.emails.listEmailsByAccountEmail, {
+        serverKey: serverKey(),
         accountEmail,
       });
       if (!submissions) {

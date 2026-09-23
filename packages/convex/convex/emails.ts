@@ -3,7 +3,6 @@
 // in docs/future-features/22_convex-restructure.md.
 export {
   saveEmail,
-  listEmailsByClerkUserId,
   listEmailsByAccountEmail,
   saveNotifyEmail,
   deleteNotifyEmail,

@@ -32,6 +32,21 @@ export const marketingTables = {
   }).index("by_email", ["email"]),
 
   /**
+   * One-time codes proving someone owns an address before it joins or leaves
+   * the notify list. One live row per address + action; a resend replaces it.
+   * Signed-in people with that address verified in Clerk skip this entirely.
+   */
+  notifyCodes: defineTable({
+    email: v.string(),
+    action: v.union(v.literal("subscribe"), v.literal("unsubscribe")),
+    /** sha256 — the plain code only exists in the mail */
+    codeHash: v.string(),
+    expiresAt: v.number(),
+    sentAt: v.number(),
+    attempts: v.number(),
+  }).index("by_email_action", ["email", "action"]),
+
+  /**
    * Whitepaper download leads from the marketing site's `/whitepaper` page,
    * captured under a double opt-in: the form only ever writes a `pending` row
    * plus a confirmation-token hash, and the document is mailed out once the

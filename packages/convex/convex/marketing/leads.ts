@@ -1,13 +1,14 @@
 import { v } from "convex/values";
 
-import { mutation } from "../functions";
+import { serverMutation } from "../functions";
 
 /**
  * Double opt-in lead capture for the marketing site's whitepaper page.
  *
  * Called server-to-server from `apps/marketing`'s `/api/whitepaper` routes —
  * the same shape as `emails.ts` — so the token itself is minted, hashed and
- * mailed there and only its digest ever reaches Convex.
+ * mailed there and only its digest ever reaches Convex. Server-key only, so the
+ * browser can't skip the API and write leads directly.
  */
 
 const leadFields = {
@@ -39,7 +40,7 @@ const RESEND_COOLDOWN_MS = 5 * 60 * 1000;
  * the mail, and the link already sitting in the recipient's inbox stays the
  * one that works.
  */
-export const saveRequest = mutation({
+export const saveRequest = serverMutation({
   args: leadFields,
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
@@ -74,7 +75,7 @@ export const saveRequest = mutation({
   },
 });
 
-export const markConfirmationSent = mutation({
+export const markConfirmationSent = serverMutation({
   args: {
     leadId: v.id("whitepaperLeads"),
     emailId: v.optional(v.string()),
@@ -95,7 +96,7 @@ export const markConfirmationSent = mutation({
  * replayed into a stream of mail. A confirmed lead whose delivery failed is
  * deliberately *not* in that state — it confirms again so the send retries.
  */
-export const confirmRequest = mutation({
+export const confirmRequest = serverMutation({
   args: {
     confirmTokenHash: v.string(),
     confirmIp: v.optional(v.string()),
@@ -137,7 +138,7 @@ export const confirmRequest = mutation({
   },
 });
 
-export const markDelivered = mutation({
+export const markDelivered = serverMutation({
   args: {
     leadId: v.id("whitepaperLeads"),
     emailId: v.optional(v.string()),

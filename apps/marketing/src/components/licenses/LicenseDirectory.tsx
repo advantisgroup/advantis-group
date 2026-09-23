@@ -373,7 +373,7 @@ export function LicenseDirectory({ licenses }: { licenses: LicenseRecord[] }) {
         </p>
       </section>
 
-      <div className="mt-10 flex flex-col gap-3 sm:sticky sm:top-20 sm:z-10 sm:-mx-4 sm:flex-row sm:items-center sm:bg-background/85 sm:px-4 sm:py-3 sm:backdrop-blur-md">
+      <div className="mt-10 flex flex-col gap-3 sm:sticky sm:top-20 sm:z-10 sm:transition-[top] sm:duration-300 sm:[[data-header-hidden]_&]:top-0 sm:-mx-4 sm:flex-row sm:items-center sm:bg-background/85 sm:px-4 sm:py-3 sm:backdrop-blur-md">
         <div className="relative min-w-0 flex-1">
           <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input

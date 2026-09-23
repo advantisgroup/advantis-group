@@ -1,102 +1,48 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useClerk } from "@clerk/nextjs";
-import { motion, type Variants } from "framer-motion";
-import { AlertCircle, Building2, Clock3, Mail, MessageSquareText } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { Display, Eyebrow } from "@/components/frame";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
-import { type ContactSubmissionRecord } from "@/types/contact";
+import { cn } from "@/lib/utils";
+import { type ContactMode, type ContactSubmissionRecord } from "@/types/contact";
 
-const submissionsContainerVariants: Variants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.04,
-      delayChildren: 0.03,
-    },
-  },
-};
+const TYPES: readonly ContactMode[] = ["message", "callback", "other"];
 
-const submissionItemVariants: Variants = {
-  hidden: {
-    opacity: 0,
-    y: 8,
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.24,
-      ease: [0, 0, 0.2, 1],
-    },
-  },
-};
-
-const toLookupKey = (value: string) => value.trim().toLowerCase();
-
-const toFallbackLabel = (value: string) =>
-  value
-    .trim()
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-
-const getDisplayLabel = (value: string, labels: Record<string, string>, fallback: string) => {
-  const key = toLookupKey(value);
-  const translated = labels[key];
-
-  if (typeof translated === "string" && translated.trim().length > 0) {
-    return translated;
-  }
-
-  const normalizedFallback = toFallbackLabel(value);
-
-  if (normalizedFallback.length > 0) {
-    return normalizedFallback;
-  }
-
-  return fallback;
-};
-
+// callback times come in as whatever the form sent: epoch seconds/ms or a local datetime string
 const parseSubmissionDate = (value: string) => {
   const trimmed = value.trim();
 
   if (/^\d+$/.test(trimmed)) {
-    const numericValue = Number(trimmed);
-    const timestamp = trimmed.length <= 10 ? numericValue * 1000 : numericValue;
-    const numericDate = new Date(timestamp);
-
-    if (!Number.isNaN(numericDate.getTime())) {
-      return numericDate;
-    }
+    const date = new Date(trimmed.length <= 10 ? Number(trimmed) * 1000 : Number(trimmed));
+    return Number.isNaN(date.getTime()) ? null : date;
   }
 
-  const parsed = new Date(value);
+  const date = new Date(trimmed);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
 
-  if (!Number.isNaN(parsed.getTime())) {
-    return parsed;
+const relativeTime = (from: number, locale: string) => {
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  const seconds = Math.round((from - Date.now()) / 1000);
+  const steps: [Intl.RelativeTimeFormatUnit, number][] = [
+    ["year", 31_536_000],
+    ["month", 2_592_000],
+    ["week", 604_800],
+    ["day", 86_400],
+    ["hour", 3_600],
+    ["minute", 60],
+  ];
+
+  for (const [unit, size] of steps) {
+    if (Math.abs(seconds) >= size) return rtf.format(Math.round(seconds / size), unit);
   }
-
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?$/);
-
-  if (!match) {
-    return null;
-  }
-
-  const [, year, month, day, hours, minutes, seconds] = match;
-
-  return new Date(
-    Number(year),
-    Number(month) - 1,
-    Number(day),
-    Number(hours),
-    Number(minutes),
-    seconds ? Number(seconds) : 0,
-  );
+  return rtf.format(0, "minute");
 };
 
 export const ContactSubmissionsPage = () => {
@@ -105,269 +51,322 @@ export const ContactSubmissionsPage = () => {
   const { openUserProfile } = useClerk();
   const [submissions, setSubmissions] = useState<ContactSubmissionRecord[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [errorDetail, setErrorDetail] = useState("");
+  const [filter, setFilter] = useState<ContactMode | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setErrorDetail("");
-        const response = await fetch("/api/submissions", { cache: "no-store" });
+  const load = useCallback(async () => {
+    setStatus("loading");
+    try {
+      const response = await fetch("/api/submissions", { cache: "no-store" });
+      if (!response.ok) throw new Error(`Failed with status ${response.status}`);
 
-        if (!response.ok) {
-          let reason = `Failed with status ${response.status}`;
-
-          try {
-            const errorData = (await response.json()) as {
-              error?: string;
-              code?: string;
-              detail?: string;
-            };
-
-            if (errorData.detail) {
-              reason = errorData.detail;
-            } else if (errorData.error) {
-              reason = errorData.error;
-            }
-
-            if (errorData.code) {
-              reason = `${reason} (code: ${errorData.code})`;
-            }
-          } catch {
-            // Keep fallback reason when response body is not JSON.
-          }
-
-          throw new Error(reason);
-        }
-
-        const data = (await response.json()) as {
-          submissions?: ContactSubmissionRecord[];
-        };
-
-        setSubmissions(data.submissions ?? []);
-        setStatus("ready");
-      } catch (error) {
-        console.error("Failed to load contact submissions", error);
-        setErrorDetail(
-          error instanceof Error ? error.message : "Unknown error while loading submissions.",
-        );
-        setStatus("error");
-      }
-    };
-
-    void load();
+      const data = (await response.json()) as { submissions?: ContactSubmissionRecord[] };
+      setSubmissions([...(data.submissions ?? [])].sort((a, b) => b.sentAt - a.sentAt));
+      setStatus("ready");
+    } catch (error) {
+      console.error("Failed to load contact submissions", error);
+      setStatus("error");
+    }
   }, []);
 
-  const formatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }),
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const dateTime = useMemo(
+    () => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }),
+    [locale],
+  );
+  const monthFormat = useMemo(
+    () => new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }),
     [locale],
   );
 
-  const submissionTypeLabels = useMemo(
-    () => ({
-      message: t("types.message"),
-      callback: t("types.callback"),
-      other: t("types.other"),
-    }),
-    [t],
-  );
+  const summary = useMemo(() => {
+    const now = Date.now();
+    const callbacks = submissions.filter((s) => s.submissionType === "callback");
 
-  const submissionStatusLabels = useMemo(
-    () => ({
-      sent: t("status.sent"),
-      failed: t("status.failed"),
-    }),
-    [t],
-  );
+    return {
+      counts: Object.fromEntries(
+        TYPES.map((type) => [type, submissions.filter((s) => s.submissionType === type).length]),
+      ) as Record<ContactMode, number>,
+      callbacks: callbacks.length,
+      upcoming: callbacks.filter((s) => {
+        const at = s.desiredDateTime ? parseSubmissionDate(s.desiredDateTime) : null;
+        return at !== null && at.getTime() > now;
+      }).length,
+      failed: submissions.filter((s) => s.status === "failed").length,
+      lastSentAt: submissions[0]?.sentAt,
+    };
+  }, [submissions]);
+
+  // grouped by month so a long history reads like a log, newest first
+  const groups = useMemo(() => {
+    const visible = filter ? submissions.filter((s) => s.submissionType === filter) : submissions;
+    const byMonth = new Map<string, ContactSubmissionRecord[]>();
+
+    for (const submission of visible) {
+      const key = monthFormat.format(new Date(submission.sentAt));
+      byMonth.set(key, [...(byMonth.get(key) ?? []), submission]);
+    }
+    return [...byMonth.entries()];
+  }, [filter, submissions, monthFormat]);
 
   return (
-    <section className="min-h-[calc(100vh-4rem)] bg-background px-4 py-28">
-      <div className="mx-auto max-w-6xl space-y-8">
-        <div className="space-y-3">
-          <span className="inline-flex rounded-full border border-rule-strong px-4 py-1 text-[13px] font-medium text-muted-foreground">
-            {t("badge")}
-          </span>
-          <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-            {t("title")}
-          </h1>
-          <p className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">
-            {t("subtitle")}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-3">
-          <Button asChild variant="outline">
-            <Link href="/contact" locale={locale}>
-              {t("newSubmissionCta")}
-            </Link>
+    <main className="mx-auto w-full max-w-3xl px-5 pt-32 pb-24 md:px-10 md:pt-40">
+      <header>
+        <Eyebrow>{t("badge")}</Eyebrow>
+        <Display as="h1" size="md" className="mt-3">
+          {t("title")}
+        </Display>
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
+          {t("subtitle")}
+        </p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Button asChild size="sm" className="rounded-full px-4">
+            <Link href="/contact">{t("newSubmissionCta")}</Link>
           </Button>
-          <Button type="button" onClick={() => void openUserProfile()}>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="rounded-full px-4"
+            onClick={() => void openUserProfile()}
+          >
             {t("accountCta")}
           </Button>
         </div>
+      </header>
 
-        {status === "loading" ? (
-          <div className="rounded-xl border border-rule bg-card p-8 text-sm text-muted-foreground">
-            {t("loading")}
-          </div>
-        ) : status === "error" ? (
-          <div className="rounded-xl border border-destructive/30 bg-destructive/8 p-8">
-            <div className="flex items-start gap-3 text-destructive">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
-              <div>
-                <p className="font-medium">{t("errorTitle")}</p>
-                <p className="mt-1 text-sm text-destructive/80">{t("errorDescription")}</p>
-                {errorDetail ? (
-                  <p className="mt-2 rounded-md border border-destructive/20 bg-card px-3 py-2 font-mono text-xs text-destructive/90">
-                    {errorDetail}
-                  </p>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        ) : submissions.length === 0 ? (
-          <div className="rounded-xl border border-rule bg-card p-8">
-            <p className="text-lg font-medium text-foreground">{t("emptyTitle")}</p>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              {t("emptyDescription")}
-            </p>
-          </div>
-        ) : (
-          <motion.div
-            className="grid gap-4"
-            variants={submissionsContainerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {submissions.map((submission) => {
-              const desiredDate = submission.desiredDateTime
-                ? parseSubmissionDate(submission.desiredDateTime)
-                : null;
-              const submissionTypeLabel = getDisplayLabel(
-                submission.submissionType,
-                submissionTypeLabels,
-                "Submission",
-              );
-              const submissionStatusLabel = getDisplayLabel(
-                submission.status,
-                submissionStatusLabels,
-                "Status",
-              );
+      {status === "loading" ? (
+        <ul aria-busy className="mt-14 border-t border-rule">
+          {[0, 1, 2].map((i) => (
+            <li key={i} className="flex flex-col gap-2.5 border-b border-rule py-5">
+              <span className="h-3 w-32 animate-pulse rounded bg-muted" />
+              <span className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+            </li>
+          ))}
+          <span className="sr-only">{t("loading")}</span>
+        </ul>
+      ) : status === "error" ? (
+        <div className="mt-14 border-t border-rule pt-8">
+          <p className="font-medium text-foreground">{t("errorTitle")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("errorDescription")}</p>
+          <Button type="button" size="sm" variant="outline" className="mt-4" onClick={load}>
+            {t("retry")}
+          </Button>
+        </div>
+      ) : submissions.length === 0 ? (
+        <div className="mt-14 border-t border-rule pt-8">
+          <p className="font-medium text-foreground">{t("emptyTitle")}</p>
+          <p className="mt-1 max-w-lg text-sm leading-relaxed text-muted-foreground">
+            {t("emptyDescription")}
+          </p>
+        </div>
+      ) : (
+        <>
+          <dl className="mt-14 grid grid-cols-2 border-y border-rule sm:grid-cols-4">
+            <SummaryItem label={t("summary.total")} value={submissions.length} />
+            <SummaryItem
+              label={t("summary.lastSent")}
+              value={summary.lastSentAt ? relativeTime(summary.lastSentAt, locale) : "—"}
+              small
+            />
+            <SummaryItem
+              label={t("summary.callbacks")}
+              value={summary.callbacks}
+              note={summary.upcoming ? t("summary.upcoming", { count: summary.upcoming }) : null}
+            />
+            <SummaryItem
+              label={t("summary.delivery")}
+              value={
+                summary.failed
+                  ? t("summary.issues", { count: summary.failed })
+                  : t("summary.allDelivered")
+              }
+              tone={summary.failed ? "failed" : "ok"}
+              small
+            />
+          </dl>
 
+          <div role="group" className="-mx-2 mt-8 flex flex-wrap gap-1">
+            {([null, ...TYPES] as const).map((type) => {
+              const count = type ? summary.counts[type] : submissions.length;
+              if (type && count === 0) return null;
               return (
-                <motion.article
-                  key={submission._id}
-                  variants={submissionItemVariants}
-                  className="rounded-xl border border-rule bg-card p-6"
+                <button
+                  key={type ?? "all"}
+                  type="button"
+                  aria-pressed={filter === type}
+                  onClick={() => setFilter(type)}
+                  className={cn(
+                    "inline-flex min-h-9 items-center gap-2 rounded-md px-2.5 text-[13px] transition-colors",
+                    filter === type
+                      ? "bg-accent font-medium text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
                 >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border border-rule-strong px-3 py-1 text-[13px] font-medium text-muted-foreground">
-                          {submissionTypeLabel}
-                        </span>
-                        <span className="rounded-full border border-rule px-3 py-1 text-xs font-medium text-muted-foreground">
-                          {submissionStatusLabel}
-                        </span>
-                      </div>
-                      <h2 className="text-2xl font-semibold text-foreground">
-                        {submission.subject}
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        {formatter.format(new Date(submission.sentAt))}
-                      </p>
-                    </div>
-
-                    <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2 lg:min-w-[320px]">
-                      <div className="flex items-start gap-2">
-                        <Mail className="mt-0.5 h-4 w-4 shrink-0" />
-                        <div>
-                          <p className="font-medium text-foreground">{submission.email}</p>
-                          <p>{t("contactEmail")}</p>
-                        </div>
-                      </div>
-                      {submission.company ? (
-                        <div className="flex items-start gap-2">
-                          <Building2 className="mt-0.5 h-4 w-4 shrink-0" />
-                          <div>
-                            <p className="font-medium text-foreground">{submission.company}</p>
-                            <p>{t("company")}</p>
-                          </div>
-                        </div>
-                      ) : null}
-                      {submission.desiredDateTime ? (
-                        <div className="flex items-start gap-2">
-                          <Clock3 className="mt-0.5 h-4 w-4 shrink-0" />
-                          <div>
-                            <p className="font-medium text-foreground">
-                              {desiredDate
-                                ? formatter.format(desiredDate)
-                                : submission.desiredDateTime}
-                            </p>
-                            <p>{t("desiredTime")}</p>
-                          </div>
-                        </div>
-                      ) : null}
-                      {submission.accountEmail ? (
-                        <div className="flex items-start gap-2">
-                          <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0" />
-                          <div>
-                            <p className="font-medium text-foreground">{submission.accountEmail}</p>
-                            <p>{t("accountEmail")}</p>
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid gap-4 border-t border-rule pt-5 lg:grid-cols-[1.5fr_1fr]">
-                    <div>
-                      <p className="text-[13px] font-medium text-muted-foreground">
-                        {t("message")}
-                      </p>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                        {submission.message}
-                      </p>
-                    </div>
-
-                    <div className="space-y-3">
-                      {submission.topic ? (
-                        <div>
-                          <p className="text-[13px] font-medium text-muted-foreground">
-                            {t("topic")}
-                          </p>
-                          <p className="mt-1 text-sm text-foreground">{submission.topic}</p>
-                        </div>
-                      ) : null}
-                      {submission.notes ? (
-                        <div>
-                          <p className="text-[13px] font-medium text-muted-foreground">
-                            {t("notes")}
-                          </p>
-                          <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">
-                            {submission.notes}
-                          </p>
-                        </div>
-                      ) : null}
-                      {submission.error ? (
-                        <div>
-                          <p className="text-[13px] font-medium text-muted-foreground">
-                            {t("deliveryIssue")}
-                          </p>
-                          <p className="mt-1 text-sm text-destructive">{submission.error}</p>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                </motion.article>
+                  {type ? t(`types.${type}`) : t("filterAll")}
+                  <span className="tabular-nums text-muted-foreground/70">{count}</span>
+                </button>
               );
             })}
-          </motion.div>
-        )}
-      </div>
-    </section>
+          </div>
+
+          {groups.map(([month, items]) => (
+            <section key={month} className="mt-8">
+              <h2 className="text-[13px] font-medium text-muted-foreground">{month}</h2>
+              <ul className="mt-2 border-t border-rule">
+                {items.map((submission) => (
+                  <SubmissionRow key={submission._id} submission={submission} dateTime={dateTime} />
+                ))}
+              </ul>
+            </section>
+          ))}
+        </>
+      )}
+    </main>
+  );
+};
+
+const SummaryItem = ({
+  label,
+  value,
+  note,
+  tone,
+  small = false,
+}: {
+  label: string;
+  value: string | number;
+  note?: string | null;
+  tone?: "ok" | "failed";
+  small?: boolean;
+}) => (
+  <div className="py-5 pr-4 sm:border-l sm:border-rule sm:pl-4 sm:first:border-l-0 sm:first:pl-0">
+    <dt className="text-[13px] text-muted-foreground">{label}</dt>
+    <dd
+      className={cn(
+        "mt-2 flex items-center gap-2 font-display font-medium leading-tight",
+        small ? "text-lg" : "text-3xl tabular-nums",
+      )}
+    >
+      {tone ? (
+        <span
+          aria-hidden
+          className={cn("size-2 rounded-full", tone === "failed" ? "bg-destructive" : "bg-success")}
+        />
+      ) : null}
+      {value}
+    </dd>
+    {note ? <p className="mt-1 text-[13px] text-muted-foreground">{note}</p> : null}
+  </div>
+);
+
+const SubmissionRow = ({
+  submission,
+  dateTime,
+}: {
+  submission: ContactSubmissionRecord;
+  dateTime: Intl.DateTimeFormat;
+}) => {
+  const t = useTranslations("auth.submissions");
+  const desired = submission.desiredDateTime
+    ? parseSubmissionDate(submission.desiredDateTime)
+    : null;
+  const upcoming = desired !== null && desired.getTime() > Date.now();
+  const failed = submission.status === "failed";
+  const isCallback = submission.submissionType === "callback";
+  const name = `${submission.firstName} ${submission.lastName}`.trim();
+
+  const details = [
+    { label: t("name"), value: name },
+    { label: t("contactEmail"), value: submission.email },
+    { label: t("phone"), value: submission.phone },
+    { label: t("company"), value: submission.company },
+    {
+      label: t("desiredTime"),
+      value: submission.desiredDateTime
+        ? desired
+          ? dateTime.format(desired)
+          : submission.desiredDateTime
+        : undefined,
+    },
+    { label: t("topic"), value: submission.topic },
+    { label: t("accountEmail"), value: submission.accountEmail },
+    { label: t("reference"), value: submission.messageId },
+  ].filter((item): item is { label: string; value: string } => Boolean(item.value));
+
+  return (
+    <li className="border-b border-rule">
+      <details className="group">
+        <summary className="flex cursor-pointer list-none items-start gap-4 py-5 [&::-webkit-details-marker]:hidden">
+          <div className="min-w-0 flex-1">
+            <p className="flex flex-wrap items-center gap-x-2 text-[13px] text-muted-foreground">
+              <span>{t(`types.${submission.submissionType}`)}</span>
+              <span aria-hidden>·</span>
+              <time dateTime={new Date(submission.sentAt).toISOString()}>
+                {dateTime.format(new Date(submission.sentAt))}
+              </time>
+              {upcoming ? (
+                <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-foreground">
+                  {t("upcoming")}
+                </span>
+              ) : null}
+            </p>
+            <h3 className="mt-1 truncate text-base font-medium text-foreground group-open:whitespace-normal">
+              {submission.subject}
+            </h3>
+          </div>
+          <span className="mt-0.5 inline-flex shrink-0 items-center gap-1.5 text-[13px] text-muted-foreground">
+            <span
+              aria-hidden
+              className={cn("size-1.5 rounded-full", failed ? "bg-destructive" : "bg-success")}
+            />
+            {t(`status.${submission.status}`)}
+          </span>
+          <ChevronDown
+            aria-hidden
+            className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+          />
+        </summary>
+
+        <div className="pb-6">
+          {/* a callback's `message` is the summary we mail the team; the details
+              below already cover it, so only the person's own notes are shown */}
+          {isCallback ? (
+            submission.notes ? (
+              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">
+                {submission.notes}
+              </p>
+            ) : null
+          ) : (
+            <>
+              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">
+                {submission.message}
+              </p>
+              {submission.notes ? (
+                <p className="mt-4 whitespace-pre-wrap border-l-2 border-rule pl-4 text-sm leading-relaxed text-muted-foreground">
+                  {submission.notes}
+                </p>
+              ) : null}
+            </>
+          )}
+
+          <dl className="mt-6 first:mt-0 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
+            {details.map((item) => (
+              <div key={item.label} className="min-w-0">
+                <dt className="text-[13px] text-muted-foreground">{item.label}</dt>
+                <dd className="mt-0.5 truncate text-foreground">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          {submission.error ? (
+            <p className="mt-5 text-sm text-destructive">
+              <span className="font-medium">{t("deliveryIssue")}:</span> {submission.error}
+            </p>
+          ) : null}
+        </div>
+      </details>
+    </li>
   );
 };

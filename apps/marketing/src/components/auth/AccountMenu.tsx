@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import { SignInButton, SignOutButton, SignUpButton, useClerk, useUser } from "@clerk/nextjs";
+import { SignOutButton, useClerk, useUser } from "@clerk/nextjs";
 import { Building2, Cookie, LogOut, ReceiptText, Settings2, UserRound } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 
 const getInitials = (fullName: string, email?: string | null) => {
   const source = fullName.trim() || email?.trim() || "Guest";
@@ -52,6 +52,9 @@ export const AccountMenu = ({
   const { openUserProfile } = useClerk();
   const { user, isSignedIn } = useUser();
   const intranetUrl = useCompanyIntranetUrl();
+  const pathname = usePathname();
+  // bring people back to the page they signed in from
+  const returnTo = { redirect_url: `/${locale}${pathname === "/" ? "" : pathname}` };
 
   const displayName = useMemo(() => {
     const nameFromParts = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
@@ -83,22 +86,24 @@ export const AccountMenu = ({
 
   const signedOutActions = (
     <div className="grid grid-cols-2 gap-2">
-      <SignInButton>
-        <Button type="button" size="sm" className="w-full" onClick={() => onMobileNavigate?.()}>
+      <Button asChild size="sm" className="w-full">
+        <Link
+          href={{ pathname: "/sign-in", query: returnTo }}
+          locale={locale}
+          onClick={() => onMobileNavigate?.()}
+        >
           {t("signIn")}
-        </Button>
-      </SignInButton>
-      <SignUpButton>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="w-full"
+        </Link>
+      </Button>
+      <Button asChild size="sm" variant="outline" className="w-full">
+        <Link
+          href={{ pathname: "/sign-up", query: returnTo }}
+          locale={locale}
           onClick={() => onMobileNavigate?.()}
         >
           {t("signUp")}
-        </Button>
-      </SignUpButton>
+        </Link>
+      </Button>
     </div>
   );
 
@@ -130,7 +135,7 @@ export const AccountMenu = ({
                 {t("submissionsCta")}
               </Link>
             </Button>
-            <SignOutButton>
+            <SignOutButton redirectUrl={`/${locale}`}>
               <Button type="button" variant="ghost" className="w-full justify-start">
                 <LogOut />
                 {t("signOut")}
@@ -210,7 +215,7 @@ export const AccountMenu = ({
         {isSignedIn ? (
           <>
             <DropdownMenuSeparator />
-            <SignOutButton>
+            <SignOutButton redirectUrl={`/${locale}`}>
               <DropdownMenuItem>
                 <LogOut />
                 {t("signOut")}

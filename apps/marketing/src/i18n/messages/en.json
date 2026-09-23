@@ -222,7 +222,11 @@
       "privacySuffix": "uses your provided data for the purpose of processing your request. Your data will only be stored to answer your request and will not be passed on to third parties.",
       "privacySuffixCallback": "uses your provided data for the purpose of the callback arrangement.",
       "privacyLink": "More information can be found in our privacy policy.",
-      "privacyNoteLabel": "PRIVACY NOTICE:"
+      "privacyNoteLabel": "PRIVACY NOTICE:",
+      "errors": {
+        "required": "Required",
+        "email": "Enter a valid email address"
+      }
     },
     "sidebar": {
       "title": "Why",
@@ -246,7 +250,12 @@
       "callSuccessTitle": "Callback requested!",
       "callSuccessDesc": "We will call you at the requested time.",
       "errorTitle": "Something went wrong",
-      "errorDesc": "Please check your entries"
+      "errorDesc": "Please check your entries",
+      "serverErrorDesc": "If the problem persists, please try again later.",
+      "rateLimitTitle": "Too many requests",
+      "rateLimitDesc": "You've sent a lot of requests. Please try again later.",
+      "copySent": "We've sent a copy to {email}.",
+      "sendAnother": "Send another"
     },
     "submissionBanner": {
       "title": "Forms temporarily unavailable",
@@ -261,6 +270,29 @@
       "emailPlaceholder": "you@example.com",
       "switchToRemove": "Remove email from list",
       "switchToSubscribe": "← Back to notifications",
+      "signedInHint": "You're signed in with this address, so no code needed.",
+      "unsubscribeLink": "Unsubscribe instead",
+      "subscribeLink": "Get notified instead",
+      "code": {
+        "title": "Check your inbox",
+        "description": "We sent a 6-digit code to {email}.",
+        "label": "Code",
+        "cta": "Confirm",
+        "loading": "Checking…",
+        "resend": "Send a new code",
+        "resendIn": "New code in {seconds}s",
+        "resent": "New code sent.",
+        "changeEmail": "Use a different email"
+      },
+      "codeEmail": {
+        "subject": "{code} is your ADVANTIS GROUP code",
+        "subscribeTitle": "Confirm your email",
+        "unsubscribeTitle": "Confirm unsubscribing",
+        "subscribeBody": "Enter this code on our website and we'll let you know as soon as our contact forms are back.",
+        "unsubscribeBody": "Enter this code on our website to remove your address from the notification list.",
+        "expiry": "The code is valid for 10 minutes.",
+        "disclaimer": "Didn't request this? You can safely ignore this email."
+      },
       "tabs": {
         "subscribe": "Subscribe",
         "remove": "Unsubscribe"
@@ -268,7 +300,11 @@
       "errors": {
         "generic": "Something went wrong. Please try again.",
         "network": "Network error. Please check your connection and try again.",
-        "invalidEmail": "Enter a valid email address."
+        "invalidEmail": "Enter a valid email address.",
+        "codeInvalid": "That code doesn't match. Check it and try again.",
+        "codeExpired": "That code has expired. Request a new one.",
+        "codeLocked": "Too many wrong codes. Request a new one.",
+        "rateLimited": "Too many attempts. Please try again in a while."
       },
       "subscribe": {
         "title": "Stay in the loop",
@@ -320,7 +356,8 @@
       "signInCta": "Sign in to prefill",
       "storedAccountNote": "When you submit while signed in, we store both your logged-in account and the contact email you entered so follow-up stays clear.",
       "successNotice": "Your signed-in details are now in the form below.",
-      "scrollNotice": "Your signed-in details were added below."
+      "scrollNotice": "Your signed-in details were added below.",
+      "signedInNote": "Signed in as {email}. This inquiry will also appear in <link>your submissions</link>."
     }
   },
   "about": {
@@ -639,6 +676,21 @@
       "loading": "Loading your submissions…",
       "errorTitle": "We could not load your submissions.",
       "errorDescription": "Please try again in a moment.",
+      "retry": "Try again",
+      "filterAll": "All",
+      "upcoming": "Upcoming",
+      "name": "Name",
+      "phone": "Phone",
+      "reference": "Reference",
+      "summary": {
+        "total": "Inquiries",
+        "lastSent": "Last sent",
+        "callbacks": "Callbacks requested",
+        "upcoming": "{count} coming up",
+        "delivery": "Delivery",
+        "allDelivered": "All delivered",
+        "issues": "{count, plural, one {# needs attention} other {# need attention}}"
+      },
       "emptyTitle": "No submissions yet",
       "emptyDescription": "Once you send a contact form while signed in, it will appear here with its status and submitted details.",
       "contactEmail": "Contact email used",

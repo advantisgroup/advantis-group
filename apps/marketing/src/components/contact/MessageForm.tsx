@@ -1,11 +1,10 @@
 import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/i18n/navigation";
 import { type FormData, type FormProps } from "@/types/contact";
 
-import { BrandText } from "../effects/BrandText";
 import { AnimatedButton } from "../ui/AnimatedButton";
+import { Field, PrivacyNote, controlClassName, useFieldError } from "./Field";
 
 export function MessageForm({
   formData,
@@ -16,106 +15,87 @@ export function MessageForm({
   onSubmit,
 }: FormProps<FormData>) {
   const t = useTranslations("contact.form");
+  const errorFor = useFieldError(errors);
 
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
-      <div>
-        <label htmlFor="company" className="block text-sm font-medium mb-2">
-          {t("company")} <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          id="company"
-          value={formData.company}
-          onChange={(e) => onFormDataChange({ ...formData, company: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-        />
-        {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company[0]}</p>}
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="w-full md:w-1/2">
-          <label htmlFor="firstName" className="block text-sm font-medium mb-2">
-            {t("firstName")} <span className="text-red-500">*</span>
-          </label>
+    <form className="space-y-5" onSubmit={onSubmit} noValidate>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field id="firstName" label={t("firstName")} error={errorFor("firstName")}>
           <input
-            type="text"
             id="firstName"
+            autoComplete="given-name"
             value={formData.firstName}
             onChange={(e) => onFormDataChange({ ...formData, firstName: e.target.value })}
-            className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+            aria-invalid={Boolean(errors.firstName)}
+            className={controlClassName}
           />
-          {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName[0]}</p>}
-        </div>
-        <div className="w-full md:w-1/2">
-          <label htmlFor="lastName" className="block text-sm font-medium mb-2">
-            {t("lastName")} <span className="text-red-500">*</span>
-          </label>
+        </Field>
+        <Field id="lastName" label={t("lastName")} error={errorFor("lastName")}>
           <input
-            type="text"
             id="lastName"
+            autoComplete="family-name"
             value={formData.lastName}
             onChange={(e) => onFormDataChange({ ...formData, lastName: e.target.value })}
-            className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+            aria-invalid={Boolean(errors.lastName)}
+            className={controlClassName}
           />
-          {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName[0]}</p>}
-        </div>
+        </Field>
       </div>
 
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium mb-2">
-          {t("email")} <span className="text-red-500">*</span>
-        </label>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field id="email" label={t("email")} error={errorFor("email")}>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            value={formData.email}
+            onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })}
+            aria-invalid={Boolean(errors.email)}
+            className={controlClassName}
+          />
+        </Field>
+        <Field id="phone" label={t("phone")} optional>
+          <input
+            id="phone"
+            type="tel"
+            autoComplete="tel"
+            value={formData.phone ?? ""}
+            onChange={(e) => onFormDataChange({ ...formData, phone: e.target.value })}
+            className={controlClassName}
+          />
+        </Field>
+      </div>
+
+      <Field id="company" label={t("company")} error={errorFor("company")}>
         <input
-          type="email"
-          id="email"
-          value={formData.email}
-          onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+          id="company"
+          autoComplete="organization"
+          value={formData.company}
+          onChange={(e) => onFormDataChange({ ...formData, company: e.target.value })}
+          aria-invalid={Boolean(errors.company)}
+          className={controlClassName}
         />
-        {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
-      </div>
+      </Field>
 
-      <div>
-        <label htmlFor="phone" className="block text-sm font-medium mb-2">
-          {t("phone")}
-        </label>
-        <input
-          type="tel"
-          id="phone"
-          value={formData.phone}
-          onChange={(e) => onFormDataChange({ ...formData, phone: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="message" className="block text-sm font-medium mb-2">
-          {t("message")} <span className="text-red-500">*</span>
-        </label>
+      <Field id="message" label={t("message")} error={errorFor("message")}>
         <textarea
           id="message"
+          rows={6}
           value={formData.message}
           onChange={(e) => onFormDataChange({ ...formData, message: e.target.value })}
-          rows={6}
-          className="min-h-28 md:min-h-40 w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
+          aria-invalid={Boolean(errors.message)}
+          className={`${controlClassName} min-h-36 resize-y`}
         />
-        {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message[0]}</p>}
-      </div>
+      </Field>
 
-      <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          <strong>{t("privacyNoteLabel")}</strong> {t("privacyPrefix")}{" "}
-          <BrandText brand="advantis">advantis GmbH</BrandText> {t("privacySuffix")}{" "}
-          <Link href="/privacy" className="underline hover:text-foreground">
-            {t("privacyLink")}
-          </Link>
-        </p>
+      <div className="space-y-4 pt-1">
+        <PrivacyNote />
         <AnimatedButton
           buttonState={buttonState}
           idleText={t("submit")}
           idleIcon={Send}
           disabled={disabled}
+          className="sm:w-auto sm:min-w-44"
         />
       </div>
     </form>

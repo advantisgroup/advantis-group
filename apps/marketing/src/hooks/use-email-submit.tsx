@@ -2,9 +2,8 @@
 "use client";
 import { useState, useCallback } from "react";
 
-import { useUser } from "@clerk/nextjs";
 import { X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { useTrackEvent } from "@/lib/analytics";
@@ -35,7 +34,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
   const { onSuccess, onError, resetDelayMs = 3000 } = options;
   const [buttonState, setButtonState] = useState<ButtonState>("idle");
   const tMessages = useTranslations("contact.messages");
-  const { user } = useUser();
+  const locale = useLocale();
   const trackEvent = useTrackEvent();
 
   const showErrorToast = useCallback(
@@ -58,29 +57,25 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
     async (payload: EmailPayload, trackingEvent: string) => {
       setButtonState("loading");
       trackEvent(trackingEvent);
-      const locale = window.localStorage.getItem("NEXT_LOCALE");
       try {
         const response = await api.send.post({
           firstName: payload.firstName,
           lastName: payload.lastName,
           message: payload.message,
           phone: payload.phone,
-          addresses: [process.env.NEXT_PUBLIC_EMAIL_ADRESS!],
-          cc: [payload.email],
+          email: payload.email,
           subject: payload.subject,
-          locale: locale || "de",
+          locale,
           topic: payload.topic,
           company: payload.company,
           submissionType: payload.submissionType,
           desiredDateTime: payload.desiredDateTime,
           notes: payload.notes,
-          accountEmail: user?.primaryEmailAddress?.emailAddress || "",
-          accountName: user?.fullName || "",
         });
 
-        if (response.status === 500) {
+        if (response.error && response.status !== 429) {
           setButtonState("error");
-          showErrorToast("Falls das Problem anhält, versuch es später nochmal");
+          showErrorToast(tMessages("serverErrorDesc"));
           resetButtonState();
           onError?.(new Error("Server error"));
           return false;
@@ -88,8 +83,8 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
 
         if (response.status === 429) {
           setButtonState("error");
-          toast.error("Rate Limit", {
-            description: "Du hast zu viele Anfragen geschickt. Versuch es später nochmal",
+          toast.error(tMessages("rateLimitTitle"), {
+            description: tMessages("rateLimitDesc"),
             icon: <X />,
           });
           resetButtonState();
@@ -98,22 +93,19 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
         }
 
         setButtonState("success");
-        toast.success(tMessages("successTitle"), {
-          description: tMessages("successDesc"),
-        });
         resetButtonState();
         onSuccess?.();
         return true;
       } catch (error) {
         console.log(error);
         setButtonState("error");
-        showErrorToast("Falls das Problem anhält versuchen sie es später nochmal");
+        showErrorToast(tMessages("serverErrorDesc"));
         resetButtonState();
         onError?.(error);
         return false;
       }
     },
-    [onSuccess, onError, resetButtonState, showErrorToast, tMessages, trackEvent, user],
+    [locale, onSuccess, onError, resetButtonState, showErrorToast, tMessages, trackEvent],
   );
 
   return {

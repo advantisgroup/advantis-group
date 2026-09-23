@@ -2,11 +2,9 @@ import React from "react";
 
 import { JetBrains_Mono, Manrope, Newsreader } from "next/font/google";
 
-import { ClerkProvider } from "@clerk/nextjs";
 import { type Metadata } from "next";
 
 import "./global.css";
-import ConvexClientProvider from "@/components/ConvexClientProvider";
 import SmoothScrolling from "@/components/effects/SmoothScrolling";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -108,18 +106,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`bg-background antialiased scroll-smooth ${manrope.variable} ${newsreader.variable} ${jetbrainsMono.variable}`}
       >
-        <ClerkProvider>
-          {/* Ivory is the designed canvas; dark is the alternate, not a coin flip
-              on the visitor's OS setting. "System" is still offered in settings. */}
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-            <SmoothScrolling>
-              <ConvexClientProvider>
-                {children}
-                <Toaster />
-              </ConvexClientProvider>
-            </SmoothScrolling>
-          </ThemeProvider>
-        </ClerkProvider>
+        {/* Ivory is the designed canvas; dark is the alternate, not a coin flip
+            on the visitor's OS setting. "System" is still offered in settings.
+            Clerk and Convex live in the [locale] layout, where the language is known. */}
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <SmoothScrolling>
+            {children}
+            <Toaster />
+          </SmoothScrolling>
+        </ThemeProvider>
       </body>
     </html>
   );

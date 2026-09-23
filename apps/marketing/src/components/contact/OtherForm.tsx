@@ -1,11 +1,12 @@
 import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/i18n/navigation";
-import { type OtherFormData, type InquiryTopic, type FormProps } from "@/types/contact";
+import { type FormProps, type InquiryTopic, type OtherFormData } from "@/types/contact";
 
-import { BrandText } from "../effects/BrandText";
 import { AnimatedButton } from "../ui/AnimatedButton";
+import { Field, PrivacyNote, controlClassName, useFieldError } from "./Field";
+
+const TOPICS: InquiryTopic[] = ["question", "withdrawal", "legal"];
 
 export function OtherForm({
   formData,
@@ -17,138 +18,111 @@ export function OtherForm({
 }: FormProps<OtherFormData>) {
   const t = useTranslations("contact.form");
   const tOther = useTranslations("contact.otherForm");
-
-  const topics: { value: InquiryTopic; label: string }[] = [
-    { value: "withdrawal", label: tOther("topics.withdrawal") },
-    { value: "question", label: tOther("topics.question") },
-    { value: "legal", label: tOther("topics.legal") },
-  ];
+  const errorFor = useFieldError(errors);
 
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="w-full md:w-1/2">
-          <label htmlFor="firstName" className="block text-sm font-medium mb-2">
-            {t("firstName")} <span className="text-red-500">*</span>
-          </label>
+    <form className="space-y-5" onSubmit={onSubmit} noValidate>
+      <fieldset>
+        <legend className="text-sm font-medium text-foreground">{tOther("topic")}</legend>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {TOPICS.map((topic) => (
+            <label
+              key={topic}
+              className="cursor-pointer rounded-full border border-rule-strong px-3.5 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground has-checked:border-foreground has-checked:bg-foreground has-checked:text-background has-focus-visible:ring-2 has-focus-visible:ring-ring"
+            >
+              <input
+                type="radio"
+                name="topic"
+                value={topic}
+                checked={formData.topic === topic}
+                onChange={() => onFormDataChange({ ...formData, topic })}
+                className="sr-only"
+              />
+              {tOther(`topics.${topic}`)}
+            </label>
+          ))}
+        </div>
+        {errors.topic ? (
+          <p className="mt-1.5 text-[13px] text-destructive">{tOther("selectTopic")}</p>
+        ) : null}
+      </fieldset>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field id="other-firstName" label={t("firstName")} error={errorFor("firstName")}>
           <input
-            type="text"
-            id="firstName"
+            id="other-firstName"
+            autoComplete="given-name"
             value={formData.firstName}
             onChange={(e) => onFormDataChange({ ...formData, firstName: e.target.value })}
-            className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+            aria-invalid={Boolean(errors.firstName)}
+            className={controlClassName}
           />
-          {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName[0]}</p>}
-        </div>
-        <div className="w-full md:w-1/2">
-          <label htmlFor="lastName" className="block text-sm font-medium mb-2">
-            {t("lastName")}{" "}
-            <span className="text-muted-foreground text-xs">({tOther("optional")})</span>
-          </label>
+        </Field>
+        <Field id="other-lastName" label={t("lastName")} optional>
           <input
-            type="text"
-            id="lastName"
-            value={formData.lastName || ""}
+            id="other-lastName"
+            autoComplete="family-name"
+            value={formData.lastName ?? ""}
             onChange={(e) => onFormDataChange({ ...formData, lastName: e.target.value })}
-            className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+            className={controlClassName}
           />
-        </div>
+        </Field>
       </div>
 
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium mb-2">
-          {t("email")} <span className="text-red-500">*</span>
-        </label>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field id="other-email" label={t("email")} error={errorFor("email")}>
+          <input
+            id="other-email"
+            type="email"
+            autoComplete="email"
+            value={formData.email}
+            onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })}
+            aria-invalid={Boolean(errors.email)}
+            className={controlClassName}
+          />
+        </Field>
+        <Field id="other-phone" label={t("phone")} optional>
+          <input
+            id="other-phone"
+            type="tel"
+            autoComplete="tel"
+            value={formData.phone ?? ""}
+            onChange={(e) => onFormDataChange({ ...formData, phone: e.target.value })}
+            className={controlClassName}
+          />
+        </Field>
+      </div>
+
+      <Field id="other-subject" label={tOther("subject")} error={errorFor("subject")}>
         <input
-          type="email"
-          id="email"
-          value={formData.email}
-          onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-        />
-        {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
-      </div>
-
-      <div>
-        <label htmlFor="phone" className="block text-sm font-medium mb-2">
-          {t("phone")} <span className="text-muted-foreground text-xs">({tOther("optional")})</span>
-        </label>
-        <input
-          type="tel"
-          id="phone"
-          value={formData.phone || ""}
-          onChange={(e) => onFormDataChange({ ...formData, phone: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="topic" className="block text-sm font-medium mb-2">
-          {tOther("topic")} <span className="text-red-500">*</span>
-        </label>
-        <select
-          id="topic"
-          value={formData.topic || ""}
-          onChange={(e) =>
-            onFormDataChange({
-              ...formData,
-              topic: e.target.value as InquiryTopic,
-            })
-          }
-          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-        >
-          <option value="">{tOther("selectTopic")}</option>
-          {topics.map((topic) => (
-            <option key={topic.value} value={topic.value}>
-              {topic.label}
-            </option>
-          ))}
-        </select>
-        {errors.topic && <p className="text-red-500 text-sm mt-1">{errors.topic[0]}</p>}
-      </div>
-
-      <div>
-        <label htmlFor="subject" className="block text-sm font-medium mb-2">
-          {tOther("subject")} <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          id="subject"
+          id="other-subject"
           value={formData.subject}
           onChange={(e) => onFormDataChange({ ...formData, subject: e.target.value })}
           placeholder={tOther("subjectPlaceholder")}
-          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+          aria-invalid={Boolean(errors.subject)}
+          className={controlClassName}
         />
-        {errors.subject && <p className="text-red-500 text-sm mt-1">{errors.subject[0]}</p>}
-      </div>
+      </Field>
 
-      <div>
-        <label htmlFor="message" className="block text-sm font-medium mb-2">
-          {t("message")} <span className="text-red-500">*</span>
-        </label>
+      <Field id="other-message" label={t("message")} error={errorFor("message")}>
         <textarea
-          id="message"
+          id="other-message"
+          rows={6}
           value={formData.message}
           onChange={(e) => onFormDataChange({ ...formData, message: e.target.value })}
-          rows={6}
-          className="min-h-28 md:min-h-40 w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
+          aria-invalid={Boolean(errors.message)}
+          className={`${controlClassName} min-h-36 resize-y`}
         />
-        {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message[0]}</p>}
-      </div>
+      </Field>
 
-      <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          <strong>{t("privacyNoteLabel")}</strong> {t("privacyPrefix")}{" "}
-          <BrandText brand="advantis">advantis GmbH</BrandText> {t("privacySuffix")}{" "}
-          <Link href="/privacy" className="underline hover:text-foreground">
-            {t("privacyLink")}
-          </Link>
-        </p>
+      <div className="space-y-4 pt-1">
+        <PrivacyNote />
         <AnimatedButton
           buttonState={buttonState}
           idleText={t("submit")}
           idleIcon={Send}
           disabled={disabled}
+          className="sm:w-auto sm:min-w-44"
         />
       </div>
     </form>

@@ -16,6 +16,8 @@ import { MobileNavFab } from "./MobileNavFab";
 import { AccountMenu } from "../auth/AccountMenu";
 
 const SCROLL_THRESHOLD = 24;
+const HIDE_AFTER = 120;
+const SCROLL_JITTER = 6;
 
 /* The lockup's mark is 84.8% of the lockup's own height (the artwork sets it
    at scale 0.6111 inside an 88-unit box), so the monogram has to be drawn a
@@ -30,6 +32,8 @@ const MARK_HEIGHT = 15;
  * headline underneath it is the first thing in the viewport. Past the first
  * scroll it settles into a shorter bar with a ground and a hairline, and the
  * wordmark gives way to the monogram — the same move anthropic.com makes.
+ * Like there, it also slides away while you scroll down and comes back as
+ * soon as you scroll up.
  *
  * What it does *not* do any more: follow the pointer, collapse the menu label
  * into a chevron, or re-pack its right-hand side. One thing changes, the rest
@@ -40,13 +44,27 @@ export const Header = () => {
   const localePathname = useLocalePathname();
   const t = useTranslations("nav");
   const [compact, setCompact] = React.useState(false);
+  const [hidden, setHidden] = React.useState(false);
 
   React.useEffect(() => {
-    const onScroll = () => setCompact(window.scrollY > SCROLL_THRESHOLD);
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      setCompact(y > SCROLL_THRESHOLD);
+      // ignore tiny jitters (trackpads, iOS bounce) so the bar doesn't flicker
+      if (Math.abs(y - lastY) < SCROLL_JITTER) return;
+      setHidden(y > lastY && y > HIDE_AFTER);
+      lastY = y;
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // lets sticky bars further down the page slide up into the freed space
+  React.useEffect(() => {
+    document.documentElement.toggleAttribute("data-header-hidden", hidden);
+  }, [hidden]);
 
   // The auth cards have their own minimal shell — the marketing chrome
   // would otherwise occlude them (see AuthShell).
@@ -77,7 +95,8 @@ export const Header = () => {
     <>
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color,backdrop-filter] duration-300",
+          "fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color,backdrop-filter,transform] duration-300 focus-within:translate-y-0",
+          hidden && "-translate-y-full",
           compact
             ? "border-rule bg-background/85 backdrop-blur-md"
             : "border-transparent bg-transparent",

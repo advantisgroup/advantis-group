@@ -1,141 +1,234 @@
-import { api } from "@advantis/convex/api";
-import { ConvexHttpClient } from "convex/browser";
-import { Elysia, t } from "elysia";
+import { createHash, randomInt } from "node:crypto";
 
-const convex = process.env.NEXT_PUBLIC_CONVEX_URL
-  ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
-  : null;
+import { api } from "@advantis/convex/api";
+import { currentUser } from "@clerk/nextjs/server";
+import { Elysia, t } from "elysia";
+import { Resend } from "resend";
+
+import { NotifyCodeEmail, notifyCodeCopy } from "@/components/email/notify-code-email";
+import { convex, serverKey } from "@/lib/convex-server";
+import { allow, clientIp, limits } from "@/lib/rate-limit";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const CODE_TTL_MS = 10 * 60 * 1000;
+
+type Action = "subscribe" | "unsubscribe";
+
+const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
+
+const errorSchema = t.Object({
+  error: t.String(),
+  code: t.Optional(t.String()),
+  detail: t.Optional(t.String()),
+});
+
+const statusSchema = t.Union([
+  t.Literal("subscribed"),
+  t.Literal("duplicate"),
+  t.Literal("unsubscribed"),
+  t.Literal("codeSent"),
+]);
+
+const notConfigured = {
+  error: "Server configuration error.",
+  code: "convex_not_configured",
+  detail: "NEXT_PUBLIC_CONVEX_URL is missing.",
+};
+
+/**
+ * Signed in with this exact address, verified by Clerk? Then the person has
+ * already proven they own it and doesn't need a code.
+ */
+async function ownsAddress(email: string) {
+  const user = await currentUser();
+  return (
+    user?.emailAddresses.some(
+      (address) =>
+        address.emailAddress.toLowerCase() === email && address.verification?.status === "verified",
+    ) ?? false
+  );
+}
+
+/** Mails a fresh code, unless one just went out — then the one in the inbox still works. */
+async function sendCode(email: string, action: Action, locale: string) {
+  const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
+  const { throttled } = await convex!.mutation(api.marketing.emails.startNotifyCode, {
+    serverKey: serverKey(),
+    email,
+    action,
+    codeHash: sha256(code),
+    expiresAt: Date.now() + CODE_TTL_MS,
+  });
+  if (throttled) return;
+
+  const { error } = await resend.emails.send({
+    from: `ADVANTIS GROUP <${process.env.NEXT_PUBLIC_EMAIL_ADRESS}>`,
+    to: [email],
+    subject: notifyCodeCopy(locale).subject.replace("{code}", code),
+    react: NotifyCodeEmail({ code, action, locale }),
+  });
+  if (error) throw new Error(error.message);
+}
+
+const failed = (err: unknown) => {
+  console.error("[notify]", err);
+  return {
+    error: "Something went wrong. Please try again.",
+    code: "notify_failed",
+    detail: err instanceof Error ? err.message : undefined,
+  };
+};
 
 export const notify = new Elysia()
   .post(
     "/notify",
-    async ({ body, set }) => {
-      const allowSubmissions = process.env.ALLOW_SUBMISSIONS === "true";
-
-      if (allowSubmissions) {
+    async ({ body, headers, set }) => {
+      if (process.env.NEXT_PUBLIC_ALLOW_SUBMISSIONS === "true") {
         set.status = 400;
-        return {
-          error: "Submissions are currently open — use the contact form directly.",
-        };
+        return { error: "Submissions are currently open — use the contact form directly." };
       }
-
       if (!convex) {
         set.status = 500;
-        return {
-          error: "Server configuration error.",
-          code: "convex_not_configured",
-          detail: "NEXT_PUBLIC_CONVEX_URL is missing, so notify emails cannot be saved.",
-        };
+        return notConfigured;
       }
 
+      const email = body.email.trim().toLowerCase();
+
       try {
-        const result = await convex.mutation(api.marketing.emails.saveNotifyEmail, {
-          email: body.email.trim().toLowerCase(),
-        });
+        if (await ownsAddress(email)) {
+          const { duplicate } = await convex.mutation(api.marketing.emails.saveNotifyEmail, {
+            serverKey: serverKey(),
+            email,
+          });
+          return { ok: true, duplicate, status: duplicate ? "duplicate" : "subscribed" } as const;
+        }
 
-        const duplicate = (result as { duplicate: boolean } | null)?.duplicate ?? false;
+        if (!(await allow(limits.notifyCode, clientIp(headers)))) {
+          set.status = 429;
+          return { error: "Too many requests. Please try again later.", code: "rate_limited" };
+        }
 
-        return {
-          ok: true,
-          duplicate,
-        };
+        await sendCode(email, "subscribe", body.locale ?? "de");
+        return { ok: true, duplicate: false, status: "codeSent" } as const;
       } catch (err) {
-        console.error("[notify] Convex error:", err);
         set.status = 500;
-        return {
-          error: "Failed to save email. Please try again.",
-          code: "convex_mutation_failed",
-          detail: err instanceof Error ? err.message : "Unknown Convex mutation error.",
-        };
+        return failed(err);
       }
     },
     {
       body: t.Object({
         email: t.String({ format: "email" }),
+        locale: t.Optional(t.String()),
       }),
       response: {
-        200: t.Object({
-          ok: t.Boolean(),
-          duplicate: t.Boolean(),
-        }),
-        400: t.Object({ error: t.String() }),
-        500: t.Object({
-          error: t.String(),
-          code: t.Optional(t.String()),
-          detail: t.Optional(t.String()),
-        }),
+        200: t.Object({ ok: t.Boolean(), duplicate: t.Boolean(), status: statusSchema }),
+        400: errorSchema,
+        429: errorSchema,
+        500: errorSchema,
       },
     },
   )
-  .delete(
-    "/notify/:email",
-    async ({ params, set }) => {
+  .post(
+    "/notify/verify",
+    async ({ body, headers, set }) => {
       if (!convex) {
         set.status = 500;
-        return {
-          error: "Server configuration error.",
-          code: "convex_not_configured",
-          detail: "NEXT_PUBLIC_CONVEX_URL is missing, so notify emails cannot be removed.",
-        };
+        return notConfigured;
+      }
+      if (!(await allow(limits.notifyVerify, clientIp(headers)))) {
+        set.status = 429;
+        return { error: "Too many attempts. Please try again later.", code: "rate_limited" };
       }
 
-      const decodedEmail = decodeURIComponent(params.email).trim().toLowerCase();
+      try {
+        const result = await convex.mutation(api.marketing.emails.redeemNotifyCode, {
+          serverKey: serverKey(),
+          email: body.email.trim().toLowerCase(),
+          action: body.action,
+          codeHash: sha256(body.code.trim()),
+        });
 
-      if (!decodedEmail) {
+        switch (result.status) {
+          case "invalid":
+            set.status = 400;
+            return { error: "That code doesn't match.", code: "code_invalid" };
+          case "expired":
+            set.status = 410;
+            return { error: "That code has expired.", code: "code_expired" };
+          case "locked":
+            set.status = 429;
+            return { error: "Too many wrong codes.", code: "code_locked" };
+          default:
+            return { ok: true, status: result.status };
+        }
+      } catch (err) {
+        set.status = 500;
+        return failed(err);
+      }
+    },
+    {
+      body: t.Object({
+        email: t.String({ format: "email" }),
+        code: t.String({ minLength: 6, maxLength: 6 }),
+        action: t.Union([t.Literal("subscribe"), t.Literal("unsubscribe")]),
+      }),
+      response: {
+        200: t.Object({ ok: t.Boolean(), status: statusSchema }),
+        400: errorSchema,
+        410: errorSchema,
+        429: errorSchema,
+        500: errorSchema,
+      },
+    },
+  )
+  /**
+   * Leaving the list. Always answers the same way whether or not the address
+   * was on it, so this can't be used to check who's subscribed.
+   */
+  .delete(
+    "/notify/:email",
+    async ({ params, query, headers, set }) => {
+      if (!convex) {
+        set.status = 500;
+        return notConfigured;
+      }
+
+      const email = decodeURIComponent(params.email).trim().toLowerCase();
+      if (!email) {
         set.status = 400;
         return { error: "Email parameter is required." };
       }
 
       try {
-        const result = (await convex.mutation(api.marketing.emails.deleteNotifyEmail, {
-          email: decodedEmail,
-        })) as { deleted: boolean; email: string | null; error: string | null };
-
-        if (!result.deleted) {
-          if (!result.email) {
-            set.status = 404;
-            return { error: "Email not found." };
-          }
-
-          console.error("[notify] Delete error:", result.error);
-          set.status = 500;
-          return {
-            error: "Failed to delete email. Please try again.",
-            code: "notify_delete_failed",
-            detail: result.error || "Delete mutation returned an unknown error.",
-          };
+        if (await ownsAddress(email)) {
+          await convex.mutation(api.marketing.emails.deleteNotifyEmail, {
+            serverKey: serverKey(),
+            email,
+          });
+          return { ok: true, email, status: "unsubscribed" } as const;
         }
 
-        return {
-          ok: true,
-          email: result.email,
-        };
+        if (!(await allow(limits.notifyCode, clientIp(headers)))) {
+          set.status = 429;
+          return { error: "Too many requests. Please try again later.", code: "rate_limited" };
+        }
+
+        await sendCode(email, "unsubscribe", query.locale ?? "de");
+        return { ok: true, email: null, status: "codeSent" } as const;
       } catch (err) {
-        console.error("[notify] Convex error:", err);
         set.status = 500;
-        return {
-          error: "Failed to delete email. Please try again.",
-          code: "convex_mutation_failed",
-          detail: err instanceof Error ? err.message : "Unknown Convex mutation error.",
-        };
+        return failed(err);
       }
     },
     {
-      params: t.Object({
-        email: t.String(),
-      }),
+      params: t.Object({ email: t.String() }),
+      query: t.Object({ locale: t.Optional(t.String()) }),
       response: {
-        200: t.Object({
-          ok: t.Boolean(),
-          email: t.Nullable(t.String()),
-        }),
+        200: t.Object({ ok: t.Boolean(), email: t.Nullable(t.String()), status: statusSchema }),
         400: t.Object({ error: t.String() }),
-        404: t.Object({ error: t.String() }),
-        500: t.Object({
-          error: t.String(),
-          code: t.Optional(t.String()),
-          detail: t.Optional(t.String()),
-        }),
+        429: errorSchema,
+        500: errorSchema,
       },
     },
   );

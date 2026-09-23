@@ -1,13 +1,17 @@
-import React from "react";
-
 import { Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/i18n/navigation";
-import { type FormProps, type CallbackFormData } from "@/types/contact";
+import { type CallbackFormData, type FormProps } from "@/types/contact";
 
-import { BrandText } from "../effects/BrandText";
 import { AnimatedButton } from "../ui/AnimatedButton";
+import { Field, PrivacyNote, controlClassName, useFieldError } from "./Field";
+
+// earliest bookable slot is "now", in the local-time format datetime-local expects
+const nowForInput = () => {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().slice(0, 16);
+};
 
 export function CallbackForm({
   formData,
@@ -18,130 +22,112 @@ export function CallbackForm({
   onSubmit,
 }: FormProps<CallbackFormData>) {
   const t = useTranslations("contact.form");
+  const errorFor = useFieldError(errors);
 
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
-      <div>
-        <label htmlFor="callback-company" className="block text-sm font-medium mb-2">
-          {t("company")} <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          id="callback-company"
-          value={formData.company}
-          onChange={(e) => onFormDataChange({ ...formData, company: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-          required
-        />
-        {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company[0]}</p>}
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="w-full md:w-1/2">
-          <label htmlFor="callback-firstName" className="block text-sm font-medium mb-2">
-            {t("firstName")} <span className="text-red-500">*</span>
-          </label>
+    <form className="space-y-5" onSubmit={onSubmit} noValidate>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field id="callback-firstName" label={t("firstName")} error={errorFor("firstName")}>
           <input
-            type="text"
             id="callback-firstName"
+            autoComplete="given-name"
             value={formData.firstName}
             onChange={(e) => onFormDataChange({ ...formData, firstName: e.target.value })}
-            className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-            required
+            aria-invalid={Boolean(errors.firstName)}
+            className={controlClassName}
           />
-          {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName[0]}</p>}
-        </div>
-        <div className="w-full md:w-1/2">
-          <label htmlFor="callback-lastName" className="block text-sm font-medium mb-2">
-            {t("lastName")} <span className="text-red-500">*</span>
-          </label>
+        </Field>
+        <Field id="callback-lastName" label={t("lastName")} error={errorFor("lastName")}>
           <input
-            type="text"
             id="callback-lastName"
+            autoComplete="family-name"
             value={formData.lastName}
             onChange={(e) => onFormDataChange({ ...formData, lastName: e.target.value })}
-            className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-            required
+            aria-invalid={Boolean(errors.lastName)}
+            className={controlClassName}
           />
-          {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName[0]}</p>}
-        </div>
+        </Field>
       </div>
 
-      <div>
-        <label htmlFor="callback-phone" className="block text-sm font-medium mb-2">
-          {t("phone")} <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="tel"
-          id="callback-phone"
-          value={formData.phone}
-          onChange={(e) => onFormDataChange({ ...formData, phone: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-          placeholder={process.env.NEXT_PUBLIC_PHONE_NUMBER}
-          required
-        />
-        {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone[0]}</p>}
-      </div>
-
-      <div>
-        <label htmlFor="callback-email" className="block text-sm font-medium mb-2">
-          {t("email")} <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="email"
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field id="callback-phone" label={t("phone")} error={errorFor("phone")}>
+          <input
+            id="callback-phone"
+            type="tel"
+            autoComplete="tel"
+            value={formData.phone}
+            onChange={(e) => onFormDataChange({ ...formData, phone: e.target.value })}
+            aria-invalid={Boolean(errors.phone)}
+            placeholder={t("phonePlaceholder")}
+            className={controlClassName}
+          />
+        </Field>
+        <Field
           id="callback-email"
-          value={formData.email}
-          onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-          required
-        />
-        {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
-        <p className="text-xs text-muted-foreground mt-1">{t("callbackEmailNote")}</p>
+          label={t("email")}
+          error={errorFor("email")}
+          hint={t("callbackEmailNote")}
+        >
+          <input
+            id="callback-email"
+            type="email"
+            autoComplete="email"
+            value={formData.email}
+            onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })}
+            aria-invalid={Boolean(errors.email)}
+            className={controlClassName}
+          />
+        </Field>
       </div>
 
-      <div>
-        <label htmlFor="callback-datetime" className="block text-sm font-medium mb-2">
-          {t("desiredTime")} <span className="text-red-500">*</span>
-        </label>
+      <Field id="callback-company" label={t("company")} error={errorFor("company")}>
         <input
-          type="datetime-local"
+          id="callback-company"
+          autoComplete="organization"
+          value={formData.company}
+          onChange={(e) => onFormDataChange({ ...formData, company: e.target.value })}
+          aria-invalid={Boolean(errors.company)}
+          className={controlClassName}
+        />
+      </Field>
+
+      <Field
+        id="callback-datetime"
+        label={t("desiredTime")}
+        error={errorFor("dateTime")}
+        hint={t("callbackTimeNote")}
+      >
+        <input
           id="callback-datetime"
+          type="datetime-local"
+          min={nowForInput()}
+          suppressHydrationWarning
           value={formData.dateTime}
           onChange={(e) => onFormDataChange({ ...formData, dateTime: e.target.value })}
-          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-          required
+          aria-invalid={Boolean(errors.dateTime)}
+          className={controlClassName}
         />
-        {errors.dateTime && <p className="text-red-500 text-sm mt-1">{errors.dateTime[0]}</p>}
-        <p className="text-xs text-muted-foreground mt-1">{t("callbackTimeNote")}</p>
-      </div>
+      </Field>
 
-      <div>
-        <label htmlFor="callback-notes" className="block text-sm font-medium mb-2">
-          {t("notes")}
-        </label>
+      <Field id="callback-notes" label={t("notes")}>
         <textarea
           id="callback-notes"
-          value={formData.notes || ""}
-          onChange={(e) => onFormDataChange({ ...formData, notes: e.target.value })}
           rows={3}
-          className="w-full px-4 py-2 rounded-md border border-rule bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
+          value={formData.notes ?? ""}
+          onChange={(e) => onFormDataChange({ ...formData, notes: e.target.value })}
           placeholder={t("notesPlaceholder")}
+          className={`${controlClassName} resize-y`}
         />
-      </div>
+      </Field>
 
-      <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          <strong>{t("privacyNoteLabel")}</strong> {t("privacyPrefix")}{" "}
-          <BrandText brand="advantis">advantis GmbH</BrandText> {t("privacySuffixCallback")}{" "}
-          <Link href="/privacy" className="underline hover:text-foreground">
-            {t("privacyLink")}
-          </Link>
-        </p>
+      <div className="space-y-4 pt-1">
+        <PrivacyNote callback />
         <AnimatedButton
           buttonState={buttonState}
           idleText={t("callbackRequest")}
           idleIcon={Phone}
           disabled={disabled}
+          className="sm:w-auto sm:min-w-44"
         />
       </div>
     </form>

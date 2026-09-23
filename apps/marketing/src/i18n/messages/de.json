@@ -225,7 +225,11 @@
       "privacySuffix": "deine angegebenen Daten zum Zweck der Bearbeitung deiner Anfrage verwendet. Deine Daten werden ausschließlich zur Beantwortung deiner Anfrage gespeichert und nicht an Dritte weitergegeben.",
       "privacySuffixCallback": "deine angegebenen Daten zum Zweck der Rückrufvereinbarung verwendet.",
       "privacyLink": "Weitere Informationen findest du in unserer Datenschutzerklärung.",
-      "privacyNoteLabel": "HINWEIS AUF DATENSCHUTZ:"
+      "privacyNoteLabel": "HINWEIS AUF DATENSCHUTZ:",
+      "errors": {
+        "required": "Pflichtfeld",
+        "email": "Bitte gib eine gültige E-Mail-Adresse ein"
+      }
     },
     "sidebar": {
       "title": "Warum",
@@ -249,7 +253,12 @@
       "callSuccessTitle": "Rückruf angefordert!",
       "callSuccessDesc": "Wir rufen dich zum gewünschten Zeitpunkt an.",
       "errorTitle": "Etwas ist schiefgelaufen",
-      "errorDesc": "Bitte überprüfe deine Eingaben"
+      "errorDesc": "Bitte überprüfe deine Eingaben",
+      "serverErrorDesc": "Falls das Problem anhält, versuch es später noch einmal.",
+      "rateLimitTitle": "Zu viele Anfragen",
+      "rateLimitDesc": "Du hast sehr viele Anfragen geschickt. Bitte versuch es später noch einmal.",
+      "copySent": "Eine Kopie ist an {email} unterwegs.",
+      "sendAnother": "Weitere Anfrage senden"
     },
     "submissionBanner": {
       "title": "Formulare vorübergehend nicht verfügbar",
@@ -264,6 +273,29 @@
       "emailPlaceholder": "du@example.com",
       "switchToRemove": "E-Mail aus Liste entfernen",
       "switchToSubscribe": "← Zurück zu Benachrichtigungen",
+      "signedInHint": "Du bist mit dieser Adresse angemeldet, ein Code ist nicht nötig.",
+      "unsubscribeLink": "Stattdessen abmelden",
+      "subscribeLink": "Stattdessen benachrichtigen lassen",
+      "code": {
+        "title": "Schau in dein Postfach",
+        "description": "Wir haben einen 6-stelligen Code an {email} geschickt.",
+        "label": "Code",
+        "cta": "Bestätigen",
+        "loading": "Wird geprüft…",
+        "resend": "Neuen Code senden",
+        "resendIn": "Neuer Code in {seconds} s",
+        "resent": "Neuer Code ist unterwegs.",
+        "changeEmail": "Andere E-Mail-Adresse verwenden"
+      },
+      "codeEmail": {
+        "subject": "{code} ist dein ADVANTIS GROUP Code",
+        "subscribeTitle": "Bestätige deine E-Mail-Adresse",
+        "unsubscribeTitle": "Abmeldung bestätigen",
+        "subscribeBody": "Gib diesen Code auf unserer Website ein, dann sagen wir dir Bescheid, sobald unsere Kontaktformulare wieder da sind.",
+        "unsubscribeBody": "Gib diesen Code auf unserer Website ein, um deine Adresse von der Benachrichtigungsliste zu entfernen.",
+        "expiry": "Der Code ist 10 Minuten gültig.",
+        "disclaimer": "Nicht angefordert? Dann kannst du diese E-Mail einfach ignorieren."
+      },
       "tabs": {
         "subscribe": "Abonnieren",
         "remove": "Abbestellen"
@@ -271,7 +303,11 @@
       "errors": {
         "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
         "network": "Netzwerkfehler. Bitte überprüfe deine Verbindung und versuche es erneut.",
-        "invalidEmail": "Bitte eine gültige E-Mail-Adresse eingeben."
+        "invalidEmail": "Bitte eine gültige E-Mail-Adresse eingeben.",
+        "codeInvalid": "Der Code stimmt nicht. Prüf ihn und versuch es noch einmal.",
+        "codeExpired": "Der Code ist abgelaufen. Fordere einen neuen an.",
+        "codeLocked": "Zu viele falsche Codes. Fordere einen neuen an.",
+        "rateLimited": "Zu viele Versuche. Bitte versuch es später noch einmal."
       },
       "subscribe": {
         "title": "Bleib auf dem Laufenden",
@@ -323,7 +359,8 @@
       "signInCta": "Zum Vorausfüllen anmelden",
       "storedAccountNote": "Wenn du angemeldet sendest, speichern wir sowohl dein eingeloggtes Konto als auch die im Formular eingetragene Kontakt-E-Mail für eine klare Zuordnung.",
       "successNotice": "Deine angemeldeten Daten stehen jetzt im Formular unten.",
-      "scrollNotice": "Deine angemeldeten Daten wurden unten ins Formular übernommen."
+      "scrollNotice": "Deine angemeldeten Daten wurden unten ins Formular übernommen.",
+      "signedInNote": "Angemeldet als {email}. Diese Anfrage erscheint auch unter <link>deinen Anfragen</link>."
     }
   },
   "about": {
@@ -642,6 +679,21 @@
       "loading": "Deine Anfragen werden geladen…",
       "errorTitle": "Deine Anfragen konnten nicht geladen werden.",
       "errorDescription": "Bitte versuche es gleich noch einmal.",
+      "retry": "Erneut versuchen",
+      "filterAll": "Alle",
+      "upcoming": "Anstehend",
+      "name": "Name",
+      "phone": "Telefon",
+      "reference": "Referenz",
+      "summary": {
+        "total": "Anfragen",
+        "lastSent": "Zuletzt gesendet",
+        "callbacks": "Rückrufe angefragt",
+        "upcoming": "{count} anstehend",
+        "delivery": "Zustellung",
+        "allDelivered": "Alle zugestellt",
+        "issues": "{count, plural, one {# braucht Aufmerksamkeit} other {# brauchen Aufmerksamkeit}}"
+      },
       "emptyTitle": "Noch keine Anfragen",
       "emptyDescription": "Sobald du angemeldet ein Kontaktformular sendest, erscheint es hier mit Status und den übermittelten Angaben.",
       "contactEmail": "Verwendete Kontakt-E-Mail",

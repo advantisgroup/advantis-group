@@ -73,12 +73,3 @@ export interface FormProps<T> {
   onFormDataChange: (data: T) => void;
   onSubmit: (e: React.SubmitEvent) => void;
 }
-
-export interface WhyAdvantisSidebarProps {
-  contactMode: ContactMode;
-}
-
-export interface TabNavigationProps {
-  contactMode: ContactMode;
-  onModeChange: (mode: ContactMode) => void;
-}

@@ -1,16 +1,13 @@
 import { api } from "@advantis/convex/api";
-import { auth } from "@clerk/nextjs/server";
-import { ConvexHttpClient } from "convex/browser";
+import { currentUser } from "@clerk/nextjs/server";
 import { Elysia, t } from "elysia";
 import { Resend } from "resend";
 
 import { EmailTemplate } from "@/components/email/email-template";
+import { convex, serverKey } from "@/lib/convex-server";
+import { allow, clientIp, limits } from "@/lib/rate-limit";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-const convex = process.env.NEXT_PUBLIC_CONVEX_URL
-  ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
-  : null;
 
 const submissionTypeSchema = t.Union([
   t.Literal("message"),
@@ -20,13 +17,22 @@ const submissionTypeSchema = t.Union([
 
 export const email = new Elysia().post(
   "/send",
-  async ({ body, set }) => {
+  async ({ body, headers, set }) => {
+    // the page greys the form out, but that alone never stopped a direct request
+    if (process.env.NEXT_PUBLIC_ALLOW_SUBMISSIONS !== "true") {
+      set.status = 503;
+      return { error: "Submissions are currently closed." };
+    }
+
+    if (!(await allow(limits.contactSend, clientIp(headers)))) {
+      set.status = 429;
+      return { error: "Too many requests. Please try again later." };
+    }
+
     const {
       firstName,
       lastName,
-      addresses,
       cc,
-      bcc,
       subject,
       message,
       phone,
@@ -36,23 +42,30 @@ export const email = new Elysia().post(
       submissionType,
       desiredDateTime,
       notes,
-      accountEmail,
-      accountName,
     } = body;
 
-    const { userId } = await auth();
+    // Recipient and account come from the server, never the request: older
+    // clients still send `addresses`/`accountEmail`, they're just ignored now.
+    const inbox = process.env.NEXT_PUBLIC_EMAIL_ADRESS!;
+    const contactEmail = (body.email ?? cc?.[0] ?? "").trim();
+    const user = await currentUser();
+    const userId = user?.id ?? "";
+    const accountEmail = user?.primaryEmailAddress?.emailAddress.toLowerCase() ?? "";
+    const accountName = user?.fullName ?? "";
+    // past the cap the team still gets the inquiry, the address just stops getting copies
+    const sendCopy = contactEmail !== "" && (await allow(limits.contactCopy, contactEmail));
 
     try {
       const { data, error } = await resend.emails.send({
-        from: `ADVANTIS GROUP <${process.env.NEXT_PUBLIC_EMAIL_ADRESS}>`,
-        to: addresses,
-        bcc,
-        cc,
+        from: `ADVANTIS GROUP <${inbox}>`,
+        to: [inbox],
+        cc: sendCopy ? [contactEmail] : undefined,
+        replyTo: contactEmail || undefined,
         subject,
         react: EmailTemplate({
           firstName,
           lastName,
-          email: cc?.[0],
+          email: contactEmail,
           phone,
           company,
           message,
@@ -69,10 +82,11 @@ export const email = new Elysia().post(
       if (convex) {
         try {
           await convex.mutation(api.marketing.emails.saveEmail, {
+            serverKey: serverKey(),
             firstName,
             lastName,
             phone: phone || undefined,
-            email: cc?.[0] || "",
+            email: contactEmail,
             subject,
             message,
             company: company || undefined,
@@ -82,7 +96,7 @@ export const email = new Elysia().post(
             notes: notes || undefined,
             accountEmail,
             accountName,
-            clerkUserId: userId || "",
+            clerkUserId: userId,
             status,
             error: errorMsg,
             messageId: data?.id,
@@ -114,9 +128,10 @@ export const email = new Elysia().post(
       if (convex) {
         try {
           await convex.mutation(api.marketing.emails.saveEmail, {
+            serverKey: serverKey(),
             firstName,
             lastName,
-            email: cc?.[0] || "",
+            email: contactEmail,
             phone: phone || undefined,
             subject,
             message,
@@ -127,7 +142,7 @@ export const email = new Elysia().post(
             notes: notes || undefined,
             accountEmail,
             accountName,
-            clerkUserId: userId || "",
+            clerkUserId: userId,
             status: "failed",
             error: errorMessage,
           });
@@ -146,7 +161,9 @@ export const email = new Elysia().post(
       firstName: t.String(),
       lastName: t.String(),
       phone: t.Optional(t.String()),
-      addresses: t.Array(t.String()),
+      email: t.Optional(t.String()),
+      // legacy fields, accepted so older clients keep working
+      addresses: t.Optional(t.Array(t.String())),
       cc: t.Optional(t.Array(t.String())),
       bcc: t.Optional(t.Array(t.String())),
       subject: t.String(),
@@ -157,8 +174,8 @@ export const email = new Elysia().post(
       submissionType: submissionTypeSchema,
       desiredDateTime: t.Optional(t.String()),
       notes: t.Optional(t.String()),
-      accountEmail: t.String(),
-      accountName: t.String(),
+      accountEmail: t.Optional(t.String()),
+      accountName: t.Optional(t.String()),
     }),
     response: {
       200: t.Object({
@@ -168,6 +185,9 @@ export const email = new Elysia().post(
         error: t.String(),
       }),
       500: t.Object({
+        error: t.String(),
+      }),
+      503: t.Object({
         error: t.String(),
       }),
     },

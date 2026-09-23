@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-import { Bell, CheckCircle2, Loader2, Mail, SmilePlusIcon, Trash2, XCircle } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useUser } from "@clerk/nextjs";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,314 +24,322 @@ interface NotifyModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type ModalState = "idle" | "loading" | "success" | "duplicate" | "removed" | "error";
-type ModalMode = "subscribe" | "remove";
+type Action = "subscribe" | "unsubscribe";
+type Step = "email" | "code" | "done";
+type Outcome = "subscribed" | "duplicate" | "unsubscribed";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const RESEND_AFTER_S = 60;
 
-const FINISHED_STATES = ["success", "duplicate", "removed"] as const;
-type FinishedState = (typeof FINISHED_STATES)[number];
+const OUTCOME_COPY = {
+  subscribed: "success",
+  duplicate: "duplicate",
+  unsubscribed: "removed",
+} as const;
 
+/**
+ * Joining or leaving the "tell me when forms are back" list.
+ *
+ * Anyone could type anyone's address here, so the address has to prove it's
+ * theirs — but that proof should cost the person as little as possible:
+ * signed in with that address already counts, and otherwise it's one code
+ * from their inbox, typed into this same dialog. No account, no link to click.
+ */
 export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
   const t = useTranslations("contact.notify");
-  const [email, setEmail] = useState("");
-  const [mode, setMode] = useState<ModalMode>("subscribe");
-  const [state, setState] = useState<ModalState>("idle");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [touched, setTouched] = useState(false);
+  const locale = useLocale();
+  const { user } = useUser();
+  const accountEmail = user?.primaryEmailAddress?.emailAddress ?? "";
 
-  const emailTrimmed = email.trim();
+  const [action, setAction] = useState<Action>("subscribe");
+  const [step, setStep] = useState<Step>("email");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [outcome, setOutcome] = useState<Outcome>("subscribed");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [resendIn, setResendIn] = useState(0);
+  const codeRef = useRef<HTMLInputElement>(null);
+
+  const emailTrimmed = email.trim().toLowerCase();
   const emailValid = EMAIL_RE.test(emailTrimmed);
-  const showEmailError = touched && emailTrimmed !== "" && !emailValid;
+  const isOwnAddress = accountEmail !== "" && emailTrimmed === accountEmail.toLowerCase();
+
+  // prefill with the account's address the first time the dialog opens
+  useEffect(() => {
+    if (open && accountEmail) setEmail((current) => current || accountEmail);
+  }, [open, accountEmail]);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const timer = window.setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendIn]);
+
+  useEffect(() => {
+    if (step === "code") codeRef.current?.focus();
+  }, [step]);
 
   const reset = () => {
+    setAction("subscribe");
+    setStep("email");
     setEmail("");
-    setMode("subscribe");
-    setState("idle");
-    setErrorMsg("");
-    setTouched(false);
+    setCode("");
+    setBusy(false);
+    setError("");
+    setNotice("");
+    setResendIn(0);
   };
 
   const handleOpenChange = (value: boolean) => {
-    if (state === "loading") return;
+    if (busy) return;
     if (!value) reset();
     onOpenChange(value);
   };
 
-  const switchMode = (newMode: ModalMode) => {
-    if (mode === newMode) return;
-    setMode(newMode);
-    setState("idle");
-    setErrorMsg("");
-    // Keep email — no need to retype when switching
-  };
-
-  const formatApiError = (errorValue: unknown) => {
-    if (typeof errorValue === "string") return errorValue;
-
-    if (errorValue && typeof errorValue === "object") {
-      const payload = errorValue as {
-        error?: string;
-        code?: string;
-        detail?: string;
-      };
-      const baseMessage = payload.detail || payload.error || t("errors.generic");
-      return payload.code ? `${baseMessage} (code: ${payload.code})` : baseMessage;
-    }
-
+  const errorFor = (status: number) => {
+    if (status === 429) return t("errors.rateLimited");
     return t("errors.generic");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setTouched(true);
-    if (!emailTrimmed || state === "loading" || !emailValid) return;
-
-    setState("loading");
-    setErrorMsg("");
-
+  /** Asks for the change; the server either does it right away or mails a code. */
+  const request = async () => {
+    setBusy(true);
+    setError("");
+    setNotice("");
     try {
-      if (mode === "subscribe") {
-        const res = await api.notify.post({
-          email: emailTrimmed.toLowerCase(),
-        });
+      const res =
+        action === "subscribe"
+          ? await api.notify.post({ email: emailTrimmed, locale })
+          : await api
+              .notify({ email: encodeURIComponent(emailTrimmed) })
+              .delete(undefined, { query: { locale } });
 
-        if (res.error) {
-          setErrorMsg(formatApiError(res.error.value));
-          setState("error");
-          return;
-        }
-
-        setState(res.data?.duplicate ? "duplicate" : "success");
-      } else {
-        const encoded = encodeURIComponent(emailTrimmed.toLowerCase());
-        const res = await api.notify({ email: encoded }).delete();
-
-        if (res.error) {
-          setErrorMsg(formatApiError(res.error.value));
-          setState("error");
-          return;
-        }
-
-        setState("removed");
+      if (res.error || !res.data) {
+        setError(errorFor(res.status));
+        return false;
       }
+
+      if (res.data.status === "codeSent") {
+        setStep("code");
+        setResendIn(RESEND_AFTER_S);
+      } else {
+        setOutcome(res.data.status);
+        setStep("done");
+      }
+      return true;
     } catch {
-      setErrorMsg(t("errors.network"));
-      setState("error");
+      setError(t("errors.network"));
+      return false;
+    } finally {
+      setBusy(false);
     }
   };
 
-  const isFinished = (FINISHED_STATES as readonly string[]).includes(state);
+  const verify = async (value: string) => {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const res = await api.notify.verify.post({ email: emailTrimmed, code: value, action });
 
-  const finishedConfig: Record<
-    FinishedState,
-    {
-      Icon: React.ElementType;
-      iconClass: string;
-      containerClass: string;
-      title: string;
-      desc: string;
+      if (res.error || !res.data) {
+        const codeError =
+          res.status === 410
+            ? t("errors.codeExpired")
+            : res.status === 429
+              ? t("errors.codeLocked")
+              : res.status === 400
+                ? t("errors.codeInvalid")
+                : t("errors.generic");
+        setError(codeError);
+        setCode("");
+        codeRef.current?.focus();
+        return;
+      }
+
+      if (res.data.status !== "codeSent") setOutcome(res.data.status);
+      setStep("done");
+    } catch {
+      setError(t("errors.network"));
+    } finally {
+      setBusy(false);
     }
-  > = {
-    success: {
-      Icon: CheckCircle2,
-      iconClass: "text-success-foreground",
-      containerClass: "border-success/35 bg-success/14",
-      title: t("success.title"),
-      desc: t("success.description"),
-    },
-    duplicate: {
-      Icon: SmilePlusIcon,
-      iconClass: "text-warning-foreground",
-      containerClass: "border-warning/35 bg-warning/12",
-      title: t("duplicate.title"),
-      desc: t("duplicate.description"),
-    },
-    removed: {
-      Icon: XCircle,
-      iconClass: "text-destructive",
-      containerClass: "border-destructive/30 bg-destructive/10",
-      title: t("removed.title"),
-      desc: t("removed.description"),
-    },
   };
 
-  const finished = isFinished ? finishedConfig[state as FinishedState] : null;
+  const resend = async () => {
+    setCode("");
+    if (await request()) setNotice(t("code.resent"));
+  };
+
+  const switchAction = () => {
+    setAction((current) => (current === "subscribe" ? "unsubscribe" : "subscribe"));
+    setError("");
+  };
+
+  const title =
+    step === "code"
+      ? t("code.title")
+      : action === "subscribe"
+        ? t("subscribe.title")
+        : t("remove.title");
+
+  const description =
+    step === "code"
+      ? t("code.description", { email: emailTrimmed })
+      : action === "subscribe"
+        ? t("subscribe.description")
+        : t("remove.description");
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <span
-              key={mode}
-              className="animate-in fade-in slide-in-from-left-1 duration-200 flex items-center gap-2"
-            >
-              {mode === "subscribe" ? (
-                <Bell className="h-5 w-5 text-amber-400" />
-              ) : (
-                <Trash2 className="h-5 w-5 text-destructive" />
-              )}
-              {mode === "subscribe" ? t("subscribe.title") : t("remove.title")}
-            </span>
-          </DialogTitle>
-          <DialogDescription
-            key={mode}
-            className="animate-in fade-in duration-200 text-muted-foreground"
-          >
-            {mode === "subscribe" ? t("subscribe.description") : t("remove.description")}
-          </DialogDescription>
-        </DialogHeader>
-
-        {finished ? (
-          <div
-            key={state}
-            className="animate-in fade-in zoom-in-95 duration-300 flex flex-col items-center gap-4 py-6 text-center"
-          >
-            <div
-              className={cn(
-                "animate-in zoom-in-75 duration-500 delay-100 flex h-14 w-14 items-center justify-center rounded-full border",
-                finished.containerClass,
-              )}
-            >
-              <finished.Icon className={cn("h-7 w-7", finished.iconClass)} />
-            </div>
-            <div>
-              <p className="font-semibold text-foreground">{finished.title}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{finished.desc}</p>
-            </div>
+      <DialogContent className="sm:max-w-md">
+        {step === "done" ? (
+          <div role="status" className="py-2">
+            <CheckCircle2 aria-hidden className="size-6 text-success" />
+            <DialogTitle className="mt-4 text-xl font-medium">
+              {t(`${OUTCOME_COPY[outcome]}.title`)}
+            </DialogTitle>
+            <DialogDescription className="mt-2 text-[15px] leading-relaxed">
+              {t(`${OUTCOME_COPY[outcome]}.description`)}
+            </DialogDescription>
             <Button
               variant="outline"
               size="sm"
-              className="mt-2"
+              className="mt-6"
               onClick={() => handleOpenChange(false)}
             >
               {t("close")}
             </Button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-            {/* Mode segmented toggle */}
-            <div className="flex rounded-lg border border-rule bg-muted/30 p-0.5 text-xs">
-              <button
-                type="button"
-                disabled={state === "loading"}
-                onClick={() => switchMode("subscribe")}
-                className={cn(
-                  "flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all duration-150",
-                  mode === "subscribe"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Bell className="h-3 w-3" />
-                {t("tabs.subscribe")}
-              </button>
-              <button
-                type="button"
-                disabled={state === "loading"}
-                onClick={() => switchMode("remove")}
-                className={cn(
-                  "flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all duration-150",
-                  mode === "remove"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Trash2 className="h-3 w-3" />
-                {t("tabs.remove")}
-              </button>
-            </div>
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-xl font-medium">{title}</DialogTitle>
+              <DialogDescription className="text-[15px] leading-relaxed">
+                {description}
+              </DialogDescription>
+            </DialogHeader>
 
-            {/* Email input */}
-            <div className="space-y-1.5">
-              <Label htmlFor="notify-email" className="text-sm font-medium">
-                {t("emailLabel")}
-              </Label>
-              <div className="relative">
-                <Mail
-                  className={cn(
-                    "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors duration-150",
-                    showEmailError ? "text-destructive/70" : "text-muted-foreground",
-                  )}
-                />
-                <Input
-                  id="notify-email"
-                  type="email"
-                  placeholder={t("emailPlaceholder")}
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    // Clear API error as soon as user starts correcting
-                    if (state === "error") {
-                      setState("idle");
-                      setErrorMsg("");
-                    }
-                  }}
-                  onBlur={() => setTouched(true)}
-                  required
-                  disabled={state === "loading"}
-                  className={cn(
-                    "pl-9 transition-all duration-150",
-                    showEmailError && "border-destructive/60 focus-visible:ring-destructive/25",
-                  )}
-                  autoComplete="email"
-                  autoFocus
-                />
-              </div>
-
-              {showEmailError && (
-                <p className="animate-in fade-in slide-in-from-top-1 duration-150 text-xs text-destructive">
-                  {t("errors.invalidEmail")}
-                </p>
-              )}
-              {state === "error" && !showEmailError && (
-                <p className="animate-in fade-in slide-in-from-top-1 duration-150 text-xs text-destructive">
-                  {errorMsg}
-                </p>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-2 pt-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={state === "loading"}
-                onClick={() => handleOpenChange(false)}
+            {step === "email" ? (
+              <form
+                noValidate
+                className="space-y-4 pt-1"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (emailValid && !busy) void request();
+                }}
               >
-                {t("cancel")}
-              </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={!emailTrimmed || state === "loading"}
-                className={cn(
-                  "gap-1.5 transition-colors duration-150",
-                  mode === "remove" &&
-                    "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-                )}
+                <div className="space-y-1.5">
+                  <Label htmlFor="notify-email">{t("emailLabel")}</Label>
+                  <Input
+                    id="notify-email"
+                    type="email"
+                    autoComplete="email"
+                    autoFocus
+                    placeholder={t("emailPlaceholder")}
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setError("");
+                    }}
+                    disabled={busy}
+                    aria-invalid={Boolean(error)}
+                  />
+                  {error ? (
+                    <p className="text-[13px] text-destructive">{error}</p>
+                  ) : isOwnAddress ? (
+                    <p className="text-[13px] text-muted-foreground">{t("signedInHint")}</p>
+                  ) : null}
+                </div>
+
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={switchAction}
+                    disabled={busy}
+                    className="text-[13px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                  >
+                    {action === "subscribe" ? t("unsubscribeLink") : t("subscribeLink")}
+                  </button>
+                  <Button type="submit" size="sm" disabled={!emailValid || busy}>
+                    {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
+                    {action === "subscribe" ? t("subscribe.cta") : t("remove.cta")}
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <form
+                noValidate
+                className="space-y-4 pt-1"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (code.length === 6 && !busy) void verify(code);
+                }}
               >
-                {state === "loading" ? (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    {mode === "subscribe" ? t("subscribe.loading") : t("remove.loading")}
-                  </>
-                ) : mode === "subscribe" ? (
-                  <>
-                    <Bell className="h-3.5 w-3.5" />
-                    {t("subscribe.cta")}
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="h-3.5 w-3.5" />
-                    {t("remove.cta")}
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
+                <div className="space-y-1.5">
+                  <Label htmlFor="notify-code">{t("code.label")}</Label>
+                  <Input
+                    ref={codeRef}
+                    id="notify-code"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={code}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
+                      setCode(digits);
+                      setError("");
+                      // pasting or autofilling the whole code confirms it straight away
+                      if (digits.length === 6 && !busy) void verify(digits);
+                    }}
+                    disabled={busy}
+                    aria-invalid={Boolean(error)}
+                    className={cn(
+                      "h-12 text-center font-mono text-xl tracking-[0.5em] md:text-xl",
+                      error && "border-destructive",
+                    )}
+                  />
+                  {error ? (
+                    <p className="text-[13px] text-destructive">{error}</p>
+                  ) : notice ? (
+                    <p className="text-[13px] text-muted-foreground">{notice}</p>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <div className="flex flex-col items-start gap-1 text-[13px]">
+                    <button
+                      type="button"
+                      onClick={() => void resend()}
+                      disabled={busy || resendIn > 0}
+                      className="text-muted-foreground underline-offset-2 enabled:hover:text-foreground enabled:hover:underline disabled:opacity-60"
+                    >
+                      {resendIn > 0 ? t("code.resendIn", { seconds: resendIn }) : t("code.resend")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStep("email");
+                        setCode("");
+                        setError("");
+                        setNotice("");
+                      }}
+                      disabled={busy}
+                      className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                    >
+                      {t("code.changeEmail")}
+                    </button>
+                  </div>
+                  <Button type="submit" size="sm" disabled={code.length !== 6 || busy}>
+                    {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
+                    {busy ? t("code.loading") : t("code.cta")}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </>
         )}
       </DialogContent>
     </Dialog>
