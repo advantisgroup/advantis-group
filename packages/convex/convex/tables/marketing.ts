@@ -107,6 +107,8 @@ export const marketingTables = {
     firstResponseAt: v.optional(v.number()),
     closedAt: v.optional(v.number()),
     lastActivityAt: v.optional(v.number()),
+    /** The state the customer was last mailed about, so a flurry of clicks mails once. */
+    notifiedState: v.optional(inquiryStateValidator),
 
     /** Callback time as an instant plus the zone the person picked it in. */
     desiredAt: v.optional(v.number()),

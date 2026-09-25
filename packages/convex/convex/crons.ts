@@ -52,6 +52,13 @@ if (process.env.DISABLE_CRONS !== "true") {
   );
 
   crons.daily(
+    "marketing: anonymize website inquiries past their retention period",
+    { hourUTC: 2, minuteUTC: 50 },
+    internal.marketing.retention.anonymizeStale,
+    {},
+  );
+
+  crons.daily(
     "hr: delete archived applicants past their retention period",
     { hourUTC: 2, minuteUTC: 40 },
     internal.hr.retention.purgeExpiredApplicants,
