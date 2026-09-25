@@ -94,6 +94,7 @@ export const Header = () => {
   return (
     <>
       <header
+        data-print-hide
         className={cn(
           // tailwind v4 moves things with `translate`, not `transform`, so that's what slides
           "fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color,backdrop-filter,translate] duration-300 ease-out has-focus-visible:translate-y-0",

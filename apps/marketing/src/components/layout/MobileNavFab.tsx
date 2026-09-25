@@ -49,7 +49,7 @@ export const MobileNavFab = ({ navLinks }: { navLinks: NavLink[] }) => {
   }, [pathname]);
 
   return (
-    <div className="lg:hidden">
+    <div data-print-hide className="lg:hidden">
       {/* `pointer-events-none` while the drawer is up, so a tap on the fading
           button cannot re-open what is closing. */}
       <motion.button

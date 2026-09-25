@@ -130,7 +130,7 @@ export const Footer = () => {
   ];
 
   return (
-    <footer ref={footerRef} className="border-t border-rule">
+    <footer ref={footerRef} data-print-hide className="border-t border-rule">
       <div className="mx-auto w-full max-w-[1200px] px-5 py-16 md:px-10 md:py-20">
         <p className="text-center text-sm text-muted-foreground">{t("footer.description")}</p>
         <LiftingWordmark progress={scrollProgress} />

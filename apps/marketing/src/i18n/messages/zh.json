@@ -671,54 +671,6 @@
     "signInRequired": "请先登录后再访问账户设置。",
     "submissionsCta": "查看提交记录",
     "contactCta": "发送新咨询",
-    "submissions": {
-      "badge": "提交历史",
-      "title": "你的咨询记录",
-      "subtitle": "查看你登录后提交的联系表单，并追踪当时使用的联系邮箱和公司信息。",
-      "newSubmissionCta": "再次提交咨询",
-      "accountCta": "管理账户",
-      "loading": "正在加载你的提交记录…",
-      "errorTitle": "无法加载你的提交记录。",
-      "errorDescription": "请稍后再试。",
-      "retry": "重试",
-      "search": "搜索您的咨询",
-      "noMatches": "没有匹配的结果。",
-      "selectHint": "选择一条咨询以查看您发送的全部内容。",
-      "followUp": "通过电子邮件跟进",
-      "filterAll": "全部",
-      "upcoming": "即将进行",
-      "name": "姓名",
-      "phone": "电话",
-      "reference": "参考编号",
-      "summary": {
-        "total": "咨询",
-        "lastSent": "最近发送",
-        "callbacks": "已申请回电",
-        "upcoming": "{count} 个即将进行",
-        "delivery": "送达情况",
-        "allDelivered": "全部已送达",
-        "issues": "{count} 条需要处理"
-      },
-      "emptyTitle": "还没有提交记录",
-      "emptyDescription": "当你登录后发送联系表单，它会显示在这里，并附带状态和提交详情。",
-      "contactEmail": "提交时使用的联系邮箱",
-      "accountEmail": "当前登录账户",
-      "company": "公司",
-      "desiredTime": "期望回电时间",
-      "message": "消息",
-      "topic": "主题",
-      "notes": "备注",
-      "deliveryIssue": "发送问题",
-      "types": {
-        "message": "留言",
-        "callback": "回电请求",
-        "other": "其他咨询"
-      },
-      "status": {
-        "sent": "已发送",
-        "failed": "需要处理"
-      }
-    },
     "backToSite": "返回网站"
   },
   "services": {
@@ -1370,6 +1322,232 @@
         "outro": "有任何疑问，或者想进行一次无约束的交流？直接回复这封邮件或给我们打电话。",
         "contactEmail": "电子邮箱",
         "contactPhone": "电话"
+      }
+    }
+  },
+  "account": {
+    "nav": {
+      "label": "账户",
+      "title": "账户",
+      "overview": "概览",
+      "inquiries": "咨询",
+      "profile": "个人资料",
+      "security": "安全",
+      "preferences": "偏好设置",
+      "downloads": "下载",
+      "privacy": "隐私与数据",
+      "signOut": "退出登录",
+      "signedOut": "您已退出登录。",
+      "back": "账户"
+    },
+    "overview": {
+      "greeting": {
+        "morning": "{name}，早上好",
+        "afternoon": "{name}，下午好",
+        "evening": "{name}，晚上好"
+      },
+      "greetingNoName": {
+        "morning": "早上好",
+        "afternoon": "下午好",
+        "evening": "晚上好"
+      },
+      "memberSince": "{date} 加入",
+      "welcome": "欢迎。您登录后发送给我们的所有内容都会汇集在这里，联系表单也会自动为您填写。",
+      "workAccount": {
+        "title": "这也是您的 ADVANTIS 工作账户",
+        "body": "登录与安全设置在内网中管理。",
+        "cta": "内网设置"
+      },
+      "comingUp": "即将进行",
+      "view": "查看",
+      "callbackConfirmed": "您的回电已确认。",
+      "callbackRequested": "您请求的回电。我们会通过电子邮件确认时间。",
+      "recent": "最近的咨询",
+      "seeAll": "查看全部",
+      "noInquiries": "尚未发送任何内容。",
+      "start": "开始",
+      "actions": {
+        "message": "给我们留言",
+        "callback": "请求回电",
+        "whitepaper": "获取白皮书"
+      }
+    },
+    "inquiries": {
+      "title": "您的咨询",
+      "back": "您的咨询",
+      "summary": "{count} 条咨询 · 最近发送于{last}",
+      "new": "新咨询",
+      "nextCallback": "下一次回电",
+      "view": "查看",
+      "problems": "{count} 条咨询未送达",
+      "problemsHint": "内容没有丢失。打开即可重新发送。",
+      "search": "搜索您的咨询",
+      "filterLabel": "显示",
+      "filters": {
+        "all": "全部",
+        "open": "处理中",
+        "answered": "已回复",
+        "closed": "已关闭"
+      },
+      "noMatches": "没有匹配的结果。",
+      "showOlder": "显示更早的",
+      "notDelivered": "未送达",
+      "upcomingAt": "即将进行 · {when}",
+      "loadError": "暂时无法加载您的咨询。",
+      "retry": "重试",
+      "empty": {
+        "title": "这里还没有内容",
+        "body": "您登录后发送给我们的内容都会显示在这里，包括处理进度和您发送的全部内容。",
+        "message": "给我们留言",
+        "callback": "请求回电",
+        "other": "其他事项"
+      },
+      "callbackTitle": "回电 · {when}",
+      "yourMessage": "您的留言",
+      "types": {
+        "message": "留言",
+        "callback": "回电",
+        "other": "其他咨询"
+      },
+      "states": {
+        "open": "已收到",
+        "in_progress": "处理中",
+        "answered": "已回复",
+        "closed": "已关闭",
+        "withdrawn": "已撤回"
+      },
+      "replyBy": "我们通常在一个工作日内回复，即 {when} 之前。",
+      "replyLate": "处理时间比平时长。如有急事，请致电 {phone}。",
+      "replyLateNoPhone": "处理时间比平时长。我们正在处理。",
+      "progressLabel": "进度",
+      "steps": {
+        "received": "已收到",
+        "seen": "已查看",
+        "inProgress": "处理中",
+        "answered": "已回复",
+        "closed": "已关闭",
+        "withdrawn": "已撤回"
+      },
+      "seenBy": "{name} · {when}",
+      "onIt": "{name} 正在处理",
+      "print": "打印",
+      "emailUs": "就此发邮件给我们",
+      "copyReference": "复制参考编号",
+      "copied": "已复制 {reference}",
+      "delivery": {
+        "team": {
+          "queued": "正在发送给我们的团队…",
+          "sent": "已发送给我们的团队",
+          "delivered": "已送达我们的团队",
+          "delayed": "发往我们团队的途中有延迟",
+          "bounced": "未送达我们的团队",
+          "failed": "未送达我们的团队"
+        },
+        "copy": {
+          "sent": "副本已发送给您",
+          "skipped": "未发送副本",
+          "delivered": "副本已送达您",
+          "delayed": "您的副本有延迟",
+          "bounced": "您的副本未送达",
+          "failed": "您的副本未发出"
+        },
+        "details": "详情",
+        "hide": "收起",
+        "toTeam": "发给我们的团队",
+        "toYou": "发给 {email} 的副本",
+        "steps": {
+          "queued": "排队中",
+          "sent": "已发送",
+          "delivered": "已送达",
+          "copySent": "已发送",
+          "copyDelivered": "已送达"
+        },
+        "skipped": {
+          "limit": "您在短时间内已收到多份副本，因此这次未发送。",
+          "preference": "您已在偏好设置中关闭副本。"
+        },
+        "reasons": {
+          "invalid_address": {
+            "title": "邮箱地址似乎有误",
+            "body": "我们的邮件服务未接受该地址。修改后请重新发送。",
+            "copyBody": "无法将您的副本发送至 {email}。下次请检查该地址。"
+          },
+          "mailbox_unavailable": {
+            "title": "该邮箱不接收邮件",
+            "body": "收件邮箱拒收了这封邮件。请重新发送或致电我们。",
+            "copyBody": "{email} 拒收了您的副本。您的咨询已送达我们。"
+          },
+          "temporary": {
+            "title": "比平时慢一些",
+            "body": "对方服务器接收较慢。您无需操作，我们会继续尝试。",
+            "copyBody": "您的副本正在发往 {email}，只是比平时慢一些。"
+          },
+          "rate_limited": {
+            "title": "同一时间发送过多",
+            "body": "邮件服务要求我们放慢速度。请一分钟后重新发送。",
+            "copyBody": "发往 {email} 的副本被暂缓。您的咨询已送达我们。"
+          },
+          "provider_error": {
+            "title": "邮件服务出现短暂故障",
+            "body": "内容没有丢失。重新发送即可。",
+            "copyBody": "发往 {email} 的副本未能发出。您的咨询已送达我们。"
+          },
+          "unknown": {
+            "title": "发送未成功",
+            "body": "内容没有丢失。请重新发送或致电我们。",
+            "copyBody": "发往 {email} 的副本未能发出。您的咨询已送达我们。"
+          }
+        },
+        "attempts": "已尝试 {count} 次 · 最近一次 {when}",
+        "sendAgain": "重新发送",
+        "retried": "已发送给我们的团队。",
+        "retryFailed": "仍未成功。请稍后再试或致电我们。",
+        "callInstead": "如仍然失败，请致电 {phone}。"
+      },
+      "callback": {
+        "title": "回电",
+        "requested": "已请求",
+        "confirmed": "已确认",
+        "done": "已完成",
+        "cancelled": "已取消",
+        "calendarTitle": "ADVANTIS GROUP 回电",
+        "addToCalendar": "添加到日历",
+        "anotherTime": "需要其他时间？",
+        "unconfirmedHint": "我们会通过电子邮件确认时间，通常在一个工作日内。"
+      },
+      "thread": {
+        "title": "沟通记录",
+        "you": "您",
+        "staff": "{name} · ADVANTIS GROUP",
+        "team": "ADVANTIS GROUP",
+        "add": "补充内容",
+        "placeholder": "写下回复或补充细节…",
+        "attach": "添加附件",
+        "removeFile": "移除 {name}",
+        "reopensHint": "回复后此咨询将重新打开。",
+        "send": "发送",
+        "sent": "已发送。",
+        "sendFailed": "发送失败，请重试。",
+        "tooLarge": "文件最大 10 MB。"
+      },
+      "actions": {
+        "withdraw": "撤回咨询",
+        "withdrawConfirm": "确定撤回此咨询？",
+        "withdrawYes": "撤回",
+        "cancel": "保留",
+        "withdrawDone": "咨询已撤回。",
+        "resolve": "问题已解决",
+        "resolveDone": "已关闭。感谢您的反馈。",
+        "stillNeedHelp": "我仍需要帮助",
+        "failed": "操作未成功，请重试。"
+      },
+      "shared": {
+        "title": "您提供的信息",
+        "email": "联系邮箱",
+        "phone": "电话",
+        "company": "公司",
+        "topic": "主题",
+        "callbackTime": "期望时间"
       }
     }
   }

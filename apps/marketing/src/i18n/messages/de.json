@@ -677,54 +677,6 @@
     "signInRequired": "Bitte melde dich zuerst an, um deine Kontoeinstellungen aufzurufen.",
     "submissionsCta": "Anfragen ansehen",
     "contactCta": "Neue Anfrage senden",
-    "submissions": {
-      "badge": "Anfrageverlauf",
-      "title": "Deine Anfragen",
-      "subtitle": "Prüfe die Kontaktformulare, die du während deiner Anmeldung gesendet hast, und behalte im Blick, welche E-Mail-Adresse und Firmendaten du verwendet hast.",
-      "newSubmissionCta": "Weitere Anfrage senden",
-      "accountCta": "Konto verwalten",
-      "loading": "Deine Anfragen werden geladen…",
-      "errorTitle": "Deine Anfragen konnten nicht geladen werden.",
-      "errorDescription": "Bitte versuche es gleich noch einmal.",
-      "retry": "Erneut versuchen",
-      "search": "Anfragen durchsuchen",
-      "noMatches": "Nichts gefunden.",
-      "selectHint": "Wähle eine Anfrage, um alles zu sehen, was du geschickt hast.",
-      "followUp": "Per E-Mail nachfassen",
-      "filterAll": "Alle",
-      "upcoming": "Anstehend",
-      "name": "Name",
-      "phone": "Telefon",
-      "reference": "Referenz",
-      "summary": {
-        "total": "Anfragen",
-        "lastSent": "Zuletzt gesendet",
-        "callbacks": "Rückrufe angefragt",
-        "upcoming": "{count} anstehend",
-        "delivery": "Zustellung",
-        "allDelivered": "Alle zugestellt",
-        "issues": "{count, plural, one {# braucht Aufmerksamkeit} other {# brauchen Aufmerksamkeit}}"
-      },
-      "emptyTitle": "Noch keine Anfragen",
-      "emptyDescription": "Sobald du angemeldet ein Kontaktformular sendest, erscheint es hier mit Status und den übermittelten Angaben.",
-      "contactEmail": "Verwendete Kontakt-E-Mail",
-      "accountEmail": "Angemeldetes Konto",
-      "company": "Unternehmen",
-      "desiredTime": "Gewünschte Rückrufzeit",
-      "message": "Nachricht",
-      "topic": "Thema",
-      "notes": "Notizen",
-      "deliveryIssue": "Zustellproblem",
-      "types": {
-        "message": "Nachricht",
-        "callback": "Rückruf",
-        "other": "Sonstige Anfrage"
-      },
-      "status": {
-        "sent": "Gesendet",
-        "failed": "Benötigt Aufmerksamkeit"
-      }
-    },
     "backToSite": "Zurück zur Website"
   },
   "services": {
@@ -1376,6 +1328,232 @@
         "outro": "Fragen dazu, oder Lust auf ein unverbindliches Gespräch? Antworte einfach auf diese E-Mail oder ruf uns an.",
         "contactEmail": "E-Mail",
         "contactPhone": "Telefon"
+      }
+    }
+  },
+  "account": {
+    "nav": {
+      "label": "Konto",
+      "title": "Konto",
+      "overview": "Übersicht",
+      "inquiries": "Anfragen",
+      "profile": "Profil",
+      "security": "Sicherheit",
+      "preferences": "Einstellungen",
+      "downloads": "Downloads",
+      "privacy": "Datenschutz & Daten",
+      "signOut": "Abmelden",
+      "signedOut": "Du bist abgemeldet.",
+      "back": "Konto"
+    },
+    "overview": {
+      "greeting": {
+        "morning": "Guten Morgen, {name}",
+        "afternoon": "Guten Tag, {name}",
+        "evening": "Guten Abend, {name}"
+      },
+      "greetingNoName": {
+        "morning": "Guten Morgen",
+        "afternoon": "Guten Tag",
+        "evening": "Guten Abend"
+      },
+      "memberSince": "Dabei seit {date}",
+      "welcome": "Willkommen. Alles, was du uns angemeldet schickst, landet hier – und die Kontaktformulare füllen sich ab jetzt von selbst aus.",
+      "workAccount": {
+        "title": "Das ist auch dein ADVANTIS-Arbeitskonto",
+        "body": "Anmeldung und Sicherheit werden im Intranet verwaltet.",
+        "cta": "Intranet-Einstellungen"
+      },
+      "comingUp": "Als Nächstes",
+      "view": "Ansehen",
+      "callbackConfirmed": "Dein Rückruf ist bestätigt.",
+      "callbackRequested": "Dein gewünschter Rückruf. Wir bestätigen den Termin per E-Mail.",
+      "recent": "Letzte Anfragen",
+      "seeAll": "Alle ansehen",
+      "noInquiries": "Noch nichts gesendet.",
+      "start": "Loslegen",
+      "actions": {
+        "message": "Schreib uns",
+        "callback": "Rückruf anfordern",
+        "whitepaper": "Whitepaper holen"
+      }
+    },
+    "inquiries": {
+      "title": "Deine Anfragen",
+      "back": "Deine Anfragen",
+      "summary": "{count, plural, one {# Anfrage} other {# Anfragen}} · zuletzt {last}",
+      "new": "Neue Anfrage",
+      "nextCallback": "Nächster Rückruf",
+      "view": "Ansehen",
+      "problems": "{count, plural, one {# Anfrage ist nicht angekommen} other {# Anfragen sind nicht angekommen}}",
+      "problemsHint": "Es ist nichts verloren. Öffne sie, um sie erneut zu senden.",
+      "search": "Anfragen durchsuchen",
+      "filterLabel": "Anzeigen",
+      "filters": {
+        "all": "Alle",
+        "open": "Offen",
+        "answered": "Beantwortet",
+        "closed": "Geschlossen"
+      },
+      "noMatches": "Dazu passt nichts.",
+      "showOlder": "Ältere anzeigen",
+      "notDelivered": "Nicht zugestellt",
+      "upcomingAt": "Anstehend · {when}",
+      "loadError": "Deine Anfragen ließen sich gerade nicht laden.",
+      "retry": "Erneut versuchen",
+      "empty": {
+        "title": "Noch nichts hier",
+        "body": "Alles, was du uns angemeldet schickst, erscheint hier – mit Stand und allem, was du gesendet hast.",
+        "message": "Schreib uns",
+        "callback": "Rückruf anfordern",
+        "other": "Etwas anderes"
+      },
+      "callbackTitle": "Rückruf · {when}",
+      "yourMessage": "Deine Nachricht",
+      "types": {
+        "message": "Nachricht",
+        "callback": "Rückruf",
+        "other": "Sonstige Anfrage"
+      },
+      "states": {
+        "open": "Eingegangen",
+        "in_progress": "In Bearbeitung",
+        "answered": "Beantwortet",
+        "closed": "Geschlossen",
+        "withdrawn": "Zurückgezogen"
+      },
+      "replyBy": "Wir antworten in der Regel innerhalb eines Werktags, also bis {when}.",
+      "replyLate": "Das dauert länger als üblich. Wenn es eilt, ruf uns an: {phone}.",
+      "replyLateNoPhone": "Das dauert länger als üblich. Wir sind dran.",
+      "progressLabel": "Stand",
+      "steps": {
+        "received": "Eingegangen",
+        "seen": "Gesehen",
+        "inProgress": "In Bearbeitung",
+        "answered": "Beantwortet",
+        "closed": "Geschlossen",
+        "withdrawn": "Zurückgezogen"
+      },
+      "seenBy": "{name} · {when}",
+      "onIt": "{name} kümmert sich",
+      "print": "Drucken",
+      "emailUs": "Uns dazu schreiben",
+      "copyReference": "Referenz kopieren",
+      "copied": "{reference} kopiert",
+      "delivery": {
+        "team": {
+          "queued": "Wird an unser Team gesendet…",
+          "sent": "An unser Team gesendet",
+          "delivered": "Bei unserem Team zugestellt",
+          "delayed": "Auf dem Weg zu unserem Team verzögert",
+          "bounced": "Nicht bei unserem Team angekommen",
+          "failed": "Nicht bei unserem Team angekommen"
+        },
+        "copy": {
+          "sent": "Kopie an dich gesendet",
+          "skipped": "keine Kopie gesendet",
+          "delivered": "Kopie bei dir zugestellt",
+          "delayed": "deine Kopie verzögert sich",
+          "bounced": "deine Kopie ist nicht angekommen",
+          "failed": "deine Kopie ging nicht raus"
+        },
+        "details": "Details",
+        "hide": "Ausblenden",
+        "toTeam": "An unser Team",
+        "toYou": "Deine Kopie an {email}",
+        "steps": {
+          "queued": "In der Warteschlange",
+          "sent": "Gesendet",
+          "delivered": "Zugestellt",
+          "copySent": "Gesendet",
+          "copyDelivered": "Zugestellt"
+        },
+        "skipped": {
+          "limit": "Du hattest in kurzer Zeit schon ein paar Kopien, deshalb haben wir diese ausgelassen.",
+          "preference": "Du hast Kopien in deinen Einstellungen ausgeschaltet."
+        },
+        "reasons": {
+          "invalid_address": {
+            "title": "Die Adresse scheint falsch zu sein",
+            "body": "Unser Maildienst hat die Adresse nicht angenommen. Korrigiere sie und sende erneut.",
+            "copyBody": "Deine Kopie an {email} ließ sich nicht senden. Prüf die Adresse fürs nächste Mal."
+          },
+          "mailbox_unavailable": {
+            "title": "Dieses Postfach nimmt keine Mails an",
+            "body": "Das Postfach hat die Nachricht abgelehnt. Sende sie erneut oder ruf uns an.",
+            "copyBody": "{email} hat deine Kopie abgelehnt. Deine Anfrage ist trotzdem bei uns."
+          },
+          "temporary": {
+            "title": "Dauert länger als üblich",
+            "body": "Der empfangende Server nimmt sie gerade langsam an. Du musst nichts tun, wir versuchen es weiter.",
+            "copyBody": "Deine Kopie ist unterwegs zu {email}, nur langsamer als sonst."
+          },
+          "rate_limited": {
+            "title": "Wir haben zu viel auf einmal gesendet",
+            "body": "Unser Maildienst hat uns gebremst. Sende sie in einer Minute erneut.",
+            "copyBody": "Deine Kopie an {email} wurde zurückgehalten. Deine Anfrage ist trotzdem bei uns."
+          },
+          "provider_error": {
+            "title": "Unser Maildienst hatte einen Aussetzer",
+            "body": "Es ist nichts verloren. Sende sie erneut, dann geht sie raus.",
+            "copyBody": "Deine Kopie an {email} ging nicht raus. Deine Anfrage ist trotzdem bei uns."
+          },
+          "unknown": {
+            "title": "Das hat nicht geklappt",
+            "body": "Es ist nichts verloren. Sende sie erneut oder ruf uns an.",
+            "copyBody": "Deine Kopie an {email} ging nicht raus. Deine Anfrage ist trotzdem bei uns."
+          }
+        },
+        "attempts": "{count, plural, one {Einmal versucht} other {# Mal versucht}} · zuletzt um {when}",
+        "sendAgain": "Erneut senden",
+        "retried": "An unser Team gesendet.",
+        "retryFailed": "Das hat auch nicht geklappt. Versuch es später oder ruf uns an.",
+        "callInstead": "Wenn es weiter scheitert, ruf uns an: {phone}."
+      },
+      "callback": {
+        "title": "Rückruf",
+        "requested": "Angefragt",
+        "confirmed": "Bestätigt",
+        "done": "Erledigt",
+        "cancelled": "Abgesagt",
+        "calendarTitle": "Rückruf von ADVANTIS GROUP",
+        "addToCalendar": "Zum Kalender hinzufügen",
+        "anotherTime": "Anderer Termin?",
+        "unconfirmedHint": "Wir bestätigen den Termin per E-Mail, meist innerhalb eines Werktags."
+      },
+      "thread": {
+        "title": "Verlauf",
+        "you": "Du",
+        "staff": "{name} · ADVANTIS GROUP",
+        "team": "ADVANTIS GROUP",
+        "add": "Etwas ergänzen",
+        "placeholder": "Antwort schreiben oder Details ergänzen…",
+        "attach": "Dateien anhängen",
+        "removeFile": "{name} entfernen",
+        "reopensHint": "Eine Antwort öffnet die Anfrage wieder.",
+        "send": "Senden",
+        "sent": "Gesendet.",
+        "sendFailed": "Das ging nicht raus. Versuch es noch einmal.",
+        "tooLarge": "Dateien dürfen bis zu 10 MB groß sein."
+      },
+      "actions": {
+        "withdraw": "Anfrage zurückziehen",
+        "withdrawConfirm": "Diese Anfrage zurückziehen?",
+        "withdrawYes": "Zurückziehen",
+        "cancel": "Behalten",
+        "withdrawDone": "Anfrage zurückgezogen.",
+        "resolve": "Hat sich erledigt",
+        "resolveDone": "Geschlossen. Danke für die Rückmeldung.",
+        "stillNeedHelp": "Ich brauche noch Hilfe",
+        "failed": "Das hat nicht geklappt. Versuch es noch einmal."
+      },
+      "shared": {
+        "title": "Was du angegeben hast",
+        "email": "Kontakt-E-Mail",
+        "phone": "Telefon",
+        "company": "Firma",
+        "topic": "Thema",
+        "callbackTime": "Gewünschter Termin"
       }
     }
   }

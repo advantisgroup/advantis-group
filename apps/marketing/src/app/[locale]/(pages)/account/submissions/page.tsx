@@ -1,21 +1,26 @@
-import { auth } from "@clerk/nextjs/server";
+import { type Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
-import { ContactSubmissionsPage } from "@/components/auth/ContactSubmissionsPage";
-import { redirect } from "@/i18n/navigation";
+import { InquiryList } from "@/components/account/InquiryList";
+import { loadInquiries } from "@/lib/inquiries-server";
 
-export default async function AccountSubmissionsRoute({
+// eslint-disable-next-line react-refresh/only-export-components
+export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "account.inquiries" });
+  return { title: t("title") };
+}
+
+export default async function InquiriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ limit?: string }>;
 }) {
-  const [{ locale }, { userId }] = await Promise.all([params, auth()]);
-
-  if (!userId) {
-    redirect({
-      href: { pathname: "/sign-in", query: { redirect_url: `/${locale}/account/submissions` } },
-      locale,
-    });
-  }
-
-  return <ContactSubmissionsPage />;
+  const { limit: requested } = await searchParams;
+  const limit = Math.min(Math.max(Number(requested) || 50, 50), 200);
+  return <InquiryList data={await loadInquiries(limit)} limit={limit} />;
 }

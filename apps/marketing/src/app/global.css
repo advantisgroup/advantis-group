@@ -404,3 +404,10 @@ html {
 .animate-shake {
   animation: shake 0.5s ease-in-out;
 }
+
+/* Printing an inquiry (or any page) leaves the site's chrome and controls behind. */
+@media print {
+  [data-print-hide] {
+    display: none !important;
+  }
+}

@@ -674,54 +674,6 @@
     "signInRequired": "Please sign in first to access your account settings.",
     "submissionsCta": "View submissions",
     "contactCta": "Send a new inquiry",
-    "submissions": {
-      "badge": "Submission history",
-      "title": "Your inquiries",
-      "subtitle": "Review the contact forms you sent while signed in and keep track of which email address and company details you shared with us.",
-      "newSubmissionCta": "Submit another inquiry",
-      "accountCta": "Manage account",
-      "loading": "Loading your submissions…",
-      "errorTitle": "We could not load your submissions.",
-      "errorDescription": "Please try again in a moment.",
-      "retry": "Try again",
-      "search": "Search your inquiries",
-      "noMatches": "Nothing matches that.",
-      "selectHint": "Pick an inquiry to see everything you sent.",
-      "followUp": "Follow up by email",
-      "filterAll": "All",
-      "upcoming": "Upcoming",
-      "name": "Name",
-      "phone": "Phone",
-      "reference": "Reference",
-      "summary": {
-        "total": "Inquiries",
-        "lastSent": "Last sent",
-        "callbacks": "Callbacks requested",
-        "upcoming": "{count} coming up",
-        "delivery": "Delivery",
-        "allDelivered": "All delivered",
-        "issues": "{count, plural, one {# needs attention} other {# need attention}}"
-      },
-      "emptyTitle": "No submissions yet",
-      "emptyDescription": "Once you send a contact form while signed in, it will appear here with its status and submitted details.",
-      "contactEmail": "Contact email used",
-      "accountEmail": "Signed-in account",
-      "company": "Company",
-      "desiredTime": "Requested callback time",
-      "message": "Message",
-      "topic": "Topic",
-      "notes": "Notes",
-      "deliveryIssue": "Delivery issue",
-      "types": {
-        "message": "Message",
-        "callback": "Callback",
-        "other": "Other inquiry"
-      },
-      "status": {
-        "sent": "Sent",
-        "failed": "Needs attention"
-      }
-    },
     "backToSite": "Back to site"
   },
   "services": {
@@ -1373,6 +1325,232 @@
         "outro": "Questions about it, or up for a no-obligation conversation? Just reply to this email or give us a call.",
         "contactEmail": "Email",
         "contactPhone": "Phone"
+      }
+    }
+  },
+  "account": {
+    "nav": {
+      "label": "Account",
+      "title": "Account",
+      "overview": "Overview",
+      "inquiries": "Inquiries",
+      "profile": "Profile",
+      "security": "Security",
+      "preferences": "Preferences",
+      "downloads": "Downloads",
+      "privacy": "Privacy & data",
+      "signOut": "Sign out",
+      "signedOut": "You're signed out.",
+      "back": "Account"
+    },
+    "overview": {
+      "greeting": {
+        "morning": "Good morning, {name}",
+        "afternoon": "Good afternoon, {name}",
+        "evening": "Good evening, {name}"
+      },
+      "greetingNoName": {
+        "morning": "Good morning",
+        "afternoon": "Good afternoon",
+        "evening": "Good evening"
+      },
+      "memberSince": "Member since {date}",
+      "welcome": "Welcome. Everything you send us while signed in collects here, and the contact forms fill themselves in from now on.",
+      "workAccount": {
+        "title": "This is also your ADVANTIS work account",
+        "body": "Sign-in and security are managed in the intranet.",
+        "cta": "Intranet settings"
+      },
+      "comingUp": "Coming up",
+      "view": "View",
+      "callbackConfirmed": "Your callback is confirmed.",
+      "callbackRequested": "The callback you asked for. We'll confirm the time by email.",
+      "recent": "Recent inquiries",
+      "seeAll": "See all",
+      "noInquiries": "Nothing sent yet.",
+      "start": "Start something",
+      "actions": {
+        "message": "Write to us",
+        "callback": "Request a callback",
+        "whitepaper": "Get the whitepaper"
+      }
+    },
+    "inquiries": {
+      "title": "Your inquiries",
+      "back": "Your inquiries",
+      "summary": "{count, plural, one {# inquiry} other {# inquiries}} · last sent {last}",
+      "new": "New inquiry",
+      "nextCallback": "Next callback",
+      "view": "View",
+      "problems": "{count, plural, one {# inquiry didn't reach us} other {# inquiries didn't reach us}}",
+      "problemsHint": "Nothing is lost. Open it to send it again.",
+      "search": "Search your inquiries",
+      "filterLabel": "Show",
+      "filters": {
+        "all": "All",
+        "open": "Open",
+        "answered": "Answered",
+        "closed": "Closed"
+      },
+      "noMatches": "Nothing matches that.",
+      "showOlder": "Show older",
+      "notDelivered": "Not delivered",
+      "upcomingAt": "Upcoming · {when}",
+      "loadError": "We couldn't load your inquiries just now.",
+      "retry": "Try again",
+      "empty": {
+        "title": "Nothing here yet",
+        "body": "Anything you send us while signed in shows up here, with where it's at and everything you sent.",
+        "message": "Write to us",
+        "callback": "Request a callback",
+        "other": "Something else"
+      },
+      "callbackTitle": "Callback · {when}",
+      "yourMessage": "Your message",
+      "types": {
+        "message": "Message",
+        "callback": "Callback",
+        "other": "Other inquiry"
+      },
+      "states": {
+        "open": "Received",
+        "in_progress": "In progress",
+        "answered": "Answered",
+        "closed": "Closed",
+        "withdrawn": "Withdrawn"
+      },
+      "replyBy": "We usually reply within one business day, so by {when}.",
+      "replyLate": "This is taking longer than usual. If it's urgent, call us on {phone}.",
+      "replyLateNoPhone": "This is taking longer than usual. We're on it.",
+      "progressLabel": "Progress",
+      "steps": {
+        "received": "Received",
+        "seen": "Seen",
+        "inProgress": "In progress",
+        "answered": "Answered",
+        "closed": "Closed",
+        "withdrawn": "Withdrawn"
+      },
+      "seenBy": "{name} · {when}",
+      "onIt": "{name} is on it",
+      "print": "Print",
+      "emailUs": "Email us about this",
+      "copyReference": "Copy reference",
+      "copied": "Copied {reference}",
+      "delivery": {
+        "team": {
+          "queued": "Sending to our team…",
+          "sent": "Sent to our team",
+          "delivered": "Delivered to our team",
+          "delayed": "Delayed on its way to our team",
+          "bounced": "Didn't reach our team",
+          "failed": "Didn't reach our team"
+        },
+        "copy": {
+          "sent": "copy sent to you",
+          "skipped": "no copy sent",
+          "delivered": "copy delivered to you",
+          "delayed": "your copy is delayed",
+          "bounced": "your copy didn't arrive",
+          "failed": "your copy didn't go out"
+        },
+        "details": "Details",
+        "hide": "Hide",
+        "toTeam": "To our team",
+        "toYou": "Your copy to {email}",
+        "steps": {
+          "queued": "Queued",
+          "sent": "Sent",
+          "delivered": "Delivered",
+          "copySent": "Sent",
+          "copyDelivered": "Delivered"
+        },
+        "skipped": {
+          "limit": "You'd had a few copies in a short time, so we skipped this one.",
+          "preference": "You turned copies off in your preferences."
+        },
+        "reasons": {
+          "invalid_address": {
+            "title": "The address looks wrong",
+            "body": "Our mail service didn't accept the address. Send it again once it's fixed.",
+            "copyBody": "We couldn't send your copy to {email}. Check the address for next time."
+          },
+          "mailbox_unavailable": {
+            "title": "That mailbox doesn't accept mail",
+            "body": "The mailbox refused the message. Send it again, or call us.",
+            "copyBody": "{email} refused your copy. Your inquiry still reached us."
+          },
+          "temporary": {
+            "title": "Taking longer than usual",
+            "body": "The receiving server is slow to accept it. Nothing to do, we keep trying.",
+            "copyBody": "Your copy is on its way to {email}, just slower than usual."
+          },
+          "rate_limited": {
+            "title": "We were sending too much at once",
+            "body": "Our mail service asked us to slow down. Send it again in a minute.",
+            "copyBody": "Your copy to {email} was held back. Your inquiry still reached us."
+          },
+          "provider_error": {
+            "title": "Our mail service had a hiccup",
+            "body": "Nothing is lost. Send it again and it'll go out.",
+            "copyBody": "Your copy to {email} didn't go out. Your inquiry still reached us."
+          },
+          "unknown": {
+            "title": "It didn't go through",
+            "body": "Nothing is lost. Send it again, or call us.",
+            "copyBody": "Your copy to {email} didn't go out. Your inquiry still reached us."
+          }
+        },
+        "attempts": "{count, plural, one {Tried once} other {Tried # times}} · last at {when}",
+        "sendAgain": "Send again",
+        "retried": "Sent to our team.",
+        "retryFailed": "That didn't work either. Try again later, or call us.",
+        "callInstead": "If it keeps failing, call us on {phone}."
+      },
+      "callback": {
+        "title": "Callback",
+        "requested": "Requested",
+        "confirmed": "Confirmed",
+        "done": "Done",
+        "cancelled": "Cancelled",
+        "calendarTitle": "Callback from ADVANTIS GROUP",
+        "addToCalendar": "Add to calendar",
+        "anotherTime": "Need another time?",
+        "unconfirmedHint": "We'll confirm the time by email, usually within one business day."
+      },
+      "thread": {
+        "title": "Conversation",
+        "you": "You",
+        "staff": "{name} · ADVANTIS GROUP",
+        "team": "ADVANTIS GROUP",
+        "add": "Add something",
+        "placeholder": "Write a reply or add details…",
+        "attach": "Attach files",
+        "removeFile": "Remove {name}",
+        "reopensHint": "Replying reopens this inquiry.",
+        "send": "Send",
+        "sent": "Sent.",
+        "sendFailed": "That didn't send. Try again.",
+        "tooLarge": "Files can be up to 10 MB."
+      },
+      "actions": {
+        "withdraw": "Withdraw inquiry",
+        "withdrawConfirm": "Withdraw this inquiry?",
+        "withdrawYes": "Withdraw",
+        "cancel": "Keep it",
+        "withdrawDone": "Inquiry withdrawn.",
+        "resolve": "This solved it",
+        "resolveDone": "Closed. Thanks for letting us know.",
+        "stillNeedHelp": "I still need help",
+        "failed": "That didn't work. Try again."
+      },
+      "shared": {
+        "title": "What you shared",
+        "email": "Contact email",
+        "phone": "Phone",
+        "company": "Company",
+        "topic": "Topic",
+        "callbackTime": "Requested time"
       }
     }
   }
