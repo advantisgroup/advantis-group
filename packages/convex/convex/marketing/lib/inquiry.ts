@@ -20,7 +20,21 @@ export const TEAM_TIME_ZONE = "Europe/Berlin";
 // legal should confirm this before it matters; nothing is anonymized sooner than this
 export const INQUIRY_RETENTION_YEARS = 3;
 
+/** The sequential numbering used briefly before references came from the id; still resolvable. */
 export const formatReference = (nr: number) => `AG-${String(nr).padStart(4, "0")}`;
+
+/**
+ * An inquiry's reference is the end of its database id ("#841KGR"): short
+ * enough to read out on the phone, and it points straight at the row. Six
+ * characters, one more for each inquiry that already holds the shorter one.
+ */
+export const REF_MIN_LENGTH = 6;
+
+export const refCandidate = (id: string, length: number) => id.slice(-length).toLowerCase();
+
+/** "#841KGR": the stored `ref`, or the first candidate for rows from before it was stored. */
+export const referenceOf = (row: { _id: string; ref?: string }) =>
+  `#${(row.ref ?? refCandidate(row._id, REF_MIN_LENGTH)).toUpperCase()}`;
 
 const DAY = 24 * 60 * 60 * 1000;
 

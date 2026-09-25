@@ -44,7 +44,11 @@ describe("createInquiry", () => {
     const first = await create(t);
     const second = await create(t);
 
-    expect(first.reference).toBe("AG-0001");
+    // the reference is the end of the id, one character longer for every clash
+    // (convex-test ids all end in "emails", so the second one needs more)
+    expect(first.reference).toBe(`#${first.id.slice(-6).toUpperCase()}`);
+    expect(second.reference).not.toBe(first.reference);
+    expect(second.id.toUpperCase().endsWith(second.reference.slice(1))).toBe(true);
     expect(second.nr).toBe(2);
     const stored = await row(t, first.id);
     expect(stored).toMatchObject({

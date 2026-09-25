@@ -1,6 +1,6 @@
 import { api } from "@advantis/convex/api";
 import { type Doc, type Id } from "@advantis/convex/dataModel";
-import { formatReference } from "@advantis/convex/marketing/inquiry";
+import { referenceOf } from "@advantis/convex/marketing/inquiry";
 import { ConvexError } from "convex/values";
 import { Elysia, t } from "elysia";
 
@@ -24,7 +24,7 @@ const errorCode = (error: unknown) =>
 
 const toMailData = (row: Doc<"emails">): InquiryMailData => ({
   id: row._id,
-  reference: row.nr ? formatReference(row.nr) : `#${row._id.slice(-6).toUpperCase()}`,
+  reference: referenceOf(row),
   submissionType: row.submissionType,
   firstName: row.firstName,
   lastName: row.lastName,

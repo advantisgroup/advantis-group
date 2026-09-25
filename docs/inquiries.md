@@ -41,7 +41,8 @@ below.
 
 | field | meaning | legacy default |
 |---|---|---|
-| `nr` | sequential number, shown as the reference `AG-0042` | backfilled by `sentAt` order |
+| `ref` | the reference, lowercased: the shortest unique end of the id, at least 6 characters (`#841KGR`) | `migrations/backfillInquiries.refs`; until then the last 6 characters of the id |
+| `nr` | sequential number, briefly shown as `AG-0042`; still resolves, no longer shown | backfilled by `sentAt` order |
 | `status` | the *team* mail: `queued \| sent \| delivered \| delayed \| bounced \| failed` | as stored |
 | `deliveredAt`, `attempts`, `lastAttemptAt` | when the team mail landed, and how many sends it took | `attempts = 1` |
 | `failureReason` | plain category for a failed/bounced team mail (see "Status tracks") | – |
@@ -61,7 +62,7 @@ below.
 | `anonymizedAt` | set by the retention cron once personal fields are blanked | – |
 
 `email` and `accountEmail` are stored lowercased (a one-time migration fixes
-old rows). Indexes added: `by_nr`, `by_email_sentAt` (claims inquiries sent
+old rows). Indexes added: `by_ref`, `by_nr`, `by_email_sentAt` (claims inquiries sent
 signed out), `by_state_lastActivityAt` (staff inbox), `by_actionTokenHash`,
 `by_lastActivityAt` (retention).
 
@@ -109,7 +110,16 @@ All in `marketing/lib/inquiry.ts` (pure, no Convex imports), exported from
 `@advantis/convex/marketing/inquiry` so the marketing app, the intranet and
 apps/api format them the same way:
 
-- `formatReference(nr)` → `AG-0042`.
+- `referenceOf(row)` → `#841KGR`: the stored `ref`, or the id's last six
+  characters for rows from before it was stored. `assignRef` (in
+  `inquiries.ts`) stores it on create: six characters, one more for as long as
+  another inquiry (or an older unstored one) already answers to it.
+- The intranet opens `/inquiries/<id | #841KGR | 841kgr | AG-0042>` and
+  redirects to the id URL; `/inquiries#841KGR` starts a search for it.
+  `inbox.search` matches every typed word against the reference, id, name,
+  addresses, company, phone (also as bare digits and in `0…` form for `+49`
+  numbers), subject, topic, message and notes of the 1,000 most recent
+  inquiries, plus an exact reference or id at any age.
 - `replyDueAt(sentAt)` → the same time on the next business day in
   Europe/Berlin (weekends skipped). The copy everywhere says "usually within
   one business day" — not "24 hours", which is wrong every Friday.

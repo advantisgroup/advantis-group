@@ -11,6 +11,7 @@ import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { internalMutation } from "../functions";
+import { assignRef } from "../marketing/inquiries";
 import { legacyDesiredAt } from "../marketing/lib/inquiry";
 
 const TOPIC_KEYS = [
@@ -52,5 +53,39 @@ export const run = internalMutation({
       });
     }
     return { migrated, done: page.isDone };
+  },
+});
+
+/**
+ * Stores `ref` (the inquiry reference, see `referenceOf`) on inquiries written
+ * before it was stored. Oldest first, so where two old ids end the same way
+ * the earlier inquiry keeps the six characters it has always shown and the
+ * later one takes seven. Idempotent; pages by scheduling itself. Run once
+ * from the Convex dashboard (`internal.migrations.backfillInquiries.refs`)
+ * after deploying. Until then those inquiries still show and resolve their
+ * six-character reference.
+ */
+export const refs = internalMutation({
+  args: { cursor: v.optional(v.union(v.string(), v.null())) },
+  handler: async (ctx, { cursor }) => {
+    const page = await ctx.db.query("emails").paginate({ cursor: cursor ?? null, numItems: 100 });
+    const unstored = await ctx.db
+      .query("emails")
+      .withIndex("by_ref", (q) => q.eq("ref", undefined))
+      .take(2000);
+
+    let assigned = 0;
+    for (const row of page.page) {
+      if (row.ref !== undefined) continue;
+      await assignRef(ctx, row._id, unstored);
+      assigned += 1;
+    }
+
+    if (!page.isDone) {
+      await ctx.scheduler.runAfter(0, internal.migrations.backfillInquiries.refs, {
+        cursor: page.continueCursor,
+      });
+    }
+    return { assigned, done: page.isDone };
   },
 });

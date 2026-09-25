@@ -8,7 +8,13 @@ import { userMutation, userQuery } from "../functions";
 import { attachmentValidator } from "../lib/validators";
 import { inquiryStateValidator } from "../tables/marketing";
 import { inquiryWatchers, referenceFor } from "./inquiries";
-import { legacyDesiredAt, replyDueAt } from "./lib/inquiry";
+import {
+  REF_MIN_LENGTH,
+  formatReference,
+  legacyDesiredAt,
+  refCandidate,
+  replyDueAt,
+} from "./lib/inquiry";
 
 /**
  * The team's side of website inquiries — the intranet's `/inquiries` page.
@@ -134,12 +140,138 @@ export const counts = userQuery({
   },
 });
 
+/**
+ * Whatever someone has in hand for an inquiry: its id, its reference
+ * ("#841KGR", "841kgr"), or one of the "AG-0042" numbers a few early mails
+ * carried.
+ */
+export async function findByReference(ctx: QueryCtx, input: string) {
+  const raw = input.trim();
+  const byId = ctx.db.normalizeId("emails", raw);
+  if (byId) return await ctx.db.get(byId);
+
+  const code = raw.replace(/^#/, "").trim().toLowerCase();
+  if (/^[a-z0-9]{4,}$/.test(code)) {
+    const stored = await ctx.db
+      .query("emails")
+      .withIndex("by_ref", (q) => q.eq("ref", code))
+      .first();
+    if (stored) return stored;
+    // rows from before refs were stored answer to the first six characters of their id's end
+    if (code.length === REF_MIN_LENGTH) {
+      const unstored = await ctx.db
+        .query("emails")
+        .withIndex("by_ref", (q) => q.eq("ref", undefined))
+        .take(2000);
+      const legacy = unstored.find((row) => refCandidate(row._id, REF_MIN_LENGTH) === code);
+      if (legacy) return legacy;
+    }
+  }
+
+  const numbered = /^(?:ag[-\s]?)?0*(\d+)$/.exec(code);
+  if (numbered) {
+    return await ctx.db
+      .query("emails")
+      .withIndex("by_nr", (q) => q.eq("nr", Number(numbered[1])))
+      .first();
+  }
+  return null;
+}
+
+// how far back search reads; a website inbox this size is years of inquiries
+const SEARCH_SCAN = 1000;
+const SEARCH_LIMIT = 50;
+
+const digits = (value: string) => value.replace(/\D/g, "");
+/** A phone's digits, plus its German domestic form ("+49 911 …" → "0911…"), as people type both. */
+const phoneForms = (phone: string | undefined) => {
+  if (!phone) return [];
+  const all = digits(phone).replace(/^00/, "");
+  return all.startsWith("49") ? [all, `0${all.slice(2)}`] : [all];
+};
+const isPhoneLike = (term: string) => /^[\d\s+()/.-]+$/.test(term) && digits(term).length >= 3;
+
+/** Everything someone might type to find an inquiry, lowercased into one string. */
+function haystack(row: Doc<"emails">) {
+  return [
+    referenceFor(row),
+    row.nr !== undefined ? formatReference(row.nr) : "",
+    row._id,
+    row.firstName,
+    row.lastName,
+    row.email,
+    row.accountEmail,
+    row.company,
+    row.phone,
+    ...phoneForms(row.phone),
+    row.subject,
+    row.topic,
+    row.message,
+    row.notes,
+  ]
+    .filter(Boolean)
+    .join(" \n ")
+    .toLowerCase();
+}
+
+/**
+ * Search by reference (whole or partial), id, name, address, company, phone
+ * or anything in the message. Every word typed has to match somewhere. Reads
+ * the most recent SEARCH_SCAN inquiries; an exact reference or id is found
+ * however old it is.
+ */
+export const search = userQuery({
+  ...inbox,
+  args: { q: v.string(), view: viewValidator },
+  handler: async (ctx, { q, view }) => {
+    const terms = q
+      .toLowerCase()
+      .split(/\s+/)
+      .map((term) => term.replace(/^#/, ""))
+      .filter(Boolean);
+    if (!terms.length) return { results: [], truncated: false };
+
+    const recent = await ctx.db
+      .query("emails")
+      .withIndex("by_lastActivityAt")
+      .order("desc")
+      .take(SEARCH_SCAN);
+    const exact = await findByReference(ctx, q);
+
+    const matches = recent.filter((row) => {
+      if (row.anonymizedAt !== undefined || !inView(row, view)) return false;
+      const text = haystack(row);
+      // a phone typed with other punctuation ("0911/377-") also matches the stored phone's digits
+      return terms.every(
+        (term) => text.includes(term) || (isPhoneLike(term) && text.includes(digits(term))),
+      );
+    });
+    if (
+      exact &&
+      exact.anonymizedAt === undefined &&
+      !matches.some((row) => row._id === exact._id)
+    ) {
+      matches.unshift(exact);
+    }
+
+    const results = await Promise.all(
+      matches.slice(0, SEARCH_LIMIT).map(async (row) => ({
+        ...forStaff(row),
+        assigneeName: await userName(ctx, row.assignedToUserId),
+      })),
+    );
+    return { results, truncated: recent.length === SEARCH_SCAN };
+  },
+});
+
 export const get = userQuery({
   ...inbox,
-  args: { id: v.id("emails") },
-  handler: async (ctx, { id }) => {
-    const row = await ctx.db.get(id);
+  // an id, or a reference pasted into the URL (/inquiries/AG-0042, /inquiries/841kgr)
+  args: { id: v.string() },
+  handler: async (ctx, args) => {
+    const row = await findByReference(ctx, args.id);
     if (!row) return null;
+    const id = row._id;
     const events = await ctx.db
       .query("inquiryEvents")
       .withIndex("by_inquiry_at", (q) => q.eq("inquiryId", id))
