@@ -15,3 +15,10 @@ export function isAuthRoute(pathname: string): boolean {
   const segment = pathname.split("/").filter(Boolean)[1];
   return segment === "sign-in" || segment === "sign-up";
 }
+
+/** Whether `path` (a nav link's un-localized href, e.g. "/about") is the
+ * current page or a page below it, given `pathname` from next-intl's
+ * `usePathname` (locale-stripped, e.g. "/about" or "/about/team"). */
+export function isActivePath(pathname: string, path: string): boolean {
+  return pathname === path || pathname.startsWith(`${path}/`);
+}

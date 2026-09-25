@@ -2,15 +2,14 @@
 
 import React from "react";
 
-import { usePathname } from "next/navigation";
-
 import { motion, useReducedMotion } from "framer-motion";
 import { Building2, Cookie, Menu, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Drawer, DrawerClose, DrawerTitle } from "@/components/ui/drawer";
 import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
+import { isActivePath } from "@/lib/utils";
 
 import { SettingsMenu } from "./SettingsMenu";
 import { AccountMenu } from "../auth/AccountMenu";
@@ -92,23 +91,29 @@ export const MobileNavFab = ({ navLinks }: { navLinks: NavLink[] }) => {
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
         >
           <ul className="divide-y divide-rule border-y border-rule">
-            {navLinks.map((link) => (
-              <li key={link.key}>
-                <Link
-                  href={link.path}
-                  onClick={close}
-                  aria-current={pathname === link.path ? "page" : undefined}
-                  className="block py-3.5"
-                >
-                  <span className="block text-base font-semibold tracking-[-0.015em]">
-                    {link.label}
-                  </span>
-                  <span className="mt-0.5 block text-sm leading-snug text-muted-foreground">
-                    {t(`descriptions.${link.key}`)}
-                  </span>
-                </Link>
-              </li>
-            ))}
+            {navLinks.map((link) => {
+              const active = isActivePath(pathname, link.path);
+              return (
+                <li key={link.key}>
+                  <Link
+                    href={link.path}
+                    onClick={close}
+                    aria-current={active ? "page" : undefined}
+                    className="block py-3.5"
+                  >
+                    <span className="flex items-center gap-2 text-base font-semibold tracking-[-0.015em]">
+                      {link.label}
+                      {active ? (
+                        <span aria-hidden className="size-1.5 rounded-full bg-advantis" />
+                      ) : null}
+                    </span>
+                    <span className="mt-0.5 block text-sm leading-snug text-muted-foreground">
+                      {t(`descriptions.${link.key}`)}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
 
           <div className="space-y-4 py-5">
