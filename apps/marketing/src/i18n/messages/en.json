@@ -175,7 +175,8 @@
     "subtitle": "Let's find out together how we can transform and push your sales forward.",
     "primary": "Contact Us Now",
     "secondary": "Send Email",
-    "benefits": "Free Initial Consultation • Tailored Solutions • Individual Offers"
+    "benefits": "Free Initial Consultation • Tailored Solutions • Individual Offers",
+    "returning": "Already written to us? <link>See your inquiries and our replies</link>."
   },
   "footer": {
     "description": "We are your partner for successful sales. With over 15 years of experience and four strong brands, we move your business forward.",
@@ -217,7 +218,7 @@
       "notes": "Notes (optional)",
       "notesPlaceholder": "What is the call about?",
       "callbackEmailNote": "For confirmation of your callback",
-      "callbackTimeNote": "We will call you at the requested time",
+      "callbackTimeNote": "Weekdays, 9:00–18:00 German time",
       "privacyPrefix": "By submitting the form, you agree that",
       "privacySuffix": "uses your provided data for the purpose of processing your request. Your data will only be stored to answer your request and will not be passed on to third parties.",
       "privacySuffixCallback": "uses your provided data for the purpose of the callback arrangement.",
@@ -225,7 +226,8 @@
       "privacyNoteLabel": "PRIVACY NOTICE:",
       "errors": {
         "required": "Required",
-        "email": "Enter a valid email address"
+        "email": "Enter a valid email address",
+        "callbackHours": "Pick a weekday between 9:00 and 18:00 (German time) that is still ahead."
       }
     },
     "sidebar": {
@@ -240,13 +242,13 @@
     },
     "messages": {
       "writeUs": "Write to us",
-      "writeUsDesc": "Send us a message and we will get back to you within 24 hours",
+      "writeUsDesc": "Send us a message. We usually reply within one business day.",
       "callback": "Schedule a callback",
       "callbackDesc": "Let us know when we can best reach you",
       "otherInquiry": "Other Inquiry",
       "otherInquiryDesc": "Have questions or general inquiries? We're happy to help!",
       "successTitle": "Sent!",
-      "successDesc": "We will get back to you within 24 hours.",
+      "successDesc": "We usually reply within one business day.",
       "callSuccessTitle": "Callback requested!",
       "callSuccessDesc": "We will call you at the requested time.",
       "errorTitle": "Something went wrong",
@@ -255,7 +257,17 @@
       "rateLimitTitle": "Too many requests",
       "rateLimitDesc": "You've sent a lot of requests. Please try again later.",
       "copySent": "We've sent a copy to {email}.",
-      "sendAnother": "Send another"
+      "sendAnother": "Send another",
+      "copyOff": "You turned copies off in your preferences, so no copy was sent.",
+      "copyLimit": "We didn't send another copy to {email}, because a few already went there this hour.",
+      "copyFailed": "We couldn't send a copy to {email}, but your inquiry reached us.",
+      "notDeliveredTitle": "Saved, but not delivered yet",
+      "notDeliveredSignedIn": "We saved your inquiry but couldn't pass it on to our team. Open it to send it again.",
+      "notDeliveredCall": "We saved your inquiry but couldn't pass it on to our team. Please try again in a few minutes, or call us on {phone}.",
+      "notDeliveredRetry": "We saved your inquiry but couldn't pass it on to our team. Please try again in a few minutes.",
+      "reference": "Reference",
+      "viewInquiry": "View this inquiry",
+      "openToRetry": "Open and send again"
     },
     "submissionBanner": {
       "title": "Forms temporarily unavailable",
@@ -343,20 +355,8 @@
       "optional": "optional"
     },
     "accountHelper": {
-      "badge": "Signed-in shortcut",
-      "title": "Use your current account details",
-      "description": "If you are reaching out from your own Clerk account, we can prefill your name and email so sending a contact request is faster.",
-      "signedInAs": "Signed in as {email}",
-      "emailNote": "You can still replace the form email with a company address if that is the best address for follow-up. We will store both for clarity.",
-      "useAccount": "Use my account details",
-      "useAccountSuccess": "Added to the form",
-      "signedOutTitle": "Want faster contact forms?",
-      "signedOutDescription": "Sign in first and we can prefill your contact details automatically and keep your submitted inquiries together in your account.",
       "signInCta": "Sign in to prefill",
-      "storedAccountNote": "When you submit while signed in, we store both your logged-in account and the contact email you entered so follow-up stays clear.",
-      "successNotice": "Your signed-in details are now in the form below.",
-      "scrollNotice": "Your signed-in details were added below.",
-      "signedInNote": "Signed in as {email}. This inquiry will also appear in <link>your submissions</link>."
+      "signedInNote": "Signed in as {email}. This inquiry will also appear in <link>your inquiries</link>."
     }
   },
   "about": {
@@ -529,7 +529,30 @@
       "contact": {
         "title": "Contact Form",
         "content1": "If you send us inquiries via email or contact form, your information from the inquiry form including the contact data you provided will be stored for the purpose of processing the inquiry and in case of follow-up questions.",
-        "content2": "We do not share this data without your consent. Processing is based on Art. 6 para. 1 lit. b GDPR, if your inquiry is related to the fulfillment of a contract or is necessary for the implementation of pre-contractual measures."
+        "content2": "We do not share this data without your consent. Processing is based on Art. 6 para. 1 lit. b GDPR, if your inquiry is related to the fulfillment of a contract or is necessary for the implementation of pre-contractual measures.",
+        "content3": "Each inquiry is stored with a reference number, its status, our replies and whether the related emails were delivered. Unless you delete them sooner, personal details in inquiries with no activity for {years} years are anonymised."
+      },
+      "account": {
+        "title": "Customer account",
+        "content1": "You can create an account to see your inquiries and our replies in one place. For this we store your name, your email addresses, how you sign in and, if you add them, your company, phone number and role. We use them to show you your inquiries, to prefill our forms and to write to you in the language you chose. The legal basis is Art. 6(1)(b) GDPR.",
+        "content2": "Sign-in is provided by Clerk. Clerk sets the cookies needed to keep you signed in. They are strictly necessary and are not used for tracking.",
+        "content3": "Under “Privacy” in your account you can download everything we store about you as a file, delete your inquiry history, or delete the account. Deleting the account also removes your inquiries, your entry on the notification list and whitepaper requests for your verified addresses."
+      },
+      "whitepaper": {
+        "title": "Whitepaper and notification list",
+        "content1": "If you request our whitepaper, we store your name, company, email address, phone number and your consent. We first send a confirmation link that is valid for 48 hours, and only send the whitepaper once you have confirmed (double opt-in). If you are signed in and the address is verified in your account, that confirmation already exists and the step is skipped. You can withdraw your consent at any time in your account or by email.",
+        "content2": "While our contact forms are closed, you can leave your email address to be told when they reopen. We store the address and the language you used, send you one email when the forms reopen, and you can remove yourself at any time."
+      },
+      "processors": {
+        "title": "Service providers",
+        "intro": "We use the following providers to run these features. They process data on our behalf:",
+        "items": {
+          "vercel": "Vercel (USA): hosting of this website",
+          "clerk": "Clerk (USA): sign-in and account management",
+          "convex": "Convex (USA): database for inquiries, account data and the notification list",
+          "resend": "Resend (USA): sending emails such as receipts, replies and the whitepaper",
+          "upstash": "Upstash: short-lived counters that limit how often a form can be sent, keyed by IP address or email address"
+        }
       },
       "rights": {
         "title": "Your Rights",
@@ -648,32 +671,23 @@
     }
   },
   "auth": {
-    "badge": "Secure access",
     "menuLabel": "Account",
     "guest": "Guest user",
-    "providerHint": "Continue with  Google or use your email to create an account.",
+    "providerHint": "Continue with Google or use your email to create an account.",
     "authShellHighlights": [
-      "Track the status of your requests",
-      "Manage your profile in one place",
-      "Secured with Clerk"
+      "See every inquiry you send, and where it stands",
+      "Keep your details in one place so forms fill themselves",
+      "Get your whitepaper again any time"
     ],
-    "signInPageCta": "Open sign-in page",
-    "signUpPageCta": "Open sign-up page",
     "signIn": "Sign in",
     "signUp": "Create account",
-    "signedIn": "Signed in with Clerk",
     "accountCta": "Profile & security",
     "signOut": "Sign out",
     "signInTitle": "Welcome back to ADVANTIS GROUP",
-    "signInSubtitle": "Sign in with Clerk to manage your profile, security settings, and future protected experiences from one place.",
+    "signInSubtitle": "Sign in to see your inquiries and replies, and to keep your contact details ready for the next form.",
     "signUpTitle": "Create your Advantis account",
-    "signUpSubtitle": "Use Clerk to create a secure account and manage your profile, sign-in methods, and future member-only experiences.",
-    "accountBadge": "Account center",
-    "accountTitle": "Your account",
-    "accountSubtitle": "Manage your profile, security settings, and active sessions in Clerk’s hosted account center.",
-    "signInRequired": "Please sign in first to access your account settings.",
+    "signUpSubtitle": "An account keeps your inquiries and our replies in one place and fills in your details on every form.",
     "submissionsCta": "Your inquiries",
-    "contactCta": "Send a new inquiry",
     "backToSite": "Back to site",
     "yourAccount": "Your account"
   },
@@ -1305,6 +1319,12 @@
       "error": {
         "title": "Something went wrong",
         "description": "We couldn't process your confirmation just now. Please try again later."
+      },
+      "next": {
+        "body": "Want to talk through what it means for your team? Pick a time and we'll call you.",
+        "cta": "Request a callback",
+        "account": "<link>Create an account</link> to download it again any time and keep your inquiries in one place.",
+        "inAccount": "It's also saved under <link>Downloads</link> in your account."
       }
     },
     "email": {

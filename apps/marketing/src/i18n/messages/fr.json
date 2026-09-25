@@ -178,7 +178,8 @@
     "subtitle": "Découvrons ensemble comment transformer et dynamiser vos ventes.",
     "primary": "Contactez-nous Maintenant",
     "secondary": "Envoyer un E-mail",
-    "benefits": "Consultation Initiale Gratuite • Solutions Individuelles • Offres Personnalisées"
+    "benefits": "Consultation Initiale Gratuite • Solutions Individuelles • Offres Personnalisées",
+    "returning": "Vous nous avez déjà écrit ? <link>Retrouvez vos demandes et nos réponses</link>."
   },
   "footer": {
     "description": "Nous sommes votre partenaire pour des ventes réussies. Avec plus de 15 ans d'expérience et quatre marques fortes, nous faisons avancer votre entreprise.",
@@ -220,7 +221,7 @@
       "notes": "Remarques (optionnel)",
       "notesPlaceholder": "De quoi s'agit-il ?",
       "callbackEmailNote": "Pour la confirmation de votre rappel",
-      "callbackTimeNote": "Nous vous appellerons à l'heure souhaitée",
+      "callbackTimeNote": "En semaine, 9 h – 18 h (heure allemande)",
       "privacyPrefix": "En soumettant ce formulaire, vous acceptez que",
       "privacySuffix": "utilise les données fournies pour traiter votre demande. Vos données ne seront stockées que pour répondre à votre demande et ne seront pas transmises à des tiers.",
       "privacySuffixCallback": "utilise les données fournies pour organiser le rappel.",
@@ -228,7 +229,8 @@
       "privacyNoteLabel": "AVIS DE CONFIDENTIALITÉ :",
       "errors": {
         "required": "Champ obligatoire",
-        "email": "Saisissez une adresse e-mail valide"
+        "email": "Saisissez une adresse e-mail valide",
+        "callbackHours": "Choisissez un jour de semaine entre 9 h et 18 h (heure allemande), pas dans le passé."
       }
     },
     "sidebar": {
@@ -243,13 +245,13 @@
     },
     "messages": {
       "writeUs": "Écrivez-nous",
-      "writeUsDesc": "Envoyez-nous un message et nous vous répondrons dans les 24 heures",
+      "writeUsDesc": "Envoyez-nous un message. Nous répondons généralement sous un jour ouvré.",
       "callback": "Planifier un rappel",
       "callbackDesc": "Dites-nous quand nous pouvons vous joindre le mieux",
       "otherInquiry": "Autre demande",
       "otherInquiryDesc": "Avez-vous des questions ou des demandes générales ? Nous sommes là pour vous aider !",
       "successTitle": "Envoyé !",
-      "successDesc": "Nous vous répondrons dans les 24 heures.",
+      "successDesc": "Nous répondons généralement sous un jour ouvré.",
       "callSuccessTitle": "Rappel demandé !",
       "callSuccessDesc": "Nous vous appellerons à l'heure souhaitée.",
       "errorTitle": "Une erreur s'est produite",
@@ -258,7 +260,17 @@
       "rateLimitTitle": "Trop de demandes",
       "rateLimitDesc": "Vous avez envoyé beaucoup de demandes. Veuillez réessayer plus tard.",
       "copySent": "Une copie a été envoyée à {email}.",
-      "sendAnother": "Envoyer une autre demande"
+      "sendAnother": "Envoyer une autre demande",
+      "copyOff": "Vous avez désactivé les copies dans vos préférences, aucune copie n'a donc été envoyée.",
+      "copyLimit": "Nous n'avons pas renvoyé de copie à {email}, car plusieurs y sont déjà parties cette heure-ci.",
+      "copyFailed": "La copie à {email} n'a pas pu être envoyée, mais votre demande nous est bien parvenue.",
+      "notDeliveredTitle": "Enregistrée, mais pas encore transmise",
+      "notDeliveredSignedIn": "Votre demande est enregistrée mais n'a pas pu être transmise à notre équipe. Ouvrez-la pour la renvoyer.",
+      "notDeliveredCall": "Votre demande est enregistrée mais n'a pas pu être transmise à notre équipe. Réessayez dans quelques minutes ou appelez-nous au {phone}.",
+      "notDeliveredRetry": "Votre demande est enregistrée mais n'a pas pu être transmise à notre équipe. Réessayez dans quelques minutes.",
+      "reference": "Référence",
+      "viewInquiry": "Voir cette demande",
+      "openToRetry": "Ouvrir et renvoyer"
     },
     "submissionBanner": {
       "title": "Formulaires temporairement indisponibles",
@@ -346,19 +358,7 @@
       "optional": "optionnel"
     },
     "accountHelper": {
-      "badge": "Raccourci connecté",
-      "title": "Utilisez les informations de votre compte actuel",
-      "description": "Si vous nous contactez avec votre compte Clerk actuel, nous pouvons préremplir votre nom et votre e-mail pour aller plus vite.",
-      "signedInAs": "Connecté en tant que {email}",
-      "emailNote": "Vous pouvez tout de même remplacer l’e-mail du formulaire par une adresse d’entreprise si c’est mieux pour le suivi. Nous garderons les deux pour plus de clarté.",
-      "useAccount": "Utiliser les infos de mon compte",
-      "useAccountSuccess": "Ajouté au formulaire",
-      "signedOutTitle": "Envoyer vos formulaires plus vite ?",
-      "signedOutDescription": "Connectez-vous d’abord pour préremplir automatiquement vos coordonnées et retrouver toutes vos demandes envoyées dans votre compte.",
       "signInCta": "Se connecter pour préremplir",
-      "storedAccountNote": "Lorsque vous envoyez une demande en étant connecté, nous enregistrons à la fois votre compte connecté et l’e-mail saisi dans le formulaire pour éviter toute ambiguïté.",
-      "successNotice": "Vos informations de compte figurent maintenant dans le formulaire ci-dessous.",
-      "scrollNotice": "Vos informations de compte ont été ajoutées au formulaire ci-dessous.",
       "signedInNote": "Connecté en tant que {email}. Cette demande apparaîtra aussi dans <link>vos demandes</link>."
     }
   },
@@ -532,7 +532,30 @@
       "contact": {
         "title": "Formulaire de Contact",
         "content1": "Si vous nous envoyez des demandes par e-mail ou formulaire de contact, vos informations du formulaire de demande, y compris les coordonnées que vous avez fournies, seront stockées dans le but de traiter la demande et en cas de questions de suivi.",
-        "content2": "Nous ne partageons pas ces données sans votre consentement. Le traitement est basé sur l'Art. 6 para. 1 lit. b RGPD, si votre demande est liée à l'exécution d'un contrat ou est nécessaire pour la mise en œuvre de mesures précontractuelles."
+        "content2": "Nous ne partageons pas ces données sans votre consentement. Le traitement est basé sur l'Art. 6 para. 1 lit. b RGPD, si votre demande est liée à l'exécution d'un contrat ou est nécessaire pour la mise en œuvre de mesures précontractuelles.",
+        "content3": "Chaque demande est enregistrée avec un numéro de référence, son statut, nos réponses et l'état de remise des e-mails correspondants. Sauf suppression antérieure de votre part, les données personnelles des demandes sans activité depuis {years} ans sont anonymisées."
+      },
+      "account": {
+        "title": "Compte client",
+        "content1": "Vous pouvez créer un compte pour retrouver vos demandes et nos réponses au même endroit. Nous enregistrons pour cela votre nom, vos adresses e-mail, vos méthodes de connexion et, si vous les indiquez, votre entreprise, votre numéro de téléphone et votre fonction. Nous les utilisons pour afficher vos demandes, préremplir nos formulaires et vous écrire dans la langue choisie. La base juridique est l'art. 6, par. 1, point b) du RGPD.",
+        "content2": "La connexion est assurée par Clerk. Clerk dépose les cookies nécessaires pour que vous restiez connecté. Ils sont strictement nécessaires et ne servent pas au suivi.",
+        "content3": "Dans la rubrique « Confidentialité » de votre compte, vous pouvez télécharger sous forme de fichier toutes les données que nous conservons sur vous, supprimer l'historique de vos demandes ou supprimer le compte. La suppression du compte efface aussi vos demandes, votre inscription à la liste de notification et les demandes de livre blanc pour vos adresses vérifiées."
+      },
+      "whitepaper": {
+        "title": "Livre blanc et liste de notification",
+        "content1": "Si vous demandez notre livre blanc, nous enregistrons votre nom, votre entreprise, votre adresse e-mail, votre numéro de téléphone et votre consentement. Nous envoyons d'abord un lien de confirmation valable 48 heures et n'envoyons le livre blanc qu'après votre confirmation (double opt-in). Si vous êtes connecté et que l'adresse est vérifiée dans votre compte, cette confirmation existe déjà et l'étape est supprimée. Vous pouvez retirer votre consentement à tout moment depuis votre compte ou par e-mail.",
+        "content2": "Tant que nos formulaires de contact sont fermés, vous pouvez laisser votre adresse e-mail pour être prévenu de leur réouverture. Nous enregistrons l'adresse et la langue utilisée, vous envoyons un e-mail à la réouverture, et vous pouvez vous désinscrire à tout moment."
+      },
+      "processors": {
+        "title": "Prestataires",
+        "intro": "Nous faisons appel aux prestataires suivants pour ces fonctions. Ils traitent les données pour notre compte :",
+        "items": {
+          "vercel": "Vercel (États-Unis) : hébergement de ce site",
+          "clerk": "Clerk (États-Unis) : connexion et gestion du compte",
+          "convex": "Convex (États-Unis) : base de données des demandes, des données de compte et de la liste de notification",
+          "resend": "Resend (États-Unis) : envoi d'e-mails (accusés de réception, réponses, livre blanc)",
+          "upstash": "Upstash : compteurs de courte durée qui limitent la fréquence d'envoi d'un formulaire, par adresse IP ou adresse e-mail"
+        }
       },
       "rights": {
         "title": "Vos Droits",
@@ -651,32 +674,23 @@
     }
   },
   "auth": {
-    "badge": "Accès sécurisé",
     "menuLabel": "Compte",
     "guest": "Invité",
     "providerHint": "Continuez avec Google ou utilisez votre e-mail pour créer un compte.",
     "authShellHighlights": [
-      "Suivez le statut de vos demandes",
-      "Gérez votre profil au même endroit",
-      "Sécurisé avec Clerk"
+      "Retrouvez chaque demande et où elle en est",
+      "Vos coordonnées au même endroit, les formulaires se remplissent seuls",
+      "Récupérez votre livre blanc à tout moment"
     ],
-    "signInPageCta": "Ouvrir la connexion",
-    "signUpPageCta": "Ouvrir l’inscription",
     "signIn": "Se connecter",
     "signUp": "Créer un compte",
-    "signedIn": "Connecté avec Clerk",
     "accountCta": "Profil et sécurité",
     "signOut": "Se déconnecter",
     "signInTitle": "Bon retour chez ADVANTIS GROUP",
-    "signInSubtitle": "Connectez-vous avec Clerk pour gérer votre profil, vos paramètres de sécurité et les futures expériences protégées depuis un seul endroit.",
+    "signInSubtitle": "Connectez-vous pour voir vos demandes et nos réponses, et garder vos coordonnées prêtes pour le prochain formulaire.",
     "signUpTitle": "Créez votre compte Advantis",
-    "signUpSubtitle": "Utilisez Clerk pour créer un compte sécurisé et gérer votre profil, vos méthodes de connexion et les futures expériences réservées aux membres.",
-    "accountBadge": "Centre de compte",
-    "accountTitle": "Votre compte",
-    "accountSubtitle": "Gérez votre profil, vos paramètres de sécurité et vos sessions actives dans le centre de compte hébergé de Clerk.",
-    "signInRequired": "Veuillez vous connecter pour accéder à vos paramètres de compte.",
+    "signUpSubtitle": "Un compte réunit vos demandes et nos réponses au même endroit et remplit vos coordonnées dans chaque formulaire.",
     "submissionsCta": "Vos demandes",
-    "contactCta": "Envoyer une nouvelle demande",
     "backToSite": "Retour au site",
     "yourAccount": "Votre compte"
   },
@@ -1308,6 +1322,12 @@
       "error": {
         "title": "Une erreur est survenue",
         "description": "Nous n'avons pas pu traiter votre confirmation. Veuillez réessayer plus tard."
+      },
+      "next": {
+        "body": "Envie d'en parler pour votre équipe ? Choisissez un créneau et nous vous appelons.",
+        "cta": "Demander un rappel",
+        "account": "<link>Créez un compte</link> pour le télécharger à nouveau à tout moment et retrouver vos demandes au même endroit.",
+        "inAccount": "Il est aussi disponible dans <link>Téléchargements</link> de votre compte."
       }
     },
     "email": {
