@@ -2,13 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { inquiryTitleParts, type InquiryState } from "@advantis/convex/marketing/inquiry";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, Inbox, Lock, Paperclip } from "lucide-react";
+import { ArrowLeft, Copy, Inbox, Lock, Paperclip } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -46,11 +46,12 @@ const toLocalInput = (at: number) => {
 export default function InquiryPage() {
   const t = useTranslations("Inquiries");
   const locale = useLocale();
-  const { id } = useParams<{ id: string }>();
-  const inquiryId = id as Id<"emails">;
+  const router = useRouter();
+  // an id, or a reference someone pasted: /inquiries/AG-0042, /inquiries/841kgr
+  const ref = decodeURIComponent(useParams<{ id: string }>().id);
   const canManage = useHasCapability("manage_inquiries");
   const me = useCurrentUser();
-  const data = useQuery(api.marketing.inbox.get, canManage ? { id: inquiryId } : "skip");
+  const data = useQuery(api.marketing.inbox.get, canManage ? { id: ref } : "skip");
   const staff = useQuery(api.marketing.inbox.staff, canManage ? {} : "skip");
   const markSeen = useMutation(api.marketing.inbox.markSeen);
   const setState = useMutation(api.marketing.inbox.setState);
@@ -73,10 +74,16 @@ export default function InquiryPage() {
   );
 
   const inquiry = data?.inquiry;
+  const resolvedId = inquiry?._id;
   const unseen = inquiry ? !inquiry.seenAt : false;
   useEffect(() => {
-    if (unseen) void markSeen({ id: inquiryId });
-  }, [unseen, inquiryId, markSeen]);
+    if (unseen && resolvedId) void markSeen({ id: resolvedId });
+  }, [unseen, resolvedId, markSeen]);
+
+  // opened by reference: settle on the id URL, so the address bar is the one link to share
+  useEffect(() => {
+    if (resolvedId && resolvedId !== ref) router.replace(`/inquiries/${resolvedId}`);
+  }, [resolvedId, ref, router]);
 
   useEffect(() => {
     if (!inquiry) return;
@@ -98,6 +105,7 @@ export default function InquiryPage() {
     return <EmptyState className="mt-10" icon={<Inbox />} title={t("notFound")} />;
   }
 
+  const inquiryId = inquiry._id;
   const Icon = TYPE_ICON[inquiry.submissionType];
   const parts = inquiryTitleParts(inquiry);
   const title =
@@ -173,7 +181,19 @@ export default function InquiryPage() {
             <Icon aria-hidden className="size-3.5" />
             <span>{t(`types.${inquiry.submissionType}`)}</span>
             <span aria-hidden>·</span>
-            <span className="tabular-nums">{inquiry.reference}</span>
+            <button
+              type="button"
+              title={t("copyReference")}
+              onClick={() =>
+                void navigator.clipboard
+                  .writeText(inquiry.reference)
+                  .then(() => toast.success(t("referenceCopied", { reference: inquiry.reference })))
+              }
+              className="inline-flex items-center gap-1 rounded tabular-nums hover:text-foreground"
+            >
+              {inquiry.reference}
+              <Copy aria-hidden className="size-3" />
+            </button>
             <span aria-hidden>·</span>
             <span>{format.format(inquiry.sentAt)}</span>
           </p>

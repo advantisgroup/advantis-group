@@ -72,8 +72,10 @@ export const marketingTables = {
     ),
     error: v.optional(v.string()),
 
-    /** Sequential, shown as the reference "AG-0042". */
+    /** Sequential. Briefly shown as "AG-0042" before references came from the id; kept so those resolve. */
     nr: v.optional(v.number()),
+    /** The reference, lowercased: the shortest unique end of the id (see `referenceOf`). */
+    ref: v.optional(v.string()),
     locale: v.optional(v.string()),
     topicKey: v.optional(
       v.union(v.literal("withdrawal"), v.literal("question"), v.literal("legal")),
@@ -128,6 +130,7 @@ export const marketingTables = {
     .index("by_accountEmail_sentAt", ["accountEmail", "sentAt"])
     .index("by_email_sentAt", ["email", "sentAt"])
     .index("by_nr", ["nr"])
+    .index("by_ref", ["ref"])
     .index("by_state_lastActivityAt", ["state", "lastActivityAt"])
     .index("by_lastActivityAt", ["lastActivityAt"])
     .index("by_actionTokenHash", ["actionTokenHash"]),

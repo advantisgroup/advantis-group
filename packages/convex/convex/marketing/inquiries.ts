@@ -10,7 +10,9 @@ import { failureReasonValidator } from "../tables/marketing";
 import {
   CUSTOMER_TRANSITIONS,
   classifyBounce,
-  formatReference,
+  REF_MIN_LENGTH,
+  refCandidate,
+  referenceOf,
   isWithinCallbackHours,
   legacyDesiredAt,
 } from "./lib/inquiry";
@@ -86,8 +88,48 @@ async function notifyTeam(
 const personName = (row: Pick<Doc<"emails">, "firstName" | "lastName">) =>
   `${row.firstName} ${row.lastName}`.trim();
 
-export const referenceFor = (row: Pick<Doc<"emails">, "nr" | "_id">) =>
-  row.nr ? formatReference(row.nr) : `#${row._id.slice(-6).toUpperCase()}`;
+export const referenceFor = (row: Pick<Doc<"emails">, "ref" | "_id">) => referenceOf(row);
+
+/**
+ * Stores the inquiry's reference: the last REF_MIN_LENGTH characters of its
+ * id, or one more for as long as another inquiry already answers to that —
+ * whether it has a stored ref or is an older inquiry from before refs were
+ * stored that already shows those six characters. Runs inside the creating mutation, so two
+ * inquiries can't race to the same one.
+ */
+export async function assignRef(
+  ctx: MutationCtx,
+  id: Id<"emails">,
+  // a batch migration passes this in once instead of re-reading it per row
+  unstoredRows?: Doc<"emails">[],
+) {
+  const unstored =
+    unstoredRows ??
+    (await ctx.db
+      .query("emails")
+      .withIndex("by_ref", (q) => q.eq("ref", undefined))
+      .take(2000));
+  const created = (await ctx.db.get(id))?._creationTime ?? Date.now();
+  for (let length = REF_MIN_LENGTH; length <= id.length; length++) {
+    const candidate = refCandidate(id, length);
+    const taken =
+      (await ctx.db
+        .query("emails")
+        .withIndex("by_ref", (q) => q.eq("ref", candidate))
+        .first()) ??
+      // an older row without a stored ref already shows this; a newer one will yield to us
+      unstored.find(
+        (row) => row._creationTime < created && refCandidate(row._id, REF_MIN_LENGTH) === candidate,
+      );
+    if (!taken) {
+      await ctx.db.patch(id, { ref: candidate });
+      return candidate;
+    }
+  }
+  // unreachable: the whole id is unique
+  await ctx.db.patch(id, { ref: id.toLowerCase() });
+  return id.toLowerCase();
+}
 
 /**
  * What a customer may see of their own row. Never the provider's raw error
@@ -214,12 +256,15 @@ export const createInquiry = serverMutation({
       at: now,
     });
 
+    await assignRef(ctx, id);
+
     const row = (await ctx.db.get(id))!;
+    const reference = referenceFor(row);
     await notifyTeam(ctx, row, {
       title: "New website inquiry",
-      body: `${formatReference(nr)} · ${personName(row)}${row.company ? ` · ${row.company}` : ""}`,
+      body: `${reference} · ${personName(row)}${row.company ? ` · ${row.company}` : ""}`,
     });
-    return { id, nr, reference: formatReference(nr) };
+    return { id, nr, reference };
   },
 });
 

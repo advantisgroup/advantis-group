@@ -1,19 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { inquiryTitleParts } from "@advantis/convex/marketing/inquiry";
 import { usePaginatedQuery, useQuery } from "convex/react";
-import { AlertTriangle, Inbox, Lock } from "lucide-react";
+import { type FunctionReturnType } from "convex/server";
+import { AlertTriangle, Inbox, Lock, Search, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { StateBadge, TYPE_ICON, senderLine } from "@/components/inquiries/shared";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useHasCapability } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { CountTabs } from "@/components/ui/count-tabs";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,12 +30,37 @@ type View = "open" | "answered" | "closed" | "failed" | "all";
 export default function InquiriesPage() {
   const t = useTranslations("Inquiries");
   const canManage = useHasCapability("manage_inquiries");
+  const router = useRouter();
   const [view, setView] = useState<View>("open");
+  const [query, setQuery] = useState("");
+  const [debounced, setDebounced] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+  const searching = debounced.trim().length > 0;
+
+  // "/inquiries#841KGR" — a reference pasted after the page's address — starts as a search
+  // for it, in every tab; the part after "#" never reaches the server, so it's read here
+  useEffect(() => {
+    const fromHash = decodeURIComponent(window.location.hash.slice(1)).trim();
+    if (!fromHash) return;
+    setQuery(fromHash);
+    setDebounced(fromHash);
+    setView("all");
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(query), 200);
+    return () => clearTimeout(timer);
+  }, [query]);
+
   const counts = useQuery(api.marketing.inbox.counts, canManage ? {} : "skip");
   const { results, status, loadMore } = usePaginatedQuery(
     api.marketing.inbox.list,
-    canManage ? { view } : "skip",
+    canManage && !searching ? { view } : "skip",
     { initialNumItems: 40 },
+  );
+  const found = useQuery(
+    api.marketing.inbox.search,
+    canManage && searching ? { q: debounced, view } : "skip",
   );
 
   if (!canManage) {
@@ -44,10 +71,48 @@ export default function InquiriesPage() {
     <div className="mx-auto w-full max-w-5xl">
       <PageHeaderBar title={t("title")} description={t("description")} icon={<Inbox />} />
 
+      <form
+        role="search"
+        className="relative mt-6"
+        onSubmit={(event) => {
+          // Enter on a single hit (a reference, usually) opens it
+          event.preventDefault();
+          if (found?.results.length === 1) router.push(`/inquiries/${found.results[0]._id}`);
+        }}
+      >
+        <Search
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+        />
+        <Input
+          ref={searchRef}
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t("searchPlaceholder")}
+          aria-label={t("searchLabel")}
+          className="pr-9 pl-9"
+        />
+        {query ? (
+          <button
+            type="button"
+            aria-label={t("clearSearch")}
+            onClick={() => {
+              setQuery("");
+              setDebounced("");
+              searchRef.current?.focus();
+            }}
+            className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+          >
+            <X className="size-4" aria-hidden />
+          </button>
+        ) : null}
+      </form>
+
       <CountTabs<View>
         value={view}
         onChange={setView}
-        className="mt-6"
+        className="mt-4"
         tabs={[
           { value: "open", label: t("views.open"), count: counts?.unanswered },
           { value: "answered", label: t("views.answered"), count: counts?.answered },
@@ -57,7 +122,33 @@ export default function InquiriesPage() {
         ]}
       />
 
-      {status === "LoadingFirstPage" ? (
+      {searching ? (
+        found === undefined ? (
+          <div className="mt-6 space-y-2">
+            {Array.from({ length: 3 }, (_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        ) : found.results.length === 0 ? (
+          <EmptyState
+            className="mt-10"
+            icon={<Search />}
+            title={t("noMatches", { query: debounced.trim() })}
+            description={view === "all" ? undefined : t("noMatchesInTab")}
+          />
+        ) : (
+          <>
+            <ul className="mt-6 divide-y divide-border border-y border-border">
+              {found.results.map((inquiry) => (
+                <InquiryRow key={inquiry._id} inquiry={inquiry} />
+              ))}
+            </ul>
+            {found.truncated ? (
+              <p className="mt-4 text-center text-xs text-muted-foreground">{t("searchScope")}</p>
+            ) : null}
+          </>
+        )
+      ) : status === "LoadingFirstPage" ? (
         <div className="mt-6 space-y-2">
           {Array.from({ length: 6 }, (_, i) => (
             <Skeleton key={i} className="h-16 w-full" />
@@ -96,7 +187,9 @@ export default function InquiriesPage() {
   );
 }
 
-type Row = ReturnType<typeof usePaginatedQuery<typeof api.marketing.inbox.list>>["results"][number];
+type Row =
+  | ReturnType<typeof usePaginatedQuery<typeof api.marketing.inbox.list>>["results"][number]
+  | FunctionReturnType<typeof api.marketing.inbox.search>["results"][number];
 
 function InquiryRow({ inquiry }: { inquiry: Row }) {
   const t = useTranslations("Inquiries");

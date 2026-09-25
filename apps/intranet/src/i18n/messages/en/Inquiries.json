@@ -92,5 +92,13 @@
     "callback_rescheduled": "Callback moved",
     "resent": "Sent again",
     "withdrawn": "Withdrawn by the customer"
-  }
+  },
+  "searchLabel": "Search inquiries",
+  "searchPlaceholder": "Search by reference, name, email, company, phone or text…",
+  "clearSearch": "Clear search",
+  "noMatches": "Nothing matches “{query}”",
+  "noMatchesInTab": "Only this tab was searched. Try “All”.",
+  "searchScope": "Searched the 1,000 most recent inquiries. An exact reference is found however old it is.",
+  "copyReference": "Copy reference",
+  "referenceCopied": "Copied {reference}"
 }
