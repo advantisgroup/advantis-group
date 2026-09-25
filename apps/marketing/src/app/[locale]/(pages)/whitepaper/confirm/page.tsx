@@ -5,7 +5,7 @@ import { getTranslations } from "next-intl/server";
 
 import { WhitepaperConfirm } from "@/components/whitepaper/WhitepaperConfirm";
 import { type Locale } from "@/i18n/request";
-import { localeAlternates } from "@/lib/seo";
+import { NO_INDEX } from "@/lib/seo";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export async function generateMetadata({
@@ -19,7 +19,8 @@ export async function generateMetadata({
   return {
     title: t("title"),
     description: t("description"),
-    alternates: localeAlternates(locale, "/whitepaper/confirm"),
+    // a token link: one person's, in one language, and useless to a crawler
+    robots: NO_INDEX,
   };
 }
 

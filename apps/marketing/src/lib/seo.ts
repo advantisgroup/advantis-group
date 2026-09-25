@@ -7,6 +7,9 @@ export function localePath(locale: string, path = "") {
   return `/${locale}${path}`;
 }
 
+/** For pages that only make sense to the person looking at them — auth, account, token links. */
+export const NO_INDEX = { index: false, follow: false } as const;
+
 /** Canonical + hreflang links for a page that exists in every locale. */
 export function localeAlternates(locale: string, path = "") {
   return {
