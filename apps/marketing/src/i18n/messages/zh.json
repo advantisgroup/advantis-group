@@ -626,23 +626,23 @@
     }
   },
   "email": {
-    "greeting": "你好 {firstName} {lastName}，",
-    "bodyIntro": "感谢您的留言。这是我们刚刚收到的请求的副本。",
-    "bodyOutro": "我们正在审核您的请求，并将尽快回复您——通常在接下来的 24 小时内。",
-    "yourMessage": "您的留言：",
-    "poweredBy": "Powered by",
-    "rightsReserved": "版权所有。",
-    "subject": "主题",
-    "topic": "主题",
-    "confirmationTitle": "我们已收到您的请求",
-    "confirmationBody": "感谢您的留言。我们已记录您的请求，将尽快与您联系。",
-    "submissionType": "请求类型",
-    "contactEmail": "电子邮件",
-    "contactPhone": "电话",
-    "company": "公司",
-    "typeMessage": "消息",
-    "typeCallback": "回电",
-    "typeOther": "其他"
+    "receipt": {
+      "subject": "我们已收到您的咨询 · {reference}",
+      "subjectCallback": "您的回电请求 · {reference}",
+      "heading": "{firstName}，感谢您的来信。",
+      "received": "您的留言已送达我们的团队。",
+      "receivedCallback": "您的回电请求已送达我们的团队。",
+      "callbackWhen": "我们将在您选择的时间致电 {phone}：{when}。",
+      "next": "我们通常会在一个工作日内通过 {inbox} 回复您。",
+      "nextCallback": "我们会在一个工作日内通过电子邮件确认时间。",
+      "reference": "参考编号",
+      "viewInAccount": "在您的账户中查看",
+      "createAccount": "创建账户",
+      "keepTrack": "使用此邮箱创建账户后，您可以在账户中查看这条咨询以及以后的所有咨询。",
+      "whatYouSent": "您发送的内容",
+      "replyHint": "想补充内容？直接回复这封邮件即可。",
+      "privacy": "隐私政策"
+    }
   },
   "auth": {
     "badge": "安全访问",

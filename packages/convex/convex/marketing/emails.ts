@@ -1,4 +1,4 @@
-import { serverMutation, serverQuery } from "../functions";
+import { serverMutation } from "../functions";
 import { v } from "convex/values";
 
 /**
@@ -8,54 +8,6 @@ import { v } from "convex/values";
  * or edit the notify list directly, skipping every check the API does.
  */
 
-export const saveEmail = serverMutation({
-  args: {
-    messageId: v.optional(v.string()),
-    firstName: v.string(),
-    lastName: v.string(),
-    email: v.string(),
-    phone: v.optional(v.string()),
-    subject: v.string(),
-    message: v.string(),
-    company: v.optional(v.string()),
-    submissionType: v.union(v.literal("message"), v.literal("callback"), v.literal("other")),
-    topic: v.optional(v.string()),
-    desiredDateTime: v.optional(v.string()),
-    notes: v.optional(v.string()),
-    accountEmail: v.string(),
-    accountName: v.string(),
-    clerkUserId: v.string(),
-    status: v.union(v.literal("sent"), v.literal("failed")),
-    error: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("emails", {
-      ...args,
-      sentAt: Date.now(),
-    });
-  },
-});
-
-/**
- * Look up submissions by the signed-in account's email rather than
- * clerkUserId — used so a customer's submission history still resolves after
- * re-signing-up under a different Clerk user id (e.g. after the marketing +
- * intranet Clerk instance merge).
- */
-export const listEmailsByAccountEmail = serverQuery({
-  args: {
-    accountEmail: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const email = args.accountEmail.toLowerCase();
-    if (!email) return [];
-    return await ctx.db
-      .query("emails")
-      .withIndex("by_accountEmail_sentAt", (q) => q.eq("accountEmail", email).gte("sentAt", 0))
-      .order("desc")
-      .take(50);
-  },
-});
 export const saveNotifyEmail = serverMutation({
   args: {
     email: v.string(),

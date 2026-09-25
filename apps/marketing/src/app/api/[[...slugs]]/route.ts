@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 
+import { callback } from "@/app/api/[[...slugs]]/callback";
 import { email } from "@/app/api/[[...slugs]]/email";
 import { notify } from "@/app/api/[[...slugs]]/notify";
 import { submissions } from "@/app/api/[[...slugs]]/submissions";
@@ -12,6 +13,7 @@ const app = new Elysia({ prefix: "/api" })
       name: t.String(),
     }),
   })
+  .use(callback)
   .use(email)
   .use(notify)
   .use(submissions)

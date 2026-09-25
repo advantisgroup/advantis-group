@@ -632,23 +632,23 @@
     }
   },
   "email": {
-    "greeting": "Bonjour {firstName} {lastName},",
-    "bodyIntro": "merci pour votre message. Ceci est une copie de la demande que nous venons de recevoir.",
-    "bodyOutro": "Nous examinons votre demande et vous répondrons dès que possible – généralement dans les prochaines 24 heures.",
-    "yourMessage": "Votre message :",
-    "poweredBy": "Propulsé par",
-    "rightsReserved": "Tous droits réservés.",
-    "subject": "Objet",
-    "topic": "Sujet",
-    "confirmationTitle": "Nous avons reçu votre demande",
-    "confirmationBody": "Merci pour votre message. Nous avons enregistré votre demande et vous répondrons dans les plus brefs délais.",
-    "submissionType": "Type de demande",
-    "contactEmail": "E-mail",
-    "contactPhone": "Téléphone",
-    "company": "Entreprise",
-    "typeMessage": "Message",
-    "typeCallback": "Rappel",
-    "typeOther": "Autre"
+    "receipt": {
+      "subject": "Nous avons bien reçu votre demande · {reference}",
+      "subjectCallback": "Votre demande de rappel · {reference}",
+      "heading": "Merci, {firstName}.",
+      "received": "Votre message est bien arrivé auprès de notre équipe.",
+      "receivedCallback": "Votre demande de rappel est bien arrivée auprès de notre équipe.",
+      "callbackWhen": "Nous vous appellerons au {phone} à l'heure choisie : {when}.",
+      "next": "Nous répondons généralement sous un jour ouvré, depuis {inbox}.",
+      "nextCallback": "Nous vous confirmerons l'horaire par e-mail sous un jour ouvré.",
+      "reference": "Référence",
+      "viewInAccount": "Voir dans votre compte",
+      "createAccount": "Créer un compte",
+      "keepTrack": "Créez un compte avec cette adresse : vous y retrouverez cette demande et toutes les suivantes.",
+      "whatYouSent": "Ce que vous nous avez envoyé",
+      "replyHint": "Vous souhaitez ajouter quelque chose ? Répondez simplement à cet e-mail.",
+      "privacy": "Confidentialité"
+    }
   },
   "auth": {
     "badge": "Accès sécurisé",

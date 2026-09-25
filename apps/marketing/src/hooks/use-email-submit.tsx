@@ -8,20 +8,31 @@ import { toast } from "sonner";
 
 import { useTrackEvent } from "@/lib/analytics";
 import { api } from "@/lib/eden";
-import { type ButtonState } from "@/types/contact";
+import { type ButtonState, type InquiryTopic } from "@/types/contact";
 
 interface EmailPayload {
   firstName: string;
   lastName: string;
   message: string;
-  subject: string;
+  subject?: string;
   email: string;
   phone?: string;
+  /** the translated label, for the team mail */
   topic?: string;
+  topicKey?: InquiryTopic;
   company?: string;
   submissionType: "message" | "callback" | "other";
-  desiredDateTime?: string;
+  desiredAt?: number;
+  timeZone?: string;
   notes?: string;
+}
+
+/** What the server says about an inquiry that went out. */
+export interface SentInquiry {
+  id: string;
+  reference: string;
+  copySent: boolean;
+  copySkipReason?: "limit" | "preference";
 }
 
 interface UseEmailSubmitOptions {
@@ -54,7 +65,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
   }, [resetDelayMs]);
 
   const sendEmail = useCallback(
-    async (payload: EmailPayload, trackingEvent: string) => {
+    async (payload: EmailPayload, trackingEvent: string): Promise<SentInquiry | null> => {
       setButtonState("loading");
       trackEvent(trackingEvent);
       try {
@@ -67,9 +78,11 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
           subject: payload.subject,
           locale,
           topic: payload.topic,
+          topicKey: payload.topicKey,
           company: payload.company,
           submissionType: payload.submissionType,
-          desiredDateTime: payload.desiredDateTime,
+          desiredAt: payload.desiredAt,
+          timeZone: payload.timeZone,
           notes: payload.notes,
         });
 
@@ -78,7 +91,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
           showErrorToast(tMessages("serverErrorDesc"));
           resetButtonState();
           onError?.(new Error("Server error"));
-          return false;
+          return null;
         }
 
         if (response.status === 429) {
@@ -89,20 +102,20 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
           });
           resetButtonState();
           onError?.(new Error("Rate limited"));
-          return false;
+          return null;
         }
 
         setButtonState("success");
         resetButtonState();
         onSuccess?.();
-        return true;
+        return response.data;
       } catch (error) {
         console.log(error);
         setButtonState("error");
         showErrorToast(tMessages("serverErrorDesc"));
         resetButtonState();
         onError?.(error);
-        return false;
+        return null;
       }
     },
     [locale, onSuccess, onError, resetButtonState, showErrorToast, tMessages, trackEvent],

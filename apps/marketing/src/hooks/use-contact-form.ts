@@ -14,7 +14,7 @@ import {
   type ContactMode,
 } from "@/types/contact";
 
-import { useEmailSubmit } from "./use-email-submit";
+import { type SentInquiry, useEmailSubmit } from "./use-email-submit";
 
 const initialFormData: FormData = {
   company: "",
@@ -65,7 +65,9 @@ export function useContactForm() {
     z.ZodFlattenedError<CallbackFormData>["fieldErrors"]
   >({});
   // what just went out, so the page can swap the form for a confirmation
-  const [sent, setSent] = useState<{ mode: ContactMode; email: string } | null>(null);
+  const [sent, setSent] = useState<(SentInquiry & { mode: ContactMode; email: string }) | null>(
+    null,
+  );
   const messageSubmit = useEmailSubmit();
   const callbackSubmit = useEmailSubmit();
   const otherSubmit = useEmailSubmit();
@@ -102,8 +104,8 @@ export function useContactForm() {
   }, [accountProfile]);
 
   const markSent = useCallback(
-    (mode: ContactMode, email: string) => {
-      setSent({ mode, email });
+    (mode: ContactMode, email: string, result: SentInquiry) => {
+      setSent({ ...result, mode, email });
 
       const keepAccount = <T>(initial: T) => ({
         ...initial,
@@ -173,7 +175,7 @@ export function useContactForm() {
         return;
       }
 
-      const ok = await messageSubmit.sendEmail(
+      const result = await messageSubmit.sendEmail(
         {
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -182,11 +184,10 @@ export function useContactForm() {
           phone: formData.phone,
           company: formData.company,
           submissionType: "message",
-          subject: `User Request - Message`,
         },
         "User - Message Submitted",
       );
-      if (ok) markSent("message", formData.email);
+      if (result) markSent("message", formData.email, result);
     },
     [formData, messageSubmit, validateAndShowError, tMessages, markSent],
   );
@@ -205,24 +206,23 @@ export function useContactForm() {
         return;
       }
 
-      const message = `Rückruf Anfrage\n\nFirma: ${callbackFormData.company}\nGewünschte Zeit: ${callbackFormData.dateTime}\nTelefon: ${callbackFormData.phone}\n\nNotizen:\n${callbackFormData.notes || "Keine"}`;
-
-      const ok = await callbackSubmit.sendEmail(
+      // datetime-local is the browser's wall clock, so its zone goes along with it
+      const result = await callbackSubmit.sendEmail(
         {
           firstName: callbackFormData.firstName,
           lastName: callbackFormData.lastName,
-          message,
+          message: "",
           phone: callbackFormData.phone,
           email: callbackFormData.email,
           company: callbackFormData.company,
           submissionType: "callback",
-          desiredDateTime: callbackFormData.dateTime,
+          desiredAt: new Date(callbackFormData.dateTime).getTime(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           notes: callbackFormData.notes,
-          subject: `User Request - Callback`,
         },
         "User - Callback Submitted",
       );
-      if (ok) markSent("callback", callbackFormData.email);
+      if (result) markSent("callback", callbackFormData.email, result);
     },
     [callbackFormData, callbackSubmit, validateAndShowError, tMessages, markSent],
   );
@@ -245,7 +245,7 @@ export function useContactForm() {
 
       const topicValue = tOtherForm(`topics.${otherFormData.topic}`);
 
-      const ok = await otherSubmit.sendEmail(
+      const result = await otherSubmit.sendEmail(
         {
           firstName: otherFormData.firstName,
           lastName: otherFormData.lastName || "",
@@ -255,10 +255,11 @@ export function useContactForm() {
           submissionType: "other",
           subject: otherFormData.subject,
           topic: topicValue,
+          topicKey: otherFormData.topic,
         },
         "User - Other Submitted",
       );
-      if (ok) markSent("other", otherFormData.email);
+      if (result) markSent("other", otherFormData.email, result);
     },
     [otherFormData, otherSubmit, validateAndShowError, tMessages, tOtherForm, markSent],
   );

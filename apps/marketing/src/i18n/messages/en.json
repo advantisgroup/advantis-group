@@ -629,23 +629,23 @@
     }
   },
   "email": {
-    "greeting": "Hello {firstName} {lastName},",
-    "bodyIntro": "thank you for your message. This is a copy of the request we just received.",
-    "bodyOutro": "We are reviewing your request and will get back to you as soon as possible – usually within the next 24 hours.",
-    "yourMessage": "Your message:",
-    "poweredBy": "Powered by",
-    "rightsReserved": "All rights reserved.",
-    "subject": "Subject",
-    "topic": "Topic",
-    "confirmationTitle": "We have received your request",
-    "confirmationBody": "Thank you for your message. We have recorded your request and will get back to you as soon as possible.",
-    "submissionType": "Request type",
-    "contactEmail": "Email",
-    "contactPhone": "Phone",
-    "company": "Company",
-    "typeMessage": "Message",
-    "typeCallback": "Callback",
-    "typeOther": "Other"
+    "receipt": {
+      "subject": "We've received your inquiry · {reference}",
+      "subjectCallback": "Your callback request · {reference}",
+      "heading": "Thanks, {firstName}.",
+      "received": "Your message has reached our team.",
+      "receivedCallback": "Your callback request has reached our team.",
+      "callbackWhen": "We'll call you on {phone} at the time you picked: {when}.",
+      "next": "We usually reply within one business day, from {inbox}.",
+      "nextCallback": "We'll confirm the time by email within one business day.",
+      "reference": "Reference",
+      "viewInAccount": "View it in your account",
+      "createAccount": "Create an account",
+      "keepTrack": "Create an account with this address and this inquiry, and any you send later, will be waiting there.",
+      "whatYouSent": "What you sent",
+      "replyHint": "Want to add something? Just reply to this email.",
+      "privacy": "Privacy"
+    }
   },
   "auth": {
     "badge": "Secure access",

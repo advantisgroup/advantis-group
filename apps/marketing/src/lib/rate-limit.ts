@@ -27,6 +27,14 @@ export const limits = {
   notifyCode: limiter(5, "1 h", "notify-code"),
   /** notify-list code guesses, per IP */
   notifyVerify: limiter(20, "1 h", "notify-verify"),
+  /** "send again" on a failed inquiry, per inquiry */
+  inquiryRetry: limiter(3, "1 h", "inquiry-retry"),
+  /** replies and status changes from the account page, per account */
+  inquiryWrite: limiter(30, "1 h", "inquiry-write"),
+  /** attachment upload slots, per account */
+  inquiryUpload: limiter(20, "1 h", "inquiry-upload"),
+  /** reschedule/cancel links from the callback mail, per IP */
+  callbackToken: limiter(20, "1 h", "callback-token"),
 };
 
 /** True when `key` is still under `limit`. Fails open if Redis is unreachable. */
