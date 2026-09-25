@@ -16,6 +16,7 @@ import {
   Cloud,
   ExternalLink,
   Grid2X2,
+  Inbox,
   LayoutDashboard,
   Lightbulb,
   LineChart,
@@ -182,6 +183,8 @@ export function Sidebar() {
   const hasBlogAccess = useHasCapability("manage_blog");
   const hasApplicantAccess = useHasApplicantAccess();
   const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
+  const hasInquiries = useHasCapability("manage_inquiries");
+  const inquiryCounts = useQuery(api.marketing.inbox.counts, hasInquiries ? {} : "skip");
   const approvalCover = useQuery(api.org.delegations.mine);
   const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
   const { setOpenMobile, state, isMobile, editing, setEditing } = useSidebar();
@@ -267,6 +270,17 @@ export function Sidebar() {
       : []),
     ...(hasBlogAccess
       ? [{ section: "knowledge" as const, href: "/blog", labelKey: "blog", icon: Newspaper }]
+      : []),
+    ...(hasInquiries
+      ? [
+          {
+            section: "support" as const,
+            href: "/inquiries",
+            labelKey: "inquiries",
+            icon: Inbox,
+            badge: inquiryCounts?.unseen,
+          },
+        ]
       : []),
     {
       section: "support",

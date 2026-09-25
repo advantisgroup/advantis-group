@@ -7,7 +7,7 @@ import { type QueryCtx } from "../_generated/server";
 import { userMutation, userQuery } from "../functions";
 import { attachmentValidator } from "../lib/validators";
 import { inquiryStateValidator } from "../tables/marketing";
-import { referenceFor } from "./inquiries";
+import { inquiryWatchers, referenceFor } from "./inquiries";
 import { legacyDesiredAt, replyDueAt } from "./lib/inquiry";
 
 /**
@@ -348,6 +348,19 @@ export const cancelCallback = userMutation({
       at: now,
     });
     await ctx.scheduler.runAfter(0, internal.marketing.mail.sendCallbackCancelled, { id });
+  },
+});
+
+/** Who an inquiry can be handed to: the same people who hear about new ones. */
+export const staff = userQuery({
+  ...inbox,
+  args: {},
+  handler: async (ctx) => {
+    const ids = await inquiryWatchers(ctx);
+    const rows = await Promise.all(
+      ids.map(async (id) => ({ id, name: (await userName(ctx, id)) ?? "" })),
+    );
+    return rows.sort((a, b) => a.name.localeCompare(b.name));
   },
 });
 

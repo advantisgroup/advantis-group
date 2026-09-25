@@ -1,0 +1,96 @@
+{
+  "title": "Website-Anfragen",
+  "description": "Kontaktformulare und Rückrufwünsche von der Website",
+  "noAccess": "Du hast keinen Zugriff auf Website-Anfragen.",
+  "notFound": "Diese Anfrage gibt es nicht oder sie wurde gelöscht.",
+  "back": "Alle Anfragen",
+  "loadMore": "Mehr laden",
+  "views": {
+    "open": "Offen",
+    "answered": "Beantwortet",
+    "closed": "Geschlossen",
+    "failed": "Nicht zugestellt",
+    "all": "Alle"
+  },
+  "empty": {
+    "open": "Nichts offen. Jede Anfrage hat eine Antwort.",
+    "answered": "Keine beantworteten Anfragen, die auf Kund:innen warten.",
+    "closed": "Noch keine geschlossenen Anfragen.",
+    "failed": "Jede Anfrage ist im Postfach angekommen.",
+    "all": "Noch keine Anfragen."
+  },
+  "types": {
+    "message": "Nachricht",
+    "callback": "Rückruf",
+    "other": "Sonstiges"
+  },
+  "states": {
+    "open": "Eingegangen",
+    "in_progress": "In Bearbeitung",
+    "answered": "Beantwortet",
+    "closed": "Geschlossen",
+    "withdrawn": "Zurückgezogen"
+  },
+  "callbackAt": "Rückruf · {when}",
+  "unseen": "Noch nicht geöffnet",
+  "assignedTo": "bei {name}",
+  "overdue": "Antwort überfällig",
+  "notDelivered": "Nicht zugestellt",
+  "notDeliveredHint": "Die Mail ans Team-Postfach ist nicht angekommen. Diese Seite ist die einzige Kopie, antworte also von hier.",
+  "overdueHint": "Innerhalb eines Werktags hat niemand geantwortet.",
+  "fields": {
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "company": "Firma",
+    "topic": "Thema",
+    "desiredAt": "Wunschtermin",
+    "language": "Sprache",
+    "account": "Angemeldet als"
+  },
+  "thread": "Antworten",
+  "noReplies": "Noch keine Antworten. Deine Antwort geht per Mail an die Person und erscheint auf ihrer Anfrageseite.",
+  "replyLabel": "Antwort",
+  "replyPlaceholder": "Antwort an {name}…",
+  "replyHint": "Geht sofort raus. Strg + Enter sendet.",
+  "sendReply": "Antwort senden",
+  "replySent": "Antwort gesendet",
+  "viaEmail": "per Mail",
+  "actionFailed": "Das hat nicht geklappt. Versuch es noch einmal.",
+  "state": "Status",
+  "changeState": "Status ändern",
+  "stateHint": "Bei „In Bearbeitung“ und „Beantwortet“ geht eine Mail raus, ein paar Minuten nach der letzten Änderung.",
+  "assignee": "Zuständig",
+  "unassigned": "Niemand",
+  "assignToMe": "Mir zuweisen",
+  "callback": "Rückruf",
+  "callbackStatus": {
+    "requested": "Gewünscht",
+    "confirmed": "Bestätigt",
+    "cancelled": "Abgesagt"
+  },
+  "callbackSlot": "Zeit",
+  "confirmCallback": "Zeit bestätigen",
+  "moveCallback": "Auf diese Zeit verschieben",
+  "cancelCallback": "Rückruf absagen",
+  "callbackConfirmedToast": "Rückruf bestätigt. Die Person bekommt eine Kalendereinladung.",
+  "callbackCancelledToast": "Rückruf abgesagt. Die Person wurde informiert.",
+  "history": "Verlauf",
+  "actors": {
+    "customer": "Kund:in",
+    "staff": "Team",
+    "system": "System"
+  },
+  "events": {
+    "created": "Eingegangen",
+    "seen": "Vom Team geöffnet",
+    "state": "Status auf {state} gesetzt",
+    "assigned": "Zuständigkeit geändert",
+    "reply": "Beantwortet",
+    "customer_reply": "Antwort der Kund:in",
+    "callback_confirmed": "Rückruf bestätigt",
+    "callback_cancelled": "Rückruf abgesagt",
+    "callback_rescheduled": "Rückruf verschoben",
+    "resent": "Erneut gesendet",
+    "withdrawn": "Von der Kund:in zurückgezogen"
+  }
+}

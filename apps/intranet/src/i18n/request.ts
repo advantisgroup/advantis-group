@@ -37,6 +37,7 @@ import deForbidden from "./messages/de/Forbidden.json";
 import deGuidebooks from "./messages/de/Guidebooks.json";
 import deImprint from "./messages/de/imprint.json";
 import deIntegrations from "./messages/de/Integrations.json";
+import deInquiries from "./messages/de/Inquiries.json";
 import deItTickets from "./messages/de/ItTickets.json";
 import deNav from "./messages/de/Nav.json";
 import deNotFound from "./messages/de/NotFound.json";
@@ -90,6 +91,7 @@ import enForbidden from "./messages/en/Forbidden.json";
 import enGuidebooks from "./messages/en/Guidebooks.json";
 import enImprint from "./messages/en/imprint.json";
 import enIntegrations from "./messages/en/Integrations.json";
+import enInquiries from "./messages/en/Inquiries.json";
 import enItTickets from "./messages/en/ItTickets.json";
 import enNav from "./messages/en/Nav.json";
 import enNotFound from "./messages/en/NotFound.json";
@@ -169,6 +171,7 @@ const messagesByLocale = {
     FeatureFlags: enFeatureFlags,
     Suggestions: enSuggestions,
     ItTickets: enItTickets,
+    Inquiries: enInquiries,
     SalesCockpit: enSalesCockpit,
     SalesCoachEv: enSalesCoachEv,
     StepUp: enStepUp,
@@ -224,6 +227,7 @@ const messagesByLocale = {
     FeatureFlags: deFeatureFlags,
     Suggestions: deSuggestions,
     ItTickets: deItTickets,
+    Inquiries: deInquiries,
     SalesCockpit: deSalesCockpit,
     SalesCoachEv: deSalesCoachEv,
     StepUp: deStepUp,
