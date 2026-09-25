@@ -257,8 +257,7 @@
     "submissionBanner": {
       "title": "表单暂时不可用",
       "defaultMessage": "联系表单当前暂时无法处理。",
-      "notifyCta": "表单恢复时通知我",
-      "dismiss": "关闭提示"
+      "notifyCta": "表单恢复时通知我"
     },
     "notify": {
       "close": "关闭",
@@ -719,7 +718,8 @@
         "sent": "已发送",
         "failed": "需要处理"
       }
-    }
+    },
+    "backToSite": "返回网站"
   },
   "services": {
     "title": "助力您销售成功的一切",

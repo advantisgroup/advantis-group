@@ -263,8 +263,7 @@
     "submissionBanner": {
       "title": "Formulaires temporairement indisponibles",
       "defaultMessage": "Les formulaires de contact ne sont pas traités pour le moment.",
-      "notifyCta": "M'avertir quand les formulaires reviennent",
-      "dismiss": "Fermer l'avertissement"
+      "notifyCta": "M'avertir quand les formulaires reviennent"
     },
     "notify": {
       "close": "Fermer",
@@ -725,7 +724,8 @@
         "sent": "Envoyé",
         "failed": "À vérifier"
       }
-    }
+    },
+    "backToSite": "Retour au site"
   },
   "services": {
     "title": "Tout pour Votre Réussite Commerciale",

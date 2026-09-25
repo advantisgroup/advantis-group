@@ -263,8 +263,7 @@
     "submissionBanner": {
       "title": "Formulare vorübergehend nicht verfügbar",
       "defaultMessage": "Kontaktformulare werden derzeit nicht verarbeitet.",
-      "notifyCta": "Benachrichtigen, wenn Formulare wieder live sind",
-      "dismiss": "Hinweis schließen"
+      "notifyCta": "Benachrichtigen, wenn Formulare wieder live sind"
     },
     "notify": {
       "close": "Schließen",
@@ -725,7 +724,8 @@
         "sent": "Gesendet",
         "failed": "Benötigt Aufmerksamkeit"
       }
-    }
+    },
+    "backToSite": "Zurück zur Website"
   },
   "services": {
     "title": "Alles für Deinen Vertriebserfolg",

@@ -2,19 +2,23 @@
 
 import type { ReactNode } from "react";
 
-import Image from "next/image";
-
+import { ArrowLeft } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Logo } from "@/components/brand/Logo";
 import { Display } from "@/components/frame";
+import { LANGUAGES, useSwitchLocale } from "@/components/layout/SettingsMenu";
 import { Link } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
 
 /**
  * Marketing's take on the intranet's two-panel AuthShell
  * (apps/intranet/src/components/layout/AuthShell.tsx): same visual
  * structure, but customer-facing copy that never mentions the intranet, and
  * localized across all four marketing locales.
+ *
+ * The site's header and footer are hidden here, so this shell carries the
+ * way home and the language switch itself — otherwise the page is a dead end.
  */
 export function AuthShell({
   title,
@@ -28,6 +32,7 @@ export function AuthShell({
   const locale = useLocale();
   const t = useTranslations("auth");
   const tNav = useTranslations("nav");
+  const switchLocale = useSwitchLocale();
   const highlights = t.raw("authShellHighlights") as string[];
 
   return (
@@ -39,14 +44,9 @@ export function AuthShell({
        * Inverted ink, the real lockup, and the three things we actually claim.
        */}
       <div className="hidden bg-foreground text-background lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <Image
-          src="/logos/advantis-group-lockup-white.svg"
-          alt="ADVANTIS GROUP"
-          width={199}
-          height={20}
-          priority
-          className="h-5 w-auto"
-        />
+        <Link href="/" locale={locale} aria-label="ADVANTIS GROUP" className="self-start">
+          <Logo inverse height={20} alt="" />
+        </Link>
 
         <div className="max-w-md">
           <Display as="h1" size="lg">
@@ -62,7 +62,9 @@ export function AuthShell({
           </ul>
         </div>
 
-        <div className="text-xs text-background/50">© {new Date().getFullYear()} advantis GmbH</div>
+        <div className="text-xs text-background/70">
+          © {new Date().getFullYear()} ADVANTIS GROUP.
+        </div>
       </div>
 
       {/* Form panel */}
@@ -71,13 +73,40 @@ export function AuthShell({
           <Logo height={20} />
         </Link>
         {children}
-        <div className="mt-8 flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+          <Link
+            href="/"
+            locale={locale}
+            className="inline-flex items-center gap-1 hover:text-foreground"
+          >
+            <ArrowLeft aria-hidden className="size-3" />
+            {t("backToSite")}
+          </Link>
           <Link href="/privacy" locale={locale} className="hover:text-foreground">
             {tNav("privacy")}
           </Link>
           <Link href="/imprint" locale={locale} className="hover:text-foreground">
             {tNav("imprint")}
           </Link>
+          <span aria-hidden className="h-3 w-px bg-rule-strong" />
+          <nav aria-label={tNav("settingsMenu.language")} className="flex items-center gap-2">
+            {LANGUAGES.map((language) => (
+              <button
+                key={language.code}
+                type="button"
+                lang={language.code}
+                title={language.name}
+                aria-current={language.code === locale ? "true" : undefined}
+                onClick={() => switchLocale(language.code)}
+                className={cn(
+                  "hover:text-foreground",
+                  language.code === locale && "font-medium text-foreground",
+                )}
+              >
+                {language.code === "zh" ? language.name : language.code.toUpperCase()}
+              </button>
+            ))}
+          </nav>
         </div>
       </div>
     </div>

@@ -260,8 +260,7 @@
     "submissionBanner": {
       "title": "Forms temporarily unavailable",
       "defaultMessage": "Contact forms are not being processed at this time.",
-      "notifyCta": "Get notified when forms go live",
-      "dismiss": "Dismiss notice"
+      "notifyCta": "Get notified when forms go live"
     },
     "notify": {
       "close": "Close",
@@ -722,7 +721,8 @@
         "sent": "Sent",
         "failed": "Needs attention"
       }
-    }
+    },
+    "backToSite": "Back to site"
   },
   "services": {
     "title": "Everything for Your Sales Success",
