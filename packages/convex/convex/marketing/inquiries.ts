@@ -421,6 +421,50 @@ export const addCustomerMessage = serverMutation({
   },
 });
 
+/**
+ * A customer answering one of our mails from their mail client (apps/api
+ * /webhooks/resend, after checking the signed reply address). Only accepted
+ * from an address the inquiry already knows, so a forwarded mail can't post
+ * into someone else's thread.
+ */
+export const apiAddInboundReply = serverMutation({
+  args: { inquiryId: v.string(), from: v.string(), body: v.string() },
+  handler: async (ctx, { inquiryId, from, body }) => {
+    const id = ctx.db.normalizeId("emails", inquiryId);
+    const row = id ? await ctx.db.get(id) : null;
+    const sender = /<([^>]+)>/.exec(from)?.[1] ?? from;
+    const known = [row?.email, row?.accountEmail].filter(Boolean);
+    if (!row || !known.includes(sender.trim().toLowerCase()) || !body.trim()) {
+      return { accepted: false };
+    }
+    const now = Date.now();
+    await ctx.db.insert("inquiryMessages", {
+      inquiryId: row._id,
+      author: "customer",
+      body: body.trim().slice(0, 5000),
+      via: "email",
+      createdAt: now,
+    });
+    const reopened = row.state === "answered" || row.state === "closed";
+    await ctx.db.patch(row._id, {
+      lastActivityAt: now,
+      state: reopened ? "in_progress" : row.state,
+    });
+    await ctx.db.insert("inquiryEvents", {
+      inquiryId: row._id,
+      type: "customer_reply",
+      state: reopened ? "in_progress" : undefined,
+      actor: "customer",
+      at: now,
+    });
+    await notifyTeam(ctx, row, {
+      title: `${personName(row)} replied on ${referenceFor(row)}`,
+      body: body.trim().slice(0, 120),
+    });
+    return { accepted: true };
+  },
+});
+
 export const generateUploadUrl = serverMutation({
   args: {},
   handler: async (ctx) => await ctx.storage.generateUploadUrl(),

@@ -93,6 +93,12 @@ export const clerkWebhookRoute = new Elysia().post("/webhooks/clerk", async ({ r
         serverKey,
         clerkUserId: user.id,
       });
+      // deleted from outside the website's account page: the team keeps the
+      // correspondence, but it's no longer tied to a login that doesn't exist
+      await convex.mutation(api.marketing.inquiries.detachAccount, {
+        serverKey,
+        clerkUserId: user.id,
+      });
     } else if (event.type === "email.created") {
       const email = event.data as ClerkEmailData;
       // Already delivered by Clerk — nothing to do. Shouldn't happen once a

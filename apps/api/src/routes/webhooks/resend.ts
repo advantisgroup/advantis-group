@@ -5,6 +5,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 
 import { getConvex, getConvexServerKey } from "../../lib/convex.js";
+import { inquiryFromReplyAddress, receivedText, stripQuoted } from "../../lib/inquiry-mail.js";
 import { withWebhookHealth } from "../../lib/webhook-health.js";
 import { Errors } from "../../lib/errors.js";
 
@@ -14,7 +15,9 @@ interface ResendTag {
 }
 interface ResendEventData {
   email_id?: string;
-  tags?: ResendTag[];
+  to?: string[];
+  tags?: ResendTag[] | Record<string, string>;
+  bounce?: { type?: string };
 }
 interface ResendEvent {
   type: string;
@@ -32,15 +35,20 @@ const TRACKED_EVENT_TYPES = new Set([
   "email.delivery_delayed",
 ]);
 
-function tagValue(tags: ResendTag[] | undefined, name: string): string | undefined {
-  return tags?.find((t) => t.name === name)?.value;
+// Resend has sent tags both as an array of pairs and as a plain object
+function tagValue(tags: ResendEventData["tags"], name: string): string | undefined {
+  if (!tags) return undefined;
+  if (Array.isArray(tags)) return tags.find((t) => t.name === name)?.value;
+  return tags[name];
 }
 
 /**
- * POST /webhooks/resend — svix-verified Resend delivery/open/click events for
- * Updates email broadcasts (see internal/updates.ts + updateEmailRecipients
- * in Convex). Same verification shape as webhooks/clerk.ts — Resend signs
- * webhooks with Svix too.
+ * POST /webhooks/resend — svix-verified Resend events. Three kinds of mail
+ * report back here: Updates broadcasts (delivery/open/click, see
+ * internal/updates.ts), the two mails a website inquiry sends (tagged
+ * `inquiry_id` + `mail`, so its delivery track can show "delivered" or
+ * "bounced"), and — when an inbound domain is set up — customers replying to
+ * an inquiry mail, which land in that inquiry's thread.
  */
 export const resendWebhookRoute = new Elysia().post(
   "/webhooks/resend",
@@ -63,7 +71,40 @@ export const resendWebhookRoute = new Elysia().post(
       return { ok: false, error: "invalid signature" };
     }
 
+    const occurredAt = event.created_at ? Date.parse(event.created_at) : Date.now();
+
+    if (event.type === "email.received") {
+      const inquiryId = (event.data.to ?? []).map(inquiryFromReplyAddress).find(Boolean);
+      if (!inquiryId || !event.data.email_id) return { ok: true };
+      const received = await receivedText(event.data.email_id);
+      await withWebhookHealth("resend", () =>
+        getConvex().mutation(api.marketing.inquiries.apiAddInboundReply, {
+          serverKey: getConvexServerKey(),
+          inquiryId,
+          from: received.from,
+          body: stripQuoted(received.text),
+        }),
+      );
+      return { ok: true };
+    }
+
     if (!TRACKED_EVENT_TYPES.has(event.type)) return { ok: true };
+
+    const inquiryId = tagValue(event.data.tags, "inquiry_id");
+    const mail = tagValue(event.data.tags, "mail");
+    if (inquiryId && (mail === "team" || mail === "receipt")) {
+      await withWebhookHealth("resend", () =>
+        getConvex().mutation(api.marketing.inquiries.apiRecordMailEvent, {
+          serverKey: getConvexServerKey(),
+          inquiryId,
+          mail,
+          eventType: event.type,
+          bounceType: event.data.bounce?.type,
+          occurredAt,
+        }),
+      );
+      return { ok: true };
+    }
 
     const updateId = tagValue(event.data.tags, "update_id");
     const userId = tagValue(event.data.tags, "user_id");
@@ -76,7 +117,7 @@ export const resendWebhookRoute = new Elysia().post(
         updateId: updateId as Id<"updates"> | undefined,
         userId: userId as Id<"users"> | undefined,
         eventType: event.type,
-        occurredAt: event.created_at ? Date.parse(event.created_at) : Date.now(),
+        occurredAt,
       }),
     );
 
