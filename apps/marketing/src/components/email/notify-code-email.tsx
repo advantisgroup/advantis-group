@@ -5,6 +5,8 @@ import enMessages from "@/i18n/messages/en.json";
 import frMessages from "@/i18n/messages/fr.json";
 import zhMessages from "@/i18n/messages/zh.json";
 
+import { mail, mailStyles as s } from "./theme";
+
 const localeMessages: Record<string, typeof deMessages> = {
   de: deMessages,
   en: enMessages,
@@ -28,17 +30,18 @@ export function NotifyCodeEmail({
   const t = notifyCodeCopy(locale);
 
   return (
-    <div style={main}>
-      <div style={container}>
-        <h1 style={heading}>{action === "subscribe" ? t.subscribeTitle : t.unsubscribeTitle}</h1>
-        <p style={bodyText}>{action === "subscribe" ? t.subscribeBody : t.unsubscribeBody}</p>
+    <div style={s.body}>
+      <div style={s.container}>
+        <p style={s.brand}>ADVANTIS GROUP</p>
+        <h1 style={s.heading}>{action === "subscribe" ? t.subscribeTitle : t.unsubscribeTitle}</h1>
+        <p style={s.text}>{action === "subscribe" ? t.subscribeBody : t.unsubscribeBody}</p>
         <p style={codeStyle}>{code}</p>
-        <p style={mutedText}>{t.expiry}</p>
-        <div style={divider} />
-        <p style={mutedText}>{t.disclaimer}</p>
-        <p style={footer}>
+        <p style={s.muted}>{t.expiry}</p>
+        <div style={s.rule} />
+        <p style={s.muted}>{t.disclaimer}</p>
+        <p style={s.footer}>
           ADVANTIS GROUP ·{" "}
-          <a href="https://advantisgroup.de" style={link}>
+          <a href="https://advantisgroup.de" style={s.link}>
             advantisgroup.de
           </a>
         </p>
@@ -47,71 +50,16 @@ export function NotifyCodeEmail({
   );
 }
 
-/* ── Inline styles (required for email clients) ── */
-
-const main: React.CSSProperties = {
-  backgroundColor: "#f6f9fc",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-  padding: "40px 0",
-};
-
-const container: React.CSSProperties = {
-  backgroundColor: "#ffffff",
-  border: "1px solid #f0f0f0",
-  borderRadius: "10px",
-  margin: "0 auto",
-  maxWidth: "480px",
-  padding: "36px 30px",
-};
-
-const heading: React.CSSProperties = {
-  color: "#1a1a1a",
-  fontSize: "22px",
-  fontWeight: "600",
-  lineHeight: "1.3",
-  margin: "0 0 12px",
-};
-
-const bodyText: React.CSSProperties = {
-  color: "#374151",
-  fontSize: "15px",
-  lineHeight: "1.6",
-  margin: "0 0 24px",
-};
-
 const codeStyle: React.CSSProperties = {
-  backgroundColor: "#f6f6f4",
+  backgroundColor: mail.card,
+  border: `1px solid ${mail.rule}`,
   borderRadius: "8px",
-  color: "#111827",
+  color: mail.ink,
   fontFamily: '"SFMono-Regular",Menlo,Consolas,monospace',
   fontSize: "32px",
-  fontWeight: "600",
+  fontWeight: 600,
   letterSpacing: "8px",
-  margin: "0 0 20px",
+  margin: "8px 0 20px",
   padding: "16px 0",
   textAlign: "center",
-};
-
-const mutedText: React.CSSProperties = {
-  color: "#6b7280",
-  fontSize: "13px",
-  lineHeight: "1.5",
-  margin: "0 0 16px",
-};
-
-const divider: React.CSSProperties = {
-  borderTop: "1px solid #eaeaea",
-  margin: "8px 0 20px",
-};
-
-const footer: React.CSSProperties = {
-  color: "#999999",
-  fontSize: "12px",
-  margin: "0",
-};
-
-const link: React.CSSProperties = {
-  color: "#DE5618",
-  textDecoration: "none",
 };

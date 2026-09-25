@@ -1,5 +1,6 @@
 "use client";
 
+import { useUser } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
 
 import { Display } from "@/components/frame";
@@ -16,6 +17,7 @@ import { Link } from "@/i18n/navigation";
  */
 export const HomeCTA = () => {
   const t = useTranslations("cta");
+  const { isSignedIn } = useUser();
 
   // Every locale writes this line as bullet-separated items; split it so the
   // three promises sit in a row rather than in one run-on line of grey text.
@@ -53,6 +55,22 @@ export const HomeCTA = () => {
               <Link href={`mailto:${process.env.NEXT_PUBLIC_EMAIL_ADRESS}`}>{t("secondary")}</Link>
             </Button>
           </div>
+
+          {/* someone who has written before is more likely looking for the answer than a new form */}
+          {isSignedIn ? (
+            <p className="mt-6 text-sm text-background/70">
+              {t.rich("returning", {
+                link: (chunks) => (
+                  <Link
+                    href="/account/submissions"
+                    className="text-background underline underline-offset-4 hover:no-underline"
+                  >
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </p>
+          ) : null}
         </div>
 
         <ul className="mx-auto mt-16 grid max-w-3xl gap-y-3 text-center sm:grid-cols-3 md:mt-24">

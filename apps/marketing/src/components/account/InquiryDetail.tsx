@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Display } from "@/components/frame";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
+import { useTrackEvent, useTrackOnce } from "@/lib/analytics";
 import { api } from "@/lib/eden";
 import type { InquiryDetail as InquiryDetailData } from "@/lib/inquiries-server";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ const TITLE_MAX = 90;
  * can do about it (send again, withdraw, reply, add the callback to a calendar).
  */
 export function InquiryDetail({ detail }: { detail: Detail }) {
+  useTrackOnce("Account - Inquiry Opened", `inquiry:${detail.inquiry._id}`);
   const t = useTranslations("account.inquiries");
   const format = useInquiryFormat();
   const { inquiry } = detail;
@@ -311,6 +313,7 @@ function Delivery({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
 
 function TeamNote({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
   const t = useTranslations("account.inquiries.delivery");
+  const trackEvent = useTrackEvent();
   const router = useRouter();
   const [sending, setSending] = useState(false);
   const { delivery } = inquiry;
@@ -326,6 +329,7 @@ function TeamNote({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
 
   const sendAgain = async () => {
     setSending(true);
+    trackEvent("Account - Inquiry Sent Again");
     const { data, error } = await api.submissions({ id: inquiry._id }).retry.post();
     setSending(false);
     if (error || !data || !("status" in data) || data.status === "failed") {

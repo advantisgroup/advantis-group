@@ -2,10 +2,13 @@
 
 import { useMemo } from "react";
 
+import { INQUIRY_RETENTION_YEARS } from "@advantis/convex/marketing/inquiry";
 import { useTranslations } from "next-intl";
 
 import { LegalLayout } from "@/components/legal/LegalLayout";
 import { COMPANY_ADDRESS } from "@/lib/company";
+
+const PROCESSORS = ["vercel", "clerk", "convex", "resend", "upstash"] as const;
 
 export default function Datenschutz() {
   const t = useTranslations("privacy");
@@ -77,6 +80,48 @@ export default function Datenschutz() {
           <div className="prose prose-base max-w-none space-y-4">
             <p className="text-foreground/80 leading-relaxed">{t("sections.contact.content1")}</p>
             <p className="text-foreground/80 leading-relaxed">{t("sections.contact.content2")}</p>
+            <p className="text-foreground/80 leading-relaxed">
+              {t("sections.contact.content3", { years: INQUIRY_RETENTION_YEARS })}
+            </p>
+          </div>
+        ),
+      },
+      {
+        id: "account",
+        title: t("sections.account.title"),
+        content: (
+          <div className="prose prose-base max-w-none space-y-4">
+            <p className="text-foreground/80 leading-relaxed">{t("sections.account.content1")}</p>
+            <p className="text-foreground/80 leading-relaxed">{t("sections.account.content2")}</p>
+            <p className="text-foreground/80 leading-relaxed">{t("sections.account.content3")}</p>
+          </div>
+        ),
+      },
+      {
+        id: "whitepaper",
+        title: t("sections.whitepaper.title"),
+        content: (
+          <div className="prose prose-base max-w-none space-y-4">
+            <p className="text-foreground/80 leading-relaxed">
+              {t("sections.whitepaper.content1")}
+            </p>
+            <p className="text-foreground/80 leading-relaxed">
+              {t("sections.whitepaper.content2")}
+            </p>
+          </div>
+        ),
+      },
+      {
+        id: "processors",
+        title: t("sections.processors.title"),
+        content: (
+          <div className="prose prose-base max-w-none space-y-4">
+            <p className="text-foreground/80 leading-relaxed">{t("sections.processors.intro")}</p>
+            <ul className="list-disc list-inside space-y-2 text-foreground/80">
+              {PROCESSORS.map((key) => (
+                <li key={key}>{t(`sections.processors.items.${key}`)}</li>
+              ))}
+            </ul>
           </div>
         ),
       },

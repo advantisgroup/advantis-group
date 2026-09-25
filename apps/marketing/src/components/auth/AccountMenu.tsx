@@ -19,7 +19,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
 import { Link, usePathname } from "@/i18n/navigation";
+import { useTrackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+
+// long enough to cover a Google round-trip, short enough that a returning tab isn't a "sign-in"
+const FRESH_SESSION_MS = 2 * 60 * 1000;
 
 const getInitials = (fullName: string, email?: string | null) => {
   const source = fullName.trim() || email?.trim() || "Guest";
@@ -60,6 +64,22 @@ export const AccountMenu = ({
   const tAccount = useTranslations("account.nav");
   const { signOut } = useClerk();
   const { user, isSignedIn, isLoaded } = useUser();
+  const trackEvent = useTrackEvent();
+  // a session that just started (sign-in or sign-up) is counted once, keyed by when it started
+  const signedInAt = user?.lastSignInAt?.getTime();
+  const createdAt = user?.createdAt?.getTime();
+  useEffect(() => {
+    if (signedInAt === undefined || Date.now() - signedInAt > FRESH_SESSION_MS) return;
+    const flag = `analytics_once:session:${signedInAt}`;
+    try {
+      if (sessionStorage.getItem(flag)) return;
+      sessionStorage.setItem(flag, "1");
+    } catch {
+      return;
+    }
+    const isNew = createdAt !== undefined && Date.now() - createdAt < FRESH_SESSION_MS;
+    trackEvent(isNew ? "Account - Signed Up" : "Account - Signed In");
+  }, [signedInAt, createdAt, trackEvent]);
   const intranetUrl = useCompanyIntranetUrl();
   const pathname = usePathname();
   // read after mount so the header needn't opt into useSearchParams (and Suspense)

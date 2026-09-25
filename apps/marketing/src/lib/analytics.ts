@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useMutation } from "convex/react";
@@ -52,4 +52,24 @@ export function useTrackEvent() {
     },
     [recordEvent, locale],
   );
+}
+
+/**
+ * `name` once per browser session under `key` (defaults to the name) — for
+ * "opened" events that would otherwise count every re-render or revisit.
+ * Also safe when the same component mounts twice (desktop + mobile header).
+ */
+export function useTrackOnce(name: string, key: string | null = name) {
+  const trackEvent = useTrackEvent();
+  useEffect(() => {
+    if (!key) return;
+    const flag = `analytics_once:${key}`;
+    try {
+      if (sessionStorage.getItem(flag)) return;
+      sessionStorage.setItem(flag, "1");
+    } catch {
+      // storage blocked: better to count it than to never count it
+    }
+    trackEvent(name);
+  }, [name, key, trackEvent]);
 }

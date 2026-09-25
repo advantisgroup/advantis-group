@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { usePathname } from "next/navigation";
 
+import { useUser } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
 
 import { Logo } from "@/components/brand/Logo";
@@ -99,6 +100,7 @@ export const Footer = () => {
   const footerRef = useRef<HTMLElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const intranetUrl = useCompanyIntranetUrl();
+  const { isSignedIn } = useUser();
 
   useEffect(() => {
     const onScroll = () => {
@@ -151,6 +153,7 @@ export const Footer = () => {
             <Row href="/blog">{t("nav.blog")}</Row>
             <Row href="/whitepaper">{t("nav.whitepaper")}</Row>
             <Row href="/contact">{t("nav.contact")}</Row>
+            {isSignedIn ? <Row href="/account/submissions">{t("auth.submissionsCta")}</Row> : null}
             {intranetUrl ? <Row href={intranetUrl}>{t("nav.intranet")}</Row> : null}
           </Column>
 

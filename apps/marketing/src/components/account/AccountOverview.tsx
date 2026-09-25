@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { Display } from "@/components/frame";
 import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
 import { Link } from "@/i18n/navigation";
+import { useTrackOnce } from "@/lib/analytics";
 import type { InquiryList } from "@/lib/inquiries-server";
 
 import { AccountSectionList } from "./AccountNav";
@@ -27,6 +28,7 @@ const greetingKey = (hour: number) =>
  * last, and the three things people come here to do.
  */
 export function AccountOverview({ data }: { data: InquiryList | null }) {
+  useTrackOnce("Account - Opened");
   const t = useTranslations("account.overview");
   const format = useInquiryFormat();
   const { user } = useUser();
