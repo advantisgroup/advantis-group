@@ -33,6 +33,8 @@ export const limits = {
   inquiryWrite: limiter(30, "1 h", "inquiry-write"),
   /** attachment upload slots, per account */
   inquiryUpload: limiter(20, "1 h", "inquiry-upload"),
+  /** "download my data", per account */
+  accountExport: limiter(10, "1 h", "account-export"),
   /** reschedule/cancel links from the callback mail, per IP */
   callbackToken: limiter(20, "1 h", "callback-token"),
 };

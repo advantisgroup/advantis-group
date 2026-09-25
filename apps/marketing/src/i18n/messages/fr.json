@@ -665,7 +665,7 @@
     "signIn": "Se connecter",
     "signUp": "Créer un compte",
     "signedIn": "Connecté avec Clerk",
-    "accountCta": "Gérer le compte",
+    "accountCta": "Profil et sécurité",
     "signOut": "Se déconnecter",
     "signInTitle": "Bon retour chez ADVANTIS GROUP",
     "signInSubtitle": "Connectez-vous avec Clerk pour gérer votre profil, vos paramètres de sécurité et les futures expériences protégées depuis un seul endroit.",
@@ -675,9 +675,10 @@
     "accountTitle": "Votre compte",
     "accountSubtitle": "Gérez votre profil, vos paramètres de sécurité et vos sessions actives dans le centre de compte hébergé de Clerk.",
     "signInRequired": "Veuillez vous connecter pour accéder à vos paramètres de compte.",
-    "submissionsCta": "Voir les demandes",
+    "submissionsCta": "Vos demandes",
     "contactCta": "Envoyer une nouvelle demande",
-    "backToSite": "Retour au site"
+    "backToSite": "Retour au site",
+    "yourAccount": "Votre compte"
   },
   "services": {
     "title": "Tout pour Votre Réussite Commerciale",
@@ -1555,6 +1556,115 @@
         "topic": "Sujet",
         "callbackTime": "Horaire souhaité"
       }
+    },
+    "profile": {
+      "title": "Profil",
+      "securityTitle": "Sécurité",
+      "details": {
+        "title": "Informations professionnelles",
+        "hint": "Nous les remplissons pour vous dans les formulaires de contact et de livre blanc.",
+        "company": "Entreprise",
+        "phone": "Téléphone",
+        "role": "Fonction",
+        "saved": "Enregistré",
+        "failed": "L'enregistrement a échoué. Réessayez."
+      },
+      "staffSecurity": {
+        "title": "Géré dans l'intranet",
+        "body": "Vos méthodes de connexion, passkeys et paramètres de double authentification relèvent de votre compte professionnel ADVANTIS.",
+        "cta": "Ouvrir les paramètres de l'intranet"
+      }
+    },
+    "preferences": {
+      "title": "Préférences",
+      "site": "Langue et apparence",
+      "mail": "E-mail",
+      "copies": {
+        "label": "Recevoir une copie de chaque demande",
+        "description": "Un accusé de réception avec la référence et ce que vous avez envoyé, dans la langue de votre message.",
+        "on": "Vous recevrez une copie de chaque demande.",
+        "off": "Plus de copies. Vos demandes restent visibles ici."
+      },
+      "notify": {
+        "label": "Me prévenir quand les formulaires rouvrent",
+        "description": "Un seul e-mail à {email}, puis vous êtes retiré de la liste."
+      },
+      "failed": "L'enregistrement a échoué. Réessayez."
+    },
+    "downloads": {
+      "title": "Téléchargements",
+      "whitepaper": "Livre blanc : les outils IA dans la vente",
+      "pdfFor": "PDF · demandé pour {email}",
+      "download": "Télécharger",
+      "get": "Obtenir le livre blanc",
+      "empty": "Rien à télécharger pour l'instant.",
+      "viaAccount": "Confirmé par votre compte",
+      "steps": {
+        "requested": "Demandé",
+        "confirmed": "Confirmé",
+        "sent": "Envoyé"
+      },
+      "pending": {
+        "title": "En attente de votre confirmation",
+        "body": "Nous avons envoyé un lien de confirmation à {email}. Ouvrez-le et le PDF suivra."
+      },
+      "expired": {
+        "title": "Le lien de confirmation a expiré",
+        "body": "Refaites la demande et utilisez le nouveau lien sous deux jours.",
+        "cta": "Refaire la demande"
+      },
+      "failed": {
+        "title": "L'e-mail avec le PDF n'est pas parti",
+        "body": "Téléchargez-le ici à la place."
+      }
+    },
+    "privacy": {
+      "title": "Confidentialité et données",
+      "summary": {
+        "keep": "Nous conservons vos demandes et nos réponses, votre demande de livre blanc, et si vous souhaitez être prévenu de la réouverture des formulaires.",
+        "howLong": "Les demandes sont anonymisées {years} ans après la dernière activité.",
+        "control": "Vous pouvez en récupérer une copie ou tout supprimer ci-dessous."
+      },
+      "policy": "Lire la politique de confidentialité complète",
+      "yourData": "Vos données",
+      "export": {
+        "label": "Télécharger vos données",
+        "description": "Tout ce que nous détenons sur ce compte, dans un seul fichier JSON.",
+        "cta": "Télécharger"
+      },
+      "history": {
+        "label": "Supprimer l'historique des demandes",
+        "description": "Retire vos demandes et nos réponses de ce compte. Les e-mails déjà dans notre boîte y restent.",
+        "cta": "Supprimer l'historique",
+        "confirm": "Supprimer définitivement",
+        "cancel": "Annuler",
+        "done": "Historique des demandes supprimé.",
+        "failed": "Cela n'a pas fonctionné. Réessayez."
+      },
+      "consents": {
+        "title": "Ce que vous avez accepté",
+        "whitepaper": "Contact au sujet du livre blanc",
+        "whitepaperDetail": "{email} · accepté le {date} ({version})",
+        "withdraw": "Retirer",
+        "withdrawn": "Retiré. Nous avons prévenu l'équipe.",
+        "notify": "E-mail de réouverture des formulaires",
+        "notifyDetail": "{email}",
+        "manage": "Gérer"
+      },
+      "account": "Compte",
+      "delete": {
+        "label": "Supprimer le compte",
+        "description": "Supprime votre compte et tout ce que ce site détient sur vous. C'est irréversible.",
+        "cta": "Supprimer le compte",
+        "typeEmail": "Saisissez {email} pour confirmer",
+        "kept": "Les copies de vos messages déjà arrivées dans notre boîte sont conservées comme l'exigent nos obligations d'archivage.",
+        "confirm": "Supprimer mon compte",
+        "cancel": "Annuler",
+        "done": "Votre compte a été supprimé.",
+        "failed": "Cela n'a pas fonctionné. Réessayez.",
+        "staff": "C'est votre compte professionnel ADVANTIS, il est donc géré par votre administrateur."
+      },
+      "failed": "Cela n'a pas fonctionné. Réessayez."
     }
   }
 }

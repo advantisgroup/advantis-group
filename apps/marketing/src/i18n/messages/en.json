@@ -662,7 +662,7 @@
     "signIn": "Sign in",
     "signUp": "Create account",
     "signedIn": "Signed in with Clerk",
-    "accountCta": "Manage account",
+    "accountCta": "Profile & security",
     "signOut": "Sign out",
     "signInTitle": "Welcome back to ADVANTIS GROUP",
     "signInSubtitle": "Sign in with Clerk to manage your profile, security settings, and future protected experiences from one place.",
@@ -672,9 +672,10 @@
     "accountTitle": "Your account",
     "accountSubtitle": "Manage your profile, security settings, and active sessions in Clerk’s hosted account center.",
     "signInRequired": "Please sign in first to access your account settings.",
-    "submissionsCta": "View submissions",
+    "submissionsCta": "Your inquiries",
     "contactCta": "Send a new inquiry",
-    "backToSite": "Back to site"
+    "backToSite": "Back to site",
+    "yourAccount": "Your account"
   },
   "services": {
     "title": "Everything for Your Sales Success",
@@ -1552,6 +1553,115 @@
         "topic": "Topic",
         "callbackTime": "Requested time"
       }
+    },
+    "profile": {
+      "title": "Profile",
+      "securityTitle": "Security",
+      "details": {
+        "title": "Business details",
+        "hint": "Filled into the contact and whitepaper forms for you.",
+        "company": "Company",
+        "phone": "Phone",
+        "role": "Role",
+        "saved": "Saved",
+        "failed": "That didn't save. Try again."
+      },
+      "staffSecurity": {
+        "title": "Managed in the intranet",
+        "body": "Your sign-in methods, passkeys and two-factor settings belong to your ADVANTIS work account.",
+        "cta": "Open intranet settings"
+      }
+    },
+    "preferences": {
+      "title": "Preferences",
+      "site": "Language and appearance",
+      "mail": "Email",
+      "copies": {
+        "label": "Email me a copy of each inquiry",
+        "description": "A receipt with the reference and what you sent, in the language you wrote in.",
+        "on": "You'll get a copy of each inquiry.",
+        "off": "No more copies. Your inquiries still show up here."
+      },
+      "notify": {
+        "label": "Tell me when the contact forms reopen",
+        "description": "One email to {email}, then you're off the list."
+      },
+      "failed": "That didn't save. Try again."
+    },
+    "downloads": {
+      "title": "Downloads",
+      "whitepaper": "Whitepaper: AI tools in sales",
+      "pdfFor": "PDF · requested for {email}",
+      "download": "Download",
+      "get": "Get the whitepaper",
+      "empty": "Nothing to download yet.",
+      "viaAccount": "Confirmed by your account",
+      "steps": {
+        "requested": "Requested",
+        "confirmed": "Confirmed",
+        "sent": "Sent"
+      },
+      "pending": {
+        "title": "Waiting for you to confirm",
+        "body": "We sent a confirmation link to {email}. Open it and the PDF follows."
+      },
+      "expired": {
+        "title": "The confirmation link expired",
+        "body": "Request it again and use the new link within two days.",
+        "cta": "Request again"
+      },
+      "failed": {
+        "title": "The email with the PDF didn't go out",
+        "body": "Download it here instead."
+      }
+    },
+    "privacy": {
+      "title": "Privacy & data",
+      "summary": {
+        "keep": "We keep your inquiries and our replies, your whitepaper request, and whether you asked to be told when the forms reopen.",
+        "howLong": "Inquiries are anonymised {years} years after the last activity.",
+        "control": "You can take a copy of all of it, or delete it, below."
+      },
+      "policy": "Read the full privacy policy",
+      "yourData": "Your data",
+      "export": {
+        "label": "Download your data",
+        "description": "Everything we hold on this account, as one JSON file.",
+        "cta": "Download"
+      },
+      "history": {
+        "label": "Delete inquiry history",
+        "description": "Removes your inquiries and our replies from this account. Mails already in our inbox stay there.",
+        "cta": "Delete history",
+        "confirm": "Delete for good",
+        "cancel": "Cancel",
+        "done": "Inquiry history deleted.",
+        "failed": "That didn't work. Try again."
+      },
+      "consents": {
+        "title": "What you agreed to",
+        "whitepaper": "Contact about the whitepaper",
+        "whitepaperDetail": "{email} · agreed {date} ({version})",
+        "withdraw": "Withdraw",
+        "withdrawn": "Withdrawn. We've told the team.",
+        "notify": "Forms-reopened email",
+        "notifyDetail": "{email}",
+        "manage": "Manage"
+      },
+      "account": "Account",
+      "delete": {
+        "label": "Delete account",
+        "description": "Deletes your account and everything this site holds on you. This can't be undone.",
+        "cta": "Delete account",
+        "typeEmail": "Type {email} to confirm",
+        "kept": "Copies of your messages that already reached our inbox are kept as our records require.",
+        "confirm": "Delete my account",
+        "cancel": "Cancel",
+        "done": "Your account has been deleted.",
+        "failed": "That didn't work. Try again.",
+        "staff": "This is your ADVANTIS work account, so it's managed by your administrator."
+      },
+      "failed": "That didn't work. Try again."
     }
   }
 }

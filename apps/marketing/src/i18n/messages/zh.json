@@ -659,7 +659,7 @@
     "signIn": "登录",
     "signUp": "创建账户",
     "signedIn": "已通过 Clerk 登录",
-    "accountCta": "管理账户",
+    "accountCta": "个人资料与安全",
     "signOut": "退出登录",
     "signInTitle": "欢迎回到 ADVANTIS GROUP",
     "signInSubtitle": "使用 Clerk 登录后，你可以在一个地方管理个人资料、安全设置以及未来的受保护体验。",
@@ -669,9 +669,10 @@
     "accountTitle": "你的账户",
     "accountSubtitle": "在 Clerk 托管的账户中心管理你的个人资料、安全设置和活跃会话。",
     "signInRequired": "请先登录后再访问账户设置。",
-    "submissionsCta": "查看提交记录",
+    "submissionsCta": "您的咨询",
     "contactCta": "发送新咨询",
-    "backToSite": "返回网站"
+    "backToSite": "返回网站",
+    "yourAccount": "您的账户"
   },
   "services": {
     "title": "助力您销售成功的一切",
@@ -1549,6 +1550,115 @@
         "topic": "主题",
         "callbackTime": "期望时间"
       }
+    },
+    "profile": {
+      "title": "个人资料",
+      "securityTitle": "安全",
+      "details": {
+        "title": "业务信息",
+        "hint": "我们会在联系表单和白皮书表单中为您自动填写。",
+        "company": "公司",
+        "phone": "电话",
+        "role": "职位",
+        "saved": "已保存",
+        "failed": "保存失败，请重试。"
+      },
+      "staffSecurity": {
+        "title": "在内网中管理",
+        "body": "您的登录方式、通行密钥和双重验证设置属于您的 ADVANTIS 工作账户。",
+        "cta": "打开内网设置"
+      }
+    },
+    "preferences": {
+      "title": "偏好设置",
+      "site": "语言与外观",
+      "mail": "电子邮件",
+      "copies": {
+        "label": "每次咨询都发送副本给我",
+        "description": "一封包含参考编号和您发送内容的回执，使用您撰写时的语言。",
+        "on": "您将收到每条咨询的副本。",
+        "off": "不再发送副本。您的咨询仍会显示在这里。"
+      },
+      "notify": {
+        "label": "联系表单重新开放时通知我",
+        "description": "只会向 {email} 发送一封邮件，之后您将自动退出列表。"
+      },
+      "failed": "保存失败，请重试。"
+    },
+    "downloads": {
+      "title": "下载",
+      "whitepaper": "白皮书：销售中的 AI 工具",
+      "pdfFor": "PDF · 为 {email} 申请",
+      "download": "下载",
+      "get": "获取白皮书",
+      "empty": "暂无可下载的内容。",
+      "viaAccount": "已通过您的账户确认",
+      "steps": {
+        "requested": "已申请",
+        "confirmed": "已确认",
+        "sent": "已发送"
+      },
+      "pending": {
+        "title": "等待您的确认",
+        "body": "我们已向 {email} 发送确认链接。打开链接后即会收到 PDF。"
+      },
+      "expired": {
+        "title": "确认链接已过期",
+        "body": "请重新申请，并在两天内使用新链接。",
+        "cta": "重新申请"
+      },
+      "failed": {
+        "title": "含 PDF 的邮件未能发出",
+        "body": "请在此直接下载。"
+      }
+    },
+    "privacy": {
+      "title": "隐私与数据",
+      "summary": {
+        "keep": "我们会保存您的咨询和我们的回复、您的白皮书申请，以及您是否希望在表单重新开放时收到通知。",
+        "howLong": "咨询会在最后一次活动 {years} 年后匿名化。",
+        "control": "您可以在下方获取全部数据的副本或将其删除。"
+      },
+      "policy": "阅读完整的隐私政策",
+      "yourData": "您的数据",
+      "export": {
+        "label": "下载您的数据",
+        "description": "我们为此账户保存的全部内容，打包为一个 JSON 文件。",
+        "cta": "下载"
+      },
+      "history": {
+        "label": "删除咨询记录",
+        "description": "从此账户中移除您的咨询和我们的回复。已进入我们邮箱的邮件会保留在邮箱中。",
+        "cta": "删除记录",
+        "confirm": "永久删除",
+        "cancel": "取消",
+        "done": "咨询记录已删除。",
+        "failed": "操作未成功，请重试。"
+      },
+      "consents": {
+        "title": "您同意的内容",
+        "whitepaper": "关于白皮书的联系",
+        "whitepaperDetail": "{email} · 于 {date} 同意（{version}）",
+        "withdraw": "撤回",
+        "withdrawn": "已撤回。我们已通知团队。",
+        "notify": "表单重新开放通知",
+        "notifyDetail": "{email}",
+        "manage": "管理"
+      },
+      "account": "账户",
+      "delete": {
+        "label": "删除账户",
+        "description": "删除您的账户以及本网站保存的关于您的所有内容。此操作无法撤销。",
+        "cta": "删除账户",
+        "typeEmail": "输入 {email} 以确认",
+        "kept": "已进入我们邮箱的消息副本将按我们的留存要求保存。",
+        "confirm": "删除我的账户",
+        "cancel": "取消",
+        "done": "您的账户已删除。",
+        "failed": "操作未成功，请重试。",
+        "staff": "这是您的 ADVANTIS 工作账户，由您的管理员管理。"
+      },
+      "failed": "操作未成功，请重试。"
     }
   }
 }

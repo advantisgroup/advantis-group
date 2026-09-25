@@ -665,7 +665,7 @@
     "signIn": "Anmelden",
     "signUp": "Konto erstellen",
     "signedIn": "Mit Clerk angemeldet",
-    "accountCta": "Konto verwalten",
+    "accountCta": "Profil & Sicherheit",
     "signOut": "Abmelden",
     "signInTitle": "Willkommen zurück bei der ADVANTIS GROUP",
     "signInSubtitle": "Melde dich mit Clerk an, um dein Profil, deine Sicherheitseinstellungen und künftige geschützte Bereiche zentral zu verwalten.",
@@ -675,9 +675,10 @@
     "accountTitle": "Dein Konto",
     "accountSubtitle": "Verwalte dein Profil, deine Sicherheitseinstellungen und aktive Sitzungen im gehosteten Account Center von Clerk.",
     "signInRequired": "Bitte melde dich zuerst an, um deine Kontoeinstellungen aufzurufen.",
-    "submissionsCta": "Anfragen ansehen",
+    "submissionsCta": "Deine Anfragen",
     "contactCta": "Neue Anfrage senden",
-    "backToSite": "Zurück zur Website"
+    "backToSite": "Zurück zur Website",
+    "yourAccount": "Dein Konto"
   },
   "services": {
     "title": "Alles für Deinen Vertriebserfolg",
@@ -1555,6 +1556,115 @@
         "topic": "Thema",
         "callbackTime": "Gewünschter Termin"
       }
+    },
+    "profile": {
+      "title": "Profil",
+      "securityTitle": "Sicherheit",
+      "details": {
+        "title": "Geschäftliche Angaben",
+        "hint": "Wir füllen sie in den Kontakt- und Whitepaper-Formularen für dich aus.",
+        "company": "Firma",
+        "phone": "Telefon",
+        "role": "Position",
+        "saved": "Gespeichert",
+        "failed": "Das wurde nicht gespeichert. Versuch es noch einmal."
+      },
+      "staffSecurity": {
+        "title": "Wird im Intranet verwaltet",
+        "body": "Deine Anmeldemethoden, Passkeys und die Zwei-Faktor-Einstellungen gehören zu deinem ADVANTIS-Arbeitskonto.",
+        "cta": "Intranet-Einstellungen öffnen"
+      }
+    },
+    "preferences": {
+      "title": "Einstellungen",
+      "site": "Sprache und Darstellung",
+      "mail": "E-Mail",
+      "copies": {
+        "label": "Kopie jeder Anfrage per E-Mail",
+        "description": "Eine Bestätigung mit Referenz und dem, was du gesendet hast – in der Sprache, in der du geschrieben hast.",
+        "on": "Du bekommst eine Kopie jeder Anfrage.",
+        "off": "Keine Kopien mehr. Deine Anfragen findest du weiterhin hier."
+      },
+      "notify": {
+        "label": "Benachrichtigen, wenn die Kontaktformulare wieder offen sind",
+        "description": "Eine E-Mail an {email}, danach bist du von der Liste."
+      },
+      "failed": "Das wurde nicht gespeichert. Versuch es noch einmal."
+    },
+    "downloads": {
+      "title": "Downloads",
+      "whitepaper": "Whitepaper: KI-Tools im Vertrieb",
+      "pdfFor": "PDF · angefordert für {email}",
+      "download": "Herunterladen",
+      "get": "Whitepaper holen",
+      "empty": "Noch nichts zum Herunterladen.",
+      "viaAccount": "Über dein Konto bestätigt",
+      "steps": {
+        "requested": "Angefordert",
+        "confirmed": "Bestätigt",
+        "sent": "Gesendet"
+      },
+      "pending": {
+        "title": "Wartet auf deine Bestätigung",
+        "body": "Wir haben einen Bestätigungslink an {email} geschickt. Öffne ihn, dann kommt das PDF."
+      },
+      "expired": {
+        "title": "Der Bestätigungslink ist abgelaufen",
+        "body": "Fordere es erneut an und nutze den neuen Link innerhalb von zwei Tagen.",
+        "cta": "Erneut anfordern"
+      },
+      "failed": {
+        "title": "Die E-Mail mit dem PDF ging nicht raus",
+        "body": "Lade es stattdessen hier herunter."
+      }
+    },
+    "privacy": {
+      "title": "Datenschutz & Daten",
+      "summary": {
+        "keep": "Wir speichern deine Anfragen und unsere Antworten, deine Whitepaper-Anforderung und ob du über wieder geöffnete Formulare informiert werden möchtest.",
+        "howLong": "Anfragen werden {years} Jahre nach der letzten Aktivität anonymisiert.",
+        "control": "Unten kannst du eine Kopie von allem herunterladen oder es löschen."
+      },
+      "policy": "Vollständige Datenschutzerklärung lesen",
+      "yourData": "Deine Daten",
+      "export": {
+        "label": "Deine Daten herunterladen",
+        "description": "Alles, was wir zu diesem Konto gespeichert haben, als eine JSON-Datei.",
+        "cta": "Herunterladen"
+      },
+      "history": {
+        "label": "Anfrageverlauf löschen",
+        "description": "Entfernt deine Anfragen und unsere Antworten aus diesem Konto. E-Mails in unserem Postfach bleiben dort.",
+        "cta": "Verlauf löschen",
+        "confirm": "Endgültig löschen",
+        "cancel": "Abbrechen",
+        "done": "Anfrageverlauf gelöscht.",
+        "failed": "Das hat nicht geklappt. Versuch es noch einmal."
+      },
+      "consents": {
+        "title": "Deine Einwilligungen",
+        "whitepaper": "Kontakt zum Whitepaper",
+        "whitepaperDetail": "{email} · zugestimmt am {date} ({version})",
+        "withdraw": "Widerrufen",
+        "withdrawn": "Widerrufen. Wir haben das Team informiert.",
+        "notify": "E-Mail bei wieder geöffneten Formularen",
+        "notifyDetail": "{email}",
+        "manage": "Verwalten"
+      },
+      "account": "Konto",
+      "delete": {
+        "label": "Konto löschen",
+        "description": "Löscht dein Konto und alles, was diese Website über dich gespeichert hat. Das lässt sich nicht rückgängig machen.",
+        "cta": "Konto löschen",
+        "typeEmail": "Gib zur Bestätigung {email} ein",
+        "kept": "Kopien deiner Nachrichten, die bereits in unserem Postfach sind, bewahren wir auf, wie es unsere Aufbewahrungspflichten verlangen.",
+        "confirm": "Mein Konto löschen",
+        "cancel": "Abbrechen",
+        "done": "Dein Konto wurde gelöscht.",
+        "failed": "Das hat nicht geklappt. Versuch es noch einmal.",
+        "staff": "Das ist dein ADVANTIS-Arbeitskonto – es wird von deiner Administration verwaltet."
+      },
+      "failed": "Das hat nicht geklappt. Versuch es noch einmal."
     }
   }
 }

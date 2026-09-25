@@ -159,6 +159,7 @@ import type * as lib_text from "../lib/text.js";
 import type * as lib_trash from "../lib/trash.js";
 import type * as lib_users from "../lib/users.js";
 import type * as lib_validators from "../lib/validators.js";
+import type * as marketing_account from "../marketing/account.js";
 import type * as marketing_analytics from "../marketing/analytics.js";
 import type * as marketing_emails from "../marketing/emails.js";
 import type * as marketing_forms from "../marketing/forms.js";
@@ -446,6 +447,7 @@ declare const fullApi: ApiFromModules<{
   "lib/trash": typeof lib_trash;
   "lib/users": typeof lib_users;
   "lib/validators": typeof lib_validators;
+  "marketing/account": typeof marketing_account;
   "marketing/analytics": typeof marketing_analytics;
   "marketing/emails": typeof marketing_emails;
   "marketing/forms": typeof marketing_forms;

@@ -11,6 +11,8 @@ import { v } from "convex/values";
 export const saveNotifyEmail = serverMutation({
   args: {
     email: v.string(),
+    locale: v.optional(v.string()),
+    clerkUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -25,6 +27,8 @@ export const saveNotifyEmail = serverMutation({
     await ctx.db.insert("notifyEmails", {
       email: args.email,
       createdAt: Date.now(),
+      locale: args.locale,
+      clerkUserId: args.clerkUserId,
     });
 
     return { duplicate: false };
@@ -109,6 +113,7 @@ export const redeemNotifyCode = serverMutation({
     email: v.string(),
     action: notifyAction,
     codeHash: v.string(),
+    locale: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
@@ -140,7 +145,7 @@ export const redeemNotifyCode = serverMutation({
     }
 
     if (existing) return { status: "duplicate" as const };
-    await ctx.db.insert("notifyEmails", { email, createdAt: Date.now() });
+    await ctx.db.insert("notifyEmails", { email, createdAt: Date.now(), locale: args.locale });
     return { status: "subscribed" as const };
   },
 });

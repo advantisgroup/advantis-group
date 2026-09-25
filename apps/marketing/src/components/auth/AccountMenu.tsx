@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { SignOutButton, useClerk, useUser } from "@clerk/nextjs";
-import { Building2, Cookie, LogOut, ReceiptText, Settings2, UserRound } from "lucide-react";
+import { useClerk, useUser } from "@clerk/nextjs";
+import { Building2, Cookie, Home, Inbox, LogOut, UserRound } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
 import { Link, usePathname } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
 
 const getInitials = (fullName: string, email?: string | null) => {
   const source = fullName.trim() || email?.trim() || "Guest";
@@ -30,9 +32,15 @@ const getInitials = (fullName: string, email?: string | null) => {
     .join("");
 };
 
+const ACCOUNT_LINKS = [
+  { href: "/account", key: "yourAccount", icon: Home },
+  { href: "/account/submissions", key: "submissionsCta", icon: Inbox },
+  { href: "/account/profile", key: "accountCta", icon: UserRound },
+] as const;
+
 /**
- * The "you" menu: who you are signed in as, the two things you can do about
- * it, how the site is set up, and the door to the intranet.
+ * The "you" menu: who you are signed in as, the way into your account, how
+ * the site is set up, and the door to the intranet.
  *
  * Everything is one column of equal rows at one padding and one radius. The
  * previous version mixed three radii, put a 4-up grid of flag pills inside a
@@ -49,12 +57,16 @@ export const AccountMenu = ({
   const locale = useLocale();
   const t = useTranslations("auth");
   const tNav = useTranslations("nav");
-  const { openUserProfile } = useClerk();
-  const { user, isSignedIn } = useUser();
+  const tAccount = useTranslations("account.nav");
+  const { signOut } = useClerk();
+  const { user, isSignedIn, isLoaded } = useUser();
   const intranetUrl = useCompanyIntranetUrl();
   const pathname = usePathname();
-  // bring people back to the page they signed in from
-  const returnTo = { redirect_url: `/${locale}${pathname === "/" ? "" : pathname}` };
+  // read after mount so the header needn't opt into useSearchParams (and Suspense)
+  const [search, setSearch] = useState("");
+  useEffect(() => setSearch(window.location.search), [pathname]);
+  // bring people back to the page they signed in from, query and all
+  const returnTo = { redirect_url: `/${locale}${pathname === "/" ? "" : pathname}${search}` };
 
   const displayName = useMemo(() => {
     const nameFromParts = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
@@ -64,15 +76,37 @@ export const AccountMenu = ({
 
   const email = user?.primaryEmailAddress?.emailAddress;
   const initials = getInitials(displayName, email);
+  const current = (href: string) =>
+    href === "/account" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+
+  const leave = async () => {
+    onMobileNavigate?.();
+    await signOut({ redirectUrl: `/${locale}` });
+    toast(tAccount("signedOut"));
+  };
+
+  const avatar = (size: "sm" | "md") => (
+    <Avatar className={size === "sm" ? "size-8" : "size-10"}>
+      {isSignedIn ? <AvatarImage src={user.imageUrl} alt={displayName} /> : null}
+      <AvatarFallback
+        className={cn(
+          "bg-muted font-medium text-muted-foreground",
+          size === "sm" ? "text-[11px]" : "text-sm",
+        )}
+      >
+        {/* nothing until Clerk knows, so a signed-in visitor never sees the guest icon first */}
+        {!isLoaded ? null : isSignedIn ? (
+          initials
+        ) : (
+          <UserRound className={size === "sm" ? "size-3.5" : "size-4"} />
+        )}
+      </AvatarFallback>
+    </Avatar>
+  );
 
   const identity = (
     <div className="flex items-center gap-3">
-      <Avatar className="size-10">
-        {isSignedIn ? <AvatarImage src={user.imageUrl} alt={displayName} /> : null}
-        <AvatarFallback className="bg-muted text-sm font-medium text-muted-foreground">
-          {isSignedIn ? initials : <UserRound className="size-4" />}
-        </AvatarFallback>
-      </Avatar>
+      {avatar("md")}
       <div className="min-w-0">
         <p className="truncate text-sm font-medium text-foreground">
           {isSignedIn ? displayName : t("menuLabel")}
@@ -86,7 +120,7 @@ export const AccountMenu = ({
 
   const signedOutActions = (
     <div className="grid grid-cols-2 gap-2">
-      <Button asChild size="sm" className="w-full">
+      <Button asChild size="sm" shape="pill" className="w-full">
         <Link
           href={{ pathname: "/sign-in", query: returnTo }}
           locale={locale}
@@ -95,7 +129,7 @@ export const AccountMenu = ({
           {t("signIn")}
         </Link>
       </Button>
-      <Button asChild size="sm" variant="outline" className="w-full">
+      <Button asChild size="sm" variant="outline" shape="pill" className="w-full">
         <Link
           href={{ pathname: "/sign-up", query: returnTo }}
           locale={locale}
@@ -110,37 +144,30 @@ export const AccountMenu = ({
   if (isMobile) {
     return (
       <div className="space-y-4">
-        {identity}
+        {isSignedIn ? (
+          <Link href="/account" onClick={() => onMobileNavigate?.()} className="block">
+            {identity}
+          </Link>
+        ) : (
+          identity
+        )}
         {isSignedIn ? (
           <div className="grid gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => {
-                onMobileNavigate?.();
-                void openUserProfile();
-              }}
-            >
-              <Settings2 />
-              {t("accountCta")}
-            </Button>
             <Button asChild variant="outline" className="w-full justify-start">
-              <Link
-                href="/account/submissions"
-                locale={locale}
-                onClick={() => onMobileNavigate?.()}
-              >
-                <ReceiptText />
-                {t("submissionsCta")}
+              <Link href="/account" onClick={() => onMobileNavigate?.()}>
+                <Home />
+                {t("yourAccount")}
               </Link>
             </Button>
-            <SignOutButton redirectUrl={`/${locale}`}>
-              <Button type="button" variant="ghost" className="w-full justify-start">
-                <LogOut />
-                {t("signOut")}
-              </Button>
-            </SignOutButton>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => void leave()}
+            >
+              <LogOut />
+              {t("signOut")}
+            </Button>
           </div>
         ) : (
           signedOutActions
@@ -157,33 +184,30 @@ export const AccountMenu = ({
           className="inline-flex size-9 items-center justify-center rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           aria-label={t("menuLabel")}
         >
-          <Avatar className="size-8">
-            {isSignedIn ? <AvatarImage src={user.imageUrl} alt={displayName} /> : null}
-            <AvatarFallback className="bg-muted text-[11px] font-medium text-muted-foreground">
-              {isSignedIn ? initials : <UserRound className="size-3.5" />}
-            </AvatarFallback>
-          </Avatar>
+          {avatar("sm")}
         </button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-[19rem]">
-        <div className="px-2.5 py-2">{identity}</div>
+        {isSignedIn ? (
+          <DropdownMenuItem asChild className="px-2.5 py-2">
+            <Link href="/account">{identity}</Link>
+          </DropdownMenuItem>
+        ) : (
+          <div className="px-2.5 py-2">{identity}</div>
+        )}
 
         <DropdownMenuSeparator />
 
         {isSignedIn ? (
-          <>
-            <DropdownMenuItem onSelect={() => void openUserProfile()}>
-              <Settings2 />
-              {t("accountCta")}
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/account/submissions" locale={locale}>
-                <ReceiptText />
-                {t("submissionsCta")}
+          ACCOUNT_LINKS.map(({ href, key, icon: Icon }) => (
+            <DropdownMenuItem key={href} asChild>
+              <Link href={href} aria-current={current(href) ? "page" : undefined}>
+                <Icon />
+                {t(key)}
               </Link>
             </DropdownMenuItem>
-          </>
+          ))
         ) : (
           <div className="px-1 py-1">{signedOutActions}</div>
         )}
@@ -215,12 +239,10 @@ export const AccountMenu = ({
         {isSignedIn ? (
           <>
             <DropdownMenuSeparator />
-            <SignOutButton redirectUrl={`/${locale}`}>
-              <DropdownMenuItem>
-                <LogOut />
-                {t("signOut")}
-              </DropdownMenuItem>
-            </SignOutButton>
+            <DropdownMenuItem onSelect={() => void leave()}>
+              <LogOut />
+              {t("signOut")}
+            </DropdownMenuItem>
           </>
         ) : null}
       </DropdownMenuContent>

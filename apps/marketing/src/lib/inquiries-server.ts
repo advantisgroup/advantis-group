@@ -23,6 +23,28 @@ export async function loadInquiries(limit = 50): Promise<InquiryList | null> {
   });
 }
 
+export type Consents = FunctionReturnType<typeof api.marketing.account.consentsForAccount> & {
+  staff: boolean;
+  primaryEmail: string;
+};
+
+/** Whitepaper leads, notify-list rows, and whether the account is staff. */
+export async function loadConsents(): Promise<Consents | null> {
+  const account = await currentAccount();
+  if (!account || !convex) return null;
+  const [consents, staff] = await Promise.all([
+    convex.query(api.marketing.account.consentsForAccount, {
+      serverKey: serverKey(),
+      account: convexAccount(account),
+    }),
+    convex.query(api.marketing.account.isStaff, {
+      serverKey: serverKey(),
+      clerkUserId: account.clerkUserId,
+    }),
+  ]);
+  return { ...consents, staff, primaryEmail: account.primaryEmail };
+}
+
 // cached per request: the page and its metadata both ask for the same inquiry
 export const loadInquiry = cache(async (id: string): Promise<InquiryDetail | null> => {
   const account = await currentAccount();

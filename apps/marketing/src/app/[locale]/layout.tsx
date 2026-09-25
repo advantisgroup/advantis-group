@@ -4,7 +4,7 @@ import { JetBrains_Mono, Manrope, Newsreader } from "next/font/google";
 import { notFound } from "next/navigation";
 
 import { ClerkProvider } from "@clerk/nextjs";
-import { deDE, enUS, frFR, zhCN } from "@clerk/localizations";
+import { enUS, frFR, zhCN } from "@clerk/localizations";
 import { type Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
@@ -18,6 +18,7 @@ import { Header } from "@/components/layout/Header";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { type Locale, locales } from "@/i18n/request";
+import { deDU } from "@/lib/clerk-de";
 import { COMPANY_ADDRESS } from "@/lib/company";
 import { SITE_URL } from "@/lib/seo";
 
@@ -133,7 +134,7 @@ const organizationJsonLd = {
 // so Clerk's sign-in, sign-up and profile screens speak the page's language. The
 // cast is only because the two packages pull in different copies of @clerk/shared;
 // the data is the same shape. The package is pinned to match @clerk/nextjs.
-const CLERK_LOCALIZATION = { de: deDE, en: enUS, fr: frFR, zh: zhCN } as Record<
+const CLERK_LOCALIZATION = { de: deDU, en: enUS, fr: frFR, zh: zhCN } as Record<
   Locale,
   ComponentProps<typeof ClerkProvider>["localization"]
 >;
@@ -173,7 +174,12 @@ export default async function LocaleLayout({
             on the visitor's OS setting. "System" is still offered in settings. */}
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <SmoothScrolling>
-            <ClerkProvider localization={CLERK_LOCALIZATION[locale as Locale]}>
+            <ClerkProvider
+              localization={CLERK_LOCALIZATION[locale as Locale]}
+              // Clerk's styles go in their own layer so the Tailwind classes we hand
+              // it through `appearance.elements` win (see the @layer order in global.css)
+              appearance={{ cssLayerName: "clerk" }}
+            >
               <ConvexClientProvider>
                 <NextIntlClientProvider locale={locale} messages={messages}>
                   <script

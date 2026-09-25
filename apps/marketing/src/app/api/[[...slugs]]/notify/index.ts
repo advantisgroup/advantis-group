@@ -82,6 +82,22 @@ const failed = (err: unknown) => {
 };
 
 export const notify = new Elysia()
+  /** Whether the signed-in person is on the list, for the preferences page. */
+  .get("/notify/me", async ({ set }) => {
+    const user = await currentUser();
+    if (!user || !convex) {
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
+    const emails = user.emailAddresses
+      .filter((address) => address.verification?.status === "verified")
+      .map((address) => address.emailAddress.toLowerCase());
+    const { notify: rows } = await convex.query(api.marketing.account.consentsForAccount, {
+      serverKey: serverKey(),
+      account: { clerkUserId: user.id, emails },
+    });
+    return { subscribed: rows.length > 0, email: rows[0]?.email ?? null };
+  })
   .post(
     "/notify",
     async ({ body, headers, set }) => {
@@ -101,6 +117,8 @@ export const notify = new Elysia()
           const { duplicate } = await convex.mutation(api.marketing.emails.saveNotifyEmail, {
             serverKey: serverKey(),
             email,
+            locale: body.locale,
+            clerkUserId: (await currentUser())?.id,
           });
           return { ok: true, duplicate, status: duplicate ? "duplicate" : "subscribed" } as const;
         }
@@ -148,6 +166,7 @@ export const notify = new Elysia()
           email: body.email.trim().toLowerCase(),
           action: body.action,
           codeHash: sha256(body.code.trim()),
+          locale: body.locale,
         });
 
         switch (result.status) {
@@ -173,6 +192,7 @@ export const notify = new Elysia()
         email: t.String({ format: "email" }),
         code: t.String({ minLength: 6, maxLength: 6 }),
         action: t.Union([t.Literal("subscribe"), t.Literal("unsubscribe")]),
+        locale: t.Optional(t.String()),
       }),
       response: {
         200: t.Object({ ok: t.Boolean(), status: statusSchema }),

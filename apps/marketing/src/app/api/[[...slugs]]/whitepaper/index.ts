@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 
 import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import { Elysia, t } from "elysia";
 import { Resend } from "resend";
 
@@ -9,6 +10,7 @@ import {
   WhitepaperDeliveryEmail,
 } from "@/components/email/whitepaper-emails";
 import { defaultLocale, locales, type Locale } from "@/i18n/request";
+import { currentAccount } from "@/lib/account";
 import {
   CONFIRM_TOKEN_TTL_MS,
   readWhitepaper,
@@ -59,6 +61,65 @@ const siteOrigin = () => {
   return /^https?:\/\//i.test(configured) ? configured : `https://${configured}`;
 };
 
+type Lead = {
+  leadId: Id<"whitepaperLeads">;
+  email: string;
+  company: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  locale: string;
+};
+
+/** Mails the document, records it, and tells the team about the lead. */
+async function deliver(lead: Lead) {
+  const locale = asLocale(lead.locale);
+  const { data, error } = await resend.emails.send({
+    from: FROM,
+    to: [lead.email],
+    subject: SUBJECTS[locale].delivery,
+    react: WhitepaperDeliveryEmail({
+      firstName: lead.firstName,
+      lastName: lead.lastName,
+      locale,
+    }),
+    attachments: [
+      {
+        filename: WHITEPAPER_FILENAME,
+        content: (await readWhitepaper()).toString("base64"),
+      },
+    ],
+  });
+
+  await convex!.mutation(api.marketing.leads.markDelivered, {
+    serverKey: serverKey(),
+    leadId: lead.leadId,
+    emailId: data?.id,
+    error: error?.message,
+  });
+  if (error) return { error: error.message };
+
+  // The team has no lead inbox of its own — this mail is how a confirmed
+  // lead actually reaches someone, the same way contact submissions do.
+  await resend.emails.send({
+    from: FROM,
+    to: [process.env.NEXT_PUBLIC_EMAIL_ADRESS!],
+    replyTo: lead.email,
+    subject: `Whitepaper-Lead: ${lead.firstName} ${lead.lastName} (${lead.company})`,
+    text: [
+      "Ein Whitepaper-Download wurde bestätigt.",
+      "",
+      `Firma:    ${lead.company}`,
+      `Name:     ${lead.firstName} ${lead.lastName}`,
+      `E-Mail:   ${lead.email}`,
+      `Telefon:  ${lead.phone}`,
+      `Sprache:  ${locale}`,
+      `Einwilligung: ${WHITEPAPER_CONSENT_VERSION}`,
+    ].join("\n"),
+  });
+  return { error: null };
+}
+
 export const whitepaper = new Elysia({ prefix: "/whitepaper" })
   .post(
     "/request",
@@ -90,6 +151,33 @@ export const whitepaper = new Elysia({ prefix: "/whitepaper" })
       const token = randomBytes(32).toString("hex");
 
       try {
+        // Signed in with this address, verified by Clerk: owning it is already
+        // proven, so the document goes out now instead of after a mailed link.
+        const account = await currentAccount();
+        if (account?.emails.includes(email)) {
+          const fields = {
+            email,
+            company: body.company.trim(),
+            firstName: body.firstName.trim(),
+            lastName: body.lastName.trim(),
+            phone: body.phone.trim(),
+            locale,
+          };
+          const { leadId } = await convex.mutation(api.marketing.leads.saveAccountRequest, {
+            serverKey: serverKey(),
+            ...fields,
+            consentVersion: WHITEPAPER_CONSENT_VERSION,
+            requestIp: clientIp(headers),
+            clerkUserId: account.clerkUserId,
+          });
+          const { error } = await deliver({ leadId, ...fields });
+          if (error) {
+            set.status = 500;
+            return { error: "The whitepaper could not be sent.", code: "delivery_send_failed" };
+          }
+          return { ok: true, delivered: true };
+        }
+
         const { leadId, throttled } = await convex.mutation(api.marketing.leads.saveRequest, {
           serverKey: serverKey(),
           email,
@@ -160,7 +248,7 @@ export const whitepaper = new Elysia({ prefix: "/whitepaper" })
         locale: t.Optional(t.String()),
       }),
       response: {
-        200: t.Object({ ok: t.Boolean() }),
+        200: t.Object({ ok: t.Boolean(), delivered: t.Optional(t.Boolean()) }),
         400: errorSchema,
         500: errorSchema,
         503: errorSchema,
@@ -200,59 +288,15 @@ export const whitepaper = new Elysia({ prefix: "/whitepaper" })
           return { ok: true, email: result.email, alreadyDelivered: true };
         }
 
-        const locale = asLocale(result.locale);
-        const { data, error } = await resend.emails.send({
-          from: FROM,
-          to: [result.email],
-          subject: SUBJECTS[locale].delivery,
-          react: WhitepaperDeliveryEmail({
-            firstName: result.firstName,
-            lastName: result.lastName,
-            locale,
-          }),
-          attachments: [
-            {
-              filename: WHITEPAPER_FILENAME,
-              content: (await readWhitepaper()).toString("base64"),
-            },
-          ],
-        });
-
-        await convex.mutation(api.marketing.leads.markDelivered, {
-          serverKey: serverKey(),
-          leadId: result.leadId,
-          emailId: data?.id,
-          error: error?.message,
-        });
-
+        const { error } = await deliver({ ...result, leadId: result.leadId });
         if (error) {
           set.status = 500;
           return {
             error: "Confirmed, but the whitepaper could not be sent.",
             code: "delivery_send_failed",
-            detail: error.message,
+            detail: error,
           };
         }
-
-        // The team has no lead inbox of its own — this mail is how a confirmed
-        // lead actually reaches someone, the same way contact submissions do.
-        await resend.emails.send({
-          from: FROM,
-          to: [process.env.NEXT_PUBLIC_EMAIL_ADRESS!],
-          replyTo: result.email,
-          subject: `Whitepaper-Lead: ${result.firstName} ${result.lastName} (${result.company})`,
-          text: [
-            "Ein Whitepaper-Download wurde per Double-Opt-in bestätigt.",
-            "",
-            `Firma:    ${result.company}`,
-            `Name:     ${result.firstName} ${result.lastName}`,
-            `E-Mail:   ${result.email}`,
-            `Telefon:  ${result.phone}`,
-            `Sprache:  ${locale}`,
-            `Einwilligung: ${WHITEPAPER_CONSENT_VERSION}`,
-          ].join("\n"),
-        });
-
         return { ok: true, email: result.email, alreadyDelivered: false };
       } catch (err) {
         console.error("[whitepaper] confirm failed:", err);

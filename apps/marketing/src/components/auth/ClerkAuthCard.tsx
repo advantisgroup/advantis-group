@@ -25,7 +25,8 @@ export const ClerkAuthCard = ({
   // Clerk hands this over as-is, so it needs the locale already on it — a bare
   // `/account` bounced through the middleware and picked up a second prefix.
   // A `?redirect_url=` on the page still wins over it.
-  const afterAuthPath = `/${locale}/account/submissions`;
+  // new accounts land on the overview's welcome, not on an empty list
+  const afterAuthPath = `/${locale}/account`;
 
   return (
     <AuthShell title={title} subtitle={subtitle}>
