@@ -11,8 +11,13 @@ export const controlClassName =
 // zod's messages are English-only, so the form shows its own localized line instead
 export const useFieldError = (errors: Partial<Record<string, string[]>>) => {
   const t = useTranslations("contact.form.errors");
-  return (field: string) =>
-    errors[field] ? (field === "email" ? t("email") : t("required")) : undefined;
+  return (field: string) => {
+    const messages = errors[field];
+    if (!messages?.length) return undefined;
+    if (field === "email") return t("email");
+    if (messages.includes("hours")) return t("callbackHours");
+    return t("required");
+  };
 };
 
 export const PrivacyNote = ({ callback = false }: { callback?: boolean }) => {

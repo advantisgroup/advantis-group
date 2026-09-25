@@ -1,9 +1,11 @@
 "use client";
-import { type FormEvent, useCallback, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
 
+import { useUser } from "@clerk/nextjs";
 import { useLocale, useTranslations } from "next-intl";
 import { type z } from "zod";
 
+import { type AccountMetadata } from "@/lib/account";
 import { useTrackEvent } from "@/lib/analytics";
 import { api } from "@/lib/eden";
 import { WhitepaperFormDataSchema } from "@/lib/schema";
@@ -33,6 +35,21 @@ export function useWhitepaperRequest() {
   const [buttonState, setButtonState] = useState<ButtonState>("idle");
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const { user } = useUser();
+
+  // signed in: the account's name, address and business details, without overwriting anything typed
+  useEffect(() => {
+    if (!user) return;
+    const metadata = (user.unsafeMetadata ?? {}) as AccountMetadata;
+    setFormData((current) => ({
+      ...current,
+      company: current.company || metadata.company || "",
+      firstName: current.firstName || user.firstName || "",
+      lastName: current.lastName || user.lastName || "",
+      email: current.email || user.primaryEmailAddress?.emailAddress || "",
+      phone: current.phone || metadata.phone || "",
+    }));
+  }, [user]);
 
   const reset = useCallback(() => {
     setFormData(initialFormData);

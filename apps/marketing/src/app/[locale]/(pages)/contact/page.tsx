@@ -1,8 +1,16 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { CheckCircle2, HelpCircle, Mail, MapPin, MessageSquare, Phone } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  HelpCircle,
+  Mail,
+  MapPin,
+  MessageSquare,
+  Phone,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { CallbackForm } from "@/components/contact/CallbackForm";
@@ -44,7 +52,6 @@ export default function Kontakt() {
   const tMessages = useTranslations("contact.messages");
   const tSidebar = useTranslations("contact.sidebar");
   const tAccount = useTranslations("contact.accountHelper");
-  const tAuth = useTranslations("auth");
   const locale = useLocale();
   const { isSignedIn } = useUser();
   const submissionsOpen = useSubmissionsOpen();
@@ -55,6 +62,13 @@ export default function Kontakt() {
 
   const [contactMode, setContactMode] = useState<ContactMode>("message");
   const [notifyOpen, setNotifyOpen] = useState(false);
+
+  // "Request a callback" elsewhere (the account overview) links here with ?mode=callback;
+  // read once on mount rather than through useSearchParams, which would opt the page out of prerendering
+  useEffect(() => {
+    const mode = new URLSearchParams(window.location.search).get("mode");
+    if (mode && MODES.some((entry) => entry.mode === mode)) setContactMode(mode as ContactMode);
+  }, []);
 
   const {
     formData,
@@ -228,34 +242,7 @@ export default function Kontakt() {
           </div>
 
           {sent && sent.mode === contactMode ? (
-            <div role="status" className="mt-8 border-t border-rule pt-8 sm:mt-10 sm:pt-10">
-              <CheckCircle2 aria-hidden className="size-6 text-success" />
-              <Display as="h2" size="md" className="mt-5">
-                {sent.mode === "callback"
-                  ? tMessages("callSuccessTitle")
-                  : tMessages("successTitle")}
-              </Display>
-              <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
-                {sent.mode === "callback" ? tMessages("callSuccessDesc") : tMessages("successDesc")}{" "}
-                {tMessages("copySent", { email: sent.email })}
-              </p>
-              <div className="mt-8 flex flex-wrap gap-2">
-                {isSignedIn ? (
-                  <Button asChild size="sm" className="rounded-full px-4">
-                    <Link href="/account/submissions">{tAuth("submissionsCta")}</Link>
-                  </Button>
-                ) : null}
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={isSignedIn ? "ghost" : "outline"}
-                  className="rounded-full px-4"
-                  onClick={sendAnother}
-                >
-                  {tMessages("sendAnother")}
-                </Button>
-              </div>
-            </div>
+            <SentState sent={sent} signedIn={Boolean(isSignedIn)} onSendAnother={sendAnother} />
           ) : (
             <>
               <div className="mt-8 sm:mt-10">
@@ -300,6 +287,88 @@ export default function Kontakt() {
       </main>
 
       <NotifyModal open={notifyOpen} onOpenChange={setNotifyOpen} />
+    </div>
+  );
+}
+
+type Sent = NonNullable<ReturnType<typeof useContactForm>["sent"]>;
+
+/**
+ * What happened to the inquiry just sent, in the words that are actually
+ * true: its reference, whether a copy went out (and why not), and — when the
+ * team mail failed — that it's saved and can be sent again.
+ */
+function SentState({
+  sent,
+  signedIn,
+  onSendAnother,
+}: {
+  sent: Sent;
+  signedIn: boolean;
+  onSendAnother: () => void;
+}) {
+  const tMessages = useTranslations("contact.messages");
+  const phone = process.env.NEXT_PUBLIC_PHONE_NUMBER;
+  const href = `/account/submissions/${sent.id}`;
+
+  const copyLine = !sent.delivered
+    ? null
+    : sent.copySent
+      ? tMessages("copySent", { email: sent.email })
+      : sent.copySkipReason === "preference"
+        ? tMessages("copyOff")
+        : sent.copySkipReason === "limit"
+          ? tMessages("copyLimit", { email: sent.email })
+          : tMessages("copyFailed", { email: sent.email });
+
+  return (
+    <div role="status" className="mt-8 border-t border-rule pt-8 sm:mt-10 sm:pt-10">
+      {sent.delivered ? (
+        <CheckCircle2 aria-hidden className="size-6 text-success" />
+      ) : (
+        <AlertTriangle aria-hidden className="size-6 text-destructive" />
+      )}
+      <Display as="h2" size="md" className="mt-5">
+        {!sent.delivered
+          ? tMessages("notDeliveredTitle")
+          : sent.mode === "callback"
+            ? tMessages("callSuccessTitle")
+            : tMessages("successTitle")}
+      </Display>
+      <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
+        {!sent.delivered
+          ? signedIn
+            ? tMessages("notDeliveredSignedIn")
+            : phone
+              ? tMessages("notDeliveredCall", { phone })
+              : tMessages("notDeliveredRetry")
+          : sent.mode === "callback"
+            ? tMessages("callSuccessDesc")
+            : tMessages("successDesc")}{" "}
+        {copyLine}
+      </p>
+      <p className="mt-4 text-[13px] text-muted-foreground">
+        {tMessages("reference")}{" "}
+        <span className="font-medium tabular-nums text-foreground">{sent.reference}</span>
+      </p>
+      <div className="mt-8 flex flex-wrap gap-2">
+        {signedIn ? (
+          <Button asChild size="sm" shape="pill">
+            <Link href={href}>
+              {sent.delivered ? tMessages("viewInquiry") : tMessages("openToRetry")}
+            </Link>
+          </Button>
+        ) : null}
+        <Button
+          type="button"
+          size="sm"
+          shape="pill"
+          variant={signedIn ? "ghost" : "outline"}
+          onClick={onSendAnother}
+        >
+          {tMessages("sendAnother")}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -33,6 +33,8 @@ export interface SentInquiry {
   reference: string;
   copySent: boolean;
   copySkipReason?: "limit" | "preference";
+  /** false = saved with its reference, but the mail to the team failed (it can be sent again) */
+  delivered: boolean;
 }
 
 interface UseEmailSubmitOptions {
@@ -65,7 +67,12 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
   }, [resetDelayMs]);
 
   const sendEmail = useCallback(
-    async (payload: EmailPayload, trackingEvent: string): Promise<SentInquiry | null> => {
+    async (
+      payload: EmailPayload,
+      trackingEvent: string,
+      /** the server refused one field (e.g. a callback time outside our hours) */
+      onFieldError?: (field: string) => void,
+    ): Promise<SentInquiry | null> => {
       setButtonState("loading");
       trackEvent(trackingEvent);
       try {
@@ -85,6 +92,23 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
           timeZone: payload.timeZone,
           notes: payload.notes,
         });
+
+        // saved, so it has a reference and shows up in the account, but it never reached the team
+        if (response.error?.status === 502) {
+          setButtonState("error");
+          resetButtonState();
+          onError?.(new Error("Not delivered"));
+          const { id, reference } = response.error.value;
+          return { id, reference, copySent: false, delivered: false };
+        }
+
+        if (response.error?.status === 400 && onFieldError) {
+          setButtonState("error");
+          showErrorToast(tMessages("errorDesc"));
+          resetButtonState();
+          onFieldError(response.error.value.field);
+          return null;
+        }
 
         if (response.error && response.status !== 429) {
           setButtonState("error");
@@ -108,7 +132,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
         setButtonState("success");
         resetButtonState();
         onSuccess?.();
-        return response.data;
+        return response.data ? { ...response.data, delivered: true } : null;
       } catch (error) {
         console.log(error);
         setButtonState("error");

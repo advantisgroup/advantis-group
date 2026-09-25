@@ -24,6 +24,9 @@ export interface AccountContactProfile {
   firstName: string;
   lastName: string;
   fullName: string;
+  /** from the account's business details, when filled in */
+  company: string;
+  phone: string;
 }
 
 export interface ContactInfoItem {
