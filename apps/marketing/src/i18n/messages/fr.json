@@ -16,7 +16,7 @@
     "analytics": {
       "title": "Analyse",
       "badge": "Sans cookies",
-      "description": "Nous comptons les visites sur nos propres serveurs plutôt que de les envoyer à une société d'analyse. Aucun cookie, aucune adresse IP, aucun profil — juste un identifiant aléatoire qui vit dans votre onglet et disparaît dès que vous le fermez. Nous distinguons ainsi les visites sans jamais savoir que c'était vous.",
+      "description": "Nous comptons les visites sur nos propres serveurs plutôt que de les envoyer à une société d'analyse. Aucun cookie, aucune adresse IP, aucun profil et rien d'enregistré sur votre appareil : juste un identifiant aléatoire gardé en mémoire par la page, qui disparaît dès que vous fermez ou rechargez l'onglet. Nous distinguons ainsi les visites sans jamais savoir que c'était vous. Les visites sont supprimées au bout de 14 mois.",
       "uses": {
         "usage": "Quelles pages sont visitées",
         "improve": "Repérer ce qu'il faut améliorer"
@@ -28,7 +28,7 @@
       "train": "Nous ne les utilisons pas pour entraîner des modèles d'IA.",
       "ads": "Nous ne diffusons pas de publicité personnalisée et ne créons pas de profils publicitaires."
     },
-    "localOnly": "Votre thème et votre langue n'en font pas partie non plus. Ils restent dans votre navigateur et ne nous sont jamais transmis.",
+    "localOnly": "Votre thème et votre langue n'en font pas partie non plus, pas plus qu'un formulaire de contact à moitié rempli que nous conservons pendant votre connexion. Ils restent dans votre navigateur et ne nous sont transmis que lorsque vous envoyez le formulaire.",
     "privacyHint": "Pour le détail complet de ce que nous stockons et pendant combien de temps, consultez la",
     "privacyLink": "politique de confidentialité"
   },
@@ -223,7 +223,7 @@
       "callbackEmailNote": "Pour la confirmation de votre rappel",
       "callbackTimeNote": "En semaine, 9 h – 18 h (heure allemande)",
       "privacyPrefix": "En soumettant ce formulaire, vous acceptez que",
-      "privacySuffix": "utilise les données fournies pour traiter votre demande. Vos données ne seront stockées que pour répondre à votre demande et ne seront pas transmises à des tiers.",
+      "privacySuffix": "utilise les données fournies pour traiter votre demande. Vos données ne seront stockées que pour répondre à votre demande et ne seront transmises à personne d'autre que les prestataires cités dans notre politique de confidentialité.",
       "privacySuffixCallback": "utilise les données fournies pour organiser le rappel.",
       "privacyLink": "Plus d'informations dans notre politique de confidentialité.",
       "privacyNoteLabel": "AVIS DE CONFIDENTIALITÉ :",
@@ -532,7 +532,7 @@
       "contact": {
         "title": "Formulaire de Contact",
         "content1": "Si vous nous envoyez des demandes par e-mail ou formulaire de contact, vos informations du formulaire de demande, y compris les coordonnées que vous avez fournies, seront stockées dans le but de traiter la demande et en cas de questions de suivi.",
-        "content2": "Nous ne partageons pas ces données sans votre consentement. Le traitement est basé sur l'Art. 6 para. 1 lit. b RGPD, si votre demande est liée à l'exécution d'un contrat ou est nécessaire pour la mise en œuvre de mesures précontractuelles.",
+        "content2": "Nous ne transmettons ces données qu'aux prestataires cités ci-dessous, qui les traitent pour notre compte, et à personne d'autre sans votre consentement. Le traitement repose sur l'art. 6, par. 1, point b) du RGPD lorsque votre demande concerne un contrat ou des mesures précontractuelles, et sinon sur notre intérêt légitime à répondre aux demandes qui nous sont adressées (art. 6, par. 1, point f) du RGPD).",
         "content3": "Chaque demande est enregistrée avec un numéro de référence, son statut, nos réponses et l'état de remise des e-mails correspondants. Sauf suppression antérieure de votre part, les données personnelles des demandes sans activité depuis {years} ans sont anonymisées."
       },
       "account": {
@@ -543,8 +543,8 @@
       },
       "whitepaper": {
         "title": "Livre blanc et liste de notification",
-        "content1": "Si vous demandez notre livre blanc, nous enregistrons votre nom, votre entreprise, votre adresse e-mail, votre numéro de téléphone et votre consentement. Nous envoyons d'abord un lien de confirmation valable 48 heures et n'envoyons le livre blanc qu'après votre confirmation (double opt-in). Si vous êtes connecté et que l'adresse est vérifiée dans votre compte, cette confirmation existe déjà et l'étape est supprimée. Vous pouvez retirer votre consentement à tout moment depuis votre compte ou par e-mail.",
-        "content2": "Tant que nos formulaires de contact sont fermés, vous pouvez laisser votre adresse e-mail pour être prévenu de leur réouverture. Nous enregistrons l'adresse et la langue utilisée, vous envoyons un e-mail à la réouverture, et vous pouvez vous désinscrire à tout moment."
+        "content1": "Si vous demandez notre livre blanc, nous enregistrons votre nom, votre entreprise, votre adresse e-mail, votre numéro de téléphone et votre consentement, sur la base de ce consentement (art. 6, par. 1, point a) du RGPD). Nous envoyons d'abord un lien de confirmation valable 48 heures et n'envoyons le livre blanc qu'après votre confirmation (double opt-in). Si vous êtes connecté et que l'adresse est vérifiée dans votre compte, cette confirmation existe déjà et l'étape est supprimée. Vous pouvez retirer votre consentement à tout moment depuis votre compte ou par e-mail. Les demandes jamais confirmées sont supprimées au bout de 30 jours. Après un retrait, nous conservons la preuve de votre consentement pendant {years} ans afin de pouvoir démontrer qu'il a été donné, puis nous la supprimons.",
+        "content2": "Tant que nos formulaires de contact sont fermés, vous pouvez laisser votre adresse e-mail pour être prévenu de leur réouverture. Nous enregistrons l'adresse et la langue utilisée sur la base de votre consentement (art. 6, par. 1, point a) du RGPD), vous envoyons un e-mail à la réouverture, puis supprimons l'inscription. D'ici là, vous pouvez vous désinscrire à tout moment."
       },
       "processors": {
         "title": "Prestataires",
@@ -554,8 +554,13 @@
           "clerk": "Clerk (États-Unis) : connexion et gestion du compte",
           "convex": "Convex (États-Unis) : base de données des demandes, des données de compte et de la liste de notification",
           "resend": "Resend (États-Unis) : envoi d'e-mails (accusés de réception, réponses, livre blanc)",
-          "upstash": "Upstash : compteurs de courte durée qui limitent la fréquence d'envoi d'un formulaire, par adresse IP ou adresse e-mail"
-        }
+          "upstash": "Upstash : compteurs de courte durée qui limitent la fréquence d'envoi d'un formulaire, par adresse IP ou adresse e-mail. Ils expirent au bout d'une heure. La base juridique est notre intérêt légitime à protéger les formulaires contre les abus (art. 6, par. 1, point f) du RGPD)."
+        },
+        "footer": "Certains de ces prestataires sont établis aux États-Unis. Les transferts vers ce pays reposent sur la décision d'adéquation de la Commission européenne relative au EU-US Data Privacy Framework (art. 45 du RGPD) lorsque le prestataire y est certifié, et sinon sur les clauses contractuelles types de l'UE (art. 46, par. 2, point c) du RGPD) figurant dans notre contrat de sous-traitance avec le prestataire."
+      },
+      "analytics": {
+        "title": "Statistiques de visite",
+        "content1": "Nous comptons les pages vues et quelques actions (comme l'envoi d'un formulaire) dans notre propre base de données. Nous enregistrons la page, la langue, le site d'où vous venez (domaine uniquement), la durée de la visite et un identifiant aléatoire qui n'existe que tant que la page est ouverte. Nous ne déposons aucun cookie, n'enregistrons rien sur votre appareil et ne conservons pas votre adresse IP. La base juridique est notre intérêt légitime à savoir quelles pages sont utiles (art. 6, par. 1, point f) du RGPD). Les statistiques sont supprimées au bout de 14 mois."
       },
       "rights": {
         "title": "Vos Droits",
@@ -585,6 +590,14 @@
           "portability": {
             "title": "Droit à la portabilité des données :",
             "description": "Vous pouvez recevoir vos données dans un format structuré"
+          },
+          "withdraw": {
+            "title": "Retrait du consentement :",
+            "description": "Vous pouvez retirer à tout moment un consentement donné, avec effet pour l'avenir"
+          },
+          "complaint": {
+            "title": "Droit de réclamation :",
+            "description": "Vous pouvez introduire une réclamation auprès d'une autorité de contrôle de la protection des données, notamment dans l'État de l'UE où vous résidez, travaillez ou où la violation présumée a eu lieu"
           }
         },
         "footer": "Pour cela et d'autres questions sur le sujet des données personnelles, vous pouvez toujours nous contacter à l'adresse indiquée dans les mentions légales."
@@ -1272,7 +1285,7 @@
       "consentSuffix": "Vous trouverez plus d'informations dans notre",
       "consentLink": "politique de confidentialité",
       "doubleOptIn": "Double opt-in : vous recevez d'abord un e-mail contenant un lien de confirmation. Le livre blanc n'est envoyé qu'ensuite.",
-      "noThirdParty": "Nous ne transmettons jamais vos données à des tiers.",
+      "noThirdParty": "Nous ne vendons jamais vos données et ne les partageons pas à des fins publicitaires.",
       "submit": "Demander le livre blanc",
       "errors": {
         "required": "Veuillez remplir ce champ.",

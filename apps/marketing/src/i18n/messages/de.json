@@ -16,7 +16,7 @@
     "analytics": {
       "title": "Analyse",
       "badge": "Ohne Cookies",
-      "description": "Wir zählen Seitenaufrufe auf unseren eigenen Servern, statt sie an ein Analyse-Unternehmen zu schicken. Kein Cookie, keine IP-Adresse, kein Profil – nur eine zufällige ID, die in deinem Browser-Tab lebt und verschwindet, sobald du ihn schließt. So können wir Besuche unterscheiden, ohne je zu wissen, dass du es warst.",
+      "description": "Wir zählen Seitenaufrufe auf unseren eigenen Servern, statt sie an ein Analyse-Unternehmen zu schicken. Kein Cookie, keine IP-Adresse, kein Profil und nichts, was auf deinem Gerät gespeichert wird – nur eine zufällige ID im Arbeitsspeicher der Seite, die verschwindet, sobald du den Tab schließt oder neu lädst. So können wir Besuche unterscheiden, ohne je zu wissen, dass du es warst. Besuche werden nach 14 Monaten gelöscht.",
       "uses": {
         "usage": "Welche Seiten besucht werden",
         "improve": "Erkennen, was verbessert werden muss"
@@ -28,7 +28,7 @@
       "train": "Wir nutzen sie nicht zum Trainieren von KI-Modellen.",
       "ads": "Wir schalten keine personalisierte Werbung und erstellen keine Werbeprofile."
     },
-    "localOnly": "Design und Sprache gehören ebenfalls nicht dazu. Sie bleiben in deinem Browser und werden nie an uns übertragen.",
+    "localOnly": "Design und Sprache gehören ebenfalls nicht dazu, genauso wenig wie ein halb ausgefülltes Kontaktformular, das wir aufheben, während du dich anmeldest. Sie bleiben in deinem Browser und werden erst übertragen, wenn du das Formular absendest.",
     "privacyHint": "Alle Details dazu, was wir speichern und wie lange, findest du in der",
     "privacyLink": "Datenschutzerklärung"
   },
@@ -223,7 +223,7 @@
       "callbackEmailNote": "Für die Bestätigung deines Rückrufs",
       "callbackTimeNote": "Werktags, 9:00–18:00 Uhr",
       "privacyPrefix": "Mit dem Absenden des Formulars erklärst du dich damit einverstanden, dass die",
-      "privacySuffix": "deine angegebenen Daten zum Zweck der Bearbeitung deiner Anfrage verwendet. Deine Daten werden ausschließlich zur Beantwortung deiner Anfrage gespeichert und nicht an Dritte weitergegeben.",
+      "privacySuffix": "deine angegebenen Daten zum Zweck der Bearbeitung deiner Anfrage verwendet. Deine Daten werden ausschließlich zur Beantwortung deiner Anfrage gespeichert und an niemanden außer den in unserer Datenschutzerklärung genannten Dienstleistern weitergegeben.",
       "privacySuffixCallback": "deine angegebenen Daten zum Zweck der Rückrufvereinbarung verwendet.",
       "privacyLink": "Weitere Informationen findest du in unserer Datenschutzerklärung.",
       "privacyNoteLabel": "HINWEIS AUF DATENSCHUTZ:",
@@ -532,7 +532,7 @@
       "contact": {
         "title": "Kontaktformular",
         "content1": "Wenn Sie uns per E-Mail oder Kontaktformular Anfragen zukommen lassen, werden Ihre Angaben aus dem Anfrageformular inklusive der von Ihnen dort angegebenen Kontaktdaten zwecks Bearbeitung der Anfrage und für den Fall von Anschlussfragen bei uns gespeichert.",
-        "content2": "Diese Daten geben wir nicht ohne Ihre Einwilligung weiter. Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO, sofern Ihre Anfrage mit der Erfüllung eines Vertrags zusammenhängt oder zur Durchführung vorvertraglicher Maßnahmen erforderlich ist.",
+        "content2": "Diese Daten geben wir nur an die unten genannten Dienstleister weiter, die sie in unserem Auftrag verarbeiten, und an niemanden sonst ohne Ihre Einwilligung. Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO, sofern Ihre Anfrage mit einem Vertrag oder vorvertraglichen Maßnahmen zusammenhängt, und im Übrigen auf Grundlage unseres berechtigten Interesses an der Beantwortung der an uns gerichteten Anfragen (Art. 6 Abs. 1 lit. f DSGVO).",
         "content3": "Jede Anfrage wird mit einer Referenznummer, ihrem Bearbeitungsstand, unseren Antworten und dem Zustellstatus der zugehörigen E-Mails gespeichert. Sofern Sie sie nicht vorher löschen, werden personenbezogene Angaben in Anfragen, die {years} Jahre lang nicht bearbeitet wurden, anonymisiert."
       },
       "account": {
@@ -543,8 +543,8 @@
       },
       "whitepaper": {
         "title": "Whitepaper und Benachrichtigungsliste",
-        "content1": "Wenn Sie unser Whitepaper anfordern, speichern wir Ihren Namen, Ihre Firma, E-Mail-Adresse, Telefonnummer und Ihre Einwilligung. Wir senden zunächst einen Bestätigungslink, der 48 Stunden gültig ist, und verschicken das Whitepaper erst nach Ihrer Bestätigung (Double-Opt-in). Sind Sie angemeldet und ist die Adresse in Ihrem Konto bestätigt, liegt diese Bestätigung bereits vor und der Schritt entfällt. Sie können Ihre Einwilligung jederzeit in Ihrem Konto oder per E-Mail widerrufen.",
-        "content2": "Solange unsere Kontaktformulare geschlossen sind, können Sie Ihre E-Mail-Adresse hinterlassen, um bei der Wiedereröffnung benachrichtigt zu werden. Wir speichern die Adresse und die verwendete Sprache, senden Ihnen eine E-Mail, sobald die Formulare wieder offen sind, und Sie können sich jederzeit austragen."
+        "content1": "Wenn Sie unser Whitepaper anfordern, speichern wir Ihren Namen, Ihre Firma, E-Mail-Adresse, Telefonnummer und Ihre Einwilligung, auf Grundlage dieser Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Wir senden zunächst einen Bestätigungslink, der 48 Stunden gültig ist, und verschicken das Whitepaper erst nach Ihrer Bestätigung (Double-Opt-in). Sind Sie angemeldet und ist die Adresse in Ihrem Konto bestätigt, liegt diese Bestätigung bereits vor und der Schritt entfällt. Sie können Ihre Einwilligung jederzeit in Ihrem Konto oder per E-Mail widerrufen. Nie bestätigte Anforderungen löschen wir nach 30 Tagen. Nach einem Widerruf bewahren wir den Nachweis Ihrer Einwilligung {years} Jahre auf, um belegen zu können, dass sie erteilt wurde, und löschen ihn dann.",
+        "content2": "Solange unsere Kontaktformulare geschlossen sind, können Sie Ihre E-Mail-Adresse hinterlassen, um bei der Wiedereröffnung benachrichtigt zu werden. Wir speichern die Adresse und die verwendete Sprache auf Grundlage Ihrer Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), senden Ihnen eine E-Mail, sobald die Formulare wieder offen sind, und löschen den Eintrag danach. Bis dahin können Sie sich jederzeit austragen."
       },
       "processors": {
         "title": "Dienstleister",
@@ -554,8 +554,13 @@
           "clerk": "Clerk (USA): Anmeldung und Kontoverwaltung",
           "convex": "Convex (USA): Datenbank für Anfragen, Kontodaten und die Benachrichtigungsliste",
           "resend": "Resend (USA): Versand von E-Mails wie Eingangsbestätigungen, Antworten und dem Whitepaper",
-          "upstash": "Upstash: kurzlebige Zähler, die begrenzen, wie oft ein Formular gesendet werden kann, anhand von IP-Adresse oder E-Mail-Adresse"
-        }
+          "upstash": "Upstash: kurzlebige Zähler, die begrenzen, wie oft ein Formular gesendet werden kann, anhand von IP-Adresse oder E-Mail-Adresse. Sie verfallen nach einer Stunde. Rechtsgrundlage ist unser berechtigtes Interesse, die Formulare vor Missbrauch zu schützen (Art. 6 Abs. 1 lit. f DSGVO)."
+        },
+        "footer": "Einige dieser Dienstleister haben ihren Sitz in den USA. Die Übermittlung dorthin stützt sich auf den Angemessenheitsbeschluss der EU-Kommission zum EU-US Data Privacy Framework (Art. 45 DSGVO), soweit der Dienstleister danach zertifiziert ist, und im Übrigen auf die EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO) in unserem Auftragsverarbeitungsvertrag mit dem Dienstleister."
+      },
+      "analytics": {
+        "title": "Besucherstatistik",
+        "content1": "Wir zählen Seitenaufrufe und einige Aktionen (etwa das Absenden eines Formulars) in unserer eigenen Datenbank. Gespeichert werden die Seite, die Sprache, die Website, von der Sie kamen (nur die Domain), die Verweildauer und eine zufällige ID, die nur existiert, solange die Seite geöffnet ist. Wir setzen kein Cookie, speichern nichts auf Ihrem Gerät und speichern Ihre IP-Adresse nicht. Rechtsgrundlage ist unser berechtigtes Interesse daran zu wissen, welche Seiten nützlich sind (Art. 6 Abs. 1 lit. f DSGVO). Die Statistik wird nach 14 Monaten gelöscht."
       },
       "rights": {
         "title": "Ihre Rechte",
@@ -585,6 +590,14 @@
           "portability": {
             "title": "Datenübertragbarkeit:",
             "description": "Sie können Ihre Daten in einem strukturierten Format erhalten"
+          },
+          "withdraw": {
+            "title": "Widerruf der Einwilligung:",
+            "description": "Sie können eine erteilte Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen"
+          },
+          "complaint": {
+            "title": "Beschwerderecht:",
+            "description": "Sie können sich bei einer Datenschutz-Aufsichtsbehörde beschweren, insbesondere in dem EU-Staat, in dem Sie wohnen oder arbeiten oder in dem der mutmaßliche Verstoß stattfand"
           }
         },
         "footer": "Hierzu sowie zu weiteren Fragen zum Thema personenbezogene Daten können Sie sich jederzeit unter der im Impressum angegebenen Adresse an uns wenden."
@@ -1272,7 +1285,7 @@
       "consentSuffix": "Weitere Informationen findest du in unserer",
       "consentLink": "Datenschutzerklärung",
       "doubleOptIn": "Doppelte Bestätigung: du bekommst zuerst eine E-Mail mit einem Bestätigungslink. Erst danach versenden wir das Whitepaper.",
-      "noThirdParty": "Wir geben deine Daten nicht an Dritte weiter.",
+      "noThirdParty": "Wir verkaufen deine Daten nie und geben sie nicht für Werbung weiter.",
       "submit": "Whitepaper anfordern",
       "errors": {
         "required": "Bitte fülle dieses Feld aus.",

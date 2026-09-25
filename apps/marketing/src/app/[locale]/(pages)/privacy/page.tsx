@@ -103,7 +103,7 @@ export default function Datenschutz() {
         content: (
           <div className="prose prose-base max-w-none space-y-4">
             <p className="text-foreground/80 leading-relaxed">
-              {t("sections.whitepaper.content1")}
+              {t("sections.whitepaper.content1", { years: INQUIRY_RETENTION_YEARS })}
             </p>
             <p className="text-foreground/80 leading-relaxed">
               {t("sections.whitepaper.content2")}
@@ -122,6 +122,16 @@ export default function Datenschutz() {
                 <li key={key}>{t(`sections.processors.items.${key}`)}</li>
               ))}
             </ul>
+            <p className="text-foreground/80 leading-relaxed">{t("sections.processors.footer")}</p>
+          </div>
+        ),
+      },
+      {
+        id: "analytics",
+        title: t("sections.analytics.title"),
+        content: (
+          <div className="prose prose-base max-w-none">
+            <p className="text-foreground/80 leading-relaxed">{t("sections.analytics.content1")}</p>
           </div>
         ),
       },
@@ -158,6 +168,14 @@ export default function Datenschutz() {
               <li>
                 <strong>{t("sections.rights.items.portability.title")}</strong>{" "}
                 {t("sections.rights.items.portability.description")}
+              </li>
+              <li>
+                <strong>{t("sections.rights.items.withdraw.title")}</strong>{" "}
+                {t("sections.rights.items.withdraw.description")}
+              </li>
+              <li>
+                <strong>{t("sections.rights.items.complaint.title")}</strong>{" "}
+                {t("sections.rights.items.complaint.description")}
               </li>
             </ul>
             <p className="text-foreground/80 leading-relaxed">{t("sections.rights.footer")}</p>

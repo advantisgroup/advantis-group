@@ -202,6 +202,29 @@ with that address). Changing the primary address no longer hides history.
   `INQUIRY_RETENTION_YEARS` (see `marketing/lib/inquiry.ts`) and sets
   `anonymizedAt`. Gated by `DISABLE_CRONS` like every other cron.
 
-Needs a legal look before shipping: the retention period, the privacy policy
-section on accounts, and letting a Clerk-verified address stand in for the
-whitepaper double opt-in.
+## Privacy decisions
+
+Made without a lawyer, on the conservative side. Revisit them when the company
+has legal counsel; each is one setting or one paragraph.
+
+- **Inquiry retention: 3 years without activity**, then personal fields are
+  blanked (`INQUIRY_RETENTION_YEARS`). That's the regular limitation period for
+  contract claims (§ 195 BGB). Inquiries that become business correspondence
+  live on in the team inbox/CRM under § 257 HGB / § 147 AO, not in this table.
+- **Whitepaper requests:** unconfirmed ones are deleted after 30 days; confirmed
+  consent stays while it's in use; after a withdrawal the consent record is kept
+  for the same 3 years as proof (Art. 7(1) GDPR), then deleted
+  (`marketing/retention.ts → purgeLeads`).
+- **Signed-in whitepaper requests skip the mailed confirmation.** A verified
+  address in the account proves ownership the same way the link does; the row
+  records `verifiedVia: "account"`, `clerkUserId`, `consentVersion` and the IP
+  as the proof.
+- **Visitor statistics are kept 14 months** (`purgeAnalytics`), and the session
+  id lives in memory only. `sessionStorage` would count as storing information on
+  the device (§ 25 TDDDG) and need consent; a JS variable doesn't. Remembering
+  the chosen language and a half-written contact form stay in browser storage.
+  Both are strictly necessary for something the visitor asked for.
+- **US providers** (Vercel, Clerk, Convex, Resend, Upstash): the privacy policy
+  names the EU–US Data Privacy Framework where a provider is certified and the
+  Standard Contractual Clauses in its DPA otherwise. **This is only true once
+  each provider's data processing agreement has been accepted** in its dashboard.

@@ -59,6 +59,20 @@ if (process.env.DISABLE_CRONS !== "true") {
   );
 
   crons.daily(
+    "marketing: delete unconfirmed and long-withdrawn whitepaper requests",
+    { hourUTC: 2, minuteUTC: 55 },
+    internal.marketing.retention.purgeLeads,
+    {},
+  );
+
+  crons.daily(
+    "marketing: delete visitor statistics past their retention period",
+    { hourUTC: 3, minuteUTC: 5 },
+    internal.marketing.retention.purgeAnalytics,
+    {},
+  );
+
+  crons.daily(
     "hr: delete archived applicants past their retention period",
     { hourUTC: 2, minuteUTC: 40 },
     internal.hr.retention.purgeExpiredApplicants,

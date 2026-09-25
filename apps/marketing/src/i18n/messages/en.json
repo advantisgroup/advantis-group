@@ -16,7 +16,7 @@
     "analytics": {
       "title": "Analytics",
       "badge": "No cookies",
-      "description": "We count page visits on our own servers rather than sending them to an analytics company. No cookie, no IP address, no profile — just a random id that lives in your browser tab and is gone the moment you close it, so we can tell one visit from another without ever knowing it was you.",
+      "description": "We count page visits on our own servers rather than sending them to an analytics company. No cookie, no IP address, no profile, and nothing stored on your device: just a random id held in the page's memory, gone the moment you close or reload the tab, so we can tell one visit from another without ever knowing it was you. Visits are deleted after 14 months.",
       "uses": {
         "usage": "Which pages get visited",
         "improve": "Finding what to fix and improve"
@@ -28,7 +28,7 @@
       "train": "We do not use it to train AI models.",
       "ads": "We do not run personalised advertising or build ad profiles."
     },
-    "localOnly": "Your theme and language are not part of this either. They stay in your browser and are never sent to us.",
+    "localOnly": "Your theme and language aren't part of this either, and neither is a half-written contact form we keep while you sign in. They stay in your browser and are never sent to us until you send the form.",
     "privacyHint": "For the full detail on what we store and for how long, see the",
     "privacyLink": "privacy policy"
   },
@@ -220,7 +220,7 @@
       "callbackEmailNote": "For confirmation of your callback",
       "callbackTimeNote": "Weekdays, 9:00–18:00 German time",
       "privacyPrefix": "By submitting the form, you agree that",
-      "privacySuffix": "uses your provided data for the purpose of processing your request. Your data will only be stored to answer your request and will not be passed on to third parties.",
+      "privacySuffix": "uses your provided data for the purpose of processing your request. Your data is only stored to answer your request and is not passed on to anyone other than the service providers named in our privacy policy.",
       "privacySuffixCallback": "uses your provided data for the purpose of the callback arrangement.",
       "privacyLink": "More information can be found in our privacy policy.",
       "privacyNoteLabel": "PRIVACY NOTICE:",
@@ -529,7 +529,7 @@
       "contact": {
         "title": "Contact Form",
         "content1": "If you send us inquiries via email or contact form, your information from the inquiry form including the contact data you provided will be stored for the purpose of processing the inquiry and in case of follow-up questions.",
-        "content2": "We do not share this data without your consent. Processing is based on Art. 6 para. 1 lit. b GDPR, if your inquiry is related to the fulfillment of a contract or is necessary for the implementation of pre-contractual measures.",
+        "content2": "We pass this data only to the service providers listed below, who process it on our behalf, and to no one else without your consent. Processing is based on Art. 6(1)(b) GDPR where your inquiry concerns a contract or steps before one, and otherwise on our legitimate interest in answering inquiries sent to us (Art. 6(1)(f) GDPR).",
         "content3": "Each inquiry is stored with a reference number, its status, our replies and whether the related emails were delivered. Unless you delete them sooner, personal details in inquiries with no activity for {years} years are anonymised."
       },
       "account": {
@@ -540,8 +540,8 @@
       },
       "whitepaper": {
         "title": "Whitepaper and notification list",
-        "content1": "If you request our whitepaper, we store your name, company, email address, phone number and your consent. We first send a confirmation link that is valid for 48 hours, and only send the whitepaper once you have confirmed (double opt-in). If you are signed in and the address is verified in your account, that confirmation already exists and the step is skipped. You can withdraw your consent at any time in your account or by email.",
-        "content2": "While our contact forms are closed, you can leave your email address to be told when they reopen. We store the address and the language you used, send you one email when the forms reopen, and you can remove yourself at any time."
+        "content1": "If you request our whitepaper, we store your name, company, email address, phone number and your consent, based on that consent (Art. 6(1)(a) GDPR). We first send a confirmation link that is valid for 48 hours, and only send the whitepaper once you have confirmed (double opt-in). If you are signed in and the address is verified in your account, that confirmation already exists and the step is skipped. You can withdraw your consent at any time in your account or by email. Requests that are never confirmed are deleted after 30 days. After a withdrawal we keep the record of your consent for {years} years so we can prove it was given, then delete it.",
+        "content2": "While our contact forms are closed, you can leave your email address to be told when they reopen. We store the address and the language you used, based on your consent (Art. 6(1)(a) GDPR), send you one email when the forms reopen and then delete the entry. You can remove yourself at any time before that."
       },
       "processors": {
         "title": "Service providers",
@@ -551,8 +551,13 @@
           "clerk": "Clerk (USA): sign-in and account management",
           "convex": "Convex (USA): database for inquiries, account data and the notification list",
           "resend": "Resend (USA): sending emails such as receipts, replies and the whitepaper",
-          "upstash": "Upstash: short-lived counters that limit how often a form can be sent, keyed by IP address or email address"
-        }
+          "upstash": "Upstash: short-lived counters that limit how often a form can be sent, keyed by IP address or email address. They expire after one hour. The basis is our legitimate interest in protecting the forms from abuse (Art. 6(1)(f) GDPR)."
+        },
+        "footer": "Some of these providers are based in the USA. Transfers there rely on the European Commission's adequacy decision for the EU–US Data Privacy Framework (Art. 45 GDPR) where the provider is certified under it, and otherwise on the EU Standard Contractual Clauses (Art. 46(2)(c) GDPR) in our data processing agreement with the provider."
+      },
+      "analytics": {
+        "title": "Visitor statistics",
+        "content1": "We count page visits and a few actions (such as sending a form) on our own database. We store the page, the language, the website you came from (domain only), how long you stayed and a random id that exists only while the page is open. We set no cookie, store nothing on your device, and do not store your IP address. The basis is our legitimate interest in knowing which pages are useful (Art. 6(1)(f) GDPR). The statistics are deleted after 14 months."
       },
       "rights": {
         "title": "Your Rights",
@@ -582,6 +587,14 @@
           "portability": {
             "title": "Right to data portability:",
             "description": "You can receive your data in a structured format"
+          },
+          "withdraw": {
+            "title": "Withdrawing consent:",
+            "description": "You can withdraw any consent you gave at any time, with effect for the future"
+          },
+          "complaint": {
+            "title": "Right to complain:",
+            "description": "You can complain to a data protection supervisory authority, in particular in the EU country where you live or work or where you think the breach happened"
           }
         },
         "footer": "For this and other questions on the subject of personal data, you can always contact us at the address given in the imprint."
@@ -1269,7 +1282,7 @@
       "consentSuffix": "You'll find more information in our",
       "consentLink": "privacy policy",
       "doubleOptIn": "Double opt-in: you'll first receive an email with a confirmation link. Only then do we send the whitepaper.",
-      "noThirdParty": "We never pass your details on to third parties.",
+      "noThirdParty": "We never sell your details or share them for advertising.",
       "submit": "Request the whitepaper",
       "errors": {
         "required": "Please fill in this field.",
