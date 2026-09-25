@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
 
 import { useTranslations } from "next-intl";
 
@@ -47,6 +47,7 @@ export const Field = ({
   children: ReactNode;
 }) => {
   const t = useTranslations("contact.otherForm");
+  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
 
   return (
     <div className={cn("space-y-1.5", className)}>
@@ -56,13 +57,20 @@ export const Field = ({
           <span className="ml-1.5 font-normal text-muted-foreground">({t("optional")})</span>
         ) : null}
       </label>
-      {children}
+      {/* every field wraps exactly one control, so the error/hint wiring lives here once */}
+      {isValidElement(children)
+        ? cloneElement(children as ReactElement<{ "aria-describedby"?: string }>, {
+            "aria-describedby": describedBy,
+          })
+        : children}
       {error ? (
         <p id={`${id}-error`} className="text-[13px] text-destructive">
           {error}
         </p>
       ) : hint ? (
-        <p className="text-[13px] text-muted-foreground">{hint}</p>
+        <p id={`${id}-hint`} className="text-[13px] text-muted-foreground">
+          {hint}
+        </p>
       ) : null}
     </div>
   );
