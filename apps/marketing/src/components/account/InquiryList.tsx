@@ -145,7 +145,7 @@ export function InquiryList({ data, limit }: { data: InquiryListData | null; lim
             {t("title")}
           </Display>
           {inquiries.length ? (
-            <p className="mt-3 text-[13px] tabular-nums text-muted-foreground">
+            <p className="mt-3 text-sm tabular-nums text-muted-foreground">
               {t("summary", {
                 count: inquiries.length,
                 last: format.relative(inquiries[0].sentAt),
@@ -201,7 +201,7 @@ export function InquiryList({ data, limit }: { data: InquiryListData | null; lim
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder={t("search")}
-                  className="h-10 w-full rounded-lg border border-input bg-card pr-3 pl-9 text-base placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:text-sm"
+                  className="h-10 w-full rounded-lg border border-input bg-card pr-3 pl-9 text-base placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:text-[15px]"
                 />
               </label>
               <div
@@ -217,7 +217,7 @@ export function InquiryList({ data, limit }: { data: InquiryListData | null; lim
                       aria-pressed={filter === f}
                       onClick={() => setFilter(f)}
                       className={cn(
-                        "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[13px] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:min-h-9",
+                        "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-3 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:min-h-9",
                         filter === f
                           ? "bg-accent font-medium text-foreground"
                           : "text-muted-foreground hover:text-foreground",
@@ -233,7 +233,7 @@ export function InquiryList({ data, limit }: { data: InquiryListData | null; lim
           ) : null}
 
           {groups.length === 0 ? (
-            <p className="mt-10 border-y border-rule py-10 text-center text-sm text-muted-foreground">
+            <p className="mt-10 border-y border-rule py-10 text-center text-[15px] text-muted-foreground">
               {t("noMatches")}
             </p>
           ) : (
@@ -241,9 +241,7 @@ export function InquiryList({ data, limit }: { data: InquiryListData | null; lim
               {groups.map(([month, items]) => (
                 <li key={month}>
                   {groups.length > 1 ? (
-                    <h2 className="pt-7 pb-2 text-[13px] font-medium text-muted-foreground">
-                      {month}
-                    </h2>
+                    <h2 className="pt-7 pb-2 text-sm font-medium text-muted-foreground">{month}</h2>
                   ) : null}
                   <ul className="divide-y divide-rule border-y border-rule">
                     {items.map((inquiry) => (
@@ -292,23 +290,23 @@ function InquiryRow({
         className="-mx-3 block rounded-lg px-3 py-5 transition-colors outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring md:py-6"
       >
         <span className="flex items-baseline justify-between gap-6">
-          <span className="line-clamp-1 text-[15px] font-medium text-foreground md:text-base">
+          <span className="line-clamp-1 text-base font-medium text-foreground md:text-[17px]">
             {title}
           </span>
           <time
             dateTime={new Date(inquiry.sentAt).toISOString()}
             title={format.full.format(inquiry.sentAt)}
-            className="shrink-0 text-[13px] whitespace-nowrap tabular-nums text-muted-foreground"
+            className="shrink-0 text-sm whitespace-nowrap tabular-nums text-muted-foreground"
           >
             {format.when(inquiry.sentAt)}
           </time>
         </span>
         {preview ? (
-          <span className="mt-1.5 line-clamp-2 block max-w-[62ch] text-sm leading-relaxed text-muted-foreground">
+          <span className="mt-1.5 line-clamp-2 block max-w-[62ch] text-[15px] leading-relaxed text-muted-foreground">
             {preview}
           </span>
         ) : null}
-        <span className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[13px] text-muted-foreground">
+        <span className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm text-muted-foreground">
           <Icon aria-hidden className="size-3.5" />
           <span>{format.type(inquiry)}</span>
           <span aria-hidden>·</span>
@@ -316,12 +314,12 @@ function InquiryRow({
           <span aria-hidden>·</span>
           <StateLabel state={inquiry.state} />
           {hasDeliveryProblem(inquiry) ? (
-            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[13px] font-medium text-destructive">
               {t("notDelivered")}
             </span>
           ) : null}
           {isUpcomingCallback(inquiry) ? (
-            <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-foreground">
+            <span className="rounded-full bg-accent px-2 py-0.5 text-[13px] font-medium text-foreground">
               {t("upcomingAt", { when: format.dateTime.format(inquiry.desiredAt!) })}
             </span>
           ) : null}
@@ -342,7 +340,7 @@ function EmptyState() {
   return (
     <div className="mt-10 border-y border-rule py-10">
       <p className="text-[15px] font-medium text-foreground">{t("empty.title")}</p>
-      <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-muted-foreground">
+      <p className="mt-1.5 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
         {t("empty.body")}
       </p>
       <ul className="mt-6 flex flex-wrap gap-2">

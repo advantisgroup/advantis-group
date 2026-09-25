@@ -68,7 +68,7 @@ export function AccountOverview({ data }: { data: InquiryList | null }) {
           : " "}
       </Display>
       {user ? (
-        <p className="mt-3 text-[13px] text-muted-foreground">
+        <p className="mt-3 text-sm text-muted-foreground">
           {[
             user.primaryEmailAddress?.emailAddress,
             user.createdAt
@@ -95,7 +95,7 @@ export function AccountOverview({ data }: { data: InquiryList | null }) {
           action={
             <a
               href={`${intranetUrl}/settings/account`}
-              className="inline-flex items-center gap-1 text-[13px] font-medium text-foreground underline-offset-4 hover:underline"
+              className="inline-flex items-center gap-1 text-sm font-medium text-foreground underline-offset-4 hover:underline"
             >
               {t("workAccount.cta")}
               <ArrowUpRight aria-hidden className="size-3.5" />
@@ -113,7 +113,7 @@ export function AccountOverview({ data }: { data: InquiryList | null }) {
           action={
             <Link
               href={`/account/submissions/${upcoming._id}`}
-              className="text-[13px] font-medium text-foreground underline-offset-4 hover:underline"
+              className="text-sm font-medium text-foreground underline-offset-4 hover:underline"
             >
               {t("view")}
             </Link>
@@ -127,11 +127,11 @@ export function AccountOverview({ data }: { data: InquiryList | null }) {
 
       <section className="mt-12">
         <div className="flex items-baseline justify-between gap-4">
-          <h2 className="text-sm font-medium text-foreground">{t("recent")}</h2>
+          <h2 className="text-[15px] font-medium text-foreground">{t("recent")}</h2>
           {inquiries.length ? (
             <Link
               href="/account/submissions"
-              className="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground"
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
               {t("seeAll")}
               <ArrowRight aria-hidden className="size-3.5" />
@@ -150,7 +150,7 @@ export function AccountOverview({ data }: { data: InquiryList | null }) {
                     <span className="line-clamp-1 text-[15px] text-foreground">
                       {format.title(inquiry).title}
                     </span>
-                    <span className="mt-1 flex items-center gap-2 text-[13px] text-muted-foreground">
+                    <span className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                       <span className="tabular-nums">{inquiry.reference}</span>
                       <span aria-hidden>·</span>
                       <StateLabel state={inquiry.state} />
@@ -158,7 +158,7 @@ export function AccountOverview({ data }: { data: InquiryList | null }) {
                   </span>
                   <time
                     title={format.full.format(inquiry.sentAt)}
-                    className="shrink-0 text-[13px] tabular-nums text-muted-foreground"
+                    className="shrink-0 text-sm tabular-nums text-muted-foreground"
                   >
                     {format.when(inquiry.sentAt)}
                   </time>
@@ -167,20 +167,20 @@ export function AccountOverview({ data }: { data: InquiryList | null }) {
             ))}
           </ul>
         ) : (
-          <p className="mt-3 border-y border-rule py-6 text-sm text-muted-foreground">
+          <p className="mt-3 border-y border-rule py-6 text-[15px] text-muted-foreground">
             {t("noInquiries")}
           </p>
         )}
       </section>
 
       <section className="mt-12">
-        <h2 className="text-sm font-medium text-foreground">{t("start")}</h2>
+        <h2 className="text-[15px] font-medium text-foreground">{t("start")}</h2>
         <ul className="mt-3 grid gap-2 sm:grid-cols-3">
           {actions.map(({ href, icon: Icon, label }) => (
             <li key={label}>
               <Link
                 href={href}
-                className="flex h-full items-center gap-3 rounded-lg border border-rule px-4 py-3.5 text-sm text-foreground transition-colors hover:bg-accent"
+                className="flex h-full items-center gap-3 rounded-lg border border-rule px-4 py-3.5 text-[15px] text-foreground transition-colors hover:bg-accent"
               >
                 <Icon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
                 {label}

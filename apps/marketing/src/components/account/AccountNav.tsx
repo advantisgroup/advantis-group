@@ -79,7 +79,7 @@ export const AccountRail = () => {
         {sections.map(({ key, href, icon: Icon, external }) => {
           const current = !external && isCurrent(pathname, href);
           const className = cn(
-            "-ml-px flex items-center gap-2.5 border-l py-2 pl-4 pr-2 text-sm transition-colors",
+            "-ml-px flex items-center gap-2.5 border-l py-2 pl-4 pr-2 text-[15px] transition-colors",
             current
               ? "border-foreground font-medium text-foreground"
               : "border-transparent text-muted-foreground hover:border-foreground/40 hover:text-foreground",
@@ -105,7 +105,7 @@ export const AccountRail = () => {
       <button
         type="button"
         onClick={() => void signOut()}
-        className="mt-6 flex items-center gap-2.5 pl-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="mt-6 flex items-center gap-2.5 pl-4 text-[15px] text-muted-foreground transition-colors hover:text-foreground"
       >
         <LogOut aria-hidden className="size-4" />
         {t("signOut")}
@@ -166,7 +166,7 @@ export const AccountBackLink = ({
       href={href}
       data-print-hide
       className={cn(
-        "mb-6 inline-flex items-center gap-1 text-[13px] text-muted-foreground transition-colors hover:text-foreground",
+        "mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground",
         href === "/account" && "lg:hidden",
       )}
     >

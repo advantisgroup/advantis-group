@@ -28,7 +28,7 @@ export function SettingRow({
       <div className="min-w-0">
         <p className="text-[15px] text-foreground">{label}</p>
         {description ? (
-          <p className="mt-1 max-w-lg text-[13px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 max-w-lg text-sm leading-relaxed text-muted-foreground">
             {description}
           </p>
         ) : null}
@@ -41,7 +41,7 @@ export function SettingRow({
 export function SettingSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mt-12 first:mt-10">
-      <h2 className="text-sm font-medium text-foreground">{title}</h2>
+      <h2 className="text-[15px] font-medium text-foreground">{title}</h2>
       <div className="mt-2 divide-y divide-rule border-y border-rule">{children}</div>
     </section>
   );

@@ -22,7 +22,9 @@ export async function generateMetadata({
  */
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className="mx-auto w-full max-w-[1200px] px-5 pt-24 pb-24 md:px-10 md:pt-32 lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-16">
+    // Manrope at small sizes renders thin and tight (Windows especially): a touch
+    // more weight and tracking for the account pages' dense, mostly small text
+    <main className="mx-auto w-full max-w-[1200px] px-5 pt-24 pb-24 font-[450] tracking-[0.005em] md:px-10 md:pt-32 lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-16">
       <AccountRail />
       <div className="min-w-0">{children}</div>
     </main>

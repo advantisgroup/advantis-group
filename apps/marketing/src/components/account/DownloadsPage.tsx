@@ -62,7 +62,7 @@ export function DownloadsPage({ consents }: { consents: Consents | null }) {
                   <FileText aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                   <div>
                     <p className="text-[15px] font-medium text-foreground">{t("whitepaper")}</p>
-                    <p className="mt-0.5 text-[13px] text-muted-foreground">
+                    <p className="mt-0.5 text-sm text-muted-foreground">
                       {t("pdfFor", { email: lead.email })}
                     </p>
                   </div>
