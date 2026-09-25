@@ -118,7 +118,7 @@ export default function Kontakt() {
             formData={formData}
             errors={errors}
             buttonState={getButtonState("message")}
-            disabled={!submissionsOpen}
+            disabled={submissionsOpen !== true}
             onFormDataChange={setFormData}
             onSubmit={handleMessageSubmit}
           />
@@ -129,7 +129,7 @@ export default function Kontakt() {
             formData={callbackFormData}
             errors={callbackErrors}
             buttonState={getButtonState("callback")}
-            disabled={!submissionsOpen}
+            disabled={submissionsOpen !== true}
             onFormDataChange={setCallbackFormData}
             onSubmit={handleCallbackSubmit}
           />
@@ -140,7 +140,7 @@ export default function Kontakt() {
             formData={otherFormData}
             errors={otherErrors}
             buttonState={getButtonState("other")}
-            disabled={!submissionsOpen}
+            disabled={submissionsOpen !== true}
             onFormDataChange={setOtherFormData}
             onSubmit={handleOtherSubmit}
           />
@@ -194,7 +194,7 @@ export default function Kontakt() {
         </aside>
 
         <div ref={formRef} className="scroll-mt-28">
-          {!submissionsOpen ? (
+          {submissionsOpen === false ? (
             <SubmissionBanner
               text={submissionText}
               onNotifyClick={() => setNotifyOpen(true)}
