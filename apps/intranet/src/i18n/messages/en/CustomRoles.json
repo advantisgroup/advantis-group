@@ -43,5 +43,7 @@
   "created": "Role created",
   "updated": "Role updated",
   "empty": "No custom roles yet.",
-  "noCapabilities": "No capabilities selected"
+  "noCapabilities": "No capabilities selected",
+  "capability_manage_inquiries": "Manage website inquiries",
+  "capability_manage_inquiries_desc": "Answer, assign and close inquiries sent through the website's contact forms, and get notified about new ones"
 }

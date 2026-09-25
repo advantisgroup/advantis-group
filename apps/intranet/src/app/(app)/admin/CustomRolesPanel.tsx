@@ -36,6 +36,7 @@ const CAPABILITIES = [
   "view_clockodo_team",
   "manage_clockodo_team",
   "use_ai",
+  "manage_inquiries",
 ] as const;
 type Capability = (typeof CAPABILITIES)[number];
 

@@ -24,6 +24,7 @@ export const capabilityValidator = v.union(
   v.literal("view_clockodo_team"),
   v.literal("manage_clockodo_team"),
   v.literal("use_ai"),
+  v.literal("manage_inquiries"),
 );
 
 // --- Applicant Management (Bewerbermanagement) validators -------------------

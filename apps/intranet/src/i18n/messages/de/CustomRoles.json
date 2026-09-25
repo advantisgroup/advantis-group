@@ -43,5 +43,7 @@
   "created": "Rolle erstellt",
   "updated": "Rolle aktualisiert",
   "empty": "Noch keine benutzerdefinierten Rollen.",
-  "noCapabilities": "Keine Berechtigungen ausgewählt"
+  "noCapabilities": "Keine Berechtigungen ausgewählt",
+  "capability_manage_inquiries": "Website-Anfragen bearbeiten",
+  "capability_manage_inquiries_desc": "Anfragen aus den Kontaktformularen der Website beantworten, zuweisen und schließen – und über neue benachrichtigt werden"
 }

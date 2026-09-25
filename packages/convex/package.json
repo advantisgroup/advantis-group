@@ -27,6 +27,11 @@
       "import": "./convex/performance/lib/callImport.ts",
       "default": "./convex/performance/lib/callImport.ts"
     },
+    "./marketing/inquiry": {
+      "types": "./convex/marketing/lib/inquiry.ts",
+      "import": "./convex/marketing/lib/inquiry.ts",
+      "default": "./convex/marketing/lib/inquiry.ts"
+    },
     "./performance/xlsxZip": {
       "types": "./convex/performance/lib/xlsxZip.ts",
       "import": "./convex/performance/lib/xlsxZip.ts",
