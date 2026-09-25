@@ -91,12 +91,12 @@ export const Checkpoints = ({
                 )}
               />
               <span className="block min-w-0 sm:mt-3">
-                <span className={cn("block text-[13px] leading-snug", LABEL[step.state])}>
+                <span className={cn("block text-sm leading-snug", LABEL[step.state])}>
                   {step.label}
                   <span className="sr-only"> · {t(step.state)}</span>
                 </span>
                 {step.meta ? (
-                  <span className="mt-0.5 block text-xs tabular-nums text-muted-foreground">
+                  <span className="mt-0.5 block text-[13px] tabular-nums text-muted-foreground">
                     {step.meta}
                   </span>
                 ) : null}
@@ -185,11 +185,13 @@ export const CheckpointNote = ({
     )}
   >
     <div className="min-w-0">
-      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="text-[15px] font-medium text-foreground">{title}</p>
       {children ? (
-        <div className="mt-1 text-sm leading-relaxed text-muted-foreground">{children}</div>
+        <div className="mt-1 text-[15px] leading-relaxed text-muted-foreground">{children}</div>
       ) : null}
-      {detail ? <p className="mt-2 text-xs tabular-nums text-muted-foreground">{detail}</p> : null}
+      {detail ? (
+        <p className="mt-2 text-[13px] tabular-nums text-muted-foreground">{detail}</p>
+      ) : null}
     </div>
     {action ? <div className="flex shrink-0 flex-wrap gap-2">{action}</div> : null}
   </div>

@@ -49,7 +49,7 @@ export function PrivacyPage({ consents }: { consents: Consents | null }) {
         <li>{t("summary.howLong", { years: INQUIRY_RETENTION_YEARS })}</li>
         <li>{t("summary.control")}</li>
       </ul>
-      <p className="mt-3 text-[13px] text-muted-foreground">
+      <p className="mt-3 text-sm text-muted-foreground">
         <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
           {t("policy")}
         </Link>
@@ -187,7 +187,7 @@ function DeleteAccount({ email }: { email: string }) {
       </SettingRow>
       {open ? (
         <div className="mt-5 rounded-lg border border-destructive/25 bg-destructive/[0.04] p-4">
-          <label htmlFor="delete-confirm" className="text-sm text-foreground">
+          <label htmlFor="delete-confirm" className="text-[15px] text-foreground">
             {t("typeEmail", { email })}
           </label>
           <input
@@ -195,9 +195,9 @@ function DeleteAccount({ email }: { email: string }) {
             value={typed}
             onChange={(event) => setTyped(event.target.value)}
             autoComplete="off"
-            className="mt-2 h-10 w-full rounded-lg border border-input bg-card px-3 text-base focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:text-sm"
+            className="mt-2 h-10 w-full rounded-lg border border-input bg-card px-3 text-base focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:text-[15px]"
           />
-          <p className="mt-2 text-[13px] text-muted-foreground">{t("kept")}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("kept")}</p>
           <div className="mt-4 flex flex-wrap justify-end gap-2">
             <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>
               {t("cancel")}

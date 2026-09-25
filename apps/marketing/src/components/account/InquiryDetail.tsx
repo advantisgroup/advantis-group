@@ -51,7 +51,7 @@ export function InquiryDetail({ detail }: { detail: Detail }) {
     <article className="max-w-3xl">
       <AccountBackLink href="/account/submissions" label={t("back")} />
 
-      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
         <Icon aria-hidden className="size-3.5" />
         <span>{format.type(inquiry)}</span>
         <span aria-hidden>·</span>
@@ -70,7 +70,7 @@ export function InquiryDetail({ detail }: { detail: Detail }) {
         {title}
       </Display>
       {waiting ? (
-        <p className="mt-3 text-sm text-muted-foreground">
+        <p className="mt-3 text-[15px] text-muted-foreground">
           {due > Date.now()
             ? t("replyBy", { when: format.full.format(due) })
             : PHONE
@@ -255,7 +255,7 @@ function Delivery({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
       <div className="flex items-center justify-between gap-4">
         <p
           className={cn(
-            "text-sm",
+            "text-[15px]",
             teamTrouble || copyTrouble ? "font-medium text-foreground" : "text-muted-foreground",
           )}
         >
@@ -266,7 +266,7 @@ function Delivery({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
           aria-expanded={open}
           onClick={() => setOpen(!open)}
           data-print-hide
-          className="shrink-0 text-[13px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          className="shrink-0 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
         >
           {open ? t("hide") : t("details")}
         </button>
@@ -275,18 +275,18 @@ function Delivery({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
       {open ? (
         <div className="mt-6 space-y-8">
           <div>
-            <p className="mb-4 text-[13px] font-medium text-muted-foreground">{t("toTeam")}</p>
+            <p className="mb-4 text-sm font-medium text-muted-foreground">{t("toTeam")}</p>
             <Checkpoints label={t("toTeam")} steps={teamSteps}>
               {teamTrouble ? <TeamNote inquiry={inquiry} format={format} /> : null}
             </Checkpoints>
           </div>
           {copy.status ? (
             <div>
-              <p className="mb-4 text-[13px] font-medium text-muted-foreground">
+              <p className="mb-4 text-sm font-medium text-muted-foreground">
                 {t("toYou", { email: inquiry.email })}
               </p>
               {copy.status === "skipped" ? (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[15px] text-muted-foreground">
                   {t(`skipped.${copy.skipReason ?? "limit"}`)}
                 </p>
               ) : (
@@ -408,7 +408,7 @@ function Callback({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
 
   return (
     <section className="mt-10 border-t border-rule pt-6">
-      <p className="mb-4 text-[13px] font-medium text-muted-foreground">{t("title")}</p>
+      <p className="mb-4 text-sm font-medium text-muted-foreground">{t("title")}</p>
       <Checkpoints label={t("title")} steps={steps}>
         {!cancelled && !done ? (
           <div data-print-hide className="mt-5 flex flex-wrap gap-2">
@@ -427,7 +427,7 @@ function Callback({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
         ) : null}
       </Checkpoints>
       {!confirmed && !cancelled ? (
-        <p className="mt-4 text-[13px] text-muted-foreground">{t("unconfirmedHint")}</p>
+        <p className="mt-4 text-sm text-muted-foreground">{t("unconfirmedHint")}</p>
       ) : null}
     </section>
   );
@@ -447,7 +447,7 @@ function Attachments({ inquiryId, attachments }: { inquiryId: string; attachment
             href={`/api/submissions/${inquiryId}/attachments/${attachment.storageId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border border-rule px-2.5 py-1 text-[13px] text-foreground hover:bg-accent"
+            className="inline-flex items-center gap-1.5 rounded-md border border-rule px-2.5 py-1 text-sm text-foreground hover:bg-accent"
           >
             <Paperclip aria-hidden className="size-3.5 text-muted-foreground" />
             {attachment.name}
@@ -464,11 +464,11 @@ function Thread({ detail, format }: { detail: Detail; format: Format }) {
 
   return (
     <section className="mt-12">
-      <h2 className="text-[13px] font-medium text-muted-foreground">{t("title")}</h2>
+      <h2 className="text-sm font-medium text-muted-foreground">{t("title")}</h2>
       <ol className="mt-3 divide-y divide-rule border-y border-rule">
         {detail.messages.map((message) => (
           <li key={message._id} className="py-5">
-            <p className="text-[13px] text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">
                 {message.author === "customer"
                   ? t("you")
@@ -562,7 +562,7 @@ function Composer({
 
   return (
     <section data-print-hide className="mt-10">
-      <label htmlFor="inquiry-reply" className="text-[13px] font-medium text-muted-foreground">
+      <label htmlFor="inquiry-reply" className="text-sm font-medium text-muted-foreground">
         {t("add")}
       </label>
       <textarea
@@ -573,14 +573,14 @@ function Composer({
         maxLength={5000}
         onChange={(event) => setBody(event.target.value)}
         placeholder={t("placeholder")}
-        className="mt-2 min-h-24 w-full resize-y rounded-lg border border-input bg-card px-3 py-2.5 text-base placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:text-sm"
+        className="mt-2 min-h-24 w-full resize-y rounded-lg border border-input bg-card px-3 py-2.5 text-base placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:text-[15px]"
       />
       {files.length ? (
         <ul className="mt-2 flex flex-wrap gap-2">
           {files.map((file, index) => (
             <li
               key={`${file.name}-${index}`}
-              className="inline-flex items-center gap-1.5 rounded-md border border-rule px-2.5 py-1 text-[13px]"
+              className="inline-flex items-center gap-1.5 rounded-md border border-rule px-2.5 py-1 text-sm"
             >
               <Paperclip aria-hidden className="size-3.5 text-muted-foreground" />
               {file.name}
@@ -599,7 +599,7 @@ function Composer({
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <label
           className={cn(
-            "inline-flex cursor-pointer items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground",
+            "inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground",
             files.length >= MAX_FILES && "pointer-events-none opacity-50",
           )}
         >
@@ -618,7 +618,7 @@ function Composer({
         </label>
         <div className="flex items-center gap-3">
           {inquiry.state === "answered" || inquiry.state === "closed" ? (
-            <span className="text-[13px] text-muted-foreground">{t("reopensHint")}</span>
+            <span className="text-sm text-muted-foreground">{t("reopensHint")}</span>
           ) : null}
           <Button
             size="sm"
@@ -651,14 +651,14 @@ function Actions({ inquiry, onNeedHelp }: { inquiry: Inquiry; onNeedHelp: () => 
   };
 
   const link =
-    "text-[13px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline";
+    "text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline";
 
   if (isActive(inquiry.state)) {
     return (
       <div data-print-hide className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
         {confirming ? (
           <>
-            <span className="text-[13px] text-foreground">{t("withdrawConfirm")}</span>
+            <span className="text-sm text-foreground">{t("withdrawConfirm")}</span>
             <button
               type="button"
               disabled={busy}
@@ -724,7 +724,7 @@ function Shared({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
   if (!rows.length) return null;
   return (
     <section className="mt-12 border-t border-rule pt-6">
-      <h2 className="text-sm font-medium text-foreground">{t("title")}</h2>
+      <h2 className="text-[15px] font-medium text-foreground">{t("title")}</h2>
       <dl className="mt-3">
         {rows.map((row) => (
           <div
@@ -754,7 +754,7 @@ function ReferenceChip({ reference }: { reference: string }) {
         toast(t("copied", { reference }));
         setTimeout(() => setCopied(false), 1500);
       }}
-      className="inline-flex items-center gap-1 rounded-md border border-rule px-1.5 py-0.5 font-mono text-xs text-foreground transition-colors hover:bg-accent"
+      className="inline-flex items-center gap-1 rounded-md border border-rule px-1.5 py-0.5 font-mono text-[13px] text-foreground transition-colors hover:bg-accent"
     >
       {reference}
       {copied ? <Check aria-hidden className="size-3" /> : <Copy aria-hidden className="size-3" />}

@@ -56,7 +56,7 @@ export function ProfilePage() {
           action={
             <a
               href={`${intranetUrl}/settings/account`}
-              className="inline-flex items-center gap-1 text-[13px] font-medium text-foreground underline-offset-4 hover:underline"
+              className="inline-flex items-center gap-1 text-sm font-medium text-foreground underline-offset-4 hover:underline"
             >
               {t("staffSecurity.cta")}
               <ArrowUpRight aria-hidden className="size-3.5" />
@@ -103,15 +103,15 @@ function BusinessDetails() {
 
   return (
     <section className="mt-10">
-      <h2 className="text-sm font-medium text-foreground">{t("title")}</h2>
-      <p className="mt-1 text-[13px] text-muted-foreground">{t("hint")}</p>
+      <h2 className="text-[15px] font-medium text-foreground">{t("title")}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{t("hint")}</p>
       <div className="mt-5 divide-y divide-rule border-y border-rule">
         {FIELDS.map((field) => (
           <label
             key={field}
             className="grid items-center gap-2 py-3 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)_auto] sm:gap-6"
           >
-            <span className="text-sm text-muted-foreground">{t(field)}</span>
+            <span className="text-[15px] text-muted-foreground">{t(field)}</span>
             <input
               defaultValue={metadata[field] ?? ""}
               type={field === "phone" ? "tel" : "text"}
@@ -124,11 +124,11 @@ function BusinessDetails() {
               }
               maxLength={200}
               onBlur={(event) => void save(field, event.target.value)}
-              className="h-10 w-full rounded-lg border border-input bg-card px-3 text-base focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:text-sm"
+              className="h-10 w-full rounded-lg border border-input bg-card px-3 text-base focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:text-[15px]"
             />
             <span
               aria-live="polite"
-              className="flex h-5 min-w-14 items-center gap-1 text-xs text-muted-foreground"
+              className="flex h-5 min-w-14 items-center gap-1 text-[13px] text-muted-foreground"
             >
               {saved === field ? (
                 <>
@@ -140,7 +140,7 @@ function BusinessDetails() {
           </label>
         ))}
       </div>
-      {failed ? <p className="mt-2 text-[13px] text-destructive">{t("failed")}</p> : null}
+      {failed ? <p className="mt-2 text-sm text-destructive">{t("failed")}</p> : null}
     </section>
   );
 }

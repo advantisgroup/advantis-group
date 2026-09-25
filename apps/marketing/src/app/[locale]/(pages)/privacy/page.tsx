@@ -62,7 +62,7 @@ export default function Datenschutz() {
               {t("sections.collection.subtitle")}
             </h3>
             <p className="text-foreground/80 leading-relaxed">{t("sections.collection.intro")}</p>
-            <ul className="list-disc list-inside space-y-2 text-foreground/80">
+            <ul className="list-disc space-y-2 pl-5 text-foreground/80 marker:text-muted-foreground">
               <li>{t("sections.collection.items.ip")}</li>
               <li>{t("sections.collection.items.browser")}</li>
               <li>{t("sections.collection.items.os")}</li>
@@ -117,7 +117,7 @@ export default function Datenschutz() {
         content: (
           <div className="prose prose-base max-w-none space-y-4">
             <p className="text-foreground/80 leading-relaxed">{t("sections.processors.intro")}</p>
-            <ul className="list-disc list-inside space-y-2 text-foreground/80">
+            <ul className="list-disc space-y-2 pl-5 text-foreground/80 marker:text-muted-foreground">
               {PROCESSORS.map((key) => (
                 <li key={key}>{t(`sections.processors.items.${key}`)}</li>
               ))}
@@ -144,37 +144,53 @@ export default function Datenschutz() {
             <h3 className="text-xl font-semibold text-foreground">
               {t("sections.rights.subtitle")}
             </h3>
-            <ul className="list-disc list-inside space-y-2 text-foreground/80">
+            <ul className="list-disc space-y-2 pl-5 text-foreground/80 marker:text-muted-foreground">
               <li>
-                <strong>{t("sections.rights.items.access.title")}</strong>{" "}
+                <strong className="font-semibold text-foreground">
+                  {t("sections.rights.items.access.title")}
+                </strong>{" "}
                 {t("sections.rights.items.access.description")}
               </li>
               <li>
-                <strong>{t("sections.rights.items.rectification.title")}</strong>{" "}
+                <strong className="font-semibold text-foreground">
+                  {t("sections.rights.items.rectification.title")}
+                </strong>{" "}
                 {t("sections.rights.items.rectification.description")}
               </li>
               <li>
-                <strong>{t("sections.rights.items.deletion.title")}</strong>{" "}
+                <strong className="font-semibold text-foreground">
+                  {t("sections.rights.items.deletion.title")}
+                </strong>{" "}
                 {t("sections.rights.items.deletion.description")}
               </li>
               <li>
-                <strong>{t("sections.rights.items.restriction.title")}</strong>{" "}
+                <strong className="font-semibold text-foreground">
+                  {t("sections.rights.items.restriction.title")}
+                </strong>{" "}
                 {t("sections.rights.items.restriction.description")}
               </li>
               <li>
-                <strong>{t("sections.rights.items.objection.title")}</strong>{" "}
+                <strong className="font-semibold text-foreground">
+                  {t("sections.rights.items.objection.title")}
+                </strong>{" "}
                 {t("sections.rights.items.objection.description")}
               </li>
               <li>
-                <strong>{t("sections.rights.items.portability.title")}</strong>{" "}
+                <strong className="font-semibold text-foreground">
+                  {t("sections.rights.items.portability.title")}
+                </strong>{" "}
                 {t("sections.rights.items.portability.description")}
               </li>
               <li>
-                <strong>{t("sections.rights.items.withdraw.title")}</strong>{" "}
+                <strong className="font-semibold text-foreground">
+                  {t("sections.rights.items.withdraw.title")}
+                </strong>{" "}
                 {t("sections.rights.items.withdraw.description")}
               </li>
               <li>
-                <strong>{t("sections.rights.items.complaint.title")}</strong>{" "}
+                <strong className="font-semibold text-foreground">
+                  {t("sections.rights.items.complaint.title")}
+                </strong>{" "}
                 {t("sections.rights.items.complaint.description")}
               </li>
             </ul>
