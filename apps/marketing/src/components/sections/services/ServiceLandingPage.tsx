@@ -135,7 +135,10 @@ export const ServiceLandingPage = ({ slug }: { slug: ServiceSlug }) => {
       <div className="border-t border-rule">
         <div className="mx-auto w-full max-w-[1200px] px-5 md:px-10">
           <div className="grid gap-12 py-14 md:py-24 lg:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] lg:gap-20">
-            <nav aria-label={common("seoLabel")} className="lg:sticky lg:top-28 lg:self-start">
+            <nav
+              aria-label={common("seoLabel")}
+              className="lg:sticky lg:top-28 lg:self-start lg:transition-[top] lg:duration-300 lg:[[data-header-hidden]_&]:top-6"
+            >
               <ol>
                 {railEntries.map((entry) => (
                   <li key={entry.id}>

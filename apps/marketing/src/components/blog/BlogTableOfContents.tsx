@@ -44,7 +44,7 @@ export function BlogTableOfContents({ headings }: { headings: BlogHeading[] }) {
 
   return (
     <nav aria-label={t("tableOfContents")} className="hidden 2xl:block">
-      <div className="sticky top-28 space-y-2.5">
+      <div className="sticky top-28 space-y-2.5 transition-[top] duration-300 [[data-header-hidden]_&]:top-6">
         <p className="text-xs font-medium tracking-wide text-muted-foreground/70">
           {t("tableOfContents")}
         </p>

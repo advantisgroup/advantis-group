@@ -183,7 +183,7 @@ export default function Kontakt() {
       <main className="mx-auto grid w-full max-w-[1200px] gap-10 px-5 pt-28 pb-20 md:gap-14 md:px-10 md:pt-44 md:pb-24 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20">
         {/* The pitch and the ways to reach us without a form. Sticky on wide
             screens so it stays beside a long form instead of scrolling off. */}
-        <aside className="lg:sticky lg:top-28 lg:self-start">
+        <aside className="lg:sticky lg:top-28 lg:self-start lg:transition-[top] lg:duration-300 lg:[[data-header-hidden]_&]:top-6">
           <Display as="h1" size="xl">
             {t("title")}
           </Display>

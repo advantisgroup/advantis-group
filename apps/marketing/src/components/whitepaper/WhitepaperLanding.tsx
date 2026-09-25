@@ -61,7 +61,7 @@ export function WhitepaperLanding({ available }: { available: boolean }) {
             </div>
 
             <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-              <div className="overflow-hidden rounded-xl border border-rule bg-card lg:sticky lg:top-28">
+              <div className="overflow-hidden rounded-xl border border-rule bg-card lg:sticky lg:top-28 lg:transition-[top] lg:duration-300 lg:[[data-header-hidden]_&]:top-6">
                 <div className="flex flex-col items-start gap-4 border-b border-rule p-6 sm:flex-row sm:items-center sm:gap-6 md:p-8">
                   <WhitepaperCover
                     title={t("hero.title")}

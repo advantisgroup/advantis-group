@@ -67,7 +67,7 @@ export default function UberUns() {
       {/* The story, set as an article: serif at reading size, one column. */}
       <Section>
         <div className="grid gap-10 lg:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] lg:gap-20">
-          <div className="lg:sticky lg:top-28 lg:self-start">
+          <div className="lg:sticky lg:top-28 lg:self-start lg:transition-[top] lg:duration-300 lg:[[data-header-hidden]_&]:top-6">
             <span className="text-[0.8125rem] font-medium text-muted-foreground">
               {t("story.badge")}
             </span>
