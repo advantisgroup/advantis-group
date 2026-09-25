@@ -436,6 +436,14 @@
       "subtitle": "Ein paar Momente aus dem Büro und von unterwegs."
     }
   },
+  "checkpoints": {
+    "done": "erledigt",
+    "current": "aktueller Schritt",
+    "upcoming": "noch offen",
+    "failed": "fehlgeschlagen",
+    "warning": "verzögert",
+    "skipped": "übersprungen"
+  },
   "brandsPage": {
     "comingSoon": "In Vorbereitung",
     "hero": {

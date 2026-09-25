@@ -433,6 +433,14 @@
       "subtitle": "A few moments from the office and on the road."
     }
   },
+  "checkpoints": {
+    "done": "done",
+    "current": "current step",
+    "upcoming": "not yet",
+    "failed": "didn't work",
+    "warning": "delayed",
+    "skipped": "skipped"
+  },
   "brandsPage": {
     "comingSoon": "Coming soon",
     "hero": {

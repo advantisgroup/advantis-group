@@ -430,6 +430,14 @@
       "subtitle": "来自办公室和外出途中的一些瞬间。"
     }
   },
+  "checkpoints": {
+    "done": "已完成",
+    "current": "当前步骤",
+    "upcoming": "尚未开始",
+    "failed": "未成功",
+    "warning": "已延迟",
+    "skipped": "已跳过"
+  },
   "brandsPage": {
     "comingSoon": "即将推出",
     "hero": {

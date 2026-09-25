@@ -436,6 +436,14 @@
       "subtitle": "Quelques instants du bureau et sur le terrain."
     }
   },
+  "checkpoints": {
+    "done": "terminé",
+    "current": "étape en cours",
+    "upcoming": "à venir",
+    "failed": "échec",
+    "warning": "en retard",
+    "skipped": "ignoré"
+  },
   "brandsPage": {
     "comingSoon": "Bientôt disponible",
     "hero": {
