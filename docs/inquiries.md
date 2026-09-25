@@ -42,8 +42,11 @@ below.
 | field | meaning | legacy default |
 |---|---|---|
 | `nr` | sequential number, shown as the reference `AG-0042` | backfilled by `sentAt` order |
-| `status` | delivery of the *team* mail: `queued \| sent \| failed` | as stored |
-| `copyStatus` | the customer receipt: `sent \| skipped \| delivered \| bounced` | none (unknown) |
+| `status` | the *team* mail: `queued \| sent \| delivered \| delayed \| bounced \| failed` | as stored |
+| `deliveredAt`, `attempts`, `lastAttemptAt` | when the team mail landed, and how many sends it took | `attempts = 1` |
+| `failureReason` | plain category for a failed/bounced team mail (see "Status tracks") | – |
+| `copyStatus` | the customer receipt: `sent \| skipped \| delivered \| delayed \| bounced \| failed` | none (unknown) |
+| `copySkipReason`, `copyFailureReason`, `copyDeliveredAt` | why a receipt was skipped (`limit \| preference`) or didn't arrive | – |
 | `state` | where the team is: `open \| in_progress \| answered \| closed \| withdrawn` | `open` |
 | `locale` | site locale the form was sent from; every later mail uses it | `de` |
 | `topicKey` | `withdrawal \| question \| legal` for "other" inquiries (not the translated label) | derived from `topic` where it matches |
@@ -131,8 +134,9 @@ apps/api format them the same way:
 
 The receipt is skipped (and the success screen says so) past the per-address
 copy limit, or when the customer turned "Email me a copy" off in
-preferences. Its Resend tag `inquiry_id` lets `/webhooks/resend` set
-`copyStatus` to `delivered`/`bounced`.
+preferences. Both submission mails carry Resend tags `inquiry_id` and
+`mail` (`team` | `receipt`), so `/webhooks/resend` can move `status` or
+`copyStatus` on to `delivered`, `delayed` or `bounced`.
 
 Replying from a mail client lands in the thread only when
 `INQUIRY_INBOUND_DOMAIN` is set (reply-to `reply+<id>.<hmac>@<domain>`,
@@ -141,6 +145,43 @@ team inbox like any other mail.
 
 The team gets a German mail with an "Open in intranet" link and an in-app
 notification (`inquiry_new`) for everyone with `manage_inquiries`.
+
+## Status tracks
+
+Anything on the customer side that moves through steps is shown as one
+horizontal track of checkpoints (`components/account/Checkpoints.tsx` in
+apps/marketing): a hairline with a dot per step, the step's label and time
+under it. Done steps are filled, the current one is ringed, later ones are
+hollow, a failed one is the destructive colour. Under a failed or stuck
+checkpoint the track opens a panel: what went wrong in plain words, what we
+already tried ("Tried 2 times · last at 14:02"), and the one thing to do
+next. Below `sm` the same steps stack vertically.
+
+| track | checkpoints | off-ramps |
+|---|---|---|
+| inquiry | Received → Seen → In progress → Answered | Withdrawn, Closed |
+| team mail | Queued → Sent → Delivered | Failed, Delayed, Bounced |
+| your copy | Sent → Delivered | Skipped, Delayed, Bounced, Failed |
+| callback | Requested → Confirmed → Done | Cancelled, Rescheduled |
+| whitepaper | Requested → Confirmed → Sent | Link expired, Not delivered |
+
+The inquiry track leads the inquiry page. The two mail tracks sit together
+under it as "Delivery", folded into one quiet line ("Delivered to our team ·
+copy delivered to you") while nothing is wrong, and open by default when
+something is. The callback track replaces the plain "Requested time" row on
+callbacks; the whitepaper track lives on `/account/downloads`.
+
+`failureReason` / `copyFailureReason` are categories the customer can act
+on; the raw provider text stays in `error` and never reaches the browser:
+
+| category | from | what the customer reads | action |
+|---|---|---|---|
+| `invalid_address` | Resend validation error on the address | The address looks wrong | Fix it and send again |
+| `mailbox_unavailable` | permanent bounce | That mailbox doesn't accept mail | Use another address |
+| `temporary` | transient bounce, `delivery_delayed` | Their server is slow to accept it | Nothing — we keep trying |
+| `rate_limited` | 429 / quota | We were sending too much at once | Send again in a minute |
+| `provider_error` | 5xx, network | Our mail service had a hiccup | Send again |
+| `unknown` | anything else | It didn't go through | Send again, or call us |
 
 ## Accounts
 
