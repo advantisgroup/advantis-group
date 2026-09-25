@@ -1,3 +1,5 @@
+/* Clerk's own styles sit below our utilities, so classes passed to its components win */
+@layer theme, base, clerk, components, utilities;
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
@@ -195,7 +197,8 @@
     @apply bg-background text-foreground;
     font-family: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
     font-synthesis-weight: none;
-    overflow-x: hidden;
+    /* hidden turns body into a scroll container, which breaks position: sticky inside it */
+    overflow-x: clip;
   }
 
   a,
@@ -303,7 +306,14 @@
 html.lenis,
 html.lenis body {
   height: auto;
+}
+
+html.lenis {
   overflow-x: hidden;
+}
+
+html.lenis body {
+  overflow-x: clip;
 }
 
 .lenis.lenis-smooth {
@@ -395,4 +405,11 @@ html {
 
 .animate-shake {
   animation: shake 0.5s ease-in-out;
+}
+
+/* Printing an inquiry (or any page) leaves the site's chrome and controls behind. */
+@media print {
+  [data-print-hide] {
+    display: none !important;
+  }
 }

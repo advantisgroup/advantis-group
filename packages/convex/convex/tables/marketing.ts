@@ -1,8 +1,49 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
+import { attachmentValidator } from "../lib/validators";
+
+/** Where the team is with an inquiry. Absent on rows from before it existed = "open". */
+export const inquiryStateValidator = v.union(
+  v.literal("open"),
+  v.literal("in_progress"),
+  v.literal("answered"),
+  v.literal("closed"),
+  v.literal("withdrawn"),
+);
+
+/** Plain categories the customer can act on; the provider's own text stays in `error`. */
+export const failureReasonValidator = v.union(
+  v.literal("invalid_address"),
+  v.literal("mailbox_unavailable"),
+  v.literal("temporary"),
+  v.literal("rate_limited"),
+  v.literal("provider_error"),
+  v.literal("unknown"),
+);
+
+export const inquiryEventTypeValidator = v.union(
+  v.literal("created"),
+  v.literal("seen"),
+  v.literal("state"),
+  v.literal("assigned"),
+  v.literal("reply"),
+  v.literal("customer_reply"),
+  v.literal("callback_confirmed"),
+  v.literal("callback_cancelled"),
+  v.literal("callback_rescheduled"),
+  v.literal("resent"),
+  v.literal("withdrawn"),
+);
+
 export const marketingTables = {
   // --- Marketing (existing) ------------------------------------------------
+  /**
+   * One row per website inquiry (contact form). Named `emails` because it
+   * started as a log of sent mails; see docs/inquiries.md for the lifecycle.
+   * Everything below `error` is optional so rows from before the inquiry
+   * model read back unchanged.
+   */
   emails: defineTable({
     messageId: v.optional(v.string()),
     firstName: v.string(),
@@ -20,15 +61,104 @@ export const marketingTables = {
     accountName: v.string(),
     clerkUserId: v.string(),
     sentAt: v.number(),
-    status: v.union(v.literal("sent"), v.literal("failed")),
+    /** The mail to the team inbox. */
+    status: v.union(
+      v.literal("queued"),
+      v.literal("sent"),
+      v.literal("delivered"),
+      v.literal("delayed"),
+      v.literal("bounced"),
+      v.literal("failed"),
+    ),
     error: v.optional(v.string()),
+
+    /** Sequential, shown as the reference "AG-0042". */
+    nr: v.optional(v.number()),
+    locale: v.optional(v.string()),
+    topicKey: v.optional(
+      v.union(v.literal("withdrawal"), v.literal("question"), v.literal("legal")),
+    ),
+    deliveredAt: v.optional(v.number()),
+    attempts: v.optional(v.number()),
+    lastAttemptAt: v.optional(v.number()),
+    failureReason: v.optional(failureReasonValidator),
+
+    /** The customer's own receipt. Absent = unknown (sent before this was tracked). */
+    copyStatus: v.optional(
+      v.union(
+        v.literal("sent"),
+        v.literal("skipped"),
+        v.literal("delivered"),
+        v.literal("delayed"),
+        v.literal("bounced"),
+        v.literal("failed"),
+      ),
+    ),
+    copySkipReason: v.optional(v.union(v.literal("limit"), v.literal("preference"))),
+    copyFailureReason: v.optional(failureReasonValidator),
+    copyDeliveredAt: v.optional(v.number()),
+    copyEmailId: v.optional(v.string()),
+
+    state: v.optional(inquiryStateValidator),
+    seenAt: v.optional(v.number()),
+    seenByUserId: v.optional(v.id("users")),
+    assignedToUserId: v.optional(v.id("users")),
+    assignedAt: v.optional(v.number()),
+    firstResponseAt: v.optional(v.number()),
+    closedAt: v.optional(v.number()),
+    lastActivityAt: v.optional(v.number()),
+    /** The state the customer was last mailed about, so a flurry of clicks mails once. */
+    notifiedState: v.optional(inquiryStateValidator),
+
+    /** Callback time as an instant plus the zone the person picked it in. */
+    desiredAt: v.optional(v.number()),
+    timeZone: v.optional(v.string()),
+    callbackStatus: v.optional(
+      v.union(v.literal("requested"), v.literal("confirmed"), v.literal("cancelled")),
+    ),
+    callbackConfirmedAt: v.optional(v.number()),
+    /** sha256 of the token in the callback mail's reschedule/cancel links. */
+    actionTokenHash: v.optional(v.string()),
+    actionTokenExpiresAt: v.optional(v.number()),
+
+    attachments: v.optional(v.array(attachmentValidator)),
+    anonymizedAt: v.optional(v.number()),
   })
     .index("by_clerkUserId_sentAt", ["clerkUserId", "sentAt"])
-    .index("by_accountEmail_sentAt", ["accountEmail", "sentAt"]),
+    .index("by_accountEmail_sentAt", ["accountEmail", "sentAt"])
+    .index("by_email_sentAt", ["email", "sentAt"])
+    .index("by_nr", ["nr"])
+    .index("by_state_lastActivityAt", ["state", "lastActivityAt"])
+    .index("by_lastActivityAt", ["lastActivityAt"])
+    .index("by_actionTokenHash", ["actionTokenHash"]),
+
+  /** What happened to an inquiry, in order — the customer's timeline and the team's history. */
+  inquiryEvents: defineTable({
+    inquiryId: v.id("emails"),
+    type: inquiryEventTypeValidator,
+    state: v.optional(inquiryStateValidator),
+    actor: v.union(v.literal("customer"), v.literal("staff"), v.literal("system")),
+    actorUserId: v.optional(v.id("users")),
+    at: v.number(),
+  }).index("by_inquiry_at", ["inquiryId", "at"]),
+
+  /** The reply thread under an inquiry. */
+  inquiryMessages: defineTable({
+    inquiryId: v.id("emails"),
+    author: v.union(v.literal("staff"), v.literal("customer")),
+    staffUserId: v.optional(v.id("users")),
+    body: v.string(),
+    attachments: v.optional(v.array(attachmentValidator)),
+    via: v.union(v.literal("web"), v.literal("email")),
+    createdAt: v.number(),
+  }).index("by_inquiry_createdAt", ["inquiryId", "createdAt"]),
 
   notifyEmails: defineTable({
     email: v.string(),
     createdAt: v.number(),
+    /** The site language they signed up in, so the "we're open again" mail matches it. */
+    locale: v.optional(v.string()),
+    clerkUserId: v.optional(v.string()),
   }).index("by_email", ["email"]),
 
   /**
@@ -86,6 +216,10 @@ export const marketingTables = {
     deliveredAt: v.optional(v.number()),
     deliveryEmailId: v.optional(v.string()),
     deliveryError: v.optional(v.string()),
+    /** Confirmed by being signed in with this address verified, instead of the mailed link. */
+    verifiedVia: v.optional(v.literal("account")),
+    clerkUserId: v.optional(v.string()),
+    withdrawnAt: v.optional(v.number()),
   })
     .index("by_email", ["email"])
     .index("by_confirmTokenHash", ["confirmTokenHash"])

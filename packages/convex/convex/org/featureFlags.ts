@@ -8,6 +8,7 @@ import {
   getFlagRow,
   isFeatureEnabled,
 } from "../lib/featureFlags";
+import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { appendTimeline, insertUpdate } from "../updates/lib/updates";
@@ -99,6 +100,10 @@ export const setFlag = userMutation({
           status: "completed",
           message: args.reason?.trim() || `${meta.label} has been re-enabled.`,
         });
+      }
+      // the forms promised the notify list a mail when they came back
+      if (key === "marketingSubmissions") {
+        await ctx.scheduler.runAfter(0, internal.marketing.mail.sendFormsReopened, {});
       }
       return { ok: true };
     }

@@ -8,20 +8,33 @@ import { toast } from "sonner";
 
 import { useTrackEvent } from "@/lib/analytics";
 import { api } from "@/lib/eden";
-import { type ButtonState } from "@/types/contact";
+import { type ButtonState, type InquiryTopic } from "@/types/contact";
 
 interface EmailPayload {
   firstName: string;
   lastName: string;
   message: string;
-  subject: string;
+  subject?: string;
   email: string;
   phone?: string;
+  /** the translated label, for the team mail */
   topic?: string;
+  topicKey?: InquiryTopic;
   company?: string;
   submissionType: "message" | "callback" | "other";
-  desiredDateTime?: string;
+  desiredAt?: number;
+  timeZone?: string;
   notes?: string;
+}
+
+/** What the server says about an inquiry that went out. */
+export interface SentInquiry {
+  id: string;
+  reference: string;
+  copySent: boolean;
+  copySkipReason?: "limit" | "preference";
+  /** false = saved with its reference, but the mail to the team failed (it can be sent again) */
+  delivered: boolean;
 }
 
 interface UseEmailSubmitOptions {
@@ -54,7 +67,12 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
   }, [resetDelayMs]);
 
   const sendEmail = useCallback(
-    async (payload: EmailPayload, trackingEvent: string) => {
+    async (
+      payload: EmailPayload,
+      trackingEvent: string,
+      /** the server refused one field (e.g. a callback time outside our hours) */
+      onFieldError?: (field: string) => void,
+    ): Promise<SentInquiry | null> => {
       setButtonState("loading");
       trackEvent(trackingEvent);
       try {
@@ -67,18 +85,37 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
           subject: payload.subject,
           locale,
           topic: payload.topic,
+          topicKey: payload.topicKey,
           company: payload.company,
           submissionType: payload.submissionType,
-          desiredDateTime: payload.desiredDateTime,
+          desiredAt: payload.desiredAt,
+          timeZone: payload.timeZone,
           notes: payload.notes,
         });
+
+        // saved, so it has a reference and shows up in the account, but it never reached the team
+        if (response.error?.status === 502) {
+          setButtonState("error");
+          resetButtonState();
+          onError?.(new Error("Not delivered"));
+          const { id, reference } = response.error.value;
+          return { id, reference, copySent: false, delivered: false };
+        }
+
+        if (response.error?.status === 400 && onFieldError) {
+          setButtonState("error");
+          showErrorToast(tMessages("errorDesc"));
+          resetButtonState();
+          onFieldError(response.error.value.field);
+          return null;
+        }
 
         if (response.error && response.status !== 429) {
           setButtonState("error");
           showErrorToast(tMessages("serverErrorDesc"));
           resetButtonState();
           onError?.(new Error("Server error"));
-          return false;
+          return null;
         }
 
         if (response.status === 429) {
@@ -89,20 +126,20 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
           });
           resetButtonState();
           onError?.(new Error("Rate limited"));
-          return false;
+          return null;
         }
 
         setButtonState("success");
         resetButtonState();
         onSuccess?.();
-        return true;
+        return response.data ? { ...response.data, delivered: true } : null;
       } catch (error) {
         console.log(error);
         setButtonState("error");
         showErrorToast(tMessages("serverErrorDesc"));
         resetButtonState();
         onError?.(error);
-        return false;
+        return null;
       }
     },
     [locale, onSuccess, onError, resetButtonState, showErrorToast, tMessages, trackEvent],

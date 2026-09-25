@@ -16,7 +16,7 @@
     "analytics": {
       "title": "Analyse",
       "badge": "Sans cookies",
-      "description": "Nous comptons les visites sur nos propres serveurs plutôt que de les envoyer à une société d'analyse. Aucun cookie, aucune adresse IP, aucun profil — juste un identifiant aléatoire qui vit dans votre onglet et disparaît dès que vous le fermez. Nous distinguons ainsi les visites sans jamais savoir que c'était vous.",
+      "description": "Nous comptons les visites sur nos propres serveurs plutôt que de les envoyer à une société d'analyse. Aucun cookie, aucune adresse IP, aucun profil et rien d'enregistré sur votre appareil : juste un identifiant aléatoire gardé en mémoire par la page, qui disparaît dès que vous fermez ou rechargez l'onglet. Nous distinguons ainsi les visites sans jamais savoir que c'était vous. Les visites sont supprimées au bout de 14 mois.",
       "uses": {
         "usage": "Quelles pages sont visitées",
         "improve": "Repérer ce qu'il faut améliorer"
@@ -28,7 +28,7 @@
       "train": "Nous ne les utilisons pas pour entraîner des modèles d'IA.",
       "ads": "Nous ne diffusons pas de publicité personnalisée et ne créons pas de profils publicitaires."
     },
-    "localOnly": "Votre thème et votre langue n'en font pas partie non plus. Ils restent dans votre navigateur et ne nous sont jamais transmis.",
+    "localOnly": "Votre thème et votre langue n'en font pas partie non plus, pas plus qu'un formulaire de contact à moitié rempli que nous conservons pendant votre connexion. Ils restent dans votre navigateur et ne nous sont transmis que lorsque vous envoyez le formulaire.",
     "privacyHint": "Pour le détail complet de ce que nous stockons et pendant combien de temps, consultez la",
     "privacyLink": "politique de confidentialité"
   },
@@ -178,7 +178,8 @@
     "subtitle": "Découvrons ensemble comment transformer et dynamiser vos ventes.",
     "primary": "Contactez-nous Maintenant",
     "secondary": "Envoyer un E-mail",
-    "benefits": "Consultation Initiale Gratuite • Solutions Individuelles • Offres Personnalisées"
+    "benefits": "Consultation Initiale Gratuite • Solutions Individuelles • Offres Personnalisées",
+    "returning": "Vous nous avez déjà écrit ? <link>Retrouvez vos demandes et nos réponses</link>."
   },
   "footer": {
     "description": "Nous sommes votre partenaire pour des ventes réussies. Avec plus de 15 ans d'expérience et quatre marques fortes, nous faisons avancer votre entreprise.",
@@ -220,15 +221,16 @@
       "notes": "Remarques (optionnel)",
       "notesPlaceholder": "De quoi s'agit-il ?",
       "callbackEmailNote": "Pour la confirmation de votre rappel",
-      "callbackTimeNote": "Nous vous appellerons à l'heure souhaitée",
+      "callbackTimeNote": "En semaine, 9 h – 18 h (heure allemande)",
       "privacyPrefix": "En soumettant ce formulaire, vous acceptez que",
-      "privacySuffix": "utilise les données fournies pour traiter votre demande. Vos données ne seront stockées que pour répondre à votre demande et ne seront pas transmises à des tiers.",
+      "privacySuffix": "utilise les données fournies pour traiter votre demande. Vos données ne seront stockées que pour répondre à votre demande et ne seront transmises à personne d'autre que les prestataires cités dans notre politique de confidentialité.",
       "privacySuffixCallback": "utilise les données fournies pour organiser le rappel.",
       "privacyLink": "Plus d'informations dans notre politique de confidentialité.",
       "privacyNoteLabel": "AVIS DE CONFIDENTIALITÉ :",
       "errors": {
         "required": "Champ obligatoire",
-        "email": "Saisissez une adresse e-mail valide"
+        "email": "Saisissez une adresse e-mail valide",
+        "callbackHours": "Choisissez un jour de semaine entre 9 h et 18 h (heure allemande), pas dans le passé."
       }
     },
     "sidebar": {
@@ -243,13 +245,13 @@
     },
     "messages": {
       "writeUs": "Écrivez-nous",
-      "writeUsDesc": "Envoyez-nous un message et nous vous répondrons dans les 24 heures",
+      "writeUsDesc": "Envoyez-nous un message. Nous répondons généralement sous un jour ouvré.",
       "callback": "Planifier un rappel",
       "callbackDesc": "Dites-nous quand nous pouvons vous joindre le mieux",
       "otherInquiry": "Autre demande",
       "otherInquiryDesc": "Avez-vous des questions ou des demandes générales ? Nous sommes là pour vous aider !",
       "successTitle": "Envoyé !",
-      "successDesc": "Nous vous répondrons dans les 24 heures.",
+      "successDesc": "Nous répondons généralement sous un jour ouvré.",
       "callSuccessTitle": "Rappel demandé !",
       "callSuccessDesc": "Nous vous appellerons à l'heure souhaitée.",
       "errorTitle": "Une erreur s'est produite",
@@ -258,13 +260,22 @@
       "rateLimitTitle": "Trop de demandes",
       "rateLimitDesc": "Vous avez envoyé beaucoup de demandes. Veuillez réessayer plus tard.",
       "copySent": "Une copie a été envoyée à {email}.",
-      "sendAnother": "Envoyer une autre demande"
+      "sendAnother": "Envoyer une autre demande",
+      "copyOff": "Vous avez désactivé les copies dans vos préférences, aucune copie n'a donc été envoyée.",
+      "copyLimit": "Nous n'avons pas renvoyé de copie à {email}, car plusieurs y sont déjà parties cette heure-ci.",
+      "copyFailed": "La copie à {email} n'a pas pu être envoyée, mais votre demande nous est bien parvenue.",
+      "notDeliveredTitle": "Enregistrée, mais pas encore transmise",
+      "notDeliveredSignedIn": "Votre demande est enregistrée mais n'a pas pu être transmise à notre équipe. Ouvrez-la pour la renvoyer.",
+      "notDeliveredCall": "Votre demande est enregistrée mais n'a pas pu être transmise à notre équipe. Réessayez dans quelques minutes ou appelez-nous au {phone}.",
+      "notDeliveredRetry": "Votre demande est enregistrée mais n'a pas pu être transmise à notre équipe. Réessayez dans quelques minutes.",
+      "reference": "Référence",
+      "viewInquiry": "Voir cette demande",
+      "openToRetry": "Ouvrir et renvoyer"
     },
     "submissionBanner": {
       "title": "Formulaires temporairement indisponibles",
       "defaultMessage": "Les formulaires de contact ne sont pas traités pour le moment.",
-      "notifyCta": "M'avertir quand les formulaires reviennent",
-      "dismiss": "Fermer l'avertissement"
+      "notifyCta": "M'avertir quand les formulaires reviennent"
     },
     "notify": {
       "close": "Fermer",
@@ -347,19 +358,7 @@
       "optional": "optionnel"
     },
     "accountHelper": {
-      "badge": "Raccourci connecté",
-      "title": "Utilisez les informations de votre compte actuel",
-      "description": "Si vous nous contactez avec votre compte Clerk actuel, nous pouvons préremplir votre nom et votre e-mail pour aller plus vite.",
-      "signedInAs": "Connecté en tant que {email}",
-      "emailNote": "Vous pouvez tout de même remplacer l’e-mail du formulaire par une adresse d’entreprise si c’est mieux pour le suivi. Nous garderons les deux pour plus de clarté.",
-      "useAccount": "Utiliser les infos de mon compte",
-      "useAccountSuccess": "Ajouté au formulaire",
-      "signedOutTitle": "Envoyer vos formulaires plus vite ?",
-      "signedOutDescription": "Connectez-vous d’abord pour préremplir automatiquement vos coordonnées et retrouver toutes vos demandes envoyées dans votre compte.",
       "signInCta": "Se connecter pour préremplir",
-      "storedAccountNote": "Lorsque vous envoyez une demande en étant connecté, nous enregistrons à la fois votre compte connecté et l’e-mail saisi dans le formulaire pour éviter toute ambiguïté.",
-      "successNotice": "Vos informations de compte figurent maintenant dans le formulaire ci-dessous.",
-      "scrollNotice": "Vos informations de compte ont été ajoutées au formulaire ci-dessous.",
       "signedInNote": "Connecté en tant que {email}. Cette demande apparaîtra aussi dans <link>vos demandes</link>."
     }
   },
@@ -435,6 +434,14 @@
       "title": "Un Aperçu de Notre Quotidien",
       "subtitle": "Quelques instants du bureau et sur le terrain."
     }
+  },
+  "checkpoints": {
+    "done": "terminé",
+    "current": "étape en cours",
+    "upcoming": "à venir",
+    "failed": "échec",
+    "warning": "en retard",
+    "skipped": "ignoré"
   },
   "brandsPage": {
     "comingSoon": "Bientôt disponible",
@@ -525,7 +532,35 @@
       "contact": {
         "title": "Formulaire de Contact",
         "content1": "Si vous nous envoyez des demandes par e-mail ou formulaire de contact, vos informations du formulaire de demande, y compris les coordonnées que vous avez fournies, seront stockées dans le but de traiter la demande et en cas de questions de suivi.",
-        "content2": "Nous ne partageons pas ces données sans votre consentement. Le traitement est basé sur l'Art. 6 para. 1 lit. b RGPD, si votre demande est liée à l'exécution d'un contrat ou est nécessaire pour la mise en œuvre de mesures précontractuelles."
+        "content2": "Nous ne transmettons ces données qu'aux prestataires cités ci-dessous, qui les traitent pour notre compte, et à personne d'autre sans votre consentement. Le traitement repose sur l'art. 6, par. 1, point b) du RGPD lorsque votre demande concerne un contrat ou des mesures précontractuelles, et sinon sur notre intérêt légitime à répondre aux demandes qui nous sont adressées (art. 6, par. 1, point f) du RGPD).",
+        "content3": "Chaque demande est enregistrée avec un numéro de référence, son statut, nos réponses et l'état de remise des e-mails correspondants. Sauf suppression antérieure de votre part, les données personnelles des demandes sans activité depuis {years} ans sont anonymisées."
+      },
+      "account": {
+        "title": "Compte client",
+        "content1": "Vous pouvez créer un compte pour retrouver vos demandes et nos réponses au même endroit. Nous enregistrons pour cela votre nom, vos adresses e-mail, vos méthodes de connexion et, si vous les indiquez, votre entreprise, votre numéro de téléphone et votre fonction. Nous les utilisons pour afficher vos demandes, préremplir nos formulaires et vous écrire dans la langue choisie. La base juridique est l'art. 6, par. 1, point b) du RGPD.",
+        "content2": "La connexion est assurée par Clerk. Clerk dépose les cookies nécessaires pour que vous restiez connecté. Ils sont strictement nécessaires et ne servent pas au suivi.",
+        "content3": "Dans la rubrique « Confidentialité » de votre compte, vous pouvez télécharger sous forme de fichier toutes les données que nous conservons sur vous, supprimer l'historique de vos demandes ou supprimer le compte. La suppression du compte efface aussi vos demandes, votre inscription à la liste de notification et les demandes de livre blanc pour vos adresses vérifiées."
+      },
+      "whitepaper": {
+        "title": "Livre blanc et liste de notification",
+        "content1": "Si vous demandez notre livre blanc, nous enregistrons votre nom, votre entreprise, votre adresse e-mail, votre numéro de téléphone et votre consentement, sur la base de ce consentement (art. 6, par. 1, point a) du RGPD). Nous envoyons d'abord un lien de confirmation valable 48 heures et n'envoyons le livre blanc qu'après votre confirmation (double opt-in). Si vous êtes connecté et que l'adresse est vérifiée dans votre compte, cette confirmation existe déjà et l'étape est supprimée. Vous pouvez retirer votre consentement à tout moment depuis votre compte ou par e-mail. Les demandes jamais confirmées sont supprimées au bout de 30 jours. Après un retrait, nous conservons la preuve de votre consentement pendant {years} ans afin de pouvoir démontrer qu'il a été donné, puis nous la supprimons.",
+        "content2": "Tant que nos formulaires de contact sont fermés, vous pouvez laisser votre adresse e-mail pour être prévenu de leur réouverture. Nous enregistrons l'adresse et la langue utilisée sur la base de votre consentement (art. 6, par. 1, point a) du RGPD), vous envoyons un e-mail à la réouverture, puis supprimons l'inscription. D'ici là, vous pouvez vous désinscrire à tout moment."
+      },
+      "processors": {
+        "title": "Prestataires",
+        "intro": "Nous faisons appel aux prestataires suivants pour ces fonctions. Ils traitent les données pour notre compte :",
+        "items": {
+          "vercel": "Vercel (États-Unis) : hébergement de ce site",
+          "clerk": "Clerk (États-Unis) : connexion et gestion du compte",
+          "convex": "Convex (États-Unis) : base de données des demandes, des données de compte et de la liste de notification",
+          "resend": "Resend (États-Unis) : envoi d'e-mails (accusés de réception, réponses, livre blanc)",
+          "upstash": "Upstash : compteurs de courte durée qui limitent la fréquence d'envoi d'un formulaire, par adresse IP ou adresse e-mail. Ils expirent au bout d'une heure. La base juridique est notre intérêt légitime à protéger les formulaires contre les abus (art. 6, par. 1, point f) du RGPD)."
+        },
+        "footer": "Certains de ces prestataires sont établis aux États-Unis. Les transferts vers ce pays reposent sur la décision d'adéquation de la Commission européenne relative au EU-US Data Privacy Framework (art. 45 du RGPD) lorsque le prestataire y est certifié, et sinon sur les clauses contractuelles types de l'UE (art. 46, par. 2, point c) du RGPD) figurant dans notre contrat de sous-traitance avec le prestataire."
+      },
+      "analytics": {
+        "title": "Statistiques de visite",
+        "content1": "Nous comptons les pages vues et quelques actions (comme l'envoi d'un formulaire) dans notre propre base de données. Nous enregistrons la page, la langue, le site d'où vous venez (domaine uniquement), la durée de la visite et un identifiant aléatoire qui n'existe que tant que la page est ouverte. Nous ne déposons aucun cookie, n'enregistrons rien sur votre appareil et ne conservons pas votre adresse IP. La base juridique est notre intérêt légitime à savoir quelles pages sont utiles (art. 6, par. 1, point f) du RGPD). Les statistiques sont supprimées au bout de 14 mois."
       },
       "rights": {
         "title": "Vos Droits",
@@ -555,6 +590,14 @@
           "portability": {
             "title": "Droit à la portabilité des données :",
             "description": "Vous pouvez recevoir vos données dans un format structuré"
+          },
+          "withdraw": {
+            "title": "Retrait du consentement :",
+            "description": "Vous pouvez retirer à tout moment un consentement donné, avec effet pour l'avenir"
+          },
+          "complaint": {
+            "title": "Droit de réclamation :",
+            "description": "Vous pouvez introduire une réclamation auprès d'une autorité de contrôle de la protection des données, notamment dans l'État de l'UE où vous résidez, travaillez ou où la violation présumée a eu lieu"
           }
         },
         "footer": "Pour cela et d'autres questions sur le sujet des données personnelles, vous pouvez toujours nous contacter à l'adresse indiquée dans les mentions légales."
@@ -625,99 +668,44 @@
     }
   },
   "email": {
-    "greeting": "Bonjour {firstName} {lastName},",
-    "bodyIntro": "merci pour votre message. Ceci est une copie de la demande que nous venons de recevoir.",
-    "bodyOutro": "Nous examinons votre demande et vous répondrons dès que possible – généralement dans les prochaines 24 heures.",
-    "yourMessage": "Votre message :",
-    "poweredBy": "Propulsé par",
-    "rightsReserved": "Tous droits réservés.",
-    "subject": "Objet",
-    "topic": "Sujet",
-    "confirmationTitle": "Nous avons reçu votre demande",
-    "confirmationBody": "Merci pour votre message. Nous avons enregistré votre demande et vous répondrons dans les plus brefs délais.",
-    "submissionType": "Type de demande",
-    "contactEmail": "E-mail",
-    "contactPhone": "Téléphone",
-    "company": "Entreprise",
-    "typeMessage": "Message",
-    "typeCallback": "Rappel",
-    "typeOther": "Autre"
+    "receipt": {
+      "subject": "Nous avons bien reçu votre demande · {reference}",
+      "subjectCallback": "Votre demande de rappel · {reference}",
+      "heading": "Merci, {firstName}.",
+      "received": "Votre message est bien arrivé auprès de notre équipe.",
+      "receivedCallback": "Votre demande de rappel est bien arrivée auprès de notre équipe.",
+      "callbackWhen": "Nous vous appellerons au {phone} à l'heure choisie : {when}.",
+      "next": "Nous répondons généralement sous un jour ouvré, depuis {inbox}.",
+      "nextCallback": "Nous vous confirmerons l'horaire par e-mail sous un jour ouvré.",
+      "reference": "Référence",
+      "viewInAccount": "Voir dans votre compte",
+      "createAccount": "Créer un compte",
+      "keepTrack": "Créez un compte avec cette adresse : vous y retrouverez cette demande et toutes les suivantes.",
+      "whatYouSent": "Ce que vous nous avez envoyé",
+      "replyHint": "Vous souhaitez ajouter quelque chose ? Répondez simplement à cet e-mail.",
+      "privacy": "Confidentialité"
+    }
   },
   "auth": {
-    "badge": "Accès sécurisé",
     "menuLabel": "Compte",
     "guest": "Invité",
     "providerHint": "Continuez avec Google ou utilisez votre e-mail pour créer un compte.",
     "authShellHighlights": [
-      "Suivez le statut de vos demandes",
-      "Gérez votre profil au même endroit",
-      "Sécurisé avec Clerk"
+      "Retrouvez chaque demande et où elle en est",
+      "Vos coordonnées au même endroit, les formulaires se remplissent seuls",
+      "Récupérez votre livre blanc à tout moment"
     ],
-    "signInPageCta": "Ouvrir la connexion",
-    "signUpPageCta": "Ouvrir l’inscription",
     "signIn": "Se connecter",
     "signUp": "Créer un compte",
-    "signedIn": "Connecté avec Clerk",
-    "accountCta": "Gérer le compte",
+    "accountCta": "Profil et sécurité",
     "signOut": "Se déconnecter",
     "signInTitle": "Bon retour chez ADVANTIS GROUP",
-    "signInSubtitle": "Connectez-vous avec Clerk pour gérer votre profil, vos paramètres de sécurité et les futures expériences protégées depuis un seul endroit.",
+    "signInSubtitle": "Connectez-vous pour voir vos demandes et nos réponses, et garder vos coordonnées prêtes pour le prochain formulaire.",
     "signUpTitle": "Créez votre compte Advantis",
-    "signUpSubtitle": "Utilisez Clerk pour créer un compte sécurisé et gérer votre profil, vos méthodes de connexion et les futures expériences réservées aux membres.",
-    "accountBadge": "Centre de compte",
-    "accountTitle": "Votre compte",
-    "accountSubtitle": "Gérez votre profil, vos paramètres de sécurité et vos sessions actives dans le centre de compte hébergé de Clerk.",
-    "signInRequired": "Veuillez vous connecter pour accéder à vos paramètres de compte.",
-    "submissionsCta": "Voir les demandes",
-    "contactCta": "Envoyer une nouvelle demande",
-    "submissions": {
-      "badge": "Historique des demandes",
-      "title": "Vos demandes",
-      "subtitle": "Consultez les formulaires de contact envoyés pendant votre session et voyez quelle adresse e-mail et quelles informations d’entreprise vous avez partagées.",
-      "newSubmissionCta": "Envoyer une autre demande",
-      "accountCta": "Gérer le compte",
-      "loading": "Chargement de vos demandes…",
-      "errorTitle": "Impossible de charger vos demandes.",
-      "errorDescription": "Veuillez réessayer dans un instant.",
-      "retry": "Réessayer",
-      "search": "Rechercher dans vos demandes",
-      "noMatches": "Aucun résultat.",
-      "selectHint": "Choisissez une demande pour voir tout ce que vous avez envoyé.",
-      "followUp": "Relancer par e-mail",
-      "filterAll": "Toutes",
-      "upcoming": "À venir",
-      "name": "Nom",
-      "phone": "Téléphone",
-      "reference": "Référence",
-      "summary": {
-        "total": "Demandes",
-        "lastSent": "Dernier envoi",
-        "callbacks": "Rappels demandés",
-        "upcoming": "{count} à venir",
-        "delivery": "Distribution",
-        "allDelivered": "Tout est distribué",
-        "issues": "{count, plural, one {# à vérifier} other {# à vérifier}}"
-      },
-      "emptyTitle": "Aucune demande pour le moment",
-      "emptyDescription": "Dès que vous envoyez un formulaire de contact en étant connecté, il apparaîtra ici avec son statut et les détails transmis.",
-      "contactEmail": "E-mail de contact utilisé",
-      "accountEmail": "Compte connecté",
-      "company": "Entreprise",
-      "desiredTime": "Heure de rappel souhaitée",
-      "message": "Message",
-      "topic": "Sujet",
-      "notes": "Notes",
-      "deliveryIssue": "Problème d’envoi",
-      "types": {
-        "message": "Message",
-        "callback": "Rappel",
-        "other": "Autre demande"
-      },
-      "status": {
-        "sent": "Envoyé",
-        "failed": "À vérifier"
-      }
-    }
+    "signUpSubtitle": "Un compte réunit vos demandes et nos réponses au même endroit et remplit vos coordonnées dans chaque formulaire.",
+    "submissionsCta": "Vos demandes",
+    "backToSite": "Retour au site",
+    "yourAccount": "Votre compte"
   },
   "services": {
     "title": "Tout pour Votre Réussite Commerciale",
@@ -1297,7 +1285,7 @@
       "consentSuffix": "Vous trouverez plus d'informations dans notre",
       "consentLink": "politique de confidentialité",
       "doubleOptIn": "Double opt-in : vous recevez d'abord un e-mail contenant un lien de confirmation. Le livre blanc n'est envoyé qu'ensuite.",
-      "noThirdParty": "Nous ne transmettons jamais vos données à des tiers.",
+      "noThirdParty": "Nous ne vendons jamais vos données et ne les partageons pas à des fins publicitaires.",
       "submit": "Demander le livre blanc",
       "errors": {
         "required": "Veuillez remplir ce champ.",
@@ -1347,6 +1335,12 @@
       "error": {
         "title": "Une erreur est survenue",
         "description": "Nous n'avons pas pu traiter votre confirmation. Veuillez réessayer plus tard."
+      },
+      "next": {
+        "body": "Envie d'en parler pour votre équipe ? Choisissez un créneau et nous vous appelons.",
+        "cta": "Demander un rappel",
+        "account": "<link>Créez un compte</link> pour le télécharger à nouveau à tout moment et retrouver vos demandes au même endroit.",
+        "inAccount": "Il est aussi disponible dans <link>Téléchargements</link> de votre compte."
       }
     },
     "email": {
@@ -1369,6 +1363,341 @@
         "contactEmail": "E-mail",
         "contactPhone": "Téléphone"
       }
+    }
+  },
+  "account": {
+    "nav": {
+      "label": "Compte",
+      "title": "Compte",
+      "overview": "Vue d'ensemble",
+      "inquiries": "Demandes",
+      "profile": "Profil",
+      "security": "Sécurité",
+      "preferences": "Préférences",
+      "downloads": "Téléchargements",
+      "privacy": "Confidentialité et données",
+      "signOut": "Se déconnecter",
+      "signedOut": "Vous êtes déconnecté.",
+      "back": "Compte"
+    },
+    "overview": {
+      "greeting": {
+        "morning": "Bonjour, {name}",
+        "afternoon": "Bonjour, {name}",
+        "evening": "Bonsoir, {name}"
+      },
+      "greetingNoName": {
+        "morning": "Bonjour",
+        "afternoon": "Bonjour",
+        "evening": "Bonsoir"
+      },
+      "memberSince": "Membre depuis {date}",
+      "welcome": "Bienvenue. Tout ce que vous nous envoyez en étant connecté se retrouve ici, et les formulaires de contact se remplissent désormais tout seuls.",
+      "workAccount": {
+        "title": "C'est aussi votre compte professionnel ADVANTIS",
+        "body": "La connexion et la sécurité sont gérées dans l'intranet.",
+        "cta": "Paramètres de l'intranet"
+      },
+      "comingUp": "À venir",
+      "view": "Voir",
+      "callbackConfirmed": "Votre rappel est confirmé.",
+      "callbackRequested": "Le rappel que vous avez demandé. Nous confirmerons l'horaire par e-mail.",
+      "recent": "Demandes récentes",
+      "seeAll": "Tout voir",
+      "noInquiries": "Rien envoyé pour l'instant.",
+      "start": "Commencer",
+      "actions": {
+        "message": "Nous écrire",
+        "callback": "Demander un rappel",
+        "whitepaper": "Obtenir le livre blanc"
+      }
+    },
+    "inquiries": {
+      "title": "Vos demandes",
+      "back": "Vos demandes",
+      "summary": "{count, plural, one {# demande} other {# demandes}} · dernière envoyée {last}",
+      "new": "Nouvelle demande",
+      "nextCallback": "Prochain rappel",
+      "view": "Voir",
+      "problems": "{count, plural, one {# demande ne nous est pas parvenue} other {# demandes ne nous sont pas parvenues}}",
+      "problemsHint": "Rien n'est perdu. Ouvrez-la pour la renvoyer.",
+      "search": "Rechercher dans vos demandes",
+      "filterLabel": "Afficher",
+      "filters": {
+        "all": "Toutes",
+        "open": "Ouvertes",
+        "answered": "Répondues",
+        "closed": "Fermées"
+      },
+      "noMatches": "Aucun résultat.",
+      "showOlder": "Afficher les plus anciennes",
+      "notDelivered": "Non distribuée",
+      "upcomingAt": "À venir · {when}",
+      "loadError": "Impossible de charger vos demandes pour le moment.",
+      "retry": "Réessayer",
+      "empty": {
+        "title": "Rien ici pour l'instant",
+        "body": "Tout ce que vous nous envoyez en étant connecté apparaît ici, avec son avancement et tout ce que vous avez envoyé.",
+        "message": "Nous écrire",
+        "callback": "Demander un rappel",
+        "other": "Autre chose"
+      },
+      "callbackTitle": "Rappel · {when}",
+      "yourMessage": "Votre message",
+      "types": {
+        "message": "Message",
+        "callback": "Rappel",
+        "other": "Autre demande"
+      },
+      "states": {
+        "open": "Reçue",
+        "in_progress": "En cours",
+        "answered": "Répondue",
+        "closed": "Fermée",
+        "withdrawn": "Retirée"
+      },
+      "replyBy": "Nous répondons généralement sous un jour ouvré, donc d'ici {when}.",
+      "replyLate": "Cela prend plus de temps que d'habitude. Si c'est urgent, appelez-nous au {phone}.",
+      "replyLateNoPhone": "Cela prend plus de temps que d'habitude. Nous nous en occupons.",
+      "progressLabel": "Avancement",
+      "steps": {
+        "received": "Reçue",
+        "seen": "Vue",
+        "inProgress": "En cours",
+        "answered": "Répondue",
+        "closed": "Fermée",
+        "withdrawn": "Retirée"
+      },
+      "seenBy": "{name} · {when}",
+      "onIt": "{name} s'en occupe",
+      "print": "Imprimer",
+      "emailUs": "Nous écrire à ce sujet",
+      "copyReference": "Copier la référence",
+      "copied": "{reference} copiée",
+      "delivery": {
+        "team": {
+          "queued": "Envoi à notre équipe…",
+          "sent": "Envoyée à notre équipe",
+          "delivered": "Distribuée à notre équipe",
+          "delayed": "Retardée en route vers notre équipe",
+          "bounced": "N'est pas parvenue à notre équipe",
+          "failed": "N'est pas parvenue à notre équipe"
+        },
+        "copy": {
+          "sent": "copie envoyée",
+          "skipped": "pas de copie envoyée",
+          "delivered": "copie distribuée",
+          "delayed": "votre copie est retardée",
+          "bounced": "votre copie n'est pas arrivée",
+          "failed": "votre copie n'est pas partie"
+        },
+        "details": "Détails",
+        "hide": "Masquer",
+        "toTeam": "À notre équipe",
+        "toYou": "Votre copie à {email}",
+        "steps": {
+          "queued": "En file d'attente",
+          "sent": "Envoyée",
+          "delivered": "Distribuée",
+          "copySent": "Envoyée",
+          "copyDelivered": "Distribuée"
+        },
+        "skipped": {
+          "limit": "Vous aviez déjà reçu plusieurs copies en peu de temps, nous avons donc sauté celle-ci.",
+          "preference": "Vous avez désactivé les copies dans vos préférences."
+        },
+        "reasons": {
+          "invalid_address": {
+            "title": "L'adresse semble incorrecte",
+            "body": "Notre service d'e-mail n'a pas accepté l'adresse. Renvoyez-la une fois corrigée.",
+            "copyBody": "Votre copie n'a pas pu être envoyée à {email}. Vérifiez l'adresse pour la prochaine fois."
+          },
+          "mailbox_unavailable": {
+            "title": "Cette boîte n'accepte pas de courrier",
+            "body": "La boîte de réception a refusé le message. Renvoyez-le ou appelez-nous.",
+            "copyBody": "{email} a refusé votre copie. Votre demande nous est tout de même parvenue."
+          },
+          "temporary": {
+            "title": "Plus long que d'habitude",
+            "body": "Le serveur destinataire tarde à l'accepter. Rien à faire, nous continuons d'essayer.",
+            "copyBody": "Votre copie est en route vers {email}, un peu plus lentement que d'habitude."
+          },
+          "rate_limited": {
+            "title": "Trop d'envois en même temps",
+            "body": "Notre service d'e-mail nous a demandé de ralentir. Renvoyez-le dans une minute.",
+            "copyBody": "Votre copie à {email} a été retenue. Votre demande nous est tout de même parvenue."
+          },
+          "provider_error": {
+            "title": "Notre service d'e-mail a eu un raté",
+            "body": "Rien n'est perdu. Renvoyez-le et il partira.",
+            "copyBody": "Votre copie à {email} n'est pas partie. Votre demande nous est tout de même parvenue."
+          },
+          "unknown": {
+            "title": "L'envoi n'a pas abouti",
+            "body": "Rien n'est perdu. Renvoyez-le ou appelez-nous.",
+            "copyBody": "Votre copie à {email} n'est pas partie. Votre demande nous est tout de même parvenue."
+          }
+        },
+        "attempts": "{count, plural, one {Une tentative} other {# tentatives}} · dernière à {when}",
+        "sendAgain": "Renvoyer",
+        "retried": "Envoyée à notre équipe.",
+        "retryFailed": "Cela n'a pas fonctionné non plus. Réessayez plus tard ou appelez-nous.",
+        "callInstead": "Si cela échoue encore, appelez-nous au {phone}."
+      },
+      "callback": {
+        "title": "Rappel",
+        "requested": "Demandé",
+        "confirmed": "Confirmé",
+        "done": "Effectué",
+        "cancelled": "Annulé",
+        "calendarTitle": "Rappel d'ADVANTIS GROUP",
+        "addToCalendar": "Ajouter au calendrier",
+        "anotherTime": "Un autre horaire ?",
+        "unconfirmedHint": "Nous confirmerons l'horaire par e-mail, généralement sous un jour ouvré."
+      },
+      "thread": {
+        "title": "Échanges",
+        "you": "Vous",
+        "staff": "{name} · ADVANTIS GROUP",
+        "team": "ADVANTIS GROUP",
+        "add": "Ajouter quelque chose",
+        "placeholder": "Écrire une réponse ou ajouter des détails…",
+        "attach": "Joindre des fichiers",
+        "removeFile": "Retirer {name}",
+        "reopensHint": "Répondre rouvre cette demande.",
+        "send": "Envoyer",
+        "sent": "Envoyé.",
+        "sendFailed": "L'envoi a échoué. Réessayez.",
+        "tooLarge": "Les fichiers peuvent faire jusqu'à 10 Mo."
+      },
+      "actions": {
+        "withdraw": "Retirer la demande",
+        "withdrawConfirm": "Retirer cette demande ?",
+        "withdrawYes": "Retirer",
+        "cancel": "La garder",
+        "withdrawDone": "Demande retirée.",
+        "resolve": "C'est résolu",
+        "resolveDone": "Fermée. Merci de nous l'avoir dit.",
+        "stillNeedHelp": "J'ai encore besoin d'aide",
+        "failed": "Cela n'a pas fonctionné. Réessayez."
+      },
+      "shared": {
+        "title": "Ce que vous avez indiqué",
+        "email": "E-mail de contact",
+        "phone": "Téléphone",
+        "company": "Entreprise",
+        "topic": "Sujet",
+        "callbackTime": "Horaire souhaité"
+      }
+    },
+    "profile": {
+      "title": "Profil",
+      "securityTitle": "Sécurité",
+      "details": {
+        "title": "Informations professionnelles",
+        "hint": "Nous les remplissons pour vous dans les formulaires de contact et de livre blanc.",
+        "company": "Entreprise",
+        "phone": "Téléphone",
+        "role": "Fonction",
+        "saved": "Enregistré",
+        "failed": "L'enregistrement a échoué. Réessayez."
+      },
+      "staffSecurity": {
+        "title": "Géré dans l'intranet",
+        "body": "Vos méthodes de connexion, passkeys et paramètres de double authentification relèvent de votre compte professionnel ADVANTIS.",
+        "cta": "Ouvrir les paramètres de l'intranet"
+      }
+    },
+    "preferences": {
+      "title": "Préférences",
+      "site": "Langue et apparence",
+      "mail": "E-mail",
+      "copies": {
+        "label": "Recevoir une copie de chaque demande",
+        "description": "Un accusé de réception avec la référence et ce que vous avez envoyé, dans la langue de votre message.",
+        "on": "Vous recevrez une copie de chaque demande.",
+        "off": "Plus de copies. Vos demandes restent visibles ici."
+      },
+      "notify": {
+        "label": "Me prévenir quand les formulaires rouvrent",
+        "description": "Un seul e-mail à {email}, puis vous êtes retiré de la liste."
+      },
+      "failed": "L'enregistrement a échoué. Réessayez."
+    },
+    "downloads": {
+      "title": "Téléchargements",
+      "whitepaper": "Livre blanc : les outils IA dans la vente",
+      "pdfFor": "PDF · demandé pour {email}",
+      "download": "Télécharger",
+      "get": "Obtenir le livre blanc",
+      "empty": "Rien à télécharger pour l'instant.",
+      "viaAccount": "Confirmé par votre compte",
+      "steps": {
+        "requested": "Demandé",
+        "confirmed": "Confirmé",
+        "sent": "Envoyé"
+      },
+      "pending": {
+        "title": "En attente de votre confirmation",
+        "body": "Nous avons envoyé un lien de confirmation à {email}. Ouvrez-le et le PDF suivra."
+      },
+      "expired": {
+        "title": "Le lien de confirmation a expiré",
+        "body": "Refaites la demande et utilisez le nouveau lien sous deux jours.",
+        "cta": "Refaire la demande"
+      },
+      "failed": {
+        "title": "L'e-mail avec le PDF n'est pas parti",
+        "body": "Téléchargez-le ici à la place."
+      }
+    },
+    "privacy": {
+      "title": "Confidentialité et données",
+      "summary": {
+        "keep": "Nous conservons vos demandes et nos réponses, votre demande de livre blanc, et si vous souhaitez être prévenu de la réouverture des formulaires.",
+        "howLong": "Les demandes sont anonymisées {years} ans après la dernière activité.",
+        "control": "Vous pouvez en récupérer une copie ou tout supprimer ci-dessous."
+      },
+      "policy": "Lire la politique de confidentialité complète",
+      "yourData": "Vos données",
+      "export": {
+        "label": "Télécharger vos données",
+        "description": "Tout ce que nous détenons sur ce compte, dans un seul fichier JSON.",
+        "cta": "Télécharger"
+      },
+      "history": {
+        "label": "Supprimer l'historique des demandes",
+        "description": "Retire vos demandes et nos réponses de ce compte. Les e-mails déjà dans notre boîte y restent.",
+        "cta": "Supprimer l'historique",
+        "confirm": "Supprimer définitivement",
+        "cancel": "Annuler",
+        "done": "Historique des demandes supprimé.",
+        "failed": "Cela n'a pas fonctionné. Réessayez."
+      },
+      "consents": {
+        "title": "Ce que vous avez accepté",
+        "whitepaper": "Contact au sujet du livre blanc",
+        "whitepaperDetail": "{email} · accepté le {date} ({version})",
+        "withdraw": "Retirer",
+        "withdrawn": "Retiré. Nous avons prévenu l'équipe.",
+        "notify": "E-mail de réouverture des formulaires",
+        "notifyDetail": "{email}",
+        "manage": "Gérer"
+      },
+      "account": "Compte",
+      "delete": {
+        "label": "Supprimer le compte",
+        "description": "Supprime votre compte et tout ce que ce site détient sur vous. C'est irréversible.",
+        "cta": "Supprimer le compte",
+        "typeEmail": "Saisissez {email} pour confirmer",
+        "kept": "Les copies de vos messages déjà arrivées dans notre boîte sont conservées comme l'exigent nos obligations d'archivage.",
+        "confirm": "Supprimer mon compte",
+        "cancel": "Annuler",
+        "done": "Votre compte a été supprimé.",
+        "failed": "Cela n'a pas fonctionné. Réessayez.",
+        "staff": "C'est votre compte professionnel ADVANTIS, il est donc géré par votre administrateur."
+      },
+      "failed": "Cela n'a pas fonctionné. Réessayez."
     }
   }
 }

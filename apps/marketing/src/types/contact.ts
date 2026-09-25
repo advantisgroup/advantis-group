@@ -24,29 +24,9 @@ export interface AccountContactProfile {
   firstName: string;
   lastName: string;
   fullName: string;
-}
-
-export interface ContactSubmissionRecord {
-  _id: string;
-  _creationTime: number;
-  messageId?: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  subject: string;
-  message: string;
-  company?: string;
-  submissionType: "message" | "callback" | "other";
-  topic?: string;
-  desiredDateTime?: string;
-  notes?: string;
-  accountEmail: string;
-  accountName: string;
-  clerkUserId: string;
-  sentAt: number;
-  status: "sent" | "failed";
-  error?: string;
+  /** from the account's business details, when filled in */
+  company: string;
+  phone: string;
 }
 
 export interface ContactInfoItem {

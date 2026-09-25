@@ -1,17 +1,24 @@
 import { Elysia, t } from "elysia";
 
+import { INQUIRY_MAIL_KINDS, isInquiryMailKind, sendInquiryMail } from "../../lib/inquiry-mail.js";
 import { requireServerKey } from "../../lib/middleware.js";
 import { sendNotificationEmail } from "../../lib/resend.js";
 
 /**
  * POST /internal/notifications — server-key gated. Convex internal actions call
- * this to send transactional email via Resend.
+ * this to send transactional email via Resend. Intranet mails and the mails
+ * website customers get about their inquiries share the route; each kind knows
+ * which template (and sender) it uses.
  */
 export const internalNotificationsRoute = new Elysia().post(
   "/internal/notifications",
   async ({ request, body }) => {
     requireServerKey(request);
-    await sendNotificationEmail(body.kind, body.to, body.data ?? {});
+    if (isInquiryMailKind(body.kind)) {
+      await sendInquiryMail(body.kind, body.to, body.data ?? {});
+    } else {
+      await sendNotificationEmail(body.kind, body.to, body.data ?? {});
+    }
     return { sent: true };
   },
   {
@@ -31,6 +38,7 @@ export const internalNotificationsRoute = new Elysia().post(
         t.Literal("admin-verification-code"),
         t.Literal("security-alert"),
         t.Literal("secondary-email-code"),
+        ...INQUIRY_MAIL_KINDS.map((kind) => t.Literal(kind)),
       ]),
       to: t.String(),
       data: t.Optional(t.Record(t.String(), t.Unknown())),

@@ -1,0 +1,96 @@
+{
+  "title": "Website inquiries",
+  "description": "Contact forms and callback requests from the website",
+  "noAccess": "You don't have access to website inquiries.",
+  "notFound": "This inquiry doesn't exist or was deleted.",
+  "back": "All inquiries",
+  "loadMore": "Load more",
+  "views": {
+    "open": "Open",
+    "answered": "Answered",
+    "closed": "Closed",
+    "failed": "Not delivered",
+    "all": "All"
+  },
+  "empty": {
+    "open": "Nothing waiting. Every inquiry has an answer.",
+    "answered": "No answered inquiries waiting on the customer.",
+    "closed": "No closed inquiries yet.",
+    "failed": "Every inquiry reached the inbox.",
+    "all": "No inquiries yet."
+  },
+  "types": {
+    "message": "Message",
+    "callback": "Callback",
+    "other": "Other"
+  },
+  "states": {
+    "open": "Received",
+    "in_progress": "In progress",
+    "answered": "Answered",
+    "closed": "Closed",
+    "withdrawn": "Withdrawn"
+  },
+  "callbackAt": "Callback · {when}",
+  "unseen": "Not opened yet",
+  "assignedTo": "with {name}",
+  "overdue": "Reply overdue",
+  "notDelivered": "Not delivered",
+  "notDeliveredHint": "The mail to the team inbox didn't go through. This page is the only copy, so reply from here.",
+  "overdueHint": "Nobody has replied within one business day.",
+  "fields": {
+    "email": "Email",
+    "phone": "Phone",
+    "company": "Company",
+    "topic": "Topic",
+    "desiredAt": "Preferred time",
+    "language": "Language",
+    "account": "Signed in as"
+  },
+  "thread": "Replies",
+  "noReplies": "No replies yet. Your reply is mailed to the customer and shown on their inquiry page.",
+  "replyLabel": "Reply",
+  "replyPlaceholder": "Reply to {name}…",
+  "replyHint": "Sent to the customer right away. Ctrl + Enter sends.",
+  "sendReply": "Send reply",
+  "replySent": "Reply sent",
+  "viaEmail": "by email",
+  "actionFailed": "That didn't work. Try again.",
+  "state": "Status",
+  "changeState": "Change status",
+  "stateHint": "The customer gets one mail for “In progress” and “Answered”, a few minutes after the last change.",
+  "assignee": "Assignee",
+  "unassigned": "Nobody",
+  "assignToMe": "Assign to me",
+  "callback": "Callback",
+  "callbackStatus": {
+    "requested": "Requested",
+    "confirmed": "Confirmed",
+    "cancelled": "Cancelled"
+  },
+  "callbackSlot": "Time",
+  "confirmCallback": "Confirm time",
+  "moveCallback": "Move to this time",
+  "cancelCallback": "Cancel callback",
+  "callbackConfirmedToast": "Callback confirmed. The customer gets a calendar invite.",
+  "callbackCancelledToast": "Callback cancelled. The customer has been told.",
+  "history": "History",
+  "actors": {
+    "customer": "Customer",
+    "staff": "Team",
+    "system": "System"
+  },
+  "events": {
+    "created": "Received",
+    "seen": "Opened by the team",
+    "state": "Status set to {state}",
+    "assigned": "Assignee changed",
+    "reply": "Replied",
+    "customer_reply": "Customer replied",
+    "callback_confirmed": "Callback confirmed",
+    "callback_cancelled": "Callback cancelled",
+    "callback_rescheduled": "Callback moved",
+    "resent": "Sent again",
+    "withdrawn": "Withdrawn by the customer"
+  }
+}

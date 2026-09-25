@@ -33,10 +33,17 @@ const buttonVariants = cva(
         icon: "size-10 [&_svg]:size-4",
         "icon-sm": "size-9 [&_svg]:size-3.5",
       },
+      // page-level actions are pills; controls inside a form or a panel keep the default
+      shape: {
+        default: "",
+        pill: "rounded-full",
+      },
     },
+    compoundVariants: [{ shape: "pill", size: "sm", className: "px-4" }],
     defaultVariants: {
       variant: "default",
       size: "default",
+      shape: "default",
     },
   },
 );
@@ -47,10 +54,14 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, shape, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <Comp
+        className={cn(buttonVariants({ variant, size, shape, className }))}
+        ref={ref}
+        {...props}
+      />
     );
   },
 );

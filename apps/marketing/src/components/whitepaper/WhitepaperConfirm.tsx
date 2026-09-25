@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 
 import { useSearchParams } from "next/navigation";
 
+import { useUser } from "@clerk/nextjs";
 import { AlertCircle, ArrowRight, Check, Loader2, MailCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -42,6 +43,7 @@ export function WhitepaperConfirm() {
   const t = useTranslations("whitepaper.confirm");
   const token = useSearchParams().get("token");
   const trackEvent = useTrackEvent();
+  const { isSignedIn } = useUser();
 
   const [pending, setPending] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
@@ -116,7 +118,35 @@ export function WhitepaperConfirm() {
               email,
               b: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
             })}
-          />
+          >
+            {/* the whitepaper is the start of a conversation; say what the next step is */}
+            <div className="space-y-4 border-t border-rule pt-6">
+              <p className="text-[15px] leading-relaxed text-muted-foreground">{t("next.body")}</p>
+              <Button asChild shape="pill" className="group">
+                <Link href={{ pathname: "/contact", query: { mode: "callback" } }}>
+                  {t("next.cta")}
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              </Button>
+              <p className="text-[13px] text-muted-foreground">
+                {isSignedIn
+                  ? t.rich("next.inAccount", {
+                      link: (chunks) => (
+                        <Link href="/account/downloads" className="underline underline-offset-2">
+                          {chunks}
+                        </Link>
+                      ),
+                    })
+                  : t.rich("next.account", {
+                      link: (chunks) => (
+                        <Link href="/sign-up" className="underline underline-offset-2">
+                          {chunks}
+                        </Link>
+                      ),
+                    })}
+              </p>
+            </div>
+          </Panel>
         ) : (
           <Panel
             tone="error"

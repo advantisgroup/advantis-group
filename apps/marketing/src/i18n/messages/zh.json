@@ -16,7 +16,7 @@
     "analytics": {
       "title": "分析",
       "badge": "无 Cookie",
-      "description": "我们在自己的服务器上统计页面访问量，而不是把数据发送给分析公司。没有 Cookie、没有 IP 地址、没有用户画像——只有一个存在于浏览器标签页中的随机标识，标签页一关就消失。这样我们能区分不同的访问，却始终不知道那是您。",
+      "description": "我们在自己的服务器上统计页面访问量，而不是把数据发送给分析公司。没有 Cookie、没有 IP 地址、没有用户画像，也不会在您的设备上存储任何内容——只有一个保存在页面内存中的随机标识，关闭或刷新标签页即消失。这样我们能区分不同的访问，却始终不知道那是您。访问记录会在 14 个月后删除。",
       "uses": {
         "usage": "哪些页面被访问",
         "improve": "找出需要改进的地方"
@@ -28,7 +28,7 @@
       "train": "我们不会用它来训练 AI 模型。",
       "ads": "我们不投放个性化广告，也不建立广告画像。"
     },
-    "localOnly": "主题和语言同样不在此列。它们只保存在您的浏览器中，绝不会发送给我们。",
+    "localOnly": "主题和语言同样不在此列，您登录期间我们为您保留的未填完的联系表单也不在此列。它们只保存在您的浏览器中，在您提交表单之前绝不会发送给我们。",
     "privacyHint": "有关我们存储哪些数据及保留多久的完整说明，请参阅",
     "privacyLink": "隐私政策"
   },
@@ -64,7 +64,7 @@
       "team": "集团背后的团队",
       "blog": "来自一线的销售洞察与实践",
       "whitepaper": "免费下载：面向未来的销售",
-      "contact": "聊聊你的销售目标"
+      "contact": "聊聊您的销售目标"
     }
   },
   "hero": {
@@ -172,7 +172,8 @@
     "subtitle": "让我们一起探索如何转型并推动您的销售。",
     "primary": "立即联系我们",
     "secondary": "发送电子邮件",
-    "benefits": "免费初次咨询 • 个性化解决方案 • 定制报价"
+    "benefits": "免费初次咨询 • 个性化解决方案 • 定制报价",
+    "returning": "已经联系过我们？<link>查看您的咨询和我们的回复</link>。"
   },
   "footer": {
     "description": "我们是您成功销售的合作伙伴。凭借超过15年的经验和四个强大的品牌，我们推动您的业务向前发展。",
@@ -214,15 +215,16 @@
       "notes": "备注（可选）",
       "notesPlaceholder": "通话的主要内容是什么？",
       "callbackEmailNote": "用于确认您的回电请求",
-      "callbackTimeNote": "我们将按您要求的时间给您致电",
+      "callbackTimeNote": "工作日 9:00–18:00（德国时间）",
       "privacyPrefix": "提交表格即表示您同意",
-      "privacySuffix": "将您提供的数据用于处理您的请求。您的数据仅用于回复您的查询，不会传递给第三方。",
+      "privacySuffix": "将您提供的数据用于处理您的请求。您的数据仅用于回复您的查询，除隐私政策中列出的服务提供商外，不会提供给任何人。",
       "privacySuffixCallback": "将您提供的数据用于安排回电。",
       "privacyLink": "更多信息请参阅我们的隐私政策。",
       "privacyNoteLabel": "隐私声明：",
       "errors": {
         "required": "必填",
-        "email": "请输入有效的电子邮件地址"
+        "email": "请输入有效的电子邮件地址",
+        "callbackHours": "请选择尚未过去的工作日 9:00–18:00（德国时间）。"
       }
     },
     "sidebar": {
@@ -237,13 +239,13 @@
     },
     "messages": {
       "writeUs": "写信给我们",
-      "writeUsDesc": "给我们发送消息，我们将在24小时内回复您",
+      "writeUsDesc": "给我们留言，我们通常会在一个工作日内回复。",
       "callback": "安排回电",
       "callbackDesc": "请告诉我们什么时候最方便联系您",
       "otherInquiry": "其他咨询",
       "otherInquiryDesc": "有问题或一般咨询？我们很乐意为您提供帮助！",
       "successTitle": "已发送！",
-      "successDesc": "我们将在24小时内回复您。",
+      "successDesc": "我们通常会在一个工作日内回复。",
       "callSuccessTitle": "已请求回电！",
       "callSuccessDesc": "我们将按您要求的时间给您致电。",
       "errorTitle": "出错了",
@@ -252,13 +254,22 @@
       "rateLimitTitle": "请求过多",
       "rateLimitDesc": "您发送的请求过多，请稍后再试。",
       "copySent": "我们已将副本发送至 {email}。",
-      "sendAnother": "再发送一条"
+      "sendAnother": "再发送一条",
+      "copyOff": "您已在偏好设置中关闭副本，因此未发送副本。",
+      "copyLimit": "由于本小时内已向 {email} 发送过多份副本，这次未再发送。",
+      "copyFailed": "副本未能发送至 {email}，但您的咨询已送达我们。",
+      "notDeliveredTitle": "已保存，但尚未送达",
+      "notDeliveredSignedIn": "您的咨询已保存，但未能转交给我们的团队。打开它即可重新发送。",
+      "notDeliveredCall": "您的咨询已保存，但未能转交给我们的团队。请几分钟后重试，或致电 {phone}。",
+      "notDeliveredRetry": "您的咨询已保存，但未能转交给我们的团队。请几分钟后重试。",
+      "reference": "编号",
+      "viewInquiry": "查看此咨询",
+      "openToRetry": "打开并重新发送"
     },
     "submissionBanner": {
       "title": "表单暂时不可用",
       "defaultMessage": "联系表单当前暂时无法处理。",
-      "notifyCta": "表单恢复时通知我",
-      "dismiss": "关闭提示"
+      "notifyCta": "表单恢复时通知我"
     },
     "notify": {
       "close": "关闭",
@@ -305,27 +316,27 @@
       },
       "subscribe": {
         "title": "保持关注",
-        "description": "输入你的邮箱，一旦联系表单重新开放，我们会立即通知你。",
+        "description": "输入您的邮箱，一旦联系表单重新开放，我们会立即通知您。",
         "cta": "通知我",
         "loading": "保存中…"
       },
       "remove": {
         "title": "移除邮箱",
-        "description": "输入你想从通知列表中移除的邮箱地址。",
+        "description": "输入您想从通知列表中移除的邮箱地址。",
         "cta": "移除",
         "loading": "移除中…"
       },
       "success": {
-        "title": "你已加入列表！",
-        "description": "一旦联系表单重新开放，我们会向你发送通知。"
+        "title": "您已加入列表！",
+        "description": "一旦联系表单重新开放，我们会向您发送通知。"
       },
       "duplicate": {
-        "title": "你已经在列表中！",
-        "description": "我们已经保存了你的邮箱。表单恢复后会第一时间通知你。"
+        "title": "您已经在列表中！",
+        "description": "我们已经保存了您的邮箱。表单恢复后会第一时间通知您。"
       },
       "removed": {
         "title": "邮箱已移除",
-        "description": "你的邮箱已从通知列表中移除。你将不会再收到后续更新。"
+        "description": "您的邮箱已从通知列表中移除。您将不会再收到后续更新。"
       }
     },
     "otherForm": {
@@ -341,20 +352,8 @@
       "optional": "可选"
     },
     "accountHelper": {
-      "badge": "登录捷径",
-      "title": "使用你当前的账户信息",
-      "description": "如果你正使用当前 Clerk 账户联系我们，我们可以预填姓名和邮箱，让提交更快。",
-      "signedInAs": "当前登录：{email}",
-      "emailNote": "如果后续沟通更适合使用公司邮箱，你仍然可以修改表单中的邮箱。为了避免混淆，我们会同时保存两者。",
-      "useAccount": "使用我的账户信息",
-      "useAccountSuccess": "已填入表单",
-      "signedOutTitle": "想更快提交联系表单？",
-      "signedOutDescription": "先登录，我们就能自动预填你的联系信息，并把你的咨询记录集中展示在账户中。",
       "signInCta": "登录并预填",
-      "storedAccountNote": "登录后提交时，我们会同时记录你的登录账户和你在表单中填写的联系邮箱，方便后续跟进。",
-      "successNotice": "你的登录信息现在已经填写到下方表单中。",
-      "scrollNotice": "你的登录信息已添加到下方表单。",
-      "signedInNote": "已以 {email} 登录。此咨询也会显示在<link>您的提交记录</link>中。"
+      "signedInNote": "已以 {email} 登录。此咨询也会显示在<link>您的咨询</link>中。"
     }
   },
   "about": {
@@ -429,6 +428,14 @@
       "title": "走进我们的日常",
       "subtitle": "来自办公室和外出途中的一些瞬间。"
     }
+  },
+  "checkpoints": {
+    "done": "已完成",
+    "current": "当前步骤",
+    "upcoming": "尚未开始",
+    "failed": "未成功",
+    "warning": "已延迟",
+    "skipped": "已跳过"
   },
   "brandsPage": {
     "comingSoon": "即将推出",
@@ -519,7 +526,35 @@
       "contact": {
         "title": "联系表单",
         "content1": "如果您通过电子邮件或联系表单向我们发送查询，您在查询表单中的信息（包括您提供的联系数据）将被存储，用于处理查询和后续问题。",
-        "content2": "未经您的同意，我们不会分享这些数据。如果您的查询与履行合同相关或为实施合同前措施所必需，处理将基于GDPR第6条第1款b项。"
+        "content2": "我们只会把这些数据交给下文列出的、代表我们处理数据的服务提供商，未经您的同意不会提供给其他任何人。如您的咨询涉及合同或签约前的步骤，处理依据为 GDPR 第 6 条第 1 款 b 项；其他情况下依据我们答复所收到咨询的正当利益（GDPR 第 6 条第 1 款 f 项）。",
+        "content3": "每条咨询都会连同编号、处理状态、我们的回复以及相关邮件的送达状态一起保存。除非您提前删除，超过 {years} 年无任何进展的咨询中的个人信息将被匿名化。"
+      },
+      "account": {
+        "title": "客户账户",
+        "content1": "您可以创建账户，在一处查看您的咨询和我们的回复。为此我们会保存您的姓名、电子邮箱地址、登录方式，以及您填写的公司、电话号码和职位。我们用这些信息向您显示咨询、预填表单，并以您选择的语言与您联系。法律依据为 GDPR 第 6 条第 1 款 b 项。",
+        "content2": "登录服务由 Clerk 提供。Clerk 会设置保持登录所必需的 Cookie，这些 Cookie 属于必要 Cookie，不用于跟踪。",
+        "content3": "在账户的“隐私”页面中，您可以将我们保存的您的全部数据下载为文件、删除咨询记录或删除账户。删除账户时，您的咨询、通知列表登记以及已验证邮箱的白皮书申请也会一并删除。"
+      },
+      "whitepaper": {
+        "title": "白皮书与通知列表",
+        "content1": "如果您索取我们的白皮书，我们会基于您的同意（GDPR 第 6 条第 1 款 a 项）保存您的姓名、公司、电子邮箱、电话号码以及您的同意。我们会先发送一个 48 小时内有效的确认链接，只有在您确认后才发送白皮书（双重确认）。如果您已登录且该邮箱已在账户中验证，则视为已确认，此步骤将跳过。您可以随时在账户中或通过邮件撤回同意。从未确认的申请会在 30 天后删除。撤回同意后，我们会将同意记录保留 {years} 年以证明曾获得同意，之后删除。",
+        "content2": "在联系表单关闭期间，您可以留下电子邮箱，以便在表单重新开放时收到通知。我们基于您的同意（GDPR 第 6 条第 1 款 a 项）保存该邮箱及您使用的语言，在表单重新开放时发送一封邮件，随后删除该登记。在此之前您可以随时退出。"
+      },
+      "processors": {
+        "title": "服务提供商",
+        "intro": "我们使用以下服务提供商来实现这些功能，它们代表我们处理数据：",
+        "items": {
+          "vercel": "Vercel（美国）：本网站托管",
+          "clerk": "Clerk（美国）：登录与账户管理",
+          "convex": "Convex（美国）：咨询、账户数据和通知列表的数据库",
+          "resend": "Resend（美国）：发送邮件，例如确认邮件、回复和白皮书",
+          "upstash": "Upstash：按 IP 地址或邮箱地址计数的短期计数器，用于限制表单的发送频率，一小时后失效。依据是我们保护表单免遭滥用的正当利益（GDPR 第 6 条第 1 款 f 项）。"
+        },
+        "footer": "其中部分服务提供商位于美国。向美国传输数据时，如提供商已获认证，依据欧盟委员会关于欧美数据隐私框架的充分性决定（GDPR 第 45 条）；否则依据我们与该提供商签订的数据处理协议中的欧盟标准合同条款（GDPR 第 46 条第 2 款 c 项）。"
+      },
+      "analytics": {
+        "title": "访问统计",
+        "content1": "我们在自己的数据库中统计页面访问和少量操作（例如提交表单）。记录内容包括页面、语言、来源网站（仅域名）、停留时长，以及一个仅在页面打开期间存在的随机标识。我们不设置 Cookie，不在您的设备上存储任何内容，也不保存您的 IP 地址。依据是我们了解哪些页面有用的正当利益（GDPR 第 6 条第 1 款 f 项）。统计数据会在 14 个月后删除。"
       },
       "rights": {
         "title": "您的权利",
@@ -549,6 +584,14 @@
           "portability": {
             "title": "数据可携带权：",
             "description": "您可以以结构化格式接收您的数据"
+          },
+          "withdraw": {
+            "title": "撤回同意：",
+            "description": "您可以随时撤回已给予的同意，对今后生效"
+          },
+          "complaint": {
+            "title": "投诉权：",
+            "description": "您可以向数据保护监管机构投诉，尤其是您居住地、工作地或涉嫌违规行为发生地所在欧盟国家的监管机构"
           }
         },
         "footer": "关于此问题和其他个人数据问题，您可以随时通过版权信息中给出的地址联系我们。"
@@ -603,7 +646,7 @@
       "copied": "已复制",
       "referral": {
         "label": "将我记为推荐人",
-        "hint": "在你的链接中加入一个代码，让我们知道你带来了多少读者。关闭时，链接中不会添加任何内容。"
+        "hint": "在您的链接中加入一个代码，让我们知道您带来了多少读者。关闭时，链接中不会添加任何内容。"
       }
     },
     "tableOfContents": "本页内容",
@@ -619,99 +662,44 @@
     }
   },
   "email": {
-    "greeting": "你好 {firstName} {lastName}，",
-    "bodyIntro": "感谢您的留言。这是我们刚刚收到的请求的副本。",
-    "bodyOutro": "我们正在审核您的请求，并将尽快回复您——通常在接下来的 24 小时内。",
-    "yourMessage": "您的留言：",
-    "poweredBy": "Powered by",
-    "rightsReserved": "版权所有。",
-    "subject": "主题",
-    "topic": "主题",
-    "confirmationTitle": "我们已收到您的请求",
-    "confirmationBody": "感谢您的留言。我们已记录您的请求，将尽快与您联系。",
-    "submissionType": "请求类型",
-    "contactEmail": "电子邮件",
-    "contactPhone": "电话",
-    "company": "公司",
-    "typeMessage": "消息",
-    "typeCallback": "回电",
-    "typeOther": "其他"
+    "receipt": {
+      "subject": "我们已收到您的咨询 · {reference}",
+      "subjectCallback": "您的回电请求 · {reference}",
+      "heading": "{firstName}，感谢您的来信。",
+      "received": "您的留言已送达我们的团队。",
+      "receivedCallback": "您的回电请求已送达我们的团队。",
+      "callbackWhen": "我们将在您选择的时间致电 {phone}：{when}。",
+      "next": "我们通常会在一个工作日内通过 {inbox} 回复您。",
+      "nextCallback": "我们会在一个工作日内通过电子邮件确认时间。",
+      "reference": "参考编号",
+      "viewInAccount": "在您的账户中查看",
+      "createAccount": "创建账户",
+      "keepTrack": "使用此邮箱创建账户后，您可以在账户中查看这条咨询以及以后的所有咨询。",
+      "whatYouSent": "您发送的内容",
+      "replyHint": "想补充内容？直接回复这封邮件即可。",
+      "privacy": "隐私政策"
+    }
   },
   "auth": {
-    "badge": "安全访问",
     "menuLabel": "账户",
     "guest": "访客",
-    "providerHint": "可通过 Clerk Google 登录，也可以使用邮箱创建账户。",
+    "providerHint": "可使用 Google 登录，也可以使用邮箱创建账户。",
     "authShellHighlights": [
-      "随时跟踪你的请求状态",
-      "在一处管理你的个人资料",
-      "由 Clerk 提供安全保障"
+      "查看您发送的每条咨询及其进展",
+      "资料集中保存，表单自动填写",
+      "随时重新获取白皮书"
     ],
-    "signInPageCta": "打开登录页",
-    "signUpPageCta": "打开注册页",
     "signIn": "登录",
     "signUp": "创建账户",
-    "signedIn": "已通过 Clerk 登录",
-    "accountCta": "管理账户",
+    "accountCta": "个人资料与安全",
     "signOut": "退出登录",
     "signInTitle": "欢迎回到 ADVANTIS GROUP",
-    "signInSubtitle": "使用 Clerk 登录后，你可以在一个地方管理个人资料、安全设置以及未来的受保护体验。",
-    "signUpTitle": "创建你的 Advantis 账户",
-    "signUpSubtitle": "使用 Clerk 创建安全账户，并集中管理个人资料、登录方式以及未来的会员体验。",
-    "accountBadge": "账户中心",
-    "accountTitle": "你的账户",
-    "accountSubtitle": "在 Clerk 托管的账户中心管理你的个人资料、安全设置和活跃会话。",
-    "signInRequired": "请先登录后再访问账户设置。",
-    "submissionsCta": "查看提交记录",
-    "contactCta": "发送新咨询",
-    "submissions": {
-      "badge": "提交历史",
-      "title": "你的咨询记录",
-      "subtitle": "查看你登录后提交的联系表单，并追踪当时使用的联系邮箱和公司信息。",
-      "newSubmissionCta": "再次提交咨询",
-      "accountCta": "管理账户",
-      "loading": "正在加载你的提交记录…",
-      "errorTitle": "无法加载你的提交记录。",
-      "errorDescription": "请稍后再试。",
-      "retry": "重试",
-      "search": "搜索您的咨询",
-      "noMatches": "没有匹配的结果。",
-      "selectHint": "选择一条咨询以查看您发送的全部内容。",
-      "followUp": "通过电子邮件跟进",
-      "filterAll": "全部",
-      "upcoming": "即将进行",
-      "name": "姓名",
-      "phone": "电话",
-      "reference": "参考编号",
-      "summary": {
-        "total": "咨询",
-        "lastSent": "最近发送",
-        "callbacks": "已申请回电",
-        "upcoming": "{count} 个即将进行",
-        "delivery": "送达情况",
-        "allDelivered": "全部已送达",
-        "issues": "{count} 条需要处理"
-      },
-      "emptyTitle": "还没有提交记录",
-      "emptyDescription": "当你登录后发送联系表单，它会显示在这里，并附带状态和提交详情。",
-      "contactEmail": "提交时使用的联系邮箱",
-      "accountEmail": "当前登录账户",
-      "company": "公司",
-      "desiredTime": "期望回电时间",
-      "message": "消息",
-      "topic": "主题",
-      "notes": "备注",
-      "deliveryIssue": "发送问题",
-      "types": {
-        "message": "留言",
-        "callback": "回电请求",
-        "other": "其他咨询"
-      },
-      "status": {
-        "sent": "已发送",
-        "failed": "需要处理"
-      }
-    }
+    "signInSubtitle": "登录后即可查看您的咨询和我们的回复，并为下一次填写表单备好联系信息。",
+    "signUpTitle": "创建您的 Advantis 账户",
+    "signUpSubtitle": "账户会把您的咨询和我们的回复集中在一处，并在每个表单中自动填写您的信息。",
+    "submissionsCta": "您的咨询",
+    "backToSite": "返回网站",
+    "yourAccount": "您的账户"
   },
   "services": {
     "title": "助力您销售成功的一切",
@@ -1188,7 +1176,7 @@
   },
   "licenses": {
     "title": "许可证",
-    "description": "本网站基于开源软件构建。你可以在此查看所使用的软件包及其许可证。",
+    "description": "本网站基于开源软件构建。您可以在此查看所使用的软件包及其许可证。",
     "searchPlaceholder": "搜索软件包、许可证或发布者…",
     "searchLabel": "搜索许可证",
     "resultCount": "{count} 个软件包",
@@ -1220,7 +1208,7 @@
       "isc": "更简短的 MIT：自由使用，保留声明即可。",
       "apache": "可自由使用，保留声明并注明修改之处——同时还授予专利许可。",
       "bsd2": "可自由使用，需在源代码和二进制文件中保留版权声明。",
-      "bsd3": "与 BSD-2 相同，另外：不得用作者的名字为你的产品做宣传。",
+      "bsd3": "与 BSD-2 相同，另外：不得用作者的名字为您的产品做宣传。",
       "mpl": "可自由使用，但对其自身文件的修改必须保持开源。",
       "noNotice": "随意使用——连版权声明都不需要保留。"
     }
@@ -1234,7 +1222,7 @@
       "badge": "免费白皮书",
       "title": "销售中的 AI 工具",
       "subtitle": "想进一步了解 AI 工具在销售中的应用吗？在这里免费下载我们的白皮书。",
-      "intro": "我们会告诉你 AI 在日常销售工作中真正能省下多少时间、选择工具时该看什么，以及如何把它们落地到团队里。"
+      "intro": "我们会告诉您 AI 在日常销售工作中真正能省下多少时间、选择工具时该看什么，以及如何把它们落地到团队里。"
     },
     "homeCta": {
       "title": "关于销售中 AI 工具的白皮书",
@@ -1272,7 +1260,7 @@
       }
     },
     "contact": {
-      "title": "你的联系人",
+      "title": "您的联系人",
       "description": "对白皮书有疑问，或者想直接聊一聊？欢迎随时联系我们。",
       "email": "电子邮箱",
       "phone": "电话",
@@ -1280,7 +1268,7 @@
     },
     "form": {
       "title": "索取白皮书",
-      "description": "填写你的联系方式 — 确认电子邮箱后，我们会立即把白皮书发给你。",
+      "description": "填写您的联系方式 — 确认电子邮箱后，我们会立即把白皮书发给您。",
       "company": "公司名称",
       "firstName": "名字",
       "lastName": "姓氏",
@@ -1290,13 +1278,13 @@
       "consent": "我同意 advantis GmbH 存储并处理我在此填写的数据，用于向我发送白皮书并就该主题与我联系。我可以随时以任何形式撤回此同意。",
       "consentSuffix": "更多信息请参阅我们的",
       "consentLink": "隐私政策",
-      "doubleOptIn": "双重确认：你会先收到一封带确认链接的邮件，确认之后我们才会发送白皮书。",
-      "noThirdParty": "我们绝不会将你的数据转交给第三方。",
+      "doubleOptIn": "双重确认：您会先收到一封带确认链接的邮件，确认之后我们才会发送白皮书。",
+      "noThirdParty": "我们绝不出售您的数据，也不会将其用于广告共享。",
       "submit": "索取白皮书",
       "errors": {
         "required": "请填写此字段。",
         "email": "请输入有效的电子邮箱地址。",
-        "consent": "请同意我们处理你的数据。",
+        "consent": "请同意我们处理您的数据。",
         "generic": "出了点问题，请重试。",
         "network": "网络错误。请检查网络连接后重试。",
         "unavailable": "白皮书尚未发布，请稍后再试。"
@@ -1304,18 +1292,18 @@
     },
     "success": {
       "title": "就差一步！",
-      "description": "我们已向 <b>{email}</b> 发送了一封邮件。点击其中的确认链接，白皮书会立刻送达你的收件箱。",
+      "description": "我们已向 <b>{email}</b> 发送了一封邮件。点击其中的确认链接，白皮书会立刻送达您的收件箱。",
       "spamHint": "没有收到？也请查看一下垃圾邮件文件夹。",
       "again": "使用其他邮箱地址"
     },
     "unavailable": {
       "title": "白皮书即将发布",
-      "description": "我们正在做最后的润色。发布后你就可以在这里索取 — 在此之前，欢迎直接联系我们。",
+      "description": "我们正在做最后的润色。发布后您就可以在这里索取 — 在此之前，欢迎直接联系我们。",
       "cta": "联系我们"
     },
     "confirm": {
-      "title": "确认你的电子邮箱",
-      "description": "再点一下 — 我们就把白皮书发给你。",
+      "title": "确认您的电子邮箱",
+      "description": "再点一下 — 我们就把白皮书发给您。",
       "cta": "确认并获取白皮书",
       "requestCta": "重新索取白皮书",
       "missingToken": {
@@ -1340,29 +1328,370 @@
       },
       "error": {
         "title": "出了点问题",
-        "description": "我们暂时无法处理你的确认。请稍后再试。"
+        "description": "我们暂时无法处理您的确认。请稍后再试。"
+      },
+      "next": {
+        "body": "想聊聊这对您的团队意味着什么？选个时间，我们给您回电。",
+        "cta": "预约回电",
+        "account": "<link>创建账户</link>，即可随时重新下载，并集中查看您的咨询。",
+        "inAccount": "您也可以在账户的<link>下载</link>中找到它。"
       }
     },
     "email": {
-      "greeting": "你好 {firstName} {lastName}，",
+      "greeting": "您好 {firstName} {lastName}，",
       "badge": "白皮书",
       "rightsReserved": "保留所有权利。",
       "privacyLink": "隐私政策",
       "confirm": {
         "title": "还差一步",
-        "body": "你索取了我们关于在销售中使用 AI 工具的免费白皮书。请先确认你的电子邮箱地址 — 之后我们会立即把文档发给你。",
+        "body": "您索取了我们关于在销售中使用 AI 工具的免费白皮书。请先确认您的电子邮箱地址 — 之后我们会立即把文档发给您。",
         "cta": "确认邮箱并获取白皮书",
         "expiry": "确认链接的有效期为 48 小时。",
         "fallback": "如果按钮无法使用，请把此链接复制到浏览器中打开：",
-        "disclaimer": "并没有索取白皮书？直接忽略这封邮件即可。未经你的确认，我们不会发送任何内容。"
+        "disclaimer": "并没有索取白皮书？直接忽略这封邮件即可。未经您的确认，我们不会发送任何内容。"
       },
       "delivery": {
-        "title": "你的白皮书到了",
-        "body": "感谢你的确认。白皮书就在这封邮件的附件中。",
+        "title": "您的白皮书到了",
+        "body": "感谢您的确认。白皮书就在这封邮件的附件中。",
         "outro": "有任何疑问，或者想进行一次无约束的交流？直接回复这封邮件或给我们打电话。",
         "contactEmail": "电子邮箱",
         "contactPhone": "电话"
       }
+    }
+  },
+  "account": {
+    "nav": {
+      "label": "账户",
+      "title": "账户",
+      "overview": "概览",
+      "inquiries": "咨询",
+      "profile": "个人资料",
+      "security": "安全",
+      "preferences": "偏好设置",
+      "downloads": "下载",
+      "privacy": "隐私与数据",
+      "signOut": "退出登录",
+      "signedOut": "您已退出登录。",
+      "back": "账户"
+    },
+    "overview": {
+      "greeting": {
+        "morning": "{name}，早上好",
+        "afternoon": "{name}，下午好",
+        "evening": "{name}，晚上好"
+      },
+      "greetingNoName": {
+        "morning": "早上好",
+        "afternoon": "下午好",
+        "evening": "晚上好"
+      },
+      "memberSince": "{date} 加入",
+      "welcome": "欢迎。您登录后发送给我们的所有内容都会汇集在这里，联系表单也会自动为您填写。",
+      "workAccount": {
+        "title": "这也是您的 ADVANTIS 工作账户",
+        "body": "登录与安全设置在内网中管理。",
+        "cta": "内网设置"
+      },
+      "comingUp": "即将进行",
+      "view": "查看",
+      "callbackConfirmed": "您的回电已确认。",
+      "callbackRequested": "您请求的回电。我们会通过电子邮件确认时间。",
+      "recent": "最近的咨询",
+      "seeAll": "查看全部",
+      "noInquiries": "尚未发送任何内容。",
+      "start": "开始",
+      "actions": {
+        "message": "给我们留言",
+        "callback": "请求回电",
+        "whitepaper": "获取白皮书"
+      }
+    },
+    "inquiries": {
+      "title": "您的咨询",
+      "back": "您的咨询",
+      "summary": "{count} 条咨询 · 最近发送于{last}",
+      "new": "新咨询",
+      "nextCallback": "下一次回电",
+      "view": "查看",
+      "problems": "{count} 条咨询未送达",
+      "problemsHint": "内容没有丢失。打开即可重新发送。",
+      "search": "搜索您的咨询",
+      "filterLabel": "显示",
+      "filters": {
+        "all": "全部",
+        "open": "处理中",
+        "answered": "已回复",
+        "closed": "已关闭"
+      },
+      "noMatches": "没有匹配的结果。",
+      "showOlder": "显示更早的",
+      "notDelivered": "未送达",
+      "upcomingAt": "即将进行 · {when}",
+      "loadError": "暂时无法加载您的咨询。",
+      "retry": "重试",
+      "empty": {
+        "title": "这里还没有内容",
+        "body": "您登录后发送给我们的内容都会显示在这里，包括处理进度和您发送的全部内容。",
+        "message": "给我们留言",
+        "callback": "请求回电",
+        "other": "其他事项"
+      },
+      "callbackTitle": "回电 · {when}",
+      "yourMessage": "您的留言",
+      "types": {
+        "message": "留言",
+        "callback": "回电",
+        "other": "其他咨询"
+      },
+      "states": {
+        "open": "已收到",
+        "in_progress": "处理中",
+        "answered": "已回复",
+        "closed": "已关闭",
+        "withdrawn": "已撤回"
+      },
+      "replyBy": "我们通常在一个工作日内回复，即 {when} 之前。",
+      "replyLate": "处理时间比平时长。如有急事，请致电 {phone}。",
+      "replyLateNoPhone": "处理时间比平时长。我们正在处理。",
+      "progressLabel": "进度",
+      "steps": {
+        "received": "已收到",
+        "seen": "已查看",
+        "inProgress": "处理中",
+        "answered": "已回复",
+        "closed": "已关闭",
+        "withdrawn": "已撤回"
+      },
+      "seenBy": "{name} · {when}",
+      "onIt": "{name} 正在处理",
+      "print": "打印",
+      "emailUs": "就此发邮件给我们",
+      "copyReference": "复制参考编号",
+      "copied": "已复制 {reference}",
+      "delivery": {
+        "team": {
+          "queued": "正在发送给我们的团队…",
+          "sent": "已发送给我们的团队",
+          "delivered": "已送达我们的团队",
+          "delayed": "发往我们团队的途中有延迟",
+          "bounced": "未送达我们的团队",
+          "failed": "未送达我们的团队"
+        },
+        "copy": {
+          "sent": "副本已发送给您",
+          "skipped": "未发送副本",
+          "delivered": "副本已送达您",
+          "delayed": "您的副本有延迟",
+          "bounced": "您的副本未送达",
+          "failed": "您的副本未发出"
+        },
+        "details": "详情",
+        "hide": "收起",
+        "toTeam": "发给我们的团队",
+        "toYou": "发给 {email} 的副本",
+        "steps": {
+          "queued": "排队中",
+          "sent": "已发送",
+          "delivered": "已送达",
+          "copySent": "已发送",
+          "copyDelivered": "已送达"
+        },
+        "skipped": {
+          "limit": "您在短时间内已收到多份副本，因此这次未发送。",
+          "preference": "您已在偏好设置中关闭副本。"
+        },
+        "reasons": {
+          "invalid_address": {
+            "title": "邮箱地址似乎有误",
+            "body": "我们的邮件服务未接受该地址。修改后请重新发送。",
+            "copyBody": "无法将您的副本发送至 {email}。下次请检查该地址。"
+          },
+          "mailbox_unavailable": {
+            "title": "该邮箱不接收邮件",
+            "body": "收件邮箱拒收了这封邮件。请重新发送或致电我们。",
+            "copyBody": "{email} 拒收了您的副本。您的咨询已送达我们。"
+          },
+          "temporary": {
+            "title": "比平时慢一些",
+            "body": "对方服务器接收较慢。您无需操作，我们会继续尝试。",
+            "copyBody": "您的副本正在发往 {email}，只是比平时慢一些。"
+          },
+          "rate_limited": {
+            "title": "同一时间发送过多",
+            "body": "邮件服务要求我们放慢速度。请一分钟后重新发送。",
+            "copyBody": "发往 {email} 的副本被暂缓。您的咨询已送达我们。"
+          },
+          "provider_error": {
+            "title": "邮件服务出现短暂故障",
+            "body": "内容没有丢失。重新发送即可。",
+            "copyBody": "发往 {email} 的副本未能发出。您的咨询已送达我们。"
+          },
+          "unknown": {
+            "title": "发送未成功",
+            "body": "内容没有丢失。请重新发送或致电我们。",
+            "copyBody": "发往 {email} 的副本未能发出。您的咨询已送达我们。"
+          }
+        },
+        "attempts": "已尝试 {count} 次 · 最近一次 {when}",
+        "sendAgain": "重新发送",
+        "retried": "已发送给我们的团队。",
+        "retryFailed": "仍未成功。请稍后再试或致电我们。",
+        "callInstead": "如仍然失败，请致电 {phone}。"
+      },
+      "callback": {
+        "title": "回电",
+        "requested": "已请求",
+        "confirmed": "已确认",
+        "done": "已完成",
+        "cancelled": "已取消",
+        "calendarTitle": "ADVANTIS GROUP 回电",
+        "addToCalendar": "添加到日历",
+        "anotherTime": "需要其他时间？",
+        "unconfirmedHint": "我们会通过电子邮件确认时间，通常在一个工作日内。"
+      },
+      "thread": {
+        "title": "沟通记录",
+        "you": "您",
+        "staff": "{name} · ADVANTIS GROUP",
+        "team": "ADVANTIS GROUP",
+        "add": "补充内容",
+        "placeholder": "写下回复或补充细节…",
+        "attach": "添加附件",
+        "removeFile": "移除 {name}",
+        "reopensHint": "回复后此咨询将重新打开。",
+        "send": "发送",
+        "sent": "已发送。",
+        "sendFailed": "发送失败，请重试。",
+        "tooLarge": "文件最大 10 MB。"
+      },
+      "actions": {
+        "withdraw": "撤回咨询",
+        "withdrawConfirm": "确定撤回此咨询？",
+        "withdrawYes": "撤回",
+        "cancel": "保留",
+        "withdrawDone": "咨询已撤回。",
+        "resolve": "问题已解决",
+        "resolveDone": "已关闭。感谢您的反馈。",
+        "stillNeedHelp": "我仍需要帮助",
+        "failed": "操作未成功，请重试。"
+      },
+      "shared": {
+        "title": "您提供的信息",
+        "email": "联系邮箱",
+        "phone": "电话",
+        "company": "公司",
+        "topic": "主题",
+        "callbackTime": "期望时间"
+      }
+    },
+    "profile": {
+      "title": "个人资料",
+      "securityTitle": "安全",
+      "details": {
+        "title": "业务信息",
+        "hint": "我们会在联系表单和白皮书表单中为您自动填写。",
+        "company": "公司",
+        "phone": "电话",
+        "role": "职位",
+        "saved": "已保存",
+        "failed": "保存失败，请重试。"
+      },
+      "staffSecurity": {
+        "title": "在内网中管理",
+        "body": "您的登录方式、通行密钥和双重验证设置属于您的 ADVANTIS 工作账户。",
+        "cta": "打开内网设置"
+      }
+    },
+    "preferences": {
+      "title": "偏好设置",
+      "site": "语言与外观",
+      "mail": "电子邮件",
+      "copies": {
+        "label": "每次咨询都发送副本给我",
+        "description": "一封包含参考编号和您发送内容的回执，使用您撰写时的语言。",
+        "on": "您将收到每条咨询的副本。",
+        "off": "不再发送副本。您的咨询仍会显示在这里。"
+      },
+      "notify": {
+        "label": "联系表单重新开放时通知我",
+        "description": "只会向 {email} 发送一封邮件，之后您将自动退出列表。"
+      },
+      "failed": "保存失败，请重试。"
+    },
+    "downloads": {
+      "title": "下载",
+      "whitepaper": "白皮书：销售中的 AI 工具",
+      "pdfFor": "PDF · 为 {email} 申请",
+      "download": "下载",
+      "get": "获取白皮书",
+      "empty": "暂无可下载的内容。",
+      "viaAccount": "已通过您的账户确认",
+      "steps": {
+        "requested": "已申请",
+        "confirmed": "已确认",
+        "sent": "已发送"
+      },
+      "pending": {
+        "title": "等待您的确认",
+        "body": "我们已向 {email} 发送确认链接。打开链接后即会收到 PDF。"
+      },
+      "expired": {
+        "title": "确认链接已过期",
+        "body": "请重新申请，并在两天内使用新链接。",
+        "cta": "重新申请"
+      },
+      "failed": {
+        "title": "含 PDF 的邮件未能发出",
+        "body": "请在此直接下载。"
+      }
+    },
+    "privacy": {
+      "title": "隐私与数据",
+      "summary": {
+        "keep": "我们会保存您的咨询和我们的回复、您的白皮书申请，以及您是否希望在表单重新开放时收到通知。",
+        "howLong": "咨询会在最后一次活动 {years} 年后匿名化。",
+        "control": "您可以在下方获取全部数据的副本或将其删除。"
+      },
+      "policy": "阅读完整的隐私政策",
+      "yourData": "您的数据",
+      "export": {
+        "label": "下载您的数据",
+        "description": "我们为此账户保存的全部内容，打包为一个 JSON 文件。",
+        "cta": "下载"
+      },
+      "history": {
+        "label": "删除咨询记录",
+        "description": "从此账户中移除您的咨询和我们的回复。已进入我们邮箱的邮件会保留在邮箱中。",
+        "cta": "删除记录",
+        "confirm": "永久删除",
+        "cancel": "取消",
+        "done": "咨询记录已删除。",
+        "failed": "操作未成功，请重试。"
+      },
+      "consents": {
+        "title": "您同意的内容",
+        "whitepaper": "关于白皮书的联系",
+        "whitepaperDetail": "{email} · 于 {date} 同意（{version}）",
+        "withdraw": "撤回",
+        "withdrawn": "已撤回。我们已通知团队。",
+        "notify": "表单重新开放通知",
+        "notifyDetail": "{email}",
+        "manage": "管理"
+      },
+      "account": "账户",
+      "delete": {
+        "label": "删除账户",
+        "description": "删除您的账户以及本网站保存的关于您的所有内容。此操作无法撤销。",
+        "cta": "删除账户",
+        "typeEmail": "输入 {email} 以确认",
+        "kept": "已进入我们邮箱的消息副本将按我们的留存要求保存。",
+        "confirm": "删除我的账户",
+        "cancel": "取消",
+        "done": "您的账户已删除。",
+        "failed": "操作未成功，请重试。",
+        "staff": "这是您的 ADVANTIS 工作账户，由您的管理员管理。"
+      },
+      "failed": "操作未成功，请重试。"
     }
   }
 }

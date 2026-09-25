@@ -75,6 +75,49 @@ export const saveRequest = serverMutation({
   },
 });
 
+/**
+ * A request from someone signed in with this very address, verified by
+ * Clerk: owning the address is already proven, so the lead is confirmed on
+ * the spot instead of waiting for the mailed link. The consent checkbox is
+ * still required and `consentVersion` still recorded; `verifiedVia` says how
+ * the address was proven.
+ */
+export const saveAccountRequest = serverMutation({
+  args: {
+    email: v.string(),
+    company: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+    phone: v.string(),
+    locale: v.string(),
+    consentVersion: v.string(),
+    requestIp: v.optional(v.string()),
+    clerkUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const email = args.email.trim().toLowerCase();
+    const now = Date.now();
+    const fields = {
+      ...args,
+      email,
+      status: "confirmed" as const,
+      verifiedVia: "account" as const,
+      requestedAt: now,
+      withdrawnAt: undefined,
+    };
+
+    const existing = await ctx.db
+      .query("whitepaperLeads")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first();
+    if (existing) {
+      await ctx.db.patch(existing._id, { ...fields, confirmedAt: existing.confirmedAt ?? now });
+      return { leadId: existing._id };
+    }
+    return { leadId: await ctx.db.insert("whitepaperLeads", { ...fields, confirmedAt: now }) };
+  },
+});
+
 export const markConfirmationSent = serverMutation({
   args: {
     leadId: v.id("whitepaperLeads"),

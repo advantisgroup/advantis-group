@@ -10,7 +10,7 @@ import { useTranslations } from "next-intl";
 import { Logo, logoWidth } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { Link, usePathname as useLocalePathname } from "@/i18n/navigation";
-import { cn, isAuthRoute } from "@/lib/utils";
+import { cn, isActivePath, isAuthRoute } from "@/lib/utils";
 
 import { MobileNavFab } from "./MobileNavFab";
 import { AccountMenu } from "../auth/AccountMenu";
@@ -94,6 +94,7 @@ export const Header = () => {
   return (
     <>
       <header
+        data-print-hide
         className={cn(
           // tailwind v4 moves things with `translate`, not `transform`, so that's what slides
           "fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color,backdrop-filter,translate] duration-300 ease-out has-focus-visible:translate-y-0",
@@ -148,22 +149,23 @@ export const Header = () => {
           </Link>
 
           <ul className="hidden items-center gap-1 lg:flex">
-            {destinations.map((link) => (
-              <li key={link.key}>
-                <Link
-                  href={link.path}
-                  aria-current={pathname === link.path ? "page" : undefined}
-                  className={cn(
-                    "rounded-lg px-3 py-2 text-sm transition-colors",
-                    pathname === link.path
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
+            {destinations.map((link) => {
+              const active = isActivePath(localePathname, link.path);
+              return (
+                <li key={link.key}>
+                  <Link
+                    href={link.path}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "rounded-lg px-3 py-2 text-sm transition-colors",
+                      active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
 
           <div className="hidden items-center gap-3 md:flex">

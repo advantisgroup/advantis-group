@@ -41,6 +41,7 @@ export const Logo = ({
   height = 20,
   className,
   alt = "ADVANTIS GROUP",
+  inverse = false,
 }: {
   variant?: keyof typeof ART;
   /** Drawn height in px; the width follows from the artwork's own ratio. */
@@ -48,8 +49,12 @@ export const Logo = ({
   className?: string;
   /** Empty when something next to it already names the company. */
   alt?: string;
+  /** For an inverted band (`bg-foreground`), which is dark in light mode and light in dark. */
+  inverse?: boolean;
 }) => {
-  const art = ART[variant];
+  const art = inverse
+    ? { ...ART[variant], light: ART[variant].dark, dark: ART[variant].light }
+    : ART[variant];
   const width = logoWidth(variant, height);
   const shared = "block h-auto w-auto max-w-none";
 

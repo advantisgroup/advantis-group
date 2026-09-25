@@ -146,7 +146,7 @@ export function LegalLayout({
               ))}
             </div>
 
-            <aside className="sticky top-32 hidden max-h-[calc(100vh-9rem)] w-60 shrink-0 self-start overflow-y-auto lg:block">
+            <aside className="sticky top-32 hidden max-h-[calc(100vh-9rem)] w-60 shrink-0 self-start overflow-y-auto transition-[top] duration-300 [[data-header-hidden]_&]:top-6 lg:block">
               <p className="mb-2 pl-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {t("tableOfContents")}
               </p>

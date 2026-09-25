@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
 
 import { useTranslations } from "next-intl";
 
@@ -11,8 +11,13 @@ export const controlClassName =
 // zod's messages are English-only, so the form shows its own localized line instead
 export const useFieldError = (errors: Partial<Record<string, string[]>>) => {
   const t = useTranslations("contact.form.errors");
-  return (field: string) =>
-    errors[field] ? (field === "email" ? t("email") : t("required")) : undefined;
+  return (field: string) => {
+    const messages = errors[field];
+    if (!messages?.length) return undefined;
+    if (field === "email") return t("email");
+    if (messages.includes("hours")) return t("callbackHours");
+    return t("required");
+  };
 };
 
 export const PrivacyNote = ({ callback = false }: { callback?: boolean }) => {
@@ -47,6 +52,7 @@ export const Field = ({
   children: ReactNode;
 }) => {
   const t = useTranslations("contact.otherForm");
+  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
 
   return (
     <div className={cn("space-y-1.5", className)}>
@@ -56,13 +62,20 @@ export const Field = ({
           <span className="ml-1.5 font-normal text-muted-foreground">({t("optional")})</span>
         ) : null}
       </label>
-      {children}
+      {/* every field wraps exactly one control, so the error/hint wiring lives here once */}
+      {isValidElement(children)
+        ? cloneElement(children as ReactElement<{ "aria-describedby"?: string }>, {
+            "aria-describedby": describedBy,
+          })
+        : children}
       {error ? (
         <p id={`${id}-error`} className="text-[13px] text-destructive">
           {error}
         </p>
       ) : hint ? (
-        <p className="text-[13px] text-muted-foreground">{hint}</p>
+        <p id={`${id}-hint`} className="text-[13px] text-muted-foreground">
+          {hint}
+        </p>
       ) : null}
     </div>
   );

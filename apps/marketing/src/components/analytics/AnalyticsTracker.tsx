@@ -18,9 +18,9 @@ import { CONVEX_SITE_URL, getSessionId } from "@/lib/analytics";
  * correct for the whole tab session (`document.referrer` doesn't update on
  * `pushState`).
  *
- * `sessionId` lives in `sessionStorage` — gone the moment the tab closes.
- * That's the whole reason this needs no cookie banner: there's nothing
- * persistent to consent to.
+ * `sessionId` lives only in memory (see `getSessionId`) — nothing is stored
+ * on the visitor's device, which is the whole reason this needs no consent
+ * banner.
  */
 
 export function AnalyticsTracker() {

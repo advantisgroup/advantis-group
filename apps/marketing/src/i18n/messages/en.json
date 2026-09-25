@@ -16,7 +16,7 @@
     "analytics": {
       "title": "Analytics",
       "badge": "No cookies",
-      "description": "We count page visits on our own servers rather than sending them to an analytics company. No cookie, no IP address, no profile — just a random id that lives in your browser tab and is gone the moment you close it, so we can tell one visit from another without ever knowing it was you.",
+      "description": "We count page visits on our own servers rather than sending them to an analytics company. No cookie, no IP address, no profile, and nothing stored on your device: just a random id held in the page's memory, gone the moment you close or reload the tab, so we can tell one visit from another without ever knowing it was you. Visits are deleted after 14 months.",
       "uses": {
         "usage": "Which pages get visited",
         "improve": "Finding what to fix and improve"
@@ -28,7 +28,7 @@
       "train": "We do not use it to train AI models.",
       "ads": "We do not run personalised advertising or build ad profiles."
     },
-    "localOnly": "Your theme and language are not part of this either. They stay in your browser and are never sent to us.",
+    "localOnly": "Your theme and language aren't part of this either, and neither is a half-written contact form we keep while you sign in. They stay in your browser and are never sent to us until you send the form.",
     "privacyHint": "For the full detail on what we store and for how long, see the",
     "privacyLink": "privacy policy"
   },
@@ -175,7 +175,8 @@
     "subtitle": "Let's find out together how we can transform and push your sales forward.",
     "primary": "Contact Us Now",
     "secondary": "Send Email",
-    "benefits": "Free Initial Consultation • Tailored Solutions • Individual Offers"
+    "benefits": "Free Initial Consultation • Tailored Solutions • Individual Offers",
+    "returning": "Already written to us? <link>See your inquiries and our replies</link>."
   },
   "footer": {
     "description": "We are your partner for successful sales. With over 15 years of experience and four strong brands, we move your business forward.",
@@ -217,15 +218,16 @@
       "notes": "Notes (optional)",
       "notesPlaceholder": "What is the call about?",
       "callbackEmailNote": "For confirmation of your callback",
-      "callbackTimeNote": "We will call you at the requested time",
+      "callbackTimeNote": "Weekdays, 9:00–18:00 German time",
       "privacyPrefix": "By submitting the form, you agree that",
-      "privacySuffix": "uses your provided data for the purpose of processing your request. Your data will only be stored to answer your request and will not be passed on to third parties.",
+      "privacySuffix": "uses your provided data for the purpose of processing your request. Your data is only stored to answer your request and is not passed on to anyone other than the service providers named in our privacy policy.",
       "privacySuffixCallback": "uses your provided data for the purpose of the callback arrangement.",
       "privacyLink": "More information can be found in our privacy policy.",
       "privacyNoteLabel": "PRIVACY NOTICE:",
       "errors": {
         "required": "Required",
-        "email": "Enter a valid email address"
+        "email": "Enter a valid email address",
+        "callbackHours": "Pick a weekday between 9:00 and 18:00 (German time) that is still ahead."
       }
     },
     "sidebar": {
@@ -240,13 +242,13 @@
     },
     "messages": {
       "writeUs": "Write to us",
-      "writeUsDesc": "Send us a message and we will get back to you within 24 hours",
+      "writeUsDesc": "Send us a message. We usually reply within one business day.",
       "callback": "Schedule a callback",
       "callbackDesc": "Let us know when we can best reach you",
       "otherInquiry": "Other Inquiry",
       "otherInquiryDesc": "Have questions or general inquiries? We're happy to help!",
       "successTitle": "Sent!",
-      "successDesc": "We will get back to you within 24 hours.",
+      "successDesc": "We usually reply within one business day.",
       "callSuccessTitle": "Callback requested!",
       "callSuccessDesc": "We will call you at the requested time.",
       "errorTitle": "Something went wrong",
@@ -255,13 +257,22 @@
       "rateLimitTitle": "Too many requests",
       "rateLimitDesc": "You've sent a lot of requests. Please try again later.",
       "copySent": "We've sent a copy to {email}.",
-      "sendAnother": "Send another"
+      "sendAnother": "Send another",
+      "copyOff": "You turned copies off in your preferences, so no copy was sent.",
+      "copyLimit": "We didn't send another copy to {email}, because a few already went there this hour.",
+      "copyFailed": "We couldn't send a copy to {email}, but your inquiry reached us.",
+      "notDeliveredTitle": "Saved, but not delivered yet",
+      "notDeliveredSignedIn": "We saved your inquiry but couldn't pass it on to our team. Open it to send it again.",
+      "notDeliveredCall": "We saved your inquiry but couldn't pass it on to our team. Please try again in a few minutes, or call us on {phone}.",
+      "notDeliveredRetry": "We saved your inquiry but couldn't pass it on to our team. Please try again in a few minutes.",
+      "reference": "Reference",
+      "viewInquiry": "View this inquiry",
+      "openToRetry": "Open and send again"
     },
     "submissionBanner": {
       "title": "Forms temporarily unavailable",
       "defaultMessage": "Contact forms are not being processed at this time.",
-      "notifyCta": "Get notified when forms go live",
-      "dismiss": "Dismiss notice"
+      "notifyCta": "Get notified when forms go live"
     },
     "notify": {
       "close": "Close",
@@ -344,20 +355,8 @@
       "optional": "optional"
     },
     "accountHelper": {
-      "badge": "Signed-in shortcut",
-      "title": "Use your current account details",
-      "description": "If you are reaching out from your own Clerk account, we can prefill your name and email so sending a contact request is faster.",
-      "signedInAs": "Signed in as {email}",
-      "emailNote": "You can still replace the form email with a company address if that is the best address for follow-up. We will store both for clarity.",
-      "useAccount": "Use my account details",
-      "useAccountSuccess": "Added to the form",
-      "signedOutTitle": "Want faster contact forms?",
-      "signedOutDescription": "Sign in first and we can prefill your contact details automatically and keep your submitted inquiries together in your account.",
       "signInCta": "Sign in to prefill",
-      "storedAccountNote": "When you submit while signed in, we store both your logged-in account and the contact email you entered so follow-up stays clear.",
-      "successNotice": "Your signed-in details are now in the form below.",
-      "scrollNotice": "Your signed-in details were added below.",
-      "signedInNote": "Signed in as {email}. This inquiry will also appear in <link>your submissions</link>."
+      "signedInNote": "Signed in as {email}. This inquiry will also appear in <link>your inquiries</link>."
     }
   },
   "about": {
@@ -432,6 +431,14 @@
       "title": "A Glimpse Into Our Everyday",
       "subtitle": "A few moments from the office and on the road."
     }
+  },
+  "checkpoints": {
+    "done": "done",
+    "current": "current step",
+    "upcoming": "not yet",
+    "failed": "didn't work",
+    "warning": "delayed",
+    "skipped": "skipped"
   },
   "brandsPage": {
     "comingSoon": "Coming soon",
@@ -522,7 +529,35 @@
       "contact": {
         "title": "Contact Form",
         "content1": "If you send us inquiries via email or contact form, your information from the inquiry form including the contact data you provided will be stored for the purpose of processing the inquiry and in case of follow-up questions.",
-        "content2": "We do not share this data without your consent. Processing is based on Art. 6 para. 1 lit. b GDPR, if your inquiry is related to the fulfillment of a contract or is necessary for the implementation of pre-contractual measures."
+        "content2": "We pass this data only to the service providers listed below, who process it on our behalf, and to no one else without your consent. Processing is based on Art. 6(1)(b) GDPR where your inquiry concerns a contract or steps before one, and otherwise on our legitimate interest in answering inquiries sent to us (Art. 6(1)(f) GDPR).",
+        "content3": "Each inquiry is stored with a reference number, its status, our replies and whether the related emails were delivered. Unless you delete them sooner, personal details in inquiries with no activity for {years} years are anonymised."
+      },
+      "account": {
+        "title": "Customer account",
+        "content1": "You can create an account to see your inquiries and our replies in one place. For this we store your name, your email addresses, how you sign in and, if you add them, your company, phone number and role. We use them to show you your inquiries, to prefill our forms and to write to you in the language you chose. The legal basis is Art. 6(1)(b) GDPR.",
+        "content2": "Sign-in is provided by Clerk. Clerk sets the cookies needed to keep you signed in. They are strictly necessary and are not used for tracking.",
+        "content3": "Under “Privacy” in your account you can download everything we store about you as a file, delete your inquiry history, or delete the account. Deleting the account also removes your inquiries, your entry on the notification list and whitepaper requests for your verified addresses."
+      },
+      "whitepaper": {
+        "title": "Whitepaper and notification list",
+        "content1": "If you request our whitepaper, we store your name, company, email address, phone number and your consent, based on that consent (Art. 6(1)(a) GDPR). We first send a confirmation link that is valid for 48 hours, and only send the whitepaper once you have confirmed (double opt-in). If you are signed in and the address is verified in your account, that confirmation already exists and the step is skipped. You can withdraw your consent at any time in your account or by email. Requests that are never confirmed are deleted after 30 days. After a withdrawal we keep the record of your consent for {years} years so we can prove it was given, then delete it.",
+        "content2": "While our contact forms are closed, you can leave your email address to be told when they reopen. We store the address and the language you used, based on your consent (Art. 6(1)(a) GDPR), send you one email when the forms reopen and then delete the entry. You can remove yourself at any time before that."
+      },
+      "processors": {
+        "title": "Service providers",
+        "intro": "We use the following providers to run these features. They process data on our behalf:",
+        "items": {
+          "vercel": "Vercel (USA): hosting of this website",
+          "clerk": "Clerk (USA): sign-in and account management",
+          "convex": "Convex (USA): database for inquiries, account data and the notification list",
+          "resend": "Resend (USA): sending emails such as receipts, replies and the whitepaper",
+          "upstash": "Upstash: short-lived counters that limit how often a form can be sent, keyed by IP address or email address. They expire after one hour. The basis is our legitimate interest in protecting the forms from abuse (Art. 6(1)(f) GDPR)."
+        },
+        "footer": "Some of these providers are based in the USA. Transfers there rely on the European Commission's adequacy decision for the EU–US Data Privacy Framework (Art. 45 GDPR) where the provider is certified under it, and otherwise on the EU Standard Contractual Clauses (Art. 46(2)(c) GDPR) in our data processing agreement with the provider."
+      },
+      "analytics": {
+        "title": "Visitor statistics",
+        "content1": "We count page visits and a few actions (such as sending a form) on our own database. We store the page, the language, the website you came from (domain only), how long you stayed and a random id that exists only while the page is open. We set no cookie, store nothing on your device, and do not store your IP address. The basis is our legitimate interest in knowing which pages are useful (Art. 6(1)(f) GDPR). The statistics are deleted after 14 months."
       },
       "rights": {
         "title": "Your Rights",
@@ -552,6 +587,14 @@
           "portability": {
             "title": "Right to data portability:",
             "description": "You can receive your data in a structured format"
+          },
+          "withdraw": {
+            "title": "Withdrawing consent:",
+            "description": "You can withdraw any consent you gave at any time, with effect for the future"
+          },
+          "complaint": {
+            "title": "Right to complain:",
+            "description": "You can complain to a data protection supervisory authority, in particular in the EU country where you live or work or where you think the breach happened"
           }
         },
         "footer": "For this and other questions on the subject of personal data, you can always contact us at the address given in the imprint."
@@ -622,99 +665,44 @@
     }
   },
   "email": {
-    "greeting": "Hello {firstName} {lastName},",
-    "bodyIntro": "thank you for your message. This is a copy of the request we just received.",
-    "bodyOutro": "We are reviewing your request and will get back to you as soon as possible – usually within the next 24 hours.",
-    "yourMessage": "Your message:",
-    "poweredBy": "Powered by",
-    "rightsReserved": "All rights reserved.",
-    "subject": "Subject",
-    "topic": "Topic",
-    "confirmationTitle": "We have received your request",
-    "confirmationBody": "Thank you for your message. We have recorded your request and will get back to you as soon as possible.",
-    "submissionType": "Request type",
-    "contactEmail": "Email",
-    "contactPhone": "Phone",
-    "company": "Company",
-    "typeMessage": "Message",
-    "typeCallback": "Callback",
-    "typeOther": "Other"
+    "receipt": {
+      "subject": "We've received your inquiry · {reference}",
+      "subjectCallback": "Your callback request · {reference}",
+      "heading": "Thanks, {firstName}.",
+      "received": "Your message has reached our team.",
+      "receivedCallback": "Your callback request has reached our team.",
+      "callbackWhen": "We'll call you on {phone} at the time you picked: {when}.",
+      "next": "We usually reply within one business day, from {inbox}.",
+      "nextCallback": "We'll confirm the time by email within one business day.",
+      "reference": "Reference",
+      "viewInAccount": "View it in your account",
+      "createAccount": "Create an account",
+      "keepTrack": "Create an account with this address and this inquiry, and any you send later, will be waiting there.",
+      "whatYouSent": "What you sent",
+      "replyHint": "Want to add something? Just reply to this email.",
+      "privacy": "Privacy"
+    }
   },
   "auth": {
-    "badge": "Secure access",
     "menuLabel": "Account",
     "guest": "Guest user",
-    "providerHint": "Continue with  Google or use your email to create an account.",
+    "providerHint": "Continue with Google or use your email to create an account.",
     "authShellHighlights": [
-      "Track the status of your requests",
-      "Manage your profile in one place",
-      "Secured with Clerk"
+      "See every inquiry you send, and where it stands",
+      "Keep your details in one place so forms fill themselves",
+      "Get your whitepaper again any time"
     ],
-    "signInPageCta": "Open sign-in page",
-    "signUpPageCta": "Open sign-up page",
     "signIn": "Sign in",
     "signUp": "Create account",
-    "signedIn": "Signed in with Clerk",
-    "accountCta": "Manage account",
+    "accountCta": "Profile & security",
     "signOut": "Sign out",
     "signInTitle": "Welcome back to ADVANTIS GROUP",
-    "signInSubtitle": "Sign in with Clerk to manage your profile, security settings, and future protected experiences from one place.",
+    "signInSubtitle": "Sign in to see your inquiries and replies, and to keep your contact details ready for the next form.",
     "signUpTitle": "Create your Advantis account",
-    "signUpSubtitle": "Use Clerk to create a secure account and manage your profile, sign-in methods, and future member-only experiences.",
-    "accountBadge": "Account center",
-    "accountTitle": "Your account",
-    "accountSubtitle": "Manage your profile, security settings, and active sessions in Clerk’s hosted account center.",
-    "signInRequired": "Please sign in first to access your account settings.",
-    "submissionsCta": "View submissions",
-    "contactCta": "Send a new inquiry",
-    "submissions": {
-      "badge": "Submission history",
-      "title": "Your inquiries",
-      "subtitle": "Review the contact forms you sent while signed in and keep track of which email address and company details you shared with us.",
-      "newSubmissionCta": "Submit another inquiry",
-      "accountCta": "Manage account",
-      "loading": "Loading your submissions…",
-      "errorTitle": "We could not load your submissions.",
-      "errorDescription": "Please try again in a moment.",
-      "retry": "Try again",
-      "search": "Search your inquiries",
-      "noMatches": "Nothing matches that.",
-      "selectHint": "Pick an inquiry to see everything you sent.",
-      "followUp": "Follow up by email",
-      "filterAll": "All",
-      "upcoming": "Upcoming",
-      "name": "Name",
-      "phone": "Phone",
-      "reference": "Reference",
-      "summary": {
-        "total": "Inquiries",
-        "lastSent": "Last sent",
-        "callbacks": "Callbacks requested",
-        "upcoming": "{count} coming up",
-        "delivery": "Delivery",
-        "allDelivered": "All delivered",
-        "issues": "{count, plural, one {# needs attention} other {# need attention}}"
-      },
-      "emptyTitle": "No submissions yet",
-      "emptyDescription": "Once you send a contact form while signed in, it will appear here with its status and submitted details.",
-      "contactEmail": "Contact email used",
-      "accountEmail": "Signed-in account",
-      "company": "Company",
-      "desiredTime": "Requested callback time",
-      "message": "Message",
-      "topic": "Topic",
-      "notes": "Notes",
-      "deliveryIssue": "Delivery issue",
-      "types": {
-        "message": "Message",
-        "callback": "Callback",
-        "other": "Other inquiry"
-      },
-      "status": {
-        "sent": "Sent",
-        "failed": "Needs attention"
-      }
-    }
+    "signUpSubtitle": "An account keeps your inquiries and our replies in one place and fills in your details on every form.",
+    "submissionsCta": "Your inquiries",
+    "backToSite": "Back to site",
+    "yourAccount": "Your account"
   },
   "services": {
     "title": "Everything for Your Sales Success",
@@ -1294,7 +1282,7 @@
       "consentSuffix": "You'll find more information in our",
       "consentLink": "privacy policy",
       "doubleOptIn": "Double opt-in: you'll first receive an email with a confirmation link. Only then do we send the whitepaper.",
-      "noThirdParty": "We never pass your details on to third parties.",
+      "noThirdParty": "We never sell your details or share them for advertising.",
       "submit": "Request the whitepaper",
       "errors": {
         "required": "Please fill in this field.",
@@ -1344,6 +1332,12 @@
       "error": {
         "title": "Something went wrong",
         "description": "We couldn't process your confirmation just now. Please try again later."
+      },
+      "next": {
+        "body": "Want to talk through what it means for your team? Pick a time and we'll call you.",
+        "cta": "Request a callback",
+        "account": "<link>Create an account</link> to download it again any time and keep your inquiries in one place.",
+        "inAccount": "It's also saved under <link>Downloads</link> in your account."
       }
     },
     "email": {
@@ -1366,6 +1360,341 @@
         "contactEmail": "Email",
         "contactPhone": "Phone"
       }
+    }
+  },
+  "account": {
+    "nav": {
+      "label": "Account",
+      "title": "Account",
+      "overview": "Overview",
+      "inquiries": "Inquiries",
+      "profile": "Profile",
+      "security": "Security",
+      "preferences": "Preferences",
+      "downloads": "Downloads",
+      "privacy": "Privacy & data",
+      "signOut": "Sign out",
+      "signedOut": "You're signed out.",
+      "back": "Account"
+    },
+    "overview": {
+      "greeting": {
+        "morning": "Good morning, {name}",
+        "afternoon": "Good afternoon, {name}",
+        "evening": "Good evening, {name}"
+      },
+      "greetingNoName": {
+        "morning": "Good morning",
+        "afternoon": "Good afternoon",
+        "evening": "Good evening"
+      },
+      "memberSince": "Member since {date}",
+      "welcome": "Welcome. Everything you send us while signed in collects here, and the contact forms fill themselves in from now on.",
+      "workAccount": {
+        "title": "This is also your ADVANTIS work account",
+        "body": "Sign-in and security are managed in the intranet.",
+        "cta": "Intranet settings"
+      },
+      "comingUp": "Coming up",
+      "view": "View",
+      "callbackConfirmed": "Your callback is confirmed.",
+      "callbackRequested": "The callback you asked for. We'll confirm the time by email.",
+      "recent": "Recent inquiries",
+      "seeAll": "See all",
+      "noInquiries": "Nothing sent yet.",
+      "start": "Start something",
+      "actions": {
+        "message": "Write to us",
+        "callback": "Request a callback",
+        "whitepaper": "Get the whitepaper"
+      }
+    },
+    "inquiries": {
+      "title": "Your inquiries",
+      "back": "Your inquiries",
+      "summary": "{count, plural, one {# inquiry} other {# inquiries}} · last sent {last}",
+      "new": "New inquiry",
+      "nextCallback": "Next callback",
+      "view": "View",
+      "problems": "{count, plural, one {# inquiry didn't reach us} other {# inquiries didn't reach us}}",
+      "problemsHint": "Nothing is lost. Open it to send it again.",
+      "search": "Search your inquiries",
+      "filterLabel": "Show",
+      "filters": {
+        "all": "All",
+        "open": "Open",
+        "answered": "Answered",
+        "closed": "Closed"
+      },
+      "noMatches": "Nothing matches that.",
+      "showOlder": "Show older",
+      "notDelivered": "Not delivered",
+      "upcomingAt": "Upcoming · {when}",
+      "loadError": "We couldn't load your inquiries just now.",
+      "retry": "Try again",
+      "empty": {
+        "title": "Nothing here yet",
+        "body": "Anything you send us while signed in shows up here, with where it's at and everything you sent.",
+        "message": "Write to us",
+        "callback": "Request a callback",
+        "other": "Something else"
+      },
+      "callbackTitle": "Callback · {when}",
+      "yourMessage": "Your message",
+      "types": {
+        "message": "Message",
+        "callback": "Callback",
+        "other": "Other inquiry"
+      },
+      "states": {
+        "open": "Received",
+        "in_progress": "In progress",
+        "answered": "Answered",
+        "closed": "Closed",
+        "withdrawn": "Withdrawn"
+      },
+      "replyBy": "We usually reply within one business day, so by {when}.",
+      "replyLate": "This is taking longer than usual. If it's urgent, call us on {phone}.",
+      "replyLateNoPhone": "This is taking longer than usual. We're on it.",
+      "progressLabel": "Progress",
+      "steps": {
+        "received": "Received",
+        "seen": "Seen",
+        "inProgress": "In progress",
+        "answered": "Answered",
+        "closed": "Closed",
+        "withdrawn": "Withdrawn"
+      },
+      "seenBy": "{name} · {when}",
+      "onIt": "{name} is on it",
+      "print": "Print",
+      "emailUs": "Email us about this",
+      "copyReference": "Copy reference",
+      "copied": "Copied {reference}",
+      "delivery": {
+        "team": {
+          "queued": "Sending to our team…",
+          "sent": "Sent to our team",
+          "delivered": "Delivered to our team",
+          "delayed": "Delayed on its way to our team",
+          "bounced": "Didn't reach our team",
+          "failed": "Didn't reach our team"
+        },
+        "copy": {
+          "sent": "copy sent to you",
+          "skipped": "no copy sent",
+          "delivered": "copy delivered to you",
+          "delayed": "your copy is delayed",
+          "bounced": "your copy didn't arrive",
+          "failed": "your copy didn't go out"
+        },
+        "details": "Details",
+        "hide": "Hide",
+        "toTeam": "To our team",
+        "toYou": "Your copy to {email}",
+        "steps": {
+          "queued": "Queued",
+          "sent": "Sent",
+          "delivered": "Delivered",
+          "copySent": "Sent",
+          "copyDelivered": "Delivered"
+        },
+        "skipped": {
+          "limit": "You'd had a few copies in a short time, so we skipped this one.",
+          "preference": "You turned copies off in your preferences."
+        },
+        "reasons": {
+          "invalid_address": {
+            "title": "The address looks wrong",
+            "body": "Our mail service didn't accept the address. Send it again once it's fixed.",
+            "copyBody": "We couldn't send your copy to {email}. Check the address for next time."
+          },
+          "mailbox_unavailable": {
+            "title": "That mailbox doesn't accept mail",
+            "body": "The mailbox refused the message. Send it again, or call us.",
+            "copyBody": "{email} refused your copy. Your inquiry still reached us."
+          },
+          "temporary": {
+            "title": "Taking longer than usual",
+            "body": "The receiving server is slow to accept it. Nothing to do, we keep trying.",
+            "copyBody": "Your copy is on its way to {email}, just slower than usual."
+          },
+          "rate_limited": {
+            "title": "We were sending too much at once",
+            "body": "Our mail service asked us to slow down. Send it again in a minute.",
+            "copyBody": "Your copy to {email} was held back. Your inquiry still reached us."
+          },
+          "provider_error": {
+            "title": "Our mail service had a hiccup",
+            "body": "Nothing is lost. Send it again and it'll go out.",
+            "copyBody": "Your copy to {email} didn't go out. Your inquiry still reached us."
+          },
+          "unknown": {
+            "title": "It didn't go through",
+            "body": "Nothing is lost. Send it again, or call us.",
+            "copyBody": "Your copy to {email} didn't go out. Your inquiry still reached us."
+          }
+        },
+        "attempts": "{count, plural, one {Tried once} other {Tried # times}} · last at {when}",
+        "sendAgain": "Send again",
+        "retried": "Sent to our team.",
+        "retryFailed": "That didn't work either. Try again later, or call us.",
+        "callInstead": "If it keeps failing, call us on {phone}."
+      },
+      "callback": {
+        "title": "Callback",
+        "requested": "Requested",
+        "confirmed": "Confirmed",
+        "done": "Done",
+        "cancelled": "Cancelled",
+        "calendarTitle": "Callback from ADVANTIS GROUP",
+        "addToCalendar": "Add to calendar",
+        "anotherTime": "Need another time?",
+        "unconfirmedHint": "We'll confirm the time by email, usually within one business day."
+      },
+      "thread": {
+        "title": "Conversation",
+        "you": "You",
+        "staff": "{name} · ADVANTIS GROUP",
+        "team": "ADVANTIS GROUP",
+        "add": "Add something",
+        "placeholder": "Write a reply or add details…",
+        "attach": "Attach files",
+        "removeFile": "Remove {name}",
+        "reopensHint": "Replying reopens this inquiry.",
+        "send": "Send",
+        "sent": "Sent.",
+        "sendFailed": "That didn't send. Try again.",
+        "tooLarge": "Files can be up to 10 MB."
+      },
+      "actions": {
+        "withdraw": "Withdraw inquiry",
+        "withdrawConfirm": "Withdraw this inquiry?",
+        "withdrawYes": "Withdraw",
+        "cancel": "Keep it",
+        "withdrawDone": "Inquiry withdrawn.",
+        "resolve": "This solved it",
+        "resolveDone": "Closed. Thanks for letting us know.",
+        "stillNeedHelp": "I still need help",
+        "failed": "That didn't work. Try again."
+      },
+      "shared": {
+        "title": "What you shared",
+        "email": "Contact email",
+        "phone": "Phone",
+        "company": "Company",
+        "topic": "Topic",
+        "callbackTime": "Requested time"
+      }
+    },
+    "profile": {
+      "title": "Profile",
+      "securityTitle": "Security",
+      "details": {
+        "title": "Business details",
+        "hint": "Filled into the contact and whitepaper forms for you.",
+        "company": "Company",
+        "phone": "Phone",
+        "role": "Role",
+        "saved": "Saved",
+        "failed": "That didn't save. Try again."
+      },
+      "staffSecurity": {
+        "title": "Managed in the intranet",
+        "body": "Your sign-in methods, passkeys and two-factor settings belong to your ADVANTIS work account.",
+        "cta": "Open intranet settings"
+      }
+    },
+    "preferences": {
+      "title": "Preferences",
+      "site": "Language and appearance",
+      "mail": "Email",
+      "copies": {
+        "label": "Email me a copy of each inquiry",
+        "description": "A receipt with the reference and what you sent, in the language you wrote in.",
+        "on": "You'll get a copy of each inquiry.",
+        "off": "No more copies. Your inquiries still show up here."
+      },
+      "notify": {
+        "label": "Tell me when the contact forms reopen",
+        "description": "One email to {email}, then you're off the list."
+      },
+      "failed": "That didn't save. Try again."
+    },
+    "downloads": {
+      "title": "Downloads",
+      "whitepaper": "Whitepaper: AI tools in sales",
+      "pdfFor": "PDF · requested for {email}",
+      "download": "Download",
+      "get": "Get the whitepaper",
+      "empty": "Nothing to download yet.",
+      "viaAccount": "Confirmed by your account",
+      "steps": {
+        "requested": "Requested",
+        "confirmed": "Confirmed",
+        "sent": "Sent"
+      },
+      "pending": {
+        "title": "Waiting for you to confirm",
+        "body": "We sent a confirmation link to {email}. Open it and the PDF follows."
+      },
+      "expired": {
+        "title": "The confirmation link expired",
+        "body": "Request it again and use the new link within two days.",
+        "cta": "Request again"
+      },
+      "failed": {
+        "title": "The email with the PDF didn't go out",
+        "body": "Download it here instead."
+      }
+    },
+    "privacy": {
+      "title": "Privacy & data",
+      "summary": {
+        "keep": "We keep your inquiries and our replies, your whitepaper request, and whether you asked to be told when the forms reopen.",
+        "howLong": "Inquiries are anonymised {years} years after the last activity.",
+        "control": "You can take a copy of all of it, or delete it, below."
+      },
+      "policy": "Read the full privacy policy",
+      "yourData": "Your data",
+      "export": {
+        "label": "Download your data",
+        "description": "Everything we hold on this account, as one JSON file.",
+        "cta": "Download"
+      },
+      "history": {
+        "label": "Delete inquiry history",
+        "description": "Removes your inquiries and our replies from this account. Mails already in our inbox stay there.",
+        "cta": "Delete history",
+        "confirm": "Delete for good",
+        "cancel": "Cancel",
+        "done": "Inquiry history deleted.",
+        "failed": "That didn't work. Try again."
+      },
+      "consents": {
+        "title": "What you agreed to",
+        "whitepaper": "Contact about the whitepaper",
+        "whitepaperDetail": "{email} · agreed {date} ({version})",
+        "withdraw": "Withdraw",
+        "withdrawn": "Withdrawn. We've told the team.",
+        "notify": "Forms-reopened email",
+        "notifyDetail": "{email}",
+        "manage": "Manage"
+      },
+      "account": "Account",
+      "delete": {
+        "label": "Delete account",
+        "description": "Deletes your account and everything this site holds on you. This can't be undone.",
+        "cta": "Delete account",
+        "typeEmail": "Type {email} to confirm",
+        "kept": "Copies of your messages that already reached our inbox are kept as our records require.",
+        "confirm": "Delete my account",
+        "cancel": "Cancel",
+        "done": "Your account has been deleted.",
+        "failed": "That didn't work. Try again.",
+        "staff": "This is your ADVANTIS work account, so it's managed by your administrator."
+      },
+      "failed": "That didn't work. Try again."
     }
   }
 }

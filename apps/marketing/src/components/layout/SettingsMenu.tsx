@@ -14,12 +14,27 @@ import { cn } from "@/lib/utils";
  * regional-indicator glyphs have no emoji font behind them, so 🇩🇪 rendered as
  * the bare letters "DE" — which is why the old row read "DE DE" and "GB EN".
  */
-const LANGUAGES = [
+export const LANGUAGES = [
   { code: "de", name: "Deutsch" },
   { code: "en", name: "English" },
   { code: "zh", name: "中文" },
   { code: "fr", name: "Français" },
 ] as const;
+
+/**
+ * Same page, other language, same query — a `?redirect_url=` or an open
+ * inquiry's `?id=` survives the switch. Read at click time so the header
+ * doesn't need useSearchParams (and a Suspense boundary) just for this.
+ */
+export const useSwitchLocale = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  return (nextLocale: string) => {
+    const query = Object.fromEntries(new URLSearchParams(window.location.search));
+    router.replace({ pathname, query }, { locale: nextLocale });
+  };
+};
 
 const THEMES = ["light", "dark", "system"] as const;
 
@@ -70,8 +85,7 @@ const SegmentedOption = ({
 export const SettingsMenu = ({ onMobileNavigate }: { onMobileNavigate?: () => void }) => {
   const locale = useLocale();
   const t = useTranslations("nav.settingsMenu");
-  const router = useRouter();
-  const pathname = usePathname();
+  const switchLocale = useSwitchLocale();
   const { setTheme, theme } = useTheme();
 
   // `theme` is undefined until next-themes has read storage; rendering the
@@ -81,7 +95,7 @@ export const SettingsMenu = ({ onMobileNavigate }: { onMobileNavigate?: () => vo
 
   const switchLanguage = (nextLocale: string) => {
     onMobileNavigate?.();
-    router.replace(pathname, { locale: nextLocale });
+    switchLocale(nextLocale);
   };
 
   const themeLabel = { light: t("light"), dark: t("dark"), system: t("system") } as const;

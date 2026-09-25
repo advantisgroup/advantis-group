@@ -4,6 +4,7 @@ import {
   BookOpen,
   Clock3,
   FolderLock,
+  Inbox,
   Megaphone,
   MessageSquare,
   Newspaper,
@@ -42,4 +43,5 @@ export const CAPABILITY_ICONS: Record<Capability, LucideIcon> = {
   view_clockodo_team: Clock3,
   manage_clockodo_team: Clock3,
   use_ai: Sparkles,
+  manage_inquiries: Inbox,
 };

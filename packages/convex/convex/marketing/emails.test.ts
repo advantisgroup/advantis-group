@@ -46,9 +46,9 @@ describe("server key", () => {
   test("submission history can't be read without it", async () => {
     const t = setup();
     await expect(
-      t.query(api.marketing.emails.listEmailsByAccountEmail, {
+      t.query(api.marketing.inquiries.listForAccount, {
         serverKey: "wrong",
-        accountEmail: email,
+        account: { clerkUserId: "user_1", emails: [email] },
       }),
     ).rejects.toThrow(/server key/i);
   });

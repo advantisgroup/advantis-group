@@ -4,8 +4,8 @@ import { useTranslations } from "next-intl";
 /**
  * There is no toggle here any more, and that's the point: analytics moved
  * off PostHog onto a first-party Convex table that stores no cookie, no IP
- * and no persistent id — just a per-tab `sessionStorage` value that dies
- * when the tab does. Nothing left to consent to, so a preferences UI with a
+ * and nothing on the device at all — just an id held in the page's memory
+ * (see `getSessionId`). Nothing left to consent to, so a preferences UI with a
  * switch would be theatre.
  *
  * The one thing that will earn a real toggle is referral attribution
