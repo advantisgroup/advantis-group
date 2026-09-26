@@ -27,6 +27,7 @@ import { toast } from "sonner";
 
 import { AskButton } from "@/components/ai/AskButton";
 import { ApplicantSidebar } from "@/components/applicants/ApplicantSidebar";
+import { HandoffBriefPrint } from "@/components/applicants/HandoffBriefPrint";
 import {
   EmailDialog,
   InterviewDialog,
@@ -391,6 +392,8 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
         <div className="min-w-0">{children}</div>
         <ApplicantSidebar applicant={applicant} className="lg:sticky lg:top-20 lg:self-start" />
       </div>
+
+      <HandoffBriefPrint applicant={applicant} />
 
       <TerminDialog
         open={quickAdd === "termin"}

@@ -8,20 +8,15 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { matchSkills } from "@advantis/types";
 import { useMutation, useQuery } from "convex/react";
-import {
-  Briefcase,
-  Calendar,
-  CalendarClock,
-  Check,
-  Mail,
-  PhoneCall,
-  Printer,
-  Users,
-  X,
-} from "lucide-react";
+import { Briefcase, Calendar, Check, Printer, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { type ApplicantDetail, ensureRichHtml } from "@/components/applicants/applicant-types";
+import {
+  type ApplicantDetail,
+  ensureRichHtml,
+  today,
+} from "@/components/applicants/applicant-types";
+import { buildTimeline } from "@/components/applicants/timeline";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,8 +32,6 @@ import {
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-import type { LucideIcon } from "lucide-react";
 
 /** Rich-text field for the long-form fields (summary, experience,
  * education) where a single flat line can't hold real detail. Saves on
@@ -68,70 +61,6 @@ function RichField({
         minHeight="min-h-24"
       />
     </div>
-  );
-}
-
-interface TimelineEntry {
-  id: string;
-  date: string;
-  time?: string;
-  icon: LucideIcon;
-  label: string;
-  notiz?: string;
-  href: string;
-  upcoming: boolean;
-}
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function buildTimeline(
-  applicant: ApplicantDetail,
-  t: ReturnType<typeof useTranslations>,
-): TimelineEntry[] {
-  const now = today();
-  const entries: TimelineEntry[] = [
-    ...applicant.termine.map((tm) => ({
-      id: `termin:${tm._id}`,
-      date: tm.datum,
-      time: tm.uhrzeit,
-      icon: CalendarClock,
-      label: `${t(`terminTyp.${tm.typ}`)} · ${t(`terminArt.${tm.art}`)}`,
-      notiz: tm.notiz,
-      href: `/hr/${applicant._id}/termine/${tm._id}`,
-      upcoming: !tm.uebernommen && tm.datum >= now,
-    })),
-    ...applicant.kontakte.map((k) => ({
-      id: `kontakt:${k._id}`,
-      date: k.datum,
-      icon: PhoneCall,
-      label: t(`kontaktArt.${k.art}`),
-      notiz: k.notiz,
-      href: `/hr/${applicant._id}/kontakte/${k._id}`,
-      upcoming: false,
-    })),
-    ...applicant.emails.map((m) => ({
-      id: `email:${m._id}`,
-      date: m.datum,
-      icon: Mail,
-      label: t(`emailKategorie.${m.kategorie}`),
-      notiz: m.notiz,
-      href: `/hr/${applicant._id}/emails/${m._id}`,
-      upcoming: false,
-    })),
-    ...applicant.interviews.map((iv) => ({
-      id: `interview:${iv._id}`,
-      date: iv.datum,
-      icon: Users,
-      label: iv.interviewer || t("tabInterviews"),
-      notiz: iv.notiz,
-      href: `/hr/${applicant._id}/interviews/${iv._id}`,
-      upcoming: false,
-    })),
-  ];
-  return entries.sort((a, b) =>
-    (b.date + (b.time ?? "00:00")).localeCompare(a.date + (a.time ?? "00:00")),
   );
 }
 
@@ -175,7 +104,7 @@ export function Uebersicht({
 
   return (
     <div className="space-y-5">
-      <Card className="print:hidden">
+      <Card>
         <CardContent className="space-y-4 p-4">
           <div>
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -345,7 +274,7 @@ export function Uebersicht({
         </CardContent>
       </Card>
 
-      <Card className="print:hidden">
+      <Card>
         <CardContent className="p-4">
           <p className="mb-3 text-sm font-semibold">{t("timeline")}</p>
           {timeline.length === 0 ? (
@@ -392,9 +321,9 @@ export function Uebersicht({
         </CardContent>
       </Card>
 
-      <Card className="border-primary/25 bg-primary/[0.03] print:border-0 print:bg-transparent">
-        <CardContent className="space-y-4 p-4 print:p-0">
-          <div className="flex flex-col items-stretch gap-3 border-b border-border/70 pb-3 print:border-foreground sm:flex-row sm:items-start sm:justify-between">
+      <Card className="border-primary/25 bg-primary/[0.03]">
+        <CardContent className="space-y-4 p-4">
+          <div className="flex flex-col items-stretch gap-3 border-b border-border/70 pb-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("handoffBrief")}
@@ -407,7 +336,7 @@ export function Uebersicht({
             <Button
               variant="outline"
               size="sm"
-              className="w-full print:hidden sm:w-auto"
+              className="w-full sm:w-auto"
               onClick={() => window.print()}
             >
               <Printer className="size-3.5" />
@@ -415,7 +344,7 @@ export function Uebersicht({
             </Button>
           </div>
 
-          <div className="grid gap-3 text-sm sm:grid-cols-2 print:grid-cols-2">
+          <div className="grid gap-3 text-sm sm:grid-cols-2">
             <BriefRow
               label={t("handoffStatus")}
               value={t(`status${applicant.status === "neu" ? "Neu" : "Pool"}`)}
@@ -442,7 +371,7 @@ export function Uebersicht({
           </div>
 
           {latestTouchpoint?.notiz && (
-            <div className="border-t border-border/70 pt-3 print:border-foreground">
+            <div className="border-t border-border/70 pt-3">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("handoffLatestNote")}
               </p>
