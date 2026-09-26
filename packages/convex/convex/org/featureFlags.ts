@@ -10,7 +10,7 @@ import {
 } from "../lib/featureFlags";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
-import type { MutationCtx } from "../_generated/server";
+import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { appendTimeline, insertUpdate } from "../updates/lib/updates";
 
 /** Actions can't touch `ctx.db` directly — this is what `gatedAction`/`gatedInternalAction` call via `ctx.runQuery`. */
@@ -25,22 +25,29 @@ export const list = userQuery({
   handler: async (ctx) => {
     const rows = await ctx.db.query("featureFlags").collect();
     const byKey = new Map(rows.map((row) => [row.key, row]));
-    return FEATURE_FLAG_KEYS.map((key) => {
-      const row = byKey.get(key);
-      const enabled = row?.enabled ?? true;
-      return {
-        key,
-        label: FEATURE_FLAG_REGISTRY[key].label,
-        premadeReason: FEATURE_FLAG_REGISTRY[key].premadeReason,
-        enabled,
-        reason: enabled ? undefined : row?.reason,
-        // off but nobody told yet — the admin panel offers to post the update now
-        hasUpdate: Boolean(row?.updateId),
-        updatedAt: row?.updatedAt,
-      };
-    });
+    return await Promise.all(
+      FEATURE_FLAG_KEYS.map(async (key) => {
+        const row = byKey.get(key);
+        const enabled = row?.enabled ?? true;
+        return {
+          key,
+          label: FEATURE_FLAG_REGISTRY[key].label,
+          premadeReason: FEATURE_FLAG_REGISTRY[key].premadeReason,
+          enabled,
+          reason: enabled ? undefined : row?.reason,
+          // off but nobody told yet (or the update was deleted) — the admin panel offers to post it now
+          hasUpdate: await updateLives(ctx, row?.updateId),
+          updatedAt: row?.updatedAt,
+        };
+      }),
+    );
   },
 });
+
+/** A deleted update reads as missing, so it no longer counts as posted. */
+async function updateLives(ctx: QueryCtx, updateId: Id<"updates"> | undefined) {
+  return updateId ? (await ctx.db.get(updateId)) !== null : false;
+}
 
 /** The "X disabled" maintenance Update everyone sees. */
 async function postDisabledUpdate(
@@ -67,7 +74,7 @@ async function postDisabledUpdate(
 
 /**
  * Enable or disable a feature. Disabling posts a new Update (premade or
- * custom `reason`) unless `postUpdate` is false — then it can still be
+ * custom `reason`) only when `postUpdate` is true — otherwise it can still be
  * posted later with `postFlagUpdate`. Re-enabling posts a follow-up on that
  * same Update instead of a second post, so toggling isn't spammy. Admin only.
  */
@@ -111,8 +118,9 @@ export const setFlag = userMutation({
     if (existing?.enabled === false) return { ok: true };
 
     const reason = args.reason?.trim() || meta.premadeReason;
-    const updateId =
-      args.postUpdate === false ? undefined : await postDisabledUpdate(ctx, key, reason, me._id);
+    const updateId = args.postUpdate
+      ? await postDisabledUpdate(ctx, key, reason, me._id)
+      : undefined;
 
     if (existing) {
       await ctx.db.patch(existing._id, {
@@ -149,7 +157,9 @@ export const postFlagUpdate = userMutation({
   handler: async (ctx, args) => {
     const key = args.key as FeatureFlagKey;
     const existing = await getFlagRow(ctx, key);
-    if (!existing || existing.enabled || existing.updateId) return { ok: true };
+    if (!existing || existing.enabled || (await updateLives(ctx, existing.updateId))) {
+      return { ok: true };
+    }
 
     const reason =
       args.reason?.trim() || existing.reason || FEATURE_FLAG_REGISTRY[key].premadeReason;
