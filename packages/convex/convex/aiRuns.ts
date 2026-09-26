@@ -19,6 +19,7 @@ import { isFeatureEnabled } from "./lib/featureFlags";
 
 import { askContext, dailyBriefContext, navigateContext } from "./lib/aiContext";
 import { getSessionCaller } from "./lib/caller";
+import { navigateSearch, navigateSearchKind } from "./lib/navigateSearch";
 import { displayName } from "./lib/users";
 
 /**
@@ -573,6 +574,12 @@ export const apiDailyBriefContext = serverUserQuery({
 export const apiNavigateContext = serverUserQuery({
   args: {},
   handler: async (ctx) => navigateContext(ctx, ctx.caller),
+});
+/** One of the wayfinder's lookups, under the asking person's own access. */
+export const apiNavigateSearch = serverUserQuery({
+  args: { kind: navigateSearchKind, query: v.string() },
+  handler: async (ctx, { kind, query }) =>
+    navigateSearch(ctx, ctx.caller, kind, query.slice(0, 200)),
 });
 
 export const pruneOld = internalMutation({

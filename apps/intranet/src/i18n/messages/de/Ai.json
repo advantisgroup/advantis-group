@@ -123,7 +123,7 @@
       "cvRescan": "Derselbe Lebenslauf noch einmal, wenn du ein Update anforderst.",
       "ask": "Der Eintrag, zu dem du fragst – ein IT-Ticket mit Verlauf und Thread, eine Ankündigung, eine Fehlermeldung mit Maßnahmen, ein Vorschlag oder eine Bewerbung mit Profil und Notizen. Das Panel listet auf, was genau dabei war.",
       "dailyBrief": "Dasselbe, was dir deine Startseite zeigt – deine offenen Tickets und Maßnahmen, Termine von heute und morgen, ungelesene Ankündigungen und wie viele Chatnachrichten warten (nicht deren Inhalt) –, um ein paar Sätze zu deinem Tag zu schreiben.",
-      "navigate": "Was du in den Helfer eingibst, dazu die Liste der Seiten, die du sehen darfst, und ein paar deiner eigenen letzten IT-Tickets – gerade genug, um den einen passenden Link auszuwählen, nie deren vollständigen Inhalt."
+      "navigate": "Was du in den Helfer eingibst, die Seiten, die du öffnen kannst, und deine neuesten IT-Tickets. Um etwas Bestimmtes zu finden, durchsucht er Wiki-Einträge, Kolleginnen und Kollegen, Ankündigungen, Vorschläge, Fehlermeldungen, Termine und deine Tickets – nur, was du selbst öffnen könntest – und sieht die Titel der Treffer, nicht ihren Inhalt. Dein KI-Verlauf zeigt jede Suche, die er gemacht hat."
     },
     "whereTitle": "Wohin es geht",
     "whereHint": "Der Weg einer Anfrage – und was danach bleibt.",

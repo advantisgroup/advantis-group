@@ -341,17 +341,12 @@ export async function startAiRun(
 type TextRequest = Omit<Parameters<typeof anthropic.streamText>[0], "model">;
 
 /**
- * One model turn inside a run. A reply cut off by `max_tokens` is a failure
- * for anything structured (the JSON would be incomplete); prose callers like
- * chat can accept it.
+ * One model call inside a run, recorded in the run's transcript before it
+ * goes out (so a call that fails still shows what it was sent) and after
+ * (the reply, including any tool calls). Returns the whole message for
+ * callers that use tools; most want `runModelText`.
  */
-export async function runModelText(
-  run: AiRunContext,
-  request: TextRequest,
-  { acceptTruncated = false }: { acceptTruncated?: boolean } = {},
-): Promise<string> {
-  // Recorded before the call goes out, so a call that fails still shows
-  // what it was sent.
+export async function runModelTurn(run: AiRunContext, request: TextRequest) {
   const call: AiTranscript["calls"][number] = {
     at: Date.now(),
     system: request.system === undefined ? null : contentToText(request.system as ContentLike),
@@ -369,11 +364,25 @@ export async function runModelText(
     { model: AI_MODEL, ...request },
     { signal: run.signal, onText: run.text },
   );
-  call.reply = text;
+  call.reply = contentToText(message.content as unknown as ContentLike) || text;
   call.stopReason = message.stop_reason ?? null;
   call.tokensIn = message.usage?.input_tokens ?? 0;
   call.tokensOut = message.usage?.output_tokens ?? 0;
   run.recordUsage(call.tokensIn, call.tokensOut);
+  return { text, message };
+}
+
+/**
+ * One model turn inside a run. A reply cut off by `max_tokens` is a failure
+ * for anything structured (the JSON would be incomplete); prose callers like
+ * chat can accept it.
+ */
+export async function runModelText(
+  run: AiRunContext,
+  request: TextRequest,
+  { acceptTruncated = false }: { acceptTruncated?: boolean } = {},
+): Promise<string> {
+  const { text, message } = await runModelTurn(run, request);
   if (!text.trim()) throw new AiRunError("no_content");
   if (message.stop_reason === "max_tokens" && !acceptTruncated) {
     throw new AiRunError("truncated");

@@ -123,7 +123,7 @@
       "cvRescan": "That applicant's CV again, when you ask for an update.",
       "ask": "The record you're asking about — an IT ticket with its history and thread, an announcement, an error report with its measures, a suggestion, or an applicant's profile and notes. The panel lists exactly what was included.",
       "dailyBrief": "The same things your overview page shows you — your open tickets and measures, today's and tomorrow's events, unread announcements and how many chat messages are waiting (not their content) — to write a few sentences about your day.",
-      "navigate": "What you type into the helper, plus the list of pages you can see and a few of your own recent IT tickets — just enough to pick the one link that matches, never their full content."
+      "navigate": "What you type into the helper, the pages you can open and your newest IT tickets. To find something specific it searches wiki entries, colleagues, announcements, suggestions, error reports, events and your tickets — only what you could open yourself — and sees the titles of what matched, not the content. Your AI history lists every search it made."
     },
     "whereTitle": "Where it goes",
     "whereHint": "The path a request takes, and what is left behind afterwards.",
