@@ -58,7 +58,7 @@
   "actionFailed": "Das hat nicht geklappt. Versuch es noch einmal.",
   "state": "Status",
   "changeState": "Status ändern",
-  "stateHint": "Bei „In Bearbeitung“ und „Beantwortet“ geht eine Mail raus, ein paar Minuten nach der letzten Änderung.",
+  "stateHint": "Öffnen allein sieht die Kundschaft nicht. Zuweisen oder „In Bearbeitung“ zeigt ihr, dass sich jemand kümmert; dafür und für „Beantwortet“ geht je eine Mail raus, ein paar Minuten nach der letzten Änderung.",
   "assignee": "Zuständig",
   "unassigned": "Niemand",
   "assignToMe": "Mir zuweisen",

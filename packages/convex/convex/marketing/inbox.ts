@@ -366,12 +366,13 @@ export const assign = userMutation({
   handler: async (ctx, { id, userId }) => {
     const row = await requireRow(ctx, id);
     const now = Date.now();
+    const pickedUp = Boolean(userId) && stateOf(row) === "open";
     await ctx.db.patch(id, {
       assignedToUserId: userId,
       assignedAt: userId ? now : undefined,
       lastActivityAt: now,
       // picking it up is working on it
-      state: userId && stateOf(row) === "open" ? "in_progress" : row.state,
+      state: pickedUp ? "in_progress" : row.state,
     });
     await ctx.db.insert("inquiryEvents", {
       inquiryId: id,
@@ -380,6 +381,13 @@ export const assign = userMutation({
       actorUserId: ctx.caller.user._id,
       at: now,
     });
+    // the same "someone is on it" mail as setting the state; it goes out once either way
+    if (pickedUp) {
+      await ctx.scheduler.runAfter(STATE_MAIL_DELAY_MS, internal.marketing.mail.sendStateUpdate, {
+        id,
+        state: "in_progress",
+      });
+    }
   },
 });
 

@@ -58,7 +58,7 @@
   "actionFailed": "That didn't work. Try again.",
   "state": "Status",
   "changeState": "Change status",
-  "stateHint": "The customer gets one mail for “In progress” and “Answered”, a few minutes after the last change.",
+  "stateHint": "Opening an inquiry tells the customer nothing. Assigning it or setting “In progress” shows them someone is on it; they get one mail for that and one for “Answered”, a few minutes after the last change.",
   "assignee": "Assignee",
   "unassigned": "Nobody",
   "assignToMe": "Assign to me",

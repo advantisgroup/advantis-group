@@ -155,7 +155,6 @@ function forCustomer(row: Doc<"emails">) {
     sentAt: row.sentAt,
     lastActivityAt: row.lastActivityAt ?? row.sentAt,
     state: row.state ?? "open",
-    seenAt: row.seenAt,
     firstResponseAt: row.firstResponseAt,
     closedAt: row.closedAt,
     desiredAt: row.desiredAt ?? legacyDesiredAt(row.desiredDateTime) ?? undefined,
@@ -577,19 +576,25 @@ export const getForAccount = serverQuery({
       .withIndex("by_inquiry_createdAt", (q) => q.eq("inquiryId", row._id))
       .take(500);
 
+    // Someone opening it in the intranet tells the customer nothing; someone
+    // taking it on (assigning it, or setting it in progress) does.
+    const handled = events.find(
+      (event) =>
+        event.actor === "staff" &&
+        (event.type === "assigned" || (event.type === "state" && event.state === "in_progress")),
+    );
+
     return {
       inquiry: forCustomer(row),
-      seenBy: await staffFirstName(ctx, row.seenByUserId),
-      assignee: await staffFirstName(ctx, row.assignedToUserId),
-      events: await Promise.all(
-        events.map(async (event) => ({
+      handledAt: handled?.at,
+      events: events
+        .filter((event) => event.type !== "seen")
+        .map((event) => ({
           type: event.type,
           state: event.state,
           actor: event.actor,
-          staffName: await staffFirstName(ctx, event.actorUserId),
           at: event.at,
         })),
-      ),
       messages: await Promise.all(
         messages.map(async (message) => ({
           _id: message._id,

@@ -138,30 +138,21 @@ function progressSteps(detail: Detail, format: Format, t: T): Checkpoint[] {
     ];
   }
 
-  const reached = { open: 0, in_progress: 2, answered: 3, closed: 3 }[inquiry.state];
+  const reached = { open: 0, in_progress: 1, answered: 2, closed: 2 }[inquiry.state];
   const steps: Checkpoint[] = [
     received,
     {
-      key: "seen",
-      label: t("steps.seen"),
-      meta: inquiry.seenAt
-        ? detail.seenBy
-          ? t("seenBy", { name: detail.seenBy, when: at(inquiry.seenAt)! })
-          : at(inquiry.seenAt)
-        : undefined,
-      state: inquiry.seenAt || reached >= 2 ? "done" : "upcoming",
-    },
-    {
       key: "inProgress",
       label: t("steps.inProgress"),
-      meta: detail.assignee ? t("onIt", { name: detail.assignee }) : undefined,
-      state: inquiry.state === "in_progress" ? "current" : reached >= 3 ? "done" : "upcoming",
+      // lights up when someone takes it on (assigns it, or sets it in progress), not when they open it
+      meta: at(detail.handledAt),
+      state: inquiry.state === "in_progress" ? "current" : reached >= 2 ? "done" : "upcoming",
     },
     {
       key: "answered",
       label: t("steps.answered"),
       meta: at(inquiry.firstResponseAt),
-      state: reached >= 3 ? "done" : "upcoming",
+      state: reached >= 2 ? "done" : "upcoming",
     },
   ];
   if (inquiry.state === "closed") {
@@ -172,14 +163,8 @@ function progressSteps(detail: Detail, format: Format, t: T): Checkpoint[] {
       state: "done",
     });
   }
-  // while nobody has it yet, the step it's waiting on is where it is
-  const waitingOn = steps.findIndex((step) => step.state === "upcoming");
-  if (inquiry.state === "open" && waitingOn !== -1) {
-    steps[waitingOn] = { ...steps[waitingOn], state: "current" };
-  }
   return steps;
 }
-
 /** One sentence of where it stands and what happens next, inside the progress card. */
 function statusLine(detail: Detail, format: Format, t: T) {
   const { inquiry } = detail;
@@ -199,8 +184,13 @@ function statusLine(detail: Detail, format: Format, t: T) {
   if (inquiry.firstResponseAt) return t("status.reopened");
 
   const due = replyDueAt(inquiry.sentAt);
-  if (due > Date.now()) return t("replyBy", { when: format.full.format(due) });
-  return PHONE ? t("replyLate", { phone: PHONE }) : t("replyLateNoPhone");
+  const reply =
+    due > Date.now()
+      ? t("replyBy", { when: format.full.format(due) })
+      : PHONE
+        ? t("replyLate", { phone: PHONE })
+        : t("replyLateNoPhone");
+  return inquiry.state === "in_progress" ? `${t("status.handling")} ${reply}` : reply;
 }
 
 // --- Delivery ----------------------------------------------------------------------

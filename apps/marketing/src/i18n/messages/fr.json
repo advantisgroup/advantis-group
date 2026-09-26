@@ -1465,14 +1465,11 @@
       "progressLabel": "Avancement",
       "steps": {
         "received": "Reçue",
-        "seen": "Vue",
         "inProgress": "En cours",
         "answered": "Répondue",
         "closed": "Fermée",
         "withdrawn": "Retirée"
       },
-      "seenBy": "{name} · {when}",
-      "onIt": "{name} s'en occupe",
       "print": "Imprimer",
       "emailUs": "Nous écrire à ce sujet",
       "copyReference": "Copier la référence",
@@ -1599,7 +1596,8 @@
         "withdrawn": "Vous avez retiré cette demande le {when}.",
         "closed": "Fermée le {when}. Répondez ci-dessous si quelque chose reste en suspens.",
         "answered": "Nous avons répondu le {when}. La réponse se trouve dans les échanges ci-dessous.",
-        "reopened": "Vous avez encore besoin d'aide, la demande est donc de nouveau entre les mains de l'équipe."
+        "reopened": "Vous avez encore besoin d'aide, la demande est donc de nouveau entre les mains de l'équipe.",
+        "handling": "Un membre de notre équipe s'en occupe."
       }
     },
     "profile": {

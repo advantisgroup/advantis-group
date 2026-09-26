@@ -1465,14 +1465,11 @@
       "progressLabel": "Stand",
       "steps": {
         "received": "Eingegangen",
-        "seen": "Gesehen",
         "inProgress": "In Bearbeitung",
         "answered": "Beantwortet",
         "closed": "Geschlossen",
         "withdrawn": "Zurückgezogen"
       },
-      "seenBy": "{name} · {when}",
-      "onIt": "{name} kümmert sich",
       "print": "Drucken",
       "emailUs": "Uns dazu schreiben",
       "copyReference": "Referenz kopieren",
@@ -1599,7 +1596,8 @@
         "withdrawn": "Du hast diese Anfrage am {when} zurückgezogen.",
         "closed": "Geschlossen am {when}. Antworte unten, falls noch etwas offen ist.",
         "answered": "Wir haben am {when} geantwortet – die Antwort steht unten im Verlauf.",
-        "reopened": "Du brauchst noch Hilfe, deshalb liegt sie wieder beim Team."
+        "reopened": "Du brauchst noch Hilfe, deshalb liegt sie wieder beim Team.",
+        "handling": "Jemand aus unserem Team kümmert sich darum."
       }
     },
     "profile": {

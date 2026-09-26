@@ -137,3 +137,25 @@ describe("search", () => {
     expect((await search(staff, "AG-0001")).results).toEqual([]);
   });
 });
+
+describe("what the customer sees of the team's work", () => {
+  test("opening an inquiry tells them nothing; assigning it shows someone is on it", async () => {
+    const t = setup();
+    const staff = await asStaff(t);
+    const { id } = await create(t);
+    const account = { clerkUserId: "", emails: ["max@example.com"] };
+    const view = () => t.query(api.marketing.inquiries.getForAccount, { serverKey, account, id });
+
+    await staff.mutation(api.marketing.inbox.markSeen, { id });
+    const opened = await view();
+    expect(opened?.inquiry.state).toBe("open");
+    expect(opened?.handledAt).toBeUndefined();
+    expect(JSON.stringify(opened)).not.toMatch(/seen/i);
+
+    const me = await t.run((ctx) => ctx.db.query("users").first());
+    await staff.mutation(api.marketing.inbox.assign, { id, userId: me!._id });
+    const assigned = await view();
+    expect(assigned?.inquiry.state).toBe("in_progress");
+    expect(assigned?.handledAt).toBeTypeOf("number");
+  });
+});

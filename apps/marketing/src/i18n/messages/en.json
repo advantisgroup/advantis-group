@@ -1462,14 +1462,11 @@
       "progressLabel": "Progress",
       "steps": {
         "received": "Received",
-        "seen": "Seen",
         "inProgress": "In progress",
         "answered": "Answered",
         "closed": "Closed",
         "withdrawn": "Withdrawn"
       },
-      "seenBy": "{name} · {when}",
-      "onIt": "{name} is on it",
       "print": "Print",
       "emailUs": "Email us about this",
       "copyReference": "Copy reference",
@@ -1596,7 +1593,8 @@
         "withdrawn": "You withdrew this inquiry on {when}.",
         "closed": "Closed on {when}. Reply below if anything's still open.",
         "answered": "We answered on {when}. It's in the conversation below.",
-        "reopened": "You asked for more help, so it's back with the team."
+        "reopened": "You asked for more help, so it's back with the team.",
+        "handling": "Someone from our team is handling it."
       }
     },
     "profile": {

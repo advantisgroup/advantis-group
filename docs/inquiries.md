@@ -55,7 +55,7 @@ below.
 | `callbackStatus` | `requested \| confirmed \| cancelled` | `requested` for callbacks |
 | `callbackConfirmedAt` | the slot the team confirmed (epoch ms) | – |
 | `actionTokenHash` / `actionTokenExpiresAt` | sha256 of the token in the callback mail's reschedule/cancel links (works signed out) | – |
-| `seenAt`, `seenByUserId` | first time someone in the team opened it | – |
+| `seenAt`, `seenByUserId` | first time someone in the team opened it — the inbox's own unread marker, never shown to the customer | – |
 | `assignedToUserId`, `assignedAt` | who is on it | – |
 | `firstResponseAt`, `closedAt`, `lastActivityAt` | timestamps for SLA and sorting | `lastActivityAt = sentAt` |
 | `attachments` | `attachmentValidator[]`, signed-in customers only | – |
@@ -97,7 +97,7 @@ in_progress → withdrawn`; `answered → closed` ("This solved it");
 `answered | closed → in_progress` ("I still need help", with a note that
 becomes a customer message). Everything else is staff-only.
 
-"Seen by our team" is a timeline entry (`seenAt`), not a state.
+Opening an inquiry in the intranet tells the customer nothing (`seenAt` is only the inbox's unread marker). They see "In progress" once someone takes it on: assigning it does that, as does setting the state.
 
 A state change the customer should hear about (`in_progress`, `answered`)
 schedules one mail five minutes out; the action re-reads the row and only
@@ -169,7 +169,7 @@ next. Below `sm` the same steps stack vertically.
 
 | track | checkpoints | off-ramps |
 |---|---|---|
-| inquiry | Received → Seen → In progress → Answered | Withdrawn, Closed |
+| inquiry | Received → In progress → Answered | Withdrawn, Closed |
 | team mail | Queued → Sent → Delivered | Failed, Delayed, Bounced |
 | your copy | Sent → Delivered | Skipped, Delayed, Bounced, Failed |
 | callback | Requested → Confirmed → Done | Cancelled, Rescheduled |

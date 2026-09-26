@@ -1459,14 +1459,11 @@
       "progressLabel": "进度",
       "steps": {
         "received": "已收到",
-        "seen": "已查看",
         "inProgress": "处理中",
         "answered": "已回复",
         "closed": "已关闭",
         "withdrawn": "已撤回"
       },
-      "seenBy": "{name} · {when}",
-      "onIt": "{name} 正在处理",
       "print": "打印",
       "emailUs": "就此发邮件给我们",
       "copyReference": "复制参考编号",
@@ -1593,7 +1590,8 @@
         "withdrawn": "您已于 {when} 撤回此咨询。",
         "closed": "已于 {when} 关闭。如仍有问题，请在下方回复。",
         "answered": "我们已于 {when} 回复，内容见下方沟通记录。",
-        "reopened": "您还需要帮助，因此咨询已重新交给团队处理。"
+        "reopened": "您还需要帮助，因此咨询已重新交给团队处理。",
+        "handling": "我们团队的成员正在处理。"
       }
     },
     "profile": {
