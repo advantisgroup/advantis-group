@@ -32,6 +32,12 @@ export const aiTables = {
     phase: aiRunPhase,
     output: v.optional(v.string()), // ciphertext, partial while running
     outputChars: v.number(),
+    // A few words saying what the run was about (the question asked, the file
+    // read), so a history row means something. Ciphertext like `output`.
+    title: v.optional(v.string()),
+    // Size of what was sent to the model — the transcript itself lives in
+    // aiRunTranscripts so the dock's subscriptions never carry it around.
+    transcriptChars: v.optional(v.number()),
     // What answered, how much it read and wrote, and what it was given —
     // so a run can be inspected after the fact instead of taken on trust.
     // Optional: runs from before this shipped carry none of it.
@@ -50,6 +56,19 @@ export const aiTables = {
     .index("by_user_subject", ["clerkUserId", "subjectKey", "startedAt"])
     .index("by_user_kind", ["clerkUserId", "kind", "startedAt"])
     .index("by_started", ["startedAt"]),
+
+  // Exactly what a run sent to the model — instructions, messages and any
+  // lookups, every turn — so an answer can be checked against what it was
+  // actually given. One row per run, sealed by apps/api like `aiRuns.output`,
+  // capped in size, and deleted with its run.
+  aiRunTranscripts: defineTable({
+    runId: v.id("aiRuns"),
+    clerkUserId: v.string(),
+    data: v.string(), // ciphertext of the transcript JSON
+    chars: v.number(),
+    truncated: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_run", ["runId"]),
 
   // "Was this any good?" — one row per person per run. An error rate only
   // says what broke; this is the half that says what came back wrong while

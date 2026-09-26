@@ -35,7 +35,7 @@ export const navigateRoute = new Elysia().use(authed).post(
     const context = await caller.convex.query(api.aiRuns.apiNavigateContext, {});
 
     const { runId } = await startAiRun(
-      { clerkUserId, kind: "navigate", subjectKey: "navigate" },
+      { clerkUserId, kind: "navigate", subjectKey: "navigate", title: question },
       async (run) => {
         run.addSources(context.sources);
         const raw = await runModelText(run, {

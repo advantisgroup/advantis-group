@@ -49,6 +49,7 @@ export const wikiFormatAssistRoute = new Elysia().post(
         kind: "wikiFormat",
         subjectKey: `wikiFormat:${body.subjectKey}`,
         href: body.href,
+        title: instructions,
       },
       async (run) => {
         const text = await runModelText(run, {

@@ -1,7 +1,8 @@
+import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { type QueryCtx } from "./_generated/server";
+import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import {
   internalMutation,
   mutation,
@@ -45,6 +46,8 @@ function toMeta(run: Doc<"aiRuns">) {
     status: run.status,
     phase: run.phase,
     outputChars: run.outputChars,
+    hasTitle: !!run.title,
+    transcriptChars: run.transcriptChars ?? null,
     model: run.model ?? null,
     tokensIn: run.tokensIn ?? null,
     tokensOut: run.tokensOut ?? null,
@@ -125,6 +128,64 @@ export const dock = query({
     return runs
       .filter((r) => r.startedAt > cutoff && (r.status === "running" || !r.seenAt))
       .map(toMeta);
+  },
+});
+
+/** Everything this person has run in the last 30 days, newest first — the
+ * history in Settings → AI, so an answer put away from the dock can still be
+ * found again, along with what it was given. */
+export const history = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    kind: v.optional(aiRunKind),
+  },
+  handler: async (ctx, { paginationOpts, kind }) => {
+    const user = (await getSessionCaller(ctx))?.user;
+    if (!user) return { page: [], isDone: true, continueCursor: "" };
+    const result = kind
+      ? await ctx.db
+          .query("aiRuns")
+          .withIndex("by_user_kind", (q) => q.eq("clerkUserId", user.clerkUserId).eq("kind", kind))
+          .order("desc")
+          .paginate(paginationOpts)
+      : await ctx.db
+          .query("aiRuns")
+          .withIndex("by_user", (q) => q.eq("clerkUserId", user.clerkUserId))
+          .order("desc")
+          .paginate(paginationOpts);
+    return { ...result, page: result.page.map(toMeta) };
+  },
+});
+
+/** A run and everything hanging off it — transcript and ratings. */
+async function deleteRun(ctx: MutationCtx, runId: Id<"aiRuns">) {
+  const transcripts = await ctx.db
+    .query("aiRunTranscripts")
+    .withIndex("by_run", (q) => q.eq("runId", runId))
+    .collect();
+  for (const row of transcripts) await ctx.db.delete(row._id);
+  const ratings = await ctx.db
+    .query("aiFeedback")
+    .withIndex("by_run_user", (q) => q.eq("runId", runId))
+    .collect();
+  for (const row of ratings) await ctx.db.delete(row._id);
+  await ctx.db.delete(runId);
+}
+
+/** Deletes a run for good — the answer, what it was given, and any rating. */
+export const remove = mutation({
+  args: { runId: v.id("aiRuns") },
+  handler: async (ctx, { runId }) => {
+    const owned = await ownRun(ctx, runId);
+    if (!owned) return null;
+    if (owned.run.status === "running") {
+      throw new ConvexError({
+        code: "conflict",
+        message: "Stop the run before deleting it",
+      });
+    }
+    await deleteRun(ctx, runId);
+    return null;
   },
 });
 
@@ -294,6 +355,7 @@ export const apiStart = serverUserMutation({
     subjectKey: v.string(),
     href: v.optional(v.string()),
     model: v.optional(v.string()),
+    title: v.optional(v.string()), // ciphertext
   },
   handler: async (ctx, args) => {
     // The one gate every AI run in the app passes through: with the flag off,
@@ -331,6 +393,7 @@ export const apiStart = serverUserMutation({
       subjectKey: args.subjectKey,
       href: args.href,
       model: args.model,
+      title: args.title,
       status: "running",
       phase: "reading",
       outputChars: 0,
@@ -361,24 +424,50 @@ export const apiProgress = serverMutation({
   },
 });
 
+const transcriptArg = v.object({
+  data: v.string(),
+  chars: v.number(),
+  truncated: v.boolean(),
+});
+
+async function saveTranscript(
+  ctx: MutationCtx,
+  run: Doc<"aiRuns">,
+  transcript: { data: string; chars: number; truncated: boolean } | undefined,
+) {
+  if (!transcript) return;
+  await ctx.db.insert("aiRunTranscripts", {
+    runId: run._id,
+    clerkUserId: run.clerkUserId,
+    ...transcript,
+    createdAt: Date.now(),
+  });
+}
+
 export const apiFinish = serverMutation({
   args: {
     runId: v.id("aiRuns"),
     output: v.string(),
     outputChars: v.number(),
+    transcript: v.optional(transcriptArg),
     tokensIn: v.optional(v.number()),
     tokensOut: v.optional(v.number()),
     sources: v.optional(v.array(v.object({ label: v.string(), href: v.optional(v.string()) }))),
   },
-  handler: async (ctx, { runId, output, outputChars, tokensIn, tokensOut, sources }) => {
+  handler: async (
+    ctx,
+    { runId, output, outputChars, transcript, tokensIn, tokensOut, sources },
+  ) => {
     const run = await ctx.db.get(runId);
     if (!run || run.status !== "running") return null;
     const now = Date.now();
+    await saveTranscript(ctx, run, transcript);
     await ctx.db.patch(runId, {
       status: "done",
       phase: "finishing",
       output,
       outputChars,
+      transcriptChars: transcript?.chars,
       tokensIn,
       tokensOut,
       sources,
@@ -394,12 +483,20 @@ export const apiFail = serverMutation({
     runId: v.id("aiRuns"),
     errorCode: v.string(),
     retryable: v.boolean(),
+    // A failed run still shows what it was sent — often the reason it failed.
+    transcript: v.optional(transcriptArg),
+    tokensIn: v.optional(v.number()),
+    tokensOut: v.optional(v.number()),
+    sources: v.optional(v.array(v.object({ label: v.string(), href: v.optional(v.string()) }))),
   },
-  handler: async (ctx, { runId, errorCode, retryable }) => {
+  handler: async (ctx, { runId, errorCode, retryable, transcript, ...recorded }) => {
     const run = await ctx.db.get(runId);
     if (!run || run.status !== "running") return null;
     const now = Date.now();
+    await saveTranscript(ctx, run, transcript);
     await ctx.db.patch(runId, {
+      ...recorded,
+      transcriptChars: transcript?.chars,
       status: "error",
       errorCode,
       retryable,
@@ -418,6 +515,21 @@ export const apiGet = serverQuery({
     const id = ctx.db.normalizeId("aiRuns", runId);
     const run = id ? await ctx.db.get(id) : null;
     return run && run.clerkUserId === clerkUserId ? run : null;
+  },
+});
+
+/** The sealed transcript of one run, for the API to decrypt — same ownership
+ * check as `apiGet`. */
+export const apiTranscript = serverQuery({
+  args: { clerkUserId: v.string(), runId: v.string() },
+  handler: async (ctx, { clerkUserId, runId }) => {
+    const id = ctx.db.normalizeId("aiRuns", runId);
+    if (!id) return null;
+    const row = await ctx.db
+      .query("aiRunTranscripts")
+      .withIndex("by_run", (q) => q.eq("runId", id))
+      .first();
+    return row && row.clerkUserId === clerkUserId ? row : null;
   },
 });
 
@@ -451,8 +563,8 @@ export const pruneOld = internalMutation({
     const old = await ctx.db
       .query("aiRuns")
       .withIndex("by_started", (q) => q.lt("startedAt", Date.now() - RETENTION_MS))
-      .take(500);
-    for (const run of old) await ctx.db.delete(run._id);
+      .take(200);
+    for (const run of old) await deleteRun(ctx, run._id);
     return { deleted: old.length };
   },
 });

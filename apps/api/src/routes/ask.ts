@@ -47,6 +47,7 @@ export const askRoute = new Elysia().use(authed).post(
         kind: "ask",
         subjectKey: `ask:${body.type}:${body.id}`,
         href: context.href,
+        title: `${context.title}: ${question}`,
       },
       async (run) => {
         run.addSources(context.sources);

@@ -142,6 +142,7 @@ export const wikiChatRoute = new Elysia()
           kind: "wikiChat",
           subjectKey: `wikiChat:${chatId}`,
           href: `/wiki-chat?chat=${chatId}`,
+          title: asked.at(-1)?.content,
         },
         async (run) => {
           const question = asked.at(-1)?.content ?? "";
@@ -150,6 +151,11 @@ export const wikiChatRoute = new Elysia()
             clerkUserId,
             question,
           });
+          run.recordLookup(
+            "Wiki-Suche",
+            question,
+            entries.map((entry) => entry.title),
+          );
           run.addSources([
             ...entries.map((entry, i) => ({
               label: `[${i + 1}] ${entry.title}`,
