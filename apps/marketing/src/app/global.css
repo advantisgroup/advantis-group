@@ -407,9 +407,30 @@ html {
   animation: shake 0.5s ease-in-out;
 }
 
-/* Printing an inquiry (or any page) leaves the site's chrome and controls behind. */
+/* Paper-only; the print block below is what shows it. */
+.print-sheet {
+  display: none;
+}
+
+/* Printing any page leaves the site's chrome and controls behind. */
 @media print {
   [data-print-hide] {
     display: none !important;
+  }
+
+  /* A page with a purpose-built paper version (components/print/PrintSheet)
+     prints that and nothing else. */
+  html[data-print-sheet] body > :not(.print-sheet) {
+    display: none !important;
+  }
+
+  .print-sheet {
+    display: block;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-sheet-frame {
+    break-inside: auto;
   }
 }

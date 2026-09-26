@@ -29,6 +29,7 @@ import {
 } from "@/components/guidebooks/extras";
 import { GuidebookAttachments } from "@/components/guidebooks/GuidebookAttachments";
 import { GuidebookPageView } from "@/components/guidebooks/GuidebookPageView";
+import { GuidebookPrint } from "@/components/guidebooks/GuidebookPrint";
 import {
   canAccessGuidebook,
   getGuidebook,
@@ -41,6 +42,7 @@ import { WikiFileLinkText } from "@/components/guidebooks/WikiFileLinkText";
 import { Link } from "@/components/Link";
 import { DocumentHeader } from "@/components/layout/DocumentHeader";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
+import { PrintRichText } from "@/components/print/PrintSheet";
 import {
   isOwnerOrAdmin,
   useCurrentUser,
@@ -188,6 +190,8 @@ export default function GuidebookPage() {
   const canManageEntry = !!entry && canManageWiki && isOwnerOrAdmin(user, entry.authorUserId);
   const canManagePage =
     !!legacyPage && canManageWiki && isOwnerOrAdmin(user, legacyPage.authorUserId);
+  // A live tool (a search, a lookup) has nothing to put on paper.
+  const printable = !!guidebook && allowed && staticGuidebook?.category !== "interactive";
 
   const title = staticGuidebook
     ? guidebookTitle(staticGuidebook, t)
@@ -342,15 +346,17 @@ export default function GuidebookPage() {
                 </Button>
               </>
             )}
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t("print")}
-              className="text-muted-foreground"
-              onClick={() => window.print()}
-            >
-              <Printer />
-            </Button>
+            {printable && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t("print")}
+                className="text-muted-foreground"
+                onClick={() => window.print()}
+              >
+                <Printer />
+              </Button>
+            )}
             {staticGuidebook && <GuidebookSwitcher current={staticGuidebook} />}
           </div>
         )}
@@ -468,6 +474,18 @@ export default function GuidebookPage() {
             </>
           )}
         </>
+      )}
+
+      {printable && (
+        <GuidebookPrint slug={guidebook.slug} title={title} description={description} entry={entry}>
+          {Component ? (
+            <Component />
+          ) : entry ? (
+            <PrintRichText html={entry.erklaerung} />
+          ) : legacyPage ? (
+            <GuidebookPageView blocks={parseBlocks(legacyPage.blocks)} />
+          ) : null}
+        </GuidebookPrint>
       )}
     </div>
   );

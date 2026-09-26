@@ -1468,6 +1468,13 @@
         "withdrawn": "Withdrawn"
       },
       "print": "Print",
+      "printSheet": {
+        "kind": "Inquiry",
+        "reference": "Reference",
+        "sent": "Sent",
+        "status": "Status",
+        "attachments": "Attachments"
+      },
       "emailUs": "Email us about this",
       "copyReference": "Copy reference",
       "copied": "Copied {reference}",
@@ -1744,5 +1751,8 @@
       "title": "New time requested",
       "body": "We'll confirm {when} by email, usually within one business day."
     }
+  },
+  "print": {
+    "printed": "Printed {date}"
   }
 }

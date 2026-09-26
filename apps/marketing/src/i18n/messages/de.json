@@ -1471,6 +1471,13 @@
         "withdrawn": "Zurückgezogen"
       },
       "print": "Drucken",
+      "printSheet": {
+        "kind": "Anfrage",
+        "reference": "Referenz",
+        "sent": "Gesendet",
+        "status": "Status",
+        "attachments": "Anhänge"
+      },
       "emailUs": "Uns dazu schreiben",
       "copyReference": "Referenz kopieren",
       "copied": "{reference} kopiert",
@@ -1747,5 +1754,8 @@
       "title": "Neuer Termin angefragt",
       "body": "Wir bestätigen dir {when} per E-Mail, meist innerhalb eines Werktags."
     }
+  },
+  "print": {
+    "printed": "Gedruckt am {date}"
   }
 }

@@ -1471,6 +1471,13 @@
         "withdrawn": "Retirée"
       },
       "print": "Imprimer",
+      "printSheet": {
+        "kind": "Demande",
+        "reference": "Référence",
+        "sent": "Envoyée",
+        "status": "Statut",
+        "attachments": "Pièces jointes"
+      },
       "emailUs": "Nous écrire à ce sujet",
       "copyReference": "Copier la référence",
       "copied": "{reference} copiée",
@@ -1747,5 +1754,8 @@
       "title": "Nouvel horaire demandé",
       "body": "Nous vous confirmerons le {when} par e-mail, généralement sous un jour ouvré."
     }
+  },
+  "print": {
+    "printed": "Imprimé le {date}"
   }
 }

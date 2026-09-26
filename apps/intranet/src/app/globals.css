@@ -695,6 +695,11 @@ html.app-shell-locked body {
   overscroll-behavior: none;
 }
 
+/* Paper-only; the print block below is what shows it. */
+.print-sheet {
+  display: none;
+}
+
 /* The app shell pins itself to the viewport so <main> can be the scroll
    container. Print needs the document to flow at its natural height instead,
    or the page break never happens and everything past the first sheet is
@@ -715,9 +720,10 @@ html.app-shell-locked body {
   /* Screen-only affordances — a download button, a chapter switcher or a
      tab strip is dead ink on paper, and the numbered nav chips in particular
      duplicate content that follows anyway. Anything genuinely worth printing
-     is text, not a control. */
+     is text, not a control. The exception is rich text: its date and file
+     chips carry `role="button"` but are words in the middle of a sentence. */
   button,
-  [role="button"],
+  [role="button"]:not(.rich-text *),
   [role="tab"],
   [role="tablist"],
   [role="toolbar"],
@@ -747,6 +753,33 @@ html.app-shell-locked body {
   p {
     orphans: 3;
     widows: 3;
+  }
+
+  /* A page with a purpose-built paper version (components/print/PrintSheet)
+     prints that and nothing else. */
+  html[data-print-sheet] body > :not(.print-sheet) {
+    display: none !important;
+  }
+
+  .print-sheet {
+    display: block;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* The frame is one table that has to run across sheets; the blanket
+     `table { break-inside: avoid }` above is meant for tables in content. */
+  .print-sheet-frame {
+    break-inside: auto;
+  }
+
+  /* Paper can't be clicked, so a link in running text prints where it goes.
+     (Not any `td`: the sheet's own frame is a table.) */
+  .print-sheet :is(p, li, .rich-text td) a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: var(--muted-foreground);
+    overflow-wrap: anywhere;
   }
 }
 
