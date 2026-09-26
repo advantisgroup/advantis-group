@@ -12,7 +12,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "account.nav" });
-  return { title: t("title"), robots: NO_INDEX };
+  // a plain string here would end the root "%s | ADVANTIS GROUP" template for every page below
+  return {
+    title: { default: t("title"), template: `%s · ${t("title")} | ADVANTIS GROUP` },
+    robots: NO_INDEX,
+  };
 }
 
 /**
@@ -24,7 +28,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   return (
     // Manrope at small sizes renders thin and tight (Windows especially): a touch
     // more weight and tracking for the account pages' dense, mostly small text
-    <main className="mx-auto w-full max-w-[1200px] px-5 pt-24 pb-24 font-[450] tracking-[0.005em] md:px-10 md:pt-32 lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-16">
+    <main className="mx-auto w-full max-w-[1200px] px-5 pt-24 pb-24 font-[450] tracking-[0.005em] md:px-10 md:pt-32 lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-14">
       <AccountRail />
       <div className="min-w-0">{children}</div>
     </main>

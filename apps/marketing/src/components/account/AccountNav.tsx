@@ -79,7 +79,7 @@ export const AccountRail = () => {
         {sections.map(({ key, href, icon: Icon, external }) => {
           const current = !external && isCurrent(pathname, href);
           const className = cn(
-            "-ml-px flex items-center gap-2.5 border-l py-2 pl-4 pr-2 text-[15px] transition-colors",
+            "-ml-px flex items-center gap-2.5 border-l py-2 pl-4 pr-2 text-[15px] whitespace-nowrap transition-colors",
             current
               ? "border-foreground font-medium text-foreground"
               : "border-transparent text-muted-foreground hover:border-foreground/40 hover:text-foreground",
