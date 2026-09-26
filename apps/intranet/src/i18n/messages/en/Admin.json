@@ -301,7 +301,19 @@
     "moveTo": "Move to",
     "actions": "Actions for {name}",
     "emptyTitle": "No departments yet",
-    "emptyBody": "Start with a department, then split it into teams."
+    "emptyBody": "Start with a department, then split it into teams.",
+    "diagram": {
+      "director": "Managing director",
+      "directorNote": "above everyone, not a reporting line",
+      "sales": "Sales",
+      "inbound": "Inbound",
+      "outbound": "Outbound",
+      "departmentLead": "Department lead",
+      "teamLead": "Team lead",
+      "member": "Member",
+      "reportsTo": "reports to",
+      "and": "and"
+    }
   },
   "accessReview": {
     "title": "Access review",

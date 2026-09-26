@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -10,10 +10,13 @@ import {
   Archive,
   Building2,
   ChevronRight,
+  Crown,
   FolderInput,
   MoreHorizontal,
   Pencil,
   Plus,
+  UserCheck,
+  UserRound,
   Users2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -176,24 +179,131 @@ export default function StructurePage() {
   );
 }
 
+// one colour per kind of thing, shared by the drawing and the legend beside it
+const tint = (color: string): CSSProperties => ({
+  color,
+  background: `color-mix(in oklab, ${color} 14%, transparent)`,
+});
+const DEPARTMENT = "var(--chart-1)";
+const TEAM = "var(--chart-2)";
+const LEAD = "var(--chart-3)";
+const DIRECTOR = "var(--chart-5)";
+
 function HowItWorks() {
   const t = useTranslations("Admin");
-  const lines = ["Departments", "Teams", "Leads", "Director"] as const;
+  const legend = [
+    { line: "Departments", icon: Building2, color: DEPARTMENT },
+    { line: "Teams", icon: Users2, color: TEAM },
+    { line: "Leads", icon: UserCheck, color: LEAD },
+    { line: "Director", icon: Crown, color: DIRECTOR },
+  ] as const;
+
   return (
     <details className="group rounded-xl border border-border/70 bg-card text-sm">
       <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 font-medium [&::-webkit-details-marker]:hidden">
         <ChevronRight className="size-4 text-muted-foreground transition-transform group-open:rotate-90" />
         {t("structure.howItWorks")}
       </summary>
-      <ul className="space-y-2 border-t border-border/60 px-4 py-3 leading-relaxed text-muted-foreground">
-        {lines.map((line) => (
-          <li key={line}>
-            <span className="font-medium text-foreground">{t(`orgEntity.intro${line}Title`)}</span>{" "}
-            {t(`orgEntity.intro${line}`)}
-          </li>
-        ))}
-      </ul>
+      <div className="grid gap-6 border-t border-border/60 p-4 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:p-5">
+        <OrgDiagram />
+        <ul className="space-y-3.5">
+          {legend.map(({ line, icon: Icon, color }) => (
+            <li key={line} className="flex gap-3">
+              <span
+                className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg"
+                style={tint(color)}
+              >
+                <Icon className="size-3.5" />
+              </span>
+              <p className="leading-relaxed text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  {t(`orgEntity.intro${line}Title`)}
+                </span>{" "}
+                {t(`orgEntity.intro${line}`)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </div>
     </details>
+  );
+}
+
+/** A worked example of the model: the legend beside it says the same in words. */
+function OrgDiagram() {
+  const t = useTranslations("Admin");
+  const d = (
+    key:
+      | "director"
+      | "directorNote"
+      | "sales"
+      | "inbound"
+      | "outbound"
+      | "departmentLead"
+      | "teamLead"
+      | "member"
+      | "reportsTo"
+      | "and",
+  ) => t(`structure.diagram.${key}`);
+
+  return (
+    <div aria-hidden className="rounded-xl bg-muted/40 p-3 text-[13px] sm:p-4">
+      {/* dashed: above everyone, but nobody reports to it */}
+      <div className="flex items-center gap-2 rounded-lg border border-dashed border-border bg-card/70 px-3 py-2">
+        <Crown className="size-3.5 shrink-0" style={{ color: DIRECTOR }} />
+        <span className="font-medium">{d("director")}</span>
+        <span className="ml-auto hidden truncate text-xs text-muted-foreground sm:block">
+          {d("directorNote")}
+        </span>
+      </div>
+      <div className="ml-6 h-3 border-l border-dashed border-border" />
+
+      <div className="rounded-lg border border-border bg-card p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Building2 className="size-4 shrink-0" style={{ color: DEPARTMENT }} />
+          <span className="font-semibold">{d("sales")}</span>
+          <LeadPill>{d("departmentLead")}</LeadPill>
+        </div>
+        <div className="ml-[7px] mt-2.5 space-y-2 border-l border-border pl-4">
+          <DiagramTeam name={d("inbound")} lead={d("teamLead")} member={d("member")} />
+          <DiagramTeam name={d("outbound")} lead={d("teamLead")} member={d("member")} />
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-1 px-1 text-xs text-muted-foreground">
+        <UserRound className="size-3.5 shrink-0" />
+        <span className="font-medium text-foreground">{d("member")}</span>
+        <span>{d("reportsTo")}</span>
+        <LeadPill>{d("teamLead")}</LeadPill>
+        <span>{d("and")}</span>
+        <LeadPill>{d("departmentLead")}</LeadPill>
+      </div>
+    </div>
+  );
+}
+
+function DiagramTeam({ name, lead, member }: { name: string; lead: string; member: string }) {
+  return (
+    <div className="relative rounded-md border border-border/80 bg-background/60 px-2.5 py-2 before:absolute before:-left-4 before:top-[18px] before:h-px before:w-4 before:bg-border">
+      <div className="flex flex-wrap items-center gap-2">
+        <Users2 className="size-3.5 shrink-0" style={{ color: TEAM }} />
+        <span className="font-medium">{name}</span>
+        <LeadPill>{lead}</LeadPill>
+      </div>
+      <div className="mt-1.5 flex items-center gap-1.5 pl-[22px] text-xs text-muted-foreground">
+        <UserRound className="size-3 shrink-0" />
+        {member}
+      </div>
+    </div>
+  );
+}
+
+function LeadPill({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+      <span className="size-1.5 rounded-full" style={{ background: LEAD }} />
+      {children}
+    </span>
   );
 }
 

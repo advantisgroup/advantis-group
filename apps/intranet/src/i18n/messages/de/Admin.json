@@ -301,7 +301,19 @@
     "moveTo": "Verschieben nach",
     "actions": "Aktionen für {name}",
     "emptyTitle": "Noch keine Abteilungen",
-    "emptyBody": "Leg zuerst eine Abteilung an und teile sie dann in Teams auf."
+    "emptyBody": "Leg zuerst eine Abteilung an und teile sie dann in Teams auf.",
+    "diagram": {
+      "director": "Geschäftsführung",
+      "directorNote": "über allen, keine Berichtslinie",
+      "sales": "Vertrieb",
+      "inbound": "Inbound",
+      "outbound": "Outbound",
+      "departmentLead": "Abteilungsleitung",
+      "teamLead": "Teamleitung",
+      "member": "Mitglied",
+      "reportsTo": "berichtet an",
+      "and": "und"
+    }
   },
   "accessReview": {
     "title": "Zugriffsprüfung",
