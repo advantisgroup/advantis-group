@@ -220,6 +220,27 @@ describe("aiRuns", () => {
     expect(left).toEqual({ transcripts: [], feedback: [] });
   });
 
+  test("titles are handed to the API only for the caller's own runs", async () => {
+    const t = setup();
+    await seedUser(t, "user_alice");
+    await seedUser(t, "user_bob");
+    const titled = await t.mutation(api.aiRuns.apiStart, {
+      serverKey,
+      clerkUserId: "user_alice",
+      kind: "wikiChat",
+      subjectKey: "wikiChat:titled",
+      title: "sealed-title",
+    });
+    const untitled = await startChatRun(t);
+    const ask = (clerkUserId: string) =>
+      t.query(api.aiRuns.apiTitles, { serverKey, clerkUserId, runIds: [titled, untitled, "nope"] });
+
+    expect(await ask("user_alice")).toEqual([
+      { _id: titled, kind: "wikiChat", title: "sealed-title" },
+    ]);
+    expect(await ask("user_bob")).toEqual([]);
+  });
+
   test("after 30 days a run goes, transcript included", async () => {
     vi.useFakeTimers();
     try {

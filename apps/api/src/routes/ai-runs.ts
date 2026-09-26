@@ -1,5 +1,5 @@
 import { api } from "@advantis/convex/api";
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 
 import { type AiTranscript, runEncryptionKey } from "../lib/ai.js";
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
@@ -52,6 +52,32 @@ export const aiRunsRoute = new Elysia()
       };
     },
     { signedIn: true },
+  )
+  .post(
+    "/ai/runs/titles",
+    async ({ caller, body }) => {
+      const { clerkUserId } = caller;
+      const convex = getConvex();
+      const serverKey = getConvexServerKey();
+      const rows = await convex.query(api.aiRuns.apiTitles, {
+        serverKey,
+        clerkUserId,
+        runIds: body.ids,
+      });
+      let applicantAccess: boolean | null = null;
+      const titles: Record<string, string> = {};
+      for (const row of rows) {
+        if (APPLICANT_KINDS.has(row.kind)) {
+          applicantAccess ??= !!(
+            await convex.query(api.hr.applicants.apiCheckAccess, { serverKey, clerkUserId })
+          )?.hasAccess;
+          if (!applicantAccess) continue;
+        }
+        titles[row._id] = decrypt(row.title, runEncryptionKey(row.kind));
+      }
+      return { titles };
+    },
+    { signedIn: true, body: t.Object({ ids: t.Array(t.String(), { maxItems: 50 }) }) },
   )
   .get(
     "/ai/runs/:id/transcript",

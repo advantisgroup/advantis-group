@@ -518,6 +518,24 @@ export const apiGet = serverQuery({
   },
 });
 
+/** Sealed titles for a page of history rows, in one round trip. Someone
+ * else's run comes back as nothing, same as `apiGet`. */
+export const apiTitles = serverQuery({
+  args: { clerkUserId: v.string(), runIds: v.array(v.string()) },
+  handler: async (ctx, { clerkUserId, runIds }) => {
+    const rows = await Promise.all(
+      runIds.slice(0, 50).map(async (runId) => {
+        const id = ctx.db.normalizeId("aiRuns", runId);
+        const run = id ? await ctx.db.get(id) : null;
+        return run && run.clerkUserId === clerkUserId && run.title
+          ? { _id: run._id, kind: run.kind, title: run.title }
+          : null;
+      }),
+    );
+    return rows.filter((row) => row !== null);
+  },
+});
+
 /** The sealed transcript of one run, for the API to decrypt — same ownership
  * check as `apiGet`. */
 export const apiTranscript = serverQuery({
