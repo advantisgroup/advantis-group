@@ -1409,7 +1409,10 @@
       "actions": {
         "message": "Schreib uns",
         "callback": "Rückruf anfordern",
-        "whitepaper": "Whitepaper holen"
+        "whitepaper": "Whitepaper holen",
+        "messageHint": "Antwort meist innerhalb eines Werktags.",
+        "callbackHint": "Werktags, 9:00–18:00 Uhr.",
+        "whitepaperHint": "KI-Tools im Vertrieb, als PDF."
       }
     },
     "inquiries": {
@@ -1542,7 +1545,8 @@
         "sendAgain": "Erneut senden",
         "retried": "An unser Team gesendet.",
         "retryFailed": "Das hat auch nicht geklappt. Versuch es später oder ruf uns an.",
-        "callInstead": "Wenn es weiter scheitert, ruf uns an: {phone}."
+        "callInstead": "Wenn es weiter scheitert, ruf uns an: {phone}.",
+        "label": "Zustellung"
       },
       "callback": {
         "title": "Rückruf",
@@ -1553,7 +1557,8 @@
         "calendarTitle": "Rückruf von ADVANTIS GROUP",
         "addToCalendar": "Zum Kalender hinzufügen",
         "anotherTime": "Anderer Termin?",
-        "unconfirmedHint": "Wir bestätigen den Termin per E-Mail, meist innerhalb eines Werktags."
+        "unconfirmedHint": "Wir bestätigen den Termin per E-Mail, meist innerhalb eines Werktags.",
+        "requestedFor": "Rückruf gewünscht für {when}."
       },
       "thread": {
         "title": "Verlauf",
@@ -1588,7 +1593,8 @@
         "company": "Firma",
         "topic": "Thema",
         "callbackTime": "Gewünschter Termin"
-      }
+      },
+      "details": "Details"
     },
     "profile": {
       "title": "Profil",
@@ -1606,7 +1612,8 @@
         "title": "Wird im Intranet verwaltet",
         "body": "Deine Anmeldemethoden, Passkeys und die Zwei-Faktor-Einstellungen gehören zu deinem ADVANTIS-Arbeitskonto.",
         "cta": "Intranet-Einstellungen öffnen"
-      }
+      },
+      "signIn": "Anmeldung & E-Mail"
     },
     "preferences": {
       "title": "Einstellungen",
@@ -1622,7 +1629,8 @@
         "label": "Benachrichtigen, wenn die Kontaktformulare wieder offen sind",
         "description": "Eine E-Mail an {email}, danach bist du von der Liste."
       },
-      "failed": "Das wurde nicht gespeichert. Versuch es noch einmal."
+      "failed": "Das wurde nicht gespeichert. Versuch es noch einmal.",
+      "languageHint": "Für diese Website und die E-Mails, die wir dir schicken."
     },
     "downloads": {
       "title": "Downloads",
@@ -1698,6 +1706,42 @@
         "staff": "Das ist dein ADVANTIS-Arbeitskonto – es wird von deiner Administration verwaltet."
       },
       "failed": "Das hat nicht geklappt. Versuch es noch einmal."
+    }
+  },
+  "callbackPage": {
+    "title": "Dein Rückruf",
+    "heading": "Dein Rückruf, {name}",
+    "confirmedFor": "Wir rufen dich am {when} an.",
+    "requestedFor": "Du hast dir einen Rückruf am {when} gewünscht. Wir bestätigen den Termin per E-Mail.",
+    "steps": {
+      "requested": "Angefragt",
+      "confirmed": "Bestätigt",
+      "call": "Anruf",
+      "cancelled": "Abgesagt"
+    },
+    "cancelConfirm": "Diesen Rückruf absagen?",
+    "cancel": "Rückruf absagen",
+    "keep": "Behalten",
+    "anotherTime": "Anderen Termin wählen",
+    "newTime": "Wann passt es dir besser?",
+    "hours": "Werktags, 9:00–18:00 Uhr (deutsche Zeit).",
+    "sendTime": "Diesen Termin anfragen",
+    "back": "Zurück",
+    "home": "Zur Website",
+    "newCallback": "Neuen Rückruf anfordern",
+    "outsideHours": "Wähl einen Werktag zwischen 9:00 und 18:00 Uhr, der noch vor uns liegt.",
+    "failed": "Das hat nicht geklappt. Versuch es noch einmal oder ruf uns an.",
+    "invalid": {
+      "title": "Dieser Link funktioniert nicht mehr",
+      "body": "Vielleicht ist er abgelaufen oder der Rückruf wurde schon geändert. Du kannst jederzeit einen neuen anfordern."
+    },
+    "cancelled": {
+      "title": "Rückruf abgesagt",
+      "body": "Wir rufen nicht an. Wenn du trotzdem sprechen möchtest, fordere jederzeit einen neuen Rückruf an."
+    },
+    "rescheduled": {
+      "title": "Neuer Termin angefragt",
+      "body": "Wir bestätigen dir {when} per E-Mail, meist innerhalb eines Werktags."
     }
   }
 }

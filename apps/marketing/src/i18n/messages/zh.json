@@ -1403,7 +1403,10 @@
       "actions": {
         "message": "给我们留言",
         "callback": "请求回电",
-        "whitepaper": "获取白皮书"
+        "whitepaper": "获取白皮书",
+        "messageHint": "通常在一个工作日内回复。",
+        "callbackHint": "工作日 9:00–18:00。",
+        "whitepaperHint": "销售中的 AI 工具（PDF）。"
       }
     },
     "inquiries": {
@@ -1536,7 +1539,8 @@
         "sendAgain": "重新发送",
         "retried": "已发送给我们的团队。",
         "retryFailed": "仍未成功。请稍后再试或致电我们。",
-        "callInstead": "如仍然失败，请致电 {phone}。"
+        "callInstead": "如仍然失败，请致电 {phone}。",
+        "label": "送达"
       },
       "callback": {
         "title": "回电",
@@ -1547,7 +1551,8 @@
         "calendarTitle": "ADVANTIS GROUP 回电",
         "addToCalendar": "添加到日历",
         "anotherTime": "需要其他时间？",
-        "unconfirmedHint": "我们会通过电子邮件确认时间，通常在一个工作日内。"
+        "unconfirmedHint": "我们会通过电子邮件确认时间，通常在一个工作日内。",
+        "requestedFor": "请求在 {when} 回电。"
       },
       "thread": {
         "title": "沟通记录",
@@ -1582,7 +1587,8 @@
         "company": "公司",
         "topic": "主题",
         "callbackTime": "期望时间"
-      }
+      },
+      "details": "详情"
     },
     "profile": {
       "title": "个人资料",
@@ -1600,7 +1606,8 @@
         "title": "在内网中管理",
         "body": "您的登录方式、通行密钥和双重验证设置属于您的 ADVANTIS 工作账户。",
         "cta": "打开内网设置"
-      }
+      },
+      "signIn": "登录与邮箱"
     },
     "preferences": {
       "title": "偏好设置",
@@ -1616,7 +1623,8 @@
         "label": "联系表单重新开放时通知我",
         "description": "只会向 {email} 发送一封邮件，之后您将自动退出列表。"
       },
-      "failed": "保存失败，请重试。"
+      "failed": "保存失败，请重试。",
+      "languageHint": "用于本网站以及我们发给您的电子邮件。"
     },
     "downloads": {
       "title": "下载",
@@ -1692,6 +1700,42 @@
         "staff": "这是您的 ADVANTIS 工作账户，由您的管理员管理。"
       },
       "failed": "操作未成功，请重试。"
+    }
+  },
+  "callbackPage": {
+    "title": "您的回电",
+    "heading": "{name}，您的回电",
+    "confirmedFor": "我们将于 {when} 致电您。",
+    "requestedFor": "您希望我们在 {when} 回电。我们会通过电子邮件确认时间。",
+    "steps": {
+      "requested": "已请求",
+      "confirmed": "已确认",
+      "call": "通话",
+      "cancelled": "已取消"
+    },
+    "cancelConfirm": "确定取消此回电？",
+    "cancel": "取消回电",
+    "keep": "保留",
+    "anotherTime": "选择其他时间",
+    "newTime": "什么时间更方便？",
+    "hours": "工作日 9:00–18:00（德国时间）。",
+    "sendTime": "申请此时间",
+    "back": "返回",
+    "home": "返回网站",
+    "newCallback": "请求新的回电",
+    "outsideHours": "请选择未来工作日的 9:00 至 18:00 之间。",
+    "failed": "操作未成功。请重试或致电我们。",
+    "invalid": {
+      "title": "此链接已失效",
+      "body": "链接可能已过期，或回电已被更改。您随时可以请求新的回电。"
+    },
+    "cancelled": {
+      "title": "回电已取消",
+      "body": "我们不会致电。如仍需沟通，随时可以请求新的回电。"
+    },
+    "rescheduled": {
+      "title": "已申请新时间",
+      "body": "我们会通过电子邮件确认 {when}，通常在一个工作日内。"
     }
   }
 }

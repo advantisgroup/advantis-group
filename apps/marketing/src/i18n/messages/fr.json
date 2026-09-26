@@ -1409,7 +1409,10 @@
       "actions": {
         "message": "Nous écrire",
         "callback": "Demander un rappel",
-        "whitepaper": "Obtenir le livre blanc"
+        "whitepaper": "Obtenir le livre blanc",
+        "messageHint": "Réponse généralement sous un jour ouvré.",
+        "callbackHint": "En semaine, de 9 h à 18 h.",
+        "whitepaperHint": "Les outils IA dans la vente, en PDF."
       }
     },
     "inquiries": {
@@ -1542,7 +1545,8 @@
         "sendAgain": "Renvoyer",
         "retried": "Envoyée à notre équipe.",
         "retryFailed": "Cela n'a pas fonctionné non plus. Réessayez plus tard ou appelez-nous.",
-        "callInstead": "Si cela échoue encore, appelez-nous au {phone}."
+        "callInstead": "Si cela échoue encore, appelez-nous au {phone}.",
+        "label": "Distribution"
       },
       "callback": {
         "title": "Rappel",
@@ -1553,7 +1557,8 @@
         "calendarTitle": "Rappel d'ADVANTIS GROUP",
         "addToCalendar": "Ajouter au calendrier",
         "anotherTime": "Un autre horaire ?",
-        "unconfirmedHint": "Nous confirmerons l'horaire par e-mail, généralement sous un jour ouvré."
+        "unconfirmedHint": "Nous confirmerons l'horaire par e-mail, généralement sous un jour ouvré.",
+        "requestedFor": "Rappel demandé pour le {when}."
       },
       "thread": {
         "title": "Échanges",
@@ -1588,7 +1593,8 @@
         "company": "Entreprise",
         "topic": "Sujet",
         "callbackTime": "Horaire souhaité"
-      }
+      },
+      "details": "Détails"
     },
     "profile": {
       "title": "Profil",
@@ -1606,7 +1612,8 @@
         "title": "Géré dans l'intranet",
         "body": "Vos méthodes de connexion, passkeys et paramètres de double authentification relèvent de votre compte professionnel ADVANTIS.",
         "cta": "Ouvrir les paramètres de l'intranet"
-      }
+      },
+      "signIn": "Connexion et e-mail"
     },
     "preferences": {
       "title": "Préférences",
@@ -1622,7 +1629,8 @@
         "label": "Me prévenir quand les formulaires rouvrent",
         "description": "Un seul e-mail à {email}, puis vous êtes retiré de la liste."
       },
-      "failed": "L'enregistrement a échoué. Réessayez."
+      "failed": "L'enregistrement a échoué. Réessayez.",
+      "languageHint": "Pour ce site et les e-mails que nous vous envoyons."
     },
     "downloads": {
       "title": "Téléchargements",
@@ -1698,6 +1706,42 @@
         "staff": "C'est votre compte professionnel ADVANTIS, il est donc géré par votre administrateur."
       },
       "failed": "Cela n'a pas fonctionné. Réessayez."
+    }
+  },
+  "callbackPage": {
+    "title": "Votre rappel",
+    "heading": "Votre rappel, {name}",
+    "confirmedFor": "Nous vous appellerons le {when}.",
+    "requestedFor": "Vous avez demandé à être rappelé le {when}. Nous confirmerons l'horaire par e-mail.",
+    "steps": {
+      "requested": "Demandé",
+      "confirmed": "Confirmé",
+      "call": "Appel",
+      "cancelled": "Annulé"
+    },
+    "cancelConfirm": "Annuler ce rappel ?",
+    "cancel": "Annuler le rappel",
+    "keep": "Le garder",
+    "anotherTime": "Choisir un autre horaire",
+    "newTime": "Quel moment vous convient mieux ?",
+    "hours": "En semaine, de 9 h à 18 h (heure allemande).",
+    "sendTime": "Demander cet horaire",
+    "back": "Retour",
+    "home": "Retour au site",
+    "newCallback": "Demander un nouveau rappel",
+    "outsideHours": "Choisissez un jour ouvré entre 9 h et 18 h, dans le futur.",
+    "failed": "Cela n'a pas fonctionné. Réessayez ou appelez-nous.",
+    "invalid": {
+      "title": "Ce lien ne fonctionne plus",
+      "body": "Il a peut-être expiré, ou le rappel a déjà été modifié. Vous pouvez toujours en demander un nouveau."
+    },
+    "cancelled": {
+      "title": "Rappel annulé",
+      "body": "Nous n'appellerons pas. Si vous souhaitez tout de même échanger, demandez un nouveau rappel quand vous voulez."
+    },
+    "rescheduled": {
+      "title": "Nouvel horaire demandé",
+      "body": "Nous vous confirmerons le {when} par e-mail, généralement sous un jour ouvré."
     }
   }
 }

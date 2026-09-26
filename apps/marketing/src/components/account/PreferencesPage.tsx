@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Display } from "@/components/frame";
-import { SettingsMenu } from "@/components/layout/SettingsMenu";
+import { LanguageSwitch, ThemeSwitch } from "@/components/layout/SettingsMenu";
 import { Switch } from "@/components/ui/switch";
 import { useSubmissionsOpen } from "@/hooks/use-submissions-open";
 import type { AccountMetadata } from "@/lib/account";
@@ -18,6 +18,7 @@ import { SettingRow, SettingSection } from "./SettingRow";
 
 export function PreferencesPage() {
   const t = useTranslations("account.preferences");
+  const tMenu = useTranslations("nav.settingsMenu");
   const locale = useLocale();
   const { user } = useUser();
   const submissionsOpen = useSubmissionsOpen();
@@ -69,9 +70,12 @@ export function PreferencesPage() {
       </Display>
 
       <SettingSection title={t("site")}>
-        <div className="py-5">
-          <SettingsMenu />
-        </div>
+        <SettingRow label={tMenu("language")} description={t("languageHint")}>
+          <LanguageSwitch names />
+        </SettingRow>
+        <SettingRow label={tMenu("appearance")}>
+          <ThemeSwitch />
+        </SettingRow>
       </SettingSection>
 
       <SettingSection title={t("mail")}>

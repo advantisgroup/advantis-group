@@ -39,10 +39,21 @@ export const useSwitchLocale = () => {
 const THEMES = ["light", "dark", "system"] as const;
 
 /** One segmented control, shared by both groups so they cannot drift apart. */
-const Segmented = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div>
-    <span className="block text-xs font-medium text-muted-foreground">{label}</span>
-    <div className="mt-2 flex gap-1 rounded-lg bg-muted p-1">{children}</div>
+const Track = ({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: React.ReactNode;
+}) => (
+  <div
+    role="group"
+    aria-label={label}
+    className={cn("flex gap-1 rounded-lg bg-muted p-1", className)}
+  >
+    {children}
   </div>
 );
 
@@ -64,7 +75,7 @@ const SegmentedOption = ({
     aria-label={title}
     aria-pressed={active}
     className={cn(
-      "flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md text-[13px] font-medium transition-colors",
+      "flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 text-[13px] font-medium whitespace-nowrap transition-colors",
       active
         ? "bg-background text-foreground shadow-panel"
         : "text-muted-foreground hover:text-foreground",
@@ -73,6 +84,86 @@ const SegmentedOption = ({
     {children}
   </button>
 );
+
+/** DE · EN · ZH · FR, or the languages' own names where there's room for them. */
+export const LanguageSwitch = ({
+  names = false,
+  onSwitch,
+  className,
+}: {
+  names?: boolean;
+  onSwitch?: () => void;
+  className?: string;
+}) => {
+  const locale = useLocale();
+  const t = useTranslations("nav.settingsMenu");
+  const switchLocale = useSwitchLocale();
+
+  return (
+    <Track label={t("language")} className={className}>
+      {LANGUAGES.map((language) => (
+        <SegmentedOption
+          key={language.code}
+          active={language.code === locale}
+          title={language.name}
+          onClick={() => {
+            onSwitch?.();
+            switchLocale(language.code);
+          }}
+        >
+          {names ? (
+            <>
+              <span className="sm:hidden">{language.code.toUpperCase()}</span>
+              <span className="hidden sm:inline">{language.name}</span>
+            </>
+          ) : (
+            language.code.toUpperCase()
+          )}
+        </SegmentedOption>
+      ))}
+    </Track>
+  );
+};
+
+const ThemeIcon = { light: Sun, dark: Moon, system: Monitor } as const;
+
+export const ThemeSwitch = ({
+  onSwitch,
+  className,
+}: {
+  onSwitch?: () => void;
+  className?: string;
+}) => {
+  const t = useTranslations("nav.settingsMenu");
+  const { setTheme, theme } = useTheme();
+
+  // `theme` is undefined until next-themes has read storage; rendering the
+  // active state before then makes the wrong option flash as selected.
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+
+  return (
+    <Track label={t("appearance")} className={className}>
+      {THEMES.map((mode) => {
+        const Icon = ThemeIcon[mode];
+        return (
+          <SegmentedOption
+            key={mode}
+            active={mounted && theme === mode}
+            title={t(mode)}
+            onClick={() => {
+              onSwitch?.();
+              setTheme(mode);
+            }}
+          >
+            <Icon className="size-3.5" />
+            <span>{t(mode)}</span>
+          </SegmentedOption>
+        );
+      })}
+    </Track>
+  );
+};
 
 /**
  * Language and appearance, rendered as two segmented controls.
@@ -83,58 +174,18 @@ const SegmentedOption = ({
  * was more chrome than the choices are worth.
  */
 export const SettingsMenu = ({ onMobileNavigate }: { onMobileNavigate?: () => void }) => {
-  const locale = useLocale();
   const t = useTranslations("nav.settingsMenu");
-  const switchLocale = useSwitchLocale();
-  const { setTheme, theme } = useTheme();
-
-  // `theme` is undefined until next-themes has read storage; rendering the
-  // active state before then makes the wrong option flash as selected.
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
-
-  const switchLanguage = (nextLocale: string) => {
-    onMobileNavigate?.();
-    switchLocale(nextLocale);
-  };
-
-  const themeLabel = { light: t("light"), dark: t("dark"), system: t("system") } as const;
-  const ThemeIcon = { light: Sun, dark: Moon, system: Monitor } as const;
 
   return (
     <div className="space-y-4">
-      <Segmented label={t("language")}>
-        {LANGUAGES.map((language) => (
-          <SegmentedOption
-            key={language.code}
-            active={language.code === locale}
-            title={language.name}
-            onClick={() => switchLanguage(language.code)}
-          >
-            {language.code.toUpperCase()}
-          </SegmentedOption>
-        ))}
-      </Segmented>
-
-      <Segmented label={t("appearance")}>
-        {THEMES.map((mode) => {
-          const Icon = ThemeIcon[mode];
-          return (
-            <SegmentedOption
-              key={mode}
-              active={mounted && theme === mode}
-              title={themeLabel[mode]}
-              onClick={() => {
-                onMobileNavigate?.();
-                setTheme(mode);
-              }}
-            >
-              <Icon className="size-3.5" />
-              <span>{themeLabel[mode]}</span>
-            </SegmentedOption>
-          );
-        })}
-      </Segmented>
+      <div>
+        <span className="block text-xs font-medium text-muted-foreground">{t("language")}</span>
+        <LanguageSwitch onSwitch={onMobileNavigate} className="mt-2" />
+      </div>
+      <div>
+        <span className="block text-xs font-medium text-muted-foreground">{t("appearance")}</span>
+        <ThemeSwitch onSwitch={onMobileNavigate} className="mt-2" />
+      </div>
     </div>
   );
 };

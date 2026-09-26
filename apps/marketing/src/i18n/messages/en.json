@@ -1406,7 +1406,10 @@
       "actions": {
         "message": "Write to us",
         "callback": "Request a callback",
-        "whitepaper": "Get the whitepaper"
+        "whitepaper": "Get the whitepaper",
+        "messageHint": "We usually reply within one business day.",
+        "callbackHint": "Weekdays, 9:00–18:00.",
+        "whitepaperHint": "AI tools in sales, as a PDF."
       }
     },
     "inquiries": {
@@ -1539,7 +1542,8 @@
         "sendAgain": "Send again",
         "retried": "Sent to our team.",
         "retryFailed": "That didn't work either. Try again later, or call us.",
-        "callInstead": "If it keeps failing, call us on {phone}."
+        "callInstead": "If it keeps failing, call us on {phone}.",
+        "label": "Delivery"
       },
       "callback": {
         "title": "Callback",
@@ -1550,7 +1554,8 @@
         "calendarTitle": "Callback from ADVANTIS GROUP",
         "addToCalendar": "Add to calendar",
         "anotherTime": "Need another time?",
-        "unconfirmedHint": "We'll confirm the time by email, usually within one business day."
+        "unconfirmedHint": "We'll confirm the time by email, usually within one business day.",
+        "requestedFor": "Callback requested for {when}."
       },
       "thread": {
         "title": "Conversation",
@@ -1585,7 +1590,8 @@
         "company": "Company",
         "topic": "Topic",
         "callbackTime": "Requested time"
-      }
+      },
+      "details": "Details"
     },
     "profile": {
       "title": "Profile",
@@ -1603,7 +1609,8 @@
         "title": "Managed in the intranet",
         "body": "Your sign-in methods, passkeys and two-factor settings belong to your ADVANTIS work account.",
         "cta": "Open intranet settings"
-      }
+      },
+      "signIn": "Sign-in and email"
     },
     "preferences": {
       "title": "Preferences",
@@ -1619,7 +1626,8 @@
         "label": "Tell me when the contact forms reopen",
         "description": "One email to {email}, then you're off the list."
       },
-      "failed": "That didn't save. Try again."
+      "failed": "That didn't save. Try again.",
+      "languageHint": "For this site and the emails we send you."
     },
     "downloads": {
       "title": "Downloads",
@@ -1695,6 +1703,42 @@
         "staff": "This is your ADVANTIS work account, so it's managed by your administrator."
       },
       "failed": "That didn't work. Try again."
+    }
+  },
+  "callbackPage": {
+    "title": "Your callback",
+    "heading": "Your callback, {name}",
+    "confirmedFor": "We'll call you on {when}.",
+    "requestedFor": "You asked us to call you on {when}. We'll confirm the time by email.",
+    "steps": {
+      "requested": "Requested",
+      "confirmed": "Confirmed",
+      "call": "Call",
+      "cancelled": "Cancelled"
+    },
+    "cancelConfirm": "Cancel this callback?",
+    "cancel": "Cancel callback",
+    "keep": "Keep it",
+    "anotherTime": "Pick another time",
+    "newTime": "When suits you better?",
+    "hours": "Weekdays, 9:00–18:00 (German time).",
+    "sendTime": "Ask for this time",
+    "back": "Back",
+    "home": "Back to the site",
+    "newCallback": "Request a new callback",
+    "outsideHours": "Pick a weekday between 9:00 and 18:00 that's still ahead.",
+    "failed": "That didn't work. Try again, or call us.",
+    "invalid": {
+      "title": "This link doesn't work any more",
+      "body": "It may have expired, or the callback was already changed. You can always request a new one."
+    },
+    "cancelled": {
+      "title": "Callback cancelled",
+      "body": "We won't call. If you'd still like to talk, request a new callback any time."
+    },
+    "rescheduled": {
+      "title": "New time requested",
+      "body": "We'll confirm {when} by email, usually within one business day."
     }
   }
 }
