@@ -83,26 +83,26 @@ export function InquiryDetail({ detail }: { detail: Detail }) {
         label={t("progressLabel")}
         steps={progressSteps(detail, format, t)}
         className="mt-10"
-      />
-
-      <Delivery inquiry={inquiry} format={format} />
+      >
+        {/* it never reached us: that outranks everything else on the page */}
+        {TROUBLE.has(inquiry.delivery.status) ? (
+          <TeamNote inquiry={inquiry} format={format} />
+        ) : null}
+      </Checkpoints>
 
       {inquiry.submissionType === "callback" ? (
         <Callback inquiry={inquiry} format={format} />
       ) : null}
 
-      {body ? (
-        <p className="mt-12 max-w-[65ch] text-base leading-[1.7] whitespace-pre-wrap text-foreground [overflow-wrap:anywhere] md:text-[17px]">
-          {body}
-        </p>
-      ) : null}
-      <Attachments inquiryId={inquiry._id} attachments={inquiry.attachments} />
-
-      <Thread detail={detail} format={format} />
+      <Conversation detail={detail} body={body} format={format} />
       <Composer inquiry={inquiry} composerRef={composerRef} />
       <Actions inquiry={inquiry} onNeedHelp={() => composerRef.current?.focus()} />
 
-      <Shared inquiry={inquiry} format={format} />
+      <section className="mt-14 border-t border-rule pt-6">
+        <h2 className="text-[15px] font-medium text-foreground">{t("details")}</h2>
+        <Shared inquiry={inquiry} format={format} />
+        <Delivery inquiry={inquiry} format={format} />
+      </section>
 
       <div data-print-hide className="mt-10 flex flex-wrap gap-2 border-t border-rule pt-6">
         <Button variant="ghost" size="sm" onClick={() => window.print()}>
@@ -125,13 +125,10 @@ export function InquiryDetail({ detail }: { detail: Detail }) {
 }
 
 function headline(inquiry: Inquiry, format: Format, t: T) {
-  const { title, preview } = format.title(inquiry);
-  if (inquiry.submissionType === "callback") return { title, body: inquiry.notes };
-  if (inquiry.submissionType === "other") return { title, body: inquiry.message };
-  // a message is named by its first line; only repeat it when the name had to be cut
-  return title.length <= TITLE_MAX
-    ? { title, body: preview === inquiry.company ? "" : preview }
-    : { title: t("yourMessage"), body: inquiry.message };
+  const { title } = format.title(inquiry);
+  const body = inquiry.submissionType === "callback" ? inquiry.notes : inquiry.message;
+  // a message is named by its first line, which reads as a paragraph in the serif when it's long
+  return { title: title.length <= TITLE_MAX ? title : t("yourMessage"), body };
 }
 
 function progressSteps(detail: Detail, format: Format, t: T): Checkpoint[] {
@@ -193,12 +190,14 @@ function progressSteps(detail: Detail, format: Format, t: T): Checkpoint[] {
 
 const TROUBLE = new Set(["failed", "bounced", "delayed"]);
 
+const DETAIL_ROW = "grid gap-x-6 py-2.5 text-[15px] sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]";
+
 function Delivery({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
   const t = useTranslations("account.inquiries.delivery");
   const { delivery, copy } = inquiry;
   const teamTrouble = TROUBLE.has(delivery.status);
   const copyTrouble = TROUBLE.has(copy.status ?? "") || copy.skipReason === "limit";
-  const [open, setOpen] = useState(teamTrouble || copyTrouble);
+  const [open, setOpen] = useState(copyTrouble);
   const at = (value?: number) => (value ? format.time.format(value) : undefined);
 
   const summary = [t(`team.${delivery.status}`), copy.status ? t(`copy.${copy.status}`) : null]
@@ -251,34 +250,30 @@ function Delivery({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
   ];
 
   return (
-    <section className="mt-8 border-t border-rule pt-5">
-      <div className="flex items-center justify-between gap-4">
-        <p
-          className={cn(
-            "text-[15px]",
-            teamTrouble || copyTrouble ? "font-medium text-foreground" : "text-muted-foreground",
-          )}
-        >
-          {summary}
-        </p>
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={() => setOpen(!open)}
-          data-print-hide
-          className="shrink-0 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-        >
-          {open ? t("hide") : t("details")}
-        </button>
+    <div>
+      <div className={DETAIL_ROW}>
+        <span className="text-muted-foreground">{t("label")}</span>
+        <span className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <span className={cn(teamTrouble || copyTrouble ? "font-medium" : "", "text-foreground")}>
+            {summary}
+          </span>
+          <button
+            type="button"
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+            data-print-hide
+            className="shrink-0 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            {open ? t("hide") : t("details")}
+          </button>
+        </span>
       </div>
 
       {open ? (
-        <div className="mt-6 space-y-8">
+        <div className="mt-4 mb-2 space-y-8 rounded-lg border border-rule p-5">
           <div>
             <p className="mb-4 text-sm font-medium text-muted-foreground">{t("toTeam")}</p>
-            <Checkpoints label={t("toTeam")} steps={teamSteps}>
-              {teamTrouble ? <TeamNote inquiry={inquiry} format={format} /> : null}
-            </Checkpoints>
+            <Checkpoints label={t("toTeam")} steps={teamSteps} />
           </div>
           {copy.status ? (
             <div>
@@ -307,7 +302,7 @@ function Delivery({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
           ) : null}
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }
 
@@ -458,42 +453,117 @@ function Attachments({ inquiryId, attachments }: { inquiryId: string; attachment
   );
 }
 
-function Thread({ detail, format }: { detail: Detail; format: Format }) {
+/**
+ * What was sent and everything said since, as one thread: the original
+ * inquiry first, then each reply in order. The customer reads a
+ * conversation, not a form receipt with comments bolted on underneath.
+ */
+function Conversation({
+  detail,
+  body,
+  format,
+}: {
+  detail: Detail;
+  body: string | undefined;
+  format: Format;
+}) {
   const t = useTranslations("account.inquiries.thread");
-  if (!detail.messages.length) return null;
+  const tCallback = useTranslations("account.inquiries.callback");
+  const { inquiry } = detail;
+  const you = `${inquiry.firstName[0] ?? ""}${inquiry.lastName[0] ?? ""}`.toUpperCase() || "·";
+  const opening =
+    body ||
+    (inquiry.submissionType === "callback" && inquiry.desiredAt
+      ? tCallback("requestedFor", { when: format.full.format(inquiry.desiredAt) })
+      : "");
 
   return (
     <section className="mt-12">
       <h2 className="text-sm font-medium text-muted-foreground">{t("title")}</h2>
-      <ol className="mt-3 divide-y divide-rule border-y border-rule">
+      <ol className="mt-2 divide-y divide-rule border-y border-rule">
+        <Entry
+          initials={you}
+          who={t("you")}
+          at={inquiry.sentAt}
+          body={opening}
+          format={format}
+          inquiryId={inquiry._id}
+          attachments={inquiry.attachments}
+        />
         {detail.messages.map((message) => (
-          <li key={message._id} className="py-5">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">
-                {message.author === "customer"
-                  ? t("you")
-                  : message.staffName
-                    ? t("staff", { name: message.staffName })
-                    : t("team")}
-              </span>
-              {" · "}
-              <time title={format.full.format(message.createdAt)}>
-                {format.when(message.createdAt)}
-              </time>
-            </p>
-            {message.body ? (
-              <p className="mt-2 max-w-[65ch] text-[15px] leading-relaxed whitespace-pre-wrap text-foreground [overflow-wrap:anywhere]">
-                {message.body}
-              </p>
-            ) : null}
-            <Attachments inquiryId={detail.inquiry._id} attachments={message.attachments} />
-          </li>
+          <Entry
+            key={message._id}
+            staff={message.author === "staff"}
+            initials={
+              message.author === "customer" ? you : (message.staffName?.[0] ?? "A").toUpperCase()
+            }
+            who={
+              message.author === "customer"
+                ? t("you")
+                : message.staffName
+                  ? t("staff", { name: message.staffName })
+                  : t("team")
+            }
+            at={message.createdAt}
+            body={message.body}
+            format={format}
+            inquiryId={inquiry._id}
+            attachments={message.attachments}
+          />
         ))}
       </ol>
     </section>
   );
 }
 
+function Entry({
+  staff = false,
+  initials,
+  who,
+  at,
+  body,
+  format,
+  inquiryId,
+  attachments,
+}: {
+  staff?: boolean;
+  initials: string;
+  who: string;
+  at: number;
+  body: string;
+  format: Format;
+  inquiryId: string;
+  attachments: Attachment[];
+}) {
+  return (
+    <li className="flex gap-3.5 py-6">
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-medium",
+          staff ? "bg-foreground text-background" : "bg-muted text-muted-foreground",
+        )}
+      >
+        {initials}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{who}</span>
+          {" · "}
+          <time dateTime={new Date(at).toISOString()} title={format.full.format(at)}>
+            {format.when(at)}
+          </time>
+        </p>
+        {body ? (
+          <p className="mt-2 max-w-[65ch] text-base leading-[1.7] whitespace-pre-wrap text-foreground [overflow-wrap:anywhere]">
+            {body}
+          </p>
+        ) : null}
+        <Attachments inquiryId={inquiryId} attachments={attachments} />
+      </div>
+    </li>
+  );
+}
 const MAX_FILES = 3;
 const MAX_BYTES = 10 * 1024 * 1024;
 const ACCEPT = "image/*,application/pdf,.doc,.docx";
@@ -723,20 +793,14 @@ function Shared({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
 
   if (!rows.length) return null;
   return (
-    <section className="mt-12 border-t border-rule pt-6">
-      <h2 className="text-[15px] font-medium text-foreground">{t("title")}</h2>
-      <dl className="mt-3">
-        {rows.map((row) => (
-          <div
-            key={row.label}
-            className="grid gap-x-6 py-2.5 text-[15px] sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]"
-          >
-            <dt className="text-muted-foreground">{row.label}</dt>
-            <dd className="text-foreground [overflow-wrap:anywhere]">{row.value}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
+    <dl className="mt-3">
+      {rows.map((row) => (
+        <div key={row.label} className={DETAIL_ROW}>
+          <dt className="text-muted-foreground">{row.label}</dt>
+          <dd className="text-foreground [overflow-wrap:anywhere]">{row.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
