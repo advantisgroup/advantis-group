@@ -1465,6 +1465,13 @@
         "withdrawn": "已撤回"
       },
       "print": "打印",
+      "printSheet": {
+        "kind": "咨询",
+        "reference": "编号",
+        "sent": "发送时间",
+        "status": "状态",
+        "attachments": "附件"
+      },
       "emailUs": "就此发邮件给我们",
       "copyReference": "复制参考编号",
       "copied": "已复制 {reference}",
@@ -1741,5 +1748,8 @@
       "title": "已申请新时间",
       "body": "我们会通过电子邮件确认 {when}，通常在一个工作日内。"
     }
+  },
+  "print": {
+    "printed": "打印于 {date}"
   }
 }

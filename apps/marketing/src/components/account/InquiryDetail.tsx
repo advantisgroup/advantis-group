@@ -3,11 +3,24 @@
 import { useRef, useState } from "react";
 
 import { buildIcs, replyDueAt } from "@advantis/convex/marketing/inquiry";
-import { CalendarPlus, Check, Copy, Mail, Paperclip, Printer, X } from "lucide-react";
+import {
+  CalendarPlus,
+  Check,
+  Circle,
+  Clock3,
+  Copy,
+  Mail,
+  Minus,
+  Paperclip,
+  Printer,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Display } from "@/components/frame";
+import { PrintRows, PrintSection, PrintSheet } from "@/components/print/PrintSheet";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTrackEvent, useTrackOnce } from "@/lib/analytics";
@@ -16,7 +29,7 @@ import type { InquiryDetail as InquiryDetailData } from "@/lib/inquiries-server"
 import { cn } from "@/lib/utils";
 
 import { AccountBackLink } from "./AccountNav";
-import { type Checkpoint, CheckpointNote, Checkpoints } from "./Checkpoints";
+import { type Checkpoint, CheckpointNote, type CheckpointState, Checkpoints } from "./Checkpoints";
 import { TYPE_ICON, isActive, isUpcomingCallback, useInquiryFormat } from "./inquiry-format";
 import { StateLabel } from "./StateLabel";
 
@@ -24,6 +37,9 @@ type Detail = InquiryDetailData;
 type Inquiry = Detail["inquiry"];
 type Format = ReturnType<typeof useInquiryFormat>;
 type T = ReturnType<typeof useTranslations<"account.inquiries">>;
+type TCallback = ReturnType<typeof useTranslations<"account.inquiries.callback">>;
+type TDelivery = ReturnType<typeof useTranslations<"account.inquiries.delivery">>;
+type TShared = ReturnType<typeof useTranslations<"account.inquiries.shared">>;
 
 const PHONE = process.env.NEXT_PUBLIC_PHONE_NUMBER;
 const INBOX = process.env.NEXT_PUBLIC_EMAIL_ADRESS;
@@ -109,6 +125,8 @@ export function InquiryDetail({ detail }: { detail: Detail }) {
           </Button>
         ) : null}
       </div>
+
+      <InquiryPrint detail={detail} title={title} body={body} format={format} />
     </article>
   );
 }
@@ -206,10 +224,7 @@ function Delivery({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
   const copyTrouble = TROUBLE.has(copy.status ?? "") || copy.skipReason === "limit";
   const [open, setOpen] = useState(copyTrouble);
   const at = (value?: number) => (value ? format.time.format(value) : undefined);
-
-  const summary = [t(`team.${delivery.status}`), copy.status ? t(`copy.${copy.status}`) : null]
-    .filter(Boolean)
-    .join(" · ");
+  const summary = deliverySummary(inquiry, t);
 
   const teamSteps: Checkpoint[] = [
     { key: "queued", label: t("steps.queued"), meta: at(inquiry.sentAt), state: "done" },
@@ -313,6 +328,13 @@ function Delivery({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
   );
 }
 
+/** Both mails in one line: "Delivered to our team · copy delivered to you". */
+function deliverySummary({ delivery, copy }: Inquiry, t: TDelivery) {
+  return [t(`team.${delivery.status}`), copy.status ? t(`copy.${copy.status}`) : null]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 function TeamNote({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
   const t = useTranslations("account.inquiries.delivery");
   const trackEvent = useTrackEvent();
@@ -370,26 +392,7 @@ function Callback({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
   const cancelled = inquiry.callbackStatus === "cancelled";
   const confirmed = inquiry.callbackStatus === "confirmed";
   const done = confirmed && at !== undefined && at < Date.now();
-
-  const steps: Checkpoint[] = cancelled
-    ? [
-        { key: "requested", label: t("requested"), meta: fmt(inquiry.desiredAt), state: "done" },
-        { key: "cancelled", label: t("cancelled"), state: "skipped" },
-      ]
-    : [
-        { key: "requested", label: t("requested"), meta: fmt(inquiry.desiredAt), state: "done" },
-        {
-          key: "confirmed",
-          label: t("confirmed"),
-          meta: confirmed ? fmt(inquiry.callbackConfirmedAt) : undefined,
-          state: confirmed ? "done" : "current",
-        },
-        { key: "done", label: t("done"), state: done ? "done" : "upcoming" },
-      ];
-
-  function fmt(value?: number) {
-    return value ? format.dateTime.format(value) : undefined;
-  }
+  const steps = callbackSteps(inquiry, format, t);
 
   const addToCalendar = () => {
     if (!at) return;
@@ -435,6 +438,30 @@ function Callback({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
   );
 }
 
+function callbackSteps(inquiry: Inquiry, format: Format, t: TCallback): Checkpoint[] {
+  const at = inquiry.callbackConfirmedAt ?? inquiry.desiredAt;
+  const confirmed = inquiry.callbackStatus === "confirmed";
+  const done = confirmed && at !== undefined && at < Date.now();
+  const fmt = (value?: number) => (value ? format.dateTime.format(value) : undefined);
+
+  if (inquiry.callbackStatus === "cancelled") {
+    return [
+      { key: "requested", label: t("requested"), meta: fmt(inquiry.desiredAt), state: "done" },
+      { key: "cancelled", label: t("cancelled"), state: "skipped" },
+    ];
+  }
+  return [
+    { key: "requested", label: t("requested"), meta: fmt(inquiry.desiredAt), state: "done" },
+    {
+      key: "confirmed",
+      label: t("confirmed"),
+      meta: confirmed ? fmt(inquiry.callbackConfirmedAt) : undefined,
+      state: confirmed ? "done" : "current",
+    },
+    { key: "done", label: t("done"), state: done ? "done" : "upcoming" },
+  ];
+}
+
 // --- What was sent, and since ------------------------------------------------------
 
 type Attachment = Inquiry["attachments"][number];
@@ -475,6 +502,29 @@ function Conversation({
   format: Format;
 }) {
   const t = useTranslations("account.inquiries.thread");
+  return (
+    <section className="mt-12">
+      <h2 className="text-sm font-medium text-muted-foreground">{t("title")}</h2>
+      <Thread detail={detail} body={body} format={format} className="mt-2" />
+    </section>
+  );
+}
+
+function Thread({
+  detail,
+  body,
+  format,
+  paper = false,
+  className,
+}: {
+  detail: Detail;
+  body: string | undefined;
+  format: Format;
+  /** Printed: a written-out time rather than "5 hours ago", at paper size. */
+  paper?: boolean;
+  className?: string;
+}) {
+  const t = useTranslations("account.inquiries.thread");
   const tCallback = useTranslations("account.inquiries.callback");
   const { inquiry } = detail;
   const you = `${inquiry.firstName[0] ?? ""}${inquiry.lastName[0] ?? ""}`.toUpperCase() || "·";
@@ -485,45 +535,52 @@ function Conversation({
       : "");
 
   return (
-    <section className="mt-12">
-      <h2 className="text-sm font-medium text-muted-foreground">{t("title")}</h2>
-      <ol className="mt-2 divide-y divide-rule border-y border-rule">
+    <ol
+      className={cn(
+        "divide-y divide-rule border-rule",
+        // on paper the section heading's rule already sits on top
+        paper ? "border-b" : "border-y",
+        className,
+      )}
+    >
+      <Entry
+        paper={paper}
+        initials={you}
+        who={t("you")}
+        at={inquiry.sentAt}
+        body={opening}
+        format={format}
+        inquiryId={inquiry._id}
+        attachments={inquiry.attachments}
+      />
+      {detail.messages.map((message) => (
         <Entry
-          initials={you}
-          who={t("you")}
-          at={inquiry.sentAt}
-          body={opening}
+          key={message._id}
+          paper={paper}
+          staff={message.author === "staff"}
+          initials={
+            message.author === "customer" ? you : (message.staffName?.[0] ?? "A").toUpperCase()
+          }
+          who={
+            message.author === "customer"
+              ? t("you")
+              : message.staffName
+                ? t("staff", { name: message.staffName })
+                : t("team")
+          }
+          at={message.createdAt}
+          body={message.body}
           format={format}
           inquiryId={inquiry._id}
-          attachments={inquiry.attachments}
+          attachments={message.attachments}
         />
-        {detail.messages.map((message) => (
-          <Entry
-            key={message._id}
-            staff={message.author === "staff"}
-            initials={
-              message.author === "customer" ? you : (message.staffName?.[0] ?? "A").toUpperCase()
-            }
-            who={
-              message.author === "customer"
-                ? t("you")
-                : message.staffName
-                  ? t("staff", { name: message.staffName })
-                  : t("team")
-            }
-            at={message.createdAt}
-            body={message.body}
-            format={format}
-            inquiryId={inquiry._id}
-            attachments={message.attachments}
-          />
-        ))}
-      </ol>
-    </section>
+      ))}
+    </ol>
   );
 }
 
 function Entry({
+  paper = false,
   staff = false,
   initials,
   who,
@@ -533,6 +590,7 @@ function Entry({
   inquiryId,
   attachments,
 }: {
+  paper?: boolean;
   staff?: boolean;
   initials: string;
   who: string;
@@ -543,7 +601,7 @@ function Entry({
   attachments: Attachment[];
 }) {
   return (
-    <li className="flex gap-3.5 py-6">
+    <li className={cn("flex gap-3.5", paper ? "break-inside-avoid py-[3.5mm]" : "py-6")}>
       <span
         aria-hidden
         className={cn(
@@ -558,11 +616,16 @@ function Entry({
           <span className="font-medium text-foreground">{who}</span>
           {" · "}
           <time dateTime={new Date(at).toISOString()} title={format.full.format(at)}>
-            {format.when(at)}
+            {paper ? format.full.format(at) : format.when(at)}
           </time>
         </p>
         {body ? (
-          <p className="mt-2 max-w-[65ch] text-base leading-[1.7] whitespace-pre-wrap text-foreground [overflow-wrap:anywhere]">
+          <p
+            className={cn(
+              "mt-2 max-w-[65ch] whitespace-pre-wrap text-foreground [overflow-wrap:anywhere]",
+              paper ? "text-[10.5pt] leading-relaxed" : "text-base leading-[1.7]",
+            )}
+          >
             {body}
           </p>
         ) : null}
@@ -784,19 +847,7 @@ function Actions({ inquiry, onNeedHelp }: { inquiry: Inquiry; onNeedHelp: () => 
 function Shared({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
   const t = useTranslations("account.inquiries.shared");
   const tTopics = useTranslations("contact.otherForm.topics");
-  const rows = [
-    {
-      label: t("email"),
-      value: inquiry.email !== inquiry.accountEmail ? inquiry.email : undefined,
-    },
-    { label: t("phone"), value: inquiry.phone },
-    { label: t("company"), value: inquiry.company },
-    { label: t("topic"), value: inquiry.topicKey ? tTopics(inquiry.topicKey) : inquiry.topic },
-    {
-      label: t("callbackTime"),
-      value: inquiry.desiredAt ? format.full.format(inquiry.desiredAt) : undefined,
-    },
-  ].filter((row): row is { label: string; value: string } => Boolean(row.value));
+  const rows = sharedRows(inquiry, format, t, tTopics);
 
   if (!rows.length) return null;
   return (
@@ -809,6 +860,28 @@ function Shared({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
       ))}
     </dl>
   );
+}
+
+/** What the customer told us about themselves, minus anything left blank. */
+function sharedRows(
+  inquiry: Inquiry,
+  format: Format,
+  t: TShared,
+  tTopics: ReturnType<typeof useTranslations<"contact.otherForm.topics">>,
+) {
+  return [
+    {
+      label: t("email"),
+      value: inquiry.email !== inquiry.accountEmail ? inquiry.email : undefined,
+    },
+    { label: t("phone"), value: inquiry.phone },
+    { label: t("company"), value: inquiry.company },
+    { label: t("topic"), value: inquiry.topicKey ? tTopics(inquiry.topicKey) : inquiry.topic },
+    {
+      label: t("callbackTime"),
+      value: inquiry.desiredAt ? format.full.format(inquiry.desiredAt) : undefined,
+    },
+  ].filter((row): row is { label: string; value: string } => Boolean(row.value));
 }
 
 function ReferenceChip({ reference }: { reference: string }) {
@@ -830,5 +903,138 @@ function ReferenceChip({ reference }: { reference: string }) {
       {reference}
       {copied ? <Check aria-hidden className="size-3" /> : <Copy aria-hidden className="size-3" />}
     </button>
+  );
+}
+
+// --- On paper ----------------------------------------------------------------------
+
+/**
+ * The inquiry as the customer's own record of it: what they sent, where it
+ * stands and what was said, laid out for a sheet rather than the page — no
+ * composer, no chips to click, and every time written out in full, since
+ * "5 hours ago" stops being true the moment it's printed.
+ */
+function InquiryPrint({
+  detail,
+  title,
+  body,
+  format,
+}: {
+  detail: Detail;
+  title: string;
+  body: string | undefined;
+  format: Format;
+}) {
+  const t = useTranslations("account.inquiries");
+  const tCallback = useTranslations("account.inquiries.callback");
+  const tDelivery = useTranslations("account.inquiries.delivery");
+  const tShared = useTranslations("account.inquiries.shared");
+  const tTopics = useTranslations("contact.otherForm.topics");
+  const { inquiry } = detail;
+
+  const details = [
+    { label: t("printSheet.reference"), value: inquiry.reference },
+    { label: t("printSheet.sent"), value: format.full.format(inquiry.sentAt) },
+    { label: t("printSheet.status"), value: format.state(inquiry.state) },
+    ...sharedRows(inquiry, format, tShared, tTopics),
+    { label: tDelivery("label"), value: deliverySummary(inquiry, tDelivery) },
+  ];
+
+  return (
+    <PrintSheet
+      title={`${inquiry.reference} · ${title}`}
+      kind={t("printSheet.kind")}
+      reference={inquiry.reference}
+      notice={["ADVANTIS GROUP", INBOX, PHONE].filter(Boolean).join(" · ")}
+    >
+      <p className="text-[8pt] font-medium tracking-[0.08em] text-muted-foreground uppercase">
+        {format.type(inquiry)} · {format.state(inquiry.state)}
+      </p>
+      <h1 className="mt-[2mm] font-display text-[22pt] leading-[1.15] font-medium text-balance [overflow-wrap:anywhere]">
+        {title}
+      </h1>
+      <p className="mt-[3mm] max-w-[140mm] text-[10.5pt] leading-relaxed">
+        {statusLine(detail, format, t)}
+      </p>
+
+      <PrintSection title={t("progressLabel")}>
+        <PrintSteps steps={progressSteps(detail, format, t)} />
+      </PrintSection>
+
+      {inquiry.submissionType === "callback" ? (
+        <PrintSection title={tCallback("title")}>
+          <PrintSteps steps={callbackSteps(inquiry, format, tCallback)} />
+        </PrintSection>
+      ) : null}
+
+      <PrintSection title={t("thread.title")}>
+        <Thread detail={detail} body={body} format={format} paper />
+      </PrintSection>
+
+      <PrintSection title={t("details")} className="break-inside-avoid">
+        <PrintRows rows={details} />
+      </PrintSection>
+    </PrintSheet>
+  );
+}
+
+const STEP_TRACK: Record<CheckpointState, string> = {
+  done: "border-foreground",
+  current: "border-foreground",
+  upcoming: "border-rule-strong",
+  failed: "border-destructive",
+  warning: "border-warning",
+  skipped: "border-dashed border-rule-strong",
+};
+
+const STEP_MARK: Record<CheckpointState, LucideIcon> = {
+  done: Check,
+  current: Circle,
+  upcoming: Circle,
+  failed: X,
+  warning: Clock3,
+  skipped: Minus,
+};
+
+/** The checkpoint track flattened for paper: a rule per step that's drawn
+ *  solid once reached, the step's mark and name on it, its time beneath. */
+function PrintSteps({ steps }: { steps: readonly Checkpoint[] }) {
+  return (
+    <ol
+      className="grid gap-x-[4mm]"
+      style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
+    >
+      {steps.map((step) => {
+        const Mark = STEP_MARK[step.state];
+        return (
+          <li key={step.key} className={cn("border-t-2 pt-[2mm]", STEP_TRACK[step.state])}>
+            <span
+              className={cn(
+                "flex items-center gap-1.5",
+                step.state === "upcoming" || step.state === "skipped"
+                  ? "text-muted-foreground"
+                  : "font-medium",
+              )}
+            >
+              <Mark
+                aria-hidden
+                strokeWidth={2.5}
+                className={cn(
+                  "size-3 shrink-0",
+                  step.state === "current" && "fill-current",
+                  step.state === "failed" && "text-destructive",
+                )}
+              />
+              {step.label}
+            </span>
+            {step.meta ? (
+              <span className="mt-[0.5mm] block text-[8.5pt] tabular-nums text-muted-foreground">
+                {step.meta}
+              </span>
+            ) : null}
+          </li>
+        );
+      })}
+    </ol>
   );
 }

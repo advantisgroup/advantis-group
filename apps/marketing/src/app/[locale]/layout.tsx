@@ -15,6 +15,7 @@ import ConvexClientProvider from "@/components/ConvexClientProvider";
 import SmoothScrolling from "@/components/effects/SmoothScrolling";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { PrintInLightTheme } from "@/components/print/PrintInLightTheme";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { type Locale, locales } from "@/i18n/request";
@@ -173,6 +174,7 @@ export default async function LocaleLayout({
         {/* Ivory is the designed canvas; dark is the alternate, not a coin flip
             on the visitor's OS setting. "System" is still offered in settings. */}
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <PrintInLightTheme />
           <SmoothScrolling>
             <ClerkProvider
               localization={CLERK_LOCALIZATION[locale as Locale]}
