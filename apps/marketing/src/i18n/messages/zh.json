@@ -1588,7 +1588,13 @@
         "topic": "主题",
         "callbackTime": "期望时间"
       },
-      "details": "详情"
+      "details": "详情",
+      "status": {
+        "withdrawn": "您已于 {when} 撤回此咨询。",
+        "closed": "已于 {when} 关闭。如仍有问题，请在下方回复。",
+        "answered": "我们已于 {when} 回复，内容见下方沟通记录。",
+        "reopened": "您还需要帮助，因此咨询已重新交给团队处理。"
+      }
     },
     "profile": {
       "title": "个人资料",

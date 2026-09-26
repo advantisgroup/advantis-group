@@ -1594,7 +1594,13 @@
         "topic": "Sujet",
         "callbackTime": "Horaire souhaité"
       },
-      "details": "Détails"
+      "details": "Détails",
+      "status": {
+        "withdrawn": "Vous avez retiré cette demande le {when}.",
+        "closed": "Fermée le {when}. Répondez ci-dessous si quelque chose reste en suspens.",
+        "answered": "Nous avons répondu le {when}. La réponse se trouve dans les échanges ci-dessous.",
+        "reopened": "Vous avez encore besoin d'aide, la demande est donc de nouveau entre les mains de l'équipe."
+      }
     },
     "profile": {
       "title": "Profil",

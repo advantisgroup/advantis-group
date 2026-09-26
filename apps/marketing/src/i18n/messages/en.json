@@ -1591,7 +1591,13 @@
         "topic": "Topic",
         "callbackTime": "Requested time"
       },
-      "details": "Details"
+      "details": "Details",
+      "status": {
+        "withdrawn": "You withdrew this inquiry on {when}.",
+        "closed": "Closed on {when}. Reply below if anything's still open.",
+        "answered": "We answered on {when}. It's in the conversation below.",
+        "reopened": "You asked for more help, so it's back with the team."
+      }
     },
     "profile": {
       "title": "Profile",

@@ -1594,7 +1594,13 @@
         "topic": "Thema",
         "callbackTime": "Gewünschter Termin"
       },
-      "details": "Details"
+      "details": "Details",
+      "status": {
+        "withdrawn": "Du hast diese Anfrage am {when} zurückgezogen.",
+        "closed": "Geschlossen am {when}. Antworte unten, falls noch etwas offen ist.",
+        "answered": "Wir haben am {when} geantwortet – die Antwort steht unten im Verlauf.",
+        "reopened": "Du brauchst noch Hilfe, deshalb liegt sie wieder beim Team."
+      }
     },
     "profile": {
       "title": "Profil",

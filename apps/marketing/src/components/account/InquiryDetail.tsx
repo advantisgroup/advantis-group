@@ -44,8 +44,6 @@ export function InquiryDetail({ detail }: { detail: Detail }) {
   const composerRef = useRef<HTMLTextAreaElement>(null);
 
   const { title, body } = headline(inquiry, format, t);
-  const due = replyDueAt(inquiry.sentAt);
-  const waiting = isActive(inquiry.state) && !inquiry.firstResponseAt;
 
   return (
     <article className="max-w-3xl">
@@ -69,20 +67,11 @@ export function InquiryDetail({ detail }: { detail: Detail }) {
       <Display as="h1" size="sm" className="mt-3 [overflow-wrap:anywhere]">
         {title}
       </Display>
-      {waiting ? (
-        <p className="mt-3 text-[15px] text-muted-foreground">
-          {due > Date.now()
-            ? t("replyBy", { when: format.full.format(due) })
-            : PHONE
-              ? t("replyLate", { phone: PHONE })
-              : t("replyLateNoPhone")}
-        </p>
-      ) : null}
-
       <Checkpoints
         label={t("progressLabel")}
         steps={progressSteps(detail, format, t)}
-        className="mt-10"
+        summary={statusLine(detail, format, t)}
+        className="mt-8"
       >
         {/* it never reached us: that outranks everything else on the page */}
         {TROUBLE.has(inquiry.delivery.status) ? (
@@ -183,7 +172,35 @@ function progressSteps(detail: Detail, format: Format, t: T): Checkpoint[] {
       state: "done",
     });
   }
+  // while nobody has it yet, the step it's waiting on is where it is
+  const waitingOn = steps.findIndex((step) => step.state === "upcoming");
+  if (inquiry.state === "open" && waitingOn !== -1) {
+    steps[waitingOn] = { ...steps[waitingOn], state: "current" };
+  }
   return steps;
+}
+
+/** One sentence of where it stands and what happens next, inside the progress card. */
+function statusLine(detail: Detail, format: Format, t: T) {
+  const { inquiry } = detail;
+  const at = (value: number | undefined) => (value ? format.full.format(value) : "");
+
+  switch (inquiry.state) {
+    case "withdrawn": {
+      const withdrawn = detail.events.findLast((event) => event.state === "withdrawn");
+      return t("status.withdrawn", { when: at(withdrawn?.at) });
+    }
+    case "closed":
+      return t("status.closed", { when: at(inquiry.closedAt) });
+    case "answered":
+      return t("status.answered", { when: at(inquiry.firstResponseAt) });
+  }
+  // back in progress after an answer: the customer asked for more
+  if (inquiry.firstResponseAt) return t("status.reopened");
+
+  const due = replyDueAt(inquiry.sentAt);
+  if (due > Date.now()) return t("replyBy", { when: format.full.format(due) });
+  return PHONE ? t("replyLate", { phone: PHONE }) : t("replyLateNoPhone");
 }
 
 // --- Delivery ----------------------------------------------------------------------
@@ -270,7 +287,7 @@ function Delivery({ inquiry, format }: { inquiry: Inquiry; format: Format }) {
       </div>
 
       {open ? (
-        <div className="mt-4 mb-2 space-y-8 rounded-lg border border-rule p-5">
+        <div className="mt-4 mb-2 space-y-6">
           <div>
             <p className="mb-4 text-sm font-medium text-muted-foreground">{t("toTeam")}</p>
             <Checkpoints label={t("toTeam")} steps={teamSteps} />

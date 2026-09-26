@@ -2,6 +2,7 @@
 
 import { type ReactNode } from "react";
 
+import { Check, Clock3, Minus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
@@ -19,17 +20,17 @@ export type Checkpoint = {
 // the line into a step is drawn solid once the track has got that far
 const REACHED = new Set<CheckpointState>(["done", "current", "failed", "warning"]);
 
-const DOT: Record<CheckpointState, string> = {
-  done: "border-foreground bg-foreground",
-  current: "border-2 border-foreground bg-background",
-  upcoming: "border-rule-strong bg-background",
-  failed: "border-destructive bg-destructive ring-4 ring-destructive/15",
-  warning: "border-warning bg-warning ring-4 ring-warning/25",
-  skipped: "border-dashed border-muted-foreground/60 bg-background",
+const MARKER: Record<CheckpointState, string> = {
+  done: "bg-foreground text-background",
+  current: "border-2 border-foreground bg-card text-foreground",
+  upcoming: "border border-rule-strong bg-card text-muted-foreground",
+  failed: "bg-destructive text-destructive-foreground",
+  warning: "bg-warning text-warning-foreground",
+  skipped: "border border-dashed border-rule-strong bg-card text-muted-foreground",
 };
 
 const LABEL: Record<CheckpointState, string> = {
-  done: "text-foreground",
+  done: "font-medium text-foreground",
   current: "font-medium text-foreground",
   upcoming: "text-muted-foreground",
   failed: "font-medium text-destructive",
@@ -37,122 +38,109 @@ const LABEL: Record<CheckpointState, string> = {
   skipped: "text-muted-foreground",
 };
 
+/** A step's circle says its state on its own: a tick, a ring, its number, a cross, a clock. */
+const Marker = ({ state, index }: { state: CheckpointState; index: number }) => (
+  <span
+    aria-hidden
+    className={cn(
+      "relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums",
+      MARKER[state],
+    )}
+  >
+    {state === "done" ? (
+      <Check className="size-3.5" strokeWidth={3} />
+    ) : state === "failed" ? (
+      <X className="size-3.5" strokeWidth={3} />
+    ) : state === "warning" ? (
+      <Clock3 className="size-3.5" strokeWidth={2.5} />
+    ) : state === "skipped" ? (
+      <Minus className="size-3.5" />
+    ) : state === "current" ? (
+      <span className="size-2 rounded-full bg-foreground" />
+    ) : (
+      index + 1
+    )}
+  </span>
+);
+
 /**
- * A process drawn as a ruler: one dot per step on a hairline, the label and
- * its time underneath. Across the page from `sm` up, stacked on a phone,
- * where four labels side by side would wrap into each other.
+ * A process drawn as a track on a card: a marked circle per step joined by a
+ * line that fills in as it moves along, each step's name and time beneath.
+ * The last step sits flush right so the track spans the card. Stacked on a
+ * phone, where four labels side by side would wrap into each other.
  *
- * Whatever explains a failed or stuck step goes in `children`, which sits
- * directly under the track — use `CheckpointNote` for it.
+ * `summary` is the one sentence of where things stand, inside the card.
+ * Whatever explains a failed or stuck step goes in `children`, right below
+ * the card — use `CheckpointNote` for it.
  */
 export const Checkpoints = ({
   steps,
   label,
+  summary,
   children,
   className,
 }: {
   steps: readonly Checkpoint[];
   /** Names the list for screen readers, e.g. "Progress". */
   label: string;
+  summary?: ReactNode;
   children?: ReactNode;
   className?: string;
 }) => {
   const t = useTranslations("checkpoints");
+  const columns = steps.length > 1 ? `repeat(${steps.length - 1}, minmax(0, 1fr)) auto` : "auto";
 
   return (
     <div className={className}>
-      <ol
-        aria-label={label}
-        className="flex flex-col sm:grid"
-        style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
-      >
-        {steps.map((step, index) => {
-          const next = steps[index + 1];
-          return (
-            <li
-              key={step.key}
-              aria-current={step.state === "current" ? "step" : undefined}
-              className="relative flex gap-3 pb-5 last:pb-0 sm:block sm:pr-4 sm:pb-0"
-            >
-              {next ? (
-                <span
-                  aria-hidden
-                  className={cn(
-                    "absolute top-[18px] bottom-0 left-[4.5px] w-px sm:top-[4.5px] sm:right-2 sm:bottom-auto sm:left-[18px] sm:h-px sm:w-auto",
-                    REACHED.has(next.state) ? "bg-foreground" : "bg-rule-strong",
-                  )}
-                />
-              ) : null}
-              <span
-                aria-hidden
-                className={cn(
-                  "relative mt-1 block size-2.5 shrink-0 rounded-full border sm:mt-0",
-                  DOT[step.state],
-                )}
-              />
-              <span className="block min-w-0 sm:mt-3">
-                <span className={cn("block text-sm leading-snug", LABEL[step.state])}>
-                  {step.label}
-                  <span className="sr-only"> · {t(step.state)}</span>
-                </span>
-                {step.meta ? (
-                  <span className="mt-0.5 block text-[13px] tabular-nums text-muted-foreground">
-                    {step.meta}
-                  </span>
+      <div className="rounded-xl border border-rule bg-card px-5 py-5 sm:px-6">
+        <ol
+          aria-label={label}
+          className="flex flex-col sm:grid"
+          style={{ gridTemplateColumns: columns }}
+        >
+          {steps.map((step, index) => {
+            const next = steps[index + 1];
+            return (
+              <li
+                key={step.key}
+                aria-current={step.state === "current" ? "step" : undefined}
+                className="relative flex gap-3.5 pb-6 last:pb-0 sm:block sm:pb-0"
+              >
+                {next ? (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "absolute top-9 bottom-1 left-[13px] w-0.5 rounded-full sm:top-[13px] sm:right-2 sm:bottom-auto sm:left-9 sm:h-0.5 sm:w-auto",
+                      REACHED.has(next.state) ? "bg-foreground" : "bg-rule-strong",
+                    )}
+                  />
                 ) : null}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
+                <Marker state={step.state} index={index} />
+                <span className="block min-w-0 pt-1 sm:mt-3 sm:pt-0 sm:pr-4">
+                  <span className={cn("block text-sm leading-snug", LABEL[step.state])}>
+                    {step.label}
+                    <span className="sr-only"> · {t(step.state)}</span>
+                  </span>
+                  {step.meta ? (
+                    <span className="mt-0.5 block text-[13px] tabular-nums text-muted-foreground">
+                      {step.meta}
+                    </span>
+                  ) : null}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+        {summary ? (
+          <p className="mt-5 border-t border-rule pt-4 text-[15px] leading-relaxed text-foreground">
+            {summary}
+          </p>
+        ) : null}
+      </div>
       {children}
     </div>
   );
 };
-
-/**
- * The same track shrunk to its dots, for a list row that only needs to say
- * how far along something is. The step names stay readable to screen readers
- * and as a hover title.
- */
-export const CheckpointDots = ({
-  steps,
-  label,
-  className,
-}: {
-  steps: readonly Checkpoint[];
-  label: string;
-  className?: string;
-}) => {
-  const t = useTranslations("checkpoints");
-
-  return (
-    <ol aria-label={label} className={cn("inline-flex items-center gap-1", className)}>
-      {steps.map((step, index) => (
-        <li key={step.key} title={step.label} className="flex items-center gap-1">
-          {index > 0 ? (
-            <span
-              aria-hidden
-              className={cn(
-                "h-px w-2.5",
-                REACHED.has(step.state) ? "bg-foreground" : "bg-rule-strong",
-              )}
-            />
-          ) : null}
-          <span
-            aria-hidden
-            // at this size the ring and the thick "current" border would swallow the dot
-            className={cn("block size-1.5 rounded-full", DOT[step.state], "border ring-0")}
-          />
-          <span className="sr-only">
-            {step.label} · {t(step.state)}
-          </span>
-        </li>
-      ))}
-    </ol>
-  );
-};
-
 const NOTE_TONE = {
   failed: "border-destructive/25 bg-destructive/[0.04]",
   warning: "border-warning/40 bg-warning/[0.08]",
