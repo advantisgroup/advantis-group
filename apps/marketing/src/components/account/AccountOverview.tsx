@@ -49,13 +49,20 @@ export function AccountOverview({ data }: { data: InquiryList | null }) {
       href: { pathname: "/contact", query: { mode: "message" } },
       icon: MessageSquare,
       label: t("actions.message"),
+      hint: t("actions.messageHint"),
     },
     {
       href: { pathname: "/contact", query: { mode: "callback" } },
       icon: Phone,
       label: t("actions.callback"),
+      hint: t("actions.callbackHint"),
     },
-    { href: { pathname: "/whitepaper" }, icon: FileText, label: t("actions.whitepaper") },
+    {
+      href: { pathname: "/whitepaper" },
+      icon: FileText,
+      label: t("actions.whitepaper"),
+      hint: t("actions.whitepaperHint"),
+    },
   ];
 
   return (
@@ -125,10 +132,11 @@ export function AccountOverview({ data }: { data: InquiryList | null }) {
         </CheckpointNote>
       ) : null}
 
-      <section className="mt-12">
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 className="text-[15px] font-medium text-foreground">{t("recent")}</h2>
-          {inquiries.length ? (
+      {/* nothing to list yet: the three ways to start say more than an empty box */}
+      {inquiries.length ? (
+        <section className="mt-12">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="text-[15px] font-medium text-foreground">{t("recent")}</h2>
             <Link
               href="/account/submissions"
               className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -136,9 +144,7 @@ export function AccountOverview({ data }: { data: InquiryList | null }) {
               {t("seeAll")}
               <ArrowRight aria-hidden className="size-3.5" />
             </Link>
-          ) : null}
-        </div>
-        {inquiries.length ? (
+          </div>
           <ul className="mt-3 divide-y divide-rule border-y border-rule">
             {inquiries.slice(0, 3).map((inquiry) => (
               <li key={inquiry._id}>
@@ -166,24 +172,25 @@ export function AccountOverview({ data }: { data: InquiryList | null }) {
               </li>
             ))}
           </ul>
-        ) : (
-          <p className="mt-3 border-y border-rule py-6 text-[15px] text-muted-foreground">
-            {t("noInquiries")}
-          </p>
-        )}
-      </section>
+        </section>
+      ) : null}
 
       <section className="mt-12">
         <h2 className="text-[15px] font-medium text-foreground">{t("start")}</h2>
         <ul className="mt-3 grid gap-2 sm:grid-cols-3">
-          {actions.map(({ href, icon: Icon, label }) => (
+          {actions.map(({ href, icon: Icon, label, hint }) => (
             <li key={label}>
               <Link
                 href={href}
-                className="flex h-full items-center gap-3 rounded-lg border border-rule px-4 py-3.5 text-[15px] text-foreground transition-colors hover:bg-accent"
+                className="flex h-full flex-col gap-3 rounded-lg border border-rule px-4 py-4 transition-colors hover:bg-accent"
               >
-                <Icon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
-                {label}
+                <Icon aria-hidden className="size-4 text-muted-foreground" />
+                <span>
+                  <span className="block text-[15px] font-medium text-foreground">{label}</span>
+                  <span className="mt-1 block text-sm leading-snug text-muted-foreground">
+                    {hint}
+                  </span>
+                </span>
               </Link>
             </li>
           ))}

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { INQUIRY_RETENTION_YEARS } from "@advantis/convex/marketing/inquiry";
 import { useClerk, useReverification } from "@clerk/nextjs";
-import { Download } from "lucide-react";
+import { Archive, Clock3, Download, ShieldCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -44,12 +44,19 @@ export function PrivacyPage({ consents }: { consents: Consents | null }) {
         {t("title")}
       </Display>
 
-      <ul className="mt-6 max-w-2xl space-y-2 text-[15px] leading-relaxed text-foreground">
-        <li>{t("summary.keep")}</li>
-        <li>{t("summary.howLong", { years: INQUIRY_RETENTION_YEARS })}</li>
-        <li>{t("summary.control")}</li>
+      <ul className="mt-8 max-w-2xl space-y-4">
+        {[
+          { icon: Archive, text: t("summary.keep") },
+          { icon: Clock3, text: t("summary.howLong", { years: INQUIRY_RETENTION_YEARS }) },
+          { icon: ShieldCheck, text: t("summary.control") },
+        ].map(({ icon: Icon, text }) => (
+          <li key={text} className="flex gap-3.5 text-[15px] leading-relaxed text-foreground">
+            <Icon aria-hidden className="mt-1 size-4 shrink-0 text-muted-foreground" />
+            {text}
+          </li>
+        ))}
       </ul>
-      <p className="mt-3 text-sm text-muted-foreground">
+      <p className="mt-5 pl-[1.875rem] text-sm text-muted-foreground">
         <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
           {t("policy")}
         </Link>
