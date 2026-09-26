@@ -22,7 +22,6 @@ import {
   Upload,
   UserCheck,
   Users,
-  Users2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -50,12 +49,6 @@ export interface AdminNavItem {
 export interface AdminNavGroup {
   labelKey: string;
   items: AdminNavItem[];
-  /**
-   * Set-and-forget configuration. Real admins reach for these a handful of
-   * times a year, so the sidebar tucks them behind one disclosure instead of
-   * making everyone scroll past them on every visit.
-   */
-  advanced?: boolean;
 }
 
 /**
@@ -104,6 +97,12 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         managerOnly: true,
       },
       {
+        href: "/admin/structure",
+        labelKey: "nav.structure",
+        icon: Building2,
+        adminOnly: true,
+      },
+      {
         href: "/admin/roles",
         labelKey: "nav.roles",
         icon: ShieldCheck,
@@ -138,34 +137,16 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         labelKey: "nav.integrations",
         icon: Plug,
       },
-    ],
-  },
-  {
-    labelKey: "nav.groupAdvanced",
-    advanced: true,
-    items: [
       {
-        href: "/admin/departments",
-        labelKey: "nav.departments",
-        icon: Building2,
-        adminOnly: true,
-      },
-      {
-        href: "/admin/teams",
-        labelKey: "nav.teams",
-        icon: Users2,
+        href: "/admin/feature-flags",
+        labelKey: "nav.featureFlags",
+        icon: PowerOff,
         adminOnly: true,
       },
       {
         href: "/admin/audit",
         labelKey: "nav.audit",
         icon: ScrollText,
-        adminOnly: true,
-      },
-      {
-        href: "/admin/feature-flags",
-        labelKey: "nav.featureFlags",
-        icon: PowerOff,
         adminOnly: true,
       },
     ],

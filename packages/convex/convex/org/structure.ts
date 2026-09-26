@@ -127,8 +127,8 @@ export const listTeams = userQuery({
 
 export const createTeam = userMutation({
   role: "admin",
-  args: { name: v.string() },
-  handler: async (ctx, { name }) => {
+  args: { name: v.string(), departmentId: v.optional(v.id("departments")) },
+  handler: async (ctx, { name, departmentId }) => {
     const admin = ctx.caller.user;
     const trimmed = name.trim();
     if (!trimmed) {
@@ -138,9 +138,45 @@ export const createTeam = userMutation({
     return await ctx.db.insert("teams", {
       name: trimmed,
       slug: slugify(trimmed, "team"),
+      departmentId,
       createdAt: Date.now(),
       createdBy: admin._id,
     });
+  },
+});
+
+/**
+ * Everything the departments & teams page shows in one read: both lists,
+ * archived included, each with how many active people are in it.
+ */
+export const overview = userQuery({
+  role: "admin",
+  args: {},
+  handler: async (ctx) => {
+    const [departments, teams, memberships, users] = await Promise.all([
+      ctx.db.query("departments").collect(),
+      ctx.db.query("teams").collect(),
+      ctx.db.query("userTeams").collect(),
+      ctx.db.query("users").collect(),
+    ]);
+    const active = new Set(users.filter((u) => u.status === "active").map((u) => u._id));
+    const count = (keys: string[]) => {
+      const out = new Map<string, number>();
+      for (const key of keys) out.set(key, (out.get(key) ?? 0) + 1);
+      return out;
+    };
+    const byDepartment = count(
+      users.filter((u) => active.has(u._id) && u.departmentId).map((u) => u.departmentId!),
+    );
+    const byTeam = count(memberships.filter((m) => active.has(m.userId)).map((m) => m.teamId));
+    const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
+
+    return {
+      departments: departments
+        .map((d) => ({ ...d, memberCount: byDepartment.get(d._id) ?? 0 }))
+        .sort(byName),
+      teams: teams.map((t) => ({ ...t, memberCount: byTeam.get(t._id) ?? 0 })).sort(byName),
+    };
   },
 });
 

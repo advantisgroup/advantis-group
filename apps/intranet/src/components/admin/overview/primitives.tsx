@@ -1,8 +1,8 @@
 "use client";
 
-import type { ComponentType, CSSProperties, ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 
-import { ArrowDownRight, ArrowRight, ArrowUpRight, type LucideIcon } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 
 import { Link } from "@/components/Link";
 import { Card } from "@/components/ui/card";
@@ -100,137 +100,6 @@ export function Delta({
       {rounded > 0 ? "+" : ""}
       {rounded}%
     </span>
-  );
-}
-
-/**
- * The vitals-row figure: label, value, optional delta chip, and a footer line
- * that says what the number means plus one line of context. Values use
- * proportional figures deliberately — `tabular-nums` makes a three-digit
- * headline look loose at this size, and nothing here aligns in a column.
- */
-export function StatTile({
-  label,
-  value,
-  delta,
-  deltaGoodWhen,
-  headline,
-  context,
-  href,
-  icon: Icon,
-  tone = "neutral",
-}: {
-  label: string;
-  value: ReactNode;
-  delta?: number | null;
-  deltaGoodWhen?: "up" | "down" | "neutral";
-  headline?: string;
-  context?: string;
-  href?: string;
-  icon?: LucideIcon;
-  tone?: "neutral" | "ok" | "warn" | "critical";
-}) {
-  const body = (
-    <>
-      <div className="flex items-start justify-between gap-2">
-        <p className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          {Icon && <Icon className="size-3.5 shrink-0" />}
-          <span className="truncate">{label}</span>
-        </p>
-        {delta !== undefined && <Delta value={delta} goodWhen={deltaGoodWhen} />}
-      </div>
-      <p
-        className={cn(
-          "mt-3 text-3xl font-semibold leading-none tracking-tight",
-          tone === "ok" && "text-ok",
-          tone === "warn" && "text-warn",
-          tone === "critical" && "text-destructive",
-        )}
-      >
-        {value}
-      </p>
-      {(headline || context) && (
-        <div className="mt-3 space-y-0.5">
-          {headline && <p className="truncate text-xs font-medium">{headline}</p>}
-          {context && <p className="truncate text-xs text-muted-foreground">{context}</p>}
-        </div>
-      )}
-    </>
-  );
-
-  const shell =
-    "rounded-xl border border-border/70 bg-card bg-gradient-to-b from-white/[0.025] to-transparent px-4 py-4";
-  if (!href) return <div className={shell}>{body}</div>;
-  return (
-    <Link
-      href={href}
-      className={cn(
-        shell,
-        "block transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-18px_rgb(0_0_0/0.18)]",
-      )}
-    >
-      {body}
-    </Link>
-  );
-}
-
-/**
- * Bare inline-SVG trend line for the stream tiles. Deliberately not Recharts:
- * a dozen `ResponsiveContainer`s to draw a dozen 40px polylines costs far more
- * than the markup it replaces, and none of them need axes, tooltip or legend —
- * the tile's own number and the big chart below carry that.
- *
- * `viewBox` is fixed and the element scales via CSS, so the stroke stays 2px at
- * any tile width. A flat series still draws a centred baseline rather than
- * collapsing to the bottom edge, so "no activity" reads as a line, not a gap.
- */
-export function Sparkline({
-  points,
-  className,
-  style,
-  ariaLabel,
-}: {
-  points: number[];
-  className?: string;
-  style?: CSSProperties;
-  ariaLabel: string;
-}) {
-  const width = 100;
-  const height = 28;
-  if (points.length === 0) return null;
-
-  const max = Math.max(...points);
-  const min = Math.min(...points);
-  const span = max - min || 1;
-  const step = points.length > 1 ? width / (points.length - 1) : width;
-  const y = (v: number) =>
-    max === min ? height / 2 : height - 2 - ((v - min) / span) * (height - 4);
-
-  const path = points
-    .map((v, i) => `${i === 0 ? "M" : "L"}${(i * step).toFixed(2)},${y(v).toFixed(2)}`)
-    .join(" ");
-  const area = `${path} L${width},${height} L0,${height} Z`;
-
-  return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      preserveAspectRatio="none"
-      role="img"
-      aria-label={ariaLabel}
-      className={cn("h-7 w-full overflow-visible", className)}
-      style={style}
-    >
-      <path d={area} fill="currentColor" className="opacity-10" />
-      <path
-        d={path}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
-      />
-    </svg>
   );
 }
 

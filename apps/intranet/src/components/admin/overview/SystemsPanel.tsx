@@ -18,6 +18,7 @@ import { useTranslations } from "next-intl";
 
 import { Mark } from "@/components/branding/ProviderMark";
 import { Link } from "@/components/Link";
+import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { relativeTime } from "@/lib/format";
 
@@ -51,6 +52,7 @@ const PROVIDER_MARKS: Record<string, ComponentType<{ className?: string }>> = {
  */
 export function SystemsPanel() {
   const t = useTranslations("Admin");
+  const isAdmin = useIsAdmin();
   const data = useQuery(api.org.overview.systems);
 
   return (
@@ -151,7 +153,8 @@ export function SystemsPanel() {
             />
           )}
 
-          {data.disabledFlags.length > 0 && (
+          {/* admins have the flags panel right beside this one */}
+          {!isAdmin && data.disabledFlags.length > 0 && (
             <>
               <div className="my-2 h-px bg-border/60" />
               {data.disabledFlags.map((flag) => (

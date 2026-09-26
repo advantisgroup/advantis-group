@@ -33,7 +33,6 @@ export function OrgStructureBar({ units }: { units: OrgUnits }) {
   const handleError = useErrorHandler();
   const createDepartment = useMutation(api.org.structure.createDepartment);
   const createTeam = useMutation(api.org.structure.createTeam);
-  const setTeamDepartment = useMutation(api.org.structure.setTeamDepartment);
   const [kind, setKind] = useState<"team" | "department" | null>(null);
   const [name, setName] = useState("");
   const [departmentId, setDepartmentId] = useState(NONE);
@@ -52,10 +51,10 @@ export function OrgStructureBar({ units }: { units: OrgUnits }) {
       if (kind === "department") {
         await createDepartment({ name: name.trim() });
       } else {
-        const teamId = await createTeam({ name: name.trim() });
-        if (departmentId !== NONE) {
-          await setTeamDepartment({ teamId, departmentId: departmentId as Id<"departments"> });
-        }
+        await createTeam({
+          name: name.trim(),
+          departmentId: departmentId === NONE ? undefined : (departmentId as Id<"departments">),
+        });
       }
       toast.success(t("orgSaved"));
       setKind(null);
@@ -77,7 +76,7 @@ export function OrgStructureBar({ units }: { units: OrgUnits }) {
         {t("orgNewTeam")}
       </Button>
       <Button variant="ghost" size="sm" asChild className="text-muted-foreground">
-        <Link href="/admin/teams">
+        <Link href="/admin/structure">
           <Settings2 />
           {t("orgManageStructure")}
         </Link>

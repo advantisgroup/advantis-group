@@ -22,7 +22,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-import { Delta, Panel, Sparkline } from "./primitives";
+import { Delta, Panel } from "./primitives";
 import { RANGE_OPTIONS, STREAM_FAMILIES, type RangeOption } from "./streams";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -35,11 +35,9 @@ function percentDelta(total: number, previous: number): number | null {
 }
 
 /**
- * The page's one filter row plus the chart it scopes.
- *
- * Range lives here, above everything, rather than inside the chart card: the
- * stream tiles, the deltas and the plot all read the same slice, so the numbers
- * on screen always agree with each other.
+ * One panel: the range in its header, a tab per family showing its total and
+ * change, and the plot for whichever tab is picked. Tabs, deltas and plot all
+ * read the same slice, so the numbers on screen always agree with each other.
  *
  * Series are drawn as lines with a faint area wash, never stacked. "Opened" and
  * "closed" are two independent measures of the same flow, not parts of a whole —
@@ -92,18 +90,13 @@ export function ThroughputPanel() {
   const rangeLabel = t("overview.rangeDays", { days: range });
 
   return (
-    <section className="space-y-3">
-      {/* Filter row — scopes every tile and the plot below it. */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="mr-auto flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
-            <Activity className="size-4" />
-          </span>
-          <div>
-            <h2 className="text-sm font-semibold tracking-tight">{t("overview.throughput")}</h2>
-            <p className="text-xs text-muted-foreground">{t("overview.throughputHint")}</p>
-          </div>
-        </div>
+    <Panel
+      icon={<Activity />}
+      title={t("overview.throughput")}
+      description={t("overview.throughputHint")}
+      bodyClassName="p-0"
+      action={
+        // scopes every tab total and the plot below, so the numbers always agree
         <div
           className="flex items-center gap-0.5 rounded-lg border border-border/70 bg-panel-2 p-0.5"
           role="group"
@@ -126,12 +119,14 @@ export function ThroughputPanel() {
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Stream tiles: one per family, each a single-series sparkline (so no
-          legend — the tile's own label names what is plotted) that selects the
-          family rendered in the plot below. */}
-      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-5">
+      }
+    >
+      {/* One tab per family: its lead total and change, picking what the plot shows. */}
+      <div
+        role="group"
+        aria-label={t("overview.throughput")}
+        className="flex overflow-x-auto border-b border-border/60 px-2"
+      >
         {families.map((f) => {
           const lead = byKey.get(f.leadKey);
           const leadDef = f.series.find((s) => s.key === f.leadKey);
@@ -143,21 +138,17 @@ export function ThroughputPanel() {
               aria-pressed={selected}
               onClick={() => setFamilyKey(f.key)}
               className={cn(
-                "group rounded-xl border bg-card bg-gradient-to-b from-white/[0.025] to-transparent px-3.5 py-3 text-left transition-all",
-                selected
-                  ? "border-primary/40 ring-1 ring-inset ring-primary/20"
-                  : "border-border/70 hover:border-border hover:-translate-y-0.5",
+                "relative shrink-0 px-3 pb-3 pt-3.5 text-left transition-colors",
+                selected ? "text-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                  <f.icon className="size-3.5 shrink-0" />
-                  <span className="truncate">{t(`overview.families.${f.labelKey}`)}</span>
-                </span>
-              </div>
-              <div className="mt-2 flex items-end justify-between gap-2">
-                <span className="text-2xl font-semibold leading-none tracking-tight">
-                  {lead ? lead.total : <Skeleton className="inline-block h-6 w-8" />}
+              <span className="flex items-center gap-1.5 whitespace-nowrap text-xs font-medium">
+                <f.icon className="size-3.5 shrink-0" />
+                {t(`overview.families.${f.labelKey}`)}
+              </span>
+              <span className="mt-2 flex items-center gap-2">
+                <span className="text-xl font-semibold leading-none tracking-tight text-foreground">
+                  {lead ? lead.total : <Skeleton className="inline-block h-5 w-6" />}
                 </span>
                 {lead && (
                   <Delta
@@ -165,21 +156,11 @@ export function ThroughputPanel() {
                     goodWhen={leadDef?.goodWhen ?? "neutral"}
                   />
                 )}
-              </div>
-              {lead && (
-                <Sparkline
-                  points={lead.points}
-                  ariaLabel={t("overview.sparklineLabel", {
-                    series: t(`overview.series.${f.leadKey}`),
-                    days: range,
-                  })}
-                  // Selected draws in slot 1 — every family's lead series *is*
-                  // its slot-1 series, so the tile's line and the same line in
-                  // the plot below share a hue. (Brand red would read as an
-                  // alarm on a neutral series; the border ring already carries
-                  // the selection affordance.)
-                  className={cn("mt-2 transition-colors", !selected && "text-muted-foreground/70")}
-                  style={selected ? { color: "var(--chart-1)" } : undefined}
+              </span>
+              {selected && (
+                <span
+                  aria-hidden
+                  className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-foreground"
                 />
               )}
             </button>
@@ -187,47 +168,46 @@ export function ThroughputPanel() {
         })}
       </div>
 
-      <Panel
-        icon={<family.icon />}
-        title={t(`overview.families.${family.labelKey}`)}
-        description={t("overview.familyHint", { range: rangeLabel })}
-        bodyClassName="px-2 pb-2 pt-4 sm:px-4"
-        action={
-          <div className="flex items-center gap-1">
-            <div
-              className="flex items-center gap-0.5 rounded-lg border border-border/70 bg-panel-2 p-0.5"
-              role="group"
-              aria-label={t("overview.viewLabel")}
-            >
-              {(
-                [
-                  ["chart", LineChartIcon, t("overview.viewChart")],
-                  ["table", Table2, t("overview.viewTable")],
-                ] as const
-              ).map(([key, Icon, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  aria-label={label}
-                  aria-pressed={view === key}
-                  onClick={() => setView(key)}
-                  className={cn(
-                    "grid size-6 place-items-center rounded-md transition-colors",
-                    view === key
-                      ? "bg-card text-foreground shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <Icon className="size-3.5" />
-                </button>
-              ))}
-            </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={family.href}>{t("overview.open")}</Link>
-            </Button>
+      <div className="flex items-center justify-between gap-2 px-5 pb-1 pt-4">
+        <p className="min-w-0 truncate text-xs text-muted-foreground">
+          {t("overview.familyHint", { range: rangeLabel })}
+        </p>
+        <div className="flex shrink-0 items-center gap-1">
+          <div
+            className="flex items-center gap-0.5 rounded-lg border border-border/70 bg-panel-2 p-0.5"
+            role="group"
+            aria-label={t("overview.viewLabel")}
+          >
+            {(
+              [
+                ["chart", LineChartIcon, t("overview.viewChart")],
+                ["table", Table2, t("overview.viewTable")],
+              ] as const
+            ).map(([key, Icon, label]) => (
+              <button
+                key={key}
+                type="button"
+                aria-label={label}
+                aria-pressed={view === key}
+                onClick={() => setView(key)}
+                className={cn(
+                  "grid size-6 place-items-center rounded-md transition-colors",
+                  view === key
+                    ? "bg-card text-foreground shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon className="size-3.5" />
+              </button>
+            ))}
           </div>
-        }
-      >
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={family.href}>{t("overview.open")}</Link>
+          </Button>
+        </div>
+      </div>
+
+      <div className="px-2 pb-2 pt-2 sm:px-4">
         {data === undefined ? (
           <Skeleton className="mx-2 h-[240px] rounded-lg" />
         ) : view === "table" ? (
@@ -296,8 +276,8 @@ export function ThroughputPanel() {
             </ComposedChart>
           </ChartContainer>
         )}
-      </Panel>
-    </section>
+      </div>
+    </Panel>
   );
 }
 

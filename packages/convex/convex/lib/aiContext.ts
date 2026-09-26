@@ -482,8 +482,7 @@ export async function navigateContext(ctx: QueryCtx, caller: Caller) {
           { href: "/admin/password-resets", label: "Warteschlange für Passwort-Zurücksetzungen" },
           { href: "/admin/members", label: "Mitglieder / Benutzerkonten verwalten" },
           { href: "/admin/roles", label: "Benutzerdefinierte Rollen & Rechte" },
-          { href: "/admin/teams", label: "Teams" },
-          { href: "/admin/departments", label: "Abteilungen" },
+          { href: "/admin/structure", label: "Abteilungen & Teams" },
           {
             href: "/admin/integrations",
             label: "Integrationen (Clockodo, Genesys, OneDrive, ...)",

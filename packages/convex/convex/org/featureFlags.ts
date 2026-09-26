@@ -12,6 +12,7 @@ import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { appendTimeline, insertUpdate } from "../updates/lib/updates";
+import { displayName } from "../lib/users";
 
 /** Actions can't touch `ctx.db` directly — this is what `gatedAction`/`gatedInternalAction` call via `ctx.runQuery`. */
 export const isEnabledInternal = internalQuery({
@@ -38,6 +39,35 @@ export const list = userQuery({
           // off but nobody told yet (or the update was deleted) — the admin panel offers to post it now
           hasUpdate: await updateLives(ctx, row?.updateId),
           updatedAt: row?.updatedAt,
+        };
+      }),
+    );
+  },
+});
+
+/**
+ * The extra context the flags page shows next to each switch: who flipped it,
+ * the update people are reading, and for the website forms how many visitors
+ * are waiting to hear they're back. Kept out of `list`, which every page
+ * subscribes to through FeatureGate. Admin only.
+ */
+export const details = userQuery({
+  role: "admin",
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db.query("featureFlags").collect();
+    const waiting = rows.some((row) => row.key === "marketingSubmissions" && !row.enabled)
+      ? (await ctx.db.query("notifyEmails").collect()).length
+      : 0;
+    return await Promise.all(
+      rows.map(async (row) => {
+        const by = await ctx.db.get(row.updatedByUserId);
+        const live = await updateLives(ctx, row.updateId);
+        return {
+          key: row.key,
+          updatedByName: by ? displayName(by) : null,
+          updateId: live ? row.updateId : null,
+          waiting: row.key === "marketingSubmissions" ? waiting : 0,
         };
       }),
     );

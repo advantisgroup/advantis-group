@@ -86,6 +86,9 @@ const nextConfig: NextConfig = {
         destination: "/playground/:path*",
         permanent: true,
       },
+      // Departments and teams are one page now.
+      { source: "/admin/departments", destination: "/admin/structure", permanent: true },
+      { source: "/admin/teams", destination: "/admin/structure", permanent: true },
     ];
   },
 };

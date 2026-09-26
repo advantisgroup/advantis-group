@@ -11,7 +11,6 @@ import {
   AlertTriangle,
   BookOpen,
   Calendar,
-  ChevronRight,
   Clock3,
   Cloud,
   ExternalLink,
@@ -68,10 +67,8 @@ import {
   Sidebar as SidebarShell,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
   SidebarHeader,
   SidebarLabel,
-  SidebarMenu,
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -103,8 +100,6 @@ interface NavGroup {
   labelKey: string;
   namespace?: "Nav" | "Admin";
   items: NavItem[];
-  /** Rendered behind a collapsed disclosure rather than inline. */
-  advanced?: boolean;
 }
 
 type SidebarMode = "workspace" | "organization";
@@ -366,7 +361,6 @@ export function Sidebar() {
       labelKey: group.labelKey,
       namespace: "Admin" as const,
       items: group.items,
-      advanced: group.advanced,
     })),
   ];
 
@@ -390,7 +384,6 @@ export function Sidebar() {
       ? "organization"
       : "workspace";
   const [mode, setMode] = useState<SidebarMode>(routeMode);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   useEffect(() => {
     setMode(routeMode);
@@ -427,16 +420,11 @@ export function Sidebar() {
   })).filter((s) => s.items.length > 0);
   const workspaceSections = resolveSidebarSections(prefs?.sidebarSections, workspaceDefaults);
 
-  const organizationSections: SidebarSection[] = visibleOrganizationGroups
-    .filter((group) => !group.advanced)
-    .map((group) => ({
-      id: `org:${group.labelKey}`,
-      title: group.namespace === "Admin" ? tAdmin(group.labelKey) : t(group.labelKey),
-      items: group.items.map((i) => i.href),
-    }));
-  const advancedItems = visibleOrganizationGroups
-    .filter((group) => group.advanced)
-    .flatMap((g) => g.items);
+  const organizationSections: SidebarSection[] = visibleOrganizationGroups.map((group) => ({
+    id: `org:${group.labelKey}`,
+    title: group.namespace === "Admin" ? tAdmin(group.labelKey) : t(group.labelKey),
+    items: group.items.map((i) => i.href),
+  }));
 
   // The tour points at nav items, so while it runs every section is open
   // (the saved preference is untouched and comes back once it ends).
@@ -602,30 +590,6 @@ export function Sidebar() {
               onToggleSection={toggleSection}
               onChange={() => {}}
             />
-            {advancedItems.length > 0 && (
-              <SidebarGroup>
-                {/* The icon rail has no room for a disclosure label, so there
-                    the items just sit inline like any other group. */}
-                <button
-                  type="button"
-                  onClick={() => setAdvancedOpen((open) => !open)}
-                  aria-expanded={advancedOpen}
-                  className="flex w-full items-center gap-1 rounded-md px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 transition-colors hover:text-sidebar-foreground/80 group-data-[state=collapsed]/sidebar:hidden"
-                >
-                  {tAdmin("nav.groupAdvanced")}
-                  <ChevronRight
-                    className={cn("size-3 transition-transform", advancedOpen && "rotate-90")}
-                  />
-                </button>
-                <SidebarMenu
-                  className={cn(
-                    !advancedOpen && "hidden group-data-[state=collapsed]/sidebar:flex",
-                  )}
-                >
-                  {advancedItems.map((item) => navLink(item.href))}
-                </SidebarMenu>
-              </SidebarGroup>
-            )}
           </>
         ) : (
           <SidebarSections

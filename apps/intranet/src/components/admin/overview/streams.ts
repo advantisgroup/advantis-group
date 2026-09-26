@@ -42,7 +42,7 @@ export const QUEUE_META: Record<string, QueueMeta> = {
   },
   suggestions: { icon: Lightbulb, href: "/suggestions", labelKey: "suggestions" },
   passwordResets: { icon: KeyRound, href: "/admin/password-resets", labelKey: "passwordResets" },
-  orgDataReview: { icon: ShieldAlert, href: "/admin/departments", labelKey: "orgDataReview" },
+  orgDataReview: { icon: ShieldAlert, href: "/admin/structure", labelKey: "orgDataReview" },
 };
 
 /**

@@ -2,11 +2,10 @@
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { CheckCircle2, Inbox } from "lucide-react";
+import { CheckCircle2, ChevronRight, Inbox } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
-import { Badge } from "@/components/ui/badge";
 import { relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -38,15 +37,23 @@ export function ActionQueue() {
       description={t("overview.queue.hint")}
       action={
         data && data.total > 0 ? (
-          <Badge variant={data.overdue > 0 ? "warning" : "muted"}>
+          <p className="pt-1.5 text-xs font-medium tabular-nums text-muted-foreground">
             {t("overview.queue.waiting", { count: data.total })}
-          </Badge>
+            {data.overdue > 0 && (
+              <span className="text-warn">
+                {" · "}
+                {t("overview.queue.overdue", { count: data.overdue })}
+              </span>
+            )}
+          </p>
         ) : null
       }
-      bodyClassName="p-3"
+      bodyClassName="p-2"
     >
       {data === undefined ? (
-        <PanelSkeleton rows={4} />
+        <div className="p-2">
+          <PanelSkeleton rows={4} />
+        </div>
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center gap-1.5 px-4 py-10 text-center">
           <span className="grid size-10 place-items-center rounded-full bg-ok/12 text-ok">
@@ -56,7 +63,7 @@ export function ActionQueue() {
           <p className="max-w-xs text-xs text-muted-foreground">{t("overview.queue.clearBody")}</p>
         </div>
       ) : (
-        <div className="grid gap-1.5 sm:grid-cols-2">
+        <div className="grid gap-x-2 sm:grid-cols-2">
           {items.map((entry) => {
             const meta = QUEUE_META[entry.key];
             if (!meta) return null;
@@ -65,7 +72,7 @@ export function ActionQueue() {
               <Link
                 key={entry.key}
                 href={meta.href}
-                className="group flex items-center gap-3 rounded-lg border border-border/60 px-3 py-2.5 transition-colors hover:border-border hover:bg-accent"
+                className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-accent"
               >
                 <span
                   className={cn(
@@ -96,6 +103,7 @@ export function ActionQueue() {
                 <span className="shrink-0 text-lg font-semibold leading-none tabular-nums">
                   {entry.count}
                 </span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
               </Link>
             );
           })}
