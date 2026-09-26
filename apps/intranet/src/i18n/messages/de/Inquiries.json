@@ -100,5 +100,8 @@
   "noMatchesInTab": "Gesucht wurde nur in diesem Tab. Versuch es unter „Alle“.",
   "searchScope": "Durchsucht wurden die 1.000 neuesten Anfragen. Eine genaue Referenz wird unabhängig vom Alter gefunden.",
   "copyReference": "Referenz kopieren",
-  "referenceCopied": "{reference} kopiert"
+  "referenceCopied": "{reference} kopiert",
+  "attach": "Dateien anhängen",
+  "removeFile": "{name} entfernen",
+  "tooLarge": "Dateien dürfen bis zu 10 MB groß sein."
 }

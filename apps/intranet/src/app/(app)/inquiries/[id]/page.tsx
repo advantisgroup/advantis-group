@@ -8,7 +8,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { inquiryTitleParts, type InquiryState } from "@advantis/convex/marketing/inquiry";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, Copy, Inbox, Lock, Paperclip } from "lucide-react";
+import { ArrowLeft, Copy, Inbox, Lock, Paperclip, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -31,6 +31,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Timeline } from "@/components/ui/timeline";
 
 const UNASSIGNED = "none";
+// the same limits Convex checks on a reply's attachments
+const MAX_FILES = 3;
+const MAX_BYTES = 10 * 1024 * 1024;
 
 /** `YYYY-MM-DDTHH:mm` in the browser's zone, for a datetime-local input. */
 const toLocalInput = (at: number) => {
@@ -59,8 +62,10 @@ export default function InquiryPage() {
   const reply = useMutation(api.marketing.inbox.reply);
   const confirmCallback = useMutation(api.marketing.inbox.confirmCallback);
   const cancelCallback = useMutation(api.marketing.inbox.cancelCallback);
+  const generateUploadUrl = useMutation(api.marketing.inbox.generateUploadUrl);
 
   const [draft, setDraft] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const [slot, setSlot] = useState("");
 
@@ -125,14 +130,45 @@ export default function InquiryPage() {
     }
   };
 
+  const upload = async (file: File) => {
+    const url = await generateUploadUrl({});
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    const { storageId } = (await response.json()) as { storageId: Id<"_storage"> };
+    return {
+      storageId,
+      name: file.name,
+      size: file.size,
+      contentType: file.type,
+      kind: file.type.startsWith("image/") ? ("image" as const) : ("file" as const),
+    };
+  };
+
   const sendReply = async () => {
-    if (!draft.trim()) return;
+    if (!draft.trim() && !files.length) return;
     setSending(true);
     await run(async () => {
-      await reply({ id: inquiryId, body: draft });
+      const attachments = await Promise.all(files.map(upload));
+      await reply({
+        id: inquiryId,
+        body: draft,
+        attachments: attachments.length ? attachments : undefined,
+      });
       setDraft("");
+      setFiles([]);
     }, t("replySent"));
     setSending(false);
+  };
+
+  const pickFiles = (list: FileList | null) => {
+    const picked = [...(list ?? [])];
+    if (picked.some((file) => file.size > MAX_BYTES)) toast.error(t("tooLarge"));
+    setFiles((current) =>
+      [...current, ...picked.filter((file) => file.size <= MAX_BYTES)].slice(0, MAX_FILES),
+    );
   };
 
   const details: [string, string | undefined][] = [
@@ -284,9 +320,53 @@ export default function InquiryPage() {
                     }
                   }}
                 />
-                <div className="mt-2 flex items-center justify-between gap-3">
-                  <p className="text-xs text-muted-foreground">{t("replyHint")}</p>
-                  <Button onClick={() => void sendReply()} disabled={sending || !draft.trim()}>
+                {files.length ? (
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {files.map((file, index) => (
+                      <li
+                        key={`${file.name}-${index}`}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs"
+                      >
+                        <Paperclip className="size-3.5 text-muted-foreground" aria-hidden />
+                        {file.name}
+                        <button
+                          type="button"
+                          aria-label={t("removeFile", { name: file.name })}
+                          onClick={() => setFiles(files.filter((_, i) => i !== index))}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-4">
+                    <label
+                      className={`inline-flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground ${
+                        files.length >= MAX_FILES ? "pointer-events-none opacity-50" : ""
+                      }`}
+                    >
+                      <Paperclip className="size-3.5" aria-hidden />
+                      {t("attach")}
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*,application/pdf,.doc,.docx"
+                        className="sr-only"
+                        onChange={(event) => {
+                          pickFiles(event.target.files);
+                          event.target.value = "";
+                        }}
+                      />
+                    </label>
+                    <p className="text-xs text-muted-foreground">{t("replyHint")}</p>
+                  </div>
+                  <Button
+                    onClick={() => void sendReply()}
+                    disabled={sending || (!draft.trim() && !files.length)}
+                  >
                     {t("sendReply")}
                   </Button>
                 </div>

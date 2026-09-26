@@ -7,7 +7,7 @@ import { type QueryCtx } from "../_generated/server";
 import { userMutation, userQuery } from "../functions";
 import { attachmentValidator } from "../lib/validators";
 import { inquiryStateValidator } from "../tables/marketing";
-import { inquiryWatchers, referenceFor } from "./inquiries";
+import { checkAttachments, inquiryWatchers, referenceFor } from "./inquiries";
 import {
   REF_MIN_LENGTH,
   formatReference,
@@ -397,6 +397,7 @@ export const reply = userMutation({
     if (!text && !attachments?.length) {
       throw new ConvexError({ code: "invalid", message: "Empty reply" });
     }
+    await checkAttachments(ctx, attachments);
     const now = Date.now();
     const messageId = await ctx.db.insert("inquiryMessages", {
       inquiryId: id,

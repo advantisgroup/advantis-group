@@ -100,5 +100,8 @@
   "noMatchesInTab": "Only this tab was searched. Try “All”.",
   "searchScope": "Searched the 1,000 most recent inquiries. An exact reference is found however old it is.",
   "copyReference": "Copy reference",
-  "referenceCopied": "Copied {reference}"
+  "referenceCopied": "Copied {reference}",
+  "attach": "Attach files",
+  "removeFile": "Remove {name}",
+  "tooLarge": "Files can be up to 10 MB."
 }

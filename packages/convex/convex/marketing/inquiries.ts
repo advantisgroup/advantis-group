@@ -188,7 +188,7 @@ const staffFirstName = async (ctx: QueryCtx, userId: Id<"users"> | undefined) =>
   return user?.firstName ?? undefined;
 };
 
-async function checkAttachments(
+export async function checkAttachments(
   ctx: QueryCtx,
   attachments: Infer<typeof attachmentValidator>[] | undefined,
 ) {
