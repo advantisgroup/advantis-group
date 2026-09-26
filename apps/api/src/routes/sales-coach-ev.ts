@@ -542,6 +542,7 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
           clerkUserId,
           kind: "coachWikiExtract",
           subjectKey: `coachWikiExtract:${body.subjectKey ?? "new"}`,
+          title: fileName || undefined,
           href: body.href ?? `/sales-coach-ev/wiki/${body.subjectKey ?? "new"}`,
         },
         async (run) => JSON.stringify({ ...(await runWikiExtraction(run, input)), fileName }),

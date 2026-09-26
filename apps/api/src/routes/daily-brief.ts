@@ -24,7 +24,13 @@ export const dailyBriefRoute = new Elysia().use(authed).post(
     const language = body.locale === "en" ? "English" : "German";
 
     const { runId } = await startAiRun(
-      { clerkUserId, kind: "dailyBrief", subjectKey: `dailyBrief:${body.day}`, href: "/" },
+      {
+        clerkUserId,
+        kind: "dailyBrief",
+        subjectKey: `dailyBrief:${body.day}`,
+        href: "/",
+        title: body.day,
+      },
       async (run) => {
         run.addSources(context.sources);
         return runModelText(run, {

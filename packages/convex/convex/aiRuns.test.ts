@@ -8,7 +8,7 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test, vi } from "vitest";
 
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { versionsToDrop } from "./drafts/lib/drafts";
 import schema from "./schema";
 import { modules } from "./test.setup";
@@ -122,6 +122,172 @@ describe("aiRuns", () => {
     expect(await alice.query(api.aiRuns.dock, {})).toHaveLength(1);
     await alice.mutation(api.aiRuns.markSeen, { runId });
     expect(await alice.query(api.aiRuns.dock, {})).toHaveLength(0);
+  });
+  test("a run keeps what it was sent, readable only by the API for its owner", async () => {
+    const t = setup();
+    const alice = await seedUser(t, "user_alice");
+    await seedUser(t, "user_bob");
+    const runId = await startChatRun(t);
+    await t.mutation(api.aiRuns.apiFinish, {
+      serverKey,
+      runId,
+      output: "sealed",
+      outputChars: 6,
+      transcript: { data: "sealed-transcript", chars: 1234, truncated: false },
+    });
+
+    expect(await alice.query(api.aiRuns.get, { runId })).toMatchObject({ transcriptChars: 1234 });
+    const own = await t.query(api.aiRuns.apiTranscript, {
+      serverKey,
+      clerkUserId: "user_alice",
+      runId,
+    });
+    expect(own?.data).toBe("sealed-transcript");
+    expect(
+      await t.query(api.aiRuns.apiTranscript, { serverKey, clerkUserId: "user_bob", runId }),
+    ).toBeNull();
+  });
+
+  test("a failed run still records what it was sent", async () => {
+    const t = setup();
+    await seedUser(t, "user_alice");
+    const runId = await startChatRun(t);
+    await t.mutation(api.aiRuns.apiFail, {
+      serverKey,
+      runId,
+      errorCode: "upstream",
+      retryable: true,
+      transcript: { data: "sealed", chars: 10, truncated: false },
+    });
+    const row = await t.query(api.aiRuns.apiTranscript, {
+      serverKey,
+      clerkUserId: "user_alice",
+      runId,
+    });
+    expect(row?.chars).toBe(10);
+  });
+
+  test("history keeps runs the dock has put away, and filters by feature", async () => {
+    const t = setup();
+    const alice = await seedUser(t, "user_alice");
+    const bob = await seedUser(t, "user_bob");
+    const chat = await startChatRun(t);
+    await t.mutation(api.aiRuns.apiFinish, { serverKey, runId: chat, output: "x", outputChars: 1 });
+    await alice.mutation(api.aiRuns.markSeen, { runId: chat });
+    await t.mutation(api.aiRuns.apiStart, {
+      serverKey,
+      clerkUserId: "user_alice",
+      kind: "navigate",
+      subjectKey: "navigate",
+    });
+
+    expect(await alice.query(api.aiRuns.dock, {})).toHaveLength(1);
+    const first = { numItems: 10, cursor: null };
+    const all = await alice.query(api.aiRuns.history, { paginationOpts: first });
+    expect(all.page.map((r) => r.kind)).toEqual(["navigate", "wikiChat"]);
+    const chats = await alice.query(api.aiRuns.history, {
+      paginationOpts: first,
+      kind: "wikiChat",
+    });
+    expect(chats.page.map((r) => r._id)).toEqual([chat]);
+    const theirs = await bob.query(api.aiRuns.history, { paginationOpts: first });
+    expect(theirs.page).toEqual([]);
+  });
+
+  test("deleting a run takes its transcript and rating with it; others can't", async () => {
+    const t = setup();
+    const alice = await seedUser(t, "user_alice");
+    const bob = await seedUser(t, "user_bob");
+    const runId = await startChatRun(t);
+    await t.mutation(api.aiRuns.apiFinish, {
+      serverKey,
+      runId,
+      output: "x",
+      outputChars: 1,
+      transcript: { data: "t", chars: 1, truncated: false },
+    });
+    await alice.mutation(api.aiRuns.rateRun, { runId, rating: "up" });
+
+    await bob.mutation(api.aiRuns.remove, { runId });
+    expect(await alice.query(api.aiRuns.get, { runId })).not.toBeNull();
+
+    await alice.mutation(api.aiRuns.remove, { runId });
+    expect(await alice.query(api.aiRuns.get, { runId })).toBeNull();
+    const left = await t.run(async (ctx) => ({
+      transcripts: await ctx.db.query("aiRunTranscripts").collect(),
+      feedback: await ctx.db.query("aiFeedback").collect(),
+    }));
+    expect(left).toEqual({ transcripts: [], feedback: [] });
+  });
+
+  test("titles are handed to the API only for the caller's own runs", async () => {
+    const t = setup();
+    await seedUser(t, "user_alice");
+    await seedUser(t, "user_bob");
+    const titled = await t.mutation(api.aiRuns.apiStart, {
+      serverKey,
+      clerkUserId: "user_alice",
+      kind: "wikiChat",
+      subjectKey: "wikiChat:titled",
+      title: "sealed-title",
+    });
+    const untitled = await startChatRun(t);
+    const ask = (clerkUserId: string) =>
+      t.query(api.aiRuns.apiTitles, { serverKey, clerkUserId, runIds: [titled, untitled, "nope"] });
+
+    expect(await ask("user_alice")).toEqual([
+      { _id: titled, kind: "wikiChat", subjectKey: "wikiChat:titled", title: "sealed-title" },
+    ]);
+    expect(await ask("user_bob")).toEqual([]);
+  });
+
+  test("a run that decides where it leads links there from the dock", async () => {
+    const t = setup();
+    const alice = await seedUser(t, "user_alice");
+    const runId = await t.mutation(api.aiRuns.apiStart, {
+      serverKey,
+      clerkUserId: "user_alice",
+      kind: "navigate",
+      subjectKey: "navigate",
+    });
+    await t.mutation(api.aiRuns.apiFinish, {
+      serverKey,
+      runId,
+      output: "{}",
+      outputChars: 2,
+      href: "/calendar?event=e1",
+    });
+    expect(await alice.query(api.aiRuns.get, { runId })).toMatchObject({
+      href: "/calendar?event=e1",
+    });
+    // Once the person has been taken there, it leaves the dock.
+    await alice.mutation(api.aiRuns.markSeen, { runId });
+    expect(await alice.query(api.aiRuns.dock, {})).toEqual([]);
+  });
+
+  test("after 30 days a run goes, transcript included", async () => {
+    vi.useFakeTimers();
+    try {
+      const t = setup();
+      await seedUser(t, "user_alice");
+      const runId = await startChatRun(t);
+      await t.mutation(api.aiRuns.apiFinish, {
+        serverKey,
+        runId,
+        output: "x",
+        outputChars: 1,
+        transcript: { data: "t", chars: 1, truncated: false },
+      });
+      vi.advanceTimersByTime(31 * 86_400_000);
+      await t.mutation(internal.aiRuns.pruneOld, {});
+      const left = await t.run(async (ctx) => ({
+        runs: await ctx.db.query("aiRuns").collect(),
+        transcripts: await ctx.db.query("aiRunTranscripts").collect(),
+      }));
+      expect(left).toEqual({ runs: [], transcripts: [] });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

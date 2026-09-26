@@ -28,54 +28,75 @@ function askPrompt(context: string, question: string) {
   ];
 }
 
-export const askRoute = new Elysia().use(authed).post(
-  "/ask",
-  async ({ caller, body }) => {
-    const { clerkUserId } = caller;
-    await rateLimit("ai.ask", clerkUserId, 15, "1 m");
-    const question = body.question.trim();
-    if (!question) throw Errors.badRequest("Empty question");
+const askSubject = t.Union([
+  t.Literal("itTicket"),
+  t.Literal("applicant"),
+  t.Literal("announcement"),
+  t.Literal("errorReport"),
+  t.Literal("suggestion"),
+]);
 
-    const context = await caller.convex.query(api.aiRuns.apiAskContext, {
-      type: body.type,
-      id: body.id,
-    });
+export const askRoute = new Elysia()
+  .use(authed)
+  /** Exactly what asking about this record sends, before anything is sent —
+   * built by the same function as the real request, with the question left
+   * as a placeholder. Nothing goes to the model and no run is opened. */
+  .get(
+    "/ask/preview",
+    async ({ caller, query }) => {
+      await rateLimit("ai.askPreview", caller.clerkUserId, 30, "1 m");
+      const context = await caller.convex.query(api.aiRuns.apiAskContext, {
+        type: query.type,
+        id: query.id,
+      });
+      const [record] = askPrompt(context.text, "");
+      return { system: ASK_SYSTEM, record: record.text };
+    },
+    { signedIn: true, query: t.Object({ type: askSubject, id: t.String({ maxLength: 64 }) }) },
+  )
+  .post(
+    "/ask",
+    async ({ caller, body }) => {
+      const { clerkUserId } = caller;
+      await rateLimit("ai.ask", clerkUserId, 15, "1 m");
+      const question = body.question.trim();
+      if (!question) throw Errors.badRequest("Empty question");
 
-    const { runId } = await startAiRun(
-      {
-        clerkUserId,
-        kind: "ask",
-        subjectKey: `ask:${body.type}:${body.id}`,
-        href: context.href,
-      },
-      async (run) => {
-        run.addSources(context.sources);
-        return runModelText(
-          run,
-          {
-            max_tokens: 900,
-            system: [{ type: "text", text: ASK_SYSTEM }],
-            messages: [{ role: "user", content: askPrompt(context.text, question) }],
-          },
-          { acceptTruncated: true },
-        );
-      },
-    );
+      const context = await caller.convex.query(api.aiRuns.apiAskContext, {
+        type: body.type,
+        id: body.id,
+      });
 
-    return { runId, title: context.title };
-  },
-  {
-    signedIn: true,
-    body: t.Object({
-      type: t.Union([
-        t.Literal("itTicket"),
-        t.Literal("applicant"),
-        t.Literal("announcement"),
-        t.Literal("errorReport"),
-        t.Literal("suggestion"),
-      ]),
-      id: t.String({ maxLength: 64 }),
-      question: t.String({ minLength: 1, maxLength: 1000 }),
-    }),
-  },
-);
+      const { runId } = await startAiRun(
+        {
+          clerkUserId,
+          kind: "ask",
+          subjectKey: `ask:${body.type}:${body.id}`,
+          href: context.href,
+          title: `${context.title}: ${question}`,
+        },
+        async (run) => {
+          run.addSources(context.sources);
+          return runModelText(
+            run,
+            {
+              max_tokens: 900,
+              system: [{ type: "text", text: ASK_SYSTEM }],
+              messages: [{ role: "user", content: askPrompt(context.text, question) }],
+            },
+            { acceptTruncated: true },
+          );
+        },
+      );
+
+      return { runId, title: context.title };
+    },
+    {
+      signedIn: true,
+      body: t.Object({
+        type: askSubject,
+        id: t.String({ maxLength: 64 }),
+        question: t.String({ minLength: 1, maxLength: 1000 }),
+      }),
+    },
+  );

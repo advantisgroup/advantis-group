@@ -158,6 +158,7 @@ export function CommandPalette({ className }: { className?: string } = {}) {
   // authored knowledge base — the part that actually grows — was unreachable
   // from here.
   const wikiEntries = useQuery(api.wiki.entries.list, open && query.trim() ? {} : "skip");
+  const intranetPages = useQuery(api.intranetPages.list, open && query.trim() ? {} : "skip");
   // A locked vault makes applicants.list throw, which would take the whole
   // palette down — only search applicants while it's unlocked.
   const vault = useQuery(api.hr.vault.status, open && hasApplicantAccess ? {} : "skip");
@@ -437,6 +438,35 @@ export function CommandPalette({ className }: { className?: string } = {}) {
       }
     }
 
+    // Every other page in the intranet, from the same list the wayfinder
+    // searches (packages/convex/convex/lib/pages.ts) — matched on what you do
+    // there, not just its name, and with the links that open something directly.
+    const listed = new Set(list.map((item) => item.href).filter(Boolean));
+    for (const p of intranetPages ?? []) {
+      const entries = [
+        { href: p.href, label: p.label, haystack: [p.label, p.description, ...p.keywords] },
+        ...p.deepLinks.map((link) => ({
+          href: link.href,
+          label: link.label,
+          haystack: [link.label],
+        })),
+      ];
+      for (const entry of entries) {
+        if (listed.has(entry.href)) continue;
+        if (!entry.haystack.some((text) => text.toLowerCase().includes(q))) continue;
+        listed.add(entry.href);
+        list.push({
+          id: `page:${entry.href}`,
+          group: t("pages"),
+          label: entry.label,
+          sublabel: entry.href === p.href ? p.description : p.label,
+          icon: Search,
+          href: entry.href,
+          run: () => go(entry.href),
+        });
+      }
+    }
+
     for (const gb of guidebooks) {
       const title = guidebookTitle(gb, tGuide);
       if (title.toLowerCase().includes(q)) {
@@ -527,6 +557,7 @@ export function CommandPalette({ className }: { className?: string } = {}) {
     hasApplicantAccess,
     guidebooks,
     wikiEntries,
+    intranetPages,
     t,
     tGuide,
   ]);

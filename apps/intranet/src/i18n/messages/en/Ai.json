@@ -40,7 +40,11 @@
       "suggestionSummary": "Summarise this suggestion.",
       "suggestionDecision": "What was decided, and why?",
       "suggestionImpact": "Who would this help?"
-    }
+    },
+    "previewToggle": "Preview exactly what's sent",
+    "previewRecord": "The record, as the model reads it",
+    "previewQuestion": "Then your question",
+    "previewQuestionPlaceholder": "(what you type below)"
   },
   "phase": {
     "reading": "Reading",
@@ -86,10 +90,10 @@
     "metaStorage": "Stored",
     "metaStorageValue": "Encrypted",
     "encTitle": "Encrypted before it's ever stored",
-    "encBody": "Every answer is locked by our API server the moment it comes back. What reaches the intranet's database is scrambled text that means nothing without the key — so a leaked backup, a database admin or anyone reading the tables sees no AI content at all.",
+    "encBody": "Every answer, and the record of what was sent to get it, is locked by our API server the moment it comes back. What reaches the intranet's database is scrambled text that means nothing without the key — so a leaked backup, a database admin or anyone reading the tables sees no AI content at all.",
     "encAlgo": "AES-256-GCM, a widely used standard for protecting stored data.",
     "encKey": "The key stays on our API server. The database never holds it.",
-    "encDeleted": "Deleted, not just hidden, 30 days after the run started.",
+    "encDeleted": "Deleted, not just hidden, 30 days after the run started — or sooner, if you delete it from your history.",
     "encYouSee": "What you see",
     "encDbHolds": "What the database holds",
     "encSample": "The customer asked about charging power — mention the wallbox's 11 kW and offer an on-site visit.",
@@ -119,7 +123,7 @@
       "cvRescan": "That applicant's CV again, when you ask for an update.",
       "ask": "The record you're asking about — an IT ticket with its history and thread, an announcement, an error report with its measures, a suggestion, or an applicant's profile and notes. The panel lists exactly what was included.",
       "dailyBrief": "The same things your overview page shows you — your open tickets and measures, today's and tomorrow's events, unread announcements and how many chat messages are waiting (not their content) — to write a few sentences about your day.",
-      "navigate": "What you type into the helper, plus the list of pages you can see and a few of your own recent IT tickets — just enough to pick the one link that matches, never their full content."
+      "navigate": "What you type into the helper, the pages you can open and your newest IT tickets. To find something specific it searches wiki entries, colleagues, announcements, suggestions, error reports, events and your tickets — only what you could open yourself — and sees the titles of what matched, not the content. Your AI history lists every search it made."
     },
     "whereTitle": "Where it goes",
     "whereHint": "The path a request takes, and what is left behind afterwards.",
@@ -132,7 +136,7 @@
     "whoTitle": "Who can see what",
     "whoHint": "An AI result belongs to whoever started it.",
     "youSee": "You",
-    "youSeeBody": "Your own runs — on the page that started them and in the AI dock, with the details of each run.",
+    "youSeeBody": "Your own runs — on the page that started them, in the AI dock, and in your AI history, with exactly what each one was sent.",
     "managersSee": "Managers",
     "managersSeeBody": "How many runs there were, what failed and why, and token usage. Never the answers themselves.",
     "ratings": "Your ratings",
@@ -187,7 +191,10 @@
     "sourcesEmpty": "Not recorded for this run.",
     "notRecorded": "Not recorded",
     "errorCode": "Error code",
-    "result": "Result"
+    "result": "Result",
+    "sentPending": "Recorded once it finishes",
+    "sourcesExplain": "These are named for people. The transcript shows the exact text the model received.",
+    "fullTranscript": "See exactly what was sent"
   },
   "errors": {
     "rate_limited": "Too many requests right now — give it a minute, then try again.",
@@ -197,5 +204,49 @@
     "truncated": "The answer ran too long and got cut off.",
     "interrupted": "The connection dropped before it finished.",
     "internal": "Something went wrong on our side."
+  },
+  "history": {
+    "back": "AI settings",
+    "backToList": "All runs",
+    "title": "AI history",
+    "hint": "Every AI run you started in the last 30 days, including the ones you dismissed from the dock. Open one to see exactly what it was sent, what it looked up and what came back.",
+    "recentTitle": "Your recent runs",
+    "recentHint": "Open one to see exactly what the AI was given and what it answered.",
+    "seeAll": "See all",
+    "seeAllInDock": "See all AI runs",
+    "filterFeature": "Feature",
+    "empty": "No AI runs yet",
+    "emptyHint": "Anything you ask the AI shows up here for 30 days.",
+    "loadMore": "Show more",
+    "sourcesCount": "{count, plural, one {# source} other {# sources}}",
+    "notFound": "This run doesn't exist anymore",
+    "notFoundHint": "Runs are deleted 30 days after they started, or when you delete them yourself.",
+    "sent": "Sent to the AI",
+    "deletedOn": "Deleted on",
+    "tokensInOut": "{in} in · {out} out",
+    "tokens": "tokens",
+    "sourcesHint": "What went into the request, named the way you'd look for it. The transcript below is the exact text.",
+    "transcriptTitle": "Exactly what was sent",
+    "transcriptHint": "The instructions and messages the model received, word for word. Files appear by name — their content went along, but isn't repeated here.",
+    "transcriptPending": "Shown here once the run has finished.",
+    "transcriptMissing": "Not recorded for this run — it's older than this record.",
+    "truncated": "This transcript was very long, so some passages are shortened here. The model received them in full.",
+    "lookups": "What it looked up first",
+    "lookupNothing": "Nothing matched.",
+    "call": "Request {n} of {total}",
+    "instructions": "Instructions",
+    "role": {
+      "system": "Instructions",
+      "user": "Sent",
+      "assistant": "Earlier answer",
+      "reply": "Reply"
+    },
+    "noReply": "No reply — the request failed before one came back.",
+    "answerTitle": "What came back",
+    "noAnswer": "There's no answer for this run.",
+    "loadFailed": "Couldn't load this. Try reloading the page.",
+    "deleteConfirm": "Delete this run?",
+    "deleteHint": "Its answer, the transcript of what was sent and your rating are deleted for good.",
+    "deleted": "Run deleted"
   }
 }

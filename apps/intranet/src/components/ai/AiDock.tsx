@@ -6,10 +6,11 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import { AlertTriangle, Check, CircleSlash, Info, Unplug, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronRight, CircleSlash, Info, Unplug, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useAiSlotPresent, useRegisterAiSlot } from "@/components/layout/bottom-bars";
+import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -134,6 +135,21 @@ function DockList({
   );
 }
 
+/** Dismissed runs aren't gone — this is the way back to them. */
+function SeeAllLink({ onNavigate }: { onNavigate: () => void }) {
+  const t = useTranslations("Ai");
+  return (
+    <Link
+      href="/settings/ai/history"
+      onClick={onNavigate}
+      className="mt-1 flex items-center justify-between rounded-lg border-t border-border/60 px-2.5 pb-1.5 pt-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+    >
+      {t("history.seeAllInDock")}
+      <ChevronRight className="size-3.5" />
+    </Link>
+  );
+}
+
 /**
  * Where AI work goes when you walk away from it, on desktop: a pill in the
  * corner that shows up only when something is working or a result is waiting.
@@ -183,6 +199,7 @@ export function AiDock() {
               setDetailRun(run);
             }}
           />
+          <SeeAllLink onNavigate={() => setOpen(false)} />
         </PopoverContent>
       </Popover>
       <AiRunDetail run={detailRun} onOpenChange={(next) => !next && setDetailRun(null)} />
@@ -264,6 +281,7 @@ export function AiDockButton({
               setDetailRun(run);
             }}
           />
+          <SeeAllLink onNavigate={() => setOpen(false)} />
         </div>
       </MobileDrawer>
       <AiRunDetail run={detailRun} onOpenChange={(next) => !next && setDetailRun(null)} />

@@ -2,34 +2,26 @@
 
 import { type ComponentType, type ReactNode } from "react";
 
+import { api } from "@advantis/convex/api";
+import { usePaginatedQuery } from "convex/react";
 import {
-  CalendarCheck,
   Check,
   ChevronRight,
-  CircleHelp,
-  Compass,
   Eye,
-  FileText,
-  FileUp,
   KeyRound,
-  LayoutDashboard,
   Lock,
-  type LucideIcon,
-  MessagesSquare,
-  PhoneCall,
-  RefreshCw,
   Server,
   Square,
-  Tags,
   ThumbsUp,
   Timer,
   Trash2,
   UserRound,
-  WandSparkles,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { AiGlyph } from "@/components/ai/AiGlyph";
+import { AiHistoryList } from "@/components/ai/AiHistoryList";
+import { AI_FEATURES } from "@/components/ai/features";
 import { Mark } from "@/components/branding/ProviderMark";
 import { Link } from "@/components/Link";
 import { useHasCapability } from "@/components/providers/current-user";
@@ -39,21 +31,6 @@ import { cn } from "@/lib/utils";
 function AnthropicMark({ className }: { className?: string }) {
   return <Mark provider="anthropic" className={className} />;
 }
-
-/** The AI features that can start a run, in the order someone meets them. */
-const FEATURES: { key: string; icon: LucideIcon }[] = [
-  { key: "wikiChat", icon: MessagesSquare },
-  { key: "ask", icon: CircleHelp },
-  { key: "dailyBrief", icon: LayoutDashboard },
-  { key: "navigate", icon: Compass },
-  { key: "wikiFormat", icon: WandSparkles },
-  { key: "wikiMeta", icon: Tags },
-  { key: "coachReport", icon: PhoneCall },
-  { key: "coachEod", icon: CalendarCheck },
-  { key: "coachWikiExtract", icon: FileUp },
-  { key: "cvExtract", icon: FileText },
-  { key: "cvRescan", icon: RefreshCw },
-];
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
@@ -87,6 +64,33 @@ function IconSquare({
     >
       <Icon className="size-4" />
     </span>
+  );
+}
+
+/** Your last few runs, so an answer put away from the dock is one click away. */
+function RecentRuns() {
+  const t = useTranslations("Ai");
+  const { results, status } = usePaginatedQuery(api.aiRuns.history, {}, { initialNumItems: 5 });
+  if (status === "LoadingFirstPage" || results.length === 0) return null;
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 className="text-[15px] font-semibold tracking-tight">{t("history.recentTitle")}</h2>
+          <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-muted-foreground text-pretty">
+            {t("history.recentHint")}
+          </p>
+        </div>
+        <Link
+          href="/settings/ai/history"
+          className="inline-flex items-center gap-1 text-[13px] font-medium hover:underline"
+        >
+          {t("history.seeAll")}
+          <ChevronRight className="size-3.5" />
+        </Link>
+      </div>
+      <AiHistoryList runs={results.slice(0, 5)} />
+    </section>
   );
 }
 
@@ -155,6 +159,8 @@ export default function SettingsAiPage() {
           ))}
         </dl>
       </header>
+
+      <RecentRuns />
 
       {/* The part people actually worry about, given room of its own. */}
       <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
@@ -242,7 +248,7 @@ export default function SettingsAiPage() {
 
       <Section title={t("privacy.featuresTitle")} hint={t("privacy.featuresHint")}>
         <ul className="divide-y divide-border/60 rounded-2xl border border-border/70 bg-card">
-          {FEATURES.map((feature) => (
+          {AI_FEATURES.map((feature) => (
             <li
               key={feature.key}
               className="grid gap-x-4 gap-y-1 px-5 py-3.5 sm:grid-cols-[13rem_minmax(0,1fr)]"

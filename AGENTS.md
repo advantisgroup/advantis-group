@@ -145,6 +145,21 @@ pushing to the working branch only, and merge into `main` once at a real
 stopping point (the whole task done, or a checkpoint the user explicitly
 asks for), not after every intermediate commit.
 
+## Intranet page list (search and the AI wayfinder)
+
+`packages/convex/convex/lib/pages.ts` is the one list of intranet pages —
+name, what you do there, keywords, who can see it and its deep links. The
+⌘K palette (`api.intranetPages.list`) and the "find your way around" AI
+(`lib/aiContext.ts` + `lib/navigateSearch.ts`) both read it. When you add a
+page under `apps/intranet/src/app/(app)`, add a line there (or to
+`NOT_DESTINATIONS` with a reason): `lib/pages.test.ts` walks the app
+directory and fails otherwise.
+
+AI runs keep a sealed transcript of what they sent (`aiRunTranscripts`,
+recorded by `runModelText`/`runModelTurn` in `apps/api/src/lib/ai.ts`). Call
+the model through those, never `anthropic.streamText` directly, or the run
+won't show up correctly in Settings → AI → history.
+
 ## Convex backend conventions
 
 Read [`docs/convex-best-practices.md`](./docs/convex-best-practices.md)

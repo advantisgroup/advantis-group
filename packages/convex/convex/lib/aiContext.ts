@@ -4,6 +4,8 @@ import { type QueryCtx } from "../_generated/server";
 import { requireVaultUnlocked } from "../hr/lib/access";
 import { userMatchesAudience } from "./audience";
 import { type Caller } from "./caller";
+import { navigateSearch } from "./navigateSearch";
+import { visiblePages } from "./pages";
 import { displayName } from "./users";
 
 /**
@@ -446,92 +448,36 @@ export async function dailyBriefContext(ctx: QueryCtx, caller: Caller) {
 }
 
 /**
- * What the "find your way around" helper is allowed to point at: the static
- * pages this person can actually see, plus a handful of their own recent IT
- * tickets. The model picks a `key` from this list — never a raw href — and
- * `hrefByKey` is how the API route turns that back into a real path, so a
- * garbled model reply can only ever fail closed, not link somewhere unlisted.
+ * What the "find your way around" helper starts with: every page this person
+ * can see (lib/pages.ts) with what each is for, plus their newest IT tickets.
+ * Anything more specific — a wiki entry, a person, an event — it looks up
+ * with its search tools (lib/navigateSearch.ts) rather than being handed.
+ *
+ * The model answers with a `key`, never a raw href; `hrefByKey` is how the API
+ * route turns that back into a path, so a garbled reply can only fail closed.
  */
 export async function navigateContext(ctx: QueryCtx, caller: Caller) {
-  const user = caller.user;
-  const isManagerOrAdmin = caller.isManager;
-  const applicantAccess = caller.hasApplicantAccess;
-
-  const pages: { href: string; label: string }[] = [
-    { href: "/", label: "Startseite / Übersicht" },
-    { href: "/calendar", label: "Kalender" },
-    ...(user.clockodoUserId
-      ? [{ href: "/clockodo", label: "Abwesenheiten / Urlaub (Clockodo)" }]
-      : []),
-    { href: "/announcements", label: "Ankündigungen" },
-    { href: "/chat", label: "Chat" },
-    { href: "/guidebooks", label: "Guidebooks / Wiki" },
-    { href: "/directory", label: "Personenverzeichnis" },
-    { href: "/suggestions", label: "Vorschläge" },
-    { href: "/suggestions?new=1", label: "Neuen Vorschlag einreichen" },
-    { href: "/it-tickets", label: "IT-Tickets" },
-    { href: "/it-tickets?new=1", label: "Neues IT-Ticket melden" },
-    { href: "/fehlermanagement", label: "Fehlermanagement (Qualität, QVM)" },
-    { href: "/fehlermanagement?new=1", label: "Neue Fehlermeldung erfassen" },
-    ...(applicantAccess ? [{ href: "/hr", label: "Bewerbermanagement" }] : []),
-    { href: "/settings", label: "Kontoeinstellungen" },
-    { href: "/settings/ai", label: "KI-Einstellungen & Datenschutz" },
-    ...(isManagerOrAdmin
-      ? [
-          { href: "/admin", label: "Adminbereich" },
-          { href: "/admin/password-resets", label: "Warteschlange für Passwort-Zurücksetzungen" },
-          { href: "/admin/members", label: "Mitglieder / Benutzerkonten verwalten" },
-          { href: "/admin/roles", label: "Benutzerdefinierte Rollen & Rechte" },
-          { href: "/admin/structure", label: "Abteilungen & Teams" },
-          {
-            href: "/admin/integrations",
-            label: "Integrationen (Clockodo, Genesys, OneDrive, ...)",
-          },
-          { href: "/admin/feature-flags", label: "Feature-Flags" },
-          { href: "/admin/audit", label: "Audit-Log" },
-          { href: "/admin/invites", label: "Einladungen" },
-          { href: "/admin/authentication", label: "Authentifizierungseinstellungen" },
-          { href: "/admin/requests", label: "Zugriffsanfragen" },
-          { href: "/admin/onboard", label: "Neue Mitarbeitende onboarden" },
-          { href: "/admin/uploads", label: "Uploads" },
-          { href: "/admin/design-feedback", label: "Design-Feedback" },
-          { href: "/admin/ai", label: "KI-Aktivität im Intranet" },
-        ]
-      : []),
-  ];
-
-  const myTickets = await ctx.db
-    .query("itTickets")
-    .withIndex("by_creator", (q) => q.eq("createdByUserId", user._id))
-    .order("desc")
-    .take(5);
-  const assignedTickets = await ctx.db
-    .query("itTickets")
-    .withIndex("by_assignee", (q) => q.eq("assignedToUserId", user._id))
-    .order("desc")
-    .take(5);
+  const pages = visiblePages(caller);
+  const tickets = await navigateSearch(ctx, caller, "tickets", "");
+  const recent = tickets.slice(0, 5);
 
   const hrefByKey: Record<string, string> = {};
-  for (const p of pages) hrefByKey[p.href] = p.href;
-
-  const ticketLine = (prefix: string, t: Doc<"itTickets">, index: number) => {
-    const key = `${prefix}${index}`;
-    hrefByKey[key] = `/it-tickets?ticket=${t._id}`;
-    return `- ${key} — #${t.nr} ${t.topic?.trim() || t.category} (Status: ${t.status}, ${berlinTime(t.createdAt)})`;
-  };
+  const pageLines: string[] = [];
+  for (const page of pages) {
+    hrefByKey[`page:${page.href}`] = page.href;
+    pageLines.push(`- page:${page.href} — ${page.label}: ${page.description}`);
+    for (const link of page.deepLinks ?? []) {
+      hrefByKey[`page:${link.href}`] = link.href;
+      pageLines.push(`  - page:${link.href} — ${link.label}`);
+    }
+  }
+  for (const ticket of recent) hrefByKey[ticket.key] = ticket.href;
 
   const text = [
+    block("Seiten (key — was man dort tut)", pageLines),
     block(
-      "Bekannte Seiten (key — Beschreibung)",
-      pages.map((p) => `- ${p.href} — ${p.label}`),
-    ),
-    block(
-      "Eigene zuletzt erstellte IT-Tickets",
-      myTickets.map((t, i) => ticketLine("myTicket", t, i)),
-    ),
-    block(
-      "IT-Tickets, die dir zugewiesen sind",
-      assignedTickets.map((t, i) => ticketLine("assignedTicket", t, i)),
+      "Deine neuesten IT-Tickets (key — Ticket)",
+      recent.map((t) => `- ${t.key} — ${t.title} (${t.detail})`),
     ),
   ]
     .filter(Boolean)
@@ -541,10 +487,8 @@ export async function navigateContext(ctx: QueryCtx, caller: Caller) {
     text,
     hrefByKey,
     sources: [
-      { label: "Bekannte Seiten" },
-      ...(myTickets.length || assignedTickets.length
-        ? [{ label: "IT-Tickets", href: "/it-tickets" }]
-        : []),
+      { label: `Seitenliste (${pages.length} Seiten, die du öffnen kannst)` },
+      ...recent.map((t) => ({ label: `IT-Ticket ${t.title}`, href: t.href })),
     ],
   };
 }

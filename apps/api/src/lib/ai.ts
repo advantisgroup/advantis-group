@@ -64,6 +64,78 @@ export interface AiRunSource {
   href?: string;
 }
 
+/** What a run sent to the model and looked up on the way, turn by turn —
+ * stored sealed next to the run so it can be read back later. The intranet
+ * reads the same shape (components/ai/transcript.ts). */
+export interface AiTranscript {
+  version: 1;
+  calls: {
+    at: number;
+    system: string | null;
+    messages: { role: "system" | "user" | "assistant"; text: string }[];
+    reply: string | null;
+    stopReason: string | null;
+    tokensIn: number;
+    tokensOut: number;
+  }[];
+  lookups: { at: number; label: string; query: string; results: string[] }[];
+  /** Some text was shortened to stay under the size cap. */
+  truncated: boolean;
+}
+
+/** A transcript larger than this is shortened, longest texts first. */
+const TRANSCRIPT_CAP_CHARS = 200_000;
+
+type ContentLike = string | readonly { type: string; [key: string]: unknown }[] | null | undefined;
+
+/** Text as the model saw it. Files show up as a placeholder naming them,
+ * never their bytes — a transcript is for reading, not for re-sending. */
+export function contentToText(content: ContentLike): string {
+  if (!content) return "";
+  if (typeof content === "string") return content;
+  return content
+    .map((block) => {
+      switch (block.type) {
+        case "text":
+          return String(block.text ?? "");
+        case "image":
+          return "[Bild]";
+        case "document": {
+          const title = typeof block.title === "string" ? block.title : null;
+          const source = block.source as { media_type?: string } | undefined;
+          return `[Dokument${title ? `: ${title}` : source?.media_type ? ` (${source.media_type})` : ""}]`;
+        }
+        case "tool_use":
+          return `[Werkzeug ${String(block.name)}: ${JSON.stringify(block.input)}]`;
+        case "tool_result":
+          return `[Ergebnis: ${contentToText(block.content as ContentLike)}]`;
+        default:
+          return `[${block.type}]`;
+      }
+    })
+    .join("\n\n");
+}
+
+/** Shrinks the longest texts until the whole thing fits under the cap. */
+export function capTranscript(transcript: AiTranscript, cap = TRANSCRIPT_CAP_CHARS): AiTranscript {
+  let json = JSON.stringify(transcript);
+  if (json.length <= cap) return transcript;
+  const copy: AiTranscript = structuredClone(transcript);
+  copy.truncated = true;
+  const cut = (text: string, max: number) =>
+    text.length > max ? `${text.slice(0, max)}\n[… ${text.length - max} Zeichen gekürzt]` : text;
+  for (let max = 20_000; max >= 200 && json.length > cap; max = Math.floor(max / 2)) {
+    for (const call of copy.calls) {
+      call.system = call.system === null ? null : cut(call.system, max);
+      for (const message of call.messages) message.text = cut(message.text, max);
+      call.reply = call.reply === null ? null : cut(call.reply, max);
+    }
+    for (const lookup of copy.lookups) lookup.results = lookup.results.map((r) => cut(r, max));
+    json = JSON.stringify(copy);
+  }
+  return copy;
+}
+
 export interface AiRunContext {
   signal: AbortSignal;
   phase(phase: AiRunPhase): void;
@@ -73,6 +145,13 @@ export interface AiRunContext {
   addSources(sources: AiRunSource[]): void;
   /** Called by `runModelText` for every model turn in the run. */
   recordUsage(tokensIn: number, tokensOut: number): void;
+  /** The run's transcript — `runModelText` adds every call to it. */
+  transcript: AiTranscript;
+  /** A search the run did before or between model calls, for the transcript. */
+  recordLookup(label: string, query: string, results: string[]): void;
+  /** Where the result lives, when that's only known at the end (the
+   * wayfinder's destination) — the dock links there instead. */
+  setHref(href: string): void;
 }
 
 const HEARTBEAT_MS = 5_000;
@@ -99,11 +178,21 @@ function describeFailure(err: unknown): { code: string; retryable: boolean } {
  * visible text backwards.
  */
 export async function startAiRun(
-  scope: { clerkUserId: string; kind: AiRunKind; subjectKey: string; href?: string },
+  scope: {
+    clerkUserId: string;
+    kind: AiRunKind;
+    subjectKey: string;
+    href?: string;
+    /** What it's about in a few words — the question, the file name. */
+    title?: string;
+  },
   work: (run: AiRunContext) => Promise<string>,
 ): Promise<{ runId: Id<"aiRuns"> }> {
   const convex = getConvex();
   const serverKey = getConvexServerKey();
+
+  const key = runEncryptionKey(scope.kind);
+  const title = scope.title?.replace(/\s+/g, " ").trim().slice(0, 140);
 
   let runId: Id<"aiRuns">;
   try {
@@ -114,6 +203,7 @@ export async function startAiRun(
       subjectKey: scope.subjectKey,
       href: safeHref(scope.href),
       model: AI_MODEL,
+      title: title ? encrypt(title, key) : undefined,
     });
   } catch (err) {
     const code = err instanceof ConvexError ? (err.data as { code?: string })?.code : undefined;
@@ -129,7 +219,6 @@ export async function startAiRun(
     throw err;
   }
 
-  const key = runEncryptionKey(scope.kind);
   const controller = new AbortController();
   let phase: AiRunPhase = "reading";
   let latest = "";
@@ -138,6 +227,13 @@ export async function startAiRun(
   let sources: AiRunSource[] = [];
   let tokensIn = 0;
   let tokensOut = 0;
+  let resultHref: string | undefined;
+  const transcript: AiTranscript = {
+    version: 1,
+    calls: [],
+    lookups: [],
+    truncated: false,
+  };
 
   const push = () => {
     const snapshot = {
@@ -181,6 +277,24 @@ export async function startAiRun(
       tokensIn += inTokens;
       tokensOut += outTokens;
     },
+    transcript,
+    recordLookup(label, query, results) {
+      transcript.lookups.push({ at: Date.now(), label, query, results });
+    },
+    setHref(href) {
+      resultHref = safeHref(href);
+    },
+  };
+
+  const sealedTranscript = () => {
+    if (transcript.calls.length === 0 && transcript.lookups.length === 0) return undefined;
+    const capped = capTranscript(transcript);
+    const json = JSON.stringify(capped);
+    return {
+      data: encrypt(json, key),
+      chars: json.length,
+      truncated: capped.truncated,
+    };
   };
 
   const job = (async () => {
@@ -203,6 +317,8 @@ export async function startAiRun(
           runId,
           output: encrypt(output, key),
           outputChars: output.length,
+          transcript: sealedTranscript(),
+          href: resultHref,
           tokensIn: tokensIn || undefined,
           tokensOut: tokensOut || undefined,
           sources: sources.length > 0 ? sources : undefined,
@@ -210,7 +326,16 @@ export async function startAiRun(
       } else {
         const { code, retryable } = describeFailure(failure);
         console.error(`[ai-runs] ${scope.kind} ${runId} failed (${code})`, failure);
-        await convex.mutation(api.aiRuns.apiFail, { serverKey, runId, errorCode: code, retryable });
+        await convex.mutation(api.aiRuns.apiFail, {
+          serverKey,
+          runId,
+          errorCode: code,
+          retryable,
+          transcript: sealedTranscript(),
+          tokensIn: tokensIn || undefined,
+          tokensOut: tokensOut || undefined,
+          sources: sources.length > 0 ? sources : undefined,
+        });
       }
     } catch (err) {
       console.error(`[ai-runs] could not settle ${runId}`, err);
@@ -224,6 +349,38 @@ export async function startAiRun(
 type TextRequest = Omit<Parameters<typeof anthropic.streamText>[0], "model">;
 
 /**
+ * One model call inside a run, recorded in the run's transcript before it
+ * goes out (so a call that fails still shows what it was sent) and after
+ * (the reply, including any tool calls). Returns the whole message for
+ * callers that use tools; most want `runModelText`.
+ */
+export async function runModelTurn(run: AiRunContext, request: TextRequest) {
+  const call: AiTranscript["calls"][number] = {
+    at: Date.now(),
+    system: request.system === undefined ? null : contentToText(request.system as ContentLike),
+    messages: request.messages.map((message) => ({
+      role: message.role,
+      text: contentToText(message.content as ContentLike),
+    })),
+    reply: null,
+    stopReason: null,
+    tokensIn: 0,
+    tokensOut: 0,
+  };
+  run.transcript.calls.push(call);
+  const { text, message } = await anthropic.streamText(
+    { model: AI_MODEL, ...request },
+    { signal: run.signal, onText: run.text },
+  );
+  call.reply = contentToText(message.content as unknown as ContentLike) || text;
+  call.stopReason = message.stop_reason ?? null;
+  call.tokensIn = message.usage?.input_tokens ?? 0;
+  call.tokensOut = message.usage?.output_tokens ?? 0;
+  run.recordUsage(call.tokensIn, call.tokensOut);
+  return { text, message };
+}
+
+/**
  * One model turn inside a run. A reply cut off by `max_tokens` is a failure
  * for anything structured (the JSON would be incomplete); prose callers like
  * chat can accept it.
@@ -233,11 +390,7 @@ export async function runModelText(
   request: TextRequest,
   { acceptTruncated = false }: { acceptTruncated?: boolean } = {},
 ): Promise<string> {
-  const { text, message } = await anthropic.streamText(
-    { model: AI_MODEL, ...request },
-    { signal: run.signal, onText: run.text },
-  );
-  run.recordUsage(message.usage?.input_tokens ?? 0, message.usage?.output_tokens ?? 0);
+  const { text, message } = await runModelTurn(run, request);
   if (!text.trim()) throw new AiRunError("no_content");
   if (message.stop_reason === "max_tokens" && !acceptTruncated) {
     throw new AiRunError("truncated");

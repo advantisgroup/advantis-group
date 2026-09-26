@@ -40,7 +40,11 @@
       "suggestionSummary": "Fass diesen Vorschlag zusammen.",
       "suggestionDecision": "Was wurde entschieden und warum?",
       "suggestionImpact": "Wem würde das helfen?"
-    }
+    },
+    "previewToggle": "Genau ansehen, was gesendet wird",
+    "previewRecord": "Der Datensatz, wie das Modell ihn liest",
+    "previewQuestion": "Danach deine Frage",
+    "previewQuestionPlaceholder": "(was du unten eingibst)"
   },
   "phase": {
     "reading": "Liest",
@@ -86,10 +90,10 @@
     "metaStorage": "Gespeichert",
     "metaStorageValue": "Verschlüsselt",
     "encTitle": "Verschlüsselt, bevor irgendetwas gespeichert wird",
-    "encBody": "Jede Antwort wird von unserem API-Server verschlüsselt, sobald sie zurückkommt. In der Intranet-Datenbank landet nur unlesbarer Text, der ohne Schlüssel nichts bedeutet – ein geleaktes Backup, Datenbank-Admins oder wer die Tabellen liest, sieht keinerlei KI-Inhalt.",
+    "encBody": "Jede Antwort – und die Aufzeichnung dessen, was dafür gesendet wurde – wird von unserem API-Server verschlüsselt, sobald sie zurückkommt. In der Intranet-Datenbank landet nur unlesbarer Text, der ohne Schlüssel nichts bedeutet – ein geleaktes Backup, Datenbank-Admins oder wer die Tabellen liest, sieht keinerlei KI-Inhalt.",
     "encAlgo": "AES-256-GCM – ein verbreiteter Standard zum Schutz gespeicherter Daten.",
     "encKey": "Der Schlüssel bleibt auf unserem API-Server. Die Datenbank kennt ihn nie.",
-    "encDeleted": "30 Tage nach dem Start gelöscht – nicht nur ausgeblendet.",
+    "encDeleted": "Gelöscht, nicht nur ausgeblendet – 30 Tage nach dem Start des Laufs, oder früher, wenn du ihn in deinem Verlauf löschst.",
     "encYouSee": "Was du siehst",
     "encDbHolds": "Was in der Datenbank liegt",
     "encSample": "Die Kundin hat nach der Ladeleistung gefragt – nenne die 11 kW der Wallbox und biete einen Vor-Ort-Termin an.",
@@ -119,7 +123,7 @@
       "cvRescan": "Derselbe Lebenslauf noch einmal, wenn du ein Update anforderst.",
       "ask": "Der Eintrag, zu dem du fragst – ein IT-Ticket mit Verlauf und Thread, eine Ankündigung, eine Fehlermeldung mit Maßnahmen, ein Vorschlag oder eine Bewerbung mit Profil und Notizen. Das Panel listet auf, was genau dabei war.",
       "dailyBrief": "Dasselbe, was dir deine Startseite zeigt – deine offenen Tickets und Maßnahmen, Termine von heute und morgen, ungelesene Ankündigungen und wie viele Chatnachrichten warten (nicht deren Inhalt) –, um ein paar Sätze zu deinem Tag zu schreiben.",
-      "navigate": "Was du in den Helfer eingibst, dazu die Liste der Seiten, die du sehen darfst, und ein paar deiner eigenen letzten IT-Tickets – gerade genug, um den einen passenden Link auszuwählen, nie deren vollständigen Inhalt."
+      "navigate": "Was du in den Helfer eingibst, die Seiten, die du öffnen kannst, und deine neuesten IT-Tickets. Um etwas Bestimmtes zu finden, durchsucht er Wiki-Einträge, Kolleginnen und Kollegen, Ankündigungen, Vorschläge, Fehlermeldungen, Termine und deine Tickets – nur, was du selbst öffnen könntest – und sieht die Titel der Treffer, nicht ihren Inhalt. Dein KI-Verlauf zeigt jede Suche, die er gemacht hat."
     },
     "whereTitle": "Wohin es geht",
     "whereHint": "Der Weg einer Anfrage – und was danach bleibt.",
@@ -132,7 +136,7 @@
     "whoTitle": "Wer was sehen kann",
     "whoHint": "Ein KI-Ergebnis gehört der Person, die es gestartet hat.",
     "youSee": "Du",
-    "youSeeBody": "Deine eigenen Läufe – auf der Seite, die sie gestartet hat, und im KI-Dock samt Details.",
+    "youSeeBody": "Deine eigenen Läufe – auf der Seite, die sie gestartet hat, im KI-Dock und in deinem KI-Verlauf, jeweils mit genau dem, was gesendet wurde.",
     "managersSee": "Manager",
     "managersSeeBody": "Wie viele Läufe es gab, was fehlschlug und warum, sowie der Tokenverbrauch. Niemals die Antworten selbst.",
     "ratings": "Deine Bewertungen",
@@ -187,7 +191,10 @@
     "sourcesEmpty": "Für diesen Lauf nicht erfasst.",
     "notRecorded": "Nicht erfasst",
     "errorCode": "Fehlercode",
-    "result": "Ergebnis"
+    "result": "Ergebnis",
+    "sentPending": "Wird aufgezeichnet, sobald er fertig ist",
+    "sourcesExplain": "So benannt, dass Menschen es wiedererkennen. Das Transkript zeigt den genauen Text, den das Modell bekommen hat.",
+    "fullTranscript": "Genau ansehen, was gesendet wurde"
   },
   "errors": {
     "rate_limited": "Gerade zu viele Anfragen – warte kurz und versuch es dann noch mal.",
@@ -197,5 +204,49 @@
     "truncated": "Die Antwort war zu lang und wurde abgeschnitten.",
     "interrupted": "Die Verbindung ist abgebrochen, bevor es fertig war.",
     "internal": "Bei uns ist etwas schiefgelaufen."
+  },
+  "history": {
+    "back": "KI-Einstellungen",
+    "backToList": "Alle Läufe",
+    "title": "KI-Verlauf",
+    "hint": "Jeder KI-Lauf, den du in den letzten 30 Tagen gestartet hast – auch die, die du im Dock weggeklickt hast. Öffne einen, um genau zu sehen, was gesendet wurde, was nachgeschlagen wurde und was zurückkam.",
+    "recentTitle": "Deine letzten Läufe",
+    "recentHint": "Öffne einen, um genau zu sehen, was die KI bekommen und geantwortet hat.",
+    "seeAll": "Alle anzeigen",
+    "seeAllInDock": "Alle KI-Läufe anzeigen",
+    "filterFeature": "Funktion",
+    "empty": "Noch keine KI-Läufe",
+    "emptyHint": "Alles, was du die KI fragst, erscheint hier für 30 Tage.",
+    "loadMore": "Mehr anzeigen",
+    "sourcesCount": "{count, plural, one {# Quelle} other {# Quellen}}",
+    "notFound": "Diesen Lauf gibt es nicht mehr",
+    "notFoundHint": "Läufe werden 30 Tage nach dem Start gelöscht – oder wenn du sie selbst löschst.",
+    "sent": "An die KI gesendet",
+    "deletedOn": "Gelöscht am",
+    "tokensInOut": "{in} rein · {out} raus",
+    "tokens": "Tokens",
+    "sourcesHint": "Was in die Anfrage eingeflossen ist, so benannt, wie du es suchen würdest. Das Transkript darunter ist der genaue Text.",
+    "transcriptTitle": "Genau das wurde gesendet",
+    "transcriptHint": "Die Anweisungen und Nachrichten, die das Modell bekommen hat, Wort für Wort. Dateien erscheinen mit Namen – ihr Inhalt wurde mitgeschickt, wird hier aber nicht wiederholt.",
+    "transcriptPending": "Erscheint hier, sobald der Lauf fertig ist.",
+    "transcriptMissing": "Für diesen Lauf nicht aufgezeichnet – er ist älter als diese Aufzeichnung.",
+    "truncated": "Dieses Transkript war sehr lang, deshalb sind einige Stellen hier gekürzt. Das Modell hat sie vollständig bekommen.",
+    "lookups": "Was vorher nachgeschlagen wurde",
+    "lookupNothing": "Nichts gefunden.",
+    "call": "Anfrage {n} von {total}",
+    "instructions": "Anweisungen",
+    "role": {
+      "system": "Anweisungen",
+      "user": "Gesendet",
+      "assistant": "Frühere Antwort",
+      "reply": "Antwort"
+    },
+    "noReply": "Keine Antwort – die Anfrage ist vorher fehlgeschlagen.",
+    "answerTitle": "Was zurückkam",
+    "noAnswer": "Für diesen Lauf gibt es keine Antwort.",
+    "loadFailed": "Konnte nicht geladen werden. Lade die Seite neu.",
+    "deleteConfirm": "Diesen Lauf löschen?",
+    "deleteHint": "Die Antwort, das Transkript des Gesendeten und deine Bewertung werden endgültig gelöscht.",
+    "deleted": "Lauf gelöscht"
   }
 }

@@ -212,7 +212,13 @@ export const applicantsRoute = new Elysia()
       const fileName = file.name;
 
       return await startAiRun(
-        { clerkUserId, kind: "cvExtract", subjectKey: `cvExtract:${randomUUID()}`, href: "/hr" },
+        {
+          clerkUserId,
+          kind: "cvExtract",
+          subjectKey: `cvExtract:${randomUUID()}`,
+          href: "/hr",
+          title: fileName,
+        },
         async (run) => {
           const extracted = await runExtraction(run, bytes);
           run.phase("finishing");
@@ -303,6 +309,7 @@ export const applicantsRoute = new Elysia()
           kind: "cvRescan",
           subjectKey: `cvRescan:${applicantId}`,
           href: `/hr/${applicantId}/dokumente`,
+          title: fileName,
         },
         async (run) => {
           const extractedFields = await runExtraction(run, bytes);
