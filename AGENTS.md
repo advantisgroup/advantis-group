@@ -41,7 +41,9 @@ Run from repo root unless noted; Turborepo filters by workspace name.
   package. See "Tests" below.
 
 Always type-check and lint/format touched packages before calling a change
-done.
+done. Formatting is oxfmt, configured once in the root `.oxfmtrc.json`; CI's
+first step is `bun run format:check`, so run `bun run format` before every
+commit — it's what has failed CI most often.
 
 ## Tests
 

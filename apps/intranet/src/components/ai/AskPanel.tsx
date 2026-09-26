@@ -6,7 +6,15 @@ import Link from "next/link";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { ArrowUp, ChevronRight, ExternalLink, RotateCcw, Square } from "lucide-react";
+import {
+  ArrowUp,
+  ChevronRight,
+  ExternalLink,
+  FileText,
+  RotateCcw,
+  ScrollText,
+  Square,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +28,7 @@ import { AiMarkdown } from "./AiMarkdown";
 import { aiErrorKey } from "./AiRunCard";
 import { AiReveal } from "./AiReveal";
 import { AiRunStats, AiThinking } from "./AiThinking";
-import { AiVerbatim } from "./AiVerbatim";
+import { AiDisclosure, AiDisclosureText } from "./AiTranscriptView";
 import { type AskSubject, useAskOpen } from "./ask-subject";
 import { useAiEnabled } from "./use-ai-enabled";
 import { useAiRun } from "./use-ai-run";
@@ -88,33 +96,32 @@ function ExactPreview({ subject, question }: { subject: AskSubject; question: st
         {t("ask.previewToggle")}
       </button>
       {open && (
-        <div className="mt-2.5 space-y-3">
+        <div className="mt-2.5 space-y-2">
           {preview === "loading" || preview === null ? (
             <p className="text-xs text-muted-foreground">{t("ask.contextLoading")}</p>
           ) : preview === "error" ? (
             <p className="text-xs text-destructive">{t("history.loadFailed")}</p>
           ) : (
             <>
-              <div className="space-y-1">
-                <p className="text-[11px] font-medium text-muted-foreground">
-                  {t("history.instructions")} · {t("chars", { count: preview.system.length })}
-                </p>
-                <AiVerbatim className="max-h-48 p-3">{preview.system}</AiVerbatim>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[11px] font-medium text-muted-foreground">
-                  {t("ask.previewRecord")} · {t("chars", { count: preview.record.length })}
-                </p>
-                <AiVerbatim className="max-h-72 p-3">{preview.record}</AiVerbatim>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[11px] font-medium text-muted-foreground">
-                  {t("ask.previewQuestion")}
-                </p>
-                <AiVerbatim className="p-3">
-                  {`Question: ${question.trim() || t("ask.previewQuestionPlaceholder")}`}
-                </AiVerbatim>
-              </div>
+              {/* The same pieces, in the same order, as the run's conversation
+                  in the AI history will show them afterwards. */}
+              <AiDisclosure
+                icon={ScrollText}
+                title={t("history.turn.instructions")}
+                meta={t("chars", { count: preview.system.length })}
+              >
+                <AiDisclosureText>{preview.system}</AiDisclosureText>
+              </AiDisclosure>
+              <AiDisclosure
+                icon={FileText}
+                title={t("ask.previewRecord")}
+                meta={t("chars", { count: preview.record.length })}
+              >
+                <AiDisclosureText>{preview.record}</AiDisclosureText>
+              </AiDisclosure>
+              <p className="ml-auto w-fit max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-muted px-3.5 py-2 text-[13px]">
+                {`Question: ${question.trim() || t("ask.previewQuestionPlaceholder")}`}
+              </p>
             </>
           )}
         </div>

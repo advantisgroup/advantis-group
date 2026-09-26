@@ -131,12 +131,14 @@ export async function navigateSearch(
           entries,
           terms,
           (e) => `${e.thema} ${e.tags.join(" ")} ${e.categoryName ?? ""}`,
-        ).map((e): NavigateHit => ({
-          key: `wiki:${e._id}`,
-          title: e.thema,
-          detail: e.tags.length ? `Tags: ${e.tags.slice(0, 5).join(", ")}` : undefined,
-          href: `/guidebooks/${e.slug}`,
-        })),
+        ).map(
+          (e): NavigateHit => ({
+            key: `wiki:${e._id}`,
+            title: e.thema,
+            detail: e.tags.length ? `Tags: ${e.tags.slice(0, 5).join(", ")}` : undefined,
+            href: `/guidebooks/${e.slug}`,
+          }),
+        ),
         ...ranked(guidebooks, terms, (p) => `${p.title} ${p.description} ${p.topic}`).map(
           (p): NavigateHit => ({
             key: `guidebook:${p._id}`,

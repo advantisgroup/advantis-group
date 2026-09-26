@@ -64,21 +64,36 @@ export interface AiRunSource {
   href?: string;
 }
 
-/** What a run sent to the model and looked up on the way, turn by turn —
- * stored sealed next to the run so it can be read back later. The intranet
- * reads the same shape (components/ai/transcript.ts). */
+/** One block of a message, as the model got or wrote it. */
+export type AiTranscriptPart =
+  | { type: "text"; text: string }
+  | { type: "file"; name: string }
+  | { type: "toolCall"; id: string; name: string; input: unknown }
+  | { type: "toolResult"; toolCallId: string; text: string };
+
+/** One step of a run, in the order it happened. `message` is something sent
+ * to the model (including earlier answers sent back as context), `reply` is
+ * what the model wrote during this run, `lookup` a search the intranet did
+ * on its own before asking. */
+export type AiTranscriptTurn =
+  | { at: number; type: "instructions"; text: string }
+  | { at: number; type: "message"; role: "user" | "assistant"; parts: AiTranscriptPart[] }
+  | {
+      at: number;
+      type: "reply";
+      parts: AiTranscriptPart[];
+      stopReason: string | null;
+      tokensIn: number;
+      tokensOut: number;
+    }
+  | { at: number; type: "lookup"; label: string; query: string; results: string[] };
+
+/** What a run sent to the model and got back, turn by turn — stored sealed
+ * next to the run so it can be read back later. The intranet reads the same
+ * shape (components/ai/transcript.ts). */
 export interface AiTranscript {
-  version: 1;
-  calls: {
-    at: number;
-    system: string | null;
-    messages: { role: "system" | "user" | "assistant"; text: string }[];
-    reply: string | null;
-    stopReason: string | null;
-    tokensIn: number;
-    tokensOut: number;
-  }[];
-  lookups: { at: number; label: string; query: string; results: string[] }[];
+  version: 2;
+  turns: AiTranscriptTurn[];
   /** Some text was shortened to stay under the size cap. */
   truncated: boolean;
 }
@@ -88,31 +103,46 @@ const TRANSCRIPT_CAP_CHARS = 200_000;
 
 type ContentLike = string | readonly { type: string; [key: string]: unknown }[] | null | undefined;
 
-/** Text as the model saw it. Files show up as a placeholder naming them,
+/** Blocks as the model saw them. Files show up as a placeholder naming them,
  * never their bytes — a transcript is for reading, not for re-sending. */
-export function contentToText(content: ContentLike): string {
-  if (!content) return "";
-  if (typeof content === "string") return content;
-  return content
-    .map((block) => {
-      switch (block.type) {
-        case "text":
-          return String(block.text ?? "");
-        case "image":
-          return "[Bild]";
-        case "document": {
-          const title = typeof block.title === "string" ? block.title : null;
-          const source = block.source as { media_type?: string } | undefined;
-          return `[Dokument${title ? `: ${title}` : source?.media_type ? ` (${source.media_type})` : ""}]`;
-        }
-        case "tool_use":
-          return `[Werkzeug ${String(block.name)}: ${JSON.stringify(block.input)}]`;
-        case "tool_result":
-          return `[Ergebnis: ${contentToText(block.content as ContentLike)}]`;
-        default:
-          return `[${block.type}]`;
+export function toParts(content: ContentLike): AiTranscriptPart[] {
+  if (!content) return [];
+  if (typeof content === "string") return [{ type: "text", text: content }];
+  return content.map((block): AiTranscriptPart => {
+    switch (block.type) {
+      case "text":
+        return { type: "text", text: String(block.text ?? "") };
+      case "image":
+        return { type: "file", name: "Bild" };
+      case "document": {
+        const title = typeof block.title === "string" ? block.title : null;
+        const source = block.source as { media_type?: string } | undefined;
+        return { type: "file", name: title ?? source?.media_type ?? "Dokument" };
       }
-    })
+      case "tool_use":
+        return {
+          type: "toolCall",
+          id: String(block.id),
+          name: String(block.name),
+          input: block.input,
+        };
+      case "tool_result":
+        return {
+          type: "toolResult",
+          toolCallId: String(block.tool_use_id),
+          text: toParts(block.content as ContentLike)
+            .map((part) => (part.type === "text" ? part.text : ""))
+            .join("\n\n"),
+        };
+      default:
+        return { type: "text", text: `[${block.type}]` };
+    }
+  });
+}
+
+function partsText(content: ContentLike): string {
+  return toParts(content)
+    .map((part) => (part.type === "text" ? part.text : ""))
     .join("\n\n");
 }
 
@@ -125,15 +155,55 @@ export function capTranscript(transcript: AiTranscript, cap = TRANSCRIPT_CAP_CHA
   const cut = (text: string, max: number) =>
     text.length > max ? `${text.slice(0, max)}\n[… ${text.length - max} Zeichen gekürzt]` : text;
   for (let max = 20_000; max >= 200 && json.length > cap; max = Math.floor(max / 2)) {
-    for (const call of copy.calls) {
-      call.system = call.system === null ? null : cut(call.system, max);
-      for (const message of call.messages) message.text = cut(message.text, max);
-      call.reply = call.reply === null ? null : cut(call.reply, max);
+    for (const turn of copy.turns) {
+      if (turn.type === "instructions") turn.text = cut(turn.text, max);
+      else if (turn.type === "lookup") turn.results = turn.results.map((r) => cut(r, max));
+      else {
+        for (const part of turn.parts) {
+          if (part.type === "text" || part.type === "toolResult") part.text = cut(part.text, max);
+        }
+      }
     }
-    for (const lookup of copy.lookups) lookup.results = lookup.results.map((r) => cut(r, max));
     json = JSON.stringify(copy);
   }
   return copy;
+}
+
+type TranscriptRequest = {
+  system?: unknown;
+  messages: readonly { role: string; content: unknown }[];
+};
+
+/**
+ * Adds one model call's request to the transcript. A tool loop resends the
+ * whole conversation every time, so when the instructions match and the
+ * messages only grew, only what's new is added — skipping the previous reply,
+ * which is already there as a `reply` turn.
+ */
+export function recordRequest(
+  transcript: AiTranscript,
+  cursor: { system: string | null; messages: number },
+  request: TranscriptRequest,
+) {
+  const at = Date.now();
+  const system = request.system === undefined ? null : partsText(request.system as ContentLike);
+  const continues =
+    cursor.messages > 0 && system === cursor.system && request.messages.length > cursor.messages;
+  if (!continues && system && system !== cursor.system) {
+    transcript.turns.push({ at, type: "instructions", text: system });
+  }
+  const fresh = continues ? request.messages.slice(cursor.messages) : request.messages;
+  for (const message of fresh) {
+    transcript.turns.push({
+      at,
+      type: "message",
+      role: message.role === "assistant" ? "assistant" : "user",
+      parts: toParts(message.content as ContentLike),
+    });
+  }
+  cursor.system = system;
+  // The reply about to come back is the next message a continuation resends.
+  cursor.messages = request.messages.length + 1;
 }
 
 export interface AiRunContext {
@@ -145,9 +215,12 @@ export interface AiRunContext {
   addSources(sources: AiRunSource[]): void;
   /** Called by `runModelText` for every model turn in the run. */
   recordUsage(tokensIn: number, tokensOut: number): void;
-  /** The run's transcript — `runModelText` adds every call to it. */
+  /** The run's transcript — `runModelTurn` adds every call to it. */
   transcript: AiTranscript;
-  /** A search the run did before or between model calls, for the transcript. */
+  /** How much of the conversation the transcript already holds. */
+  transcriptCursor: { system: string | null; messages: number };
+  /** A search the intranet did on its own before asking the model (a tool
+   * call the model makes is recorded with the call instead). */
   recordLookup(label: string, query: string, results: string[]): void;
   /** Where the result lives, when that's only known at the end (the
    * wayfinder's destination) — the dock links there instead. */
@@ -228,12 +301,7 @@ export async function startAiRun(
   let tokensIn = 0;
   let tokensOut = 0;
   let resultHref: string | undefined;
-  const transcript: AiTranscript = {
-    version: 1,
-    calls: [],
-    lookups: [],
-    truncated: false,
-  };
+  const transcript: AiTranscript = { version: 2, turns: [], truncated: false };
 
   const push = () => {
     const snapshot = {
@@ -278,8 +346,9 @@ export async function startAiRun(
       tokensOut += outTokens;
     },
     transcript,
+    transcriptCursor: { system: null, messages: 0 },
     recordLookup(label, query, results) {
-      transcript.lookups.push({ at: Date.now(), label, query, results });
+      transcript.turns.push({ at: Date.now(), type: "lookup", label, query, results });
     },
     setHref(href) {
       resultHref = safeHref(href);
@@ -287,7 +356,7 @@ export async function startAiRun(
   };
 
   const sealedTranscript = () => {
-    if (transcript.calls.length === 0 && transcript.lookups.length === 0) return undefined;
+    if (transcript.turns.length === 0) return undefined;
     const capped = capTranscript(transcript);
     const json = JSON.stringify(capped);
     return {
@@ -355,28 +424,23 @@ type TextRequest = Omit<Parameters<typeof anthropic.streamText>[0], "model">;
  * callers that use tools; most want `runModelText`.
  */
 export async function runModelTurn(run: AiRunContext, request: TextRequest) {
-  const call: AiTranscript["calls"][number] = {
-    at: Date.now(),
-    system: request.system === undefined ? null : contentToText(request.system as ContentLike),
-    messages: request.messages.map((message) => ({
-      role: message.role,
-      text: contentToText(message.content as ContentLike),
-    })),
-    reply: null,
-    stopReason: null,
-    tokensIn: 0,
-    tokensOut: 0,
-  };
-  run.transcript.calls.push(call);
+  recordRequest(run.transcript, run.transcriptCursor, request);
   const { text, message } = await anthropic.streamText(
     { model: AI_MODEL, ...request },
     { signal: run.signal, onText: run.text },
   );
-  call.reply = contentToText(message.content as unknown as ContentLike) || text;
-  call.stopReason = message.stop_reason ?? null;
-  call.tokensIn = message.usage?.input_tokens ?? 0;
-  call.tokensOut = message.usage?.output_tokens ?? 0;
-  run.recordUsage(call.tokensIn, call.tokensOut);
+  const parts = toParts(message.content as unknown as ContentLike);
+  const tokensIn = message.usage?.input_tokens ?? 0;
+  const tokensOut = message.usage?.output_tokens ?? 0;
+  run.transcript.turns.push({
+    at: Date.now(),
+    type: "reply",
+    parts: parts.length > 0 ? parts : [{ type: "text", text }],
+    stopReason: message.stop_reason ?? null,
+    tokensIn,
+    tokensOut,
+  });
+  run.recordUsage(tokensIn, tokensOut);
   return { text, message };
 }
 

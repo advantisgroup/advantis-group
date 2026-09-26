@@ -51,6 +51,9 @@ export const aiTables = {
     heartbeatAt: v.number(),
     finishedAt: v.optional(v.number()),
     seenAt: v.optional(v.number()),
+    // Put away from the dock with its ✕. Seeing a result doesn't do that —
+    // a finished run stays there to be opened again for the rest of the day.
+    dismissedAt: v.optional(v.number()),
   })
     .index("by_user", ["clerkUserId", "startedAt"])
     .index("by_user_subject", ["clerkUserId", "subjectKey", "startedAt"])

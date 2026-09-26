@@ -113,8 +113,8 @@ export const recent = query({
   },
 });
 
-/** What the app-wide dock shows: anything still working, plus finished runs
- * nobody has looked at yet. */
+/** What the app-wide dock lists: today's runs that haven't been put away —
+ * working, waiting to be looked at, or already seen and there to reopen. */
 export const dock = query({
   args: {},
   handler: async (ctx) => {
@@ -126,9 +126,7 @@ export const dock = query({
       .order("desc")
       .take(25);
     const cutoff = Date.now() - DOCK_WINDOW_MS;
-    return runs
-      .filter((r) => r.startedAt > cutoff && (r.status === "running" || !r.seenAt))
-      .map(toMeta);
+    return runs.filter((r) => r.startedAt > cutoff && !r.dismissedAt).map(toMeta);
   },
 });
 
@@ -201,26 +199,43 @@ export const cancel = mutation({
   },
 });
 
+/** Settles a run whose API function is gone, so it can't come back as
+ * "working" — the only way a running run can be seen or put away. */
+async function settleStale(ctx: MutationCtx, run: Doc<"aiRuns">, now: number) {
+  if (run.status !== "running") return true;
+  if (now - run.heartbeatAt < AI_RUN_STALE_MS) return false;
+  await ctx.db.patch(run._id, {
+    status: "error",
+    errorCode: "interrupted",
+    retryable: true,
+    finishedAt: now,
+  });
+  return true;
+}
+
+/** The result has been looked at: it stops counting as waiting, but stays in
+ * the dock to reopen. */
 export const markSeen = mutation({
   args: { runId: v.id("aiRuns") },
   handler: async (ctx, { runId }) => {
     const owned = await ownRun(ctx, runId);
     if (!owned || owned.run.seenAt) return null;
     const now = Date.now();
-    if (owned.run.status === "running") {
-      // Only a run whose API function is gone can be put away while
-      // "running" — settle it as interrupted so it can't come back.
-      if (now - owned.run.heartbeatAt < AI_RUN_STALE_MS) return null;
-      await ctx.db.patch(runId, {
-        status: "error",
-        errorCode: "interrupted",
-        retryable: true,
-        finishedAt: now,
-        seenAt: now,
-      });
-      return null;
-    }
+    if (!(await settleStale(ctx, owned.run, now))) return null;
     await ctx.db.patch(runId, { seenAt: now });
+    return null;
+  },
+});
+
+/** Puts a run away from the dock. It's still in the history. */
+export const dismiss = mutation({
+  args: { runId: v.id("aiRuns") },
+  handler: async (ctx, { runId }) => {
+    const owned = await ownRun(ctx, runId);
+    if (!owned || owned.run.dismissedAt) return null;
+    const now = Date.now();
+    if (!(await settleStale(ctx, owned.run, now))) return null;
+    await ctx.db.patch(runId, { seenAt: owned.run.seenAt ?? now, dismissedAt: now });
     return null;
   },
 });

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { useSearchParams } from "next/navigation";
+
 import { api } from "@advantis/convex/api";
 import { usePaginatedQuery } from "convex/react";
 import { ArrowLeft, History } from "lucide-react";
@@ -16,16 +18,21 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FilterPill } from "@/components/ui/filter-pill";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 30;
 
 /**
  * Every AI run you started in the last 30 days — including the ones already
- * put away from the dock — each leading to what it was sent and what came back.
+ * put away from the dock — by day, each opening onto its whole conversation.
+ * `?kind=` preselects a feature (the AI settings page links here that way).
  */
 export default function AiHistoryPage() {
   const t = useTranslations("Ai");
   const tc = useTranslations("Common");
-  const [kinds, setKinds] = useState<AiRunKind[]>([]);
+  const params = useSearchParams();
+  const [kinds, setKinds] = useState<AiRunKind[]>(() => {
+    const kind = params.get("kind");
+    return AI_FEATURES.some((f) => f.key === kind) ? [kind as AiRunKind] : [];
+  });
   // One feature filters on the server; more than one filters the loaded pages.
   const kind = kinds.length === 1 ? kinds[0] : undefined;
   const { results, status, loadMore } = usePaginatedQuery(
@@ -37,7 +44,7 @@ export default function AiHistoryPage() {
 
   return (
     <div className="max-w-4xl space-y-6">
-      <div className="space-y-3">
+      <header className="space-y-3">
         <Link
           href="/settings/ai"
           className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground"
@@ -45,28 +52,27 @@ export default function AiHistoryPage() {
           <ArrowLeft className="size-3.5" />
           {t("history.back")}
         </Link>
-        <div>
-          <h1 className="font-display text-xl font-semibold tracking-tight">
-            {t("history.title")}
-          </h1>
-          <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground text-pretty">
-            {t("history.hint")}
-          </p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl font-semibold tracking-tight">{t("history.title")}</h1>
+            <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground text-pretty">
+              {t("history.hint")}
+            </p>
+          </div>
+          <FilterPill
+            label={t("history.filterFeature")}
+            options={AI_FEATURES.map((f) => ({ value: f.key, label: t(`kind.${f.key}`) }))}
+            selected={kinds}
+            onChange={(next) => setKinds(next as AiRunKind[])}
+            clearLabel={tc("clear")}
+          />
         </div>
-        <FilterPill
-          label={t("history.filterFeature")}
-          options={AI_FEATURES.map((f) => ({ value: f.key, label: t(`kind.${f.key}`) }))}
-          selected={kinds}
-          onChange={(next) => setKinds(next as AiRunKind[])}
-          clearLabel={tc("clear")}
-        />
-      </div>
+      </header>
 
       {status === "LoadingFirstPage" ? (
         <div className="space-y-2">
-          {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-14 rounded-xl" />
-          ))}
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-48 rounded-xl" />
         </div>
       ) : runs.length === 0 ? (
         <EmptyState

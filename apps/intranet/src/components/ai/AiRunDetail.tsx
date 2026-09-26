@@ -1,24 +1,17 @@
 "use client";
 
-import { type ComponentType, type ReactNode, useEffect, useState } from "react";
+import { type ReactNode } from "react";
 
 import { api } from "@advantis/convex/api";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import {
-  Activity,
-  AlertTriangle,
   ArrowDown,
   ArrowUp,
-  CalendarClock,
-  Check,
-  Coins,
+  ArrowUpRight,
+  ChevronRight,
+  Compass,
   ExternalLink,
-  ScrollText,
-  Send,
-  ThumbsDown,
-  ThumbsUp,
-  Timer,
-  Type,
+  MessagesSquare,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -26,29 +19,73 @@ import { Mark } from "@/components/branding/ProviderMark";
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { SidePanel, SidePanelSection } from "@/components/ui/side-panel";
-import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNow } from "@/hooks/use-now";
 import { formatDateTime } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
+import { AiMarkdown } from "./AiMarkdown";
 import { AI_STATE_ACCENT, aiErrorKey } from "./AiRunCard";
+import { AiRunFeedback } from "./AiRunFeedback";
+import { AiRunStats, AiThinking } from "./AiThinking";
+import { useAiRunText } from "./transcript";
 import { aiRunState, type AiRunMeta } from "./use-ai-run";
 
-/** Every run here is answered by a Claude model, so the model row wears its mark. */
-function ClaudeMark({ className }: { className?: string }) {
-  return <Mark provider="claude" className={className} />;
+/** Where the wayfinder took someone, from its stored `{ href, label }`.
+ * Null when the output isn't one of those. */
+export function AiDestination({ output }: { output: string }) {
+  const t = useTranslations("Ai");
+  let destination: { href: string | null; label: string | null };
+  try {
+    destination = JSON.parse(output) as { href: string | null; label: string | null };
+  } catch {
+    return null;
+  }
+  if (!destination.href) {
+    return (
+      <p className="rounded-xl border border-border/70 px-3.5 py-3 text-[13px] text-muted-foreground">
+        {t("history.result.nowhere")}
+      </p>
+    );
+  }
+  return (
+    <Link
+      href={destination.href}
+      className="flex items-center gap-3 rounded-xl border border-border/70 bg-card px-3.5 py-3 transition-colors hover:bg-accent/60"
+    >
+      <Compass className="size-4 shrink-0 text-muted-foreground" />
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13.5px] font-medium">
+          {t("history.result.tookYou", { label: destination.label ?? destination.href })}
+        </span>
+        <span className="block truncate font-mono text-[12px] text-muted-foreground">
+          {destination.href}
+        </span>
+      </span>
+      <ArrowUpRight className="size-4 shrink-0 text-muted-foreground" />
+    </Link>
+  );
+}
+
+function isJson(text: string) {
+  try {
+    const parsed: unknown = JSON.parse(text);
+    return !!parsed && typeof parsed === "object";
+  } catch {
+    return false;
+  }
 }
 
 /**
- * Everything the app knows about one run, in plain rows: what answered it,
- * how long it took, how much it read and wrote, and what it was given.
+ * A quick look at one run without leaving the page: what was asked, what came
+ * back, where it happened — then what it was given, a way to the whole
+ * conversation, and the plain facts about the run.
  *
  * The point is that an answer can be checked rather than taken on trust —
  * which also means saying "not recorded" where nothing was, instead of
  * inventing a tidy-looking source list.
  */
 export function AiRunDetail({
-  run,
+  run: opened,
   onOpenChange,
 }: {
   run: AiRunMeta | null;
@@ -57,75 +94,50 @@ export function AiRunDetail({
   const t = useTranslations("Ai");
   const tc = useTranslations("Common");
   const locale = useLocale();
+  // Followed live, so a run opened while working turns into its answer here.
+  const live = useQuery(api.aiRuns.get, opened ? { runId: opened._id } : "skip");
+  const run = live ?? opened;
   const now = useNow(run?.status === "running");
-  const saved = useQuery(api.aiRuns.myFeedback, run ? { runId: run._id } : "skip");
-  const rateRun = useMutation(api.aiRuns.rateRun);
-  const [note, setNote] = useState("");
-  const [noteSaved, setNoteSaved] = useState(false);
-
-  useEffect(() => {
-    setNote(saved?.note ?? "");
-    setNoteSaved(false);
-  }, [saved?.note, run?._id]);
+  const text = useAiRunText(run?._id ?? null, run?.status);
 
   if (!run) return null;
 
   const state = aiRunState(run, now);
   const seconds = Math.max(0, Math.floor(((run.finishedAt ?? now) - run.startedAt) / 1000));
   const accent = AI_STATE_ACCENT[state];
-
+  const title = text.status === "ready" ? text.value.title : null;
+  const output = text.status === "ready" ? text.value.output : null;
   const number = new Intl.NumberFormat(locale);
-  const rows: {
-    id: string;
-    icon: ComponentType<{ className?: string }>;
-    label: string;
-    value: ReactNode;
-  }[] = [
+
+  const facts: { label: string; value: ReactNode }[] = [
+    { label: t("detail.started"), value: formatDateTime(run.startedAt, locale) },
+    { label: t("detail.duration"), value: t("elapsed", { seconds }) },
     {
-      id: "status",
-      icon: Activity,
-      label: t("detail.status"),
-      value: (
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2 rounded-full" style={{ background: accent }} />
-          {t(`state.${state}`)}
-        </span>
-      ),
-    },
-    {
-      id: "started",
-      icon: CalendarClock,
-      label: t("detail.started"),
-      value: formatDateTime(run.startedAt, locale),
-    },
-    { id: "duration", icon: Timer, label: t("detail.duration"), value: t("elapsed", { seconds }) },
-    {
-      id: "model",
-      icon: ClaudeMark,
       label: t("detail.model"),
       value: run.model ? (
-        <span className="font-mono text-[12.5px]">{run.model}</span>
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <Mark provider="claude" className="size-3.5 shrink-0" />
+          <span className="truncate font-mono text-[12px]">{run.model}</span>
+        </span>
       ) : (
         t("detail.notRecorded")
       ),
     },
     {
-      id: "tokens",
-      icon: Coins,
       label: t("detail.tokens"),
       value:
         run.tokensIn !== null || run.tokensOut !== null ? (
           // In and out as direction rather than as words — the arrows carry it
           // faster than "rein · raus" ever did.
-          <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="inline-flex items-center gap-1" title={t("detail.tokensIn")}>
-              <ArrowDown className="size-3.5 text-muted-foreground" />
-              <span className="tabular-nums">{number.format(run.tokensIn ?? 0)}</span>
+          <span className="inline-flex items-center gap-2.5 tabular-nums">
+            <span className="inline-flex items-center gap-0.5" title={t("detail.tokensIn")}>
+              <ArrowDown className="size-3 text-muted-foreground" />
+              {number.format(run.tokensIn ?? 0)}
               <span className="sr-only">{t("detail.tokensIn")}</span>
             </span>
-            <span className="inline-flex items-center gap-1" title={t("detail.tokensOut")}>
-              <ArrowUp className="size-3.5 text-muted-foreground" />
-              <span className="tabular-nums">{number.format(run.tokensOut ?? 0)}</span>
+            <span className="inline-flex items-center gap-0.5" title={t("detail.tokensOut")}>
+              <ArrowUp className="size-3 text-muted-foreground" />
+              {number.format(run.tokensOut ?? 0)}
               <span className="sr-only">{t("detail.tokensOut")}</span>
             </span>
           </span>
@@ -134,8 +146,6 @@ export function AiRunDetail({
         ),
     },
     {
-      id: "sent",
-      icon: Send,
       label: t("history.sent"),
       value:
         run.transcriptChars !== null
@@ -144,63 +154,78 @@ export function AiRunDetail({
             ? t("detail.sentPending")
             : t("detail.notRecorded"),
     },
-    {
-      id: "output",
-      icon: Type,
-      label: t("detail.output"),
-      value: t("chars", { count: run.outputChars }),
-    },
-    ...(run.errorCode
-      ? [
-          {
-            id: "error",
-            icon: AlertTriangle,
-            label: t("detail.errorCode"),
-            value: (
-              <span>
-                <span className="font-mono text-xs">{run.errorCode}</span>
-                <span className="mt-0.5 block text-muted-foreground">
-                  {t(aiErrorKey(run.errorCode))}
-                </span>
-              </span>
-            ),
-          },
-        ]
-      : []),
   ];
+
+  let answer: ReactNode;
+  if (state === "working") {
+    answer = (
+      <div className="space-y-1.5">
+        <AiThinking phase={run.phase} elapsedSec={seconds} />
+        <p className="text-xs text-muted-foreground">{t("keepsRunning")}</p>
+      </div>
+    );
+  } else if (state !== "done") {
+    answer = (
+      <p className="text-[13px] text-muted-foreground">
+        {state === "error"
+          ? t(aiErrorKey(run.errorCode))
+          : state === "cancelled"
+            ? t("cancelledBody")
+            : t("interruptedBody")}
+      </p>
+    );
+  } else if (text.status === "loading") {
+    answer = <Skeleton className="h-20 rounded-xl" />;
+  } else if (text.status === "error") {
+    answer = <p className="text-[13px] text-destructive">{t("history.loadFailed")}</p>;
+  } else if (!output) {
+    answer = <p className="text-[13px] text-muted-foreground">{t("detail.noAnswer")}</p>;
+  } else if (run.kind === "navigate") {
+    answer = <AiDestination output={output} />;
+  } else if (isJson(output)) {
+    // Suggestions to review (fields, tags, a CV's contents) — they belong on
+    // the page that applies them, not in a raw dump here.
+    answer = <p className="text-[13px] text-muted-foreground">{t("detail.structured")}</p>;
+  } else {
+    answer = (
+      <div className="text-sm leading-relaxed">
+        <AiMarkdown>{output}</AiMarkdown>
+      </div>
+    );
+  }
 
   return (
     <SidePanel
       open
       onOpenChange={onOpenChange}
-      title={t(`kind.${run.kind}`)}
+      title={title ?? t(`kind.${run.kind}`)}
       accent={accent}
       closeLabel={tc("close")}
       header={
         <div className="space-y-1 pr-8">
-          <span className="text-xs font-medium text-muted-foreground">
-            <span className="ai-text">{t("eyebrow")}</span> · {t("detail.title")}
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <span className="ai-text">{t(`kind.${run.kind}`)}</span>
+            <span aria-hidden>·</span>
+            <span className="size-1.5 rounded-full" style={{ background: accent }} />
+            {t(`state.${state}`)}
           </span>
-          <h2 className="text-lg font-semibold leading-snug tracking-tight">
-            {t(`kind.${run.kind}`)}
+          <h2 className="text-lg font-semibold leading-snug tracking-tight text-balance">
+            {title ?? t(`kind.${run.kind}`)}
           </h2>
         </div>
       }
     >
-      <SidePanelSection title={t("detail.aboutRun")}>
-        {/* Icon-led rather than a plain label column: what each line is about
-            reads before the words do, which is the point of a details panel. */}
-        <dl className="grid grid-cols-[8.5rem_minmax(0,1fr)] items-baseline gap-x-3 gap-y-[9px] text-[13px] sm:grid-cols-[9.5rem_minmax(0,1fr)]">
-          {rows.map((row) => (
-            <div key={row.id} className="contents">
-              <dt className="flex items-center gap-2 text-muted-foreground">
-                <row.icon className="size-3.5 shrink-0" />
-                <span className="min-w-0 truncate">{row.label}</span>
-              </dt>
-              <dd className="min-w-0 break-words">{row.value}</dd>
-            </div>
-          ))}
-        </dl>
+      <SidePanelSection title={t("detail.answer")}>
+        {answer}
+        <AiRunStats run={run} className="mt-2" />
+        {run.href && run.kind !== "navigate" && (
+          <Button asChild variant="outline" size="sm" className="mt-3">
+            <Link href={run.href} onClick={() => onOpenChange(false)}>
+              <ExternalLink />
+              {t("detail.openWhere")}
+            </Link>
+          </Button>
+        )}
       </SidePanelSection>
 
       <SidePanelSection title={t("detail.sources")}>
@@ -222,90 +247,40 @@ export function AiRunDetail({
             ))}
           </ul>
         )}
-        <p className="mt-3 text-xs text-muted-foreground">{t("detail.sourcesExplain")}</p>
+        {/* The list names things the way a person would; the conversation is
+            the exact text — so the way to it sits right under the list. */}
         <Link
           href={`/settings/ai/history/${run._id}`}
           onClick={() => onOpenChange(false)}
-          className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
+          className="mt-4 flex items-center gap-3 rounded-lg border border-border/70 px-3 py-2.5 transition-colors hover:bg-accent"
         >
-          <ScrollText className="size-3.5" />
-          {t("detail.fullTranscript")}
+          <MessagesSquare className="size-4 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] font-medium">{t("detail.fullTranscript")}</span>
+            <span className="block text-xs text-muted-foreground">
+              {t("detail.fullTranscriptHint")}
+            </span>
+          </span>
+          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
         </Link>
       </SidePanelSection>
 
       {state !== "working" && (
         <SidePanelSection title={t("feedback.question")}>
-          <div className="flex flex-wrap items-center gap-2">
-            {(["up", "down"] as const).map((rating) => {
-              const Icon = rating === "up" ? ThumbsUp : ThumbsDown;
-              const active = saved?.rating === rating;
-              return (
-                <Button
-                  key={rating}
-                  variant="outline"
-                  size="sm"
-                  aria-pressed={active}
-                  // Unmistakably picked: a tinted fill and a filled icon in the
-                  // rating's own colour. The old two-percent wash on the border
-                  // left people unsure the click had registered at all.
-                  className={cn(
-                    active &&
-                      (rating === "up"
-                        ? "border-success/40 bg-success/10 text-success hover:bg-success/15 hover:text-success"
-                        : "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive"),
-                  )}
-                  onClick={() => void rateRun({ runId: run._id, rating, note: note || undefined })}
-                >
-                  <Icon className={cn(active && "fill-current")} />
-                  {t(`feedback.${rating}`)}
-                  {active && <Check className="size-3.5 opacity-80" />}
-                </Button>
-              );
-            })}
-          </div>
-          {saved?.rating === "down" && (
-            <div className="mt-3 space-y-2">
-              <Textarea
-                value={note}
-                onChange={(event) => {
-                  setNote(event.target.value);
-                  setNoteSaved(false);
-                }}
-                placeholder={t("feedback.notePlaceholder")}
-                className="min-h-[72px]"
-              />
-              <div className="flex items-center justify-end gap-2">
-                {noteSaved && (
-                  <span className="text-xs text-muted-foreground">{t("feedback.saved")}</span>
-                )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    void rateRun({ runId: run._id, rating: "down", note }).then(() =>
-                      setNoteSaved(true),
-                    );
-                  }}
-                >
-                  {t("feedback.save")}
-                </Button>
-              </div>
-            </div>
-          )}
+          <AiRunFeedback runId={run._id} />
         </SidePanelSection>
       )}
 
-      {run.href && (
-        <SidePanelSection title={t("detail.result")}>
-          <Link
-            href={run.href}
-            className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
-          >
-            {t("open")}
-            <ExternalLink className="size-3.5" />
-          </Link>
-        </SidePanelSection>
-      )}
+      <SidePanelSection title={t("detail.aboutRun")}>
+        <dl className="space-y-2 text-[13px]">
+          {facts.map((fact) => (
+            <div key={fact.label} className="flex items-baseline justify-between gap-3">
+              <dt className="shrink-0 text-muted-foreground">{fact.label}</dt>
+              <dd className="min-w-0 text-right">{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </SidePanelSection>
     </SidePanel>
   );
 }

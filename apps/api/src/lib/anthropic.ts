@@ -3,6 +3,10 @@ import { Anthropic } from "@anthropic-ai/sdk";
 import { requireEnv } from "./env.js";
 import { ProviderError } from "./errors.js";
 
+/** The SDK's request and response types, for routes that build tool calls —
+ * they come through here so the SDK itself is only imported in this file. */
+export type { Anthropic };
+
 export class AnthropicClient {
   #client: Anthropic | undefined;
 

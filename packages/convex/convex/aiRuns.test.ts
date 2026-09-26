@@ -113,14 +113,17 @@ describe("aiRuns", () => {
     expect(await startChatRun(t, "user_carol")).toBeDefined();
   });
 
-  test("the dock keeps a finished result until it has been seen", async () => {
+  test("the dock keeps a finished run after it's been seen, until it's put away", async () => {
     const t = setup();
     const alice = await seedUser(t, "user_alice");
     const runId = await startChatRun(t);
     await t.mutation(api.aiRuns.apiFinish, { serverKey, runId, output: "sealed", outputChars: 6 });
 
-    expect(await alice.query(api.aiRuns.dock, {})).toHaveLength(1);
+    expect(await alice.query(api.aiRuns.dock, {})).toMatchObject([{ seenAt: null }]);
     await alice.mutation(api.aiRuns.markSeen, { runId });
+    const [seen] = await alice.query(api.aiRuns.dock, {});
+    expect(seen.seenAt).toEqual(expect.any(Number));
+    await alice.mutation(api.aiRuns.dismiss, { runId });
     expect(await alice.query(api.aiRuns.dock, {})).toHaveLength(0);
   });
   test("a run keeps what it was sent, readable only by the API for its owner", async () => {
@@ -173,7 +176,7 @@ describe("aiRuns", () => {
     const bob = await seedUser(t, "user_bob");
     const chat = await startChatRun(t);
     await t.mutation(api.aiRuns.apiFinish, { serverKey, runId: chat, output: "x", outputChars: 1 });
-    await alice.mutation(api.aiRuns.markSeen, { runId: chat });
+    await alice.mutation(api.aiRuns.dismiss, { runId: chat });
     await t.mutation(api.aiRuns.apiStart, {
       serverKey,
       clerkUserId: "user_alice",
@@ -260,9 +263,12 @@ describe("aiRuns", () => {
     expect(await alice.query(api.aiRuns.get, { runId })).toMatchObject({
       href: "/calendar?event=e1",
     });
-    // Once the person has been taken there, it leaves the dock.
+    // Once the person has been taken there it's no longer waiting, but it
+    // stays in the dock to go back to.
     await alice.mutation(api.aiRuns.markSeen, { runId });
-    expect(await alice.query(api.aiRuns.dock, {})).toEqual([]);
+    expect(await alice.query(api.aiRuns.dock, {})).toMatchObject([
+      { href: "/calendar?event=e1", seenAt: expect.any(Number) },
+    ]);
   });
 
   test("after 30 days a run goes, transcript included", async () => {

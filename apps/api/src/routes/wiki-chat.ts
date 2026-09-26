@@ -152,7 +152,7 @@ export const wikiChatRoute = new Elysia()
             question,
           });
           run.recordLookup(
-            "Wiki-Suche",
+            "Wiki",
             question,
             entries.map((entry) => entry.title),
           );

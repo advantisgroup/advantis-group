@@ -7,16 +7,21 @@ import { useParams, useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, ExternalLink, Search, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowLeft, ArrowUp, ExternalLink, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { AiMarkdown } from "@/components/ai/AiMarkdown";
 import { AI_STATE_ACCENT, aiErrorKey } from "@/components/ai/AiRunCard";
+import { AiDestination } from "@/components/ai/AiRunDetail";
+import { AiRunFeedback } from "@/components/ai/AiRunFeedback";
+import { AiThinking } from "@/components/ai/AiThinking";
+import { AiTranscriptView } from "@/components/ai/AiTranscriptView";
 import { AiVerbatim } from "@/components/ai/AiVerbatim";
 import { AI_FEATURE_ICON, AI_RETENTION_MS } from "@/components/ai/features";
 import { type AiTranscript, useAiRunText, useAiTranscript } from "@/components/ai/transcript";
-import { aiRunState } from "@/components/ai/use-ai-run";
+import { type AiRunMeta, type AiRunState, aiRunState } from "@/components/ai/use-ai-run";
+import { Mark } from "@/components/branding/ProviderMark";
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
@@ -25,124 +30,100 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNow } from "@/hooks/use-now";
 import { formatDateTime } from "@/lib/format";
 
-function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+function RailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="space-y-3">
-      <div>
-        <h2 className="text-[15px] font-semibold tracking-tight">{title}</h2>
-        {hint && (
-          <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-muted-foreground text-pretty">
-            {hint}
-          </p>
-        )}
-      </div>
+    <section className="space-y-2.5">
+      <h2 className="text-xs font-medium text-muted-foreground">{title}</h2>
       {children}
     </section>
   );
 }
 
-function prettyOutput(output: string): { json: string } | { text: string } {
-  try {
-    const parsed: unknown = JSON.parse(output);
-    if (parsed && typeof parsed === "object") return { json: JSON.stringify(parsed, null, 2) };
-  } catch {
-    // Prose — rendered as the answer was shown.
-  }
-  return { text: output };
+function sameText(a: string, b: string) {
+  const normal = (text: string) => {
+    try {
+      return JSON.stringify(JSON.parse(text));
+    } catch {
+      return text.trim();
+    }
+  };
+  return normal(a) === normal(b);
 }
 
-function TranscriptView({ transcript }: { transcript: AiTranscript }) {
-  const t = useTranslations("Ai");
-  const locale = useLocale();
-  const number = new Intl.NumberFormat(locale);
-  const many = transcript.calls.length > 1;
+/** The last thing the model wrote, to tell whether the stored answer adds anything. */
+function lastReplyText(transcript: AiTranscript | null) {
+  const reply = transcript?.turns.findLast((turn) => turn.type === "reply");
+  if (!reply || reply.type !== "reply") return null;
+  return reply.parts.map((part) => (part.type === "text" ? part.text : "")).join("");
+}
 
+/** How the conversation ends: where the wayfinder led, what the intranet kept
+ * of the answer when that differs from the reply, or why it stopped. */
+function Ending({
+  run,
+  state,
+  output,
+  transcript,
+}: {
+  run: AiRunMeta;
+  state: AiRunState;
+  output: string | null;
+  transcript: AiTranscript | null;
+}) {
+  const t = useTranslations("Ai");
+
+  if (state === "error" || state === "interrupted" || state === "cancelled") {
+    return (
+      <p className="flex items-start gap-2.5 rounded-xl border border-border/70 px-3 py-2.5 text-[13px]">
+        <AlertTriangle
+          className="mt-0.5 size-3.5 shrink-0"
+          style={{ color: AI_STATE_ACCENT[state] }}
+        />
+        <span>
+          <span className="font-medium">{t(`state.${state}`)}</span>
+          <span className="text-muted-foreground">
+            {" "}
+            ·{" "}
+            {state === "error"
+              ? t(aiErrorKey(run.errorCode))
+              : state === "cancelled"
+                ? t("cancelledBody")
+                : t("interruptedBody")}
+          </span>
+        </span>
+      </p>
+    );
+  }
+  if (!output) return null;
+
+  if (run.kind === "navigate") return <AiDestination output={output} />;
+
+  const reply = lastReplyText(transcript);
+  if (reply !== null && sameText(reply, output)) return null;
+  let json: string | null = null;
+  try {
+    json = JSON.stringify(JSON.parse(output), null, 2);
+  } catch {
+    // Prose.
+  }
   return (
-    <div className="space-y-6">
-      {transcript.truncated && (
-        <p className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-[13px] text-warning">
-          {t("history.truncated")}
-        </p>
-      )}
-      {transcript.lookups.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-[13.5px] font-medium">{t("history.lookups")}</h3>
-          <ul className="space-y-2">
-            {transcript.lookups.map((lookup, i) => (
-              <li key={i} className="rounded-xl border border-border/70 bg-card p-3 text-[13px]">
-                <p className="flex items-center gap-2 font-medium">
-                  <Search className="size-3.5 text-muted-foreground" />
-                  {lookup.label}: <span className="font-normal">„{lookup.query}“</span>
-                </p>
-                {lookup.results.length === 0 ? (
-                  <p className="mt-1.5 text-muted-foreground">{t("history.lookupNothing")}</p>
-                ) : (
-                  <ul className="mt-1.5 list-disc space-y-0.5 pl-5 text-muted-foreground">
-                    {lookup.results.map((result, j) => (
-                      <li key={j}>{result}</li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium text-muted-foreground">{t("history.result.kept")}</p>
+      {json ? (
+        <AiVerbatim className="p-3">{json}</AiVerbatim>
+      ) : (
+        <div className="rounded-xl border border-border/70 bg-card p-4 text-[14px] leading-relaxed">
+          <AiMarkdown>{output}</AiMarkdown>
         </div>
       )}
-      {transcript.calls.map((call, i) => (
-        <div key={i} className="space-y-3">
-          {many && (
-            <h3 className="text-[13.5px] font-medium">
-              {t("history.call", { n: i + 1, total: transcript.calls.length })}
-            </h3>
-          )}
-          {call.system && (
-            <details className="group rounded-xl border border-border/70 bg-card">
-              <summary className="cursor-pointer select-none px-4 py-3 text-[13px] font-medium">
-                {t("history.instructions")}
-                <span className="ml-2 font-normal text-muted-foreground">
-                  {t("chars", { count: call.system.length })}
-                </span>
-              </summary>
-              <div className="px-4 pb-4">
-                <AiVerbatim>{call.system}</AiVerbatim>
-              </div>
-            </details>
-          )}
-          {call.messages.map((message, j) => (
-            <div key={j} className="space-y-1.5">
-              <p className="text-[12px] font-medium text-muted-foreground">
-                {t(`history.role.${message.role}`)} · {t("chars", { count: message.text.length })}
-              </p>
-              <AiVerbatim>{message.text}</AiVerbatim>
-            </div>
-          ))}
-          <div className="space-y-1.5">
-            <p className="text-[12px] font-medium text-muted-foreground">
-              {t("history.role.reply")}
-              {call.reply !== null && (
-                <>
-                  {" "}
-                  · {number.format(call.tokensIn)} → {number.format(call.tokensOut)}{" "}
-                  {t("history.tokens")}
-                </>
-              )}
-            </p>
-            {call.reply === null ? (
-              <p className="text-[13px] text-muted-foreground">{t("history.noReply")}</p>
-            ) : (
-              <AiVerbatim>{call.reply}</AiVerbatim>
-            )}
-          </div>
-        </div>
-      ))}
     </div>
   );
 }
 
 /**
- * One run, in full: what it was, what it was given (the sources as a person
- * would name them, then the exact text the model received), what it looked
- * up, what came back, and when all of it is deleted.
+ * One run, read like the conversation it was: what was sent, what the model
+ * looked up, what it answered and where that led — with the facts about the
+ * run and your rating alongside instead of stacked above it.
  */
 export default function AiRunPage() {
   const t = useTranslations("Ai");
@@ -170,16 +151,16 @@ export default function AiRunPage() {
 
   if (run === undefined) {
     return (
-      <div className="max-w-4xl space-y-4">
+      <div className="space-y-4">
         {back}
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-40 rounded-2xl" />
+        <Skeleton className="h-8 w-72" />
+        <Skeleton className="h-64 max-w-3xl rounded-2xl" />
       </div>
     );
   }
   if (run === null) {
     return (
-      <div className="max-w-4xl space-y-4">
+      <div className="space-y-4">
         {back}
         <EmptyState title={t("history.notFound")} description={t("history.notFoundHint")} />
       </div>
@@ -189,28 +170,18 @@ export default function AiRunPage() {
   const state = aiRunState(run, now);
   const Icon = AI_FEATURE_ICON[run.kind];
   const title = text.status === "ready" ? text.value.title : null;
+  const output = text.status === "ready" ? text.value.output : null;
   const seconds = Math.max(0, Math.floor(((run.finishedAt ?? now) - run.startedAt) / 1000));
   const number = new Intl.NumberFormat(locale);
 
   const facts: { label: string; value: ReactNode }[] = [
     {
-      label: t("detail.status"),
-      value: (
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2 rounded-full" style={{ background: AI_STATE_ACCENT[state] }} />
-          {t(`state.${state}`)}
-          {run.errorCode && (
-            <span className="text-muted-foreground">· {t(aiErrorKey(run.errorCode))}</span>
-          )}
-        </span>
-      ),
-    },
-    { label: t("detail.started"), value: formatDateTime(run.startedAt, locale) },
-    { label: t("detail.duration"), value: t("elapsed", { seconds }) },
-    {
       label: t("detail.model"),
       value: run.model ? (
-        <span className="font-mono text-[12.5px]">{run.model}</span>
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <Mark provider="claude" className="size-3.5 shrink-0" />
+          <span className="truncate font-mono text-[12px]">{run.model}</span>
+        </span>
       ) : (
         t("detail.notRecorded")
       ),
@@ -218,12 +189,20 @@ export default function AiRunPage() {
     {
       label: t("detail.tokens"),
       value:
-        run.tokensIn !== null || run.tokensOut !== null
-          ? t("history.tokensInOut", {
-              in: number.format(run.tokensIn ?? 0),
-              out: number.format(run.tokensOut ?? 0),
-            })
-          : t("detail.notRecorded"),
+        run.tokensIn !== null || run.tokensOut !== null ? (
+          <span className="inline-flex items-center gap-2.5 tabular-nums">
+            <span className="inline-flex items-center gap-0.5" title={t("detail.tokensIn")}>
+              <ArrowDown className="size-3 text-muted-foreground" />
+              {number.format(run.tokensIn ?? 0)}
+            </span>
+            <span className="inline-flex items-center gap-0.5" title={t("detail.tokensOut")}>
+              <ArrowUp className="size-3 text-muted-foreground" />
+              {number.format(run.tokensOut ?? 0)}
+            </span>
+          </span>
+        ) : (
+          t("detail.notRecorded")
+        ),
     },
     {
       label: t("history.sent"),
@@ -232,6 +211,7 @@ export default function AiRunPage() {
           ? t("chars", { count: run.transcriptChars })
           : t("detail.notRecorded"),
     },
+    { label: t("detail.duration"), value: t("elapsed", { seconds }) },
     {
       label: t("history.deletedOn"),
       value: new Date(run.startedAt + AI_RETENTION_MS).toLocaleDateString(locale, {
@@ -253,102 +233,127 @@ export default function AiRunPage() {
     router.push("/settings/ai/history");
   }
 
-  const output =
-    text.status === "ready" && text.value.output ? prettyOutput(text.value.output) : null;
-
   return (
-    <div className="max-w-4xl space-y-10">
-      <header className="space-y-4">
+    <div className="space-y-7">
+      <header className="space-y-3">
         {back}
-        <div className="flex flex-wrap items-start gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-muted/70 text-muted-foreground">
-            <Icon className="size-5" />
-          </span>
-          <div className="min-w-[14rem] flex-1">
-            <p className="text-[12px] font-medium text-muted-foreground">
-              <span className="ai-text">{t("eyebrow")}</span> · {t(`kind.${run.kind}`)}
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+          <div className="min-w-0 max-w-3xl flex-1">
+            {text.status === "loading" ? (
+              <Skeleton className="h-7 w-80 max-w-full" />
+            ) : (
+              <h1 className="text-xl font-semibold tracking-tight text-balance">
+                {title ?? t(`kind.${run.kind}`)}
+              </h1>
+            )}
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <Icon className="size-3.5" />
+                {t(`kind.${run.kind}`)}
+              </span>
+              <span aria-hidden>·</span>
+              <span>{formatDateTime(run.startedAt, locale)}</span>
+              <span aria-hidden>·</span>
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  className="size-1.5 rounded-full"
+                  style={{ background: AI_STATE_ACCENT[state] }}
+                />
+                {t(`state.${state}`)}
+              </span>
             </p>
-            <h1 className="mt-0.5 font-display text-xl font-semibold tracking-tight text-balance">
-              {title ?? t(`kind.${run.kind}`)}
-            </h1>
           </div>
-          <div className="flex shrink-0 gap-2">
-            {run.href && (
-              <Button asChild variant="outline" size="sm">
-                <Link href={run.href}>
-                  <ExternalLink />
-                  {t("open")}
-                </Link>
-              </Button>
-            )}
-            {run.status !== "running" && (
-              <Button variant="outline" size="sm" onClick={() => void onDelete()}>
-                <Trash2 />
-                {tc("delete")}
-              </Button>
-            )}
-          </div>
+          {run.href && (
+            <Button asChild variant="outline" size="sm" className="shrink-0">
+              <Link href={run.href}>
+                <ExternalLink />
+                {t("open")}
+              </Link>
+            </Button>
+          )}
         </div>
-        <dl className="grid grid-cols-2 gap-y-4 border-y border-border/60 py-4 sm:grid-cols-4">
-          {facts.map((fact) => (
-            <div key={fact.label} className="min-w-0 pr-3">
-              <dt className="text-[12px] text-muted-foreground">{fact.label}</dt>
-              <dd className="mt-1 break-words text-[13.5px]">{fact.value}</dd>
-            </div>
-          ))}
-        </dl>
       </header>
 
-      <Section title={t("detail.sources")} hint={t("history.sourcesHint")}>
-        {run.sources.length === 0 ? (
-          <p className="text-[13px] text-muted-foreground">{t("detail.sourcesEmpty")}</p>
-        ) : (
-          <ul className="space-y-1.5 text-[13.5px]">
-            {run.sources.map((source) => (
-              <li key={`${source.label}-${source.href ?? ""}`} className="flex gap-2">
-                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
-                {source.href ? (
-                  <Link href={source.href} className="min-w-0 hover:underline">
-                    {source.label}
-                  </Link>
-                ) : (
-                  <span className="min-w-0 text-muted-foreground">{source.label}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
+      <div className="grid gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
+        <main className="min-w-0 max-w-3xl">
+          {run.status === "running" ? (
+            <AiThinking
+              phase={run.phase}
+              label={t("history.transcriptPending")}
+              elapsedSec={seconds}
+            />
+          ) : transcript.status === "loading" ? (
+            <div className="space-y-4">
+              <Skeleton className="h-9 rounded-xl" />
+              <Skeleton className="ml-auto h-16 w-2/3 rounded-2xl" />
+              <Skeleton className="h-24 w-5/6 rounded-xl" />
+            </div>
+          ) : transcript.status === "error" ? (
+            <p className="text-[13px] text-destructive">{t("history.loadFailed")}</p>
+          ) : transcript.value === null ? (
+            <p className="text-[13px] text-muted-foreground">{t("history.transcriptMissing")}</p>
+          ) : (
+            <AiTranscriptView
+              transcript={transcript.value}
+              ending={
+                <Ending run={run} state={state} output={output} transcript={transcript.value} />
+              }
+            />
+          )}
+        </main>
 
-      <Section title={t("history.transcriptTitle")} hint={t("history.transcriptHint")}>
-        {run.status === "running" ? (
-          <p className="text-[13px] text-muted-foreground">{t("history.transcriptPending")}</p>
-        ) : transcript.status === "loading" ? (
-          <Skeleton className="h-32 rounded-xl" />
-        ) : transcript.status === "error" ? (
-          <p className="text-[13px] text-destructive">{t("history.loadFailed")}</p>
-        ) : transcript.value === null ? (
-          <p className="text-[13px] text-muted-foreground">{t("history.transcriptMissing")}</p>
-        ) : (
-          <TranscriptView transcript={transcript.value} />
-        )}
-      </Section>
+        <aside className="space-y-7 lg:sticky lg:top-6 lg:self-start">
+          <RailSection title={t("detail.aboutRun")}>
+            <dl className="space-y-2 text-[13px]">
+              {facts.map((fact) => (
+                <div key={fact.label} className="flex items-baseline justify-between gap-3">
+                  <dt className="shrink-0 text-muted-foreground">{fact.label}</dt>
+                  <dd className="min-w-0 text-right">{fact.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </RailSection>
 
-      <Section title={t("history.answerTitle")}>
-        {text.status === "loading" ? (
-          <Skeleton className="h-24 rounded-xl" />
-        ) : text.status === "error" ? (
-          <p className="text-[13px] text-destructive">{t("history.loadFailed")}</p>
-        ) : !output ? (
-          <p className="text-[13px] text-muted-foreground">{t("history.noAnswer")}</p>
-        ) : "json" in output ? (
-          <AiVerbatim>{output.json}</AiVerbatim>
-        ) : (
-          <div className="rounded-xl border border-border/70 bg-card p-4 text-[13.5px] leading-relaxed">
-            <AiMarkdown>{output.text}</AiMarkdown>
-          </div>
-        )}
-      </Section>
+          <RailSection title={t("detail.sources")}>
+            {run.sources.length === 0 ? (
+              <p className="text-[13px] text-muted-foreground">{t("detail.sourcesEmpty")}</p>
+            ) : (
+              <ul className="space-y-1.5 text-[13px]">
+                {run.sources.map((source) => (
+                  <li key={`${source.label}-${source.href ?? ""}`} className="flex gap-2">
+                    <span className="mt-[7px] size-1 shrink-0 rounded-full bg-muted-foreground/60" />
+                    {source.href ? (
+                      <Link href={source.href} className="min-w-0 hover:underline">
+                        {source.label}
+                      </Link>
+                    ) : (
+                      <span className="min-w-0 text-muted-foreground">{source.label}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </RailSection>
+
+          {state !== "working" && (
+            <RailSection title={t("feedback.question")}>
+              <AiRunFeedback runId={id} />
+            </RailSection>
+          )}
+
+          {run.status !== "running" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-ml-2 text-muted-foreground hover:text-destructive"
+              onClick={() => void onDelete()}
+            >
+              <Trash2 />
+              {t("history.delete")}
+            </Button>
+          )}
+        </aside>
+      </div>
     </div>
   );
 }

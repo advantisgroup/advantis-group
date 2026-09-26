@@ -1,5 +1,4 @@
 import { api } from "@advantis/convex/api";
-import { type Anthropic } from "@anthropic-ai/sdk";
 import { Elysia, t } from "elysia";
 
 import {
@@ -10,6 +9,7 @@ import {
   startAiRun,
   str,
 } from "../lib/ai.js";
+import { type Anthropic } from "../lib/anthropic.js";
 import { type convexAs } from "../lib/convex.js";
 import { Errors } from "../lib/errors.js";
 import { authed } from "../lib/middleware.js";
@@ -100,11 +100,6 @@ async function runSearch(
     hrefByKey[hit.key] = hit.href;
     return `- ${hit.key} — ${hit.title}${hit.detail ? ` (${hit.detail})` : ""}`;
   });
-  run.recordLookup(
-    KIND_LABEL[kind as SearchKind],
-    words,
-    hits.map((hit) => `${hit.title}${hit.detail ? ` (${hit.detail})` : ""}`),
-  );
   run.addSources([
     { label: `Suche in ${KIND_LABEL[kind as SearchKind]}: „${words}“ (${hits.length} Treffer)` },
   ]);
