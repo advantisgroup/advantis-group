@@ -203,6 +203,10 @@ export function useContactForm() {
         const { fieldErrors } = result.error.flatten();
         setErrorsFn(fieldErrors);
         setButtonError();
+        // the toast says something's wrong; the cursor should land on what
+        requestAnimationFrame(() =>
+          document.querySelector<HTMLElement>('form [aria-invalid="true"]')?.focus(),
+        );
 
         return false;
       }
