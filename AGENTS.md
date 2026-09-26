@@ -391,6 +391,14 @@ picks up this guard, and still needs the var set even then.
   rendered on mobile is inconsistent with every other tabbed page in the
   app. See `apps/intranet/src/components/applicants/RouteTabs.tsx` for the
   canonical pattern.
+- **A page that offers "Print" gets a paper version, not its screen layout.**
+  Mount a `PrintSheet` (`components/print/PrintSheet.tsx` — one in the
+  intranet, one in marketing) holding a layout written for A4: it's hidden on
+  screen, is the only thing that prints while mounted (Ctrl+P included),
+  repeats its head and foot on every sheet, and keeps the browser's own
+  URL/date lines off the paper. Printing always switches to the light theme
+  for its duration. `HandoffBriefPrint`, `GuidebookPrint` and marketing's
+  `InquiryPrint` (in `InquiryDetail.tsx`) are the examples to copy.
 - Don't add speculative abstractions, fallbacks, or error handling for cases
   that can't occur. Match the existing minimal, direct style.
 - i18n strings live in `apps/intranet/src/lib/activity/locales/{en,de}.ts`
