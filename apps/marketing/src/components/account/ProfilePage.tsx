@@ -66,9 +66,22 @@ export function ProfilePage() {
           {t("staffSecurity.body")}
         </CheckpointNote>
       ) : (
-        <div className="mt-10 border-t border-rule pt-6">
-          <UserProfile path={`/${locale}/account/profile`} routing="path" appearance={APPEARANCE} />
-        </div>
+        <section className="mt-12">
+          {!security ? (
+            <h2 className="mb-2 text-[15px] font-medium text-foreground">{t("signIn")}</h2>
+          ) : null}
+          {/* Clerk pads its page and bolds its section names; flatten both so its
+              rows line up with the business details above and read the same. Its
+              own "delete account" goes: that one only unlinks inquiries, while
+              Privacy & data erases them, and there should be one way to do it. */}
+          <div className="[&_.cl-profilePageContent]:p-0 [&_.cl-profileSection__danger]:hidden [&_.cl-profileSectionTitleText]:text-[15px] [&_.cl-profileSectionTitleText]:font-normal [&_.cl-profileSectionTitleText]:text-muted-foreground">
+            <UserProfile
+              path={`/${locale}/account/profile`}
+              routing="path"
+              appearance={APPEARANCE}
+            />
+          </div>
+        </section>
       )}
     </div>
   );
