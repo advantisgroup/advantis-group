@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { useInPrintSheet } from "@/components/print/PrintSheet";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
@@ -126,6 +127,30 @@ const CALLOUT_STYLES = {
 function DocImage({ block }: { block: Extract<DocBlock, { kind: "image" }> }) {
   const t = useTranslations("Guidebooks");
   const [open, setOpen] = useState(false);
+  const inPrintSheet = useInPrintSheet();
+
+  // On paper there's nothing to zoom into, and the zoom button would take
+  // the screenshot down with it (print hides every button). Eager, because
+  // the sheet is hidden until printing and a lazy image would never load.
+  if (inPrintSheet) {
+    return (
+      <figure>
+        <Image
+          src={block.src}
+          alt={block.alt}
+          width={block.width}
+          height={block.height}
+          loading="eager"
+          className="h-auto max-h-[120mm] w-auto max-w-full rounded-md border border-border"
+        />
+        {block.caption && (
+          <figcaption className="mt-1 text-[8.5pt] text-muted-foreground">
+            {block.caption}
+          </figcaption>
+        )}
+      </figure>
+    );
+  }
 
   return (
     <figure className="my-1">
@@ -219,7 +244,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
     }
     case "links":
       return (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-2 print:grid-cols-1">
           {block.items.map((link) => (
             <a
               key={link.href}
@@ -229,7 +254,12 @@ function DocBlockView({ block }: { block: DocBlock }) {
               className="group flex items-start gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-accent"
             >
               <ExternalLink className="mt-0.5 size-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
-              <span className="min-w-0 text-sm font-medium leading-snug">{link.label}</span>
+              <span className="min-w-0 text-sm font-medium leading-snug">
+                {link.label}
+                <span className="hidden break-all text-xs font-normal text-muted-foreground print:block">
+                  {link.href}
+                </span>
+              </span>
             </a>
           ))}
         </div>
@@ -269,11 +299,12 @@ export function DocViewer({
   downloadable?: boolean;
 }) {
   const t = useTranslations("Guidebooks");
+  const inPrintSheet = useInPrintSheet();
 
   return (
     <div>
       {/* Mobile TOC: horizontal chip row */}
-      <nav className="mb-6 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+      <nav className="mb-6 flex gap-2 overflow-x-auto pb-1 print:hidden lg:hidden">
         {doc.sections.map((section, i) => (
           <a
             key={section.id}
@@ -289,9 +320,9 @@ export function DocViewer({
       </nav>
 
       {/* Article */}
-      <article className="min-w-0 space-y-12 pb-12">
+      <article className="min-w-0 space-y-12 pb-12 print:space-y-[8mm] print:pb-0">
         {downloadable && doc.download && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 print:hidden">
             <div className="flex min-w-0 items-center gap-3">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary refreshed:bg-muted refreshed:text-foreground">
                 <FileText className="size-4" />
@@ -312,8 +343,14 @@ export function DocViewer({
           </div>
         )}
         {doc.sections.map((section, i) => (
-          <section key={section.id} id={section.id} className="scroll-mt-24">
-            <div className="mb-4 flex items-baseline gap-3 border-b border-border pb-3">
+          <section
+            key={section.id}
+            // The screen copy owns the anchor; a second element with the same
+            // id would be invalid and could steal the TOC's jump.
+            id={inPrintSheet ? undefined : section.id}
+            className="scroll-mt-24"
+          >
+            <div className="mb-4 flex items-baseline gap-3 border-b border-border pb-3 break-after-avoid">
               <span className="font-mono text-sm font-bold text-primary">
                 {String(i + 1).padStart(2, "0")}
               </span>
