@@ -13,6 +13,7 @@ import { toast } from "sonner";
 
 import { AiMarkdown } from "@/components/ai/AiMarkdown";
 import { AI_STATE_ACCENT, aiErrorKey } from "@/components/ai/AiRunCard";
+import { AiVerbatim } from "@/components/ai/AiVerbatim";
 import { AI_FEATURE_ICON, AI_RETENTION_MS } from "@/components/ai/features";
 import { type AiTranscript, useAiRunText, useAiTranscript } from "@/components/ai/transcript";
 import { aiRunState } from "@/components/ai/use-ai-run";
@@ -37,15 +38,6 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
       </div>
       {children}
     </section>
-  );
-}
-
-/** Model text as it was: whitespace kept, nothing rendered as markup. */
-function Verbatim({ children }: { children: string }) {
-  return (
-    <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap break-words rounded-xl border border-border/70 bg-muted/30 p-4 font-mono text-[12px] leading-relaxed">
-      {children}
-    </pre>
   );
 }
 
@@ -112,7 +104,7 @@ function TranscriptView({ transcript }: { transcript: AiTranscript }) {
                 </span>
               </summary>
               <div className="px-4 pb-4">
-                <Verbatim>{call.system}</Verbatim>
+                <AiVerbatim>{call.system}</AiVerbatim>
               </div>
             </details>
           )}
@@ -121,7 +113,7 @@ function TranscriptView({ transcript }: { transcript: AiTranscript }) {
               <p className="text-[12px] font-medium text-muted-foreground">
                 {t(`history.role.${message.role}`)} · {t("chars", { count: message.text.length })}
               </p>
-              <Verbatim>{message.text}</Verbatim>
+              <AiVerbatim>{message.text}</AiVerbatim>
             </div>
           ))}
           <div className="space-y-1.5">
@@ -138,7 +130,7 @@ function TranscriptView({ transcript }: { transcript: AiTranscript }) {
             {call.reply === null ? (
               <p className="text-[13px] text-muted-foreground">{t("history.noReply")}</p>
             ) : (
-              <Verbatim>{call.reply}</Verbatim>
+              <AiVerbatim>{call.reply}</AiVerbatim>
             )}
           </div>
         </div>
@@ -350,7 +342,7 @@ export default function AiRunPage() {
         ) : !output ? (
           <p className="text-[13px] text-muted-foreground">{t("history.noAnswer")}</p>
         ) : "json" in output ? (
-          <Verbatim>{output.json}</Verbatim>
+          <AiVerbatim>{output.json}</AiVerbatim>
         ) : (
           <div className="rounded-xl border border-border/70 bg-card p-4 text-[13.5px] leading-relaxed">
             <AiMarkdown>{output.text}</AiMarkdown>

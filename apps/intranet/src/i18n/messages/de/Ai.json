@@ -40,7 +40,11 @@
       "suggestionSummary": "Fass diesen Vorschlag zusammen.",
       "suggestionDecision": "Was wurde entschieden und warum?",
       "suggestionImpact": "Wem würde das helfen?"
-    }
+    },
+    "previewToggle": "Genau ansehen, was gesendet wird",
+    "previewRecord": "Der Datensatz, wie das Modell ihn liest",
+    "previewQuestion": "Danach deine Frage",
+    "previewQuestionPlaceholder": "(was du unten eingibst)"
   },
   "phase": {
     "reading": "Liest",
@@ -187,7 +191,10 @@
     "sourcesEmpty": "Für diesen Lauf nicht erfasst.",
     "notRecorded": "Nicht erfasst",
     "errorCode": "Fehlercode",
-    "result": "Ergebnis"
+    "result": "Ergebnis",
+    "sentPending": "Wird aufgezeichnet, sobald er fertig ist",
+    "sourcesExplain": "So benannt, dass Menschen es wiedererkennen. Das Transkript zeigt den genauen Text, den das Modell bekommen hat.",
+    "fullTranscript": "Genau ansehen, was gesendet wurde"
   },
   "errors": {
     "rate_limited": "Gerade zu viele Anfragen – warte kurz und versuch es dann noch mal.",

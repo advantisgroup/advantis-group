@@ -13,6 +13,8 @@ import {
   Check,
   Coins,
   ExternalLink,
+  ScrollText,
+  Send,
   ThumbsDown,
   ThumbsUp,
   Timer,
@@ -132,6 +134,17 @@ export function AiRunDetail({
         ),
     },
     {
+      id: "sent",
+      icon: Send,
+      label: t("history.sent"),
+      value:
+        run.transcriptChars !== null
+          ? t("chars", { count: run.transcriptChars })
+          : state === "working"
+            ? t("detail.sentPending")
+            : t("detail.notRecorded"),
+    },
+    {
       id: "output",
       icon: Type,
       label: t("detail.output"),
@@ -209,6 +222,15 @@ export function AiRunDetail({
             ))}
           </ul>
         )}
+        <p className="mt-3 text-xs text-muted-foreground">{t("detail.sourcesExplain")}</p>
+        <Link
+          href={`/settings/ai/history/${run._id}`}
+          onClick={() => onOpenChange(false)}
+          className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
+        >
+          <ScrollText className="size-3.5" />
+          {t("detail.fullTranscript")}
+        </Link>
       </SidePanelSection>
 
       {state !== "working" && (

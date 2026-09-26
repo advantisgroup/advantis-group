@@ -6,19 +6,21 @@ import Link from "next/link";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { ArrowUp, ExternalLink, RotateCcw, Square } from "lucide-react";
+import { ArrowUp, ChevronRight, ExternalLink, RotateCcw, Square } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { SidePanel, SidePanelSection } from "@/components/ui/side-panel";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIntranetApiClient } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 import { AiGlyph } from "./AiGlyph";
 import { AiMarkdown } from "./AiMarkdown";
 import { aiErrorKey } from "./AiRunCard";
 import { AiReveal } from "./AiReveal";
 import { AiRunStats, AiThinking } from "./AiThinking";
+import { AiVerbatim } from "./AiVerbatim";
 import { type AskSubject, useAskOpen } from "./ask-subject";
 import { useAiEnabled } from "./use-ai-enabled";
 import { useAiRun } from "./use-ai-run";
@@ -41,6 +43,83 @@ function Chip({ label, href }: { label: string; href?: string }) {
       <span className="truncate">{label}</span>
       <ExternalLink className="size-3 shrink-0" />
     </Link>
+  );
+}
+
+/**
+ * The request itself, word for word, before anything is sent: the rules the
+ * model is given and the record as text. Built by apps/api with the same code
+ * as the real request, so it can't drift from it.
+ */
+function ExactPreview({ subject, question }: { subject: AskSubject; question: string }) {
+  const t = useTranslations("Ai");
+  const apiClient = useIntranetApiClient();
+  const [open, setOpen] = useState(false);
+  const [preview, setPreview] = useState<
+    { system: string; record: string } | "loading" | "error" | null
+  >(null);
+
+  useEffect(() => {
+    setPreview(null);
+    setOpen(false);
+  }, [subject.type, subject.id]);
+
+  function toggle() {
+    const next = !open;
+    setOpen(next);
+    if (!next || (preview && preview !== "error")) return;
+    setPreview("loading");
+    const params = new URLSearchParams({ type: subject.type, id: subject.id });
+    apiClient
+      .fetchJson<{ system: string; record: string }>(`/ask/preview?${params}`)
+      .then(setPreview)
+      .catch(() => setPreview("error"));
+  }
+
+  return (
+    <div className="mt-3">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+      >
+        <ChevronRight className={cn("size-3.5 transition-transform", open && "rotate-90")} />
+        {t("ask.previewToggle")}
+      </button>
+      {open && (
+        <div className="mt-2.5 space-y-3">
+          {preview === "loading" || preview === null ? (
+            <p className="text-xs text-muted-foreground">{t("ask.contextLoading")}</p>
+          ) : preview === "error" ? (
+            <p className="text-xs text-destructive">{t("history.loadFailed")}</p>
+          ) : (
+            <>
+              <div className="space-y-1">
+                <p className="text-[11px] font-medium text-muted-foreground">
+                  {t("history.instructions")} · {t("chars", { count: preview.system.length })}
+                </p>
+                <AiVerbatim className="max-h-48 p-3">{preview.system}</AiVerbatim>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] font-medium text-muted-foreground">
+                  {t("ask.previewRecord")} · {t("chars", { count: preview.record.length })}
+                </p>
+                <AiVerbatim className="max-h-72 p-3">{preview.record}</AiVerbatim>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] font-medium text-muted-foreground">
+                  {t("ask.previewQuestion")}
+                </p>
+                <AiVerbatim className="p-3">
+                  {`Question: ${question.trim() || t("ask.previewQuestionPlaceholder")}`}
+                </AiVerbatim>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -100,6 +179,7 @@ function AskBody({ subject, onClose }: { subject: AskSubject; onClose: () => voi
           )}
         </div>
         <p className="mt-2.5 text-xs text-muted-foreground">{t("ask.contextHint")}</p>
+        <ExactPreview subject={subject} question={question} />
       </SidePanelSection>
 
       <SidePanelSection title={t("ask.answerTitle")}>

@@ -40,7 +40,11 @@
       "suggestionSummary": "Summarise this suggestion.",
       "suggestionDecision": "What was decided, and why?",
       "suggestionImpact": "Who would this help?"
-    }
+    },
+    "previewToggle": "Preview exactly what's sent",
+    "previewRecord": "The record, as the model reads it",
+    "previewQuestion": "Then your question",
+    "previewQuestionPlaceholder": "(what you type below)"
   },
   "phase": {
     "reading": "Reading",
@@ -187,7 +191,10 @@
     "sourcesEmpty": "Not recorded for this run.",
     "notRecorded": "Not recorded",
     "errorCode": "Error code",
-    "result": "Result"
+    "result": "Result",
+    "sentPending": "Recorded once it finishes",
+    "sourcesExplain": "These are named for people. The transcript shows the exact text the model received.",
+    "fullTranscript": "See exactly what was sent"
   },
   "errors": {
     "rate_limited": "Too many requests right now — give it a minute, then try again.",
