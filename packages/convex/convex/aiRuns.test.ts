@@ -236,9 +236,33 @@ describe("aiRuns", () => {
       t.query(api.aiRuns.apiTitles, { serverKey, clerkUserId, runIds: [titled, untitled, "nope"] });
 
     expect(await ask("user_alice")).toEqual([
-      { _id: titled, kind: "wikiChat", title: "sealed-title" },
+      { _id: titled, kind: "wikiChat", subjectKey: "wikiChat:titled", title: "sealed-title" },
     ]);
     expect(await ask("user_bob")).toEqual([]);
+  });
+
+  test("a run that decides where it leads links there from the dock", async () => {
+    const t = setup();
+    const alice = await seedUser(t, "user_alice");
+    const runId = await t.mutation(api.aiRuns.apiStart, {
+      serverKey,
+      clerkUserId: "user_alice",
+      kind: "navigate",
+      subjectKey: "navigate",
+    });
+    await t.mutation(api.aiRuns.apiFinish, {
+      serverKey,
+      runId,
+      output: "{}",
+      outputChars: 2,
+      href: "/calendar?event=e1",
+    });
+    expect(await alice.query(api.aiRuns.get, { runId })).toMatchObject({
+      href: "/calendar?event=e1",
+    });
+    // Once the person has been taken there, it leaves the dock.
+    await alice.mutation(api.aiRuns.markSeen, { runId });
+    expect(await alice.query(api.aiRuns.dock, {})).toEqual([]);
   });
 
   test("after 30 days a run goes, transcript included", async () => {

@@ -4,10 +4,15 @@ import { useCallback, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
+import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
+import { useMutation } from "convex/react";
+
 import { useIntranetApiClient } from "@/lib/api-client";
 
 const POLL_MS = 350;
-const TIMEOUT_MS = 20_000;
+// Room for a few searches before it answers.
+const TIMEOUT_MS = 45_000;
 
 interface NavigateOutput {
   href: string | null;
@@ -23,6 +28,7 @@ interface NavigateOutput {
 export function useAiNavigate() {
   const apiClient = useIntranetApiClient();
   const router = useRouter();
+  const markSeen = useMutation(api.aiRuns.markSeen);
   const [pending, setPending] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -57,6 +63,10 @@ export function useAiNavigate() {
           setFailed(true);
           return;
         }
+        // The answer has been used right here, so it has nothing left to
+        // wait for in the AI dock. (A run still going after the timeout stays
+        // there, and links to where it led once it finishes.)
+        void markSeen({ runId: runId as Id<"aiRuns"> });
         const result = JSON.parse(output) as NavigateOutput;
         if (result.href) {
           router.push(result.href);
@@ -69,7 +79,7 @@ export function useAiNavigate() {
         setPending(false);
       }
     },
-    [apiClient, router],
+    [apiClient, router, markSeen],
   );
 
   return { run, pending, notFound, failed };

@@ -7,9 +7,14 @@ import { decrypt } from "../lib/crypto.js";
 import { Errors } from "../lib/errors.js";
 import { authed } from "../lib/middleware.js";
 
-/** Runs that read a CV hold applicant data, so reading them back needs the
- *  same access and unlocked vault as the rest of Applicant Management. */
+/** Runs that read applicant data — a CV, or a question asked about an
+ *  applicant — so reading them back needs the same access as the rest of
+ *  Applicant Management. Losing that access means losing the answers too. */
 const APPLICANT_KINDS = new Set(["cvExtract", "cvRescan"]);
+
+export function readsApplicantData(run: { kind: string; subjectKey: string }) {
+  return APPLICANT_KINDS.has(run.kind) || run.subjectKey.startsWith("ask:applicant:");
+}
 
 /** The caller's own run, with the same applicant gate the rest of Applicant
  * Management has for anything that read a CV. */
@@ -22,7 +27,7 @@ async function readableRun(clerkUserId: string, runId: string) {
     runId,
   });
   if (!run) throw Errors.notFound("Run not found");
-  if (APPLICANT_KINDS.has(run.kind)) {
+  if (readsApplicantData(run)) {
     const access = await convex.query(api.hr.applicants.apiCheckAccess, {
       serverKey,
       clerkUserId,
@@ -67,7 +72,7 @@ export const aiRunsRoute = new Elysia()
       let applicantAccess: boolean | null = null;
       const titles: Record<string, string> = {};
       for (const row of rows) {
-        if (APPLICANT_KINDS.has(row.kind)) {
+        if (readsApplicantData(row)) {
           applicantAccess ??= !!(
             await convex.query(api.hr.applicants.apiCheckAccess, { serverKey, clerkUserId })
           )?.hasAccess;

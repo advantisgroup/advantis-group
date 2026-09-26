@@ -149,6 +149,9 @@ export interface AiRunContext {
   transcript: AiTranscript;
   /** A search the run did before or between model calls, for the transcript. */
   recordLookup(label: string, query: string, results: string[]): void;
+  /** Where the result lives, when that's only known at the end (the
+   * wayfinder's destination) — the dock links there instead. */
+  setHref(href: string): void;
 }
 
 const HEARTBEAT_MS = 5_000;
@@ -224,6 +227,7 @@ export async function startAiRun(
   let sources: AiRunSource[] = [];
   let tokensIn = 0;
   let tokensOut = 0;
+  let resultHref: string | undefined;
   const transcript: AiTranscript = {
     version: 1,
     calls: [],
@@ -277,6 +281,9 @@ export async function startAiRun(
     recordLookup(label, query, results) {
       transcript.lookups.push({ at: Date.now(), label, query, results });
     },
+    setHref(href) {
+      resultHref = safeHref(href);
+    },
   };
 
   const sealedTranscript = () => {
@@ -311,6 +318,7 @@ export async function startAiRun(
           output: encrypt(output, key),
           outputChars: output.length,
           transcript: sealedTranscript(),
+          href: resultHref,
           tokensIn: tokensIn || undefined,
           tokensOut: tokensOut || undefined,
           sources: sources.length > 0 ? sources : undefined,

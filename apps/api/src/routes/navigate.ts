@@ -167,6 +167,7 @@ export const navigateRoute = new Elysia().use(authed).post(
         const key = str(parsed.key);
         const href = key ? safeHref(hrefByKey[key]) : undefined;
         const label = str(parsed.label) || undefined;
+        if (href) run.setHref(href);
         return JSON.stringify({ href: href ?? null, label: label ?? null });
       },
     );

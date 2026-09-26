@@ -451,13 +451,15 @@ export const apiFinish = serverMutation({
     output: v.string(),
     outputChars: v.number(),
     transcript: v.optional(transcriptArg),
+    // Replaces the run's link when the result decides where it goes.
+    href: v.optional(v.string()),
     tokensIn: v.optional(v.number()),
     tokensOut: v.optional(v.number()),
     sources: v.optional(v.array(v.object({ label: v.string(), href: v.optional(v.string()) }))),
   },
   handler: async (
     ctx,
-    { runId, output, outputChars, transcript, tokensIn, tokensOut, sources },
+    { runId, output, outputChars, transcript, href, tokensIn, tokensOut, sources },
   ) => {
     const run = await ctx.db.get(runId);
     if (!run || run.status !== "running") return null;
@@ -469,6 +471,7 @@ export const apiFinish = serverMutation({
       output,
       outputChars,
       transcriptChars: transcript?.chars,
+      ...(href ? { href } : {}),
       tokensIn,
       tokensOut,
       sources,
@@ -529,7 +532,7 @@ export const apiTitles = serverQuery({
         const id = ctx.db.normalizeId("aiRuns", runId);
         const run = id ? await ctx.db.get(id) : null;
         return run && run.clerkUserId === clerkUserId && run.title
-          ? { _id: run._id, kind: run.kind, title: run.title }
+          ? { _id: run._id, kind: run.kind, subjectKey: run.subjectKey, title: run.title }
           : null;
       }),
     );
