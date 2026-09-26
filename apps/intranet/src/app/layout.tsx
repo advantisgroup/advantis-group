@@ -8,6 +8,7 @@ import { getLocale, getMessages } from "next-intl/server";
 
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { ClientErrorReporter } from "@/components/ClientErrorReporter";
+import { PrintInLightTheme } from "@/components/print/PrintInLightTheme";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -82,6 +83,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 disableTransitionOnChange
               >
                 <ClientErrorReporter />
+                <PrintInLightTheme />
                 {children}
                 {/* Lifted clear of the two things that live in the same
                     corner: the AI dock on desktop, the bottom nav pill on a

@@ -57,5 +57,6 @@
   "fieldStatus": "Status",
   "fieldDate": "Datum",
   "fieldNumber": "Nr.",
-  "newestFirst": "Neueste zuerst"
+  "newestFirst": "Neueste zuerst",
+  "printedBy": "Gedruckt am {date} von {name}"
 }
