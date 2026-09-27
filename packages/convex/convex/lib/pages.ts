@@ -111,8 +111,8 @@ export const INTRANET_PAGES: IntranetPage[] = [
   },
   {
     href: "/files",
-    label: "Dateien",
-    description: "Freigegebene Dateien und Ordner aus OneDrive.",
+    label: "Firmendateien",
+    description: "Der gemeinsame Firmen-OneDrive: dieselben Ordner für alle mit Dateizugriff.",
     keywords: ["dokumente", "ordner", "files", "onedrive"],
     visible: (caller) => caller.can("access_files"),
   },
@@ -374,8 +374,8 @@ export const INTRANET_PAGES: IntranetPage[] = [
   },
   {
     href: "/hr/files",
-    label: "Bewerbermanagement: Dateien",
-    description: "Lebensläufe und Unterlagen im Bewerbermanagement.",
+    label: "HR-Dateien",
+    description: "Die OneDrive-Ordner des HR-Teams (Team/HR).",
     keywords: ["unterlagen", "dokumente"],
     visible: applicants,
   },

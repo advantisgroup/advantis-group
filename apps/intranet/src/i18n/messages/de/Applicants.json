@@ -431,5 +431,6 @@
   "poolConsentNone": "Keine Einwilligung – 6 Monate nach Archivierung gelöscht",
   "poolConsentRecord": "Einwilligung eintragen",
   "poolConsentMonths": "{months} Monate",
-  "poolConsentWithdraw": "Widerrufen"
+  "poolConsentWithdraw": "Widerrufen",
+  "filesDescription": "Die OneDrive-Ordner des HR-Teams. Unterlagen zu einer einzelnen Person liegen in ihrem Datensatz."
 }

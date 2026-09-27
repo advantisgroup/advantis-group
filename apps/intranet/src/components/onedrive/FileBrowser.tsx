@@ -12,6 +12,7 @@ import {
   Clock,
   Download,
   Folder,
+  FolderOpen,
   FolderPlus,
   Frown,
   LayoutGrid,
@@ -28,6 +29,7 @@ import {
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -88,6 +90,8 @@ export function FileBrowser({
   rootPath = "",
   rootLabel,
   routeBase = "/files",
+  title,
+  description,
 }: {
   initialPath?: string;
   /** Confines this browser to a subtree — used by the dedicated Wiki/HR
@@ -102,6 +106,10 @@ export function FileBrowser({
   /** The route this instance is mounted at — navigation stays under it
    * instead of always redirecting to `/files`. */
   routeBase?: string;
+  /** Names this file area in the page header. Left out where the page
+   * already has its own header (the wiki's Files tab). */
+  title?: string;
+  description?: string;
 }) {
   const t = useTranslations("Files");
   const handleError = useErrorHandler();
@@ -538,11 +546,14 @@ export function FileBrowser({
         <UploadDropOverlay enabled={canDrop} requiresApproval={!canWrite} onUpload={handleUpload} />
       )}
 
-      {/* Header: title + quota */}
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-lg font-semibold md:text-xl">{t("title")}</h1>
-        {quota && <QuotaBar quota={quota} />}
-      </div>
+      {title && (
+        <PageHeaderBar title={title} description={description} icon={<FolderOpen />} priority={1} />
+      )}
+      {quota && (
+        <div className="flex justify-end">
+          <QuotaBar quota={quota} />
+        </div>
+      )}
 
       {path === "" && !wikiNoticeDismissed && (
         <div className="flex items-start gap-3 rounded-xl border px-4 py-3 border-border/70 bg-card">

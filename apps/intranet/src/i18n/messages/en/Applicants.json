@@ -431,5 +431,6 @@
   "poolConsentNone": "No consent — deleted 6 months after archiving",
   "poolConsentRecord": "Record consent",
   "poolConsentMonths": "{months} months",
-  "poolConsentWithdraw": "Withdrawn"
+  "poolConsentWithdraw": "Withdrawn",
+  "filesDescription": "The HR team's OneDrive folders. Documents for one applicant or employee live in their record."
 }
