@@ -5,7 +5,6 @@ import { type ReactNode, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { ArrowLeft, Check, ExternalLink, Pencil, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -13,6 +12,7 @@ import { toast } from "sonner";
 
 import { Link } from "@/components/Link";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
+import { PersonPicker } from "@/components/people/PersonPicker";
 import { PersonLink } from "@/components/profile/PersonLink";
 import { useHasCapability } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
@@ -203,7 +203,7 @@ export default function ClockodoEmployeeDetailPage() {
 
   const canManageClockodo = useHasCapability("manage_clockodo_team");
   const links = useQuery(api.integrations.clockodoView.listWithLinks);
-  const intranetUsers = useQuery(api.people.users.list, {});
+
   const liveStatus = useQuery(api.activity.state.clockodoStatusForRoster, {
     clockodoUserIds: [clockodoUserId],
   });
@@ -313,10 +313,7 @@ export default function ClockodoEmployeeDetailPage() {
 
   const { user, targetHours, holidaysQuota } = detail;
   const link = links?.find((l) => l.clockodoUserId === String(clockodoUserId));
-  const linkableUsers = (intranetUsers ?? []).map((u) => ({
-    _id: u._id as string,
-    name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
-  }));
+
   const managers = allUsers.filter((m) => m.id !== clockodoUserId);
   const targetHoursDesc = [...targetHours].reverse();
   const vacationDesc = [...holidaysQuota].sort((a, b) => b.yearSince - a.yearSince);
@@ -391,10 +388,13 @@ export default function ClockodoEmployeeDetailPage() {
   );
 
   const linkSelect = (className: string) => (
-    <Select
-      value={link?.userId ?? "none"}
-      onValueChange={async (v) => {
-        if (v === "none") {
+    <PersonPicker
+      value={link?.userId ?? null}
+      className={className}
+      label={t("linkedEmployee")}
+      noneLabel={t("notLinked")}
+      onChange={async (userId) => {
+        if (!userId) {
           const ok = await confirm({
             title: t("confirmUnlinkTitle"),
             description: t("confirmUnlinkBody"),
@@ -404,22 +404,10 @@ export default function ClockodoEmployeeDetailPage() {
           if (!ok) return;
           void unlinkClockodoUser({ userId: link!.userId });
         } else {
-          void linkClockodoUser({ userId: v as Id<"users">, clockodoUserId });
+          void linkClockodoUser({ userId, clockodoUserId });
         }
       }}
-    >
-      <SelectTrigger className={className}>
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="none">{t("notLinked")}</SelectItem>
-        {linkableUsers.map((u) => (
-          <SelectItem key={u._id} value={u._id}>
-            {u.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    />
   );
 
   const activityLink = link?.deviceId && (

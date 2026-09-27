@@ -31,13 +31,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "@/components/Link";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { PersonPicker } from "@/components/people/PersonPicker";
+
 import {
   Table,
   TableBody,
@@ -67,14 +62,6 @@ import type { AcademyProgressData, Chapter } from "./types";
 
 export const ADMIN_BASE = "/guidebooks/wallbox-sales-academy/admin";
 
-function userDisplayName(u: {
-  firstName?: string | null;
-  lastName?: string | null;
-  email: string;
-}) {
-  return [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email;
-}
-
 // ─── Teilnehmer & Ergebnisse ───────────────────────────────────────────────
 
 function sendMailtoInvite(name: string, email: string, code: string) {
@@ -91,8 +78,8 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
   const [mode, setMode] = useState<"email" | "account">("email");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
-  const users = useQuery(api.people.users.list, {});
+  const [selectedUserId, setSelectedUserId] = useState<Id<"users"> | undefined>();
+  const users = useQuery(api.people.users.options, {});
   const create = useMutation(api.academy.participants.create);
   const { academyPin } = useAcademySession();
 
@@ -115,7 +102,7 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
         academyId: ACADEMY_ID,
         name: "",
         email: "",
-        linkUserId: selectedUserId as Id<"users">,
+        linkUserId: selectedUserId,
         pin: academyPin,
       });
       toast.success("Einladung gesendet - Benachrichtigung und E-Mail wurden verschickt.");
@@ -196,13 +183,13 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
             {matchedUser ? (
               <div className="flex items-center justify-between gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm refreshed:border-border refreshed:bg-muted/40">
                 <span>
-                  Diese E-Mail gehört zum Intranet-Konto <b>{userDisplayName(matchedUser)}</b>.
+                  Diese E-Mail gehört zum Intranet-Konto <b>{matchedUser.name}</b>.
                 </span>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    setSelectedUserId(matchedUser._id);
+                    setSelectedUserId(matchedUser.userId);
                     setMode("account");
                   }}
                 >
@@ -218,18 +205,13 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
         ) : (
           <div className="space-y-3">
             <Label>Intranet-Konto</Label>
-            <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Konto auswählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {(users ?? []).map((u) => (
-                  <SelectItem key={u._id} value={u._id}>
-                    {userDisplayName(u)} · {u.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <PersonPicker
+              value={selectedUserId ?? null}
+              onChange={(userId) => setSelectedUserId(userId ?? undefined)}
+              people={users}
+              label="Intranet-Konto"
+              placeholder="Konto auswählen"
+            />
             <p className="text-xs text-muted-foreground">
               Der Zugangscode geht sofort als In-App-Benachrichtigung und als E-Mail an dieses
               Konto. Zugriff auf die Academy läuft weiterhin über den Code, nicht automatisch über
@@ -405,16 +387,15 @@ export function ParticipantsTab() {
 }
 
 function LinkAccountControl({ participant }: { participant: Doc<"academyParticipants"> }) {
-  const users = useQuery(api.people.users.list, {});
   const linkToAccount = useMutation(api.academy.participants.linkToAccount);
   const unlinkAccount = useMutation(api.academy.participants.unlinkAccount);
   const { academyPin } = useAcademySession();
 
   return (
-    <Select
-      value={participant.linkedUserId ?? "none"}
-      onValueChange={(v) => {
-        if (v === "none")
+    <PersonPicker
+      value={participant.linkedUserId ?? null}
+      onChange={(userId) => {
+        if (!userId)
           void unlinkAccount({
             participantId: participant._id,
             pin: academyPin,
@@ -422,23 +403,14 @@ function LinkAccountControl({ participant }: { participant: Doc<"academyParticip
         else
           void linkToAccount({
             participantId: participant._id,
-            userId: v as Id<"users">,
+            userId,
             pin: academyPin,
           });
       }}
-    >
-      <SelectTrigger className="w-72">
-        <SelectValue placeholder="Kein Konto verknüpft" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="none">Kein Konto verknüpft</SelectItem>
-        {(users ?? []).map((u) => (
-          <SelectItem key={u._id} value={u._id}>
-            {userDisplayName(u)} · {u.email}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      label="Intranet-Konto"
+      noneLabel="Kein Konto verknüpft"
+      className="w-72 max-w-full"
+    />
   );
 }
 

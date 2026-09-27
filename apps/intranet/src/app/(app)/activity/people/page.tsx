@@ -13,6 +13,8 @@ import { BrandedText } from "@/components/branding/ProviderMark";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
 import { PersonIdentityBadges } from "@/components/people/PersonIdentityBadges";
+import { PersonAvatar } from "@/components/people/PersonPicker";
+import { PersonLink } from "@/components/profile/PersonLink";
 import { useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -116,14 +118,6 @@ export default function PeoplePage() {
   // The roster renders twice — stacked cards on mobile, a table from md up —
   // so the delete/edit buttons and read-only cells live in one place.
 
-  const linkableUsers = (intranetUsers ?? []).map((u) => ({
-    _id: u._id as string,
-    name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
-    role: u.role,
-    department: u.department,
-    teams: u.teams,
-  }));
-
   const editingPerson = editTarget ? (people.find((p) => p._id === editTarget) ?? null) : null;
 
   // Once a person is linked to an intranet account, `users.clockodoUserId`
@@ -147,13 +141,21 @@ export default function PeoplePage() {
     );
 
   const userLinkCell = (p: { userId?: GenericId<"users"> }) => {
-    const linked = linkableUsers.find((u) => u._id === (p.userId as string));
+    const linked = intranetUsers?.find((u) => u._id === p.userId);
     if (!linked) {
       return <span className="text-sm text-muted-foreground">{t("people.intranetUserNone")}</span>;
     }
     return (
       <div className="space-y-1">
-        <span className="text-sm text-muted-foreground">{linked.name}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          <PersonAvatar
+            person={{ name: linked.name, email: linked.email, avatarUrl: linked.avatar }}
+            className="size-6"
+          />
+          <PersonLink userId={linked._id} className="text-sm">
+            {linked.name}
+          </PersonLink>
+        </span>
         <PersonIdentityBadges
           role={linked.role}
           department={linked.department}
@@ -342,7 +344,6 @@ export default function PeoplePage() {
 
       <EditPersonDialog
         person={editingPerson}
-        linkableUsers={linkableUsers}
         onOpenChange={(open) => {
           if (!open) setEditTarget(null);
         }}

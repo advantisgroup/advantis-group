@@ -267,7 +267,7 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
   const optionsNeedAttention = readiness.missing.some((c) => c.key !== "thema");
 
   const category = entryForm.categories.find((c) => c._id === entryForm.categoryId);
-  const owner = entryForm.users.find((u) => u._id === entryForm.ownerUserId);
+  const owner = entryForm.users.find((u) => u.userId === entryForm.ownerUserId);
 
   const optionsBody = (
     <div className="space-y-4">

@@ -32,6 +32,7 @@ import {
 import { CategoryManagerDialog, type WikiEntry } from "@/components/guidebooks/WikiEntryDialogs";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
+import { PersonPicker } from "@/components/people/PersonPicker";
 import {
   isOwnerOrAdmin,
   useCurrentUser,
@@ -45,13 +46,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { type FilterGroup, FilterPill, FilterSheet } from "@/components/ui/filter-pill";
 import { Input } from "@/components/ui/input";
 import { htmlToText } from "@/components/ui/rich-text";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate } from "@/lib/format";
 import {
@@ -376,7 +370,6 @@ export default function GuidebooksPage() {
 
   const items = useGridItems(user, t);
   const knowledgeTabs = useKnowledgeTabs();
-  const users = useQuery(api.people.users.list, {}) ?? [];
   const wikiCategoriesRaw = useQuery(api.wiki.categories.list);
   const wikiCategories = wikiCategoriesRaw ?? EMPTY_CATEGORIES;
   const extend = useMutation(api.wiki.entries.update);
@@ -745,25 +738,17 @@ export default function GuidebooksPage() {
                   >
                     {item.title}
                   </Link>
-                  <Select
-                    onValueChange={(ownerUserId) =>
-                      setOwner({
-                        entryId: item.wikiEntry!._id,
-                        ownerUserId: ownerUserId as Id<"users">,
-                      }).catch(handleError)
+                  <PersonPicker
+                    value={null}
+                    onChange={(ownerUserId) =>
+                      ownerUserId &&
+                      setOwner({ entryId: item.wikiEntry!._id, ownerUserId }).catch(handleError)
                     }
-                  >
-                    <SelectTrigger className="h-7 w-44 bg-card text-xs">
-                      <SelectValue placeholder={t("ownerMissing")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.map((user) => (
-                        <SelectItem key={user._id} value={user._id}>
-                          {user.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    label={t("ownerMissing")}
+                    placeholder={t("ownerMissing")}
+                    align="end"
+                    className="h-7 min-h-7 w-44 bg-card text-xs md:min-h-7"
+                  />
                 </div>
               ))}
             </div>

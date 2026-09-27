@@ -9,14 +9,11 @@ import { Plus, Users, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useCurrentUser } from "@/components/providers/current-user";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PersonList } from "@/components/people/PersonPicker";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { initials } from "@/lib/format";
 
 export function NewConversationDialog({
   onCreated,
@@ -30,7 +27,7 @@ export function NewConversationDialog({
   const t = useTranslations("Chat");
   const tc = useTranslations("Common");
   const me = useCurrentUser();
-  const people = useQuery(api.people.users.list, {});
+  const people = useQuery(api.people.users.options, {});
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
   const createGroup = useMutation(api.chat.createGroup);
   const handleError = useErrorHandler();
@@ -38,9 +35,9 @@ export function NewConversationDialog({
   const [open, setOpen] = useState(false);
   const [groupMode, setGroupMode] = useState(false);
   const [groupName, setGroupName] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<Id<"users">>>(new Set());
 
-  const others = people?.filter((p) => p._id !== me._id) ?? [];
+  const others = people?.filter((p) => p.userId !== me._id) ?? [];
 
   function reset() {
     setGroupMode(false);
@@ -64,7 +61,7 @@ export function NewConversationDialog({
     try {
       const { conversationId } = await createGroup({
         name: groupName.trim(),
-        memberIds: [...selected] as Id<"users">[],
+        memberIds: [...selected],
       });
       setOpen(false);
       reset();
@@ -74,7 +71,7 @@ export function NewConversationDialog({
     }
   }
 
-  function toggle(id: string) {
+  function toggle(id: Id<"users">) {
     setSelected((s) => {
       const next = new Set(s);
       if (next.has(id)) next.delete(id);
@@ -139,7 +136,7 @@ export function NewConversationDialog({
           />
         )}
 
-        {others.length === 0 ? (
+        {people !== undefined && others.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border py-12 text-center">
             <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
               <UsersRound className="h-5 w-5" />
@@ -150,29 +147,14 @@ export function NewConversationDialog({
             </div>
           </div>
         ) : (
-          <ScrollArea className="h-72 rounded-lg border border-border">
-            {others.map((p) => (
-              <div
-                key={p._id}
-                className="flex items-center gap-3 border-b border-border/60 px-3 py-2 last:border-b-0 hover:bg-accent"
-              >
-                {groupMode && (
-                  <Checkbox checked={selected.has(p._id)} onCheckedChange={() => toggle(p._id)} />
-                )}
-                <Avatar className="size-8">
-                  {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-                  <AvatarFallback className="text-xs">{initials(p.name, p.email)}</AvatarFallback>
-                </Avatar>
-                <button
-                  className="min-w-0 flex-1 text-left"
-                  onClick={() => (groupMode ? toggle(p._id) : startDm(p._id))}
-                >
-                  <p className="truncate text-sm font-medium">{p.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{p.jobTitle || p.email}</p>
-                </button>
-              </div>
-            ))}
-          </ScrollArea>
+          <PersonList
+            people={people === undefined ? undefined : others}
+            multiple={groupMode}
+            selected={groupMode ? selected : null}
+            onSelect={(p) => (groupMode ? toggle(p.userId) : void startDm(p.userId))}
+            autoFocus={!groupMode}
+            listClassName="h-72"
+          />
         )}
       </ResponsiveDialog>
     </>

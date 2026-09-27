@@ -1,6 +1,12 @@
 "use client";
 
-import { useHasCapability, useIsAdmin } from "@/components/providers/current-user";
+import { PersonPicker } from "@/components/people/PersonPicker";
+import {
+  useHasApplicantAccess,
+  useHasCapability,
+  useIsAdmin,
+} from "@/components/providers/current-user";
+import { Link } from "@/components/Link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,7 +36,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
-import { CalendarClock, CheckCircle2, Circle, Hash, Users2 } from "lucide-react";
+import { CalendarClock, CheckCircle2, Circle, FolderLock, Hash, Users2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -183,7 +189,6 @@ function OrganisationEditor({
   const setManager = useMutation(api.people.users.setManager);
   const setDepartment = useMutation(api.org.structure.setUserDepartment);
   const departments = useQuery(api.org.structure.listDepartments, {});
-  const users = useQuery(api.people.users.list, isAdmin ? {} : "skip");
 
   return (
     <div className="space-y-3 rounded-lg border border-border/70 p-3">
@@ -216,31 +221,17 @@ function OrganisationEditor({
       {isAdmin && (
         <div className="space-y-1.5">
           <p className="text-xs font-medium text-muted-foreground">{t("reportsToManual")}</p>
-          <Select
-            value={manualManagerId ?? NOBODY}
-            onValueChange={(value) =>
-              setManager({
-                userId,
-                managerId: value === NOBODY ? undefined : (value as Id<"users">),
-              })
+          <PersonPicker
+            value={manualManagerId}
+            onChange={(managerId) =>
+              setManager({ userId, managerId: managerId ?? undefined })
                 .then(() => toast.success(t("organisationSaved")))
                 .catch(handleError)
             }
-          >
-            <SelectTrigger className="h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NOBODY}>{t("reportsToNobody")}</SelectItem>
-              {(users ?? [])
-                .filter((u) => u._id !== userId)
-                .map((u) => (
-                  <SelectItem key={u._id} value={u._id}>
-                    {u.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
+            label={t("reportsToManual")}
+            noneLabel={t("reportsToNobody")}
+            exclude={[userId]}
+          />
         </div>
       )}
       <p className="text-xs text-muted-foreground">{t("organisationHint")}</p>
@@ -573,6 +564,41 @@ export function LinkedAccountsSection({ userId }: { userId: Id<"users"> }) {
           </div>
         ))}
       </dl>
+    </Section>
+  );
+}
+
+/** Whether this person has an HR record — only rendered for people with HR
+ *  access, so HR can jump between the two without searching twice. */
+export function HrRecord({ userId, onNavigate }: { userId: Id<"users">; onNavigate: () => void }) {
+  const t = useTranslations("Profile");
+  const hasAccess = useHasApplicantAccess();
+  const result = useQuery(api.hr.employees.recordForUser, hasAccess ? { userId } : "skip");
+  if (!result?.access) return null;
+  const record = result.record;
+
+  return (
+    <Section label={t("hrRecord")} className={LATE_SECTION}>
+      <div className="flex min-h-10 items-center gap-3 text-sm">
+        <IconTile>
+          <FolderLock />
+        </IconTile>
+        <span className="min-w-0 flex-1 truncate text-muted-foreground">
+          {record
+            ? record.status === "archived"
+              ? t("hrRecordArchived")
+              : t("hrRecordActive")
+            : t("hrRecordMissing")}
+        </span>
+        <Button size="sm" variant="outline" asChild>
+          <Link
+            href={record ? `/hr/employees/${record._id}` : "/hr/employees/import"}
+            onClick={onNavigate}
+          >
+            {record ? t("hrRecordOpen") : t("hrRecordCreate")}
+          </Link>
+        </Button>
+      </div>
     </Section>
   );
 }

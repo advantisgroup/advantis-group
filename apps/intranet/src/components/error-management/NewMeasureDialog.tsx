@@ -8,6 +8,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { PersonPicker } from "@/components/people/PersonPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
@@ -39,13 +40,12 @@ export function NewMeasureDialog({
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
   const reports = useQuery(api.fehlermanagement.reports.list) ?? EMPTY_REPORTS;
-  const users = useQuery(api.people.users.list, {}) ?? [];
   const create = useMutation(api.fehlermanagement.measures.create);
 
   const [errorId, setErrorId] = useState(defaultErrorId ?? "");
   const [description, setDescription] = useState("");
   const [phase, setPhase] = useState<MeasurePhase>("d3_sofort");
-  const [ownerUserId, setOwnerUserId] = useState("unassigned");
+  const [ownerUserId, setOwnerUserId] = useState<Id<"users"> | null>(null);
   const [dueDate, setDueDate] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -61,12 +61,12 @@ export function NewMeasureDialog({
         errorReportId: errorId as Id<"errorReports">,
         description,
         phase,
-        ownerUserId: ownerUserId === "unassigned" ? undefined : (ownerUserId as Id<"users">),
+        ownerUserId: ownerUserId ?? undefined,
         dueAt: dateInputToMs(dueDate),
       });
       toast.success(t("created"));
       setDescription("");
-      setOwnerUserId("unassigned");
+      setOwnerUserId(null);
       setDueDate("");
       onOpenChange(false);
     } catch (e) {
@@ -147,19 +147,12 @@ export function NewMeasureDialog({
             <label className="mb-1 block text-xs font-medium text-muted-foreground">
               {t("fieldOwner")}
             </label>
-            <Select value={ownerUserId} onValueChange={setOwnerUserId}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unassigned">{t("ownerUnassigned")}</SelectItem>
-                {users.map((user) => (
-                  <SelectItem key={user._id} value={user._id}>
-                    {user.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <PersonPicker
+              value={ownerUserId}
+              onChange={setOwnerUserId}
+              label={t("fieldOwner")}
+              noneLabel={t("ownerUnassigned")}
+            />
           </div>
         </div>
         <div>

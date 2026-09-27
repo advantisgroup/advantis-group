@@ -22,6 +22,14 @@ export function initials(name: string | null | undefined, email?: string): strin
   return source.slice(0, 2).toUpperCase();
 }
 
+/** Whether any of `fields` contains `query`, ignoring case and accents — so
+ *  "muller" finds "Müller". Every people search uses this. */
+export function matchesSearch(query: string, ...fields: (string | null | undefined)[]): boolean {
+  const fold = (value: string) => value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  const q = fold(query.trim());
+  return !q || fields.some((field) => field && fold(field).includes(q));
+}
+
 /** Locale-aware short date from an ISO date string (YYYY-MM-DD). */
 export function formatIsoDate(iso: string, locale: string): string {
   if (typeof iso !== "string") return "";
