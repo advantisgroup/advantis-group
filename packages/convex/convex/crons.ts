@@ -72,6 +72,14 @@ if (process.env.DISABLE_CRONS !== "true") {
     {},
   );
 
+  // Monday 06:50 UTC — before people start in Berlin, summer or winter time.
+  crons.weekly(
+    "digest: weekly what-you-missed email",
+    { dayOfWeek: "monday", hourUTC: 6, minuteUTC: 50 },
+    internal.digest.weekly.send,
+    {},
+  );
+
   crons.daily(
     "hr: delete archived applicants past their retention period",
     { hourUTC: 2, minuteUTC: 40 },

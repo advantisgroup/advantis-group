@@ -12,8 +12,10 @@ import {
   BookOpen,
   Calendar,
   CheckCheck,
+  ClipboardList,
   Clock3,
   Cloud,
+  Contact,
   ExternalLink,
   Grid2X2,
   Inbox,
@@ -21,18 +23,19 @@ import {
   LifeBuoy,
   Lightbulb,
   LineChart,
+  type LucideIcon,
   Megaphone,
   MessageSquare,
   Newspaper,
   PhoneCall,
   RotateCcw,
   Rss,
+  ScrollText,
   Settings,
   ShieldCheck,
   SlidersHorizontal,
-  type LucideIcon,
-  UserSearch,
   Users,
+  UserSearch,
   Wrench,
   Zap,
 } from "lucide-react";
@@ -54,6 +57,7 @@ import {
   type SidebarSectionDef,
   toSavedSections,
 } from "@/components/layout/sidebar-layout";
+import { SidebarFavorites, SidebarTools } from "@/components/layout/SidebarExtras";
 import { SidebarSections } from "@/components/layout/SidebarSections";
 import { Link } from "@/components/Link";
 import { MarkLogo, WordmarkLogo } from "@/components/Logo";
@@ -280,6 +284,7 @@ export function Sidebar() {
           },
         ]
       : []),
+    { section: "knowledge", href: "/policies", labelKey: "policies", icon: ScrollText },
     ...(hasBlogAccess
       ? [{ section: "knowledge" as const, href: "/blog", labelKey: "blog", icon: Newspaper }]
       : []),
@@ -288,6 +293,18 @@ export function Sidebar() {
       href: "/help",
       labelKey: "help",
       icon: LifeBuoy,
+    },
+    {
+      section: "support",
+      href: "/requests",
+      labelKey: "myRequests",
+      icon: ClipboardList,
+    },
+    {
+      section: "support",
+      href: "/who-to-ask",
+      labelKey: "whoToAsk",
+      icon: Contact,
     },
     ...(hasInquiries
       ? [
@@ -616,16 +633,20 @@ export function Sidebar() {
             />
           </>
         ) : (
-          <SidebarSections
-            sections={workspaceSections}
-            collapsed={collapsed}
-            sectionLabel={sectionLabel}
-            renderLink={navLink}
-            renderItemContent={itemContent}
-            isActive={isActive}
-            onToggleSection={toggleSection}
-            onChange={saveSections}
-          />
+          <>
+            {!editing && <SidebarFavorites onNavigate={close} />}
+            {!editing && <SidebarTools />}
+            <SidebarSections
+              sections={workspaceSections}
+              collapsed={collapsed}
+              sectionLabel={sectionLabel}
+              renderLink={navLink}
+              renderItemContent={itemContent}
+              isActive={isActive}
+              onToggleSection={toggleSection}
+              onChange={saveSections}
+            />
+          </>
         )}
       </SidebarContent>
 

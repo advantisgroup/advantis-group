@@ -57,5 +57,27 @@
   "offboarding_files": "Dateien und Freigaben übergeben",
   "offboarding_devices": "Geräte zurückgegeben",
   "offboarding_access": "Zugriffsentzug angefordert",
-  "viewFullProfile": "Vollständiges Profil ansehen"
+  "viewFullProfile": "Vollständiges Profil ansehen",
+  "statusSet": "Status setzen",
+  "statusChange": "Status ändern",
+  "statusTitle": "Dein Status",
+  "statusDescription": "Eine kurze Notiz neben deinem Namen, z. B. „Ab Montag zurück, frag Anna“. Kolleg:innen sehen sie in deinem Profil, im Verzeichnis und wenn sie dich @erwähnen.",
+  "statusPlaceholder": "Was sollen Kolleg:innen wissen?",
+  "statusClearAfter": "Entfernen nach",
+  "statusDuration": {
+    "today": "Heute",
+    "tomorrow": "Morgen",
+    "week": "Diese Woche",
+    "date": "Ein Datum …",
+    "never": "Nicht entfernen"
+  },
+  "statusClear": "Status entfernen",
+  "statusSaved": "Status gesetzt",
+  "statusCleared": "Status entfernt",
+  "statusSaveFailed": "Status konnte nicht gespeichert werden. Versuch es noch einmal.",
+  "statusUntil": "bis {date}",
+  "presetMeeting": "Heute in Meetings",
+  "presetHome": "Im Homeoffice",
+  "presetSick": "Krank",
+  "presetVacation": "Im Urlaub"
 }

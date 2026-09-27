@@ -10,6 +10,7 @@ import { type RouteTab, routeTabClick } from "@/components/layout/route-tab";
 import { TourReplayButton, type CheckpointId } from "@/components/tour";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { FavoriteToggle } from "@/components/layout/FavoriteToggle";
 import { cn } from "@/lib/utils";
 
 export interface PageHeaderIdentity {
@@ -235,6 +236,7 @@ export function PageHeaderBarSlot() {
       <h1 className="min-w-0 font-display text-sm font-semibold leading-tight tracking-tight [overflow-wrap:anywhere] md:whitespace-nowrap md:text-[15px]">
         {identity.title}
       </h1>
+      <FavoriteToggle title={identity.title} />
       {identity.tourCheckpoint && <TourReplayButton checkpointId={identity.tourCheckpoint} />}
       {identity.description && (
         <Tooltip open={descriptionOpen} onOpenChange={setDescriptionOpen}>

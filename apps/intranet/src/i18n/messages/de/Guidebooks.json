@@ -328,5 +328,12 @@
       "title": "Wallbox Sales Academy",
       "when": "Schulungskapitel und Quizze."
     }
-  }
+  },
+  "policyToggle": "Das ist eine Richtlinie",
+  "policyToggleHint": "Alle bestätigen, dass sie sie gelesen haben. Sie steht unter Richtlinien und auf dem Dashboard jeder Person, bis sie bestätigt ist.",
+  "policyAskAgain": "Alle erneut bestätigen lassen",
+  "policyAskAgainHint": "Anhaken, wenn die Änderung wichtig ist. Bei einem Tippfehler aus lassen, damit niemand unnötig neu bestätigen muss.",
+  "policyConfirmBody": "Das ist eine Richtlinie. Bitte bestätige, dass du sie gelesen und verstanden hast.",
+  "policyChangedBody": "Diese Richtlinie hat sich geändert, seit du sie bestätigt hast. Bitte lies sie erneut und bestätige.",
+  "policyOlderVersion": "hat eine ältere Version bestätigt"
 }

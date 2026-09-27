@@ -328,5 +328,12 @@
       "title": "Wallbox Sales Academy",
       "when": "Training chapters and quizzes."
     }
-  }
+  },
+  "policyToggle": "This is a policy",
+  "policyToggleHint": "Everyone confirms they've read it. It's listed under Policies and shows on each person's dashboard until they confirm.",
+  "policyAskAgain": "Ask everyone to confirm again",
+  "policyAskAgainHint": "Tick this when the change matters. Leave it off for a typo fix, so nobody has to confirm again for nothing.",
+  "policyConfirmBody": "This is a policy. Please confirm that you've read and understood it.",
+  "policyChangedBody": "This policy has changed since you confirmed it. Please read it again and confirm.",
+  "policyOlderVersion": "confirmed an older version"
 }

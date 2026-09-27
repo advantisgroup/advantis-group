@@ -100,6 +100,8 @@ export const contentTables = {
     userId: v.id("users"),
     slug: v.string(),
     readAt: v.number(),
+    /** The entry's `policyVersion` confirmed; absent = version 1. */
+    version: v.optional(v.number()),
   })
     .index("by_user_slug", ["userId", "slug"])
     .index("by_user", ["userId"])
@@ -133,6 +135,11 @@ export const contentTables = {
     erklaerung: v.string(),
     tags: v.array(v.string()),
     link: v.optional(v.string()),
+    // A policy: everyone confirms they've read it, and confirms again when
+    // `policyVersion` goes up (an editor asks for that when a change
+    // matters, not on every typo fix).
+    policy: v.optional(v.boolean()),
+    policyVersion: v.optional(v.number()),
     // Unset = everyone signed in. For how-tos about screens only managers
     // (or admins) have — enforced by every wiki read (see wiki/entries.ts).
     minRole: v.optional(v.union(v.literal("manager"), v.literal("admin"))),

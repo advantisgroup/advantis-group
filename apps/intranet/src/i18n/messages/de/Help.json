@@ -1,6 +1,7 @@
 {
   "title": "Hilfe & Anfragen",
   "description": "Unsicher, wohin damit? Fang bei dem an, was gerade los ist.",
+  "myRequestsLink": "Schon etwas angefragt? Den Stand siehst du unter Meine Anfragen.",
   "reportTitle": "Etwas melden oder beantragen",
   "findTitle": "Etwas herausfinden",
   "it": {
@@ -35,8 +36,8 @@
   },
   "who": {
     "title": "Wer kann mir dabei helfen?",
-    "when": "Kolleg:innen finden, ihr Team sehen und ob sie gerade erreichbar sind.",
-    "cta": "Team"
+    "when": "An wen du dich bei IT, Personal, Lohn oder Erster Hilfe wendest, und wie du sie erreichst.",
+    "cta": "Ansprechpartner"
   },
   "status": {
     "title": "Ist gerade etwas gestört?",

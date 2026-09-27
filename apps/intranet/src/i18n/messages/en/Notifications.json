@@ -49,7 +49,7 @@
   "weeklyReportHint": "Every Monday: tickets, error reports and suggestions from last week against the week before.",
   "digestTitle": "Daily email digest",
   "digestHint": "One email each morning with anything you haven't read yet. Nothing is sent on quiet days.",
-  "browserHint": "System notifications while the tab is in the background.",
+  "browserHint": "System notifications on this device when you're not looking at the intranet.",
   "browserUnsupported": "Your browser doesn't support notifications.",
   "browserDenied": "Notification permission was denied in the browser.",
   "browserDeniedHint": "Notifications are blocked for this site in your browser. Enable them in your browser or OS settings, then turn this back on.",
@@ -74,5 +74,7 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "earlier": "Earlier"
-  }
+  },
+  "weeklyDigestTitle": "Weekly summary email",
+  "weeklyDigestHint": "Every Monday: what was announced, posted and added to the wiki last week, policies waiting for you, and next week's events. Only sent when there's something new."
 }

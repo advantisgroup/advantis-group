@@ -42,6 +42,11 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     department: user.department ?? null,
     jobTitle: user.jobTitle ?? null,
     phone: user.phone ?? null,
+    // Expiry is checked where it's shown (queries are cached, so "now" here
+    // would go stale); see the intranet's `activeStatusMessage`.
+    statusMessage: user.statusText
+      ? { text: user.statusText, until: user.statusUntil ?? null }
+      : null,
     teams: user.teams ?? [],
     managingDirector: user.managingDirector ?? false,
     expertise: user.expertise ?? [],
@@ -386,6 +391,30 @@ export const updateProfile = userMutation({
         imageUrl: avatarUrl,
       });
     }
+    return { ok: true as const };
+  },
+});
+
+const STATUS_MAX_LENGTH = 120;
+
+/** Sets or clears the caller's status note. An empty text clears it. */
+export const setStatusMessage = userMutation({
+  args: { text: v.string(), until: v.optional(v.number()) },
+  handler: async (ctx, { text, until }) => {
+    const trimmed = text.replace(/\s+/g, " ").trim();
+    if (trimmed.length > STATUS_MAX_LENGTH) {
+      throw new ConvexError({
+        code: "bad_request",
+        message: `Keep the status to ${STATUS_MAX_LENGTH} characters`,
+      });
+    }
+    if (until !== undefined && until <= Date.now()) {
+      throw new ConvexError({ code: "bad_request", message: "The end must be in the future" });
+    }
+    await ctx.db.patch(ctx.caller.user._id, {
+      statusText: trimmed || undefined,
+      statusUntil: trimmed ? until : undefined,
+    });
     return { ok: true as const };
   },
 });

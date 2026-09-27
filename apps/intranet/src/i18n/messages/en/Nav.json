@@ -66,5 +66,26 @@
     "Secure — for Advantis employees only"
   ],
   "playground": "Playground",
-  "help": "Help & requests"
+  "help": "Help & requests",
+  "myRequests": "My requests",
+  "whoToAsk": "Who to ask",
+  "groupFavorites": "Favourites",
+  "favoriteAdd": "Add to favourites",
+  "favoriteRemove": "Remove from favourites",
+  "favoritesFull": "You can keep up to {max} favourites. Remove one first.",
+  "groupTools": "Tools",
+  "toolsEdit": "Edit tools",
+  "toolsEmptyAdmin": "Add the tools everyone uses.",
+  "toolsTitle": "Company tools",
+  "toolsDescription": "Links to the tools everyone uses, shown in the sidebar. They open in a new tab.",
+  "toolName": "Name",
+  "toolNamePlaceholder": "e.g. Clockodo, Outlook, Salesforce",
+  "toolUrl": "Link",
+  "toolAdd": "Add",
+  "toolAdded": "Tool added",
+  "toolAddFailed": "Couldn't add the tool. Check the link starts with https:// and try again.",
+  "toolMoveUp": "Move {name} up",
+  "toolMoveDown": "Move {name} down",
+  "toolRemove": "Remove {name}",
+  "policies": "Policies"
 }

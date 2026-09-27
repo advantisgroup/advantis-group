@@ -292,5 +292,7 @@
   "ticketStatus": {
     "offen": "Offen",
     "bearbeitung": "In Bearbeitung"
-  }
+  },
+  "needsYouPolicy": "Richtlinie lesen und bestätigen",
+  "needsYouPolicyChanged": "Richtlinie geändert, bitte erneut bestätigen"
 }

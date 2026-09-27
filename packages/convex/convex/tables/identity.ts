@@ -23,6 +23,10 @@ export const identityTables = {
      */
     department: v.optional(v.string()),
     jobTitle: v.optional(v.string()),
+    // "Back Monday, ask Anna" — a short note shown next to the person's name,
+    // optionally until a moment after which it no longer shows.
+    statusText: v.optional(v.string()),
+    statusUntil: v.optional(v.number()),
     /** Canonical department link — see `departments` table. */
     departmentId: v.optional(v.id("departments")),
     phone: v.optional(v.string()),
@@ -286,6 +290,55 @@ export const identityTables = {
   }),
 
   /**
+   * "Who to ask" — who to go to for a topic (IT, payroll, first aid, …),
+   * kept by admins. People are linked by account so names, photos and
+   * status notes stay current; a phone number or email covers contacts that
+   * aren't colleagues (the company doctor, emergency numbers).
+   */
+  /**
+   * Days the office is shut beyond the public holidays: a company holiday,
+   * the week between Christmas and New Year. Inclusive ISO dates.
+   */
+  officeClosures: defineTable({
+    title: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+    note: v.optional(v.string()),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_endDate", ["endDate"]),
+
+  /** Singleton: which German state's public holidays apply on top of the
+   *  nationwide ones. Unset = nationwide only. */
+  officeCalendarSettings: defineTable({
+    region: v.optional(v.string()),
+    updatedBy: v.id("users"),
+    updatedAt: v.number(),
+  }),
+
+  /** The company's external tools (Clockodo, Outlook, Salesforce, …),
+   *  kept by admins, as links in the sidebar. */
+  companyTools: defineTable({
+    name: v.string(),
+    url: v.string(),
+    description: v.optional(v.string()),
+    sortOrder: v.number(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  }),
+
+  contactTopics: defineTable({
+    section: v.union(v.literal("help"), v.literal("safety")),
+    topic: v.string(),
+    note: v.optional(v.string()),
+    userIds: v.array(v.id("users")),
+    phone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    updatedAt: v.number(),
+    updatedBy: v.id("users"),
+  }),
+
+  /**
    * Canonical teams (access-control tags, e.g. "customer-care"). Replaces
    * the free-text `users.teams` array — membership lives in `userTeams`.
    * `slug` is kept stable across renames so existing guidebook access rules
@@ -421,6 +474,11 @@ export const identityTables = {
     /** AG-root-relative OneDrive folder paths pinned in the file browser. */
     favoriteFolders: v.optional(v.array(v.string())),
     favoriteGuidebooks: v.optional(v.array(v.string())),
+    /** Pages starred from their header, shown at the top of the sidebar. */
+    favoritePages: v.optional(v.array(v.object({ href: v.string(), label: v.string() }))),
+    /** The Monday "what you missed" email. Unset = on for employees, off
+     *  for external members (see digest/weekly.ts). */
+    weeklyDigest: v.optional(v.boolean()),
     savedDirectoryViews: v.optional(
       v.array(
         v.object({

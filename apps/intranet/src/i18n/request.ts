@@ -37,6 +37,9 @@ import deFileViewer from "./messages/de/FileViewer.json";
 import deForbidden from "./messages/de/Forbidden.json";
 import deGuidebooks from "./messages/de/Guidebooks.json";
 import deHelp from "./messages/de/Help.json";
+import deRequests from "./messages/de/Requests.json";
+import deWhoToAsk from "./messages/de/WhoToAsk.json";
+import dePolicies from "./messages/de/Policies.json";
 import deImprint from "./messages/de/imprint.json";
 import deIntegrations from "./messages/de/Integrations.json";
 import deInquiries from "./messages/de/Inquiries.json";
@@ -93,6 +96,9 @@ import enFileViewer from "./messages/en/FileViewer.json";
 import enForbidden from "./messages/en/Forbidden.json";
 import enGuidebooks from "./messages/en/Guidebooks.json";
 import enHelp from "./messages/en/Help.json";
+import enRequests from "./messages/en/Requests.json";
+import enWhoToAsk from "./messages/en/WhoToAsk.json";
+import enPolicies from "./messages/en/Policies.json";
 import enImprint from "./messages/en/imprint.json";
 import enIntegrations from "./messages/en/Integrations.json";
 import enInquiries from "./messages/en/Inquiries.json";
@@ -151,6 +157,9 @@ const messagesByLocale = {
     CustomRoles: enCustomRoles,
     Guidebooks: enGuidebooks,
     Help: enHelp,
+    Requests: enRequests,
+    WhoToAsk: enWhoToAsk,
+    Policies: enPolicies,
     Blog: enBlog,
     CaseSearch: enCaseSearch,
     Settings: enSettings,
@@ -209,6 +218,9 @@ const messagesByLocale = {
     CustomRoles: deCustomRoles,
     Guidebooks: deGuidebooks,
     Help: deHelp,
+    Requests: deRequests,
+    WhoToAsk: deWhoToAsk,
+    Policies: dePolicies,
     Blog: deBlog,
     CaseSearch: deCaseSearch,
     Settings: deSettings,

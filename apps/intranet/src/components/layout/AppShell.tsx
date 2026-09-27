@@ -36,6 +36,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Link } from "@/components/Link";
 import { MarkLogo } from "@/components/Logo";
 import { BrowserNotificationBridge } from "@/components/notifications/BrowserNotificationBridge";
+import { PushSubscriptionSync } from "@/components/notifications/PushSubscriptionSync";
 import { OnboardingPanel } from "@/components/onboarding/OnboardingPanel";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import { OnboardingTrigger } from "@/components/onboarding/OnboardingTrigger";
@@ -342,6 +343,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
       {/* Native browser notifications for background tabs (opt-in). */}
       <BrowserNotificationBridge />
+      <PushSubscriptionSync />
       <KeyboardShortcuts />
       <AiDock />
       <AskPanel />

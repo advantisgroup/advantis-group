@@ -122,6 +122,7 @@ export const salesTables = {
     .index("by_status", ["status"])
     .index("by_category", ["categoryId"])
     .index("by_createdAt", ["createdAt"])
+    .index("by_creator", ["createdByUserId"])
     // "Closed in window" for the resolution timeline — an error opened before
     // the window but closed inside it has to land in the closed series.
     .index("by_closedAt", ["closedAt"])

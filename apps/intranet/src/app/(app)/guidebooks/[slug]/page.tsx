@@ -68,7 +68,14 @@ const EMPTY_SLUGS: string[] = [];
  * records nothing on its own; only this explicit "yes, I read and
  * understood it" click does. Editors additionally see who has confirmed.
  */
-function ReadConfirmation({ slug }: { slug: string }) {
+function ReadConfirmation({
+  slug,
+  policyVersion,
+}: {
+  slug: string;
+  /** Set for a policy: the version everyone has to have confirmed. */
+  policyVersion: number | null;
+}) {
   const t = useTranslations("Guidebooks");
   const locale = useLocale();
   const canManageWiki = useHasCapability("manage_guidebooks");
@@ -82,6 +89,11 @@ function ReadConfirmation({ slug }: { slug: string }) {
   const [justConfirmed, setJustConfirmed] = useState(false);
   const [showConfirmers, setShowConfirmers] = useState(false);
   const isRead = readSlugs.includes(slug) || justConfirmed;
+  const mine = useQuery(api.guidebooks.reads.mineForSlug, policyVersion ? { slug } : "skip");
+  // Confirmed before an editor asked everyone to confirm the policy again.
+  const changed = !isRead && policyVersion !== null && !!mine && mine.version < policyVersion;
+  const currentConfirmers =
+    policyVersion === null ? confirmers : confirmers?.filter((c) => c.version >= policyVersion);
 
   async function onConfirm() {
     setJustConfirmed(true);
@@ -98,7 +110,13 @@ function ReadConfirmation({ slug }: { slug: string }) {
     <div className="mt-8 space-y-3 rounded-xl border border-border/70 bg-muted/30 px-4 py-3 print:hidden">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {isRead ? t("readConfirmedBody") : t("readConfirmBody")}
+          {isRead
+            ? t("readConfirmedBody")
+            : changed
+              ? t("policyChangedBody")
+              : policyVersion !== null
+                ? t("policyConfirmBody")
+                : t("readConfirmBody")}
         </p>
         {isRead ? (
           <Badge variant="success">
@@ -119,8 +137,8 @@ function ReadConfirmation({ slug }: { slug: string }) {
             onClick={() => setShowConfirmers((v) => !v)}
             className="text-xs font-medium text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
           >
-            {confirmers
-              ? t("readConfirmersCount", { count: confirmers.length })
+            {currentConfirmers
+              ? t("readConfirmersCount", { count: currentConfirmers.length })
               : t("readConfirmersLoading")}
           </button>
           {showConfirmers && confirmers && (
@@ -128,7 +146,12 @@ function ReadConfirmation({ slug }: { slug: string }) {
               {confirmers.length === 0 && <li>{t("readConfirmersEmpty")}</li>}
               {confirmers.map((c) => (
                 <li key={c.userId} className="flex items-center justify-between gap-3">
-                  <span className="truncate">{c.name}</span>
+                  <span className="truncate">
+                    {c.name}
+                    {policyVersion !== null && c.version < policyVersion && (
+                      <span className="text-warn"> · {t("policyOlderVersion")}</span>
+                    )}
+                  </span>
                   <span className="shrink-0">{formatDateTime(c.readAt, locale)}</span>
                 </li>
               ))}
@@ -480,7 +503,10 @@ export default function GuidebookPage() {
           ) : (
             <>
               <GuidebookAttachments slug={guidebook.slug} />
-              <ReadConfirmation slug={guidebook.slug} />
+              <ReadConfirmation
+                slug={guidebook.slug}
+                policyVersion={entry?.policy ? (entry.policyVersion ?? 1) : null}
+              />
               <FeedbackWidget slug={guidebook.slug} />
             </>
           )}

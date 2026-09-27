@@ -1,0 +1,31 @@
+{
+  "title": "Who to ask",
+  "description": "Who to go to for IT, HR, payroll, first aid and emergencies, and how to reach them.",
+  "add": "Add contact",
+  "edit": "Edit {topic}",
+  "section": {
+    "help": "Help with…",
+    "safety": "Safety & emergencies"
+  },
+  "emptyTitle": "Nobody listed yet",
+  "emptyHint": "Your admins haven't filled this in yet. Until then, the directory shows everyone's team and job title.",
+  "emptyHintAdmin": "List who people should go to for IT, HR, payroll, first aid and emergencies, so nobody has to ask around.",
+  "openDirectory": "Open the directory",
+  "addTitle": "Add a contact",
+  "editTitle": "Edit contact",
+  "dialogHint": "Link colleagues by their account so names, photos and status notes stay current. Add a phone number or email for contacts outside the company.",
+  "fieldSection": "Section",
+  "fieldTopic": "Topic",
+  "fieldTopicPlaceholder": "e.g. IT & accounts, Payroll, First aid",
+  "fieldNote": "When to go to them (optional)",
+  "fieldNotePlaceholder": "e.g. Laptop, phone, logins and printers",
+  "fieldPeople": "People",
+  "addPerson": "Add a person…",
+  "removePerson": "Remove {name}",
+  "fieldPhone": "Phone (optional)",
+  "fieldEmail": "Email (optional)",
+  "saved": "Contact saved",
+  "saveFailed": "Couldn't save the contact. Try again.",
+  "removeConfirm": "Remove “{topic}”?",
+  "removed": "Contact removed"
+}

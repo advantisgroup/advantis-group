@@ -1,5 +1,8 @@
 import { userMutation, userQuery } from "../functions";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
+
+const MAX_FAVORITE_PAGES = 12;
+
 const preferenceFields = {
   hiddenDashboardCards: v.optional(v.array(v.string())),
   dashboardCardOrder: v.optional(v.array(v.string())),
@@ -11,6 +14,8 @@ const preferenceFields = {
   weekStartsOn: v.optional(v.union(v.literal("monday"), v.literal("sunday"))),
   favoriteFolders: v.optional(v.array(v.string())),
   favoriteGuidebooks: v.optional(v.array(v.string())),
+  favoritePages: v.optional(v.array(v.object({ href: v.string(), label: v.string() }))),
+  weeklyDigest: v.optional(v.boolean()),
   savedDirectoryViews: v.optional(
     v.array(
       v.object({
@@ -100,6 +105,21 @@ export const setMine = userMutation({
   args: preferenceFields,
   handler: async (ctx, patch) => {
     const user = ctx.caller.user;
+    if (patch.favoritePages) {
+      if (patch.favoritePages.length > MAX_FAVORITE_PAGES) {
+        throw new ConvexError({
+          code: "limit",
+          message: `At most ${MAX_FAVORITE_PAGES} favourites`,
+        });
+      }
+      // Intranet paths only — never an external or protocol-relative URL.
+      if (patch.favoritePages.some((f) => !f.href.startsWith("/") || f.href.startsWith("//"))) {
+        throw new ConvexError({
+          code: "bad_request",
+          message: "Favourites must be intranet pages",
+        });
+      }
+    }
     const existing = await ctx.db
       .query("userPreferences")
       .withIndex("by_user", (q) => q.eq("userId", user._id))

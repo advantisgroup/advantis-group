@@ -1,0 +1,27 @@
+{
+  "title": "Meine Anfragen",
+  "description": "Alles, was du angefragt hast: IT-Tickets, Vorschläge, Fehlermeldungen, Datei-Uploads und Abwesenheiten, und wie der Stand ist.",
+  "tabOpen": "Noch offen",
+  "tabClosed": "Abgeschlossen",
+  "emptyOpen": "Gerade ist nichts offen",
+  "emptyClosed": "Noch nichts abgeschlossen",
+  "emptyHint": "Wenn du ein Ticket anlegst, eine Idee teilst, einen Fehler meldest, einen Upload anfragst oder Urlaub beantragst, erscheint es hier, bis es erledigt ist.",
+  "emptyAction": "Wohin mit meinem Anliegen?",
+  "updated": "aktualisiert {date}",
+  "kind": {
+    "ticket": "IT-Ticket",
+    "suggestion": "Vorschlag",
+    "error": "Fehlermeldung",
+    "upload": "Datei-Upload",
+    "absence": "Abwesenheit"
+  },
+  "state": {
+    "open": "Wartet",
+    "active": "In Bearbeitung",
+    "done": "Erledigt",
+    "declined": "Abgelehnt"
+  },
+  "statusWithdrawn": "Zurückgezogen",
+  "statusFailed": "Fehlgeschlagen",
+  "statusCancelled": "Abgebrochen"
+}

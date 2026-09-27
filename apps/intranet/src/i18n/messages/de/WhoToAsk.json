@@ -1,0 +1,31 @@
+{
+  "title": "Ansprechpartner",
+  "description": "Wen du bei IT, Personal, Lohn, Erster Hilfe und Notfällen fragst, und wie du sie erreichst.",
+  "add": "Kontakt hinzufügen",
+  "edit": "{topic} bearbeiten",
+  "section": {
+    "help": "Hilfe bei …",
+    "safety": "Sicherheit & Notfälle"
+  },
+  "emptyTitle": "Noch niemand eingetragen",
+  "emptyHint": "Die Admins haben das noch nicht ausgefüllt. Bis dahin zeigt das Verzeichnis Team und Position aller Kolleg:innen.",
+  "emptyHintAdmin": "Trag ein, an wen man sich bei IT, Personal, Lohn, Erster Hilfe und Notfällen wendet, damit niemand herumfragen muss.",
+  "openDirectory": "Verzeichnis öffnen",
+  "addTitle": "Kontakt hinzufügen",
+  "editTitle": "Kontakt bearbeiten",
+  "dialogHint": "Verknüpf Kolleg:innen über ihr Konto, dann bleiben Name, Foto und Status aktuell. Für Kontakte außerhalb der Firma trag Telefon oder E-Mail ein.",
+  "fieldSection": "Bereich",
+  "fieldTopic": "Thema",
+  "fieldTopicPlaceholder": "z. B. IT & Zugänge, Lohn, Erste Hilfe",
+  "fieldNote": "Wofür (optional)",
+  "fieldNotePlaceholder": "z. B. Laptop, Telefon, Logins und Drucker",
+  "fieldPeople": "Personen",
+  "addPerson": "Person hinzufügen …",
+  "removePerson": "{name} entfernen",
+  "fieldPhone": "Telefon (optional)",
+  "fieldEmail": "E-Mail (optional)",
+  "saved": "Kontakt gespeichert",
+  "saveFailed": "Kontakt konnte nicht gespeichert werden. Versuch es noch einmal.",
+  "removeConfirm": "„{topic}“ entfernen?",
+  "removed": "Kontakt entfernt"
+}

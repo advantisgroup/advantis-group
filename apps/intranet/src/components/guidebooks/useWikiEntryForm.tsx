@@ -17,6 +17,7 @@ import { staticGuidebookSlugs } from "@/components/guidebooks/registry";
 import { PersonPicker, type PersonOption } from "@/components/people/PersonPicker";
 import { TagInput, type WikiEntry } from "@/components/guidebooks/WikiEntryDialogs";
 import { useCurrentUser } from "@/components/providers/current-user";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { htmlToText } from "@/components/ui/rich-text";
 import { type FileLinkCandidate } from "@/components/ui/rich-text-toolbar";
@@ -27,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { slugify } from "@/lib/utils";
 import { useOneDriveApi } from "@/lib/onedrive-api";
@@ -174,6 +176,47 @@ function WikiEntryDetailFields({
   );
 }
 
+/** Marks an entry as a policy everyone confirms, and — when an existing
+ *  policy changes in a way that matters — asks everyone to confirm again. */
+function PolicyFields({
+  policy,
+  setPolicy,
+  askAgain,
+  setAskAgain,
+  wasPolicy,
+}: {
+  policy: boolean;
+  setPolicy: (v: boolean) => void;
+  askAgain: boolean;
+  setAskAgain: (v: boolean) => void;
+  wasPolicy: boolean;
+}) {
+  const t = useTranslations("Guidebooks");
+  return (
+    <div className="mt-3 space-y-3 rounded-lg border border-border/70 p-3">
+      <label className="flex items-start gap-3">
+        <Switch checked={policy} onCheckedChange={setPolicy} className="mt-0.5" />
+        <span className="min-w-0">
+          <span className="block text-sm font-medium">{t("policyToggle")}</span>
+          <span className="block text-xs text-muted-foreground">{t("policyToggleHint")}</span>
+        </span>
+      </label>
+      {policy && wasPolicy && (
+        <label className="flex items-start gap-3">
+          <Checkbox
+            checked={askAgain}
+            onCheckedChange={(v) => setAskAgain(v === true)}
+            className="mt-0.5"
+          />
+          <span className="min-w-0">
+            <span className="block text-sm font-medium">{t("policyAskAgain")}</span>
+            <span className="block text-xs text-muted-foreground">{t("policyAskAgainHint")}</span>
+          </span>
+        </label>
+      )}
+    </div>
+  );
+}
 /** "" = everyone signed in; otherwise the lowest role that may read it. */
 export type WikiEntryAudience = "" | "manager" | "admin";
 
@@ -186,6 +229,9 @@ export interface WikiEntryValues {
   validFrom: string;
   validUntil: string;
   ownerUserId: string;
+  /** Optional so a draft saved before these fields existed still restores. */
+  policy?: boolean;
+  askAgain?: boolean;
   /** Optional so a draft saved before this field existed still restores. */
   minRole?: WikiEntryAudience;
 }
@@ -205,6 +251,7 @@ function initialValues(
       validFrom: msToDateInput(now),
       validUntil: msToDateInput(addMonths(now, 3)),
       ownerUserId: currentUserId,
+      policy: false,
       minRole: "",
     };
   }
@@ -217,6 +264,8 @@ function initialValues(
     validFrom: msToDateInput(entry.validFrom),
     validUntil: msToDateInput(entry.validUntil),
     ownerUserId: entry.ownerUserId,
+    policy: entry.policy,
+    askAgain: false,
     minRole: entry.minRole ?? "",
   };
 }
@@ -278,6 +327,8 @@ export function useWikiEntryForm({
       setValidFrom: field("validFrom"),
       setValidUntil: field("validUntil"),
       setOwnerUserId: field("ownerUserId"),
+      setPolicy: field("policy"),
+      setAskAgain: field("askAgain"),
       setMinRole: field("minRole"),
     };
   }, []);
@@ -347,10 +398,11 @@ export function useWikiEntryForm({
         validFrom: new Date(`${values.validFrom}T00:00:00`).getTime(),
         validUntil: new Date(`${values.validUntil}T00:00:00`).getTime(),
         ownerUserId: values.ownerUserId as Id<"users">,
+        policy: values.policy || undefined,
         minRole: values.minRole || undefined,
       };
       if (isEditing) {
-        await update({ entryId: entry._id, ...patch });
+        await update({ entryId: entry._id, ...patch, askAgain: values.askAgain || undefined });
         await draft.clear();
         toast.success(t("entryUpdated"));
         onDone(entry.slug);
@@ -398,23 +450,32 @@ export function useWikiEntryForm({
   }
 
   const optionsFields = (
-    <WikiEntryDetailFields
-      categoryId={values.categoryId}
-      setCategoryId={setters.setCategoryId}
-      categories={categories}
-      ownerUserId={values.ownerUserId}
-      setOwnerUserId={setters.setOwnerUserId}
-      tags={values.tags}
-      setTags={setters.setTags}
-      link={values.link}
-      setLink={setters.setLink}
-      validFrom={values.validFrom}
-      setValidFrom={setters.setValidFrom}
-      validUntil={values.validUntil}
-      setValidUntil={setters.setValidUntil}
-      minRole={values.minRole ?? ""}
-      setMinRole={setters.setMinRole}
-    />
+    <>
+      <WikiEntryDetailFields
+        categoryId={values.categoryId}
+        setCategoryId={setters.setCategoryId}
+        categories={categories}
+        ownerUserId={values.ownerUserId}
+        setOwnerUserId={setters.setOwnerUserId}
+        tags={values.tags}
+        setTags={setters.setTags}
+        link={values.link}
+        setLink={setters.setLink}
+        validFrom={values.validFrom}
+        setValidFrom={setters.setValidFrom}
+        validUntil={values.validUntil}
+        setValidUntil={setters.setValidUntil}
+        minRole={values.minRole ?? ""}
+        setMinRole={setters.setMinRole}
+      />
+      <PolicyFields
+        policy={values.policy ?? false}
+        setPolicy={setters.setPolicy}
+        askAgain={values.askAgain ?? false}
+        setAskAgain={setters.setAskAgain}
+        wasPolicy={isEditing && entry.policy}
+      />
+    </>
   );
 
   const attachmentsSlot = isEditing ? (

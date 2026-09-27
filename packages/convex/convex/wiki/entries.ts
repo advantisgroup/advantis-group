@@ -94,6 +94,8 @@ export const list = userQuery({
           erklaerung: e.erklaerung,
           tags: e.tags,
           link: e.link ?? null,
+          policy: e.policy ?? false,
+          policyVersion: e.policyVersion ?? null,
           minRole: e.minRole ?? null,
           validFrom: e.validFrom,
           validUntil: e.validUntil,
@@ -134,6 +136,8 @@ export const get = userQuery({
       erklaerung: row.erklaerung,
       tags: row.tags,
       link: row.link ?? null,
+      policy: row.policy ?? false,
+      policyVersion: row.policyVersion ?? null,
       minRole: row.minRole ?? null,
       validFrom: row.validFrom,
       validUntil: row.validUntil,
@@ -167,8 +171,8 @@ const entryFields = {
  * Convex doesn't know about) before calling this. */
 export const create = userMutation({
   can: "manage_guidebooks",
-  args: { slug: v.string(), ...entryFields },
-  handler: async (ctx, args) => {
+  args: { slug: v.string(), ...entryFields, policy: v.optional(v.boolean()) },
+  handler: async (ctx, { policy, ...args }) => {
     const user = ctx.caller.user;
     const existing = await ctx.db
       .query("wikiEntries")
@@ -186,6 +190,8 @@ export const create = userMutation({
     const now = Date.now();
     const id = await ctx.db.insert("wikiEntries", {
       ...args,
+      policy: policy || undefined,
+      policyVersion: policy ? 1 : undefined,
       version: 1,
       pinned: false,
       authorUserId: user._id,
@@ -200,8 +206,14 @@ export const create = userMutation({
 
 export const update = userMutation({
   can: "manage_guidebooks",
-  args: { entryId: v.id("wikiEntries"), ...entryFields },
-  handler: async (ctx, { entryId, ...patch }) => {
+  args: {
+    entryId: v.id("wikiEntries"),
+    ...entryFields,
+    policy: v.optional(v.boolean()),
+    /** Ask everyone to confirm the policy again after this change. */
+    askAgain: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { entryId, policy, askAgain, ...patch }) => {
     const entry = await ctx.db.get(entryId);
     if (!entry) throw new ConvexError({ code: "not_found", message: "Not found" });
     if (!ctx.caller.owns(entry.authorUserId)) {
@@ -223,6 +235,16 @@ export const update = userMutation({
     // to be written back explicitly or it would silently keep the old value.
     await ctx.db.patch(entryId, {
       ...patch,
+      // Written out: the form sends every field, and an absent one means
+      // "off", which a spread of the args would silently skip.
+      policy: policy || undefined,
+      // Becoming a policy, or a change the editor flagged, raises the version
+      // everyone has to have confirmed. Turning it off drops it.
+      policyVersion: policy
+        ? entry.policy && entry.policyVersion && !askAgain
+          ? entry.policyVersion
+          : (entry.policyVersion ?? 0) + 1
+        : undefined,
       link: patch.link,
       minRole: patch.minRole,
       categoryName: undefined,
