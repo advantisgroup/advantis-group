@@ -1,7 +1,7 @@
 /**
  * Structure of the in-app Help / FAQ. Content is not stored here — each entry id
  * maps to localized strings `faq.q.<id>` (question) and `faq.a.<id>` (answer),
- * and each section to `faq.section.<id>`, in lib/locales/{de,en}.ts. Keeping the
+ * and each section to `faq.section.<id>`, in the `ActivityTrack` message namespace. Keeping the
  * structure data-driven means adding a Q&A is just two translation keys.
  *
  * Each entry also carries a `scope` so the reader can tell at a glance whether a

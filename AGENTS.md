@@ -401,9 +401,11 @@ picks up this guard, and still needs the var set even then.
   `InquiryPrint` (in `InquiryDetail.tsx`) are the examples to copy.
 - Don't add speculative abstractions, fallbacks, or error handling for cases
   that can't occur. Match the existing minimal, direct style.
-- i18n strings live in `apps/intranet/src/lib/activity/locales/{en,de}.ts`
-  (ActivityTrack) and `apps/intranet/src/i18n/messages/{en,de}/` (rest of the
-  intranet) — always update both languages together. The second set is split
+- i18n strings live in `apps/intranet/src/i18n/messages/{en,de}/` — always
+  update both languages together (`bun run check:i18n` fails otherwise).
+  ActivityTrack's are the `ActivityTrack` namespace, read through its
+  `useI18n()` hook (`lib/activity/i18n.tsx`), which keeps the dotted
+  `t("people.add")` call shape. The files are split
   one file per top-level namespace (`messages/en/Admin.json`,
   `messages/de/Admin.json`, etc.), matching the `useTranslations("Admin")`
   call sites 1:1, and `src/i18n/request.ts` statically imports every one of

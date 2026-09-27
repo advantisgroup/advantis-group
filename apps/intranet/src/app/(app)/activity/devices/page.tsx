@@ -293,7 +293,7 @@ export default function DevicesPage() {
       <div>
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <h2 className="font-display text-lg font-bold tracking-tightest text-fg">
-            {t("devices.slots.heading.devices")}
+            {t("devices.allDevicesHeading")}
           </h2>
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <Input
@@ -369,7 +369,7 @@ export default function DevicesPage() {
 
         {/* md and up: the full table. */}
         <Card className="hidden md:block">
-          <Table aria-label={t("devices.slots.heading.devices")}>
+          <Table aria-label={t("devices.allDevicesHeading")}>
             <TableHeader>
               <TableRow>
                 <SortableHead

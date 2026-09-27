@@ -9,6 +9,7 @@ import deAbsences from "./messages/de/Absences.json";
 import deAccess from "./messages/de/Access.json";
 import deAccessDenied from "./messages/de/AccessDenied.json";
 import deActivity from "./messages/de/Activity.json";
+import deActivityTrack from "./messages/de/ActivityTrack.json";
 import deAdmin from "./messages/de/Admin.json";
 import deAi from "./messages/de/Ai.json";
 import deAnnouncements from "./messages/de/Announcements.json";
@@ -63,6 +64,7 @@ import enAbsences from "./messages/en/Absences.json";
 import enAccess from "./messages/en/Access.json";
 import enAccessDenied from "./messages/en/AccessDenied.json";
 import enActivity from "./messages/en/Activity.json";
+import enActivityTrack from "./messages/en/ActivityTrack.json";
 import enAdmin from "./messages/en/Admin.json";
 import enAi from "./messages/en/Ai.json";
 import enAnnouncements from "./messages/en/Announcements.json";
@@ -157,6 +159,7 @@ const messagesByLocale = {
     Errors: enErrors,
     ErrorManagement: enErrorManagement,
     Activity: enActivity,
+    ActivityTrack: enActivityTrack,
     Files: enFiles,
     FileViewer: enFileViewer,
     Updates: enUpdates,
@@ -213,6 +216,7 @@ const messagesByLocale = {
     Errors: deErrors,
     ErrorManagement: deErrorManagement,
     Activity: deActivity,
+    ActivityTrack: deActivityTrack,
     Files: deFiles,
     FileViewer: deFileViewer,
     Updates: deUpdates,

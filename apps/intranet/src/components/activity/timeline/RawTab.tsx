@@ -31,7 +31,7 @@ export function RawTab({ samples }: { samples: RawSample[] }) {
         <TableHeader>
           <TableRow>
             <TableHead>{t("timeline.time")}</TableHead>
-            <TableHead>{t("timeline.state")}</TableHead>
+            <TableHead>{t("timeline.stateColumn")}</TableHead>
             <TableHead>{t("timeline.idle")}</TableHead>
           </TableRow>
         </TableHeader>
