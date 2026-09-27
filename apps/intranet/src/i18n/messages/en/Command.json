@@ -1,5 +1,5 @@
 {
-  "placeholder": "Search pages, people, announcements…",
+  "placeholder": "Search pages, people, tickets, chats, files…",
   "pages": "Pages",
   "people": "People",
   "announcements": "Announcements",
@@ -23,5 +23,13 @@
   "clearSearch": "Clear search",
   "navigate": "Navigate",
   "select": "Select",
-  "close": "Close"
+  "close": "Close",
+  "tickets": "IT tickets",
+  "events": "Events",
+  "suggestions": "Suggestions",
+  "errorReports": "Error reports",
+  "updates": "Updates",
+  "blog": "Blog",
+  "chat": "Chat",
+  "files": "Files"
 }

@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { type OneDriveItem } from "@advantis/types";
 import { type Id } from "@advantis/convex/dataModel";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useMutation, useQuery } from "convex/react";
@@ -19,17 +20,24 @@ import {
   AlertTriangle,
   BookOpen,
   Calendar,
+  CalendarClock,
   CalendarPlus,
+  ClipboardX,
   Clock,
   Compass,
+  FileText,
   FlaskConical,
+  Folder,
   FolderOpen,
   LayoutDashboard,
   Lightbulb,
+  type LucideIcon,
   Megaphone,
   MessageSquare,
+  Newspaper,
   Plane,
   Plus,
+  Radio,
   Search,
   Settings,
   ShieldCheck,
@@ -58,8 +66,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { initials } from "@/lib/format";
+import { useOneDriveApi } from "@/lib/onedrive-api";
+import { pathToUrl } from "@/lib/onedrive-path";
 import { cn } from "@/lib/utils";
 
 interface Item {
@@ -161,6 +172,28 @@ export function CommandPalette({ className }: { className?: string } = {}) {
   // from here.
   const wikiEntries = useQuery(api.wiki.entries.list, open && query.trim() ? {} : "skip");
   const intranetPages = useQuery(api.intranetPages.list, open && query.trim() ? {} : "skip");
+  // Tickets, events, suggestions, error reports, updates, the blog and your
+  // chats are searched on the server, once typing pauses.
+  const settledQuery = useDebouncedValue(query.trim(), 250);
+  const everything = useQuery(
+    api.org.search.everything,
+    open && settledQuery.length >= 3 ? { query: settledQuery } : "skip",
+  );
+  const oneDriveApi = useOneDriveApi();
+  const [fileHits, setFileHits] = useState<{ query: string; items: OneDriveItem[] } | null>(null);
+  useEffect(() => {
+    if (!open || !hasFilesAccess || settledQuery.length < 3) return;
+    let cancelled = false;
+    oneDriveApi
+      .search(settledQuery)
+      .then((res) => !cancelled && setFileHits({ query: settledQuery, items: res.items }))
+      // A failed file search just leaves the files group out.
+      .catch(() => !cancelled && setFileHits({ query: settledQuery, items: [] }));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, hasFilesAccess, settledQuery]);
   // A locked vault makes applicants.list throw, which would take the whole
   // palette down — only search applicants while it's unlocked.
   const vault = useQuery(api.hr.vault.status, open && hasApplicantAccess ? {} : "skip");
@@ -525,6 +558,48 @@ export function CommandPalette({ className }: { className?: string } = {}) {
         run: () => go(href),
       });
     }
+    // Server-side matches only count for the query they were made for, so a
+    // stale group doesn't flash under a new search.
+    if (everything && settledQuery === query.trim()) {
+      const groups: [keyof typeof everything, string, LucideIcon][] = [
+        ["tickets", t("tickets"), Wrench],
+        ["events", t("events"), CalendarClock],
+        ["suggestions", t("suggestions"), Lightbulb],
+        ["errorReports", t("errorReports"), ClipboardX],
+        ["updates", t("updates"), Radio],
+        ["blog", t("blog"), Newspaper],
+        ["chat", t("chat"), MessageSquare],
+      ];
+      for (const [kind, group, icon] of groups) {
+        for (const hit of everything[kind]) {
+          list.push({
+            id: hit.key,
+            group,
+            label: hit.title,
+            sublabel: hit.detail,
+            icon,
+            href: hit.href,
+            run: () => go(hit.href),
+          });
+        }
+      }
+    }
+    if (fileHits && fileHits.query === query.trim()) {
+      for (const item of fileHits.items.slice(0, 5)) {
+        const folder =
+          item.type === "folder" ? item.path : item.path.split("/").slice(0, -1).join("/");
+        const href = pathToUrl(folder);
+        list.push({
+          id: `file:${item.id}`,
+          group: t("files"),
+          label: item.name,
+          sublabel: folder || undefined,
+          icon: item.type === "folder" ? Folder : FileText,
+          href,
+          run: () => go(href),
+        });
+      }
+    }
     if (hasApplicantAccess) {
       const matchingApplicants = (applicants ?? [])
         .filter((ap) =>
@@ -563,6 +638,9 @@ export function CommandPalette({ className }: { className?: string } = {}) {
     guidebooks,
     wikiEntries,
     intranetPages,
+    everything,
+    fileHits,
+    settledQuery,
     t,
     tGuide,
   ]);

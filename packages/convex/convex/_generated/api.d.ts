@@ -194,6 +194,7 @@ import type * as org_lib_delegations from "../org/lib/delegations.js";
 import type * as org_offboarding from "../org/offboarding.js";
 import type * as org_overview from "../org/overview.js";
 import type * as org_roles from "../org/roles.js";
+import type * as org_search from "../org/search.js";
 import type * as org_structure from "../org/structure.js";
 import type * as org_structureMigration from "../org/structureMigration.js";
 import type * as org_trash from "../org/trash.js";
@@ -491,6 +492,7 @@ declare const fullApi: ApiFromModules<{
   "org/offboarding": typeof org_offboarding;
   "org/overview": typeof org_overview;
   "org/roles": typeof org_roles;
+  "org/search": typeof org_search;
   "org/structure": typeof org_structure;
   "org/structureMigration": typeof org_structureMigration;
   "org/trash": typeof org_trash;
