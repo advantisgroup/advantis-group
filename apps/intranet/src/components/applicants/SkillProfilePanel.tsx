@@ -20,6 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 import type { FunctionReturnType } from "convex/server";
@@ -225,9 +226,7 @@ export function SkillProfilePanel() {
         </Button>
       </div>
 
-      {profiles && profiles.length === 0 && (
-        <p className="py-8 text-center text-sm text-muted-foreground">{t("noProfiles")}</p>
-      )}
+      {profiles && profiles.length === 0 && <EmptyState inline title={t("noProfiles")} />}
 
       <div className="space-y-2">
         {profiles?.map((profile) => (

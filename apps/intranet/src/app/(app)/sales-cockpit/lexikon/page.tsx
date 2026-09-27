@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatFileSize, uploadToConvex } from "@/lib/upload";
 
@@ -201,7 +202,7 @@ export default function SalesCockpitLexikonPage() {
           </div>
 
           {list === undefined ? (
-            <p className="text-sm text-muted-foreground">{t("loading")}</p>
+            <SkeletonRows className="py-2" />
           ) : list.length === 0 ? (
             <EmptyState
               icon={<BookOpen />}

@@ -58,7 +58,7 @@ import { FilePreviewDialog } from "./FilePreviewDialog";
 import { UploadDropOverlay } from "./UploadDropOverlay";
 import {
   Breadcrumbs,
-  EmptyState,
+  FolderEmpty,
   FileCard,
   FileRow,
   GridTile,
@@ -736,7 +736,7 @@ export function FileBrowser({
             ))}
           </div>
         ) : items.length === 0 ? (
-          <EmptyState searching={results !== null} />
+          <FolderEmpty searching={results !== null} />
         ) : isMobile ? (
           <ul className="divide-y divide-border/60">
             {items.map((item) => (

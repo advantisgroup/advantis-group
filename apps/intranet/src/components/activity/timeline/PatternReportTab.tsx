@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { weekStartOf } from "@/lib/activity/activity";
 import { formatRelativeTime, todayLocalDay } from "@/lib/activity/fmt";
 import { HighlightedSentence } from "@/lib/activity/highlightedText";
@@ -161,9 +162,7 @@ export function PatternReportTab({ employeeId }: { employeeId: string | null }) 
             </div>
           )}
 
-          {!generating && report === null && (
-            <p className="py-6 text-center text-sm text-muted-foreground">{t("pattern.empty")}</p>
-          )}
+          {!generating && report === null && <EmptyState inline title={t("pattern.empty")} />}
 
           {!generating && report && (
             <>

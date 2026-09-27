@@ -18,6 +18,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -282,10 +284,10 @@ export default function PerformanceRolesAdminPage() {
             </p>
           </Card>
         ) : roles === undefined ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">{t("loading")}</p>
+          <SkeletonRows className="py-2" />
         ) : roles.length === 0 ? (
           <Card>
-            <p className="py-8 text-center text-sm text-muted-foreground">{t("rolesEmpty")}</p>
+            <EmptyState inline title={t("rolesEmpty")} />
           </Card>
         ) : (
           <Card>

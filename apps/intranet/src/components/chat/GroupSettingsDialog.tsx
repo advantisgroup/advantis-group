@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 import { isImage, uploadToConvex } from "@/lib/upload";
@@ -425,7 +426,7 @@ function SharedMedia({
   );
 
   if (results.length === 0 && status !== "LoadingFirstPage") {
-    return <p className="py-12 text-center text-sm text-muted-foreground">{emptyLabel}</p>;
+    return <EmptyState inline title={emptyLabel} />;
   }
 
   return (

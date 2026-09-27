@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 export interface OrgEntity {
@@ -86,7 +88,6 @@ export function OrgEntityCrudList({
   onArchiveToggle: (id: string, archived: boolean) => Promise<void>;
 }) {
   const t = useTranslations("Admin");
-  const tc = useTranslations("Common");
   const handleError = useErrorHandler();
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -123,9 +124,9 @@ export function OrgEntityCrudList({
       </div>
 
       {entities === undefined ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">{tc("loading")}</p>
+        <SkeletonRows className="py-2" />
       ) : entities.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">{t("orgEntity.empty")}</p>
+        <EmptyState inline title={t("orgEntity.empty")} />
       ) : (
         <div className="space-y-2">
           {entities.map((entity) => (

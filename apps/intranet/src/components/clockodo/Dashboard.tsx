@@ -13,6 +13,7 @@ import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { isoToday, mondayOfWeek } from "@/lib/absences";
 import { type CalendarAbsence, type MyAbsence } from "@/lib/absences-api";
 import { type ClockEntry, useClockEntries } from "@/lib/clockodo-entries-api";
@@ -112,9 +113,7 @@ export function Dashboard({
           <CardContent>
             <SectionBoundary title={t("presenceUnavailable")}>
               <div className="divide-y divide-border/70">
-                {calendar === undefined && (
-                  <p className="py-6 text-sm text-muted-foreground">{t("loading")}</p>
-                )}
+                {calendar === undefined && <SkeletonRows className="py-2" />}
                 {calendar?.filter((a) => a.startDate <= isoToday() && a.endDate >= isoToday())
                   .length === 0 && (
                   <p className="py-6 text-sm text-muted-foreground">{t("nobodyOutToday")}</p>

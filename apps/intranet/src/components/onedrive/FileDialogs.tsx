@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { type OneDriveVersion, useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
@@ -318,7 +319,7 @@ export function VersionsDialog({
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
         ) : versions.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">{t("noVersions")}</p>
+          <EmptyState inline title={t("noVersions")} />
         ) : (
           <ul className="max-h-80 space-y-1 overflow-y-auto">
             {versions.map((v, i) => (

@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FAQ_SECTIONS } from "@/lib/activity/faq";
 import { useI18n } from "@/lib/activity/i18n";
 import { useSlashFocus } from "@/lib/activity/useSlashFocus";
@@ -49,7 +50,7 @@ export default function HelpPage() {
 
       {sections.length === 0 ? (
         <Card className="border-dashed">
-          <p className="py-10 text-center text-sm text-muted-foreground">{t("help.noResults")}</p>
+          <EmptyState inline title={t("help.noResults")} />
         </Card>
       ) : (
         sections.map((s) => (

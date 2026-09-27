@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -119,7 +120,7 @@ function InstantResults({
           )}
         </h2>
         {hits === undefined ? (
-          <p className="px-3 py-5 text-sm text-muted-foreground">{t("loading")}</p>
+          <SkeletonRows className="py-2" />
         ) : hits.length === 0 ? (
           <p className="px-3 py-5 text-sm text-muted-foreground">{t("lexNoHits")}</p>
         ) : (
@@ -396,7 +397,7 @@ export default function SalesCockpitHomePage() {
 
       <h2 className="mb-3 mt-1 text-[15px] font-semibold">{t("welchesProjekt")}</h2>
       {projects === undefined ? (
-        <p className="text-sm text-muted-foreground">{t("loading")}</p>
+        <SkeletonRows className="py-2" />
       ) : projects.length === 0 ? (
         <EmptyState
           icon={<PhoneCall />}

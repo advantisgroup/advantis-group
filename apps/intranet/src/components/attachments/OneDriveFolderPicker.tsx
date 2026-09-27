@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { NewFolderDialog } from "@/components/onedrive/FileDialogs";
 import { Button } from "@/components/ui/button";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { useOneDriveApi } from "@/lib/onedrive-api";
 import { cn } from "@/lib/utils";
 
@@ -158,7 +159,7 @@ function FolderBrowser({
 
         <div className="min-h-[9rem] rounded-lg border border-border/70">
           {folders === undefined ? (
-            <p className="px-3 py-8 text-center text-sm text-muted-foreground">{tc("loading")}</p>
+            <SkeletonRows className="py-2" />
           ) : folders.length === 0 ? (
             <p className="px-3 py-8 text-center text-sm text-muted-foreground">
               {t("noSubfolders")}

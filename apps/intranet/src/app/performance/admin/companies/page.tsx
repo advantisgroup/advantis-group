@@ -28,6 +28,8 @@ import { Input } from "@/components/ui/input";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -685,10 +687,10 @@ export default function PerformanceCompaniesAdminPage() {
           </Button>
         </div>
         {companies === undefined ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">{t("loading")}</p>
+          <SkeletonRows className="py-2" />
         ) : companies.length === 0 ? (
           <Card>
-            <p className="py-8 text-center text-sm text-muted-foreground">{t("companiesEmpty")}</p>
+            <EmptyState inline title={t("companiesEmpty")} />
           </Card>
         ) : (
           <>

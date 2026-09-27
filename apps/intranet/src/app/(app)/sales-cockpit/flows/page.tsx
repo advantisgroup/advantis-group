@@ -19,6 +19,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -157,7 +158,7 @@ export default function SalesCockpitFlowsPage() {
       </div>
 
       {flows === undefined ? (
-        <p className="text-sm text-muted-foreground">{t("loading")}</p>
+        <SkeletonRows className="py-2" />
       ) : flows.length === 0 ? (
         <EmptyState icon={<Workflow />} title={t("keineFlows")} />
       ) : (

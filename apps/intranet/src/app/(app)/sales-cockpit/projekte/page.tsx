@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 type Project = NonNullable<
@@ -56,7 +57,7 @@ export default function SalesCockpitProjektePage() {
       </div>
 
       {projects === undefined ? (
-        <p className="text-sm text-muted-foreground">{t("loading")}</p>
+        <SkeletonRows className="py-2" />
       ) : projects.length === 0 ? (
         <EmptyState
           icon={<FolderKanban />}

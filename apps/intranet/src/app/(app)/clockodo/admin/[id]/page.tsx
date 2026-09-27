@@ -30,6 +30,7 @@ import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 const WEEKDAYS = [
@@ -299,7 +300,7 @@ export default function ClockodoEmployeeDetailPage() {
             {t("backToRoster")}
           </Link>
         </Button>
-        <p className="py-10 text-center text-sm text-muted-foreground">{t("loadError")}</p>
+        <EmptyState inline title={t("loadError")} />
       </section>
     );
   }

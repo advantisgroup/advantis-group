@@ -14,7 +14,6 @@ import {
   FileText,
   Folder,
   Link2,
-  Loader2,
   MoreVertical,
   Pencil,
   RotateCcw,
@@ -28,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ariaSort, SortButton, type SortDir } from "@/components/ui/sortable-head";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -423,21 +423,14 @@ export function FileCard({
   );
 }
 
-export function EmptyState({ searching }: { searching: boolean }) {
+export function FolderEmpty({ searching }: { searching: boolean }) {
   const t = useTranslations("Files");
   return (
-    <div className="flex flex-col items-center gap-2 py-16 text-center text-muted-foreground">
-      <Folder className="size-8" />
-      <p className="text-sm">{searching ? t("noResults") : t("emptyFolder")}</p>
-    </div>
-  );
-}
-
-// Re-export so the page can show a loading fallback without importing internals.
-export function FileBrowserSkeleton() {
-  return (
-    <div className="space-y-2 p-4">
-      <Loader2 className="size-5 animate-spin text-muted-foreground" />
-    </div>
+    <EmptyState
+      inline
+      className="py-16"
+      icon={<Folder />}
+      title={searching ? t("noResults") : t("emptyFolder")}
+    />
   );
 }

@@ -4,6 +4,7 @@ import { formatClockTime, NoPersonalClockodoAccount } from "@/components/clockod
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { addDaysIso, isoToday, mondayOfWeek } from "@/lib/absences";
 import { elapsedSince } from "@/lib/clockodo-clock";
 import { type ClockEntry, deleteClockEntry, useClockEntries } from "@/lib/clockodo-entries-api";
@@ -154,9 +155,7 @@ export function Timetable() {
           })}
         </div>
         <div className="p-2">
-          {entries === undefined && (
-            <p className="px-3 py-10 text-center text-sm text-muted-foreground">{t("loading")}</p>
-          )}
+          {entries === undefined && <SkeletonRows className="py-2" />}
           {entries !== undefined && dayEntries.length === 0 && (
             <p className="px-3 py-10 text-center text-sm text-muted-foreground">
               {t("noTimeEntries")}

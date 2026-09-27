@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useOneDriveApi } from "@/lib/onedrive-api";
@@ -79,9 +80,7 @@ export function UploadApprovalQueue({
   }
 
   if (pending.length === 0) {
-    return (
-      <p className="py-12 text-center text-sm text-muted-foreground">{t("noPendingUploads")}</p>
-    );
+    return <EmptyState inline title={t("noPendingUploads")} />;
   }
 
   return (

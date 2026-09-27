@@ -43,6 +43,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, formatIsoDate, relativeTime } from "@/lib/format";
 import { downloadPerformanceFile, uploadPerformanceReport } from "@/lib/performanceAuth";
@@ -706,7 +707,7 @@ export default function PerformanceUploadPage() {
         <h2 className="text-sm font-medium">{t("uploadLogTitle")}</h2>
         <Card>
           {log === undefined ? null : log.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">{t("uploadLogEmpty")}</p>
+            <EmptyState inline title={t("uploadLogEmpty")} />
           ) : (
             <Table>
               <TableHeader>

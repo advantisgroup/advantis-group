@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle, useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CAPABILITY_ICONS } from "@/lib/permission-icons";
@@ -349,9 +350,7 @@ export function CustomRolesPanel() {
         </Button>
       </div>
 
-      {roles && roles.length === 0 && (
-        <p className="py-8 text-center text-sm text-muted-foreground">{t("empty")}</p>
-      )}
+      {roles && roles.length === 0 && <EmptyState inline title={t("empty")} />}
 
       <div className="space-y-2">
         {roles?.map((role) => (
