@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 
+import { AddPersonDialog } from "@/components/activity/AddPersonDialog";
 import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { CopyButton } from "@/components/activity/CopyButton";
 import { EditPersonDialog } from "@/components/activity/EditPersonDialog";
@@ -69,8 +70,7 @@ export default function PeoplePage() {
   const update = useMutationWithToast(api.activity.people.update);
   const remove = useMutationWithToast(api.activity.people.remove);
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState("");
   const searchRef = useSlashFocus<HTMLInputElement>();
   const [deleteTarget, setDeleteTarget] = useState<GenericId<"people"> | null>(null);
@@ -89,7 +89,19 @@ export default function PeoplePage() {
   }, [people, query]);
 
   const header = (
-    <PageHeader title={t("people.heading")} description={t("people.sub")} icon={<Users />} />
+    <PageHeader
+      title={t("people.heading")}
+      description={t("people.sub")}
+      icon={<Users />}
+      action={
+        canEdit ? (
+          <Button data-shortcut-new onClick={() => setAdding(true)}>
+            <Plus className="h-4 w-4" />
+            {t("people.add")}
+          </Button>
+        ) : undefined
+      }
+    />
   );
 
   if (people === undefined) {
@@ -99,19 +111,6 @@ export default function PeoplePage() {
         <Skeleton className="h-64 w-full" />
       </section>
     );
-  }
-
-  async function onAdd(e: FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    const created = await create({
-      name: name.trim(),
-      email: email.trim() || undefined,
-    });
-    if (created) {
-      setName("");
-      setEmail("");
-    }
   }
 
   // ── shared row pieces ──────────────────────────────────────────────────
@@ -197,31 +196,6 @@ export default function PeoplePage() {
   return (
     <section className="space-y-6">
       {header}
-
-      {canEdit && (
-        <Card className="animate-fade-up">
-          <CardContent className="p-3 sm:p-4">
-            <form onSubmit={onAdd} className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t("people.name")}
-                className="sm:flex-1"
-              />
-              <Input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={t("people.email")}
-                className="sm:flex-1"
-              />
-              <Button type="submit" disabled={!name.trim()} className="sm:w-auto">
-                <Plus className="h-4 w-4" />
-                {t("people.add")}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Roster search — outside the table card so the mobile card list and
           the desktop table share one input. */}
@@ -342,6 +316,12 @@ export default function PeoplePage() {
         </Table>
       </Card>
 
+      <AddPersonDialog
+        open={adding}
+        onOpenChange={setAdding}
+        onAdd={(person) => create(person)}
+        linkedUserIds={people.map((p) => p.userId)}
+      />
       <EditPersonDialog
         person={editingPerson}
         onOpenChange={(open) => {

@@ -87,6 +87,8 @@ export const de: Dict = {
   "people.heading": "Mitarbeiter",
   "people.sub": "Die Stammliste: Namen, E-Mail und die Integrations-IDs hinter dem Live-Status.",
   "people.add": "Mitarbeiter hinzufügen",
+  "people.addHint":
+    "Wählen Sie das Intranet-Konto, um die Angaben zu übernehmen und beides zu verknüpfen, oder tragen Sie für Personen ohne Konto nur einen Namen ein.",
   "people.name": "Name",
   "people.email": "E-Mail",
   "people.active": "Aktiv",

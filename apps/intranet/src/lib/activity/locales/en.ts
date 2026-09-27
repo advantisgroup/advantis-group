@@ -86,6 +86,8 @@ export const en: Dict = {
   "people.heading": "People",
   "people.sub": "The roster: names, e-mail and the integration IDs behind the live status.",
   "people.add": "Add person",
+  "people.addHint":
+    "Pick their intranet account to fill in the details and link the two, or just type a name for someone without one.",
   "people.name": "Name",
   "people.email": "Email",
   "people.active": "Active",
