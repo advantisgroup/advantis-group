@@ -30,6 +30,7 @@
   "promptPasskey": "Nutze Fingerabdruck, Gesicht oder PIN, womit du dieses Gerät entsperrst.",
   "usePasskey": "Mit Passkey bestätigen",
   "passkeyError": "Das hat mit dem Passkey nicht geklappt. Versuch es erneut oder wähle einen anderen Weg.",
+  "codeMismatch": "Der Code hat nicht gepasst. Prüf ihn und versuch es noch mal, oder hol dir einen neuen.",
   "methodPasskey": "Passkey",
   "methodTotp": "Authentifizierungs-App",
   "methodEmailCode": "E-Mail-Code",

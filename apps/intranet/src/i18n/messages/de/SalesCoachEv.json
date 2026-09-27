@@ -6,7 +6,6 @@
   "tabWiki": "Wiki",
   "tabSettings": "Einstellungen",
   "tabAdmin": "Team",
-
   "startCall": "Call starten",
   "endCall": "Beenden",
   "statusLive": "Aufnahme läuft",
@@ -18,10 +17,8 @@
   "tabScript": "Script",
   "tabObjections": "Einwände",
   "tabWikiShort": "Wiki",
-
   "transcriptEmpty": "Call starten und Gespräch beginnen...",
   "weakFormulation": "Schwache Formulierung",
-
   "liveCoaching": "Coach",
   "checklistTitle": "EV-Checkliste",
   "language": "Gesprächssprache",
@@ -32,15 +29,12 @@
   "outcomeTermin": "Termin",
   "outcomeWiedervorlage": "Wiedervorlage",
   "outcomeKeinErgebnis": "Kein Ergebnis",
-
   "objectionDetected": "KI erkannte Einwand",
-
   "wikiSearchPlaceholder": "Wiki durchsuchen...",
   "wikiAutoHits": "{count} Wiki-Treffer zum aktuellen Gespräch",
   "wikiNoResults": "Keine Treffer",
   "wikiScanHint": "Wort im Transkript anklicken oder auf den Auto-Scan warten",
   "wikiOpenLink": "Öffnen",
-
   "reportTitle": "Call-Auswertung",
   "skillScore": "Skill-Score",
   "skillBreakdown": "Skill-Bewertung",
@@ -52,7 +46,6 @@
   "improvements": "Verbesserungen",
   "nextSteps": "Für das nächste Gespräch",
   "close": "Schließen",
-
   "period7": "7 Tage",
   "period30": "30 Tage",
   "periodAll": "Alle",
@@ -70,7 +63,6 @@
   "callsInPeriod": "{count} Calls",
   "noCallsYet": "Noch keine Calls",
   "details": "Details",
-
   "eodTitle": "Training heute beenden",
   "eodMilestoneRemaining": "Noch {count} Calls bis zur Tagesauswertung",
   "eodLoading": "Analyse läuft...",
@@ -82,7 +74,6 @@
   "eodTop3Strengths": "Top 3 Stärken",
   "eodTop3Improvements": "Top 3 Verbesserungen",
   "eodSummaryFailed": "Auswertung fehlgeschlagen",
-
   "wikiPageTitle": "Wiki",
   "wikiPageSubtitle": "Wissensdatenbank — Produktinfos, Argumente",
   "wikiNewArticle": "Artikel",
@@ -114,7 +105,6 @@
   "wikiDeleteFailed": "Löschen fehlgeschlagen",
   "cancel": "Abbrechen",
   "save": "Speichern",
-
   "kpiLoaded": "KPI-Dokument geladen — fließt in alle Auswertungen ein",
   "kpiReading": "Lese Datei...",
   "kpiLoadedNamed": "Geladen: {name}",
@@ -128,7 +118,6 @@
   "audioStep2": "Tab Aufnahme → Rechtsklick → Deaktivierte Geräte anzeigen",
   "audioStep3": "Stereo Mix → Aktivieren → Standard → OK → im Call-Gerät auswählen",
   "audioAlternative": "Alternative: VB-Cable (vb-audio.com) kostenlos installieren",
-
   "adminNotAuthorized": "Du hast keinen Zugriff auf diese Seite.",
   "adminTitle": "Admin — Teamübersicht",
   "adminSubtitle": "Alle Mitarbeiter im Vergleich",
@@ -140,7 +129,6 @@
   "adminAppointments": "Termine",
   "adminRate": "Rate",
   "adminTrend": "Trend",
-
   "backToProgress": "Fortschritt",
   "reportVerdictStrong": "Starkes Gespräch",
   "reportVerdictSolid": "Solides Gespräch",
@@ -169,5 +157,11 @@
   "wikiExtractReadyNoFile": "Vorschläge aus dem Dokument",
   "wikiApply": "Übernehmen",
   "wikiApplied": "Übernommen",
-  "wikiApplyAll": "Alle übernehmen"
+  "wikiApplyAll": "Alle übernehmen",
+  "speechUnsupported": "Die Live-Transkription braucht Chrome oder Edge.",
+  "speechMicDenied": "Der Mikrofonzugriff ist blockiert. Erlaube ihn in den Website-Einstellungen deines Browsers und starte neu.",
+  "speechNoSound": "Es kommt kein Ton an. Prüf dein Mikrofon und starte neu.",
+  "speechNetwork": "Die Transkription hat die Verbindung verloren. Prüf dein Netzwerk und starte neu.",
+  "speechNoMic": "Kein Mikrofon gefunden. Schließ eins an und starte neu.",
+  "speechStartFailed": "Die Transkription konnte nicht starten. Lade die Seite neu und versuch es noch mal."
 }

@@ -30,6 +30,7 @@
   "promptPasskey": "Use the fingerprint, face or PIN you unlock this device with.",
   "usePasskey": "Verify with passkey",
   "passkeyError": "That passkey didn't go through. Try again, or pick another way.",
+  "codeMismatch": "That code didn't work. Check it and try again, or get a new one.",
   "methodPasskey": "Passkey",
   "methodTotp": "Authenticator app",
   "methodEmailCode": "Email code",

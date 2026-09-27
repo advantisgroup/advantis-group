@@ -12,6 +12,8 @@ import {
 
 import { useAuth } from "@clerk/nextjs";
 
+import { ApiResponseError } from "@/lib/api-client";
+
 export type Passkey = {
   _id: string;
   name: string;
@@ -37,10 +39,12 @@ export type SecondaryEmail = {
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
 
+/** Throws an `ApiResponseError` carrying the API's error code, so callers can
+ * pick localised copy for it instead of showing the server's own text. */
 export async function jsonOrThrow(response: Response) {
-  const body = (await response.json()) as { message?: string };
-  if (!response.ok) throw new Error(body.message ?? "Request failed");
-  return body;
+  const body = (await response.json().catch(() => undefined)) as unknown;
+  if (!response.ok) throw new ApiResponseError(body);
+  return body as { message?: string };
 }
 
 interface SecurityState {

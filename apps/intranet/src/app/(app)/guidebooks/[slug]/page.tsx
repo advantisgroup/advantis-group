@@ -77,6 +77,7 @@ function ReadConfirmation({ slug }: { slug: string }) {
     canManageWiki ? { slug } : "skip",
   );
   const markRead = useMutation(api.guidebooks.reads.markRead);
+  const handleError = useErrorHandler();
   const [justConfirmed, setJustConfirmed] = useState(false);
   const [showConfirmers, setShowConfirmers] = useState(false);
   const isRead = readSlugs.includes(slug) || justConfirmed;
@@ -88,7 +89,7 @@ function ReadConfirmation({ slug }: { slug: string }) {
       toast.success(t("readConfirmedToast"));
     } catch (e) {
       setJustConfirmed(false);
-      toast.error(e instanceof Error ? e.message : t("readConfirmFailed"));
+      handleError(e, t("readConfirmFailed"));
     }
   }
 

@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { type OneDriveVersion, useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
 
@@ -42,6 +43,7 @@ export function NewFolderDialog({
   onDone: () => void;
 }) {
   const t = useTranslations("Files");
+  const handleError = useErrorHandler();
   const od = useOneDriveApi();
   const [name, setName] = useState("");
   const [busy, setBusy] = useBusy();
@@ -60,7 +62,7 @@ export function NewFolderDialog({
       onOpenChange(false);
       onDone();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     } finally {
       setBusy(false);
     }
@@ -107,6 +109,7 @@ export function RenameDialog({
   onDone: () => void;
 }) {
   const t = useTranslations("Files");
+  const handleError = useErrorHandler();
   const od = useOneDriveApi();
   const [name, setName] = useState("");
   const [busy, setBusy] = useBusy();
@@ -129,7 +132,7 @@ export function RenameDialog({
       onOpenChange(false);
       onDone();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     } finally {
       setBusy(false);
     }
@@ -174,6 +177,7 @@ export function ShareDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const t = useTranslations("Files");
+  const handleError = useErrorHandler();
   const od = useOneDriveApi();
   const [days, setDays] = useState(7);
   const [url, setUrl] = useState<string | null>(null);
@@ -195,7 +199,7 @@ export function ShareDialog({
       const res = await od.share(item.id, days);
       setUrl(res.url);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     } finally {
       setBusy(false);
     }
@@ -268,6 +272,7 @@ export function VersionsDialog({
   onDone: () => void;
 }) {
   const t = useTranslations("Files");
+  const handleError = useErrorHandler();
   const od = useOneDriveApi();
   const [versions, setVersions] = useState<OneDriveVersion[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -290,7 +295,7 @@ export function VersionsDialog({
       onOpenChange(false);
       onDone();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     } finally {
       setBusyId(null);
     }

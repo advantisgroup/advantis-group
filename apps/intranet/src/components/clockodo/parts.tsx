@@ -102,13 +102,8 @@ export function AbsencesSubNav({
 export function SectionBoundary({ title, children }: { title: string; children: ReactNode }) {
   return (
     <ErrorBoundary
-      fallback={({ error, reset }) => (
-        <ErrorFallback
-          title={title}
-          description={error.message}
-          className="min-h-0 py-6"
-          onRetry={reset}
-        />
+      fallback={({ reset }) => (
+        <ErrorFallback title={title} className="min-h-0 py-6" onRetry={reset} />
       )}
     >
       {children}

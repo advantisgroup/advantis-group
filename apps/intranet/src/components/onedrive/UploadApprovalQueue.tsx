@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
 
@@ -127,6 +128,7 @@ function InspectorDialog({
   readOnly: boolean;
 }) {
   const t = useTranslations("Admin");
+  const handleError = useErrorHandler();
   const od = useOneDriveApi();
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState<"approve" | "deny" | null>(null);
@@ -146,7 +148,7 @@ function InspectorDialog({
       setNote("");
       onClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     } finally {
       setBusy(null);
     }

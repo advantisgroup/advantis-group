@@ -35,6 +35,7 @@ import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { nextSort, type Sort, sortSign } from "@/components/ui/sortable-head";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { shouldEagerPrefetch } from "@/lib/network-heuristics";
 import { useOneDriveApi } from "@/lib/onedrive-api";
@@ -103,6 +104,7 @@ export function FileBrowser({
   routeBase?: string;
 }) {
   const t = useTranslations("Files");
+  const handleError = useErrorHandler();
   const tc = useTranslations("Common");
   const od = useOneDriveApi();
   const confirm = useConfirm();
@@ -184,12 +186,12 @@ export function FileBrowser({
           router.replace(url);
         }
       } catch (e) {
-        if (!cached) toast.error(e instanceof Error ? e.message : t("genericError"));
+        if (!cached) handleError(e);
       } finally {
         setLoading(false);
       }
     },
-    [od, t, router, routeBase, rootPath],
+    [od, handleError, router, routeBase, rootPath],
   );
 
   // Pushes the target folder into the URL immediately; the effect below
@@ -313,11 +315,11 @@ export function FileBrowser({
             : t("requestedCount", { count: total }),
         );
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : t("genericError"));
+        handleError(e);
         throw e;
       }
     },
-    [listing, od, path, refresh, t],
+    [handleError, listing, od, path, refresh, t],
   );
 
   /** One queue entry at a time; failures stay in the panel with a retry. */
@@ -379,7 +381,7 @@ export function FileBrowser({
       toast.success(t("deleted"));
       refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     }
   };
 
@@ -506,7 +508,7 @@ export function FileBrowser({
       }
       toast.success(t("deleted"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     }
     setSelected(new Set());
     refresh();

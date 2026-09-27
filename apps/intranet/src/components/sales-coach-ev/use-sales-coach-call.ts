@@ -200,7 +200,7 @@ export function useSalesCoachCall() {
     (lang: string) => {
       const Ctor = getSpeechRecognitionCtor();
       if (!Ctor) {
-        setError("Web Speech API benoetigt Chrome oder Edge.");
+        setError(t("speechUnsupported"));
         return;
       }
       setError(null);
@@ -251,10 +251,10 @@ export function useSalesCoachCall() {
       };
       recognition.onerror = (e) => {
         const messages: Record<string, string> = {
-          "not-allowed": "Mikrofonzugriff verweigert.",
-          "no-speech": "Kein Ton.",
-          network: "Netzwerkfehler.",
-          "audio-capture": "Kein Mikrofon.",
+          "not-allowed": t("speechMicDenied"),
+          "no-speech": t("speechNoSound"),
+          network: t("speechNetwork"),
+          "audio-capture": t("speechNoMic"),
         };
         const msg = messages[e.error];
         if (msg) {
@@ -278,10 +278,11 @@ export function useSalesCoachCall() {
       try {
         recognition.start();
       } catch (err) {
-        setError(`Startfehler: ${err instanceof Error ? err.message : String(err)}`);
+        console.error("[sales-coach] speech recognition failed to start", err);
+        setError(t("speechStartFailed"));
       }
     },
-    [runLiveAnalysis, stop, updateTimer],
+    [runLiveAnalysis, stop, t, updateTimer],
   );
 
   useEffect(() => {

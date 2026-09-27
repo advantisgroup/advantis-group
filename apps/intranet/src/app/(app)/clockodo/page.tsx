@@ -76,13 +76,7 @@ export function ClockodoWorkspace({ section }: { section: ClockodoSection }) {
   return (
     <ErrorBoundary
       key={section}
-      fallback={({ error, reset }) => (
-        <ErrorFallback
-          title={t("sectionUnavailable")}
-          description={error.message}
-          onRetry={reset}
-        />
-      )}
+      fallback={({ reset }) => <ErrorFallback title={t("sectionUnavailable")} onRetry={reset} />}
     >
       {section === "dashboard" && (
         <Dashboard mine={mine} calendar={calendar} pending={pending} onNavigate={navigate} />
