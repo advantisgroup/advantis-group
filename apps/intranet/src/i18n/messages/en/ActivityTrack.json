@@ -432,7 +432,7 @@
     "forbidden": "You do not have permission to view this.",
     "copy": "Copy",
     "copied": "Copied!",
-    "copyFailed": "Couldn't copy to clipboard.",
+    "copyFailed": "Couldn't copy. Select the text and copy it by hand.",
     "search": "Search …",
     "noResults": "No matches."
   },

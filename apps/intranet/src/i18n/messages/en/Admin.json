@@ -103,7 +103,7 @@
   "teamAccessRevoked": "Access revoked.",
   "teamAccessHasAccess": "Has access",
   "teamAccessNoAccess": "No access",
-  "teamAccessLoadError": "Couldn't load Team folder access.",
+  "teamAccessLoadError": "Couldn't load Team folder access. Reload the page to try again.",
   "scan_clean": "Clean",
   "scan_suspicious": "Suspicious",
   "scan_blocked": "Blocked",

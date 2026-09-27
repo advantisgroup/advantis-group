@@ -103,7 +103,7 @@
   "teamAccessRevoked": "Zugriff entzogen.",
   "teamAccessHasAccess": "Hat Zugriff",
   "teamAccessNoAccess": "Kein Zugriff",
-  "teamAccessLoadError": "Team-Ordner-Zugriff konnte nicht geladen werden.",
+  "teamAccessLoadError": "Team-Ordner-Zugriff konnte nicht geladen werden. Lade die Seite neu, um es noch einmal zu versuchen.",
   "scan_clean": "Unbedenklich",
   "scan_suspicious": "Verdächtig",
   "scan_blocked": "Blockiert",

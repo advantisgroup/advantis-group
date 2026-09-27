@@ -20,7 +20,7 @@
   "confirmUnlinkTitle": "Unlink this Clockodo account?",
   "confirmUnlinkBody": "The intranet account loses its time-tracking and ActivityTrack presence link until someone relinks it here.",
   "empty": "No Clockodo users yet.",
-  "loadError": "Couldn't load Clockodo users.",
+  "loadError": "Couldn't load Clockodo users. Reload the page to try again; if it keeps failing, check the Clockodo status under Admin → Overview.",
   "searchPlaceholder": "Search by name or email",
   "filterUnlinked": "Unlinked only",
   "filterMissingHours": "Missing target hours",

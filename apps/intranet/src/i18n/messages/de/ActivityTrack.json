@@ -432,7 +432,7 @@
     "forbidden": "Keine Berechtigung für diese Ansicht.",
     "copy": "Kopieren",
     "copied": "Kopiert!",
-    "copyFailed": "Kopieren in die Zwischenablage fehlgeschlagen.",
+    "copyFailed": "Kopieren hat nicht geklappt. Markiere den Text und kopiere ihn von Hand.",
     "search": "Suchen …",
     "noResults": "Keine Treffer."
   },
