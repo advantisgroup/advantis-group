@@ -27,6 +27,7 @@
   "snoozeAfternoon": "Heute Nachmittag",
   "snoozeTomorrow": "Morgen früh",
   "snoozeNextWeek": "Nächsten Montag",
+  "snoozedToast": "Zurückgestellt — kommt {when} wieder.",
   "cat_uploads": "Dateien",
   "cat_chat": "Chat",
   "type_absence_request": "Abwesenheitsanträge (zu genehmigen)",

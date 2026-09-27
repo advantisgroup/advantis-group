@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { Bell, BellOff, Check, ChevronRight, Settings2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Drawer } from "vaul";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSave } from "@/hooks/use-save";
 import { relativeTime } from "@/lib/format";
 import { bucketFor, notificationVisual, type NotificationBucket } from "@/lib/notification-kinds";
 import { cn } from "@/lib/utils";
@@ -32,9 +33,9 @@ export function NotificationsMenu() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const notifications = useQuery(api.notifications.notifications.list, { limit: 20 });
   const unread = useQuery(api.notifications.notifications.unreadCount) ?? 0;
-  const markRead = useMutation(api.notifications.notifications.markRead);
-  const markAllRead = useMutation(api.notifications.notifications.markAllRead);
-  const remove = useMutation(api.notifications.notifications.remove);
+  const markRead = useSave(api.notifications.notifications.markRead);
+  const markAllRead = useSave(api.notifications.notifications.markAllRead);
+  const remove = useSave(api.notifications.notifications.remove);
 
   // Newest first within a day; the day headings carry the ordering the old
   // unread-first sort was trying to express, without shuffling an item out

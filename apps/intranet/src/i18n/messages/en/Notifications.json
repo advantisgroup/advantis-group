@@ -27,6 +27,7 @@
   "snoozeAfternoon": "This afternoon",
   "snoozeTomorrow": "Tomorrow morning",
   "snoozeNextWeek": "Next Monday",
+  "snoozedToast": "Snoozed — it'll come back {when}.",
   "cat_uploads": "Files",
   "cat_chat": "Chat",
   "type_absence_request": "Absence requests (to approve)",

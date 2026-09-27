@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { AlarmClock, Bell, Check, ChevronDown, Mail, MailOpen, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
@@ -23,7 +23,8 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterPill } from "@/components/ui/filter-pill";
 import { useNow } from "@/lib/activity/useNow";
-import { relativeTime } from "@/lib/format";
+import { useSave } from "@/hooks/use-save";
+import { formatDateTime, relativeTime } from "@/lib/format";
 import { bucketFor, notificationVisual } from "@/lib/notification-kinds";
 import { cn } from "@/lib/utils";
 
@@ -72,7 +73,7 @@ function RefreshedNotificationsPage() {
   const t = useTranslations("Notifications");
 
   const notifications = useQuery(api.notifications.notifications.list, { limit: 100 });
-  const markAllRead = useMutation(api.notifications.notifications.markAllRead);
+  const markAllRead = useSave(api.notifications.notifications.markAllRead);
 
   const [tab, setTab] = useState<"unread" | "all">("unread");
   const [types, setTypes] = useState<Category[]>([]);
@@ -217,10 +218,11 @@ function RefreshedNotificationsPage() {
 function NotificationRow({ n }: { n: NotificationDoc }) {
   const t = useTranslations("Notifications");
   const router = useRouter();
-  const markRead = useMutation(api.notifications.notifications.markRead);
-  const markUnread = useMutation(api.notifications.notifications.markUnread);
-  const remove = useMutation(api.notifications.notifications.remove);
-  const snooze = useMutation(api.notifications.notifications.snooze);
+  const locale = useLocale();
+  const markRead = useSave(api.notifications.notifications.markRead);
+  const markUnread = useSave(api.notifications.notifications.markUnread);
+  const remove = useSave(api.notifications.notifications.remove);
+  const snooze = useSave(api.notifications.notifications.snooze);
   // Icon/tint come from the shared registry, so a row looks the same here
   // as in the header menu. The coarse category is only for the filter chips.
   const { icon: Icon, tint } = notificationVisual(n.type);
@@ -312,7 +314,13 @@ function NotificationRow({ n }: { n: NotificationDoc }) {
               .map(([key, until]) => (
                 <DropdownMenuItem
                   key={key}
-                  onClick={() => void snooze({ notificationId: n._id, until: until() })}
+                  onClick={() => {
+                    const at = until();
+                    void snooze(
+                      { notificationId: n._id, until: at },
+                      { success: t("snoozedToast", { when: formatDateTime(at, locale) }) },
+                    );
+                  }}
                 >
                   {t(key)}
                 </DropdownMenuItem>
