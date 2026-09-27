@@ -551,18 +551,18 @@ export const de: Dict = {
   "faq.scope.dashboard": "Dashboard",
   "faq.scope.both": "Beides",
 
-  "faq.q.signin_denied": "Jemand kann sich nicht am Dashboard anmelden",
+  "faq.q.signin_denied": "Jemand kann ActivityTrack nicht öffnen",
   "faq.a.signin_denied":
-    "Der Zugriff wird per E-Mail entschieden. Fügen Sie die E-Mail-Domain unter Einstellungen → Zugriff hinzu, oder die genaue Adresse zu den dauerhaften Admins (ACTIVITYTRACK_ADMIN_EMAILS in Convex). Beim nächsten Anmeldeversuch klappt es.",
-  "faq.q.domain": "Wie lasse ich eine ganze Firmendomain zu?",
+    "ActivityTrack nutzt die normale Intranet-Anmeldung. Zum Öffnen braucht die Person die Rolle Manager oder Admin oder eine eigene Rolle mit „ActivityTrack-Admin einsehen“. Die Rolle ändern Sie unter Verwaltung → Mitglieder, eigene Rollen legen Sie unter Verwaltung → Rollen an. Kann sich die Person gar nicht am Intranet anmelden, genehmigen Sie ihre Anfrage unter Verwaltung → Anfragen.",
+  "faq.q.domain": "Wer darf sich am Intranet anmelden?",
   "faq.a.domain":
-    "Einstellungen → Zugriff → Domain hinzufügen (z. B. example.com). Alle mit dieser E-Mail-Domain können sich als Betrachter anmelden; einzelne Personen unter Einstellungen → Benutzer hochstufen.",
+    "Die Firmen-E-Mail-Domains sind auf dem Server hinterlegt (ALLOWED_EMAIL_DOMAINS) und unter Einstellungen → Konfiguration → Zugriffskontrolle nur zur Ansicht zu sehen. Adressen außerhalb dieser Domains lassen sich trotzdem unter Verwaltung → Einladungen einladen; sie gelten dann als externe Mitglieder.",
   "faq.q.roles": "Was darf welche Rolle?",
   "faq.a.roles":
-    "Betrachter: nur lesende Dashboards. Manager: zusätzlich Personen anlegen/bearbeiten und Geräte zuordnen. IT-Admin: alles, inklusive Benutzer, Zugriff, Gerätefreigabe und Einstellungen.",
-  "faq.q.add_admin": "Wie mache ich jemanden zum dauerhaften Admin?",
+    "Eigene Rolle mit „ActivityTrack-Admin einsehen“: nur lesende Dashboards, Zeitverläufe und Berichte. Manager: zusätzlich Personen anlegen und bearbeiten und Geräte zuordnen. Admin: alles, inklusive Geräte freigeben oder sperren, Konfiguration und Systemstatus. Rollen verwalten Sie unter Verwaltung → Mitglieder und Verwaltung → Rollen.",
+  "faq.q.add_admin": "Wie mache ich jemanden zum Admin?",
   "faq.a.add_admin":
-    "Dauerhafte Admins stehen in der Convex-Umgebungsvariable ACTIVITYTRACK_ADMIN_EMAILS und können nie ausgesperrt werden. Hinterlegen Sie mindestens eine Chef-E-Mail. Alle anderen lassen sich unter Einstellungen → Benutzer hochstufen.",
+    "Vergeben Sie unter Verwaltung → Mitglieder die Rolle Admin. Adressen in der Server-Variable ADMIN_EMAILS werden bei ihrer ersten Anmeldung automatisch Admin, damit sich die Firma nicht aussperren kann.",
   "faq.q.not_reporting": "Ein Computer taucht nicht auf / meldet nicht",
   "faq.a.not_reporting":
     "Prüfen: (1) Tracker installiert und läuft (Infobereich), (2) Gerät erscheint unter Geräte und ist freigegeben (ausstehende Geräte zählen nicht), (3) der Computer hat Internet. Neue Installationen erscheinen als „ausstehend“, bis Sie sie freigeben.",
@@ -578,10 +578,10 @@ export const de: Dict = {
   "faq.q.integration_down":
     "Eine Integration (Genesys / Clockodo) wird als nicht verfügbar angezeigt",
   "faq.a.integration_down":
-    "Meist abgelaufene oder fehlende API-Zugangsdaten, oder der Anbieter ist nicht erreichbar. Prüfen Sie die Schlüssel in den Convex-Umgebungsvariablen. Das Dashboard arbeitet währenddessen allein mit der Arbeitsplatz-Aktivität weiter.",
+    "Meist abgelaufene oder fehlende API-Zugangsdaten, oder der Anbieter ist nicht erreichbar. Die Schlüssel sind Server-Umgebungsvariablen (GENESYS_… und CLOCKODO_…) — bitten Sie die Person, die die Server betreut, sie zu prüfen. Unter Einstellungen → Systemstatus steht der letzte Fehler. Das Dashboard arbeitet währenddessen allein mit der Arbeitsplatz-Aktivität weiter.",
   "faq.q.clockodo_setup": "Wie verbinde ich den Clockodo-Webhook?",
   "faq.a.clockodo_setup":
-    "Richten Sie den Clockodo-Webhook auf /api/webhooks/clockodo. Beim ersten Speichern sendet Clockodo ein Validierungs-Secret, das einmalig in den Deploy-Logs erscheint — tragen Sie diesen Wert in das Feld „Token“ bei Clockodo ein.",
+    "Optional: Ohne Webhook wird Clockodo trotzdem alle 15 Minuten abgefragt. Richten Sie in Clockodo einen Webhook auf die Adresse /integrations/clockodo/webhook der API ein. Clockodo schickt zuerst ein Validierungs-Secret, das einmalig in den Logs der API erscheint; tragen Sie es als Webhook-Token in Clockodo und auf dem Server (CLOCKODO_WEBHOOK_TOKEN) ein.",
   "faq.q.assumed_out": "Warum steht bei jemandem „Vermutlich Feierabend“?",
   "faq.a.assumed_out":
     "Clockodo meldet kein „Feierabend“-Ereignis – es weiß nur, ob gerade ein Eintrag läuft. Eine kurze Lücke ohne laufenden Eintrag zählt als Pause; dauert die Lücke länger als eine Stunde, nimmt das Dashboard an, dass der Arbeitstag beendet ist.\nDas Wort „vermutlich“ ist entscheidend: Es ist eine Annahme, kein Fakt. Stempelt die Person am selben Tag wieder ein, wird der gesamte Zeitraum automatisch als Pause umgewertet und der Tag läuft normal weiter – nichts muss von Hand korrigiert werden.\nAb 20:00 Uhr endet das Vermuten: Wer dann noch nicht wieder eingestempelt hat, gilt endgültig als ausgestempelt (die Kennzeichnung „vermutlich“ verschwindet). Ein späteres Einstempeln beginnt einen neuen Abschnitt, statt den Abend nachträglich zur Pause zu machen.",
@@ -614,7 +614,7 @@ export const de: Dict = {
   "setup.title": "Einrichtung abschließen",
   "setup.subtitle": "Noch ein paar Schritte, bis ActivityTrack vollständig läuft.",
   "setup.remaining": "{count} offen",
-  "setup.item.access": "Festlegen, wer sich anmelden darf (Admins oder erlaubte Domains)",
+  "setup.item.access": "Prüfen, wer sich anmelden darf (Admins und Firmendomains)",
   "setup.item.approve": "Mindestens ein Gerät freigeben",
   "setup.item.people": "Die erfassten Personen hinzufügen",
   "setup.item.link": "Ein Gerät mit einer Person verknüpfen",

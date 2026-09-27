@@ -529,18 +529,18 @@ export const en: Dict = {
   "faq.scope.dashboard": "Dashboard",
   "faq.scope.both": "Both",
 
-  "faq.q.signin_denied": "Someone can't sign in to the dashboard",
+  "faq.q.signin_denied": "Someone can't open ActivityTrack",
   "faq.a.signin_denied":
-    "Access is decided by email. Add their email domain under Settings → Access, or add their exact address to the permanent admins (ACTIVITYTRACK_ADMIN_EMAILS in Convex). They get in on their next sign-in attempt.",
-  "faq.q.domain": "How do I let a whole company domain sign in?",
+    "ActivityTrack uses the normal intranet sign-in. To open it, a person needs the Manager or Admin role, or a custom role that includes “View ActivityTrack admin”. Change their role under Admin → Members, or build a custom role under Admin → Roles. If they can't sign in to the intranet at all, approve their request under Admin → Requests.",
+  "faq.q.domain": "Who can sign in to the intranet?",
   "faq.a.domain":
-    "Settings → Access → add the domain (e.g. example.com). Everyone with that email domain can sign in as a viewer; promote individuals under Settings → Users.",
+    "Company email domains are set on the server (ALLOWED_EMAIL_DOMAINS) and shown read-only under Settings → Configuration → Access control. Addresses outside those domains can still be invited under Admin → Invites; they count as external members.",
   "faq.q.roles": "What can each role do?",
   "faq.a.roles":
-    "Viewer: read-only dashboards. Manager: also add/edit people and link devices. IT admin: everything, including users, access, device approval and settings.",
-  "faq.q.add_admin": "How do I make someone a permanent admin?",
+    "Custom role with “View ActivityTrack admin”: read-only dashboards, timelines and reports. Manager: also add and edit people and link devices. Admin: everything, including approving or revoking devices, configuration and system health. Roles are managed under Admin → Members and Admin → Roles.",
+  "faq.q.add_admin": "How do I make someone an admin?",
   "faq.a.add_admin":
-    "Permanent admins are pinned in the ACTIVITYTRACK_ADMIN_EMAILS Convex env var and can never be locked out. Set at least one boss's email there. Anyone else can be promoted under Settings → Users.",
+    "Give them the Admin role under Admin → Members. Addresses listed in the server's ADMIN_EMAILS variable become admins automatically on their first sign-in, so the company can't lock itself out.",
   "faq.q.not_reporting": "A computer isn't showing up / not reporting",
   "faq.a.not_reporting":
     "Check: (1) the tracker is installed and running (system tray), (2) the device appears under Devices and is Approved (pending devices don't count), (3) the computer has internet. New installs appear as 'pending' until you approve them.",
@@ -555,10 +555,10 @@ export const en: Dict = {
     "It unlocks the tracker's local status/diagnostics window on a PC. Set or change it under Settings → Configuration. It never unlocks the dashboard — only the on-device debug view.",
   "faq.q.integration_down": "An integration (Genesys / Clockodo) shows as unavailable",
   "faq.a.integration_down":
-    "Usually expired or missing API credentials, or the provider is unreachable. Check the integration's keys in the Convex environment variables. The dashboard keeps working from workstation activity alone while an integration is down.",
+    "Usually expired or missing API credentials, or the provider is unreachable. The keys are server environment variables (GENESYS_… and CLOCKODO_…), so ask whoever runs the servers to check them. Settings → System health shows the last error. The dashboard keeps working from workstation activity alone while an integration is down.",
   "faq.q.clockodo_setup": "How do I connect the Clockodo webhook?",
   "faq.a.clockodo_setup":
-    "Point Clockodo's webhook at /api/webhooks/clockodo. On first save Clockodo sends a validation secret, which is logged once in the deploy logs — paste that value into Clockodo's 'Token' field to finish.",
+    "Optional: without it, Clockodo is still polled every 15 minutes. In Clockodo, point a webhook at the API's /integrations/clockodo/webhook address. Clockodo first sends a validation secret, which shows up once in the API's logs; enter it as the webhook token in Clockodo and on the server (CLOCKODO_WEBHOOK_TOKEN).",
   "faq.q.assumed_out": "Why does someone show 'Done for the day (assumed)'?",
   "faq.a.assumed_out":
     "Clockodo doesn't report 'the day has ended' — it only knows whether an entry is running. A short gap without a running entry counts as a break; once the gap passes one hour, the dashboard assumes the person is done for the day.\nThe word 'assumed' is the important part: it is a guess, not a fact. If the person clocks back in the same day, the whole stretch is automatically re-labelled as a break and their day continues — nothing needs to be fixed by hand.\nAt 20:00 the guessing stops: anyone still not clocked in counts as definitively clocked out (the '(assumed)' marker disappears), and clocking in after that starts a new stint instead of turning the evening into a break.",
@@ -591,7 +591,7 @@ export const en: Dict = {
   "setup.title": "Finish setting up",
   "setup.subtitle": "A few steps to get ActivityTrack fully running.",
   "setup.remaining": "{count} left",
-  "setup.item.access": "Configure who can sign in (admins or allowed domains)",
+  "setup.item.access": "Check who can sign in (admins and company domains)",
   "setup.item.approve": "Approve at least one device",
   "setup.item.people": "Add the people you're tracking",
   "setup.item.link": "Link a device to a person",
