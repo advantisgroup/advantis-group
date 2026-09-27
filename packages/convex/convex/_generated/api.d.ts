@@ -197,6 +197,7 @@ import type * as org_roles from "../org/roles.js";
 import type * as org_search from "../org/search.js";
 import type * as org_structure from "../org/structure.js";
 import type * as org_structureMigration from "../org/structureMigration.js";
+import type * as org_tools from "../org/tools.js";
 import type * as org_trash from "../org/trash.js";
 import type * as orgData from "../orgData.js";
 import type * as orgDataMigration from "../orgDataMigration.js";
@@ -495,6 +496,7 @@ declare const fullApi: ApiFromModules<{
   "org/search": typeof org_search;
   "org/structure": typeof org_structure;
   "org/structureMigration": typeof org_structureMigration;
+  "org/tools": typeof org_tools;
   "org/trash": typeof org_trash;
   orgData: typeof orgData;
   orgDataMigration: typeof orgDataMigration;

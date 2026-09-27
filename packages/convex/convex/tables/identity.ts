@@ -316,6 +316,17 @@ export const identityTables = {
     updatedAt: v.number(),
   }),
 
+  /** The company's external tools (Clockodo, Outlook, Salesforce, …),
+   *  kept by admins, as links in the sidebar. */
+  companyTools: defineTable({
+    name: v.string(),
+    url: v.string(),
+    description: v.optional(v.string()),
+    sortOrder: v.number(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  }),
+
   contactTopics: defineTable({
     section: v.union(v.literal("help"), v.literal("safety")),
     topic: v.string(),
@@ -460,6 +471,8 @@ export const identityTables = {
     /** AG-root-relative OneDrive folder paths pinned in the file browser. */
     favoriteFolders: v.optional(v.array(v.string())),
     favoriteGuidebooks: v.optional(v.array(v.string())),
+    /** Pages starred from their header, shown at the top of the sidebar. */
+    favoritePages: v.optional(v.array(v.object({ href: v.string(), label: v.string() }))),
     savedDirectoryViews: v.optional(
       v.array(
         v.object({
