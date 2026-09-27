@@ -84,7 +84,7 @@ export function AdminUserDetailDialog({
                 <div
                   className={cn(
                     "mt-1 text-xs font-semibold",
-                    entry.trend >= 0 ? "text-emerald-600" : "text-red-600",
+                    entry.trend >= 0 ? "text-ok" : "text-destructive",
                   )}
                 >
                   {entry.trend >= 0 ? "↑" : "↓"} {Math.abs(entry.trend)}
@@ -172,7 +172,7 @@ export function AdminUserDetailDialog({
                         c.outcome === "termin"
                           ? "bg-primary/10 text-primary"
                           : c.outcome === "wiedervorlage"
-                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                            ? "bg-info/10 text-info"
                             : "bg-muted text-muted-foreground",
                       )}
                     >

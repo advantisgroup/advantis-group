@@ -256,7 +256,7 @@ export function ShareDialog({
               onClick={() => void copy()}
               aria-label={tc("copy")}
             >
-              {copied ? <Check className="size-4 text-green-500" /> : <Copy className="size-4" />}
+              {copied ? <Check className="size-4 text-ok" /> : <Copy className="size-4" />}
             </Button>
           </div>
         )}

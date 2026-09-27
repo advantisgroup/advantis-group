@@ -172,8 +172,8 @@ export function UploadDropOverlay({ enabled, requiresApproval, onUpload }: Props
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 18 }}
             >
-              <div className="flex size-20 items-center justify-center rounded-full bg-green-500/20">
-                <Check className="size-12 text-green-400" strokeWidth={3} />
+              <div className="flex size-20 items-center justify-center rounded-full bg-ok/20">
+                <Check className="size-12 text-ok" strokeWidth={3} />
               </div>
               <p className="text-lg font-medium text-white">
                 {requiresApproval ? t("doneApproval") : t("done")}

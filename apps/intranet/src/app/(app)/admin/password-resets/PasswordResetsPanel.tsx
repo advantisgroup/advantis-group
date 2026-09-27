@@ -391,7 +391,7 @@ function RequestCard({
       )}
       {request.autoApproved && request.autoApprovedVia && (
         <p className="mt-3 flex items-start gap-2 text-xs text-foreground">
-          <Link2 className="mt-px size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <Link2 className="mt-px size-3.5 shrink-0 text-ok" />
           {t(AUTO_APPROVED_HINT_KEY[request.autoApprovedVia])}
         </p>
       )}

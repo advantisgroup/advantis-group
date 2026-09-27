@@ -23,8 +23,8 @@ export function GracePeriodBanner() {
   if (!status || status.state !== "warning") return null;
 
   return (
-    <Alert className="flex items-center gap-3 rounded-none border-x-0 border-t-0 border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-foreground [&>svg]:static [&>svg+div]:translate-y-0 [&>svg~*]:pl-0">
-      <ShieldAlert className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+    <Alert className="flex items-center gap-3 rounded-none border-x-0 border-t-0 border-warn/40 bg-warn/10 px-3 py-2.5 text-foreground [&>svg]:static [&>svg+div]:translate-y-0 [&>svg~*]:pl-0">
+      <ShieldAlert className="size-4 shrink-0 text-warn" />
       <AlertDescription className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-3">
         <span className="text-sm font-medium">
           {t("graceBannerBody", {
@@ -37,7 +37,7 @@ export function GracePeriodBanner() {
         <span className="flex shrink-0 items-center gap-3">
           <Link
             href="/guidebooks/sicherheitsanmeldung"
-            className="text-sm font-medium text-amber-700 underline underline-offset-2 hover:opacity-80 dark:text-amber-400"
+            className="text-sm font-medium text-warn underline underline-offset-2 hover:opacity-80"
           >
             {t("graceBannerHelp")}
           </Link>

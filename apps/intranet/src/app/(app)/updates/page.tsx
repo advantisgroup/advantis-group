@@ -213,8 +213,8 @@ export default function UpdatesPage() {
                           item.type === "incident"
                             ? "bg-destructive/10 text-destructive"
                             : item.type === "maintenance"
-                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                              ? "bg-warn/10 text-warn"
+                              : "bg-ok/10 text-ok"
                         }`}
                       >
                         <Icon className="size-4" />

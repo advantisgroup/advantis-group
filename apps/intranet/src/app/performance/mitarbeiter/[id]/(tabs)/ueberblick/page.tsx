@@ -73,24 +73,14 @@ function SignalList({ items, kind }: { items: Signal[]; kind: "alert" | "highlig
         <li key={s.key} className="text-sm">
           <div className="flex items-center justify-between">
             <span className="font-medium">{s.label}</span>
-            <span
-              className={
-                kind === "alert" ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"
-              }
-            >
+            <span className={kind === "alert" ? "text-destructive" : "text-ok"}>
               {fmtNum(s.value)}
               {s.unit}
             </span>
           </div>
           <p className="text-xs text-muted-foreground">{s.cmp}</p>
           {s.trend && (
-            <p
-              className={
-                s.trend.dir === "good"
-                  ? "text-xs text-emerald-600 dark:text-emerald-400"
-                  : "text-xs text-destructive"
-              }
-            >
+            <p className={s.trend.dir === "good" ? "text-xs text-ok" : "text-xs text-destructive"}>
               {s.trend.text}
             </p>
           )}

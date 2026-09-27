@@ -97,7 +97,7 @@ function ListStatCard({ href, label, value }: { href: string; label: string; val
       <Card className="h-full transition-colors hover:bg-muted/50">
         <CardContent className="flex flex-col gap-1.5 p-4">
           <span className="text-xs text-muted-foreground">{label}</span>
-          <span className="text-xl font-semibold tabular-nums text-amber-600 underline decoration-dotted underline-offset-4 dark:text-amber-400">
+          <span className="text-xl font-semibold tabular-nums text-warn underline decoration-dotted underline-offset-4">
             {value}
           </span>
         </CardContent>
@@ -164,7 +164,7 @@ export default function DashboardOverviewPage() {
       </p>
 
       {fc?.incomplete && fc.missingDays.length > 0 && (
-        <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
+        <div className="flex items-start gap-2 rounded-md border border-warn/40 bg-warn/10 p-3 text-sm text-warn">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           {t("dashboardMissingReport", { days: fc.missingDays.join(", ") })}
         </div>
@@ -254,10 +254,7 @@ export default function DashboardOverviewPage() {
             </span>
             <p className="text-xs text-muted-foreground">{t("dashboardWorkdaysSubtitle")}</p>
             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-emerald-500"
-                style={{ width: `${workdaysPct}%` }}
-              />
+              <div className="h-full rounded-full bg-ok" style={{ width: `${workdaysPct}%` }} />
             </div>
           </CardContent>
         </Card>

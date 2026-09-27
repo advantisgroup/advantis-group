@@ -87,7 +87,7 @@ export function ProgressView() {
             <div
               className={cn(
                 "mt-1 text-xs font-semibold",
-                trend >= 0 ? "text-emerald-600" : "text-red-600",
+                trend >= 0 ? "text-ok" : "text-destructive",
               )}
             >
               {trend >= 0 ? "↑" : "↓"} {Math.abs(trend)}
@@ -194,7 +194,7 @@ export function ProgressView() {
                     c.outcome === "termin"
                       ? "bg-primary/10 text-primary"
                       : c.outcome === "wiedervorlage"
-                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                        ? "bg-info/10 text-info"
                         : "bg-muted text-muted-foreground",
                   )}
                 >

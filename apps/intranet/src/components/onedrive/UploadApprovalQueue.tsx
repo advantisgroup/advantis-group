@@ -46,7 +46,7 @@ function verdictBadge(verdict: ScanReport["verdict"]) {
 
 const severityColor: Record<ScanSeverity, string> = {
   info: "text-muted-foreground",
-  warning: "text-amber-500",
+  warning: "text-warn",
   danger: "text-destructive",
 };
 

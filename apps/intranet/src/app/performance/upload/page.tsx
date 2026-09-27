@@ -89,11 +89,11 @@ function StatusIcon({ status }: { status: QueueStatus }) {
     case "processing":
       return <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />;
     case "done":
-      return <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />;
+      return <CheckCircle2 className="h-4 w-4 shrink-0 text-ok" />;
     case "empty":
       return <Info className="h-4 w-4 shrink-0 text-muted-foreground" />;
     case "duplicate":
-      return <Copy className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />;
+      return <Copy className="h-4 w-4 shrink-0 text-warn" />;
     case "error":
       return <XCircle className="h-4 w-4 shrink-0 text-destructive" />;
   }
@@ -159,7 +159,7 @@ function LogRow({
           {legacy && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                <AlertCircle className="h-3.5 w-3.5 shrink-0 text-warn" />
               </TooltipTrigger>
               <TooltipContent>{t("uploadLogLegacy")}</TooltipContent>
             </Tooltip>
@@ -607,7 +607,7 @@ export default function PerformanceUploadPage() {
                             </span>
                           )}
                           {item.status === "done" && (
-                            <span className="text-emerald-600 dark:text-emerald-400">
+                            <span className="text-ok">
                               {t("uploadOk", {
                                 count: item.rowsImported ?? 0,
                               })}
@@ -627,7 +627,7 @@ export default function PerformanceUploadPage() {
                             <span className="text-muted-foreground">{t("uploadEmpty")}</span>
                           )}
                           {item.status === "duplicate" && (
-                            <span className="text-amber-600 dark:text-amber-400">
+                            <span className="text-warn">
                               {item.duplicateOf
                                 ? t("uploadDuplicateDetail", {
                                     filename: item.duplicateOf.filename,

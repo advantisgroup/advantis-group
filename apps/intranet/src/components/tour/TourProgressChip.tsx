@@ -18,11 +18,10 @@ import { useTour } from "./TourProvider";
 import type { CheckpointStatus } from "./tour-types";
 
 function StatusDot({ status }: { status: CheckpointStatus }) {
-  if (status === "completed") return <Check className="size-3.5 shrink-0 text-green-500" />;
+  if (status === "completed") return <Check className="size-3.5 shrink-0 text-ok" />;
   if (status === "skipped")
     return <SkipForward className="size-3.5 shrink-0 text-muted-foreground" />;
-  if (status === "active")
-    return <Circle className="size-3.5 shrink-0 fill-blue-500 text-blue-500" />;
+  if (status === "active") return <Circle className="size-3.5 shrink-0 fill-info text-info" />;
   return <Circle className="size-3.5 shrink-0 text-muted-foreground/40" />;
 }
 

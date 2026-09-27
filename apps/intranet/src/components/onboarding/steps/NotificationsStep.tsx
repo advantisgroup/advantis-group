@@ -68,7 +68,7 @@ export function NotificationsStep() {
         <motion.span
           animate={bellControls}
           style={{ transformOrigin: "50% 0%" }}
-          className="flex size-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-300"
+          className="flex size-11 items-center justify-center rounded-xl bg-warn/15 text-warn"
         >
           <BellRing className="size-5" />
         </motion.span>
@@ -94,9 +94,7 @@ export function NotificationsStep() {
             />
           </div>
           {permission === "denied" && (
-            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-              {tn("browserDeniedHint")}
-            </p>
+            <p className="mt-2 text-xs text-warn">{tn("browserDeniedHint")}</p>
           )}
         </div>
         {MUTABLE_TYPES.map(({ type, icon: Icon, tint }) => (
