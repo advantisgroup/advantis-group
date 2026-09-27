@@ -62,6 +62,8 @@
   "personPicker": {
     "placeholder": "Choose a person",
     "search": "Search name, email, position…",
+    "recent": "Recent",
+    "everyone": "Everyone",
     "empty": "Nobody matches that"
   }
 }

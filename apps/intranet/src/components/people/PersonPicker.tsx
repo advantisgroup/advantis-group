@@ -72,11 +72,14 @@ export function PersonList({
   onNone,
   hint,
   isDisabled,
+  recent,
   autoFocus = false,
   className,
   listClassName,
 }: {
   people: PersonOption[] | undefined;
+  /** Ids shown first under "Recent" while the search box is empty. */
+  recent?: readonly string[];
   selected: PersonId | null | ReadonlySet<string>;
   onSelect: (person: PersonOption) => void;
   multiple?: boolean;
@@ -98,13 +101,18 @@ export function PersonList({
   const isSelected = (id: PersonId) =>
     selected instanceof Set ? selected.has(id) : selected === id;
 
-  const filtered = useMemo(
-    () =>
-      (people ?? []).filter((person) =>
+  const { filtered, recentCount } = useMemo(() => {
+    const all = people ?? [];
+    if (search.trim() || !recent?.length) {
+      const matches = all.filter((person) =>
         matchesSearch(search, person.name, person.email, person.jobTitle, person.department),
-      ),
-    [people, search],
-  );
+      );
+      return { filtered: matches, recentCount: 0 };
+    }
+    const top = recent.flatMap((id) => all.find((person) => person.userId === id) ?? []);
+    const rest = all.filter((person) => !recent.includes(person.userId));
+    return { filtered: [...top, ...rest], recentCount: top.length };
+  }, [people, search, recent]);
 
   const showNone = Boolean(noneLabel && onNone && !search.trim());
   const rowCount = filtered.length + (showNone ? 1 : 0);
@@ -188,8 +196,19 @@ export function PersonList({
             const disabled = isDisabled?.(person) ?? false;
             const detail = [person.jobTitle, person.department].filter(Boolean).join(" · ");
             const badge = hint?.(person);
+            const heading =
+              recentCount > 0 && i === 0
+                ? t("recent")
+                : recentCount > 0 && i === recentCount
+                  ? t("everyone")
+                  : null;
             return (
               <li key={person.userId}>
+                {heading && (
+                  <p className="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {heading}
+                  </p>
+                )}
                 <button
                   type="button"
                   data-index={index}
@@ -242,6 +261,26 @@ export function PersonList({
   );
 }
 
+const RECENT_KEY = "person-picker:recent";
+
+function readRecent(): string[] {
+  try {
+    const stored: unknown = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
+    return Array.isArray(stored) ? stored.filter((id) => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberRecent(userId: string) {
+  try {
+    const next = [userId, ...readRecent().filter((id) => id !== userId)].slice(0, 5);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+  } catch {
+    // private mode or storage blocked — recents are only a convenience
+  }
+}
+
 /**
  * The one way to choose a single intranet person: shows who's picked with
  * their avatar, and opens a searchable list — anchored under the field on
@@ -285,7 +324,13 @@ export function PersonPicker({
   const t = useTranslations("Common.personPicker");
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
+  const [recent, setRecent] = useState<string[]>([]);
   const fetched = useQuery(api.people.users.options, peopleOverride ? "skip" : {});
+
+  function openChange(next: boolean) {
+    if (next) setRecent(readRecent());
+    setOpen(next);
+  }
   const all = peopleOverride ?? fetched;
 
   const people = useMemo(
@@ -297,6 +342,7 @@ export function PersonPicker({
 
   function pick(person: PersonOption | null) {
     setOpen(false);
+    if (person) rememberRecent(person.userId);
     if ((person?.userId ?? null) !== (value ?? null)) onChange(person?.userId ?? null, person);
   }
 
@@ -341,6 +387,7 @@ export function PersonPicker({
       onNone={noneLabel ? () => pick(null) : undefined}
       hint={hint}
       isDisabled={isDisabled}
+      recent={recent}
       autoFocus={!isMobile}
       className="h-full"
     />
@@ -348,7 +395,7 @@ export function PersonPicker({
 
   if (isMobile) {
     return (
-      <Drawer.Root open={open} onOpenChange={setOpen}>
+      <Drawer.Root open={open} onOpenChange={openChange}>
         <Drawer.Trigger asChild disabled={disabled}>
           {field}
         </Drawer.Trigger>
@@ -379,7 +426,7 @@ export function PersonPicker({
   // `modal` keeps the list scrollable when the picker sits inside a dialog,
   // whose scroll lock would otherwise swallow the wheel.
   return (
-    <Popover open={open} onOpenChange={setOpen} modal>
+    <Popover open={open} onOpenChange={openChange} modal>
       <PopoverTrigger asChild disabled={disabled}>
         {field}
       </PopoverTrigger>
