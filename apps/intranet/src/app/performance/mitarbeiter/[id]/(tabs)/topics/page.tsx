@@ -30,6 +30,7 @@ import { getPerformanceToken } from "@/lib/performanceAuth";
 
 export default function EmployeeTopicsPage() {
   const t = useTranslations("Performance");
+  const tc = useTranslations("Common");
   const params = useParams<{ id: string }>();
   const employeeId = params.id as Id<"performanceEmployees">;
   const token = getPerformanceToken() ?? "";
@@ -108,6 +109,7 @@ export default function EmployeeTopicsPage() {
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => setTopicDialog({ open: true, topic })}
+                        aria-label={tc("edit")}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
@@ -116,6 +118,7 @@ export default function EmployeeTopicsPage() {
                         size="icon"
                         className="h-8 w-8 text-destructive"
                         onClick={() => setDeleteTarget(topic)}
+                        aria-label={tc("delete")}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>

@@ -105,6 +105,7 @@ export function ContactRow({
   href: string;
   onCopy: () => void;
 }) {
+  const tc = useTranslations("Common");
   return (
     <div className="flex min-h-10 items-center gap-3 text-sm">
       <IconTile>{icon}</IconTile>
@@ -116,6 +117,7 @@ export function ContactRow({
         variant="ghost"
         className="size-8 shrink-0 text-muted-foreground"
         onClick={onCopy}
+        aria-label={tc("copy")}
       >
         <Copy className="size-3.5" />
       </Button>

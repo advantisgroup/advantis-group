@@ -180,6 +180,7 @@ export function BlogPostComposer({ entry }: { entry: BlogPostSubject }) {
               size="icon"
               className="absolute right-2 top-2 size-7"
               onClick={form.removeCover}
+              aria-label={tc("remove")}
             >
               <X className="size-3.5" />
             </Button>

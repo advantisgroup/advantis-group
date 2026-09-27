@@ -65,5 +65,7 @@
     "recent": "Zuletzt gewählt",
     "everyone": "Alle",
     "empty": "Niemand gefunden"
-  }
+  },
+  "remove": "Entfernen",
+  "moreOptions": "Weitere Optionen"
 }

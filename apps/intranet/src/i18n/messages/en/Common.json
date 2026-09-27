@@ -65,5 +65,7 @@
     "recent": "Recent",
     "everyone": "Everyone",
     "empty": "Nobody matches that"
-  }
+  },
+  "remove": "Remove",
+  "moreOptions": "More options"
 }

@@ -177,6 +177,7 @@ export function ShareDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const t = useTranslations("Files");
+  const tc = useTranslations("Common");
   const handleError = useErrorHandler();
   const od = useOneDriveApi();
   const [days, setDays] = useState(7);
@@ -248,7 +249,12 @@ export function ShareDialog({
         ) : (
           <div className="flex items-center gap-2">
             <Input readOnly value={url} className="flex-1" />
-            <Button size="icon" variant="outline" onClick={() => void copy()}>
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => void copy()}
+              aria-label={tc("copy")}
+            >
               {copied ? <Check className="size-4 text-green-500" /> : <Copy className="size-4" />}
             </Button>
           </div>

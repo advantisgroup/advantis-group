@@ -322,6 +322,7 @@ function BatchRows({
 
 export default function PerformanceUploadPage() {
   const t = useTranslations("Performance");
+  const tc = useTranslations("Common");
   const locale = useLocale();
   const { token, loading, session } = usePerformanceGate((s) =>
     s.permissions.includes("upload_reports"),
@@ -665,6 +666,7 @@ export default function PerformanceUploadPage() {
                           size="icon"
                           className="h-6 w-6 shrink-0"
                           onClick={() => removeItem(item.id)}
+                          aria-label={tc("remove")}
                         >
                           <X className="h-3.5 w-3.5" />
                         </Button>
