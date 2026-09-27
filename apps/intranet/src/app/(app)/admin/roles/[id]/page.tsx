@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
-import { ArrowLeft, Info, Search, ShieldCheck, Sparkles, Trash2, UserPlus, X } from "lucide-react";
+import { ArrowLeft, Search, ShieldCheck, Sparkles, Trash2, UserPlus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -22,7 +22,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { CAPABILITY_GROUPS, CAPABILITY_ICONS, CAPABILITY_IMPLIES } from "@/lib/permission-icons";
 import { cn } from "@/lib/utils";
@@ -152,20 +152,7 @@ function Permissions({ role }: { role: Role }) {
                       <div className="min-w-0 flex-1">
                         <p className="flex items-center gap-1.5 text-[13.5px] font-medium">
                           <span className="truncate">{label}</span>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                type="button"
-                                aria-label={t("moreInfo")}
-                                className="inline-flex shrink-0 text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus-visible:text-foreground"
-                              >
-                                <Info className="size-3.5" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs leading-relaxed">
-                              {t(`capability_${cap}_desc`)}
-                            </TooltipContent>
-                          </Tooltip>
+                          <InfoTip text={t(`capability_${cap}_desc`)} className="shrink-0" />
                         </p>
                         {lockedBy && (
                           <p className="text-[12px] text-muted-foreground">
@@ -238,9 +225,7 @@ function Members({ role }: { role: Role }) {
         {people === undefined ? (
           <Skeleton className="h-24 rounded-none" />
         ) : members.length === 0 ? (
-          <p className="px-4 py-8 text-center text-[13px] text-muted-foreground">
-            {t("membersEmpty")}
-          </p>
+          <EmptyState inline title={t("membersEmpty")} />
         ) : (
           <ul className="divide-y divide-border/60">
             {members.map(({ userId, role: tier, person }) => (

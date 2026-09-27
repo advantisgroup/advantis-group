@@ -30,7 +30,6 @@
   "group_files": "Files & integrations",
   "group_ai": "AI",
   "impliedBy": "Included with \"{by}\"",
-  "moreInfo": "More about this permission",
   "aiScopeTitle": "AI only works where the role already does",
   "aiScopeRead": "Anyone with it can ask about records, use the wiki assistant, the daily brief and the find-your-way helper — reading only what they could open themselves.",
   "aiScopeWrite": "It never edits or deletes anything on its own. Writing help (formatting wiki entries, reading CVs) only shows up in areas the person can already edit.",

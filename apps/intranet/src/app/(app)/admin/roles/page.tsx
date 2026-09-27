@@ -24,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -130,16 +131,18 @@ export default function AdminRolesPage() {
         {roles === undefined ? (
           <Skeleton className="h-32 rounded-none" />
         ) : roles.length === 0 ? (
-          <div className="px-4 py-10 text-center">
-            <p className="text-sm font-medium">{t("empty")}</p>
-            <p className="mx-auto mt-1 max-w-sm text-[13px] text-muted-foreground">
-              {t("emptyHint")}
-            </p>
-            <Button size="sm" className="mt-4" onClick={() => setCreating(true)}>
-              <Plus className="size-4" />
-              {t("newRole")}
-            </Button>
-          </div>
+          <EmptyState
+            inline
+            icon={<ShieldCheck />}
+            title={t("empty")}
+            description={t("emptyHint")}
+            action={
+              <Button size="sm" onClick={() => setCreating(true)}>
+                <Plus className="size-4" />
+                {t("newRole")}
+              </Button>
+            }
+          />
         ) : (
           [...roles]
             .sort((a, b) => a.name.localeCompare(b.name))

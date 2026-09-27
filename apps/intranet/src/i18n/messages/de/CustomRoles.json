@@ -30,7 +30,6 @@
   "group_files": "Dateien & Integrationen",
   "group_ai": "KI",
   "impliedBy": "Enthalten in „{by}“",
-  "moreInfo": "Mehr zu dieser Berechtigung",
   "aiScopeTitle": "KI wirkt nur dort, wo die Rolle schon Zugriff hat",
   "aiScopeRead": "Wer sie hat, kann zu Einträgen fragen, den Wiki-Assistenten, die Tageszusammenfassung und den Wegweiser nutzen – und liest dabei nur, was die Person selbst öffnen könnte.",
   "aiScopeWrite": "Sie ändert oder löscht nie selbst etwas. Schreibhilfen (Wiki-Einträge formatieren, Lebensläufe auslesen) erscheinen nur in Bereichen, die die Person ohnehin bearbeiten darf.",
