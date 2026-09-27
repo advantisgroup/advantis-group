@@ -169,6 +169,7 @@ function BlogList({
         <EmptyState
           icon={<Newspaper />}
           title={posts.length === 0 ? t("noPostsYet") : t("noResults")}
+          description={posts.length === 0 ? t("noPostsYetHint") : undefined}
           action={
             posts.length === 0 ? (
               <Button data-shortcut-new size="sm" asChild>

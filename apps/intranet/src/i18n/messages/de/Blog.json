@@ -4,6 +4,7 @@
   "newPost": "Neuer Beitrag",
   "loading": "Lädt…",
   "noPostsYet": "Noch keine Beiträge.",
+  "noPostsYetHint": "Beiträge, die du hier veröffentlichst, erscheinen auf advantisgroup.de/blog.",
   "untitled": "Ohne Titel",
   "delete": "Löschen",
   "deleteConfirmTitle": "Beitrag löschen?",

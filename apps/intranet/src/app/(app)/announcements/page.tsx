@@ -646,6 +646,7 @@ export default function AnnouncementsPage() {
         <EmptyState
           icon={<Megaphone />}
           title={t("empty")}
+          description={isManager ? t("emptyHintManager") : t("emptyHint")}
           action={
             isManager ? (
               <Button data-shortcut-new size="sm" asChild>

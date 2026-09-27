@@ -1,6 +1,6 @@
 {
   "pageTitle": "Error Management",
-  "pageDescription": "Log, escalate and close out quality issues with 8D/PDCA corrective measures.",
+  "pageDescription": "Record quality issues and customer complaints, and track the measures until the cause is fixed.",
   "tabErfassung": "Errors",
   "tabMeasures": "Measures (8D-PDCA)",
   "tabDashboard": "Dashboard",
@@ -75,6 +75,7 @@
   "searchPlaceholder": "Search errors (description, customer…)",
   "noResults": "No errors match your filters",
   "empty": "No errors logged yet",
+  "emptyHint": "Record a quality issue or customer complaint here, then follow the measures until the cause is fixed and it doesn't happen again.",
   "overdueBadge": "Overdue",
   "customerNotInformedBadge": "Customer not yet informed",
   "closeNeedsEffectivenessCheck": "This error's measures haven't had their effectiveness checked yet — close anyway?",

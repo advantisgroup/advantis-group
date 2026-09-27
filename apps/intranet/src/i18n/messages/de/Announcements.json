@@ -49,6 +49,8 @@
   "by": "von {name}",
   "deleteConfirm": "Diese Ankündigung löschen?",
   "empty": "Noch keine Ankündigungen",
+  "emptyHint": "Neuigkeiten aus dem Unternehmen erscheinen hier und auf deinem Dashboard.",
+  "emptyHintManager": "Hier veröffentlichst du Neuigkeiten fürs Unternehmen. Sie erscheinen auf dem Dashboard aller, und du kannst eine Lesebestätigung anfordern.",
   "viewedBy": "{count, plural, =0 {Noch nicht gesehen} one {# Aufruf} other {# Aufrufe}}",
   "noViews": "Noch niemand hat das gesehen",
   "notReadYet": "Noch nicht gelesen",

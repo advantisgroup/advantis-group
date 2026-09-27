@@ -211,6 +211,7 @@ function ErrorReportsContent() {
         <EmptyState
           icon={<AlertTriangle />}
           title={all.length === 0 ? t("empty") : t("noResults")}
+          description={all.length === 0 ? t("emptyHint") : undefined}
           action={
             filtersActive ? (
               <Button variant="outline" size="sm" onClick={clearFilters}>

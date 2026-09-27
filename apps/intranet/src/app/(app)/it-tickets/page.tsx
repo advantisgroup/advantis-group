@@ -499,6 +499,7 @@ function ItTicketsPageContent() {
         <EmptyState
           icon={<Wrench />}
           title={tickets.length === 0 ? t("noTickets") : t("noResults")}
+          description={tickets.length === 0 ? t("noTicketsHint") : undefined}
           action={
             filtersActive ? (
               <Button variant="outline" size="sm" onClick={clearFilters}>
