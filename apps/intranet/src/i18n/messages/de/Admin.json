@@ -248,7 +248,7 @@
     "featureFlags": "Feature-Flags",
     "passwordResets": "Passwort-Resets",
     "authentication": "Authentifizierung",
-    "designFeedback": "Design-Feedback",
+    "designFeedback": "Seiten-Feedback",
     "ai": "KI-Aktivität"
   },
   "requestedAgo": "Angefragt vor {age}",

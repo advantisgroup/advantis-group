@@ -248,7 +248,7 @@
     "featureFlags": "Feature flags",
     "passwordResets": "Password resets",
     "authentication": "Authentication",
-    "designFeedback": "Design feedback",
+    "designFeedback": "Page feedback",
     "ai": "AI activity"
   },
   "requestedAgo": "Requested {age} ago",

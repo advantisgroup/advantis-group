@@ -534,8 +534,9 @@ export const INTRANET_PAGES: IntranetPage[] = [
   },
   {
     href: "/admin/design-feedback",
-    label: "Design-Feedback",
-    description: "Rückmeldungen zum Design des Intranets.",
+    label: "Seiten-Feedback",
+    description: "Rückmeldungen zu einzelnen Seiten, mit der Seite, auf der sie geschickt wurden.",
+    keywords: ["feedback", "rückmeldung", "design"],
     visible: manager,
   },
   {
