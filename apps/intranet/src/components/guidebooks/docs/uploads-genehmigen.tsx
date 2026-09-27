@@ -23,7 +23,7 @@ const DOC: DocContent = {
         },
         {
           kind: "text",
-          body: "Im Bereich **„Ausstehende Freigaben“** zeigt jede Anfrage Größe, Typ, Anfragezeitpunkt und Zielordner der Datei sowie das Ergebnis der Sicherheitsprüfung („Keine Auffälligkeiten“, falls sauber).",
+          body: "Im Bereich **„Ausstehende Freigaben“** zeigt jede Anfrage Größe, Typ, Anfragezeitpunkt und Zielordner der Datei sowie das Ergebnis der Sicherheitsprüfung („Unbedenklich“, falls sauber).",
         },
         {
           kind: "text",

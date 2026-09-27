@@ -48,7 +48,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Genehmigte Abwesenheiten erscheinen automatisch im Kalender — sie stammen entweder aus Clockodo oder aus direkten Anträgen im Intranet (siehe Guidebook „Zeiterfassung mit Clockodo“).",
+          body: "Genehmigte Abwesenheiten erscheinen automatisch im Kalender — sie kommen immer aus Clockodo, egal ob sie im Intranet oder in Clockodo beantragt wurden (siehe Guidebook „Zeiterfassung mit Clockodo“). Bei Kolleg:innen seht ihr nur Urlaub; Krankheit und andere Gründe sieht nur die Person selbst.",
         },
         {
           kind: "text",

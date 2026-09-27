@@ -55,7 +55,7 @@ const DOC: DocContent = {
         {
           kind: "steps",
           items: [
-            "Im Intranet zu **„Einstellungen“ → „Konto“** gehen, zum Bereich **„Passkeys“** scrollen.",
+            "Im Intranet zu **„Einstellungen“ → „Mein Konto“** gehen, zum Bereich **„Passkeys“** scrollen.",
             "Auf **„Passkey hinzufügen“** klicken, einen Namen vergeben (z. B. „Arbeits-PC“).",
             "Der Browser fragt automatisch nach Windows Hello — mit PIN, Fingerabdruck oder Gesicht bestätigen.",
           ],
@@ -73,7 +73,7 @@ const DOC: DocContent = {
         { kind: "subheading", text: "Weg A — Direkt am iPhone einen eigenen Passkey anlegen" },
         {
           kind: "text",
-          body: "Im Intranet auf dem iPhone (Safari) einloggen, zu **„Einstellungen“ → „Konto“** → **„Passkeys“** gehen und dort ebenfalls **„Passkey hinzufügen“** wählen. Face ID/Touch ID bestätigt die Erstellung. Damit hat man zwei unabhängige Passkeys — einen für den PC, einen fürs iPhone.",
+          body: "Im Intranet auf dem iPhone (Safari) einloggen, zu **„Einstellungen“ → „Mein Konto“** → **„Passkeys“** gehen und dort ebenfalls **„Passkey hinzufügen“** wählen. Face ID/Touch ID bestätigt die Erstellung. Damit hat man zwei unabhängige Passkeys — einen für den PC, einen fürs iPhone.",
         },
         {
           kind: "subheading",
@@ -110,7 +110,7 @@ const DOC: DocContent = {
           kind: "steps",
           items: [
             "Authenticator-App auf dem iPhone installieren.",
-            "Im Intranet unter **„Einstellungen“ → „Konto“** → **„Authenticator-App“** auf **„Einrichten“** klicken.",
+            "Im Intranet unter **„Einstellungen“ → „Mein Konto“** → **„Authentifizierungs-App“** auf **„Authentifizierungs-App einrichten“** klicken.",
             "Den angezeigten QR-Code mit der App scannen.",
             "Den 6-stelligen Code aus der App eingeben, um die Einrichtung zu bestätigen.",
             "Die angezeigten **Wiederherstellungscodes** sicher aufbewahren (z. B. Passwort-Manager) — falls das Handy mal verloren geht, kommt man damit trotzdem wieder rein.",

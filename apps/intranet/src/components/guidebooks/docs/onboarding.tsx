@@ -78,12 +78,12 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Urlaub, Krankheit & Co. beantragt ihr direkt in **Clockodo** (siehe Guidebook „Zeiterfassung mit Clockodo“) — Clockodo ist das führende System für Abwesenheiten.",
+          body: "Urlaub, Krankheit & Co. werden in **Clockodo** gespeichert — Clockodo ist das führende System für Abwesenheiten (siehe Guidebook „Zeiterfassung mit Clockodo“).",
         },
         {
           kind: "callout",
           tone: "tip",
-          body: "Genehmigte und offene Anträge aus Clockodo erscheinen automatisch (schreibgeschützt) auf der Seite **„Abwesenheiten“** im Intranet, wo ihr auch euren Resturlaub und den Status aller Anträge seht. Alternativ könnt ihr dort auch direkt einen Antrag stellen.",
+          body: "Am einfachsten beantragt ihr direkt im Intranet: Seitenleiste **„Clockodo“** → **„Meine Anträge“** → **„Neue Abwesenheit“**. Dort seht ihr auch eure genommenen Urlaubstage und den Status aller Anträge.",
         },
       ],
     },
