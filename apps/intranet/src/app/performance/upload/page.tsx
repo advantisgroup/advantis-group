@@ -215,11 +215,13 @@ function LogRow({
           )}
         </span>
       </TableCell>
-      <TableCell>{row.fileSize ? formatFileSize(row.fileSize) : "–"}</TableCell>
+      <TableCell className="hidden md:table-cell">
+        {row.fileSize ? formatFileSize(row.fileSize) : "–"}
+      </TableCell>
       <TableCell title={relativeTime(row.uploadedAt)}>
         {formatDateTime(row.uploadedAt, locale)}
       </TableCell>
-      <TableCell className="max-w-[10rem] truncate" title={row.uploadedBy}>
+      <TableCell className="hidden max-w-[10rem] truncate md:table-cell" title={row.uploadedBy}>
         {row.uploadedBy ?? <span className="text-muted-foreground">–</span>}
       </TableCell>
       <TableCell>
@@ -292,9 +294,12 @@ function BatchRows({
           </span>
         </TableCell>
         <TableCell>{totalRows}</TableCell>
-        <TableCell />
+        <TableCell className="hidden md:table-cell" />
         <TableCell title={relativeTime(latest)}>{formatDateTime(latest, locale)}</TableCell>
-        <TableCell className="max-w-[10rem] truncate" title={rows[0].uploadedBy}>
+        <TableCell
+          className="hidden max-w-[10rem] truncate md:table-cell"
+          title={rows[0].uploadedBy}
+        >
           {rows[0].uploadedBy ?? <span className="text-muted-foreground">–</span>}
         </TableCell>
         <TableCell>
@@ -710,9 +715,9 @@ export default function PerformanceUploadPage() {
                   <TableHead>{t("uploadLogType")}</TableHead>
                   <TableHead>{t("uploadLogDate")}</TableHead>
                   <TableHead>{t("uploadLogRows")}</TableHead>
-                  <TableHead>{t("uploadLogSize")}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t("uploadLogSize")}</TableHead>
                   <TableHead>{t("uploadLogWhen")}</TableHead>
-                  <TableHead>{t("uploadLogBy")}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t("uploadLogBy")}</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
