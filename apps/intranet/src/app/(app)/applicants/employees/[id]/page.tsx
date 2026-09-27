@@ -5,28 +5,19 @@ import { useParams, useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Archive, Building2, Link2, Mail, Phone, UserRound } from "lucide-react";
+import { Archive, Building2, Mail, Phone, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { OnboardingChecklist } from "@/components/applicants/OnboardingChecklist";
-import { Badge } from "@/components/ui/badge";
+import { PersonChip, PersonPicker } from "@/components/people/PersonPicker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-
-const NONE = "__none__";
 
 export default function EmployeeOverviewPage() {
   const t = useTranslations("Applicants");
@@ -37,12 +28,29 @@ export default function EmployeeOverviewPage() {
   const params = useParams<{ id: string }>();
   const employeeProfileId = params.id as Id<"employeeProfiles">;
   const profile = useQuery(api.hr.employees.getProfile, { employeeProfileId });
-  const users = useQuery(api.people.users.list, {}) ?? [];
+  const linkedAccounts = useQuery(api.hr.employees.linkedAccounts, {});
   const update = useMutation(api.hr.employees.updateProfile);
   const archive = useMutation(api.hr.employees.archiveProfile);
 
   if (!profile) return null;
   const profileName = profile.name;
+  const account = profile.linkedProfile;
+  const recordOf = new Set(linkedAccounts?.map((linked) => linked.userId));
+
+  // What the intranet profile knows that this record says differently — only
+  // fields the account actually has, so copying never blanks anything.
+  const accountDetails: Partial<Record<"name" | "email" | "jobTitle" | "department", string>> = {};
+  if (account) {
+    if (account.name !== profile.name) accountDetails.name = account.name;
+    if (account.email !== profile.email) accountDetails.email = account.email;
+    if (account.jobTitle && account.jobTitle !== profile.jobTitle) {
+      accountDetails.jobTitle = account.jobTitle;
+    }
+    if (account.department && account.department !== profile.department) {
+      accountDetails.department = account.department;
+    }
+  }
+  const hasAccountDetails = Object.keys(accountDetails).length > 0;
 
   async function save(fields: Parameters<typeof update>[0]) {
     try {
@@ -83,6 +91,7 @@ export default function EmployeeOverviewPage() {
               <Label htmlFor="employee-name">{t("name")}</Label>
               <Input
                 id="employee-name"
+                key={profile.name}
                 defaultValue={profile.name}
                 onBlur={(event) =>
                   event.target.value !== profile.name &&
@@ -94,6 +103,7 @@ export default function EmployeeOverviewPage() {
               <Label htmlFor="employee-email">{t("email")}</Label>
               <Input
                 id="employee-email"
+                key={profile.email}
                 type="email"
                 defaultValue={profile.email ?? ""}
                 onBlur={(event) =>
@@ -125,6 +135,7 @@ export default function EmployeeOverviewPage() {
               <Label htmlFor="employee-job-title">{t("jobTitle")}</Label>
               <Input
                 id="employee-job-title"
+                key={profile.jobTitle}
                 defaultValue={profile.jobTitle ?? ""}
                 onBlur={(event) =>
                   event.target.value !== (profile.jobTitle ?? "") &&
@@ -136,6 +147,7 @@ export default function EmployeeOverviewPage() {
               <Label htmlFor="employee-department">{t("department")}</Label>
               <Input
                 id="employee-department"
+                key={profile.department}
                 defaultValue={profile.department ?? ""}
                 onBlur={(event) =>
                   event.target.value !== (profile.department ?? "") &&
@@ -171,43 +183,41 @@ export default function EmployeeOverviewPage() {
           <CardHeader>
             <CardTitle className="text-base">{t("employeeAccount")}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-3 text-sm">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
-                <UserRound className="size-4 text-muted-foreground" />
-              </span>
-              <div className="min-w-0">
-                <p className="font-medium">
-                  {profile.linkedProfile?.name ?? t("employeeNoAccount")}
-                </p>
-                <p className="text-xs text-muted-foreground">{t("employeeAccountHint")}</p>
-              </div>
-            </div>
-            <Select
-              value={profile.userId ?? NONE}
-              onValueChange={(value) =>
-                void save({
-                  employeeProfileId,
-                  userId: value === NONE ? null : (value as Id<"users">),
-                })
+          <CardContent className="space-y-3">
+            {account ? (
+              <PersonChip person={account} />
+            ) : (
+              <p className="text-sm text-muted-foreground">{t("employeeAccountHint")}</p>
+            )}
+            <PersonPicker
+              value={profile.userId ?? null}
+              onChange={(userId) => void save({ employeeProfileId, userId })}
+              label={t("employeeAccount")}
+              noneLabel={t("employeeNoAccount")}
+              hint={(person) =>
+                recordOf.has(person.userId) && person.userId !== profile.userId
+                  ? t("employeeHasRecord")
+                  : null
               }
-            >
-              <SelectTrigger aria-label={t("employeeAccount")}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE}>{t("employeeNoAccount")}</SelectItem>
-                {users.map((user) => (
-                  <SelectItem key={user._id} value={user._id}>
-                    {user.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Badge variant={profile.userId ? "success" : "outline"}>
-              <Link2 className="size-3" />
-              {profile.userId ? t("employeeLinked") : t("employeeNotLinked")}
-            </Badge>
+              isDisabled={(person) =>
+                recordOf.has(person.userId) && person.userId !== profile.userId
+              }
+            />
+            {hasAccountDetails && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() =>
+                  void update({ employeeProfileId, ...accountDetails })
+                    .then(() => toast.success(t("employeeAccountDetailsCopied")))
+                    .catch(handleError)
+                }
+              >
+                <RefreshCw className="size-3.5" />
+                {t("employeeUseAccountDetails")}
+              </Button>
+            )}
           </CardContent>
         </Card>
 
