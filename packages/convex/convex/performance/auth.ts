@@ -5,6 +5,7 @@ import { type Doc, type Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { hashPassword, randomToken, verifyPassword } from "../activity/lib/crypto";
 import { getCurrentUser } from "../lib/auth";
+import { toProfileOption } from "../lib/profile";
 import {
   alreadyLinked,
   emailTaken,
@@ -683,16 +684,15 @@ export const listIntranetUsersForLink = query({
     const linkedToLoginName = new Map(
       logins.filter((l) => l.linkedUserId).map((l) => [l.linkedUserId!, l.name] as const),
     );
-    return users
-      .filter((u) => u.status === "active")
-      .map((u) => ({
-        id: u._id,
-        name: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
-        email: u.email,
-        avatarUrl: u.avatarUrl ?? null,
-        linkedToLoginName: linkedToLoginName.get(u._id) ?? null,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const options = await Promise.all(
+      users
+        .filter((u) => u.status === "active")
+        .map(async (u) => ({
+          ...(await toProfileOption(ctx, u)),
+          linkedToLoginName: linkedToLoginName.get(u._id) ?? null,
+        })),
+    );
+    return options.sort((a, b) => a.name.localeCompare(b.name));
   },
 });
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { PersonPicker } from "@/components/people/PersonPicker";
 import { useHasCapability, useIsAdmin } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -183,7 +184,6 @@ function OrganisationEditor({
   const setManager = useMutation(api.people.users.setManager);
   const setDepartment = useMutation(api.org.structure.setUserDepartment);
   const departments = useQuery(api.org.structure.listDepartments, {});
-  const users = useQuery(api.people.users.list, isAdmin ? {} : "skip");
 
   return (
     <div className="space-y-3 rounded-lg border border-border/70 p-3">
@@ -216,31 +216,17 @@ function OrganisationEditor({
       {isAdmin && (
         <div className="space-y-1.5">
           <p className="text-xs font-medium text-muted-foreground">{t("reportsToManual")}</p>
-          <Select
-            value={manualManagerId ?? NOBODY}
-            onValueChange={(value) =>
-              setManager({
-                userId,
-                managerId: value === NOBODY ? undefined : (value as Id<"users">),
-              })
+          <PersonPicker
+            value={manualManagerId}
+            onChange={(managerId) =>
+              setManager({ userId, managerId: managerId ?? undefined })
                 .then(() => toast.success(t("organisationSaved")))
                 .catch(handleError)
             }
-          >
-            <SelectTrigger className="h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NOBODY}>{t("reportsToNobody")}</SelectItem>
-              {(users ?? [])
-                .filter((u) => u._id !== userId)
-                .map((u) => (
-                  <SelectItem key={u._id} value={u._id}>
-                    {u.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
+            label={t("reportsToManual")}
+            noneLabel={t("reportsToNobody")}
+            exclude={[userId]}
+          />
         </div>
       )}
       <p className="text-xs text-muted-foreground">{t("organisationHint")}</p>

@@ -29,6 +29,7 @@ import { NewMeasureDialog } from "@/components/error-management/NewMeasureDialog
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
+import { PersonPicker } from "@/components/people/PersonPicker";
 import { PersonLink } from "@/components/profile/PersonLink";
 import { useIsManager } from "@/components/providers/current-user";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -659,7 +660,6 @@ function MeasurePanelBody({ measure }: { measure: Measure }) {
   const isManager = useIsManager();
   const handleError = useErrorHandler();
   const update = useMutation(api.fehlermanagement.measures.update);
-  const users = useQuery(api.people.users.list, isManager ? {} : "skip") ?? [];
   const currentIndex = MEASURE_PHASES.indexOf(measure.phase);
 
   function patch(fields: Parameters<typeof update>[0]["patch"]) {
@@ -709,29 +709,19 @@ function MeasurePanelBody({ measure }: { measure: Measure }) {
             {
               label: t("fieldOwner"),
               value: isManager ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                <PersonPicker
+                  value={measure.ownerUserId ?? null}
+                  onChange={(ownerUserId) => patch({ ownerUserId: ownerUserId ?? undefined })}
+                  label={t("fieldOwner")}
+                  noneLabel={t("ownerUnassigned")}
+                  trigger={
                     <PropertyButton>
                       <span className={cn(!measure.ownerName && "text-muted-foreground")}>
                         {measure.ownerName ?? t("ownerUnassigned")}
                       </span>
                     </PropertyButton>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="max-h-72 w-56 overflow-y-auto">
-                    {users.map((user) => (
-                      <DropdownMenuItem
-                        key={user._id}
-                        onClick={() => patch({ ownerUserId: user._id })}
-                      >
-                        {user.name}
-                      </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => patch({ ownerUserId: undefined })}>
-                      {t("ownerUnassigned")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  }
+                />
               ) : measure.ownerUserId && measure.ownerName ? (
                 <PersonLink userId={measure.ownerUserId}>{measure.ownerName}</PersonLink>
               ) : (

@@ -14,6 +14,7 @@ import { useDraft } from "@/components/compose/use-draft";
 import { GuidebookAttachments } from "@/components/guidebooks/GuidebookAttachments";
 import { PendingWikiAttachments } from "@/components/guidebooks/PendingWikiAttachments";
 import { staticGuidebookSlugs } from "@/components/guidebooks/registry";
+import { PersonPicker, type PersonOption } from "@/components/people/PersonPicker";
 import { TagInput, type WikiEntry } from "@/components/guidebooks/WikiEntryDialogs";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,8 @@ import { isImage } from "@/lib/upload";
 import { addMonths, msToDateInput } from "@/lib/wiki";
 import { attachPendingFiles } from "@/lib/wiki-attachments";
 
+const NOBODY: PersonOption[] = [];
+
 /**
  * The "Details" fields shared by every wiki entry — everything except the
  * headline thema/erklaerung pair and the attachments picker, which the
@@ -45,7 +48,6 @@ function WikiEntryDetailFields({
   categories,
   ownerUserId,
   setOwnerUserId,
-  users,
   tags,
   setTags,
   link,
@@ -60,7 +62,6 @@ function WikiEntryDetailFields({
   categories: { _id: Id<"wikiCategories">; name: string; color: string }[];
   ownerUserId: string;
   setOwnerUserId: (v: string) => void;
-  users: { _id: Id<"users">; name: string }[];
   tags: string[];
   setTags: (v: string[]) => void;
   link: string;
@@ -97,18 +98,12 @@ function WikiEntryDetailFields({
         <label className="mb-1 block text-xs font-medium text-muted-foreground">
           {t("fieldOwner")}
         </label>
-        <Select value={ownerUserId} onValueChange={setOwnerUserId}>
-          <SelectTrigger>
-            <SelectValue placeholder={t("fieldOwnerPlaceholder")} />
-          </SelectTrigger>
-          <SelectContent>
-            {users.map((user) => (
-              <SelectItem key={user._id} value={user._id}>
-                {user.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <PersonPicker
+          value={(ownerUserId || null) as Id<"users"> | null}
+          onChange={(userId) => setOwnerUserId(userId ?? "")}
+          label={t("fieldOwner")}
+          placeholder={t("fieldOwnerPlaceholder")}
+        />
       </div>
       <div>
         <label className="mb-1 block text-xs font-medium text-muted-foreground">
@@ -215,7 +210,7 @@ export function useWikiEntryForm({
   const t = useTranslations("Guidebooks");
   const handleError = useErrorHandler();
   const categories = useQuery(api.wiki.categories.list) ?? [];
-  const users = useQuery(api.people.users.list, {}) ?? [];
+  const users = useQuery(api.people.users.options, {}) ?? NOBODY;
   const currentUser = useCurrentUser();
   const entries = useQuery(api.wiki.entries.list) ?? [];
   const create = useMutation(api.wiki.entries.create);
@@ -378,7 +373,6 @@ export function useWikiEntryForm({
       categories={categories}
       ownerUserId={values.ownerUserId}
       setOwnerUserId={setters.setOwnerUserId}
-      users={users}
       tags={values.tags}
       setTags={setters.setTags}
       link={values.link}

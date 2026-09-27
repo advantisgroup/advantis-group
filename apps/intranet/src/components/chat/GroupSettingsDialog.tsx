@@ -19,11 +19,11 @@ import {
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { PersonList } from "@/components/people/PersonPicker";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GroupAvatar } from "@/components/ui/avatar-stack";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
@@ -376,31 +376,25 @@ function AddMembersPanel({
   onConfirm: () => void;
   labels: { add: string; cancel: string; empty: string };
 }) {
-  const people = useQuery(api.people.users.list, {});
-  const candidates = (people ?? []).filter((p) => !existingIds.has(p._id));
+  const people = useQuery(api.people.users.options, {});
+  const candidates = people?.filter((p) => !existingIds.has(p.userId));
 
   return (
     <div>
-      <ScrollArea className="h-56 rounded-lg border border-border">
-        {candidates.length === 0 ? (
-          <p className="p-6 text-center text-sm text-muted-foreground">{labels.empty}</p>
-        ) : (
-          candidates.map((p) => (
-            <button
-              key={p._id}
-              onClick={() => onToggle(p._id)}
-              className="flex w-full items-center gap-2.5 border-b border-border/60 px-3 py-2 text-left transition-colors last:border-b-0 hover:bg-accent"
-            >
-              <Checkbox checked={selected.has(p._id)} />
-              <Avatar className="size-8">
-                {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-                <AvatarFallback className="text-xs">{initials(p.name, p.email)}</AvatarFallback>
-              </Avatar>
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.name}</span>
-            </button>
-          ))
-        )}
-      </ScrollArea>
+      {candidates?.length === 0 ? (
+        <p className="rounded-lg border border-border p-6 text-center text-sm text-muted-foreground">
+          {labels.empty}
+        </p>
+      ) : (
+        <PersonList
+          people={candidates}
+          multiple
+          selected={selected}
+          onSelect={(p) => onToggle(p.userId)}
+          autoFocus
+          listClassName="h-56"
+        />
+      )}
       <div className="mt-2 flex justify-end gap-2">
         <Button variant="ghost" size="sm" onClick={onCancel}>
           <X className="mr-1.5 h-4 w-4" />

@@ -150,7 +150,7 @@ export function AnnouncementComposer(
   // Left as the raw (possibly-undefined) query result rather than falling
   // back to `?? []` here — a fresh `[]` on every render would defeat the
   // useMemo deps below that read them.
-  const peopleQuery = useQuery(api.people.users.list, {});
+  const peopleQuery = useQuery(api.people.users.options, {});
   const announcementsQuery = useQuery(api.announcements.list, {});
   const attachmentUpload = useAttachmentUpload();
 
@@ -168,7 +168,6 @@ export function AnnouncementComposer(
   );
   const [busy, setBusy] = useState(false);
   const [oneDrivePickerOpen, setOneDrivePickerOpen] = useState(false);
-  const [peopleSearch, setPeopleSearch] = useState("");
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [sendPromptOpen, setSendPromptOpen] = useState(false);
   const [view, setView] = useState<"write" | "preview">("write");
@@ -253,10 +252,10 @@ export function AnnouncementComposer(
   const mentionCandidates = useMemo(
     () =>
       (peopleQuery ?? []).map((p) => ({
-        id: p._id,
+        id: p.userId,
         name: p.name,
         email: p.email,
-        avatar: p.avatar,
+        avatar: p.avatarUrl,
       })),
     [peopleQuery],
   );
@@ -292,14 +291,10 @@ export function AnnouncementComposer(
     audienceHasTarget ? { audience: audienceValue } : "skip",
   );
 
-  const filteredPeople = useMemo(() => {
-    const q = peopleSearch.trim().toLowerCase();
-    const mine = (peopleQuery ?? []).filter((p) => p._id !== me._id);
-    if (!q) return mine;
-    return mine.filter(
-      (p) => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q),
-    );
-  }, [peopleQuery, peopleSearch, me._id]);
+  const otherPeople = useMemo(
+    () => peopleQuery?.filter((p) => p.userId !== me._id),
+    [peopleQuery, me._id],
+  );
 
   // Selected people shown as removable chips regardless of the current
   // search text, so a pick made earlier doesn't visually disappear the
@@ -307,7 +302,7 @@ export function AnnouncementComposer(
   const selectedPeople = useMemo(() => {
     const all = peopleQuery ?? [];
     return draft.audienceUserIds
-      .map((id) => all.find((p) => p._id === id))
+      .map((id) => all.find((p) => p.userId === id))
       .filter((p): p is NonNullable<typeof p> => !!p);
   }, [peopleQuery, draft.audienceUserIds]);
 
@@ -465,9 +460,7 @@ export function AnnouncementComposer(
       set={set}
       editing={!!editing}
       departments={departments}
-      peopleSearch={peopleSearch}
-      setPeopleSearch={setPeopleSearch}
-      filteredPeople={filteredPeople}
+      people={otherPeople}
       selectedPeople={selectedPeople}
       toggleAudienceUser={toggleAudienceUser}
       toggleAudienceDepartment={toggleAudienceDepartment}

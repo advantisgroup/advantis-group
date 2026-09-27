@@ -10,6 +10,7 @@ import {
   Archive,
   Building2,
   ChevronRight,
+  ChevronsUpDown,
   Crown,
   FolderInput,
   MoreHorizontal,
@@ -23,6 +24,7 @@ import { useTranslations } from "next-intl";
 
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
+import { PersonAvatar, PersonPicker, type PersonOption } from "@/components/people/PersonPicker";
 import { useIsAdmin } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
@@ -54,7 +56,7 @@ import { cn } from "@/lib/utils";
 type Overview = FunctionReturnType<typeof api.org.structure.overview>;
 type Department = Overview["departments"][number];
 type Team = Overview["teams"][number];
-type Person = { _id: string; name: string };
+type Person = PersonOption;
 
 const NONE = "__none";
 
@@ -67,7 +69,7 @@ export default function StructurePage() {
   const t = useTranslations("Admin");
   const isAdmin = useIsAdmin();
   const data = useQuery(api.org.structure.overview, isAdmin ? {} : "skip");
-  const people = useQuery(api.people.users.list, isAdmin ? {} : "skip");
+  const people = useQuery(api.people.users.options, isAdmin ? {} : "skip");
   const [creating, setCreating] = useState<{
     kind: "department" | "team";
     departmentId?: string;
@@ -103,7 +105,7 @@ export default function StructurePage() {
     ...(data?.departments ?? []).filter((d) => d.archivedAt !== undefined),
     ...(data?.teams ?? []).filter((team) => team.archivedAt !== undefined),
   ];
-  const leads = (people ?? []).filter((p) => p.status === "active");
+  const leads = people ?? [];
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-8">
@@ -491,26 +493,32 @@ function LeadSelect({
   onChange: (userId: string | null) => void;
 }) {
   const t = useTranslations("Admin");
+  const lead = people.find((person) => person.userId === value);
   return (
-    <Select value={value ?? NONE} onValueChange={(v) => onChange(v === NONE ? null : v)}>
-      <SelectTrigger
-        aria-label={t("orgEntity.reportsTo")}
-        className={cn(
-          "h-8 w-auto max-w-60 gap-1.5 border-transparent bg-transparent px-2.5 shadow-none hover:bg-accent refreshed:border-transparent refreshed:bg-transparent",
-          !value && "text-muted-foreground",
-        )}
-      >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent align="end">
-        <SelectItem value={NONE}>{t("orgEntity.reportsToNobody")}</SelectItem>
-        {people.map((person) => (
-          <SelectItem key={person._id} value={person._id}>
-            {t("orgEntity.reportsToPerson", { name: person.name })}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <PersonPicker
+      value={(value ?? null) as Id<"users"> | null}
+      onChange={(userId) => onChange(userId)}
+      people={people}
+      label={t("orgEntity.reportsTo")}
+      noneLabel={t("orgEntity.reportsToNobody")}
+      align="end"
+      trigger={
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-label={t("orgEntity.reportsTo")}
+          className={cn("max-w-60 gap-1.5 font-normal", !lead && "text-muted-foreground")}
+        >
+          {lead && <PersonAvatar person={lead} className="size-5" />}
+          <span className="truncate">
+            {lead
+              ? t("orgEntity.reportsToPerson", { name: lead.name })
+              : t("orgEntity.reportsToNobody")}
+          </span>
+          <ChevronsUpDown className="text-muted-foreground" />
+        </Button>
+      }
+    />
   );
 }
 

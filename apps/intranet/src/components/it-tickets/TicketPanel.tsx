@@ -24,6 +24,7 @@ import {
 } from "@/components/it-tickets/shared";
 import { TicketRelatedLinks } from "@/components/it-tickets/TicketDetailView";
 import { TicketStatusHistory } from "@/components/it-tickets/TicketStatusHistory";
+import { PersonPicker } from "@/components/people/PersonPicker";
 import { PersonLink } from "@/components/profile/PersonLink";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -288,8 +289,12 @@ function TicketPanelBody({
     {
       label: t("assignee"),
       value: canAssign ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <PersonPicker
+          value={ticket.assignedToUserId ?? null}
+          onChange={(userId) => changeAssignee(userId ?? undefined)}
+          label={t("assignee")}
+          noneLabel={t("unassigned")}
+          trigger={
             <PropertyButton>
               {assignee ? (
                 <PersonChip person={assignee} />
@@ -297,23 +302,8 @@ function TicketPanelBody({
                 <span className="text-muted-foreground">{t("unassigned")}</span>
               )}
             </PropertyButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="max-h-72 w-60 overflow-y-auto">
-            {assignees.map((person) => (
-              <DropdownMenuItem
-                key={person._id}
-                onClick={() => changeAssignee(person._id)}
-                className="gap-2"
-              >
-                <PersonChip person={person} />
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => changeAssignee(undefined)}>
-              {t("unassigned")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          }
+        />
       ) : assignee ? (
         <PersonLink userId={assignee._id}>{assignee.name}</PersonLink>
       ) : (
