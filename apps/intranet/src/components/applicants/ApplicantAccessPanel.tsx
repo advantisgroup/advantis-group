@@ -9,7 +9,7 @@ import { KeyRound, ShieldCheck, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { VaultStepUpDialog } from "@/components/applicants/VaultStepUpDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

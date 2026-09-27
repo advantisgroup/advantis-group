@@ -8,7 +8,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { Ban, CheckCircle2, Clock3, Monitor, MonitorSmartphone, Trash2 } from "lucide-react";
 
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { StatCard } from "@/components/activity/StatCard";
 import { PageHeader } from "@/components/PageHeader";
 import { useIsAdmin, useIsManager } from "@/components/providers/current-user";

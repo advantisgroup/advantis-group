@@ -10,7 +10,7 @@ import { CalendarPlus, Link2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { type TERMIN_ARTEN } from "@/components/applicants/applicant-types";
 import { TerminDialog } from "@/components/applicants/EntryDialogs";
 import { Button } from "@/components/ui/button";

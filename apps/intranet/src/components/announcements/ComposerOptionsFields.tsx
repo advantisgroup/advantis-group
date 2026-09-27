@@ -1,6 +1,6 @@
 "use client";
 
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { type useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { Mark } from "@/components/branding/ProviderMark";

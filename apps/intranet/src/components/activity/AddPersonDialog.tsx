@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { PersonPicker } from "@/components/people/PersonPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

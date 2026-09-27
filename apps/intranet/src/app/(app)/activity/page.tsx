@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 import { StateStrip, StateStripLegend } from "@/components/activity/charts/StateStrip";
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Stagger, StaggerItem } from "@/components/activity/motion/Stagger";
 import { QueryState } from "@/components/activity/QueryState";
 import { SetupChecklist } from "@/components/activity/SetupChecklist";

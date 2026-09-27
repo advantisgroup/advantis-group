@@ -421,7 +421,7 @@ picks up this guard, and still needs the var set even then.
   in compact UI (badges, dropdown items, table cells, permission/capability
   lists) — a wrapping paragraph reflows the layout around it and is worse on
   mobile. When more explanation is genuinely needed, put it behind a tooltip
-  (`@/components/ui/tooltip`'s `Tooltip`/`TooltipTrigger`/`TooltipContent`,
-  triggered by a small `Info` icon) rather than inlining it. Only write the
+  (`@/components/ui/info-tip`'s `InfoTip`, a small `Info` icon over
+  `@/components/ui/tooltip`) rather than inlining it. Only write the
   long form inline when the surface already has dedicated space for it (e.g.
   a settings page section, not a card in a grid).

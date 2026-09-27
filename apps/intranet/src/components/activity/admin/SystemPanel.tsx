@@ -6,7 +6,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { AlertTriangle, CheckCircle2, WifiOff } from "lucide-react";
 
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { SkeletonCard } from "@/components/activity/Skeleton";
 import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { BrandedText } from "@/components/branding/ProviderMark";
 import { PersonPicker } from "@/components/people/PersonPicker";
 import { Button } from "@/components/ui/button";
