@@ -1216,6 +1216,18 @@ input[type="week"] {
     outline-offset: 2px;
   }
 
+  /* Screenshots in wiki pages (see isBundledImageSrc) — also inside the
+     editor, so an author editing a page sees them where they will appear. */
+  .rich-text img,
+  [data-rte] img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0.75rem 0;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+  }
+
   .rich-text-table-wrap {
     margin: 0.75rem 0;
     overflow-x: auto;
