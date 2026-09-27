@@ -24,6 +24,7 @@ import {
   Megaphone,
   MessageSquare,
   Newspaper,
+  PhoneCall,
   RotateCcw,
   Rss,
   Settings,
@@ -335,6 +336,7 @@ export function Sidebar() {
       featureKey: "activitytrack",
       external: true,
     },
+    { section: "apps", href: "/sales-cockpit", labelKey: "salesCockpit", icon: PhoneCall },
     { section: "apps", href: "/sales-coach-ev", labelKey: "salesCoachEv", icon: Zap },
     // Products that happen to be registered as guidebooks — their own route
     // tree, their own admin area, sometimes their own auth. They were buried
