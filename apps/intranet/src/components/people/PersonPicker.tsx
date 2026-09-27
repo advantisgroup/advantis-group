@@ -17,24 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { initials } from "@/lib/format";
+import { initials, matchesSearch } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /** The shape every picker shows — `lib/profile.ts`'s `ProfileOption`. */
 export type PersonOption = FunctionReturnType<typeof api.people.users.options>[number];
 
 type PersonId = Id<"users">;
-
-/** Accent-blind, so "muller" finds "Müller". */
-function fold(value: string) {
-  return value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
-}
-
-function matches(person: PersonOption, query: string) {
-  return [person.name, person.email, person.jobTitle, person.department].some(
-    (field) => field && fold(field).includes(query),
-  );
-}
 
 export function PersonAvatar({
   person,
@@ -109,10 +98,13 @@ export function PersonList({
   const isSelected = (id: PersonId) =>
     selected instanceof Set ? selected.has(id) : selected === id;
 
-  const filtered = useMemo(() => {
-    const query = fold(search.trim());
-    return (people ?? []).filter((person) => !query || matches(person, query));
-  }, [people, search]);
+  const filtered = useMemo(
+    () =>
+      (people ?? []).filter((person) =>
+        matchesSearch(search, person.name, person.email, person.jobTitle, person.department),
+      ),
+    [people, search],
+  );
 
   const showNone = Boolean(noneLabel && onNone && !search.trim());
   const rowCount = filtered.length + (showNone ? 1 : 0);

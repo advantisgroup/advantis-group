@@ -41,6 +41,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { matchesSearch } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type DirectoryFilter = "all" | "linked" | "unlinked" | "documents" | "left" | "archived";
@@ -231,7 +232,6 @@ export default function EmployeesPage() {
   }, [profiles]);
 
   const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
     return ((filter === "archived" ? archived : profiles) ?? []).filter((profile) => {
       const matchesFilter =
         filter === "all" ||
@@ -240,11 +240,10 @@ export default function EmployeesPage() {
         (filter === "unlinked" && !profile.userId) ||
         (filter === "documents" && profile.documentsCount > 0) ||
         (filter === "left" && profile.accountStatus === "removed");
-      if (!matchesFilter) return false;
-      if (!query) return true;
-      return `${profile.name} ${profile.email ?? ""} ${profile.jobTitle ?? ""} ${profile.department ?? ""}`
-        .toLowerCase()
-        .includes(query);
+      return (
+        matchesFilter &&
+        matchesSearch(search, profile.name, profile.email, profile.jobTitle, profile.department)
+      );
     });
   }, [archived, filter, profiles, search]);
 
