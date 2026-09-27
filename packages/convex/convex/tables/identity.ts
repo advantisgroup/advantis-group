@@ -295,6 +295,27 @@ export const identityTables = {
    * status notes stay current; a phone number or email covers contacts that
    * aren't colleagues (the company doctor, emergency numbers).
    */
+  /**
+   * Days the office is shut beyond the public holidays: a company holiday,
+   * the week between Christmas and New Year. Inclusive ISO dates.
+   */
+  officeClosures: defineTable({
+    title: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+    note: v.optional(v.string()),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_endDate", ["endDate"]),
+
+  /** Singleton: which German state's public holidays apply on top of the
+   *  nationwide ones. Unset = nationwide only. */
+  officeCalendarSettings: defineTable({
+    region: v.optional(v.string()),
+    updatedBy: v.id("users"),
+    updatedAt: v.number(),
+  }),
+
   contactTopics: defineTable({
     section: v.union(v.literal("help"), v.literal("safety")),
     topic: v.string(),

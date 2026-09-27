@@ -5,6 +5,7 @@ import { CalendarBar, Segmented } from "@/components/clockodo/parts";
 import { useHasCapability } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useDaysOff } from "@/hooks/use-days-off";
 import { addDaysIso, isoToday, rangesOverlap, workingDays } from "@/lib/absences";
 import { type CalendarAbsence } from "@/lib/absences-api";
 import { formatIsoDate } from "@/lib/format";
@@ -51,8 +52,13 @@ export function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined 
     [calendar, days],
   );
   const busiest = Math.max(1, ...outByDay.values());
+  const daysOff = useDaysOff(start, end);
 
   const year = String(new Date().getFullYear());
+  // The summary counts this year's absence days, so it needs this year's
+  // holidays and closures, not just the four weeks on screen.
+  const yearDaysOff = useDaysOff(`${year}-01-01`, `${year}-12-31`);
+  const yearOffSet = useMemo(() => new Set(yearDaysOff?.byDay.keys() ?? []), [yearDaysOff]);
   const summaryRows = useMemo(() => {
     const summary = new Map<string, { department: string | null; days: number; periods: number }>();
     for (const absence of calendar ?? []) {
@@ -62,12 +68,12 @@ export function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined 
         days: 0,
         periods: 0,
       };
-      existing.days += workingDays(absence.startDate, absence.endDate, absence.halfDay);
+      existing.days += workingDays(absence.startDate, absence.endDate, absence.halfDay, yearOffSet);
       existing.periods += 1;
       summary.set(absence.userName, existing);
     }
     return [...summary.entries()].sort(([, a], [, b]) => b.days - a.days);
-  }, [calendar, year]);
+  }, [calendar, year, yearOffSet]);
 
   return (
     <Card className="overflow-hidden">
@@ -123,14 +129,24 @@ export function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined 
               <div className="px-4 py-3 text-xs text-muted-foreground font-medium normal-case tracking-normal">
                 {t("employee")}
               </div>
-              {days.map((day) => (
-                <div
-                  key={day}
-                  className="border-l border-border/70 py-3 text-center text-[11px] text-muted-foreground"
-                >
-                  {new Date(`${day}T00:00:00`).getDate()}
-                </div>
-              ))}
+              {days.map((day) => {
+                const off = daysOff?.byDay.get(day) ?? [];
+                return (
+                  <div
+                    key={day}
+                    title={off.map((d) => d.label).join(" · ") || undefined}
+                    className={cn(
+                      "border-l border-border/70 py-3 text-center text-[11px] text-muted-foreground",
+                      off.length > 0 && "bg-muted/60 font-semibold text-foreground/70",
+                    )}
+                  >
+                    {new Date(`${day}T00:00:00`).getDate()}
+                    {off.length > 0 && (
+                      <span className="sr-only">: {off.map((d) => d.label).join(", ")}</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <div className="grid grid-cols-[13rem_repeat(28,minmax(0,1fr))] border-b border-border/70 bg-muted/20">
               <div className="px-4 py-2 text-xs font-medium text-muted-foreground">

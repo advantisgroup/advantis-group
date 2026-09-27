@@ -24,6 +24,7 @@ import {
   CalendarArrowDown,
   CalendarClock,
   CalendarDays,
+  CalendarOff,
   CalendarRange,
   ChevronLeft,
   ChevronRight,
@@ -44,9 +45,15 @@ import {
   emptyDraft,
   isoDay,
 } from "@/components/calendar/EventDialog";
+import { DaysOffDialog } from "@/components/calendar/DaysOffDialog";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { PersonLink } from "@/components/profile/PersonLink";
-import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
+import {
+  isOwnerOrAdmin,
+  useCurrentUser,
+  useIsAdmin,
+  useIsManager,
+} from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
 import { FilterPill, TogglePill } from "@/components/ui/filter-pill";
@@ -61,6 +68,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SidePanel, SidePanelProperties, SidePanelSection } from "@/components/ui/side-panel";
+import { type DayOff, useDaysOff } from "@/hooks/use-days-off";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useAbsencesCalendar } from "@/lib/absences-api";
@@ -142,6 +150,8 @@ export default function CalendarPage() {
   const tAbs = useTranslations("Absences");
   const locale = useLocale();
   const isManager = useIsManager();
+  const isAdmin = useIsAdmin();
+  const [daysOffOpen, setDaysOffOpen] = useState(false);
   const me = useCurrentUser();
   const confirm = useConfirm();
   const removeEvent = useMutation(api.events.remove);
@@ -222,6 +232,7 @@ export default function CalendarPage() {
     end: rangeEnd.getTime(),
   });
   const absences = useAbsencesCalendar(isoDay(rangeStart), isoDay(rangeEnd));
+  const daysOff = useDaysOff(isoDay(rangeStart), isoDay(rangeEnd));
 
   const goPrev = useCallback(() => {
     setCursor((c) => (view === "week" ? subWeeks(c, 1) : subMonths(c, 1)));
@@ -411,6 +422,9 @@ export default function CalendarPage() {
       filteredEvents?.filter((e) => eventDay(e, e.start) <= iso && iso <= eventDay(e, e.end)) ?? []
     );
   }
+  function daysOffOn(day: Date): DayOff[] {
+    return daysOff?.byDay.get(isoDay(day)) ?? [];
+  }
   function absencesOn(day: Date): CalAbsence[] {
     const iso = isoDay(day);
     return filteredAbsences?.filter((a) => a.startDate <= iso && iso <= a.endDate) ?? [];
@@ -450,8 +464,9 @@ export default function CalendarPage() {
       day,
       dayEvents: eventsOn(day),
       dayAbsences: absencesOn(day),
+      dayOff: daysOffOn(day),
     }))
-    .filter((d) => d.dayEvents.length > 0 || d.dayAbsences.length > 0);
+    .filter((d) => d.dayEvents.length > 0 || d.dayAbsences.length > 0 || d.dayOff.length > 0);
 
   function toggleKind(kind: FilterKind) {
     setHiddenKinds((prev) => {
@@ -548,6 +563,7 @@ export default function CalendarPage() {
   return (
     <div className="mx-auto max-w-5xl" data-tour="tour-calendar-view">
       <PageHeaderBar title={t("title")} tourCheckpoint="calendar" />
+      {isAdmin && <DaysOffDialog open={daysOffOpen} onOpenChange={setDaysOffOpen} />}
       <PageHeaderActions
         actions={[
           {
@@ -557,6 +573,17 @@ export default function CalendarPage() {
             onClick: exportIcs,
             variant: "outline",
           },
+          ...(isAdmin
+            ? [
+                {
+                  key: "days-off",
+                  label: t("daysOffManage"),
+                  icon: CalendarOff,
+                  onClick: () => setDaysOffOpen(true),
+                  variant: "outline" as const,
+                },
+              ]
+            : []),
           ...(isManager
             ? [
                 {
@@ -819,6 +846,7 @@ export default function CalendarPage() {
           {gridDays.map((day, i) => {
             const dayEvents = eventsOn(day);
             const dayAbsences = absencesOn(day);
+            const dayOff = daysOffOn(day);
             const inMonth = isSameMonth(day, cursor);
             const isToday = isSameDay(day, new Date());
             const shownEvents = dayEvents.slice(0, 3);
@@ -838,7 +866,9 @@ export default function CalendarPage() {
                   className={cn(
                     "min-h-20 space-y-1 border-b border-r border-border/60 p-1 text-left align-top transition-colors last:border-r-0 hover:bg-accent/50 md:min-h-24 md:p-1.5",
                     !inMonth && "bg-muted/20 text-muted-foreground",
+                    dayOff.length > 0 && "bg-muted/40",
                   )}
+                  title={dayOff.map((d) => d.label).join(" · ") || undefined}
                 >
                   <div
                     className={cn(
@@ -848,6 +878,7 @@ export default function CalendarPage() {
                   >
                     {day.getDate()}
                   </div>
+                  <DayOffLabels days={dayOff} className="hidden md:block" />
                   <div className="flex flex-wrap gap-1 md:hidden">
                     {dayEvents.slice(0, 2).map((event) => (
                       <span key={event._id} className="size-1.5 rounded-full bg-primary" />
@@ -892,6 +923,7 @@ export default function CalendarPage() {
           {gridDays.map((day) => {
             const dayEvents = eventsOn(day);
             const dayAbsences = absencesOn(day);
+            const dayOff = daysOffOn(day);
             const isToday = isSameDay(day, new Date());
             return (
               <div
@@ -919,7 +951,8 @@ export default function CalendarPage() {
                   </span>
                 </button>
                 <div className="flex-1 space-y-1 p-1.5">
-                  {dayEvents.length === 0 && dayAbsences.length === 0 ? (
+                  <DayOffLabels days={dayOff} />
+                  {dayEvents.length === 0 && dayAbsences.length === 0 && dayOff.length === 0 ? (
                     <p className="px-1 py-2 text-[11px] text-muted-foreground/70">
                       {t("noEntries")}
                     </p>
@@ -949,7 +982,7 @@ export default function CalendarPage() {
               <p className="text-sm text-muted-foreground">{t("noUpcoming")}</p>
             </div>
           ) : (
-            agendaDays.map(({ day, dayEvents, dayAbsences }) => (
+            agendaDays.map(({ day, dayEvents, dayAbsences, dayOff }) => (
               <div
                 key={day.toISOString()}
                 className="flex gap-4 border-b border-border/60 px-4 py-3 last:border-b-0"
@@ -969,6 +1002,20 @@ export default function CalendarPage() {
                   </p>
                 </div>
                 <div className="min-w-0 flex-1 space-y-1.5">
+                  {dayOff.map((d) => (
+                    <div
+                      key={d.key}
+                      className="flex items-center gap-2.5 rounded-lg border border-dashed border-border/70 px-2.5 py-2"
+                    >
+                      <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                        <CalendarOff className="size-3.5" />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{d.label}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {d.kind === "holiday" ? t("publicHoliday") : t("officeClosed")}
+                      </span>
+                    </div>
+                  ))}
                   {dayEvents.map((e) => (
                     <button
                       key={e._id}
@@ -1237,6 +1284,25 @@ export default function CalendarPage() {
       </SidePanel>
 
       <EventDialog draft={eventDraft} onOpenChange={(open) => !open && setEventDraft(null)} />
+    </div>
+  );
+}
+
+/** A holiday or office closure written under the day's date, so a day off
+ *  reads as one at a glance instead of looking like a quiet workday. */
+function DayOffLabels({ days, className }: { days: DayOff[]; className?: string }) {
+  if (days.length === 0) return null;
+  return (
+    <div className={cn("space-y-0.5", className)}>
+      {days.map((d) => (
+        <p
+          key={d.key}
+          className="flex items-center gap-1 truncate text-[11px] font-medium text-muted-foreground"
+        >
+          <CalendarOff className="size-3 shrink-0" />
+          <span className="truncate">{d.label}</span>
+        </p>
+      ))}
     </div>
   );
 }

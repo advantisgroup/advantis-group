@@ -3,14 +3,21 @@
  * inclusive. Weekends don't count; a half-day knocks 0.5 off (bounded below at
  * 0.5 so a single half-day still shows up).
  */
-export function workingDays(startDate: string, endDate: string, halfDay?: boolean): number {
+/** Monday–Friday days in the range, minus any `daysOff` (ISO dates of
+ *  public holidays and office closures) when given. */
+export function workingDays(
+  startDate: string,
+  endDate: string,
+  halfDay?: boolean,
+  daysOff?: ReadonlySet<string>,
+): number {
   const start = new Date(`${startDate}T00:00:00Z`);
   const end = new Date(`${endDate}T00:00:00Z`);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return 0;
   let days = 0;
   for (const d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
     const dow = d.getUTCDay();
-    if (dow !== 0 && dow !== 6) days++;
+    if (dow !== 0 && dow !== 6 && !daysOff?.has(d.toISOString().slice(0, 10))) days++;
   }
   if (halfDay && days > 0) days -= 0.5;
   return days;
