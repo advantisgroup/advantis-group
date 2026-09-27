@@ -13,6 +13,7 @@ import {
   SlidersHorizontal,
   Wrench,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Reveal } from "@/components/activity/motion/Reveal";
 import { BrandedText } from "@/components/branding/ProviderMark";
@@ -24,7 +25,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/lib/activity/i18n";
 import { useActionWithToast } from "@/lib/activity/useActionWithToast";
 import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
-import { useToast } from "@/lib/activity/useToast";
 
 /** A single labelled numeric config field with a unit suffix. */
 function NumberField({
@@ -66,7 +66,6 @@ export function ConfigPanel({
   onOpenDiscarded?: () => void;
 }) {
   const { t } = useI18n();
-  const toast = useToast();
 
   // ── Operational config ────────────────────────────────────────────────
   const config = useQuery(api.activity.settings.getConfig);
@@ -91,7 +90,7 @@ export function ConfigPanel({
   async function saveConfig(e: FormEvent) {
     e.preventDefault();
     if (inactivity === "" || offline === "" || retention === "") {
-      toast(t("settings.config.invalid"), "warn");
+      toast.warning(t("settings.config.invalid"));
       return;
     }
     setSavingCfg(true);
@@ -167,10 +166,10 @@ export function ConfigPanel({
       }
       const msg = t("settings.trouble.quarantineDone", { count: moved });
       setTroubleResult((r) => ({ ...r, quarantine: msg }));
-      toast(msg, "ok");
+      toast.success(msg);
     } catch (err) {
       console.error("[troubleshoot quarantine failed]", err);
-      toast(t("settings.trouble.failed"), "danger");
+      toast.error(t("settings.trouble.failed"));
     }
     setTroubleBusy(null);
   }
@@ -186,10 +185,10 @@ export function ConfigPanel({
       }
       const msg = t("settings.trouble.pruneDone", { count: deleted });
       setTroubleResult((r) => ({ ...r, prune: msg }));
-      toast(msg, "ok");
+      toast.success(msg);
     } catch (err) {
       console.error("[troubleshoot prune failed]", err);
-      toast(t("settings.trouble.failed"), "danger");
+      toast.error(t("settings.trouble.failed"));
     }
     setTroubleBusy(null);
   }
@@ -205,7 +204,7 @@ export function ConfigPanel({
         quarantined: res.quarantined,
       });
       setTroubleResult((r) => ({ ...r, sanitize: msg }));
-      toast(msg, "ok");
+      toast.success(msg);
     }
     setTroubleBusy(null);
   }
@@ -214,7 +213,7 @@ export function ConfigPanel({
     e.preventDefault();
     setSaved(false);
     if (pw.length < 6) {
-      toast(t("settings.debugPw.tooShort"), "warn");
+      toast.warning(t("settings.debugPw.tooShort"));
       return;
     }
     setBusy(true);

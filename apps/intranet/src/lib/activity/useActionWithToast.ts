@@ -3,26 +3,25 @@
 import { useCallback } from "react";
 
 import { useAction } from "convex/react";
+import { toast } from "sonner";
 
-import { errorMessage } from "./errors";
+import { useErrorHandler } from "@/hooks/use-error-handler";
+
+import { activityErrorText } from "./errors";
 import { useI18n } from "./i18n";
-import { useToast } from "./useToast";
 
-import type { FunctionReference, FunctionArgs, FunctionReturnType } from "convex/server";
+import type { FunctionArgs, FunctionReference, FunctionReturnType } from "convex/server";
 
 /**
- * The action counterpart of `useMutationWithToast`: a Convex action wrapped so
- * that success optionally raises a green toast and failure ALWAYS raises a red
- * toast with a readable, localized message (and logs the raw error) — never
- * silently swallowed.
- *
- * On failure it resolves to `undefined` (rather than rethrowing) so callers can
- * branch on the result without a try/catch and we never emit an unhandled
- * rejection.
+ * A Convex action for ActivityTrack: success optionally raises a toast
+ * (`{ success }`), failure always shows localised copy through the shared
+ * `useErrorHandler` — ActivityTrack's own wording for the codes it knows,
+ * the shared `Errors` copy otherwise — and resolves to `undefined` instead of
+ * throwing, so callers can branch on the result without a try/catch.
  */
-export function useActionWithToast<Action extends FunctionReference<"action">>(actionRef: Action) {
-  const run = useAction(actionRef);
-  const toast = useToast();
+export function useActionWithToast<Action extends FunctionReference<"action">>(ref: Action) {
+  const run = useAction(ref);
+  const handleError = useErrorHandler();
   const { t } = useI18n();
 
   return useCallback(
@@ -32,16 +31,13 @@ export function useActionWithToast<Action extends FunctionReference<"action">>(a
     ): Promise<FunctionReturnType<Action> | undefined> => {
       try {
         const result = (await run(args)) as FunctionReturnType<Action>;
-        if (opts?.success) toast(opts.success, "ok");
-        // Generic Convex return type is opaque to the linter (resolves to `any`).
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        if (opts?.success) toast.success(opts.success);
         return result;
       } catch (err) {
-        toast(errorMessage(t, err), "danger");
-        console.error("[action failed]", err);
+        handleError(err, activityErrorText(t, err));
         return undefined;
       }
     },
-    [run, toast, t],
+    [run, handleError, t],
   );
 }

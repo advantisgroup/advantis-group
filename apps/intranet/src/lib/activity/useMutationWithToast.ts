@@ -3,28 +3,27 @@
 import { useCallback } from "react";
 
 import { useMutation } from "convex/react";
+import { toast } from "sonner";
 
-import { errorMessage } from "./errors";
+import { useErrorHandler } from "@/hooks/use-error-handler";
+
+import { activityErrorText } from "./errors";
 import { useI18n } from "./i18n";
-import { useToast } from "./useToast";
 
-import type { FunctionReference, FunctionArgs, FunctionReturnType } from "convex/server";
+import type { FunctionArgs, FunctionReference, FunctionReturnType } from "convex/server";
 
 /**
- * A Convex mutation wrapped so that:
- *   - success optionally raises a green toast (pass `{ success }`)
- *   - failure ALWAYS raises a red toast with a readable, localized message and
- *     logs the raw error to the console — never silently swallowed.
- *
- * On failure it resolves to `undefined` (rather than rethrowing) so callers
- * don't have to wrap every call in try/catch and we never emit an unhandled
- * rejection. Callers that need to branch on success can check the return value.
+ * A Convex mutation for ActivityTrack: success optionally raises a toast
+ * (`{ success }`), failure always shows localised copy through the shared
+ * `useErrorHandler` — ActivityTrack's own wording for the codes it knows,
+ * the shared `Errors` copy otherwise — and resolves to `undefined` instead of
+ * throwing, so callers can branch on the result without a try/catch.
  */
 export function useMutationWithToast<Mutation extends FunctionReference<"mutation">>(
-  mutationRef: Mutation,
+  ref: Mutation,
 ) {
-  const mutate = useMutation(mutationRef);
-  const toast = useToast();
+  const run = useMutation(ref);
+  const handleError = useErrorHandler();
   const { t } = useI18n();
 
   return useCallback(
@@ -33,17 +32,14 @@ export function useMutationWithToast<Mutation extends FunctionReference<"mutatio
       opts?: { success?: string },
     ): Promise<FunctionReturnType<Mutation> | undefined> => {
       try {
-        const result = (await mutate(args)) as FunctionReturnType<Mutation>;
-        if (opts?.success) toast(opts.success, "ok");
-        // Generic Convex return type is opaque to the linter (resolves to `any`).
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        const result = (await run(args)) as FunctionReturnType<Mutation>;
+        if (opts?.success) toast.success(opts.success);
         return result;
       } catch (err) {
-        toast(errorMessage(t, err), "danger");
-        console.error("[mutation failed]", err);
+        handleError(err, activityErrorText(t, err));
         return undefined;
       }
     },
-    [mutate, toast, t],
+    [run, handleError, t],
   );
 }
