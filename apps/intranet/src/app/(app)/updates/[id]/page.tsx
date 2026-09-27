@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UpdateArtBanner } from "@/components/updates/UpdateArtBanner";
 import { UpdateMarkdown } from "@/components/updates/UpdateMarkdown";
 import { useErrorHandler } from "@/hooks/use-error-handler";
@@ -136,8 +137,8 @@ export default function UpdateDetailPage() {
     return (
       <div className="px-4 pt-6 md:px-8 md:pt-8">
         <div className="mx-auto max-w-3xl space-y-4">
-          <div className="h-8 w-2/3 animate-pulse rounded bg-muted/50" />
-          <div className="h-40 animate-pulse rounded-xl bg-muted/50" />
+          <Skeleton className="h-8 w-2/3" />
+          <Skeleton className="h-40 rounded-xl" />
         </div>
       </div>
     );

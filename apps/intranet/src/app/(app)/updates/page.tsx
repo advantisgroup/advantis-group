@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { CountTabs } from "@/components/ui/count-tabs";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -166,7 +167,7 @@ export default function UpdatesPage() {
       {items === undefined ? (
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-20 animate-pulse rounded-xl bg-muted/50" />
+            <Skeleton key={i} className="h-20 rounded-xl" />
           ))}
         </div>
       ) : items.length === 0 ? (

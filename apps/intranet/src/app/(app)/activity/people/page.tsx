@@ -7,7 +7,6 @@ import { useQuery } from "convex/react";
 import { Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 
 import { AddPersonDialog } from "@/components/activity/AddPersonDialog";
-import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { CopyButton } from "@/components/activity/CopyButton";
 import { EditPersonDialog } from "@/components/activity/EditPersonDialog";
 import { BrandedText } from "@/components/branding/ProviderMark";
@@ -19,6 +18,7 @@ import { PersonLink } from "@/components/profile/PersonLink";
 import { useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,7 +73,7 @@ export default function PeoplePage() {
   const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState("");
   const searchRef = useSlashFocus<HTMLInputElement>();
-  const [deleteTarget, setDeleteTarget] = useState<GenericId<"people"> | null>(null);
+  const confirm = useConfirm();
   const [editTarget, setEditTarget] = useState<GenericId<"people"> | null>(null);
 
   // Client-side roster filter — name / email / any integration id. Cheap, and
@@ -111,6 +111,16 @@ export default function PeoplePage() {
         <Skeleton className="h-64 w-full" />
       </section>
     );
+  }
+
+  async function confirmDelete(id: GenericId<"people">) {
+    const ok = await confirm({
+      title: t("people.confirmDelete"),
+      confirmLabel: t("people.delete"),
+      cancelLabel: t("people.cancel"),
+      destructive: true,
+    });
+    if (ok) await remove({ personId: id }, { success: t("people.deleted") });
   }
 
   // ── shared row pieces ──────────────────────────────────────────────────
@@ -184,7 +194,7 @@ export default function PeoplePage() {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setDeleteTarget(id)}
+        onClick={() => void confirmDelete(id)}
         className="text-danger hover:bg-danger/10 hover:text-danger"
         aria-label={t("people.delete")}
       >
@@ -330,19 +340,6 @@ export default function PeoplePage() {
         onSave={(personId, patch) => {
           void update({ personId, ...patch }, { success: t("people.updated") });
         }}
-      />
-
-      <ConfirmDialog
-        open={deleteTarget !== null}
-        heading={t("people.confirmDelete")}
-        confirmLabel={t("people.delete")}
-        onConfirm={async () => {
-          if (deleteTarget) {
-            await remove({ personId: deleteTarget }, { success: t("people.deleted") });
-          }
-          setDeleteTarget(null);
-        }}
-        onCancel={() => setDeleteTarget(null)}
       />
     </section>
   );

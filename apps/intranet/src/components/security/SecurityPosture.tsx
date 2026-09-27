@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 
 import { MOTION } from "@/components/activity/motion/motion-tokens";
 import { SettingsSection } from "@/components/ui/settings-rows";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 import { scorePosture, useSecurityState, type Posture, type PostureTier } from "./security-state";
@@ -111,9 +112,7 @@ export function SecurityPosture() {
   const animate = !prefersReducedMotion;
 
   if (loading) {
-    return (
-      <div className="h-[7.5rem] animate-pulse rounded-2xl border border-border/60 bg-muted/30" />
-    );
+    return <Skeleton className="h-[7.5rem] rounded-2xl" />;
   }
 
   // A failed request leaves these null, which scores identically to "you have

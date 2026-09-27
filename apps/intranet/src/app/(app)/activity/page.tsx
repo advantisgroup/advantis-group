@@ -30,6 +30,7 @@ import { StatusSummary } from "@/components/activity/state/StatusSummary";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { dayStateSegments, STATE_NAMES, type StateSegment } from "@/lib/activity/activity";
 import { formatDuration, formatRelativeTime, todayLocalDay } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
@@ -488,12 +489,9 @@ export default function OverviewPage() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div
+                <Skeleton
                   key={i}
-                  className={cn(
-                    "h-[7.5rem] animate-pulse rounded-2xl border border-border bg-panel/60",
-                    i === 4 && "col-span-2 lg:col-span-1",
-                  )}
+                  className={cn("h-[7.5rem] rounded-2xl", i === 4 && "col-span-2 lg:col-span-1")}
                 />
               ))}
             </div>

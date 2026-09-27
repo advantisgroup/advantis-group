@@ -8,13 +8,13 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { Ban, CheckCircle2, Clock3, Monitor, MonitorSmartphone, Trash2 } from "lucide-react";
 
-import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { InfoTip } from "@/components/activity/InfoTip";
 import { StatCard } from "@/components/activity/StatCard";
 import { PageHeader } from "@/components/PageHeader";
 import { useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -78,7 +78,7 @@ export default function DevicesPage() {
   // Per-row pending guard: while a device's mutation is in flight we disable its
   // action buttons so a double-click can't fire two requests.
   const [busyId, setBusyId] = useState<GenericId<"devices"> | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<GenericId<"devices"> | null>(null);
+  const confirm = useConfirm();
 
   // Wrap a row mutation so its buttons show a disabled/pending state while it
   // runs; useMutationWithToast already swallows errors and toasts them.
@@ -88,6 +88,21 @@ export default function DevicesPage() {
       await fn();
     } finally {
       setBusyId(null);
+    }
+  }
+
+  async function confirmDelete(id: GenericId<"devices">) {
+    const ok = await confirm({
+      title: t("devices.confirmDelete"),
+      description: t("devices.confirmDeleteBody"),
+      confirmLabel: t("devices.delete"),
+      cancelLabel: t("people.cancel"),
+      destructive: true,
+    });
+    if (ok) {
+      await runWithBusy(id, () =>
+        removeDevice({ deviceId: id }, { success: t("devices.deleted") }),
+      );
     }
   }
 
@@ -247,7 +262,7 @@ export default function DevicesPage() {
           variant="ghost"
           size="icon"
           disabled={busyId === d._id}
-          onClick={() => setDeleteTarget(d._id)}
+          onClick={() => void confirmDelete(d._id)}
           className="text-danger hover:bg-danger/10 hover:text-danger"
           aria-label={t("devices.delete")}
         >
@@ -443,23 +458,6 @@ export default function DevicesPage() {
           </Table>
         </Card>
       </div>
-
-      <ConfirmDialog
-        open={deleteTarget !== null}
-        heading={t("devices.confirmDelete")}
-        body={t("devices.confirmDeleteBody")}
-        confirmLabel={t("devices.delete")}
-        onConfirm={async () => {
-          const id = deleteTarget;
-          setDeleteTarget(null);
-          if (id) {
-            await runWithBusy(id, () =>
-              removeDevice({ deviceId: id }, { success: t("devices.deleted") }),
-            );
-          }
-        }}
-        onCancel={() => setDeleteTarget(null)}
-      />
     </section>
   );
 }
