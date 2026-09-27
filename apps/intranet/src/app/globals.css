@@ -10,9 +10,9 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* `refreshed:` utilities only apply while the person has opted into the
-   refreshed design (see `DesignAttribute` in lib/design-preview.tsx), so
-   shared components can match it without changing the classic look. */
+/* `refreshed:` utilities apply under `data-design="refreshed"`, which the root
+   layout now stamps for everyone — the classic design is gone. The variant is
+   kept until those classes are folded into the base ones. */
 @custom-variant refreshed (&:where([data-design="refreshed"], [data-design="refreshed"] *));
 
 @keyframes pulse-slow {
