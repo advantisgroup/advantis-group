@@ -29,6 +29,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { Link } from "@/components/Link";
 import { useAsk } from "@/components/ai/ask-subject";
 import { useAiEnabled } from "@/components/ai/use-ai-enabled";
 import { Mark } from "@/components/branding/ProviderMark";
@@ -649,9 +650,11 @@ export default function AnnouncementsPage() {
           title={t("empty")}
           action={
             isManager ? (
-              <Button data-shortcut-new size="sm" onClick={() => router.push("/announcements/new")}>
-                <Plus />
-                {t("new")}
+              <Button data-shortcut-new size="sm" asChild>
+                <Link href="/announcements/new">
+                  <Plus />
+                  {t("new")}
+                </Link>
               </Button>
             ) : undefined
           }

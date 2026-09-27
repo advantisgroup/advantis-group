@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { TrademarkNotice } from "@/components/branding/TrademarkNotice";
 import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 import { PersonLink } from "@/components/profile/PersonLink";
+import { Link } from "@/components/Link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -631,7 +632,13 @@ export function ClockodoAdminPanel() {
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="truncate font-medium text-fg">{row.name}</span>
+                              <Link
+                                href={`/clockodo/admin/${row.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="truncate font-medium text-fg hover:underline"
+                              >
+                                {row.name}
+                              </Link>
                               <Badge
                                 variant={row.active === false ? "muted" : "success"}
                                 className="text-[10px]"
@@ -725,7 +732,13 @@ export function ClockodoAdminPanel() {
                           </TableCell>
                           <TableCell className="text-fg refreshed:font-medium">
                             <div className="flex items-center gap-2">
-                              {row.name}
+                              <Link
+                                href={`/clockodo/admin/${row.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="hover:underline"
+                              >
+                                {row.name}
+                              </Link>
                               {row.active === false && (
                                 <span className="text-xs font-normal text-muted-foreground">
                                   {t("inactive")}

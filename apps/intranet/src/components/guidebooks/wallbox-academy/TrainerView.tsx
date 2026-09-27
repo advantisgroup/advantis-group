@@ -320,7 +320,13 @@ export function ParticipantsTab() {
                   >
                     <TableCell>
                       <div className="flex items-center gap-1.5">
-                        <span className="font-medium">{p.name}</span>
+                        <Link
+                          href={`${ADMIN_BASE}/teilnehmer/${p._id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="font-medium hover:underline"
+                        >
+                          {p.name}
+                        </Link>
                         {p.linkedUserId ? (
                           <Badge variant="secondary">
                             {p.autoLinkedVia === "email_match"

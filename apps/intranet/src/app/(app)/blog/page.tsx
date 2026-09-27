@@ -171,9 +171,11 @@ function RefreshedBlogList({
           title={posts.length === 0 ? t("noPostsYet") : t("noResults")}
           action={
             posts.length === 0 ? (
-              <Button data-shortcut-new size="sm" onClick={() => router.push("/blog/new")}>
-                <Plus />
-                {t("newPost")}
+              <Button data-shortcut-new size="sm" asChild>
+                <Link href="/blog/new">
+                  <Plus />
+                  {t("newPost")}
+                </Link>
               </Button>
             ) : undefined
           }
@@ -194,17 +196,20 @@ function RefreshedBlogList({
               {rows.map((post) => (
                 <TableRow
                   key={post._id}
-                  tabIndex={0}
                   onClick={() => router.push(`/blog/${post._id}`)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") router.push(`/blog/${post._id}`);
-                  }}
-                  className="cursor-pointer focus-visible:bg-muted/40 focus-visible:outline-none"
+                  className="cursor-pointer"
                 >
                   <TableCell className="w-full max-w-0">
-                    <span className={cn("block truncate font-medium", !post.title && "italic")}>
+                    <Link
+                      href={`/blog/${post._id}`}
+                      onClick={(event) => event.stopPropagation()}
+                      className={cn(
+                        "block truncate font-medium hover:underline",
+                        !post.title && "italic",
+                      )}
+                    >
                       {post.title || t("untitled")}
-                    </span>
+                    </Link>
                   </TableCell>
                   <TableCell>
                     <PostStatus published={post.status === "published"} />

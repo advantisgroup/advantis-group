@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
@@ -66,7 +65,6 @@ export function TerminRow({
 }) {
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
-  const router = useRouter();
   const confirm = useConfirm();
   const convertTermin = useMutation(api.hr.applicants.convertTermin);
   const removeTermin = useMutation(api.hr.applicants.removeTermin);
@@ -106,13 +104,12 @@ export function TerminRow({
       </div>
       <div className="font-medium text-foreground">
         {applicantName && (
-          <button
-            type="button"
-            onClick={() => router.push(`/hr/${termin.applicantId}/uebersicht`)}
+          <Link
+            href={`/hr/${termin.applicantId}/uebersicht`}
             className="-m-1.5 rounded p-1.5 text-primary hover:underline"
           >
             {applicantName}
-          </button>
+          </Link>
         )}
         {applicantName ? " · " : ""}
         {t(`terminTyp.${termin.typ}`)}

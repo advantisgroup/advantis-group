@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useAction, useMutation, useQuery } from "convex/react";
@@ -187,7 +187,6 @@ function EditableNumber({
 export default function ClockodoEmployeeDetailPage() {
   const t = useTranslations("Integrations");
   const tc = useTranslations("Common");
-  const router = useRouter();
   const handleError = useErrorHandler();
   const confirm = useConfirm();
   const params = useParams<{ id: string }>();
@@ -294,9 +293,11 @@ export default function ClockodoEmployeeDetailPage() {
   if (loadError) {
     return (
       <section className="mx-auto max-w-4xl space-y-6">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/clockodo/admin")}>
-          <ArrowLeft className="h-4 w-4" />
-          {t("backToRoster")}
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/clockodo/admin">
+            <ArrowLeft className="h-4 w-4" />
+            {t("backToRoster")}
+          </Link>
         </Button>
         <p className="py-10 text-center text-sm text-muted-foreground">{t("loadError")}</p>
       </section>
@@ -352,14 +353,11 @@ export default function ClockodoEmployeeDetailPage() {
   );
 
   const backButton = (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="-ml-2"
-      onClick={() => router.push("/clockodo/admin")}
-    >
-      <ArrowLeft className="h-4 w-4" />
-      {t("backToRoster")}
+    <Button variant="ghost" size="sm" className="-ml-2" asChild>
+      <Link href="/clockodo/admin">
+        <ArrowLeft className="h-4 w-4" />
+        {t("backToRoster")}
+      </Link>
     </Button>
   );
 

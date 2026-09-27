@@ -765,9 +765,11 @@ export default function GuidebooksPage() {
                   {tc("clearSearch")}
                 </Button>
               ) : canManage && !showArchive ? (
-                <Button data-shortcut-new size="sm" onClick={() => router.push("/guidebooks/new")}>
-                  <Plus />
-                  {t("newEntry")}
+                <Button data-shortcut-new size="sm" asChild>
+                  <Link href="/guidebooks/new">
+                    <Plus />
+                    {t("newEntry")}
+                  </Link>
                 </Button>
               ) : undefined
             }
