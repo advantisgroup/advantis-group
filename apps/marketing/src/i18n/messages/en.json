@@ -95,7 +95,9 @@
     "text": "We build modern customer care and inside sales organizations — experienced teams, powered by AI."
   },
   "pipeline": {
-    "caption": "How it works — from signal to close",
+    "caption": "How it works",
+    "title": "From the first signal to a signed deal",
+    "lede": "Every lead passes through the same four stages. AI does the sorting; people do the talking.",
     "legend": "Four stages",
     "altText": "Schematic: a lead passes through four stages – capturing the signal, AI qualification, prioritising and assigning, and a close handled by the sales team.",
     "stages": {
@@ -125,6 +127,7 @@
     "badge": "Our Strengths",
     "title": "Why",
     "titleBrand": "ADVANTIS GROUP",
+    "imageAlt": "Two colleagues planning a campaign at a whiteboard covered in sticky notes",
     "subtitle": "We combine over 15 years of sales experience with innovative sales approaches and AI tools to take your sales to the next level.",
     "feature1": {
       "title": "We make your sales team successful",
@@ -422,6 +425,11 @@
       "coach": "Coach and Trainer",
       "quality": "Data Protection Officer and Quality Manager"
     },
+    "home": {
+      "title": "The people behind the phone",
+      "lede": "Sales people, coaches and specialists — the team you work with, whichever brand you come through.",
+      "cta": "Meet the whole team"
+    },
     "grid": {
       "title": "Our Team",
       "subtitle": "The experts by your side"
@@ -707,6 +715,20 @@
   "services": {
     "title": "Everything for Your Sales Success",
     "subtitle": "From customer care to AI automation — discover how we support your sales holistically.",
+    "groups": {
+      "conversations": {
+        "title": "Customer conversations",
+        "text": "Service and support your customers want to come back to."
+      },
+      "business": {
+        "title": "New business",
+        "text": "From the first call to the signed deal — more qualified pipeline."
+      },
+      "systems": {
+        "title": "Systems & skills",
+        "text": "The CRM, the automation and the training that make it last."
+      }
+    },
     "common": {
       "whyTitle": "Why ADVANTIS GROUP?",
       "offeringsTitle": "Our Services",

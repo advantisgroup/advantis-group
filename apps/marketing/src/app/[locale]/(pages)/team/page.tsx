@@ -9,6 +9,7 @@ import { Display, PageHeader, Section, SectionHead } from "@/components/frame";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import { TEAM } from "@/lib/team";
 
 /* office-teamwork is the homepage's hero photograph, so it sits this one out. */
 const OFFICE_PHOTOS = [
@@ -21,44 +22,12 @@ const OFFICE_PHOTOS = [
 export default function Team() {
   const t = useTranslations("team");
 
-  const teamMembers = [
-    {
-      name: "Andrea Reichl",
-      role: t("founder.role"),
-      initials: "AR",
-      bio: t("founder.bio"),
-      email: process.env.NEXT_PUBLIC_EMAIL_ADRESS,
-      photo: undefined as string | undefined,
-    },
-    { name: "Andrea Lautenbacher", role: t("roles.inbound"), initials: "AL" },
-    {
-      name: "Jessica Blume",
-      role: t("roles.outbound"),
-      initials: "JB",
-      photo: "/team/jessica-blume.png",
-    },
-    { name: "Morena Azzuro", role: t("roles.hr"), initials: "MA" },
-    {
-      name: "Adam Kämpfer",
-      role: t("roles.marketing"),
-      initials: "AK",
-      photo: "/team/adam-kaempfer.png",
-    },
-    {
-      name: "Sabine Sagasser",
-      role: t("roles.coach"),
-      initials: "SS",
-      photo: "/team/sabine-sagasser.png",
-    },
-    {
-      name: "Martin Bergmüller",
-      role: t("roles.quality"),
-      initials: "MB",
-      photo: "/team/martin-bergmueller.png",
-    },
-  ];
-
-  const founder = teamMembers[0];
+  const teamMembers = TEAM.map((member) => ({ ...member, role: t(member.role) }));
+  const founder = {
+    ...teamMembers[0],
+    bio: t("founder.bio"),
+    email: process.env.NEXT_PUBLIC_EMAIL_ADRESS,
+  };
 
   return (
     <div className="min-h-screen bg-background">

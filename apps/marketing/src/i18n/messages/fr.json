@@ -98,7 +98,9 @@
     "text": "Nous construisons des organisations modernes de Customer Care et d'Inside Sales — des équipes expérimentées, renforcées par l'IA."
   },
   "pipeline": {
-    "caption": "Le parcours — du signal à la signature",
+    "caption": "Le parcours",
+    "title": "Du premier signal au contrat signé",
+    "lede": "Chaque lead passe par les mêmes quatre étapes. L'IA fait le tri, les humains mènent la conversation.",
     "legend": "Quatre étapes",
     "altText": "Schéma : un lead traverse quatre étapes – captation du signal, qualification par IA, priorisation et affectation, puis conclusion par l'équipe commerciale.",
     "stages": {
@@ -128,6 +130,7 @@
     "badge": "Nos Forces",
     "title": "Pourquoi",
     "titleBrand": "ADVANTIS GROUP",
+    "imageAlt": "Deux collègues planifient une campagne devant un tableau blanc couvert de post-it",
     "subtitle": "Nous combinons plus de 15 ans d'expérience commerciale avec des approches de vente innovantes et des outils d'IA pour porter vos ventes au niveau supérieur.",
     "feature1": {
       "title": "Nous rendons votre équipe commerciale performante",
@@ -425,6 +428,11 @@
       "coach": "Coach et Formatrice",
       "quality": "Délégué à la protection des données et responsable qualité"
     },
+    "home": {
+      "title": "Les personnes au bout du fil",
+      "lede": "Commerciaux, coachs et spécialistes — l'équipe avec qui vous travaillez, quelle que soit la marque par laquelle vous arrivez.",
+      "cta": "Découvrir toute l'équipe"
+    },
     "grid": {
       "title": "Notre Équipe",
       "subtitle": "Les experts à vos côtés"
@@ -710,6 +718,20 @@
   "services": {
     "title": "Tout pour Votre Réussite Commerciale",
     "subtitle": "Du Customer Care à l'automatisation IA — découvrez comment nous soutenons votre vente de façon globale.",
+    "groups": {
+      "conversations": {
+        "title": "Relation client",
+        "text": "Un service et un support vers lesquels vos clients aiment revenir."
+      },
+      "business": {
+        "title": "Nouveaux clients",
+        "text": "Du premier appel au contrat signé — un pipeline plus qualifié."
+      },
+      "systems": {
+        "title": "Systèmes & compétences",
+        "text": "Le CRM, l'automatisation et la formation qui font durer les résultats."
+      }
+    },
     "common": {
       "whyTitle": "Pourquoi ADVANTIS GROUP ?",
       "offeringsTitle": "Nos Prestations",
