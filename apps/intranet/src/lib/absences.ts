@@ -20,8 +20,18 @@ export function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd
   return aStart <= bEnd && bStart <= aEnd;
 }
 
+/** `YYYY-MM-DD` of `date` in the viewer's own timezone — Clockodo's absence
+ * dates are calendar days, and `toISOString()` would report yesterday for the
+ * first hours after local midnight. */
+export function localIsoDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export function isoToday(): string {
-  return new Date().toISOString().slice(0, 10);
+  return localIsoDate(new Date());
 }
 
 export function addDaysIso(iso: string, days: number): string {

@@ -7,21 +7,20 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { htmlToText } from "@/components/ui/rich-text";
+import { addLocalDays, useStartOfToday } from "@/hooks/use-today";
 import { isoToday } from "@/lib/absences";
 import { useAbsencesCalendar } from "@/lib/absences-api";
 import { formatDateTime, formatIsoDate, initials, relativeTime } from "@/lib/format";
 
 import { DashCard, Empty, Row, RowSkeletons } from "./primitives";
 
-const now = Date.now();
-const startOfToday = new Date(now).setHours(0, 0, 0, 0);
-
 export function EventsCard() {
   const t = useTranslations("Dashboard");
   const locale = useLocale();
+  const startOfToday = useStartOfToday();
   const events = useQuery(api.events.listForRange, {
     start: startOfToday,
-    end: now + 30 * 24 * 60 * 60 * 1000,
+    end: addLocalDays(startOfToday, 31),
   });
 
   return (
