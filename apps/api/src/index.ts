@@ -27,6 +27,7 @@ import { wikiFormatAssistRoute } from "./routes/wiki-format-assist.js";
 import { wikiImportRoute } from "./routes/wiki-import.js";
 import { internalBackupsRoute } from "./routes/internal/backups.js";
 import { internalClockodoRoute } from "./routes/internal/clockodo.js";
+import { internalDigestRoute } from "./routes/internal/digest.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
 import { internalOnedriveRoute } from "./routes/internal/onedrive.js";
 import { internalUpdatesRoute } from "./routes/internal/updates.js";
@@ -80,6 +81,7 @@ export const app = new Elysia()
   .use(internalBackupsRoute)
   .use(internalNotificationsRoute)
   .use(internalClockodoRoute)
+  .use(internalDigestRoute)
   .use(internalOnedriveRoute)
   .use(internalUpdatesRoute)
   .use(activityRoute)

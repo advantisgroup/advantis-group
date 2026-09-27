@@ -15,6 +15,7 @@ const preferenceFields = {
   favoriteFolders: v.optional(v.array(v.string())),
   favoriteGuidebooks: v.optional(v.array(v.string())),
   favoritePages: v.optional(v.array(v.object({ href: v.string(), label: v.string() }))),
+  weeklyDigest: v.optional(v.boolean()),
   savedDirectoryViews: v.optional(
     v.array(
       v.object({

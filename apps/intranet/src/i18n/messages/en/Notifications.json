@@ -74,5 +74,7 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "earlier": "Earlier"
-  }
+  },
+  "weeklyDigestTitle": "Weekly summary email",
+  "weeklyDigestHint": "Every Monday: what was announced, posted and added to the wiki last week, policies waiting for you, and next week's events. Only sent when there's something new."
 }

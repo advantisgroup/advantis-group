@@ -460,3 +460,93 @@ export async function sendUpdateBroadcast(
   }
   return results;
 }
+
+export interface WeeklyDigestItem {
+  title: string;
+  path: string;
+  detail?: string;
+}
+
+export interface WeeklyDigest {
+  userId: string;
+  email: string;
+  firstName: string | null;
+  announcements: WeeklyDigestItem[];
+  updates: WeeklyDigestItem[];
+  wiki: WeeklyDigestItem[];
+  policies: WeeklyDigestItem[];
+  events: WeeklyDigestItem[];
+}
+
+const DIGEST_SECTIONS: [keyof Omit<WeeklyDigest, "userId" | "email" | "firstName">, string][] = [
+  ["policies", "Bitte lesen und bestätigen"],
+  ["announcements", "Ankündigungen"],
+  ["updates", "Updates"],
+  ["wiki", "Neu im Wiki"],
+  ["events", "Nächste Woche"],
+];
+
+/** The Monday "what you missed" email, in German and with du like the rest
+ *  of the intranet. Every value is escaped: titles are written by people. */
+export function renderWeeklyDigest(digest: WeeklyDigest): { subject: string; html: string } {
+  const sections = DIGEST_SECTIONS.filter(([key]) => digest[key].length > 0)
+    .map(([key, heading]) => {
+      const items = digest[key]
+        .map(
+          (item) =>
+            `<li style="margin:0 0 8px"><a href="${esc(`${INTERNAL_URL}${item.path}`)}" style="color:#18181b;font-weight:600">${esc(item.title)}</a>${
+              item.detail
+                ? `<br><span style="color:#71717a;font-size:13px">${esc(item.detail)}</span>`
+                : ""
+            }</li>`,
+        )
+        .join("");
+      return `<h2 style="margin:24px 0 8px;font-size:15px">${heading}</h2><ul style="margin:0;padding-left:18px;line-height:1.5">${items}</ul>`;
+    })
+    .join("");
+  const greeting = digest.firstName ? `Hallo ${esc(digest.firstName)},` : "Hallo,";
+  return {
+    subject: "Das hast du diese Woche im Intranet verpasst",
+    html: layout(
+      "Deine Woche im Intranet",
+      `<p style="margin:0 0 8px;line-height:1.6">${greeting} hier ist, was sich in den letzten sieben Tagen getan hat.</p>
+       ${sections}
+       <p style="margin:24px 0 0">${button(INTERNAL_URL, "Intranet öffnen")}</p>
+       <p style="margin:24px 0 0;color:#71717a;font-size:12px;line-height:1.5">Du bekommst diese Mail jeden Montag. Abbestellen kannst du sie unter <a href="${INTERNAL_URL}/settings/notifications" style="color:#71717a">Einstellungen → Benachrichtigungen</a>.</p>`,
+    ),
+  };
+}
+
+/** Sends each person their own digest, 100 per Resend batch call. */
+export async function sendWeeklyDigests(digests: WeeklyDigest[]): Promise<{ failed: number }> {
+  let failed = 0;
+  const CHUNK = 100;
+  for (let i = 0; i < digests.length; i += CHUNK) {
+    const chunk = digests.slice(i, i + CHUNK);
+    try {
+      const { error } = await getResend().batch.send(
+        chunk.map((d) => {
+          const { subject, html } = renderWeeklyDigest(d);
+          return {
+            from: FROM,
+            to: d.email,
+            subject,
+            html,
+            tags: [
+              { name: "kind", value: "weekly_digest" },
+              { name: "user_id", value: d.userId },
+            ],
+          };
+        }),
+      );
+      if (error) {
+        console.error(`[resend] weekly digest batch failed:`, JSON.stringify(error));
+        failed += chunk.length;
+      }
+    } catch (thrown) {
+      console.error(`[resend] weekly digest batch threw:`, thrown);
+      failed += chunk.length;
+    }
+  }
+  return { failed };
+}

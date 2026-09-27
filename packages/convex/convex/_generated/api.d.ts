@@ -77,6 +77,7 @@ import type * as clockodoWebhookLog from "../clockodoWebhookLog.js";
 import type * as companies from "../companies.js";
 import type * as companyRoles from "../companyRoles.js";
 import type * as crons from "../crons.js";
+import type * as digest_weekly from "../digest/weekly.js";
 import type * as customRoles from "../customRoles.js";
 import type * as designFeedback from "../designFeedback.js";
 import type * as draftShares from "../draftShares.js";
@@ -377,6 +378,7 @@ declare const fullApi: ApiFromModules<{
   companies: typeof companies;
   companyRoles: typeof companyRoles;
   crons: typeof crons;
+  "digest/weekly": typeof digest_weekly;
   customRoles: typeof customRoles;
   designFeedback: typeof designFeedback;
   draftShares: typeof draftShares;

@@ -473,6 +473,9 @@ export const identityTables = {
     favoriteGuidebooks: v.optional(v.array(v.string())),
     /** Pages starred from their header, shown at the top of the sidebar. */
     favoritePages: v.optional(v.array(v.object({ href: v.string(), label: v.string() }))),
+    /** The Monday "what you missed" email. Unset = on for employees, off
+     *  for external members (see digest/weekly.ts). */
+    weeklyDigest: v.optional(v.boolean()),
     savedDirectoryViews: v.optional(
       v.array(
         v.object({

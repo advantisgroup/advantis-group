@@ -74,5 +74,7 @@
     "today": "Heute",
     "yesterday": "Gestern",
     "earlier": "Früher"
-  }
+  },
+  "weeklyDigestTitle": "Wöchentliche Zusammenfassung per Mail",
+  "weeklyDigestHint": "Jeden Montag: was letzte Woche angekündigt, gepostet und ins Wiki gestellt wurde, offene Richtlinien und die Termine der nächsten Woche. Nur wenn es etwas Neues gibt."
 }
