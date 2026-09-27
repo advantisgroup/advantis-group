@@ -11,6 +11,7 @@ import { type FunctionReturnType } from "convex/server";
 import { AlertTriangle, Inbox, Lock, Search, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { Link } from "@/components/Link";
 import { StateBadge, TYPE_ICON, senderLine } from "@/components/inquiries/shared";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useHasCapability } from "@/components/providers/current-user";
@@ -194,7 +195,6 @@ type Row =
 function InquiryRow({ inquiry }: { inquiry: Row }) {
   const t = useTranslations("Inquiries");
   const locale = useLocale();
-  const router = useRouter();
   const Icon = TYPE_ICON[inquiry.submissionType];
   const format = useMemo(
     () => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }),
@@ -211,9 +211,8 @@ function InquiryRow({ inquiry }: { inquiry: Row }) {
 
   return (
     <li>
-      <button
-        type="button"
-        onClick={() => router.push(`/inquiries/${inquiry._id}`)}
+      <Link
+        href={`/inquiries/${inquiry._id}`}
         className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-1 px-2 py-4 text-left transition-colors hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:outline-none"
       >
         <span className="flex min-w-0 items-center gap-2">
@@ -249,7 +248,7 @@ function InquiryRow({ inquiry }: { inquiry: Row }) {
           ) : null}
         </span>
         <StateBadge state={inquiry.state} className="justify-self-end" />
-      </button>
+      </Link>
     </li>
   );
 }

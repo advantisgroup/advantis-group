@@ -27,7 +27,7 @@ const DOC: DocContent = {
         },
         {
           kind: "text",
-          body: "Die Vollständigkeits-Anzeige zeigt, wie viele der Angaben (Foto, Position, Abteilung, Telefonnummer) noch fehlen, damit Kolleg:innen euch leichter finden und erreichen.",
+          body: "Die Vollständigkeits-Anzeige zeigt, wie viele der Angaben (Foto, Position, Abteilung, Telefonnummer) noch fehlen, damit Kolleg:innen dich leichter finden und erreichen.",
         },
       ],
     },
@@ -47,12 +47,12 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Zeigt, ob euer Konto mit Clockodo verknüpft ist — direkt oder über einen ActivityTrack-Eintrag. Nur wenn hier **„Verknüpft“** steht, synchronisieren eure Abwesenheiten automatisch aus Clockodo.",
+          body: "Zeigt, ob dein Konto mit Clockodo verknüpft ist — direkt oder über einen ActivityTrack-Eintrag. Nur wenn hier **„Verknüpft“** steht, synchronisieren deine Abwesenheiten automatisch aus Clockodo.",
         },
         {
           kind: "callout",
           tone: "warning",
-          body: "Steht dort **„Nicht verknüpft“**, bittet einen Admin, euer Clockodo-Konto zu verknüpfen — sonst tauchen eure Abwesenheiten nicht automatisch im Intranet auf (siehe Guidebook „Zeiterfassung mit Clockodo“).",
+          body: "Steht dort **„Nicht verknüpft“**, bitte einen Admin, dein Clockodo-Konto zu verknüpfen — sonst tauchen deine Abwesenheiten nicht automatisch im Intranet auf (siehe Guidebook „Zeiterfassung mit Clockodo“).",
         },
       ],
     },

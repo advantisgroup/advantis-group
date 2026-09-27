@@ -15,6 +15,7 @@ import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatIsoDate } from "@/lib/format";
 import { clearPerformanceToken } from "@/lib/performanceAuth";
 
@@ -64,8 +65,8 @@ export default function DashboardInteractionDayPage() {
         {!data ? (
           <Card>
             <CardContent className="space-y-2 p-6">
-              <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
-              <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
             </CardContent>
           </Card>
         ) : (

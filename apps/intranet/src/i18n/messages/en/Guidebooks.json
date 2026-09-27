@@ -8,6 +8,7 @@
   "empty": "No guidebooks for you yet",
   "emptyHint": "Guidebooks assigned to your team will appear here.",
   "notFound": "Guidebook not found",
+  "germanOnly": "This content is in German only. Your browser can translate the page: right-click it and choose Translate.",
   "notFoundHint": "It may have been moved or removed.",
   "noAccess": "No access to this guidebook",
   "noAccessHint": "It's restricted to other teams. Ask an admin if you need access.",
@@ -19,7 +20,7 @@
   "pinnedGroup": "Pinned",
   "uncategorizedGroup": "Uncategorized",
   "libraryTab": "Library",
-  "filesTab": "Files",
+  "filesTab": "Wiki files",
   "interactiveToolsTitle": "Interactive tools",
   "newEntry": "New entry",
   "newEntryAdvanced": "Advanced page (block editor)",
@@ -304,5 +305,24 @@
   "formatAssistRevert": "Revert to original",
   "formatAssistEdit": "Edit",
   "formatAssistDiscard": "Discard",
-  "formatAssistApply": "Apply"
+  "formatAssistApply": "Apply",
+  "otherSources": {
+    "title": "Also answers questions",
+    "ask": {
+      "title": "Ask the AI assistant",
+      "when": "Answers from what's in the wiki."
+    },
+    "glossary": {
+      "title": "Sales lexicon",
+      "when": "Terms and abbreviations used in sales."
+    },
+    "coachWiki": {
+      "title": "Sales Coach knowledge",
+      "when": "Product info and talking points for sales calls."
+    },
+    "academy": {
+      "title": "Wallbox Sales Academy",
+      "when": "Training chapters and quizzes."
+    }
+  }
 }

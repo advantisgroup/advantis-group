@@ -6,7 +6,6 @@
   "tabWiki": "Wiki",
   "tabSettings": "Settings",
   "tabAdmin": "Team",
-
   "startCall": "Start call",
   "endCall": "End call",
   "statusLive": "Recording",
@@ -18,10 +17,8 @@
   "tabScript": "Script",
   "tabObjections": "Objections",
   "tabWikiShort": "Wiki",
-
   "transcriptEmpty": "Start a call to begin the conversation...",
   "weakFormulation": "Weak phrasing",
-
   "liveCoaching": "Coach",
   "checklistTitle": "EV checklist",
   "language": "Call language",
@@ -32,15 +29,12 @@
   "outcomeTermin": "Appointment",
   "outcomeWiedervorlage": "Follow-up",
   "outcomeKeinErgebnis": "No outcome",
-
   "objectionDetected": "AI detected an objection",
-
   "wikiSearchPlaceholder": "Search wiki...",
   "wikiAutoHits": "{count} wiki matches for this conversation",
   "wikiNoResults": "No matches",
   "wikiScanHint": "Click a transcript word or wait for the auto-scan",
   "wikiOpenLink": "Open",
-
   "reportTitle": "Call report",
   "skillScore": "Skill score",
   "skillBreakdown": "Skill breakdown",
@@ -52,7 +46,6 @@
   "improvements": "Areas to improve",
   "nextSteps": "For the next call",
   "close": "Close",
-
   "period7": "7 days",
   "period30": "30 days",
   "periodAll": "All",
@@ -70,7 +63,6 @@
   "callsInPeriod": "{count} calls",
   "noCallsYet": "No calls yet",
   "details": "Details",
-
   "eodTitle": "End today's training",
   "eodMilestoneRemaining": "{count} more calls until your daily review",
   "eodLoading": "Analyzing...",
@@ -82,7 +74,6 @@
   "eodTop3Strengths": "Top 3 strengths",
   "eodTop3Improvements": "Top 3 areas to improve",
   "eodSummaryFailed": "Summary failed",
-
   "wikiPageTitle": "Wiki",
   "wikiPageSubtitle": "Knowledge base — product info, talking points",
   "wikiNewArticle": "New article",
@@ -104,7 +95,7 @@
   "wikiDocumentUpload": "Upload file",
   "wikiDocumentAnalyzing": "AI is reading the document...",
   "wikiDocumentAnalyzed": "Fields filled in from the document — please review",
-  "wikiDocumentAnalyzeFailed": "Couldn't read the document",
+  "wikiDocumentAnalyzeFailed": "Couldn't read the document. Try a PDF or Word file with selectable text.",
   "wikiDocumentView": "View",
   "wikiDocumentTooLarge": "File too large (max. {max})",
   "wikiDocumentUnsupported": "Unsupported file type (PDF, Word .docx, text)",
@@ -114,7 +105,6 @@
   "wikiDeleteFailed": "Delete failed",
   "cancel": "Cancel",
   "save": "Save",
-
   "kpiLoaded": "KPI document loaded — used in every report",
   "kpiReading": "Reading file...",
   "kpiLoadedNamed": "Loaded: {name}",
@@ -128,7 +118,6 @@
   "audioStep2": "Recording tab → right-click → Show disabled devices",
   "audioStep3": "Stereo Mix → Enable → Set as default → OK → select it in the call device dropdown",
   "audioAlternative": "Alternative: install VB-Cable (vb-audio.com) for free",
-
   "adminNotAuthorized": "You don't have access to this page.",
   "adminTitle": "Team overview",
   "adminSubtitle": "All reps compared",
@@ -140,7 +129,6 @@
   "adminAppointments": "Appointments",
   "adminRate": "Rate",
   "adminTrend": "Trend",
-
   "backToProgress": "Progress",
   "reportVerdictStrong": "Strong call",
   "reportVerdictSolid": "Solid call",
@@ -156,7 +144,7 @@
   "reportTooShort": "Calls under a minute aren't scored.",
   "reportNotFound": "Call not found",
   "reportSavedShort": "Call saved — under a minute, so it isn't scored.",
-  "reportStartFailed": "Couldn't start the report",
+  "reportStartFailed": "Couldn't start the report. Try again.",
   "summaryMilestoneBody": "The review looks at your last {total} scored calls.",
   "summaryWorkingTitle": "Summarising your last {count} calls",
   "summaryReadyTitle": "Your training at a glance",
@@ -169,5 +157,11 @@
   "wikiExtractReadyNoFile": "Suggestions from the document",
   "wikiApply": "Apply",
   "wikiApplied": "Applied",
-  "wikiApplyAll": "Apply all"
+  "wikiApplyAll": "Apply all",
+  "speechUnsupported": "Live transcription needs Chrome or Edge.",
+  "speechMicDenied": "Microphone access was blocked. Allow it in your browser's site settings, then start again.",
+  "speechNoSound": "No sound came through. Check your microphone and start again.",
+  "speechNetwork": "Transcription lost its connection. Check your network and start again.",
+  "speechNoMic": "No microphone found. Plug one in and start again.",
+  "speechStartFailed": "Transcription couldn't start. Reload the page and try again."
 }

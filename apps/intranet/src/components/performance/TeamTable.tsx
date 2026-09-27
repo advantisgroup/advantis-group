@@ -9,6 +9,7 @@ import { type FunctionReturnType } from "convex/server";
 import { ChevronRight, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Link } from "@/components/Link";
 import { fmtNum, fmtPct } from "@/components/performance/PerformanceFormat";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -162,7 +163,13 @@ export function TeamTable({ data }: { data: TeamDashboardData }) {
               >
                 <CardContent className="space-y-2.5 p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="min-w-0 truncate font-medium">{s.name}</span>
+                    <Link
+                      href={`/performance/mitarbeiter/${s.employeeId}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="min-w-0 truncate font-medium hover:underline"
+                    >
+                      {s.name}
+                    </Link>
                     <div className="flex shrink-0 items-center gap-1.5">
                       {mark && (
                         <Badge variant={mark.level === "high" ? "success" : "warning"}>
@@ -330,7 +337,15 @@ export function TeamTable({ data }: { data: TeamDashboardData }) {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => router.push(`/performance/mitarbeiter/${s.employeeId}`)}
                   >
-                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link
+                        href={`/performance/mitarbeiter/${s.employeeId}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="hover:underline"
+                      >
+                        {s.name}
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {fmtNum(s.leadsCreated)}
                     </TableCell>

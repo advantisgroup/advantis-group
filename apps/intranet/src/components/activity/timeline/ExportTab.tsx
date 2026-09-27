@@ -5,13 +5,13 @@ import { useState } from "react";
 import { api } from "@advantis/convex/api";
 import { useConvex } from "convex/react";
 import { Download } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { downloadFile, toCsv, toJson } from "@/lib/activity/export";
 import { useI18n } from "@/lib/activity/i18n";
-import { useToast } from "@/lib/activity/useToast";
 
 /**
  * Per-employee export tab: pick a date range, download the device's raw samples
@@ -29,7 +29,6 @@ export function ExportTab({
   today: string;
 }) {
   const { t } = useI18n();
-  const toast = useToast();
   const convex = useConvex();
   const [exportStart, setExportStart] = useState(startDay);
   const [exportEnd, setExportEnd] = useState(today);
@@ -57,11 +56,11 @@ export function ExportTab({
         const csv = toCsv(rows, ["capturedAt", "active", "idleMs", "windowsUser", "hostname"]);
         downloadFile(`${base}.csv`, "text/csv;charset=utf-8", csv);
       }
-      toast(t("timeline.export.done"), "ok");
+      toast.success(t("timeline.export.done"));
     } catch (err) {
       // The query can fail (network/permissions); surface it instead of leaving
       // the user staring at a button that silently did nothing.
-      toast(t("timeline.export.failed"), "danger");
+      toast.error(t("timeline.export.failed"));
       console.error("[export failed]", err);
     } finally {
       setExporting(false);

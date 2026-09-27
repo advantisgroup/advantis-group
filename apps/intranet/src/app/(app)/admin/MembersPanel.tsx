@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -78,7 +80,6 @@ function TourProgressChip({ userId }: { userId: Id<"users"> }) {
 
 export function MembersPanel({ isManager }: { isManager: boolean }) {
   const t = useTranslations("Admin");
-  const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
   const tTeams = useTranslations("Teams");
   const tCap = useTranslations("CustomRoles");
@@ -424,9 +425,9 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
       </div>
 
       {members === undefined ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">{tc("loading")}</p>
+        <SkeletonRows className="py-2" />
       ) : filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">{t("noMembers")}</p>
+        <EmptyState inline title={t("noMembers")} />
       ) : (
         <div data-tour="tour-admin-members">
           {/* Below sm: a card per member. sm and up: a proper table, so

@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 
-import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
+import { AddPersonDialog } from "@/components/activity/AddPersonDialog";
 import { CopyButton } from "@/components/activity/CopyButton";
 import { EditPersonDialog } from "@/components/activity/EditPersonDialog";
 import { BrandedText } from "@/components/branding/ProviderMark";
@@ -18,6 +18,7 @@ import { PersonLink } from "@/components/profile/PersonLink";
 import { useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -69,11 +70,10 @@ export default function PeoplePage() {
   const update = useMutationWithToast(api.activity.people.update);
   const remove = useMutationWithToast(api.activity.people.remove);
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState("");
   const searchRef = useSlashFocus<HTMLInputElement>();
-  const [deleteTarget, setDeleteTarget] = useState<GenericId<"people"> | null>(null);
+  const confirm = useConfirm();
   const [editTarget, setEditTarget] = useState<GenericId<"people"> | null>(null);
 
   // Client-side roster filter — name / email / any integration id. Cheap, and
@@ -89,7 +89,19 @@ export default function PeoplePage() {
   }, [people, query]);
 
   const header = (
-    <PageHeader title={t("people.heading")} description={t("people.sub")} icon={<Users />} />
+    <PageHeader
+      title={t("people.heading")}
+      description={t("people.sub")}
+      icon={<Users />}
+      action={
+        canEdit ? (
+          <Button data-shortcut-new onClick={() => setAdding(true)}>
+            <Plus className="h-4 w-4" />
+            {t("people.add")}
+          </Button>
+        ) : undefined
+      }
+    />
   );
 
   if (people === undefined) {
@@ -101,17 +113,14 @@ export default function PeoplePage() {
     );
   }
 
-  async function onAdd(e: FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    const created = await create({
-      name: name.trim(),
-      email: email.trim() || undefined,
+  async function confirmDelete(id: GenericId<"people">) {
+    const ok = await confirm({
+      title: t("people.confirmDelete"),
+      confirmLabel: t("people.delete"),
+      cancelLabel: t("people.cancel"),
+      destructive: true,
     });
-    if (created) {
-      setName("");
-      setEmail("");
-    }
+    if (ok) await remove({ personId: id }, { success: t("people.deleted") });
   }
 
   // ── shared row pieces ──────────────────────────────────────────────────
@@ -185,7 +194,7 @@ export default function PeoplePage() {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setDeleteTarget(id)}
+        onClick={() => void confirmDelete(id)}
         className="text-danger hover:bg-danger/10 hover:text-danger"
         aria-label={t("people.delete")}
       >
@@ -197,31 +206,6 @@ export default function PeoplePage() {
   return (
     <section className="space-y-6">
       {header}
-
-      {canEdit && (
-        <Card className="animate-fade-up">
-          <CardContent className="p-3 sm:p-4">
-            <form onSubmit={onAdd} className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t("people.name")}
-                className="sm:flex-1"
-              />
-              <Input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={t("people.email")}
-                className="sm:flex-1"
-              />
-              <Button type="submit" disabled={!name.trim()} className="sm:w-auto">
-                <Plus className="h-4 w-4" />
-                {t("people.add")}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Roster search — outside the table card so the mobile card list and
           the desktop table share one input. */}
@@ -342,6 +326,12 @@ export default function PeoplePage() {
         </Table>
       </Card>
 
+      <AddPersonDialog
+        open={adding}
+        onOpenChange={setAdding}
+        onAdd={(person) => create(person)}
+        linkedUserIds={people.map((p) => p.userId)}
+      />
       <EditPersonDialog
         person={editingPerson}
         onOpenChange={(open) => {
@@ -350,19 +340,6 @@ export default function PeoplePage() {
         onSave={(personId, patch) => {
           void update({ personId, ...patch }, { success: t("people.updated") });
         }}
-      />
-
-      <ConfirmDialog
-        open={deleteTarget !== null}
-        heading={t("people.confirmDelete")}
-        confirmLabel={t("people.delete")}
-        onConfirm={async () => {
-          if (deleteTarget) {
-            await remove({ personId: deleteTarget }, { success: t("people.deleted") });
-          }
-          setDeleteTarget(null);
-        }}
-        onCancel={() => setDeleteTarget(null)}
       />
     </section>
   );

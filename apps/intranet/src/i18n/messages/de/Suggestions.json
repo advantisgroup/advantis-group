@@ -53,6 +53,7 @@
   "columnDate": "Eingereicht",
   "countLabel": "{shown} von {total}",
   "empty": "Noch keine Vorschläge.",
+  "emptyHint": "Du hast eine Idee, die die Arbeit leichter macht? Teile sie. Das ganze Team sieht sie und kann abstimmen, und du siehst, was daraus wird.",
   "noResults": "Keine Vorschläge passen zu diesen Filtern.",
   "submittedOn": "Eingereicht am {date}",
   "updatedOn": "Aktualisiert am {date}",

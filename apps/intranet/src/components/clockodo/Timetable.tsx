@@ -4,6 +4,7 @@ import { formatClockTime, NoPersonalClockodoAccount } from "@/components/clockod
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { addDaysIso, isoToday, mondayOfWeek } from "@/lib/absences";
 import { elapsedSince } from "@/lib/clockodo-clock";
 import { type ClockEntry, deleteClockEntry, useClockEntries } from "@/lib/clockodo-entries-api";
@@ -86,7 +87,7 @@ export function Timetable() {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="flex-row items-center justify-between border-b border-border/70 bg-gradient-to-r from-muted/60 to-muted/10 refreshed:bg-none">
+      <CardHeader className="flex-row items-center justify-between border-b border-border/70">
         <div>
           <CardTitle className="text-base">{t("yourTimetable")}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -154,9 +155,7 @@ export function Timetable() {
           })}
         </div>
         <div className="p-2">
-          {entries === undefined && (
-            <p className="px-3 py-10 text-center text-sm text-muted-foreground">{t("loading")}</p>
-          )}
+          {entries === undefined && <SkeletonRows className="py-2" />}
           {entries !== undefined && dayEntries.length === 0 && (
             <p className="px-3 py-10 text-center text-sm text-muted-foreground">
               {t("noTimeEntries")}
@@ -180,7 +179,7 @@ export function Timetable() {
                     {t("breakDuration", { duration: breakLabel })}
                   </div>
                 )}
-                <div className="flex items-center justify-between gap-3 rounded-md border border-border/70 border-l-2 border-l-primary/60 bg-card px-3 py-2.5 shadow-sm refreshed:shadow-none">
+                <div className="flex items-center justify-between gap-3 rounded-md border border-border/70 border-l-2 border-l-primary/60 bg-card px-3 py-2.5 shadow-none">
                   <div className="min-w-0">
                     <p className="text-sm font-medium tabular-nums">
                       {formatClockTime(entry.startTime, locale)} –{" "}

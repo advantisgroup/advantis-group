@@ -37,6 +37,8 @@ export default function HRFilesPage() {
       rootPath={HR_FOLDER_BASE}
       rootLabel={t("filesRootLabel")}
       routeBase="/hr/files"
+      title={t("filesRootLabel")}
+      description={t("filesDescription")}
     />
   );
 }

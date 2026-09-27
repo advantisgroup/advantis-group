@@ -486,11 +486,9 @@ export const identityTables = {
     onboardingStep: v.optional(v.number()),
     /** JSON-encoded Record<OnboardingStepId, "pending"|"completed"|"skipped">. */
     onboardingStepStatuses: v.optional(v.string()),
-    /** Opt-in for the refreshed page designs while they're in preview. Unset
-     * means the person hasn't answered the banner yet. */
+    /** Dead — design preview ended. Drop after `migrations/dropDesignPreviewFields` runs. */
     designPreview: v.optional(v.union(v.literal("refreshed"), v.literal("classic"))),
-    /** Set the moment the one-off "how's the new design?" prompt shows, so it
-     * never shows again whether it was answered, dismissed or ignored. */
+    /** Dead — design preview ended. Drop after `migrations/dropDesignPreviewFields` runs. */
     designFeedbackPromptedAt: v.optional(v.number()),
     /** Custom sidebar layout — sections of nav hrefs. Empty means the default. */
     sidebarSections: v.optional(

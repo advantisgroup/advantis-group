@@ -4,21 +4,13 @@ import { useEffect } from "react";
 
 import Link from "next/link";
 
-import { type LucideIcon } from "lucide-react";
-
 import { useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
 import { useSetPageHeaderTabs } from "@/components/layout/PageHeaderBar";
+import { type RouteTab, routeTabClick } from "@/components/layout/route-tab";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-export interface RouteTab {
-  value: string;
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  /** Optional count badge next to the label (e.g. open appointments). */
-  count?: number;
-}
+export type { RouteTab } from "@/components/layout/route-tab";
 
 /**
  * URL-driven equivalent of `Tabs`/`TabsList`/`TabsTrigger` — each "tab" is a
@@ -45,7 +37,7 @@ export function RouteTabs({
   const setHeaderTabs = useSetPageHeaderTabs();
   const inHeader = !isMobile && !inline;
 
-  // Refreshed design: on desktop the tabs sit as pills beside the page title.
+  // On desktop the tabs sit as pills beside the page title.
   useEffect(() => {
     if (!inHeader) return;
     setHeaderTabs({ tabs, activeValue });
@@ -57,10 +49,12 @@ export function RouteTabs({
     // BottomNav only ever reads `label` as an aria-label (it renders icons
     // only), so folding the count into it here keeps that contract exactly
     // as it was before tabs could carry a separate `count` field.
-    const mobileTabs = tabs.map((tab) => ({
-      ...tab,
-      label: tab.count !== undefined ? `${tab.label} (${tab.count})` : tab.label,
-    }));
+    const mobileTabs = tabs.map((tab) => {
+      const label = tab.count !== undefined ? `${tab.label} (${tab.count})` : tab.label;
+      return tab.onSelect
+        ? { value: tab.value, label, icon: tab.icon, onClick: tab.onSelect }
+        : { value: tab.value, href: tab.href, label, icon: tab.icon };
+    });
     setTabs(mobileTabs, activeValue);
     return () => setTabs(null, null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -78,6 +72,7 @@ export function RouteTabs({
           <Link
             key={tab.value}
             href={tab.href}
+            onClick={routeTabClick(tab)}
             className={cn(
               "relative flex shrink-0 select-none items-center gap-2 whitespace-nowrap px-3.5 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none",
               active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
@@ -89,9 +84,7 @@ export function RouteTabs({
               <span
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none tabular-nums",
-                  active
-                    ? "bg-primary/10 text-primary refreshed:bg-foreground refreshed:text-background"
-                    : "bg-muted text-muted-foreground",
+                  active ? "bg-foreground text-background" : "bg-muted text-muted-foreground",
                 )}
               >
                 {tab.count}
@@ -100,7 +93,7 @@ export function RouteTabs({
             <span
               className={cn(
                 "absolute inset-x-3 -bottom-px h-0.5 rounded-full transition-colors",
-                active ? "bg-primary refreshed:bg-foreground" : "bg-transparent",
+                active ? "bg-foreground" : "bg-transparent",
               )}
             />
           </Link>

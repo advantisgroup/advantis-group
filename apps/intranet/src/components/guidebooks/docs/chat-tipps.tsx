@@ -33,7 +33,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "**Enter** sendet die Nachricht, **Umschalt+Enter** fügt einen Zeilenumbruch ein. Mit **@** könnt ihr Kolleg:innen direkt in der Nachricht erwähnen — Vorschläge erscheinen automatisch.",
+          body: "**Enter** sendet die Nachricht, **Umschalt+Enter** fügt einen Zeilenumbruch ein. Mit **@** kannst du Kolleg:innen direkt in der Nachricht erwähnen — Vorschläge erscheinen automatisch.",
         },
         {
           kind: "text",

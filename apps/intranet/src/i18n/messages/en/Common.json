@@ -20,7 +20,7 @@
   "open": "Open",
   "copy": "Copy",
   "copied": "Copied to clipboard",
-  "copyFailed": "Failed to copy..",
+  "copyFailed": "Couldn't copy. Select the text and copy it by hand.",
   "areYouSure": "Are you sure?",
   "deleteWarning": "This action can't be undone.",
   "fromOneDrive": "From OneDrive",
@@ -65,5 +65,7 @@
     "recent": "Recent",
     "everyone": "Everyone",
     "empty": "Nobody matches that"
-  }
+  },
+  "remove": "Remove",
+  "moreOptions": "More options"
 }

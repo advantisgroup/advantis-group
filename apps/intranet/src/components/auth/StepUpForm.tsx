@@ -16,6 +16,7 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import { useErrorText } from "@/hooks/use-error-handler";
 import { cn } from "@/lib/utils";
 
 // Matches the Convex-side StepMethod exactly (including "passkey") so the
@@ -108,6 +109,7 @@ export function StepUpForm({
   onVerified: () => void;
 }) {
   const t = useTranslations("StepUp");
+  const errorText = useErrorText();
   const { getToken } = useAuth();
   const methods = (
     availableMethods.length > 0 ? availableMethods : (["email_code"] as StepMethod[])
@@ -156,11 +158,11 @@ export function StepUpForm({
       );
       setCooldownUntil(Date.now() + RESEND_COOLDOWN_MS);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("genericError"));
+      setError(errorText(err, t("genericError")));
     } finally {
       setSending(false);
     }
-  }, [apiRequest, context, t]);
+  }, [apiRequest, context, errorText, t]);
 
   useEffect(() => {
     if (method !== "email_code" || sentOnce.current === "email_code") return;
@@ -192,7 +194,7 @@ export function StepUpForm({
         }),
       )) as { ok: boolean; message?: string };
       if (!result.ok) {
-        setError(result.message ?? t("genericError"));
+        setError(t("passkeyError"));
         return;
       }
       onVerified();
@@ -226,21 +228,21 @@ export function StepUpForm({
           }),
         )) as { ok: boolean; message?: string };
         if (!result.ok) {
-          setError(result.message ?? t("genericError"));
+          setError(t("codeMismatch"));
           setCode("");
           submittedCode.current = null;
           return;
         }
         onVerified();
       } catch (err) {
-        setError(err instanceof Error ? err.message : t("genericError"));
+        setError(errorText(err, t("genericError")));
         setCode("");
         submittedCode.current = null;
       } finally {
         setSubmitting(false);
       }
     },
-    [apiRequest, area, context, method, onVerified, t],
+    [apiRequest, area, context, errorText, method, onVerified, t],
   );
 
   // Auto-submit the moment six digits land — whether typed, pasted, or filled

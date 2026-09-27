@@ -73,8 +73,6 @@ const preferenceFields = {
   onboardingDismissedAt: v.optional(v.number()),
   onboardingStep: v.optional(v.number()),
   onboardingStepStatuses: v.optional(v.string()),
-  designPreview: v.optional(v.union(v.literal("refreshed"), v.literal("classic"))),
-  designFeedbackPromptedAt: v.optional(v.number()),
   sidebarSections: v.optional(
     v.array(
       v.object({ id: v.string(), title: v.optional(v.string()), items: v.array(v.string()) }),

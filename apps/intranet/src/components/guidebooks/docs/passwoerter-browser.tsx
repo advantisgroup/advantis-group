@@ -37,7 +37,7 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "info",
-          body: "Der eingebaute „Password Checkup“ prüft laufend im Hintergrund, ob gespeicherte Zugangsdaten in bekannten Datenlecks aufgetaucht, mehrfach verwendet oder einfach zu erraten sind, und warnt euch direkt im Passwortmanager.",
+          body: "Der eingebaute „Password Checkup“ prüft laufend im Hintergrund, ob gespeicherte Zugangsdaten in bekannten Datenlecks aufgetaucht, mehrfach verwendet oder einfach zu erraten sind, und warnt dich direkt im Passwortmanager.",
         },
       ],
     },
@@ -56,7 +56,7 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "info",
-          body: "Der Microsoft Passwort-Manager synchronisiert Passwörter geräteübergreifend nur, wenn ihr in Edge mit einem **persönlichen Microsoft-Konto-Profil** angemeldet seid.",
+          body: "Der Microsoft Passwort-Manager synchronisiert Passwörter geräteübergreifend nur, wenn du in Edge mit einem **persönlichen Microsoft-Konto-Profil** angemeldet bist.",
         },
         {
           kind: "text",
@@ -75,7 +75,7 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "warning",
-          body: "Für Firmenkonten (Outlook, IONOS, Clockodo, Intranet) **niemals** das gleiche Passwort wie für private Konten verwenden. Der Passwort-Manager im Browser merkt sich für jeden Dienst ein eigenes, starkes Passwort — ihr müsst es euch nicht selbst merken.",
+          body: "Für Firmenkonten (Outlook, IONOS, Clockodo, Intranet) **niemals** das gleiche Passwort wie für private Konten verwenden. Der Passwort-Manager im Browser merkt sich für jeden Dienst ein eigenes, starkes Passwort — du musst es dir nicht selbst merken.",
         },
       ],
     },

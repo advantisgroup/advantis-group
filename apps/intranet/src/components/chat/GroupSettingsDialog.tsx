@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 import { isImage, uploadToConvex } from "@/lib/upload";
@@ -207,7 +208,7 @@ export function GroupSettingsDialog({
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
                 aria-label={t("changePhoto")}
-                className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full border-2 border-background bg-blue-500 text-white shadow-sm transition-colors hover:bg-blue-600 refreshed:bg-foreground refreshed:text-background refreshed:shadow-none refreshed:hover:bg-foreground/88"
+                className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full border-2 border-background transition-colors bg-foreground text-background shadow-none hover:bg-foreground/88"
               >
                 {uploading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -425,7 +426,7 @@ function SharedMedia({
   );
 
   if (results.length === 0 && status !== "LoadingFirstPage") {
-    return <p className="py-12 text-center text-sm text-muted-foreground">{emptyLabel}</p>;
+    return <EmptyState inline title={emptyLabel} />;
   }
 
   return (

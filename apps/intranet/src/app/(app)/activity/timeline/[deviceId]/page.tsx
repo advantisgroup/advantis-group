@@ -7,12 +7,23 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { ArrowLeft, ChevronLeft, ChevronRight, MonitorSmartphone } from "lucide-react";
+import {
+  Archive,
+  ArrowLeft,
+  CalendarDays,
+  ChartLine,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  ListTree,
+  MonitorSmartphone,
+  Sparkles,
+} from "lucide-react";
 
 import { StateStripLegend } from "@/components/activity/charts/StateStrip";
 import { StateTimelineChart } from "@/components/activity/charts/StateTimelineChart";
 import { STATE_COLOR } from "@/components/activity/charts/theme";
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { SourceSignals } from "@/components/activity/state/StateBits";
 import { StatusSummary } from "@/components/activity/state/StatusSummary";
 import { ChartsTab } from "@/components/activity/timeline/ChartsTab";
@@ -22,18 +33,12 @@ import { DiscardedTab } from "@/components/activity/timeline/DiscardedTab";
 import { ExportTab } from "@/components/activity/timeline/ExportTab";
 import { PatternReportTab } from "@/components/activity/timeline/PatternReportTab";
 import { RawTab } from "@/components/activity/timeline/RawTab";
+import { RouteTabs, type RouteTab } from "@/components/layout/RouteTabs";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import {
   dailyTrend,
   dayStateSegments,
@@ -257,6 +262,24 @@ export default function TimelinePage({ params }: { params: Promise<{ deviceId: s
   // "Since when" for the hero verdict: last heartbeat when offline, otherwise
   // the moment the fused state last changed.
   const since = device ? (!device.online ? device.lastSeen : device.finalStateSince) : null;
+
+  const tabFor = (value: string, label: string, icon: RouteTab["icon"]): RouteTab => ({
+    value,
+    label,
+    icon,
+    href: `/activity/timeline/${encodeURIComponent(deviceId)}?tab=${value}`,
+    onSelect: () => setTab(value),
+  });
+  const tabs = [
+    tabFor("charts", t("timeline.tabs.charts"), ChartLine),
+    tabFor("day", t("timeline.tabs.day"), CalendarDays),
+    tabFor("pattern", t("timeline.tabs.pattern"), Sparkles),
+    tabFor("raw", t("timeline.tabs.raw"), ListTree),
+    tabFor("export", t("timeline.tabs.export"), Download),
+    // Deliberately not a permanent tab — quarantined data is an audit surface
+    // reached via the "Missing data?" hint or Settings → Discarded data.
+    ...(tab === "discarded" ? [tabFor("discarded", t("timeline.tabs.discarded"), Archive)] : []),
+  ];
 
   return (
     <section className="space-y-6">
@@ -546,39 +569,10 @@ export default function TimelinePage({ params }: { params: Promise<{ deviceId: s
         onSelectDay={setSelectedDay}
       />
 
+      <RouteTabs tabs={tabs} activeValue={tab} />
+
       <Tabs value={tab} onValueChange={setTab}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {/* A full-width horizontal strip here would be a second control
-              competing with the mobile bottom nav's thumb-zone space, so
-              below md this collapses to a single compact Select instead. */}
-          <TabsList className="hidden md:inline-flex">
-            <TabsTrigger value="charts">{t("timeline.tabs.charts")}</TabsTrigger>
-            <TabsTrigger value="day">{t("timeline.tabs.day")}</TabsTrigger>
-            <TabsTrigger value="pattern">{t("timeline.tabs.pattern")}</TabsTrigger>
-            <TabsTrigger value="raw">{t("timeline.tabs.raw")}</TabsTrigger>
-            <TabsTrigger value="export">{t("timeline.tabs.export")}</TabsTrigger>
-            {/* Deliberately not a permanent tab — quarantined data is an
-                audit surface reached via the "Missing data?" hint or
-                Settings → Discarded data. Shown only while open. */}
-            {tab === "discarded" && (
-              <TabsTrigger value="discarded">{t("timeline.tabs.discarded")}</TabsTrigger>
-            )}
-          </TabsList>
-          <Select value={tab} onValueChange={setTab}>
-            <SelectTrigger className="w-40 md:hidden">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="charts">{t("timeline.tabs.charts")}</SelectItem>
-              <SelectItem value="day">{t("timeline.tabs.day")}</SelectItem>
-              <SelectItem value="pattern">{t("timeline.tabs.pattern")}</SelectItem>
-              <SelectItem value="raw">{t("timeline.tabs.raw")}</SelectItem>
-              <SelectItem value="export">{t("timeline.tabs.export")}</SelectItem>
-              {tab === "discarded" && (
-                <SelectItem value="discarded">{t("timeline.tabs.discarded")}</SelectItem>
-              )}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {tab !== "discarded" && (
             <InfoTip text={t("timeline.discarded.hint")} side="left">
               <button

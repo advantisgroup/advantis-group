@@ -21,7 +21,7 @@ function PopoverContent({
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          "z-50 w-72 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto rounded-lg border border-border/70 bg-card p-3 shadow-overlay outline-none refreshed:rounded-[10px]",
+          "z-50 w-72 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto border border-border/70 bg-card p-3 shadow-overlay outline-none rounded-[10px]",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",

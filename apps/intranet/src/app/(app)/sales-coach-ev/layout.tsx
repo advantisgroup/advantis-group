@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { BookOpen, PhoneCall, Settings2, TrendingUp, Users, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { RouteTabs } from "@/components/applicants/RouteTabs";
+import { RouteTabs } from "@/components/layout/RouteTabs";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin } from "@/components/providers/current-user";
 

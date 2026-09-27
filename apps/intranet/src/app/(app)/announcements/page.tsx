@@ -29,6 +29,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { Link } from "@/components/Link";
 import { useAsk } from "@/components/ai/ask-subject";
 import { useAiEnabled } from "@/components/ai/use-ai-enabled";
 import { Mark } from "@/components/branding/ProviderMark";
@@ -79,7 +80,7 @@ function CollapsibleBody({ html, title }: { html: string; title: string }) {
       >
         <MentionRichText html={html} sourcedDateSummary={title} />
         {overflowing && !expanded && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent refreshed:from-background" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t to-transparent from-background" />
         )}
       </div>
       {overflowing && (
@@ -209,8 +210,8 @@ function AnnouncementCard({
       ref={articleRef}
       className={cn(
         "group relative -mx-2 flex gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-accent/40",
-        // Refreshed: posts read as text split by hairlines, not rows of cards.
-        "refreshed:mx-0 refreshed:gap-3.5 refreshed:rounded-none refreshed:px-0 refreshed:py-5 refreshed:hover:bg-transparent",
+        // Posts read as text split by hairlines, not rows of cards.
+        "mx-0 gap-3.5 rounded-none px-0 py-5 hover:bg-transparent",
         (a.scheduled || a.expired) && "opacity-70",
         highlighted && "deeplink-hl",
       )}
@@ -269,17 +270,15 @@ function AnnouncementCard({
           {a.expired && <Badge variant="muted">{t("expired")}</Badge>}
         </div>
 
-        <div className="mt-1 min-w-0 overflow-hidden rounded-lg border border-border/60 bg-card px-3.5 py-3 refreshed:mt-2 refreshed:rounded-none refreshed:border-0 refreshed:bg-transparent refreshed:p-0">
+        <div className="min-w-0 overflow-hidden border-border/60 mt-2 rounded-none border-0 bg-transparent p-0">
           {a.relevantDate && (
             <RelevantDateCallout
               value={a.relevantDate}
               summary={a.title}
-              className="-mx-3.5 -mt-3 mb-3 border-t-0 refreshed:mx-0 refreshed:mt-0 refreshed:rounded-lg refreshed:border"
+              className="mb-3 mx-0 mt-0 rounded-lg border"
             />
           )}
-          <h2 className="font-display text-base font-semibold leading-tight refreshed:text-lg refreshed:tracking-tight">
-            {a.title}
-          </h2>
+          <h2 className="font-display font-semibold text-lg tracking-tight">{a.title}</h2>
           <div className="mt-1">
             <CollapsibleBody html={a.body} title={a.title} />
           </div>
@@ -647,11 +646,14 @@ export default function AnnouncementsPage() {
         <EmptyState
           icon={<Megaphone />}
           title={t("empty")}
+          description={isManager ? t("emptyHintManager") : t("emptyHint")}
           action={
             isManager ? (
-              <Button data-shortcut-new size="sm" onClick={() => router.push("/announcements/new")}>
-                <Plus />
-                {t("new")}
+              <Button data-shortcut-new size="sm" asChild>
+                <Link href="/announcements/new">
+                  <Plus />
+                  {t("new")}
+                </Link>
               </Button>
             ) : undefined
           }
@@ -679,13 +681,13 @@ export default function AnnouncementsPage() {
       <div className="space-y-6">
         {pinnedRows.length > 0 && otherRows.length > 0 ? (
           <>
-            <section className="space-y-4 refreshed:space-y-0 refreshed:divide-y refreshed:divide-border/60">
+            <section className="space-y-0 divide-y divide-border/60">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("pinnedSection")}
               </h2>
               {pinnedRows.map(renderCard)}
             </section>
-            <section className="space-y-4 refreshed:space-y-0 refreshed:divide-y refreshed:divide-border/60">
+            <section className="space-y-0 divide-y divide-border/60">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("latestSection")}
               </h2>
@@ -693,9 +695,7 @@ export default function AnnouncementsPage() {
             </section>
           </>
         ) : (
-          <div className="space-y-4 refreshed:space-y-0 refreshed:divide-y refreshed:divide-border/60">
-            {filtered.map(renderCard)}
-          </div>
+          <div className="space-y-0 divide-y divide-border/60">{filtered.map(renderCard)}</div>
         )}
       </div>
 

@@ -10,11 +10,6 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* `refreshed:` utilities only apply while the person has opted into the
-   refreshed design (see `DesignAttribute` in lib/design-preview.tsx), so
-   shared components can match it without changing the classic look. */
-@custom-variant refreshed (&:where([data-design="refreshed"], [data-design="refreshed"] *));
-
 @keyframes pulse-slow {
   0% {
     opacity: 0.4;
@@ -26,17 +21,6 @@
 
   100% {
     opacity: 0.4;
-  }
-}
-
-@keyframes shimmer {
-  0%,
-  100% {
-    background-position: 0% 0%;
-  }
-
-  50% {
-    background-position: 200% 0%;
   }
 }
 
@@ -250,15 +234,15 @@
   --animate-fade-in: fade-in 200ms linear both;
   --animate-scale-in: scale-in 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
   --animate-rise: rise 240ms cubic-bezier(0.23, 1, 0.32, 1) both;
-  --animate-shimmer: shimmer 1.6s linear infinite;
   --animate-pulse-dot: pulse-dot 2s ease-in-out infinite;
   --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
   --animate-caret-blink: caret-blink 1.25s ease-out infinite;
   --animate-shake: shake 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
-/* Refreshed design runs a tighter radius scale: 8px controls, 12px surfaces. */
-:root[data-design="refreshed"] {
+/* A tight radius scale: 8px controls, 12px surfaces. Un-layered so it wins
+   over the @theme defaults above. */
+:root {
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
@@ -266,17 +250,17 @@
   --radius-2xl: 14px;
 }
 
-/* Refreshed dark: the same warm near-neutral ground the light side uses,
+/* Dark: the same warm near-neutral ground the light side uses,
    read the other way up — a dark ground, one step of lift for cards, and
    borders that are a hairline rather than a line. Only the neutrals move;
    the Advantis red stays the accent, and the status/chart tokens below are
-   left alone so a chart means the same thing in either design.
+   left alone so a chart reads the same in either theme.
 
    `:not(.light)` rather than `.dark` because dark is what a bare `:root`
    already is here (see the palette in `@layer base`) — this has to cover the
    moment before the theme class lands as well as the explicit choice. Kept
    un-layered so it wins over those base values. */
-:root[data-design="refreshed"]:not(.light) {
+:root:not(.light) {
   --background: rgb(31 30 29);
   --foreground: rgb(245 244 239);
 

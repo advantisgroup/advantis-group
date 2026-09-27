@@ -31,9 +31,11 @@ import {
 } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
+import { useErrorText } from "@/hooks/use-error-handler";
 
 export function SecondaryEmailsCard() {
   const t = useTranslations("Settings");
+  const errorText = useErrorText();
   const confirm = useConfirm();
   const { secondaryEmails, refresh, apiRequest } = useSecurityState();
   const { runGuarded, dialog: stepUpDialog } = useDestructiveStepUp();
@@ -90,7 +92,7 @@ export function SecondaryEmailsCard() {
       setCode("");
       setStep("code");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("secondaryEmailAddError"));
+      setError(errorText(err, t("secondaryEmailAddError")));
     } finally {
       setBusy(false);
     }
@@ -108,7 +110,7 @@ export function SecondaryEmailsCard() {
         }),
       )) as { ok: boolean; message?: string };
       if (!result.ok) {
-        setError(result.message ?? t("secondaryEmailCodeError"));
+        setError(t("secondaryEmailCodeError"));
         setCode("");
         return;
       }
@@ -116,7 +118,7 @@ export function SecondaryEmailsCard() {
       setOpen(false);
       toast.success(t("secondaryEmailAdded"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("secondaryEmailCodeError"));
+      setError(errorText(err, t("secondaryEmailCodeError")));
       setCode("");
     } finally {
       setBusy(false);

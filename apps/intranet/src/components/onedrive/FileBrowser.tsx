@@ -12,6 +12,7 @@ import {
   Clock,
   Download,
   Folder,
+  FolderOpen,
   FolderPlus,
   Frown,
   LayoutGrid,
@@ -28,6 +29,7 @@ import {
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,6 +37,7 @@ import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { nextSort, type Sort, sortSign } from "@/components/ui/sortable-head";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { shouldEagerPrefetch } from "@/lib/network-heuristics";
 import { useOneDriveApi } from "@/lib/onedrive-api";
@@ -57,7 +60,7 @@ import { FilePreviewDialog } from "./FilePreviewDialog";
 import { UploadDropOverlay } from "./UploadDropOverlay";
 import {
   Breadcrumbs,
-  EmptyState,
+  FolderEmpty,
   FileCard,
   FileRow,
   GridTile,
@@ -87,6 +90,8 @@ export function FileBrowser({
   rootPath = "",
   rootLabel,
   routeBase = "/files",
+  title,
+  description,
 }: {
   initialPath?: string;
   /** Confines this browser to a subtree — used by the dedicated Wiki/HR
@@ -101,8 +106,13 @@ export function FileBrowser({
   /** The route this instance is mounted at — navigation stays under it
    * instead of always redirecting to `/files`. */
   routeBase?: string;
+  /** Names this file area in the page header. Left out where the page
+   * already has its own header (the wiki's Files tab). */
+  title?: string;
+  description?: string;
 }) {
   const t = useTranslations("Files");
+  const handleError = useErrorHandler();
   const tc = useTranslations("Common");
   const od = useOneDriveApi();
   const confirm = useConfirm();
@@ -184,12 +194,12 @@ export function FileBrowser({
           router.replace(url);
         }
       } catch (e) {
-        if (!cached) toast.error(e instanceof Error ? e.message : t("genericError"));
+        if (!cached) handleError(e);
       } finally {
         setLoading(false);
       }
     },
-    [od, t, router, routeBase, rootPath],
+    [od, handleError, router, routeBase, rootPath],
   );
 
   // Pushes the target folder into the URL immediately; the effect below
@@ -313,11 +323,11 @@ export function FileBrowser({
             : t("requestedCount", { count: total }),
         );
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : t("genericError"));
+        handleError(e);
         throw e;
       }
     },
-    [listing, od, path, refresh, t],
+    [handleError, listing, od, path, refresh, t],
   );
 
   /** One queue entry at a time; failures stay in the panel with a retry. */
@@ -379,7 +389,7 @@ export function FileBrowser({
       toast.success(t("deleted"));
       refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     }
   };
 
@@ -506,7 +516,7 @@ export function FileBrowser({
       }
       toast.success(t("deleted"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     }
     setSelected(new Set());
     refresh();
@@ -536,14 +546,17 @@ export function FileBrowser({
         <UploadDropOverlay enabled={canDrop} requiresApproval={!canWrite} onUpload={handleUpload} />
       )}
 
-      {/* Header: title + quota */}
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-lg font-semibold md:text-xl">{t("title")}</h1>
-        {quota && <QuotaBar quota={quota} />}
-      </div>
+      {title && (
+        <PageHeaderBar title={title} description={description} icon={<FolderOpen />} priority={1} />
+      )}
+      {quota && (
+        <div className="flex justify-end">
+          <QuotaBar quota={quota} />
+        </div>
+      )}
 
       {path === "" && !wikiNoticeDismissed && (
-        <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 refreshed:border-border/70 refreshed:bg-card">
+        <div className="flex items-start gap-3 rounded-xl border px-4 py-3 border-border/70 bg-card">
           <NotebookPen className="mt-0.5 size-4 shrink-0 text-primary" />
           <div className="min-w-0 flex-1 text-sm">
             <p className="font-medium">{t("wikiNoticeTitle")}</p>
@@ -734,7 +747,7 @@ export function FileBrowser({
             ))}
           </div>
         ) : items.length === 0 ? (
-          <EmptyState searching={results !== null} />
+          <FolderEmpty searching={results !== null} />
         ) : isMobile ? (
           <ul className="divide-y divide-border/60">
             {items.map((item) => (
@@ -764,7 +777,7 @@ export function FileBrowser({
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wide text-muted-foreground refreshed:bg-muted/40 refreshed:normal-case refreshed:tracking-normal">
+              <tr className="border-b border-border/60 text-left text-xs text-muted-foreground bg-muted/40 normal-case tracking-normal">
                 <th className="w-8 pl-3">
                   <Checkbox
                     aria-label={t("selectAll")}
@@ -819,9 +832,9 @@ export function FileBrowser({
 
       {/* Upload queue panel */}
       {queue.length > 0 && (
-        <div className="fixed bottom-20 right-4 z-40 w-72 rounded-xl border border-border bg-card p-3 shadow-lg md:bottom-4 refreshed:shadow-overlay">
+        <div className="fixed bottom-20 right-4 z-40 w-72 rounded-xl border border-border bg-card p-3 md:bottom-4 shadow-overlay">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+            <p className="text-xs text-muted-foreground font-medium normal-case tracking-normal">
               {t("uploadQueue")}
             </p>
             {queue.every((e) => e.status === "done" || e.status === "error") && (

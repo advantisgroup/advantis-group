@@ -20,7 +20,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
 
@@ -44,7 +46,7 @@ function verdictBadge(verdict: ScanReport["verdict"]) {
 
 const severityColor: Record<ScanSeverity, string> = {
   info: "text-muted-foreground",
-  warning: "text-amber-500",
+  warning: "text-warn",
   danger: "text-destructive",
 };
 
@@ -78,9 +80,7 @@ export function UploadApprovalQueue({
   }
 
   if (pending.length === 0) {
-    return (
-      <p className="py-12 text-center text-sm text-muted-foreground">{t("noPendingUploads")}</p>
-    );
+    return <EmptyState inline title={t("noPendingUploads")} />;
   }
 
   return (
@@ -127,6 +127,7 @@ function InspectorDialog({
   readOnly: boolean;
 }) {
   const t = useTranslations("Admin");
+  const handleError = useErrorHandler();
   const od = useOneDriveApi();
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState<"approve" | "deny" | null>(null);
@@ -146,7 +147,7 @@ function InspectorDialog({
       setNote("");
       onClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     } finally {
       setBusy(null);
     }

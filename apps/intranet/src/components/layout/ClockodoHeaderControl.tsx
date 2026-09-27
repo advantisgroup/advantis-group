@@ -57,7 +57,7 @@ export function ClockodoHeaderControl() {
           >
             <Icon className="size-3.5" />
             {working && (
-              <span className="absolute right-0 top-0 size-1.5 animate-pulse rounded-full bg-emerald-500" />
+              <span className="absolute right-0 top-0 size-1.5 animate-pulse rounded-full bg-ok" />
             )}
           </span>
           <span className="relative z-10 min-w-0 leading-tight">

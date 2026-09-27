@@ -23,7 +23,7 @@ const DOC: DocContent = {
         },
         {
           kind: "text",
-          body: "Für jede Anfrage: Rolle über das Dropdown auswählen (Standard **„Mitarbeiter“** — die Rolle „Admin“ könnt ihr als Führungskraft nicht vergeben, das ist Admins vorbehalten), dann **„Ablehnen“** oder **„Genehmigen“** klicken.",
+          body: "Für jede Anfrage: Rolle über das Dropdown auswählen (Standard **„Mitarbeiter“** — die Rolle „Admin“ kannst du als Führungskraft nicht vergeben, das ist Admins vorbehalten), dann **„Ablehnen“** oder **„Genehmigen“** klicken.",
         },
       ],
     },
@@ -42,7 +42,7 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "tip",
-          body: "Für die private E-Mail-Adresse der neuen Person einladen, nicht auf eine Firmenadresse warten. Für den Intranet-Zugang macht das keinen Unterschied — die Person meldet sich einfach mit der eingeladenen Adresse an. Damit könnt ihr sofort loslegen, statt erst mit IT eine Firmen-Mailbox einzurichten. Eine Firmenadresse kann später jederzeit ergänzt werden, falls gewünscht.",
+          body: "Für die private E-Mail-Adresse der neuen Person einladen, nicht auf eine Firmenadresse warten. Für den Intranet-Zugang macht das keinen Unterschied — die Person meldet sich einfach mit der eingeladenen Adresse an. Damit kann es sofort losgehen, statt erst mit IT eine Firmen-Mailbox einzurichten. Eine Firmenadresse kann später jederzeit ergänzt werden, falls gewünscht.",
         },
         {
           kind: "text",
@@ -60,7 +60,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Abteilung, Team und Jobtitel trägt sich jede:r beim ersten Login selbst im eigenen Profil ein — dafür braucht es keinen Eingriff von euch. Die vollständige Checkliste für den ersten Tag steht im Guidebook **„Onboarding“**.",
+          body: "Abteilung, Team und Jobtitel trägt sich jede:r beim ersten Login selbst im eigenen Profil ein — dafür musst du nichts tun. Die vollständige Checkliste für den ersten Tag steht im Guidebook **„Onboarding“**.",
         },
         {
           kind: "links",
@@ -111,7 +111,7 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "info",
-          body: "Rolle ändern, Geschäftsführungs-Zugriff gewähren, erneut einladen sowie ein Konto sperren oder entfernen sind **Admin-only** — als Führungskraft seht ihr diese Menüpunkte nicht.",
+          body: "Rolle ändern, Geschäftsführungs-Zugriff gewähren, erneut einladen sowie ein Konto sperren oder entfernen sind **Admin-only** — als Führungskraft siehst du diese Menüpunkte nicht.",
         },
       ],
     },

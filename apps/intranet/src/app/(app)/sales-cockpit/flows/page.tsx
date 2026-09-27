@@ -11,6 +11,7 @@ import { Plus, Trash2, Workflow } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
@@ -18,6 +19,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -122,7 +124,6 @@ function NewFlowDialog({
 export default function SalesCockpitFlowsPage() {
   const t = useTranslations("SalesCockpit");
   const tc = useTranslations("Common");
-  const router = useRouter();
   const confirm = useConfirm();
   const handleError = useErrorHandler();
   const flows = useQuery(api.salesCockpit.flows.listFlows);
@@ -157,7 +158,7 @@ export default function SalesCockpitFlowsPage() {
       </div>
 
       {flows === undefined ? (
-        <p className="text-sm text-muted-foreground">{t("loading")}</p>
+        <SkeletonRows className="py-2" />
       ) : flows.length === 0 ? (
         <EmptyState icon={<Workflow />} title={t("keineFlows")} />
       ) : (
@@ -168,9 +169,8 @@ export default function SalesCockpitFlowsPage() {
                 key={flow._id}
                 className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
               >
-                <button
-                  type="button"
-                  onClick={() => router.push(`/sales-cockpit/flows/${flow._id}`)}
+                <Link
+                  href={`/sales-cockpit/flows/${flow._id}`}
                   className="min-w-0 flex-1 text-left"
                 >
                   <b className="block truncate text-sm hover:underline">{flow.titel}</b>
@@ -179,7 +179,7 @@ export default function SalesCockpitFlowsPage() {
                     {t("flowKnoten", { n: flow.nodeCount })}
                     {flow.updatedAt ? ` · ${formatDateTime(flow.updatedAt, "de-DE")}` : ""}
                   </p>
-                </button>
+                </Link>
                 <Button
                   variant="ghost"
                   size="icon-sm"

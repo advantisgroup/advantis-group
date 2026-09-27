@@ -318,7 +318,7 @@ function DirectoryPageContent() {
   // simply the more readable shape, and the grid is for browsing faces.
   const viewSwitch = (
     <div
-      className="flex shrink-0 items-center gap-0.5 rounded-lg border border-border/70 bg-panel-2 p-0.5 refreshed:bg-muted/40"
+      className="flex shrink-0 items-center gap-0.5 rounded-lg border border-border/70 p-0.5 bg-muted/40"
       role="group"
       aria-label={t("view")}
     >
@@ -336,7 +336,7 @@ function DirectoryPageContent() {
           aria-pressed={view === mode}
           onClick={() => setView(mode)}
           className={cn(
-            "grid size-8 place-items-center rounded-md transition-colors refreshed:size-7",
+            "grid place-items-center rounded-md transition-colors size-7",
             view === mode
               ? "bg-card text-foreground shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
               : "text-muted-foreground hover:text-foreground",

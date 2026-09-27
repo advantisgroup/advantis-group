@@ -43,7 +43,7 @@ export const STATUS_TINT: Record<ReportStatus, string> = {
   geschlossen: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
 };
 
-/** Theme tokens (not Tailwind shades) for the refreshed design, so the list
+/** Theme tokens (not Tailwind shades), so the list
  * dot, the panel's top edge and the status chip agree in both themes. */
 export const SEVERITY_ACCENT: Record<Severity, string> = {
   niedrig: "var(--muted-foreground)",

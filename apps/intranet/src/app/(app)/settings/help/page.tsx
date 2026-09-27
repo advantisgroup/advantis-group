@@ -10,17 +10,13 @@ import { Button } from "@/components/ui/button";
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 
 function CheckpointStatusIcon({ status }: { status: CheckpointStatus }) {
-  if (status === "completed")
-    return <Check className="size-3.5 text-green-500 refreshed:text-ok" />;
+  if (status === "completed") return <Check className="size-3.5 text-ok" />;
   if (status === "skipped") return <SkipForward className="size-3.5 text-muted-foreground" />;
-  if (status === "active")
-    return (
-      <Circle className="size-3.5 fill-blue-500 text-blue-500 refreshed:fill-info refreshed:text-info" />
-    );
+  if (status === "active") return <Circle className="size-3.5 fill-info text-info" />;
   return <Circle className="size-3.5 text-muted-foreground/40" />;
 }
 
-function RefreshedHelp() {
+export default function SettingsHelpPage() {
   const t = useTranslations("Onboarding");
   const tt = useTranslations("Tour");
   const { restart } = useOnboarding();
@@ -77,8 +73,4 @@ function RefreshedHelp() {
       )}
     </>
   );
-}
-
-export default function SettingsHelpPage() {
-  return <RefreshedHelp />;
 }

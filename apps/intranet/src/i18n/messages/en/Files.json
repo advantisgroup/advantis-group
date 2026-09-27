@@ -73,5 +73,7 @@
   "chooseFolder": "Choose a folder",
   "chooseFolderHint": "Browse into a subfolder, or upload straight to the current one.",
   "selectThisFolder": "Save here",
-  "noSubfolders": "No subfolders here yet."
+  "noSubfolders": "No subfolders here yet.",
+  "companyTitle": "Company files",
+  "companyDescription": "The shared company OneDrive: the same folders for everyone with file access."
 }

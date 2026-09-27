@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { BookOpen, FolderOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { type RouteTab } from "@/components/applicants/RouteTabs";
+import { type RouteTab } from "@/components/layout/RouteTabs";
 import { useHasCapability } from "@/components/providers/current-user";
 
 /**

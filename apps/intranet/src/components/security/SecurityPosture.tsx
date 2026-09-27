@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 
 import { MOTION } from "@/components/activity/motion/motion-tokens";
 import { SettingsSection } from "@/components/ui/settings-rows";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 import { scorePosture, useSecurityState, type Posture, type PostureTier } from "./security-state";
@@ -111,9 +112,7 @@ export function SecurityPosture() {
   const animate = !prefersReducedMotion;
 
   if (loading) {
-    return (
-      <div className="h-[7.5rem] animate-pulse rounded-2xl border border-border/60 bg-muted/30" />
-    );
+    return <Skeleton className="h-[7.5rem] rounded-2xl" />;
   }
 
   // A failed request leaves these null, which scores identically to "you have
@@ -156,12 +155,12 @@ export function SecurityPosture() {
     <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
       <div className="min-w-0 flex-1">
         <p
-          className="text-[0.7rem] font-medium uppercase tracking-[0.16em] refreshed:hidden"
+          className="text-[0.7rem] font-medium uppercase tracking-[0.16em] hidden"
           style={{ color: accent }}
         >
           {t("posture.eyebrow")}
         </p>
-        <h2 className="mt-1 font-display text-xl font-bold tracking-tight text-balance refreshed:mt-0 refreshed:text-lg refreshed:font-semibold">
+        <h2 className="font-display tracking-tight text-balance mt-0 text-lg font-semibold">
           {title}
         </h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground text-pretty">

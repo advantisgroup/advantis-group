@@ -4,6 +4,7 @@ import * as React from "react";
 import { createContext, type ReactNode, useCallback, useContext, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { AlertTriangle, CheckCircle2, CircleAlert, Lightbulb, X, XCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Drawer } from "vaul";
 
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,12 @@ type DialogContentProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.
   hideClose?: boolean;
 };
 
+/** Screen-reader name for the corner close button, in the reader's language. */
+export function CloseLabel() {
+  const tc = useTranslations("Common");
+  return <span className="sr-only">{tc("close")}</span>;
+}
+
 /**
  * One quiet surface: generous padding, no rules between header, body and
  * footer — spacing does that job. The close button is a bare icon in the
@@ -78,7 +85,7 @@ const DialogContent = React.forwardRef<
           className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
         >
           <X className="size-[18px]" />
-          <span className="sr-only">Close</span>
+          <CloseLabel />
         </DialogPrimitive.Close>
       )}
     </DialogPrimitive.Content>
@@ -349,6 +356,7 @@ function ConfirmDialogPanel({
 }
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const tc = useTranslations("Common");
   const [open, setOpen] = useState(false);
   const [opts, setOpts] = useState<ConfirmOptions | null>(null);
   const [typedConfirm, setTypedConfirm] = useState("");
@@ -410,8 +418,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                 typedConfirm={typedConfirm}
                 onTypedConfirmChange={setTypedConfirm}
                 confirmBlocked={confirmBlocked}
-                cancelLabel={opts?.cancelLabel ?? "Cancel"}
-                confirmLabel={opts?.confirmLabel ?? "Confirm"}
+                cancelLabel={opts?.cancelLabel ?? tc("cancel")}
+                confirmLabel={opts?.confirmLabel ?? tc("confirm")}
                 onCancel={() => settle(false)}
                 onConfirm={() => settle(true)}
               />
@@ -438,8 +446,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               typedConfirm={typedConfirm}
               onTypedConfirmChange={setTypedConfirm}
               confirmBlocked={confirmBlocked}
-              cancelLabel={opts?.cancelLabel ?? "Cancel"}
-              confirmLabel={opts?.confirmLabel ?? "Confirm"}
+              cancelLabel={opts?.cancelLabel ?? tc("cancel")}
+              confirmLabel={opts?.confirmLabel ?? tc("confirm")}
               onCancel={() => settle(false)}
               onConfirm={() => settle(true)}
             />

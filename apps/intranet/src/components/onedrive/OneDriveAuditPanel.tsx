@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatDateTime } from "@/lib/format";
 
 /** Read-only "who did what" feed for OneDrive actions. Manager+. */
@@ -21,7 +22,7 @@ export function OneDriveAuditPanel() {
     );
   }
   if (rows.length === 0) {
-    return <p className="py-12 text-center text-sm text-muted-foreground">{t("noAudit")}</p>;
+    return <EmptyState inline title={t("noAudit")} />;
   }
 
   return (

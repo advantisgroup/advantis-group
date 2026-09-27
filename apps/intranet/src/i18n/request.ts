@@ -9,6 +9,7 @@ import deAbsences from "./messages/de/Absences.json";
 import deAccess from "./messages/de/Access.json";
 import deAccessDenied from "./messages/de/AccessDenied.json";
 import deActivity from "./messages/de/Activity.json";
+import deActivityTrack from "./messages/de/ActivityTrack.json";
 import deAdmin from "./messages/de/Admin.json";
 import deAi from "./messages/de/Ai.json";
 import deAnnouncements from "./messages/de/Announcements.json";
@@ -35,6 +36,7 @@ import deFiles from "./messages/de/Files.json";
 import deFileViewer from "./messages/de/FileViewer.json";
 import deForbidden from "./messages/de/Forbidden.json";
 import deGuidebooks from "./messages/de/Guidebooks.json";
+import deHelp from "./messages/de/Help.json";
 import deImprint from "./messages/de/imprint.json";
 import deIntegrations from "./messages/de/Integrations.json";
 import deInquiries from "./messages/de/Inquiries.json";
@@ -63,6 +65,7 @@ import enAbsences from "./messages/en/Absences.json";
 import enAccess from "./messages/en/Access.json";
 import enAccessDenied from "./messages/en/AccessDenied.json";
 import enActivity from "./messages/en/Activity.json";
+import enActivityTrack from "./messages/en/ActivityTrack.json";
 import enAdmin from "./messages/en/Admin.json";
 import enAi from "./messages/en/Ai.json";
 import enAnnouncements from "./messages/en/Announcements.json";
@@ -89,6 +92,7 @@ import enFiles from "./messages/en/Files.json";
 import enFileViewer from "./messages/en/FileViewer.json";
 import enForbidden from "./messages/en/Forbidden.json";
 import enGuidebooks from "./messages/en/Guidebooks.json";
+import enHelp from "./messages/en/Help.json";
 import enImprint from "./messages/en/imprint.json";
 import enIntegrations from "./messages/en/Integrations.json";
 import enInquiries from "./messages/en/Inquiries.json";
@@ -146,6 +150,7 @@ const messagesByLocale = {
     Teams: enTeams,
     CustomRoles: enCustomRoles,
     Guidebooks: enGuidebooks,
+    Help: enHelp,
     Blog: enBlog,
     CaseSearch: enCaseSearch,
     Settings: enSettings,
@@ -157,6 +162,7 @@ const messagesByLocale = {
     Errors: enErrors,
     ErrorManagement: enErrorManagement,
     Activity: enActivity,
+    ActivityTrack: enActivityTrack,
     Files: enFiles,
     FileViewer: enFileViewer,
     Updates: enUpdates,
@@ -202,6 +208,7 @@ const messagesByLocale = {
     Teams: deTeams,
     CustomRoles: deCustomRoles,
     Guidebooks: deGuidebooks,
+    Help: deHelp,
     Blog: deBlog,
     CaseSearch: deCaseSearch,
     Settings: deSettings,
@@ -213,6 +220,7 @@ const messagesByLocale = {
     Errors: deErrors,
     ErrorManagement: deErrorManagement,
     Activity: deActivity,
+    ActivityTrack: deActivityTrack,
     Files: deFiles,
     FileViewer: deFileViewer,
     Updates: deUpdates,

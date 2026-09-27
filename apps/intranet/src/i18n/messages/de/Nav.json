@@ -1,5 +1,6 @@
 {
   "dashboard": "Übersicht",
+  "approvals": "Freigaben",
   "calendar": "Kalender",
   "absences": "Clockodo",
   "announcements": "Ankündigungen",
@@ -48,8 +49,8 @@
   "signOut": "Abmelden",
   "viewAs": "Ansicht als",
   "viewAsRole": "Ansicht als {role}",
-  "sandboxActive": "Sandbox-Modus: Ansicht als {role}. Änderungen sind deaktiviert.",
-  "exitSandbox": "Sandbox beenden",
+  "sandboxActive": "Du siehst das Intranet so, wie {role} es sieht. Änderungen sind dabei ausgeschaltet.",
+  "exitSandbox": "Zurück zur eigenen Ansicht",
   "files": "Dateien",
   "errorManagement": "Fehlermanagement",
   "integrations": "Integrationen",
@@ -64,5 +65,6 @@
     "Direkter Draht zum gesamten Team per Chat",
     "Sicher — nur für Advantis Mitarbeitende"
   ],
-  "playground": "Spielwiese"
+  "playground": "Spielwiese",
+  "help": "Hilfe & Anfragen"
 }

@@ -28,27 +28,27 @@ const DOC: DocContent = {
         },
         {
           kind: "text",
-          body: "Jeder offene Antrag zeigt Name, Abteilung, Zeitraum, Anzahl Arbeitstage und eine optionale Begründung. Rechts daneben zwei Buttons: **„Ablehnen“** (Rahmen-Button) und **„Genehmigen“** (ausgefüllter Button).",
+          body: "Jeder offene Antrag zeigt Name, Abteilung, Art, Zeitraum, Anzahl Arbeitstage und eine optionale Begründung. Rechts daneben zwei Buttons: **„Ablehnen“** und **„Genehmigen“**.",
         },
         {
-          kind: "text",
-          body: "„Ablehnen“ öffnet den Dialog **„Antrag ablehnen“** mit einem optionalen Notizfeld für die betroffene Person — danach mit dem roten **„Ablehnen“**-Button bestätigen.",
+          kind: "callout",
+          tone: "warning",
+          body: "Ein Klick entscheidet sofort — es gibt keine Rückfrage und kein Notizfeld. Soll die Person wissen, warum ein Antrag abgelehnt wurde, schreib ihr kurz im Chat.",
         },
         {
           kind: "callout",
           tone: "info",
-          body: "Als Führungskraft seht ihr hier nur Anträge eurer direkten Teammitglieder. Admins sehen alle Anträge im Unternehmen.",
+          body: "Mit Team-Zugriff auf Clockodo siehst du alle offenen Anträge im Unternehmen. Deine eigenen Anträge kannst du nicht selbst genehmigen. Dieselben Anträge stehen auch unter **„Freigaben“** in der Seitenleiste.",
         },
       ],
     },
     {
       id: "clockodo-vs-intranet",
-      title: "Clockodo- vs. Intranet-Anträge",
+      title: "Alles landet in Clockodo",
       blocks: [
         {
-          kind: "callout",
-          tone: "warning",
-          body: "Anträge mit dem Clockodo-Symbol sind aus Clockodo synchronisiert und hier schreibgeschützt — „Genehmigen“/„Ablehnen“ funktioniert nur bei Anträgen, die direkt im Intranet gestellt wurden. Clockodo-Anträge werden in Clockodo selbst entschieden (siehe Guidebook „Zeiterfassung mit Clockodo“).",
+          kind: "text",
+          body: "Abwesenheiten werden direkt in Clockodo gespeichert — egal ob sie im Intranet oder in Clockodo selbst beantragt wurden. Hier erscheinen deshalb alle offenen Anträge, und deine Entscheidung gilt sofort auch in Clockodo.",
         },
       ],
     },
@@ -58,7 +58,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Oben im Reiter „Genehmigungen“ zeigt **„Abwesend in den nächsten 14 Tagen“** auf einen Blick, wer aus eurem Team in den kommenden zwei Wochen weg ist.",
+          body: "Oben im Reiter „Genehmigungen“ zeigt **„Abwesend in den nächsten 14 Tagen“** auf einen Blick, wer aus deinem Team in den kommenden zwei Wochen weg ist.",
         },
       ],
     },

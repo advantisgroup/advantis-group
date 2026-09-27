@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 type FlowNode = NonNullable<
@@ -69,7 +70,7 @@ export function FlowPlayer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
   }, [focus, activeId, nodesById, childrenByParent]);
 
   if (flow === undefined) {
-    return <p className="text-sm text-muted-foreground">{t("loading")}</p>;
+    return <SkeletonRows className="py-2" />;
   }
   if (!node || !rootId) {
     return <p className="text-sm text-muted-foreground">{t("flowLeer")}</p>;

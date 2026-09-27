@@ -81,9 +81,9 @@ export function StationsFinder() {
   return (
     <div className="space-y-6">
       {/* Hero open button */}
-      <Card className="overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 refreshed:border refreshed:border-border/70 refreshed:bg-none refreshed:bg-card">
+      <Card className="overflow-hidden border border-border/70 bg-card">
         <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary refreshed:bg-muted refreshed:text-foreground">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted text-foreground">
             <MapPin className="h-8 w-8" />
           </div>
           <div>
@@ -96,7 +96,7 @@ export function StationsFinder() {
             href={STATION_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-opacity hover:opacity-90 refreshed:rounded-lg refreshed:bg-foreground refreshed:text-background refreshed:shadow-none"
+            className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold transition-opacity hover:opacity-90 rounded-lg bg-foreground text-background shadow-none"
           >
             <ExternalLink className="h-4 w-4" />
             Stationsfinder öffnen
@@ -125,7 +125,7 @@ export function StationsFinder() {
 
       {/* Quick links */}
       <div>
-        <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+        <p className="mb-2.5 text-xs text-muted-foreground font-medium normal-case tracking-normal">
           Schnellzugriff
         </p>
         <div className="flex flex-wrap gap-2">

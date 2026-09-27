@@ -6,7 +6,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { AlertTriangle, CheckCircle2, WifiOff } from "lucide-react";
 
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { SkeletonCard } from "@/components/activity/Skeleton";
 import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
@@ -222,11 +222,15 @@ export function SystemPanel() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("health.detail.severity")}</TableHead>
-                  <TableHead>{t("health.detail.event")}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t("health.detail.event")}</TableHead>
                   <TableHead>{t("health.detail.message")}</TableHead>
-                  <TableHead>{t("health.detail.source")}</TableHead>
-                  <TableHead>{t("health.detail.device")}</TableHead>
-                  <TableHead>{t("health.detail.count")}</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    {t("health.detail.source")}
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    {t("health.detail.device")}
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">{t("health.detail.count")}</TableHead>
                   <TableHead>{t("health.detail.lastAt")}</TableHead>
                   <TableHead>{t("health.detail.status")}</TableHead>
                   <TableHead />
@@ -253,7 +257,9 @@ export function SystemPanel() {
                           {t(`health.sev.${e.severity}`)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-mono text-xs">{e.code}</TableCell>
+                      <TableCell className="hidden md:table-cell font-mono text-xs">
+                        {e.code}
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         {e.message}
                         {e.context && (
@@ -261,14 +267,21 @@ export function SystemPanel() {
                             {e.context}
                           </span>
                         )}
+                        {/* Phones drop the event, source, device and count
+                            columns; where it happened rides along under the
+                            message instead. */}
+                        <span className="mt-1 block text-[11px] text-muted-foreground/80 md:hidden">
+                          {t(`health.src.${e.source}`)} · {e.hostname ?? e.deviceId ?? "—"}
+                          {e.count > 1 ? ` · ×${e.count}` : ""}
+                        </span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="hidden md:table-cell text-muted-foreground">
                         {t(`health.src.${e.source}`)}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="hidden md:table-cell text-muted-foreground">
                         {e.hostname ?? e.deviceId ?? "—"}
                       </TableCell>
-                      <TableCell className="tabular-nums">{e.count}</TableCell>
+                      <TableCell className="hidden md:table-cell tabular-nums">{e.count}</TableCell>
                       <TableCell className="whitespace-nowrap text-muted-foreground">
                         {formatTime(e.lastAt, lang)}
                       </TableCell>

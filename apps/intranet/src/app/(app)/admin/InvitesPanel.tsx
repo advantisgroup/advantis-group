@@ -130,11 +130,7 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
           />
           <RoleSelect value={role} onChange={setRole} canElevate={isAdmin} />
         </div>
-        {enteredExternal && (
-          <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
-            {t("inviteExternalHint")}
-          </p>
-        )}
+        {enteredExternal && <p className="mt-2 text-xs text-warn">{t("inviteExternalHint")}</p>}
       </ResponsiveDialog>
       {pending.length === 0 ? (
         <EmptyState icon={<Mail />} title={t("noInvites")} />

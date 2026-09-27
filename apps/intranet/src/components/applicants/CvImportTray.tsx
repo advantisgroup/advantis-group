@@ -11,6 +11,7 @@ import { FileText, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { Link } from "@/components/Link";
 import { AiGlyph } from "@/components/ai/AiGlyph";
 import { aiErrorKey } from "@/components/ai/AiRunCard";
 import { AiThinking } from "@/components/ai/AiThinking";
@@ -140,12 +141,8 @@ function CvImportRow({ runId, index }: { runId: Id<"aiRuns">; index: number }) {
           </>
         )}
         {failed && file && (
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={() => router.push(`/hr/cv-review?run=${runId}`)}
-          >
-            {t("fillManually")}
+          <Button size="xs" variant="outline" asChild>
+            <Link href={`/hr/cv-review?run=${runId}`}>{t("fillManually")}</Link>
           </Button>
         )}
         {failed && !file && (

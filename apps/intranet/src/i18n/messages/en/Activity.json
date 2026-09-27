@@ -85,7 +85,7 @@
   },
   "migration": {
     "title": "Data migration",
-    "description": "One-time import of ActivityTrack data from the old deployment into the intranet. Resumable and idempotent — re-running is safe.",
+    "description": "One-time import of ActivityTrack data from the old standalone app into the intranet. Safe to run again: it picks up where it stopped and skips anything already imported.",
     "start": "Start migration",
     "resume": "Resume",
     "retry": "Retry failed step",

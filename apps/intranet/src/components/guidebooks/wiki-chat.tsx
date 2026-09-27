@@ -359,7 +359,7 @@ export function WikiChat({ className }: { className?: string } = {}) {
               <div className="mx-auto flex h-full max-w-xl flex-col items-center justify-center gap-5 px-6 py-10 text-center">
                 <AiGlyph className="size-7" />
                 <div>
-                  <h2 className="font-display text-2xl font-bold tracking-tight refreshed:text-xl refreshed:font-semibold">
+                  <h2 className="font-display tracking-tight text-xl font-semibold">
                     {t("wikiChat.emptyTitle")}
                   </h2>
                   <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">

@@ -12,7 +12,7 @@ import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { AmpelDot } from "@/components/applicants/AmpelBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 import type { FunctionReturnType } from "convex/server";
@@ -225,13 +226,11 @@ export function SkillProfilePanel() {
         </Button>
       </div>
 
-      {profiles && profiles.length === 0 && (
-        <p className="py-8 text-center text-sm text-muted-foreground">{t("noProfiles")}</p>
-      )}
+      {profiles && profiles.length === 0 && <EmptyState inline title={t("noProfiles")} />}
 
       <div className="space-y-2">
         {profiles?.map((profile) => (
-          <Card nested key={profile._id}>
+          <Card key={profile._id}>
             <CardContent className="p-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">

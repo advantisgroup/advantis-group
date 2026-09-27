@@ -101,7 +101,7 @@ export default function PerformancePasswordPage() {
             </div>
             <div className="flex items-center justify-end gap-3 pt-1">
               {done && (
-                <p className="mr-auto flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400">
+                <p className="mr-auto flex items-center gap-1.5 text-sm text-ok">
                   <CheckCircle2 className="h-4 w-4" />
                   {t("passwordChanged")}
                 </p>

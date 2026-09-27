@@ -9,7 +9,7 @@ import { KeyRound, ShieldCheck, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { VaultStepUpDialog } from "@/components/applicants/VaultStepUpDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -153,7 +153,7 @@ export function ApplicantAccessPanel() {
           <p className="text-sm text-muted-foreground">{t("noOneHasAccess")}</p>
         ) : (
           granted.map((u) => (
-            <Card nested key={u._id}>
+            <Card key={u._id}>
               <CardContent className="flex flex-wrap items-center justify-between gap-2 p-3">
                 <div className="min-w-0">
                   <p className="truncate font-medium">{u.name}</p>

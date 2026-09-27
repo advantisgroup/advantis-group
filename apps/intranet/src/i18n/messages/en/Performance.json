@@ -370,7 +370,7 @@
   "companyDeleteConfirm": "Delete permanently",
   "companyDeleted": "Company deleted.",
   "rolesTitle": "Roles & permissions",
-  "rolesIntro": "Define who can do what — every new role applies immediately, no deploy needed.",
+  "rolesIntro": "Define who can do what. A new or changed role applies straight away.",
   "rolesCompanyPlaceholder": "Select a company",
   "rolesCompanyEmpty": "Select a company above to manage its roles.",
   "rolesEmpty": "No roles yet.",

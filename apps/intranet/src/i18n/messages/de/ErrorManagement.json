@@ -1,6 +1,6 @@
 {
   "pageTitle": "Fehlermanagement",
-  "pageDescription": "Fehler erfassen, eskalieren und mit 8D-/PDCA-Maßnahmen abstellen.",
+  "pageDescription": "Qualitätsprobleme und Reklamationen erfassen und die Maßnahmen verfolgen, bis die Ursache behoben ist.",
   "tabErfassung": "Fehler",
   "tabMeasures": "Maßnahmen (8D-PDCA)",
   "tabDashboard": "Dashboard",
@@ -75,6 +75,7 @@
   "searchPlaceholder": "Fehler suchen (Beschreibung, Kunde…)",
   "noResults": "Keine Fehler entsprechen deinen Filtern",
   "empty": "Noch keine Fehler erfasst",
+  "emptyHint": "Erfasse hier ein Qualitätsproblem oder eine Reklamation und verfolge die Maßnahmen, bis die Ursache behoben ist und es nicht wieder passiert.",
   "overdueBadge": "Überfällig",
   "customerNotInformedBadge": "Kunde noch nicht informiert",
   "closeNeedsEffectivenessCheck": "Die Wirksamkeit der Maßnahmen wurde noch nicht geprüft — trotzdem schließen?",

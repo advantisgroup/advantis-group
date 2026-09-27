@@ -67,10 +67,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { addLocalDays, useStartOfToday } from "@/hooks/use-today";
+import { localIsoDate } from "@/lib/absences";
 import { cn } from "@/lib/utils";
-
-const now = Date.now();
-const startOfToday = new Date(now).setHours(0, 0, 0, 0);
 
 const CARD_IDS = [
   "aibrief",
@@ -126,9 +125,10 @@ export default function DashboardPage() {
     );
   const hasApplicantPipelineHealth = isManager && (isAdmin || user.applicantAccess);
 
+  const startOfToday = useStartOfToday();
   const events = useQuery(api.events.listForRange, {
     start: startOfToday,
-    end: now + 30 * 24 * 60 * 60 * 1000,
+    end: addLocalDays(startOfToday, 31),
   });
   const newWikiPages = useLatestWikiPages();
   const prefs = useQuery(api.people.preferences.getMine);
@@ -190,15 +190,12 @@ export default function DashboardPage() {
   }
 
   const todaysEvents = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localIsoDate(new Date(startOfToday));
     return (events ?? []).filter((e) => {
-      const iso = (ms: number) => {
-        const d = new Date(ms);
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      };
+      const iso = (ms: number) => localIsoDate(new Date(ms));
       return iso(e.start) <= today && today <= iso(e.end);
     });
-  }, [events]);
+  }, [events, startOfToday]);
 
   const cardLabels: Record<CardId, string> = {
     aibrief: t("briefTitle"),

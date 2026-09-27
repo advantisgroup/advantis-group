@@ -20,6 +20,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import type { CurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useStartOfToday } from "@/hooks/use-today";
+import { localIsoDate } from "@/lib/absences";
 import { useMyAbsences } from "@/lib/absences-api";
 import { formatDateTime, formatIsoDate, formatTime, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -61,19 +63,19 @@ export function MyWeekCard() {
   const t = useTranslations("Dashboard");
   const tAbs = useTranslations("Absences");
   const locale = useLocale();
+  const startOfToday = useStartOfToday();
   const period = useMemo(() => {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
+    const start = new Date(startOfToday);
     const end = new Date(start);
     end.setDate(end.getDate() + 7);
     end.setHours(23, 59, 59, 999);
     return {
       start: start.getTime(),
       end: end.getTime(),
-      startIso: start.toISOString().slice(0, 10),
-      endIso: end.toISOString().slice(0, 10),
+      startIso: localIsoDate(start),
+      endIso: localIsoDate(end),
     };
-  }, []);
+  }, [startOfToday]);
   const events = useQuery(api.events.listForRange, { start: period.start, end: period.end });
   const { absences } = useMyAbsences();
 

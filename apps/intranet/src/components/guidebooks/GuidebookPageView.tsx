@@ -8,9 +8,8 @@ import { type Block } from "@/lib/guidebook-blocks";
 import { cn } from "@/lib/utils";
 
 const CALLOUT_STYLES: Record<"info" | "warning", string> = {
-  info: "border-sky-400/40 bg-sky-500/10 text-sky-900 dark:text-sky-100 refreshed:border-info/30 refreshed:bg-info/10 refreshed:text-foreground",
-  warning:
-    "border-amber-400/40 bg-amber-500/10 text-amber-900 dark:text-amber-100 refreshed:border-warn/30 refreshed:bg-warn/10 refreshed:text-foreground",
+  info: "border-info/30 bg-info/10 text-foreground",
+  warning: "border-warn/30 bg-warn/10 text-foreground",
 };
 
 /** Read-only render of a guidebook page's blocks — the counterpart to

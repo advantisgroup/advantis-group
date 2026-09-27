@@ -49,6 +49,8 @@
   "by": "by {name}",
   "deleteConfirm": "Delete this announcement?",
   "empty": "No announcements yet",
+  "emptyHint": "When there's company news, it shows up here and on your dashboard.",
+  "emptyHintManager": "Post company news here. It shows up on everyone's dashboard, and you can ask people to confirm they've read it.",
   "viewedBy": "{count, plural, =0 {Not seen yet} one {# view} other {# views}}",
   "noViews": "No one has seen this yet",
   "notReadYet": "Not read yet",

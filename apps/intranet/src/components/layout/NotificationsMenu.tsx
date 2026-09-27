@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { Bell, BellOff, Check, ChevronRight, Settings2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Drawer } from "vaul";
@@ -18,7 +18,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSave } from "@/hooks/use-save";
 import { relativeTime } from "@/lib/format";
 import { bucketFor, notificationVisual, type NotificationBucket } from "@/lib/notification-kinds";
 import { cn } from "@/lib/utils";
@@ -32,9 +34,9 @@ export function NotificationsMenu() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const notifications = useQuery(api.notifications.notifications.list, { limit: 20 });
   const unread = useQuery(api.notifications.notifications.unreadCount) ?? 0;
-  const markRead = useMutation(api.notifications.notifications.markRead);
-  const markAllRead = useMutation(api.notifications.notifications.markAllRead);
-  const remove = useMutation(api.notifications.notifications.remove);
+  const markRead = useSave(api.notifications.notifications.markRead);
+  const markAllRead = useSave(api.notifications.notifications.markAllRead);
+  const remove = useSave(api.notifications.notifications.remove);
 
   // Newest first within a day; the day headings carry the ordering the old
   // unread-first sort was trying to express, without shuffling an item out
@@ -100,11 +102,11 @@ export function NotificationsMenu() {
           <div className="space-y-2 p-3">
             {[0, 1, 2].map((i) => (
               <div key={i} className="flex gap-2.5">
-                <span className="size-8 shrink-0 animate-pulse rounded-full bg-muted" />
-                <span className="flex-1 space-y-1.5 py-1">
-                  <span className="block h-2.5 w-2/3 animate-pulse rounded bg-muted" />
-                  <span className="block h-2 w-1/3 animate-pulse rounded bg-muted" />
-                </span>
+                <Skeleton className="size-8 shrink-0 rounded-full" />
+                <div className="flex-1 space-y-1.5 py-1">
+                  <Skeleton className="h-2.5 w-2/3" />
+                  <Skeleton className="h-2 w-1/3" />
+                </div>
               </div>
             ))}
           </div>

@@ -28,6 +28,8 @@ import { Input } from "@/components/ui/input";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -149,11 +151,7 @@ function CopyableField({ label, value }: { label: string; value: string }) {
         onClick={() => void handleCopy()}
         aria-label={copied ? t("companyDnsCopied") : t("companyDnsCopy")}
       >
-        {copied ? (
-          <Check className="h-3.5 w-3.5 text-emerald-600" />
-        ) : (
-          <Copy className="h-3.5 w-3.5" />
-        )}
+        {copied ? <Check className="h-3.5 w-3.5 text-ok" /> : <Copy className="h-3.5 w-3.5" />}
       </Button>
       <span className="sr-only">{label}</span>
     </div>
@@ -172,7 +170,7 @@ function DnsRecordField({ record, companyDomain }: { record: DnsRecord; companyD
   const t = useTranslations("Performance");
   const host = record.domain && record.domain.length > 0 ? record.domain : "@";
   return (
-    <div className="space-y-2.5 rounded border border-amber-500/20 bg-background/40 p-3">
+    <div className="space-y-2.5 rounded border border-warn/20 bg-background/40 p-3">
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
         <dt className="text-muted-foreground">{t("companyDnsFieldType")}</dt>
         <dd className="font-mono">{record.type}</dd>
@@ -211,8 +209,8 @@ function DnsInstructions({
   const t = useTranslations("Performance");
   if (records.length === 0) return null;
   return (
-    <div className="space-y-4 rounded-md border border-amber-500/30 bg-amber-500/10 p-4 text-xs">
-      <p className="font-medium leading-relaxed text-amber-700 dark:text-amber-400">{title}</p>
+    <div className="space-y-4 rounded-md border border-warn/30 bg-warn/10 p-4 text-xs">
+      <p className="font-medium leading-relaxed text-warn">{title}</p>
       <div className="space-y-3">
         {records.map((r, i) => (
           <DnsRecordField key={i} record={r} companyDomain={domain} />
@@ -223,7 +221,7 @@ function DnsInstructions({
           href={provider.docsUrl}
           target="_blank"
           rel="noreferrer"
-          className="flex items-start gap-1.5 leading-relaxed text-amber-700 underline underline-offset-2 dark:text-amber-400"
+          className="flex items-start gap-1.5 leading-relaxed text-warn underline underline-offset-2"
         >
           <ProviderFavicon provider={provider} />
           <span>{t("companyDnsProviderHint", { provider: provider.name })}</span>
@@ -685,10 +683,10 @@ export default function PerformanceCompaniesAdminPage() {
           </Button>
         </div>
         {companies === undefined ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">{t("loading")}</p>
+          <SkeletonRows className="py-2" />
         ) : companies.length === 0 ? (
           <Card>
-            <p className="py-8 text-center text-sm text-muted-foreground">{t("companiesEmpty")}</p>
+            <EmptyState inline title={t("companiesEmpty")} />
           </Card>
         ) : (
           <>

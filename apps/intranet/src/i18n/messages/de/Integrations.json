@@ -1,6 +1,6 @@
 {
   "hubTitle": "Integrationen",
-  "hubSubtitle": "Konten bei Drittanbietern für Ihr Team anlegen und verwalten.",
+  "hubSubtitle": "Konten bei Drittanbietern für dein Team anlegen und verwalten.",
   "clockodoCard": "Clockodo",
   "clockodoCardDescription": "Clockodo-Benutzer, Sollstunden und Urlaubsanspruch anlegen und verwalten.",
   "createUser": "Clockodo-Benutzer anlegen",
@@ -20,7 +20,7 @@
   "confirmUnlinkTitle": "Diesen Clockodo-Account entknüpfen?",
   "confirmUnlinkBody": "Das Intranet-Konto verliert die Zeiterfassungs- und ActivityTrack-Präsenzverknüpfung, bis jemand sie hier wiederherstellt.",
   "empty": "Noch keine Clockodo-Benutzer.",
-  "loadError": "Clockodo-Benutzer konnten nicht geladen werden.",
+  "loadError": "Clockodo-Benutzer konnten nicht geladen werden. Lade die Seite neu; klappt es weiter nicht, prüf den Clockodo-Status unter Verwaltung → Übersicht.",
   "searchPlaceholder": "Nach Name oder E-Mail suchen",
   "filterUnlinked": "Nur nicht verknüpft",
   "filterMissingHours": "Ohne Sollstunden",

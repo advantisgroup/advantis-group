@@ -53,6 +53,7 @@
   "columnDate": "Submitted",
   "countLabel": "{shown} of {total}",
   "empty": "No suggestions yet.",
+  "emptyHint": "Got an idea that would make work easier? Share it. The whole team can see it and vote, and you'll see what becomes of it.",
   "noResults": "No suggestions match these filters.",
   "submittedOn": "Submitted {date}",
   "updatedOn": "Updated {date}",

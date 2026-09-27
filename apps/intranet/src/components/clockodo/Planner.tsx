@@ -71,7 +71,7 @@ export function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined 
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="flex-row items-center justify-between border-b border-border/70 bg-gradient-to-r from-muted/60 to-muted/10 refreshed:bg-none">
+      <CardHeader className="flex-row items-center justify-between border-b border-border/70">
         <div>
           <CardTitle className="text-base">
             {view === "calendar" ? t("absencePlanner") : t("teamReport", { year })}
@@ -120,7 +120,7 @@ export function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined 
           <AbsenceTypeLegend className="border-b border-border/70 px-4 py-2.5" />
           <div className="min-w-[58rem]">
             <div className="grid grid-cols-[13rem_repeat(28,minmax(0,1fr))] border-b border-border/70">
-              <div className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+              <div className="px-4 py-3 text-xs text-muted-foreground font-medium normal-case tracking-normal">
                 {t("employee")}
               </div>
               {days.map((day) => (
@@ -185,7 +185,7 @@ export function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined 
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[38rem] text-sm">
-              <thead className="border-b border-border/70 bg-muted/35 text-left text-xs uppercase tracking-wider text-muted-foreground refreshed:bg-muted/40 refreshed:normal-case refreshed:tracking-normal [&_th]:refreshed:font-medium">
+              <thead className="border-b border-border/70 text-left text-xs text-muted-foreground bg-muted/40 normal-case tracking-normal [&_th]:font-medium">
                 <tr>
                   <th className="px-5 py-3 font-semibold">{t("employee")}</th>
                   <th className="px-5 py-3 font-semibold">{t("department")}</th>

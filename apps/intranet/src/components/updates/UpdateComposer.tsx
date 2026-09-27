@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { KNOWN_SYSTEMS, type UpdateType } from "@/lib/updates";
 
@@ -383,7 +384,7 @@ export function UpdateComposer({ draftId }: { draftId: string }) {
             {values.emailRequested && (
               <div className="mt-2 rounded-lg border border-border/70 p-3">
                 {emailPreview === undefined ? (
-                  <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+                  <SkeletonRows className="py-2" />
                 ) : (
                   <>
                     <button

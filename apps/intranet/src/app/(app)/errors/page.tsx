@@ -7,14 +7,15 @@ import { ErrorFallback } from "@/components/ErrorFallback";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { NotFoundScreen } from "@/components/layout/NotFoundScreen";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
+import { useIsAdmin } from "@/components/providers/current-user";
 import { Card } from "@/components/ui/card";
 
 /**
  * Live catalog of this app's full-page error states, for previewing them
  * without having to actually reproduce the condition (e.g. you can't easily
  * demote yourself out of admin to see the 403 page). Lives under `(app)`, so
- * it's gated the same as everything else: any provisioned intranet account,
- * no extra role check.
+ * it's gated like everything else there, and additionally to admins — it's a
+ * tool for whoever builds the intranet, not something employees need.
  *
  * `AccessDeniedScreen` (blocked email domain) is intentionally not listed
  * here — mounting it self-deletes the current account and signs out, so
@@ -22,6 +23,7 @@ import { Card } from "@/components/ui/card";
  */
 export default function ErrorsCatalogPage() {
   const t = useTranslations("ErrorsCatalog");
+  const isAdmin = useIsAdmin();
 
   const entries = [
     {
@@ -40,6 +42,8 @@ export default function ErrorsCatalogPage() {
       render: () => <ErrorFallback onRetry={() => {}} className="min-h-[280px]" />,
     },
   ];
+
+  if (!isAdmin) return <ForbiddenScreen />;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">

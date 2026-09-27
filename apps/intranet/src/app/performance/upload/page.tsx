@@ -43,6 +43,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, formatIsoDate, relativeTime } from "@/lib/format";
 import { downloadPerformanceFile, uploadPerformanceReport } from "@/lib/performanceAuth";
@@ -88,11 +89,11 @@ function StatusIcon({ status }: { status: QueueStatus }) {
     case "processing":
       return <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />;
     case "done":
-      return <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />;
+      return <CheckCircle2 className="h-4 w-4 shrink-0 text-ok" />;
     case "empty":
       return <Info className="h-4 w-4 shrink-0 text-muted-foreground" />;
     case "duplicate":
-      return <Copy className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />;
+      return <Copy className="h-4 w-4 shrink-0 text-warn" />;
     case "error":
       return <XCircle className="h-4 w-4 shrink-0 text-destructive" />;
   }
@@ -158,7 +159,7 @@ function LogRow({
           {legacy && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                <AlertCircle className="h-3.5 w-3.5 shrink-0 text-warn" />
               </TooltipTrigger>
               <TooltipContent>{t("uploadLogLegacy")}</TooltipContent>
             </Tooltip>
@@ -215,11 +216,13 @@ function LogRow({
           )}
         </span>
       </TableCell>
-      <TableCell>{row.fileSize ? formatFileSize(row.fileSize) : "–"}</TableCell>
+      <TableCell className="hidden md:table-cell">
+        {row.fileSize ? formatFileSize(row.fileSize) : "–"}
+      </TableCell>
       <TableCell title={relativeTime(row.uploadedAt)}>
         {formatDateTime(row.uploadedAt, locale)}
       </TableCell>
-      <TableCell className="max-w-[10rem] truncate" title={row.uploadedBy}>
+      <TableCell className="hidden max-w-[10rem] truncate md:table-cell" title={row.uploadedBy}>
         {row.uploadedBy ?? <span className="text-muted-foreground">–</span>}
       </TableCell>
       <TableCell>
@@ -292,9 +295,12 @@ function BatchRows({
           </span>
         </TableCell>
         <TableCell>{totalRows}</TableCell>
-        <TableCell />
+        <TableCell className="hidden md:table-cell" />
         <TableCell title={relativeTime(latest)}>{formatDateTime(latest, locale)}</TableCell>
-        <TableCell className="max-w-[10rem] truncate" title={rows[0].uploadedBy}>
+        <TableCell
+          className="hidden max-w-[10rem] truncate md:table-cell"
+          title={rows[0].uploadedBy}
+        >
           {rows[0].uploadedBy ?? <span className="text-muted-foreground">–</span>}
         </TableCell>
         <TableCell>
@@ -322,6 +328,7 @@ function BatchRows({
 
 export default function PerformanceUploadPage() {
   const t = useTranslations("Performance");
+  const tc = useTranslations("Common");
   const locale = useLocale();
   const { token, loading, session } = usePerformanceGate((s) =>
     s.permissions.includes("upload_reports"),
@@ -600,7 +607,7 @@ export default function PerformanceUploadPage() {
                             </span>
                           )}
                           {item.status === "done" && (
-                            <span className="text-emerald-600 dark:text-emerald-400">
+                            <span className="text-ok">
                               {t("uploadOk", {
                                 count: item.rowsImported ?? 0,
                               })}
@@ -620,7 +627,7 @@ export default function PerformanceUploadPage() {
                             <span className="text-muted-foreground">{t("uploadEmpty")}</span>
                           )}
                           {item.status === "duplicate" && (
-                            <span className="text-amber-600 dark:text-amber-400">
+                            <span className="text-warn">
                               {item.duplicateOf
                                 ? t("uploadDuplicateDetail", {
                                     filename: item.duplicateOf.filename,
@@ -665,6 +672,7 @@ export default function PerformanceUploadPage() {
                           size="icon"
                           className="h-6 w-6 shrink-0"
                           onClick={() => removeItem(item.id)}
+                          aria-label={tc("remove")}
                         >
                           <X className="h-3.5 w-3.5" />
                         </Button>
@@ -699,7 +707,7 @@ export default function PerformanceUploadPage() {
         <h2 className="text-sm font-medium">{t("uploadLogTitle")}</h2>
         <Card>
           {log === undefined ? null : log.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">{t("uploadLogEmpty")}</p>
+            <EmptyState inline title={t("uploadLogEmpty")} />
           ) : (
             <Table>
               <TableHeader>
@@ -708,9 +716,9 @@ export default function PerformanceUploadPage() {
                   <TableHead>{t("uploadLogType")}</TableHead>
                   <TableHead>{t("uploadLogDate")}</TableHead>
                   <TableHead>{t("uploadLogRows")}</TableHead>
-                  <TableHead>{t("uploadLogSize")}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t("uploadLogSize")}</TableHead>
                   <TableHead>{t("uploadLogWhen")}</TableHead>
-                  <TableHead>{t("uploadLogBy")}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t("uploadLogBy")}</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>

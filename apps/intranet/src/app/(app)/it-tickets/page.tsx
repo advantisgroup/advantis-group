@@ -17,9 +17,15 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import {
+  categoryColor,
+  TicketMonthStrip,
+  AssigneeCell,
+  OpenedLabel,
+} from "@/components/it-tickets/TicketListParts";
 import { CategoriesDialog } from "@/components/it-tickets/CategoriesDialog";
 import {
   StatusBadge,
@@ -35,9 +41,7 @@ import { type TicketAssignee, TicketPanel } from "@/components/it-tickets/Ticket
 import { useFillPage } from "@/components/layout/fill-page";
 import { TicketWorkspace } from "@/components/it-tickets/TicketWorkspace";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
-import { PersonLink } from "@/components/profile/PersonLink";
 import { useHasCapability, useIsManager } from "@/components/providers/current-user";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { CountTabs } from "@/components/ui/count-tabs";
 import {
@@ -60,13 +64,6 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterPill, TogglePill } from "@/components/ui/filter-pill";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -78,8 +75,6 @@ import {
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { usePanelParam } from "@/hooks/use-panel-param";
-import { isoToday } from "@/lib/absences";
-import { formatIsoDate, initials } from "@/lib/format";
 
 type StatusTab = "alle" | Status;
 type SavedTicketView = {
@@ -91,125 +86,9 @@ type SavedTicketView = {
 
 const PAGE_SIZE = 50;
 
-// Categories take chart slots in the order they were created, so a category
-// keeps its colour from month to month and between the strip and the filter.
-const CATEGORY_SLOTS = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
-];
-
-function categoryColor(categories: string[], name: string): string {
-  return CATEGORY_SLOTS[categories.indexOf(name)] ?? "var(--muted-foreground)";
-}
-
 const EMPTY_THREADS: NonNullable<
   ReturnType<typeof useQuery<typeof api.itTickets.threads.listStarted>>
 > = [];
-
-function TicketMonthStrip({ tickets, categories }: { tickets: Ticket[]; categories: string[] }) {
-  const t = useTranslations("ItTickets");
-  const locale = useLocale();
-  const current = isoToday().slice(0, 7);
-  const [month, setMonth] = useState(current);
-
-  const months = useMemo(() => {
-    const set = new Set(tickets.map((ticket) => ticket.date.slice(0, 7)));
-    set.add(current);
-    return [...set].sort().reverse();
-  }, [tickets, current]);
-
-  const inMonth = tickets.filter((ticket) => ticket.date.slice(0, 7) === month);
-  const segments = categories
-    .map((name) => ({
-      name,
-      color: categoryColor(categories, name),
-      count: inMonth.filter((ticket) => ticket.category === name).length,
-    }))
-    .filter((segment) => segment.count > 0);
-
-  function monthLabel(key: string) {
-    const [year, monthIndex] = key.split("-").map(Number);
-    return new Date(year, monthIndex - 1, 1).toLocaleDateString(locale, {
-      month: "long",
-      year: "numeric",
-    });
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
-      <div className="flex items-center gap-1">
-        <Select value={month} onValueChange={setMonth}>
-          <SelectTrigger className="h-7 w-auto gap-1.5 border-transparent bg-transparent px-2 text-xs font-medium text-foreground shadow-none hover:bg-accent">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {months.map((key) => (
-              <SelectItem key={key} value={key}>
-                {monthLabel(key)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <span className="tabular-nums">{t("monthSummary", { count: inMonth.length })}</span>
-      </div>
-      {segments.length > 0 && (
-        <>
-          <span aria-hidden className="flex h-1.5 w-40 gap-0.5 overflow-hidden rounded-full">
-            {segments.map((segment) => (
-              <span key={segment.name} style={{ flex: segment.count, background: segment.color }} />
-            ))}
-          </span>
-          <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            {segments.map((segment) => (
-              <span key={segment.name} className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-[2px]" style={{ background: segment.color }} />
-                {segment.name}
-                <span className="font-semibold tabular-nums text-foreground">{segment.count}</span>
-              </span>
-            ))}
-          </span>
-        </>
-      )}
-    </div>
-  );
-}
-
-function AssigneeCell({ assignee }: { assignee: TicketAssignee | undefined }) {
-  const t = useTranslations("ItTickets");
-  if (!assignee) return <span className="text-muted-foreground">{t("unassigned")}</span>;
-  return (
-    <span className="flex min-w-0 items-center gap-2">
-      <Avatar className="size-6">
-        {assignee.avatar && <AvatarImage src={assignee.avatar} alt="" />}
-        <AvatarFallback className="text-[10px]">{initials(assignee.name)}</AvatarFallback>
-      </Avatar>
-      <PersonLink userId={assignee._id}>{assignee.name}</PersonLink>
-    </span>
-  );
-}
-
-function OpenedLabel({ ticket }: { ticket: Ticket }) {
-  const t = useTranslations("ItTickets");
-  const locale = useLocale();
-  const attention = ticketAttention(ticket);
-  if (attention) {
-    return (
-      <span className="whitespace-nowrap font-medium text-warn">
-        {t(attention.kind === "open" ? "attentionOpen" : "attentionInProgress", {
-          days: attention.ageDays,
-        })}
-      </span>
-    );
-  }
-  return (
-    <span className="whitespace-nowrap text-muted-foreground">
-      {formatIsoDate(ticket.date, locale)}
-    </span>
-  );
-}
 
 function ItTicketsPageContent() {
   const t = useTranslations("ItTickets");
@@ -620,6 +499,7 @@ function ItTicketsPageContent() {
         <EmptyState
           icon={<Wrench />}
           title={tickets.length === 0 ? t("noTickets") : t("noResults")}
+          description={tickets.length === 0 ? t("noTicketsHint") : undefined}
           action={
             filtersActive ? (
               <Button variant="outline" size="sm" onClick={clearFilters}>

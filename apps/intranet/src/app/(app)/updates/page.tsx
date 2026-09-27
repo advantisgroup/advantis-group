@@ -12,8 +12,10 @@ import { DocumentHeader } from "@/components/layout/DocumentHeader";
 import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CountTabs } from "@/components/ui/count-tabs";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -21,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDateTime, relativeTime } from "@/lib/format";
 import { formatDuration, KNOWN_SYSTEMS, statusesForType, type UpdateType } from "@/lib/updates";
 
@@ -108,43 +109,20 @@ export default function UpdatesPage() {
         }
       />
 
-      <Tabs
+      <CountTabs
+        className="mb-4"
         value={type}
-        onValueChange={(v) => {
-          setType(v as UpdateType | "all");
+        onChange={(v) => {
+          setType(v);
           setStatus("all");
         }}
-        className="mb-4"
-      >
-        {/* A full-width horizontal strip here would be a second control
-            competing with the mobile bottom nav's thumb-zone space, so below
-            md this collapses to a single compact Select instead — matching
-            the status/system filters right below it, which are Selects on
-            every screen size already. */}
-        <TabsList className="hidden md:inline-flex">
-          <TabsTrigger value="all">{t("tabAll")}</TabsTrigger>
-          <TabsTrigger value="incident">{t("tabIncident")}</TabsTrigger>
-          <TabsTrigger value="maintenance">{t("tabMaintenance")}</TabsTrigger>
-          <TabsTrigger value="changelog">{t("tabChangelog")}</TabsTrigger>
-        </TabsList>
-        <Select
-          value={type}
-          onValueChange={(v) => {
-            setType(v as UpdateType | "all");
-            setStatus("all");
-          }}
-        >
-          <SelectTrigger className="md:hidden">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("tabAll")}</SelectItem>
-            <SelectItem value="incident">{t("tabIncident")}</SelectItem>
-            <SelectItem value="maintenance">{t("tabMaintenance")}</SelectItem>
-            <SelectItem value="changelog">{t("tabChangelog")}</SelectItem>
-          </SelectContent>
-        </Select>
-      </Tabs>
+        tabs={[
+          { value: "all", label: t("tabAll") },
+          { value: "incident", label: t("tabIncident") },
+          { value: "maintenance", label: t("tabMaintenance") },
+          { value: "changelog", label: t("tabChangelog") },
+        ]}
+      />
 
       <div className="mb-6 flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
@@ -189,7 +167,7 @@ export default function UpdatesPage() {
       {items === undefined ? (
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-20 animate-pulse rounded-xl bg-muted/50" />
+            <Skeleton key={i} className="h-20 rounded-xl" />
           ))}
         </div>
       ) : items.length === 0 ? (
@@ -235,8 +213,8 @@ export default function UpdatesPage() {
                           item.type === "incident"
                             ? "bg-destructive/10 text-destructive"
                             : item.type === "maintenance"
-                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                              ? "bg-warn/10 text-warn"
+                              : "bg-ok/10 text-ok"
                         }`}
                       >
                         <Icon className="size-4" />

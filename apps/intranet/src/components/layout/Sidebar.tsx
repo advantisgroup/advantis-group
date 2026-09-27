@@ -11,17 +11,20 @@ import {
   AlertTriangle,
   BookOpen,
   Calendar,
+  CheckCheck,
   Clock3,
   Cloud,
   ExternalLink,
   Grid2X2,
   Inbox,
   LayoutDashboard,
+  LifeBuoy,
   Lightbulb,
   LineChart,
   Megaphone,
   MessageSquare,
   Newspaper,
+  PhoneCall,
   RotateCcw,
   Rss,
   Settings,
@@ -76,6 +79,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { usePendingAbsenceCount } from "@/lib/absences-api";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -182,6 +186,8 @@ export function Sidebar() {
   const inquiryCounts = useQuery(api.marketing.inbox.counts, hasInquiries ? {} : "skip");
   const approvalCover = useQuery(api.org.delegations.mine);
   const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
+  const canManageClockodo = useHasCapability("manage_clockodo_team");
+  const pendingAbsences = usePendingAbsenceCount(canManageClockodo || hasApprovalCover);
   const { setOpenMobile, state, isMobile, editing, setEditing } = useSidebar();
   const featureFlags = useFeatureFlags();
   const disabledFeatures = new Set(
@@ -210,6 +216,17 @@ export function Sidebar() {
       icon: LayoutDashboard,
       tourAttr: "tour-nav-dashboard",
     },
+    ...(isManager || hasApprovalCover
+      ? [
+          {
+            section: "general" as const,
+            href: "/approvals",
+            labelKey: "approvals",
+            icon: CheckCheck,
+            badge: pendingAbsences,
+          },
+        ]
+      : []),
     {
       section: "general",
       href: "/announcements",
@@ -266,6 +283,12 @@ export function Sidebar() {
     ...(hasBlogAccess
       ? [{ section: "knowledge" as const, href: "/blog", labelKey: "blog", icon: Newspaper }]
       : []),
+    {
+      section: "support",
+      href: "/help",
+      labelKey: "help",
+      icon: LifeBuoy,
+    },
     ...(hasInquiries
       ? [
           {
@@ -313,6 +336,7 @@ export function Sidebar() {
       featureKey: "activitytrack",
       external: true,
     },
+    { section: "apps", href: "/sales-cockpit", labelKey: "salesCockpit", icon: PhoneCall },
     { section: "apps", href: "/sales-coach-ev", labelKey: "salesCoachEv", icon: Zap },
     // Products that happen to be registered as guidebooks — their own route
     // tree, their own admin area, sometimes their own auth. They were buried

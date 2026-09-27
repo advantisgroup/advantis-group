@@ -43,14 +43,12 @@ interface SOPScenario {
 
 const STEP_STYLES: Record<StepType, { container: string; dot: string; bold: boolean }> = {
   warning: {
-    container:
-      "border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300 refreshed:border-destructive/30 refreshed:bg-destructive/10 refreshed:text-foreground",
+    container: "border border-destructive/30 bg-destructive/10 text-foreground",
     dot: "bg-rose-500",
     bold: true,
   },
   action: {
-    container:
-      "border border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300 refreshed:border-info/30 refreshed:bg-info/10 refreshed:text-foreground",
+    container: "border border-info/30 bg-info/10 text-foreground",
     dot: "bg-blue-500",
     bold: false,
   },
@@ -60,14 +58,12 @@ const STEP_STYLES: Record<StepType, { container: string; dot: string; bold: bool
     bold: false,
   },
   wait: {
-    container:
-      "border border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300 refreshed:border-warn/30 refreshed:bg-warn/10 refreshed:text-foreground",
+    container: "border border-warn/30 bg-warn/10 text-foreground",
     dot: "bg-amber-500",
     bold: false,
   },
   branch: {
-    container:
-      "border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300 refreshed:border-ok/30 refreshed:bg-ok/10 refreshed:text-foreground",
+    container: "border border-ok/30 bg-ok/10 text-foreground",
     dot: "bg-emerald-500",
     bold: false,
   },
@@ -468,7 +464,7 @@ function CaseSuggestionCard({ suggestion }: { suggestion: CaseSuggestion }) {
       <div className="grid gap-3 sm:grid-cols-2">
         {fields.map(([label, value]) => (
           <div key={label}>
-            <div className="mb-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+            <div className="mb-0.5 text-muted-foreground text-xs font-medium normal-case tracking-normal">
               {label}
             </div>
             <div className="text-sm font-medium leading-snug">{value}</div>
@@ -491,7 +487,7 @@ function EmailBlock({ email }: { email: EmailTemplate }) {
 
   return (
     <div className="space-y-2">
-      <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+      <div className="text-muted-foreground text-xs font-medium normal-case tracking-normal">
         {email.title}
       </div>
       <div className="relative rounded-lg border border-border bg-muted/40 p-4 font-mono text-[13px] leading-relaxed text-foreground">
@@ -522,7 +518,7 @@ export function SOPPanel() {
     <div className="flex min-h-[540px] overflow-hidden rounded-xl border border-border">
       {/* Left: scenario list */}
       <div className="w-64 shrink-0 overflow-y-auto border-r border-border bg-muted/30 p-3">
-        <div className="mb-2 px-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+        <div className="mb-2 px-1 text-muted-foreground text-xs font-medium normal-case tracking-normal">
           Szenarien
         </div>
         <div className="space-y-1">
@@ -565,7 +561,7 @@ export function SOPPanel() {
 
             {/* Steps */}
             <div className="space-y-2">
-              <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+              <div className="text-muted-foreground text-xs font-medium normal-case tracking-normal">
                 Vorgehen
               </div>
               {scenario.steps.map((step, i) => {
@@ -591,7 +587,7 @@ export function SOPPanel() {
             {/* Case suggestion(s) */}
             {(scenario.caseCard || scenario.cases) && (
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+                <div className="text-muted-foreground text-xs font-medium normal-case tracking-normal">
                   ⚠ Case-Felder
                 </div>
                 {scenario.caseCard && <CaseSuggestionCard suggestion={scenario.caseCard} />}

@@ -221,7 +221,7 @@ function CompanyEmailGuide({ isAdmin }: { isAdmin: boolean }) {
         <p>{t("onboardCompanyIntro2")}</p>
       </div>
 
-      <Card nested className="space-y-3 p-4">
+      <Card className="space-y-3 p-4">
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">{t("inviteEmail")}</label>
           <Input

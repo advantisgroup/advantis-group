@@ -27,6 +27,7 @@ import {
   ReadingProgress,
   RelatedGuidebooks,
 } from "@/components/guidebooks/extras";
+import { GermanOnlyNote } from "@/components/guidebooks/german-only-note";
 import { GuidebookAttachments } from "@/components/guidebooks/GuidebookAttachments";
 import { GuidebookPageView } from "@/components/guidebooks/GuidebookPageView";
 import { GuidebookPrint } from "@/components/guidebooks/GuidebookPrint";
@@ -77,6 +78,7 @@ function ReadConfirmation({ slug }: { slug: string }) {
     canManageWiki ? { slug } : "skip",
   );
   const markRead = useMutation(api.guidebooks.reads.markRead);
+  const handleError = useErrorHandler();
   const [justConfirmed, setJustConfirmed] = useState(false);
   const [showConfirmers, setShowConfirmers] = useState(false);
   const isRead = readSlugs.includes(slug) || justConfirmed;
@@ -88,7 +90,7 @@ function ReadConfirmation({ slug }: { slug: string }) {
       toast.success(t("readConfirmedToast"));
     } catch (e) {
       setJustConfirmed(false);
-      toast.error(e instanceof Error ? e.message : t("readConfirmFailed"));
+      handleError(e, t("readConfirmFailed"));
     }
   }
 
@@ -381,6 +383,7 @@ export default function GuidebookPage() {
           <PageHeaderBar title={t("eyebrow")} />
           <DocumentHeader eyebrow={t("eyebrow")} title={title} description={description} />
           <div id="guidebook-content">
+            {Component && staticGuidebook?.category === "guide" && <GermanOnlyNote />}
             {Component ? (
               <Component />
             ) : entry ? (
@@ -413,7 +416,7 @@ export default function GuidebookPage() {
                     )}
                   </div>
                   <aside className="space-y-3 rounded-xl border border-border/70 bg-muted/30 p-4 text-sm lg:sticky lg:top-20 lg:self-start">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+                    <p className="text-xs text-muted-foreground font-medium normal-case tracking-normal">
                       {t("detailsSectionTitle")}
                     </p>
                     <div className="flex items-center gap-2">

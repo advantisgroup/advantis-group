@@ -42,7 +42,7 @@
   "emailRequested": "Email requested",
   "noEmailsSentYet": "No emails sent yet.",
   "downloadArt": "Download artwork",
-  "downloadArtError": "Could not generate the image",
+  "downloadArtError": "Couldn't create the image. Try again.",
   "typeLabel": "Type",
   "titleLabel": "Title",
   "titlePlaceholder": "Short, specific title",

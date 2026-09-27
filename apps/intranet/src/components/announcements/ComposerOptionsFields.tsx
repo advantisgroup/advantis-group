@@ -1,6 +1,6 @@
 "use client";
 
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { type useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { Mark } from "@/components/branding/ProviderMark";
@@ -32,7 +32,7 @@ import { type ReactNode, useState } from "react";
 function OptionsSection({ label, children }: { label: string; children: ReactNode }) {
   return (
     <section className="space-y-2.5 border-b border-border/60 pb-4 last:border-b-0 last:pb-0">
-      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+      <Label className="text-xs text-muted-foreground font-medium normal-case tracking-normal">
         {label}
       </Label>
       {children}

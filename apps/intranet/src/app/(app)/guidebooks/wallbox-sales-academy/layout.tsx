@@ -5,6 +5,7 @@ import { type ReactNode } from "react";
 import { ArrowLeft, BookOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { GermanOnlyNote } from "@/components/guidebooks/german-only-note";
 import {
   canAccessGuidebook,
   getGuidebook,
@@ -65,6 +66,7 @@ export default function WallboxAcademyLayout({ children }: { children: ReactNode
             title={guidebookTitle(guidebook, t)}
             description={guidebookDescription(guidebook, t)}
           />
+          <GermanOnlyNote />
           <AcademySessionProvider>{children}</AcademySessionProvider>
         </>
       )}

@@ -8,7 +8,7 @@ import { CalendarClock, ShieldCheck, Sparkles, UserRoundSearch, Users } from "lu
 import { useTranslations } from "next-intl";
 
 import { ApplicantVaultGate } from "@/components/applicants/ApplicantVaultGate";
-import { RouteTabs } from "@/components/applicants/RouteTabs";
+import { RouteTabs } from "@/components/layout/RouteTabs";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import {
   useCanManageApplicantAccess,

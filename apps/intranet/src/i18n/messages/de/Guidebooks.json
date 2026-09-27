@@ -8,6 +8,7 @@
   "empty": "Noch kein Wiki-Inhalt für dich",
   "emptyHint": "Wiki-Inhalte für dein Team erscheinen hier.",
   "notFound": "Wiki-Eintrag nicht gefunden",
+  "germanOnly": "Diese Inhalte gibt es nur auf Deutsch.",
   "notFoundHint": "Er wurde möglicherweise verschoben oder entfernt.",
   "noAccess": "Kein Zugriff auf diesen Wiki-Eintrag",
   "noAccessHint": "Er ist anderen Teams vorbehalten. Wende dich an einen Admin, wenn du Zugriff brauchst.",
@@ -19,7 +20,7 @@
   "pinnedGroup": "Angeheftet",
   "uncategorizedGroup": "Ohne Kategorie",
   "libraryTab": "Bibliothek",
-  "filesTab": "Dateien",
+  "filesTab": "Wiki-Dateien",
   "interactiveToolsTitle": "Interaktive Tools",
   "newEntry": "Neuer Eintrag",
   "newEntryAdvanced": "Erweiterte Seite (Block-Editor)",
@@ -163,7 +164,7 @@
   },
   "abwesenheitenGenehmigen": {
     "title": "Abwesenheiten genehmigen",
-    "description": "Anträge eures Teams prüfen, genehmigen oder ablehnen — inkl. Clockodo-Anträgen."
+    "description": "Anträge deines Teams prüfen, genehmigen oder ablehnen — inkl. Clockodo-Anträgen."
   },
   "verwaltungMitglieder": {
     "title": "Verwaltung: Mitglieder & Zugang",
@@ -304,5 +305,24 @@
   "formatAssistRevert": "Original wiederherstellen",
   "formatAssistEdit": "Bearbeiten",
   "formatAssistDiscard": "Verwerfen",
-  "formatAssistApply": "Übernehmen"
+  "formatAssistApply": "Übernehmen",
+  "otherSources": {
+    "title": "Hier gibt es auch Antworten",
+    "ask": {
+      "title": "KI-Assistent fragen",
+      "when": "Antwortet auf Basis des Wikis."
+    },
+    "glossary": {
+      "title": "Vertriebs-Lexikon",
+      "when": "Begriffe und Abkürzungen aus dem Vertrieb."
+    },
+    "coachWiki": {
+      "title": "Sales-Coach-Wissen",
+      "when": "Produktinfos und Argumente für Verkaufsgespräche."
+    },
+    "academy": {
+      "title": "Wallbox Sales Academy",
+      "when": "Schulungskapitel und Quizze."
+    }
+  }
 }

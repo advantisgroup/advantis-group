@@ -389,7 +389,7 @@ picks up this guard, and still needs the var set even then.
   tab switcher instead of a second, competing control floating over
   thumb-zone space. A page that rolls its own tab strip and leaves it
   rendered on mobile is inconsistent with every other tabbed page in the
-  app. See `apps/intranet/src/components/applicants/RouteTabs.tsx` for the
+  app. See `apps/intranet/src/components/layout/RouteTabs.tsx` for the
   canonical pattern.
 - **A page that offers "Print" gets a paper version, not its screen layout.**
   Mount a `PrintSheet` (`components/print/PrintSheet.tsx` — one in the
@@ -401,9 +401,11 @@ picks up this guard, and still needs the var set even then.
   `InquiryPrint` (in `InquiryDetail.tsx`) are the examples to copy.
 - Don't add speculative abstractions, fallbacks, or error handling for cases
   that can't occur. Match the existing minimal, direct style.
-- i18n strings live in `apps/intranet/src/lib/activity/locales/{en,de}.ts`
-  (ActivityTrack) and `apps/intranet/src/i18n/messages/{en,de}/` (rest of the
-  intranet) — always update both languages together. The second set is split
+- i18n strings live in `apps/intranet/src/i18n/messages/{en,de}/` — always
+  update both languages together (`bun run check:i18n` fails otherwise).
+  ActivityTrack's are the `ActivityTrack` namespace, read through its
+  `useI18n()` hook (`lib/activity/i18n.tsx`), which keeps the dotted
+  `t("people.add")` call shape. The files are split
   one file per top-level namespace (`messages/en/Admin.json`,
   `messages/de/Admin.json`, etc.), matching the `useTranslations("Admin")`
   call sites 1:1, and `src/i18n/request.ts` statically imports every one of
@@ -419,7 +421,7 @@ picks up this guard, and still needs the var set even then.
   in compact UI (badges, dropdown items, table cells, permission/capability
   lists) — a wrapping paragraph reflows the layout around it and is worse on
   mobile. When more explanation is genuinely needed, put it behind a tooltip
-  (`@/components/ui/tooltip`'s `Tooltip`/`TooltipTrigger`/`TooltipContent`,
-  triggered by a small `Info` icon) rather than inlining it. Only write the
+  (`@/components/ui/info-tip`'s `InfoTip`, a small `Info` icon over
+  `@/components/ui/tooltip`) rather than inlining it. Only write the
   long form inline when the surface already has dedicated space for it (e.g.
   a settings page section, not a card in a grid).

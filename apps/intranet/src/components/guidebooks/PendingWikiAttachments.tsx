@@ -46,7 +46,7 @@ export function PendingWikiAttachments({
 
   return (
     <div className="space-y-2">
-      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+      <label className="text-xs text-muted-foreground font-medium normal-case tracking-normal">
         {t("attachmentsTitle")}
       </label>
       <p className="break-all text-[11px] text-muted-foreground">

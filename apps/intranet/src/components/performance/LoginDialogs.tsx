@@ -8,7 +8,7 @@ import { useAction, useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { InfoTip } from "@/components/activity/InfoTip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { PersonPicker, type PersonOption } from "@/components/people/PersonPicker";
 import { usePerformanceCompanySlug } from "@/components/performance/PerformanceCompanyProvider";
 import { Button } from "@/components/ui/button";

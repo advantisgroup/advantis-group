@@ -5,10 +5,10 @@ import { useCallback, useEffect, useState } from "react";
 import { type MessageAttachment, type OneDriveItem, type OneDriveListing } from "@advantis/types";
 import { ChevronRight, Frown, Loader2, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,7 @@ export function OneDrivePickerDialog({
   onImport?: (attachment: MessageAttachment, item: OneDriveItem) => void;
 }) {
   const t = useTranslations("Files");
+  const handleError = useErrorHandler();
   const od = useOneDriveApi();
 
   const [listing, setListing] = useState<OneDriveListing | null>(null);
@@ -56,12 +57,12 @@ export function OneDrivePickerDialog({
         const data = await od.list(next);
         setListing(data);
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : t("genericError"));
+        handleError(e);
       } finally {
         setLoading(false);
       }
     },
-    [od, t],
+    [handleError, od],
   );
 
   // Start fresh at the root every time the dialog is opened.
@@ -109,7 +110,7 @@ export function OneDrivePickerDialog({
       }
       onOpenChange(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     } finally {
       setImportingId(null);
     }

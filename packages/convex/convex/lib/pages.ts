@@ -111,8 +111,8 @@ export const INTRANET_PAGES: IntranetPage[] = [
   },
   {
     href: "/files",
-    label: "Dateien",
-    description: "Freigegebene Dateien und Ordner aus OneDrive.",
+    label: "Firmendateien",
+    description: "Der gemeinsame Firmen-OneDrive: dieselben Ordner für alle mit Dateizugriff.",
     keywords: ["dokumente", "ordner", "files", "onedrive"],
     visible: (caller) => caller.can("access_files"),
   },
@@ -154,6 +154,13 @@ export const INTRANET_PAGES: IntranetPage[] = [
     description: "Kolleginnen und Kollegen finden, mit Kontakt, Team und Erreichbarkeit.",
     keywords: ["kollegen", "mitarbeiter", "telefon", "people", "team", "kontakt"],
     deepLinks: [{ href: "/directory?availability=now", label: "Wer gerade erreichbar ist" }],
+  },
+  {
+    href: "/help",
+    label: "Hilfe & Anfragen",
+    description:
+      "Wohin mit einem Problem, einer Idee oder einer Frage: IT-Ticket, Fehlermeldung, Vorschlag, Abwesenheit, Wiki.",
+    keywords: ["hilfe", "help", "support", "melden", "anfrage", "problem", "wohin"],
   },
   {
     href: "/suggestions",
@@ -209,8 +216,10 @@ export const INTRANET_PAGES: IntranetPage[] = [
   {
     href: "/approvals",
     label: "Freigaben",
-    description: "Anträge und Uploads, die auf deine Freigabe warten.",
-    keywords: ["genehmigungen", "approvals", "freigeben"],
+    description:
+      "Abwesenheitsanträge, Zugriffsanfragen und offene Maßnahmen, die auf deine Entscheidung warten.",
+    keywords: ["genehmigungen", "approvals", "freigeben", "urlaubsantrag", "zugriffsanfrage"],
+    visible: manager,
   },
   {
     href: "/blog",
@@ -372,8 +381,8 @@ export const INTRANET_PAGES: IntranetPage[] = [
   },
   {
     href: "/hr/files",
-    label: "Bewerbermanagement: Dateien",
-    description: "Lebensläufe und Unterlagen im Bewerbermanagement.",
+    label: "HR-Dateien",
+    description: "Die OneDrive-Ordner des HR-Teams (Team/HR).",
     keywords: ["unterlagen", "dokumente"],
     visible: applicants,
   },
@@ -539,8 +548,9 @@ export const INTRANET_PAGES: IntranetPage[] = [
   },
   {
     href: "/admin/design-feedback",
-    label: "Design-Feedback",
-    description: "Rückmeldungen zum Design des Intranets.",
+    label: "Seiten-Feedback",
+    description: "Rückmeldungen zu einzelnen Seiten, mit der Seite, auf der sie geschickt wurden.",
+    keywords: ["feedback", "rückmeldung", "design"],
     visible: manager,
   },
   {
@@ -564,10 +574,10 @@ export const NOT_DESTINATIONS: Record<string, string> = {
   "/sales-coach-ev/wiki/new": "listed as a deep link of /sales-coach-ev/wiki",
   "/sales-cockpit/projekte/new": "listed as a deep link of /sales-cockpit/projekte",
   "/updates/new": "writing updates is an admin step inside /updates",
-  "/errors": "internal error log viewer, reached from admin",
+  "/errors": "admin-only preview of the full-page error screens (403, 404, crash)",
   "/admin/integrations/clockodo": "a tab of /admin/integrations",
   "/applicants": "served as /hr",
-  "/playground": "developer playground",
+  "/playground": "admin-only developer playground",
   "/playground/chat": "developer playground",
   "/playground/components": "developer playground",
   "/playground/design": "developer playground",

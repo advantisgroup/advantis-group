@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { BookOpen, FolderKanban, PhoneCall, Workflow } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { RouteTabs } from "@/components/applicants/RouteTabs";
+import { RouteTabs } from "@/components/layout/RouteTabs";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 
 /**

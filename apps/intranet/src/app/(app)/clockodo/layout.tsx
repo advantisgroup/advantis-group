@@ -10,7 +10,7 @@ import { useMutation, useQuery } from "convex/react";
 import { CalendarDays, Clock3, LayoutDashboard, Link2Off, Settings2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { RouteTabs } from "@/components/applicants/RouteTabs";
+import { RouteTabs } from "@/components/layout/RouteTabs";
 import { Mark } from "@/components/branding/ProviderMark";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { StatusScreen } from "@/components/layout/StatusScreen";

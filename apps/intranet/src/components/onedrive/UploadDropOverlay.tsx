@@ -106,7 +106,7 @@ export function UploadDropOverlay({ enabled, requiresApproval, onUpload }: Props
         >
           {phase === "prompt" && (
             <motion.div
-              className="flex flex-col items-center gap-5 rounded-2xl border-2 border-dashed border-blue-400 bg-blue-500/5 px-12 py-14 text-center refreshed:border-white/40 refreshed:bg-white/5"
+              className="flex flex-col items-center gap-5 rounded-2xl border-2 border-dashed px-12 py-14 text-center border-white/40 bg-white/5"
               initial={{ scale: reduce ? 1 : 0.94, opacity: 0 }}
               animate={{
                 scale: 1,
@@ -124,10 +124,10 @@ export function UploadDropOverlay({ enabled, requiresApproval, onUpload }: Props
                 default: { duration: 0.25 },
               }}
             >
-              <UploadCloud className="size-12 text-blue-400 refreshed:text-white/80" />
+              <UploadCloud className="size-12 text-white/80" />
               <div>
                 <p className="text-xl font-semibold text-white">{t("dropTitle")}</p>
-                <p className="mt-1 text-sm text-blue-100/80 refreshed:text-white/70">
+                <p className="mt-1 text-sm text-white/70">
                   {requiresApproval ? t("dropSubtitleApproval") : t("dropSubtitle")}
                 </p>
               </div>
@@ -147,18 +147,18 @@ export function UploadDropOverlay({ enabled, requiresApproval, onUpload }: Props
                     ease: "easeIn",
                   }}
                 >
-                  <Rocket className="size-12 -rotate-45 text-blue-400 refreshed:text-white/80" />
+                  <Rocket className="size-12 -rotate-45 text-white/80" />
                 </motion.div>
               </div>
               <div className="w-56">
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/15">
                   <motion.div
-                    className="h-full rounded-full bg-blue-400 refreshed:bg-white"
+                    className="h-full rounded-full bg-white"
                     animate={{ width: `${Math.round(progress * 100)}%` }}
                     transition={{ ease: "easeOut", duration: 0.2 }}
                   />
                 </div>
-                <p className="mt-3 text-center text-sm text-blue-100/80 refreshed:text-white/70">
+                <p className="mt-3 text-center text-sm text-white/70">
                   {requiresApproval ? t("uploadingApproval") : t("uploading")}
                 </p>
               </div>
@@ -172,8 +172,8 @@ export function UploadDropOverlay({ enabled, requiresApproval, onUpload }: Props
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 18 }}
             >
-              <div className="flex size-20 items-center justify-center rounded-full bg-green-500/20">
-                <Check className="size-12 text-green-400" strokeWidth={3} />
+              <div className="flex size-20 items-center justify-center rounded-full bg-ok/20">
+                <Check className="size-12 text-ok" strokeWidth={3} />
               </div>
               <p className="text-lg font-medium text-white">
                 {requiresApproval ? t("doneApproval") : t("done")}

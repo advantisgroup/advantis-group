@@ -256,7 +256,7 @@ export default function EmployeeDocumentsPage() {
       {documents.length === 0 ? (
         <EmptyState icon={<FileText />} title={t("noDocumentsYet")} />
       ) : filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">{t("documentNoMatches")}</p>
+        <EmptyState inline title={t("documentNoMatches")} />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {filtered.map((document) => (

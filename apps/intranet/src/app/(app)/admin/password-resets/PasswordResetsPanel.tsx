@@ -25,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CountTabs } from "@/components/ui/count-tabs";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 
 type RequestId = Id<"passwordResetRequests">;
 
@@ -390,7 +391,7 @@ function RequestCard({
       )}
       {request.autoApproved && request.autoApprovedVia && (
         <p className="mt-3 flex items-start gap-2 text-xs text-foreground">
-          <Link2 className="mt-px size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <Link2 className="mt-px size-3.5 shrink-0 text-ok" />
           {t(AUTO_APPROVED_HINT_KEY[request.autoApprovedVia])}
         </p>
       )}
@@ -682,38 +683,20 @@ export function PasswordResetsPanel() {
   const highlighted = params.get("request");
   const pending = useQuery(api.security.passwordResets.listRequests, { status: "pending" });
   const handled = useQuery(api.security.passwordResets.listRequests, { status: "handled" });
-  const [tab, setTab] = useState("pending");
+  const [tab, setTab] = useState<"pending" | "handled" | "linked">("pending");
 
   return (
-    <Tabs value={tab} onValueChange={setTab}>
-      {/* A full-width horizontal strip here would be a second control
-          competing with the mobile bottom nav's thumb-zone space, so below
-          md this collapses to a single compact Select instead. */}
-      <TabsList className="hidden md:inline-flex">
-        <TabsTrigger value="pending">
-          {t("adminPending")}
-          {pending && pending.length > 0 && (
-            <Badge variant="warning" className="ml-2">
-              {pending.length}
-            </Badge>
-          )}
-        </TabsTrigger>
-        <TabsTrigger value="handled">{t("adminHandled")}</TabsTrigger>
-        <TabsTrigger value="linked">{t("linkedEmailsTab")}</TabsTrigger>
-      </TabsList>
-      <Select value={tab} onValueChange={setTab}>
-        <SelectTrigger className="md:hidden">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="pending">
-            {t("adminPending")}
-            {pending && pending.length > 0 ? ` (${pending.length})` : ""}
-          </SelectItem>
-          <SelectItem value="handled">{t("adminHandled")}</SelectItem>
-          <SelectItem value="linked">{t("linkedEmailsTab")}</SelectItem>
-        </SelectContent>
-      </Select>
+    <Tabs value={tab}>
+      <CountTabs
+        className="mb-4"
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { value: "pending", label: t("adminPending"), count: pending?.length },
+          { value: "handled", label: t("adminHandled"), count: handled?.length },
+          { value: "linked", label: t("linkedEmailsTab") },
+        ]}
+      />
 
       <TabsContent value="pending" className="space-y-3">
         {pending?.length === 0 ? (

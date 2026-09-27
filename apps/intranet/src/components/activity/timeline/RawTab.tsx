@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Table,
   TableBody,
@@ -23,7 +24,7 @@ interface RawSample {
 export function RawTab({ samples }: { samples: RawSample[] }) {
   const { t, lang } = useI18n();
   if (samples.length === 0) {
-    return <p className="py-8 text-center text-muted-foreground">{t("timeline.empty")}</p>;
+    return <EmptyState inline title={t("timeline.empty")} />;
   }
   return (
     <Card>
@@ -31,7 +32,7 @@ export function RawTab({ samples }: { samples: RawSample[] }) {
         <TableHeader>
           <TableRow>
             <TableHead>{t("timeline.time")}</TableHead>
-            <TableHead>{t("timeline.state")}</TableHead>
+            <TableHead>{t("timeline.stateColumn")}</TableHead>
             <TableHead>{t("timeline.idle")}</TableHead>
           </TableRow>
         </TableHeader>

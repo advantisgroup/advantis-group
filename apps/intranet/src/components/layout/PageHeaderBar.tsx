@@ -6,7 +6,7 @@ import Link from "next/link";
 
 import { Info, type LucideIcon } from "lucide-react";
 
-import type { RouteTab } from "@/components/applicants/RouteTabs";
+import { type RouteTab, routeTabClick } from "@/components/layout/route-tab";
 import { TourReplayButton, type CheckpointId } from "@/components/tour";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -123,7 +123,7 @@ export function usePageHeaderBarState() {
   return useContext(PageHeaderBarContext);
 }
 
-/** Lets `RouteTabs` move its tabs up next to the page title (refreshed design). */
+/** Lets `RouteTabs` move its tabs up next to the page title. */
 export function useSetPageHeaderTabs() {
   return useContext(SetTabsContext);
 }
@@ -141,6 +141,7 @@ export function PageHeaderTabsSlot() {
           <Link
             key={tab.value}
             href={tab.href}
+            onClick={routeTabClick(tab)}
             aria-current={active ? "page" : undefined}
             className={cn(
               "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -231,7 +232,7 @@ export function PageHeaderBarSlot() {
           {identity.icon}
         </span>
       )}
-      <h1 className="min-w-0 font-display text-sm font-semibold leading-tight tracking-tight [overflow-wrap:anywhere] md:whitespace-nowrap md:text-base refreshed:md:text-[15px]">
+      <h1 className="min-w-0 font-display text-sm font-semibold leading-tight tracking-tight [overflow-wrap:anywhere] md:whitespace-nowrap md:text-[15px]">
         {identity.title}
       </h1>
       {identity.tourCheckpoint && <TourReplayButton checkpointId={identity.tourCheckpoint} />}

@@ -9,6 +9,7 @@ import { useQuery } from "convex/react";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { Link } from "@/components/Link";
 import { ProjectForm } from "@/components/sales-cockpit/ProjectForm";
 
@@ -25,7 +26,7 @@ export default function EditSalesCockpitProjectPage({
   const seen = useRef(false);
 
   if (projects === undefined) {
-    return <p className="text-sm text-muted-foreground">{t("loading")}</p>;
+    return <SkeletonRows className="py-2" />;
   }
   const project = projects.find((p) => p._id === projectId);
   if (project) seen.current = true;

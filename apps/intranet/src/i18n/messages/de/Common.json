@@ -20,7 +20,7 @@
   "open": "Öffnen",
   "copy": "Kopieren",
   "copied": "In Zwischenablagen kopiert!",
-  "copyFailed": "Kopieren fehlgeschlagen..",
+  "copyFailed": "Kopieren hat nicht geklappt. Markiere den Text und kopiere ihn von Hand.",
   "areYouSure": "Bist du sicher?",
   "deleteWarning": "Diese Aktion kann nicht rückgängig gemacht werden.",
   "fromOneDrive": "Aus OneDrive",
@@ -65,5 +65,7 @@
     "recent": "Zuletzt gewählt",
     "everyone": "Alle",
     "empty": "Niemand gefunden"
-  }
+  },
+  "remove": "Entfernen",
+  "moreOptions": "Weitere Optionen"
 }

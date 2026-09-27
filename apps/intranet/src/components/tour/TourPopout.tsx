@@ -122,6 +122,7 @@ export function TourPopout() {
     snooze,
   } = useTour();
   const tt = useTranslations("Tour");
+  const tc = useTranslations("Common");
   const skipCheckpointDialog = useTourSkipCheckpoint();
   const endTourDialog = useTourEndTour();
 
@@ -210,7 +211,12 @@ export function TourPopout() {
             </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" className="size-6 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="size-6 shrink-0"
+                  aria-label={tc("moreOptions")}
+                >
                   <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>

@@ -19,7 +19,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Clockodo ist unser Zeiterfassungs-Tool. Damit stempelt ihr Arbeitsbeginn, Pausen und Feierabend — die Zeiten laufen automatisch in die Auswertung.",
+          body: "Clockodo ist unser Zeiterfassungs-Tool. Damit stempelst du Arbeitsbeginn, Pausen und Feierabend — die Zeiten laufen automatisch in die Auswertung.",
         },
         { kind: "subheading", text: "Am PC (Web-App)" },
         {
@@ -47,7 +47,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Sobald ihr die Stoppuhr anhaltet, zählt die Zeit automatisch als Pause. Ihr müsst Pausen also **nicht** separat eintragen — einfach kurz ausstempeln und nach der Pause wieder einstempeln.",
+          body: "Sobald du die Stoppuhr anhältst, zählt die Zeit automatisch als Pause. Du musst Pausen also **nicht** separat eintragen — einfach kurz ausstempeln und nach der Pause wieder einstempeln.",
         },
       ],
     },
@@ -57,12 +57,13 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Clockodo ist bei uns auch das **führende System für Abwesenheiten** — Urlaub, Krankheit und Co. werden direkt dort beantragt, nicht im Intranet.",
+          body: "Clockodo ist bei uns auch das **führende System für Abwesenheiten** — Urlaub, Krankheit und Co. werden dort gespeichert. Beantragen kannst du sie im Intranet oder in Clockodo selbst; beides landet am selben Ort.",
         },
         {
           kind: "steps",
           items: [
-            "In Clockodo auf **„Meine Anträge“** gehen.",
+            "Im Intranet: in der Seitenleiste **„Clockodo“** öffnen, den Reiter **„Meine Anträge“** wählen und auf **„Neue Abwesenheit“** klicken.",
+            "Oder in Clockodo: auf **„Meine Anträge“** gehen.",
             "Über den blauen Button **„+ Abwesenheit“** einen neuen Antrag anlegen.",
             "Abwesenheitstyp auswählen (z. B. Urlaub, Sonderurlaub, Krankheit, Homeoffice) und den Zeitraum angeben.",
             "Optional eine Notiz hinterlegen — privat für die Führungskraft oder öffentlich für alle Kolleg:innen im Abwesenheitsplaner sichtbar.",
@@ -72,7 +73,7 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "info",
-          body: "Genehmigte und offene Abwesenheiten aus Clockodo erscheinen automatisch — meist innerhalb einer Stunde — schreibgeschützt auf der Seite **„Abwesenheiten“** im Intranet. Anträge stellen, genehmigen und ändern läuft ausschließlich über Clockodo.",
+          body: "Anträge aus beiden Wegen erscheinen sofort im Intranet unter **„Clockodo“ → „Meine Anträge“**. Führungskräfte können sie im Intranet oder in Clockodo genehmigen.",
         },
       ],
     },
@@ -82,7 +83,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Falls ihr vergessen habt, euch ein- oder auszustempeln, könnt ihr den Eintrag im Nachhinein anpassen:",
+          body: "Falls du vergessen hast, dich ein- oder auszustempeln, kannst du den Eintrag im Nachhinein anpassen:",
         },
         {
           kind: "steps",

@@ -36,7 +36,7 @@ const DOC: DocContent = {
         },
         {
           kind: "text",
-          body: "**1. Ist das Ausgabegerät richtig?** Meist heißen eure Headsets „USB“, „Logitech“, „MQ“ oder ähnlich — Namen wie „Realtek Audio“ sind meist **nicht** die richtigen Geräte. Man kann es einfach testen, indem man direkt im Ausgabe-Bereich die Lautstärke ändert: Hört man einen Ton, ist es das richtige Gerät.",
+          body: "**1. Ist das Ausgabegerät richtig?** Meist heißen die Headsets „USB“, „Logitech“, „MQ“ oder ähnlich — Namen wie „Realtek Audio“ sind meist **nicht** die richtigen Geräte. Zum Testen änderst du direkt im Ausgabe-Bereich die Lautstärke: Hörst du einen Ton, ist es das richtige Gerät.",
         },
         {
           kind: "image",

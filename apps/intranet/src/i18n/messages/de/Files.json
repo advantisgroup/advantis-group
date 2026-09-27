@@ -73,5 +73,7 @@
   "chooseFolder": "Ordner wählen",
   "chooseFolderHint": "In einen Unterordner wechseln oder direkt in den aktuellen hochladen.",
   "selectThisFolder": "Hier speichern",
-  "noSubfolders": "Noch keine Unterordner."
+  "noSubfolders": "Noch keine Unterordner.",
+  "companyTitle": "Firmendateien",
+  "companyDescription": "Der gemeinsame Firmen-OneDrive: dieselben Ordner für alle mit Dateizugriff."
 }

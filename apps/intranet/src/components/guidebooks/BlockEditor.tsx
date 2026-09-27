@@ -200,8 +200,8 @@ export function BlockEditor({
                         "flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                         block.variant === variant
                           ? variant === "info"
-                            ? "border-sky-400 bg-sky-500/10 text-sky-700 dark:text-sky-300 refreshed:border-info refreshed:bg-info/10 refreshed:text-info"
-                            : "border-amber-400 bg-amber-500/10 text-amber-700 dark:text-amber-300 refreshed:border-warn refreshed:bg-warn/10 refreshed:text-warn"
+                            ? "border-info bg-info/10 text-info"
+                            : "border-warn bg-warn/10 text-warn"
                           : "border-border text-muted-foreground",
                       )}
                     >

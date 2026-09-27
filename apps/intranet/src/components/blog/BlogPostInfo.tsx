@@ -153,7 +153,7 @@ export function BlogPostInfo({ post }: { post: Doc<"blogPosts"> }) {
             ← {tc("back")}
           </Link>
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="font-display text-2xl font-bold tracking-tight refreshed:text-xl refreshed:font-semibold">
+            <h1 className="font-display tracking-tight text-xl font-semibold">
               {post.title || t("untitled")}
             </h1>
             <span className="inline-flex items-center gap-1.5 text-xs font-medium">

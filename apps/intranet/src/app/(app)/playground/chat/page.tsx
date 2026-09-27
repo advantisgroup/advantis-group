@@ -295,12 +295,12 @@ function ChatLab() {
                         <div className={cn("flex items-center gap-1", mine && "flex-row-reverse")}>
                           <div className={chatBubbleClass(mine)}>
                             {!mine && !grouped && (
-                              <p className="mb-0.5 text-xs font-semibold text-blue-500 refreshed:text-muted-foreground">
+                              <p className="mb-0.5 text-xs font-semibold text-muted-foreground">
                                 {NAMES[m.sender]}
                               </p>
                             )}
                             {quoted && (
-                              <div className="mb-1 flex flex-col rounded-md border-l-2 border-blue-500/60 bg-background/60 px-2 py-1 text-xs refreshed:border-foreground/25">
+                              <div className="mb-1 flex flex-col rounded-md border-l-2 bg-background/60 px-2 py-1 text-xs border-foreground/25">
                                 <span className="font-semibold opacity-80">
                                   {quoted.sender === "me" ? t("chat.you") : NAMES[quoted.sender]}
                                 </span>

@@ -10,7 +10,7 @@ import { useQuery } from "convex/react";
 import { Briefcase, Building2, FileText, History, LayoutDashboard, Link2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { RouteTabs } from "@/components/applicants/RouteTabs";
+import { RouteTabs } from "@/components/layout/RouteTabs";
 import { PersonLink } from "@/components/profile/PersonLink";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

@@ -104,7 +104,7 @@ function ReviewAll({ href }: { href: string }) {
   );
 }
 
-function RefreshedApprovalsPage() {
+export default function ApprovalsPage() {
   const t = useTranslations("Approvals");
   const tAbsences = useTranslations("Absences");
   const tError = useTranslations("ErrorManagement");
@@ -457,8 +457,4 @@ function ApprovalCoverPanel() {
       </ResponsiveDialog>
     </Panel>
   );
-}
-
-export default function ApprovalsPage() {
-  return <RefreshedApprovalsPage />;
 }

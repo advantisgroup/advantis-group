@@ -116,7 +116,7 @@ export function AdminRoster() {
                   </div>
                   <div>
                     {t("adminTrend")}:{" "}
-                    <strong className={entry.trend >= 0 ? "text-emerald-600" : "text-red-600"}>
+                    <strong className={entry.trend >= 0 ? "text-ok" : "text-destructive"}>
                       {entry.trend >= 0 ? "↑" : "↓"} {Math.abs(entry.trend)}
                     </strong>
                   </div>
@@ -126,10 +126,10 @@ export function AdminRoster() {
                     className={cn(
                       "h-full rounded-full",
                       entry.avgScore >= 70
-                        ? "bg-emerald-500"
+                        ? "bg-ok"
                         : entry.avgScore >= 45
-                          ? "bg-amber-500"
-                          : "bg-red-500",
+                          ? "bg-warn"
+                          : "bg-destructive",
                     )}
                     style={{ width: `${entry.avgScore}%` }}
                   />

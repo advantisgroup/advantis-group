@@ -20,6 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { type OneDriveVersion, useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
 
@@ -42,6 +44,7 @@ export function NewFolderDialog({
   onDone: () => void;
 }) {
   const t = useTranslations("Files");
+  const handleError = useErrorHandler();
   const od = useOneDriveApi();
   const [name, setName] = useState("");
   const [busy, setBusy] = useBusy();
@@ -60,7 +63,7 @@ export function NewFolderDialog({
       onOpenChange(false);
       onDone();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     } finally {
       setBusy(false);
     }
@@ -107,6 +110,7 @@ export function RenameDialog({
   onDone: () => void;
 }) {
   const t = useTranslations("Files");
+  const handleError = useErrorHandler();
   const od = useOneDriveApi();
   const [name, setName] = useState("");
   const [busy, setBusy] = useBusy();
@@ -129,7 +133,7 @@ export function RenameDialog({
       onOpenChange(false);
       onDone();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     } finally {
       setBusy(false);
     }
@@ -174,6 +178,8 @@ export function ShareDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const t = useTranslations("Files");
+  const tc = useTranslations("Common");
+  const handleError = useErrorHandler();
   const od = useOneDriveApi();
   const [days, setDays] = useState(7);
   const [url, setUrl] = useState<string | null>(null);
@@ -195,7 +201,7 @@ export function ShareDialog({
       const res = await od.share(item.id, days);
       setUrl(res.url);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     } finally {
       setBusy(false);
     }
@@ -244,8 +250,13 @@ export function ShareDialog({
         ) : (
           <div className="flex items-center gap-2">
             <Input readOnly value={url} className="flex-1" />
-            <Button size="icon" variant="outline" onClick={() => void copy()}>
-              {copied ? <Check className="size-4 text-green-500" /> : <Copy className="size-4" />}
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => void copy()}
+              aria-label={tc("copy")}
+            >
+              {copied ? <Check className="size-4 text-ok" /> : <Copy className="size-4" />}
             </Button>
           </div>
         )}
@@ -268,6 +279,7 @@ export function VersionsDialog({
   onDone: () => void;
 }) {
   const t = useTranslations("Files");
+  const handleError = useErrorHandler();
   const od = useOneDriveApi();
   const [versions, setVersions] = useState<OneDriveVersion[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -290,7 +302,7 @@ export function VersionsDialog({
       onOpenChange(false);
       onDone();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("genericError"));
+      handleError(e);
     } finally {
       setBusyId(null);
     }
@@ -307,7 +319,7 @@ export function VersionsDialog({
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
         ) : versions.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">{t("noVersions")}</p>
+          <EmptyState inline title={t("noVersions")} />
         ) : (
           <ul className="max-h-80 space-y-1 overflow-y-auto">
             {versions.map((v, i) => (

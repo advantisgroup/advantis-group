@@ -2,24 +2,15 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-interface CardProps extends React.ComponentProps<"div"> {
-  nested?: boolean;
-}
-
-function Card({ className, nested = false, ...props }: CardProps) {
+function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card"
       className={cn(
-        // A faint top-down sheen (a hair lighter at the top, fading out) gives
-        // surfaces subtle depth without reading as a coloured gradient.
-        "bg-card bg-gradient-to-b from-white/[0.025] to-transparent text-card-foreground flex flex-col rounded-[var(--radius)] border border-border/70",
-        nested
-          ? "shadow-none"
-          : "shadow-[0_1px_2px_0_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.10)]",
-        // The refreshed design keeps surfaces flat — the border separates,
-        // shadow and sheen are saved for things that float (panels, menus).
-        "refreshed:bg-none refreshed:shadow-none",
+        "bg-card text-card-foreground flex flex-col rounded-[var(--radius)] border border-border/70",
+        // Surfaces stay flat — the border separates; shadow is saved for
+        // things that float (panels, menus).
+        "shadow-none",
         className,
       )}
       {...props}

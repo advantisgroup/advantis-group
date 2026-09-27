@@ -11,25 +11,30 @@ import { cn } from "@/lib/utils";
  * past.
  *
  * A quiet hairline surface rather than a dashed border — dashed reads as
- * "drop a file here", which is a different promise.
+ * "drop a file here", which is a different promise. `inline` drops the
+ * surface for use inside something that already is one (a card, a chart
+ * panel, a dialog), so it doesn't nest a box in a box.
  */
 export function EmptyState({
   icon,
   title,
   description,
   action,
+  inline = false,
   className,
 }: {
   icon?: ReactNode;
   title: string;
   description?: string;
   action?: ReactNode;
+  inline?: boolean;
   className?: string;
 }) {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card/50 px-6 py-12 text-center",
+        "flex flex-col items-center justify-center gap-1.5 text-center",
+        inline ? "px-4 py-8" : "rounded-xl border border-border/60 bg-card/50 px-6 py-12",
         className,
       )}
     >

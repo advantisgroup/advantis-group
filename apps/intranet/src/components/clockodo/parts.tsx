@@ -102,13 +102,8 @@ export function AbsencesSubNav({
 export function SectionBoundary({ title, children }: { title: string; children: ReactNode }) {
   return (
     <ErrorBoundary
-      fallback={({ error, reset }) => (
-        <ErrorFallback
-          title={title}
-          description={error.message}
-          className="min-h-0 py-6"
-          onRetry={reset}
-        />
+      fallback={({ reset }) => (
+        <ErrorFallback title={title} className="min-h-0 py-6" onRetry={reset} />
       )}
     >
       {children}
@@ -126,34 +121,26 @@ export const TYPE_STYLE: Record<
 > = {
   vacation: {
     icon: Plane,
-    className:
-      "bg-gradient-to-br from-emerald-400/30 to-emerald-500/10 text-emerald-700 dark:text-emerald-300 refreshed:bg-none refreshed:bg-emerald-500/15",
-    barClassName:
-      "bg-gradient-to-r from-emerald-500 to-emerald-500/70 refreshed:bg-none refreshed:bg-emerald-500",
+    className: "text-emerald-700 dark:text-emerald-300 bg-emerald-500/15",
+    barClassName: "bg-emerald-500",
     accent: "var(--color-emerald-500)",
   },
   sick: {
     icon: Thermometer,
-    className:
-      "bg-gradient-to-br from-sky-400/30 to-sky-500/10 text-sky-700 dark:text-sky-300 refreshed:bg-none refreshed:bg-sky-500/15",
-    barClassName:
-      "bg-gradient-to-r from-sky-500 to-sky-500/70 refreshed:bg-none refreshed:bg-sky-500",
+    className: "text-sky-700 dark:text-sky-300 bg-sky-500/15",
+    barClassName: "bg-sky-500",
     accent: "var(--color-sky-500)",
   },
   personal: {
     icon: CircleDashed,
-    className:
-      "bg-gradient-to-br from-violet-400/30 to-violet-500/10 text-violet-700 dark:text-violet-300 refreshed:bg-none refreshed:bg-violet-500/15",
-    barClassName:
-      "bg-gradient-to-r from-violet-500 to-violet-500/70 refreshed:bg-none refreshed:bg-violet-500",
+    className: "text-violet-700 dark:text-violet-300 bg-violet-500/15",
+    barClassName: "bg-violet-500",
     accent: "var(--color-violet-500)",
   },
   other: {
     icon: CircleDashed,
-    className:
-      "bg-gradient-to-br from-amber-400/30 to-amber-500/10 text-amber-700 dark:text-amber-300 refreshed:bg-none refreshed:bg-amber-500/15",
-    barClassName:
-      "bg-gradient-to-r from-amber-500 to-amber-500/70 refreshed:bg-none refreshed:bg-amber-500",
+    className: "text-amber-700 dark:text-amber-300 bg-amber-500/15",
+    barClassName: "bg-amber-500",
     accent: "var(--color-amber-500)",
   },
 };
