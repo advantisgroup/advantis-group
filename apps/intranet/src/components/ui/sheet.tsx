@@ -5,6 +5,7 @@ import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 
+import { CloseLabel } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 const Sheet = SheetPrimitive.Root;
@@ -87,7 +88,7 @@ const SheetContent = React.forwardRef<
         {children}
         <SheetPrimitive.Close className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-md opacity-70 ring-offset-background transition-opacity hover:bg-accent hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring disabled:pointer-events-none">
           <X className="h-5 w-5" />
-          <span className="sr-only">Close</span>
+          <CloseLabel />
         </SheetPrimitive.Close>
       </SheetPrimitive.Content>
     </SheetPortal>
