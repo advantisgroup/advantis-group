@@ -350,6 +350,9 @@ export const identityTables = {
   customRoles: defineTable({
     name: v.string(),
     capabilities: v.array(capabilityValidator),
+    // AI requests per 24 hours for people who get `use_ai` from this role.
+    // Missing means the workspace default (aiSettings).
+    aiDailyLimit: v.optional(v.number()),
     createdBy: v.id("users"),
     createdAt: v.number(),
   }),

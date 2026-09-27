@@ -164,7 +164,7 @@
     "ratingDown": "Not useful",
     "noNote": "No note",
     "limitTitle": "Daily limit per employee",
-    "limitHint": "How many AI requests someone below Manager can start in any 24 hours. Managers and admins aren't limited.",
+    "limitHint": "How many AI requests someone below Manager can start in any 24 hours, unless one of their roles sets its own. Managers and admins aren't limited.",
     "limitUnit": "requests / 24 h",
     "limitSaved": "Limit saved"
   },

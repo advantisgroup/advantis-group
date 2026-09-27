@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { capabilityValidator } from "../schema";
+import { MAX_DAILY_RUN_LIMIT, isValidDailyRunLimit } from "../lib/aiRuns";
 import { effectiveCustomRoleIds, type Capability } from "../lib/auth";
 
 /**
@@ -145,15 +146,24 @@ export const update = userMutation({
     customRoleId: v.id("customRoles"),
     name: v.optional(v.string()),
     capabilities: v.optional(v.array(capabilityValidator)),
+    // null goes back to the workspace default.
+    aiDailyLimit: v.optional(v.union(v.number(), v.null())),
   },
-  handler: async (ctx, { customRoleId, name, capabilities }) => {
+  handler: async (ctx, { customRoleId, name, capabilities, aiDailyLimit }) => {
     const role = await ctx.db.get(customRoleId);
     if (!role) {
       throw new ConvexError({ code: "not_found", message: "Role not found" });
     }
+    if (typeof aiDailyLimit === "number" && !isValidDailyRunLimit(aiDailyLimit)) {
+      throw new ConvexError({
+        code: "bad_request",
+        message: `The limit has to be a whole number between 1 and ${MAX_DAILY_RUN_LIMIT}`,
+      });
+    }
     await ctx.db.patch(customRoleId, {
       ...(name !== undefined ? { name: name.trim() || role.name } : {}),
       ...(capabilities !== undefined ? { capabilities: normalizeCapabilities(capabilities) } : {}),
+      ...(aiDailyLimit !== undefined ? { aiDailyLimit: aiDailyLimit ?? undefined } : {}),
     });
   },
 });

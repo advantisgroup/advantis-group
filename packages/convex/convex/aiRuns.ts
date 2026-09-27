@@ -14,7 +14,16 @@ import {
   userMutation,
   userQuery,
 } from "./functions";
-import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase, askSubjectType } from "./lib/aiRuns";
+import {
+  AI_RUN_STALE_MS,
+  DEFAULT_DAILY_RUN_LIMIT,
+  MAX_DAILY_RUN_LIMIT,
+  aiRunKind,
+  aiRunPhase,
+  askSubjectType,
+  isValidDailyRunLimit,
+} from "./lib/aiRuns";
+import { effectiveCustomRoleIds } from "./lib/auth";
 import { isFeatureEnabled } from "./lib/featureFlags";
 
 import { askContext, dailyBriefContext, navigateContext } from "./lib/aiContext";
@@ -405,19 +414,28 @@ function hasAreaAccess(caller: Caller, kind: Doc<"aiRuns">["kind"], subjectKey: 
   }
 }
 
-const DEFAULT_DAILY_RUN_LIMIT = 60;
-const MAX_DAILY_RUN_LIMIT = 1000;
 const DAY_MS = 86_400_000;
 
 async function dailyRunLimit(ctx: QueryCtx) {
   return (await ctx.db.query("aiSettings").first())?.dailyRunLimit ?? DEFAULT_DAILY_RUN_LIMIT;
 }
 
+/** The most generous limit among the roles that give this person AI — roles
+ * only ever add, so one without its own limit counts as the workspace one. */
+async function personalLimit(ctx: QueryCtx, caller: Caller) {
+  const fallback = await dailyRunLimit(ctx);
+  const roles = await Promise.all(effectiveCustomRoleIds(caller.user).map((id) => ctx.db.get(id)));
+  const limits = roles
+    .filter((role) => role?.capabilities.includes("use_ai"))
+    .map((role) => role!.aiDailyLimit ?? fallback);
+  return limits.length > 0 ? Math.max(...limits) : fallback;
+}
+
 /** How much of the daily allowance this person has used, or null when they
  * have no cap. Reads at most `limit` rows: past that the answer is "all of it". */
 async function allowance(ctx: QueryCtx, caller: Caller) {
   if (caller.isManager) return null;
-  const limit = await dailyRunLimit(ctx);
+  const limit = await personalLimit(ctx, caller);
   const runs = await ctx.db
     .query("aiRuns")
     .withIndex("by_user", (q) => q.eq("clerkUserId", caller.user.clerkUserId))
@@ -451,7 +469,7 @@ export const setDailyRunLimit = userMutation({
   args: { dailyRunLimit: v.number() },
   handler: async (ctx, { dailyRunLimit }) => {
     const limit = Math.round(dailyRunLimit);
-    if (!(limit >= 1 && limit <= MAX_DAILY_RUN_LIMIT)) {
+    if (!isValidDailyRunLimit(limit)) {
       throw new ConvexError({
         code: "bad_request",
         message: `The limit has to be between 1 and ${MAX_DAILY_RUN_LIMIT}`,

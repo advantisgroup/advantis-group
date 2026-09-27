@@ -31,9 +31,24 @@ type Role = NonNullable<FunctionReturnType<typeof api.org.roles.get>>;
 
 /** What turning on `use_ai` actually opens up for this role — AI only ever
  * works inside areas the role reaches already. */
-function AiScope({ capabilities }: { capabilities: Capability[] }) {
+function AiScope({ role }: { role: Role }) {
   const t = useTranslations("CustomRoles");
   const settings = useQuery(api.aiRuns.settings);
+  const update = useMutation(api.org.roles.update);
+  const handleError = useErrorHandler();
+  const [draft, setDraft] = useState<string | null>(null);
+
+  // Empty means "use the workspace limit"; saves when the field is left.
+  function commit() {
+    if (draft === null) return;
+    const text = draft.trim();
+    setDraft(null);
+    const next = text === "" ? null : Number(text);
+    if (next === (role.aiDailyLimit ?? null) || Number.isNaN(next)) return;
+    update({ customRoleId: role._id, aiDailyLimit: next })
+      .then(() => toast.success(t("aiLimitSaved")))
+      .catch(handleError);
+  }
 
   return (
     <div className="space-y-2 border-t border-border/60 bg-muted/30 px-4 py-3.5 text-[12.5px] leading-relaxed text-muted-foreground">
@@ -43,16 +58,39 @@ function AiScope({ capabilities }: { capabilities: Capability[] }) {
       </p>
       <p className="text-pretty">{t("aiScopeRead")}</p>
       <p className="text-pretty">{t("aiScopeWrite")}</p>
-      {capabilities.includes("manage_guidebooks") && (
+      {role.capabilities.includes("manage_guidebooks") && (
         <p className="text-pretty">{t("aiScopeGuidebooks")}</p>
       )}
       {settings && (
-        <p>
-          {t("aiLimit", { limit: settings.dailyRunLimit })}{" "}
-          <Link href="/admin/ai" className="font-medium text-foreground hover:underline">
-            {t("aiLimitLink")}
-          </Link>
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-1.5">
+          <div className="min-w-0 max-w-sm">
+            <label htmlFor="role-ai-limit" className="font-medium text-foreground">
+              {t("aiLimitTitle")}
+            </label>
+            <p className="text-pretty">
+              {t("aiLimitHint", { limit: settings.dailyRunLimit })}{" "}
+              <Link href="/admin/ai" className="font-medium text-foreground hover:underline">
+                {t("aiLimitLink")}
+              </Link>
+            </p>
+          </div>
+          <span className="flex items-center gap-2">
+            <Input
+              id="role-ai-limit"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={settings.maxDailyRunLimit}
+              value={draft ?? role.aiDailyLimit?.toString() ?? ""}
+              placeholder={String(settings.dailyRunLimit)}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={commit}
+              onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+              className="h-9 w-24 bg-card text-right tabular-nums"
+            />
+            {t("aiLimitUnit")}
+          </span>
+        </div>
       )}
     </div>
   );
@@ -167,7 +205,7 @@ function Permissions({ role }: { role: Role }) {
                         aria-label={label}
                       />
                     </div>
-                    {cap === "use_ai" && checked && <AiScope capabilities={role.capabilities} />}
+                    {cap === "use_ai" && checked && <AiScope role={role} />}
                   </div>
                 );
               })}

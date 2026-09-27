@@ -164,7 +164,7 @@
     "ratingDown": "Nicht hilfreich",
     "noNote": "Keine Notiz",
     "limitTitle": "Tageslimit pro Mitarbeiter:in",
-    "limitHint": "Wie viele KI-Anfragen jemand unterhalb von Manager in 24 Stunden starten kann. Manager und Admins sind nicht begrenzt.",
+    "limitHint": "Wie viele KI-Anfragen jemand unterhalb von Manager in 24 Stunden starten kann, sofern keine seiner Rollen ein eigenes Limit hat. Manager und Admins sind nicht begrenzt.",
     "limitUnit": "Anfragen / 24 Std.",
     "limitSaved": "Limit gespeichert"
   },

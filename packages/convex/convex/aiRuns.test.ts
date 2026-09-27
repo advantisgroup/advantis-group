@@ -166,6 +166,56 @@ describe("aiRuns", () => {
     }
   });
 
+  test("a role can set its own limit, and the most generous one wins", async () => {
+    const t = setup();
+    await seedUser(t, "user_alice");
+    await t.run((ctx) =>
+      ctx.db.insert("users", {
+        clerkUserId: "user_manager",
+        email: "manager@advantisgroup.de",
+        role: "manager",
+        status: "active",
+        external: false,
+        createdAt: Date.now(),
+      }),
+    );
+    const manager = t.withIdentity({ subject: "user_manager" });
+    const alice = t.withIdentity({ subject: "user_alice" });
+    const limit = async () => (await alice.query(api.aiRuns.myAllowance, {}))?.limit;
+    await manager.mutation(api.aiRuns.setDailyRunLimit, { dailyRunLimit: 20 });
+    const aiRole = await t.run(async (ctx) => (await ctx.db.query("customRoles").first())!._id);
+
+    expect(await limit()).toBe(20);
+    await manager.mutation(api.org.roles.update, { customRoleId: aiRole, aiDailyLimit: 100 });
+    expect(await limit()).toBe(100);
+
+    // A second, stingier role doesn't take away what the first one gives.
+    const strict = await manager.mutation(api.org.roles.create, {
+      name: "Strict",
+      capabilities: ["use_ai"],
+    });
+    await manager.mutation(api.org.roles.update, { customRoleId: strict, aiDailyLimit: 5 });
+    const aliceId = await t.run(
+      async (ctx) =>
+        (await ctx.db
+          .query("users")
+          .filter((q) => q.eq(q.field("clerkUserId"), "user_alice"))
+          .first())!._id,
+    );
+    await manager.mutation(api.org.roles.addMember, { customRoleId: strict, userId: aliceId });
+    expect(await limit()).toBe(100);
+
+    // Back to the workspace default, the strict role's 5 is below it too.
+    await manager.mutation(api.org.roles.update, { customRoleId: aiRole, aiDailyLimit: null });
+    expect(await limit()).toBe(20);
+    await manager.mutation(api.org.roles.removeMember, { customRoleId: aiRole, userId: aliceId });
+    expect(await limit()).toBe(5);
+
+    await expect(
+      manager.mutation(api.org.roles.update, { customRoleId: strict, aiDailyLimit: 0 }),
+    ).rejects.toThrow();
+  });
+
   test("the dock keeps a finished run after it's been seen, until it's put away", async () => {
     const t = setup();
     const alice = await seedUser(t, "user_alice");
