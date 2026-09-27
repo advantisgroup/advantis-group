@@ -118,7 +118,7 @@ export async function navigateSearch(
 
     case "wiki": {
       const entries = (await ctx.db.query("wikiEntries").collect()).filter(
-        (e) => !e.deletedAt && e.validUntil > now,
+        (e) => !e.deletedAt && e.validUntil > now && (!e.minRole || caller.meets(e.minRole)),
       );
       const guidebooks = (await ctx.db.query("guidebookPages").collect()).filter(
         (p) =>

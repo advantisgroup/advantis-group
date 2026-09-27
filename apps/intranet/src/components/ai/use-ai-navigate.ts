@@ -9,6 +9,7 @@ import { type Id } from "@advantis/convex/dataModel";
 import { useMutation } from "convex/react";
 
 import { useIntranetApiClient } from "@/lib/api-client";
+import { parseError } from "@/lib/errors";
 
 const POLL_MS = 350;
 // Room for a few searches before it answers.
@@ -32,6 +33,7 @@ export function useAiNavigate() {
   const [pending, setPending] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [limited, setLimited] = useState(false);
 
   const run = useCallback(
     async (query: string) => {
@@ -40,6 +42,7 @@ export function useAiNavigate() {
       setPending(true);
       setNotFound(false);
       setFailed(false);
+      setLimited(false);
       try {
         const { runId } = await apiClient.fetchJson<{ runId: string }>("/ai/navigate", {
           method: "POST",
@@ -73,8 +76,9 @@ export function useAiNavigate() {
         } else {
           setNotFound(true);
         }
-      } catch {
-        setFailed(true);
+      } catch (err) {
+        if (parseError(err).code === "ai_limit") setLimited(true);
+        else setFailed(true);
       } finally {
         setPending(false);
       }
@@ -82,5 +86,5 @@ export function useAiNavigate() {
     [apiClient, router, markSeen],
   );
 
-  return { run, pending, notFound, failed };
+  return { run, pending, notFound, failed, limited };
 }

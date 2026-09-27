@@ -180,6 +180,7 @@ import type * as migrations_backfillInquiries from "../migrations/backfillInquir
 import type * as migrations_backfillManageClockodoTeam from "../migrations/backfillManageClockodoTeam.js";
 import type * as migrations_backfillPerformanceCompanyId from "../migrations/backfillPerformanceCompanyId.js";
 import type * as migrations_dropGuestFields from "../migrations/dropGuestFields.js";
+import type * as migrations_moveGuidesToWiki from "../migrations/moveGuidesToWiki.js";
 import type * as notifications from "../notifications.js";
 import type * as notifications_email from "../notifications/email.js";
 import type * as notifications_notifications from "../notifications/notifications.js";
@@ -291,6 +292,7 @@ import type * as updatesInternal from "../updatesInternal.js";
 import type * as userPreferences from "../userPreferences.js";
 import type * as users from "../users.js";
 import type * as whitepaperLeads from "../whitepaperLeads.js";
+import type * as wiki_builtinGuides from "../wiki/builtinGuides.js";
 import type * as wiki_categories from "../wiki/categories.js";
 import type * as wiki_chats from "../wiki/chats.js";
 import type * as wiki_entries from "../wiki/entries.js";
@@ -482,6 +484,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/backfillManageClockodoTeam": typeof migrations_backfillManageClockodoTeam;
   "migrations/backfillPerformanceCompanyId": typeof migrations_backfillPerformanceCompanyId;
   "migrations/dropGuestFields": typeof migrations_dropGuestFields;
+  "migrations/moveGuidesToWiki": typeof migrations_moveGuidesToWiki;
   notifications: typeof notifications;
   "notifications/email": typeof notifications_email;
   "notifications/notifications": typeof notifications_notifications;
@@ -593,6 +596,7 @@ declare const fullApi: ApiFromModules<{
   userPreferences: typeof userPreferences;
   users: typeof users;
   whitepaperLeads: typeof whitepaperLeads;
+  "wiki/builtinGuides": typeof wiki_builtinGuides;
   "wiki/categories": typeof wiki_categories;
   "wiki/chats": typeof wiki_chats;
   "wiki/entries": typeof wiki_entries;

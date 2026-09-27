@@ -175,16 +175,24 @@ export default function GuidebookPage() {
   const confirm = useConfirm();
   const handleError = useErrorHandler();
 
-  const staticGuidebook = getGuidebook(params.slug);
-  // Only look up wiki/legacy content when the slug isn't one of the
-  // hardcoded registry ones — the static registry always wins on a collision.
-  const entry = useQuery(api.wiki.entries.get, staticGuidebook ? "skip" : { slug: params.slug });
+  const registered = getGuidebook(params.slug);
+  // The built-in guides move into the wiki under the same slug
+  // (migrations/moveGuidesToWiki). Once their wiki entry exists it wins;
+  // until then — or for someone the entry's audience leaves out, who gets
+  // the registry's own access check instead — the component is the fallback.
+  // Interactive tools never move, so for those the registry always wins.
+  const movable = registered?.category === "guide";
+  const entry = useQuery(
+    api.wiki.entries.get,
+    registered && !movable ? "skip" : { slug: params.slug },
+  );
+  const staticGuidebook = movable && entry !== null ? undefined : registered;
   // A wiki entry with this slug supersedes any legacy page of the same slug
   // (post-migration) — only look up the legacy page once we know there's no
   // wiki entry.
   const legacyPage = useQuery(
     api.guidebooks.pages.get,
-    staticGuidebook || entry ? "skip" : { slug: params.slug },
+    registered || entry ? "skip" : { slug: params.slug },
   );
   // Loaded here (not just inside `GuidebookAttachments`) so `WikiFileLinkText`
   // can resolve inline file-link chips in the body — Convex dedupes this
@@ -406,7 +414,7 @@ export default function GuidebookPage() {
           <PageHeaderBar title={t("eyebrow")} />
           <DocumentHeader eyebrow={t("eyebrow")} title={title} description={description} />
           <div id="guidebook-content">
-            {Component && staticGuidebook?.category === "guide" && <GermanOnlyNote />}
+            {movable && <GermanOnlyNote />}
             {Component ? (
               <Component />
             ) : entry ? (

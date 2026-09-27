@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
+
 import { api } from "@advantis/convex/api";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import { aiErrorKey } from "@/components/ai/AiRunCard";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
@@ -11,6 +14,7 @@ import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { PersonLink } from "@/components/profile/PersonLink";
 import { useIsManager } from "@/components/providers/current-user";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
 import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -21,7 +25,55 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime } from "@/lib/format";
+
+/** Saves when the field is left or Enter is pressed — no save button. */
+function DailyLimit() {
+  const t = useTranslations("Ai");
+  const settings = useQuery(api.aiRuns.settings);
+  const save = useMutation(api.aiRuns.setDailyRunLimit);
+  const handleError = useErrorHandler();
+  const [draft, setDraft] = useState<string | null>(null);
+
+  if (!settings) return <Skeleton className="h-20 rounded-xl" />;
+  const value = draft ?? String(settings.dailyRunLimit);
+
+  function commit() {
+    if (draft === null) return;
+    const next = Number(draft);
+    setDraft(null);
+    if (!Number.isFinite(next) || next === settings!.dailyRunLimit) return;
+    save({ dailyRunLimit: next })
+      .then(() => toast.success(t("admin.limitSaved")))
+      .catch(handleError);
+  }
+
+  return (
+    <section className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-xl border border-border/70 bg-card px-4 py-3.5">
+      <div className="min-w-0 max-w-lg">
+        <h2 className="text-sm font-semibold tracking-tight">{t("admin.limitTitle")}</h2>
+        <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground text-pretty">
+          {t("admin.limitHint")}
+        </p>
+      </div>
+      <label className="flex items-center gap-2 text-[13px] text-muted-foreground">
+        <Input
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={settings.maxDailyRunLimit}
+          value={value}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+          className="h-9 w-24 text-right tabular-nums"
+        />
+        {t("admin.limitUnit")}
+      </label>
+    </section>
+  );
+}
 
 /**
  * What AI has been doing lately, for the people answerable for it: how much
@@ -45,6 +97,8 @@ export default function AiActivityPage() {
         description={t("admin.description")}
         icon={<Sparkles />}
       />
+
+      <DailyLimit />
 
       {stats === undefined ? (
         <Skeleton className="h-24 rounded-xl" />

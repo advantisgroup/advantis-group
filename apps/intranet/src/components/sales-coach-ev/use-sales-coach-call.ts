@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useAiEnabled } from "@/components/ai/use-ai-enabled";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIntranetApiClient } from "@/lib/api-client";
 import { useEdenApi } from "@/lib/eden";
@@ -69,6 +70,7 @@ export function useSalesCoachCall() {
   const eden = useEdenApi();
   const apiClient = useIntranetApiClient();
   const handleError = useErrorHandler();
+  const aiEnabled = useAiEnabled();
 
   const [status, setStatus] = useState<"idle" | "live" | "stopped">("idle");
   const [thinking, setThinking] = useState(false);
@@ -98,6 +100,7 @@ export function useSalesCoachCall() {
   const browserSupported = getSpeechRecognitionCtor() !== null;
 
   const runLiveAnalysis = useCallback(async () => {
+    if (!aiEnabled) return;
     const text = transcriptRef.current.trim();
     if (!text || text.length < 80 || text.length - lastAnalysisLenRef.current < 60) return;
     lastAnalysisLenRef.current = text.length;
@@ -132,7 +135,7 @@ export function useSalesCoachCall() {
     } finally {
       setThinking(false);
     }
-  }, [eden]);
+  }, [eden, aiEnabled]);
 
   const updateTimer = useCallback(() => {
     if (!callStartRef.current) return;

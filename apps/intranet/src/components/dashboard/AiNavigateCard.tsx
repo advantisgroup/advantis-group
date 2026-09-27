@@ -18,7 +18,8 @@ import { Input } from "@/components/ui/input";
  */
 export function AiNavigateCard() {
   const t = useTranslations("Dashboard");
-  const { run, pending, notFound, failed } = useAiNavigate();
+  const te = useTranslations("Errors");
+  const { run, pending, notFound, failed, limited } = useAiNavigate();
   const [query, setQuery] = useState("");
 
   function submit() {
@@ -63,9 +64,9 @@ export function AiNavigateCard() {
           </Button>
         </form>
 
-        {(notFound || failed) && (
+        {(notFound || failed || limited) && (
           <p className="mt-2 text-[13px] text-muted-foreground">
-            {notFound ? t("helperNoMatch") : t("helperFailed")}
+            {notFound ? t("helperNoMatch") : limited ? te("ai_limit") : t("helperFailed")}
           </p>
         )}
       </div>

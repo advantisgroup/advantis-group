@@ -130,6 +130,12 @@
     "featureHistory": "Verlauf",
     "deleteBody": "Jeden Lauf auf seiner Seite löschen; Antwort und Gespräch verschwinden mit ihm."
   },
+  "allowance": {
+    "title": "Heutiges Kontingent",
+    "used": "{used, number} von {limit, number} genutzt",
+    "hint": "Zählt jede KI-Anfrage, die du in den letzten 24 Stunden gestartet hast.",
+    "nextFree": "Aufgebraucht – die nächste wird {time, date, ::EEEHHmm} frei."
+  },
   "feedback": {
     "question": "War das brauchbar?",
     "up": "Hilfreich",
@@ -156,7 +162,11 @@
     "columnTokens": "Tokens",
     "ratingUp": "Hilfreich",
     "ratingDown": "Nicht hilfreich",
-    "noNote": "Keine Notiz"
+    "noNote": "Keine Notiz",
+    "limitTitle": "Tageslimit pro Mitarbeiter:in",
+    "limitHint": "Wie viele KI-Anfragen jemand unterhalb von Manager in 24 Stunden starten kann, sofern keine seiner Rollen ein eigenes Limit hat. Manager und Admins sind nicht begrenzt.",
+    "limitUnit": "Anfragen / 24 Std.",
+    "limitSaved": "Limit gespeichert"
   },
   "detail": {
     "aboutRun": "Dieser Lauf",

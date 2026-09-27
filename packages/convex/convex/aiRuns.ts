@@ -14,11 +14,20 @@ import {
   userMutation,
   userQuery,
 } from "./functions";
-import { AI_RUN_STALE_MS, aiRunKind, aiRunPhase, askSubjectType } from "./lib/aiRuns";
+import {
+  AI_RUN_STALE_MS,
+  DEFAULT_DAILY_RUN_LIMIT,
+  MAX_DAILY_RUN_LIMIT,
+  aiRunKind,
+  aiRunPhase,
+  askSubjectType,
+  isValidDailyRunLimit,
+} from "./lib/aiRuns";
+import { effectiveCustomRoleIds } from "./lib/auth";
 import { isFeatureEnabled } from "./lib/featureFlags";
 
 import { askContext, dailyBriefContext, navigateContext } from "./lib/aiContext";
-import { getSessionCaller } from "./lib/caller";
+import { type Caller, getSessionCaller } from "./lib/caller";
 import { navigateSearch, navigateSearchKind } from "./lib/navigateSearch";
 import { displayName } from "./lib/users";
 
@@ -365,6 +374,125 @@ export const feedbackList = userQuery({
 
 // --- apps/api ----------------------------------------------------------------
 
+/** The one gate every AI call in the app passes through: with the flag off,
+ * nothing new reaches the model, whatever the browser still shows. Each
+ * refusal has its own code so apps/api can say why. */
+async function requireAi(ctx: QueryCtx, caller: Caller) {
+  if (!(await isFeatureEnabled(ctx, "ai"))) {
+    throw new ConvexError({ code: "disabled", message: "AI is switched off" });
+  }
+  if (!caller.can("use_ai")) {
+    throw new ConvexError({ code: "no_capability", message: "AI is not enabled for you" });
+  }
+}
+
+/**
+ * `use_ai` turns AI on for someone; it never opens an area to them. A run
+ * also needs whatever its area asks for by hand, so AI can't read or change
+ * anything its user couldn't without it. The routes check this too before
+ * doing any work — this is what holds if one of them forgets.
+ */
+function hasAreaAccess(caller: Caller, kind: Doc<"aiRuns">["kind"], subjectKey: string) {
+  switch (kind) {
+    case "wikiFormat":
+    case "wikiMeta":
+      return caller.can("manage_guidebooks");
+    case "cvExtract":
+    case "cvRescan":
+      return caller.hasApplicantAccess;
+    case "coachWikiExtract":
+      return caller.isAdmin;
+    case "ask":
+      // The other records are open to everyone; askContext checks visibility.
+      return !subjectKey.startsWith("ask:applicant:") || caller.hasApplicantAccess;
+    case "wikiChat":
+    case "coachReport":
+    case "coachEod":
+    case "dailyBrief":
+    case "navigate":
+      return true;
+  }
+}
+
+const DAY_MS = 86_400_000;
+
+async function dailyRunLimit(ctx: QueryCtx) {
+  return (await ctx.db.query("aiSettings").first())?.dailyRunLimit ?? DEFAULT_DAILY_RUN_LIMIT;
+}
+
+/** The most generous limit among the roles that give this person AI — roles
+ * only ever add, so one without its own limit counts as the workspace one. */
+async function personalLimit(ctx: QueryCtx, caller: Caller) {
+  const fallback = await dailyRunLimit(ctx);
+  const roles = await Promise.all(effectiveCustomRoleIds(caller.user).map((id) => ctx.db.get(id)));
+  const limits = roles
+    .filter((role) => role?.capabilities.includes("use_ai"))
+    .map((role) => role!.aiDailyLimit ?? fallback);
+  return limits.length > 0 ? Math.max(...limits) : fallback;
+}
+
+/** How much of the daily allowance this person has used, or null when they
+ * have no cap. Reads at most `limit` rows: past that the answer is "all of it". */
+async function allowance(ctx: QueryCtx, caller: Caller) {
+  if (caller.isManager) return null;
+  const limit = await personalLimit(ctx, caller);
+  const runs = await ctx.db
+    .query("aiRuns")
+    .withIndex("by_user", (q) => q.eq("clerkUserId", caller.user.clerkUserId))
+    .order("desc")
+    .take(limit);
+  const since = Date.now() - DAY_MS;
+  const used = runs.filter((run) => run.startedAt > since).length;
+  // When the oldest counted run drops out of the window, one frees up.
+  const nextFreeAt = used >= limit ? runs[limit - 1].startedAt + DAY_MS : null;
+  return { limit, used, nextFreeAt };
+}
+
+/** The Settings → AI meter: how much of today's allowance is left. */
+export const myAllowance = userQuery({
+  args: {},
+  handler: async (ctx) => allowance(ctx, ctx.caller),
+});
+
+export const settings = userQuery({
+  role: "manager",
+  args: {},
+  handler: async (ctx) => ({
+    dailyRunLimit: await dailyRunLimit(ctx),
+    defaultDailyRunLimit: DEFAULT_DAILY_RUN_LIMIT,
+    maxDailyRunLimit: MAX_DAILY_RUN_LIMIT,
+  }),
+});
+
+export const setDailyRunLimit = userMutation({
+  role: "manager",
+  args: { dailyRunLimit: v.number() },
+  handler: async (ctx, { dailyRunLimit }) => {
+    const limit = Math.round(dailyRunLimit);
+    if (!isValidDailyRunLimit(limit)) {
+      throw new ConvexError({
+        code: "bad_request",
+        message: `The limit has to be between 1 and ${MAX_DAILY_RUN_LIMIT}`,
+      });
+    }
+    const row = { dailyRunLimit: limit, updatedByUserId: ctx.caller.id, updatedAt: Date.now() };
+    const existing = await ctx.db.query("aiSettings").first();
+    if (existing) await ctx.db.patch(existing._id, row);
+    else await ctx.db.insert("aiSettings", row);
+    return null;
+  },
+});
+
+/** The same gate for calls too quick to be runs of their own — Sales Coach's
+ * live hints. */
+export const apiCheck = serverUserQuery({
+  args: {},
+  handler: async (ctx) => {
+    await requireAi(ctx, ctx.caller);
+    return null;
+  },
+});
+
 export const apiStart = serverUserMutation({
   args: {
     kind: aiRunKind,
@@ -374,14 +502,16 @@ export const apiStart = serverUserMutation({
     title: v.optional(v.string()), // ciphertext
   },
   handler: async (ctx, args) => {
-    // The one gate every AI run in the app passes through: with the flag off,
-    // nothing new reaches the model, whatever the browser still shows.
-    if (!(await isFeatureEnabled(ctx, "ai"))) {
-      throw new ConvexError({ code: "disabled", message: "AI is switched off" });
+    await requireAi(ctx, ctx.caller);
+    if (!hasAreaAccess(ctx.caller, args.kind, args.subjectKey)) {
+      throw new ConvexError({
+        code: "no_area_access",
+        message: "You don't have access to this area",
+      });
     }
-    // Same gate, per person. Its own code so apps/api can say why.
-    if (!ctx.caller.can("use_ai")) {
-      throw new ConvexError({ code: "no_capability", message: "AI is not enabled for you" });
+    const used = await allowance(ctx, ctx.caller);
+    if (used && used.used >= used.limit) {
+      throw new ConvexError({ code: "ai_limit", message: "Today's AI allowance is used up" });
     }
     const clerkUserId = ctx.caller.user.clerkUserId;
     const now = Date.now();

@@ -8,6 +8,7 @@ export const API_ERROR_CODES = [
   "upstream",
   "internal",
   "feature_disabled",
+  "ai_limit",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

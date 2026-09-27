@@ -9,6 +9,7 @@
   "upstream": "Der verbundene Dienst ist gerade nicht erreichbar. Bitte versuche es erneut.",
   "internal": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
   "feature_disabled": "Diese Funktion ist derzeit nicht verfügbar.",
+  "ai_limit": "Dein KI-Kontingent für heute ist aufgebraucht. Es wird im Lauf der nächsten 24 Stunden wieder frei.",
   "boundaryTitle": "Etwas ist schiefgelaufen",
   "boundaryDescription": "Beim Laden dieser Seite ist ein unerwarteter Fehler aufgetreten. Du kannst es erneut versuchen.",
   "retry": "Erneut versuchen",

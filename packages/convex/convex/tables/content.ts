@@ -140,6 +140,9 @@ export const contentTables = {
     // matters, not on every typo fix).
     policy: v.optional(v.boolean()),
     policyVersion: v.optional(v.number()),
+    // Unset = everyone signed in. For how-tos about screens only managers
+    // (or admins) have — enforced by every wiki read (see wiki/entries.ts).
+    minRole: v.optional(v.union(v.literal("manager"), v.literal("admin"))),
     validFrom: v.number(),
     validUntil: v.number(),
     version: v.number(),

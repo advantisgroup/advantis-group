@@ -140,6 +140,7 @@ export function CommandPalette({ className }: { className?: string } = {}) {
   const t = useTranslations("Command");
   const tNav = useTranslations("Nav");
   const tGuide = useTranslations("Guidebooks");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
@@ -240,6 +241,9 @@ export function CommandPalette({ className }: { className?: string } = {}) {
   useEffect(() => {
     if (navigateAi.failed) toast.error(t("aiSearchFailed"));
   }, [navigateAi.failed, t]);
+  useEffect(() => {
+    if (navigateAi.limited) toast.error(te("ai_limit"));
+  }, [navigateAi.limited, te]);
 
   useEffect(() => {
     if (open) {
@@ -505,7 +509,11 @@ export function CommandPalette({ className }: { className?: string } = {}) {
       }
     }
 
+    // A built-in guide that has moved into the wiki shows up once, as the
+    // wiki entry below.
+    const wikiSlugs = new Set((wikiEntries ?? []).map((e) => e.slug));
     for (const gb of guidebooks) {
+      if (wikiSlugs.has(gb.slug)) continue;
       const title = guidebookTitle(gb, tGuide);
       if (title.toLowerCase().includes(q)) {
         list.push({

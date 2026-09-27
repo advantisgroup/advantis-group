@@ -42,3 +42,12 @@ export const aiRunStatus = v.union(
  * run is reported as interrupted instead of spinning forever. The browser
  * applies the same threshold on its own clock. */
 export const AI_RUN_STALE_MS = 20_000;
+
+/** AI requests an employee may start in any 24 hours, unless the workspace
+ * or one of their roles says otherwise. */
+export const DEFAULT_DAILY_RUN_LIMIT = 60;
+export const MAX_DAILY_RUN_LIMIT = 1000;
+
+export function isValidDailyRunLimit(limit: number) {
+  return Number.isInteger(limit) && limit >= 1 && limit <= MAX_DAILY_RUN_LIMIT;
+}

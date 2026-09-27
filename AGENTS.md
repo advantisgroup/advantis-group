@@ -162,6 +162,13 @@ recorded by `runModelText`/`runModelTurn` in `apps/api/src/lib/ai.ts`). Call
 the model through those, never `anthropic.streamText` directly, or the run
 won't show up correctly in Settings → AI → history.
 
+`use_ai` switches AI on for a person but never opens an area to them:
+`aiRuns.apiStart` also checks the area's own permission per run kind
+(`hasAreaAccess`) and the per-employee daily limit (the workspace's, or the
+highest one set by a role that grants `use_ai`). A new run kind needs a
+case there; an AI call that isn't a run goes through `requireAi` in
+`apps/api/src/lib/ai.ts`.
+
 ## Convex backend conventions
 
 Read [`docs/convex-best-practices.md`](./docs/convex-best-practices.md)

@@ -242,6 +242,38 @@ function describeFailure(err: unknown): { code: string; retryable: boolean } {
   return { code: "internal", retryable: true };
 }
 
+/** Why Convex wouldn't let an AI call through, as an answer for the browser. */
+function refusal(err: unknown): unknown {
+  const code = err instanceof ConvexError ? (err.data as { code?: string })?.code : undefined;
+  switch (code) {
+    case "conflict":
+      return new ApiError(409, "conflict", "This is still being worked on.");
+    case "disabled":
+      return new ApiError(503, "feature_disabled", "AI is switched off right now.");
+    case "no_capability":
+      return new ApiError(403, "forbidden", "AI is not enabled for your account.");
+    case "no_area_access":
+      return new ApiError(403, "forbidden", "You don't have access to this area.");
+    case "ai_limit":
+      return new ApiError(429, "ai_limit", "Today's AI allowance is used up.");
+    default:
+      return err;
+  }
+}
+
+/** For AI calls that aren't runs (Sales Coach's live hints): the same
+ * switch-and-permission gate `startAiRun` passes through. */
+export async function requireAi(clerkUserId: string) {
+  try {
+    await getConvex().query(api.aiRuns.apiCheck, {
+      serverKey: getConvexServerKey(),
+      clerkUserId,
+    });
+  } catch (err) {
+    throw refusal(err);
+  }
+}
+
 /**
  * Opens a run row and does `work` after the response has gone out.
  *
@@ -279,17 +311,7 @@ export async function startAiRun(
       title: title ? encrypt(title, key) : undefined,
     });
   } catch (err) {
-    const code = err instanceof ConvexError ? (err.data as { code?: string })?.code : undefined;
-    if (code === "conflict") {
-      throw new ApiError(409, "conflict", "This is still being worked on.");
-    }
-    if (code === "disabled") {
-      throw new ApiError(503, "feature_disabled", "AI is switched off right now.");
-    }
-    if (code === "no_capability") {
-      throw new ApiError(403, "forbidden", "AI is not enabled for your account.");
-    }
-    throw err;
+    throw refusal(err);
   }
 
   const controller = new AbortController();
