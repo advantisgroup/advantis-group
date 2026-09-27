@@ -68,7 +68,7 @@
   "externalMembersHint": "Members whose email is outside your company domains. They have full access according to their role.",
   "inviteExternalHint": "External address — they'll be invited as a full member with the selected role.",
   "inviteExternalTitle": "Invite an external user?",
-  "inviteExternalBody": "{email} is outside your company domains. They'll receive a Clerk invitation and get full access as the selected role. Send it anyway?",
+  "inviteExternalBody": "{email} is outside your company domains. They'll get an email invitation and full access with the selected role. Send it anyway?",
   "onboardPageTitle": "Invite a new employee",
   "onboardPageDescription": "Set up access, depending on whether a personal or a company email address is used.",
   "onboardModeLabel": "Email type",

@@ -127,7 +127,7 @@
     "empty": "Noch keine Geräte. Genehmige eines, sobald sich sein Tracker registriert.",
     "noMatches": "Keine Geräte entsprechen diesen Filtern.",
     "confirmDelete": "Dieses Gerät endgültig löschen?",
-    "confirmDeleteBody": "Dadurch wird das Gerät entfernt und sein Token widerrufen. Es muss sich komplett neu registrieren. Wenn du es nur vorübergehend pausieren willst, nimm stattdessen „Deaktivieren“.",
+    "confirmDeleteBody": "Dadurch wird das Gerät entfernt und sein Tracker abgemeldet. Um zurückzukommen, muss es sich mit einem neuen Code neu registrieren. Wenn du es nur vorübergehend pausieren willst, nimm stattdessen „Deaktivieren“.",
     "approved": "Gerät genehmigt.",
     "disabled": "Gerät deaktiviert.",
     "deleted": "Gerät gelöscht.",
@@ -195,7 +195,7 @@
     },
     "discarded": {
       "heading": "Verworfene Daten",
-      "hint": "Signale, die die Statuslogik abgelehnt hat (z. B. außerhalb der Geschäftszeiten), werden in Quarantäne gestellt statt in die Zeitleisten geschrieben. Hier lässt sich prüfen, was verworfen wurde und warum.",
+      "hint": "Aktivität, die nicht zu den Regeln passt (z. B. außerhalb der Geschäftszeiten), wird hier zurückgehalten statt in den Zeitleisten zu erscheinen. Hier siehst du, was zurückgehalten wurde und warum.",
       "open": "Verworfene Daten öffnen",
       "sub": "Abgelehnte Signale aller Mitarbeiter, neueste zuerst.",
       "empty": "Es wurde nichts verworfen.",
@@ -342,7 +342,7 @@
         "clockodo": "Clockodo"
       },
       "missing": "Fehlende Daten?",
-      "hint": "Signale, die jemanden außerhalb der Geschäftszeiten (07:00–20:00) als arbeitend markieren würden, werden in Quarantäne gestellt statt in die Zeitleiste geschrieben. Klicken zeigt, was für diese Person verworfen wurde — die Gesamtliste steht unter Einstellungen → Verworfene Daten."
+      "hint": "Signale, die jemanden außerhalb der Geschäftszeiten (07:00–20:00) als arbeitend markieren würden, werden zurückgehalten statt in der Zeitleiste zu erscheinen. Klicken zeigt, was für diese Person verworfen wurde — die Gesamtliste steht unter Einstellungen → Verworfene Daten."
     },
     "day": {
       "heading": "Minute für Minute",
@@ -581,11 +581,11 @@
     },
     "fix": {
       "tracker": {
-        "send_failed": "Der Tracker konnte das Backend nicht erreichen. Meist eine kurze Netzwerkstörung — er versucht es automatisch erneut und behält die Daten. Hält es an, Internet des PCs und die Convex-URL prüfen.",
+        "send_failed": "Der Tracker konnte den Server nicht erreichen. Meist eine kurze Netzwerkstörung — er versucht es automatisch erneut und behält die Daten. Hält es an, prüf die Internetverbindung des PCs und die Serveradresse in der config.json des Trackers.",
         "queue_io": "Der Tracker konnte seinen lokalen Puffer nicht schreiben (Festplatte voll oder gesperrter ProgramData-Ordner). Freien Speicher auf dem PC prüfen."
       },
       "ingest": {
-        "bad_tz_offset": "Ein Gerät meldete eine unmögliche Zeitzone; das Backend hat sie korrigiert. Harmlos, außer es wiederholt sich — dann Uhrzeit/Zeitzone des PCs prüfen."
+        "bad_tz_offset": "Ein Gerät meldete eine unmögliche Zeitzone; der Server hat sie korrigiert. Harmlos, außer es wiederholt sich — dann Uhrzeit/Zeitzone des PCs prüfen."
       },
       "enroll": {
         "code_invalid": "Ein Tracker wollte sich mit einem ungültigen oder abgelaufenen Code registrieren. Erstelle unter Geräte einen neuen Registrierungscode."

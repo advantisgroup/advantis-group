@@ -127,7 +127,7 @@
     "empty": "No devices yet. Approve one once its tracker enrolls.",
     "noMatches": "No devices match these filters.",
     "confirmDelete": "Permanently delete this device?",
-    "confirmDeleteBody": "This removes the device and revokes its token. It will have to re-enroll from scratch. To pause it reversibly, use Disable instead.",
+    "confirmDeleteBody": "This removes the device and signs its tracker out. To come back, it has to register again with a new code. To pause it for a while, use Disable instead.",
     "approved": "Device approved.",
     "disabled": "Device disabled.",
     "deleted": "Device deleted.",
@@ -195,7 +195,7 @@
     },
     "discarded": {
       "heading": "Discarded data",
-      "hint": "Signals the state engine rejected (e.g. outside business hours) are quarantined instead of written to timelines. Review what was discarded and why.",
+      "hint": "Activity that doesn't fit the rules (for example outside business hours) is set aside here instead of showing up in timelines. Check what was set aside and why.",
       "open": "Open discarded data",
       "sub": "Rejected signals across all people, newest first.",
       "empty": "Nothing has been discarded.",
@@ -232,7 +232,7 @@
       "inactivity": "Inactivity threshold",
       "inactivityHint": "Idle time before someone counts as inactive (used in charts and KPIs).",
       "offline": "Offline threshold",
-      "offlineHint": "Time without a heartbeat before a device shows as offline.",
+      "offlineHint": "How long a device can go without sending a sign of life before it shows as offline.",
       "retention": "Data retention",
       "retentionHint": "How long raw samples and state history are kept before pruning.",
       "seconds": "seconds",
@@ -342,7 +342,7 @@
         "clockodo": "Clockodo"
       },
       "missing": "Missing data?",
-      "hint": "Signals that would mark someone as working outside business hours (07:00–20:00) are quarantined instead of written to the timeline. Click to see what was discarded for this person — the org-wide list is under Settings → Discarded data."
+      "hint": "Signals that would mark someone as working outside business hours (07:00–20:00) are set aside instead of showing up in the timeline. Click to see what was discarded for this person — the org-wide list is under Settings → Discarded data."
     },
     "day": {
       "heading": "Minute by minute",
@@ -581,17 +581,17 @@
     },
     "fix": {
       "tracker": {
-        "send_failed": "The tracker couldn't reach the backend. Usually a temporary network drop — it retries automatically and keeps the data. If it persists, check that PC's internet and the Convex URL.",
+        "send_failed": "The tracker couldn't reach the server. Usually a short network drop — it retries on its own and keeps the data. If it keeps happening, check that PC's internet connection and the server address in the tracker's config.json.",
         "queue_io": "The tracker couldn't write its local buffer (disk full or a locked ProgramData folder). Check free disk space on that PC."
       },
       "ingest": {
-        "bad_tz_offset": "A device reported an impossible timezone; the backend clamped it. Harmless unless it repeats — then check that PC's clock/timezone settings."
+        "bad_tz_offset": "A device reported an impossible time zone, and the server corrected it. Harmless unless it repeats — then check that PC's clock/timezone settings."
       },
       "enroll": {
         "code_invalid": "A tracker tried to enroll with a bad or expired code. Issue a fresh enrollment code under Devices."
       },
       "api": {
-        "internal_error": "The dashboard's server hit an unexpected error (often a missing/invalid integration credential or secret). Check the integration settings; details are in the deploy logs."
+        "internal_error": "The dashboard's server ran into an unexpected error, usually because an integration's login details are missing or wrong. Check the integration settings, or tell whoever looks after the servers."
       },
       "unknown": "See the technical detail below, or the Help page. If it keeps happening, contact your administrator."
     }
@@ -656,7 +656,7 @@
       "roles": "Custom role with “View ActivityTrack admin”: read-only dashboards, timelines and reports. Manager: also add and edit people and link devices. Admin: everything, including approving or revoking devices, configuration and system health. Roles are managed under Admin → Members and Admin → Roles.",
       "add_admin": "Give them the Admin role under Admin → Members. Addresses listed in the server's ADMIN_EMAILS variable become admins automatically on their first sign-in, so the company can't lock itself out.",
       "not_reporting": "Check: (1) the tracker is installed and running (system tray), (2) the device appears under Devices and is Approved (pending devices don't count), (3) the computer has internet. New installs appear as 'pending' until you approve them.",
-      "offline": "A device goes 'offline' after it misses heartbeats for the offline window (Settings → Configuration). Causes: the PC is asleep, off the network, or the tracker was closed. It clears itself once the tracker reports again.",
+      "offline": "A device shows as 'offline' once it has sent no signs of life for longer than the offline window (Settings → Configuration). Causes: the PC is asleep, off the network, or the tracker was closed. It clears itself once the tracker reports again.",
       "enroll_failed": "The one-time enrollment code is wrong, already used, or expired. Create a fresh code under Devices → enrollment codes and put it in the device's config (or reinstall with a current code).",
       "debug_password": "It unlocks the tracker's local status/diagnostics window on a PC. Set or change it under Settings → Configuration. It never unlocks the dashboard — only the on-device debug view.",
       "integration_down": "Usually expired or missing API credentials, or the provider is unreachable. The keys are server environment variables (GENESYS_… and CLOCKODO_…), so ask whoever runs the servers to check them. Settings → System health shows the last error. The dashboard keeps working from workstation activity alone while an integration is down.",

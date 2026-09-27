@@ -85,7 +85,7 @@
   },
   "migration": {
     "title": "Datenmigration",
-    "description": "Einmaliger Import der ActivityTrack-Daten aus dem alten Deployment ins Intranet. Wiederaufnehmbar und idempotent — erneutes Ausführen ist sicher.",
+    "description": "Einmaliger Import der ActivityTrack-Daten aus der alten eigenständigen App ins Intranet. Du kannst ihn gefahrlos erneut starten: Er macht dort weiter, wo er aufgehört hat, und überspringt bereits Importiertes.",
     "start": "Migration starten",
     "resume": "Fortsetzen",
     "retry": "Fehlgeschlagenen Schritt wiederholen",

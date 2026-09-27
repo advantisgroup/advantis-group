@@ -370,7 +370,7 @@
   "companyDeleteConfirm": "Endgültig löschen",
   "companyDeleted": "Unternehmen gelöscht.",
   "rolesTitle": "Rollen & Berechtigungen",
-  "rolesIntro": "Legt fest, wer was darf — jede neue Rolle gilt sofort, ohne Deploy.",
+  "rolesIntro": "Hier legst du fest, wer was darf. Neue oder geänderte Rollen gelten sofort.",
   "rolesCompanyPlaceholder": "Unternehmen auswählen",
   "rolesCompanyEmpty": "Oben ein Unternehmen auswählen, um dessen Rollen zu verwalten.",
   "rolesEmpty": "Noch keine Rollen.",
