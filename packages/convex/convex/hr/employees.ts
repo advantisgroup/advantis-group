@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { profileDisplayName, profileOptionValidator, toProfileOption } from "../lib/profile";
+import { hasApplicantAccess } from "./lib/access";
 import { onboardingItemValidator } from "../schema";
 
 const employeeDocumentCategoryValidator = v.union(
@@ -30,6 +31,7 @@ const employeeProfileValidator = v.object({
   phone: v.optional(v.string()),
   jobTitle: v.optional(v.string()),
   department: v.optional(v.string()),
+  hireDate: v.optional(v.string()),
   status: v.union(v.literal("active"), v.literal("archived")),
   onboarding: v.optional(v.array(onboardingItemValidator)),
   notes: v.optional(v.string()),
@@ -82,12 +84,28 @@ async function requireLinkable(
 
 const emailKey = (email: string | undefined) => email?.trim().toLowerCase() || null;
 
+/** The linked account's own state, so HR can see who has left the intranet
+ * while their record is still active. */
+const accountStatusValidator = v.union(
+  v.literal("active"),
+  v.literal("suspended"),
+  v.literal("removed"),
+  v.null(),
+);
+
+function requireIsoDate(value: string) {
+  if (value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new ConvexError({ code: "bad_request", message: "Date must be YYYY-MM-DD" });
+  }
+}
+
 export const listProfiles = userQuery({
   applicant: "access",
   args: { includeArchived: v.optional(v.boolean()) },
   returns: v.array(
     employeeProfileValidator.extend({
       linkedProfile: v.union(profileOptionValidator, v.null()),
+      accountStatus: accountStatusValidator,
       documentsCount: v.number(),
     }),
   ),
@@ -110,10 +128,44 @@ export const listProfiles = userQuery({
         return {
           ...profile,
           linkedProfile: user ? await toProfileOption(ctx, user) : null,
+          accountStatus: user?.status ?? null,
           documentsCount: documents.length,
         };
       }),
     );
+  },
+});
+
+/**
+ * Whether someone has an HR record, for the intranet profile — only for
+ * people with HR access, and deliberately without the vault: it says a
+ * record exists and where, nothing that's in it. Opening it still unlocks.
+ */
+export const recordForUser = userQuery({
+  args: { userId: v.id("users") },
+  returns: v.union(
+    v.object({
+      access: v.literal(true),
+      record: v.union(
+        v.object({
+          _id: v.id("employeeProfiles"),
+          status: v.union(v.literal("active"), v.literal("archived")),
+        }),
+        v.null(),
+      ),
+    }),
+    v.object({ access: v.literal(false) }),
+  ),
+  handler: async (ctx, { userId }) => {
+    if (!hasApplicantAccess(ctx.caller.user)) return { access: false as const };
+    const record = await ctx.db
+      .query("employeeProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+    return {
+      access: true as const,
+      record: record ? { _id: record._id, status: record.status } : null,
+    };
   },
 });
 
@@ -217,6 +269,7 @@ export const backfillFromIntranet = userMutation({
           phone: match.phone ?? user.phone,
           jobTitle: match.jobTitle ?? user.jobTitle,
           department: match.department ?? user.department,
+          hireDate: match.hireDate ?? user.hireDate,
           updatedAt: now,
         });
         unlinkedByEmail.delete(user.email.toLowerCase());
@@ -229,6 +282,7 @@ export const backfillFromIntranet = userMutation({
           phone: user.phone,
           jobTitle: user.jobTitle,
           department: user.department,
+          hireDate: user.hireDate,
           status: "active",
           createdByUserId: ctx.caller.user._id,
           createdAt: now,
@@ -247,6 +301,8 @@ export const getProfile = userQuery({
   args: { employeeProfileId: v.id("employeeProfiles") },
   returns: employeeProfileValidator.extend({
     linkedProfile: v.union(profileOptionValidator, v.null()),
+    accountStatus: accountStatusValidator,
+    accountHireDate: v.union(v.string(), v.null()),
     sourceApplicant: v.union(
       v.object({
         _id: v.id("applicants"),
@@ -265,6 +321,8 @@ export const getProfile = userQuery({
     return {
       ...profile,
       linkedProfile: linkedUser ? await toProfileOption(ctx, linkedUser) : null,
+      accountStatus: linkedUser?.status ?? null,
+      accountHireDate: linkedUser?.hireDate ?? null,
       sourceApplicant: sourceApplicant
         ? {
             _id: sourceApplicant._id,
@@ -319,11 +377,20 @@ export const updateProfile = userMutation({
     phone: v.optional(v.string()),
     jobTitle: v.optional(v.string()),
     department: v.optional(v.string()),
+    hireDate: v.optional(v.string()),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, { employeeProfileId, userId, ...patch }) => {
-    await requireProfile(ctx, employeeProfileId);
+    const profile = await requireProfile(ctx, employeeProfileId);
     if (userId) await requireLinkable(ctx, userId, employeeProfileId);
+    if (patch.hireDate !== undefined) {
+      const hireDate = compact(patch.hireDate);
+      requireIsoDate(hireDate ?? "");
+      // HR is the source for start dates; the account copy drives the
+      // work-anniversary and "starting soon" views.
+      const linkedUserId = userId === undefined ? profile.userId : userId;
+      if (linkedUserId) await ctx.db.patch(linkedUserId, { hireDate });
+    }
     await ctx.db.patch(employeeProfileId, {
       ...(userId !== undefined ? { userId: userId ?? undefined } : {}),
       ...(patch.name !== undefined ? { name: compact(patch.name) ?? "" } : {}),
@@ -331,6 +398,7 @@ export const updateProfile = userMutation({
       ...(patch.phone !== undefined ? { phone: compact(patch.phone) } : {}),
       ...(patch.jobTitle !== undefined ? { jobTitle: compact(patch.jobTitle) } : {}),
       ...(patch.department !== undefined ? { department: compact(patch.department) } : {}),
+      ...(patch.hireDate !== undefined ? { hireDate: compact(patch.hireDate) } : {}),
       ...(patch.notes !== undefined ? { notes: compact(patch.notes) } : {}),
       updatedAt: Date.now(),
     });

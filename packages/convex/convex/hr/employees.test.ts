@@ -87,3 +87,35 @@ test("an account can only be linked to one record", async () => {
     userId: ids.carol,
   });
 });
+
+test("a hire date set in HR also lands on the linked account", async () => {
+  const { t, raw, ids } = await seed();
+  await t.mutation(api.hr.employees.updateProfile, {
+    employeeProfileId: ids.carolRecord,
+    hireDate: "2024-03-01",
+  });
+  const carol = await raw.run((ctx) => ctx.db.get(ids.carol));
+  expect(carol?.hireDate).toBe("2024-03-01");
+  await expect(
+    t.mutation(api.hr.employees.updateProfile, {
+      employeeProfileId: ids.carolRecord,
+      hireDate: "1. März",
+    }),
+  ).rejects.toThrow(/YYYY-MM-DD/);
+});
+
+test("profiles show HR people whether a record exists, and nobody else", async () => {
+  const { t, raw, ids } = await seed();
+  expect(await t.query(api.hr.employees.recordForUser, { userId: ids.carol })).toEqual({
+    access: true,
+    record: { _id: ids.carolRecord, status: "active" },
+  });
+  expect(await t.query(api.hr.employees.recordForUser, { userId: ids.alice })).toEqual({
+    access: true,
+    record: null,
+  });
+  const asAlice = raw.withIdentity({ subject: "alice" });
+  expect(await asAlice.query(api.hr.employees.recordForUser, { userId: ids.carol })).toEqual({
+    access: false,
+  });
+});

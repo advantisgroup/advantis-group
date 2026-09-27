@@ -59,6 +59,8 @@ export const hrTables = {
     phone: v.optional(v.string()),
     jobTitle: v.optional(v.string()),
     department: v.optional(v.string()),
+    /** "YYYY-MM-DD", mirrored onto the linked `users.hireDate` (anniversaries). */
+    hireDate: v.optional(v.string()),
     status: v.union(v.literal("active"), v.literal("archived")),
     notes: v.optional(v.string()),
     onboarding: v.optional(v.array(onboardingItemValidator)),

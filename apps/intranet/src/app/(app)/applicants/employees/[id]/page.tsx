@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Archive, Building2, Mail, Phone, RefreshCw } from "lucide-react";
+import { Archive, ArchiveRestore, Building2, Mail, Phone, RefreshCw, UserX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { cn } from "@/lib/utils";
 
 export default function EmployeeOverviewPage() {
   const t = useTranslations("Applicants");
@@ -39,7 +40,9 @@ export default function EmployeeOverviewPage() {
 
   // What the intranet profile knows that this record says differently — only
   // fields the account actually has, so copying never blanks anything.
-  const accountDetails: Partial<Record<"name" | "email" | "jobTitle" | "department", string>> = {};
+  const accountDetails: Partial<
+    Record<"name" | "email" | "jobTitle" | "department" | "hireDate", string>
+  > = {};
   if (account) {
     if (account.name !== profile.name) accountDetails.name = account.name;
     if (account.email !== profile.email) accountDetails.email = account.email;
@@ -48,6 +51,9 @@ export default function EmployeeOverviewPage() {
     }
     if (account.department && account.department !== profile.department) {
       accountDetails.department = account.department;
+    }
+    if (profile.accountHireDate && profile.accountHireDate !== profile.hireDate) {
+      accountDetails.hireDate = profile.accountHireDate;
     }
   }
   const hasAccountDetails = Object.keys(accountDetails).length > 0;
@@ -79,8 +85,47 @@ export default function EmployeeOverviewPage() {
     }
   }
 
+  async function restoreProfile() {
+    try {
+      await archive({ employeeProfileId, archived: false });
+      toast.success(t("employeeRestored"));
+    } catch (error) {
+      handleError(error);
+    }
+  }
+
+  const archived = profile.status === "archived";
+  const notice = archived
+    ? t("employeeArchivedNotice")
+    : profile.accountStatus === "removed"
+      ? t("employeeLeftNotice")
+      : null;
+
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      {notice && (
+        <div
+          className={cn(
+            "flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 xl:col-span-2",
+            archived ? "border-border/70 bg-muted/40" : "border-warning/40 bg-warning/5",
+          )}
+        >
+          {archived ? (
+            <Archive className="size-4 shrink-0 text-muted-foreground" />
+          ) : (
+            <UserX className="size-4 shrink-0 text-warning" />
+          )}
+          <p className="min-w-0 flex-1 text-sm">{notice}</p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void (archived ? restoreProfile() : archiveProfile())}
+          >
+            {archived ? <ArchiveRestore className="size-4" /> : <Archive className="size-4" />}
+            {archived ? t("employeeRestore") : t("employeeArchive")}
+          </Button>
+        </div>
+      )}
       <div className="space-y-5">
         <Card>
           <CardHeader>
@@ -152,6 +197,19 @@ export default function EmployeeOverviewPage() {
                 onBlur={(event) =>
                   event.target.value !== (profile.department ?? "") &&
                   void save({ employeeProfileId, department: event.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="employee-hire-date">{t("employeeHireDate")}</Label>
+              <Input
+                id="employee-hire-date"
+                key={profile.hireDate}
+                type="date"
+                defaultValue={profile.hireDate ?? ""}
+                onBlur={(event) =>
+                  event.target.value !== (profile.hireDate ?? "") &&
+                  void save({ employeeProfileId, hireDate: event.target.value })
                 }
               />
             </div>
@@ -241,14 +299,21 @@ export default function EmployeeOverviewPage() {
           </CardContent>
         </Card>
 
-        <Button
-          variant="outline"
-          className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
-          onClick={() => void archiveProfile()}
-        >
-          <Archive className="size-4" />
-          {t("employeeArchive")}
-        </Button>
+        {archived ? (
+          <Button variant="outline" className="w-full" onClick={() => void restoreProfile()}>
+            <ArchiveRestore className="size-4" />
+            {t("employeeRestore")}
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => void archiveProfile()}
+          >
+            <Archive className="size-4" />
+            {t("employeeArchive")}
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -7,7 +7,18 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { FileText, FolderOpen, Link2, Plus, Search, UserPlus, Users } from "lucide-react";
+import {
+  Archive,
+  FileText,
+  FolderOpen,
+  Link2,
+  Plus,
+  Search,
+  UserPlus,
+  Users,
+  UserX,
+  X,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -32,7 +43,7 @@ import {
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { cn } from "@/lib/utils";
 
-type DirectoryFilter = "all" | "linked" | "unlinked" | "documents";
+type DirectoryFilter = "all" | "linked" | "unlinked" | "documents" | "left" | "archived";
 
 function CreateEmployeeDialog({
   open,
@@ -193,11 +204,20 @@ export default function EmployeesPage() {
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
   const router = useRouter();
-  const profiles = useQuery(api.hr.employees.listProfiles, {});
+  const allProfiles = useQuery(api.hr.employees.listProfiles, { includeArchived: true });
   const importable = useQuery(api.hr.employees.backfillCandidates, {});
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<DirectoryFilter>("all");
   const [createOpen, setCreateOpen] = useState(false);
+
+  const profiles = useMemo(
+    () => allProfiles?.filter((profile) => profile.status === "active"),
+    [allProfiles],
+  );
+  const archived = useMemo(
+    () => allProfiles?.filter((profile) => profile.status === "archived") ?? [],
+    [allProfiles],
+  );
 
   const counts = useMemo(() => {
     const all = profiles ?? [];
@@ -206,24 +226,27 @@ export default function EmployeesPage() {
       linked: all.filter((profile) => profile.userId).length,
       unlinked: all.filter((profile) => !profile.userId).length,
       documents: all.filter((profile) => profile.documentsCount > 0).length,
+      left: all.filter((profile) => profile.accountStatus === "removed").length,
     };
   }, [profiles]);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return (profiles ?? []).filter((profile) => {
+    return ((filter === "archived" ? archived : profiles) ?? []).filter((profile) => {
       const matchesFilter =
         filter === "all" ||
+        filter === "archived" ||
         (filter === "linked" && !!profile.userId) ||
         (filter === "unlinked" && !profile.userId) ||
-        (filter === "documents" && profile.documentsCount > 0);
+        (filter === "documents" && profile.documentsCount > 0) ||
+        (filter === "left" && profile.accountStatus === "removed");
       if (!matchesFilter) return false;
       if (!query) return true;
       return `${profile.name} ${profile.email ?? ""} ${profile.jobTitle ?? ""} ${profile.department ?? ""}`
         .toLowerCase()
         .includes(query);
     });
-  }, [filter, profiles, search]);
+  }, [archived, filter, profiles, search]);
 
   function openProfile(employeeProfileId: Id<"employeeProfiles">) {
     router.push(`/hr/employees/${employeeProfileId}`);
@@ -275,6 +298,18 @@ export default function EmployeesPage() {
         </div>
       )}
 
+      {counts.left > 0 && filter !== "left" && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-warning/40 bg-warning/5 px-4 py-3">
+          <UserX className="size-4 shrink-0 text-warning" />
+          <p className="min-w-0 flex-1 text-sm">
+            {t("employeeLeftBanner", { count: counts.left })}
+          </p>
+          <Button size="sm" variant="outline" onClick={() => setFilter("left")}>
+            {t("employeeLeftReview")}
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <DirectoryStat
           label={t("employeeStatAll")}
@@ -306,14 +341,36 @@ export default function EmployeesPage() {
         />
       </div>
 
-      <div className="relative max-w-lg">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder={t("employeeSearchPlaceholder")}
-          className="pl-9"
-        />
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-0 max-w-lg flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t("employeeSearchPlaceholder")}
+            className="pl-9"
+          />
+        </div>
+        {(filter === "left" || filter === "archived" || archived.length > 0) && (
+          <Button
+            variant={filter === "left" || filter === "archived" ? "secondary" : "ghost"}
+            onClick={() =>
+              setFilter(filter === "left" || filter === "archived" ? "all" : "archived")
+            }
+          >
+            {filter === "left" ? (
+              <>
+                <X className="size-4" />
+                {t("employeeLeftBadge")}
+              </>
+            ) : (
+              <>
+                {filter === "archived" ? <X className="size-4" /> : <Archive className="size-4" />}
+                {t("employeeShowArchived", { count: archived.length })}
+              </>
+            )}
+          </Button>
+        )}
       </div>
 
       {profiles === undefined ? null : filtered.length === 0 ? (
@@ -380,7 +437,9 @@ export default function EmployeesPage() {
                     <TableCell>{profile.jobTitle || "–"}</TableCell>
                     <TableCell>{profile.department || "–"}</TableCell>
                     <TableCell onClick={(event) => event.stopPropagation()}>
-                      {profile.linkedProfile ? (
+                      {profile.accountStatus === "removed" ? (
+                        <Badge variant="warning">{t("employeeLeftBadge")}</Badge>
+                      ) : profile.linkedProfile ? (
                         <span className="inline-flex max-w-52 items-center gap-1.5 text-sm">
                           <Link2 className="size-3.5 shrink-0 text-success" />
                           <PersonLink userId={profile.linkedProfile.userId}>
