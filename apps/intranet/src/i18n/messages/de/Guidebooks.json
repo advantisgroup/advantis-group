@@ -8,6 +8,7 @@
   "empty": "Noch kein Wiki-Inhalt für dich",
   "emptyHint": "Wiki-Inhalte für dein Team erscheinen hier.",
   "notFound": "Wiki-Eintrag nicht gefunden",
+  "germanOnly": "Diese Inhalte gibt es nur auf Deutsch.",
   "notFoundHint": "Er wurde möglicherweise verschoben oder entfernt.",
   "noAccess": "Kein Zugriff auf diesen Wiki-Eintrag",
   "noAccessHint": "Er ist anderen Teams vorbehalten. Wende dich an einen Admin, wenn du Zugriff brauchst.",

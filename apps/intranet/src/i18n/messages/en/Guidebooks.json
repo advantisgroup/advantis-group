@@ -8,6 +8,7 @@
   "empty": "No guidebooks for you yet",
   "emptyHint": "Guidebooks assigned to your team will appear here.",
   "notFound": "Guidebook not found",
+  "germanOnly": "This content is in German only. Your browser can translate the page: right-click it and choose Translate.",
   "notFoundHint": "It may have been moved or removed.",
   "noAccess": "No access to this guidebook",
   "noAccessHint": "It's restricted to other teams. Ask an admin if you need access.",

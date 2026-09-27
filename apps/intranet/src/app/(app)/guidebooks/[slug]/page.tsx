@@ -27,6 +27,7 @@ import {
   ReadingProgress,
   RelatedGuidebooks,
 } from "@/components/guidebooks/extras";
+import { GermanOnlyNote } from "@/components/guidebooks/german-only-note";
 import { GuidebookAttachments } from "@/components/guidebooks/GuidebookAttachments";
 import { GuidebookPageView } from "@/components/guidebooks/GuidebookPageView";
 import { GuidebookPrint } from "@/components/guidebooks/GuidebookPrint";
@@ -382,6 +383,7 @@ export default function GuidebookPage() {
           <PageHeaderBar title={t("eyebrow")} />
           <DocumentHeader eyebrow={t("eyebrow")} title={title} description={description} />
           <div id="guidebook-content">
+            {Component && staticGuidebook?.category === "guide" && <GermanOnlyNote />}
             {Component ? (
               <Component />
             ) : entry ? (
