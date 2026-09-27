@@ -98,7 +98,9 @@
     "text": "Wir bauen moderne Customer-Care- und Inside-Sales-Organisationen auf – erfahrene Teams, gestärkt durch KI."
   },
   "pipeline": {
-    "caption": "Ablauf — vom Signal zum Abschluss",
+    "caption": "Ablauf",
+    "title": "Vom ersten Signal zum unterschriebenen Auftrag",
+    "lede": "Jeder Lead durchläuft dieselben vier Stufen. Die KI sortiert, gesprochen wird von Mensch zu Mensch.",
     "legend": "Vier Stufen",
     "altText": "Schema: Ein Lead durchläuft vier Stufen – Signale erfassen, KI-Qualifizierung, Priorisieren und Zuordnen sowie den menschlichen Abschluss durch das Vertriebsteam.",
     "stages": {
@@ -128,6 +130,7 @@
     "badge": "Unsere Stärken",
     "title": "Warum",
     "titleBrand": "ADVANTIS GROUP",
+    "imageAlt": "Zwei Kolleg:innen planen an einem Whiteboard voller Haftnotizen eine Kampagne",
     "subtitle": "Wir kombinieren über 15 Jahre Vertriebserfahrung mit innovativen Sales-Ansätzen und KI-Tools, um deinen Vertrieb auf das nächste Level zu bringen.",
     "feature1": {
       "title": "Wir machen dein Sales-Team erfolgreich",
@@ -425,6 +428,11 @@
       "coach": "Coach und Trainerin",
       "quality": "Datenschutzbeauftragter und Qualitätsmanager"
     },
+    "home": {
+      "title": "Die Menschen am anderen Ende der Leitung",
+      "lede": "Vertriebsprofis, Coaches und Spezialist:innen — das Team, mit dem du arbeitest, egal über welche Marke du kommst.",
+      "cta": "Das ganze Team kennenlernen"
+    },
     "grid": {
       "title": "Unser Team",
       "subtitle": "Die Experten an deiner Seite"
@@ -710,6 +718,20 @@
   "services": {
     "title": "Alles für deinen Vertriebserfolg",
     "subtitle": "Von Customer Care bis KI-Automatisierung – entdecke, wie wir deinen Vertrieb ganzheitlich unterstützen.",
+    "groups": {
+      "conversations": {
+        "title": "Kundengespräche",
+        "text": "Service und Support, zu dem deine Kund:innen gerne zurückkommen."
+      },
+      "business": {
+        "title": "Neugeschäft",
+        "text": "Vom ersten Anruf bis zum unterschriebenen Auftrag — mehr qualifizierte Pipeline."
+      },
+      "systems": {
+        "title": "Systeme & Skills",
+        "text": "CRM, Automatisierung und Training, die den Erfolg halten."
+      }
+    },
     "common": {
       "whyTitle": "Warum ADVANTIS GROUP?",
       "offeringsTitle": "Unsere Leistungen",

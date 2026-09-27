@@ -92,19 +92,15 @@ export default function UnsereMarken() {
         </section>
       ))}
 
-      <section className="border-t border-rule bg-foreground text-background">
+      <section className="border-t border-rule bg-ink text-on-ink">
         <div className="mx-auto w-full max-w-[1200px] px-5 py-20 text-center md:px-10 md:py-32">
           <Display as="h2" size="lg" className="mx-auto max-w-[20ch]">
             {t("cta.titlePart1")} {t("cta.titlePart2")}
           </Display>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-background/70 md:text-lg">
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-on-ink/70 md:text-lg">
             {t("cta.description")}
           </p>
-          <Button
-            asChild
-            size="lg"
-            className="mt-9 bg-background text-foreground hover:bg-background/90"
-          >
+          <Button asChild size="lg" className="mt-9 bg-on-ink text-ink hover:bg-on-ink/90">
             <Link href="/contact">{t("cta.button")}</Link>
           </Button>
         </div>

@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { BrandText } from "@/components/effects/BrandText";
+import { Reveal, RevealWords } from "@/components/effects/Reveal";
 import { Display } from "@/components/frame";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -28,7 +29,7 @@ export const Hero = () => {
   const brandLabel = useTranslations("brands");
 
   return (
-    <section className="pt-28 md:pt-36">
+    <section className="pt-28 pb-20 md:pt-36 md:pb-28">
       <div className="mx-auto w-full max-w-[1200px] px-5 md:px-10">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-end lg:gap-16">
           {/*
@@ -38,10 +39,15 @@ export const Hero = () => {
            * literal string "Advantis" and the headline rendered the wrong word.
            */}
           <Display as="h1" size="xl" className="max-w-[15ch] text-pretty">
-            {t("title")} <span className="text-primary">{t("titleHighlight")}</span>
+            <RevealWords text={t("title")} />{" "}
+            <RevealWords
+              text={t("titleHighlight")}
+              delay={t("title").split(" ").length * 0.07}
+              className="text-primary"
+            />
           </Display>
 
-          <div className="lg:pb-2">
+          <Reveal onLoad delay={0.45} className="lg:pb-2">
             {/* The line that answers "what is this company". */}
             <p className="max-w-xl text-lg leading-[1.55] text-foreground/80">
               {positioning("eyebrow")}
@@ -66,17 +72,17 @@ export const Hero = () => {
                 <Link href="/brands">{t("ctaSecondary")}</Link>
               </Button>
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
 
       {/* The only image this big on the site — the page's one photograph of
           the actual company. It widens to the screen edges as it scrolls. */}
-      <div className="mt-14 md:mt-20">
+      <Reveal onLoad delay={0.7} className="mt-14 md:mt-20">
         <HeroMedia src="/office/office-teamwork.png" alt={t("imageAlt")} />
-      </div>
+      </Reveal>
 
-      <div className="mx-auto w-full max-w-[1200px] px-5 md:px-10">
+      <Reveal onLoad delay={0.9} className="mx-auto w-full max-w-[1200px] px-5 md:px-10">
         {/*
          * Four names, held still. They used to scroll past on an endless
          * marquee, which is a device for hiding that you have more logos than
@@ -92,11 +98,11 @@ export const Hero = () => {
          * read as five items in a list, not as a label and the four things it
          * names.
          */}
-        <div className="mt-12 md:mt-16">
+        <div className="mt-14 md:mt-20">
           <p className="text-[0.8125rem] font-medium text-muted-foreground">
             {brandLabel("groupLabel")}
           </p>
-          <ul className="mt-4 flex flex-wrap items-baseline gap-x-10 gap-y-3">
+          <ul className="mt-5 flex flex-wrap items-baseline gap-x-12 gap-y-4">
             {BRANDS.map((brand) => (
               <li key={brand.key} className="flex items-baseline gap-2">
                 <Link
@@ -122,7 +128,7 @@ export const Hero = () => {
             ))}
           </ul>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 };

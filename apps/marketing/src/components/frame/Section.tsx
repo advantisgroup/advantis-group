@@ -9,6 +9,11 @@ import { Eyebrow } from "./Eyebrow";
  * A page section: the shared container width and vertical rhythm, nothing
  * else. Sections are separated by a single hairline and a lot of air — the
  * air is doing most of the work, so the rhythm is deliberately generous.
+ *
+ * `tone` changes the ground. A long page on one ground reads as one long
+ * section however the headings vary, so the homepage alternates: paper, a
+ * warm raised band, and the inverted ink band. A toned band carries no
+ * hairline — the change of colour is the boundary.
  */
 export const Section = ({
   id,
@@ -17,6 +22,7 @@ export const Section = ({
   innerClassName,
   bordered = true,
   size = "normal",
+  tone = "paper",
 }: {
   id?: string;
   children: ReactNode;
@@ -24,6 +30,7 @@ export const Section = ({
   innerClassName?: string;
   bordered?: boolean;
   size?: "tight" | "normal" | "loose";
+  tone?: "paper" | "raised" | "ink";
 }) => {
   // Mobile gets noticeably less air: at 390px wide, desktop's padding put
   // roughly a third of a screen of nothing between every pair of sections.
@@ -36,7 +43,16 @@ export const Section = ({
   return (
     <section
       id={id}
-      className={cn("relative", bordered && "border-t border-rule", padding, className)}
+      // Tells the fixed header it is over an inverted band, so it can invert too.
+      data-header-inverse={tone === "ink" ? "" : undefined}
+      className={cn(
+        "relative",
+        tone === "paper" && bordered && "border-t border-rule",
+        tone === "raised" && "bg-secondary",
+        tone === "ink" && "bg-ink text-on-ink",
+        padding,
+        className,
+      )}
     >
       <div className={cn("relative mx-auto w-full max-w-[1200px] px-5 md:px-10", innerClassName)}>
         {children}
