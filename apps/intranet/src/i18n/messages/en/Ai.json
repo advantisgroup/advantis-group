@@ -130,6 +130,12 @@
     "featureHistory": "History",
     "deleteBody": "Delete any run from its page; its answer and conversation go with it."
   },
+  "allowance": {
+    "title": "Today's allowance",
+    "used": "{used, number} of {limit, number} used",
+    "hint": "Counts every AI request you started in the last 24 hours.",
+    "nextFree": "All used — the next one frees up {time, date, ::EEEHHmm}."
+  },
   "feedback": {
     "question": "Was this any good?",
     "up": "Useful",
@@ -156,7 +162,11 @@
     "columnTokens": "Tokens",
     "ratingUp": "Useful",
     "ratingDown": "Not useful",
-    "noNote": "No note"
+    "noNote": "No note",
+    "limitTitle": "Daily limit per employee",
+    "limitHint": "How many AI requests someone below Manager can start in any 24 hours. Managers and admins aren't limited.",
+    "limitUnit": "requests / 24 h",
+    "limitSaved": "Limit saved"
   },
   "detail": {
     "aboutRun": "This run",

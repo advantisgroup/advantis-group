@@ -9,6 +9,7 @@
   "upstream": "The connected service is unavailable. Please try again.",
   "internal": "Something went wrong. Please try again.",
   "feature_disabled": "This feature is currently unavailable.",
+  "ai_limit": "You've used up today's AI allowance. It frees up again over the next 24 hours.",
   "boundaryTitle": "Something went wrong",
   "boundaryDescription": "An unexpected error occurred while loading this page. You can try again.",
   "retry": "Try again",

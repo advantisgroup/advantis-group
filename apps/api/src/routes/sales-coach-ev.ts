@@ -6,6 +6,7 @@ import {
   AI_MODEL,
   AiRunError,
   parseModelJson,
+  requireAi,
   runModelText,
   startAiRun,
   str,
@@ -374,6 +375,7 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
     async ({ caller, body }) => {
       const { clerkUserId } = caller;
       await rateLimit("salesCoachEv.liveHint", clerkUserId, 6, "1 m");
+      await requireAi(clerkUserId);
       const kpiText = await getKpiText(clerkUserId);
       const userMsg = `Gespraechszeit: ${fmt(body.elapsedSec)}\n\n${body.transcriptTail}`;
       const raw = await callClaudeJson(liveSystemPrompt(kpiText), userMsg);

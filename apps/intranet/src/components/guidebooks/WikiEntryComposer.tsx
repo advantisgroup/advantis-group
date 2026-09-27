@@ -11,6 +11,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { AiGlyph } from "@/components/ai/AiGlyph";
+import { useAiEnabled } from "@/components/ai/use-ai-enabled";
 import {
   DraftIndicator,
   DraftOfferBanner,
@@ -30,7 +31,7 @@ import { type WikiEntry } from "@/components/guidebooks/WikiEntryDialogs";
 import { WikiEntryPreview } from "@/components/guidebooks/WikiEntryPreview";
 import { WikiMetaAssist } from "@/components/guidebooks/WikiMetaAssist";
 import { Link } from "@/components/Link";
-import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
+import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import { useRichTextController } from "@/components/ui/rich-text-controller";
@@ -183,7 +184,8 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
   const locale = useLocale();
   const router = useRouter();
   const me = useCurrentUser();
-  const canUseAi = useHasCapability("manage_guidebooks");
+  // The composer is already behind manage_guidebooks; this is AI itself.
+  const canUseAi = useAiEnabled();
   const isMobile = useIsMobile();
   const keyboardInset = useKeyboardInset();
 

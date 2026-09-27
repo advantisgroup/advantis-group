@@ -60,6 +60,16 @@ export const aiTables = {
     .index("by_user_kind", ["clerkUserId", "kind", "startedAt"])
     .index("by_started", ["startedAt"]),
 
+  // Workspace-wide AI settings, one row. Missing means the defaults in
+  // aiRuns.ts.
+  aiSettings: defineTable({
+    // Runs an employee may start in any 24 hours. Managers and admins aren't
+    // capped — they're the ones watching the usage on /admin/ai.
+    dailyRunLimit: v.number(),
+    updatedByUserId: v.id("users"),
+    updatedAt: v.number(),
+  }),
+
   // Exactly what a run sent to the model — instructions, messages and any
   // lookups, every turn — so an answer can be checked against what it was
   // actually given. One row per run, sealed by apps/api like `aiRuns.output`,

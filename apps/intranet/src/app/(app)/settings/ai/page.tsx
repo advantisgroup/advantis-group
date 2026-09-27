@@ -3,7 +3,7 @@
 import { type ComponentType, type ReactNode } from "react";
 
 import { api } from "@advantis/convex/api";
-import { usePaginatedQuery } from "convex/react";
+import { usePaginatedQuery, useQuery } from "convex/react";
 import {
   ArrowRight,
   Check,
@@ -59,6 +59,37 @@ function Section({
       </div>
       {children}
     </section>
+  );
+}
+
+/** How much of the daily allowance is gone. Managers and admins have none,
+ * so they see nothing here. */
+function Allowance() {
+  const t = useTranslations("Ai");
+  const allowance = useQuery(api.aiRuns.myAllowance);
+  if (!allowance) return null;
+  const share = Math.min(1, allowance.used / allowance.limit);
+
+  return (
+    <div className="max-w-md space-y-1.5">
+      <div className="flex items-baseline justify-between gap-3 text-[13px]">
+        <span className="font-medium">{t("allowance.title")}</span>
+        <span className="tabular-nums text-muted-foreground">
+          {t("allowance.used", { used: allowance.used, limit: allowance.limit })}
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+        <div
+          className={cn("h-full rounded-full", share >= 1 ? "bg-warning" : "bg-foreground/70")}
+          style={{ width: `${share * 100}%` }}
+        />
+      </div>
+      <p className="text-[12px] text-muted-foreground">
+        {allowance.nextFreeAt
+          ? t("allowance.nextFree", { time: new Date(allowance.nextFreeAt) })
+          : t("allowance.hint")}
+      </p>
+    </div>
   );
 }
 
@@ -229,6 +260,8 @@ export default function SettingsAiPage() {
           {canUseAi ? t("privacy.badgeOn") : t("privacy.badgeOff")}
         </span>
       </header>
+
+      {canUseAi && <Allowance />}
 
       <RecentRuns />
 
