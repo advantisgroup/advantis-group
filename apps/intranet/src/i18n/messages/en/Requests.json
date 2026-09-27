@@ -1,0 +1,27 @@
+{
+  "title": "My requests",
+  "description": "Everything you've asked for: IT tickets, suggestions, error reports, file uploads and time off, and where each one stands.",
+  "tabOpen": "Still open",
+  "tabClosed": "Closed",
+  "emptyOpen": "Nothing open right now",
+  "emptyClosed": "Nothing closed yet",
+  "emptyHint": "When you open a ticket, share an idea, report an error, request an upload or ask for time off, it shows up here until it's done.",
+  "emptyAction": "Where do I go with something?",
+  "updated": "updated {date}",
+  "kind": {
+    "ticket": "IT ticket",
+    "suggestion": "Suggestion",
+    "error": "Error report",
+    "upload": "File upload",
+    "absence": "Time off"
+  },
+  "state": {
+    "open": "Waiting",
+    "active": "In progress",
+    "done": "Done",
+    "declined": "Declined"
+  },
+  "statusWithdrawn": "Withdrawn",
+  "statusFailed": "Failed",
+  "statusCancelled": "Cancelled"
+}

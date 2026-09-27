@@ -163,6 +163,13 @@ export const INTRANET_PAGES: IntranetPage[] = [
     keywords: ["hilfe", "help", "support", "melden", "anfrage", "problem", "wohin"],
   },
   {
+    href: "/requests",
+    label: "Meine Anfragen",
+    description:
+      "Alles, was du angefragt hast, mit Stand: IT-Tickets, Vorschläge, Fehlermeldungen, Datei-Uploads und Abwesenheiten.",
+    keywords: ["anfragen", "requests", "status", "meine", "tickets", "stand", "offen"],
+  },
+  {
     href: "/suggestions",
     label: "Vorschläge",
     description: "Verbesserungsvorschläge einreichen, abstimmen und Entscheidungen sehen.",

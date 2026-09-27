@@ -129,6 +129,7 @@ export const commsTables = {
     deletedBy: v.optional(v.id("users")),
   })
     .index("by_createdAt", ["createdAt"])
+    .index("by_author", ["authorUserId"])
     .index("by_outcome", ["outcome"])
     .index("by_deletedAt", ["deletedAt"]),
 

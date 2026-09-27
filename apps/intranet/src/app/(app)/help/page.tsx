@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import {
   BookOpen,
   ChevronRight,
+  ClipboardList,
   ClipboardX,
   LifeBuoy,
   Lightbulb,
@@ -58,6 +59,14 @@ export default function HelpPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8 pb-10">
       <PageHeader title={t("title")} description={t("description")} icon={<LifeBuoy />} />
+      <Link
+        href="/requests"
+        className="flex items-center gap-2 rounded-lg border border-border/70 bg-muted/40 px-3.5 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+      >
+        <ClipboardList className="size-4 shrink-0" />
+        <span className="flex-1">{t("myRequestsLink")}</span>
+        <ChevronRight className="size-4 shrink-0" />
+      </Link>
       <ChoiceGroup title={t("reportTitle")} choices={report} />
       <ChoiceGroup title={t("findTitle")} choices={find} />
       <p className="flex items-start gap-2 text-sm text-muted-foreground">

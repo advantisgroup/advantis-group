@@ -207,6 +207,7 @@ import type * as people_lib_provisioning from "../people/lib/provisioning.js";
 import type * as people_members from "../people/members.js";
 import type * as people_preferences from "../people/preferences.js";
 import type * as people_presence from "../people/presence.js";
+import type * as people_requests from "../people/requests.js";
 import type * as people_sandbox from "../people/sandbox.js";
 import type * as people_tourProgress from "../people/tourProgress.js";
 import type * as people_users from "../people/users.js";
@@ -501,6 +502,7 @@ declare const fullApi: ApiFromModules<{
   "people/members": typeof people_members;
   "people/preferences": typeof people_preferences;
   "people/presence": typeof people_presence;
+  "people/requests": typeof people_requests;
   "people/sandbox": typeof people_sandbox;
   "people/tourProgress": typeof people_tourProgress;
   "people/users": typeof people_users;

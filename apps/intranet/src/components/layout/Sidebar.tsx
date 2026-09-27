@@ -12,6 +12,7 @@ import {
   BookOpen,
   Calendar,
   CheckCheck,
+  ClipboardList,
   Clock3,
   Cloud,
   ExternalLink,
@@ -21,6 +22,7 @@ import {
   LifeBuoy,
   Lightbulb,
   LineChart,
+  type LucideIcon,
   Megaphone,
   MessageSquare,
   Newspaper,
@@ -30,9 +32,8 @@ import {
   Settings,
   ShieldCheck,
   SlidersHorizontal,
-  type LucideIcon,
-  UserSearch,
   Users,
+  UserSearch,
   Wrench,
   Zap,
 } from "lucide-react";
@@ -288,6 +289,12 @@ export function Sidebar() {
       href: "/help",
       labelKey: "help",
       icon: LifeBuoy,
+    },
+    {
+      section: "support",
+      href: "/requests",
+      labelKey: "myRequests",
+      icon: ClipboardList,
     },
     ...(hasInquiries
       ? [
