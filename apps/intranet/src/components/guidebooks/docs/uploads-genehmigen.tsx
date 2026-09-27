@@ -51,7 +51,7 @@ const DOC: DocContent = {
         },
         {
           kind: "text",
-          body: "Standardmäßig dürfen alle Mitarbeitenden Uploads anfragen. Über das **„⋮“-Menü** einer Person könnt ihr **„Upload-Anfragen sperren“** bzw. **„Upload-Anfragen erlauben“** auswählen, um das gezielt für einzelne Personen abzuschalten oder wieder freizugeben.",
+          body: "Standardmäßig dürfen alle Mitarbeitenden Uploads anfragen. Über das **„⋮“-Menü** einer Person kannst du **„Upload-Anfragen sperren“** bzw. **„Upload-Anfragen erlauben“** auswählen, um das gezielt für einzelne Personen abzuschalten oder wieder freizugeben.",
         },
       ],
     },

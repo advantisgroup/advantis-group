@@ -24,7 +24,7 @@ const DOC: DocContent = {
         { kind: "subheading", text: "Option A — Lesezeichen" },
         {
           kind: "text",
-          body: "Über die Lesezeichenleiste: Das Lesezeichen ist meist **„OneDrive Team“** oder **„OneDrive AG“** benannt. Es bringt euch direkt zu dem **„Team“**-Ordner unter „Advantis GmbH“.",
+          body: "Über die Lesezeichenleiste: Das Lesezeichen ist meist **„OneDrive Team“** oder **„OneDrive AG“** benannt. Es bringt dich direkt zu dem **„Team“**-Ordner unter „Advantis GmbH“.",
         },
         {
           kind: "image",
@@ -37,7 +37,7 @@ const DOC: DocContent = {
         { kind: "subheading", text: "Option B — Tab selbst öffnen" },
         {
           kind: "text",
-          body: "Alle Browser haben eine Tastenkombination, um einen neuen Tab zu öffnen — für Chrome/Edge: [[Strg]] + [[T]]. Damit öffnet sich ein neuer Tab, und in der Leiste, wo man den Link eingibt, schreibt ihr: **onedrive.live.com**. Daraufhin navigiert man zu der Leiste **„Geteilt“**, wo man dann den Ordner **„Team“** sehen kann — geteilt von Advantis GmbH oder Advantis Group. Die anderen Ordner kann man ignorieren.",
+          body: "Alle Browser haben eine Tastenkombination, um einen neuen Tab zu öffnen — für Chrome/Edge: [[Strg]] + [[T]]. Damit öffnet sich ein neuer Tab, und in die Adresszeile schreibst du: **onedrive.live.com**. Dann wechselst du links zu **„Geteilt“**, dort siehst du den Ordner **„Team“** — geteilt von Advantis GmbH oder Advantis Group. Die anderen Ordner kannst du ignorieren.",
         },
         {
           kind: "image",

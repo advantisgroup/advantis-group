@@ -33,12 +33,12 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "warning",
-          body: "Ein Klick entscheidet sofort — es gibt keine Rückfrage und kein Notizfeld. Soll die Person wissen, warum ein Antrag abgelehnt wurde, schreibt ihr kurz im Chat.",
+          body: "Ein Klick entscheidet sofort — es gibt keine Rückfrage und kein Notizfeld. Soll die Person wissen, warum ein Antrag abgelehnt wurde, schreib ihr kurz im Chat.",
         },
         {
           kind: "callout",
           tone: "info",
-          body: "Mit Team-Zugriff auf Clockodo seht ihr alle offenen Anträge im Unternehmen. Eure eigenen Anträge könnt ihr nicht selbst genehmigen. Dieselben Anträge stehen auch unter **„Freigaben“** in der Seitenleiste.",
+          body: "Mit Team-Zugriff auf Clockodo siehst du alle offenen Anträge im Unternehmen. Deine eigenen Anträge kannst du nicht selbst genehmigen. Dieselben Anträge stehen auch unter **„Freigaben“** in der Seitenleiste.",
         },
       ],
     },
@@ -48,7 +48,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Abwesenheiten werden direkt in Clockodo gespeichert — egal ob sie im Intranet oder in Clockodo selbst beantragt wurden. Hier erscheinen deshalb alle offenen Anträge, und eure Entscheidung gilt sofort auch in Clockodo.",
+          body: "Abwesenheiten werden direkt in Clockodo gespeichert — egal ob sie im Intranet oder in Clockodo selbst beantragt wurden. Hier erscheinen deshalb alle offenen Anträge, und deine Entscheidung gilt sofort auch in Clockodo.",
         },
       ],
     },
@@ -58,7 +58,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Oben im Reiter „Genehmigungen“ zeigt **„Abwesend in den nächsten 14 Tagen“** auf einen Blick, wer aus eurem Team in den kommenden zwei Wochen weg ist.",
+          body: "Oben im Reiter „Genehmigungen“ zeigt **„Abwesend in den nächsten 14 Tagen“** auf einen Blick, wer aus deinem Team in den kommenden zwei Wochen weg ist.",
         },
       ],
     },

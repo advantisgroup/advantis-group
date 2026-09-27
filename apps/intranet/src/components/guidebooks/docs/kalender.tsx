@@ -38,7 +38,7 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "info",
-          body: "Termine im gemeinsamen Kalender anlegen können nur **Führungskräfte und Admins** — als normales Mitglied seht ihr sie nur. Details dazu stehen im Guidebook „Ankündigungen & Termine erstellen“.",
+          body: "Termine im gemeinsamen Kalender anlegen können nur **Führungskräfte und Admins** — als normales Mitglied siehst du sie nur. Details dazu stehen im Guidebook „Ankündigungen & Termine erstellen“.",
         },
       ],
     },
@@ -48,11 +48,11 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Genehmigte Abwesenheiten erscheinen automatisch im Kalender — sie kommen immer aus Clockodo, egal ob sie im Intranet oder in Clockodo beantragt wurden (siehe Guidebook „Zeiterfassung mit Clockodo“). Bei Kolleg:innen seht ihr nur Urlaub; Krankheit und andere Gründe sieht nur die Person selbst.",
+          body: "Genehmigte Abwesenheiten erscheinen automatisch im Kalender — sie kommen immer aus Clockodo, egal ob sie im Intranet oder in Clockodo beantragt wurden (siehe Guidebook „Zeiterfassung mit Clockodo“). Bei Kolleg:innen siehst du nur Urlaub; Krankheit und andere Gründe sieht nur die Person selbst.",
         },
         {
           kind: "text",
-          body: "Mit **„Nur meine Abwesenheiten“** blendet ihr die Einträge der Kolleg:innen aus, über den Abteilungsfilter (**„Alle Abteilungen“**) filtert ihr nach Team. Die Legende erklärt die Farben, und die Zahl neben einem Tag zeigt, wie viele Personen an dem Tag abwesend sind.",
+          body: "Mit **„Nur meine Abwesenheiten“** blendest du die Einträge der Kolleg:innen aus, über den Abteilungsfilter (**„Alle Abteilungen“**) filterst du nach Team. Die Legende erklärt die Farben, und die Zahl neben einem Tag zeigt, wie viele Personen an dem Tag abwesend sind.",
         },
       ],
     },

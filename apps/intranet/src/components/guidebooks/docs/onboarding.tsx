@@ -22,7 +22,7 @@ const DOC: DocContent = {
           items: [
             "Mit der Firmen-E-Mail-Adresse im Intranet anmelden.",
             "Unter **„Einstellungen“** das Profil vervollständigen (Profilbild, Kontaktdaten).",
-            "Unter **„Einstellungen“ → „Benachrichtigungen“** festlegen, worüber ihr informiert werden wollt.",
+            "Unter **„Einstellungen“ → „Benachrichtigungen“** festlegen, worüber du informiert werden willst.",
           ],
         },
       ],
@@ -33,12 +33,12 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Die Zugangsdaten für Outlook und/oder das IONOS-Postfach bekommt ihr von der IT/Verwaltung.",
+          body: "Die Zugangsdaten für Outlook und/oder das IONOS-Postfach bekommst du von der IT/Verwaltung.",
         },
         {
           kind: "callout",
           tone: "tip",
-          body: "Sobald ihr eingeloggt seid, richtet direkt eure Signatur ein — die genaue Anleitung dafür steht im Guidebook **„E-Mail-Signatur — Outlook & IONOS“**.",
+          body: "Sobald du eingeloggt bist, richte direkt deine Signatur ein — die genaue Anleitung dafür steht im Guidebook **„E-Mail-Signatur — Outlook & IONOS“**.",
         },
       ],
     },
@@ -48,7 +48,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Den Clockodo-Zugang bekommt ihr ebenfalls von der Verwaltung zugeschickt.",
+          body: "Den Clockodo-Zugang bekommst du ebenfalls von der Verwaltung zugeschickt.",
         },
         {
           kind: "callout",
@@ -65,8 +65,8 @@ const DOC: DocContent = {
           kind: "steps",
           items: [
             "**OneDrive:** Zugriff auf den gemeinsamen „Team“-Ordner einrichten — siehe Guidebook „OneDrive — Schulung“.",
-            "**Directory („Mitarbeiter“):** Hier findet ihr Kontaktdaten und Teams aller Kolleg:innen.",
-            "**Chat:** Für die Team-Kommunikation nutzen — Gruppen könnt ihr direkt im Intranet erstellen.",
+            "**Directory („Mitarbeiter“):** Hier findest du Kontaktdaten und Teams aller Kolleg:innen.",
+            "**Chat:** Für die Team-Kommunikation nutzen — Gruppen kannst du direkt im Intranet erstellen.",
             "**Kalender:** Für Termine, Meetings und Abwesenheiten anderer im Blick behalten.",
           ],
         },
@@ -83,7 +83,7 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "tip",
-          body: "Am einfachsten beantragt ihr direkt im Intranet: Seitenleiste **„Clockodo“** → **„Meine Anträge“** → **„Neue Abwesenheit“**. Dort seht ihr auch eure genommenen Urlaubstage und den Status aller Anträge.",
+          body: "Am einfachsten beantragst du direkt im Intranet: Seitenleiste **„Clockodo“** → **„Meine Anträge“** → **„Neue Abwesenheit“**. Dort siehst du auch deine genommenen Urlaubstage und den Status aller Anträge.",
         },
       ],
     },

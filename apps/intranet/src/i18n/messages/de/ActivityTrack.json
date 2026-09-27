@@ -48,7 +48,7 @@
   },
   "overview": {
     "heading": "Team-Übersicht",
-    "empty": "Noch keine genehmigten Geräte. Genehmigen Sie ein Gerät unter „Geräte“.",
+    "empty": "Noch keine genehmigten Geräte. Genehmige ein Gerät unter „Geräte“.",
     "working": "Arbeitet",
     "idleNow": "Inaktiv",
     "offline": "Offline",
@@ -116,18 +116,18 @@
       },
       "expires": "Läuft ab",
       "usedAt": "Eingelöst",
-      "empty": "Noch keine Codes. Erstellen Sie einen, um ein neues Gerät einzuschreiben.",
-      "note": "Tragen Sie diesen Code in die config.json des Trackers ein — er wird beim ersten Start automatisch verwendet."
+      "empty": "Noch keine Codes. Erstelle einen, um ein neues Gerät zu registrieren.",
+      "note": "Trag diesen Code in die config.json des Trackers ein — er wird beim ersten Start automatisch verwendet."
     },
     "allDevicesHeading": "Alle Geräte",
     "filter": {
       "search": "Suche …",
       "all": "Alle Status"
     },
-    "empty": "Noch keine Geräte. Genehmigen Sie eines, sobald sich sein Tracker registriert.",
+    "empty": "Noch keine Geräte. Genehmige eines, sobald sich sein Tracker registriert.",
     "noMatches": "Keine Geräte entsprechen diesen Filtern.",
     "confirmDelete": "Dieses Gerät endgültig löschen?",
-    "confirmDeleteBody": "Dadurch wird das Gerät entfernt und sein Token widerrufen. Es muss sich komplett neu registrieren. Zum reversiblen Pausieren verwenden Sie stattdessen „Deaktivieren“.",
+    "confirmDeleteBody": "Dadurch wird das Gerät entfernt und sein Token widerrufen. Es muss sich komplett neu registrieren. Wenn du es nur vorübergehend pausieren willst, nimm stattdessen „Deaktivieren“.",
     "approved": "Gerät genehmigt.",
     "disabled": "Gerät deaktiviert.",
     "deleted": "Gerät gelöscht.",
@@ -143,7 +143,7 @@
     "heading": "Mitarbeiter",
     "sub": "Die Stammliste: Namen, E-Mail und die Integrations-IDs hinter dem Live-Status.",
     "add": "Mitarbeiter hinzufügen",
-    "addHint": "Wählen Sie das Intranet-Konto, um die Angaben zu übernehmen und beides zu verknüpfen, oder tragen Sie für Personen ohne Konto nur einen Namen ein.",
+    "addHint": "Wähle das Intranet-Konto, um die Angaben zu übernehmen und beides zu verknüpfen, oder trag für Personen ohne Konto nur einen Namen ein.",
     "name": "Name",
     "email": "E-Mail",
     "active": "Aktiv",
@@ -388,7 +388,7 @@
       "idle": "Inaktiv",
       "total": "Gesamt"
     },
-    "empty": "Keine Daten für diesen Zeitraum. Wählen Sie einen größeren Zeitraum oder ein anderes Gerät.",
+    "empty": "Keine Daten für diesen Zeitraum. Wähle einen größeren Zeitraum oder ein anderes Gerät.",
     "trend": {
       "heading": "Wöchentlicher Verlauf",
       "sub": "Aktiv- und Inaktivstunden je Woche."
@@ -405,7 +405,7 @@
     "regenerate": "Neu erstellen",
     "generating": "Aktivität der Woche wird ausgewertet…",
     "lastGenerated": "Erstellt {time}",
-    "empty": "Noch kein Bericht für diese Woche — erstellen Sie einen, um zu sehen, was auffällig war.",
+    "empty": "Noch kein Bericht für diese Woche — erstell einen, um zu sehen, was auffällig war.",
     "chart": {
       "daily": {
         "heading": "Aktiv vs. inaktiv, nach Tag"
@@ -487,7 +487,7 @@
     "network": "Keine Verbindung zum Server. Bitte später erneut versuchen.",
     "auth": {
       "required": "Bitte erneut anmelden.",
-      "forbidden": "Dafür fehlt Ihnen die Berechtigung."
+      "forbidden": "Dafür fehlt dir die Berechtigung."
     },
     "notFound": {
       "device": "Das Gerät wurde nicht gefunden (evtl. bereits gelöscht).",
@@ -497,15 +497,15 @@
       "event": "Der Eintrag wurde nicht gefunden."
     },
     "clockodo": {
-      "managedElsewhere": "Diese Person ist mit einem Intranet-Konto verknüpft — bearbeiten Sie die Clockodo-ID stattdessen unter Admin → Integrationen → Clockodo."
+      "managedElsewhere": "Diese Person ist mit einem Intranet-Konto verknüpft — bearbeite die Clockodo-ID stattdessen unter Admin → Integrationen → Clockodo."
     },
     "validation": {
       "password_short": "Das Passwort muss mindestens 6 Zeichen haben.",
       "out_of_range": "Der Wert liegt außerhalb des zulässigen Bereichs."
     },
     "user": {
-      "cannot_demote_self": "Sie können sich nicht selbst die IT-Administratorrolle entziehen.",
-      "last_admin": "Der letzte IT-Admin kann nicht herabgestuft werden — stufen Sie zuerst eine andere Person hoch."
+      "cannot_demote_self": "Du kannst dir nicht selbst die IT-Administratorrolle entziehen.",
+      "last_admin": "Der letzte IT-Admin kann nicht herabgestuft werden — stufe zuerst eine andere Person hoch."
     }
   },
   "health": {
@@ -517,7 +517,7 @@
     },
     "attention": {
       "title": "{count} Sache(n) brauchen Aufmerksamkeit",
-      "body": "Eine Übersicht finden Sie unten."
+      "body": "Eine Übersicht findest du unten."
     },
     "offline": {
       "heading": "Geräte, die sich nicht melden",
@@ -588,12 +588,12 @@
         "bad_tz_offset": "Ein Gerät meldete eine unmögliche Zeitzone; das Backend hat sie korrigiert. Harmlos, außer es wiederholt sich — dann Uhrzeit/Zeitzone des PCs prüfen."
       },
       "enroll": {
-        "code_invalid": "Ein Tracker wollte sich mit einem ungültigen oder abgelaufenen Code registrieren. Erstellen Sie unter Geräte einen neuen Registrierungscode."
+        "code_invalid": "Ein Tracker wollte sich mit einem ungültigen oder abgelaufenen Code registrieren. Erstelle unter Geräte einen neuen Registrierungscode."
       },
       "api": {
-        "internal_error": "Der Server des Dashboards hatte einen unerwarteten Fehler (oft fehlende/ungültige Integrationsdaten oder ein Secret). Prüfen Sie die Integrationseinstellungen; Details stehen in den Deploy-Logs."
+        "internal_error": "Beim Dashboard-Server ist ein unerwarteter Fehler aufgetreten, meist wegen fehlender oder ungültiger Zugangsdaten einer Integration. Prüfe die Integrationseinstellungen oder gib der Person Bescheid, die die Server betreut."
       },
-      "unknown": "Siehe die technischen Details unten oder die Hilfeseite. Wenn es weiter auftritt, wenden Sie sich an Ihre:n Administrator:in."
+      "unknown": "Siehe die technischen Details unten oder die Hilfeseite. Wenn es weiter auftritt, wende dich an deine:n Administrator:in."
     }
   },
   "errorBoundary": {
@@ -604,9 +604,9 @@
   "auth": {
     "error": {
       "title": "Anmeldung konnte nicht abgeschlossen werden",
-      "body": "Ihr Konto konnte nicht geladen werden. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
-      "not_allowed": "Ihr Konto ist für dieses Dashboard nicht freigeschaltet. Wenden Sie sich an Ihren Administrator.",
-      "domain_not_allowed": "Ihre E-Mail-Domain ist nicht zugelassen. Wenden Sie sich an Ihren Administrator.",
+      "body": "Dein Konto konnte nicht geladen werden. Prüf deine Internetverbindung und versuch es noch einmal.",
+      "not_allowed": "Dein Konto ist für dieses Dashboard nicht freigeschaltet. Wende dich an deine:n Administrator:in.",
+      "domain_not_allowed": "Deine E-Mail-Domain ist nicht zugelassen. Wende dich an deine:n Administrator:in.",
       "retry": "Erneut versuchen"
     }
   },
@@ -651,21 +651,21 @@
       "approve_device": "Ein neues Gerät hängt auf „ausstehend“"
     },
     "a": {
-      "signin_denied": "ActivityTrack nutzt die normale Intranet-Anmeldung. Zum Öffnen braucht die Person die Rolle Manager oder Admin oder eine eigene Rolle mit „ActivityTrack-Admin einsehen“. Die Rolle ändern Sie unter Verwaltung → Mitglieder, eigene Rollen legen Sie unter Verwaltung → Rollen an. Kann sich die Person gar nicht am Intranet anmelden, genehmigen Sie ihre Anfrage unter Verwaltung → Anfragen.",
+      "signin_denied": "ActivityTrack nutzt die normale Intranet-Anmeldung. Zum Öffnen braucht die Person die Rolle Manager oder Admin oder eine eigene Rolle mit „ActivityTrack-Admin einsehen“. Die Rolle änderst du unter Verwaltung → Mitglieder, eigene Rollen legst du unter Verwaltung → Rollen an. Kann sich die Person gar nicht am Intranet anmelden, genehmige ihre Anfrage unter Verwaltung → Anfragen.",
       "domain": "Die Firmen-E-Mail-Domains sind auf dem Server hinterlegt (ALLOWED_EMAIL_DOMAINS) und unter Einstellungen → Konfiguration → Zugriffskontrolle nur zur Ansicht zu sehen. Adressen außerhalb dieser Domains lassen sich trotzdem unter Verwaltung → Einladungen einladen; sie gelten dann als externe Mitglieder.",
-      "roles": "Eigene Rolle mit „ActivityTrack-Admin einsehen“: nur lesende Dashboards, Zeitverläufe und Berichte. Manager: zusätzlich Personen anlegen und bearbeiten und Geräte zuordnen. Admin: alles, inklusive Geräte freigeben oder sperren, Konfiguration und Systemstatus. Rollen verwalten Sie unter Verwaltung → Mitglieder und Verwaltung → Rollen.",
-      "add_admin": "Vergeben Sie unter Verwaltung → Mitglieder die Rolle Admin. Adressen in der Server-Variable ADMIN_EMAILS werden bei ihrer ersten Anmeldung automatisch Admin, damit sich die Firma nicht aussperren kann.",
-      "not_reporting": "Prüfen: (1) Tracker installiert und läuft (Infobereich), (2) Gerät erscheint unter Geräte und ist freigegeben (ausstehende Geräte zählen nicht), (3) der Computer hat Internet. Neue Installationen erscheinen als „ausstehend“, bis Sie sie freigeben.",
+      "roles": "Eigene Rolle mit „ActivityTrack-Admin einsehen“: nur lesende Dashboards, Zeitverläufe und Berichte. Manager: zusätzlich Personen anlegen und bearbeiten und Geräte zuordnen. Admin: alles, inklusive Geräte freigeben oder sperren, Konfiguration und Systemstatus. Rollen verwaltest du unter Verwaltung → Mitglieder und Verwaltung → Rollen.",
+      "add_admin": "Vergib unter Verwaltung → Mitglieder die Rolle Admin. Adressen in der Server-Variable ADMIN_EMAILS werden bei ihrer ersten Anmeldung automatisch Admin, damit sich die Firma nicht aussperren kann.",
+      "not_reporting": "Prüfen: (1) Tracker installiert und läuft (Infobereich), (2) Gerät erscheint unter Geräte und ist freigegeben (ausstehende Geräte zählen nicht), (3) der Computer hat Internet. Neue Installationen erscheinen als „ausstehend“, bis du sie freigibst.",
       "offline": "Ein Gerät gilt als „offline“, wenn es länger als das Offline-Zeitfenster (Einstellungen → Konfiguration) keine Signale sendet. Ursachen: PC im Ruhezustand, nicht im Netzwerk, oder Tracker geschlossen. Es korrigiert sich, sobald der Tracker wieder meldet.",
-      "enroll_failed": "Der einmalige Registrierungscode ist falsch, bereits benutzt oder abgelaufen. Erstellen Sie unter Geräte → Registrierungscodes einen neuen und tragen Sie ihn in die Gerätekonfiguration ein (oder neu installieren mit gültigem Code).",
+      "enroll_failed": "Der einmalige Registrierungscode ist falsch, bereits benutzt oder abgelaufen. Erstelle unter Geräte → Registrierungscodes einen neuen und trag ihn in die Gerätekonfiguration ein (oder neu installieren mit gültigem Code).",
       "debug_password": "Es entsperrt am PC das lokale Status-/Diagnosefenster des Trackers. Setzen oder ändern unter Einstellungen → Konfiguration. Es entsperrt nie das Dashboard — nur die Diagnoseansicht auf dem Gerät.",
-      "integration_down": "Meist abgelaufene oder fehlende API-Zugangsdaten, oder der Anbieter ist nicht erreichbar. Die Schlüssel sind Server-Umgebungsvariablen (GENESYS_… und CLOCKODO_…) — bitten Sie die Person, die die Server betreut, sie zu prüfen. Unter Einstellungen → Systemstatus steht der letzte Fehler. Das Dashboard arbeitet währenddessen allein mit der Arbeitsplatz-Aktivität weiter.",
-      "clockodo_setup": "Optional: Ohne Webhook wird Clockodo trotzdem alle 15 Minuten abgefragt. Richten Sie in Clockodo einen Webhook auf die Adresse /integrations/clockodo/webhook der API ein. Clockodo schickt zuerst ein Validierungs-Secret, das einmalig in den Logs der API erscheint; tragen Sie es als Webhook-Token in Clockodo und auf dem Server (CLOCKODO_WEBHOOK_TOKEN) ein.",
+      "integration_down": "Meist abgelaufene oder fehlende API-Zugangsdaten, oder der Anbieter ist nicht erreichbar. Die Schlüssel sind Server-Umgebungsvariablen (GENESYS_… und CLOCKODO_…) — bitte die Person, die die Server betreut, sie zu prüfen. Unter Einstellungen → Systemstatus steht der letzte Fehler. Das Dashboard arbeitet währenddessen allein mit der Arbeitsplatz-Aktivität weiter.",
+      "clockodo_setup": "Optional: Ohne Webhook wird Clockodo trotzdem alle 15 Minuten abgefragt. Richte in Clockodo einen Webhook auf die Adresse /integrations/clockodo/webhook der API ein. Clockodo schickt zuerst ein Validierungs-Secret, das einmalig in den Logs der API erscheint; trag es als Webhook-Token in Clockodo und auf dem Server (CLOCKODO_WEBHOOK_TOKEN) ein.",
       "assumed_out": "Clockodo meldet kein „Feierabend“-Ereignis – es weiß nur, ob gerade ein Eintrag läuft. Eine kurze Lücke ohne laufenden Eintrag zählt als Pause; dauert die Lücke länger als eine Stunde, nimmt das Dashboard an, dass der Arbeitstag beendet ist.\nDas Wort „vermutlich“ ist entscheidend: Es ist eine Annahme, kein Fakt. Stempelt die Person am selben Tag wieder ein, wird der gesamte Zeitraum automatisch als Pause umgewertet und der Tag läuft normal weiter – nichts muss von Hand korrigiert werden.\nAb 20:00 Uhr endet das Vermuten: Wer dann noch nicht wieder eingestempelt hat, gilt endgültig als ausgestempelt (die Kennzeichnung „vermutlich“ verschwindet). Ein späteres Einstempeln beginnt einen neuen Abschnitt, statt den Abend nachträglich zur Pause zu machen.",
       "privacy": "Nur die Aktivitätszeit — ob der PC aktiv oder untätig ist und wie lange. Keine Screenshots, keine Tastenanschläge, keine Zwischenablage, keine Dateiinhalte. Erfasst wird die Eingabe-Zeit, nicht der Eingabe-Inhalt.",
       "retention": "Rohdaten werden nach dem Aufbewahrungszeitraum gelöscht (Einstellungen → Konfiguration, Standard 90 Tage). Tagessummen bleiben dauerhaft erhalten, sodass Verlaufsberichte auch nach dem Löschen der Rohdaten bestehen.",
       "add_person": "Personen → Person hinzufügen. Dann Geräte → Gerät öffnen und mit der Person verknüpfen. Nach dem Verknüpfen zeigt das Dashboard den Namen statt des Hostnamens.",
-      "approve_device": "Neue Installationen registrieren sich automatisch als „ausstehend“, damit ohne Ihre Zustimmung nichts erfasst wird. Öffnen Sie Geräte und geben Sie es frei; ab der Freigabe wird die Aktivität gezählt."
+      "approve_device": "Neue Installationen registrieren sich automatisch als „ausstehend“, damit ohne deine Zustimmung nichts erfasst wird. Öffne Geräte und gib es frei; ab der Freigabe wird die Aktivität gezählt."
     }
   },
   "setup": {

@@ -24,7 +24,7 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "tip",
-          body: "Ihr müsst euch nicht für beides entscheiden — ein Passkey **und** eine Authenticator-App können parallel eingerichtet sein. Wenn eines der beiden Geräte mal nicht griffbereit ist, bleibt das andere als Rückweg.",
+          body: "Du musst dich nicht für eins entscheiden — ein Passkey **und** eine Authenticator-App können parallel eingerichtet sein. Wenn eines der beiden Geräte mal nicht griffbereit ist, bleibt das andere als Rückweg.",
         },
       ],
     },

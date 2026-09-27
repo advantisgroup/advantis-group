@@ -78,7 +78,7 @@ const DOC: DocContent = {
         {
           kind: "steps",
           items: [
-            "Auf **webmail.ionos.de** (bzw. der für euer Postfach gültigen IONOS-Webmail-Adresse) einloggen.",
+            "Auf **webmail.ionos.de** (bzw. der für dein Postfach gültigen IONOS-Webmail-Adresse) einloggen.",
             "Oben rechts auf das **Zahnrad-Symbol** klicken und **„Alle Einstellungen“** auswählen.",
             "Im Menü **„Mail“** den Punkt **„Signaturen“** auswählen.",
           ],

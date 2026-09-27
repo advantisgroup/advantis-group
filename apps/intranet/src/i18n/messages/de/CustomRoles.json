@@ -1,6 +1,6 @@
 {
   "heading": "Benutzerdefinierte Rollen",
-  "description": "Vergeben Sie begrenzte Berechtigungen, ohne jemanden zum Manager zu befördern.",
+  "description": "Vergib einzelne Berechtigungen, ohne jemanden zum Manager zu befördern.",
   "descriptionDetail": "Beispiel: Mitglieder verwalten ohne Integrationszugriff. Berechtigungen sind additiv – eine benutzerdefinierte Rolle nimmt nie weg, was die Basisrolle bereits erlaubt.",
   "newRole": "Neue Rolle",
   "name": "Name",
