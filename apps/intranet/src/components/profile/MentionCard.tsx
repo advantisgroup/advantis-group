@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StatusMessage } from "@/components/profile/StatusMessage";
 import { initials, roleLabel } from "@/lib/format";
 
 /**
@@ -101,6 +102,7 @@ export function MentionCard({
               </div>
             </div>
             <div className="space-y-1 text-xs text-muted-foreground">
+              <StatusMessage status={user.statusMessage} compact className="text-foreground/80" />
               {user.jobTitle && <p className="truncate">{user.jobTitle}</p>}
               {user.department && (
                 <p className="flex items-center gap-1.5 truncate">

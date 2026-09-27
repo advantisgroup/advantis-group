@@ -11,6 +11,7 @@ import {
   FileStack,
   FileText,
   LogOut,
+  MessageCircle,
   MessageSquareHeart,
   Monitor,
   Moon,
@@ -26,6 +27,7 @@ import { api } from "@advantis/convex/api";
 import { useMutation } from "convex/react";
 
 import { PageFeedbackDialog } from "@/components/feedback/PageFeedbackDialog";
+import { StatusMessageDialog } from "@/components/profile/StatusMessageDialog";
 import { LocaleFlag } from "@/components/icons/flags";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { useLocaleSwitch, useMounted } from "@/components/settings/PreferencePickers";
@@ -43,6 +45,7 @@ import {
 import { locales } from "@/i18n/config";
 import { initials, roleLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { activeStatusMessage } from "@/lib/status-message";
 
 const THEME_MODES = [
   { key: "light", icon: Sun },
@@ -78,7 +81,10 @@ export function AccountMenu({
   const tRoles = useTranslations("Roles");
   const tSettings = useTranslations("Settings");
   const tDesign = useTranslations("Design");
+  const tProfile = useTranslations("Profile");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const status = activeStatusMessage(user.statusMessage);
   const setSandboxRole = useMutation(api.people.users.setSandboxRole);
   const {
     current: currentLocale,
@@ -175,6 +181,13 @@ export function AccountMenu({
               <DropdownMenuSeparator />
             </>
           )}
+          {/* No onNavigate, like page feedback below: the dialog lives in this menu. */}
+          <DropdownMenuItem onClick={() => setStatusOpen(true)}>
+            <MessageCircle className="mr-2 h-4 w-4" />
+            <span className="min-w-0 flex-1 truncate">
+              {status ? status.text : tProfile("statusSet")}
+            </span>
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               onNavigate?.();
@@ -270,6 +283,7 @@ export function AccountMenu({
         </DropdownMenuContent>
       </DropdownMenu>
       <PageFeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      <StatusMessageDialog open={statusOpen} onOpenChange={setStatusOpen} />
     </>
   );
 }

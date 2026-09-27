@@ -23,6 +23,10 @@ export const identityTables = {
      */
     department: v.optional(v.string()),
     jobTitle: v.optional(v.string()),
+    // "Back Monday, ask Anna" — a short note shown next to the person's name,
+    // optionally until a moment after which it no longer shows.
+    statusText: v.optional(v.string()),
+    statusUntil: v.optional(v.number()),
     /** Canonical department link — see `departments` table. */
     departmentId: v.optional(v.id("departments")),
     phone: v.optional(v.string()),

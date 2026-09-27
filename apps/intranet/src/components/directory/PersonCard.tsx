@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { PersonIdentityBadges } from "@/components/people/PersonIdentityBadges";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
+import { StatusMessage } from "@/components/profile/StatusMessage";
 import { initials } from "@/lib/format";
 import { profileColorStyle, profileGradientClass } from "@/lib/profile-gradient";
 import { cn } from "@/lib/utils";
@@ -67,6 +68,7 @@ export function PersonCard({
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {person.jobTitle || t("noJobTitle")}
           </p>
+          <StatusMessage status={person.statusMessage} compact className="mt-1" />
         </div>
       </button>
 

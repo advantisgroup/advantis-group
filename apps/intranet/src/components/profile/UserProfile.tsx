@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
@@ -10,6 +12,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Drawer } from "vaul";
 
+import { StatusMessage } from "@/components/profile/StatusMessage";
+import { StatusMessageDialog } from "@/components/profile/StatusMessageDialog";
 import { useCurrentUser, useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +25,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useNow } from "@/lib/activity/useNow";
 import { formatIsoDate, initials } from "@/lib/format";
 import { profileColorStyle, profileGradientClass } from "@/lib/profile-gradient";
+import { activeStatusMessage } from "@/lib/status-message";
 import { teamColor, teamLabelKey } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { ManagementRail } from "./ProfileAdmin";
@@ -53,6 +58,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
   const now = useNow();
 
   const isSelf = user._id === me._id;
+  const [statusOpen, setStatusOpen] = useState(false);
 
   async function message() {
     try {
@@ -123,6 +129,16 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
           </h2>
           {subtitle && (
             <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{subtitle}</p>
+          )}
+          <StatusMessage status={user.statusMessage} className="mt-2" />
+          {isSelf && (
+            <button
+              type="button"
+              onClick={() => setStatusOpen(true)}
+              className="mt-1.5 text-xs font-medium text-primary hover:underline"
+            >
+              {activeStatusMessage(user.statusMessage) ? t("statusChange") : t("statusSet")}
+            </button>
           )}
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
             <RoleBadge member={user} isAdmin={isAdmin} tRoles={tRoles} onSave={saveRoleLabel} />
@@ -205,6 +221,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
     <section className="min-w-0 pb-5">
       {identity}
       <div className="px-5 pt-5">{details}</div>
+      {isSelf && <StatusMessageDialog open={statusOpen} onOpenChange={setStatusOpen} />}
     </section>
   );
 

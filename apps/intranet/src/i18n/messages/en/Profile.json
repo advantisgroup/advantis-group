@@ -57,5 +57,27 @@
   "offboarding_files": "Files and shared folders handed over",
   "offboarding_devices": "Devices returned",
   "offboarding_access": "Access removal requested",
-  "viewFullProfile": "View full profile"
+  "viewFullProfile": "View full profile",
+  "statusSet": "Set a status",
+  "statusChange": "Change status",
+  "statusTitle": "Your status",
+  "statusDescription": "A short note next to your name, e.g. \"Back Monday, ask Anna\". Colleagues see it on your profile, in the directory and when they @mention you.",
+  "statusPlaceholder": "What should colleagues know?",
+  "statusClearAfter": "Clear after",
+  "statusDuration": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "week": "This week",
+    "date": "A date…",
+    "never": "Don't clear"
+  },
+  "statusClear": "Clear status",
+  "statusSaved": "Status set",
+  "statusCleared": "Status cleared",
+  "statusSaveFailed": "Couldn't save your status. Try again.",
+  "statusUntil": "until {date}",
+  "presetMeeting": "In meetings today",
+  "presetHome": "Working from home",
+  "presetSick": "Out sick",
+  "presetVacation": "On vacation"
 }
