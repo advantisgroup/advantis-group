@@ -472,7 +472,11 @@ export function CommandPalette({ className }: { className?: string } = {}) {
       }
     }
 
+    // A built-in guide that has moved into the wiki shows up once, as the
+    // wiki entry below.
+    const wikiSlugs = new Set((wikiEntries ?? []).map((e) => e.slug));
     for (const gb of guidebooks) {
+      if (wikiSlugs.has(gb.slug)) continue;
       const title = guidebookTitle(gb, tGuide);
       if (title.toLowerCase().includes(q)) {
         list.push({
