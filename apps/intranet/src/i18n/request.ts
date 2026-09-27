@@ -39,6 +39,7 @@ import deGuidebooks from "./messages/de/Guidebooks.json";
 import deHelp from "./messages/de/Help.json";
 import deRequests from "./messages/de/Requests.json";
 import deWhoToAsk from "./messages/de/WhoToAsk.json";
+import dePolicies from "./messages/de/Policies.json";
 import deImprint from "./messages/de/imprint.json";
 import deIntegrations from "./messages/de/Integrations.json";
 import deInquiries from "./messages/de/Inquiries.json";
@@ -97,6 +98,7 @@ import enGuidebooks from "./messages/en/Guidebooks.json";
 import enHelp from "./messages/en/Help.json";
 import enRequests from "./messages/en/Requests.json";
 import enWhoToAsk from "./messages/en/WhoToAsk.json";
+import enPolicies from "./messages/en/Policies.json";
 import enImprint from "./messages/en/imprint.json";
 import enIntegrations from "./messages/en/Integrations.json";
 import enInquiries from "./messages/en/Inquiries.json";
@@ -157,6 +159,7 @@ const messagesByLocale = {
     Help: enHelp,
     Requests: enRequests,
     WhoToAsk: enWhoToAsk,
+    Policies: enPolicies,
     Blog: enBlog,
     CaseSearch: enCaseSearch,
     Settings: enSettings,
@@ -217,6 +220,7 @@ const messagesByLocale = {
     Help: deHelp,
     Requests: deRequests,
     WhoToAsk: deWhoToAsk,
+    Policies: dePolicies,
     Blog: deBlog,
     CaseSearch: deCaseSearch,
     Settings: deSettings,

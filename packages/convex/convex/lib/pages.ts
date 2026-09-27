@@ -170,6 +170,12 @@ export const INTRANET_PAGES: IntranetPage[] = [
     keywords: ["anfragen", "requests", "status", "meine", "tickets", "stand", "offen"],
   },
   {
+    href: "/policies",
+    label: "Richtlinien",
+    description: "Die Richtlinien des Unternehmens, mit Version und ob du sie bestätigt hast.",
+    keywords: ["richtlinien", "policies", "regeln", "bestätigen", "datenschutz", "compliance"],
+  },
+  {
     href: "/who-to-ask",
     label: "Ansprechpartner",
     description:

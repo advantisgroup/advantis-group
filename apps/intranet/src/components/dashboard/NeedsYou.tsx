@@ -13,6 +13,7 @@ import {
   KeyRound,
   Pin,
   Plane,
+  ScrollText,
   Wrench,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -87,11 +88,13 @@ export function NeedsYouPanel() {
   const tickets = useQuery(api.itTickets.tickets.listAssignedOpen);
   const measures = useQuery(api.fehlermanagement.measures.listMineOpen);
   const announcements = useQuery(api.announcements.needsAttention);
+  const policies = useQuery(api.wiki.policies.pendingMine);
 
   const loading =
     tickets === undefined ||
     measures === undefined ||
     announcements === undefined ||
+    policies === undefined ||
     (isManager && accessRequests === undefined);
 
   const items = useMemo(() => {
@@ -168,6 +171,17 @@ export function NeedsYouPanel() {
         at: a.publishedAt,
       });
     }
+    for (const p of policies ?? []) {
+      list.push({
+        key: `policy-${p._id}`,
+        icon: <ScrollText />,
+        title: p.title,
+        meta: t(p.state === "changed" ? "needsYouPolicyChanged" : "needsYouPolicy"),
+        href: `/guidebooks/${encodeURIComponent(p.slug)}`,
+        urgent: true,
+        at: p.updatedAt,
+      });
+    }
     return list.sort((a, b) => Number(b.urgent) - Number(a.urgent) || a.at - b.at);
   }, [
     accessRequests,
@@ -176,6 +190,7 @@ export function NeedsYouPanel() {
     canReviewAbsences,
     locale,
     measures,
+    policies,
     t,
     tAbsences,
     tickets,

@@ -86,5 +86,6 @@
   "toolAddFailed": "Couldn't add the tool. Check the link starts with https:// and try again.",
   "toolMoveUp": "Move {name} up",
   "toolMoveDown": "Move {name} down",
-  "toolRemove": "Remove {name}"
+  "toolRemove": "Remove {name}",
+  "policies": "Policies"
 }

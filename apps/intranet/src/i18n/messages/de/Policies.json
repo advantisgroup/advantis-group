@@ -1,0 +1,16 @@
+{
+  "title": "Richtlinien",
+  "description": "Die Richtlinien des Unternehmens, welche Version gilt und ob du sie bestätigt hast.",
+  "add": "Neue Richtlinie",
+  "emptyTitle": "Noch keine Richtlinien",
+  "emptyHint": "Veröffentlicht das Unternehmen eine Richtlinie, erscheint sie hier zum Lesen und Bestätigen.",
+  "emptyHintManager": "Leg dafür eine Wiki-Seite an und schalte „Das ist eine Richtlinie“ ein. Dann werden alle gebeten, sie zu bestätigen.",
+  "openCount": "{count, plural, one {# Richtlinie wartet} other {# Richtlinien warten}} auf deine Bestätigung.",
+  "meta": "Version {version} · geändert {date}",
+  "confirmedBy": "{count} von {total} bestätigt",
+  "state": {
+    "confirmed": "Bestätigt",
+    "changed": "Geändert",
+    "pending": "Zu bestätigen"
+  }
+}

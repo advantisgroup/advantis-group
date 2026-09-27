@@ -294,6 +294,7 @@ import type * as wiki_chats from "../wiki/chats.js";
 import type * as wiki_entries from "../wiki/entries.js";
 import type * as wiki_formatSettings from "../wiki/formatSettings.js";
 import type * as wiki_migration from "../wiki/migration.js";
+import type * as wiki_policies from "../wiki/policies.js";
 import type * as wikiCategories from "../wikiCategories.js";
 import type * as wikiChats from "../wikiChats.js";
 import type * as wikiEntries from "../wikiEntries.js";
@@ -593,6 +594,7 @@ declare const fullApi: ApiFromModules<{
   "wiki/entries": typeof wiki_entries;
   "wiki/formatSettings": typeof wiki_formatSettings;
   "wiki/migration": typeof wiki_migration;
+  "wiki/policies": typeof wiki_policies;
   wikiCategories: typeof wikiCategories;
   wikiChats: typeof wikiChats;
   wikiEntries: typeof wikiEntries;

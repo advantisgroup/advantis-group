@@ -30,6 +30,7 @@ import {
   PhoneCall,
   RotateCcw,
   Rss,
+  ScrollText,
   Settings,
   ShieldCheck,
   SlidersHorizontal,
@@ -283,6 +284,7 @@ export function Sidebar() {
           },
         ]
       : []),
+    { section: "knowledge", href: "/policies", labelKey: "policies", icon: ScrollText },
     ...(hasBlogAccess
       ? [{ section: "knowledge" as const, href: "/blog", labelKey: "blog", icon: Newspaper }]
       : []),

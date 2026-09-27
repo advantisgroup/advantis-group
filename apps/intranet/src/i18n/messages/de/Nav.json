@@ -86,5 +86,6 @@
   "toolAddFailed": "Tool konnte nicht hinzugefügt werden. Prüf, ob der Link mit https:// beginnt, und versuch es noch einmal.",
   "toolMoveUp": "{name} nach oben",
   "toolMoveDown": "{name} nach unten",
-  "toolRemove": "{name} entfernen"
+  "toolRemove": "{name} entfernen",
+  "policies": "Richtlinien"
 }

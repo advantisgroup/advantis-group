@@ -1,0 +1,16 @@
+{
+  "title": "Policies",
+  "description": "The company's policies, which version is current, and whether you've confirmed it.",
+  "add": "New policy",
+  "emptyTitle": "No policies yet",
+  "emptyHint": "When the company publishes a policy, it shows up here for you to read and confirm.",
+  "emptyHintManager": "To publish one, create a wiki page and switch on \"This is a policy\". Everyone is then asked to confirm it.",
+  "openCount": "{count, plural, one {# policy is} other {# policies are}} waiting for your confirmation.",
+  "meta": "Version {version} · changed {date}",
+  "confirmedBy": "{count} of {total} confirmed",
+  "state": {
+    "confirmed": "Confirmed",
+    "changed": "Changed",
+    "pending": "To confirm"
+  }
+}

@@ -1,8 +1,10 @@
 import { userQuery, userMutation } from "../functions";
 import { v } from "convex/values";
+import { type QueryCtx } from "../_generated/server";
 import { profileDisplayName } from "../lib/profile";
 
-/** Slugs the current user has confirmed reading. */
+/** Slugs the current user has confirmed reading — for a policy, only if
+ *  they confirmed its current version. */
 export const listMine = userQuery({
   args: {},
   handler: async (ctx) => {
@@ -11,9 +13,30 @@ export const listMine = userQuery({
       .query("guidebookReads")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
-    return rows.map((r) => r.slug);
+    const policies = await currentPolicyVersions(ctx);
+    return rows.filter((r) => (r.version ?? 1) >= (policies.get(r.slug) ?? 0)).map((r) => r.slug);
   },
 });
+
+/** The current user's confirmation of one entry, if any. */
+export const mineForSlug = userQuery({
+  args: { slug: v.string() },
+  handler: async (ctx, { slug }) => {
+    const row = await ctx.db
+      .query("guidebookReads")
+      .withIndex("by_user_slug", (q) => q.eq("userId", ctx.caller.user._id).eq("slug", slug))
+      .unique();
+    return row ? { readAt: row.readAt, version: row.version ?? 1 } : null;
+  },
+});
+
+/** slug → the policy version everyone must have confirmed. */
+async function currentPolicyVersions(ctx: QueryCtx) {
+  const entries = await ctx.db.query("wikiEntries").collect();
+  return new Map(
+    entries.filter((e) => e.policy).map((e) => [e.slug, e.policyVersion ?? 1] as const),
+  );
+}
 
 /** Manual confirmation only — a user explicitly asserting "I read and
  * understood this," not a side effect of opening the page. Idempotent
@@ -27,8 +50,19 @@ export const markRead = userMutation({
       .query("guidebookReads")
       .withIndex("by_user_slug", (q) => q.eq("userId", user._id).eq("slug", slug))
       .unique();
-    if (existing) return { ok: true };
-    await ctx.db.insert("guidebookReads", { userId: user._id, slug, readAt: Date.now() });
+    const entry = await ctx.db
+      .query("wikiEntries")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .unique();
+    const version = entry?.policy ? (entry.policyVersion ?? 1) : undefined;
+    if (existing) {
+      // Re-confirming a policy that changed records the version now agreed to.
+      if (version !== undefined && (existing.version ?? 1) < version) {
+        await ctx.db.patch(existing._id, { version, readAt: Date.now() });
+      }
+      return { ok: true };
+    }
+    await ctx.db.insert("guidebookReads", { userId: user._id, slug, readAt: Date.now(), version });
     return { ok: true };
   },
 });
@@ -55,6 +89,7 @@ export const listConfirmersForSlug = userQuery({
           userId: r.userId,
           name: u ? profileDisplayName(u) : "Deleted user",
           readAt: r.readAt,
+          version: r.version ?? 1,
         };
       })
       .sort((a, b) => b.readAt - a.readAt);
