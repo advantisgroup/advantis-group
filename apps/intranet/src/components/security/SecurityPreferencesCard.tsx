@@ -118,7 +118,7 @@ export function SecurityPreferencesCard() {
   ].filter((entry) => entry.pref?.applies);
 
   return (
-    <div id="security-preferences" data-hash-anchor className="space-y-4 refreshed:space-y-10">
+    <div id="security-preferences" data-hash-anchor className="space-y-10">
       <SettingsSection title={t("securitySignIn")}>
         <SettingsRow
           title={t("securityAlwaysMfa")}

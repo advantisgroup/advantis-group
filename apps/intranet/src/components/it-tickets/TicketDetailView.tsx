@@ -150,13 +150,13 @@ export function TicketDetailView({
         className={cn(
           "space-y-3 border-b border-l-4 border-border/70 p-4",
           STATUS_BORDER[ticket.status],
-          "refreshed:border-l-0 refreshed:border-t-[3px]",
+          "border-l-0 border-t-[3px]",
         )}
         style={{ borderTopColor: STATUS_ACCENT[ticket.status] }}
       >
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-xs text-muted-foreground">{ticketNumber(ticket.nr)}</span>
-          <span className="text-sm font-semibold refreshed:text-base">{ticket.category}</span>
+          <span className="font-semibold text-base">{ticket.category}</span>
           <StatusBadge status={ticket.status} />
         </div>
         <dl className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 text-[13px]">
@@ -271,7 +271,7 @@ export function TicketDetailView({
 
       {otherThreads.length > 0 && (
         <div className="min-h-0 flex-1 space-y-1 p-3">
-          <p className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+          <p className="px-1 text-muted-foreground text-xs font-medium normal-case tracking-normal">
             {t("thread.otherThreads")}
           </p>
           {otherThreads.map((other) => (
@@ -351,7 +351,7 @@ export function TicketRelatedLinks({ ticket, className }: { ticket: Ticket; clas
           {link.url.startsWith("/") ? (
             <Link
               href={link.url}
-              className="flex min-w-0 flex-1 items-center gap-1.5 text-xs font-medium text-primary hover:underline refreshed:text-foreground"
+              className="flex min-w-0 flex-1 items-center gap-1.5 text-xs font-medium hover:underline text-foreground"
             >
               <span className="truncate">{link.label}</span>
               <ExternalLink className="size-3 shrink-0" />
@@ -361,7 +361,7 @@ export function TicketRelatedLinks({ ticket, className }: { ticket: Ticket; clas
               href={link.url}
               target="_blank"
               rel="noreferrer"
-              className="flex min-w-0 flex-1 items-center gap-1.5 text-xs font-medium text-primary hover:underline refreshed:text-foreground"
+              className="flex min-w-0 flex-1 items-center gap-1.5 text-xs font-medium hover:underline text-foreground"
             >
               <span className="truncate">{link.label}</span>
               <ExternalLink className="size-3 shrink-0" />

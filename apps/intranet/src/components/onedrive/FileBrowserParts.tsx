@@ -124,7 +124,7 @@ export function SortHeader({
         active={active}
         dir={dir}
         onClick={onClick}
-        className="uppercase tracking-wide refreshed:normal-case refreshed:tracking-normal"
+        className="normal-case tracking-normal"
       />
     </th>
   );
@@ -301,7 +301,7 @@ export function FileRow({
       className={cn(
         "group border-b border-border/40 last:border-0 hover:bg-accent/40",
         focused && "bg-accent/60",
-        selected && "bg-primary/5 refreshed:bg-accent",
+        selected && "bg-accent",
       )}
     >
       <td className="pl-3">

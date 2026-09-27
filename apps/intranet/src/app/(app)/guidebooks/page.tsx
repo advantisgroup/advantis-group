@@ -611,7 +611,7 @@ export default function GuidebooksPage() {
 
       {interactiveTools.length > 0 && (
         <div className="mb-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+          <p className="mb-2 text-xs text-muted-foreground font-medium normal-case tracking-normal">
             {t("interactiveToolsTitle")}
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -687,10 +687,8 @@ export default function GuidebooksPage() {
         </div>
 
         {!showArchive && reviewDue.length > 0 && (
-          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 refreshed:rounded-xl refreshed:border-border/70 refreshed:border-l-2 refreshed:border-l-warn refreshed:bg-card">
-            <p className="mb-1 text-sm font-semibold text-amber-700 dark:text-amber-400 refreshed:text-warn">
-              {t("reviewPanelTitle")}
-            </p>
+          <div className="border p-4 rounded-xl border-border/70 border-l-2 border-l-warn bg-card">
+            <p className="mb-1 text-sm font-semibold text-warn">{t("reviewPanelTitle")}</p>
             <p className="mb-3 text-xs text-muted-foreground">{t("reviewPanelBody")}</p>
             <div className="space-y-2">
               {reviewDue.map((i) => {
@@ -701,7 +699,7 @@ export default function GuidebooksPage() {
                     className="flex flex-wrap items-center gap-2 rounded-lg bg-card px-3 py-2 text-sm"
                   >
                     <span className="min-w-0 flex-1 truncate font-medium">{i.title}</span>
-                    <span className="text-xs font-medium text-amber-700 dark:text-amber-400 refreshed:text-warn">
+                    <span className="text-xs font-medium text-warn">
                       {days < 0
                         ? t("expiredSince", {
                             date: formatIsoDate(msToDateInput(i.validUntil ?? 0), locale),
@@ -721,10 +719,8 @@ export default function GuidebooksPage() {
         )}
 
         {canManage && !showArchive && ownershipMissing.length > 0 && (
-          <div className="rounded-2xl border border-sky-500/30 bg-sky-500/5 p-4 refreshed:rounded-xl refreshed:border-border/70 refreshed:border-l-2 refreshed:border-l-info refreshed:bg-card">
-            <p className="mb-1 text-sm font-semibold text-sky-700 dark:text-sky-300 refreshed:text-info">
-              {t("ownershipPanelTitle")}
-            </p>
+          <div className="border p-4 rounded-xl border-border/70 border-l-2 border-l-info bg-card">
+            <p className="mb-1 text-sm font-semibold text-info">{t("ownershipPanelTitle")}</p>
             <p className="mb-3 text-xs text-muted-foreground">{t("ownershipPanelBody")}</p>
             <div className="space-y-2">
               {ownershipMissing.map((item) => (

@@ -576,7 +576,7 @@ export function ConversationView({
     );
     return text.split(pattern).map((part, i) =>
       names.some((n) => part === `@${n}`) ? (
-        <span key={i} className="font-semibold text-blue-500 refreshed:text-info">
+        <span key={i} className="font-semibold text-info">
           {part}
         </span>
       ) : (
@@ -684,7 +684,7 @@ export function ConversationView({
             <Popover open={membersOpen} onOpenChange={setMembersOpen}>
               <PopoverTrigger asChild>{membersTrigger}</PopoverTrigger>
               <PopoverContent align="start" className="w-72 p-1.5">
-                <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+                <p className="px-2 py-1.5 text-muted-foreground text-xs font-medium normal-case tracking-normal">
                   {conversation.members.length} {t("members")}
                 </p>
                 <div className="max-h-72 space-y-0.5 overflow-y-auto">{membersList}</div>
@@ -774,8 +774,8 @@ export function ConversationView({
 
       {/* DM-left banner */}
       {conversation?.dmOtherLeft && (
-        <div className="mx-3 mt-3 flex items-center gap-3 rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-2.5 refreshed:border-border/70 refreshed:bg-card">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-500 refreshed:bg-info/10 refreshed:text-info">
+        <div className="mx-3 mt-3 flex items-center gap-3 rounded-lg border px-3 py-2.5 border-border/70 bg-card">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-info/10 text-info">
             <UserPlus className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
@@ -801,7 +801,7 @@ export function ConversationView({
       <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto p-4">
         {conversation && messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-            <span className="flex size-14 items-center justify-center rounded-2xl bg-blue-500/10 text-2xl refreshed:bg-muted">
+            <span className="flex size-14 items-center justify-center rounded-2xl text-2xl bg-muted">
               👋
             </span>
             <div>
@@ -849,11 +849,11 @@ export function ConversationView({
                     {showDay && <ChatDayDivider label={dayLabel(m.createdAt)} />}
                     {firstUnreadId === m._id && (
                       <div className="flex items-center gap-2 py-1">
-                        <span className="h-px flex-1 bg-blue-500/30 refreshed:bg-info/30" />
-                        <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-500 refreshed:bg-info/10 refreshed:text-[11px] refreshed:font-medium refreshed:normal-case refreshed:tracking-normal refreshed:text-info">
+                        <span className="h-px flex-1 bg-info/30" />
+                        <span className="rounded-full px-2.5 py-0.5 bg-info/10 text-[11px] font-medium normal-case tracking-normal text-info">
                           {t("newMessages")}
                         </span>
-                        <span className="h-px flex-1 bg-blue-500/30 refreshed:bg-info/30" />
+                        <span className="h-px flex-1 bg-info/30" />
                       </div>
                     )}
                     <div
@@ -900,7 +900,7 @@ export function ConversationView({
                             {...(isMobile && !m.deleted ? longPressHandlers(m) : {})}
                           >
                             {!mine && conversation?.type === "group" && !grouped && (
-                              <p className="mb-0.5 text-xs font-semibold text-blue-500 refreshed:text-muted-foreground">
+                              <p className="mb-0.5 text-xs font-semibold text-muted-foreground">
                                 {m.senderName}
                               </p>
                             )}
@@ -913,7 +913,7 @@ export function ConversationView({
                                     block: "center",
                                   })
                                 }
-                                className="mb-1 flex w-full flex-col rounded-md border-l-2 border-blue-500/60 bg-background/60 px-2 py-1 text-left text-xs refreshed:border-foreground/25"
+                                className="mb-1 flex w-full flex-col rounded-md border-l-2 bg-background/60 px-2 py-1 text-left text-xs border-foreground/25"
                               >
                                 <span className="font-semibold opacity-80">
                                   {m.replyTo.senderName}
@@ -1044,7 +1044,7 @@ export function ConversationView({
         <button
           onClick={scrollToBottom}
           aria-label={t("jumpToBottom")}
-          className="absolute right-5 flex size-9 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-md transition-transform hover:scale-105 refreshed:shadow-overlay refreshed:hover:scale-100 refreshed:hover:bg-accent"
+          className="absolute right-5 flex size-9 items-center justify-center rounded-full border border-border bg-card text-foreground transition-transform shadow-overlay hover:scale-100 hover:bg-accent"
           style={{ bottom: "calc(6rem + env(safe-area-inset-bottom))" }}
         >
           <ArrowDown className="h-4 w-4" />
@@ -1071,14 +1071,14 @@ export function ConversationView({
         }}
       >
         {(replyTo || editing) && (
-          <div className="mb-2 flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-1.5 text-xs refreshed:border-border/70 refreshed:bg-muted/40">
+          <div className="mb-2 flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs border-border/70 bg-muted/40">
             {editing ? (
-              <Pencil className="h-3.5 w-3.5 shrink-0 text-blue-500 refreshed:text-muted-foreground" />
+              <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             ) : (
-              <Reply className="h-3.5 w-3.5 shrink-0 text-blue-500 refreshed:text-muted-foreground" />
+              <Reply className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             )}
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-blue-500 refreshed:text-foreground">
+              <p className="font-semibold text-foreground">
                 {editing
                   ? t("editingMessage")
                   : t("replyingTo", {
@@ -1138,10 +1138,10 @@ export function ConversationView({
           </div>
         )}
 
-        <div className="relative flex items-end gap-2 rounded-xl border border-border bg-background p-1.5 shadow-sm transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40 refreshed:bg-card refreshed:shadow-none refreshed:focus-within:ring-0">
+        <div className="relative flex items-end gap-2 rounded-xl border border-border p-1.5 transition-colors focus-within:border-ring focus-within:ring-ring/40 bg-card shadow-none focus-within:ring-0">
           {/* @mention autocomplete */}
           {mention && mentionableMembers.length > 0 && (
-            <div className="absolute bottom-full left-0 mb-2 w-64 overflow-hidden rounded-lg border border-border bg-popover shadow-lg refreshed:rounded-[10px] refreshed:bg-card refreshed:shadow-overlay">
+            <div className="absolute bottom-full left-0 mb-2 w-64 overflow-hidden border border-border rounded-[10px] bg-card shadow-overlay">
               {mentionableMembers.map((m) => (
                 <button
                   key={m._id}
@@ -1251,8 +1251,8 @@ export function ConversationView({
       {/* Drag-and-drop overlay */}
       {dragging && (
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-background/70 p-6 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-blue-400 bg-blue-500/5 px-12 py-10 text-center refreshed:border-border refreshed:bg-card">
-            <UploadCloud className="size-10 text-blue-400 refreshed:text-muted-foreground" />
+          <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed px-12 py-10 text-center border-border bg-card">
+            <UploadCloud className="size-10 text-muted-foreground" />
             <p className="text-sm font-medium text-foreground">{t("dropToSend")}</p>
           </div>
         </div>
@@ -1265,7 +1265,7 @@ export function ConversationView({
           ariaLabel={`${conversation.members.length} ${t("members")}`}
         >
           <div className="px-4 pb-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground refreshed:text-xs refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+            <p className="text-muted-foreground text-xs font-medium normal-case tracking-normal">
               {conversation.members.length} {t("members")}
             </p>
           </div>

@@ -545,7 +545,7 @@ export function FileBrowser({
       </div>
 
       {path === "" && !wikiNoticeDismissed && (
-        <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 refreshed:border-border/70 refreshed:bg-card">
+        <div className="flex items-start gap-3 rounded-xl border px-4 py-3 border-border/70 bg-card">
           <NotebookPen className="mt-0.5 size-4 shrink-0 text-primary" />
           <div className="min-w-0 flex-1 text-sm">
             <p className="font-medium">{t("wikiNoticeTitle")}</p>
@@ -766,7 +766,7 @@ export function FileBrowser({
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wide text-muted-foreground refreshed:bg-muted/40 refreshed:normal-case refreshed:tracking-normal">
+              <tr className="border-b border-border/60 text-left text-xs text-muted-foreground bg-muted/40 normal-case tracking-normal">
                 <th className="w-8 pl-3">
                   <Checkbox
                     aria-label={t("selectAll")}
@@ -821,9 +821,9 @@ export function FileBrowser({
 
       {/* Upload queue panel */}
       {queue.length > 0 && (
-        <div className="fixed bottom-20 right-4 z-40 w-72 rounded-xl border border-border bg-card p-3 shadow-lg md:bottom-4 refreshed:shadow-overlay">
+        <div className="fixed bottom-20 right-4 z-40 w-72 rounded-xl border border-border bg-card p-3 md:bottom-4 shadow-overlay">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground refreshed:font-medium refreshed:normal-case refreshed:tracking-normal">
+            <p className="text-xs text-muted-foreground font-medium normal-case tracking-normal">
               {t("uploadQueue")}
             </p>
             {queue.every((e) => e.status === "done" || e.status === "error") && (

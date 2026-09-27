@@ -123,7 +123,7 @@ export function usePageHeaderBarState() {
   return useContext(PageHeaderBarContext);
 }
 
-/** Lets `RouteTabs` move its tabs up next to the page title (refreshed design). */
+/** Lets `RouteTabs` move its tabs up next to the page title. */
 export function useSetPageHeaderTabs() {
   return useContext(SetTabsContext);
 }
@@ -232,7 +232,7 @@ export function PageHeaderBarSlot() {
           {identity.icon}
         </span>
       )}
-      <h1 className="min-w-0 font-display text-sm font-semibold leading-tight tracking-tight [overflow-wrap:anywhere] md:whitespace-nowrap md:text-base refreshed:md:text-[15px]">
+      <h1 className="min-w-0 font-display text-sm font-semibold leading-tight tracking-tight [overflow-wrap:anywhere] md:whitespace-nowrap md:text-[15px]">
         {identity.title}
       </h1>
       {identity.tourCheckpoint && <TourReplayButton checkpointId={identity.tourCheckpoint} />}

@@ -54,7 +54,7 @@ function PostStatus({ published }: { published: boolean }) {
   );
 }
 
-function RefreshedBlogList({
+function BlogList({
   posts,
   onDelete,
 }: {
@@ -292,5 +292,5 @@ export default function BlogListPage() {
 
   const deletePost = (post: Post) => void onDelete(post._id, post.title || t("untitled"));
 
-  return <RefreshedBlogList posts={posts} onDelete={deletePost} />;
+  return <BlogList posts={posts} onDelete={deletePost} />;
 }

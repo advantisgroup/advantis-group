@@ -49,7 +49,7 @@ function monthKey(ms: number) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function RefreshedErrorDashboard() {
+export default function ErrorDashboardPage() {
   const t = useTranslations("ErrorManagement");
   const locale = useLocale();
   const reports = useQuery(api.fehlermanagement.reports.list);
@@ -358,8 +358,4 @@ function RefreshedErrorDashboard() {
       </div>
     </div>
   );
-}
-
-export default function ErrorDashboardPage() {
-  return <RefreshedErrorDashboard />;
 }

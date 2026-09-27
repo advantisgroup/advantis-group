@@ -104,9 +104,9 @@ export function MessageComposer({
 
   return (
     <div
-      // Refreshed: no rule across the pane — the composer floats in the same
+      // No rule across the pane — the composer floats in the same
       // centred column as the messages, the way the AI chat's does.
-      className="border-t border-border/70 p-3 refreshed:border-t-0 refreshed:px-4 refreshed:pt-2"
+      className="border-border/70 p-3 border-t-0 px-4 pt-2"
       style={{
         // Layout viewport doesn't shrink for the keyboard, so this needs
         // lifting by however much it covers (see AnnouncementComposer).
@@ -116,7 +116,7 @@ export function MessageComposer({
     >
       <div className={CHAT_COLUMN}>
         {above}
-        <div className="relative flex items-end gap-2 rounded-xl border border-border bg-background p-1.5 shadow-sm transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40 refreshed:rounded-2xl refreshed:bg-card refreshed:p-2 refreshed:shadow-[0_1px_2px_rgb(0_0_0/0.04)] refreshed:focus-within:border-foreground/25 refreshed:focus-within:ring-0">
+        <div className="relative flex items-end gap-2 border border-border transition-colors focus-within:ring-ring/40 rounded-2xl bg-card p-2 shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-within:border-foreground/25 focus-within:ring-0">
           {overlay}
 
           {onPickFiles && (

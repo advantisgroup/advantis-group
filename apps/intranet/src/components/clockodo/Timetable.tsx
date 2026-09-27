@@ -87,7 +87,7 @@ export function Timetable() {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="flex-row items-center justify-between border-b border-border/70 bg-gradient-to-r from-muted/60 to-muted/10 refreshed:bg-none">
+      <CardHeader className="flex-row items-center justify-between border-b border-border/70">
         <div>
           <CardTitle className="text-base">{t("yourTimetable")}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -179,7 +179,7 @@ export function Timetable() {
                     {t("breakDuration", { duration: breakLabel })}
                   </div>
                 )}
-                <div className="flex items-center justify-between gap-3 rounded-md border border-border/70 border-l-2 border-l-primary/60 bg-card px-3 py-2.5 shadow-sm refreshed:shadow-none">
+                <div className="flex items-center justify-between gap-3 rounded-md border border-border/70 border-l-2 border-l-primary/60 bg-card px-3 py-2.5 shadow-none">
                   <div className="min-w-0">
                     <p className="text-sm font-medium tabular-nums">
                       {formatClockTime(entry.startTime, locale)} –{" "}

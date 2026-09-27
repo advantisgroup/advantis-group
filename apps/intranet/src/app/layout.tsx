@@ -66,9 +66,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html
       lang={locale}
-      // One design now, so it's stamped at render instead of mirrored from a
-      // preference after it loads — no first paint in the old look.
-      data-design="refreshed"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable}`}
     >

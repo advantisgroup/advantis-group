@@ -66,10 +66,6 @@ function needsDecision(notification: NotificationDoc): boolean {
 }
 
 export default function NotificationsPage() {
-  return <RefreshedNotificationsPage />;
-}
-
-function RefreshedNotificationsPage() {
   const t = useTranslations("Notifications");
 
   const notifications = useQuery(api.notifications.notifications.list, { limit: 100 });

@@ -540,14 +540,14 @@ export function ClockodoAdminPanel() {
       {rows !== null && !loadError && rows.length > 0 && (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="relative sm:max-w-xs refreshed:sm:w-64">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-8 -translate-y-1/2 text-muted-foreground refreshed:size-3.5" />
+            <div className="relative sm:max-w-xs sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
               <Input
                 ref={searchRef}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t("searchPlaceholder")}
-                className="pl-9 refreshed:h-9 refreshed:pl-8 refreshed:text-sm md:refreshed:h-8 md:refreshed:text-[13px]"
+                className="h-9 pl-8 text-sm md:h-8 md:text-[13px]"
               />
             </div>
             {gaps.length > 0 && (
@@ -730,7 +730,7 @@ export function ClockodoAdminPanel() {
                               aria-label={row.name}
                             />
                           </TableCell>
-                          <TableCell className="text-fg refreshed:font-medium">
+                          <TableCell className="text-fg font-medium">
                             <div className="flex items-center gap-2">
                               <Link
                                 href={`/clockodo/admin/${row.id}`}

@@ -354,7 +354,7 @@ export function CustomRolesPanel() {
 
       <div className="space-y-2">
         {roles?.map((role) => (
-          <Card nested key={role._id}>
+          <Card key={role._id}>
             <CardContent className="flex flex-wrap items-center justify-between gap-3 p-3">
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{role.name}</p>

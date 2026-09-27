@@ -326,7 +326,7 @@ const sidebarMenuButtonVariants = cva(
   {
     variants: {
       active: {
-        true: "bg-sidebar-primary/10 text-sidebar-primary refreshed:bg-sidebar-accent refreshed:text-sidebar-foreground refreshed:[&>svg]:text-sidebar-primary",
+        true: "bg-sidebar-accent text-sidebar-foreground [&>svg]:text-sidebar-primary",
         false: "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
       },
     },

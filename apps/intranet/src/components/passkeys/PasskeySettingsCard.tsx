@@ -157,7 +157,7 @@ export function PasskeySettingsCard() {
         href="https://support.microsoft.com/en-us/windows/learn-about-windows-hello-and-set-it-up-dae28983-8242-bb2a-d3d1-87c9d265a5f0"
         target="_blank"
         rel="noopener noreferrer"
-        className="font-medium text-primary underline underline-offset-2 hover:opacity-80 refreshed:text-foreground refreshed:decoration-muted-foreground/50"
+        className="font-medium underline underline-offset-2 hover:opacity-80 text-foreground decoration-muted-foreground/50"
       >
         {t("passkeyHelpWindows")}
       </a>{" "}
@@ -166,14 +166,14 @@ export function PasskeySettingsCard() {
         href="https://support.apple.com/guide/iphone/use-passkeys-to-sign-in-to-websites-and-apps-iphf538ea8d0/ios"
         target="_blank"
         rel="noopener noreferrer"
-        className="font-medium text-primary underline underline-offset-2 hover:opacity-80 refreshed:text-foreground refreshed:decoration-muted-foreground/50"
+        className="font-medium underline underline-offset-2 hover:opacity-80 text-foreground decoration-muted-foreground/50"
       >
         {t("passkeyHelpIphone")}
       </a>{" "}
       ·{" "}
       <Link
         href="/guidebooks/sicherheitsanmeldung"
-        className="font-medium text-primary underline underline-offset-2 hover:opacity-80 refreshed:text-foreground refreshed:decoration-muted-foreground/50"
+        className="font-medium underline underline-offset-2 hover:opacity-80 text-foreground decoration-muted-foreground/50"
       >
         {t("passkeyHelpGuide")}
       </Link>

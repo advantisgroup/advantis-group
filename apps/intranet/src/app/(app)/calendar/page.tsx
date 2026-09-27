@@ -619,7 +619,7 @@ export default function CalendarPage() {
         </div>
 
         {/* View switcher */}
-        <div className="hidden items-center gap-1 rounded-lg border border-border bg-card p-1 md:flex refreshed:gap-0 refreshed:border-border/70 refreshed:bg-muted/40 refreshed:p-0.5">
+        <div className="hidden items-center rounded-lg border md:flex gap-0 border-border/70 bg-muted/40 p-0.5">
           {(
             [
               { key: "month", label: t("viewMonth"), icon: CalendarDays },
@@ -637,8 +637,8 @@ export default function CalendarPage() {
                 className={cn(
                   "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors",
                   view === v.key
-                    ? "bg-primary/10 text-primary refreshed:bg-card refreshed:text-foreground refreshed:shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground refreshed:hover:bg-transparent",
+                    ? "bg-card text-foreground shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]"
+                    : "text-muted-foreground hover:text-foreground hover:bg-transparent",
                 )}
               >
                 <Icon className="size-4" />
@@ -804,14 +804,14 @@ export default function CalendarPage() {
 
       {/* Month grid (leading column: ISO week numbers) */}
       {view === "month" && (
-        <div className="grid grid-cols-7 overflow-hidden rounded-xl border border-border/70 bg-card text-sm shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] md:grid-cols-[1.75rem_repeat(7,minmax(0,1fr))] refreshed:shadow-none">
+        <div className="grid grid-cols-7 overflow-hidden rounded-xl border border-border/70 bg-card text-sm md:grid-cols-[1.75rem_repeat(7,minmax(0,1fr))] shadow-none">
           <div className="hidden border-b border-r border-border/60 bg-muted/30 p-2 text-center text-[10px] font-semibold uppercase text-muted-foreground/70 md:block">
             {t("weekShort")}
           </div>
           {weekdays.map((d) => (
             <div
               key={d}
-              className="border-b border-r border-border/60 bg-muted/30 p-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground last:border-r-0 refreshed:bg-muted/40 refreshed:font-medium refreshed:normal-case refreshed:tracking-normal"
+              className="border-b border-r border-border/60 p-2 text-center text-xs text-muted-foreground last:border-r-0 bg-muted/40 font-medium normal-case tracking-normal"
             >
               {d}
             </div>
@@ -843,8 +843,7 @@ export default function CalendarPage() {
                   <div
                     className={cn(
                       "flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
-                      isToday &&
-                        "bg-primary font-semibold text-primary-foreground refreshed:bg-foreground refreshed:text-background",
+                      isToday && "font-semibold bg-foreground text-background",
                     )}
                   >
                     {day.getDate()}
@@ -898,9 +897,8 @@ export default function CalendarPage() {
               <div
                 key={day.toISOString()}
                 className={cn(
-                  "flex min-h-48 flex-col rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] refreshed:shadow-none",
-                  isToday &&
-                    "border-primary/40 ring-1 ring-primary/20 refreshed:border-foreground/30 refreshed:ring-0",
+                  "flex min-h-48 flex-col rounded-xl border border-border/70 bg-card shadow-none",
+                  isToday && "ring-primary/20 border-foreground/30 ring-0",
                 )}
               >
                 <button
@@ -914,8 +912,7 @@ export default function CalendarPage() {
                   <span
                     className={cn(
                       "flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs font-semibold",
-                      isToday &&
-                        "bg-primary text-primary-foreground refreshed:bg-foreground refreshed:text-background",
+                      isToday && "bg-foreground text-background",
                     )}
                   >
                     {day.getDate()}
@@ -945,7 +942,7 @@ export default function CalendarPage() {
 
       {/* Agenda / list view */}
       {view === "list" && (
-        <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] refreshed:shadow-none">
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-none">
           {agendaDays.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-16 text-center">
               <CalendarClock className="h-7 w-7 text-muted-foreground" />

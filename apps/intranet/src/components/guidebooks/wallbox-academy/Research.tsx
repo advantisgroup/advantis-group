@@ -52,7 +52,7 @@ export function Research({
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 refreshed:border-border refreshed:text-foreground refreshed:hover:bg-accent"
+                className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors border-border text-foreground hover:bg-accent"
               >
                 {label}
                 <ExternalLink className="size-3" />

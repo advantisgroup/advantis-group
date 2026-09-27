@@ -208,7 +208,7 @@ export function GroupSettingsDialog({
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
                 aria-label={t("changePhoto")}
-                className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full border-2 border-background bg-blue-500 text-white shadow-sm transition-colors hover:bg-blue-600 refreshed:bg-foreground refreshed:text-background refreshed:shadow-none refreshed:hover:bg-foreground/88"
+                className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full border-2 border-background transition-colors bg-foreground text-background shadow-none hover:bg-foreground/88"
               >
                 {uploading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

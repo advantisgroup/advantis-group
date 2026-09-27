@@ -273,14 +273,14 @@ export function TicketThreadView({
       {thread.lockedAt ? (
         // Where the composer would be, shaped like it — a read-only
         // conversation reads as "you can't type here", not as a footnote.
-        <div className="shrink-0 border-t border-border/70 px-4 py-3 text-center refreshed:border-t-0 refreshed:pb-4 refreshed:pt-2">
+        <div className="shrink-0 border-border/70 px-4 py-3 text-center border-t-0 pb-4 pt-2">
           <div
             className={cn(
-              "refreshed:flex refreshed:items-center refreshed:gap-3 refreshed:rounded-2xl refreshed:border refreshed:border-border/70 refreshed:bg-card refreshed:px-4 refreshed:py-3 refreshed:text-left",
+              "flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-4 py-3 text-left",
               CHAT_COLUMN,
             )}
           >
-            <span className="hidden size-8 shrink-0 place-items-center rounded-lg bg-muted/70 text-muted-foreground refreshed:grid">
+            <span className="size-8 shrink-0 place-items-center rounded-lg bg-muted/70 text-muted-foreground grid">
               <Lock className="size-4" />
             </span>
             <div className="min-w-0">

@@ -16,7 +16,7 @@ function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimi
         // mobile swipe/tap is ambiguous between "scroll the tab bar" and
         // "scroll the page", so taps sometimes get swallowed as a scroll
         // gesture and page scroll leaks in via this row.
-        "inline-flex h-10 max-w-full items-center justify-center overflow-x-auto overscroll-x-contain rounded-lg border border-border/70 bg-muted/50 p-1 text-muted-foreground [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [touch-action:pan-x] [&::-webkit-scrollbar]:hidden refreshed:h-9 refreshed:bg-muted/40 refreshed:p-0.5",
+        "inline-flex max-w-full items-center justify-center overflow-x-auto overscroll-x-contain rounded-lg border border-border/70 text-muted-foreground [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [touch-action:pan-x] [&::-webkit-scrollbar]:hidden h-9 bg-muted/40 p-0.5",
         className,
       )}
       {...props}
@@ -31,7 +31,7 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
         // `shrink-0` keeps every trigger at its natural width instead of being
         // squeezed by flex when the bar is close to overflowing — a shrunken
         // trigger is what made taps near the edges miss on mobile.
-        "inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap rounded-md px-3.5 py-1.5 text-sm font-medium ring-offset-background transition-all hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm refreshed:px-3 refreshed:py-1 refreshed:data-[state=active]:shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]",
+        "inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-card data-[state=active]:text-foreground px-3 py-1 data-[state=active]:shadow-[0_1px_2px_0_rgb(0_0_0/0.06)]",
         className,
       )}
       {...props}

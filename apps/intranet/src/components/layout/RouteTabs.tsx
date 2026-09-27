@@ -37,7 +37,7 @@ export function RouteTabs({
   const setHeaderTabs = useSetPageHeaderTabs();
   const inHeader = !isMobile && !inline;
 
-  // Refreshed design: on desktop the tabs sit as pills beside the page title.
+  // On desktop the tabs sit as pills beside the page title.
   useEffect(() => {
     if (!inHeader) return;
     setHeaderTabs({ tabs, activeValue });
@@ -84,9 +84,7 @@ export function RouteTabs({
               <span
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none tabular-nums",
-                  active
-                    ? "bg-primary/10 text-primary refreshed:bg-foreground refreshed:text-background"
-                    : "bg-muted text-muted-foreground",
+                  active ? "bg-foreground text-background" : "bg-muted text-muted-foreground",
                 )}
               >
                 {tab.count}
@@ -95,7 +93,7 @@ export function RouteTabs({
             <span
               className={cn(
                 "absolute inset-x-3 -bottom-px h-0.5 rounded-full transition-colors",
-                active ? "bg-primary refreshed:bg-foreground" : "bg-transparent",
+                active ? "bg-foreground" : "bg-transparent",
               )}
             />
           </Link>

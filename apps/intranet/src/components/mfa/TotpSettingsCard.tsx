@@ -160,14 +160,14 @@ export function TotpSettingsCard() {
         href="https://support.microsoft.com/en-us/authenticator/download-microsoft-authenticator"
         target="_blank"
         rel="noopener noreferrer"
-        className="font-medium text-primary underline underline-offset-2 hover:opacity-80 refreshed:text-foreground refreshed:decoration-muted-foreground/50"
+        className="font-medium underline underline-offset-2 hover:opacity-80 text-foreground decoration-muted-foreground/50"
       >
         {t("totpHelpDownload")}
       </a>{" "}
       ·{" "}
       <Link
         href="/guidebooks/sicherheitsanmeldung"
-        className="font-medium text-primary underline underline-offset-2 hover:opacity-80 refreshed:text-foreground refreshed:decoration-muted-foreground/50"
+        className="font-medium underline underline-offset-2 hover:opacity-80 text-foreground decoration-muted-foreground/50"
       >
         {t("totpHelpGuide")}
       </Link>

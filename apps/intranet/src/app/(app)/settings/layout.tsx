@@ -46,14 +46,14 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 refreshed:max-w-6xl refreshed:space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
       <PageHeaderBar
         title={t("title")}
         description={t(HINT_KEY[active] ?? "accountHint")}
         tourCheckpoint="settings"
       />
       <RouteTabs tabs={tabs} activeValue={active} />
-      <div className="space-y-4 refreshed:space-y-10">{children}</div>
+      <div className="space-y-10">{children}</div>
     </div>
   );
 }

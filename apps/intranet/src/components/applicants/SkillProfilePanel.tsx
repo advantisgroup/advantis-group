@@ -230,7 +230,7 @@ export function SkillProfilePanel() {
 
       <div className="space-y-2">
         {profiles?.map((profile) => (
-          <Card nested key={profile._id}>
+          <Card key={profile._id}>
             <CardContent className="p-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
