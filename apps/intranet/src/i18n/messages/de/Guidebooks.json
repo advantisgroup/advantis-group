@@ -304,5 +304,24 @@
   "formatAssistRevert": "Original wiederherstellen",
   "formatAssistEdit": "Bearbeiten",
   "formatAssistDiscard": "Verwerfen",
-  "formatAssistApply": "Übernehmen"
+  "formatAssistApply": "Übernehmen",
+  "otherSources": {
+    "title": "Hier gibt es auch Antworten",
+    "ask": {
+      "title": "KI-Assistent fragen",
+      "when": "Antwortet auf Basis des Wikis."
+    },
+    "glossary": {
+      "title": "Vertriebs-Lexikon",
+      "when": "Begriffe und Abkürzungen aus dem Vertrieb."
+    },
+    "coachWiki": {
+      "title": "Sales-Coach-Wissen",
+      "when": "Produktinfos und Argumente für Verkaufsgespräche."
+    },
+    "academy": {
+      "title": "Wallbox Sales Academy",
+      "when": "Schulungskapitel und Quizze."
+    }
+  }
 }

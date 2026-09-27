@@ -304,5 +304,24 @@
   "formatAssistRevert": "Revert to original",
   "formatAssistEdit": "Edit",
   "formatAssistDiscard": "Discard",
-  "formatAssistApply": "Apply"
+  "formatAssistApply": "Apply",
+  "otherSources": {
+    "title": "Also answers questions",
+    "ask": {
+      "title": "Ask the AI assistant",
+      "when": "Answers from what's in the wiki."
+    },
+    "glossary": {
+      "title": "Sales lexicon",
+      "when": "Terms and abbreviations used in sales."
+    },
+    "coachWiki": {
+      "title": "Sales Coach knowledge",
+      "when": "Product info and talking points for sales calls."
+    },
+    "academy": {
+      "title": "Wallbox Sales Academy",
+      "when": "Training chapters and quizzes."
+    }
+  }
 }

@@ -31,6 +31,7 @@ import {
 } from "@/components/guidebooks/registry";
 import { CategoryManagerDialog, type WikiEntry } from "@/components/guidebooks/WikiEntryDialogs";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
+import { OtherKnowledgeSources } from "@/components/guidebooks/other-sources";
 import { Link } from "@/components/Link";
 import { PersonPicker } from "@/components/people/PersonPicker";
 import {
@@ -631,6 +632,8 @@ export default function GuidebooksPage() {
           </div>
         </div>
       )}
+
+      <OtherKnowledgeSources />
 
       <div className="space-y-4">
         <div>
