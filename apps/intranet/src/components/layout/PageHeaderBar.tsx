@@ -6,7 +6,7 @@ import Link from "next/link";
 
 import { Info, type LucideIcon } from "lucide-react";
 
-import type { RouteTab } from "@/components/applicants/RouteTabs";
+import type { RouteTab } from "@/components/layout/RouteTabs";
 import { TourReplayButton, type CheckpointId } from "@/components/tour";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";

@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Building2, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
+import { RouteTabs, type RouteTab } from "@/components/layout/RouteTabs";
 import { PerformanceShell, usePerformanceGate } from "@/components/performance/PerformanceShell";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 

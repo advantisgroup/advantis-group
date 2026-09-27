@@ -22,7 +22,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { RouteTabs } from "@/components/applicants/RouteTabs";
+import { RouteTabs } from "@/components/layout/RouteTabs";
 import { useKnowledgeTabs } from "@/components/guidebooks/knowledge-tabs";
 import {
   accessibleGuidebooks,

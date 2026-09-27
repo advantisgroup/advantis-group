@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { FlaskConical, Hand, MessagesSquare, Orbit, Palette, Shapes } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
+import { RouteTabs, type RouteTab } from "@/components/layout/RouteTabs";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin } from "@/components/providers/current-user";

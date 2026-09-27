@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { Bell, CircleHelp, SlidersHorizontal, Sparkles, Trash2, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
+import { RouteTabs, type RouteTab } from "@/components/layout/RouteTabs";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 
 type SettingsSectionId = "account" | "workspace" | "notifications" | "ai" | "trash" | "help";

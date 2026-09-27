@@ -7,7 +7,7 @@ import { useQuery } from "convex/react";
 import { BookOpen, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { RouteTabs } from "@/components/applicants/RouteTabs";
+import { RouteTabs } from "@/components/layout/RouteTabs";
 import { useKnowledgeTabs } from "@/components/guidebooks/knowledge-tabs";
 import { Link } from "@/components/Link";
 import { useHasCapability } from "@/components/providers/current-user";

@@ -35,7 +35,7 @@ import {
   TerminDialog,
 } from "@/components/applicants/EntryDialogs";
 import { RecentlyViewedApplicants } from "@/components/applicants/RecentlyViewedApplicants";
-import { RouteTabs } from "@/components/applicants/RouteTabs";
+import { RouteTabs } from "@/components/layout/RouteTabs";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

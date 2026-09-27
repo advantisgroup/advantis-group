@@ -9,7 +9,7 @@ import { useQuery } from "convex/react";
 
 import { BookOpen, ChartNoAxesColumn, MessageCircleQuestion, Settings2, Users } from "lucide-react";
 
-import { RouteTabs } from "@/components/applicants/RouteTabs";
+import { RouteTabs } from "@/components/layout/RouteTabs";
 import { useAcademySession } from "@/components/guidebooks/wallbox-academy/session";
 import { ADMIN_BASE } from "@/components/guidebooks/wallbox-academy/TrainerView";
 import { ACADEMY_ID } from "@/components/guidebooks/wallbox-academy/use-academy-progress";

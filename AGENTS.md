@@ -389,7 +389,7 @@ picks up this guard, and still needs the var set even then.
   tab switcher instead of a second, competing control floating over
   thumb-zone space. A page that rolls its own tab strip and leaves it
   rendered on mobile is inconsistent with every other tabbed page in the
-  app. See `apps/intranet/src/components/applicants/RouteTabs.tsx` for the
+  app. See `apps/intranet/src/components/layout/RouteTabs.tsx` for the
   canonical pattern.
 - **A page that offers "Print" gets a paper version, not its screen layout.**
   Mount a `PrintSheet` (`components/print/PrintSheet.tsx` — one in the
