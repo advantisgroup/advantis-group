@@ -223,6 +223,7 @@ export const update = userMutation({
     // to be written back explicitly or it would silently keep the old value.
     await ctx.db.patch(entryId, {
       ...patch,
+      link: patch.link,
       minRole: patch.minRole,
       categoryName: undefined,
       version: entry.version + 1,

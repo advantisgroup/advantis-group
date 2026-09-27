@@ -142,4 +142,21 @@ describe("wiki entry audience", () => {
     const employee = t.withIdentity({ subject: "employee" });
     expect(await employee.query(api.wiki.entries.list, {})).toHaveLength(2);
   });
+
+  test("clearing the link in the form removes it", async () => {
+    const { t, open } = await seed();
+    await t.run((ctx) => ctx.db.patch(open, { link: "https://example.com/alt" }));
+    const admin = t.withIdentity({ subject: "admin" });
+    const entry = await admin.query(api.wiki.entries.get, { slug: "urlaub-beantragen" });
+    if (!entry) throw new Error("seeded entry missing");
+    await admin.mutation(api.wiki.entries.update, {
+      entryId: open,
+      thema: entry.thema,
+      erklaerung: entry.erklaerung,
+      tags: entry.tags,
+      validFrom: entry.validFrom,
+      validUntil: entry.validUntil,
+    });
+    expect(await t.run((ctx) => ctx.db.get(open))).not.toHaveProperty("link");
+  });
 });
