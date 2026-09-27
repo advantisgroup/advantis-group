@@ -156,6 +156,13 @@ export const INTRANET_PAGES: IntranetPage[] = [
     deepLinks: [{ href: "/directory?availability=now", label: "Wer gerade erreichbar ist" }],
   },
   {
+    href: "/help",
+    label: "Hilfe & Anfragen",
+    description:
+      "Wohin mit einem Problem, einer Idee oder einer Frage: IT-Ticket, Fehlermeldung, Vorschlag, Abwesenheit, Wiki.",
+    keywords: ["hilfe", "help", "support", "melden", "anfrage", "problem", "wohin"],
+  },
+  {
     href: "/suggestions",
     label: "Vorschläge",
     description: "Verbesserungsvorschläge einreichen, abstimmen und Entscheidungen sehen.",

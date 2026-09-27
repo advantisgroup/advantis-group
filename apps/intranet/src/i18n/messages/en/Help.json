@@ -1,0 +1,47 @@
+{
+  "title": "Help & requests",
+  "description": "Not sure where something goes? Start from what's happening.",
+  "reportTitle": "Report or request something",
+  "findTitle": "Find something out",
+  "it": {
+    "title": "Something technical isn't working",
+    "when": "Your computer, phone, an account or a tool — IT picks it up as a ticket.",
+    "cta": "IT ticket"
+  },
+  "error": {
+    "title": "A mistake happened in our work",
+    "when": "A quality issue or customer complaint to record and follow up on.",
+    "cta": "Report an error"
+  },
+  "idea": {
+    "title": "I have an idea",
+    "when": "Something that could work better. The whole team can see and vote on it.",
+    "cta": "Suggest it"
+  },
+  "absence": {
+    "title": "I need time off",
+    "when": "Vacation or other absence, sent to Clockodo for approval.",
+    "cta": "Request absence"
+  },
+  "howto": {
+    "title": "How do I…?",
+    "when": "Step-by-step guides for our tools and processes.",
+    "cta": "Guidebooks"
+  },
+  "ask": {
+    "title": "Ask a question",
+    "when": "The AI assistant answers from what's in the wiki.",
+    "cta": "Ask AI"
+  },
+  "who": {
+    "title": "Who can help me with this?",
+    "when": "Find a colleague, their team and whether they're reachable now.",
+    "cta": "Directory"
+  },
+  "status": {
+    "title": "Is something down right now?",
+    "when": "Current incidents, planned maintenance and what's new.",
+    "cta": "Status"
+  },
+  "pageFeedbackHint": "Something in the intranet itself is confusing or broken? Open your account menu on that page and choose “Feedback on this page”."
+}

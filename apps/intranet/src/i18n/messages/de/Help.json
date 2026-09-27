@@ -1,0 +1,47 @@
+{
+  "title": "Hilfe & Anfragen",
+  "description": "Unsicher, wohin damit? Fang bei dem an, was gerade los ist.",
+  "reportTitle": "Etwas melden oder beantragen",
+  "findTitle": "Etwas herausfinden",
+  "it": {
+    "title": "Etwas Technisches funktioniert nicht",
+    "when": "Computer, Telefon, ein Konto oder ein Tool — die IT übernimmt es als Ticket.",
+    "cta": "IT-Ticket"
+  },
+  "error": {
+    "title": "In unserer Arbeit ist ein Fehler passiert",
+    "when": "Ein Qualitätsproblem oder eine Reklamation, die erfasst und nachverfolgt wird.",
+    "cta": "Fehler melden"
+  },
+  "idea": {
+    "title": "Ich habe eine Idee",
+    "when": "Etwas, das besser laufen könnte. Das ganze Team sieht es und kann abstimmen.",
+    "cta": "Vorschlagen"
+  },
+  "absence": {
+    "title": "Ich brauche frei",
+    "when": "Urlaub oder eine andere Abwesenheit, zur Genehmigung an Clockodo.",
+    "cta": "Abwesenheit beantragen"
+  },
+  "howto": {
+    "title": "Wie mache ich …?",
+    "when": "Schritt-für-Schritt-Anleitungen zu unseren Tools und Abläufen.",
+    "cta": "Wiki"
+  },
+  "ask": {
+    "title": "Eine Frage stellen",
+    "when": "Der KI-Assistent antwortet auf Basis des Wikis.",
+    "cta": "KI fragen"
+  },
+  "who": {
+    "title": "Wer kann mir dabei helfen?",
+    "when": "Kolleg:innen finden, ihr Team sehen und ob sie gerade erreichbar sind.",
+    "cta": "Team"
+  },
+  "status": {
+    "title": "Ist gerade etwas gestört?",
+    "when": "Aktuelle Störungen, geplante Wartungen und Neuerungen.",
+    "cta": "Status"
+  },
+  "pageFeedbackHint": "Ist etwas im Intranet selbst unklar oder kaputt? Öffne auf der Seite dein Kontomenü und wähle „Feedback zu dieser Seite“."
+}

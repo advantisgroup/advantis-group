@@ -18,6 +18,7 @@ import {
   Grid2X2,
   Inbox,
   LayoutDashboard,
+  LifeBuoy,
   Lightbulb,
   LineChart,
   Megaphone,
@@ -281,6 +282,12 @@ export function Sidebar() {
     ...(hasBlogAccess
       ? [{ section: "knowledge" as const, href: "/blog", labelKey: "blog", icon: Newspaper }]
       : []),
+    {
+      section: "support",
+      href: "/help",
+      labelKey: "help",
+      icon: LifeBuoy,
+    },
     ...(hasInquiries
       ? [
           {
