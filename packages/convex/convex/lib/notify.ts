@@ -1,3 +1,4 @@
+import { internal } from "../_generated/api";
 import { type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 
@@ -25,7 +26,7 @@ export async function createNotification(
     .unique();
   if (prefs?.mutedTypes.includes(args.type)) return null;
 
-  return ctx.db.insert("notifications", {
+  const id = await ctx.db.insert("notifications", {
     userId: args.userId,
     type: args.type,
     title: args.title,
@@ -33,6 +34,16 @@ export async function createNotification(
     link: args.link,
     createdAt: Date.now(),
   });
+  // Push to the person's browsers too, for when no intranet tab is open. Only
+  // scheduled when they have a subscribed browser at all.
+  const subscribed = await ctx.db
+    .query("pushSubscriptions")
+    .withIndex("by_user", (q) => q.eq("userId", args.userId))
+    .first();
+  if (subscribed) {
+    await ctx.scheduler.runAfter(0, internal.notifications.push.send, { notificationId: id });
+  }
+  return id;
 }
 
 /** Notify many users at once. */

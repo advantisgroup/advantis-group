@@ -7,17 +7,23 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 
+import { usePushActive } from "@/lib/web-push";
+
 /**
  * Fires native browser notifications for freshly arrived in-app notifications
  * while the tab is open but hidden (visible tabs already show the bell badge
  * and toasts — a system notification on top would be noise). Opt-in via
  * userPreferences.browserPushEnabled; server-side mutes already filtered the
- * rows before they exist, so no extra filtering is needed here.
+ * rows before they exist, so no extra filtering is needed here. Stands down
+ * while this browser gets Web Pushes (PushSubscriptionSync) — the service
+ * worker shows those, so a notification never appears twice.
  */
 export function BrowserNotificationBridge() {
   const router = useRouter();
   const prefs = useQuery(api.people.preferences.getMine);
+  const pushActive = usePushActive();
   const enabled =
+    !pushActive &&
     (prefs?.browserPushEnabled ?? false) &&
     typeof Notification !== "undefined" &&
     Notification.permission === "granted";

@@ -135,6 +135,19 @@ export const chatTables = {
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
 
+  /** A browser that receives push notifications while no intranet tab is
+   *  open — one row per browser, not per person. */
+  pushSubscriptions: defineTable({
+    userId: v.id("users"),
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    userAgent: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_endpoint", ["endpoint"]),
+
   // Per-user notification preferences. `mutedTypes` holds the raw notification
   // `type` strings the user has opted out of (e.g. "announcement").
   notificationPreferences: defineTable({

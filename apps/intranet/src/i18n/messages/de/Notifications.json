@@ -49,7 +49,7 @@
   "weeklyReportHint": "Jeden Montag: Tickets, Fehlermeldungen und Vorschläge der letzten Woche im Vergleich zur Vorwoche.",
   "digestTitle": "Tägliche E-Mail-Zusammenfassung",
   "digestHint": "Jeden Morgen eine E-Mail mit allem, was du noch nicht gelesen hast. An ruhigen Tagen kommt nichts.",
-  "browserHint": "System-Benachrichtigungen, während der Tab im Hintergrund ist.",
+  "browserHint": "System-Benachrichtigungen auf diesem Gerät, wenn du gerade nicht ins Intranet schaust.",
   "browserUnsupported": "Dein Browser unterstützt keine Benachrichtigungen.",
   "browserDenied": "Die Benachrichtigungs-Berechtigung wurde im Browser verweigert.",
   "browserDeniedHint": "Benachrichtigungen sind für diese Seite in deinem Browser blockiert. Aktiviere sie in den Browser- oder Systemeinstellungen und schalte diesen Schalter danach erneut ein.",

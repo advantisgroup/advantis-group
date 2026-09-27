@@ -30,6 +30,7 @@ import { internalClockodoRoute } from "./routes/internal/clockodo.js";
 import { internalDigestRoute } from "./routes/internal/digest.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
 import { internalOnedriveRoute } from "./routes/internal/onedrive.js";
+import { internalPushRoute } from "./routes/internal/push.js";
 import { internalUpdatesRoute } from "./routes/internal/updates.js";
 import { meRoute } from "./routes/me.js";
 import { unfurlRoute } from "./routes/unfurl.js";
@@ -83,6 +84,7 @@ export const app = new Elysia()
   .use(internalClockodoRoute)
   .use(internalDigestRoute)
   .use(internalOnedriveRoute)
+  .use(internalPushRoute)
   .use(internalUpdatesRoute)
   .use(activityRoute)
   .use(aiRunsRoute)

@@ -183,6 +183,7 @@ import type * as migrations_dropGuestFields from "../migrations/dropGuestFields.
 import type * as notifications from "../notifications.js";
 import type * as notifications_email from "../notifications/email.js";
 import type * as notifications_notifications from "../notifications/notifications.js";
+import type * as notifications_push from "../notifications/push.js";
 import type * as offboarding from "../offboarding.js";
 import type * as onedrive from "../onedrive.js";
 import type * as org_auditLog from "../org/auditLog.js";
@@ -484,6 +485,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   "notifications/email": typeof notifications_email;
   "notifications/notifications": typeof notifications_notifications;
+  "notifications/push": typeof notifications_push;
   offboarding: typeof offboarding;
   onedrive: typeof onedrive;
   "org/auditLog": typeof org_auditLog;
