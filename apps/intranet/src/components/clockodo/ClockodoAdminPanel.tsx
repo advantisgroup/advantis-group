@@ -726,11 +726,11 @@ export function ClockodoAdminPanel() {
                           <TableCell className="text-fg refreshed:font-medium">
                             <div className="flex items-center gap-2">
                               {row.name}
-                              row.active === false && (
-                              <span className="text-xs font-normal text-muted-foreground">
-                                {t("inactive")}
-                              </span>
-                              )
+                              {row.active === false && (
+                                <span className="text-xs font-normal text-muted-foreground">
+                                  {t("inactive")}
+                                </span>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">{row.email}</TableCell>
