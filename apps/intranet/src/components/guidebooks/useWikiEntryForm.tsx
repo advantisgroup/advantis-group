@@ -56,6 +56,8 @@ function WikiEntryDetailFields({
   setValidFrom,
   validUntil,
   setValidUntil,
+  minRole,
+  setMinRole,
 }: {
   categoryId: string;
   setCategoryId: (v: string) => void;
@@ -70,6 +72,8 @@ function WikiEntryDetailFields({
   setValidFrom: (v: string) => void;
   validUntil: string;
   setValidUntil: (v: string) => void;
+  minRole: WikiEntryAudience;
+  setMinRole: (v: WikiEntryAudience) => void;
 }) {
   const t = useTranslations("Guidebooks");
   return (
@@ -104,6 +108,24 @@ function WikiEntryDetailFields({
           label={t("fieldOwner")}
           placeholder={t("fieldOwnerPlaceholder")}
         />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+          {t("fieldAudience")}
+        </label>
+        <Select
+          value={minRole || "everyone"}
+          onValueChange={(v) => setMinRole(v === "everyone" ? "" : (v as WikiEntryAudience))}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="everyone">{t("audienceEveryone")}</SelectItem>
+            <SelectItem value="manager">{t("audienceManagers")}</SelectItem>
+            <SelectItem value="admin">{t("audienceAdmins")}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div>
         <label className="mb-1 block text-xs font-medium text-muted-foreground">
@@ -152,6 +174,9 @@ function WikiEntryDetailFields({
   );
 }
 
+/** "" = everyone signed in; otherwise the lowest role that may read it. */
+export type WikiEntryAudience = "" | "manager" | "admin";
+
 export interface WikiEntryValues {
   thema: string;
   erklaerung: string;
@@ -161,6 +186,8 @@ export interface WikiEntryValues {
   validFrom: string;
   validUntil: string;
   ownerUserId: string;
+  /** Optional so a draft saved before this field existed still restores. */
+  minRole?: WikiEntryAudience;
 }
 
 function initialValues(
@@ -178,6 +205,7 @@ function initialValues(
       validFrom: msToDateInput(now),
       validUntil: msToDateInput(addMonths(now, 3)),
       ownerUserId: currentUserId,
+      minRole: "",
     };
   }
   return {
@@ -189,6 +217,7 @@ function initialValues(
     validFrom: msToDateInput(entry.validFrom),
     validUntil: msToDateInput(entry.validUntil),
     ownerUserId: entry.ownerUserId,
+    minRole: entry.minRole ?? "",
   };
 }
 
@@ -249,6 +278,7 @@ export function useWikiEntryForm({
       setValidFrom: field("validFrom"),
       setValidUntil: field("validUntil"),
       setOwnerUserId: field("ownerUserId"),
+      setMinRole: field("minRole"),
     };
   }, []);
 
@@ -317,6 +347,7 @@ export function useWikiEntryForm({
         validFrom: new Date(`${values.validFrom}T00:00:00`).getTime(),
         validUntil: new Date(`${values.validUntil}T00:00:00`).getTime(),
         ownerUserId: values.ownerUserId as Id<"users">,
+        minRole: values.minRole || undefined,
       };
       if (isEditing) {
         await update({ entryId: entry._id, ...patch });
@@ -381,6 +412,8 @@ export function useWikiEntryForm({
       setValidFrom={setters.setValidFrom}
       validUntil={values.validUntil}
       setValidUntil={setters.setValidUntil}
+      minRole={values.minRole ?? ""}
+      setMinRole={setters.setMinRole}
     />
   );
 

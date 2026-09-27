@@ -1,10 +1,18 @@
 import { serverQuery, userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 import { displayName } from "../lib/users";
-import { getServerCaller } from "../lib/caller";
+import { type Caller, getServerCaller } from "../lib/caller";
+import type { Doc } from "../_generated/dataModel";
 import { moveToTrash } from "../lib/trash";
 
 const MAX_PINS = 5;
+
+/** Whether this caller may read the entry. Every wiki read goes through this —
+ * the list, a single page, ⌘K search and the AI assistant's retrieval — so a
+ * managers-only page never reaches someone below that role by another path. */
+export function canReadWikiEntry(caller: Caller, entry: Pick<Doc<"wikiEntries">, "minRole">) {
+  return !entry.minRole || caller.meets(entry.minRole);
+}
 
 function plainText(html: string) {
   return html
@@ -20,8 +28,8 @@ function plainText(html: string) {
 export const apiSearchForAssistant = serverQuery({
   args: { clerkUserId: v.string(), question: v.string() },
   handler: async (ctx, { clerkUserId, question }) => {
-    const user = (await getServerCaller(ctx, clerkUserId))?.user;
-    if (!user) return [];
+    const caller = await getServerCaller(ctx, clerkUserId);
+    if (!caller) return [];
     const words = [
       ...new Set(
         question
@@ -34,7 +42,7 @@ export const apiSearchForAssistant = serverQuery({
     const now = Date.now();
     const rows = await ctx.db.query("wikiEntries").collect();
     return rows
-      .filter((e) => e.validFrom <= now && e.validUntil > now)
+      .filter((e) => e.validFrom <= now && e.validUntil > now && canReadWikiEntry(caller, e))
       .map((e) => {
         const title = e.thema.toLowerCase();
         const tags = e.tags.join(" ").toLowerCase();
@@ -65,7 +73,9 @@ export const apiSearchForAssistant = serverQuery({
 export const list = userQuery({
   args: {},
   handler: async (ctx) => {
-    const rows = await ctx.db.query("wikiEntries").collect();
+    const rows = (await ctx.db.query("wikiEntries").collect()).filter((e) =>
+      canReadWikiEntry(ctx.caller, e),
+    );
     const categories = await ctx.db.query("wikiCategories").collect();
     const catById = new Map(categories.map((c) => [c._id, c]));
     return Promise.all(
@@ -84,6 +94,7 @@ export const list = userQuery({
           erklaerung: e.erklaerung,
           tags: e.tags,
           link: e.link ?? null,
+          minRole: e.minRole ?? null,
           validFrom: e.validFrom,
           validUntil: e.validUntil,
           version: e.version,
@@ -108,7 +119,7 @@ export const get = userQuery({
       .query("wikiEntries")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .unique();
-    if (!row) return null;
+    if (!row || !canReadWikiEntry(ctx.caller, row)) return null;
     const category = row.categoryId ? await ctx.db.get(row.categoryId) : null;
     const ownerUserId = row.ownerUserId ?? row.authorUserId;
     const owner = await ctx.db.get(ownerUserId);
@@ -123,6 +134,7 @@ export const get = userQuery({
       erklaerung: row.erklaerung,
       tags: row.tags,
       link: row.link ?? null,
+      minRole: row.minRole ?? null,
       validFrom: row.validFrom,
       validUntil: row.validUntil,
       version: row.version,
@@ -144,6 +156,7 @@ const entryFields = {
   erklaerung: v.string(),
   tags: v.array(v.string()),
   link: v.optional(v.string()),
+  minRole: v.optional(v.union(v.literal("manager"), v.literal("admin"))),
   validFrom: v.number(),
   validUntil: v.number(),
   ownerUserId: v.optional(v.id("users")),
@@ -205,8 +218,12 @@ export const update = userMutation({
     }
     // A save always re-selects a real category (or explicitly "none"), so
     // the deleted-category snapshot never survives an edit either way.
+    // An update is a full save of the form, so a field the form left empty
+    // means "clear it". Convex drops undefined args on the way in, so it has
+    // to be written back explicitly or it would silently keep the old value.
     await ctx.db.patch(entryId, {
       ...patch,
+      minRole: patch.minRole,
       categoryName: undefined,
       version: entry.version + 1,
       updatedAt: Date.now(),

@@ -571,6 +571,7 @@ export default function GuidebooksPage() {
         erklaerung: item.wikiEntry.erklaerung,
         tags: item.wikiEntry.tags,
         link: item.wikiEntry.link ?? undefined,
+        minRole: item.wikiEntry.minRole ?? undefined,
         validFrom: item.wikiEntry.validFrom,
         validUntil: addMonths(Date.now(), 3),
       });

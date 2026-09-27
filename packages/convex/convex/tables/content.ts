@@ -133,6 +133,9 @@ export const contentTables = {
     erklaerung: v.string(),
     tags: v.array(v.string()),
     link: v.optional(v.string()),
+    // Unset = everyone signed in. For how-tos about screens only managers
+    // (or admins) have — enforced by every wiki read (see wiki/entries.ts).
+    minRole: v.optional(v.union(v.literal("manager"), v.literal("admin"))),
     validFrom: v.number(),
     validUntil: v.number(),
     version: v.number(),
