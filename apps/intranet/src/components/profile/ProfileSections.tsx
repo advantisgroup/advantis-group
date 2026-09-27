@@ -1,7 +1,12 @@
 "use client";
 
 import { PersonPicker } from "@/components/people/PersonPicker";
-import { useHasCapability, useIsAdmin } from "@/components/providers/current-user";
+import {
+  useHasApplicantAccess,
+  useHasCapability,
+  useIsAdmin,
+} from "@/components/providers/current-user";
+import { Link } from "@/components/Link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,7 +36,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
-import { CalendarClock, CheckCircle2, Circle, Hash, Users2 } from "lucide-react";
+import { CalendarClock, CheckCircle2, Circle, FolderLock, Hash, Users2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -559,6 +564,41 @@ export function LinkedAccountsSection({ userId }: { userId: Id<"users"> }) {
           </div>
         ))}
       </dl>
+    </Section>
+  );
+}
+
+/** Whether this person has an HR record — only rendered for people with HR
+ *  access, so HR can jump between the two without searching twice. */
+export function HrRecord({ userId, onNavigate }: { userId: Id<"users">; onNavigate: () => void }) {
+  const t = useTranslations("Profile");
+  const hasAccess = useHasApplicantAccess();
+  const result = useQuery(api.hr.employees.recordForUser, hasAccess ? { userId } : "skip");
+  if (!result?.access) return null;
+  const record = result.record;
+
+  return (
+    <Section label={t("hrRecord")} className={LATE_SECTION}>
+      <div className="flex min-h-10 items-center gap-3 text-sm">
+        <IconTile>
+          <FolderLock />
+        </IconTile>
+        <span className="min-w-0 flex-1 truncate text-muted-foreground">
+          {record
+            ? record.status === "archived"
+              ? t("hrRecordArchived")
+              : t("hrRecordActive")
+            : t("hrRecordMissing")}
+        </span>
+        <Button size="sm" variant="outline" asChild>
+          <Link
+            href={record ? `/hr/employees/${record._id}` : "/hr/employees/import"}
+            onClick={onNavigate}
+          >
+            {record ? t("hrRecordOpen") : t("hrRecordCreate")}
+          </Link>
+        </Button>
+      </div>
     </Section>
   );
 }

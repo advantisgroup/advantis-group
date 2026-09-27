@@ -27,6 +27,7 @@ import { ManagementRail } from "./ProfileAdmin";
 import { ContactRow, DetailRow, InfoPanel, RoleBadge, Section, useUser } from "./ProfileParts";
 import {
   Expertise,
+  HrRecord,
   MutualConversations,
   Organisation,
   type ProfileUser,
@@ -194,6 +195,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
       )}
 
       <Organisation userId={user._id} />
+      <HrRecord userId={user._id} onNavigate={onClose} />
       <UpcomingAbsences userId={user._id} />
       {!isSelf && <MutualConversations userId={user._id} onNavigate={onClose} />}
     </InfoPanel>
