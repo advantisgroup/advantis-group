@@ -58,5 +58,10 @@
   "fieldDate": "Datum",
   "fieldNumber": "Nr.",
   "newestFirst": "Neueste zuerst",
-  "printedBy": "Gedruckt am {date} von {name}"
+  "printedBy": "Gedruckt am {date} von {name}",
+  "personPicker": {
+    "placeholder": "Person auswählen",
+    "search": "Name, E-Mail, Position suchen…",
+    "empty": "Niemand gefunden"
+  }
 }

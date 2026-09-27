@@ -67,6 +67,19 @@ returning the structured object (not a pre-flattened display string) lets
 every consumer also get the avatar and email without a second round trip,
 and keeps the "how do we resolve a display name" decision in one place.
 
+## Picking a person
+
+Every "choose someone" control in the intranet reads the same list and
+shows the same row: `api.people.users.options` returns `ProfileOption`
+(`PartialProfile` plus `jobTitle`/`department`), and
+`apps/intranet/src/components/people/PersonPicker.tsx` renders it —
+`PersonPicker` for one person (popover on desktop, bottom sheet on phones,
+searchable), `PersonList` for several, `PersonChip` for showing a linked
+account. Don't build a `Select` of `users.list` names for a new one; pass
+`people` only when the list comes from somewhere without an intranet session
+(Performance) or carries extra per-person context, and return
+`ProfileOption` from that query too.
+
 ## The enrichment convention, in practice
 
 Before: `packages/convex/convex/integrations/clockodoAbsences.ts`'s
