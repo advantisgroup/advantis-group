@@ -209,8 +209,10 @@ export const INTRANET_PAGES: IntranetPage[] = [
   {
     href: "/approvals",
     label: "Freigaben",
-    description: "Anträge und Uploads, die auf deine Freigabe warten.",
-    keywords: ["genehmigungen", "approvals", "freigeben"],
+    description:
+      "Abwesenheitsanträge, Zugriffsanfragen und offene Maßnahmen, die auf deine Entscheidung warten.",
+    keywords: ["genehmigungen", "approvals", "freigeben", "urlaubsantrag", "zugriffsanfrage"],
+    visible: manager,
   },
   {
     href: "/blog",
