@@ -38,6 +38,7 @@ const ALLOWED = new Set([
   "H2",
   "H3",
   "CODE",
+  "KBD",
   "PRE",
   "TABLE",
   "THEAD",
@@ -55,6 +56,30 @@ function setSpanAttributes(safe: Element, el: Element) {
     const value = el.getAttribute(attr);
     if (value && /^\d+$/.test(value)) safe.setAttribute(attr, value);
   }
+}
+
+/** Screenshots that ship with the app under `public/guidebooks/` — the
+ *  built-in guides moved into the wiki keep theirs this way. Only a plain
+ *  same-origin path into that folder with an image extension passes; any
+ *  other `src` (remote URLs, data: URIs, `..` segments) drops the image. */
+const BUNDLED_IMAGE_SRC = /^\/guidebooks\/(?:[\w-]+\/)*[\w.-]+\.(?:png|jpe?g|gif|webp)$/i;
+
+export function isBundledImageSrc(src: string | null): src is string {
+  return !!src && BUNDLED_IMAGE_SRC.test(src) && !src.includes("..");
+}
+
+function cleanImage(el: Element, out: Node, doc: Document) {
+  const src = el.getAttribute("src");
+  if (!isBundledImageSrc(src)) return;
+  const img = doc.createElement("img");
+  img.setAttribute("src", src);
+  img.setAttribute("alt", el.getAttribute("alt") ?? "");
+  img.setAttribute("loading", "lazy");
+  for (const attr of ["width", "height"]) {
+    const value = el.getAttribute(attr);
+    if (value && /^\d+$/.test(value)) img.setAttribute(attr, value);
+  }
+  out.appendChild(img);
 }
 
 const REMOVE = new Set([
@@ -81,6 +106,10 @@ function cleanInto(node: Node, out: Node, doc: Document, headingIds: Set<string>
     const el = child as Element;
     const tag = el.tagName;
     if (REMOVE.has(tag)) return;
+    if (tag === "IMG") {
+      cleanImage(el, out, doc);
+      return;
+    }
     if (ALLOWED.has(tag)) {
       const safe = doc.createElement(tag);
       if (tag === "TH" || tag === "TD") {

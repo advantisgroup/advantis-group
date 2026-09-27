@@ -169,8 +169,10 @@ function useGridItems(user: ReturnType<typeof useCurrentUser>, t: (key: string) 
     // that described the two tools beside them — and couldn't be searched or
     // filtered with everything else. Their registry `topic` maps onto the
     // same chips legacy pages already use, so one taxonomy covers all three.
+    // Once a guide has moved into the wiki (same slug), its wiki entry above
+    // stands in for it.
     const staticItems: GridItem[] = accessibleGuidebooks(user)
-      .filter((gb) => gb.category === "guide")
+      .filter((gb) => gb.category === "guide" && !migratedSlugs.has(gb.slug))
       .map((gb) => ({
         kind: "static",
         key: `static:${gb.slug}`,
@@ -571,6 +573,7 @@ export default function GuidebooksPage() {
         erklaerung: item.wikiEntry.erklaerung,
         tags: item.wikiEntry.tags,
         link: item.wikiEntry.link ?? undefined,
+        minRole: item.wikiEntry.minRole ?? undefined,
         validFrom: item.wikiEntry.validFrom,
         validUntil: addMonths(Date.now(), 3),
       });
