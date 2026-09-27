@@ -16,6 +16,7 @@ import { PersonPicker } from "@/components/people/PersonPicker";
 import { PersonLink } from "@/components/profile/PersonLink";
 import { useHasCapability } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
+import { CountTabs } from "@/components/ui/count-tabs";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,7 +29,7 @@ import {
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 const WEEKDAYS = [
@@ -217,7 +218,7 @@ export default function ClockodoEmployeeDetailPage() {
   const [hoursThisWeek, setHoursThisWeek] = useState<number | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [mode, setMode] = useState<"view" | "edit">("view");
-  const [tab, setTab] = useState("profile");
+  const [tab, setTab] = useState<"profile" | "permissions" | "hours" | "history">("profile");
 
   useEffect(() => {
     if (!Number.isFinite(clockodoUserId)) return;
@@ -362,29 +363,20 @@ export default function ClockodoEmployeeDetailPage() {
     </Button>
   );
 
+  // Sections of one person's record, under the Clockodo area's own route
+  // tabs — so an in-page strip (scrolls sideways on phones), not a second set
+  // of route tabs competing for the header and bottom nav.
   const tabNav = (
-    <>
-      {/* A full-width horizontal strip here would be a second control
-          competing with the mobile bottom nav's thumb-zone space, so below
-          md this collapses to a single compact Select instead. */}
-      <TabsList className="hidden md:inline-flex">
-        <TabsTrigger value="profile">{t("tabProfile")}</TabsTrigger>
-        <TabsTrigger value="permissions">{t("tabPermissions")}</TabsTrigger>
-        <TabsTrigger value="hours">{t("tabHoursVacation")}</TabsTrigger>
-        <TabsTrigger value="history">{t("tabHistory")}</TabsTrigger>
-      </TabsList>
-      <Select value={tab} onValueChange={setTab}>
-        <SelectTrigger className="md:hidden">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="profile">{t("tabProfile")}</SelectItem>
-          <SelectItem value="permissions">{t("tabPermissions")}</SelectItem>
-          <SelectItem value="hours">{t("tabHoursVacation")}</SelectItem>
-          <SelectItem value="history">{t("tabHistory")}</SelectItem>
-        </SelectContent>
-      </Select>
-    </>
+    <CountTabs
+      value={tab}
+      onChange={setTab}
+      tabs={[
+        { value: "profile", label: t("tabProfile") },
+        { value: "permissions", label: t("tabPermissions") },
+        { value: "hours", label: t("tabHoursVacation") },
+        { value: "history", label: t("tabHistory") },
+      ]}
+    />
   );
 
   const linkSelect = (className: string) => (
@@ -562,7 +554,7 @@ export default function ClockodoEmployeeDetailPage() {
         {editToggle}
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
+      <Tabs value={tab}>
         {tabNav}
 
         <TabsContent value="profile" className="mt-6">
