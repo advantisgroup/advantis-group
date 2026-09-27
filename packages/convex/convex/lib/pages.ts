@@ -386,6 +386,13 @@ export const INTRANET_PAGES: IntranetPage[] = [
     visible: applicants,
   },
   {
+    href: "/hr/employees/import",
+    label: "Mitarbeiterakten aus dem Intranet anlegen",
+    description: "Für Intranet-Konten ohne Personalakte in einem Schritt Akten anlegen.",
+    keywords: ["import", "übernehmen", "nachtragen", "backfill"],
+    visible: applicants,
+  },
+  {
     href: "/hr/profile",
     label: "Bewerbermanagement: Profil",
     description: "Dein Profil im Bewerbermanagement.",

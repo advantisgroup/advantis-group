@@ -21,18 +21,16 @@ import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
 import { PersonLink } from "@/components/profile/PersonLink";
-import { useHasCapability, useIsManager } from "@/components/providers/current-user";
+import { PersonPicker } from "@/components/people/PersonPicker";
+import {
+  useCurrentUser,
+  useHasCapability,
+  useIsManager,
+} from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { isoToday } from "@/lib/absences";
@@ -327,12 +325,12 @@ function ApprovalCoverPanel() {
   const t = useTranslations("Approvals");
   const locale = useLocale();
   const covers = useQuery(api.org.delegations.listGranted);
-  const users = useQuery(api.people.users.list, {});
+  const me = useCurrentUser();
   const createCover = useMutation(api.org.delegations.create);
   const revokeCover = useMutation(api.org.delegations.revoke);
   const handleError = useErrorHandler();
   const [open, setOpen] = useState(false);
-  const [delegateUserId, setDelegateUserId] = useState<string>();
+  const [delegateUserId, setDelegateUserId] = useState<Id<"users">>();
   const [startsOn, setStartsOn] = useState("");
   const [endsOn, setEndsOn] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -350,7 +348,7 @@ function ApprovalCoverPanel() {
     setSubmitting(true);
     try {
       await createCover({
-        delegateUserId: delegateUserId as Id<"users">,
+        delegateUserId,
         scope: "absence_approvals",
         startsAt,
         endsAt,
@@ -432,23 +430,16 @@ function ApprovalCoverPanel() {
           </>
         }
       >
-        <label className="block space-y-1.5 text-sm font-medium">
+        <div className="space-y-1.5 text-sm font-medium">
           {t("approvalCoverDelegate")}
-          <Select value={delegateUserId} onValueChange={setDelegateUserId}>
-            <SelectTrigger>
-              <SelectValue placeholder={t("approvalCoverDelegatePlaceholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              {users
-                ?.filter((user) => user.status === "active")
-                .map((user) => (
-                  <SelectItem key={user._id} value={user._id}>
-                    {user.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </label>
+          <PersonPicker
+            value={delegateUserId ?? null}
+            onChange={(userId) => setDelegateUserId(userId ?? undefined)}
+            label={t("approvalCoverDelegate")}
+            placeholder={t("approvalCoverDelegatePlaceholder")}
+            exclude={[me._id]}
+          />
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block space-y-1.5 text-sm font-medium">
             {t("approvalCoverStarts")}

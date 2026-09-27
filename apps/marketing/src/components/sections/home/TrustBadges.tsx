@@ -4,20 +4,36 @@ import Image from "next/image";
 
 import { useTranslations } from "next-intl";
 
-import { Display, Section } from "@/components/frame";
+import { Reveal } from "@/components/effects/Reveal";
+import { Display, Section, StatRow } from "@/components/frame";
+import { AwardPodium } from "@/components/illustrations/HomeIllustrations";
 
 const SALES_CLUB_YEARS = ["2024", "2025", "2026"] as const;
 
 /**
- * The proof bar: the badges as evidence, the claims spelled out beside them.
+ * The proof band: the figures, then the awards, each badge captioned with
+ * what it is.
  *
- * The badges are no longer desaturated-until-hover. A greyed-out award is a
+ * The figures used to close the "why us" section and the badges had a
+ * section of their own, with every claim written out twice — once in a list,
+ * once as the badge's alt text beside it. Together they are one argument,
+ * so they share one band.
+ *
+ * The badges are not desaturated-until-hover. A greyed-out award is a
  * strange thing to print — either it counts or it doesn't.
  */
 export const TrustBadges = () => {
   const t = useTranslations("trustBadges");
+  const features = useTranslations("features");
 
-  const ledger = [
+  const stats = [
+    { value: 15, suffix: "+", label: features("stats.experience") },
+    { value: 150, suffix: "+", label: features("stats.projects") },
+    { value: 4, label: features("stats.brands") },
+    { value: 100, suffix: "%", label: features("stats.passion") },
+  ];
+
+  const badges = [
     ...SALES_CLUB_YEARS.map((year) => ({
       key: year,
       text: t("salesClub", { year }),
@@ -27,39 +43,28 @@ export const TrustBadges = () => {
   ];
 
   return (
-    <Section size="normal">
-      <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center lg:gap-20">
+    <Section tone="raised">
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-16">
         <div>
-          <Display size="md" className="max-w-[18ch]">
+          <Display size="md" className="max-w-[14ch]">
             {t("title")}
           </Display>
-
-          <ul className="mt-8">
-            {ledger.map((entry) => (
-              <li
-                key={entry.key}
-                className="border-t border-rule py-3 text-sm text-muted-foreground last:border-b"
-              >
-                {entry.text}
-              </li>
-            ))}
-          </ul>
+          <AwardPodium className="mt-8 max-w-xs" />
         </div>
 
-        <div className="flex flex-wrap items-center gap-8 lg:justify-end">
-          {ledger.map((entry) => (
-            <div key={entry.key} className="relative size-20 sm:size-24">
-              <Image
-                src={entry.src}
-                alt={entry.text}
-                fill
-                sizes="96px"
-                className="object-contain"
-              />
-            </div>
-          ))}
-        </div>
+        <StatRow items={stats} className="lg:grid-cols-2 lg:self-center xl:grid-cols-4" />
       </div>
+
+      <ul className="mt-16 grid grid-cols-2 gap-x-6 gap-y-10 border-t border-rule-strong pt-12 sm:grid-cols-4 md:mt-20">
+        {badges.map((badge, index) => (
+          <Reveal as="li" key={badge.key} delay={index * 0.08} className="flex items-center gap-4">
+            <div className="relative size-16 shrink-0 sm:size-20">
+              <Image src={badge.src} alt="" fill sizes="80px" className="object-contain" />
+            </div>
+            <span className="text-sm leading-snug text-muted-foreground">{badge.text}</span>
+          </Reveal>
+        ))}
+      </ul>
     </Section>
   );
 };

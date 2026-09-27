@@ -6,18 +6,15 @@ import { api } from "@advantis/convex/api";
 import type { Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { Check, Search } from "lucide-react";
+
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { PersonAvatar, PersonList } from "@/components/people/PersonPicker";
 import { useCurrentUser } from "@/components/providers/current-user";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { initials } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
 import { type Draft } from "./use-draft";
 
@@ -34,23 +31,6 @@ export interface ShareTarget {
 
 const NOBODY: SharedPerson[] = [];
 
-function PersonAvatar({
-  name,
-  email,
-  avatar,
-}: {
-  name: string;
-  email: string;
-  avatar: string | null;
-}) {
-  return (
-    <Avatar className="size-8">
-      {avatar && <AvatarImage src={avatar} alt={name} />}
-      <AvatarFallback className="text-xs">{initials(name, email)}</AvatarFallback>
-    </Avatar>
-  );
-}
-
 /** Picks the colleagues who get to read one version of a draft. */
 export function ShareVersionDialog({
   draft,
@@ -65,35 +45,25 @@ export function ShareVersionDialog({
   const tc = useTranslations("Common");
   const me = useCurrentUser();
   const handleError = useErrorHandler();
-  const people = useQuery(api.people.users.list, target ? {} : "skip");
+  const people = useQuery(api.people.users.options, target ? {} : "skip");
   const history = useQuery(
     api.drafts.drafts.listVersions,
     target?.versionId ? { surface: draft.surface, subjectKey: draft.subjectKey } : "skip",
   );
   const unshare = useMutation(api.drafts.shares.unshare);
-  const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<Id<"users">>>(new Set());
   const [busy, setBusy] = useState(false);
 
   const sharedWith =
     history?.versions.find((version) => version._id === target?.versionId)?.sharedWith ?? NOBODY;
   const already = useMemo(() => new Set(sharedWith.map((person) => person._id)), [sharedWith]);
-  const candidates = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return (people ?? []).filter(
-      (person) =>
-        person._id !== me._id &&
-        !already.has(person._id) &&
-        (!query ||
-          person.name.toLowerCase().includes(query) ||
-          person.email.toLowerCase().includes(query) ||
-          person.jobTitle?.toLowerCase().includes(query)),
-    );
-  }, [people, search, me._id, already]);
+  const candidates = useMemo(
+    () => people?.filter((person) => person.userId !== me._id && !already.has(person.userId)),
+    [people, me._id, already],
+  );
 
   function close() {
     onOpenChange(false);
-    setSearch("");
     setSelected(new Set());
   }
 
@@ -108,7 +78,7 @@ export function ShareVersionDialog({
 
   async function share() {
     if (!target || selected.size === 0) return;
-    const chosen = (people ?? []).filter((person) => selected.has(person._id));
+    const chosen = (people ?? []).filter((person) => selected.has(person.userId));
     const first = chosen[0]?.name.split(" ")[0] ?? "";
     setBusy(true);
     try {
@@ -161,7 +131,7 @@ export function ShareVersionDialog({
           <ul className="divide-y divide-border/60 rounded-xl border border-border/70">
             {sharedWith.map((person) => (
               <li key={person._id} className="flex items-center gap-3 px-3 py-2">
-                <PersonAvatar {...person} />
+                <PersonAvatar person={{ ...person, avatarUrl: person.avatar }} />
                 <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
                   {person.name}
                 </span>
@@ -184,58 +154,14 @@ export function ShareVersionDialog({
       )}
 
       <section className="space-y-2">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            autoFocus
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder={t("shareSearch")}
-            className="pl-8"
-          />
-        </div>
-        <ul className="max-h-64 overflow-y-auto rounded-xl border border-border/70">
-          {candidates.length === 0 ? (
-            <li className="px-3 py-6 text-center text-[13px] text-muted-foreground">
-              {people === undefined ? "…" : t("shareNoPeople")}
-            </li>
-          ) : (
-            candidates.map((person) => {
-              const checked = selected.has(person._id);
-              return (
-                <li key={person._id} className="border-b border-border/60 last:border-b-0">
-                  <button
-                    type="button"
-                    aria-pressed={checked}
-                    onClick={() => toggle(person._id)}
-                    className={cn(
-                      "flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-accent/60",
-                      checked && "bg-accent/60",
-                    )}
-                  >
-                    <PersonAvatar {...person} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] font-medium">{person.name}</span>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {person.jobTitle || person.email}
-                      </span>
-                    </span>
-                    <span
-                      className={cn(
-                        "grid size-5 shrink-0 place-items-center rounded-full border",
-                        checked
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border",
-                      )}
-                    >
-                      {checked && <Check className="size-3" strokeWidth={3} />}
-                    </span>
-                  </button>
-                </li>
-              );
-            })
-          )}
-        </ul>
+        <PersonList
+          people={candidates}
+          multiple
+          selected={selected}
+          onSelect={(person) => toggle(person.userId)}
+          autoFocus
+          listClassName="max-h-64"
+        />
         <p className="text-xs leading-relaxed text-muted-foreground">{t("shareFootnote")}</p>
       </section>
     </ResponsiveDialog>

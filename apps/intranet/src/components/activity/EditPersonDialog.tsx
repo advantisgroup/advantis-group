@@ -4,19 +4,14 @@ import { useState } from "react";
 
 import { InfoTip } from "@/components/activity/InfoTip";
 import { BrandedText } from "@/components/branding/ProviderMark";
+import { PersonPicker } from "@/components/people/PersonPicker";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useI18n } from "@/lib/activity/i18n";
 
+import type { Id } from "@advantis/convex/dataModel";
 import type { GenericId } from "convex/values";
 
 export interface EditablePerson {
@@ -42,7 +37,6 @@ export type PersonPatch = Partial<{
 
 interface FormProps {
   person: EditablePerson;
-  linkableUsers: { _id: string; name: string }[];
   onSave: (patch: PersonPatch) => void;
 }
 
@@ -54,14 +48,14 @@ interface FormProps {
  * `ResponsiveDialog`) can trigger it with a plain `form="edit-person-form"`
  * attribute instead of needing the save handler lifted up.
  */
-function PersonForm({ person, linkableUsers, onSave }: FormProps) {
+function PersonForm({ person, onSave }: FormProps) {
   const { t } = useI18n();
   const [name, setName] = useState(person.name);
   const [email, setEmail] = useState(person.email ?? "");
   const [employeeId, setEmployeeId] = useState(person.employeeId ?? "");
   const [genesysUserId, setGenesysUserId] = useState(person.genesysUserId ?? "");
   const [clockodoUserId, setClockodoUserId] = useState(person.clockodoUserId ?? "");
-  const [userId, setUserId] = useState<string | undefined>(person.userId as string | undefined);
+  const [userId, setUserId] = useState<Id<"users"> | undefined>(person.userId);
   const [active, setActive] = useState(person.active);
 
   // Once linked to an intranet account, the Clockodo id is managed via
@@ -78,7 +72,7 @@ function PersonForm({ person, linkableUsers, onSave }: FormProps) {
       clockodoUserId: clockodoManagedElsewhere
         ? (person.clockodoUserId ?? "")
         : clockodoUserId.trim(),
-      userId: (userId as GenericId<"users"> | undefined) ?? null,
+      userId: userId ?? null,
       active,
     });
   }
@@ -153,22 +147,12 @@ function PersonForm({ person, linkableUsers, onSave }: FormProps) {
           </label>
           <InfoTip text={t("people.intranetUserHint")} />
         </div>
-        <Select
-          value={userId ?? "none"}
-          onValueChange={(v) => setUserId(v === "none" ? undefined : v)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">{t("people.intranetUserNone")}</SelectItem>
-            {linkableUsers.map((u) => (
-              <SelectItem key={u._id} value={u._id}>
-                {u.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <PersonPicker
+          value={userId ?? null}
+          onChange={(id) => setUserId(id ?? undefined)}
+          label={t("people.intranetUser")}
+          noneLabel={t("people.intranetUserNone")}
+        />
       </div>
 
       <label className="flex w-fit items-center gap-2 pt-1 text-sm text-fg">
@@ -181,7 +165,6 @@ function PersonForm({ person, linkableUsers, onSave }: FormProps) {
 
 interface Props {
   person: EditablePerson | null;
-  linkableUsers: { _id: string; name: string }[];
   onSave: (personId: GenericId<"people">, patch: PersonPatch) => void | Promise<void>;
   onOpenChange: (open: boolean) => void;
 }
@@ -192,7 +175,7 @@ interface Props {
  * edits on a member list made it too easy to change data by accident while
  * scanning the roster.
  */
-export function EditPersonDialog({ person, linkableUsers, onSave, onOpenChange }: Props) {
+export function EditPersonDialog({ person, onSave, onOpenChange }: Props) {
   const { t } = useI18n();
   return (
     <ResponsiveDialog
@@ -214,7 +197,6 @@ export function EditPersonDialog({ person, linkableUsers, onSave, onOpenChange }
         <PersonForm
           key={person._id}
           person={person}
-          linkableUsers={linkableUsers}
           onSave={(patch) => {
             void onSave(person._id, patch);
             onOpenChange(false);

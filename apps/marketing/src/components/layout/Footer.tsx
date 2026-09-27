@@ -65,10 +65,14 @@ const LiftingWordmark = ({ progress }: { progress: number }) => {
   };
 
   return (
-    <div aria-label="ADVANTIS GROUP" className="overflow-x-clip pb-2 text-center">
+    // Sized in vw so it spans the screen at any width; the top padding is the lift's headroom.
+    <div
+      aria-label="ADVANTIS GROUP"
+      className="overflow-x-clip pt-10 pb-4 text-center md:pt-14 md:pb-6"
+    >
       <span
         aria-hidden
-        className="block text-[13vw] font-semibold leading-none tracking-[-0.04em] md:text-[12vw] lg:text-[8rem]"
+        className="block text-[11vw] font-extrabold leading-[0.8] tracking-[-0.055em] whitespace-nowrap"
       >
         {words.map((word, wordIndex) => (
           <span key={word} className="inline-block whitespace-nowrap">
@@ -90,9 +94,10 @@ const LiftingWordmark = ({ progress }: { progress: number }) => {
 };
 
 /**
- * A directory with the wordmark over it. The logo that used to rotate in from
- * the bottom-right corner is gone — two things competing for the same corner
- * of the same band, and the wordmark is the one that says the name.
+ * A directory, then the name set as big as the screen allows — the last thing
+ * on every page, the way Discord signs off. The logo that used to rotate in
+ * from the bottom-right corner is gone — two things competing for the same
+ * corner of the same band, and the wordmark is the one that says the name.
  */
 export const Footer = () => {
   const pathname = usePathname();
@@ -133,17 +138,15 @@ export const Footer = () => {
 
   return (
     <footer ref={footerRef} data-print-hide className="border-t border-rule">
-      <div className="mx-auto w-full max-w-[1200px] px-5 py-16 md:px-10 md:py-20">
-        <p className="text-center text-sm text-muted-foreground">{t("footer.description")}</p>
-        <LiftingWordmark progress={scrollProgress} />
-
-        <div className="mt-16 grid gap-12 md:mt-20 md:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))] md:gap-8">
-          {/* Just the mark: the line that would go here is already above the
-              wordmark, and printing it twice in one band reads as a mistake. */}
+      <div className="mx-auto w-full max-w-[1200px] px-5 pt-24 md:px-10 md:pt-32">
+        <div className="grid gap-12 md:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))] md:gap-8">
           <div>
             <Link href="/" aria-label="ADVANTIS GROUP" className="inline-flex">
               <Logo height={18} />
             </Link>
+            <p className="mt-5 max-w-xs text-sm leading-relaxed text-muted-foreground">
+              {t("footer.description")}
+            </p>
           </div>
 
           <Column title={t("footer.quickLinks")}>
@@ -179,7 +182,7 @@ export const Footer = () => {
           </Column>
         </div>
 
-        <div className="mt-14 flex flex-col-reverse gap-4 border-t border-rule pt-6 md:flex-row md:items-center md:justify-between">
+        <div className="mt-20 flex flex-col-reverse gap-4 border-t border-rule pt-8 md:flex-row md:items-center md:justify-between">
           <p className="text-[13px] text-muted-foreground">
             © {new Date().getFullYear().toString()} ADVANTIS GROUP. {t("footer.copyright")}
           </p>
@@ -196,6 +199,10 @@ export const Footer = () => {
             ))}
           </ul>
         </div>
+      </div>
+
+      <div className="mt-16 md:mt-24">
+        <LiftingWordmark progress={scrollProgress} />
       </div>
     </footer>
   );

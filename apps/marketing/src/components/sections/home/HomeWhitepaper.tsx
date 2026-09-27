@@ -11,7 +11,7 @@ export const HomeWhitepaper = () => {
   const t = useTranslations("whitepaper");
 
   return (
-    <Section>
+    <Section tone="raised">
       <div className="grid items-center gap-12 md:grid-cols-[minmax(0,1fr)_auto] md:gap-20">
         <div>
           <Display size="md" className="max-w-[22ch]">

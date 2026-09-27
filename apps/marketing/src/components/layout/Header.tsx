@@ -18,6 +18,8 @@ import { AccountMenu } from "../auth/AccountMenu";
 const SCROLL_THRESHOLD = 24;
 const HIDE_AFTER = 120;
 const SCROLL_JITTER = 6;
+/** The height, in px from the top of the screen, at which the bar checks what it sits over. */
+const HEADER_PROBE = 28;
 
 /* The lockup's mark is 84.8% of the lockup's own height (the artwork sets it
    at scale 0.6111 inside an 88-unit box), so the monogram has to be drawn a
@@ -45,12 +47,20 @@ export const Header = () => {
   const t = useTranslations("nav");
   const [compact, setCompact] = React.useState(false);
   const [hidden, setHidden] = React.useState(false);
+  const [inverse, setInverse] = React.useState(false);
 
   React.useEffect(() => {
     let lastY = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
       setCompact(y > SCROLL_THRESHOLD);
+      // Over an inverted band the dark logo and links vanish into it, so the bar inverts with the band.
+      setInverse(
+        [...document.querySelectorAll("[data-header-inverse]")].some((band) => {
+          const { top, bottom } = band.getBoundingClientRect();
+          return top <= HEADER_PROBE && bottom >= HEADER_PROBE;
+        }),
+      );
       // ignore tiny jitters (trackpads, iOS bounce) so the bar doesn't flicker
       if (Math.abs(y - lastY) < SCROLL_JITTER) return;
       setHidden(y > lastY && y > HIDE_AFTER);
@@ -99,9 +109,11 @@ export const Header = () => {
           // tailwind v4 moves things with `translate`, not `transform`, so that's what slides
           "fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color,backdrop-filter,translate] duration-300 ease-out has-focus-visible:translate-y-0",
           hidden && "-translate-y-full",
-          compact
-            ? "border-rule bg-background/85 backdrop-blur-md"
-            : "border-transparent bg-transparent",
+          !compact
+            ? "border-transparent bg-transparent"
+            : inverse
+              ? "border-on-ink/10 bg-ink/85 backdrop-blur-md"
+              : "border-rule bg-background/85 backdrop-blur-md",
         )}
       >
         <nav
@@ -131,6 +143,7 @@ export const Header = () => {
                 variant="lockup"
                 height={LOCKUP_HEIGHT}
                 alt=""
+                inverse={inverse}
                 className={cn(
                   "absolute inset-y-0 left-0 transition-opacity duration-300",
                   compact ? "opacity-0" : "opacity-100",
@@ -140,6 +153,7 @@ export const Header = () => {
                 variant="mark"
                 height={MARK_HEIGHT}
                 alt=""
+                inverse={inverse}
                 className={cn(
                   "absolute left-0 top-1/2 -translate-y-1/2 transition-opacity duration-300",
                   compact ? "opacity-100" : "opacity-0",
@@ -158,7 +172,13 @@ export const Header = () => {
                     aria-current={active ? "page" : undefined}
                     className={cn(
                       "rounded-lg px-3 py-2 text-sm transition-colors",
-                      active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                      inverse
+                        ? active
+                          ? "text-on-ink"
+                          : "text-on-ink/65 hover:text-on-ink"
+                        : active
+                          ? "text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
                     )}
                   >
                     {link.label}
@@ -169,7 +189,14 @@ export const Header = () => {
           </ul>
 
           <div className="hidden items-center gap-3 md:flex">
-            <Button asChild size="sm" className="rounded-full px-4">
+            <Button
+              asChild
+              size="sm"
+              className={cn(
+                "rounded-full px-4",
+                inverse && "bg-on-ink text-ink hover:bg-on-ink/90",
+              )}
+            >
               <Link href="/contact">{t("contact")}</Link>
             </Button>
             <AccountMenu />

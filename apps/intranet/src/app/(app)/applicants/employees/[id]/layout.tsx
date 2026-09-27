@@ -7,11 +7,12 @@ import { useParams, usePathname } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
-import { Briefcase, Building2, FileText, History, LayoutDashboard } from "lucide-react";
+import { Briefcase, Building2, FileText, History, LayoutDashboard, Link2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { RouteTabs } from "@/components/applicants/RouteTabs";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { PersonLink } from "@/components/profile/PersonLink";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
@@ -102,6 +103,9 @@ export default function EmployeeDetailLayout({ children }: { children: ReactNode
         <CardContent className="flex flex-wrap items-start justify-between gap-4 p-5">
           <div className="flex min-w-0 items-start gap-3.5">
             <Avatar className="size-12 border-border/70">
+              {profile.linkedProfile?.avatarUrl && (
+                <AvatarImage src={profile.linkedProfile.avatarUrl} alt={profile.name} />
+              )}
               <AvatarFallback className="font-display text-base font-semibold">
                 {initials(profile.name)}
               </AvatarFallback>
@@ -125,9 +129,16 @@ export default function EmployeeDetailLayout({ children }: { children: ReactNode
               </div>
             </div>
           </div>
-          <Badge variant={profile.userId ? "success" : "outline"}>
-            {profile.linkedProfile?.name || t("employeeNoAccount")}
-          </Badge>
+          {profile.linkedProfile ? (
+            <Badge variant="success" className="max-w-full">
+              <Link2 className="size-3" />
+              <PersonLink userId={profile.linkedProfile.userId}>
+                {profile.linkedProfile.name}
+              </PersonLink>
+            </Badge>
+          ) : (
+            <Badge variant="outline">{t("employeeNoAccount")}</Badge>
+          )}
         </CardContent>
         <div className="border-t border-border/70 px-2">
           <RouteTabs tabs={tabs} activeValue={active} />

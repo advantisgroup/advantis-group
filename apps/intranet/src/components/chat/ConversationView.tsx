@@ -75,7 +75,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { formatTime, initials, relativeTime } from "@/lib/format";
+import { formatTime, initials, matchesSearch, relativeTime } from "@/lib/format";
 import { MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 import {
@@ -218,9 +218,8 @@ export function ConversationView({
 
   const mentionableMembers = useMemo(() => {
     if (!conversation || conversation.type !== "group" || !mention) return [];
-    const q = mention.query.toLowerCase();
     return conversation.members
-      .filter((m) => m._id !== me._id && m.name.toLowerCase().includes(q))
+      .filter((m) => m._id !== me._id && matchesSearch(mention.query, m.name))
       .slice(0, 6);
   }, [conversation, mention, me._id]);
 

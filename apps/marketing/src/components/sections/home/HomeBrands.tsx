@@ -4,83 +4,92 @@ import { ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { BrandText } from "@/components/effects/BrandText";
+import { Reveal } from "@/components/effects/Reveal";
 import { Display, Section, SectionHead } from "@/components/frame";
-import { Button } from "@/components/ui/button";
+import { BrandScene } from "@/components/illustrations/HomeIllustrations";
 import { Link } from "@/i18n/navigation";
 import { BRANDS } from "@/lib/brands";
 
 /**
- * Four brands, four rows.
+ * Four brands, four cards, each opening on a drawing of what that brand
+ * does, in its own colour on a wash of it.
  *
- * Each row used to carry a gradient wash in its own colour plus a coloured
- * bar that grew down its left edge on hover. Four accents competing in one
- * section is four accents too many — the wordmark already carries the brand's
- * colour, which is enough to tell them apart.
+ * This is the one section where several accents belong on screen together:
+ * the point being made is that the group is four different things. The two
+ * unlaunched brands keep their colour in the drawing, on a fainter wash —
+ * their wordmark stays grey and carries the "coming soon".
  */
 export const HomeBrands = () => {
   const t = useTranslations("brands");
 
   return (
     <Section size="loose">
-      <SectionHead
-        title={
-          <>
-            {t("title")} <span className="text-primary">{t("titleHighlight")}</span>
-          </>
-        }
-        lede={t("subtitle")}
-      />
-
-      <ul className="mt-16">
-        {BRANDS.map((brand) => (
-          <li key={brand.key}>
-            <Link
-              href={`/brands#${brand.brandText}`}
-              className="group grid gap-3 border-t border-rule py-8 transition-colors hover:bg-accent/40 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-center md:gap-10 md:px-4"
-            >
-              <div>
-                <span className="flex flex-wrap items-center gap-2.5">
-                  <span className="text-[13px] text-muted-foreground">
-                    {t(`${brand.key}.tagline`)}
-                  </span>
-                  {/* Named, but plainly not open yet. */}
-                  {brand.status === "soon" ? (
-                    <span className="rounded-full border border-rule px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                      {t("comingSoon")}
-                    </span>
-                  ) : null}
-                </span>
-                <Display size="md" as="p" className="mt-1.5">
-                  {brand.status === "live" ? (
-                    <BrandText brand={brand.brandText} hoverable={false}>
-                      {brand.name}
-                    </BrandText>
-                  ) : (
-                    <span className="text-muted-foreground/70">{brand.name}</span>
-                  )}
-                </Display>
-              </div>
-
-              <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
-                {t(`${brand.key}.description`)}
-              </p>
-
-              <span
-                aria-hidden
-                className="hidden size-10 items-center justify-center rounded-full border border-rule text-muted-foreground transition-colors group-hover:border-rule-strong group-hover:text-foreground md:inline-flex"
-              >
-                <ArrowRight className="size-4" />
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-12 border-t border-rule pt-10">
-        <Button asChild variant="outline" size="lg">
-          <Link href="/brands">{t("cta")}</Link>
-        </Button>
+      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <SectionHead
+          align="left"
+          title={
+            <>
+              {t("title")} <span className="text-primary">{t("titleHighlight")}</span>
+            </>
+          }
+          lede={t("subtitle")}
+        />
+        <Link
+          href="/brands"
+          className="group inline-flex shrink-0 items-center gap-2 text-sm font-medium"
+        >
+          {t("cta")}
+          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
+
+      <ul className="mt-14 grid gap-4 md:grid-cols-2">
+        {BRANDS.map((brand, index) => {
+          const live = brand.status === "live";
+
+          return (
+            <Reveal as="li" key={brand.key} delay={index * 0.08}>
+              <Link
+                href={`/brands#${brand.brandText}`}
+                className="group flex h-full flex-col overflow-hidden rounded-xl border border-rule bg-card transition-[border-color,transform,box-shadow] duration-300 hover:-translate-y-1 hover:border-rule-strong hover:shadow-overlay"
+              >
+                <BrandScene
+                  brand={brand.key}
+                  accent={brand.accent}
+                  // The unlaunched two get a fainter wash; the grey wordmark and the badge say "not yet".
+                  ground={`color-mix(in oklch, ${brand.accent} ${live ? 12 : 6}%, var(--card))`}
+                />
+
+                <div className="flex flex-1 flex-col p-6 md:p-8">
+                  <Display size="md" as="p">
+                    {live ? (
+                      <BrandText brand={brand.brandText} hoverable={false}>
+                        {brand.name}
+                      </BrandText>
+                    ) : (
+                      <span className="text-muted-foreground/70">{brand.name}</span>
+                    )}
+                  </Display>
+                  <span className="mt-3 flex flex-wrap items-center gap-2.5">
+                    <span className="text-[13px] font-medium">{t(`${brand.key}.tagline`)}</span>
+                    {live ? null : (
+                      <span className="rounded-full border border-rule px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        {t("comingSoon")}
+                      </span>
+                    )}
+                  </span>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground md:text-base">
+                    {t(`${brand.key}.description`)}
+                  </p>
+                  <span className="mt-auto pt-6">
+                    <ArrowRight className="size-4 text-muted-foreground transition-[color,transform] group-hover:translate-x-1 group-hover:text-foreground" />
+                  </span>
+                </div>
+              </Link>
+            </Reveal>
+          );
+        })}
+      </ul>
     </Section>
   );
 };

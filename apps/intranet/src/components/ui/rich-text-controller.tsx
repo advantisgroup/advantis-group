@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { matchesSearch } from "@/lib/format";
 import { type CalloutVariant } from "@/lib/rich-callout";
 import {
   formatRichDate,
@@ -35,7 +36,7 @@ import {
 
 /** State and commands behind the rich text editor — the toolbar and surface both drive one of these. */
 
-/** A mentionable person — supplied by the consumer, e.g. from `api.people.users.list`. */
+/** A mentionable person — supplied by the consumer, e.g. from `api.people.users.options`. */
 export interface MentionCandidate {
   id: string;
   name: string;
@@ -552,11 +553,9 @@ export function useRichTextController({
 
   const mentionMatches = useMemo(() => {
     if (!mention) return [];
-    const q = mention.query.trim().toLowerCase();
-    const pool = q
-      ? mentionCandidates.filter((c) => c.name.toLowerCase().includes(q))
-      : mentionCandidates;
-    return pool.slice(0, 6);
+    return mentionCandidates
+      .filter((c) => matchesSearch(mention.query, c.name, c.email))
+      .slice(0, 6);
   }, [mention, mentionCandidates]);
 
   const slashMatches = useMemo(() => {

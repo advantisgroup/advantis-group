@@ -13,6 +13,7 @@ import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { loadReportingLookup, reportingLines, resolveManager } from "../lib/reporting";
 import { requireVaultUnlocked, isApplicantEligible } from "../hr/lib/access";
 import { ensureUser } from "../people/lib/provisioning";
+import { profileOptionValidator, toProfileOption } from "../lib/profile";
 
 const roleArg = roleValidator;
 
@@ -193,6 +194,20 @@ export const list = userQuery({
         };
       }),
     );
+  },
+});
+
+/**
+ * The list behind every person picker (`components/people/PersonPicker.tsx`).
+ * Slimmer than `list` on purpose — no roles or permissions — so a dialog that
+ * only needs "who" doesn't re-run the heavy join.
+ */
+export const options = userQuery({
+  args: {},
+  returns: v.array(profileOptionValidator),
+  handler: async (ctx) => {
+    const { users } = await queryUsers(ctx, {});
+    return Promise.all(users.map((u) => toProfileOption(ctx, u)));
   },
 });
 

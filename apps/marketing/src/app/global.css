@@ -48,6 +48,8 @@
   --color-card: var(--card);
   --color-rule: var(--rule);
   --color-rule-strong: var(--rule-strong);
+  --color-ink: var(--ink);
+  --color-on-ink: var(--on-ink);
   --color-advantis: var(--advantis);
   --color-rodeo: var(--rodeo);
   --color-salespirates: var(--salespirates);
@@ -118,6 +120,16 @@
 
     --shadow-tint: oklch(30% 0.03 60);
 
+    /*
+     * The ground of the inverted bands. Not `--foreground`: that flips to
+     * near-white in dark mode, which turned every "dark" band into the
+     * brightest thing on a page someone is reading at night. Ink stays dark
+     * in both themes — in dark mode a step below the page, so it still reads
+     * as a change of ground.
+     */
+    --ink: oklch(23% 0.006 70);
+    --on-ink: oklch(97% 0.006 88);
+
     --salespirates: oklch(66% 0.13 85);
     --advantis: oklch(0.6 0.17 14);
     --rodeo: oklch(55% 0.17 240);
@@ -183,6 +195,9 @@
     --ring: oklch(0.67 0.155 16);
 
     --shadow-tint: oklch(8% 0.01 60);
+
+    --ink: oklch(15.5% 0.004 80);
+    --on-ink: oklch(96% 0.004 92);
 
     --salespirates: oklch(75% 0.14 85);
     --advantis: oklch(0.67 0.155 16);

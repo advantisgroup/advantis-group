@@ -4,7 +4,7 @@ import { InfoTip } from "@/components/activity/InfoTip";
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { type useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { Mark } from "@/components/branding/ProviderMark";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PersonAvatar, PersonList, type PersonOption } from "@/components/people/PersonPicker";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -19,11 +19,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { type Draft, CATEGORY_MAX_LENGTH, relevantDateHasValidRange } from "@/lib/announcements";
-import { initials } from "@/lib/format";
 import { type RichDateKind, richDateTimestampFromInput } from "@/lib/rich-date";
 import { formatFileSize, MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 import { cn } from "@/lib/utils";
-import { Building2, CalendarDays, CalendarPlus, Paperclip, Search, Users, X } from "lucide-react";
+import { Building2, CalendarDays, CalendarPlus, Paperclip, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 
@@ -46,9 +45,7 @@ export function ComposerOptionsFields({
   set,
   editing,
   departments,
-  peopleSearch,
-  setPeopleSearch,
-  filteredPeople,
+  people,
   selectedPeople,
   toggleAudienceUser,
   toggleAudienceDepartment,
@@ -63,10 +60,8 @@ export function ComposerOptionsFields({
   set: <K extends keyof Draft>(key: K, value: Draft[K]) => void;
   editing: boolean;
   departments: string[];
-  peopleSearch: string;
-  setPeopleSearch: (v: string) => void;
-  filteredPeople: { _id: string; name: string; email: string; avatar?: string | null }[];
-  selectedPeople: { _id: string; name: string; email: string; avatar?: string | null }[];
+  people: PersonOption[] | undefined;
+  selectedPeople: PersonOption[];
   toggleAudienceUser: (userId: string) => void;
   toggleAudienceDepartment: (department: string) => void;
   audienceCount: number | undefined;
@@ -212,20 +207,15 @@ export function ComposerOptionsFields({
                 <div className="flex flex-wrap gap-1.5">
                   {selectedPeople.map((p) => (
                     <span
-                      key={p._id}
+                      key={p.userId}
                       className="flex items-center gap-1.5 rounded-full border border-border bg-accent/60 py-0.5 pl-1 pr-1.5 text-xs font-medium"
                     >
-                      <Avatar className="size-4">
-                        {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-                        <AvatarFallback className="text-[8px]">
-                          {initials(p.name, p.email)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <PersonAvatar person={p} className="size-4 [&>span]:text-[8px]" />
                       {p.name}
                       <button
                         type="button"
                         aria-label={tc("delete")}
-                        onClick={() => toggleAudienceUser(p._id)}
+                        onClick={() => toggleAudienceUser(p.userId)}
                         className="text-muted-foreground hover:text-foreground"
                       >
                         <X className="size-3" />
@@ -235,44 +225,13 @@ export function ComposerOptionsFields({
                 </div>
               )}
 
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder={tc("search")}
-                  value={peopleSearch}
-                  onChange={(e) => setPeopleSearch(e.target.value)}
-                  className="h-8 pl-8 text-sm"
-                />
-              </div>
-              <div className="max-h-40 overflow-y-auto rounded-md border border-border/60">
-                {filteredPeople.length === 0 ? (
-                  <p className="p-3 text-xs text-muted-foreground">{tc("noResults")}</p>
-                ) : (
-                  filteredPeople.map((p) => (
-                    <label
-                      key={p._id}
-                      className="flex cursor-pointer items-center gap-2.5 px-2.5 py-1.5 hover:bg-accent"
-                    >
-                      <Checkbox
-                        checked={draft.audienceUserIds.includes(p._id)}
-                        onCheckedChange={() => toggleAudienceUser(p._id)}
-                      />
-                      <Avatar className="size-6 shrink-0">
-                        {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-                        <AvatarFallback className="text-[10px]">
-                          {initials(p.name, p.email)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm">{p.name}</span>
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {p.email}
-                        </span>
-                      </span>
-                    </label>
-                  ))
-                )}
-              </div>
+              <PersonList
+                people={people}
+                multiple
+                selected={new Set(draft.audienceUserIds)}
+                onSelect={(p) => toggleAudienceUser(p.userId)}
+                listClassName="max-h-48"
+              />
             </div>
           </div>
         )}

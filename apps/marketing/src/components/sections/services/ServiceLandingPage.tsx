@@ -193,19 +193,15 @@ export const ServiceLandingPage = ({ slug }: { slug: ServiceSlug }) => {
         </div>
       </div>
 
-      <section className="border-t border-rule bg-foreground text-background">
+      <section className="border-t border-rule bg-ink text-on-ink">
         <div className="mx-auto w-full max-w-[1200px] px-5 py-20 text-center md:px-10 md:py-28">
           <Display as="h2" size="md" className="mx-auto max-w-[22ch]">
             {common("ctaTitle")}
           </Display>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-background/70 md:text-lg">
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-on-ink/70 md:text-lg">
             {t("ctaText")}
           </p>
-          <Button
-            asChild
-            size="lg"
-            className="mt-9 bg-background text-foreground hover:bg-background/90"
-          >
+          <Button asChild size="lg" className="mt-9 bg-on-ink text-ink hover:bg-on-ink/90">
             <Link href="/contact">{common("ctaButton")}</Link>
           </Button>
         </div>

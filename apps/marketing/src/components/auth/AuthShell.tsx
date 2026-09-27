@@ -43,7 +43,7 @@ export function AuthShell({
        * whole screen spending the accent, plus decoration that says nothing.
        * Inverted ink, the real lockup, and the three things we actually claim.
        */}
-      <div className="hidden bg-foreground text-background lg:flex lg:flex-col lg:justify-between lg:p-12">
+      <div className="hidden bg-ink text-on-ink lg:flex lg:flex-col lg:justify-between lg:p-12">
         <Link href="/" locale={locale} aria-label="ADVANTIS GROUP" className="self-start">
           <Logo inverse height={20} alt="" />
         </Link>
@@ -52,19 +52,17 @@ export function AuthShell({
           <Display as="h1" size="lg">
             {title}
           </Display>
-          <p className="mt-5 text-base leading-relaxed text-background/70">{subtitle}</p>
+          <p className="mt-5 text-base leading-relaxed text-on-ink/70">{subtitle}</p>
           <ul className="mt-10">
             {highlights.map((item) => (
-              <li key={item} className="border-t border-background/15 py-3 text-sm last:border-b">
+              <li key={item} className="border-t border-on-ink/15 py-3 text-sm last:border-b">
                 {item}
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="text-xs text-background/70">
-          © {new Date().getFullYear()} ADVANTIS GROUP.
-        </div>
+        <div className="text-xs text-on-ink/70">© {new Date().getFullYear()} ADVANTIS GROUP.</div>
       </div>
 
       {/* Form panel */}

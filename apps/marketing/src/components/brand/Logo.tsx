@@ -49,12 +49,10 @@ export const Logo = ({
   className?: string;
   /** Empty when something next to it already names the company. */
   alt?: string;
-  /** For an inverted band (`bg-foreground`), which is dark in light mode and light in dark. */
+  /** For an inverted band (`bg-ink`), which is dark in both themes — so the white art in both. */
   inverse?: boolean;
 }) => {
-  const art = inverse
-    ? { ...ART[variant], light: ART[variant].dark, dark: ART[variant].light }
-    : ART[variant];
+  const art = inverse ? { ...ART[variant], light: ART[variant].dark } : ART[variant];
   const width = logoWidth(variant, height);
   const shared = "block h-auto w-auto max-w-none";
 

@@ -83,6 +83,30 @@ export async function toPartialProfile(
   };
 }
 
+/**
+ * What every person picker shows: the partial profile plus the two lines that
+ * tell two people with similar names apart. `people.users.options` is the one
+ * list pickers read, and anything that returns "the linked account" to a
+ * picker-shaped UI returns this too, so the avatar and name are always there.
+ */
+export const profileOptionValidator = partialProfileValidator.extend({
+  jobTitle: v.union(v.string(), v.null()),
+  department: v.union(v.string(), v.null()),
+});
+
+export type ProfileOption = Infer<typeof profileOptionValidator>;
+
+export async function toProfileOption(
+  ctx: QueryCtx,
+  user: PartialProfileSource & Pick<Doc<"users">, "jobTitle" | "department">,
+): Promise<ProfileOption> {
+  return {
+    ...(await toPartialProfile(ctx, user)),
+    jobTitle: user.jobTitle ?? null,
+    department: user.department ?? null,
+  };
+}
+
 /** `toPartialProfile`, tolerating a missing user (deleted/unresolved
  *  reference) by returning `null` instead of throwing — for call sites that
  *  already treat "no profile" as a valid outcome (e.g. a subprofile whose
