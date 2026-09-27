@@ -38,6 +38,7 @@ import deForbidden from "./messages/de/Forbidden.json";
 import deGuidebooks from "./messages/de/Guidebooks.json";
 import deHelp from "./messages/de/Help.json";
 import deRequests from "./messages/de/Requests.json";
+import deWhoToAsk from "./messages/de/WhoToAsk.json";
 import deImprint from "./messages/de/imprint.json";
 import deIntegrations from "./messages/de/Integrations.json";
 import deInquiries from "./messages/de/Inquiries.json";
@@ -95,6 +96,7 @@ import enForbidden from "./messages/en/Forbidden.json";
 import enGuidebooks from "./messages/en/Guidebooks.json";
 import enHelp from "./messages/en/Help.json";
 import enRequests from "./messages/en/Requests.json";
+import enWhoToAsk from "./messages/en/WhoToAsk.json";
 import enImprint from "./messages/en/imprint.json";
 import enIntegrations from "./messages/en/Integrations.json";
 import enInquiries from "./messages/en/Inquiries.json";
@@ -154,6 +156,7 @@ const messagesByLocale = {
     Guidebooks: enGuidebooks,
     Help: enHelp,
     Requests: enRequests,
+    WhoToAsk: enWhoToAsk,
     Blog: enBlog,
     CaseSearch: enCaseSearch,
     Settings: enSettings,
@@ -213,6 +216,7 @@ const messagesByLocale = {
     Guidebooks: deGuidebooks,
     Help: deHelp,
     Requests: deRequests,
+    WhoToAsk: deWhoToAsk,
     Blog: deBlog,
     CaseSearch: deCaseSearch,
     Settings: deSettings,

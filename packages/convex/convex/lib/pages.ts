@@ -170,6 +170,23 @@ export const INTRANET_PAGES: IntranetPage[] = [
     keywords: ["anfragen", "requests", "status", "meine", "tickets", "stand", "offen"],
   },
   {
+    href: "/who-to-ask",
+    label: "Ansprechpartner",
+    description:
+      "Wen man bei IT, Personal, Lohn, Erster Hilfe und Notfällen fragt, mit Kontaktdaten.",
+    keywords: [
+      "ansprechpartner",
+      "kontakt",
+      "wer",
+      "erste hilfe",
+      "notfall",
+      "it",
+      "hr",
+      "personal",
+      "lohn",
+    ],
+  },
+  {
     href: "/suggestions",
     label: "Vorschläge",
     description: "Verbesserungsvorschläge einreichen, abstimmen und Entscheidungen sehen.",

@@ -52,7 +52,7 @@ export default function HelpPage() {
   const find: Choice[] = [
     { key: "howto", href: "/guidebooks", icon: <BookOpen /> },
     ...(aiEnabled ? [{ key: "ask", href: "/wiki-chat", icon: <Sparkles /> }] : []),
-    { key: "who", href: "/directory", icon: <Users /> },
+    { key: "who", href: "/who-to-ask", icon: <Users /> },
     { key: "status", href: "/updates", icon: <Radio /> },
   ];
 

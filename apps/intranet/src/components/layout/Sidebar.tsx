@@ -15,6 +15,7 @@ import {
   ClipboardList,
   Clock3,
   Cloud,
+  Contact,
   ExternalLink,
   Grid2X2,
   Inbox,
@@ -295,6 +296,12 @@ export function Sidebar() {
       href: "/requests",
       labelKey: "myRequests",
       icon: ClipboardList,
+    },
+    {
+      section: "support",
+      href: "/who-to-ask",
+      labelKey: "whoToAsk",
+      icon: Contact,
     },
     ...(hasInquiries
       ? [

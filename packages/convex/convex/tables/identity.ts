@@ -290,6 +290,23 @@ export const identityTables = {
   }),
 
   /**
+   * "Who to ask" — who to go to for a topic (IT, payroll, first aid, …),
+   * kept by admins. People are linked by account so names, photos and
+   * status notes stay current; a phone number or email covers contacts that
+   * aren't colleagues (the company doctor, emergency numbers).
+   */
+  contactTopics: defineTable({
+    section: v.union(v.literal("help"), v.literal("safety")),
+    topic: v.string(),
+    note: v.optional(v.string()),
+    userIds: v.array(v.id("users")),
+    phone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    updatedAt: v.number(),
+    updatedBy: v.id("users"),
+  }),
+
+  /**
    * Canonical teams (access-control tags, e.g. "customer-care"). Replaces
    * the free-text `users.teams` array — membership lives in `userTeams`.
    * `slug` is kept stable across renames so existing guidebook access rules
