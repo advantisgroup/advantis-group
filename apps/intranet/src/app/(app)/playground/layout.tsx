@@ -8,12 +8,19 @@ import { FlaskConical, Hand, MessagesSquare, Orbit, Palette, Shapes } from "luci
 import { useTranslations } from "next-intl";
 
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
+import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
+import { useIsAdmin } from "@/components/providers/current-user";
 
-/** A learning ground: the intranet's own pieces, live, to poke at. */
+/**
+ * A learning ground: the intranet's own pieces, live, to poke at. Admins
+ * only — it's a workbench for building the intranet, and to everyone else it
+ * read as a half-finished page that had leaked into search.
+ */
 export default function PlaygroundLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Playground");
   const pathname = usePathname();
+  const isAdmin = useIsAdmin();
   const active = pathname.split("/")[2] ?? "overview";
 
   const tabs: RouteTab[] = [
@@ -29,6 +36,8 @@ export default function PlaygroundLayout({ children }: { children: ReactNode }) 
       icon: Shapes,
     },
   ];
+
+  if (!isAdmin) return <ForbiddenScreen />;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-10">

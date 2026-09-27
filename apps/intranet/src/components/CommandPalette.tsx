@@ -52,6 +52,7 @@ import {
   useCurrentUser,
   useHasCapability,
   useHasApplicantAccess,
+  useIsAdmin,
   useIsManager,
 } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -130,6 +131,7 @@ export function CommandPalette({ className }: { className?: string } = {}) {
   const tGuide = useTranslations("Guidebooks");
   const router = useRouter();
   const isManager = useIsManager();
+  const isAdmin = useIsAdmin();
   const hasApplicantAccess = useHasApplicantAccess();
   const hasFilesAccess = useHasCapability("access_files");
   const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
@@ -275,12 +277,15 @@ export function CommandPalette({ className }: { className?: string } = {}) {
         managerOnly: true,
       },
       { href: "/settings", label: tNav("settings"), icon: Settings },
-      { href: "/playground", label: tNav("playground"), icon: FlaskConical, searchOnly: true },
+      ...(isAdmin
+        ? [{ href: "/playground", label: tNav("playground"), icon: FlaskConical, searchOnly: true }]
+        : []),
     ];
     return all.filter((p) => !p.managerOnly || isManager).filter((p) => !p.hidden);
   }, [
     tNav,
     isManager,
+    isAdmin,
     hasApplicantAccess,
     hasClockodoTeamAccess,
     hasFilesAccess,
