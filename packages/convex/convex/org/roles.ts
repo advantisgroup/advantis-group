@@ -1,6 +1,8 @@
 import { userMutation, userQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
+import { type Doc, type Id } from "../_generated/dataModel";
+import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { capabilityValidator } from "../schema";
 import { effectiveCustomRoleIds, type Capability } from "../lib/auth";
 
@@ -32,11 +34,84 @@ function normalizeCapabilities(capabilities: Capability[]): Capability[] {
   return [...set];
 }
 
+/** Everyone still in the org who holds each role. `users` is org-sized, so
+ * one scan covers every role at once. */
+async function holdersByRole(ctx: QueryCtx) {
+  const holders = new Map<Id<"customRoles">, Doc<"users">[]>();
+  for (const user of await ctx.db.query("users").collect()) {
+    if (user.status === "removed") continue;
+    for (const roleId of effectiveCustomRoleIds(user)) {
+      holders.set(roleId, [...(holders.get(roleId) ?? []), user]);
+    }
+  }
+  return holders;
+}
+
 export const list = userQuery({
   role: "manager",
   args: {},
   handler: async (ctx) => {
-    return ctx.db.query("customRoles").collect();
+    const roles = await ctx.db.query("customRoles").collect();
+    const holders = await holdersByRole(ctx);
+    return roles.map((role) => ({
+      ...role,
+      memberIds: (holders.get(role._id) ?? []).map((user) => user._id),
+    }));
+  },
+});
+
+export const get = userQuery({
+  role: "manager",
+  args: { customRoleId: v.string() },
+  handler: async (ctx, { customRoleId }) => {
+    const id = ctx.db.normalizeId("customRoles", customRoleId);
+    const role = id ? await ctx.db.get(id) : null;
+    if (!role) return null;
+    const holders = await holdersByRole(ctx);
+    return {
+      ...role,
+      // The base role too, so the page can say who'd have all of it anyway.
+      members: (holders.get(role._id) ?? []).map((user) => ({
+        userId: user._id,
+        role: user.role,
+      })),
+    };
+  },
+});
+
+async function requireRoleAndUser(
+  ctx: MutationCtx,
+  customRoleId: Id<"customRoles">,
+  userId: Id<"users">,
+) {
+  const [role, user] = await Promise.all([ctx.db.get(customRoleId), ctx.db.get(userId)]);
+  if (!role) throw new ConvexError({ code: "not_found", message: "Role not found" });
+  if (!user) throw new ConvexError({ code: "not_found", message: "User not found" });
+  return user;
+}
+
+export const addMember = userMutation({
+  role: "manager",
+  args: { customRoleId: v.id("customRoles"), userId: v.id("users") },
+  handler: async (ctx, { customRoleId, userId }) => {
+    const user = await requireRoleAndUser(ctx, customRoleId, userId);
+    const ids = effectiveCustomRoleIds(user);
+    if (ids.includes(customRoleId)) return null;
+    await ctx.db.patch(userId, { customRoleIds: [...ids, customRoleId], customRoleId: undefined });
+    return null;
+  },
+});
+
+export const removeMember = userMutation({
+  role: "manager",
+  args: { customRoleId: v.id("customRoles"), userId: v.id("users") },
+  handler: async (ctx, { customRoleId, userId }) => {
+    const user = await requireRoleAndUser(ctx, customRoleId, userId);
+    await ctx.db.patch(userId, {
+      customRoleIds: effectiveCustomRoleIds(user).filter((id) => id !== customRoleId),
+      customRoleId: undefined,
+    });
+    return null;
   },
 });
 
