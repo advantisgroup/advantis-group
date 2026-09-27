@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings } from "lucide-react";
+import { Archive, HeartPulse, ScrollText, Settings, SlidersHorizontal, Users } from "lucide-react";
 
 import { AuditPanel } from "@/components/activity/admin/AuditPanel";
 import { ConfigPanel } from "@/components/activity/admin/ConfigPanel";
@@ -8,14 +8,8 @@ import { DiscardedPanel } from "@/components/activity/admin/DiscardedPanel";
 import { SystemPanel } from "@/components/activity/admin/SystemPanel";
 import { UsersPanel } from "@/components/activity/admin/UsersPanel";
 import { PageHeader } from "@/components/PageHeader";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RouteTabs, type RouteTab } from "@/components/layout/RouteTabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useI18n } from "@/lib/activity/i18n";
 import { useTabParam } from "@/lib/activity/useTabParam";
 
@@ -29,6 +23,23 @@ import { useTabParam } from "@/lib/activity/useTabParam";
 export default function SettingsPage() {
   const { t } = useI18n();
   const [tab, setTab] = useTabParam("config");
+  const tabFor = (value: string, label: string, icon: RouteTab["icon"]): RouteTab => ({
+    value,
+    label,
+    icon,
+    href: `/activity/settings?tab=${value}`,
+    onSelect: () => setTab(value),
+  });
+  const tabs = [
+    tabFor("config", t("settings.tabs.config"), SlidersHorizontal),
+    tabFor("system", t("settings.tabs.system"), HeartPulse),
+    tabFor("users", t("settings.tabs.users"), Users),
+    tabFor("audit", t("settings.tabs.audit"), ScrollText),
+    // Audit surface, not a daily view: the tab only appears while it's open —
+    // it's reached via the "Discarded data" button under Configuration (or a
+    // deep link), not browsed into.
+    ...(tab === "discarded" ? [tabFor("discarded", t("settings.tabs.discarded"), Archive)] : []),
+  ];
   return (
     <section className="space-y-6">
       <PageHeader
@@ -37,37 +48,9 @@ export default function SettingsPage() {
         icon={<Settings />}
       />
 
-      <Tabs value={tab} onValueChange={setTab}>
-        {/* A full-width horizontal strip here would be a second control
-            competing with the mobile bottom nav's thumb-zone space, so below
-            md this collapses to a single compact Select instead. */}
-        <TabsList className="hidden md:inline-flex">
-          <TabsTrigger value="config">{t("settings.tabs.config")}</TabsTrigger>
-          <TabsTrigger value="system">{t("settings.tabs.system")}</TabsTrigger>
-          <TabsTrigger value="users">{t("settings.tabs.users")}</TabsTrigger>
-          <TabsTrigger value="audit">{t("settings.tabs.audit")}</TabsTrigger>
-          {/* Audit surface, not a daily view: the trigger only appears while
-              the tab is open — it is reached via the "Discarded data" button
-              under Configuration (or a deep link), not browsed into. */}
-          {tab === "discarded" && (
-            <TabsTrigger value="discarded">{t("settings.tabs.discarded")}</TabsTrigger>
-          )}
-        </TabsList>
-        <Select value={tab} onValueChange={setTab}>
-          <SelectTrigger className="md:hidden">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="config">{t("settings.tabs.config")}</SelectItem>
-            <SelectItem value="system">{t("settings.tabs.system")}</SelectItem>
-            <SelectItem value="users">{t("settings.tabs.users")}</SelectItem>
-            <SelectItem value="audit">{t("settings.tabs.audit")}</SelectItem>
-            {tab === "discarded" && (
-              <SelectItem value="discarded">{t("settings.tabs.discarded")}</SelectItem>
-            )}
-          </SelectContent>
-        </Select>
+      <RouteTabs tabs={tabs} activeValue={tab} />
 
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsContent value="config">
           <ConfigPanel onOpenDiscarded={() => setTab("discarded")} />
         </TabsContent>

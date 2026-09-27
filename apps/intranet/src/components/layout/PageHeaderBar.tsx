@@ -6,7 +6,7 @@ import Link from "next/link";
 
 import { Info, type LucideIcon } from "lucide-react";
 
-import type { RouteTab } from "@/components/layout/RouteTabs";
+import { type RouteTab, routeTabClick } from "@/components/layout/route-tab";
 import { TourReplayButton, type CheckpointId } from "@/components/tour";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -141,6 +141,7 @@ export function PageHeaderTabsSlot() {
           <Link
             key={tab.value}
             href={tab.href}
+            onClick={routeTabClick(tab)}
             aria-current={active ? "page" : undefined}
             className={cn(
               "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
