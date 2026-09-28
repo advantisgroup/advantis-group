@@ -48,6 +48,9 @@ export interface AiRunView<T> {
   state: AiRunState | null;
   /** The latest decrypted output — partial while working. */
   text: string | null;
+  /** What the run has done along the way, for kinds that report it (the
+   * wiki chat's searches) — shaped by whoever wrote it. */
+  steps: unknown[] | null;
   /** The parsed final output, once the run is done. */
   result: T | null;
   /** Fetching the text keeps failing (it's still retrying in the background). */
@@ -65,8 +68,10 @@ type RunSource =
 interface Snapshot {
   runId: string;
   chars: number;
+  stepsRev: number;
   final: boolean;
   text: string | null;
+  steps: unknown[] | null;
 }
 
 /**
@@ -96,6 +101,7 @@ export function useAiRun<T = string>(
 
   const id = run?._id;
   const chars = run?.outputChars ?? 0;
+  const stepsRev = run?.stepsRev ?? 0;
   const status = run?.status;
 
   useEffect(() => {
@@ -104,23 +110,38 @@ export function useAiRun<T = string>(
   }, [id]);
 
   useEffect(() => {
-    if (!id || (chars === 0 && status !== "done")) return;
+    if (!id || (chars === 0 && stepsRev === 0 && status !== "done")) return;
     let active = true;
     let retry: ReturnType<typeof setTimeout> | undefined;
     // Not cancelled when a newer tick comes in: snapshots arrive every few
     // hundred ms, and dropping every in-flight fetch would starve the view
     // on a slow connection. Instead a response only wins if it's newer.
     void apiClient
-      .fetchJson<{ status: string; outputChars: number; output: string | null }>(`/ai/runs/${id}`)
+      .fetchJson<{
+        status: string;
+        outputChars: number;
+        output: string | null;
+        stepsRev: number;
+        steps: unknown[] | null;
+      }>(`/ai/runs/${id}`)
       .then(
         (res) => {
           failures.current = 0;
           setTextFailed(false);
           const final = res.status === "done";
           setSnapshot((prev) =>
-            prev?.runId === id && (prev.final || (!final && prev.chars > res.outputChars))
+            prev?.runId === id &&
+            (prev.final ||
+              (!final && (prev.chars > res.outputChars || prev.stepsRev > res.stepsRev)))
               ? prev
-              : { runId: id, chars: res.outputChars, final, text: res.output },
+              : {
+                  runId: id,
+                  chars: res.outputChars,
+                  stepsRev: res.stepsRev,
+                  final,
+                  text: res.output,
+                  steps: res.steps,
+                },
           );
         },
         () => {
@@ -139,10 +160,11 @@ export function useAiRun<T = string>(
       active = false;
       if (retry) clearTimeout(retry);
     };
-  }, [apiClient, id, chars, status, attempt]);
+  }, [apiClient, id, chars, stepsRev, status, attempt]);
 
   const current = snapshot && snapshot.runId === id ? snapshot : null;
   const text = current?.text ?? null;
+  const steps = current?.steps ?? null;
   const final = current?.final ?? false;
   const result = useMemo(() => {
     if (!final || text === null) return null;
@@ -167,6 +189,7 @@ export function useAiRun<T = string>(
     loading,
     state,
     text,
+    steps,
     result,
     textFailed,
     retryText: () => {

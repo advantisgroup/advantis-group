@@ -26,7 +26,13 @@ import {
 import { effectiveCustomRoleIds } from "./lib/auth";
 import { isFeatureEnabled } from "./lib/featureFlags";
 
-import { askContext, dailyBriefContext, navigateContext } from "./lib/aiContext";
+import {
+  askContext,
+  chatContext,
+  dailyBriefContext,
+  navigateContext,
+  openForChat,
+} from "./lib/aiContext";
 import { type Caller, getSessionCaller } from "./lib/caller";
 import { navigateSearch, navigateSearchKind } from "./lib/navigateSearch";
 import { displayName } from "./lib/users";
@@ -56,6 +62,7 @@ function toMeta(run: Doc<"aiRuns">) {
     status: run.status,
     phase: run.phase,
     outputChars: run.outputChars,
+    stepsRev: run.stepsRev ?? 0,
     hasTitle: !!run.title,
     transcriptChars: run.transcriptChars ?? null,
     model: run.model ?? null,
@@ -457,6 +464,10 @@ export const myAllowance = userQuery({
   handler: async (ctx) => allowance(ctx, ctx.caller),
 });
 
+async function webSearchAllowed(ctx: QueryCtx) {
+  return (await ctx.db.query("aiSettings").first())?.webSearch ?? false;
+}
+
 export const settings = userQuery({
   role: "manager",
   args: {},
@@ -464,7 +475,26 @@ export const settings = userQuery({
     dailyRunLimit: await dailyRunLimit(ctx),
     defaultDailyRunLimit: DEFAULT_DAILY_RUN_LIMIT,
     maxDailyRunLimit: MAX_DAILY_RUN_LIMIT,
+    webSearch: await webSearchAllowed(ctx),
   }),
+});
+
+/** Whether the chat offers web search to anyone — the switch the chat reads. */
+export const webSearchEnabled = userQuery({
+  args: {},
+  handler: async (ctx) => webSearchAllowed(ctx),
+});
+
+export const setWebSearch = userMutation({
+  role: "manager",
+  args: { enabled: v.boolean() },
+  handler: async (ctx, { enabled }) => {
+    const existing = await ctx.db.query("aiSettings").first();
+    const change = { webSearch: enabled, updatedByUserId: ctx.caller.id, updatedAt: Date.now() };
+    if (existing) await ctx.db.patch(existing._id, change);
+    else await ctx.db.insert("aiSettings", { dailyRunLimit: DEFAULT_DAILY_RUN_LIMIT, ...change });
+    return null;
+  },
 });
 
 export const setDailyRunLimit = userMutation({
@@ -559,8 +589,10 @@ export const apiProgress = serverMutation({
     phase: aiRunPhase,
     output: v.optional(v.string()),
     outputChars: v.number(),
+    steps: v.optional(v.string()),
+    stepsRev: v.optional(v.number()),
   },
-  handler: async (ctx, { runId, phase, output, outputChars }) => {
+  handler: async (ctx, { runId, phase, output, outputChars, steps, stepsRev }) => {
     const run = await ctx.db.get(runId);
     if (!run || run.status !== "running") return { cancelled: true };
     await ctx.db.patch(runId, {
@@ -568,6 +600,7 @@ export const apiProgress = serverMutation({
       outputChars,
       heartbeatAt: Date.now(),
       ...(output !== undefined ? { output } : {}),
+      ...(steps !== undefined ? { steps, stepsRev } : {}),
     });
     return { cancelled: false };
   },
@@ -725,6 +758,19 @@ export const apiDailyBriefContext = serverUserQuery({
 export const apiNavigateContext = serverUserQuery({
   args: {},
   handler: async (ctx) => navigateContext(ctx, ctx.caller),
+});
+export const apiChatContext = serverUserQuery({
+  args: {},
+  handler: async (ctx) => ({
+    ...chatContext(ctx.caller),
+    webSearch: await webSearchAllowed(ctx),
+  }),
+});
+/** One search hit read in full for the chat assistant, under the asking
+ * person's own access — null when they couldn't open it themselves. */
+export const apiChatOpen = serverUserQuery({
+  args: { key: v.string() },
+  handler: async (ctx, { key }) => openForChat(ctx, ctx.caller, key.slice(0, 200)),
 });
 /** One of the wayfinder's lookups, under the asking person's own access. */
 export const apiNavigateSearch = serverUserQuery({

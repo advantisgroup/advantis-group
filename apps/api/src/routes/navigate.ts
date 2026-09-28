@@ -15,7 +15,7 @@ import { Errors } from "../lib/errors.js";
 import { authed } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
-const SEARCH_KINDS = [
+export const SEARCH_KINDS = [
   "pages",
   "tickets",
   "wiki",
@@ -25,9 +25,9 @@ const SEARCH_KINDS = [
   "errorReports",
   "events",
 ] as const;
-type SearchKind = (typeof SEARCH_KINDS)[number];
+export type SearchKind = (typeof SEARCH_KINDS)[number];
 
-const KIND_LABEL: Record<SearchKind, string> = {
+export const KIND_LABEL: Record<SearchKind, string> = {
   pages: "Seiten",
   tickets: "IT-Tickets",
   wiki: "Wiki & Guidebooks",

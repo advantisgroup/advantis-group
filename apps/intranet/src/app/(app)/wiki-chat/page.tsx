@@ -17,7 +17,7 @@ export default function WikiChatPage() {
     <FeatureGate featureKey="ai" label={t("kind.wikiChat")}>
       {canUseAi ? (
         <div className="h-full">
-          <WikiChat className="rounded-none border-0" />
+          <WikiChat />
         </div>
       ) : (
         <ForbiddenScreen />

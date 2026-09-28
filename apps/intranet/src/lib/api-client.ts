@@ -50,6 +50,13 @@ export class IntranetApiClient {
     return this.readJson<T>(response);
   }
 
+  /** For files an `<img>` can't load itself because they need the token. */
+  async fetchBlob(path: string): Promise<Blob> {
+    const response = await fetch(`${apiBaseUrl}${path}`, { headers: await this.headers() });
+    if (!response.ok) throw new ApiResponseError(undefined);
+    return response.blob();
+  }
+
   async uploadForm<T>(
     path: string,
     form: FormData,

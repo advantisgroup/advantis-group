@@ -145,8 +145,9 @@ export const INTRANET_PAGES: IntranetPage[] = [
   {
     href: "/wiki-chat",
     label: "Wiki-Assistent",
-    description: "Dem KI-Assistenten Fragen zum Wiki stellen.",
-    keywords: ["ki", "ai", "fragen", "assistant"],
+    description:
+      "Mit Claude chatten: Fragen zum Wiki, zu Kollegen, Terminen, eigenen Tickets und – auf Wunsch – mit Websuche.",
+    keywords: ["ki", "ai", "fragen", "assistant", "claude", "chat", "websuche"],
   },
   {
     href: "/directory",

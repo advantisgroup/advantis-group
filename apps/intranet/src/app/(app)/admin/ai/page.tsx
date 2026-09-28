@@ -17,6 +17,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -75,6 +76,35 @@ function DailyLimit() {
   );
 }
 
+function WebSearchSetting() {
+  const t = useTranslations("Ai");
+  const settings = useQuery(api.aiRuns.settings);
+  const save = useMutation(api.aiRuns.setWebSearch);
+  const handleError = useErrorHandler();
+
+  if (!settings) return <Skeleton className="h-20 rounded-xl" />;
+
+  return (
+    <section className="flex items-center justify-between gap-6 rounded-xl border border-border/70 bg-card px-4 py-3.5">
+      <div className="min-w-0 max-w-lg">
+        <h2 className="text-sm font-semibold tracking-tight">{t("admin.webTitle")}</h2>
+        <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground text-pretty">
+          {t("admin.webHint")}
+        </p>
+      </div>
+      <Switch
+        checked={settings.webSearch}
+        aria-label={t("admin.webTitle")}
+        onCheckedChange={(enabled) =>
+          save({ enabled })
+            .then(() => toast.success(t(enabled ? "admin.webOn" : "admin.webOff")))
+            .catch(handleError)
+        }
+      />
+    </section>
+  );
+}
+
 /**
  * What AI has been doing lately, for the people answerable for it: how much
  * ran, what failed and why, what it cost in tokens, and what people said
@@ -98,7 +128,10 @@ export default function AiActivityPage() {
         icon={<Sparkles />}
       />
 
-      <DailyLimit />
+      <div className="space-y-3">
+        <DailyLimit />
+        <WebSearchSetting />
+      </div>
 
       {stats === undefined ? (
         <Skeleton className="h-24 rounded-xl" />

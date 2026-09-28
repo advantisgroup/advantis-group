@@ -170,7 +170,11 @@
     "limitTitle": "Tageslimit pro Mitarbeiter:in",
     "limitHint": "Wie viele KI-Anfragen jemand unterhalb von Manager in 24 Stunden starten kann, sofern keine seiner Rollen ein eigenes Limit hat. Manager und Admins sind nicht begrenzt.",
     "limitUnit": "Anfragen / 24 Std.",
-    "limitSaved": "Limit gespeichert"
+    "limitSaved": "Limit gespeichert",
+    "webTitle": "Websuche im Chat",
+    "webHint": "Erlaubt, dass Claude im Chat auf Wunsch im öffentlichen Web sucht. Nur Suchbegriffe verlassen das Intranet; jede Suche rechnet Anthropic zusätzlich zu den Tokens ab.",
+    "webOn": "Websuche ist im Chat verfügbar",
+    "webOff": "Websuche ist ausgeschaltet"
   },
   "detail": {
     "aboutRun": "Dieser Lauf",

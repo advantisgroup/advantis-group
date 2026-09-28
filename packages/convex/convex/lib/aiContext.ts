@@ -313,6 +313,163 @@ function berlinTime(ms: number) {
   });
 }
 
+// --- Wiki chat ----------------------------------------------------------------
+
+/**
+ * What the chat assistant always knows: who's asking, what day it is and every
+ * page they can open, with its path so the answer can link straight to it.
+ * Anything more specific it looks up with its tools.
+ */
+export function chatContext(caller: Caller) {
+  const user = caller.user;
+  const links: { title: string; href: string }[] = [];
+  const pageLines: string[] = [];
+  for (const page of visiblePages(caller)) {
+    links.push({ title: page.label, href: page.href });
+    pageLines.push(`- ${page.label} (${page.href}): ${page.description}`);
+    for (const link of page.deepLinks ?? []) {
+      links.push({ title: link.label, href: link.href });
+      pageLines.push(`  - ${link.label} (${link.href})`);
+    }
+  }
+  const text = [
+    block("Person", [
+      `Name: ${displayName(user)}`,
+      user.jobTitle ? `Position: ${user.jobTitle}` : null,
+      user.department ? `Abteilung: ${user.department}` : null,
+      `Rolle im Intranet: ${caller.isAdmin ? "Admin" : caller.isManager ? "Manager" : "Mitarbeiter"}`,
+      `Heute: ${new Date().toLocaleDateString("de-DE", { timeZone: BERLIN, dateStyle: "full" })}`,
+    ]),
+    block("Seiten, die diese Person öffnen kann (Name (Pfad): was man dort tut)", pageLines),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  return { text, links };
+}
+
+/**
+ * One search hit opened in full for the chat, by the key the search handed
+ * out. Every kind re-checks the same visibility its search applies, so a key
+ * can't open more than searching could have found.
+ */
+export async function openForChat(
+  ctx: QueryCtx,
+  caller: Caller,
+  key: string,
+): Promise<{ title: string; href: string; text: string } | null> {
+  const split = key.indexOf(":");
+  const kind = key.slice(0, split);
+  const id = key.slice(split + 1);
+  const now = Date.now();
+  const cap = (context: { title: string; href: string; text: string }) => ({
+    ...context,
+    text: context.text.slice(0, ASK_CONTEXT_CHARS),
+  });
+
+  switch (kind) {
+    case "wiki": {
+      const entryId = ctx.db.normalizeId("wikiEntries", id);
+      const e = entryId ? await ctx.db.get(entryId) : null;
+      if (!e || e.deletedAt || e.validUntil <= now || (e.minRole && !caller.meets(e.minRole))) {
+        return null;
+      }
+      return cap({
+        title: e.thema,
+        href: `/guidebooks/${e.slug}`,
+        text: [
+          block("Wiki-Eintrag", [
+            `Thema: ${e.thema}`,
+            e.categoryName ? `Kategorie: ${e.categoryName}` : null,
+            e.tags.length ? `Tags: ${e.tags.join(", ")}` : null,
+            e.link ? `Link: ${e.link}` : null,
+          ]),
+          block("Text", [plainText(e.erklaerung)]),
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
+      });
+    }
+    case "guidebook": {
+      const pageId = ctx.db.normalizeId("guidebookPages", id);
+      const p = pageId ? await ctx.db.get(pageId) : null;
+      if (
+        !p ||
+        p.deletedAt ||
+        p.teams.length > 0 ||
+        (p.minRole && !(p.minRole === "admin" ? caller.isAdmin : caller.isManager))
+      ) {
+        return null;
+      }
+      return cap({
+        title: p.title,
+        href: `/guidebooks/${p.slug}`,
+        text: block("Guidebook (interaktives Werkzeug, nur die Beschreibung ist lesbar)", [
+          `Titel: ${p.title}`,
+          `Thema: ${p.topic}`,
+          `Beschreibung: ${p.description}`,
+        ]),
+      });
+    }
+    case "ticket": {
+      const ticketId = ctx.db.normalizeId("itTickets", id);
+      const t = ticketId ? await ctx.db.get(ticketId) : null;
+      const mine = t && (t.createdByUserId === caller.id || t.assignedToUserId === caller.id);
+      if (!t || t.deletedAt || !mine) return null;
+      return cap(await ticketContext(ctx, id));
+    }
+    // These throw not_found for anything this person can't see.
+    case "announcement":
+      return announcementContext(ctx, caller, id).then(cap, () => null);
+    case "suggestion":
+      return suggestionContext(ctx, id).then(cap, () => null);
+    case "errorReport":
+      return errorReportContext(ctx, id).then(cap, () => null);
+    case "person": {
+      const userId = ctx.db.normalizeId("users", id);
+      const u = userId ? await ctx.db.get(userId) : null;
+      if (!u || u.status !== "active") return null;
+      return {
+        title: displayName(u),
+        href: `/directory?user=${u._id}`,
+        text: block("Person", [
+          `Name: ${displayName(u)}`,
+          u.jobTitle ? `Position: ${u.jobTitle}` : null,
+          u.department ? `Abteilung: ${u.department}` : null,
+          u.teams?.length ? `Teams: ${u.teams.join(", ")}` : null,
+          u.expertise?.length ? `Fachgebiete: ${u.expertise.join(", ")}` : null,
+          `E-Mail: ${u.email}`,
+          u.phone ? `Telefon: ${u.phone}` : null,
+          u.statusText && (!u.statusUntil || u.statusUntil > now)
+            ? `Status: ${u.statusText}`
+            : null,
+          u.managerId ? `Vorgesetzte(r): ${await userName(ctx, u.managerId)}` : null,
+        ]),
+      };
+    }
+    case "event": {
+      const eventId = ctx.db.normalizeId("events", id);
+      const e = eventId ? await ctx.db.get(eventId) : null;
+      if (!e || e.deletedAt || e.dismissedAt || !userMatchesAudience(caller.user, e.audience)) {
+        return null;
+      }
+      return cap({
+        title: e.title,
+        href: `/calendar?event=${e._id}`,
+        text: block("Termin", [
+          `Titel: ${e.title}`,
+          e.allDay
+            ? `Ganztägig: ${berlinTime(e.start)}`
+            : `Von ${berlinTime(e.start)} bis ${berlinTime(e.end)}`,
+          e.location ? `Ort: ${e.location}` : null,
+          e.description ? `Beschreibung: ${e.description}` : null,
+        ]),
+      });
+    }
+    default:
+      return null;
+  }
+}
+
 /**
  * The same things the overview page already shows this person — their open
  * work, today's and tomorrow's events, what's waiting to be read — as one

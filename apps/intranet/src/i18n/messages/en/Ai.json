@@ -170,7 +170,11 @@
     "limitTitle": "Daily limit per employee",
     "limitHint": "How many AI requests someone below Manager can start in any 24 hours, unless one of their roles sets its own. Managers and admins aren't limited.",
     "limitUnit": "requests / 24 h",
-    "limitSaved": "Limit saved"
+    "limitSaved": "Limit saved",
+    "webTitle": "Web search in the chat",
+    "webHint": "Lets people allow Claude to search the public web from the chat. Only search words leave the intranet; each search is billed by Anthropic on top of tokens.",
+    "webOn": "Web search is available in the chat",
+    "webOff": "Web search is switched off"
   },
   "detail": {
     "aboutRun": "This run",

@@ -52,6 +52,8 @@ export const aiRunsRoute = new Elysia()
       return {
         status: run.status,
         outputChars: run.outputChars,
+        stepsRev: run.stepsRev ?? 0,
+        steps: run.steps ? (JSON.parse(decrypt(run.steps, key)) as unknown[]) : null,
         output: run.output ? decrypt(run.output, key) : null,
         title: run.title ? decrypt(run.title, key) : null,
       };

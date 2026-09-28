@@ -60,11 +60,50 @@
   }
 }
 
-/* The Claude mark turns slowly while a run is working. */
-.ai-glyph[data-working="true"] {
-  transform-origin: center;
-  will-change: transform;
-  animation: ai-glyph 3s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+/* Three clay dots taking turns — what Claude shows while it works, instead of
+   a moving mark. */
+.ai-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ai-dots > span {
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background-color: var(--ai-1);
+  animation: ai-dot 1.2s ease-in-out infinite;
+}
+.ai-dots > span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.ai-dots > span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* Standing in for the mark, the dots take its size, whatever that is. */
+.ai-glyph > .ai-dots {
+  width: 100%;
+  justify-content: center;
+  gap: 11%;
+}
+.ai-glyph > .ai-dots > span {
+  width: 22%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+@keyframes ai-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Streamed words arrive soft and settle — each span animates once, on mount. */
@@ -85,12 +124,6 @@
   }
   to {
     background-position: -30% 0;
-  }
-}
-
-@keyframes ai-glyph {
-  to {
-    transform: rotate(360deg);
   }
 }
 
@@ -118,7 +151,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ai-shimmer,
-  .ai-glyph[data-working="true"],
+  .ai-dots > span,
   .ai-word,
   .ai-rise {
     animation: none;

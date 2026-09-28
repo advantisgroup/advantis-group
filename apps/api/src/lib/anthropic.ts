@@ -20,15 +20,26 @@ export class AnthropicClient {
     }
   }
 
-  /** Streams a reply, handing the text so far to `onText` on every delta.
-   * Failures mid-stream are converted like a failed create; an abort through
-   * `signal` is rethrown untouched so the caller can tell a stop from a fault. */
+  /** Streams a reply, handing the text so far to `onText` on every delta and
+   * each finished block to `onBlock` (how a server-side web search shows up
+   * while it runs). Failures mid-stream are converted like a failed create; an
+   * abort through `signal` is rethrown untouched so the caller can tell a stop
+   * from a fault. */
   async streamText(
     params: Anthropic.MessageStreamParams,
-    { signal, onText }: { signal?: AbortSignal; onText?: (soFar: string) => void } = {},
+    {
+      signal,
+      onText,
+      onBlock,
+    }: {
+      signal?: AbortSignal;
+      onText?: (soFar: string) => void;
+      onBlock?: (block: Anthropic.ContentBlock) => void;
+    } = {},
   ): Promise<{ text: string; message: Anthropic.Message }> {
     try {
       const stream = this.client.messages.stream(params, { signal });
+      if (onBlock) stream.on("contentBlock", onBlock);
       let text = "";
       for await (const event of stream) {
         if (event.type === "content_block_delta" && event.delta.type === "text_delta") {

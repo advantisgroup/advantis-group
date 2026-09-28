@@ -13,6 +13,11 @@ export const aiTables = {
     clerkUserId: v.string(),
     title: v.string(), // ciphertext
     messages: v.string(), // ciphertext (encrypted JSON of the message array)
+    // Kept at the top of the chat list.
+    pinnedAt: v.optional(v.number()),
+    // Files attached to its questions — ciphertext too, sealed by the API
+    // before upload. Listed here so deleting the chat deletes them.
+    files: v.optional(v.array(v.id("_storage"))),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_user", ["clerkUserId"]),
@@ -32,6 +37,11 @@ export const aiTables = {
     phase: aiRunPhase,
     output: v.optional(v.string()), // ciphertext, partial while running
     outputChars: v.number(),
+    // What the run is doing along the way (searching, reading), so the chat
+    // can show it live. Ciphertext like `output`; `stepsRev` counts changes so
+    // the browser knows when to fetch it again.
+    steps: v.optional(v.string()),
+    stepsRev: v.optional(v.number()),
     // A few words saying what the run was about (the question asked, the file
     // read), so a history row means something. Ciphertext like `output`.
     title: v.optional(v.string()),
@@ -66,6 +76,9 @@ export const aiTables = {
     // Runs an employee may start in any 24 hours. Managers and admins aren't
     // capped — they're the ones watching the usage on /admin/ai.
     dailyRunLimit: v.number(),
+    // Whether the chat may search the public web at all. Off until a manager
+    // turns it on — each person still chooses per chat on top of this.
+    webSearch: v.optional(v.boolean()),
     updatedByUserId: v.id("users"),
     updatedAt: v.number(),
   }),

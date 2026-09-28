@@ -136,3 +136,56 @@ describe("navigate search", () => {
     expect(context.text).toContain("#7 Monitor flackert");
   });
 });
+
+describe("chat assistant", () => {
+  function open(t: T, clerkUserId: string, key: string) {
+    return t.query(api.aiRuns.apiChatOpen, { serverKey, clerkUserId, key });
+  }
+
+  test("opens your own ticket in full, never someone else's", async () => {
+    const t = setup();
+    const alice = await seedUser(t, "user_alice");
+    const bob = await seedUser(t, "user_bob");
+    const mine = await seedTicket(t, alice, 1, "Drucker druckt nicht");
+    const theirs = await seedTicket(t, bob, 2, "Gehaltsfrage");
+
+    const item = await open(t, "user_alice", `ticket:${mine}`);
+    expect(item?.href).toBe(`/it-tickets?open=${mine}`);
+    expect(item?.text).toContain("Thema: Drucker druckt nicht");
+    expect(await open(t, "user_alice", `ticket:${theirs}`)).toBeNull();
+  });
+
+  test("an event outside your audience, or a made-up key, opens nothing", async () => {
+    const t = setup();
+    await seedUser(t, "user_alice");
+    const bob = await seedUser(t, "user_bob");
+    const event = await t.run((ctx) =>
+      ctx.db.insert("events", {
+        title: "Führungskreis",
+        start: Date.now(),
+        end: Date.now() + 3_600_000,
+        allDay: false,
+        createdByUserId: bob,
+        audience: { kind: "users", userIds: [bob] },
+        createdAt: Date.now(),
+      }),
+    );
+    expect(await open(t, "user_alice", `event:${event}`)).toBeNull();
+    expect(await open(t, "user_bob", `event:${event}`)).toMatchObject({ title: "Führungskreis" });
+    expect(await open(t, "user_alice", `applicant:${bob}`)).toBeNull();
+  });
+
+  test("the context names the person and links only pages they can open", async () => {
+    const t = setup();
+    await seedUser(t, "user_alice", { firstName: "Alice", jobTitle: "Kundenberaterin" });
+    const context = await t.query(api.aiRuns.apiChatContext, {
+      serverKey,
+      clerkUserId: "user_alice",
+    });
+    expect(context.text).toContain("Position: Kundenberaterin");
+    expect(context.links.map((l) => l.href)).toContain("/calendar");
+    expect(context.links.map((l) => l.href)).not.toContain("/admin");
+    // Web search stays off until a manager allows it.
+    expect(context.webSearch).toBe(false);
+  });
+});

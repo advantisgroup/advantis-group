@@ -30,6 +30,19 @@ const MARKDOWN: ComponentProps<typeof ReactMarkdown>["components"] = {
   ),
 };
 
-export function AiMarkdown({ children }: { children: string }) {
-  return <ReactMarkdown components={MARKDOWN}>{children}</ReactMarkdown>;
+export type AiMarkdownComponents = ComponentProps<typeof ReactMarkdown>["components"];
+
+export function AiMarkdown({
+  children,
+  components,
+}: {
+  children: string;
+  /** Replaces single elements, e.g. the chat's source pills for links. */
+  components?: AiMarkdownComponents;
+}) {
+  return (
+    <ReactMarkdown components={components ? { ...MARKDOWN, ...components } : MARKDOWN}>
+      {children}
+    </ReactMarkdown>
+  );
 }

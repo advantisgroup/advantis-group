@@ -3,7 +3,7 @@ import { type Id } from "@advantis/convex/dataModel";
 import { waitUntil } from "@vercel/functions";
 import { ConvexError } from "convex/values";
 
-import { anthropic } from "./anthropic.js";
+import { type Anthropic, anthropic } from "./anthropic.js";
 import { getConvex, getConvexServerKey } from "./convex.js";
 import { encrypt } from "./crypto.js";
 import { ApiError, ProviderError } from "./errors.js";
@@ -209,6 +209,7 @@ export function recordRequest(
 }
 
 export interface AiRunContext {
+  id: Id<"aiRuns">;
   signal: AbortSignal;
   phase(phase: AiRunPhase): void;
   /** The text so far — snapshots are throttled, so call it on every delta. */
@@ -227,6 +228,9 @@ export interface AiRunContext {
   /** Where the result lives, when that's only known at the end (the
    * wayfinder's destination) — the dock links there instead. */
   setHref(href: string): void;
+  /** What the run is doing along the way (the chat's searches and reads),
+   * written straight away — pass the whole list each time. */
+  steps(list: unknown[]): void;
 }
 
 const HEARTBEAT_MS = 5_000;
@@ -325,6 +329,9 @@ export async function startAiRun(
   let tokensIn = 0;
   let tokensOut = 0;
   let resultHref: string | undefined;
+  let steps: unknown[] = [];
+  let stepsRev = 0;
+  let stepsSent = 0;
   const transcript: AiTranscript = { version: 2, turns: [], truncated: false };
 
   const push = () => {
@@ -332,7 +339,9 @@ export async function startAiRun(
       phase,
       output: latest ? encrypt(latest, key) : undefined,
       outputChars: latest.length,
+      ...(stepsRev !== stepsSent ? { steps: encrypt(JSON.stringify(steps), key), stepsRev } : {}),
     };
+    stepsSent = stepsRev;
     writes = writes
       .then(async () => {
         const { cancelled } = await convex.mutation(api.aiRuns.apiProgress, {
@@ -346,6 +355,7 @@ export async function startAiRun(
   };
 
   const context: AiRunContext = {
+    id: runId,
     signal: controller.signal,
     phase(next) {
       if (next === phase) return;
@@ -376,6 +386,11 @@ export async function startAiRun(
     },
     setHref(href) {
       resultHref = safeHref(href);
+    },
+    steps(list) {
+      steps = list;
+      stepsRev += 1;
+      push();
     },
   };
 
@@ -447,11 +462,23 @@ type TextRequest = Omit<Parameters<typeof anthropic.streamText>[0], "model">;
  * (the reply, including any tool calls). Returns the whole message for
  * callers that use tools; most want `runModelText`.
  */
-export async function runModelTurn(run: AiRunContext, request: TextRequest) {
+export async function runModelTurn(
+  run: AiRunContext,
+  request: TextRequest,
+  {
+    onText = run.text,
+    onBlock,
+  }: {
+    /** Defaults to the run's text; a tool loop passes its own to keep what
+     * earlier turns already wrote in front. */
+    onText?: (soFar: string) => void;
+    onBlock?: (block: Anthropic.ContentBlock) => void;
+  } = {},
+) {
   recordRequest(run.transcript, run.transcriptCursor, request);
   const { text, message } = await anthropic.streamText(
     { model: AI_MODEL, ...request },
-    { signal: run.signal, onText: run.text },
+    { signal: run.signal, onText, onBlock },
   );
   const parts = toParts(message.content as unknown as ContentLike);
   const tokensIn = message.usage?.input_tokens ?? 0;
@@ -476,9 +503,16 @@ export async function runModelTurn(run: AiRunContext, request: TextRequest) {
 export async function runModelText(
   run: AiRunContext,
   request: TextRequest,
-  { acceptTruncated = false }: { acceptTruncated?: boolean } = {},
+  {
+    acceptTruncated = false,
+    onText,
+  }: {
+    acceptTruncated?: boolean;
+    /** For a side call (a chat's title) that mustn't replace the run's text. */
+    onText?: (soFar: string) => void;
+  } = {},
 ): Promise<string> {
-  const { text, message } = await runModelTurn(run, request);
+  const { text, message } = await runModelTurn(run, request, { onText });
   if (!text.trim()) throw new AiRunError("no_content");
   if (message.stop_reason === "max_tokens" && !acceptTruncated) {
     throw new AiRunError("truncated");
