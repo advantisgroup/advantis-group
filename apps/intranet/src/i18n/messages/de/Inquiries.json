@@ -91,7 +91,10 @@
     "callback_cancelled": "Rückruf abgesagt",
     "callback_rescheduled": "Rückruf verschoben",
     "resent": "Erneut gesendet",
-    "withdrawn": "Von der Kund:in zurückgezogen"
+    "withdrawn": "Von der Kund:in zurückgezogen",
+    "merged": "Zusammengeführt in {reference}",
+    "merged_in": "{reference} hierher zusammengeführt",
+    "rated": "Kund:in hat die Antwort bewertet"
   },
   "searchLabel": "Anfragen durchsuchen",
   "searchPlaceholder": "Nach Referenz, Name, E-Mail, Firma, Telefon oder Text suchen…",
@@ -103,5 +106,165 @@
   "referenceCopied": "{reference} kopiert",
   "attach": "Dateien anhängen",
   "removeFile": "{name} entfernen",
-  "tooLarge": "Dateien dürfen bis zu 10 MB groß sein."
+  "tooLarge": "Dateien dürfen bis zu 10 MB groß sein.",
+  "tags": {
+    "title": "Tags",
+    "filter": "Tag",
+    "clearFilter": "Tag-Filter entfernen",
+    "add": "Tag hinzufügen",
+    "placeholder": "Tag hinzufügen…",
+    "remove": "Tag {tag} entfernen",
+    "failed": "Die Tags konnten nicht gespeichert werden. Versuch es noch einmal."
+  },
+  "composer": {
+    "label": "Antwort oder Notiz",
+    "reply": "Antwort an Kund:in",
+    "note": "Interne Notiz"
+  },
+  "notes": {
+    "label": "Interne Notiz",
+    "placeholder": "Sieht nur das Team. Praktisch für Kontext, nächste Schritte oder wen man fragen kann…",
+    "hint": "Wird nie gemailt oder der Kund:in gezeigt. Steht in der Datenauskunft, wenn sie eine anfordert.",
+    "add": "Notiz speichern",
+    "added": "Notiz gespeichert",
+    "edit": "Notiz bearbeiten",
+    "delete": "Notiz löschen",
+    "deleteConfirm": "Diese Notiz löschen?",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "edited": "bearbeitet",
+    "someone": "Jemand",
+    "failed": "Das hat nicht geklappt. Versuch es noch einmal."
+  },
+  "templates": {
+    "title": "Antwortvorlagen",
+    "description": "Textbausteine für das ganze Team, auswählbar über „Vorlagen“ neben dem Antwortfeld",
+    "pick": "Vorlagen",
+    "search": "Vorlagen durchsuchen…",
+    "none": "Noch keine Vorlagen.",
+    "noMatch": "Keine Vorlage passt.",
+    "manage": "Vorlagen verwalten",
+    "new": "Neue Vorlage",
+    "empty": "Noch keine Vorlagen. Schreib die häufigsten Antworten einmal auf und nutze sie wieder.",
+    "name": "Name",
+    "namePlaceholder": "z. B. Danke, wir rufen zurück",
+    "language": "Sprache",
+    "anyLanguage": "Jede Sprache",
+    "anyLanguageShort": "alle",
+    "languages": {
+      "de": "Deutsch",
+      "en": "Englisch",
+      "fr": "Französisch",
+      "zh": "Chinesisch"
+    },
+    "text": "Text",
+    "placeholdersHint": "Werden beim Einfügen ausgefüllt; leere fallen weg:",
+    "placeholders": {
+      "firstName": "Vorname der Kund:in",
+      "lastName": "Nachname der Kund:in",
+      "name": "Vollständiger Name der Kund:in",
+      "company": "Firma der Kund:in",
+      "reference": "Referenz der Anfrage, z. B. #841KGR",
+      "myFirstName": "Dein Vorname",
+      "myName": "Dein vollständiger Name"
+    },
+    "save": "Speichern",
+    "saved": "Vorlage gespeichert",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "deleteConfirm": "Sie bleibt 30 Tage im Papierkorb und lässt sich dort wiederherstellen.",
+    "deleted": "Vorlage in den Papierkorb verschoben",
+    "pickOne": "Wähl eine Vorlage oder leg eine neue an",
+    "pickOneHint": "Beim Antworten stehen Vorlagen in der Sprache der Kund:in oben.",
+    "deleteConfirmTitle": "Diese Vorlage löschen?"
+  },
+  "viewers": {
+    "writing": "{count, plural, one {{names} schreibt gerade eine Antwort. Stimmt euch ab, bevor du auch antwortest.} other {{names} schreiben gerade Antworten. Stimmt euch ab, bevor du auch antwortest.}}",
+    "viewing": "{count, plural, one {{names} hat die Anfrage auch gerade offen.} other {{names} haben die Anfrage auch gerade offen.}}"
+  },
+  "merge": {
+    "related": "Gleiche:r Kund:in",
+    "action": "Hierhin zusammenführen",
+    "hint": "Alles aus {source} nach {target} verschieben und {source} schließen",
+    "confirm": "Nachricht, Antworten, Notizen und Tags wandern nach {target}, {source} wird geschlossen. Die Kund:in bekommt keine Mail. Das lässt sich nicht rückgängig machen.",
+    "done": "Zusammengeführt in {target}",
+    "failed": "Zusammenführen hat nicht geklappt. Das geht nur bei Anfragen derselben Kund:in und nicht bei einem noch anstehenden Rückruf.",
+    "banner": "Diese Anfrage wurde in <link>{reference}</link> zusammengeführt. Antworte dort.",
+    "confirmTitle": "{source} mit {target} zusammenführen?",
+    "confirmLabel": "Zusammenführen"
+  },
+  "settings": {
+    "title": "Postfach-Einstellungen",
+    "description": "Gelten für alle, die das Website-Postfach bearbeiten.",
+    "autoClose": "Beantwortete Anfragen automatisch schließen",
+    "autoCloseHint": "Eine beantwortete Anfrage, auf die sich die Kund:in nicht mehr meldet, wird nach dieser Zeit geschlossen – so zeigt „Beantwortet“ nur, was noch auf sie wartet. Sie bekommt keine Mail, und eine Antwort öffnet die Anfrage wieder.",
+    "never": "Nie",
+    "afterDays": "Nach {days} Tagen ohne Aktivität",
+    "saved": "Gespeichert",
+    "failed": "Speichern hat nicht geklappt. Versuch es noch einmal."
+  },
+  "stats": {
+    "title": "Auswertung",
+    "description": "Was reinkam, wie schnell geantwortet wurde und wie lange es offen blieb",
+    "range": "Zeitraum",
+    "days": "{days} Tage",
+    "received": "Eingegangen",
+    "closed": "Geschlossen",
+    "before": "{value} im Zeitraum davor",
+    "firstResponse": "Erste Antwort (Median)",
+    "firstResponseHint": "{before} im Zeitraum davor",
+    "firstResponseShort": "Erste Antwort",
+    "timeToClose": "Bis geschlossen (Median)",
+    "timeToCloseHint": "{before} im Zeitraum davor",
+    "unanswered": "Noch ohne Antwort",
+    "unansweredHint": "der eingegangenen; {withdrawn} zurückgezogen",
+    "flow": "Eingegangen und geschlossen",
+    "flowHintDay": "Pro Tag",
+    "flowHintWeek": "Pro Woche, die letzte endet heute",
+    "view": "Ansicht",
+    "viewChart": "Diagramm",
+    "viewTable": "Tabelle",
+    "tableDay": "Tag",
+    "tableWeek": "Woche ab",
+    "byType": "Nach Art",
+    "byAssignee": "Nach Zuständigkeit",
+    "type": "Art",
+    "assignee": "Zuständig",
+    "count": "Anfragen",
+    "answeredOf": "{answered} von {count} beantwortet",
+    "tags": "Tags",
+    "tag": "Tag",
+    "noTags": "Keine getaggten Anfragen in diesem Zeitraum.",
+    "nothing": "In diesem Zeitraum ist nichts eingegangen.",
+    "minutes": "{value} Min.",
+    "hours": "{value} Std.",
+    "daysShort": "{value} Tg.",
+    "footnote": "Zeiten sind Kalenderzeit vom Eingang bis zur ersten Antwort (oder bestätigtem Rückruf) und bis zum Schließen, keine Geschäftszeiten. Zusammengeführte Anfragen zählen einmal.",
+    "truncated": "Gezählt wurden nur die 5.000 zuletzt aktiven Anfragen.",
+    "satisfaction": "Hat die Antwort geholfen?",
+    "noRatings": "In diesem Zeitraum hat niemand eine Antwort bewertet.",
+    "helpfulShare": "{helpful} von {total} Bewertungen sagen: hat geholfen",
+    "recentUnhelpful": "Zuletzt „hat nicht geholfen“"
+  },
+  "ai": {
+    "title": "KI",
+    "details": "Was gesendet wurde",
+    "again": "Neu schreiben",
+    "summary": {
+      "title": "Zusammenfassung",
+      "prompt": "Ein paar Sätze dazu, was die Kund:in möchte und wo es steht.",
+      "start": "Zusammenfassen"
+    },
+    "draft": {
+      "title": "Antwortentwurf",
+      "prompt": "Ein erster Entwurf in der Sprache der Kund:in. Er landet zum Prüfen im Antwortfeld; [eckige Klammern] markieren, was nur du ausfüllen kannst.",
+      "start": "Antwort entwerfen",
+      "use": "Ins Antwortfeld übernehmen"
+    }
+  },
+  "rating": {
+    "title": "Rückmeldung der Kund:in",
+    "helpful": "Die Antwort hat geholfen",
+    "not_helpful": "Die Antwort hat nicht geholfen"
+  }
 }

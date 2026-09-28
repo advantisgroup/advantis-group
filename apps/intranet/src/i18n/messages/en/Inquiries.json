@@ -91,7 +91,10 @@
     "callback_cancelled": "Callback cancelled",
     "callback_rescheduled": "Callback moved",
     "resent": "Sent again",
-    "withdrawn": "Withdrawn by the customer"
+    "withdrawn": "Withdrawn by the customer",
+    "merged": "Merged into {reference}",
+    "merged_in": "{reference} merged in",
+    "rated": "Customer rated the answer"
   },
   "searchLabel": "Search inquiries",
   "searchPlaceholder": "Search by reference, name, email, company, phone or text…",
@@ -103,5 +106,165 @@
   "referenceCopied": "Copied {reference}",
   "attach": "Attach files",
   "removeFile": "Remove {name}",
-  "tooLarge": "Files can be up to 10 MB."
+  "tooLarge": "Files can be up to 10 MB.",
+  "tags": {
+    "title": "Tags",
+    "filter": "Tag",
+    "clearFilter": "Clear tag filter",
+    "add": "Add a tag",
+    "placeholder": "Add a tag…",
+    "remove": "Remove tag {tag}",
+    "failed": "Couldn't save the tags. Try again."
+  },
+  "composer": {
+    "label": "Reply or note",
+    "reply": "Reply to customer",
+    "note": "Internal note"
+  },
+  "notes": {
+    "label": "Internal note",
+    "placeholder": "Only the team sees this. Handy for context, next steps or who to ask…",
+    "hint": "Never mailed or shown to the customer. Included if they ask for a copy of their data.",
+    "add": "Add note",
+    "added": "Note added",
+    "edit": "Edit note",
+    "delete": "Delete note",
+    "deleteConfirm": "Delete this note?",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edited": "edited",
+    "someone": "Someone",
+    "failed": "That didn't work. Try again."
+  },
+  "templates": {
+    "title": "Reply templates",
+    "description": "Canned replies the whole team shares, picked from “Templates” beside the reply box",
+    "pick": "Templates",
+    "search": "Search templates…",
+    "none": "No templates yet.",
+    "noMatch": "No template matches.",
+    "manage": "Manage templates",
+    "new": "New template",
+    "empty": "No templates yet. Write the answers you give most often once, and reuse them.",
+    "name": "Name",
+    "namePlaceholder": "e.g. Thanks, we'll call you back",
+    "language": "Language",
+    "anyLanguage": "Any language",
+    "anyLanguageShort": "all",
+    "languages": {
+      "de": "German",
+      "en": "English",
+      "fr": "French",
+      "zh": "Chinese"
+    },
+    "text": "Text",
+    "placeholdersHint": "Filled in when you pick it; empty ones are left out:",
+    "placeholders": {
+      "firstName": "The customer's first name",
+      "lastName": "The customer's last name",
+      "name": "The customer's full name",
+      "company": "The customer's company",
+      "reference": "The inquiry's reference, like #841KGR",
+      "myFirstName": "Your first name",
+      "myName": "Your full name"
+    },
+    "save": "Save",
+    "saved": "Template saved",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleteConfirm": "It goes to the trash for 30 days, where you can restore it.",
+    "deleted": "Template moved to the trash",
+    "pickOne": "Pick a template or start a new one",
+    "pickOneHint": "Templates in the customer's language are listed first when you reply.",
+    "deleteConfirmTitle": "Delete this template?"
+  },
+  "viewers": {
+    "writing": "{count, plural, one {{names} is writing a reply right now. Check before you answer too.} other {{names} are writing replies right now. Check before you answer too.}}",
+    "viewing": "{count, plural, one {{names} has this open too.} other {{names} have this open too.}}"
+  },
+  "merge": {
+    "related": "Same customer",
+    "action": "Merge into this",
+    "hint": "Move everything from {source} into {target} and close {source}",
+    "confirm": "Its message, replies, notes and tags move to {target}, and {source} is closed. The customer isn't mailed. This can't be undone.",
+    "done": "Merged into {target}",
+    "failed": "Couldn't merge. Only inquiries from the same customer can be merged, and not a callback that's still to happen.",
+    "banner": "This inquiry was merged into <link>{reference}</link>. Reply there.",
+    "confirmTitle": "Merge {source} into {target}?",
+    "confirmLabel": "Merge"
+  },
+  "settings": {
+    "title": "Inbox settings",
+    "description": "These apply to everyone who works the website inbox.",
+    "autoClose": "Close answered inquiries automatically",
+    "autoCloseHint": "An answered inquiry the customer doesn't come back to is closed after this long, so “Answered” only lists what's still waiting on them. They aren't mailed, and replying opens it again.",
+    "never": "Never",
+    "afterDays": "After {days} days without activity",
+    "saved": "Saved",
+    "failed": "Couldn't save. Try again."
+  },
+  "stats": {
+    "title": "Inbox stats",
+    "description": "What came in, how fast it was answered and how long it stayed open",
+    "range": "Period",
+    "days": "{days} days",
+    "received": "Received",
+    "closed": "Closed",
+    "before": "{value} in the period before",
+    "firstResponse": "First answer (median)",
+    "firstResponseHint": "{before} in the period before",
+    "firstResponseShort": "First answer",
+    "timeToClose": "Until closed (median)",
+    "timeToCloseHint": "{before} in the period before",
+    "unanswered": "Still without an answer",
+    "unansweredHint": "of those received; {withdrawn} withdrawn",
+    "flow": "Received and closed",
+    "flowHintDay": "Per day",
+    "flowHintWeek": "Per week, the latest one ending today",
+    "view": "View",
+    "viewChart": "Chart",
+    "viewTable": "Table",
+    "tableDay": "Day",
+    "tableWeek": "Week from",
+    "byType": "By type",
+    "byAssignee": "By assignee",
+    "type": "Type",
+    "assignee": "Assignee",
+    "count": "Inquiries",
+    "answeredOf": "{answered} of {count} answered",
+    "tags": "Tags",
+    "tag": "Tag",
+    "noTags": "No tagged inquiries in this period.",
+    "nothing": "Nothing received in this period.",
+    "minutes": "{value} min",
+    "hours": "{value} h",
+    "daysShort": "{value} d",
+    "footnote": "Times are calendar time from receiving to the first reply (or confirmed callback) and to closing, not business hours. Inquiries merged into another count once.",
+    "truncated": "Only the 5,000 most recently active inquiries were counted.",
+    "satisfaction": "Did the answer help?",
+    "noRatings": "No customer has rated an answer in this period.",
+    "helpfulShare": "{helpful} of {total} ratings said it helped",
+    "recentUnhelpful": "Latest “didn't help”"
+  },
+  "ai": {
+    "title": "AI",
+    "details": "What was sent",
+    "again": "Write it again",
+    "summary": {
+      "title": "Summary",
+      "prompt": "A few sentences on what the customer wants and where it stands.",
+      "start": "Summarize"
+    },
+    "draft": {
+      "title": "Reply draft",
+      "prompt": "A first draft in the customer's language. It goes into the reply box for you to check; [square brackets] mark what only you can fill in.",
+      "start": "Draft a reply",
+      "use": "Put in reply box"
+    }
+  },
+  "rating": {
+    "title": "Customer feedback",
+    "helpful": "The answer helped",
+    "not_helpful": "The answer didn't help"
+  }
 }

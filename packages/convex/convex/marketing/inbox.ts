@@ -4,7 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
-import { userMutation, userQuery } from "../functions";
+import { serverUserQuery, userMutation, userQuery } from "../functions";
 import { attachmentValidator } from "../lib/validators";
 import { inquiryStateValidator } from "../tables/marketing";
 import { checkAttachments, inquiryWatchers, referenceFor } from "./inquiries";
@@ -12,8 +12,11 @@ import {
   REF_MIN_LENGTH,
   formatReference,
   legacyDesiredAt,
+  VIEWER_STALE_MS,
+  normalizeTags,
   refCandidate,
   replyDueAt,
+  sameCustomer,
 } from "./lib/inquiry";
 
 /**
@@ -37,6 +40,8 @@ const viewValidator = v.union(
 );
 
 const stateOf = (row: Doc<"emails">) => row.state ?? "open";
+
+const hasTag = (row: Doc<"emails">, tag: string | undefined) => !tag || !!row.tags?.includes(tag);
 
 const inView = (row: Doc<"emails">, view: string) => {
   const state = stateOf(row);
@@ -84,8 +89,12 @@ async function requireRow(ctx: QueryCtx, id: Id<"emails">) {
 
 export const list = userQuery({
   ...inbox,
-  args: { view: viewValidator, paginationOpts: paginationOptsValidator },
-  handler: async (ctx, { view, paginationOpts }) => {
+  args: {
+    view: viewValidator,
+    tag: v.optional(v.string()),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, { view, tag, paginationOpts }) => {
     // the emails table grows without bound, so this pages newest-activity first
     const page = await ctx.db
       .query("emails")
@@ -93,7 +102,7 @@ export const list = userQuery({
       .order("desc")
       .filter((q) => q.eq(q.field("anonymizedAt"), undefined))
       .paginate(paginationOpts);
-    const rows = page.page.filter((row) => inView(row, view));
+    const rows = page.page.filter((row) => inView(row, view) && hasTag(row, tag));
     return {
       ...page,
       page: await Promise.all(
@@ -208,6 +217,7 @@ function haystack(row: Doc<"emails">) {
     row.topic,
     row.message,
     row.notes,
+    ...(row.tags ?? []).map((tag) => `#${tag}`),
   ]
     .filter(Boolean)
     .join(" \n ")
@@ -222,8 +232,8 @@ function haystack(row: Doc<"emails">) {
  */
 export const search = userQuery({
   ...inbox,
-  args: { q: v.string(), view: viewValidator },
-  handler: async (ctx, { q, view }) => {
+  args: { q: v.string(), view: viewValidator, tag: v.optional(v.string()) },
+  handler: async (ctx, { q, view, tag }) => {
     const terms = q
       .toLowerCase()
       .split(/\s+/)
@@ -239,7 +249,7 @@ export const search = userQuery({
     const exact = await findByReference(ctx, q);
 
     const matches = recent.filter((row) => {
-      if (row.anonymizedAt !== undefined || !inView(row, view)) return false;
+      if (row.anonymizedAt !== undefined || !inView(row, view) || !hasTag(row, tag)) return false;
       const text = haystack(row);
       // a phone typed with other punctuation ("0911/377-") also matches the stored phone's digits
       return terms.every(
@@ -280,6 +290,10 @@ export const get = userQuery({
       .query("inquiryMessages")
       .withIndex("by_inquiry_createdAt", (q) => q.eq("inquiryId", id))
       .take(500);
+    const notes = await ctx.db
+      .query("inquiryNotes")
+      .withIndex("by_inquiry_createdAt", (q) => q.eq("inquiryId", id))
+      .take(500);
     const withUrls = (attachments: Doc<"inquiryMessages">["attachments"]) =>
       Promise.all(
         (attachments ?? []).map(async (attachment) => ({
@@ -288,8 +302,14 @@ export const get = userQuery({
         })),
       );
 
+    const referenceOfId = async (other: Id<"emails"> | undefined) => {
+      const related = other ? await ctx.db.get(other) : null;
+      return related ? { id: related._id, reference: referenceFor(related) } : undefined;
+    };
+
     return {
       inquiry: forStaff(row),
+      mergedInto: await referenceOfId(row.mergedIntoId),
       attachments: await withUrls(row.attachments),
       assigneeName: await userName(ctx, row.assignedToUserId),
       seenByName: await userName(ctx, row.seenByUserId),
@@ -297,6 +317,7 @@ export const get = userQuery({
         events.map(async (event) => ({
           ...event,
           actorName: await userName(ctx, event.actorUserId),
+          related: await referenceOfId(event.relatedInquiryId),
         })),
       ),
       messages: await Promise.all(
@@ -304,6 +325,12 @@ export const get = userQuery({
           ...message,
           staffName: await userName(ctx, message.staffUserId),
           attachments: await withUrls(message.attachments),
+        })),
+      ),
+      notes: await Promise.all(
+        notes.map(async (note) => ({
+          ...note,
+          authorName: await userName(ctx, note.authorUserId),
         })),
       ),
     };
@@ -401,6 +428,9 @@ export const reply = userMutation({
   },
   handler: async (ctx, { id, body, attachments }) => {
     const row = await requireRow(ctx, id);
+    if (row.mergedIntoId) {
+      throw new ConvexError({ code: "merged", message: "Reply on the inquiry it was merged into" });
+    }
     const text = body.trim();
     if (!text && !attachments?.length) {
       throw new ConvexError({ code: "invalid", message: "Empty reply" });
@@ -510,4 +540,386 @@ export const waitingCount = userQuery({
   role: "admin",
   args: {},
   handler: async (ctx) => (await ctx.db.query("notifyEmails").take(1000)).length,
+});
+
+// --- Tags --------------------------------------------------------------------------
+
+export const setTags = userMutation({
+  ...inbox,
+  args: { id: v.id("emails"), tags: v.array(v.string()) },
+  handler: async (ctx, { id, tags }) => {
+    await requireRow(ctx, id);
+    const next = normalizeTags(tags);
+    // labels are the team's own bookkeeping: no event, no activity bump, nothing for the customer
+    await ctx.db.patch(id, { tags: next.length ? next : undefined });
+    return next;
+  },
+});
+
+/** Every tag in use on recent inquiries, most used first — the filter and the tag input's suggestions. */
+export const tagSuggestions = userQuery({
+  ...inbox,
+  args: {},
+  handler: async (ctx) => {
+    const recent = await ctx.db
+      .query("emails")
+      .withIndex("by_lastActivityAt")
+      .order("desc")
+      .take(SEARCH_SCAN);
+    const counts = new Map<string, number>();
+    for (const row of recent) {
+      for (const tag of row.tags ?? []) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+    return [...counts]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([tag, count]) => ({ tag, count }));
+  },
+});
+
+// --- Internal notes ------------------------------------------------------------------
+
+const MAX_NOTE_LENGTH = 5000;
+
+async function requireOwnNote(ctx: QueryCtx, noteId: Id<"inquiryNotes">, userId: Id<"users">) {
+  const note = await ctx.db.get(noteId);
+  if (!note) throw new ConvexError({ code: "not_found", message: "Note not found" });
+  if (note.authorUserId !== userId) {
+    throw new ConvexError({ code: "forbidden", message: "Only the author can change a note" });
+  }
+  return note;
+}
+
+/** A note for the team only: never mailed, never on the customer's page. */
+export const addNote = userMutation({
+  ...inbox,
+  args: { id: v.id("emails"), body: v.string() },
+  handler: async (ctx, { id, body }) => {
+    const row = await requireRow(ctx, id);
+    const text = body.trim();
+    if (!text) throw new ConvexError({ code: "invalid", message: "Empty note" });
+    const now = Date.now();
+    await ctx.db.insert("inquiryNotes", {
+      inquiryId: id,
+      authorUserId: ctx.caller.user._id,
+      body: text.slice(0, MAX_NOTE_LENGTH),
+      createdAt: now,
+    });
+    // writing a note is looking at it
+    if (!row.seenAt) await ctx.db.patch(id, { seenAt: now, seenByUserId: ctx.caller.user._id });
+  },
+});
+
+export const editNote = userMutation({
+  ...inbox,
+  args: { noteId: v.id("inquiryNotes"), body: v.string() },
+  handler: async (ctx, { noteId, body }) => {
+    await requireOwnNote(ctx, noteId, ctx.caller.user._id);
+    const text = body.trim();
+    if (!text) throw new ConvexError({ code: "invalid", message: "Empty note" });
+    await ctx.db.patch(noteId, { body: text.slice(0, MAX_NOTE_LENGTH), editedAt: Date.now() });
+  },
+});
+
+// A hard delete, not the trash: a note is personal data about the customer, and
+// erasure (which never sees trashed rows) has to be able to remove every one.
+export const deleteNote = userMutation({
+  ...inbox,
+  args: { noteId: v.id("inquiryNotes") },
+  handler: async (ctx, { noteId }) => {
+    await requireOwnNote(ctx, noteId, ctx.caller.user._id);
+    await ctx.db.delete(noteId);
+  },
+});
+
+// --- Who else is on it ----------------------------------------------------------------
+
+/**
+ * "I have this open" (and "I'm writing a reply"), sent every few seconds by
+ * the inquiry page. Also sweeps anyone on this inquiry who stopped beating.
+ */
+export const heartbeat = userMutation({
+  ...inbox,
+  args: { id: v.id("emails"), typing: v.boolean() },
+  handler: async (ctx, { id, typing }) => {
+    const now = Date.now();
+    const userId = ctx.caller.user._id;
+    const rows = await ctx.db
+      .query("inquiryViewers")
+      .withIndex("by_inquiry", (q) => q.eq("inquiryId", id))
+      .take(50);
+    const mine = rows.find((row) => row.userId === userId);
+    if (mine) await ctx.db.patch(mine._id, { typing, at: now });
+    else await ctx.db.insert("inquiryViewers", { inquiryId: id, userId, typing, at: now });
+    for (const row of rows) {
+      if (row.userId !== userId && row.at < now - VIEWER_STALE_MS) await ctx.db.delete(row._id);
+    }
+  },
+});
+
+export const leave = userMutation({
+  ...inbox,
+  args: { id: v.id("emails") },
+  handler: async (ctx, { id }) => {
+    const mine = await ctx.db
+      .query("inquiryViewers")
+      .withIndex("by_inquiry_user", (q) => q.eq("inquiryId", id).eq("userId", ctx.caller.user._id))
+      .first();
+    if (mine) await ctx.db.delete(mine._id);
+  },
+});
+
+/**
+ * Everyone else with this inquiry open, with when they last beat. The page
+ * drops anyone older than VIEWER_STALE_MS on its own clock: a query doesn't
+ * re-run just because time passes.
+ */
+export const viewers = userQuery({
+  ...inbox,
+  args: { id: v.id("emails") },
+  handler: async (ctx, { id }) => {
+    const rows = await ctx.db
+      .query("inquiryViewers")
+      .withIndex("by_inquiry", (q) => q.eq("inquiryId", id))
+      .take(50);
+    return await Promise.all(
+      rows
+        .filter((row) => row.userId !== ctx.caller.user._id)
+        .map(async (row) => ({
+          userId: row.userId,
+          name: (await userName(ctx, row.userId)) ?? "",
+          typing: row.typing,
+          at: row.at,
+        })),
+    );
+  },
+});
+
+// --- Same customer, and merging ----------------------------------------------------------
+
+const RELATED_LIMIT = 20;
+
+/** The customer's other inquiries: same address, same account. Newest first. */
+export const related = userQuery({
+  ...inbox,
+  args: { id: v.id("emails") },
+  handler: async (ctx, { id }) => {
+    const row = await requireRow(ctx, id);
+    const candidates = new Map<Id<"emails">, Doc<"emails">>();
+    const add = (rows: Doc<"emails">[]) =>
+      rows.forEach((other) => candidates.set(other._id, other));
+
+    for (const address of new Set([row.email, row.accountEmail].filter(Boolean))) {
+      add(
+        await ctx.db
+          .query("emails")
+          .withIndex("by_email_sentAt", (q) => q.eq("email", address))
+          .order("desc")
+          .take(RELATED_LIMIT),
+      );
+      add(
+        await ctx.db
+          .query("emails")
+          .withIndex("by_accountEmail_sentAt", (q) => q.eq("accountEmail", address))
+          .order("desc")
+          .take(RELATED_LIMIT),
+      );
+    }
+    if (row.clerkUserId) {
+      add(
+        await ctx.db
+          .query("emails")
+          .withIndex("by_clerkUserId_sentAt", (q) => q.eq("clerkUserId", row.clerkUserId))
+          .order("desc")
+          .take(RELATED_LIMIT),
+      );
+    }
+
+    return [...candidates.values()]
+      .filter(
+        (other) => other._id !== id && other.anonymizedAt === undefined && sameCustomer(row, other),
+      )
+      .sort((a, b) => b.sentAt - a.sentAt)
+      .slice(0, RELATED_LIMIT)
+      .map((other) => ({
+        ...forStaff(other),
+        // what the merge button needs to know without another round trip
+        mergeable: canMerge(other, row) === null,
+      }));
+  },
+});
+
+const ACTIVE_CALLBACK = new Set(["requested", "confirmed"]);
+
+/** Why `source` can't be merged into `target`, or null if it can. */
+function canMerge(source: Doc<"emails">, target: Doc<"emails">) {
+  if (source._id === target._id) return "same";
+  if (source.anonymizedAt !== undefined || target.anonymizedAt !== undefined) return "anonymized";
+  if (source.mergedIntoId || target.mergedIntoId) return "already_merged";
+  if (!sameCustomer(source, target)) return "different_customer";
+  // a callback still waiting to happen has its own time, links and calendar invite
+  if (
+    source.submissionType === "callback" &&
+    ACTIVE_CALLBACK.has(source.callbackStatus ?? "requested")
+  ) {
+    return "active_callback";
+  }
+  return null;
+}
+
+/**
+ * Folds `id` into `into`: its message becomes the first customer message in
+ * the target's thread (with its attachments), its replies and notes move
+ * across, tags are combined, and `id` is closed with a pointer to `into`.
+ * Only for two inquiries from the same customer; nothing is mailed.
+ */
+export const merge = userMutation({
+  ...inbox,
+  args: { id: v.id("emails"), into: v.id("emails") },
+  handler: async (ctx, { id, into }) => {
+    const source = await requireRow(ctx, id);
+    const target = await requireRow(ctx, into);
+    const refused = canMerge(source, target);
+    if (refused) throw new ConvexError({ code: refused, message: `Can't merge: ${refused}` });
+
+    const now = Date.now();
+    const staffId = ctx.caller.user._id;
+
+    const opening = [source.message.trim(), source.notes?.trim()].filter(Boolean).join("\n\n");
+    if (opening || source.attachments?.length) {
+      await ctx.db.insert("inquiryMessages", {
+        inquiryId: into,
+        author: "customer",
+        body: opening,
+        attachments: source.attachments,
+        via: "web",
+        createdAt: source.sentAt,
+      });
+    }
+    for (const table of ["inquiryMessages", "inquiryNotes"] as const) {
+      const rows = await ctx.db
+        .query(table)
+        .withIndex("by_inquiry_createdAt", (q) => q.eq("inquiryId", id))
+        .take(500);
+      for (const doc of rows) await ctx.db.patch(doc._id, { inquiryId: into });
+    }
+
+    const sourceActive = ["open", "in_progress"].includes(stateOf(source));
+    const targetDone = ["answered", "closed", "withdrawn"].includes(stateOf(target));
+    const reopen = sourceActive && targetDone;
+    const tags = normalizeTags([...(target.tags ?? []), ...(source.tags ?? [])]);
+    await ctx.db.patch(into, {
+      tags: tags.length ? tags : undefined,
+      lastActivityAt: now,
+      // an open question folded into a finished one is open again
+      state: reopen ? "in_progress" : target.state,
+    });
+    await ctx.db.patch(id, {
+      state: "closed",
+      closedAt: now,
+      lastActivityAt: now,
+      mergedIntoId: into,
+      // they live on the target's thread now; one owner, so erasure deletes each file once
+      attachments: undefined,
+      seenAt: source.seenAt ?? now,
+      seenByUserId: source.seenByUserId ?? staffId,
+    });
+
+    await ctx.db.insert("inquiryEvents", {
+      inquiryId: id,
+      type: "merged",
+      state: "closed",
+      actor: "staff",
+      actorUserId: staffId,
+      relatedInquiryId: into,
+      at: now,
+    });
+    await ctx.db.insert("inquiryEvents", {
+      inquiryId: into,
+      type: "merged_in",
+      state: reopen ? "in_progress" : undefined,
+      actor: "staff",
+      actorUserId: staffId,
+      relatedInquiryId: id,
+      at: now,
+    });
+    return { into };
+  },
+});
+
+// --- AI ----------------------------------------------------------------------------------
+
+const clip = (text: string, max: number) => (text.length > max ? `${text.slice(0, max)} …` : text);
+const iso = (at: number) => new Date(at).toISOString().slice(0, 16).replace("T", " ");
+
+/**
+ * What an AI summary or reply draft of one inquiry is given, for apps/api's
+ * `/inquiries/:id/ai`. The customer's words, the thread and the team's notes;
+ * never an address or phone number, which neither job needs. Built with the
+ * asking person's own access (`manage_inquiries`).
+ */
+export const apiAiContext = serverUserQuery({
+  ...inbox,
+  args: { id: v.id("emails") },
+  handler: async (ctx, { id }) => {
+    const row = await requireRow(ctx, id);
+    if (row.anonymizedAt !== undefined) {
+      throw new ConvexError({
+        code: "invalid",
+        message: "Anonymized inquiries can't be summarized",
+      });
+    }
+    const messages = await ctx.db
+      .query("inquiryMessages")
+      .withIndex("by_inquiry_createdAt", (q) => q.eq("inquiryId", id))
+      .take(100);
+    const notes = await ctx.db
+      .query("inquiryNotes")
+      .withIndex("by_inquiry_createdAt", (q) => q.eq("inquiryId", id))
+      .take(50);
+    const reference = referenceFor(row);
+    const desiredAt = row.desiredAt ?? legacyDesiredAt(row.desiredDateTime) ?? undefined;
+
+    const lines = [
+      `Reference: ${reference}`,
+      `Type: ${row.submissionType}${row.topicKey ? ` (${row.topicKey})` : row.topic ? ` (${row.topic})` : ""}`,
+      `Received: ${iso(row.sentAt)} UTC`,
+      `Status: ${stateOf(row)}`,
+      `Customer: ${`${row.firstName} ${row.lastName}`.trim() || "(no name)"}${row.company ? `, ${row.company}` : ""}`,
+      `Customer's language: ${row.locale ?? "de"}`,
+      ...(row.subject ? [`Subject: ${clip(row.subject, 300)}`] : []),
+      ...(desiredAt
+        ? [
+            `Callback requested for: ${iso(desiredAt)} UTC (${row.callbackStatus ?? "requested"}${
+              row.callbackConfirmedAt ? `, confirmed for ${iso(row.callbackConfirmedAt)} UTC` : ""
+            })`,
+          ]
+        : []),
+      ...(row.tags?.length ? [`Team tags: ${row.tags.join(", ")}`] : []),
+      "",
+      "Customer's message:",
+      clip([row.message, row.notes].filter((part) => part?.trim()).join("\n\n") || "(empty)", 6000),
+    ];
+    for (const message of messages) {
+      const who =
+        message.author === "staff"
+          ? `Team (${(await userName(ctx, message.staffUserId)) ?? "someone"})`
+          : "Customer";
+      lines.push("", `${who}, ${iso(message.createdAt)} UTC:`, clip(message.body, 4000));
+    }
+    if (notes.length) {
+      lines.push("", "Internal team notes (never shown to the customer):");
+      for (const note of notes) {
+        lines.push(`- ${iso(note.createdAt)} UTC: ${clip(note.body, 1000)}`);
+      }
+    }
+
+    return {
+      reference,
+      locale: row.locale ?? "de",
+      firstName: row.firstName,
+      text: lines.join("\n"),
+      href: `/inquiries/${id}`,
+      sources: [{ label: `Anfrage ${reference}`, href: `/inquiries/${id}` }],
+    };
+  },
 });

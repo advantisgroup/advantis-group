@@ -22,7 +22,9 @@ export type AiRunKind =
   | "cvRescan"
   | "ask"
   | "dailyBrief"
-  | "navigate";
+  | "navigate"
+  | "inquirySummary"
+  | "inquiryDraft";
 
 export type AiRunPhase = "reading" | "writing" | "finishing";
 

@@ -5,6 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { useLocale, useTranslations } from "next-intl";
 import { type z } from "zod";
 
+import { useAltcha } from "@/hooks/use-altcha";
 import { type AccountMetadata } from "@/lib/account";
 import { useTrackEvent } from "@/lib/analytics";
 import { api } from "@/lib/eden";
@@ -29,6 +30,7 @@ export function useWhitepaperRequest() {
   const t = useTranslations("whitepaper.form");
   const locale = useLocale();
   const trackEvent = useTrackEvent();
+  const spamCheck = useAltcha();
 
   const [formData, setFormData] = useState<WhitepaperFormData>(initialFormData);
   const [errors, setErrors] = useState<z.ZodFlattenedError<WhitepaperFormData>["fieldErrors"]>({});
@@ -78,6 +80,7 @@ export function useWhitepaperRequest() {
       trackEvent("Whitepaper - Requested");
 
       try {
+        const altcha = await spamCheck();
         const response = await api.whitepaper.request.post({
           company: result.data.company,
           firstName: result.data.firstName,
@@ -86,6 +89,7 @@ export function useWhitepaperRequest() {
           phone: result.data.phone,
           consent: result.data.consent,
           locale,
+          altcha,
         });
 
         if (response.status !== 200) {
@@ -103,7 +107,7 @@ export function useWhitepaperRequest() {
         setTimeout(() => setButtonState("idle"), 3000);
       }
     },
-    [formData, locale, t, trackEvent],
+    [formData, locale, t, trackEvent, spamCheck],
   );
 
   return {

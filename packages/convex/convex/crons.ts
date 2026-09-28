@@ -72,6 +72,14 @@ if (process.env.DISABLE_CRONS !== "true") {
     {},
   );
 
+  // 05:15 Berlin in summer, 04:15 in winter — before anyone opens the inbox
+  crons.daily(
+    "marketing: close answered website inquiries the customer never came back to",
+    { hourUTC: 3, minuteUTC: 15 },
+    internal.marketing.automation.autoClose,
+    {},
+  );
+
   // Monday 06:50 UTC — before people start in Berlin, summer or winter time.
   crons.weekly(
     "digest: weekly what-you-missed email",

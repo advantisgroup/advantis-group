@@ -256,6 +256,7 @@
       "serverErrorDesc": "如果问题仍然存在，请稍后再试。",
       "rateLimitTitle": "请求过多",
       "rateLimitDesc": "您发送的请求过多，请稍后再试。",
+      "spamCheckDesc": "反垃圾验证未通过。请刷新页面后重试。",
       "copySent": "我们已将副本发送至 {email}。",
       "sendAnother": "再发送一条",
       "copyOff": "您已在偏好设置中关闭副本，因此未发送副本。",
@@ -1611,7 +1612,24 @@
         "closed": "已于 {when} 关闭。如仍有问题，请在下方回复。",
         "answered": "我们已于 {when} 回复，内容见下方沟通记录。",
         "reopened": "您还需要帮助，因此咨询已重新交给团队处理。",
-        "handling": "我们团队的成员正在处理。"
+        "handling": "我们团队的成员正在处理。",
+        "merged": "已与 {reference} 合并。"
+      },
+      "merged": "由于内容相同，我们已将此咨询与 <link>{reference}</link> 合并，后续沟通将在那里进行。",
+      "rating": {
+        "question": "我们的回复对您有帮助吗？",
+        "helpful": "有帮助",
+        "notHelpful": "不太有帮助",
+        "whatMissing": "还缺少什么？（可选，将直接发送给我们的团队）",
+        "send": "发送",
+        "cancel": "取消",
+        "thanks": "感谢您的反馈",
+        "failed": "操作未成功，请重试。",
+        "change": "修改",
+        "given": {
+          "helpful": "您表示回复有帮助。",
+          "not_helpful": "您表示回复没有帮助，我们的团队已收到通知。"
+        }
       }
     },
     "profile": {

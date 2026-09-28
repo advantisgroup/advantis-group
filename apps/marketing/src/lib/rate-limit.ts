@@ -3,7 +3,7 @@ import { Redis } from "@upstash/redis";
 
 // Vercel's KV integration sets the KV_* names, a direct Upstash setup the UPSTASH_* ones.
 // Without either (local dev, previews) limits are simply skipped.
-const redis =
+export const redis =
   (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) ||
   (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
     ? Redis.fromEnv()

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAltcha } from "@/hooks/use-altcha";
 import { api } from "@/lib/eden";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,7 @@ const OUTCOME_COPY = {
  */
 export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
   const t = useTranslations("contact.notify");
+  const spamCheck = useAltcha();
   const locale = useLocale();
   const { user } = useUser();
   const accountEmail = user?.primaryEmailAddress?.emailAddress ?? "";
@@ -111,7 +113,7 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
     try {
       const res =
         action === "subscribe"
-          ? await api.notify.post({ email: emailTrimmed, locale })
+          ? await api.notify.post({ email: emailTrimmed, locale, altcha: await spamCheck() })
           : await api
               .notify({ email: encodeURIComponent(emailTrimmed) })
               .delete(undefined, { query: { locale } });

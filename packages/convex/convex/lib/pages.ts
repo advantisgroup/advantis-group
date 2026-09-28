@@ -267,6 +267,20 @@ export const INTRANET_PAGES: IntranetPage[] = [
     visible: (caller) => caller.can("manage_inquiries"),
   },
   {
+    href: "/inquiries/templates",
+    label: "Antwortvorlagen",
+    description: "Textbausteine für Antworten auf Website-Anfragen anlegen und pflegen.",
+    keywords: ["textbausteine", "vorlagen", "antworten", "canned replies"],
+    visible: (caller) => caller.can("manage_inquiries"),
+  },
+  {
+    href: "/inquiries/stats",
+    label: "Auswertung der Kundenanfragen",
+    description: "Eingang, Antwortzeiten und Bearbeitungsdauer der Website-Anfragen.",
+    keywords: ["statistik", "kennzahlen", "antwortzeit", "report", "anfragen"],
+    visible: (caller) => caller.can("manage_inquiries"),
+  },
+  {
     href: "/sales-coach-ev",
     label: "Sales Coach EV",
     description: "Verkaufsgespräche aufnehmen und von der KI auswerten lassen.",

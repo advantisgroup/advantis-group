@@ -411,6 +411,9 @@ function hasAreaAccess(caller: Caller, kind: Doc<"aiRuns">["kind"], subjectKey: 
     case "dailyBrief":
     case "navigate":
       return true;
+    case "inquirySummary":
+    case "inquiryDraft":
+      return caller.can("manage_inquiries");
   }
 }
 

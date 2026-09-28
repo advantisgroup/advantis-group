@@ -7,6 +7,7 @@ import { Resend } from "resend";
 
 import { NotifyCodeEmail, notifyCodeCopy } from "@/components/email/notify-code-email";
 import { convex, serverKey } from "@/lib/convex-server";
+import { passedAltcha } from "@/lib/altcha";
 import { allow, clientIp, limits } from "@/lib/rate-limit";
 import { submissionsOpen } from "@/lib/submissions";
 
@@ -128,6 +129,12 @@ export const notify = new Elysia()
           return { error: "Too many requests. Please try again later.", code: "rate_limited" };
         }
 
+        // mailing a code to any address is what a bot would abuse; a signed-in owner skips this
+        if (!(await passedAltcha(body.altcha))) {
+          set.status = 403;
+          return { error: "The spam check didn't pass.", code: "captcha_failed" };
+        }
+
         await sendCode(email, "subscribe", body.locale ?? "de");
         return { ok: true, duplicate: false, status: "codeSent" } as const;
       } catch (err) {
@@ -139,10 +146,12 @@ export const notify = new Elysia()
       body: t.Object({
         email: t.String({ format: "email" }),
         locale: t.Optional(t.String()),
+        altcha: t.Optional(t.String({ maxLength: 10_000 })),
       }),
       response: {
         200: t.Object({ ok: t.Boolean(), duplicate: t.Boolean(), status: statusSchema }),
         400: errorSchema,
+        403: errorSchema,
         429: errorSchema,
         500: errorSchema,
       },

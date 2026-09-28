@@ -6,9 +6,11 @@ import {
   FileUp,
   LayoutDashboard,
   type LucideIcon,
+  MailQuestion,
   MessagesSquare,
   PhoneCall,
   RefreshCw,
+  Reply,
   Tags,
   WandSparkles,
 } from "lucide-react";
@@ -28,6 +30,8 @@ export const AI_FEATURES: { key: AiRunKind; icon: LucideIcon }[] = [
   { key: "coachWikiExtract", icon: FileUp },
   { key: "cvExtract", icon: FileText },
   { key: "cvRescan", icon: RefreshCw },
+  { key: "inquirySummary", icon: MailQuestion },
+  { key: "inquiryDraft", icon: Reply },
 ];
 
 export const AI_FEATURE_ICON = Object.fromEntries(

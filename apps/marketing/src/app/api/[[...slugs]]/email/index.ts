@@ -9,6 +9,7 @@ import { Elysia, t } from "elysia";
 import { type InquiryMailData } from "@/components/email/inquiry-emails";
 import { locales } from "@/i18n/request";
 import { currentAccount } from "@/lib/account";
+import { passedAltcha } from "@/lib/altcha";
 import { convex, serverKey } from "@/lib/convex-server";
 import { sendReceipt, sendTeamMail } from "@/lib/inquiry-mail";
 import { allow, clientIp, limits } from "@/lib/rate-limit";
@@ -59,6 +60,11 @@ export const email = new Elysia().post(
     if (!(await allow(limits.contactSend, clientIp(headers)))) {
       set.status = 429;
       return { error: "Too many requests. Please try again later." };
+    }
+
+    if (!(await passedAltcha(body.altcha))) {
+      set.status = 403;
+      return { error: "The spam check didn't pass. Reload the page and try again." };
     }
 
     if (!convex) {
@@ -207,6 +213,8 @@ export const email = new Elysia().post(
       bcc: t.Optional(t.Array(t.String())),
       accountEmail: t.Optional(t.String()),
       accountName: t.Optional(t.String()),
+      /** the solved spam-check puzzle, see lib/altcha.ts */
+      altcha: t.Optional(t.String({ maxLength: 10_000 })),
     }),
     response: {
       200: t.Object({
@@ -216,6 +224,7 @@ export const email = new Elysia().post(
         copySkipReason: t.Optional(t.Union([t.Literal("limit"), t.Literal("preference")])),
       }),
       400: t.Object({ error: t.String(), field: t.String() }),
+      403: t.Object({ error: t.String() }),
       429: t.Object({ error: t.String() }),
       500: t.Object({ error: t.String() }),
       502: t.Object({ error: t.String(), id: t.String(), reference: t.String() }),

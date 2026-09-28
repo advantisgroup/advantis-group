@@ -6,7 +6,7 @@ import { serverMutation, serverQuery } from "../functions";
 import { effectiveCustomRoleIds } from "../lib/auth";
 import { notifyUsers } from "../lib/notify";
 import { attachmentValidator } from "../lib/validators";
-import { failureReasonValidator } from "../tables/marketing";
+import { failureReasonValidator, inquiryRatingValidator } from "../tables/marketing";
 import {
   CUSTOMER_TRANSITIONS,
   classifyBounce,
@@ -49,6 +49,13 @@ async function requireOwnedRow(ctx: QueryCtx, id: string, account: Account) {
   const row = await ownedRow(ctx, id, account);
   if (!row) throw new ConvexError({ code: "not_found", message: "Inquiry not found" });
   return row;
+}
+
+/** Folded into another inquiry: the conversation goes on over there. */
+function refuseMerged(row: Doc<"emails">) {
+  if (row.mergedIntoId) {
+    throw new ConvexError({ code: "merged", message: "This inquiry was merged into another" });
+  }
 }
 
 /**
@@ -176,6 +183,9 @@ function forCustomer(row: Doc<"emails">) {
       deliveredAt: row.copyDeliveredAt,
     },
     attachments: row.attachments ?? [],
+    rating: row.rating,
+    ratingComment: row.ratingComment,
+    ratedAt: row.ratedAt,
   };
 }
 
@@ -377,6 +387,7 @@ export const setStateByCustomer = serverMutation({
   },
   handler: async (ctx, { account, id, action, note }) => {
     const row = await requireOwnedRow(ctx, id, account);
+    refuseMerged(row);
     const from = row.state ?? "open";
     const { from: allowed, to } = CUSTOMER_TRANSITIONS[action];
     if (!allowed.includes(from)) {
@@ -419,6 +430,43 @@ export const setStateByCustomer = serverMutation({
   },
 });
 
+/**
+ * "Did our answer help?" Once the team has answered (the inquiry is answered
+ * or closed); asking again replaces the earlier answer. A "no" reaches the
+ * team straight away, since it usually means the customer is still stuck.
+ */
+export const rateByCustomer = serverMutation({
+  args: {
+    account: accountValidator,
+    id: v.string(),
+    rating: inquiryRatingValidator,
+    comment: v.optional(v.string()),
+  },
+  handler: async (ctx, { account, id, rating, comment }) => {
+    const row = await requireOwnedRow(ctx, id, account);
+    refuseMerged(row);
+    if (!row.firstResponseAt || (row.state !== "answered" && row.state !== "closed")) {
+      throw new ConvexError({ code: "invalid_state", message: "Nothing to rate yet" });
+    }
+    const now = Date.now();
+    const note = comment?.trim().slice(0, 2000) || undefined;
+    await ctx.db.patch(row._id, { rating, ratingComment: note, ratedAt: now });
+    await ctx.db.insert("inquiryEvents", {
+      inquiryId: row._id,
+      type: "rated",
+      actor: "customer",
+      at: now,
+    });
+    if (rating === "not_helpful") {
+      await notifyTeam(ctx, row, {
+        title: `${personName(row)} found the answer to ${referenceFor(row)} unhelpful`,
+        body: note?.slice(0, 120),
+      });
+    }
+    return { rating };
+  },
+});
+
 export const addCustomerMessage = serverMutation({
   args: {
     account: accountValidator,
@@ -428,6 +476,7 @@ export const addCustomerMessage = serverMutation({
   },
   handler: async (ctx, { account, id, body, attachments }) => {
     const row = await requireOwnedRow(ctx, id, account);
+    refuseMerged(row);
     if (row.state === "withdrawn") {
       throw new ConvexError({ code: "invalid_state", message: "This inquiry was withdrawn" });
     }
@@ -475,7 +524,9 @@ export const apiAddInboundReply = serverMutation({
   args: { inquiryId: v.string(), from: v.string(), body: v.string() },
   handler: async (ctx, { inquiryId, from, body }) => {
     const id = ctx.db.normalizeId("emails", inquiryId);
-    const row = id ? await ctx.db.get(id) : null;
+    const addressed = id ? await ctx.db.get(id) : null;
+    // an answer to a mail about a merged inquiry lands where the conversation went
+    const row = addressed?.mergedIntoId ? await ctx.db.get(addressed.mergedIntoId) : addressed;
     const sender = /<([^>]+)>/.exec(from)?.[1] ?? from;
     const known = [row?.email, row?.accountEmail].filter(Boolean);
     if (!row || !known.includes(sender.trim().toLowerCase()) || !body.trim()) {
@@ -584,8 +635,15 @@ export const getForAccount = serverQuery({
         (event.type === "assigned" || (event.type === "state" && event.state === "in_progress")),
     );
 
+    // folded into another of theirs by the team: say where the conversation went
+    const target = row.mergedIntoId ? await ctx.db.get(row.mergedIntoId) : null;
+
     return {
       inquiry: forCustomer(row),
+      mergedInto:
+        target && owns(target, account)
+          ? { id: target._id, reference: referenceFor(target) }
+          : undefined,
       handledAt: handled?.at,
       events: events
         .filter((event) => event.type !== "seen")

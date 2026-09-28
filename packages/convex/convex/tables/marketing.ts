@@ -34,7 +34,15 @@ export const inquiryEventTypeValidator = v.union(
   v.literal("callback_rescheduled"),
   v.literal("resent"),
   v.literal("withdrawn"),
+  /** This one was folded into `relatedInquiryId`. */
+  v.literal("merged"),
+  /** `relatedInquiryId` was folded into this one. */
+  v.literal("merged_in"),
+  /** The customer said whether the answer helped. */
+  v.literal("rated"),
 );
+
+export const inquiryRatingValidator = v.union(v.literal("helpful"), v.literal("not_helpful"));
 
 export const marketingTables = {
   // --- Marketing (existing) ------------------------------------------------
@@ -125,6 +133,15 @@ export const marketingTables = {
 
     attachments: v.optional(v.array(attachmentValidator)),
     anonymizedAt: v.optional(v.number()),
+
+    /** The team's own labels ("pricing", "partner"), lowercased. Never shown to the customer. */
+    tags: v.optional(v.array(v.string())),
+    /** Folded into another inquiry from the same customer; this one is closed and points there. */
+    mergedIntoId: v.optional(v.id("emails")),
+    /** "Did our answer help?" from the customer's inquiry page, once there is an answer. */
+    rating: v.optional(inquiryRatingValidator),
+    ratingComment: v.optional(v.string()),
+    ratedAt: v.optional(v.number()),
   })
     .index("by_clerkUserId_sentAt", ["clerkUserId", "sentAt"])
     .index("by_accountEmail_sentAt", ["accountEmail", "sentAt"])
@@ -142,6 +159,8 @@ export const marketingTables = {
     state: v.optional(inquiryStateValidator),
     actor: v.union(v.literal("customer"), v.literal("staff"), v.literal("system")),
     actorUserId: v.optional(v.id("users")),
+    /** The other inquiry of a `merged` / `merged_in` event. */
+    relatedInquiryId: v.optional(v.id("emails")),
     at: v.number(),
   }).index("by_inquiry_at", ["inquiryId", "at"]),
 
@@ -155,6 +174,60 @@ export const marketingTables = {
     via: v.union(v.literal("web"), v.literal("email")),
     createdAt: v.number(),
   }).index("by_inquiry_createdAt", ["inquiryId", "createdAt"]),
+
+  /**
+   * The team's notes on an inquiry. Their own table, not a flag on
+   * `inquiryMessages`, so no read path the customer uses can pick one up by
+   * forgetting a filter. Included in the customer's data export (Art. 15).
+   */
+  inquiryNotes: defineTable({
+    inquiryId: v.id("emails"),
+    authorUserId: v.id("users"),
+    body: v.string(),
+    createdAt: v.number(),
+    editedAt: v.optional(v.number()),
+  }).index("by_inquiry_createdAt", ["inquiryId", "createdAt"]),
+
+  /**
+   * Canned replies for the inbox. `locale` is the site language the text is
+   * written in (absent: fits any); the picker puts the customer's language
+   * first. Placeholders like {firstName} are filled in by `fillTemplate`.
+   */
+  inquiryReplyTemplates: defineTable({
+    title: v.string(),
+    body: v.string(),
+    locale: v.optional(v.string()),
+    createdByUserId: v.id("users"),
+    updatedByUserId: v.optional(v.id("users")),
+    updatedAt: v.number(),
+    /** How often it was put into a reply — the picker's order. */
+    uses: v.optional(v.number()),
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
+  }).index("by_deletedAt", ["deletedAt"]),
+
+  /**
+   * Who from the team has an inquiry open right now, and whether they're
+   * writing a reply, so two people don't answer the same customer. One row per
+   * person and inquiry, refreshed by a heartbeat; rows older than
+   * VIEWER_STALE_MS count as gone and are swept by the next heartbeat.
+   */
+  inquiryViewers: defineTable({
+    inquiryId: v.id("emails"),
+    userId: v.id("users"),
+    typing: v.boolean(),
+    at: v.number(),
+  })
+    .index("by_inquiry", ["inquiryId"])
+    .index("by_inquiry_user", ["inquiryId", "userId"]),
+
+  /** The inbox's own settings. One row, or none for the defaults (see `marketing/automation.ts`). */
+  inquirySettings: defineTable({
+    /** Answered inquiries with no activity for this many days are closed; 0 = never. */
+    autoCloseDays: v.optional(v.number()),
+    updatedByUserId: v.optional(v.id("users")),
+    updatedAt: v.number(),
+  }),
 
   notifyEmails: defineTable({
     email: v.string(),

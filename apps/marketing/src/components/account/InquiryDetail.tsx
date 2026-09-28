@@ -13,6 +13,8 @@ import {
   Minus,
   Paperclip,
   Printer,
+  ThumbsDown,
+  ThumbsUp,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -95,13 +97,35 @@ export function InquiryDetail({ detail }: { detail: Detail }) {
         ) : null}
       </Checkpoints>
 
+      {detail.mergedInto ? (
+        <p className="mt-6 border-l-2 border-foreground/40 py-1 pl-4 text-[15px] text-foreground">
+          {t.rich("merged", {
+            reference: detail.mergedInto.reference,
+            link: (chunks) => (
+              <Link
+                href={`/account/submissions/${detail.mergedInto!.id}`}
+                className="font-medium underline underline-offset-4"
+              >
+                {chunks}
+              </Link>
+            ),
+          })}
+        </p>
+      ) : null}
+
       {inquiry.submissionType === "callback" ? (
         <Callback inquiry={inquiry} format={format} />
       ) : null}
 
       <Conversation detail={detail} body={body} format={format} />
-      <Composer inquiry={inquiry} composerRef={composerRef} />
-      <Actions inquiry={inquiry} onNeedHelp={() => composerRef.current?.focus()} />
+      {/* merged: the conversation goes on in the other one, linked above */}
+      {detail.mergedInto ? null : (
+        <>
+          <Composer inquiry={inquiry} composerRef={composerRef} />
+          <Actions inquiry={inquiry} onNeedHelp={() => composerRef.current?.focus()} />
+          <Rating inquiry={inquiry} />
+        </>
+      )}
 
       <section className="mt-14 border-t border-rule pt-6">
         <h2 className="text-[15px] font-medium text-foreground">{t("details")}</h2>
@@ -187,6 +211,8 @@ function progressSteps(detail: Detail, format: Format, t: T): Checkpoint[] {
 function statusLine(detail: Detail, format: Format, t: T) {
   const { inquiry } = detail;
   const at = (value: number | undefined) => (value ? format.full.format(value) : "");
+
+  if (detail.mergedInto) return t("status.merged", { reference: detail.mergedInto.reference });
 
   switch (inquiry.state) {
     case "withdrawn": {
@@ -842,6 +868,106 @@ function Actions({ inquiry, onNeedHelp }: { inquiry: Inquiry; onNeedHelp: () => 
   }
 
   return null;
+}
+
+/**
+ * "Did our answer help?" once there is one. A "no" asks what's missing (optional)
+ * and reaches the team straight away; either answer can be changed later.
+ */
+function Rating({ inquiry }: { inquiry: Inquiry }) {
+  const t = useTranslations("account.inquiries.rating");
+  const router = useRouter();
+  const track = useTrackEvent();
+  const [asking, setAsking] = useState(false);
+  const [comment, setComment] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  if (!inquiry.firstResponseAt || (inquiry.state !== "answered" && inquiry.state !== "closed")) {
+    return null;
+  }
+
+  const send = async (rating: "helpful" | "not_helpful", note?: string) => {
+    setBusy(true);
+    const { error } = await api
+      .submissions({ id: inquiry._id })
+      .rating.post({ rating, comment: note?.trim() || undefined });
+    setBusy(false);
+    if (error) {
+      toast.error(t("failed"));
+      return;
+    }
+    track(rating === "helpful" ? "Account - Inquiry Helpful" : "Account - Inquiry Not Helpful");
+    setAsking(false);
+    setComment("");
+    toast.success(t("thanks"));
+    router.refresh();
+  };
+
+  const link =
+    "text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline";
+
+  if (inquiry.rating && !asking) {
+    return (
+      <p data-print-hide className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+        {inquiry.rating === "helpful" ? (
+          <ThumbsUp aria-hidden className="size-4 text-muted-foreground" />
+        ) : (
+          <ThumbsDown aria-hidden className="size-4 text-muted-foreground" />
+        )}
+        <span className="text-foreground">{t(`given.${inquiry.rating}`)}</span>
+        <button type="button" className={link} onClick={() => setAsking(true)}>
+          {t("change")}
+        </button>
+      </p>
+    );
+  }
+
+  return (
+    <section data-print-hide className="mt-8 border-t border-rule pt-6" aria-labelledby="rating">
+      <h2 id="rating" className="text-[15px] font-medium text-foreground">
+        {t("question")}
+      </h2>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" disabled={busy} onClick={() => void send("helpful")}>
+          <ThumbsUp />
+          {t("helpful")}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={busy}
+          aria-expanded={asking && !inquiry.rating ? true : undefined}
+          onClick={() => setAsking(true)}
+        >
+          <ThumbsDown />
+          {t("notHelpful")}
+        </Button>
+      </div>
+      {asking ? (
+        <div className="mt-4">
+          <label htmlFor="rating-comment" className="text-sm text-muted-foreground">
+            {t("whatMissing")}
+          </label>
+          <textarea
+            id="rating-comment"
+            rows={3}
+            value={comment}
+            maxLength={2000}
+            onChange={(event) => setComment(event.target.value)}
+            className="mt-2 min-h-20 w-full resize-y rounded-lg border border-input bg-card px-3 py-2.5 text-base placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:text-[15px]"
+          />
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <Button size="sm" disabled={busy} onClick={() => void send("not_helpful", comment)}>
+              {t("send")}
+            </Button>
+            <button type="button" className={link} onClick={() => setAsking(false)}>
+              {t("cancel")}
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
 }
 
 function Shared({ inquiry, format }: { inquiry: Inquiry; format: Format }) {

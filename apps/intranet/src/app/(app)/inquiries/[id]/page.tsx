@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useParams, useRouter } from "next/navigation";
 
@@ -8,11 +8,18 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { inquiryTitleParts, type InquiryState } from "@advantis/convex/marketing/inquiry";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, Copy, Inbox, Lock, Paperclip, X } from "lucide-react";
+import { ArrowLeft, Copy, Inbox, Lock, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { InquiryAi } from "@/components/inquiries/InquiryAi";
+import { Attachments, InquiryThread } from "@/components/inquiries/InquiryThread";
+import { RelatedInquiries } from "@/components/inquiries/RelatedInquiries";
+import { type ComposerHandle, ReplyComposer } from "@/components/inquiries/ReplyComposer";
 import { STATES, StateBadge, TYPE_ICON, senderLine } from "@/components/inquiries/shared";
+import { TagEditor } from "@/components/inquiries/TagEditor";
+import { TemplatePicker } from "@/components/inquiries/TemplatePicker";
+import { ViewersBanner, useInquiryViewers } from "@/components/inquiries/ViewersBanner";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
 import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
@@ -27,13 +34,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { Timeline } from "@/components/ui/timeline";
 
 const UNASSIGNED = "none";
-// the same limits Convex checks on a reply's attachments
-const MAX_FILES = 3;
-const MAX_BYTES = 10 * 1024 * 1024;
 
 /** `YYYY-MM-DDTHH:mm` in the browser's zone, for a datetime-local input. */
 const toLocalInput = (at: number) => {
@@ -59,15 +62,12 @@ export default function InquiryPage() {
   const markSeen = useMutation(api.marketing.inbox.markSeen);
   const setState = useMutation(api.marketing.inbox.setState);
   const assign = useMutation(api.marketing.inbox.assign);
-  const reply = useMutation(api.marketing.inbox.reply);
   const confirmCallback = useMutation(api.marketing.inbox.confirmCallback);
   const cancelCallback = useMutation(api.marketing.inbox.cancelCallback);
-  const generateUploadUrl = useMutation(api.marketing.inbox.generateUploadUrl);
+  const composerRef = useRef<ComposerHandle>(null);
 
-  const [draft, setDraft] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
-  const [sending, setSending] = useState(false);
   const [slot, setSlot] = useState("");
+  const [typing, setTyping] = useState(false);
 
   const format = useMemo(
     () =>
@@ -80,6 +80,9 @@ export default function InquiryPage() {
 
   const inquiry = data?.inquiry;
   const resolvedId = inquiry?._id;
+  const viewers = useInquiryViewers(resolvedId, typing);
+  // a draft on the last inquiry isn't one on this
+  useEffect(() => setTyping(false), [resolvedId]);
   const unseen = inquiry ? !inquiry.seenAt : false;
   useEffect(() => {
     if (unseen && resolvedId) void markSeen({ id: resolvedId });
@@ -130,47 +133,6 @@ export default function InquiryPage() {
     }
   };
 
-  const upload = async (file: File) => {
-    const url = await generateUploadUrl({});
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": file.type },
-      body: file,
-    });
-    const { storageId } = (await response.json()) as { storageId: Id<"_storage"> };
-    return {
-      storageId,
-      name: file.name,
-      size: file.size,
-      contentType: file.type,
-      kind: file.type.startsWith("image/") ? ("image" as const) : ("file" as const),
-    };
-  };
-
-  const sendReply = async () => {
-    if (!draft.trim() && !files.length) return;
-    setSending(true);
-    await run(async () => {
-      const attachments = await Promise.all(files.map(upload));
-      await reply({
-        id: inquiryId,
-        body: draft,
-        attachments: attachments.length ? attachments : undefined,
-      });
-      setDraft("");
-      setFiles([]);
-    }, t("replySent"));
-    setSending(false);
-  };
-
-  const pickFiles = (list: FileList | null) => {
-    const picked = [...(list ?? [])];
-    if (picked.some((file) => file.size > MAX_BYTES)) toast.error(t("tooLarge"));
-    setFiles((current) =>
-      [...current, ...picked.filter((file) => file.size <= MAX_BYTES)].slice(0, MAX_FILES),
-    );
-  };
-
   const details: [string, string | undefined][] = [
     [t("fields.email"), inquiry.email],
     [t("fields.phone"), inquiry.phone],
@@ -189,7 +151,9 @@ export default function InquiryPage() {
   const eventLabel = (event: (typeof data.events)[number]) =>
     event.type === "state" && event.state
       ? t("events.state", { state: t(`states.${event.state}`) })
-      : t(`events.${event.type}`);
+      : event.type === "merged" || event.type === "merged_in"
+        ? t(`events.${event.type}`, { reference: event.related?.reference ?? "" })
+        : t(`events.${event.type}`);
 
   const timeline = [...data.events].reverse().map((event) => ({
     key: event._id,
@@ -236,6 +200,22 @@ export default function InquiryPage() {
           <h1 className="mt-2 text-xl font-semibold leading-snug break-words">{title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{senderLine(inquiry)}</p>
 
+          {data.mergedInto ? (
+            <p className="mt-4 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+              {t.rich("merge.banner", {
+                reference: data.mergedInto.reference,
+                link: (chunks) => (
+                  <Link
+                    href={`/inquiries/${data.mergedInto!.id}`}
+                    className="font-medium underline underline-offset-4"
+                  >
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </p>
+          ) : null}
+
           {failed || inquiry.overdue ? (
             <p className="mt-4 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
               {failed ? t("notDeliveredHint") : t("overdueHint")}
@@ -270,107 +250,34 @@ export default function InquiryPage() {
             <h2 id="thread" className="text-sm font-semibold">
               {t("thread")}
             </h2>
-            {data.messages.length === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">{t("noReplies")}</p>
-            ) : (
-              <ol className="mt-4 space-y-4">
-                {data.messages.map((message) => (
-                  <li
-                    key={message._id}
-                    className={`rounded-lg border px-4 py-3 ${
-                      message.author === "staff"
-                        ? "border-primary/30 bg-primary/5"
-                        : "border-border"
-                    }`}
-                  >
-                    <p className="text-xs text-muted-foreground">
-                      {message.author === "staff"
-                        ? (message.staffName ?? t("actors.staff"))
-                        : t("actors.customer")}
-                      {" · "}
-                      {format.format(message.createdAt)}
-                      {message.via === "email" ? ` · ${t("viaEmail")}` : ""}
-                    </p>
-                    <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-6">
-                      {message.body}
-                    </p>
-                    <Attachments items={message.attachments} />
-                  </li>
-                ))}
-              </ol>
-            )}
+            <InquiryThread detail={data} meId={me._id} format={format} />
+            <ViewersBanner viewers={viewers} />
 
-            {inquiry.anonymizedAt ? null : (
-              <div className="mt-6">
-                <label htmlFor="reply" className="sr-only">
-                  {t("replyLabel")}
-                </label>
-                <Textarea
-                  id="reply"
-                  value={draft}
-                  onChange={(event) => setDraft(event.target.value)}
-                  placeholder={t("replyPlaceholder", {
-                    name: inquiry.firstName || inquiry.email,
-                  })}
-                  rows={5}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-                      event.preventDefault();
-                      void sendReply();
-                    }
-                  }}
-                />
-                {files.length ? (
-                  <ul className="mt-2 flex flex-wrap gap-2">
-                    {files.map((file, index) => (
-                      <li
-                        key={`${file.name}-${index}`}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs"
-                      >
-                        <Paperclip className="size-3.5 text-muted-foreground" aria-hidden />
-                        {file.name}
-                        <button
-                          type="button"
-                          aria-label={t("removeFile", { name: file.name })}
-                          onClick={() => setFiles(files.filter((_, i) => i !== index))}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <X className="size-3.5" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-4">
-                    <label
-                      className={`inline-flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground ${
-                        files.length >= MAX_FILES ? "pointer-events-none opacity-50" : ""
-                      }`}
-                    >
-                      <Paperclip className="size-3.5" aria-hidden />
-                      {t("attach")}
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*,application/pdf,.doc,.docx"
-                        className="sr-only"
-                        onChange={(event) => {
-                          pickFiles(event.target.files);
-                          event.target.value = "";
-                        }}
-                      />
-                    </label>
-                    <p className="text-xs text-muted-foreground">{t("replyHint")}</p>
-                  </div>
-                  <Button
-                    onClick={() => void sendReply()}
-                    disabled={sending || (!draft.trim() && !files.length)}
-                  >
-                    {t("sendReply")}
-                  </Button>
-                </div>
-              </div>
+            {inquiry.anonymizedAt || data.mergedInto ? null : (
+              <ReplyComposer
+                key={inquiryId}
+                inquiryId={inquiryId}
+                customerName={inquiry.firstName || inquiry.email}
+                handle={composerRef}
+                onTypingChange={setTyping}
+                toolbar={(mode) =>
+                  mode === "reply" ? (
+                    <TemplatePicker
+                      locale={inquiry.locale}
+                      values={{
+                        firstName: inquiry.firstName,
+                        lastName: inquiry.lastName,
+                        name: `${inquiry.firstName} ${inquiry.lastName}`.trim(),
+                        company: inquiry.company,
+                        reference: inquiry.reference,
+                        myFirstName: me.firstName ?? undefined,
+                        myName: [me.firstName, me.lastName].filter(Boolean).join(" "),
+                      }}
+                      onPick={(text) => composerRef.current?.insert(text)}
+                    />
+                  ) : null
+                }
+              />
             )}
           </section>
         </div>
@@ -450,6 +357,42 @@ export default function InquiryPage() {
             ) : null}
           </section>
 
+          {inquiry.rating ? (
+            <section>
+              <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("rating.title")}
+              </h2>
+              <p className="mt-2 flex items-center gap-1.5 text-sm">
+                {inquiry.rating === "helpful" ? (
+                  <ThumbsUp aria-hidden className="size-4 text-ok" />
+                ) : (
+                  <ThumbsDown aria-hidden className="size-4 text-warn" />
+                )}
+                {t(`rating.${inquiry.rating}`)}
+              </p>
+              {inquiry.ratingComment ? (
+                <blockquote className="mt-1.5 border-l-2 border-border pl-3 text-sm whitespace-pre-wrap break-words text-muted-foreground">
+                  {inquiry.ratingComment}
+                </blockquote>
+              ) : null}
+            </section>
+          ) : null}
+
+          {inquiry.anonymizedAt ? null : (
+            <InquiryAi
+              id={inquiryId}
+              signOff={me.firstName ?? ""}
+              onUseDraft={(text) => composerRef.current?.insert(text, { replace: true })}
+            />
+          )}
+
+          <section>
+            <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t("tags.title")}
+            </h2>
+            <TagEditor id={inquiryId} tags={inquiry.tags ?? []} />
+          </section>
+
           {inquiry.submissionType === "callback" ? (
             <section>
               <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -510,6 +453,13 @@ export default function InquiryPage() {
             </section>
           ) : null}
 
+          <RelatedInquiries
+            id={inquiryId}
+            reference={inquiry.reference}
+            merged={Boolean(data.mergedInto)}
+            format={format}
+          />
+
           <section>
             <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {t("history")}
@@ -523,32 +473,5 @@ export default function InquiryPage() {
         </aside>
       </div>
     </div>
-  );
-}
-
-function Attachments({
-  items,
-}: {
-  items: { storageId: string; name?: string; url: string | null }[] | undefined;
-}) {
-  if (!items?.length) return null;
-  return (
-    <ul className="mt-3 flex flex-wrap gap-2">
-      {items.map((item) =>
-        item.url ? (
-          <li key={item.storageId}>
-            <a
-              href={item.url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent"
-            >
-              <Paperclip className="size-3.5" aria-hidden />
-              {item.name ?? item.storageId}
-            </a>
-          </li>
-        ) : null,
-      )}
-    </ul>
   );
 }

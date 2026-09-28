@@ -259,6 +259,7 @@
       "serverErrorDesc": "If the problem persists, please try again later.",
       "rateLimitTitle": "Too many requests",
       "rateLimitDesc": "You've sent a lot of requests. Please try again later.",
+      "spamCheckDesc": "The spam check didn't pass. Please reload the page and try again.",
       "copySent": "We've sent a copy to {email}.",
       "sendAnother": "Send another",
       "copyOff": "You turned copies off in your preferences, so no copy was sent.",
@@ -1623,7 +1624,24 @@
         "closed": "Closed on {when}. Reply below if anything's still open.",
         "answered": "We answered on {when}. It's in the conversation below.",
         "reopened": "You asked for more help, so it's back with the team.",
-        "handling": "Someone from our team is handling it."
+        "handling": "Someone from our team is handling it.",
+        "merged": "Combined with {reference}."
+      },
+      "merged": "We combined this inquiry with <link>{reference}</link> because it's about the same thing. The conversation continues there.",
+      "rating": {
+        "question": "Did our answer help?",
+        "helpful": "Yes, it helped",
+        "notHelpful": "Not really",
+        "whatMissing": "What's still missing? (optional, goes straight to our team)",
+        "send": "Send",
+        "cancel": "Cancel",
+        "thanks": "Thanks for letting us know",
+        "failed": "That didn't work. Please try again.",
+        "change": "Change",
+        "given": {
+          "helpful": "You said the answer helped.",
+          "not_helpful": "You said the answer didn't help. Our team knows."
+        }
       }
     },
     "profile": {

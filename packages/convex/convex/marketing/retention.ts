@@ -33,6 +33,12 @@ export const anonymizeStale = internalMutation({
         await ctx.storage.delete(attachment.storageId);
       }
       for (const message of messages) await ctx.db.delete(message._id);
+      // the team's notes are about the person as much as the thread is
+      const notes = await ctx.db
+        .query("inquiryNotes")
+        .withIndex("by_inquiry_createdAt", (q) => q.eq("inquiryId", row._id))
+        .collect();
+      for (const note of notes) await ctx.db.delete(note._id);
 
       await ctx.db.patch(row._id, {
         firstName: "",
@@ -49,6 +55,8 @@ export const anonymizeStale = internalMutation({
         clerkUserId: "",
         error: undefined,
         attachments: undefined,
+        tags: undefined,
+        ratingComment: undefined,
         actionTokenHash: undefined,
         anonymizedAt: Date.now(),
       });

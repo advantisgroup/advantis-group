@@ -131,8 +131,14 @@ export const exportForAccount = serverQuery({
             .query("inquiryMessages")
             .withIndex("by_inquiry_createdAt", (q) => q.eq("inquiryId", row._id))
             .collect();
+          const notes = await ctx.db
+            .query("inquiryNotes")
+            .withIndex("by_inquiry_createdAt", (q) => q.eq("inquiryId", row._id))
+            .collect();
           return {
             ...rest,
+            // the team's notes are data about the person too, so a copy includes them
+            teamNotes: notes.map(({ body, createdAt }) => ({ body, createdAt })),
             events: events.map(({ type, state, actor, at }) => ({ type, state, actor, at })),
             messages: messages.map(({ author, body, via, createdAt, attachments }) => ({
               author,
@@ -173,13 +179,21 @@ async function eraseInquiries(ctx: MutationCtx, rows: Doc<"emails">[]) {
       .query("inquiryMessages")
       .withIndex("by_inquiry_createdAt", (q) => q.eq("inquiryId", row._id))
       .collect();
+    const notes = await ctx.db
+      .query("inquiryNotes")
+      .withIndex("by_inquiry_createdAt", (q) => q.eq("inquiryId", row._id))
+      .collect();
     for (const attachment of [
       ...(row.attachments ?? []),
       ...messages.flatMap((message) => message.attachments ?? []),
     ]) {
       await ctx.storage.delete(attachment.storageId);
     }
-    for (const doc of [...events, ...messages]) await ctx.db.delete(doc._id);
+    const viewers = await ctx.db
+      .query("inquiryViewers")
+      .withIndex("by_inquiry", (q) => q.eq("inquiryId", row._id))
+      .collect();
+    for (const doc of [...events, ...messages, ...notes, ...viewers]) await ctx.db.delete(doc._id);
     await ctx.db.delete(row._id);
   }
   return rows.length;

@@ -8,17 +8,29 @@ import { api } from "@advantis/convex/api";
 import { inquiryTitleParts } from "@advantis/convex/marketing/inquiry";
 import { usePaginatedQuery, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
-import { AlertTriangle, Inbox, Lock, Search, X } from "lucide-react";
+import {
+  AlertTriangle,
+  BarChart3,
+  FileText,
+  Inbox,
+  Lock,
+  Search,
+  Settings2,
+  X,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
+import { InboxSettingsDialog } from "@/components/inquiries/InboxSettingsDialog";
 import { StateBadge, TYPE_ICON, senderLine } from "@/components/inquiries/shared";
-import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
+import { TagChips } from "@/components/inquiries/TagEditor";
+import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useHasCapability } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CountTabs } from "@/components/ui/count-tabs";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterPill } from "@/components/ui/filter-pill";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type View = "open" | "answered" | "closed" | "failed" | "all";
@@ -35,8 +47,36 @@ export default function InquiriesPage() {
   const [view, setView] = useState<View>("open");
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
+  const [tag, setTag] = useState<string | undefined>();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const searching = debounced.trim().length > 0;
+  const headerActions = useMemo(
+    () => [
+      {
+        key: "stats",
+        label: t("stats.title"),
+        icon: BarChart3,
+        variant: "outline" as const,
+        onClick: () => router.push("/inquiries/stats"),
+      },
+      {
+        key: "settings",
+        label: t("settings.title"),
+        icon: Settings2,
+        variant: "outline" as const,
+        onClick: () => setSettingsOpen(true),
+      },
+      {
+        key: "templates",
+        label: t("templates.title"),
+        icon: FileText,
+        variant: "outline" as const,
+        onClick: () => router.push("/inquiries/templates"),
+      },
+    ],
+    [t, router],
+  );
 
   // "/inquiries#841KGR" — a reference pasted after the page's address — starts as a search
   // for it, in every tab; the part after "#" never reaches the server, so it's read here
@@ -54,14 +94,15 @@ export default function InquiriesPage() {
   }, [query]);
 
   const counts = useQuery(api.marketing.inbox.counts, canManage ? {} : "skip");
+  const tags = useQuery(api.marketing.inbox.tagSuggestions, canManage ? {} : "skip");
   const { results, status, loadMore } = usePaginatedQuery(
     api.marketing.inbox.list,
-    canManage && !searching ? { view } : "skip",
+    canManage && !searching ? { view, tag } : "skip",
     { initialNumItems: 40 },
   );
   const found = useQuery(
     api.marketing.inbox.search,
-    canManage && searching ? { q: debounced, view } : "skip",
+    canManage && searching ? { q: debounced, view, tag } : "skip",
   );
 
   if (!canManage) {
@@ -71,6 +112,8 @@ export default function InquiriesPage() {
   return (
     <div className="mx-auto w-full max-w-5xl">
       <PageHeaderBar title={t("title")} description={t("description")} icon={<Inbox />} />
+      <PageHeaderActions actions={headerActions} />
+      <InboxSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
 
       <form
         role="search"
@@ -109,6 +152,23 @@ export default function InquiriesPage() {
           </button>
         ) : null}
       </form>
+
+      {tags?.length || tag ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <FilterPill
+            label={t("tags.filter")}
+            clearLabel={t("tags.clearFilter")}
+            options={(tags ?? []).map((entry) => ({
+              value: entry.tag,
+              label: entry.tag,
+              count: entry.count,
+            }))}
+            selected={tag ? [tag] : []}
+            // one tag at a time: picking another replaces it
+            onChange={(next) => setTag(next.at(-1))}
+          />
+        </div>
+      ) : null}
 
       <CountTabs<View>
         value={view}
@@ -246,6 +306,7 @@ function InquiryRow({ inquiry }: { inquiry: Row }) {
           {failed ? (
             <span className="font-medium text-destructive">{t("notDelivered")}</span>
           ) : null}
+          <TagChips tags={inquiry.tags} />
         </span>
         <StateBadge state={inquiry.state} className="justify-self-end" />
       </Link>

@@ -142,6 +142,35 @@ export const submissions = new Elysia({ prefix: "/submissions" })
     },
   )
   .post(
+    "/:id/rating",
+    async ({ account, params, body, set }) => {
+      if (!(await allow(limits.inquiryWrite, account!.clerkUserId))) {
+        set.status = 429;
+        return { error: "Too many requests." };
+      }
+      try {
+        return await convex!.mutation(api.marketing.inquiries.rateByCustomer, {
+          serverKey: serverKey(),
+          account: convexAccount(account!),
+          id: params.id,
+          rating: body.rating,
+          comment: body.comment,
+        });
+      } catch (error) {
+        const code = errorCode(error);
+        if (!code) throw error;
+        set.status = code === "not_found" ? 404 : 409;
+        return { error: code };
+      }
+    },
+    {
+      body: t.Object({
+        rating: t.Union([t.Literal("helpful"), t.Literal("not_helpful")]),
+        comment: t.Optional(t.String({ maxLength: 2000 })),
+      }),
+    },
+  )
+  .post(
     "/:id/messages",
     async ({ account, params, body, set }) => {
       if (!(await allow(limits.inquiryWrite, account!.clerkUserId))) {

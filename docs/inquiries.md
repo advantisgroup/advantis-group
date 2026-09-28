@@ -79,6 +79,116 @@ Two new tables:
 `notifyEmails` gains `locale?` and `clerkUserId?`. `whitepaperLeads` gains
 `withdrawnAt?`, `verifiedVia?: "account"` and `clerkUserId?`.
 
+## Team tools
+
+Things the team uses to work the inbox. None of them change what the
+customer sees, unless the entry says otherwise.
+
+- **Internal notes** (`inquiryNotes`: `{ inquiryId, authorUserId, body, createdAt, editedAt? }`).
+  A table of their own rather than a flag on `inquiryMessages`, so no customer
+  read path can pick one up by forgetting a filter. Shown in the staff thread,
+  tinted and marked, interleaved with the replies. Only the author can edit or
+  delete one. Deleted with the inquiry on erasure and by the retention cron;
+  included in the customer's data export as `teamNotes` (Art. 15 covers what we
+  write about someone), and the composer says so.
+- **Tags** (`emails.tags`, lowercased, spaces as `-`, at most 10 of 32
+  characters, `normalizeTags` in `lib/inquiry.ts`). Free-form; the input
+  suggests tags already in use (`inbox.tagSuggestions`, from the 1,000 most
+  recent inquiries). The list and search take an optional `tag`; search also
+  matches `#tag`. No event, no activity bump. Cleared by the retention cron.
+- **Reply templates** (`inquiryReplyTemplates`, `marketing/templates.ts`,
+  `/inquiries/templates`). One shared set for everyone with
+  `manage_inquiries`. A template has an optional `locale`; the "Templates"
+  picker beside the reply box lists the customer's language first, then
+  any-language ones, then the rest, most used (`uses`) first within each.
+  `fillTemplate` fills `{firstName}`, `{lastName}`, `{name}`, `{company}`,
+  `{reference}`, `{myFirstName}` and `{myName}`; an empty one disappears with
+  the space before it, an unknown one stays as typed. The text lands in the
+  reply box for editing, never sent straight away. Deleting moves a template
+  to the trash (`lib/trash.ts`).
+- **Who else is on it** (`inquiryViewers`: `{ inquiryId, userId, typing, at }`).
+  The inquiry page sends `inbox.heartbeat` every `VIEWER_HEARTBEAT_MS` while
+  it's visible (and at once when a reply is started or cleared), and
+  `inbox.leave` when hidden or closed. `inbox.viewers` lists the others; the
+  page drops anyone older than `VIEWER_STALE_MS` on its own clock, and each
+  heartbeat deletes stale rows on that inquiry. Shown above the reply box:
+  "Anna is writing a reply right now" in the warning colour, "has this open
+  too" quietly. Deleted with the inquiry on erasure.
+- **Same customer, and merging** (`inbox.related`, `inbox.merge`,
+  `emails.mergedIntoId`). The sidebar lists the customer's other inquiries
+  (`sameCustomer` in `lib/inquiry.ts`: a shared contact or account address, or
+  the same Clerk id). "Merge into this" folds the open inquiry into that one:
+  its message (and callback notes) becomes a customer message dated when it
+  was sent, with its attachments; its replies and notes move across; tags are
+  combined; the source is closed with `mergedIntoId`, and both get an event
+  (`merged` / `merged_in`, with `relatedInquiryId`). If the source was still
+  open and the target was done, the target goes back to `in_progress`. Nothing
+  is mailed. Refused for different customers (so a merge never shows one
+  customer another's words), for a callback that's still requested or
+  confirmed, and for anything already merged or anonymized. Afterwards the
+  source takes no more replies from either side (`merged` error), a mail
+  reply to it lands on the target, and the customer's page says where the
+  conversation went.
+- **Stats** (`marketing/stats.ts → overview`, `/inquiries/stats`). For the last
+  30, 90 or 365 days against the same length before: received, closed, median
+  time to the first answer (a reply or a confirmed callback: `firstResponseAt`)
+  and to closing, still unanswered, withdrawn; received vs. closed per day (30)
+  or per week; and splits by type, assignee and tag. Calendar time, not
+  business hours. Merged-away inquiries don't count. Reads rows by
+  `lastActivityAt` (anything received or closed in either period has one after
+  its start), at most 5,000; the page says when it hit that. The browser passes
+  `until` rounded to the hour and its time-zone offset, so days start at its
+  midnight and the read range holds still.
+- **Auto-close** (`marketing/automation.ts`, `inquirySettings`). A daily cron
+  (`autoClose`, 03:15 UTC) closes `answered` inquiries with no activity for
+  `autoCloseDays` (default 14; 0 = never), with a `system` state event and no
+  mail. Customers can still reply, which reopens them. Set from "Inbox
+  settings" on `/inquiries`. No SLA or escalation on purpose: the team is small
+  enough that the overdue label is all it needs.
+- **AI summary and reply draft** (run kinds `inquirySummary` / `inquiryDraft`,
+  apps/api `POST /inquiries/:id/ai`, context from `inbox.apiAiContext`). Two
+  cards in the inquiry sidebar, each started by hand and kept as an AI run
+  (`subjectKey` `inquirySummary:<id>` / `inquiryDraft:<id>`), so the last one
+  is there next time. The summary is written in the page's language; the draft
+  in the customer's `locale`, signed with the asking person's first name, with
+  `[square brackets]` for anything only the team knows, and goes into the reply
+  box via "Put in reply box", never straight out. The context holds the
+  customer's name, company and words, the thread and the internal notes (the
+  draft prompt says never to quote or mention them), but no address or phone
+  number. Needs `manage_inquiries` (`hasAreaAccess`) plus the usual AI switch
+  and `use_ai`. **Before switching it on for the team**, the website's privacy
+  policy should name Anthropic as a processor for inquiries: it currently only
+  lists the providers in "Privacy decisions" below.
+- **"Did our answer help?"** (`emails.rating`: `helpful | not_helpful`,
+  `ratingComment`, `ratedAt`; `inquiries.rateByCustomer`, marketing
+  `POST /api/submissions/:id/rating`). Shown on the customer's inquiry page
+  once there's an answer (`answered` or `closed` with `firstResponseAt`), not
+  on merged ones. A "no" asks what's missing (optional) and notifies the
+  assignee, or everyone who watches the inbox; answering again replaces the
+  earlier answer. A `rated` event is recorded. The staff sidebar shows it, and
+  the stats page shows the share of "helpful" among answers rated in the
+  period with the latest "no"s. Only signed-in customers can rate, since the
+  page needs an account. The retention cron blanks the comment.
+
+## Spam check
+
+The contact forms, the whitepaper request and the "tell me when you're open"
+code mail need a solved [ALTCHA](https://altcha.org) proof-of-work puzzle
+(`apps/marketing/src/lib/altcha.ts`, `hooks/use-altcha.ts`). Self-hosted: no
+cookies, no third party, nothing to click.
+
+- `GET /api/altcha` issues a signed puzzle (`PBKDF2/SHA-256`, cost 2,000, about
+  a second of work in a browser, valid 20 minutes), or `{ disabled: true }`
+  when `ALTCHA_HMAC_KEY` isn't set: off in local dev and previews, like the
+  rate limits.
+- While a form is on screen, one invisible widget per page solves a puzzle in
+  the background; submitting sends its payload as `altcha` and starts the next.
+- `/send`, `/whitepaper/request` and `/notify` (the code-mail path only, not a
+  signed-in owner) answer 403 without a valid, unexpired, unused solution.
+  Used puzzles are remembered in Upstash (`marketing:altcha:<nonce>`) for as
+  long as they're valid; without Redis only per server instance. If Redis
+  errors, the check lets the request through rather than lock every form.
+
 ## States
 
 What the customer sees is deliberately small — three words, like a help

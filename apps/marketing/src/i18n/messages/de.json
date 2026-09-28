@@ -262,6 +262,7 @@
       "serverErrorDesc": "Falls das Problem anhält, versuch es später noch einmal.",
       "rateLimitTitle": "Zu viele Anfragen",
       "rateLimitDesc": "Du hast sehr viele Anfragen geschickt. Bitte versuch es später noch einmal.",
+      "spamCheckDesc": "Die Spam-Prüfung hat nicht geklappt. Lade die Seite neu und versuch es noch einmal.",
       "copySent": "Eine Kopie ist an {email} unterwegs.",
       "sendAnother": "Weitere Anfrage senden",
       "copyOff": "Du hast Kopien in deinen Einstellungen ausgeschaltet, deshalb ging keine raus.",
@@ -1626,7 +1627,24 @@
         "closed": "Geschlossen am {when}. Antworte unten, falls noch etwas offen ist.",
         "answered": "Wir haben am {when} geantwortet – die Antwort steht unten im Verlauf.",
         "reopened": "Du brauchst noch Hilfe, deshalb liegt sie wieder beim Team.",
-        "handling": "Jemand aus unserem Team kümmert sich darum."
+        "handling": "Jemand aus unserem Team kümmert sich darum.",
+        "merged": "Mit {reference} zusammengeführt."
+      },
+      "merged": "Wir haben diese Anfrage mit <link>{reference}</link> zusammengeführt, weil es um dasselbe geht. Dort geht es weiter.",
+      "rating": {
+        "question": "Hat dir unsere Antwort geholfen?",
+        "helpful": "Ja, hat geholfen",
+        "notHelpful": "Nicht wirklich",
+        "whatMissing": "Was fehlt dir noch? (optional, geht direkt an unser Team)",
+        "send": "Absenden",
+        "cancel": "Abbrechen",
+        "thanks": "Danke für deine Rückmeldung",
+        "failed": "Das hat nicht geklappt. Versuch es bitte noch einmal.",
+        "change": "Ändern",
+        "given": {
+          "helpful": "Du hast gesagt: Die Antwort hat geholfen.",
+          "not_helpful": "Du hast gesagt: Die Antwort hat nicht geholfen. Unser Team weiß Bescheid."
+        }
       }
     },
     "profile": {

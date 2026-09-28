@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 
 import { account } from "@/app/api/[[...slugs]]/account";
+import { altcha } from "@/app/api/[[...slugs]]/altcha";
 import { callback } from "@/app/api/[[...slugs]]/callback";
 import { email } from "@/app/api/[[...slugs]]/email";
 import { notify } from "@/app/api/[[...slugs]]/notify";
@@ -15,6 +16,7 @@ const app = new Elysia({ prefix: "/api" })
     }),
   })
   .use(account)
+  .use(altcha)
   .use(callback)
   .use(email)
   .use(notify)

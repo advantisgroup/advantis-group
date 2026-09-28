@@ -11,7 +11,9 @@
     "cvRescan": "CV update",
     "ask": "Ask about a record",
     "dailyBrief": "Your day at a glance",
-    "navigate": "Find your way around"
+    "navigate": "Find your way around",
+    "inquirySummary": "Inquiry summary",
+    "inquiryDraft": "Inquiry reply draft"
   },
   "ask": {
     "title": "Ask about this",
@@ -113,7 +115,9 @@
       "cvRescan": "That applicant's CV again, when you ask for an update.",
       "ask": "The record you're asking about — an IT ticket with its history and thread, an announcement, an error report with its measures, a suggestion, or an applicant's profile and notes. The panel lists exactly what was included.",
       "dailyBrief": "The same things your overview page shows you — your open tickets and measures, today's and tomorrow's events, unread announcements and how many chat messages are waiting (not their content) — to write a few sentences about your day.",
-      "navigate": "What you type into the helper, the pages you can open and your newest IT tickets. To find something specific it searches wiki entries, colleagues, announcements, suggestions, error reports, events and your tickets — only what you could open yourself — and sees the titles of what matched, not the content. Your AI history lists every search it made."
+      "navigate": "What you type into the helper, the pages you can open and your newest IT tickets. To find something specific it searches wiki entries, colleagues, announcements, suggestions, error reports, events and your tickets — only what you could open yourself — and sees the titles of what matched, not the content. Your AI history lists every search it made.",
+      "inquirySummary": "One website inquiry: the customer's name, company and message, the replies so far and the team's internal notes — never their email address or phone number.",
+      "inquiryDraft": "The same as the inquiry summary, to draft a reply in the customer's language. The draft only goes into the reply box; nothing is sent until someone sends it."
     },
     "whoTitle": "Who sees what",
     "whoHint": "An AI run belongs to whoever started it — and only they can read it, stop it or delete it.",

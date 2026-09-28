@@ -48,6 +48,15 @@ describe("routes", () => {
     expect(res.status).toBe(401);
     expect(await res.json()).toMatchObject({ code: "unauthorized" });
   });
+
+  test("an inquiry's AI summary needs a session before anything is read", async () => {
+    const res = await call("/inquiries/abc/ai", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mode: "summary", locale: "de", signOff: "" }),
+    });
+    expect(res.status).toBe(401);
+  });
 });
 
 describe("convex errors become the right status", () => {

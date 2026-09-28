@@ -27,6 +27,7 @@ export const TRASH_TABLES = [
   "errorMeasures",
   "events",
   "guidebookPages",
+  "inquiryReplyTemplates",
   "itTickets",
   "suggestions",
   "updates",

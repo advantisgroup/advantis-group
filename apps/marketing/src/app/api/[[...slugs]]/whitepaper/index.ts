@@ -19,6 +19,7 @@ import {
   whitepaperExists,
 } from "@/lib/whitepaper";
 import { convex, serverKey } from "@/lib/convex-server";
+import { passedAltcha } from "@/lib/altcha";
 import { clientIp } from "@/lib/rate-limit";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -127,6 +128,11 @@ export const whitepaper = new Elysia({ prefix: "/whitepaper" })
       if (!body.consent) {
         set.status = 400;
         return { error: "Consent is required.", code: "consent_missing" };
+      }
+
+      if (!(await passedAltcha(body.altcha))) {
+        set.status = 403;
+        return { error: "The spam check didn't pass.", code: "captcha_failed" };
       }
 
       if (!whitepaperExists()) {
@@ -246,10 +252,12 @@ export const whitepaper = new Elysia({ prefix: "/whitepaper" })
         phone: t.String({ minLength: 1 }),
         consent: t.Boolean(),
         locale: t.Optional(t.String()),
+        altcha: t.Optional(t.String({ maxLength: 10_000 })),
       }),
       response: {
         200: t.Object({ ok: t.Boolean(), delivered: t.Optional(t.Boolean()) }),
         400: errorSchema,
+        403: errorSchema,
         500: errorSchema,
         503: errorSchema,
       },

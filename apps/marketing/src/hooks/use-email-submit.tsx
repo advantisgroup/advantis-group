@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useAltcha } from "@/hooks/use-altcha";
 import { useTrackEvent } from "@/lib/analytics";
 import { api } from "@/lib/eden";
 import { type ButtonState, type InquiryTopic } from "@/types/contact";
@@ -49,6 +50,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
   const tMessages = useTranslations("contact.messages");
   const locale = useLocale();
   const trackEvent = useTrackEvent();
+  const spamCheck = useAltcha();
 
   const showErrorToast = useCallback(
     (description: string) => {
@@ -76,6 +78,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
       setButtonState("loading");
       trackEvent(trackingEvent);
       try {
+        const altcha = await spamCheck();
         const response = await api.send.post({
           firstName: payload.firstName,
           lastName: payload.lastName,
@@ -91,6 +94,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
           desiredAt: payload.desiredAt,
           timeZone: payload.timeZone,
           notes: payload.notes,
+          altcha,
         });
 
         // saved, so it has a reference and shows up in the account, but it never reached the team
@@ -107,6 +111,14 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
           showErrorToast(tMessages("errorDesc"));
           resetButtonState();
           onFieldError(response.error.value.field);
+          return null;
+        }
+
+        if (response.error?.status === 403) {
+          setButtonState("error");
+          showErrorToast(tMessages("spamCheckDesc"));
+          resetButtonState();
+          onError?.(new Error("Spam check failed"));
           return null;
         }
 
@@ -142,7 +154,16 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
         return null;
       }
     },
-    [locale, onSuccess, onError, resetButtonState, showErrorToast, tMessages, trackEvent],
+    [
+      locale,
+      onSuccess,
+      onError,
+      resetButtonState,
+      showErrorToast,
+      spamCheck,
+      tMessages,
+      trackEvent,
+    ],
   );
 
   return {

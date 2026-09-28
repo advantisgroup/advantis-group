@@ -262,6 +262,7 @@
       "serverErrorDesc": "Si le problème persiste, veuillez réessayer plus tard.",
       "rateLimitTitle": "Trop de demandes",
       "rateLimitDesc": "Vous avez envoyé beaucoup de demandes. Veuillez réessayer plus tard.",
+      "spamCheckDesc": "La vérification anti-spam n'a pas abouti. Veuillez recharger la page et réessayer.",
       "copySent": "Une copie a été envoyée à {email}.",
       "sendAnother": "Envoyer une autre demande",
       "copyOff": "Vous avez désactivé les copies dans vos préférences, aucune copie n'a donc été envoyée.",
@@ -1626,7 +1627,24 @@
         "closed": "Fermée le {when}. Répondez ci-dessous si quelque chose reste en suspens.",
         "answered": "Nous avons répondu le {when}. La réponse se trouve dans les échanges ci-dessous.",
         "reopened": "Vous avez encore besoin d'aide, la demande est donc de nouveau entre les mains de l'équipe.",
-        "handling": "Un membre de notre équipe s'en occupe."
+        "handling": "Un membre de notre équipe s'en occupe.",
+        "merged": "Regroupée avec {reference}."
+      },
+      "merged": "Nous avons regroupé cette demande avec <link>{reference}</link>, car elle porte sur le même sujet. La suite des échanges se trouve là-bas.",
+      "rating": {
+        "question": "Notre réponse vous a-t-elle aidé ?",
+        "helpful": "Oui, elle m'a aidé",
+        "notHelpful": "Pas vraiment",
+        "whatMissing": "Que vous manque-t-il encore ? (facultatif, transmis directement à notre équipe)",
+        "send": "Envoyer",
+        "cancel": "Annuler",
+        "thanks": "Merci pour votre retour",
+        "failed": "Cela n'a pas fonctionné. Veuillez réessayer.",
+        "change": "Modifier",
+        "given": {
+          "helpful": "Vous avez indiqué que la réponse vous a aidé.",
+          "not_helpful": "Vous avez indiqué que la réponse ne vous a pas aidé. Notre équipe est prévenue."
+        }
       }
     },
     "profile": {

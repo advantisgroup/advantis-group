@@ -270,3 +270,92 @@ export function buildIcs({
   ];
   return lines.join("\r\n") + "\r\n";
 }
+
+// --- Tags ---------------------------------------------------------------------------
+
+export const MAX_TAGS = 10;
+export const MAX_TAG_LENGTH = 32;
+
+/** Lowercased, trimmed, inner spaces as "-", no "#", no duplicates, at most MAX_TAGS. */
+export function normalizeTags(tags: string[]): string[] {
+  const seen = new Set<string>();
+  for (const raw of tags) {
+    const tag = raw
+      .trim()
+      .replace(/^#+/, "")
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .slice(0, MAX_TAG_LENGTH);
+    if (tag) seen.add(tag);
+    if (seen.size === MAX_TAGS) break;
+  }
+  return [...seen];
+}
+
+// --- Reply templates ------------------------------------------------------------------
+
+export const TEMPLATE_PLACEHOLDERS = [
+  "firstName",
+  "lastName",
+  "name",
+  "company",
+  "reference",
+  "myFirstName",
+  "myName",
+] as const;
+
+export type TemplatePlaceholder = (typeof TEMPLATE_PLACEHOLDERS)[number];
+
+/**
+ * Fills `{firstName}`-style placeholders. One that has no value (no company
+ * on file) is dropped along with a space before it, so "Hallo {firstName},"
+ * without a name reads "Hallo,". Unknown ones stay as typed.
+ */
+export function fillTemplate(
+  body: string,
+  values: Partial<Record<TemplatePlaceholder, string | undefined>>,
+): string {
+  return body.replace(/ ?\{(\w+)\}/g, (match, key: string) => {
+    if (!(TEMPLATE_PLACEHOLDERS as readonly string[]).includes(key)) return match;
+    const value = values[key as TemplatePlaceholder]?.trim();
+    if (!value) return "";
+    return match.startsWith(" ") ? ` ${value}` : value;
+  });
+}
+
+// --- Who else is on it ----------------------------------------------------------------
+
+/** The inquiry page beats this often while open. */
+export const VIEWER_HEARTBEAT_MS = 10_000;
+/** A viewer who hasn't beaten for this long has left (closed the tab, lost the network). */
+export const VIEWER_STALE_MS = 30_000;
+
+// --- Same customer --------------------------------------------------------------------
+
+type CustomerKeys = { email: string; accountEmail: string; clerkUserId: string };
+
+/**
+ * Whether two inquiries come from the same person: the same contact address,
+ * the same signed-in account, or one sent signed in with the address the
+ * other came from. Only these can be merged, so a merge never shows one
+ * customer another's words.
+ */
+export function sameCustomer(a: CustomerKeys, b: CustomerKeys): boolean {
+  const addresses = (row: CustomerKeys) =>
+    new Set(
+      [row.email, row.accountEmail].map((value) => value.trim().toLowerCase()).filter(Boolean),
+    );
+  const theirs = addresses(b);
+  if ([...addresses(a)].some((address) => theirs.has(address))) return true;
+  return a.clerkUserId !== "" && a.clerkUserId === b.clerkUserId;
+}
+
+// --- Stats ------------------------------------------------------------------------------
+
+/** The middle value (the mean of the two middle ones for an even count); undefined for none. */
+export function median(values: number[]): number | undefined {
+  if (values.length === 0) return undefined;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
