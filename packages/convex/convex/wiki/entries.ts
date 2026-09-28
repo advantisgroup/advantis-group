@@ -14,6 +14,17 @@ export function canReadWikiEntry(caller: Caller, entry: Pick<Doc<"wikiEntries">,
   return !entry.minRole || caller.meets(entry.minRole);
 }
 
+/** The same rule for a user outside a request (the weekly email, the policy
+ *  library's "how many have confirmed" count), by their actual role. */
+export function userCanReadWikiEntry(
+  user: Pick<Doc<"users">, "role">,
+  entry: Pick<Doc<"wikiEntries">, "minRole">,
+) {
+  if (!entry.minRole) return true;
+  if (entry.minRole === "admin") return user.role === "admin";
+  return user.role === "manager" || user.role === "admin";
+}
+
 function plainText(html: string) {
   return html
     .replace(/<(br|\/p|\/li|\/h\d)>/gi, "\n")

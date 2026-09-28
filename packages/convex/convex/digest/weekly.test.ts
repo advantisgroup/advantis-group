@@ -126,4 +126,37 @@ describe("weekly digest", () => {
     // Only the unconfirmed policy is still news for the sales colleague.
     expect(digests.map((d) => d.email)).toEqual(["sales@advantisgroup.de"]);
   });
+
+  test("leaves managers-only wiki pages and policies out for employees", async () => {
+    const t = await setup();
+    await t.run(async (ctx) => {
+      const author = (await ctx.db.query("users").first())!._id;
+      for (const [slug, policy] of [
+        ["fuehrung-neu", false],
+        ["fuehrung-richtlinie", true],
+      ] as const) {
+        await ctx.db.insert("wikiEntries", {
+          slug,
+          thema: slug,
+          erklaerung: "",
+          tags: [],
+          minRole: "manager",
+          policy: policy || undefined,
+          policyVersion: policy ? 1 : undefined,
+          validFrom: NOW - DAY,
+          validUntil: NOW + 300 * DAY,
+          version: 1,
+          pinned: false,
+          authorUserId: author,
+          authorName: "x",
+          createdAt: NOW - DAY,
+          updatedAt: NOW - DAY,
+        });
+      }
+    });
+    const digests = await t.query(internal.digest.weekly.build, { until: NOW });
+    const sales = digests.find((d) => d.email === "sales@advantisgroup.de")!;
+    expect(sales.wiki).toEqual([]);
+    expect(sales.policies.map((p) => p.title)).toEqual(["Datenschutz"]);
+  });
 });
