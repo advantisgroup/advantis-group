@@ -25,6 +25,13 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         route: "/",
       },
       {
+        id: "dashboard.search",
+        targetAttr: "tour-search",
+        popoutSide: "bottom",
+        route: "/",
+        skipOnMobile: true,
+      },
+      {
         id: "dashboard.actions",
         targetAttr: "tour-dashboard-actions",
         popoutSide: "bottom",
@@ -240,6 +247,37 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
     ],
   },
   {
+    id: "help",
+    route: "/help",
+    steps: [
+      {
+        id: "help.nav",
+        targetAttr: "tour-nav-help",
+        popoutSide: "right",
+        route: "/help",
+        skipOnMobile: true,
+      },
+      {
+        id: "help.report",
+        targetAttr: "tour-help-report",
+        popoutSide: "bottom",
+        route: "/help",
+      },
+      {
+        id: "help.find",
+        targetAttr: "tour-help-find",
+        popoutSide: "top",
+        route: "/help",
+      },
+      {
+        id: "help.requests",
+        targetAttr: "tour-help-requests",
+        popoutSide: "bottom",
+        route: "/help",
+      },
+    ],
+  },
+  {
     id: "notifications",
     route: "/notifications",
     steps: [
@@ -291,6 +329,12 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         targetAttr: "tour-settings-connections",
         popoutSide: "top",
         route: "/settings/workspace",
+      },
+      {
+        id: "settings.help",
+        targetAttr: "tour-settings-onboarding",
+        popoutSide: "bottom",
+        route: "/settings/help",
       },
     ],
   },

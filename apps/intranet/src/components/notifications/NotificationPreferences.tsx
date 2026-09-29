@@ -10,36 +10,58 @@ import { toast } from "sonner";
 
 import { useIsManager } from "@/components/providers/current-user";
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
-import { notificationVisual } from "@/lib/notification-kinds";
 import { cn } from "@/lib/utils";
 
-import type { LucideIcon } from "lucide-react";
-
 /**
- * The subset of notification types a user is allowed to silence, in display
- * order. Icons/tints come from the shared registry so this list and the
- * notification feed can't drift apart. `access_request` is deliberately
- * absent — managers must not mute access requests.
+ * The notification types a user is allowed to silence, grouped for display.
+ * `access_request` is deliberately absent — managers must not mute access
+ * requests.
  */
-export const MUTABLE_TYPES: { type: string; icon: LucideIcon; tint: string }[] = [
-  "chat-message",
-  "chat-mention",
-  "absence_request",
-  "absence_decision",
-  "announcement",
-  "upload_request",
-  "upload_decision",
-  "draft_shared",
-  "draft_comment",
-].map((type) => ({ type, ...notificationVisual(type) }));
-
-const SECTIONS = [
+export const NOTIFICATION_SECTIONS = [
   { key: "chat", types: ["chat-message", "chat-mention"] },
   { key: "drafts", types: ["draft_shared", "draft_comment"] },
   { key: "absence", types: ["absence_request", "absence_decision"] },
   { key: "uploads", types: ["upload_request", "upload_decision"] },
   { key: "announcement", types: ["announcement"] },
 ] as const;
+
+/** The browser-notification opt-in: asks for permission the first time it's
+ * switched on, and remembers the choice on the account. */
+export function useBrowserPush() {
+  const t = useTranslations("Notifications");
+  const userPrefs = useQuery(api.people.preferences.getMine);
+  const setUserPrefs = useMutation(api.people.preferences.setMine);
+  const [permission, setPermission] = useState<NotificationPermission | null>(null);
+
+  useEffect(() => {
+    // The Notification global doesn't exist during SSR; this can only be
+    // read post-mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPermission(typeof Notification !== "undefined" ? Notification.permission : null);
+  }, []);
+
+  const enabled = (userPrefs?.browserPushEnabled ?? false) && permission === "granted";
+
+  async function toggle() {
+    if (enabled) {
+      await setUserPrefs({ browserPushEnabled: false });
+      return;
+    }
+    if (typeof Notification === "undefined") {
+      toast.error(t("browserUnsupported"));
+      return;
+    }
+    const result = await Notification.requestPermission();
+    setPermission(result);
+    if (result !== "granted") {
+      toast.error(t("browserDenied"));
+      return;
+    }
+    await setUserPrefs({ browserPushEnabled: true });
+  }
+
+  return { enabled, denied: permission === "denied", toggle };
+}
 
 export function Switch({
   checked,
@@ -83,42 +105,13 @@ export function NotificationPreferences({ deliveryExtra }: { deliveryExtra?: Rea
   const prefs = useQuery(api.notifications.notifications.getPreferences);
   const setPreferences = useMutation(api.notifications.notifications.setPreferences);
   const setDeliveryOption = useMutation(api.notifications.notifications.setDeliveryOption);
-  const userPrefs = useQuery(api.people.preferences.getMine);
-  const setUserPrefs = useMutation(api.people.preferences.setMine);
-  const [permission, setPermission] = useState<NotificationPermission | null>(null);
-
-  useEffect(() => {
-    // The Notification global doesn't exist during SSR; this can only be
-    // read post-mount.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPermission(typeof Notification !== "undefined" ? Notification.permission : null);
-  }, []);
+  const browser = useBrowserPush();
 
   const muted = prefs?.mutedTypes ?? [];
 
   function toggleType(type: string) {
     const next = muted.includes(type) ? muted.filter((m) => m !== type) : [...muted, type];
     void setPreferences({ mutedTypes: next });
-  }
-
-  const browserEnabled = (userPrefs?.browserPushEnabled ?? false) && permission === "granted";
-
-  async function toggleBrowser() {
-    if (browserEnabled) {
-      await setUserPrefs({ browserPushEnabled: false });
-      return;
-    }
-    if (typeof Notification === "undefined") {
-      toast.error(t("browserUnsupported"));
-      return;
-    }
-    const result = await Notification.requestPermission();
-    setPermission(result);
-    if (result !== "granted") {
-      toast.error(t("browserDenied"));
-      return;
-    }
-    await setUserPrefs({ browserPushEnabled: true });
   }
 
   return (
@@ -129,15 +122,13 @@ export function NotificationPreferences({ deliveryExtra }: { deliveryExtra?: Rea
           description={t("browserHint")}
           control={
             <Switch
-              checked={browserEnabled}
-              onToggle={() => void toggleBrowser()}
+              checked={browser.enabled}
+              onToggle={() => void browser.toggle()}
               label={t("browserTitle")}
             />
           }
         >
-          {permission === "denied" && (
-            <p className="mt-2 text-xs text-warn">{t("browserDeniedHint")}</p>
-          )}
+          {browser.denied && <p className="mt-2 text-xs text-warn">{t("browserDeniedHint")}</p>}
         </SettingsRow>
         <SettingsRow
           title={t("digestTitle")}
@@ -188,7 +179,7 @@ export function NotificationPreferences({ deliveryExtra }: { deliveryExtra?: Rea
         )}
       </SettingsSection>
 
-      {SECTIONS.map((section) => (
+      {NOTIFICATION_SECTIONS.map((section) => (
         <SettingsSection
           key={section.key}
           title={t(`cat_${section.key}`)}

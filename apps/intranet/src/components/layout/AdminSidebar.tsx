@@ -44,6 +44,7 @@ export interface AdminNavItem {
   icon: LucideIcon;
   managerOnly?: boolean;
   adminOnly?: boolean;
+  tourAttr?: string;
 }
 
 export interface AdminNavGroup {
@@ -60,7 +61,12 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     labelKey: "nav.groupGeneral",
     items: [
-      { href: "/admin", labelKey: "nav.overview", icon: LayoutDashboard },
+      {
+        href: "/admin",
+        labelKey: "nav.overview",
+        icon: LayoutDashboard,
+        tourAttr: "tour-nav-admin",
+      },
       {
         href: "/admin/design-feedback",
         labelKey: "nav.designFeedback",
@@ -218,7 +224,7 @@ export function AdminSidebar() {
                         href={item.href}
                         onClick={close}
                         aria-current={active ? "page" : undefined}
-                        data-tour={item.href === "/admin" ? "tour-nav-admin" : undefined}
+                        data-tour={item.tourAttr}
                       >
                         <Icon />
                         <SidebarLabel>{t(item.labelKey)}</SidebarLabel>

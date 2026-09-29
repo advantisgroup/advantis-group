@@ -1,47 +1,54 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Bell, Palette, SlidersHorizontal, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { MarkLogo } from "@/components/Logo";
 import { useCurrentUser } from "@/components/providers/current-user";
-import { Button } from "@/components/ui/button";
 
-import { useOnboarding } from "../OnboardingProvider";
+import { rise } from "./step-parts";
+
+const COMING_UP = [
+  { key: "profile", icon: UserRound },
+  { key: "appearance", icon: Palette },
+  { key: "workspace", icon: SlidersHorizontal },
+  { key: "notifications", icon: Bell },
+] as const;
 
 export function WelcomeStep() {
   const t = useTranslations("Onboarding");
   const user = useCurrentUser();
-  const { next, skip } = useOnboarding();
 
   return (
-    <div className="flex flex-col items-center gap-6 py-4 text-center">
-      <motion.div
-        initial={{ scale: 0.6, rotate: -10, opacity: 0 }}
-        animate={{ scale: 1, rotate: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary"
-      >
-        <Sparkles className="size-8" />
+    <div className="my-auto flex flex-col items-center py-4 text-center">
+      <motion.div variants={rise}>
+        <MarkLogo size={44} className="size-11" />
       </motion.div>
-
-      <div>
-        <h2 className="font-display text-2xl font-bold tracking-tight">
-          {t("welcomeTitle", { name: user.firstName ?? user.name })}
-        </h2>
-        <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-          {t("welcomeBody")}
-        </p>
-      </div>
-
-      <div className="flex flex-col items-center gap-2">
-        <Button size="lg" className="min-w-40" onClick={next}>
-          {t("getStarted")}
-        </Button>
-        <Button variant="ghost" size="sm" onClick={skip}>
-          {t("skipForNow")}
-        </Button>
-      </div>
+      <motion.h2
+        variants={rise}
+        id="onboarding-title"
+        className="mt-6 font-display text-[26px] font-semibold leading-tight tracking-tight md:text-3xl"
+      >
+        {t("welcomeTitle", { name: user.firstName ?? user.name })}
+      </motion.h2>
+      <motion.p
+        variants={rise}
+        className="mt-2 max-w-sm text-[15px] leading-relaxed text-muted-foreground text-pretty"
+      >
+        {t("welcomeBody")}
+      </motion.p>
+      <motion.ul
+        variants={rise}
+        className="mt-8 w-full max-w-sm divide-y divide-border/60 rounded-xl border border-border/70 text-left"
+      >
+        {COMING_UP.map(({ key, icon: Icon }) => (
+          <li key={key} className="flex items-center gap-3 px-4 py-3 text-[14px]">
+            <Icon className="size-4 shrink-0 text-muted-foreground" />
+            {t(`welcomeItem_${key}`)}
+          </li>
+        ))}
+      </motion.ul>
     </div>
   );
 }

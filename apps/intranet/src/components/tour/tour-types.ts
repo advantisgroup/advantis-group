@@ -7,6 +7,7 @@ export type CheckpointId =
   | "directory"
   | "files"
   | "guidebooks"
+  | "help"
   | "notifications"
   | "settings"
   | "admin"

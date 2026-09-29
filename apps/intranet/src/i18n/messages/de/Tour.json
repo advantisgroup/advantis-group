@@ -11,20 +11,28 @@
   "skipCheckpoint": "Abschnitt überspringen",
   "snooze": "24 Std. zurückstellen",
   "endTour": "Tour beenden",
-  "chipTitle": "Onboarding-Tour",
+  "chipTitle": "Geführte Tour",
   "chipStart": "Wähle einen Abschnitt, um zu beginnen.",
   "chipRemaining": "{count, plural, one {Noch # Abschnitt zu entdecken.} other {Noch # Abschnitte zu entdecken.}}",
   "chipAria": "Onboarding-Tour: {done} von {total} Abschnitten abgeschlossen",
   "viewInSettings": "Details in den Einstellungen ansehen",
-  "settingsHint": "Sieh dir einzelne Abschnitte an oder starte die gesamte Tour hier neu.",
-  "restartTour": "Gesamte Tour neu starten",
+  "settingsHint": "Ein kurzer Rundgang durch jeden Bereich des Intranets. Starte einzelne Abschnitte oder die ganze Tour noch einmal.",
+  "restartTour": "Tour neu starten",
   "redo": "Wiederholen",
+  "start": "Starten",
+  "progress": "{done} von {total} Abschnitten erledigt",
+  "status": {
+    "completed": "Erledigt",
+    "skipped": "Übersprungen",
+    "active": "Läuft",
+    "pending": "Nicht begonnen"
+  },
   "skipCheckpointTitle": "„{name}“ überspringen?",
-  "skipCheckpointBody": "Du kannst diesen Abschnitt jederzeit unter Einstellungen → Tour wiederholen.",
+  "skipCheckpointBody": "Du kannst diesen Abschnitt jederzeit unter Einstellungen → Hilfe und Einführung wiederholen.",
   "skipConfirm": "Überspringen",
   "keepGoing": "Weitermachen",
   "endTourTitle": "Tour beenden?",
-  "endTourBody": "Dein Fortschritt wird gespeichert. Du kannst jederzeit unter Einstellungen → Tour neu starten.",
+  "endTourBody": "Dein Fortschritt wird gespeichert. Du kannst jederzeit unter Einstellungen → Hilfe und Einführung neu starten.",
   "doneTitle": "Glückwunsch!",
   "doneBody": "Du hast die Intranet-Tour abgeschlossen.",
   "getStarted": "Loslegen",
@@ -36,7 +44,8 @@
     "absences": "Abwesenheiten",
     "chat": "Chat",
     "directory": "Mitarbeiter",
-    "guidebooks": "Leitfäden",
+    "guidebooks": "Wiki",
+    "help": "Hilfe & Anfragen",
     "notifications": "Benachrichtigungen",
     "settings": "Einstellungen",
     "admin": "Verwaltung",
@@ -47,15 +56,19 @@
     "dashboard": {
       "sidebar": {
         "title": "Deine Navigation",
-        "description": "Alles, was du brauchst, ist in dieser Seitenleiste. Schneller Zugriff auf alle Intranet-Bereiche."
+        "description": "Jeder Bereich des Intranets, nach Zweck gruppiert. Pinne Favoriten nach oben, klappe selten genutzte Gruppen ein oder ordne alles über „Anpassen“ ganz unten neu."
       },
       "header": {
-        "title": "Schnellaktionen",
-        "description": "Benachrichtigungen, Einstellungen und dein Konto sind hier oben immer erreichbar."
+        "title": "Immer hier oben",
+        "description": "Suche, Benachrichtigungen, dein Konto und deine Einstellungen bleiben auf jeder Seite in dieser Leiste. Aktionen der jeweiligen Seite erscheinen links daneben."
+      },
+      "search": {
+        "title": "Alles durchsuchen",
+        "description": "Finde Personen, Seiten, Ankündigungen, Wiki-Einträge und mehr von überall — klicke hier oder drücke ⌘K (Strg+K unter Windows)."
       },
       "actions": {
         "title": "Schnellaktionen",
-        "description": "Spring direkt zu den häufigsten Aufgaben — Datei hochladen oder (als Führungskraft) Termine und Ankündigungen erstellen. Am Desktop öffnet ⌘K überall die Suche."
+        "description": "Spring direkt zu den häufigsten Aufgaben — Datei hochladen oder (als Führungskraft) Termine und Ankündigungen erstellen."
       },
       "main": {
         "title": "Dein Dashboard",
@@ -150,12 +163,30 @@
     },
     "guidebooks": {
       "nav": {
-        "title": "Leitfäden",
+        "title": "Wiki",
         "description": "SOPs, Fallsuche und Teamwissen – alles an einem Ort."
       },
       "list": {
         "title": "Deine Wissensbasis",
         "description": "Durchsuche die Einträge, pinne Favoriten (sie sortieren nach vorn) und spring über das „Mach weiter“-Banner zurück. In einem Eintrag bekommst du ein Inhaltsverzeichnis, einen Lesefortschritts-Balken, Druckansicht und eine schnelle Rückmeldung, ob er geholfen hat."
+      }
+    },
+    "help": {
+      "nav": {
+        "title": "Hilfe & Anfragen",
+        "description": "Nicht sicher, wohin etwas gehört? Fang hier an — hier findest du für jedes Problem und jede Frage die richtige Stelle."
+      },
+      "report": {
+        "title": "Etwas melden oder beantragen",
+        "description": "Eine IT-Störung, ein Qualitätsfehler, eine Idee oder Urlaub — jede Zeile sagt, wann sie die richtige Wahl ist, und öffnet direkt das Formular."
+      },
+      "find": {
+        "title": "Eine Antwort finden",
+        "description": "Anleitungen im Wiki, wen du wofür fragst, und die Statusseite für bekannte Probleme."
+      },
+      "requests": {
+        "title": "Alles, was du angefragt hast",
+        "description": "Unter „Meine Anfragen“ stehen deine Tickets, Fehlermeldungen, Ideen und Abwesenheiten in einer Liste — mit ihrem aktuellen Stand."
       }
     },
     "notifications": {
@@ -175,11 +206,11 @@
     "settings": {
       "nav": {
         "title": "Deine Einstellungen",
-        "description": "Personalisiere dein Profil, ändere deine Sprache und wähle ein Design."
+        "description": "Profil, Aussehen, Benachrichtigungen, KI und Kontosicherheit findest du alle hier."
       },
       "profile": {
-        "title": "Profilkarte",
-        "description": "Halte Name, Position und Kontaktdaten aktuell — der Vollständigkeits-Balken zeigt, was fehlt. Fotos werden automatisch zugeschnitten, und die Kontosicherheit liegt hinter „Konto verwalten“."
+        "title": "Du auf einen Blick",
+        "description": "Name, Rolle und Kontaktdaten so, wie Kolleg:innen sie sehen. „Profil bearbeiten“ öffnet eine Seite mit Live-Vorschau; Passkeys und Zwei-Schritt-Verifizierung stehen direkt darunter."
       },
       "prefs": {
         "title": "Mach die App zu deiner",
@@ -188,6 +219,10 @@
       "connections": {
         "title": "Deine Integrationen",
         "description": "Sieh, ob dein Clockodo-Konto verknüpft ist (damit deine Abwesenheiten ins Intranet synchronisieren) und ob ein ActivityTrack-Eintrag auf dich zeigt."
+      },
+      "help": {
+        "title": "Jederzeit wieder",
+        "description": "Unter „Hilfe und Einführung“ startest du die Einrichtung neu oder spielst jeden Teil dieser Tour noch einmal ab."
       }
     },
     "admin": {

@@ -18,7 +18,13 @@ import { useRouter, usePathname } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { useMutation } from "convex/react";
 
-import { useCurrentUser, useIsAdmin, useIsManager } from "@/components/providers/current-user";
+import { useFeatureFlags } from "@/components/feature-flags/FeatureGate";
+import {
+  useCurrentUser,
+  useHasCapability,
+  useIsAdmin,
+  useIsManager,
+} from "@/components/providers/current-user";
 import { useSidebar } from "@/components/ui/sidebar";
 
 import { TOUR_CHECKPOINTS } from "./tour-config";
@@ -85,11 +91,28 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef<TourLocalState | null>(null);
 
+  const hasFilesAccess = useHasCapability("access_files");
+  const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
+  const featureFlags = useFeatureFlags();
+
+  // Sections whose page this person can't open — the same rules the sidebar
+  // uses to hide their links. Admins still see switched-off features.
+  const unavailable = useMemo(() => {
+    const off = (key: string) =>
+      !isAdmin && featureFlags?.find((f) => f.key === key)?.enabled === false;
+    const ids = new Set<CheckpointId>();
+    if (!hasFilesAccess) ids.add("files");
+    if (!user.clockodoUserId && !hasClockodoTeamAccess) ids.add("absences");
+    if (off("chat")) ids.add("chat");
+    if (off("activitytrack")) ids.add("activity");
+    return ids;
+  }, [isAdmin, featureFlags, hasFilesAccess, hasClockodoTeamAccess, user.clockodoUserId]);
+
   // Checkpoints visible to this user (filter manager-only checkpoints and
   // role-gated steps for employees — their target UI doesn't render for them)
   const visibleCheckpoints: TourCheckpoint[] = useMemo(
     () =>
-      TOUR_CHECKPOINTS.filter((cp) => !cp.managerOnly || isManager)
+      TOUR_CHECKPOINTS.filter((cp) => (!cp.managerOnly || isManager) && !unavailable.has(cp.id))
         .map((cp) => ({
           ...cp,
           steps: cp.steps.filter(
@@ -100,7 +123,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
           ),
         }))
         .filter((cp) => cp.steps.length > 0),
-    [isManager, isAdmin],
+    [isManager, isAdmin, unavailable],
   );
 
   // Persist state to localStorage and schedule Convex sync
@@ -230,6 +253,10 @@ export function TourProvider({ children }: { children: ReactNode }) {
         timer = setTimeout(() => {
           rafId = requestAnimationFrame(tryMeasure);
         }, 60);
+      } else {
+        // The target never showed up (hidden by a permission, an empty state
+        // or a customised sidebar) — move on instead of stalling invisibly.
+        advanceRef.current();
       }
     }
 
@@ -498,18 +525,41 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
   const startTour = useCallback(() => {
     if (!state) return;
-    const firstCp = visibleCheckpoints[0];
-    if (!firstCp) return;
+    // Resume where the person left off; with no current section (a fresh
+    // state, or one that's no longer visible) pick the first unfinished one.
+    const resume = visibleCheckpoints.find((c) => c.id === state.currentCheckpointId);
+    const target =
+      resume ??
+      visibleCheckpoints.find((c) => state.checkpoints[c.id]?.status !== "completed") ??
+      visibleCheckpoints[0];
+    if (!target) return;
     const next: TourLocalState = {
       ...state,
       active: true,
       snoozedUntil: null,
+      completedAt: null,
+      currentCheckpointId: target.id,
+      currentStepIndex: resume ? state.currentStepIndex : 0,
+      checkpoints: {
+        ...state.checkpoints,
+        [target.id]: {
+          ...state.checkpoints[target.id],
+          status: "active",
+          currentStepIndex: resume ? state.currentStepIndex : 0,
+        },
+      },
     };
     setIsReplayingCheckpoint(false);
     persist(next);
     setState(next);
     setPhase("navigating");
   }, [state, visibleCheckpoints, persist]);
+
+  // A saved position can point at a section this person no longer sees (a
+  // permission changed, a feature was switched off) — pick up at the next one.
+  useEffect(() => {
+    if (phase === "navigating" && state?.active && !currentCheckpoint) startTour();
+  }, [phase, state?.active, currentCheckpoint, startTour]);
 
   const openSidebar = useCallback(() => {
     setOpenMobile(true);

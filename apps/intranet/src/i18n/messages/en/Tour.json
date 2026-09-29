@@ -11,20 +11,28 @@
   "skipCheckpoint": "Skip section",
   "snooze": "Snooze 24 h",
   "endTour": "End tour",
-  "chipTitle": "Onboarding tour",
+  "chipTitle": "Guided tour",
   "chipStart": "Pick a section to get started.",
   "chipRemaining": "{count, plural, one {# section left to explore.} other {# sections left to explore.}}",
   "chipAria": "Onboarding tour: {done} of {total} checkpoints complete",
   "viewInSettings": "View details in settings",
-  "settingsHint": "Review any checkpoint or restart the full tour from here.",
-  "restartTour": "Restart entire tour",
-  "redo": "Redo",
+  "settingsHint": "A short walk through each part of the intranet. Start any section on its own, or run the whole tour again.",
+  "restartTour": "Restart tour",
+  "redo": "Replay",
+  "start": "Start",
+  "progress": "{done} of {total} sections done",
+  "status": {
+    "completed": "Done",
+    "skipped": "Skipped",
+    "active": "In progress",
+    "pending": "Not started"
+  },
   "skipCheckpointTitle": "Skip “{name}”?",
-  "skipCheckpointBody": "You can redo this section anytime from Settings → Tour.",
+  "skipCheckpointBody": "You can redo this section anytime from Settings → Help and onboarding.",
   "skipConfirm": "Skip",
   "keepGoing": "Keep going",
   "endTourTitle": "End the tour?",
-  "endTourBody": "Your progress is saved. You can restart anytime from Settings → Tour.",
+  "endTourBody": "Your progress is saved. You can restart anytime from Settings → Help and onboarding.",
   "doneTitle": "Congratulations!",
   "doneBody": "You've completed the intranet tour.",
   "getStarted": "Get started",
@@ -37,6 +45,7 @@
     "chat": "Chat",
     "directory": "Directory",
     "guidebooks": "Guidebooks",
+    "help": "Help & requests",
     "notifications": "Notifications",
     "settings": "Settings",
     "admin": "Admin Panel",
@@ -47,15 +56,19 @@
     "dashboard": {
       "sidebar": {
         "title": "Your navigation",
-        "description": "Everything you need is in this sidebar. Quick access to all intranet sections."
+        "description": "Every part of the intranet, grouped by what it's for. Pin favorites to the top, collapse groups you rarely use, or rearrange it with Customize at the bottom."
       },
       "header": {
-        "title": "Quick actions",
-        "description": "Notifications, settings, and your account are always available up here."
+        "title": "Always up here",
+        "description": "Search, notifications, your account and preferences stay in this bar on every page. Page-specific actions appear on its left."
+      },
+      "search": {
+        "title": "Search everything",
+        "description": "Find people, pages, announcements, wiki entries and more from anywhere — click here or press ⌘K (Ctrl+K on Windows)."
       },
       "actions": {
         "title": "Quick actions",
-        "description": "Jump straight into the things you do most — upload a file, or (as a manager) create events and announcements. On desktop, ⌘K opens the search palette from anywhere."
+        "description": "Jump straight into the things you do most — upload a file, or (as a manager) create events and announcements."
       },
       "main": {
         "title": "Your dashboard",
@@ -158,6 +171,24 @@
         "description": "Search across guidebooks, pin your favorites so they sort first, and jump back in via the \"continue where you left off\" banner. Inside a guide you get a table of contents, a reading-progress bar, print support, and a quick way to say whether it helped."
       }
     },
+    "help": {
+      "nav": {
+        "title": "Help & requests",
+        "description": "Not sure where something belongs? Start here — it points you to the right place for any problem or question."
+      },
+      "report": {
+        "title": "Report or request something",
+        "description": "An IT fault, a quality error, an idea, or time off — each line says when it's the right choice and opens the form straight away."
+      },
+      "find": {
+        "title": "Find an answer",
+        "description": "How-tos in the wiki, who to ask for what, and the status page for known issues."
+      },
+      "requests": {
+        "title": "Everything you've asked for",
+        "description": "My requests collects your tickets, error reports, ideas and absences in one list, with where each one stands."
+      }
+    },
     "notifications": {
       "bell": {
         "title": "Notification bell",
@@ -175,11 +206,11 @@
     "settings": {
       "nav": {
         "title": "Your settings",
-        "description": "Personalise your profile, change your language, and pick a theme."
+        "description": "Your profile, appearance, notifications, AI and account security all live here."
       },
       "profile": {
-        "title": "Profile card",
-        "description": "Keep your name, job title and contact details current — the completeness bar shows what's missing. Photos are auto-cropped, and account security lives behind \"Manage account\"."
+        "title": "You, at a glance",
+        "description": "Your name, role and contact details as colleagues see them. Edit profile opens a page with a live preview; passkeys and two-step verification sit right below."
       },
       "prefs": {
         "title": "Make the app yours",
@@ -188,6 +219,10 @@
       "connections": {
         "title": "Your integrations",
         "description": "See whether your Clockodo account is linked (so your absences sync into the intranet) and whether an ActivityTrack record points at you."
+      },
+      "help": {
+        "title": "Come back anytime",
+        "description": "Run setup again, or replay any part of this tour, from Help and onboarding."
       }
     },
     "admin": {

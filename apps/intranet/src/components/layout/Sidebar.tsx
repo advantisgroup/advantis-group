@@ -293,6 +293,7 @@ export function Sidebar() {
       href: "/help",
       labelKey: "help",
       icon: LifeBuoy,
+      tourAttr: "tour-nav-help",
     },
     {
       section: "support",

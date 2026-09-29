@@ -16,9 +16,11 @@ function buildInitialState(): TourLocalState {
   for (const cp of TOUR_CHECKPOINTS) {
     checkpoints[cp.id] = { status: "pending", currentStepIndex: 0 };
   }
+  // Starts idle: the onboarding dialog offers the tour when it finishes, and
+  // an active tour would otherwise start navigating behind that dialog.
   return {
     version: VERSION,
-    active: true,
+    active: false,
     snoozedUntil: null,
     currentCheckpointId: "dashboard",
     currentStepIndex: 0,

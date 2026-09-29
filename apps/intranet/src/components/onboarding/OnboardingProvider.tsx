@@ -39,6 +39,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [local, setLocal] = useState<OnboardingLocalState | null>(null);
   const [open, setOpen] = useState(false);
   const [forced, setForced] = useState(false);
+  const [direction, setDirection] = useState<1 | -1>(1);
 
   const stateRef = useRef<OnboardingLocalState | null>(null);
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,6 +93,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
     const loaded = getOrInitOnboardingState(user._id);
     if (remote?.onboardingStep != null) loaded.stepIndex = remote.onboardingStep;
+    // Saves from before the flow was shortened can point past the last step.
+    loaded.stepIndex = Math.min(Math.max(loaded.stepIndex, 0), ONBOARDING_STEPS.length - 1);
     if (remote?.onboardingStepStatuses) {
       try {
         loaded.stepStatuses = {
@@ -147,11 +150,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       stepIndex: idx + 1,
       stepStatuses: { ...local.stepStatuses, [stepId]: "completed" },
     };
+    setDirection(1);
     persist(nextState);
   }, [local, persist]);
 
   const back = useCallback(() => {
     if (!local || local.stepIndex <= 0) return;
+    setDirection(-1);
     persist({ ...local, stepIndex: local.stepIndex - 1 });
   }, [local, persist]);
 
@@ -203,6 +208,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     stateRef.current = fresh;
     setLocal(fresh);
     writeOnboardingState(user._id, fresh);
+    setDirection(1);
     setForced(false);
     setOpen(true);
   }, [resetOnboardingRemote, user._id]);
@@ -214,6 +220,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       steps: ONBOARDING_STEPS,
       stepIndex: local?.stepIndex ?? 0,
       currentStepId,
+      direction,
       stepStatuses:
         local?.stepStatuses ??
         (Object.fromEntries(ONBOARDING_STEPS.map((s) => [s, "pending"])) as Record<
@@ -229,7 +236,20 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       reopen,
       restart,
     }),
-    [open, forced, local, currentStepId, next, back, skip, close, complete, reopen, restart],
+    [
+      open,
+      forced,
+      local,
+      currentStepId,
+      direction,
+      next,
+      back,
+      skip,
+      close,
+      complete,
+      reopen,
+      restart,
+    ],
   );
 
   return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>;

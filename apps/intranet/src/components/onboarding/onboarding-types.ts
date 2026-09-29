@@ -1,10 +1,9 @@
 export type OnboardingStepId =
   | "welcome"
   | "profile"
-  | "notifications"
-  | "theme"
-  | "language"
+  | "appearance"
   | "workspace"
+  | "notifications"
   | "manager"
   | "finish";
 
@@ -32,11 +31,13 @@ export interface OnboardingContextValue {
   steps: OnboardingStepId[];
   stepIndex: number;
   currentStepId: OnboardingStepId;
+  /** Which way the last step change went, so the panel slides the right way. */
+  direction: 1 | -1;
   stepStatuses: Record<OnboardingStepId, OnboardingStepStatus>;
   isCompleted: boolean;
   next: () => void;
   back: () => void;
-  /** Skip the whole flow from the welcome step — fully dismisses. */
+  /** Skip the whole flow — fully dismisses. */
   skip: () => void;
   /** Close the panel without finishing (voluntary sessions only) — keeps
    * progress so it resumes at the same step next time. */

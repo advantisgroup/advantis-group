@@ -58,17 +58,23 @@ export default function HelpPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 pb-10">
-      <PageHeader title={t("title")} description={t("description")} icon={<LifeBuoy />} />
+      <PageHeader
+        title={t("title")}
+        description={t("description")}
+        icon={<LifeBuoy />}
+        tourCheckpoint="help"
+      />
       <Link
         href="/requests"
+        data-tour="tour-help-requests"
         className="flex items-center gap-2 rounded-lg border border-border/70 bg-muted/40 px-3.5 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
       >
         <ClipboardList className="size-4 shrink-0" />
         <span className="flex-1">{t("myRequestsLink")}</span>
         <ChevronRight className="size-4 shrink-0" />
       </Link>
-      <ChoiceGroup title={t("reportTitle")} choices={report} />
-      <ChoiceGroup title={t("findTitle")} choices={find} />
+      <ChoiceGroup title={t("reportTitle")} choices={report} tour="tour-help-report" />
+      <ChoiceGroup title={t("findTitle")} choices={find} tour="tour-help-find" />
       <p className="flex items-start gap-2 text-sm text-muted-foreground">
         <MessageSquareHeart className="mt-0.5 size-4 shrink-0" />
         {t("pageFeedbackHint")}
@@ -77,10 +83,10 @@ export default function HelpPage() {
   );
 }
 
-function ChoiceGroup({ title, choices }: { title: string; choices: Choice[] }) {
+function ChoiceGroup({ title, choices, tour }: { title: string; choices: Choice[]; tour: string }) {
   const t = useTranslations("Help");
   return (
-    <section className="space-y-2">
+    <section className="space-y-2" data-tour={tour}>
       <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
       <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
         {choices.map((choice) => (

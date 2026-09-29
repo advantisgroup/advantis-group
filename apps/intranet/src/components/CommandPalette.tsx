@@ -696,6 +696,7 @@ export function CommandPalette({ className }: { className?: string } = {}) {
             size="icon"
             className={className}
             aria-label={t("placeholder")}
+            data-tour="tour-search"
             onClick={() => {
               openSourceRef.current = "trigger";
               setOpen(true);

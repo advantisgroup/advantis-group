@@ -16,6 +16,18 @@ import { START_PAGES } from "@/lib/startPages";
 
 export function AppPreferencesCard() {
   const t = useTranslations("Settings");
+  return (
+    <div data-tour="tour-settings-app-prefs">
+      <SettingsSection title={t("appPrefs")} description={t("appPrefsHint")}>
+        <AppPreferenceRows />
+      </SettingsSection>
+    </div>
+  );
+}
+
+/** Start page, calendar view and week start — also asked during onboarding. */
+export function AppPreferenceRows() {
+  const t = useTranslations("Settings");
   const prefs = useQuery(api.people.preferences.getMine);
   const setPrefs = useMutation(api.people.preferences.setMine);
 
@@ -80,12 +92,10 @@ export function AppPreferencesCard() {
 
   const control = "h-8 w-40 text-sm";
   return (
-    <div data-tour="tour-settings-app-prefs">
-      <SettingsSection title={t("appPrefs")} description={t("appPrefsHint")}>
-        <SettingsRow title={t("startPage")} control={startPage(control)} />
-        <SettingsRow title={t("defaultCalendarView")} control={calendarView(control)} />
-        <SettingsRow title={t("weekStart")} control={weekStart(control)} />
-      </SettingsSection>
-    </div>
+    <>
+      <SettingsRow title={t("startPage")} control={startPage(control)} />
+      <SettingsRow title={t("defaultCalendarView")} control={calendarView(control)} />
+      <SettingsRow title={t("weekStart")} control={weekStart(control)} />
+    </>
   );
 }
