@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { useClerk } from "@clerk/nextjs";
 import {
+  ChevronDown,
   Eye,
   FileStack,
   LogOut,
@@ -13,6 +14,7 @@ import {
   MessageSquareHeart,
   Monitor,
   Moon,
+  Scale,
   Settings as SettingsIcon,
   Sun,
 } from "lucide-react";
@@ -79,6 +81,7 @@ export function AccountMenu({
   const tProfile = useTranslations("Profile");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
+  const [legalOpen, setLegalOpen] = useState(false);
   const status = activeStatusMessage(user.statusMessage);
   const setSandboxRole = useMutation(api.people.users.setSandboxRole);
   const {
@@ -122,11 +125,11 @@ export function AccountMenu({
             <>
               {/* Language and theme share one row — two small segmented
                   controls instead of two labelled blocks. */}
-              <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+              <div className="flex items-center gap-2 px-2 py-1.5">
                 <div
                   role="radiogroup"
                   aria-label={tSettings("language")}
-                  className="flex rounded-lg border border-border p-0.5"
+                  className="flex min-w-0 flex-1 rounded-lg border border-border p-0.5"
                 >
                   {locales.map((locale) => (
                     <button
@@ -137,7 +140,7 @@ export function AccountMenu({
                       disabled={localePending}
                       onClick={() => chooseLocale(locale)}
                       className={cn(
-                        "flex h-8 items-center gap-1.5 rounded-md px-2 text-xs font-medium transition-colors disabled:opacity-60",
+                        "flex h-8 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-colors disabled:opacity-60",
                         locale === currentLocale
                           ? "bg-accent text-foreground"
                           : "text-muted-foreground hover:text-foreground",
@@ -151,7 +154,7 @@ export function AccountMenu({
                 <div
                   role="radiogroup"
                   aria-label={tSettings("appearance")}
-                  className="flex rounded-lg border border-border p-0.5"
+                  className="flex min-w-0 flex-1 rounded-lg border border-border p-0.5"
                 >
                   {THEME_MODES.map(({ key, icon: Icon }) => {
                     const active = mounted && theme === key;
@@ -171,7 +174,7 @@ export function AccountMenu({
                         aria-label={label}
                         title={label}
                         className={cn(
-                          "grid size-8 place-items-center rounded-md transition-colors",
+                          "grid h-8 min-w-0 flex-1 place-items-center rounded-md transition-colors",
                           active
                             ? "bg-accent text-foreground"
                             : "text-muted-foreground hover:text-foreground",
@@ -230,35 +233,47 @@ export function AccountMenu({
                 {tNav("exitSandbox")}
               </DropdownMenuItem>
             ) : (
-              // One row with two small choices rather than a label and two rows.
-              <div className="flex items-center gap-1 py-0.5 pl-2 pr-1">
-                <Eye className="mr-1 size-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate text-[13px]">{tNav("viewAs")}</span>
-                {(["employee", "manager"] as const).map((role) => (
-                  <DropdownMenuItem
-                    key={role}
-                    onClick={() => void enterSandbox(role)}
-                    className="h-7 rounded-md border border-border px-2 text-xs"
-                  >
-                    {tRoles(role)}
-                  </DropdownMenuItem>
-                ))}
+              // A small label over two side-by-side choices, rather than a
+              // heading and two full rows.
+              <div className="px-2 pb-1.5 pt-1">
+                <p className="mb-1.5 flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+                  <Eye className="size-3.5" />
+                  {tNav("viewAs")}
+                </p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {(["employee", "manager"] as const).map((role) => (
+                    <DropdownMenuItem
+                      key={role}
+                      onClick={() => void enterSandbox(role)}
+                      className="h-8 justify-center border border-border px-2 text-xs"
+                    >
+                      <span className="truncate">{tRoles(role)}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </div>
               </div>
             ))}
+          {/* Legal pages are rarely needed but must stay reachable — one
+              small row that opens in place (a side submenu would be clipped
+              on a phone, where this menu is already nearly full width). */}
           <DropdownMenuItem
-            onClick={() => {
-              posthog.reset();
-              void signOut({ redirectUrl: "/sign-in" });
+            onSelect={(e) => {
+              e.preventDefault();
+              setLegalOpen((o) => !o);
             }}
+            aria-expanded={legalOpen}
           >
-            <LogOut className="mr-2 h-4 w-4" />
-            {tNav("signOut")}
+            <Scale className="mr-2 h-4 w-4" />
+            <span className="flex-1">{tNav("legal")}</span>
+            <ChevronDown
+              className={cn(
+                "text-muted-foreground transition-transform",
+                legalOpen && "rotate-180",
+              )}
+            />
           </DropdownMenuItem>
-          {/* Legal pages are rarely needed but must stay reachable — a line
-              of small links rather than three full rows. */}
-          <DropdownMenuSeparator />
-          <div className="flex flex-wrap gap-x-0.5 px-0.5 pb-0.5">
-            {(
+          {legalOpen &&
+            (
               [
                 ["privacy", "/privacy"],
                 ["terms", "/terms"],
@@ -271,12 +286,21 @@ export function AccountMenu({
                   onNavigate?.();
                   router.push(href);
                 }}
-                className="px-1.5 py-1 text-[11.5px] text-muted-foreground"
+                className="pl-8 text-xs text-muted-foreground"
               >
                 {tNav(key)}
               </DropdownMenuItem>
             ))}
-          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              posthog.reset();
+              void signOut({ redirectUrl: "/sign-in" });
+            }}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            {tNav("signOut")}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <PageFeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
