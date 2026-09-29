@@ -1,6 +1,7 @@
 import { type Doc } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
 import { userQuery } from "../functions";
+import { canReadWikiEntry, userCanReadWikiEntry } from "./entries";
 
 export type PolicyState = "confirmed" | "changed" | "pending";
 
@@ -18,15 +19,17 @@ function stateOf(confirmed: number | undefined, current: number): PolicyState {
 }
 
 /**
- * The policy library: every policy, where the caller stands with it, and —
- * for people who manage the wiki — how many active colleagues have
- * confirmed the current version.
+ * The policy library: every policy the caller may read, where they stand
+ * with it, and — for people who manage the wiki — how many of the colleagues
+ * it's visible to have confirmed the current version.
  */
 export const list = userQuery({
   args: {},
   handler: async (ctx) => {
     const caller = ctx.caller;
-    const policies = (await ctx.db.query("wikiEntries").collect()).filter((e) => e.policy);
+    const policies = (await ctx.db.query("wikiEntries").collect()).filter(
+      (e) => e.policy && canReadWikiEntry(caller, e),
+    );
     const mine = await myReads(ctx, caller.user._id);
     const canManage = caller.can("manage_guidebooks");
     const activeUsers = canManage
@@ -48,8 +51,10 @@ export const list = userQuery({
             const confirmedIds = new Set(
               reads.filter((r) => (r.version ?? 1) >= current).map((r) => r.userId),
             );
-            audienceCount = activeUsers.length;
-            confirmedCount = activeUsers.filter((u) => confirmedIds.has(u._id)).length;
+            // Only the colleagues the page is visible to are asked to confirm it.
+            const audience = activeUsers.filter((u) => userCanReadWikiEntry(u, e));
+            audienceCount = audience.length;
+            confirmedCount = audience.filter((u) => confirmedIds.has(u._id)).length;
           }
           return {
             _id: e._id,
@@ -73,7 +78,7 @@ export const pendingMine = userQuery({
     const caller = ctx.caller;
     const mine = await myReads(ctx, caller.user._id);
     return (await ctx.db.query("wikiEntries").collect())
-      .filter((e) => e.policy)
+      .filter((e) => e.policy && canReadWikiEntry(caller, e))
       .map((e) => ({
         _id: e._id,
         slug: e.slug,

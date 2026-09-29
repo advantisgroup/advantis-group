@@ -5,6 +5,7 @@ import { type Doc } from "../_generated/dataModel";
 import { internalAction, internalQuery } from "../functions";
 import { userMatchesAudience } from "../lib/audience";
 import { internalApiFetch } from "../lib/internalApi";
+import { userCanReadWikiEntry } from "../wiki/entries";
 
 const DAY = 24 * 60 * 60 * 1000;
 const PER_SECTION = 6;
@@ -109,11 +110,15 @@ export const build = internalQuery({
           .slice(0, PER_SECTION)
           .map((u) => ({ title: u.title, path: `/updates/${u._id}`, detail: u.summary })),
         wiki: newWiki
+          .filter((e) => userCanReadWikiEntry(user, e))
           .sort((a, b) => b.createdAt - a.createdAt)
           .slice(0, PER_SECTION)
           .map((e) => ({ title: e.thema, path: `/guidebooks/${encodeURIComponent(e.slug)}` })),
         policies: policies
-          .filter((e) => (reads.get(e.slug) ?? 0) < (e.policyVersion ?? 1))
+          .filter(
+            (e) =>
+              userCanReadWikiEntry(user, e) && (reads.get(e.slug) ?? 0) < (e.policyVersion ?? 1),
+          )
           .slice(0, PER_SECTION)
           .map((e) => ({ title: e.thema, path: `/guidebooks/${encodeURIComponent(e.slug)}` })),
         events: events
