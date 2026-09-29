@@ -11,6 +11,7 @@ import { createPortal } from "react-dom";
 import { useTour } from "@/components/tour/TourProvider";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 import { useOnboarding } from "./OnboardingProvider";
 import { AppearanceStep } from "./steps/AppearanceStep";
@@ -49,10 +50,11 @@ const slide: Variants = {
 };
 
 /**
- * One frame for the whole flow: a bottom sheet on phones, a centred dialog
- * from tablet up. Its size is fixed rather than fitted to each step, so moving
- * between steps only ever changes what's inside — the frame and its buttons
- * never jump. The header and footer stay put; only the middle scrolls.
+ * One frame for the whole flow: a bottom sheet on phones, a dialog pinned near
+ * the top from tablet up. It fits each step, easing to the new height rather
+ * than snapping — and since it hangs from a fixed top (or sits on the bottom
+ * edge on phones), only one edge ever moves. Past the screen's height the
+ * middle scrolls; the header and footer stay put.
  */
 export function OnboardingPanel() {
   const t = useTranslations("Onboarding");
@@ -74,11 +76,22 @@ export function OnboardingPanel() {
   const [mounted, setMounted] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState<number | null>(null);
+  const [resizing, setResizing] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!open || !el) return;
+    const observer = new ResizeObserver(() => setContentHeight(el.offsetHeight));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [open, mounted]);
 
   useEffect(() => {
     if (!open) return;
@@ -113,7 +126,7 @@ export function OnboardingPanel() {
         {open && (
           <div
             key="onboarding"
-            className="fixed inset-0 flex items-end justify-center md:items-center md:p-6"
+            className="fixed inset-0 flex items-end justify-center md:items-start md:px-6 md:pt-[max(1.5rem,12vh)]"
             style={{ zIndex: 60 }}
           >
             <motion.div
@@ -136,7 +149,7 @@ export function OnboardingPanel() {
               animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
               exit={isMobile ? { y: "100%" } : { opacity: 0, y: 8, scale: 0.98 }}
               transition={{ duration: isMobile ? 0.42 : 0.3, ease: ONBOARDING_EASE }}
-              className="relative flex h-[calc(100dvh-env(safe-area-inset-top)-1rem)] w-full flex-col overflow-hidden rounded-t-2xl border border-border/70 bg-card shadow-overlay outline-none md:h-[min(40rem,calc(100dvh-3rem))] md:max-w-xl md:rounded-2xl"
+              className="relative flex max-h-[calc(100dvh-env(safe-area-inset-top)-1rem)] w-full flex-col overflow-hidden rounded-t-2xl border border-border/70 bg-card shadow-overlay outline-none md:max-h-[calc(100dvh-max(1.5rem,12vh)-1.5rem)] md:max-w-xl md:rounded-2xl"
             >
               <div className="flex h-14 shrink-0 items-center gap-4 px-5 md:px-8">
                 {!isWelcome && !isFinish ? (
@@ -171,21 +184,36 @@ export function OnboardingPanel() {
                 </Button>
               </div>
 
-              <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-                <AnimatePresence mode="wait" custom={direction}>
-                  <motion.div
-                    key={currentStepId}
-                    custom={direction}
-                    variants={slide}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    className="flex min-h-full flex-col px-5 pb-8 pt-2 md:px-8"
-                  >
-                    {STEP_CONTENT[currentStepId]()}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
+              {/* Animates to the step's measured height; when that's more than
+                  the screen allows, flex shrinks it and it scrolls instead. */}
+              <motion.div
+                ref={bodyRef}
+                initial={false}
+                animate={{ height: contentHeight ?? "auto" }}
+                transition={{ duration: 0.35, ease: ONBOARDING_EASE }}
+                onAnimationStart={() => setResizing(true)}
+                onAnimationComplete={() => setResizing(false)}
+                className={cn(
+                  "min-h-0 shrink overscroll-contain",
+                  resizing ? "overflow-hidden" : "overflow-y-auto",
+                )}
+              >
+                <div ref={contentRef}>
+                  <AnimatePresence mode="wait" custom={direction}>
+                    <motion.div
+                      key={currentStepId}
+                      custom={direction}
+                      variants={slide}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      className="flex flex-col px-5 pb-7 pt-2 md:px-8"
+                    >
+                      {STEP_CONTENT[currentStepId]()}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </motion.div>
 
               <div className="flex shrink-0 items-center gap-2 border-t border-border/70 px-5 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 md:px-8 md:py-4">
                 {isWelcome ? (

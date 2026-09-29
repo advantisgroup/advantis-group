@@ -123,20 +123,16 @@ export function ProfileStep() {
             )}
             style={profileColorStyle(color)}
           />
-          <div className="-mt-8 flex flex-wrap items-end gap-x-4 gap-y-3 px-4 pb-4">
-            <Avatar className="size-16 ring-4 ring-card">
+          {/* Only the avatar reaches up into the banner; the name sits below
+              it on the card, where it's always readable. */}
+          <div className="flex items-end justify-between gap-3 px-4">
+            <Avatar className="-mt-8 size-16 ring-4 ring-card">
               {avatarUrl && <AvatarImage src={avatarUrl} alt={user.name} />}
               <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
                 {initials(displayName, user.email)}
               </AvatarFallback>
             </Avatar>
-            <div className="min-w-0 flex-1 pb-0.5">
-              <p className="truncate font-display text-base font-semibold leading-tight tracking-tight">
-                {displayName}
-              </p>
-              <p className="truncate text-[13px] text-muted-foreground">{subtitle || user.email}</p>
-            </div>
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="mt-3" asChild>
               <label
                 className={cn("cursor-pointer", uploading && "pointer-events-none opacity-60")}
               >
@@ -151,6 +147,14 @@ export function ProfileStep() {
                 />
               </label>
             </Button>
+          </div>
+          <div className="min-w-0 px-4 pb-4 pt-2.5">
+            <p className="truncate font-display text-base font-semibold leading-tight tracking-tight">
+              {displayName}
+            </p>
+            <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
+              {subtitle || user.email}
+            </p>
           </div>
         </motion.div>
 

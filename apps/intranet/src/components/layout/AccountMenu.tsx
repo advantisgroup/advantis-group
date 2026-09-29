@@ -6,20 +6,15 @@ import { useRouter } from "next/navigation";
 
 import { useClerk } from "@clerk/nextjs";
 import {
-  Building2,
   Eye,
   FileStack,
-  FileText,
   LogOut,
   MessageCircle,
   MessageSquareHeart,
   Monitor,
   Moon,
   Settings as SettingsIcon,
-  Shield,
   Sun,
-  UserRound,
-  UsersRound,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
@@ -114,31 +109,38 @@ export function AccountMenu({
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel className="flex flex-col">
-            <span className="truncate">{user.name}</span>
-            <span className="truncate text-xs font-normal text-muted-foreground">{user.email}</span>
-            <span className="mt-1 text-xs font-normal text-primary">{roleLabel(user, tRoles)}</span>
+        <DropdownMenuContent align="end" className="w-60">
+          <DropdownMenuLabel className="flex flex-col font-normal">
+            <span className="flex items-baseline gap-2">
+              <span className="truncate text-[13px] font-medium text-foreground">{user.name}</span>
+              <span className="shrink-0 text-[11px] text-primary">{roleLabel(user, tRoles)}</span>
+            </span>
+            <span className="truncate text-xs text-muted-foreground">{user.email}</span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           {showPreferences && (
             <>
-              <div className="px-2 py-2">
-                <p className="px-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {tSettings("language")}
-                </p>
-                <div className="grid grid-cols-2 gap-2">
+              {/* Language and theme share one row — two small segmented
+                  controls instead of two labelled blocks. */}
+              <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+                <div
+                  role="radiogroup"
+                  aria-label={tSettings("language")}
+                  className="flex rounded-lg border border-border p-0.5"
+                >
                   {locales.map((locale) => (
                     <button
                       key={locale}
                       type="button"
+                      role="radio"
+                      aria-checked={locale === currentLocale}
                       disabled={localePending}
                       onClick={() => chooseLocale(locale)}
                       className={cn(
-                        "flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-60",
+                        "flex h-8 items-center gap-1.5 rounded-md px-2 text-xs font-medium transition-colors disabled:opacity-60",
                         locale === currentLocale
-                          ? "border-primary/40 bg-primary/10 text-primary"
-                          : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
+                          ? "bg-accent text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
                       )}
                     >
                       <LocaleFlag locale={locale} />
@@ -146,10 +148,11 @@ export function AccountMenu({
                     </button>
                   ))}
                 </div>
-                <p className="px-1 pb-2 pt-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {tSettings("appearance")}
-                </p>
-                <div className="grid grid-cols-3 gap-2">
+                <div
+                  role="radiogroup"
+                  aria-label={tSettings("appearance")}
+                  className="flex rounded-lg border border-border p-0.5"
+                >
                   {THEME_MODES.map(({ key, icon: Icon }) => {
                     const active = mounted && theme === key;
                     const label =
@@ -162,17 +165,19 @@ export function AccountMenu({
                       <button
                         key={key}
                         type="button"
+                        role="radio"
+                        aria-checked={active}
                         onClick={() => setTheme(key)}
                         aria-label={label}
                         title={label}
                         className={cn(
-                          "flex h-10 items-center justify-center rounded-lg border transition-colors",
+                          "grid size-8 place-items-center rounded-md transition-colors",
                           active
-                            ? "border-primary/40 bg-primary/10 text-primary"
-                            : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
+                            ? "bg-accent text-foreground"
+                            : "text-muted-foreground hover:text-foreground",
                         )}
                       >
-                        <Icon className="h-4 w-4" />
+                        <Icon className="size-3.5" />
                       </button>
                     );
                   })}
@@ -213,64 +218,33 @@ export function AccountMenu({
             {tDesign("menuItem")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => {
-              onNavigate?.();
-              router.push("/privacy");
-            }}
-          >
-            <Shield className="mr-2 h-4 w-4" />
-            {tNav("privacy")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              onNavigate?.();
-              router.push("/terms");
-            }}
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            {tNav("terms")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              onNavigate?.();
-              router.push("/imprint");
-            }}
-          >
-            <Building2 className="mr-2 h-4 w-4" />
-            {tNav("imprint")}
-          </DropdownMenuItem>
-          {user.canUseSandbox && (
-            <>
-              <DropdownMenuSeparator />
-              {user.sandboxRole ? (
-                <DropdownMenuItem
-                  onClick={() => {
-                    onNavigate?.();
-                    void setSandboxRole({ role: null });
-                  }}
-                >
-                  <Eye className="mr-2 h-4 w-4" />
-                  {tNav("exitSandbox")}
-                </DropdownMenuItem>
-              ) : (
-                <>
-                  <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
-                    {tNav("viewAs")}
-                  </DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => void enterSandbox("employee")}>
-                    <UserRound className="mr-2 h-4 w-4" />
-                    {tNav("viewAsRole", { role: tRoles("employee") })}
+          {user.canUseSandbox &&
+            (user.sandboxRole ? (
+              <DropdownMenuItem
+                onClick={() => {
+                  onNavigate?.();
+                  void setSandboxRole({ role: null });
+                }}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                {tNav("exitSandbox")}
+              </DropdownMenuItem>
+            ) : (
+              // One row with two small choices rather than a label and two rows.
+              <div className="flex items-center gap-1 py-0.5 pl-2 pr-1">
+                <Eye className="mr-1 size-4 shrink-0 text-muted-foreground" />
+                <span className="min-w-0 flex-1 truncate text-[13px]">{tNav("viewAs")}</span>
+                {(["employee", "manager"] as const).map((role) => (
+                  <DropdownMenuItem
+                    key={role}
+                    onClick={() => void enterSandbox(role)}
+                    className="h-7 rounded-md border border-border px-2 text-xs"
+                  >
+                    {tRoles(role)}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => void enterSandbox("manager")}>
-                    <UsersRound className="mr-2 h-4 w-4" />
-                    {tNav("viewAsRole", { role: tRoles("manager") })}
-                  </DropdownMenuItem>
-                </>
-              )}
-            </>
-          )}
-          <DropdownMenuSeparator />
+                ))}
+              </div>
+            ))}
           <DropdownMenuItem
             onClick={() => {
               posthog.reset();
@@ -280,6 +254,29 @@ export function AccountMenu({
             <LogOut className="mr-2 h-4 w-4" />
             {tNav("signOut")}
           </DropdownMenuItem>
+          {/* Legal pages are rarely needed but must stay reachable — a line
+              of small links rather than three full rows. */}
+          <DropdownMenuSeparator />
+          <div className="flex flex-wrap gap-x-0.5 px-0.5 pb-0.5">
+            {(
+              [
+                ["privacy", "/privacy"],
+                ["terms", "/terms"],
+                ["imprint", "/imprint"],
+              ] as const
+            ).map(([key, href]) => (
+              <DropdownMenuItem
+                key={key}
+                onClick={() => {
+                  onNavigate?.();
+                  router.push(href);
+                }}
+                className="px-1.5 py-1 text-[11.5px] text-muted-foreground"
+              >
+                {tNav(key)}
+              </DropdownMenuItem>
+            ))}
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
       <PageFeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
