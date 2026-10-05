@@ -449,7 +449,7 @@ const SIGNAL_DEFS: SignalDef[] = [
   },
   {
     key: "wonPerDay",
-    label: "Won je Werktag",
+    label: "Won je Arbeitstag",
     kind: "count",
     invert: false,
     weight: 1.0,
@@ -503,7 +503,7 @@ const SIGNAL_DEFS: SignalDef[] = [
   },
   {
     key: "overduesOpps",
-    label: "Overdue Opportunities",
+    label: "Überfällige Opportunities",
     kind: "count",
     invert: true,
     weight: 1.3,
@@ -521,7 +521,7 @@ const SIGNAL_DEFS: SignalDef[] = [
   },
   {
     key: "leadsNoAction14",
-    label: "Leads: Last Activity >2 Wo.",
+    label: "Leads: letzte Aktivität >2 Wo.",
     kind: "count",
     invert: true,
     weight: 1.1,
@@ -530,7 +530,7 @@ const SIGNAL_DEFS: SignalDef[] = [
   },
   {
     key: "oppsNoAction14",
-    label: "Opps: Last Activity >2 Wo.",
+    label: "Opps: letzte Aktivität >2 Wo.",
     kind: "count",
     invert: true,
     weight: 1.1,

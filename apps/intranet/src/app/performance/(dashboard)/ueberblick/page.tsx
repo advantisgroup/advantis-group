@@ -2,13 +2,15 @@
 
 import { useMemo } from "react";
 
-import { AlertTriangle, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
+import { ComparisonFootnote, MissingReportWarning } from "@/components/performance/ComparisonNotes";
 import { useDashboardData } from "@/components/performance/PerformanceDashboardContext";
 import {
   DeltaBadge,
+  type DeltaFormat,
   DeltaPair,
   fmtNum,
   fmtPct,
@@ -32,6 +34,7 @@ function PrimaryKpiCard({
   subtitle,
   dVm,
   dVj,
+  format,
 }: {
   accent: "emerald" | "purple" | "slate" | "amber";
   label: string;
@@ -39,6 +42,7 @@ function PrimaryKpiCard({
   subtitle?: string;
   dVm?: number;
   dVj?: number;
+  format?: DeltaFormat;
 }) {
   const border = {
     emerald: "border-t-emerald-500",
@@ -54,7 +58,7 @@ function PrimaryKpiCard({
         </span>
         <span className="text-3xl font-semibold tabular-nums">{value}</span>
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-        <DeltaPair dVm={dVm} dVj={dVj} />
+        <DeltaPair dVm={dVm} dVj={dVj} format={format} />
       </CardContent>
     </Card>
   );
@@ -91,14 +95,19 @@ function StatCard({
   );
 }
 
-function ListStatCard({ href, label, value }: { href: string; label: string; value: string }) {
+function ListStatCard({ href, label, value }: { href: string; label: string; value?: number }) {
   return (
     <Link href={href}>
       <Card className="h-full transition-colors hover:bg-muted/50">
         <CardContent className="flex flex-col gap-1.5 p-4">
           <span className="text-xs text-muted-foreground">{label}</span>
-          <span className="text-xl font-semibold tabular-nums text-warn underline decoration-dotted underline-offset-4">
-            {value}
+          <span
+            className={cn(
+              "text-xl font-semibold tabular-nums underline decoration-dotted underline-offset-4",
+              value ? "text-warn" : "text-foreground",
+            )}
+          >
+            {fmtNum(value)}
           </span>
         </CardContent>
       </Card>
@@ -158,17 +167,11 @@ export default function DashboardOverviewPage() {
       <p className="text-sm text-muted-foreground">
         {t("dashboardSubtitle", {
           ym: fmtYm(data.ym, locale),
-          date: data.total.reportDate ? formatIsoDate(data.total.reportDate, locale) : "–",
           count: data.snaps.length,
         })}
       </p>
 
-      {fc?.incomplete && fc.missingDays.length > 0 && (
-        <div className="flex items-start gap-2 rounded-md border border-warn/40 bg-warn/10 p-3 text-sm text-warn">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          {t("dashboardMissingReport", { days: fc.missingDays.join(", ") })}
-        </div>
-      )}
+      <MissingReportWarning fc={fc} />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <PrimaryKpiCard
@@ -178,6 +181,7 @@ export default function DashboardOverviewPage() {
           subtitle={`${fmtNum(data.total.workableCreated)} / ${fmtNum(data.total.leadsCreated)}`}
           dVm={data.dVm.workableRate}
           dVj={data.dVj.workableRate}
+          format="pts"
         />
         <PrimaryKpiCard
           accent="purple"
@@ -186,6 +190,7 @@ export default function DashboardOverviewPage() {
           subtitle={`${fmtNum(data.total.wonMonth)} / ${fmtNum(data.total.workableCreated)}`}
           dVm={data.dVm.hitrate}
           dVj={data.dVj.hitrate}
+          format="pts"
         />
         <PrimaryKpiCard
           accent="slate"
@@ -289,9 +294,9 @@ export default function DashboardOverviewPage() {
         {LIST_KEYS.map((key) => (
           <ListStatCard
             key={key}
-            href={`/performance/liste/${key}`}
+            href={`/performance/liste/${key}?from=ueberblick`}
             label={t(`list.${key}.title`)}
-            value={fmtNum(listValues[key])}
+            value={listValues[key]}
           />
         ))}
       </div>
@@ -300,14 +305,17 @@ export default function DashboardOverviewPage() {
 
       <TeamTable data={data} />
 
-      {fc && (
-        <p className="text-xs text-muted-foreground">
-          {t("dashboardForecastFootnote", {
-            elapsed: fc.elapsed,
-            total: fc.total,
-          })}
-        </p>
-      )}
+      <div className="space-y-1 text-xs text-muted-foreground">
+        <ComparisonFootnote comparison={data.comparison} />
+        {fc && (
+          <p>
+            {t("dashboardForecastFootnote", {
+              elapsed: fc.elapsed,
+              total: fc.total,
+            })}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
