@@ -5,7 +5,7 @@ import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { Activity, Download, LayoutDashboard, Phone, TrendingUp, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -17,6 +17,11 @@ import {
   LastDayInteractions,
   type LastDayInteractionRow,
 } from "@/components/performance/LastDayInteractions";
+import {
+  dashboardHome,
+  type PerformanceDashboard,
+  usePerformanceAccess,
+} from "@/components/performance/PerformanceAccess";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceDashboardDataProvider } from "@/components/performance/PerformanceDashboardContext";
 import {
@@ -30,8 +35,6 @@ import {
   PerformanceYmProvider,
   usePerformanceYm,
 } from "@/components/performance/PerformanceYmContext";
-import { SelfLinkPrompt } from "@/components/performance/SelfLinkPrompt";
-import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatIsoDate } from "@/lib/format";
-import { clearPerformanceToken, downloadPerformanceFile } from "@/lib/performanceAuth";
+import { usePerformanceApi } from "@/lib/performance";
 
 interface DashboardTopData {
   hasCalls: boolean;
@@ -137,25 +140,27 @@ function DashboardTopSection({
 }
 
 function DashboardChrome({
-  token,
-  viaClerk,
+  dashboard,
   children,
 }: {
-  token: string;
-  viaClerk: boolean;
+  dashboard: PerformanceDashboard;
   children: ReactNode;
 }) {
   const t = useTranslations("Performance");
   const locale = useLocale();
   const pathname = usePathname();
+  const performanceApi = usePerformanceApi();
   const [ym, setYm] = usePerformanceYm();
-  const data = useQuery(api.performance.queries.teamDashboard, { token, ym });
-  const interactions = useQuery(api.performance.queries.interactionsMonth, {
-    token,
-    ym,
-  });
+  const companyId = dashboard.companyId;
+  const data = useQuery(api.performance.queries.teamDashboard, { companyId, ym });
 
   const activeTab = pathname.split("/").filter(Boolean)[1] ?? "ueberblick";
+  // A whole month of single interactions is heavy — only load it on the tab
+  // that shows it.
+  const interactions = useQuery(
+    api.performance.queries.interactionsMonth,
+    activeTab === "interaktionen" ? { companyId, ym } : "skip",
+  );
 
   const tabs: RouteTab[] = [
     {
@@ -196,7 +201,6 @@ function DashboardChrome({
       <PerformanceHeader />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
-        {!viaClerk && <SelfLinkPrompt token={token} />}
         <div className="flex flex-wrap items-center gap-3">
           <Select
             value={ym ?? data?.ym ?? ""}
@@ -226,14 +230,13 @@ function DashboardChrome({
               })}
             </span>
           )}
-          {!viaClerk && data && data.snaps.length > 0 && (
+          {data && data.snaps.length > 0 && (
             <Button
               variant="outline"
               size="sm"
               onClick={() =>
-                void downloadPerformanceFile(
-                  `/performance/export?ym=${data.ym}`,
-                  token,
+                void performanceApi.download(
+                  `/performance/export?ym=${data.ym}&companyId=${companyId}`,
                   `performance-${data.ym}.xlsx`,
                 )
               }
@@ -268,62 +271,50 @@ function DashboardChrome({
 }
 
 export default function PerformanceDashboardLayout({ children }: { children: ReactNode }) {
-  const t = useTranslations("Performance");
   const router = useRouter();
-  const { token, session } = usePerformanceSession();
-  const touchSession = useMutation(api.performance.auth.touchSession);
+  const { me, dashboard } = usePerformanceAccess();
 
+  // People without the team view have their own detail page instead.
   useEffect(() => {
-    void touchSession({ token });
-  }, [token, touchSession]);
-
-  useEffect(() => {
-    // Wait for the query to resolve before redirecting — a visitor with no
-    // password cookie may still resolve via their linked Clerk identity, so
-    // "no cookie" alone isn't grounds to bounce to the login page.
-    if (session && !session.valid) {
-      clearPerformanceToken();
-      router.replace("/performance/login");
+    if (dashboard && !dashboard.canViewTeam && dashboard.employeeId) {
+      router.replace(dashboardHome(dashboard));
     }
-  }, [session, router]);
+  }, [dashboard, router]);
 
-  // Employee logins have their own detail page — this layout is the admin
-  // team view.
-  useEffect(() => {
-    if (!session?.valid || session.permissions.includes("view_all_employees")) return;
-    if (session.employeeId) {
-      router.replace(`/performance/mitarbeiter/${session.employeeId}`);
-    }
-  }, [session, router]);
-
-  if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid) return null;
-
-  if (!session.permissions.includes("view_all_employees")) {
-    if (session.employeeId) return null; // redirecting
-    return (
-      <div className="min-h-screen bg-muted/20">
-        <PerformanceHeader />
-        <main className="mx-auto max-w-3xl p-4 pb-24 md:p-6">
-          <Card>
-            <CardHeader className="items-center text-center">
-              <CardTitle>{t("notLinkedTitle")}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center text-sm text-muted-foreground">
-              {t("notLinkedBody")}
-            </CardContent>
-          </Card>
-        </main>
-        <PerformanceBottomTabs />
-      </div>
-    );
+  if (me === undefined) return <PerformancePageSkeleton />;
+  if (!dashboard?.canViewTeam) {
+    if (dashboard?.employeeId) return null; // redirecting
+    return <NoDashboard />;
   }
 
   return (
     <PerformanceYmProvider>
-      <DashboardChrome token={token} viaClerk={session.viaClerk}>
+      {/* Remount on dashboard switch so month and tab state start fresh. */}
+      <DashboardChrome key={dashboard.companyId} dashboard={dashboard}>
         {children}
       </DashboardChrome>
     </PerformanceYmProvider>
+  );
+}
+
+/** Signed in, but nothing to show: not on a team with a dashboard yet, or
+ * no report name linked to this person. */
+function NoDashboard() {
+  const t = useTranslations("Performance");
+  return (
+    <div className="min-h-screen bg-muted/20">
+      <PerformanceHeader />
+      <main className="mx-auto max-w-3xl p-4 pb-24 md:p-6">
+        <Card>
+          <CardHeader className="items-center text-center">
+            <CardTitle>{t("notLinkedTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center text-sm text-muted-foreground">
+            {t("notLinkedBody")}
+          </CardContent>
+        </Card>
+      </main>
+      <PerformanceBottomTabs />
+    </div>
   );
 }

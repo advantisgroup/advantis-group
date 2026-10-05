@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { Loader2, SearchCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -52,16 +53,12 @@ const ALL_BATCHES = "__all__";
  * empty) set of findings gets written back via `recordScanResults`.
  * Renders nothing once there's nothing left to check.
  */
-export function RescanOlderUploads({ token }: { token: string }) {
+export function RescanOlderUploads({ companyId }: { companyId: Id<"companies"> }) {
   const t = useTranslations("Performance");
   const locale = useLocale();
   const handleError = useErrorHandler();
-  const unscanned = useQuery(api.performance.import.listUnscannedCallUploads, {
-    token,
-  });
-  const employeeNames = useQuery(api.performance.import.listEmployeeNames, {
-    token,
-  });
+  const unscanned = useQuery(api.performance.import.listUnscannedCallUploads, { companyId });
+  const employeeNames = useQuery(api.performance.import.listEmployeeNames, { companyId });
   const recordScanResults = useMutation(api.performance.import.recordScanResults);
 
   const [open, setOpen] = useState(false);
@@ -124,7 +121,6 @@ export function RescanOlderUploads({ token }: { token: string }) {
       try {
         const { flaggedRows } = await rescanCallReport(log.filename, log.fileUrl, employeeNames);
         await recordScanResults({
-          token,
           logId: log._id,
           flaggedRows,
         });

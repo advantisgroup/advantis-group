@@ -46,7 +46,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, formatIsoDate, relativeTime } from "@/lib/format";
-import { downloadPerformanceFile, uploadPerformanceReport } from "@/lib/performanceAuth";
+import { usePerformanceApi } from "@/lib/performance";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -116,12 +116,12 @@ interface UploadLogRow {
 function LogRow({
   row,
   locale,
-  token,
+  companyId,
   indent,
 }: {
   row: UploadLogRow;
   locale: string;
-  token: string;
+  companyId: Id<"companies">;
   indent?: boolean;
 }) {
   const t = useTranslations("Performance");
@@ -137,7 +137,7 @@ function LogRow({
     setReimporting(true);
     try {
       const result = await reimportUpload({
-        token,
+        companyId,
         logId: row._id as Id<"performanceUploadLog">,
       });
       if (result.status === "ok") toast.success(t("uploadReimportOk"));
@@ -251,14 +251,14 @@ function BatchRows({
   expanded,
   onToggle,
   locale,
-  token,
+  companyId,
 }: {
   batchId: string;
   rows: UploadLogRow[];
   expanded: boolean;
   onToggle: () => void;
   locale: string;
-  token: string;
+  companyId: Id<"companies">;
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
@@ -270,7 +270,7 @@ function BatchRows({
   async function reimportAll() {
     setReimporting(true);
     try {
-      const { results } = await reimportBatch({ token, batchId });
+      const { results } = await reimportBatch({ companyId, batchId });
       const ok = results.filter((r) => r.status === "ok").length;
       toast.success(t("uploadReimportBatchOk", { count: ok, total: results.length }));
     } catch (err) {
@@ -321,7 +321,9 @@ function BatchRows({
         </TableCell>
       </TableRow>
       {expanded &&
-        rows.map((row) => <LogRow key={row._id} row={row} locale={locale} token={token} indent />)}
+        rows.map((row) => (
+          <LogRow key={row._id} row={row} locale={locale} companyId={companyId} indent />
+        ))}
     </>
   );
 }
@@ -330,22 +332,25 @@ export default function PerformanceUploadPage() {
   const t = useTranslations("Performance");
   const tc = useTranslations("Common");
   const locale = useLocale();
-  const { token, loading, session } = usePerformanceGate((s) =>
-    s.permissions.includes("upload_reports"),
-  );
+  const { loading, me, dashboard } = usePerformanceGate((m) => m.isAdmin);
+  const companyId = dashboard?.companyId;
+  const performanceApi = usePerformanceApi();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [flaggedDialogOpen, setFlaggedDialogOpen] = useState(false);
 
-  const log = useQuery(api.performance.import.listUploadLog, session ? { token } : "skip");
+  const log = useQuery(
+    api.performance.import.listUploadLog,
+    me && companyId ? { companyId } : "skip",
+  );
 
   function updateItem(id: string, patch: Partial<QueueItem>) {
     setQueue((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   }
 
   async function enqueue(files: File[]) {
-    if (!token || files.length === 0) return;
+    if (!companyId || files.length === 0) return;
     // Shared by every file dropped/picked together, so the upload log can
     // later show them as one batch — tagged even for a single file; the
     // log only renders batch chrome once a batchId actually repeats.
@@ -370,9 +375,10 @@ export default function PerformanceUploadPage() {
   }
 
   async function runUpload(id: string, file: File, opts?: { force?: boolean; batchId?: string }) {
-    if (!token) return;
+    if (!companyId) return;
     updateItem(id, { status: "uploading", progress: 0, error: undefined });
-    const result = await uploadPerformanceReport(file, token, {
+    const result = await performanceApi.uploadReport(file, {
+      companyId,
       onProgress: (frac) =>
         updateItem(id, {
           progress: frac,
@@ -475,11 +481,11 @@ export default function PerformanceUploadPage() {
   }, [log]);
 
   if (loading) return <PerformancePageSkeleton />;
-  if (!session) return null;
+  if (!me || !companyId || !dashboard) return null;
 
   return (
     <PerformanceShell
-      title={t("uploadTitle")}
+      title={t("uploadTitleFor", { dashboard: dashboard.name })}
       description={t("uploadIntro")}
       width="max-w-7xl"
       actions={
@@ -487,7 +493,7 @@ export default function PerformanceUploadPage() {
           variant="outline"
           size="sm"
           onClick={() =>
-            void downloadPerformanceFile("/performance/template", token, "performance-vorlage.xlsx")
+            void performanceApi.download("/performance/template", "performance-vorlage.xlsx")
           }
         >
           <Download className="mr-2 h-4 w-4" />
@@ -495,14 +501,12 @@ export default function PerformanceUploadPage() {
         </Button>
       }
     >
-      {token && (
-        <FlaggedRowsDialog
-          token={token}
-          open={flaggedDialogOpen}
-          onOpenChange={setFlaggedDialogOpen}
-        />
-      )}
-      {token && <RescanOlderUploads token={token} />}
+      <FlaggedRowsDialog
+        companyId={companyId}
+        open={flaggedDialogOpen}
+        onOpenChange={setFlaggedDialogOpen}
+      />
+      <RescanOlderUploads companyId={companyId} />
 
       <Card>
         <CardContent className="space-y-4 p-4">
@@ -732,10 +736,15 @@ export default function PerformanceUploadPage() {
                       expanded={expandedBatches.has(group.key)}
                       onToggle={() => toggleBatch(group.key)}
                       locale={locale}
-                      token={token}
+                      companyId={companyId}
                     />
                   ) : (
-                    <LogRow key={group.key} row={group.rows[0]} locale={locale} token={token} />
+                    <LogRow
+                      key={group.key}
+                      row={group.rows[0]}
+                      locale={locale}
+                      companyId={companyId}
+                    />
                   ),
                 )}
               </TableBody>

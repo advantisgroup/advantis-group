@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
 import {
   Award,
@@ -13,7 +14,6 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import type { CurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useStartOfToday } from "@/hooks/use-today";
@@ -229,16 +229,11 @@ export function MyTicketsCard() {
   );
 }
 
-/** Personal performance snapshot — only rendered for users with a linked
- * Performance account (sales team); the parent decides whether to mount it. */
-export function MyPerformanceCard() {
+/** Personal performance snapshot — only rendered for people whose intranet
+ * account is linked to a Performance report name; the parent decides. */
+export function MyPerformanceCard({ employeeId }: { employeeId: Id<"performanceEmployees"> }) {
   const t = useTranslations("Dashboard");
-  const { token, session } = usePerformanceSession();
-  const employeeId = session?.valid ? session.employeeId : null;
-  const detail = useQuery(
-    api.performance.queries.employeeDetail,
-    employeeId ? { token, employeeId } : "skip",
-  );
+  const detail = useQuery(api.performance.queries.employeeDetail, { employeeId });
 
   const topHighlight = detail?.highlights?.[0];
 

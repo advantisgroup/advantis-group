@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-import { getLastPerformanceYm, setLastPerformanceYm } from "@/lib/performanceAuth";
+import { getLastPerformanceYm, setLastPerformanceYm } from "@/lib/performance";
 
 type YmState = [ym: string | undefined, setYm: (ym: string) => void];
 

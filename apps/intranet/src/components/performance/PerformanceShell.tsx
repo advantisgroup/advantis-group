@@ -4,48 +4,31 @@ import { useEffect, type ReactNode } from "react";
 
 import { useRouter } from "next/navigation";
 
-import { type api } from "@advantis/convex/api";
-import { type FunctionReturnType } from "convex/server";
 import { type LucideIcon } from "lucide-react";
 
+import {
+  type PerformanceMe,
+  usePerformanceAccess,
+} from "@/components/performance/PerformanceAccess";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
-import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
-import { clearPerformanceToken } from "@/lib/performanceAuth";
 import { cn } from "@/lib/utils";
 
-export type ValidPerformanceSession = Extract<
-  FunctionReturnType<typeof api.performance.auth.validateSession>,
-  { valid: true }
->;
-
 /**
- * Session gate for a Performance page with a permission check: bounces to
- * the login page when the session is gone, and back to the dashboard when
- * `allowed` says no. `session` is only returned once both pass.
+ * Gate for a Performance page with an access check (e.g. admins only):
+ * sends the visitor back to the dashboard when `allowed` says no. `me` is
+ * only returned once it passes.
  */
-export function usePerformanceGate(allowed: (session: ValidPerformanceSession) => boolean) {
+export function usePerformanceGate(allowed: (me: PerformanceMe) => boolean) {
   const router = useRouter();
-  const { token, session } = usePerformanceSession();
-  const ok = !!session?.valid && allowed(session);
+  const { me, dashboard } = usePerformanceAccess();
+  const ok = !!me && allowed(me);
 
   useEffect(() => {
-    // Wait for the query to resolve — a visitor with no password cookie may
-    // still resolve via their linked Clerk identity.
-    if (!session) return;
-    if (!session.valid) {
-      clearPerformanceToken();
-      router.replace("/performance/login");
-    } else if (!ok) {
-      router.replace("/performance");
-    }
-  }, [session, ok, router]);
+    if (me && !ok) router.replace("/performance");
+  }, [me, ok, router]);
 
-  return {
-    token,
-    loading: session === undefined,
-    session: ok && session?.valid ? session : null,
-  };
+  return { loading: me === undefined, me: ok ? me : null, dashboard };
 }
 
 /** Header, page title and bottom tabs around a Performance admin page. */

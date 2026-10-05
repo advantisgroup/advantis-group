@@ -201,11 +201,9 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
 
   // Blank upload template with the aggregated-format's recognized headers
   // — no Convex round-trip, the headers are static.
-  .get(
-    "/template",
-    () => xlsxResponse([TEMPLATE_HEADER], "Vorlage", "performance-vorlage.xlsx"),
-    { signedIn: true },
-  )
+  .get("/template", () => xlsxResponse([TEMPLATE_HEADER], "Vorlage", "performance-vorlage.xlsx"), {
+    signedIn: true,
+  })
 
   // Per-employee KPI export for one month (port of the reference script's
   // `employee_export`).

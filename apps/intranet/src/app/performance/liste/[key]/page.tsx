@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { PerformanceBackLink } from "@/components/performance/PerformanceBackLink";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -31,7 +31,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatIsoDate } from "@/lib/format";
-import { clearPerformanceToken } from "@/lib/performanceAuth";
 
 const LIST_KEYS = ["analysis30", "leads14", "opp_overdue", "opp30", "opps14"] as const;
 type ListKey = (typeof LIST_KEYS)[number];
@@ -66,26 +65,16 @@ const ALL_EMPLOYEES = "__all__";
 export default function DrilldownPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const router = useRouter();
   const params = useParams<{ key: string }>();
   const validKey = (LIST_KEYS as readonly string[]).includes(params.key)
     ? (params.key as ListKey)
     : null;
-  const { token, session } = usePerformanceSession();
+  const { me, dashboard } = usePerformanceAccess();
   const [empFilter, setEmpFilter] = useState<string>(ALL_EMPLOYEES);
-
-  useEffect(() => {
-    // Wait for the query to resolve — a visitor with no password cookie may
-    // still resolve via their linked Clerk identity.
-    if (session && !session.valid) {
-      clearPerformanceToken();
-      router.replace("/performance/login");
-    }
-  }, [session, router]);
 
   const data = useQuery(
     api.performance.queries.drilldown,
-    session?.valid && validKey ? { token, key: validKey } : "skip",
+    me && validKey ? { key: validKey, companyId: dashboard?.companyId } : "skip",
   );
 
   const owners = useMemo(() => {
@@ -102,8 +91,7 @@ export default function DrilldownPage() {
     return all.filter((i) => i.owner === empFilter);
   }, [data?.items, empFilter]);
 
-  if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid) return null;
+  if (me === undefined) return <PerformancePageSkeleton />;
 
   return (
     <div className="min-h-screen bg-muted/20">

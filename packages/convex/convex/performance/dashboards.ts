@@ -110,7 +110,8 @@ export const create = userMutation({
   args: { name: v.string(), ...orgArgs },
   handler: async (ctx, { name, teamIds, departmentIds }): Promise<Id<"companies">> => {
     const trimmed = name.trim();
-    if (!trimmed) throw new ConvexError({ code: "validation", message: "Bitte einen Namen eingeben." });
+    if (!trimmed)
+      throw new ConvexError({ code: "validation", message: "Bitte einen Namen eingeben." });
     const base = slugify(trimmed, "dashboard");
     let slug = base;
     for (let i = 2; ; i++) {
@@ -139,13 +140,14 @@ export const update = userMutation({
   handler: async (ctx, { companyId, name, teamIds, departmentIds }): Promise<void> => {
     await getDashboard(ctx, companyId);
     const trimmed = name.trim();
-    if (!trimmed) throw new ConvexError({ code: "validation", message: "Bitte einen Namen eingeben." });
+    if (!trimmed)
+      throw new ConvexError({ code: "validation", message: "Bitte einen Namen eingeben." });
     await ctx.db.patch(companyId, { name: trimmed, teamIds, departmentIds, updatedAt: Date.now() });
   },
 });
 
-/** Every report name on a dashboard with the intranet person behind it, plus
- * the people it could be linked to. */
+/** Every report name on a dashboard with the intranet person behind it, and
+ * an unambiguous name match as a suggestion where nobody is linked yet. */
 export const employees = userQuery({
   role: "admin",
   args: { companyId: v.id("companies") },
@@ -166,28 +168,23 @@ export const employees = userQuery({
       usersByKey.set(key, [...(usersByKey.get(key) ?? []), u]);
     }
 
-    return {
-      employees: employees
-        .filter((e) => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
-        .map((e) => {
-          const user = e.userId ? userById.get(e.userId) : undefined;
-          const candidates = usersByKey.get(nameKey(e.name)) ?? [];
-          return {
-            id: e._id,
-            name: e.name,
-            active: e.active,
-            user: user ? { id: user._id, name: displayName(user), email: user.email } : null,
-            suggestion:
-              !user && candidates.length === 1
-                ? { id: candidates[0]._id, name: displayName(candidates[0]) }
-                : null,
-          };
-        })
-        .sort((a, b) => a.name.localeCompare(b.name, "de")),
-      users: activeUsers
-        .map((u) => ({ id: u._id, name: displayName(u), email: u.email }))
-        .sort((a, b) => a.name.localeCompare(b.name, "de")),
-    };
+    return employees
+      .filter((e) => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
+      .map((e) => {
+        const user = e.userId ? userById.get(e.userId) : undefined;
+        const candidates = usersByKey.get(nameKey(e.name)) ?? [];
+        return {
+          id: e._id,
+          name: e.name,
+          active: e.active,
+          user: user ? { id: user._id, name: displayName(user), email: user.email } : null,
+          suggestion:
+            !user && candidates.length === 1
+              ? { id: candidates[0]._id, name: displayName(candidates[0]) }
+              : null,
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, "de"));
   },
 });
 

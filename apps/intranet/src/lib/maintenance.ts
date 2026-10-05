@@ -20,6 +20,8 @@ const OPEN_PREFIXES = [
   // Organisation
   "/calendar",
   "/clockodo",
+  // Kennzahlen (geprüft 05.10.2026, Zugriff jetzt über die Intranet-Anmeldung)
+  "/performance",
   // Hilfe & Fehler
   "/it-tickets",
   "/help",

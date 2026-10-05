@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -18,6 +18,7 @@ import {
   LastDayInteractions,
   type LastDayInteractionRow,
 } from "@/components/performance/LastDayInteractions";
+import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceEmployeeDetailProvider } from "@/components/performance/PerformanceEmployeeDetailContext";
 import { buildCallActivityChartData, fmtYm } from "@/components/performance/PerformanceFormat";
@@ -27,7 +28,6 @@ import {
   PerformanceYmProvider,
   usePerformanceYm,
 } from "@/components/performance/PerformanceYmContext";
-import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -37,7 +37,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { clearPerformanceToken } from "@/lib/performanceAuth";
 
 interface EmployeeTopData {
   hasCalls: boolean;
@@ -100,11 +99,9 @@ function EmployeeTopSection({
 }
 
 function EmployeeChrome({
-  token,
   employeeId,
   children,
 }: {
-  token: string;
   employeeId: Id<"performanceEmployees">;
   children: ReactNode;
 }) {
@@ -112,18 +109,14 @@ function EmployeeChrome({
   const locale = useLocale();
   const pathname = usePathname();
   const [ym, setYm] = usePerformanceYm();
-  const data = useQuery(api.performance.queries.employeeDetail, {
-    token,
-    employeeId,
-    ym,
-  });
-  const interactions = useQuery(api.performance.queries.interactionsMonth, {
-    token,
-    ym,
-    employeeId,
-  });
+  const data = useQuery(api.performance.queries.employeeDetail, { employeeId, ym });
 
   const activeTab = pathname.split("/").filter(Boolean)[3] ?? "ueberblick";
+  // Only the Interaktionen tab shows the month's single interactions.
+  const interactions = useQuery(
+    api.performance.queries.interactionsMonth,
+    activeTab === "interaktionen" ? { ym, employeeId } : "skip",
+  );
 
   const tabs: RouteTab[] = [
     {
@@ -164,16 +157,6 @@ function EmployeeChrome({
       <PerformanceHeader />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
-        {data && (
-          <EmployeeTopSection
-            data={data}
-            interactionDays={interactions?.days}
-            activeTab={activeTab}
-            t={t}
-            locale={locale}
-          />
-        )}
-
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-xl font-semibold">{data?.employee.name}</h1>
           <Select
@@ -199,6 +182,16 @@ function EmployeeChrome({
           )}
         </div>
 
+        {data && (
+          <EmployeeTopSection
+            data={data}
+            interactionDays={interactions?.days}
+            activeTab={activeTab}
+            t={t}
+            locale={locale}
+          />
+        )}
+
         <Card className="overflow-hidden">
           <div className="px-2">
             <RouteTabs tabs={tabs} activeValue={activeTab} inline />
@@ -216,26 +209,17 @@ function EmployeeChrome({
 
 export default function EmployeeDetailLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Performance");
-  const router = useRouter();
   const params = useParams<{ id: string }>();
   const employeeId = params.id as Id<"performanceEmployees">;
-  const { token, session } = usePerformanceSession();
+  const { me } = usePerformanceAccess();
 
-  useEffect(() => {
-    // Wait for the query to resolve — a visitor with no password cookie may
-    // still resolve via their linked Clerk identity.
-    if (session && !session.valid) {
-      clearPerformanceToken();
-      router.replace("/performance/login");
-    }
-  }, [session, router]);
-
+  // Rough client-side check so a plain employee opening someone else's link
+  // gets a note instead of an error; the server decides exactly
+  // (`performance/lib/access.ts`).
   const canView =
-    session?.valid &&
-    (session.permissions.includes("view_all_employees") || session.employeeId === employeeId);
+    !!me && (me.isAdmin || me.dashboards.some((d) => d.canViewTeam || d.employeeId === employeeId));
 
-  if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid) return null;
+  if (me === undefined) return <PerformancePageSkeleton />;
   if (!canView) {
     return (
       <div className="min-h-screen bg-muted/20">
@@ -254,9 +238,7 @@ export default function EmployeeDetailLayout({ children }: { children: ReactNode
 
   return (
     <PerformanceYmProvider>
-      <EmployeeChrome token={token} employeeId={employeeId}>
-        {children}
-      </EmployeeChrome>
+      <EmployeeChrome employeeId={employeeId}>{children}</EmployeeChrome>
     </PerformanceYmProvider>
   );
 }

@@ -27,11 +27,11 @@ export const performanceTables = {
     domain: v.optional(v.string()),
     status: v.optional(
       v.union(
-      v.literal("provisioning"), // row just created, about to call Vercel
-      v.literal("pending_dns"), // added to Vercel, waiting on the owner's ownership-verification DNS record
-      v.literal("pending_routing"), // ownership verified, but no A/CNAME actually routes traffic to Vercel yet
-      v.literal("active"), // ownership verified AND traffic correctly routed — actually live
-      v.literal("failed"), // a real error (not just "not verified yet")
+        v.literal("provisioning"), // row just created, about to call Vercel
+        v.literal("pending_dns"), // added to Vercel, waiting on the owner's ownership-verification DNS record
+        v.literal("pending_routing"), // ownership verified, but no A/CNAME actually routes traffic to Vercel yet
+        v.literal("active"), // ownership verified AND traffic correctly routed — actually live
+        v.literal("failed"), // a real error (not just "not verified yet")
       ),
     ),
     // Legacy: emails that could self-claim the old password Admin login.

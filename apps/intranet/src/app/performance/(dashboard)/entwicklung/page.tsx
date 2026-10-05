@@ -17,17 +17,17 @@ import {
 
 import { FilterableBarChart } from "@/components/charts/FilterableBarChart";
 import { CHART, tooltipStyle } from "@/components/charts/theme";
+import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
 import { fmtDayShort, fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getPerformanceToken } from "@/lib/performanceAuth";
 
 export default function DashboardDevelopmentPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const token = getPerformanceToken() ?? "";
-  const data = useQuery(api.performance.queries.teamDevelopment, { token });
+  const companyId = usePerformanceAccess().dashboard?.companyId;
+  const data = useQuery(api.performance.queries.teamDevelopment, { companyId });
 
   const funnelChart = useMemo(
     () =>

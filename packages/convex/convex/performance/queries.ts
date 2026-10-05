@@ -932,7 +932,10 @@ export const drilldown = userQuery({
       // Own numbers only: pin the list to the viewer's own employee name.
       const employee = dashboard.employeeId ? await ctx.db.get(dashboard.employeeId) : null;
       if (!employee || !employee.companyId) {
-        throw new ConvexError({ code: "forbidden", message: "Dir ist kein Mitarbeiter zugeordnet." });
+        throw new ConvexError({
+          code: "forbidden",
+          message: "Dir ist kein Mitarbeiter zugeordnet.",
+        });
       }
       if (empFilter && empFilter !== employee.name) {
         throw new ConvexError({ code: "forbidden", message: "Kein Zugriff." });

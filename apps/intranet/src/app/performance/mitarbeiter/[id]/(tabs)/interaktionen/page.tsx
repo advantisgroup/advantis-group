@@ -15,18 +15,15 @@ import { shiftAnchor, todayIso } from "@/components/performance/lib";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { Button } from "@/components/ui/button";
 import { formatIsoDate } from "@/lib/format";
-import { getPerformanceToken } from "@/lib/performanceAuth";
 
 export default function EmployeeInteractionsPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
   const params = useParams<{ id: string }>();
   const employeeId = params.id as Id<"performanceEmployees">;
-  const token = getPerformanceToken() ?? "";
   const [anchor, setAnchor] = useState(todayIso);
 
   const data = useQuery(api.performance.queries.interactionsDayDetail, {
-    token,
     date: anchor,
     employeeId,
   });
