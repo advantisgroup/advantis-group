@@ -103,6 +103,7 @@ async function runApplyImport(
     contentHash: string;
     reportKind?: "lead" | "opp" | "call" | "template";
     reportDate?: string;
+    reportDateFrom?: string;
     sourceRowCount?: number;
     skippedNames?: string[];
     flaggedRows?: FlaggedRowInput[];
@@ -518,11 +519,16 @@ async function processReport(
       companyId,
       calls.rows,
     );
+    const firstDay = toISODate(
+      calls.rows.reduce((min, r) => (r.date < min ? r.date : min), calls.rows[0].date),
+    );
+    const reportDateFrom = firstDay !== reportDate ? firstDay : undefined;
     const result = await runApplyImport(ctx, {
       ...base,
       snapshots,
       reportKind: "call",
       reportDate,
+      reportDateFrom,
       sourceRowCount: calls.rows.length,
       skippedNames: skipped,
       flaggedRows,
@@ -532,6 +538,7 @@ async function processReport(
       rowsImported: result.rowsImported,
       reportKind: "call",
       reportDate,
+      reportDateFrom,
       skipped,
       flagged: flaggedRows.length,
     };

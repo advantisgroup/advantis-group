@@ -428,6 +428,7 @@ export const applyImport = internalMutation({
     contentHash: v.optional(v.string()),
     reportKind: v.optional(reportKindValidator),
     reportDate: v.optional(v.string()),
+    reportDateFrom: v.optional(v.string()),
     sourceRowCount: v.optional(v.number()),
     skippedNames: v.optional(v.array(v.string())),
     flaggedRows: v.optional(v.array(flaggedRowInputValidator)),
@@ -785,30 +786,91 @@ async function requireCompany(ctx: QueryCtx, companyId: Id<"companies">): Promis
   }
 }
 
-/** Most recent uploads, for the admin upload page's log table. */
+const UPLOAD_LOG_PAGE = 60;
+const UPLOAD_LOG_MAX = 1000;
+
+/** Most recent uploads, for the admin upload page's log table. `limit`
+ * grows with "Mehr laden"; `hasMore` says whether older rows exist. */
 export const listUploadLog = userQuery({
   role: "admin",
-  args: { companyId: v.id("companies") },
-  handler: async (ctx, { companyId }) => {
+  args: { companyId: v.id("companies"), limit: v.optional(v.number()) },
+  handler: async (ctx, { companyId, limit }) => {
     await requireCompany(ctx, companyId);
-    const rows = await ctx.db
+    const take = Math.min(Math.max(Math.floor(limit ?? UPLOAD_LOG_PAGE), 1), UPLOAD_LOG_MAX);
+    const fetched = await ctx.db
       .query("performanceUploadLog")
       .withIndex("by_company_uploadedAt", (q) => q.eq("companyId", companyId))
       .order("desc")
-      .take(60);
-    return rows.map((r) => ({
-      _id: r._id,
-      filename: r.filename,
-      rowsImported: r.rowsImported,
-      uploadedAt: r.uploadedAt,
-      reportKind: r.reportKind,
-      reportDate: r.reportDate,
-      sourceRowCount: r.sourceRowCount,
-      skippedNames: r.skippedNames,
-      fileSize: r.fileSize,
-      batchId: r.batchId,
-      uploadedBy: r.uploadedBy,
-      scannedForFlags: r.scannedForFlags,
+      .take(take + 1);
+    const rows = fetched.slice(0, take);
+    return {
+      hasMore: fetched.length > take,
+      rows: rows.map((r) => ({
+        _id: r._id,
+        filename: r.filename,
+        rowsImported: r.rowsImported,
+        uploadedAt: r.uploadedAt,
+        reportKind: r.reportKind,
+        reportDate: r.reportDate,
+        reportDateFrom: r.reportDateFrom,
+        sourceRowCount: r.sourceRowCount,
+        skippedNames: r.skippedNames,
+        fileSize: r.fileSize,
+        batchId: r.batchId,
+        uploadedBy: r.uploadedBy,
+        scannedForFlags: r.scannedForFlags,
+      })),
+    };
+  },
+});
+
+const DAILY_STATUS_KINDS = ["lead", "opp", "call", "interactions"] as const;
+type DailyStatusKind = (typeof DAILY_STATUS_KINDS)[number];
+
+/** "Tagesstatus" on the upload page: for each of the given report days
+ * (the client passes the last few workdays, Berlin calendar), which of the
+ * four daily exports have been imported. A multi-day interactions or call
+ * file counts for every day it covers. */
+export const dailyUploadStatus = userQuery({
+  role: "admin",
+  args: { companyId: v.id("companies"), dates: v.array(v.string()) },
+  handler: async (
+    ctx,
+    { companyId, dates },
+  ): Promise<{ date: string; kinds: DailyStatusKind[] }[]> => {
+    await requireCompany(ctx, companyId);
+    const days = [...new Set(dates)]
+      .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+      .sort()
+      .slice(-14);
+    if (days.length === 0) return [];
+    const from = days[0];
+    const to = days[days.length - 1];
+    // Multi-day files are filed under their last day; look a month past
+    // `to` so one that ends later but starts inside the window still counts.
+    const until = new Date(Date.parse(`${to}T00:00:00Z`) + 31 * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+    const rows = await ctx.db
+      .query("performanceUploadLog")
+      .withIndex("by_company_reportDate", (q) =>
+        q.eq("companyId", companyId).gte("reportDate", from).lte("reportDate", until),
+      )
+      .take(2000);
+    const byDay = new Map(days.map((d) => [d, new Set<DailyStatusKind>()]));
+    for (const r of rows) {
+      const kind = r.reportKind;
+      if (!r.reportDate || !kind || !(DAILY_STATUS_KINDS as readonly string[]).includes(kind)) {
+        continue;
+      }
+      const start = r.reportDateFrom ?? r.reportDate;
+      for (const d of days) {
+        if (d >= start && d <= r.reportDate) byDay.get(d)!.add(kind as DailyStatusKind);
+      }
+    }
+    return days.map((date) => ({
+      date,
+      kinds: DAILY_STATUS_KINDS.filter((k) => byDay.get(date)!.has(k)),
     }));
   },
 });

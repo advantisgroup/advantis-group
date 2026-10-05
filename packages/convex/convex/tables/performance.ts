@@ -344,8 +344,8 @@ export const performanceTables = {
     // spans multiple days itself.
     reportDate: v.optional(v.string()),
     // First day of a report that spans several days (an Interaktionen
-    // export); `reportDate` is then its last day. Absent for single-day
-    // reports.
+    // export, a call report over several days); `reportDate` is then its
+    // last day. Absent for single-day reports.
     reportDateFrom: v.optional(v.string()),
     // Total data rows in the source file, before any team-matching filter
     // — lets the UI show "40 of 41 matched" instead of just the imported
@@ -378,6 +378,8 @@ export const performanceTables = {
     .index("by_contentHash", ["contentHash"])
     .index("by_batchId", ["batchId"])
     .index("by_company_uploadedAt", ["companyId", "uploadedAt"])
+    // The upload page's "Tagesstatus": which report kinds exist per day.
+    .index("by_company_reportDate", ["companyId", "reportDate"])
     // Duplicate-upload detection must be per-company — two different client
     // companies could upload files with identical bytes/hash by coincidence
     // (e.g. the blank template).

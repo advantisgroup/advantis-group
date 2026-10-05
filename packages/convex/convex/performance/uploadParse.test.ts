@@ -166,6 +166,68 @@ describe("import lock", () => {
   });
 });
 
+describe("upload page queries", () => {
+  async function withAdmin() {
+    const ctx = await setup();
+    await ctx.t.run((db) =>
+      db.db.insert("users", {
+        clerkUserId: "admin",
+        email: "admin@advantisgroup.de",
+        firstName: "Ada",
+        lastName: "Admin",
+        role: "admin",
+        status: "active",
+        external: false,
+        createdAt: Date.now(),
+      }),
+    );
+    return { ...ctx, admin: ctx.t.withIdentity({ subject: "admin" }) };
+  }
+
+  test("daily status lists which exports exist per day, multi-day files on every day", async () => {
+    const { admin, ids, upload } = await withAdmin();
+    await upload("lead.csv", leadCsv("2026-10-02", [["Anna Müller", "Open", "01.10.2026"]]));
+    await upload(
+      "interaktionen.csv",
+      interactionsCsv([
+        ["Anna Müller", "01.10.26 08:00", "00:02:00"],
+        ["Anna Müller", "05.10.26 08:00", "00:02:00"],
+      ]),
+    );
+    const status = await admin.query(api.performance.import.dailyUploadStatus, {
+      companyId: ids.companyId,
+      dates: ["2026-10-01", "2026-10-02", "2026-10-05"],
+    });
+    expect(status).toEqual([
+      { date: "2026-10-01", kinds: ["interactions"] },
+      { date: "2026-10-02", kinds: ["lead", "interactions"] },
+      { date: "2026-10-05", kinds: ["interactions"] },
+    ]);
+  });
+
+  test("the upload log pages with a limit", async () => {
+    const { admin, ids, upload } = await withAdmin();
+    for (const day of ["01", "02", "05"]) {
+      await upload(
+        `lead-${day}.csv`,
+        leadCsv(`2026-10-${day}`, [["Anna Müller", "Open", "01.10.2026"]]),
+      );
+    }
+    const first = await admin.query(api.performance.import.listUploadLog, {
+      companyId: ids.companyId,
+      limit: 2,
+    });
+    expect(first.rows).toHaveLength(2);
+    expect(first.hasMore).toBe(true);
+    const all = await admin.query(api.performance.import.listUploadLog, {
+      companyId: ids.companyId,
+      limit: 4,
+    });
+    expect(all.rows).toHaveLength(3);
+    expect(all.hasMore).toBe(false);
+  });
+});
+
 describe("unrecognised files", () => {
   test("get a German error naming the expected exports", async () => {
     const { upload } = await setup();
