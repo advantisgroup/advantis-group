@@ -103,7 +103,7 @@ export function PersonTable({
                         {initials(person.name, person.email)}
                       </AvatarFallback>
                     </Avatar>
-                    {status.kind === "online" ? (
+                    {status.kind === "online" || status.kind === "inOffice" ? (
                       <span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-card bg-success" />
                     ) : null}
                   </div>

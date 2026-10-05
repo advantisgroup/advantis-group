@@ -156,6 +156,11 @@ function DirectoryPageContent() {
     return map;
   }, [outToday]);
 
+  // Clocked in and not on a break, from Zeiterfassung. Only ids come back —
+  // no times — so this is the same for everyone.
+  const inOfficeIds = useQuery(api.time.status.inOffice);
+  const inOffice = useMemo(() => new Set<string>(inOfficeIds ?? []), [inOfficeIds]);
+
   async function message(userId: Id<"users">) {
     const { conversationId } = await getOrCreateDm({ otherUserId: userId });
     router.push(`/chat?c=${conversationId}`);
@@ -208,7 +213,13 @@ function DirectoryPageContent() {
     else if (team !== "all") rows = rows.filter((p) => p.teams.includes(team));
     if (availableNow) {
       rows = rows.filter((person) => {
-        return personStatus(person, now, outUntilByUser.get(person._id)).kind === "online";
+        const status = personStatus(
+          person,
+          now,
+          outUntilByUser.get(person._id),
+          inOffice.has(person._id),
+        );
+        return status.kind === "inOffice" || status.kind === "online";
       });
     }
     const key = (p: Person) =>
@@ -217,15 +228,26 @@ function DirectoryPageContent() {
     return [...rows].sort(
       (a, b) => dir * (key(a).localeCompare(key(b)) || a.name.localeCompare(b.name)),
     );
-  }, [availableNow, me.teams, myTeamsOnly, now, outUntilByUser, people, role, sort, team]);
+  }, [
+    availableNow,
+    inOffice,
+    me.teams,
+    myTeamsOnly,
+    now,
+    outUntilByUser,
+    people,
+    role,
+    sort,
+    team,
+  ]);
 
   const statuses = useMemo(() => {
     const map = new Map<string, PersonStatus>();
     for (const p of filtered) {
-      map.set(p._id, personStatus(p, now, outUntilByUser.get(p._id)));
+      map.set(p._id, personStatus(p, now, outUntilByUser.get(p._id), inOffice.has(p._id)));
     }
     return map;
-  }, [filtered, now, outUntilByUser]);
+  }, [filtered, inOffice, now, outUntilByUser]);
 
   function toggleSort(key: SortKey) {
     setSort((s) => nextSort(s, key));

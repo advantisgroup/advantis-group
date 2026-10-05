@@ -59,7 +59,7 @@ export function PersonCard({
             {person.avatar && <AvatarImage src={person.avatar} alt="" />}
             <AvatarFallback>{initials(person.name, person.email)}</AvatarFallback>
           </Avatar>
-          {status.kind === "online" ? (
+          {status.kind === "online" || status.kind === "inOffice" ? (
             <span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-card bg-success" />
           ) : null}
         </div>

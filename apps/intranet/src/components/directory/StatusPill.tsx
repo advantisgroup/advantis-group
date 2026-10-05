@@ -1,6 +1,6 @@
 "use client";
 
-import { Circle, Plane, Wifi } from "lucide-react";
+import { Building2, Circle, Plane, Wifi } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { formatIsoDate } from "@/lib/format";
@@ -24,6 +24,11 @@ export function StatusPill({ status, className }: { status: PersonStatus; classN
         date: status.kind === "out" ? formatIsoDate(status.until, locale) : "",
       }),
       tone: "bg-info/12 text-info ring-info/25",
+    },
+    inOffice: {
+      icon: Building2,
+      label: t("inOffice"),
+      tone: "bg-ok/12 text-ok ring-ok/25",
     },
     online: { icon: Wifi, label: t("online"), tone: "bg-ok/12 text-ok ring-ok/25" },
     away: {

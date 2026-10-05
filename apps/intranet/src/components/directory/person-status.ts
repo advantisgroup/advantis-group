@@ -6,22 +6,30 @@ import type { FunctionReturnType } from "convex/server";
 
 export type Person = FunctionReturnType<typeof api.people.users.directoryList>[number];
 
-export type PersonStatus = { kind: "out"; until: string } | { kind: "online" } | { kind: "away" };
+export type PersonStatus =
+  | { kind: "out"; until: string }
+  | { kind: "inOffice" }
+  | { kind: "online" }
+  | { kind: "away" };
 
 /**
  * The one place "what is this person's availability" is decided, so the table
  * and the card can't drift apart on it.
  *
- * Precedence is deliberate: a booked absence outranks the live "has a tab
- * open" signal (someone on holiday who opens the intranet from a beach is
- * still away).
+ * Precedence is deliberate: a booked absence outranks any live signal (someone
+ * on holiday who opens the intranet from a beach is still away), and being
+ * clocked in with Zeiterfassung (not on a break) outranks the "has a tab open"
+ * heuristic. Not clocked in falls back to that heuristic rather than reading
+ * as away — not everyone clocks yet.
  */
 export function personStatus(
   person: Person,
   now: number,
   outUntil: string | undefined,
+  inOffice = false,
 ): PersonStatus {
   if (outUntil) return { kind: "out", until: outUntil };
+  if (inOffice) return { kind: "inOffice" };
   const online = person.lastActiveAt != null && now - person.lastActiveAt < ONLINE_WINDOW_MS;
   return online ? { kind: "online" } : { kind: "away" };
 }
