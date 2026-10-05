@@ -168,12 +168,10 @@ export const performanceTables = {
     .index("by_company_name", ["companyId", "name"]),
 
   // Backfilled nightly (see crons.ts's `cacheCompletedMonthBadges`) with one
-  // row per completed month once its badges are computed. A completed
-  // month's underlying reports never change (see the "historical data
-  // doesn't change once reported" convention on `performanceReports`), so
-  // once a row exists here it's permanent — reading it lets
-  // `performanceQueries.allBadgesMap` skip recomputing that month's team
-  // totals from scratch on every request.
+  // row per completed month, from the 3rd day after month end (late uploads
+  // of the last day usually land on the 1st). `performance/queries.ts`
+  // recomputes a cached month when a report for it was imported after
+  // `computedAt`, so the cache only saves work, it never freezes old numbers.
   performanceBadgeCache: defineTable({
     companyId: v.optional(v.id("companies")),
     ym: v.string(),
