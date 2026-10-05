@@ -142,7 +142,19 @@ Built as specified; where the spec left room:
 - **Hours account** counts from the opening date (else the first schedule or
   entry) up to yesterday.
 
+### Test mode (before go-live)
+
+Convex env `TIME_MODE` anything but `live` (default: unset) = test mode:
+only the emails in `TIME_TESTERS` may call `time.*` (admins included — the
+others get the maintenance screen and no sidebar item), admin notifications
+go to the testers, the directory's "Im Büro" stays empty, and a banner offers
+"Testdaten löschen" (`time.mode.purgeTestData`, everything except holidays,
+refused once live).
+
 ### Cutover checklist
+
+0. Delete the test data (banner button), then set Convex env
+   `TIME_MODE=live`.
 
 1. Run the Clockodo import (separate task): per person `setOpeningBalance`
    (minutes + cutover date), `setAllowance` for the current year

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 
 import { userMutation, userQuery } from "../functions";
+import { assertTimeAccess } from "./lib/mode";
 import { createNotification } from "../lib/notify";
 import { timeAbsenceTypeValidator } from "../tables/time";
 import { addDays, isIsoDate } from "./lib/berlin";
@@ -39,6 +40,7 @@ const LINK = "/zeiterfassung/abwesenheiten";
 export const list = userQuery({
   args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, { userId }) => {
+    assertTimeAccess(ctx);
     const subject = subjectFor(ctx.caller, userId);
     const rows = await loadAbsences(ctx, subject);
     if (rows.length === 0) return [];
@@ -63,6 +65,7 @@ export const request = userMutation({
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    assertTimeAccess(ctx);
     const subject = subjectFor(ctx.caller, args.userId);
     if (!isIsoDate(args.startDate) || !isIsoDate(args.endDate) || args.endDate < args.startDate) {
       throw timeError("bad_request", "invalid_range", "Bad date range");
@@ -146,6 +149,7 @@ export const request = userMutation({
 export const cancel = userMutation({
   args: { id: v.id("timeAbsences"), reason: v.optional(v.string()) },
   handler: async (ctx, { id, reason }) => {
+    assertTimeAccess(ctx);
     const row = await ctx.db.get(id);
     if (!row) throw timeError("conflict", "not_pending", "Absence not found");
     subjectFor(ctx.caller, row.userId);
@@ -184,6 +188,7 @@ export const decide = userMutation({
   role: "admin",
   args: { id: v.id("timeAbsences"), approve: v.boolean(), note: v.optional(v.string()) },
   handler: async (ctx, { id, approve, note }) => {
+    assertTimeAccess(ctx);
     const row = await ctx.db.get(id);
     if (!row || row.status !== "pending") {
       throw timeError("conflict", "not_pending", "Not waiting for a decision");
@@ -230,6 +235,7 @@ export const decide = userMutation({
 export const calendar = userQuery({
   args: { from: v.string(), to: v.string() },
   handler: async (ctx, { from, to }) => {
+    assertTimeAccess(ctx);
     if (!isIsoDate(from) || !isIsoDate(to) || to < from || to > addDays(from, 92)) {
       throw timeError("bad_request", "invalid_range", "Bad range");
     }

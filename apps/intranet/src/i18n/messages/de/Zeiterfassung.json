@@ -345,5 +345,14 @@
     "not_pending": "Das wurde inzwischen schon entschieden.",
     "changed_meanwhile": "Der Eintrag hat sich inzwischen geändert. Bitte neu laden.",
     "no_working_days": "Im gewählten Zeitraum gibt es keine Arbeitstage."
+  },
+  "testMode": {
+    "title": "Testmodus – nur für Tester sichtbar",
+    "description": "Die Zeiterfassung ist noch nicht freigeschaltet: Nur die in Convex hinterlegten Tester sehen sie, Benachrichtigungen gehen nur an sie, und im Mitarbeiterverzeichnis erscheint niemand als „Im Büro“.",
+    "purge": "Testdaten löschen",
+    "purgeTitle": "Alle Testdaten löschen?",
+    "purgeDescription": "Löscht alle Zeiteinträge, Abwesenheiten, Arbeitszeitmodelle, Urlaubskonten, Stundenkonten, Monatssperren und das Protokoll der Zeiterfassung – für alle Personen. Feiertage bleiben. Das lässt sich nicht rückgängig machen.",
+    "purgeConfirm": "Endgültig löschen",
+    "purged": "{count, plural, =0 {Keine Testdaten vorhanden} one {# Datensatz gelöscht} other {# Datensätze gelöscht}}"
   }
 }

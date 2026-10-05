@@ -10,15 +10,20 @@ import { useQuery } from "convex/react";
 import { CalendarDays, Clock3, LayoutDashboard, Plane, Settings2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { MaintenanceScreen } from "@/components/layout/MaintenanceScreen";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { RouteTabs } from "@/components/layout/RouteTabs";
 import { useIsAdmin } from "@/components/providers/current-user";
+import { TestModeBanner } from "@/components/zeiterfassung/TestModeBanner";
 
 export default function ZeiterfassungLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Zeiterfassung");
   const pathname = usePathname();
   const isAdmin = useIsAdmin();
-  const approvals = useQuery(api.time.admin.approvals, isAdmin ? {} : "skip");
+  // Test mode (Convex TIME_MODE ≠ live): only TIME_TESTERS get in, admins too
+  // see the maintenance screen, so nobody is bothered before go-live.
+  const mode = useQuery(api.time.mode.status);
+  const approvals = useQuery(api.time.admin.approvals, isAdmin && mode?.canUse ? {} : "skip");
   const waiting = approvals ? approvals.absences.length + approvals.corrections.length : 0;
   const active = pathname.split("/")[2] ?? "overview";
   const tabs = useMemo(
@@ -62,6 +67,9 @@ export default function ZeiterfassungLayout({ children }: { children: ReactNode 
     [t, isAdmin, waiting],
   );
 
+  if (mode === undefined) return null;
+  if (!mode.canUse) return <MaintenanceScreen />;
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeaderBar
@@ -69,6 +77,7 @@ export default function ZeiterfassungLayout({ children }: { children: ReactNode 
         description={t("subtitle")}
         icon={<Clock3 className="size-4" />}
       />
+      {mode.testMode && <TestModeBanner />}
       <RouteTabs tabs={tabs} activeValue={active} />
       <div className="mt-4">{children}</div>
     </div>

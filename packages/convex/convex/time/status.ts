@@ -1,4 +1,5 @@
 import { userQuery } from "../functions";
+import { isTimeTestMode } from "./lib/mode";
 import { openEntries } from "./lib/store";
 
 /**
@@ -8,6 +9,8 @@ import { openEntries } from "./lib/store";
 export const inOffice = userQuery({
   args: {},
   handler: async (ctx) => {
+    // Test clock-ins must not show anyone as "Im Büro" before go-live.
+    if (isTimeTestMode()) return [];
     const open = await openEntries(ctx);
     const onBreak = new Set(open.filter((row) => row.kind === "break").map((row) => row.userId));
     return [

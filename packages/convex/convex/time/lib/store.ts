@@ -16,6 +16,7 @@ import {
 import { summarizeDays, totals } from "./days";
 import { isMonthLocked } from "./lock";
 import { carryOverExpiry, vacationSummary } from "./vacation";
+import { isTimeTestMode, timeTesterEmails } from "./mode";
 
 /**
  * Database-side helpers every Zeiterfassung function shares: who a request is
@@ -342,12 +343,28 @@ export async function activeAdmins(ctx: QueryCtx) {
   return admins.filter((user) => user.status === "active");
 }
 
+async function activeTesters(ctx: QueryCtx) {
+  const testers = await Promise.all(
+    timeTesterEmails().map((email) =>
+      ctx.db
+        .query("users")
+        .withIndex("by_email", (q) => q.eq("email", email))
+        .filter((q) => q.eq(q.field("status"), "active"))
+        .first(),
+    ),
+  );
+  return testers.filter((user): user is Doc<"users"> => user !== null);
+}
+
 export async function notifyAdmins(
   ctx: MutationCtx,
   args: { type: string; title: string; body?: string; link?: string },
   except?: Id<"users">,
 ): Promise<void> {
-  const admins = (await activeAdmins(ctx)).filter((admin) => admin._id !== except);
+  // In test mode the real admins must not hear about test data: the testers
+  // get these notifications instead (see lib/mode.ts).
+  const recipients = isTimeTestMode() ? await activeTesters(ctx) : await activeAdmins(ctx);
+  const admins = recipients.filter((admin) => admin._id !== except);
   await notifyUsers(
     ctx,
     admins.map((admin) => admin._id),

@@ -20,9 +20,13 @@ const setNow = (date: string, time: string) => vi.setSystemTime(local(date, time
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
+  // Everything below tests the module as it runs after go-live; the
+  // "test mode" block switches back.
+  vi.stubEnv("TIME_MODE", "live");
 });
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllEnvs();
 });
 
 async function setup() {
@@ -594,5 +598,76 @@ describe("hours account and settings", () => {
     expect(expired?.carriedOverExpiredDays).toBe(21);
     const summary = await s.alice.query(api.time.overview.summary, { today: "2027-04-01" });
     expect(summary.vacation).toMatchObject({ remaining: 24, carriedOverExpired: 21 });
+  });
+});
+
+describe("test mode", () => {
+  beforeEach(() => {
+    vi.stubEnv("TIME_MODE", "");
+    vi.stubEnv("TIME_TESTERS", "Alice@advantisgroup.de, bob@advantisgroup.de");
+  });
+
+  test("only testers get in — admins included", async () => {
+    const s = await setup();
+    expect(await s.admin.query(api.time.mode.status, {})).toEqual({
+      testMode: true,
+      canUse: false,
+    });
+    await expect(s.admin.query(api.time.overview.summary, { today: "2026-10-05" })).rejects.toThrow(
+      /Testmodus/,
+    );
+    await expect(s.admin.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Testmodus/);
+    expect(await s.alice.query(api.time.mode.status, {})).toEqual({
+      testMode: true,
+      canUse: true,
+    });
+  });
+
+  test("notifications go to testers, not admins; nobody shows as in the office", async () => {
+    const s = await setup();
+    setNow("2026-10-05", "09:00");
+    await s.alice.mutation(api.time.clock.clockIn, {});
+    expect(await s.admin.query(api.time.status.inOffice, {})).toEqual([]);
+    await s.alice.mutation(api.time.absences.request, {
+      type: "sick",
+      startDate: "2026-10-06",
+      endDate: "2026-10-06",
+      halfDayStart: false,
+      halfDayEnd: false,
+    });
+    expect(await notificationsOf(s.t, s.ids.admin)).toHaveLength(0);
+    expect((await notificationsOf(s.t, s.ids.bob)).length).toBeGreaterThan(0);
+  });
+
+  test("testers wipe the test data; holidays stay; refused after go-live", async () => {
+    const s = await setup();
+    setNow("2026-10-05", "09:00");
+    await s.alice.mutation(api.time.clock.clockIn, {});
+    await s.t.run((ctx) =>
+      ctx.db.insert("holidays", {
+        date: "2026-12-25",
+        name: "1. Weihnachtstag",
+        fraction: 1,
+        region: "BY",
+        updatedAt: Date.now(),
+      }),
+    );
+    let done = false;
+    while (!done) {
+      ({ done } = await s.alice.mutation(api.time.mode.purgeTestData, {
+        confirm: "TESTDATEN LÖSCHEN",
+      }));
+    }
+    const left = await s.t.run(async (ctx) => ({
+      entries: (await ctx.db.query("timeEntries").collect()).length,
+      audit: (await ctx.db.query("timeAuditLog").collect()).length,
+      holidays: (await ctx.db.query("holidays").collect()).length,
+    }));
+    expect(left).toEqual({ entries: 0, audit: 0, holidays: 1 });
+
+    vi.stubEnv("TIME_MODE", "live");
+    await expect(
+      s.alice.mutation(api.time.mode.purgeTestData, { confirm: "TESTDATEN LÖSCHEN" }),
+    ).rejects.toThrow(/Testmodus/);
   });
 });

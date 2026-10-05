@@ -190,6 +190,8 @@ export function Sidebar() {
   const hasInquiries = useHasCapability("manage_inquiries");
   const inquiryCounts = useQuery(api.marketing.inbox.counts, hasInquiries ? {} : "skip");
   const approvalCover = useQuery(api.org.delegations.mine);
+  // Test mode: only the testers named in Convex (TIME_TESTERS) see it.
+  const timeMode = useQuery(api.time.mode.status);
   const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
   const canManageClockodo = useHasCapability("manage_clockodo_team");
   const pendingAbsences = usePendingAbsenceCount(canManageClockodo || hasApprovalCover);
@@ -274,14 +276,18 @@ export function Sidebar() {
           },
         ]
       : []),
-    // Own time tracking, next to Clockodo until the cutover. Non-admins don't
-    // see it while lib/maintenance.ts keeps /zeiterfassung locked.
-    {
-      section: "planning",
-      href: "/zeiterfassung",
-      labelKey: "zeiterfassung",
-      icon: Timer,
-    },
+    // Own time tracking, next to Clockodo until the cutover. While Convex runs
+    // it in test mode only the testers see it — admins included.
+    ...(timeMode?.canUse
+      ? [
+          {
+            section: "planning" as const,
+            href: "/zeiterfassung",
+            labelKey: "zeiterfassung",
+            icon: Timer,
+          },
+        ]
+      : []),
     ...(hasGuidebooks
       ? [
           {

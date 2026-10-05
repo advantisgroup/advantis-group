@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 import { userMutation, userQuery } from "../functions";
+import { assertTimeAccess } from "./lib/mode";
 import { createNotification } from "../lib/notify";
 import { timeEntryKindValidator } from "../tables/time";
 import { addDays, berlinDate, isIsoDate, monthsBetween } from "./lib/berlin";
@@ -40,6 +41,7 @@ const FUTURE_SLACK = 5 * 60_000;
 export const range = userQuery({
   args: { userId: v.optional(v.id("users")), from: v.string(), to: v.string() },
   handler: async (ctx, { userId, from, to }) => {
+    assertTimeAccess(ctx);
     const subject = subjectFor(ctx.caller, userId);
     if (!isIsoDate(from) || !isIsoDate(to) || to < from || to > addDays(from, 62)) {
       throw timeError("bad_request", "invalid_range", "Bad range");
@@ -151,6 +153,7 @@ export const save = userMutation({
     reason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    assertTimeAccess(ctx);
     const subject = subjectFor(ctx.caller, args.userId);
     validateSpan(args.start, args.end);
     const original = args.entryId ? await loadOwnEntry(ctx, subject, args.entryId) : null;
@@ -236,6 +239,7 @@ export const save = userMutation({
 export const remove = userMutation({
   args: { entryId: v.id("timeEntries"), reason: v.optional(v.string()) },
   handler: async (ctx, { entryId, reason: rawReason }) => {
+    assertTimeAccess(ctx);
     const existing = await ctx.db.get(entryId);
     if (!existing) throw timeError("conflict", "changed_meanwhile", "Entry not found");
     const subject = subjectFor(ctx.caller, existing.userId);
@@ -307,6 +311,7 @@ export const remove = userMutation({
 export const withdraw = userMutation({
   args: { entryId: v.id("timeEntries") },
   handler: async (ctx, { entryId }) => {
+    assertTimeAccess(ctx);
     const row = await ctx.db.get(entryId);
     if (!row || row.status !== "pending") {
       throw timeError("conflict", "not_pending", "Not a pending correction");
@@ -356,6 +361,7 @@ export const decide = userMutation({
     note: v.optional(v.string()),
   },
   handler: async (ctx, { entryId, approve, note: rawNote }) => {
+    assertTimeAccess(ctx);
     const request = await ctx.db.get(entryId);
     if (!request || request.status !== "pending") {
       throw timeError("conflict", "not_pending", "Not a pending correction");
@@ -405,6 +411,7 @@ export const decide = userMutation({
 export const pendingFor = userQuery({
   args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, { userId }) => {
+    assertTimeAccess(ctx);
     const subject = subjectFor(ctx.caller, userId);
     const pending = await ctx.db
       .query("timeEntries")

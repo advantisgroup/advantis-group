@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 
 import { userQuery } from "../functions";
+import { assertTimeAccess } from "./lib/mode";
 import { addDays, berlinInstant, isIsoDate } from "./lib/berlin";
 import { hoursAccount, loadAbsences, subjectFor, timeError, vacationFor } from "./lib/store";
 
@@ -13,6 +14,7 @@ import { hoursAccount, loadAbsences, subjectFor, timeError, vacationFor } from "
 export const summary = userQuery({
   args: { userId: v.optional(v.id("users")), today: v.string() },
   handler: async (ctx, { userId, today }) => {
+    assertTimeAccess(ctx);
     const subject = subjectFor(ctx.caller, userId);
     if (!isIsoDate(today)) throw timeError("bad_request", "invalid_range", "Bad date");
     const absences = await loadAbsences(ctx, subject);
