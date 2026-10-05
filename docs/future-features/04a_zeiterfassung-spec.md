@@ -104,3 +104,60 @@ and act when it is the target local hour).
 
 Projects/customers, billing, NFC/phone clocking, automatic break
 deduction, location, payroll export (DATEV).
+
+## Implementation notes (2026-10-05, branch `zeiterfassung`)
+
+Built as specified; where the spec left room:
+
+- **18:00 rule** — runs hourly; an open work entry is due at the first 18:00
+  Berlin after its start (an entry started after 18:00 closes the next day).
+  End = open entry's start + (regular hours for the weekday − work already
+  booked in earlier closed segments that day) + breaks taken inside it,
+  clamped between the start and 18:00 — i.e. "first start + regular hours"
+  for the usual single entry. A break still open at 18:00 ends with it. The
+  entry gets `source: "auto18"`, `autoClosed: true`, an audit row and an
+  in-app notification.
+- **Breaks** count for the ArbZG check as explicit pause segments plus gaps
+  between work segments, each only from 15 minutes (§ 4 ArbZG). Warnings
+  only; nothing is deducted.
+- **Corrections** — any manual change by a non-admin (add, edit, delete of a
+  closed entry, any past day or today) is a pending row; approving an edit
+  tombstones the original (`deleted`) and activates the request, so both
+  stay readable beside the audit row. Admin changes apply directly the same
+  way. The running entry can't be edited, only clocked out.
+- **Absences** — sick days and anything an admin enters are approved at
+  once; employees can withdraw pending requests; admins can cancel approved
+  ones. All approved types reduce target hours; only vacation uses the
+  allowance. Others see only approved vacation in the team calendar.
+- **Vacation** — no allowance row = 24 days. In January a job opens each
+  active person's new year with last year's remainder as carry-over;
+  vacation up to 31 March uses carry-over first; from 1 April the unused
+  rest lapses (recorded on the row).
+- **Month lock** — time-based (15th of the next month, 00:00 Berlin), so it
+  holds even if the job is late; the job writes a `monthLocks` row and caches
+  the month's totals. Admin unlock needs a reason; locking again wins.
+- **Holidays** — seeded idempotently (this year if missing, next year from
+  1 December, or via the admin button). Seeding fills in missing dates even
+  in locked months; editing a holiday respects the lock.
+- **Hours account** counts from the opening date (else the first schedule or
+  entry) up to yesterday.
+
+### Cutover checklist
+
+1. Run the Clockodo import (separate task): per person `setOpeningBalance`
+   (minutes + cutover date), `setAllowance` for the current year
+   (entitlement + carry-over), entries with `source: "import"` and
+   absences; then `time.admin.recomputeTotals` per person to cache the
+   locked months.
+2. Seed holidays for the current and next year (Verwaltung → Feiertage).
+3. Set each part-timer's schedule (default is 8 h Mon–Fri).
+4. `apps/intranet/src/lib/maintenance.ts`: add `/zeiterfassung` to
+   `OPEN_PREFIXES`; `lib/pages.ts`: drop `visible: admin` from the
+   `/zeiterfassung*` entries.
+5. `AppShell.tsx`: mount `TimeClockHeaderControl` (add `hidden lg:flex`)
+   instead of `ClockodoHeaderControl`; remove the preview from the overview.
+6. Sidebar: drop the Clockodo item; dashboard/calendar/directory "out today"
+   should read `time.absences.calendar` instead of `useAbsencesCalendar`.
+7. Redirect `/clockodo/*` to the matching `/zeiterfassung/*` page, then remove
+   the Clockodo integration (apps/api routes, `lib/absences-api.ts`,
+   `lib/clockodo-*`, `components/clockodo`, `users.clockodoUserId`).

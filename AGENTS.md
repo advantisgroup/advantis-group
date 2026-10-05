@@ -266,6 +266,36 @@ webhook + cron (the old approach — `clockodoSync.ts`/`absenceSync.ts`/the
   `users.clockodoUserId` (run automatically on `/clockodo`, or from the
   settings Connections card). It goes away with the `people` table.
 
+## Zeiterfassung (`/zeiterfassung`, own time tracking)
+
+Replaces Clockodo for working time and absences; spec and cutover plan in
+[`docs/future-features/04a_zeiterfassung-spec.md`](./docs/future-features/04a_zeiterfassung-spec.md).
+Until cutover it is locked for non-admins by `apps/intranet/src/lib/maintenance.ts`
+(not in `OPEN_PREFIXES`) and the Clockodo screens keep working beside it.
+
+- Tables: `packages/convex/convex/tables/time.ts`. Absences are `timeAbsences`
+  (a legacy `absences` table may still hold prod rows).
+- Rules are pure functions in `convex/time/lib/` (Berlin calendar without
+  `Intl`, holidays, targets, ArbZG warnings, vacation carry-over, month lock,
+  18:00 auto-close) with unit tests in `calc.test.ts`. The intranet imports
+  the same functions from `@advantis/convex/time`, so day totals are computed
+  live in the browser with exactly the server's rules — change a rule in one
+  place.
+- Functions in `convex/time/*.ts`; `time/lib/store.ts` holds the shared
+  database helpers. Every write goes through `writeAudit` (`timeAuditLog`);
+  nothing is hard-deleted (`status: "deleted"`). Employees only reach their
+  own rows (`subjectFor`); admin-only functions declare `role: "admin"`.
+  Managers get nothing extra here.
+- Month lock: any change touching a locked month throws `reason:
+  "month_locked"`, admins included — they unlock with a reason first.
+- `timeMonthTotals` caches a locked month's worked/target minutes for the
+  hours account. Anything that changes a month's inputs must call
+  `invalidateTotals`/`invalidateTotalsFrom`; a missing row is computed live.
+- Crons are hourly and decide from the Berlin clock what is due (UTC
+  schedules can't express 18:00 Berlin in both CET and CEST).
+- `convex/_generated/api.d.ts` lists the new modules by hand (codegen needs a
+  deployment) — keep it in sync when adding a file under `convex/time/`.
+
 ## Removed: ActivityTrack
 
 ActivityTrack (`/activity`, the desktop agent's `/ingest`, Genesys/Clockodo
