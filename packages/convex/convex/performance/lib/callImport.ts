@@ -250,6 +250,33 @@ export function fmtDurationShort(sec: number | null): string {
   return `${s}s`;
 }
 
+// ----------------------------------------------------------------- numbers
+
+/** Reads a numeric cell the way a German export writes it: "1.234" and
+ * "1.234,5" use the dot as thousands separator, "12,5" the comma as
+ * decimal. A plain "1.5" (one or two digits after the dot, or a leading
+ * "0.") stays a decimal, so point-decimal exports keep working. */
+export function parseLocaleNumber(v: CellValue): number | null {
+  if (v === null || v === undefined || v === "" || typeof v === "boolean") return null;
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (v instanceof Date) return null;
+  let s = String(v)
+    .trim()
+    .replace(/[\s ']/g, "");
+  if (!s || s === "-" || s === "–") return null;
+  if (s.endsWith("%")) s = s.slice(0, -1);
+  if (/^[-+]?[1-9]\d{0,2}(\.\d{3})+(,\d+)?$/.test(s)) {
+    s = s.replace(/\./g, "").replace(",", ".");
+  } else if (/^[-+]?\d{1,3}(,\d{3})+\.\d+$/.test(s)) {
+    s = s.replace(/,/g, "");
+  } else {
+    s = s.replace(",", ".");
+  }
+  if (!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(s)) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
 // ---------------------------------------------------------------- detection
 
 function toInt(v: CellValue): number {

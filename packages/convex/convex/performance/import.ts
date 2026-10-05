@@ -29,7 +29,6 @@ import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { monthBounds } from "./lib/kpi";
 import { EXCLUDED_OWNERS } from "./lib/salesforceImport";
 import { type SnapshotFields } from "./lib/types";
-import { TEMPLATE_ALIAS_LOOKUP } from "./lib/aggregatedTemplate";
 
 /** A one-shot URL `apps/api` POSTs the original report file to (Convex
  * file storage), before parsing and importing it. Public (not internal) —
@@ -52,82 +51,6 @@ export const apiDeleteStorage = serverMutation({
     await ctx.storage.delete(storageId);
   },
 });
-
-// ------------------------------------------------- aggregated template import
-// Fallback format when a file is neither a Salesforce export nor a call
-// report: one row per employee, with the metrics already aggregated by
-// whoever filled in the template (see `/performance/vorlage.xlsx`,
-// added in a later phase).
-
-const HEADER_ALIASES: Record<string, string[]> = {
-  employee: ["mitarbeiter", "employee", "name", "salesrep", "vertriebler", "mitarbeiterin"],
-  date: ["datum", "date", "reportdatum", "reportdate", "stichtag"],
-  leadsCreated: [
-    "leadserstelltmonat",
-    "leadscreatedthismonth",
-    "leadscreated",
-    "leadserstellt",
-    "leadsmonat",
-  ],
-  workableCreated: [
-    "workableerstelltmonat",
-    "workablecreatedthismonth",
-    "workablecreated",
-    "workableerstellt",
-    "workablemonat",
-  ],
-  leadsAnalysis: ["leadsstatusanalysis", "leadsanalysis", "statusanalysis"],
-  leadsDetailsIdent: [
-    "leadsdetailsidentificationrunning",
-    "detailsidentificationrunning",
-    "leadsstatusdetailsidentificationrunning",
-    "detailsidentification",
-  ],
-  oppsOpen: [
-    "opportunitiesoffengesamt",
-    "opportunitiesgesamtoffen",
-    "oppsopen",
-    "opportunitiesopen",
-    "opportunitiesoffen",
-  ],
-  oppsClose7d: [
-    "opportunitiesclosedate7tage",
-    "oppsclosedate7tage",
-    "closedate7days",
-    "opportunitiesclosedatein7tagen",
-    "oppsclose7d",
-    "opportunitiesclosedateindenkommenden7tagen",
-  ],
-  oppsPending: [
-    "oppspendingcreditdocuments",
-    "opportunitiespendingcreditdocuments",
-    "pendingcreditdocuments",
-    "oppspending",
-    "opportunitiespending",
-    "stagedetailspendingcreditoderpendingdocuments",
-  ],
-  wonMonth: ["wonmonat", "wonthismonth", "won", "gewonnenmonat"],
-  callsToday: ["callsheute", "callstoday", "anzahlcallstoday", "anzahlcallsheute", "calls"],
-  overduesAnalysis: ["overduesanalysis", "overdueanalysis", "analysis30", "analysis30tage"],
-  overduesOpps: ["overduesopportunities", "overdueopportunities", "overduesopps"],
-  oppsOver30: ["opportunities30tage", "opps30tage", "opportunity30", "opps30"],
-  leadsNoAction14: ["leadslastactivity2wochen", "leadslastaction2wochen", "leadsinaktiv2wochen"],
-  oppsNoAction14: [
-    "oppslastactivity2wochen",
-    "opportunitieslastactivity2wochen",
-    "oppsinaktiv2wochen",
-  ],
-  unqualifiedReasons: [
-    "unqualifiedreasons",
-    "unqualifiedreason",
-    "unqualifiziertgruende",
-    "unqualifiedgruende",
-    "gruendeunqualified",
-  ],
-};
-for (const [field, aliases] of Object.entries(HEADER_ALIASES)) {
-  for (const alias of aliases) TEMPLATE_ALIAS_LOOKUP.set(alias, field);
-}
 
 // ----------------------------------------------------------------- upserts
 

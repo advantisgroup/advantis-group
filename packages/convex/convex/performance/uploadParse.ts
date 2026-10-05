@@ -375,6 +375,14 @@ export type ImportResult =
 // something readable the next time it's (re)written.
 const EXTENSION_RE = /\.(xlsx|xlsm|csv)\b/i;
 
+function unrecognizedFile(): ConvexError<{ code: string; message: string }> {
+  return new ConvexError({
+    code: "unrecognized_report",
+    message:
+      "Dateityp nicht erkannt – erwartet: Salesforce Lead- oder Opportunity-Export, Genesys Call-Report, Genesys Interaktionen-Export oder die Upload-Vorlage (Spalte „Mitarbeiter“ plus mindestens eine Kennzahl).",
+  });
+}
+
 async function processReport(
   ctx: ActionCtx,
   companyId: Id<"companies">,
@@ -475,11 +483,7 @@ async function processReport(
       return { status: "ok", rowsImported: inserts.length, skipped };
     }
 
-    throw new ConvexError({
-      code: "unrecognized_report",
-      message:
-        "CSV nicht erkannt. Erwartet wird ein Call-Report mit Agentenname und Call-Spalten, oder ein Interaktionen-Export.",
-    });
+    throw unrecognizedFile();
   }
 
   const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -559,14 +563,19 @@ async function processReport(
   }
 
   const template = parseAggregatedTemplate(rows);
+  if (!template) throw unrecognizedFile();
+  if (template.snapshots.length === 0) {
+    return { status: "empty", reportDate: template.reportDate };
+  }
   const result = await runApplyImport(ctx, {
     companyId,
-    snapshots: template,
+    snapshots: template.snapshots,
     sourceFile: filename,
     storageId,
     contentHash,
     reportKind: "template",
-    sourceRowCount: template.length,
+    reportDate: template.reportDate,
+    sourceRowCount: template.snapshots.length,
     fileSize,
     batchId,
     uploadedBy,
