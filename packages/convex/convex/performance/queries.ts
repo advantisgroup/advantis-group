@@ -40,7 +40,9 @@ import {
   type Ctx,
   type MonthCalls,
   type QueryCache,
+  countsOnDashboard,
   employeeNameMap,
+  loadRoster,
   latestSnapshots,
   monthCallsMap,
   newQueryCache,
@@ -64,7 +66,7 @@ async function callDaysList(
   employeeId: Id<"performanceEmployees"> | undefined,
   cache: QueryCache,
 ): Promise<CallDay[]> {
-  const names = await employeeNameMap(ctx, companyId);
+  const names = await employeeNameMap(ctx, companyId, cache);
   const rows = await reportsInRange(ctx, companyId, ym, employeeId, cache);
   const byDate = new Map<string, Partial<Record<(typeof DAILY_KEYS)[number], number>>>();
   for (const r of rows) {
@@ -172,6 +174,7 @@ async function closedWonTrend(
   ctx: QueryCtx,
   companyId: Id<"companies">,
   employeeId: Id<"performanceEmployees"> | undefined,
+  cache: QueryCache,
 ): Promise<{ days: WonDay[]; avg: number }> {
   const currentYm = defaultYm();
   const { start } = monthBounds(shiftYm(currentYm, -2));
@@ -191,9 +194,10 @@ async function closedWonTrend(
     )
     .collect();
 
+  const { ownerKeys } = await loadRoster(ctx, companyId, cache);
   const perDate = new Map<string, number>();
   for (const r of rows) {
-    if (EXCLUDED_OWNERS.has(r.owner.toLowerCase())) continue;
+    if (!ownerKeys.has(r.owner.trim().toLowerCase())) continue;
     if (ownerName !== undefined && r.owner !== ownerName) continue;
     perDate.set(r.closeDate, (perDate.get(r.closeDate) ?? 0) + 1);
   }
@@ -233,11 +237,12 @@ async function stateFieldTrend(
   ctx: QueryCtx,
   companyId: Id<"companies">,
   field: keyof MetricFields,
+  cache: QueryCache,
 ): Promise<StateFieldDay[]> {
   const currentYm = defaultYm();
   const { start } = monthBounds(shiftYm(currentYm, -2));
   const { end } = monthBounds(currentYm);
-  const names = await employeeNameMap(ctx, companyId);
+  const names = await employeeNameMap(ctx, companyId, cache);
 
   const rows = await ctx.db
     .query("performanceReports")
@@ -495,7 +500,7 @@ export const teamDashboard = userQuery({
     const { total, snaps, unqualified } = await teamTotals(ctx, companyId, ym, cache);
     const days = await callDaysList(ctx, companyId, ym, undefined, cache);
     const hasCalls = await hasCallData(ctx, companyId, ym, undefined, cache);
-    const wonTrend = await closedWonTrend(ctx, companyId, undefined);
+    const wonTrend = await closedWonTrend(ctx, companyId, undefined, cache);
     const loggedIn = await loggedInDaysList(ctx, companyId, ym);
 
     const vmYm = shiftYm(ym, -1);
@@ -577,14 +582,19 @@ export const teamDevelopment = userQuery({
       });
     }
 
-    const wonTrend = await closedWonTrend(ctx, companyId, undefined);
+    const wonTrend = await closedWonTrend(ctx, companyId, undefined, cache);
     const callsPerDay: CallDay[] = [];
     for (const ym of months) {
       callsPerDay.push(...(await callDaysList(ctx, companyId, ym, undefined, cache)));
     }
-    const leadsAnalysisPerDay = await stateFieldTrend(ctx, companyId, "leadsAnalysis");
-    const leadsDetailsIdentPerDay = await stateFieldTrend(ctx, companyId, "leadsDetailsIdent");
-    const oppsOpenPerDay = await stateFieldTrend(ctx, companyId, "oppsOpen");
+    const leadsAnalysisPerDay = await stateFieldTrend(ctx, companyId, "leadsAnalysis", cache);
+    const leadsDetailsIdentPerDay = await stateFieldTrend(
+      ctx,
+      companyId,
+      "leadsDetailsIdent",
+      cache,
+    );
+    const oppsOpenPerDay = await stateFieldTrend(ctx, companyId, "oppsOpen", cache);
 
     return {
       monthly,
@@ -608,7 +618,7 @@ export const employeeDetail = userQuery({
   handler: async (ctx, { employeeId, ym: ymArg }) => {
     const viewer = await loadViewer(ctx, ctx.caller);
     const { employee, companyId } = await requireViewableEmployee(ctx, viewer, employeeId);
-    if (EXCLUDED_OWNERS.has(employee.name.toLowerCase())) {
+    if (!countsOnDashboard(employee)) {
       throw new ConvexError({ code: "not_found", message: "Mitarbeiter nicht gefunden." });
     }
 
@@ -656,7 +666,7 @@ export const employeeDetail = userQuery({
 
     const days = await callDaysList(ctx, companyId, ym, employeeId, cache);
     const hasCalls = await hasCallData(ctx, companyId, ym, employeeId, cache);
-    const wonTrend = await closedWonTrend(ctx, companyId, employeeId);
+    const wonTrend = await closedWonTrend(ctx, companyId, employeeId, cache);
 
     return {
       employee: { id: employee._id, name: employee.name },
@@ -976,7 +986,8 @@ export const drilldown = userQuery({
               .query("performanceRawOpps")
               .withIndex("by_company", (q) => q.eq("companyId", companyId))
               .collect();
-    rows = rows.filter((r) => !EXCLUDED_OWNERS.has(r.owner.toLowerCase()));
+    const { ownerKeys } = await loadRoster(ctx, companyId);
+    rows = rows.filter((r) => ownerKeys.has(r.owner.trim().toLowerCase()));
 
     interface Item {
       reportDate: string;

@@ -23,17 +23,50 @@ import { parseISODate, todayBerlin } from "./workdays";
  * context since both only ever read through it. */
 export type Ctx = QueryCtx | MutationCtx;
 
-export async function employeeNameMap(
+/** Whether a report name counts on the dashboard at all: not one of the
+ * import's excluded owners and not hidden by an admin (Performance →
+ * Einstellungen, `performanceEmployees.active`). */
+export function countsOnDashboard(
+  e: Pick<Doc<"performanceEmployees">, "name" | "active">,
+): boolean {
+  return e.active && !EXCLUDED_OWNERS.has(e.name.toLowerCase());
+}
+
+/** The dashboard's counted employees — the one place that decides who shows
+ * up in team tables, totals, badges, marks and drill-downs. `ownerKeys`
+ * holds the lowercased names for the tables keyed by the Salesforce owner
+ * name instead of an employee id (raw leads/opps, won opps). */
+export interface Roster {
+  names: Map<Id<"performanceEmployees">, string>;
+  ownerKeys: Set<string>;
+}
+
+export async function loadRoster(
   ctx: Ctx,
   companyId: Id<"companies">,
-): Promise<Map<Id<"performanceEmployees">, string>> {
+  cache?: QueryCache,
+): Promise<Roster> {
+  const hit = cache?.roster.get(companyId);
+  if (hit) return hit;
   const employees = await ctx.db
     .query("performanceEmployees")
     .withIndex("by_company", (q) => q.eq("companyId", companyId))
     .collect();
-  return new Map(
-    employees.filter((e) => !EXCLUDED_OWNERS.has(e.name.toLowerCase())).map((e) => [e._id, e.name]),
-  );
+  const counted = employees.filter(countsOnDashboard);
+  const roster: Roster = {
+    names: new Map(counted.map((e) => [e._id, e.name])),
+    ownerKeys: new Set(counted.map((e) => e.name.trim().toLowerCase())),
+  };
+  cache?.roster.set(companyId, roster);
+  return roster;
+}
+
+export async function employeeNameMap(
+  ctx: Ctx,
+  companyId: Id<"companies">,
+  cache?: QueryCache,
+): Promise<Map<Id<"performanceEmployees">, string>> {
+  return (await loadRoster(ctx, companyId, cache)).names;
 }
 
 export function reportToSnapshot(r: Doc<"performanceReports">, name: string): Snapshot {
@@ -61,11 +94,12 @@ export function reportToSnapshot(r: Doc<"performanceReports">, name: string): Sn
  */
 export interface QueryCache {
   reports: Map<string, Doc<"performanceReports">[]>;
+  roster: Map<Id<"companies">, Roster>;
   badges?: Record<string, Record<string, BadgeResult>>;
 }
 
 export function newQueryCache(): QueryCache {
-  return { reports: new Map() };
+  return { reports: new Map(), roster: new Map() };
 }
 
 export async function reportsInRange(
@@ -132,7 +166,7 @@ export async function latestSnapshots(
   employeeId: Id<"performanceEmployees"> | undefined,
   cache: QueryCache,
 ): Promise<Snapshot[]> {
-  const names = await employeeNameMap(ctx, companyId);
+  const names = await employeeNameMap(ctx, companyId, cache);
   const rows = await reportsInRange(ctx, companyId, ym, employeeId, cache);
   const sorted = [...rows].sort((a, b) => a.reportDate.localeCompare(b.reportDate));
   const merged = new Map<Id<"performanceEmployees">, Snapshot>();
@@ -181,6 +215,7 @@ export async function monthCallsMap(
   employeeId: Id<"performanceEmployees"> | undefined,
   cache: QueryCache,
 ): Promise<Map<Id<"performanceEmployees">, MonthCalls>> {
+  const names = await employeeNameMap(ctx, companyId, cache);
   const rows = await reportsInRange(ctx, companyId, ym, employeeId, cache);
   const sums = new Map<
     Id<"performanceEmployees">,
@@ -191,6 +226,7 @@ export async function monthCallsMap(
     }
   >();
   for (const r of rows) {
+    if (!names.has(r.employeeId)) continue;
     const cur = sums.get(r.employeeId) ?? { vals: {}, nDays: 0, workDays: 0 };
     cur.nDays++;
     if ((r.callsToday ?? 0) > 0) cur.workDays++;

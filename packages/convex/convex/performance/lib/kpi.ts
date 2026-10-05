@@ -625,14 +625,6 @@ export const BADGES = [
   },
 ] as const;
 
-/** These employees don't participate in badge awarding. They still appear
- * in every other view — only awards are withheld. */
-export const BADGE_EXCLUDED = new Set(["andrea weber", "diana kaiser"]);
-
-export function badgeEligible(name: string | undefined): boolean {
-  return !BADGE_EXCLUDED.has((name ?? "").trim().toLowerCase());
-}
-
 export function monthCompleted(ym: string, today: Date = todayBerlin()): boolean {
   const { end } = monthBoundsISO(ym);
   return parseISODate(end).getTime() < today.getTime();
@@ -643,14 +635,15 @@ export interface BadgeResult {
   winners: string[]; // employeeIds
 }
 
-/** Winner(s) per badge for a month. Ties award the badge multiple times. */
+/** Winner(s) per badge for a month. Ties award the badge multiple times.
+ * Everyone in `snaps` takes part — hiding someone from awards means hiding
+ * them from the dashboard (Einstellungen), which drops them before this. */
 export function awardBadges(snaps: Snapshot[]): Record<string, BadgeResult> {
   const res: Record<string, BadgeResult> = {};
   // Hitrate only with a solid basis — otherwise whoever works the fewest
-  // leads wins. The basis is scoped to the whole team, even though some
-  // employees are excluded from winning.
+  // leads wins.
   const hrBase = hitrateMinBase(snaps);
-  const participants = snaps.filter((s) => badgeEligible(s.name));
+  const participants = snaps;
 
   const hrCand = participants.filter(
     (s) => s.hitrate !== undefined && (s.workableCreated ?? 0) >= hrBase,
