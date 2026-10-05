@@ -183,6 +183,30 @@ if (process.env.DISABLE_CRONS !== "true") {
     internal.chat.purgeExpiredDms,
     {},
   );
+
+  // Zeiterfassung. Convex schedules in UTC, so these run hourly and work out
+  // from the Europe/Berlin clock whether anything is due — right in CET and
+  // CEST alike, and idempotent. Minute 0 is 18:00 Berlin in both seasons.
+  crons.hourly(
+    "time: close entries still open at 18:00 Berlin",
+    { minuteUTC: 0 },
+    internal.time.jobs.autoCloseOpenEntries,
+    {},
+  );
+  // 15th 00:05 Berlin: lock last month; 1 Dec: seed next year's holidays.
+  crons.hourly(
+    "time: lock months and seed holidays",
+    { minuteUTC: 5 },
+    internal.time.jobs.lockAndSeed,
+    {},
+  );
+  // January: open the new vacation year; from 1 April 00:10: expire carry-over.
+  crons.hourly(
+    "time: vacation carry-over and expiry",
+    { minuteUTC: 10 },
+    internal.time.jobs.vacationYear,
+    {},
+  );
 }
 
 export default crons;
