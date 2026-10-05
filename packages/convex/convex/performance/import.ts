@@ -574,7 +574,7 @@ export const recordUpload = internalMutation({
   },
 });
 
-// ------------------------------------------------------------ import state
+// ------------------------------------------------------- import state/lock
 
 async function loadImportState(
   ctx: { db: QueryCtx["db"] },
@@ -610,6 +610,44 @@ export const getRawReportDates = internalQuery({
           .first()
       )?.reportDate;
     return { leads, opps };
+  },
+});
+
+// Convex actions run for at most 10 minutes; a lock older than that belongs
+// to an import that died without releasing it.
+const IMPORT_LOCK_MS = 10 * 60_000;
+
+/** Takes the dashboard's import lock for `token`, or throws the German
+ * "already running" message while another import holds it. Re-entrant for
+ * the same token (a batch re-import takes it once per file). */
+export const acquireImportLock = internalMutation({
+  args: { companyId: v.id("companies"), token: v.string(), by: v.optional(v.string()) },
+  handler: async (ctx, { companyId, token, by }): Promise<void> => {
+    const now = Date.now();
+    const state = await loadImportState(ctx, companyId);
+    if (state?.lockToken && state.lockToken !== token && (state.lockedUntil ?? 0) > now) {
+      throw new ConvexError({
+        code: "import_locked",
+        message: "Gerade läuft schon ein Import für dieses Dashboard – bitte kurz warten.",
+      });
+    }
+    const lock = { lockToken: token, lockedUntil: now + IMPORT_LOCK_MS, lockedBy: by };
+    if (state) await ctx.db.patch(state._id, lock);
+    else await ctx.db.insert("performanceImportState", { companyId, ...lock });
+  },
+});
+
+export const releaseImportLock = internalMutation({
+  args: { companyId: v.id("companies"), token: v.string() },
+  handler: async (ctx, { companyId, token }): Promise<void> => {
+    const state = await loadImportState(ctx, companyId);
+    if (state?.lockToken === token) {
+      await ctx.db.patch(state._id, {
+        lockToken: undefined,
+        lockedUntil: undefined,
+        lockedBy: undefined,
+      });
+    }
   },
 });
 

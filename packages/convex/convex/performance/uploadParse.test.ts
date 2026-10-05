@@ -131,6 +131,41 @@ describe("Salesforce import", () => {
   });
 });
 
+describe("import lock", () => {
+  test("a second import for the same dashboard waits for the first", async () => {
+    const { t, ids, upload } = await setup();
+    await t.run((ctx) =>
+      ctx.db.insert("performanceImportState", {
+        companyId: ids.companyId,
+        lockToken: "other-import",
+        lockedUntil: Date.now() + 60_000,
+      }),
+    );
+    await expect(
+      upload("lead.csv", leadCsv("2026-10-05", [["Anna Müller", "Open", "01.10.2026"]])),
+    ).rejects.toThrow("Gerade läuft schon ein Import für dieses Dashboard");
+  });
+
+  test("an expired lock doesn't block, and a finished import releases it", async () => {
+    const { t, ids, upload } = await setup();
+    await t.run((ctx) =>
+      ctx.db.insert("performanceImportState", {
+        companyId: ids.companyId,
+        lockToken: "crashed-import",
+        lockedUntil: Date.now() - 1,
+      }),
+    );
+    await upload("lead.csv", leadCsv("2026-10-05", [["Anna Müller", "Open", "01.10.2026"]]));
+    const state = await t.run((ctx) => ctx.db.query("performanceImportState").first());
+    expect(state?.lockToken).toBeUndefined();
+    expect(state?.rawLeadsReportDate).toBe("2026-10-05");
+    // Released even when the import itself fails.
+    await expect(upload("x.csv", "Foo;Bar\n1;2")).rejects.toThrow();
+    const after = await t.run((ctx) => ctx.db.query("performanceImportState").first());
+    expect(after?.lockToken).toBeUndefined();
+  });
+});
+
 describe("unrecognised files", () => {
   test("get a German error naming the expected exports", async () => {
     const { upload } = await setup();

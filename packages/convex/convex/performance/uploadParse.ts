@@ -616,35 +616,54 @@ export const apiImportReport = serverAction({
     ctx,
     { companyId, filename, storageId, contentHash, force, fileSize, batchId, uploadedBy },
   ): Promise<ImportResult> => {
-    // Checked before any parsing — covers every report type (Salesforce
-    // Lead/Opp, call report, aggregated template) uniformly, and skips the
-    // (potentially expensive) parse entirely for a re-upload. Scoped to
-    // `companyId` — two different client companies uploading
-    // byte-identical files must not collide.
-    if (!force) {
-      const priorUpload = await ctx.runQuery(internal.performance.import.findUploadByHash, {
-        companyId,
-        contentHash,
-      });
-      if (priorUpload) {
-        return {
-          status: "duplicate",
-          filename: priorUpload.filename,
-          uploadedAt: priorUpload.uploadedAt,
-        };
+    return withImportLock(ctx, companyId, uploadedBy, async () => {
+      // Checked before any parsing — covers every report type uniformly,
+      // and skips the parse entirely for a re-upload. Inside the lock, so
+      // the same file dropped twice at once is imported only once. Scoped
+      // to `companyId` — two dashboards may get byte-identical files.
+      if (!force) {
+        const priorUpload = await ctx.runQuery(internal.performance.import.findUploadByHash, {
+          companyId,
+          contentHash,
+        });
+        if (priorUpload) {
+          return {
+            status: "duplicate",
+            filename: priorUpload.filename,
+            uploadedAt: priorUpload.uploadedAt,
+          };
+        }
       }
-    }
-
-    return processReport(ctx, companyId, {
-      filename,
-      storageId,
-      contentHash,
-      fileSize,
-      batchId,
-      uploadedBy,
+      return processReport(ctx, companyId, {
+        filename,
+        storageId,
+        contentHash,
+        fileSize,
+        batchId,
+        uploadedBy,
+      });
     });
   },
 });
+
+/** Runs one import (or a batch re-import) while holding the dashboard's
+ * import lock, so two imports never interleave their clear-then-insert
+ * steps and duplicate rows. A second import meanwhile fails right away
+ * with a German "please wait" message instead of queueing. */
+async function withImportLock<T>(
+  ctx: ActionCtx,
+  companyId: Id<"companies">,
+  by: string | undefined,
+  run: () => Promise<T>,
+): Promise<T> {
+  const token = crypto.randomUUID();
+  await ctx.runMutation(internal.performance.import.acquireImportLock, { companyId, token, by });
+  try {
+    return await run();
+  } finally {
+    await ctx.runMutation(internal.performance.import.releaseImportLock, { companyId, token });
+  }
+}
 
 async function requireCompanyExists(ctx: ActionCtx, companyId: Id<"companies">): Promise<void> {
   if (!(await ctx.runQuery(internal.performance.import.companyExists, { companyId }))) {
@@ -675,15 +694,17 @@ export const reimportUpload = userAction({
         message: "Upload-log entry not found.",
       });
     }
-    return processReport(ctx, companyId, {
-      filename: log.filename,
-      storageId: log.storageId,
-      contentHash: log.contentHash ?? "",
-      fileSize: log.fileSize,
-      batchId: log.batchId,
-      uploadedBy: log.uploadedBy,
-      replaceLogId: logId,
-    });
+    return withImportLock(ctx, companyId, log.uploadedBy, () =>
+      processReport(ctx, companyId, {
+        filename: log.filename,
+        storageId: log.storageId,
+        contentHash: log.contentHash ?? "",
+        fileSize: log.fileSize,
+        batchId: log.batchId,
+        uploadedBy: log.uploadedBy,
+        replaceLogId: logId,
+      }),
+    );
   },
 });
 
@@ -706,23 +727,36 @@ export const reimportBatch = userAction({
     const rows = await ctx.runQuery(internal.performance.import.getUploadLogRowsByBatch, {
       batchId,
     });
-    const results: (ImportResult & { logId: string })[] = [];
-    for (const log of rows) {
-      // A batch id is only ever shared by files uploaded together by the
-      // same company — skip anything that somehow doesn't match instead of
-      // silently importing it into the wrong company.
-      if (log.companyId !== companyId) continue;
-      const result = await processReport(ctx, companyId, {
-        filename: log.filename,
-        storageId: log.storageId,
-        contentHash: log.contentHash ?? "",
-        fileSize: log.fileSize,
-        batchId: log.batchId,
-        uploadedBy: log.uploadedBy,
-        replaceLogId: log._id,
-      });
-      results.push({ ...result, logId: log._id });
-    }
-    return { results };
+    return withImportLock(ctx, companyId, undefined, async () => {
+      const results: (ImportResult & { logId: string })[] = [];
+      // Salesforce files first (they create the roster the call and
+      // interaction files match against), oldest report first within each.
+      const ordered = [...rows].sort(
+        (a, b) =>
+          kindOrder(a.reportKind) - kindOrder(b.reportKind) ||
+          (a.reportDate ?? "").localeCompare(b.reportDate ?? ""),
+      );
+      for (const log of ordered) {
+        // A batch id is only ever shared by files uploaded together by the
+        // same company — skip anything that somehow doesn't match instead
+        // of silently importing it into the wrong company.
+        if (log.companyId !== companyId) continue;
+        const result = await processReport(ctx, companyId, {
+          filename: log.filename,
+          storageId: log.storageId,
+          contentHash: log.contentHash ?? "",
+          fileSize: log.fileSize,
+          batchId: log.batchId,
+          uploadedBy: log.uploadedBy,
+          replaceLogId: log._id,
+        });
+        results.push({ ...result, logId: log._id });
+      }
+      return { results };
+    });
   },
 });
+
+function kindOrder(kind: ReportKind | undefined): number {
+  return kind === "lead" || kind === "opp" ? 0 : kind === "template" ? 1 : 2;
+}

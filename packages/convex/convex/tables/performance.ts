@@ -386,9 +386,14 @@ export const performanceTables = {
   // One row per dashboard, owned by the upload pipeline (`performance/
   // import.ts`). The raw dates say which report the drill-down tables
   // currently hold, so re-importing an older Lead/Opp file never replaces
-  // newer lists.
+  // newer lists. The lock keeps two imports for the same dashboard (two
+  // admins, two browser tabs) from running their clear-then-insert steps
+  // interleaved; it expires on its own in case an action dies mid-import.
   performanceImportState: defineTable({
     companyId: v.id("companies"),
+    lockToken: v.optional(v.string()),
+    lockedUntil: v.optional(v.number()),
+    lockedBy: v.optional(v.string()),
     rawLeadsReportDate: v.optional(v.string()),
     rawOppsReportDate: v.optional(v.string()),
   }).index("by_company", ["companyId"]),
