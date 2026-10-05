@@ -9,6 +9,7 @@ import { ArrowRight, CalendarClock, Coffee, Info, TriangleAlert } from "lucide-r
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
+import { TimeClockHeaderControl } from "@/components/layout/TimeClockHeaderControl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
@@ -56,6 +57,7 @@ export function Overview() {
         <h2 className="text-base font-semibold">
           {formatDay(today, locale, { weekday: "long", day: "numeric", month: "long" })}
         </h2>
+        <TimeClockHeaderControl className="hidden lg:flex" />
       </div>
       <SectionBoundary title={t("overview.clockUnavailable")}>
         <ClockCard />
