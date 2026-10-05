@@ -5,7 +5,7 @@ import { Elysia, t } from "elysia";
 import * as XLSX from "xlsx";
 
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
-import { Errors } from "../lib/errors.js";
+import { ApiError, Errors } from "../lib/errors.js";
 import { authed } from "../lib/middleware.js";
 import { scanFile } from "../lib/onedrive/scan.js";
 import { rateLimit } from "../lib/rate-limit.js";
@@ -14,7 +14,7 @@ const ALLOWED_EXTENSIONS = [".xlsx", ".xlsm", ".csv"];
 
 const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-// Matches performance/import.ts's aggregated-template HEADER_ALIASES —
+// Matches performance/lib/aggregatedTemplate.ts's HEADER_ALIASES —
 // these exact labels round-trip cleanly back through that parser.
 const TEMPLATE_HEADER = [
   "Mitarbeiter",
@@ -71,13 +71,27 @@ function xlsxResponse(aoa: unknown[][], sheetName: string, filename: string): Re
   });
 }
 
-function extractConvexMessage(err: unknown, fallback: string): string {
-  if (err instanceof ConvexError) {
-    const data = err.data as { message?: string } | string | undefined;
-    if (typeof data === "string") return data;
-    if (data?.message) return data.message;
+// Vercel rejects request bodies over ~4.5 MB before they reach the route;
+// the intranet refuses bigger files client-side with the same limit.
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+function convexErrorData(err: unknown): { code?: string; message?: string } | undefined {
+  if (!(err instanceof ConvexError)) return undefined;
+  const data = err.data as { code?: string; message?: string } | string | undefined;
+  return typeof data === "string" ? { message: data } : data;
+}
+
+/** The parser's own German message ("Dateityp nicht erkannt – …") as the
+ * response's `error`, which the upload queue shows verbatim. */
+function importError(err: unknown): ApiError {
+  const data = convexErrorData(err);
+  const message = data?.message;
+  if (data?.code === "import_locked" && message) {
+    return new ApiError(409, "conflict", message);
   }
-  return fallback;
+  if (message) return Errors.badRequest(message);
+  console.error("[performance] import failed:", err);
+  return Errors.badRequest("Import fehlgeschlagen. Bitte erneut versuchen oder die Datei prüfen.");
 }
 
 /** Access runs through the intranet sign-in (Clerk): uploads are for
@@ -104,6 +118,11 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       const extension = ALLOWED_EXTENSIONS.find((ext) => lowerName.endsWith(ext));
       if (!extension) {
         throw Errors.badRequest("Bitte eine .xlsx-, .xlsm- oder .csv-Datei auswählen.");
+      }
+      if (file.size > MAX_UPLOAD_BYTES) {
+        throw Errors.badRequest(
+          "Die Datei ist größer als 4 MB. Bitte den Export auf weniger Spalten oder einen kürzeren Zeitraum beschränken oder als .xlsx speichern.",
+        );
       }
 
       const bytes = new Uint8Array(await file.arrayBuffer());
@@ -185,7 +204,14 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
         }
         return result;
       } catch (err) {
-        throw Errors.badRequest(extractConvexMessage(err, "Import failed"));
+        // Nothing was imported or logged — don't keep the staged copy.
+        await getConvex()
+          .mutation(api.performance.import.apiDeleteStorage, {
+            serverKey: getConvexServerKey(),
+            storageId,
+          })
+          .catch(() => undefined);
+        throw importError(err);
       }
     },
     {

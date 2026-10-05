@@ -313,5 +313,21 @@
   "settingsColShown": "Show",
   "settingsPickPerson": "Choose person",
   "settingsUnlink": "Not linked",
-  "settingsUseSuggestion": "Use {name}"
+  "settingsUseSuggestion": "Use {name}",
+  "uploadKindDetected": "Detected: {kind} · {date}",
+  "uploadRawKept": "Open leads/opportunities stay at the newer report from {date}.",
+  "uploadSkippedHint": "Names are linked to people under Performance → Settings. Agents from other teams are skipped on purpose.",
+  "uploadSkippedShow": "{count, plural, one {# name not matched} other {# names not matched}}",
+  "uploadSettingsLink": "Open settings",
+  "uploadLogMore": "Load more",
+  "uploadSortedHint": "Salesforce files are uploaded first so call and interaction reports already know the names.",
+  "dailyStatusTitle": "Daily status",
+  "dailyStatusHint": "Which reports have been uploaded for the last workdays (by report date).",
+  "dailyStatusToday": "Today",
+  "dailyStatusMissingToday": "Still missing today: {kinds}",
+  "dailyStatusCompleteToday": "Everything is in for today.",
+  "dailyStatusMissingLatest": "Still missing for {date}: {kinds}",
+  "dailyStatusPresent": "uploaded",
+  "dailyStatusMissing": "missing",
+  "uploadTooLarge": "The file is larger than 4 MB and can't be uploaded. Limit the export to fewer columns or a shorter period, or save it as .xlsx (much smaller than .csv)."
 }

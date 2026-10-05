@@ -284,8 +284,8 @@ export const performanceTables = {
   // handled it. `date` is the calendar day of `startedAt` (ISO
   // "YYYY-MM-DD", UTC) — kept alongside the timestamp so day-scoped queries
   // can use an index instead of re-deriving the date from every row.
-  // Wholesale-replaced per calendar month on import (see
-  // `interactionImport.ts`), same rationale as `performanceRawLeads`/`Opps`.
+  // An import replaces exactly the date range its file covers (first to
+  // last day), see `uploadParse.ts`'s `writeInteractions`.
   performanceInteractions: defineTable({
     employeeId: v.id("performanceEmployees"),
     companyId: v.optional(v.id("companies")),
@@ -343,6 +343,10 @@ export const performanceTables = {
     // not the upload time. Undefined for the aggregated template, which
     // spans multiple days itself.
     reportDate: v.optional(v.string()),
+    // First day of a report that spans several days (an Interaktionen
+    // export, a call report over several days); `reportDate` is then its
+    // last day. Absent for single-day reports.
+    reportDateFrom: v.optional(v.string()),
     // Total data rows in the source file, before any team-matching filter
     // — lets the UI show "40 of 41 matched" instead of just the imported
     // count.
@@ -374,10 +378,27 @@ export const performanceTables = {
     .index("by_contentHash", ["contentHash"])
     .index("by_batchId", ["batchId"])
     .index("by_company_uploadedAt", ["companyId", "uploadedAt"])
+    // The upload page's "Tagesstatus": which report kinds exist per day.
+    .index("by_company_reportDate", ["companyId", "reportDate"])
     // Duplicate-upload detection must be per-company — two different client
     // companies could upload files with identical bytes/hash by coincidence
     // (e.g. the blank template).
     .index("by_company_contentHash", ["companyId", "contentHash"]),
+
+  // One row per dashboard, owned by the upload pipeline (`performance/
+  // import.ts`). The raw dates say which report the drill-down tables
+  // currently hold, so re-importing an older Lead/Opp file never replaces
+  // newer lists. The lock keeps two imports for the same dashboard (two
+  // admins, two browser tabs) from running their clear-then-insert steps
+  // interleaved; it expires on its own in case an action dies mid-import.
+  performanceImportState: defineTable({
+    companyId: v.id("companies"),
+    lockToken: v.optional(v.string()),
+    lockedUntil: v.optional(v.number()),
+    lockedBy: v.optional(v.string()),
+    rawLeadsReportDate: v.optional(v.string()),
+    rawOppsReportDate: v.optional(v.string()),
+  }).index("by_company", ["companyId"]),
 
   // A single employee/day/field whose parsed duration failed the physical
   // 24h plausibility check (see callImport.ts's `capExplicitDuration`) gets

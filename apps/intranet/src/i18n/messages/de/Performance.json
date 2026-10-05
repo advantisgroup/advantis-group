@@ -313,5 +313,21 @@
   "settingsColShown": "Anzeigen",
   "settingsPickPerson": "Person wählen",
   "settingsUnlink": "Keine Zuordnung",
-  "settingsUseSuggestion": "{name} übernehmen"
+  "settingsUseSuggestion": "{name} übernehmen",
+  "uploadKindDetected": "Erkannt: {kind} · {date}",
+  "uploadRawKept": "Die offenen Leads/Opportunities bleiben auf dem neueren Stand vom {date}.",
+  "uploadSkippedHint": "Namen werden unter Performance → Einstellungen einer Person zugeordnet. Agenten anderer Teams werden absichtlich übersprungen.",
+  "uploadSkippedShow": "{count, plural, one {# Name nicht zugeordnet} other {# Namen nicht zugeordnet}}",
+  "uploadSettingsLink": "Zu den Einstellungen",
+  "uploadLogMore": "Mehr laden",
+  "uploadSortedHint": "Salesforce-Dateien werden zuerst hochgeladen, damit Call- und Interaktionen-Reports die Namen schon kennen.",
+  "dailyStatusTitle": "Tagesstatus",
+  "dailyStatusHint": "Welche Reports für die letzten Arbeitstage schon hochgeladen sind (nach Report-Datum).",
+  "dailyStatusToday": "Heute",
+  "dailyStatusMissingToday": "Heute fehlt noch: {kinds}",
+  "dailyStatusCompleteToday": "Heute ist alles da.",
+  "dailyStatusMissingLatest": "Für {date} fehlt noch: {kinds}",
+  "dailyStatusPresent": "vorhanden",
+  "dailyStatusMissing": "fehlt",
+  "uploadTooLarge": "Die Datei ist größer als 4 MB und kann nicht hochgeladen werden. Bitte den Export auf weniger Spalten oder einen kürzeren Zeitraum beschränken oder als .xlsx speichern (deutlich kleiner als .csv)."
 }
