@@ -25,9 +25,13 @@ import { internal } from "../_generated/api";
 import { type ActionCtx } from "../_generated/server";
 import {
   cleanAgentName,
+  decodeCsvBytes,
+  firstLine,
   matchEmployee,
+  parseCsvText,
   readCallCsv,
   readCallExport,
+  sniffDelimiter,
   type CallRow,
   type DurationFlag,
 } from "./lib/callImport";
@@ -57,10 +61,6 @@ import { parseAggregatedTemplate } from "./lib/aggregatedTemplate";
 // Safely under Convex's 8192-element array-argument limit, with headroom
 // for the rest of each row's payload size.
 const RAW_CHUNK_SIZE = 2000;
-
-function stripBom(text: string): string {
-  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-}
 
 /** Reads the first sheet of a workbook into an array of rows, matching
  * openpyxl's `ws.iter_rows(values_only=True)`. `cellDates: true` makes
@@ -411,8 +411,56 @@ async function processReport(
     });
   }
 
-  if (extension === ".csv") {
-    const text = stripBom(await blob.text());
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const csvText = extension === ".csv" ? decodeCsvBytes(bytes) : null;
+  const rows =
+    csvText !== null
+      ? parseCsvText(csvText, sniffDelimiter(firstLine(csvText)))
+      : readSheetRows(bytes);
+
+  const sf = readSalesforceExport(rows);
+  if (sf) {
+    if (sf.kind === "lead") {
+      const { snapshots, raw } = aggregateLeadReport(sf.rows, sf.reportDate);
+      const result = await runApplyImport(ctx, {
+        companyId,
+        snapshots,
+        sourceFile: filename,
+        storageId,
+        contentHash,
+        reportKind: "lead",
+        reportDate: toISODate(sf.reportDate),
+        sourceRowCount: sf.rows.length,
+        fileSize,
+        batchId,
+        uploadedBy,
+        replaceLogId,
+      });
+      await writeRawLeads(ctx, companyId, raw);
+      return { status: "ok", rowsImported: result.rowsImported };
+    }
+    const { snapshots, raw, wonOpps } = aggregateOppReport(sf.rows, sf.reportDate);
+    const result = await runApplyImport(ctx, {
+      companyId,
+      snapshots,
+      sourceFile: filename,
+      storageId,
+      contentHash,
+      reportKind: "opp",
+      reportDate: toISODate(sf.reportDate),
+      sourceRowCount: sf.rows.length,
+      fileSize,
+      batchId,
+      uploadedBy,
+      replaceLogId,
+    });
+    await writeRawOpps(ctx, companyId, raw);
+    await writeWonOpps(ctx, companyId, wonOpps);
+    return { status: "ok", rowsImported: result.rowsImported };
+  }
+
+  if (csvText !== null) {
+    const text = csvText;
     const detected = readCallCsv(text);
     if (detected) {
       if (detected.rows.length === 0) {
@@ -477,56 +525,9 @@ async function processReport(
       );
       return { status: "ok", rowsImported: inserts.length, skipped };
     }
-
-    throw unrecognizedFile();
   }
 
-  const bytes = new Uint8Array(await blob.arrayBuffer());
-  const rows = readSheetRows(bytes);
-  console.warn(`[performanceUploadParse] ${filename}: parsed ${rows.length} sheet rows`);
-
-  const sf = readSalesforceExport(rows);
-  if (sf) {
-    if (sf.kind === "lead") {
-      const { snapshots, raw } = aggregateLeadReport(sf.rows, sf.reportDate);
-      const result = await runApplyImport(ctx, {
-        companyId,
-        snapshots,
-        sourceFile: filename,
-        storageId,
-        contentHash,
-        reportKind: "lead",
-        reportDate: toISODate(sf.reportDate),
-        sourceRowCount: sf.rows.length,
-        fileSize,
-        batchId,
-        uploadedBy,
-        replaceLogId,
-      });
-      await writeRawLeads(ctx, companyId, raw);
-      return { status: "ok", rowsImported: result.rowsImported };
-    }
-    const { snapshots, raw, wonOpps } = aggregateOppReport(sf.rows, sf.reportDate);
-    const result = await runApplyImport(ctx, {
-      companyId,
-      snapshots,
-      sourceFile: filename,
-      storageId,
-      contentHash,
-      reportKind: "opp",
-      reportDate: toISODate(sf.reportDate),
-      sourceRowCount: sf.rows.length,
-      fileSize,
-      batchId,
-      uploadedBy,
-      replaceLogId,
-    });
-    await writeRawOpps(ctx, companyId, raw);
-    await writeWonOpps(ctx, companyId, wonOpps);
-    return { status: "ok", rowsImported: result.rowsImported };
-  }
-
-  const calls = readCallExport(rows);
+  const calls = csvText === null ? readCallExport(rows) : null;
   if (calls) {
     if (calls.rows.length === 0) {
       return { status: "empty", reportDate: toISODate(calls.reportDate) };

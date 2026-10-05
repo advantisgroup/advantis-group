@@ -783,6 +783,40 @@ export function parseCsvText(text: string, delimiter: string): string[][] {
   return rows.filter((r) => !(r.length === 1 && r[0] === ""));
 }
 
+// Windows-1252 differs from Latin-1 only in 0x80–0x9F; spelled out so
+// decoding never depends on which encodings the runtime's TextDecoder
+// ships with.
+const CP1252_HIGH = [
+  0x20ac, 0x81, 0x201a, 0x192, 0x201e, 0x2026, 0x2020, 0x2021, 0x2c6, 0x2030, 0x160, 0x2039, 0x152,
+  0x8d, 0x17d, 0x8f, 0x90, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014, 0x2dc, 0x2122,
+  0x161, 0x203a, 0x153, 0x9d, 0x17e, 0x178,
+];
+
+function decodeWindows1252(bytes: Uint8Array): string {
+  let out = "";
+  for (let i = 0; i < bytes.length; i += 8192) {
+    const chunk = bytes.subarray(i, i + 8192);
+    out += String.fromCharCode(
+      ...Array.from(chunk, (b) => (b >= 0x80 && b <= 0x9f ? CP1252_HIGH[b - 0x80] : b)),
+    );
+  }
+  return out;
+}
+
+/** Decodes an uploaded CSV. UTF-8 (with or without BOM) and UTF-16 (BOM,
+ * Excel's "Unicode text") are read as such; anything that isn't valid
+ * UTF-8 is a Windows export in Windows-1252 — read as UTF-8 its umlauts
+ * turn into "�" and the agent names stop matching the team. */
+export function decodeCsvBytes(bytes: Uint8Array): string {
+  if (bytes[0] === 0xff && bytes[1] === 0xfe) return new TextDecoder("utf-16le").decode(bytes);
+  if (bytes[0] === 0xfe && bytes[1] === 0xff) return new TextDecoder("utf-16be").decode(bytes);
+  try {
+    return stripBom(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  } catch {
+    return decodeWindows1252(bytes);
+  }
+}
+
 export function stripBom(text: string): string {
   return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
 }
