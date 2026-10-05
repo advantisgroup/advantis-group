@@ -2,8 +2,8 @@
   "title": "Time tracking",
   "subtitle": "Working hours, breaks, vacation and absences",
   "tabs": {
-    "overview": "Overview",
-    "entries": "Working hours",
+    "overview": "Time clock",
+    "entries": "My hours",
     "absences": "Absences",
     "calendar": "Calendar",
     "admin": "Admin"
@@ -54,7 +54,10 @@
     "noSegments": "Nothing booked yet today.",
     "breaks": "Breaks: {minutes} min",
     "thisWeek": "Week at a glance",
-    "allEntries": "Working hours"
+    "allEntries": "All hours",
+    "from": "From",
+    "to": "To",
+    "duration": "Duration"
   },
   "entries": {
     "running": "running",
@@ -66,8 +69,8 @@
     "week": "Week",
     "month": "Month",
     "today": "Today",
-    "add": "Entry",
-    "addForDay": "Add entry for this day",
+    "add": "Add time",
+    "addForDay": "Add time for this day",
     "pendingChip": "{count, plural, one {1 correction pending} other {# corrections pending}}",
     "locked": "Locked",
     "lockedHint": "This month is closed. Changes only after an admin unlocks it.",

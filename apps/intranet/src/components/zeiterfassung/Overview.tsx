@@ -9,7 +9,6 @@ import { ArrowRight, CalendarClock, Coffee, Info, TriangleAlert } from "lucide-r
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
-import { TimeClockHeaderControl } from "@/components/layout/TimeClockHeaderControl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
@@ -51,32 +50,26 @@ export function Overview() {
   );
   const weekWarnings = (days ?? []).filter((day) => day.date <= today && day.warnings.length > 0);
 
+  const notices = summary
+    ? [
+        summary.autoClosed.length > 0,
+        weekWarnings.length > 0,
+        summary.pendingCorrections + summary.pendingAbsences > 0,
+        summary.vacation.carriedOverLeft > 0,
+      ].filter(Boolean).length
+    : 0;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-base font-semibold">
-          {formatDay(today, locale, { weekday: "long", day: "numeric", month: "long" })}
-        </h2>
-        <TimeClockHeaderControl className="hidden lg:flex" />
-      </div>
+    <div className="space-y-5">
       <SectionBoundary title={t("overview.clockUnavailable")}>
-        <ClockCard />
+        <ClockCard today={todayView} />
       </SectionBoundary>
-      <KpiStrip>
-        <Kpi
-          featured
-          label={t("overview.today")}
-          value={todayView ? formatMinutes(todayView.workedMinutes) : "–"}
-          hint={
-            todayView
-              ? t("overview.ofTarget", { target: formatMinutes(todayView.targetMinutes) })
-              : undefined
-          }
-        />
+      <KpiStrip className="grid-cols-3 lg:grid-cols-3">
         <Kpi
           label={t("overview.week")}
           value={week ? formatMinutes(week.worked) : "–"}
           hint={week ? t("overview.ofTarget", { target: formatMinutes(week.target) }) : undefined}
+          href="/zeiterfassung/arbeitszeiten"
         />
         <Kpi
           label={t("overview.balance")}
@@ -87,6 +80,7 @@ export function Overview() {
         <Kpi
           label={t("overview.vacation")}
           value={summary ? formatDays(summary.vacation.remaining, locale) : "–"}
+          href="/zeiterfassung/abwesenheiten"
           hint={
             summary
               ? summary.vacation.pending > 0
@@ -110,59 +104,55 @@ export function Overview() {
           <WeekCard days={days} today={today} />
         </div>
         <div className="space-y-5">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">{t("overview.notices")}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-0 text-sm">
-              {summary === undefined && <SkeletonRows className="py-1" />}
-              {summary && (
-                <>
-                  {summary.autoClosed.length > 0 && (
-                    <Notice icon={<TriangleAlert className="size-4 text-warn" />}>
-                      {t("overview.autoClosedNotice", { count: summary.autoClosed.length })}{" "}
-                      <Link
-                        href={`/zeiterfassung/arbeitszeiten?date=${berlinDate(summary.autoClosed[0].start)}`}
-                        className="font-medium underline-offset-2 hover:underline"
-                      >
-                        {t("overview.check")}
-                      </Link>
-                    </Notice>
-                  )}
-                  {weekWarnings.length > 0 && (
-                    <Notice icon={<Info className="size-4 text-muted-foreground" />}>
-                      {t("overview.warningsNotice", { count: weekWarnings.length })}
-                    </Notice>
-                  )}
-                  {summary.pendingCorrections + summary.pendingAbsences > 0 && (
-                    <Notice icon={<CalendarClock className="size-4 text-muted-foreground" />}>
-                      {t("overview.pendingNotice", {
-                        count: summary.pendingCorrections + summary.pendingAbsences,
-                      })}
-                    </Notice>
-                  )}
-                  {summary.vacation.carriedOverLeft > 0 && (
-                    <Notice icon={<Info className="size-4 text-muted-foreground" />}>
-                      {t("overview.carryOverNotice", {
-                        days: formatDays(summary.vacation.carriedOverLeft, locale),
-                        date: formatDay(summary.vacation.carriedOverExpires, locale, {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        }),
-                      })}
-                    </Notice>
-                  )}
-                  {summary.autoClosed.length === 0 &&
-                    weekWarnings.length === 0 &&
-                    summary.pendingCorrections + summary.pendingAbsences === 0 &&
-                    summary.vacation.carriedOverLeft === 0 && (
-                      <p className="py-2 text-muted-foreground">{t("overview.allClear")}</p>
+          {(summary === undefined || notices > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">{t("overview.notices")}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-0 text-sm">
+                {summary === undefined && <SkeletonRows className="py-1" />}
+                {summary && (
+                  <>
+                    {summary.autoClosed.length > 0 && (
+                      <Notice icon={<TriangleAlert className="size-4 text-warn" />}>
+                        {t("overview.autoClosedNotice", { count: summary.autoClosed.length })}{" "}
+                        <Link
+                          href={`/zeiterfassung/arbeitszeiten?date=${berlinDate(summary.autoClosed[0].start)}`}
+                          className="font-medium underline-offset-2 hover:underline"
+                        >
+                          {t("overview.check")}
+                        </Link>
+                      </Notice>
                     )}
-                </>
-              )}
-            </CardContent>
-          </Card>
+                    {weekWarnings.length > 0 && (
+                      <Notice icon={<Info className="size-4 text-muted-foreground" />}>
+                        {t("overview.warningsNotice", { count: weekWarnings.length })}
+                      </Notice>
+                    )}
+                    {summary.pendingCorrections + summary.pendingAbsences > 0 && (
+                      <Notice icon={<CalendarClock className="size-4 text-muted-foreground" />}>
+                        {t("overview.pendingNotice", {
+                          count: summary.pendingCorrections + summary.pendingAbsences,
+                        })}
+                      </Notice>
+                    )}
+                    {summary.vacation.carriedOverLeft > 0 && (
+                      <Notice icon={<Info className="size-4 text-muted-foreground" />}>
+                        {t("overview.carryOverNotice", {
+                          days: formatDays(summary.vacation.carriedOverLeft, locale),
+                          date: formatDay(summary.vacation.carriedOverExpires, locale, {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          }),
+                        })}
+                      </Notice>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardHeader className="flex-row items-center justify-between">
               <CardTitle className="text-base">{t("overview.upcoming")}</CardTitle>
@@ -240,33 +230,46 @@ function TodayCard({ day }: { day: DayView | undefined }) {
         ) : segments.length === 0 ? (
           <p className="py-4 text-sm text-muted-foreground">{t("overview.noSegments")}</p>
         ) : (
-          <ul className="space-y-1.5">
-            {segments.map((row) => {
-              const end = row.end ?? now;
-              const minutes = Math.round((end - row.start) / 60_000);
-              return (
-                <li
-                  key={row._id}
-                  className={cn(
-                    "flex items-center justify-between gap-3 rounded-md border border-border/70 px-3 py-2",
-                    row.kind === "work"
-                      ? "border-l-2 border-l-primary/60 bg-card"
-                      : "border-dashed bg-muted/40 text-muted-foreground",
-                  )}
-                >
-                  <span className="flex items-center gap-2 text-sm tabular-nums">
-                    {row.kind === "break" && <Coffee className="size-3.5" />}
-                    {formatClock(row.start, locale)} –{" "}
-                    {row.end ? formatClock(row.end, locale) : t("entries.running")}
-                    {row.autoClosed && <Chip tone="warn">{t("entries.autoClosed")}</Chip>}
-                  </span>
-                  <span className="text-sm tabular-nums text-muted-foreground">
-                    {formatMinutes(minutes)}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="overflow-hidden rounded-lg border border-border/70">
+            <div className="grid grid-cols-[1fr_1fr_auto] gap-3 bg-muted/40 px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <span>{t("overview.from")}</span>
+              <span>{t("overview.to")}</span>
+              <span className="text-right">{t("overview.duration")}</span>
+            </div>
+            <ul className="divide-y divide-border/70">
+              {segments.map((row) => {
+                const end = row.end ?? now;
+                const minutes = Math.round((end - row.start) / 60_000);
+                return (
+                  <li
+                    key={row._id}
+                    className={cn(
+                      "grid grid-cols-[1fr_1fr_auto] items-center gap-3 px-3 py-2 text-sm tabular-nums",
+                      row.kind === "break" && "bg-muted/30 text-muted-foreground",
+                    )}
+                  >
+                    <span className="flex items-center gap-2">
+                      {row.kind === "break" && <Coffee className="size-3.5" />}
+                      {formatClock(row.start, locale)}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      {row.end ? (
+                        formatClock(row.end, locale)
+                      ) : (
+                        <span className="text-emerald-700 dark:text-emerald-300">
+                          {t("entries.running")}
+                        </span>
+                      )}
+                      {row.autoClosed && <Chip tone="warn">{t("entries.autoClosed")}</Chip>}
+                    </span>
+                    <span className="text-right text-muted-foreground">
+                      {formatMinutes(minutes)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
         {day && segments.length > 0 && (
           <div className="mt-3 flex items-center justify-between border-t border-border/70 pt-3 text-sm">

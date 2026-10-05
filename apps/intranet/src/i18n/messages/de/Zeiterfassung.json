@@ -2,8 +2,8 @@
   "title": "Zeiterfassung",
   "subtitle": "Arbeitszeiten, Pausen, Urlaub und Abwesenheiten",
   "tabs": {
-    "overview": "Übersicht",
-    "entries": "Arbeitszeiten",
+    "overview": "Stempeluhr",
+    "entries": "Meine Zeiten",
     "absences": "Abwesenheiten",
     "calendar": "Kalender",
     "admin": "Verwaltung"
@@ -54,7 +54,10 @@
     "noSegments": "Heute noch nichts gebucht.",
     "breaks": "Pausen: {minutes} Min.",
     "thisWeek": "Woche im Überblick",
-    "allEntries": "Arbeitszeiten"
+    "allEntries": "Alle Zeiten",
+    "from": "Von",
+    "to": "Bis",
+    "duration": "Dauer"
   },
   "entries": {
     "running": "läuft",
@@ -66,8 +69,8 @@
     "week": "Woche",
     "month": "Monat",
     "today": "Heute",
-    "add": "Eintrag",
-    "addForDay": "Eintrag für diesen Tag",
+    "add": "Zeit nachtragen",
+    "addForDay": "Zeit für diesen Tag nachtragen",
     "pendingChip": "{count, plural, one {1 Korrektur offen} other {# Korrekturen offen}}",
     "locked": "Gesperrt",
     "lockedHint": "Der Monat ist abgeschlossen. Änderungen nur nach Entsperren durch die Verwaltung.",
