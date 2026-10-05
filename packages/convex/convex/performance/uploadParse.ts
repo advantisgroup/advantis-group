@@ -31,7 +31,11 @@ import {
   type CallRow,
   type DurationFlag,
 } from "./lib/callImport";
-import { readInteractionsCsv, type InteractionRow } from "./lib/interactionImport";
+import {
+  interactionDateRange,
+  readInteractionsCsv,
+  type InteractionRow,
+} from "./lib/interactionImport";
 import {
   aggregateLeadReport,
   aggregateOppReport,
@@ -258,19 +262,18 @@ interface InteractionInsert {
   direction?: string;
 }
 
-/** Matches each interaction's `Benutzer` name(s) against the team roster
- * and keeps only those already active in the Performance Dashboard for the
- * interaction's own calendar month — per the import rule: a raw Genesys
- * export otherwise pulls in every agent who touched the queue, not just
- * the sales team this feature tracks. A multi-agent interaction (transfer/
- * conference) produces one insert per matched, active employee. */
+/** Matches each interaction's `Benutzer` name(s) against the dashboard's
+ * roster. Agents outside the roster (other queues) are reported as skipped
+ * rather than imported; whether a matched employee already has a report
+ * that month doesn't matter, so the upload order of the day's files
+ * doesn't either. A multi-agent interaction (transfer/conference) produces
+ * one insert per matched employee. */
 async function buildInteractionInserts(
   ctx: ActionCtx,
   companyId: Id<"companies">,
   rows: InteractionRow[],
 ): Promise<{
   inserts: InteractionInsert[];
-  months: string[];
   skipped: string[];
 }> {
   const employees: { id: Id<"performanceEmployees">; name: string }[] = await ctx.runQuery(
@@ -289,28 +292,21 @@ async function buildInteractionInserts(
   const known = employees.map((e) => e.name);
   const idByName = new Map(employees.map((e) => [e.name, e.id]));
 
-  const months = [...new Set(rows.map((r) => r.date.slice(0, 7)))];
-  const activeByMonth: Record<string, Id<"performanceEmployees">[]> = await ctx.runQuery(
-    internal.performance.import.getActiveEmployeeIdsByMonth,
-    {
-      companyId,
-      months,
-    },
-  );
-  const activeSets = new Map(Object.entries(activeByMonth).map(([ym, ids]) => [ym, new Set(ids)]));
-
   const inserts: InteractionInsert[] = [];
   const skipped = new Set<string>();
+  const matchCache = new Map<string, string | null>();
   for (const row of rows) {
-    const active = activeSets.get(row.date.slice(0, 7));
     for (const rawName of row.names) {
-      const matched = matchEmployee(rawName, known);
+      let matched = matchCache.get(rawName);
+      if (matched === undefined) {
+        matched = matchEmployee(rawName, known);
+        matchCache.set(rawName, matched);
+      }
       if (!matched) {
         skipped.add(rawName);
         continue;
       }
       const employeeId = idByName.get(matched)!;
-      if (!active?.has(employeeId)) continue;
       inserts.push({
         employeeId,
         date: row.date,
@@ -320,23 +316,23 @@ async function buildInteractionInserts(
       });
     }
   }
-  return { inserts, months, skipped: [...skipped] };
+  return { inserts, skipped: [...skipped].sort() };
 }
 
-/** Wholesale-replaces every month the upload covers, then writes the new
- * rows in bounded-size chunks (see `RAW_CHUNK_SIZE`) — same clear-then-
- * insert shape as `writeRawLeads`/`writeRawOpps`. */
+/** Replaces the file's own date range (first to last day it contains),
+ * then writes the new rows in bounded-size chunks (see `RAW_CHUNK_SIZE`) —
+ * same clear-then-insert shape as `writeRawLeads`/`writeRawOpps`. */
 async function writeInteractions(
   ctx: ActionCtx,
   companyId: Id<"companies">,
   inserts: InteractionInsert[],
-  months: string[],
+  range: { from: string; to: string },
   sourceFile: string,
 ): Promise<void> {
-  await clearInBatches("clearInteractionsForMonths", () =>
-    ctx.runMutation(internal.performance.import.clearInteractionsForMonths, {
+  await clearInBatches("clearInteractionsInRange", () =>
+    ctx.runMutation(internal.performance.import.clearInteractionsInRange, {
       companyId,
-      months,
+      ...range,
     }),
   );
   const uploadedAt = Date.now();
@@ -459,18 +455,17 @@ async function processReport(
         // Recognized, but no employee-attributable interaction at all.
         return { status: "empty", reportDate: toISODate(todayBerlin()) };
       }
-      const { inserts, months, skipped } = await buildInteractionInserts(
-        ctx,
-        companyId,
-        interactionRows,
-      );
-      await writeInteractions(ctx, companyId, inserts, months, filename);
+      const range = interactionDateRange(interactionRows);
+      const { inserts, skipped } = await buildInteractionInserts(ctx, companyId, interactionRows);
+      await writeInteractions(ctx, companyId, inserts, range, filename);
       await runSafely("logInteractionsImport", () =>
         ctx.runMutation(internal.performance.import.logInteractionsImport, {
           companyId,
           sourceFile: filename,
           storageId,
           contentHash,
+          reportDate: range.to,
+          reportDateFrom: range.from,
           sourceRowCount: interactionRows.length,
           skippedNames: skipped,
           fileSize,

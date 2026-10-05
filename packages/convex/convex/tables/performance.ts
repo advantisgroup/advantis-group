@@ -284,8 +284,8 @@ export const performanceTables = {
   // handled it. `date` is the calendar day of `startedAt` (ISO
   // "YYYY-MM-DD", UTC) — kept alongside the timestamp so day-scoped queries
   // can use an index instead of re-deriving the date from every row.
-  // Wholesale-replaced per calendar month on import (see
-  // `interactionImport.ts`), same rationale as `performanceRawLeads`/`Opps`.
+  // An import replaces exactly the date range its file covers (first to
+  // last day), see `uploadParse.ts`'s `writeInteractions`.
   performanceInteractions: defineTable({
     employeeId: v.id("performanceEmployees"),
     companyId: v.optional(v.id("companies")),
@@ -343,6 +343,10 @@ export const performanceTables = {
     // not the upload time. Undefined for the aggregated template, which
     // spans multiple days itself.
     reportDate: v.optional(v.string()),
+    // First day of a report that spans several days (an Interaktionen
+    // export); `reportDate` is then its last day. Absent for single-day
+    // reports.
+    reportDateFrom: v.optional(v.string()),
     // Total data rows in the source file, before any team-matching filter
     // — lets the UI show "40 of 41 matched" instead of just the imported
     // count.

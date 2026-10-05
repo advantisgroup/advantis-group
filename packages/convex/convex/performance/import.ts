@@ -26,7 +26,6 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
-import { monthBounds } from "./lib/kpi";
 import { EXCLUDED_OWNERS } from "./lib/salesforceImport";
 import { type SnapshotFields } from "./lib/types";
 
@@ -255,31 +254,6 @@ export const getTeamEmployeesWithId = internalQuery({
     return employees
       .filter((e) => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
       .map((e) => ({ id: e._id, name: e.name }));
-  },
-});
-
-/** Employees with at least one Performance report in each of `months`
- * ("YYYY-MM") — the "already active in the Performance Dashboard this
- * month" gate for imported interactions, so a raw Genesys export doesn't
- * pull in agents from queues/departments this feature doesn't track. */
-export const getActiveEmployeeIdsByMonth = internalQuery({
-  args: { companyId: v.id("companies"), months: v.array(v.string()) },
-  handler: async (
-    ctx,
-    { companyId, months },
-  ): Promise<Record<string, Id<"performanceEmployees">[]>> => {
-    const out: Record<string, Id<"performanceEmployees">[]> = {};
-    for (const ym of months) {
-      const { start, end } = monthBounds(ym);
-      const rows = await ctx.db
-        .query("performanceReports")
-        .withIndex("by_company_reportDate", (q) =>
-          q.eq("companyId", companyId).gte("reportDate", start).lte("reportDate", end),
-        )
-        .collect();
-      out[ym] = [...new Set(rows.map((r) => r.employeeId))];
-    }
-    return out;
   },
 });
 
@@ -912,10 +886,10 @@ export const getUploadLogRowsByBatch = internalQuery({
 
 // ------------------------------------------------------------- interactions
 // Raw per-interaction rows (`performanceInteractions`) are a full snapshot
-// of the source export for the months it covers, not a delta — wholesale-
-// replaced per calendar month on import, same rationale as
-// `performanceRawLeads`/`Opps`. See `performanceUploadParse.ts`'s
-// `writeInteractions`, the only caller.
+// of the source export for the days it covers, not a delta — replaced for
+// exactly the date range the file contains (its first to its last day), so
+// a file with only yesterday never wipes the rest of the month. See
+// `uploadParse.ts`'s `writeInteractions`, the only caller.
 
 const interactionInsertValidator = v.object({
   employeeId: v.id("performanceEmployees"),
@@ -925,33 +899,20 @@ const interactionInsertValidator = v.object({
   direction: v.optional(v.string()),
 });
 
-/** Batched like `clearRawLeads`/`clearRawOpps`/`clearWonOpps` above — deletes
- * up to `CLEAR_BATCH_SIZE` rows across the given months per call and reports
- * `more` whenever it deleted anything, so the caller loops until a full pass
- * over every month finds nothing left instead of risking the same unbounded
- * collect-then-delete blowing Convex's per-execution read limit on a month
- * with heavy interaction volume. */
-export const clearInteractionsForMonths = internalMutation({
-  args: { companyId: v.id("companies"), months: v.array(v.string()) },
-  handler: async (ctx, { companyId, months }): Promise<{ more: boolean }> => {
-    let remaining = CLEAR_BATCH_SIZE;
-    let deletedAny = false;
-    for (const ym of months) {
-      if (remaining <= 0) break;
-      const { start, end } = monthBounds(ym);
-      const batch = await ctx.db
-        .query("performanceInteractions")
-        .withIndex("by_company_date", (q) =>
-          q.eq("companyId", companyId).gte("date", start).lte("date", end),
-        )
-        .take(remaining);
-      if (batch.length > 0) {
-        await Promise.all(batch.map((row) => ctx.db.delete(row._id)));
-        deletedAny = true;
-        remaining -= batch.length;
-      }
-    }
-    return { more: deletedAny };
+/** Deletes up to `CLEAR_BATCH_SIZE` interactions dated `from`..`to` (ISO,
+ * inclusive) per call — batched like `clearRawLeads`, the caller loops
+ * while `more`. */
+export const clearInteractionsInRange = internalMutation({
+  args: { companyId: v.id("companies"), from: v.string(), to: v.string() },
+  handler: async (ctx, { companyId, from, to }): Promise<{ more: boolean }> => {
+    const batch = await ctx.db
+      .query("performanceInteractions")
+      .withIndex("by_company_date", (q) =>
+        q.eq("companyId", companyId).gte("date", from).lte("date", to),
+      )
+      .take(CLEAR_BATCH_SIZE);
+    await Promise.all(batch.map((row) => ctx.db.delete(row._id)));
+    return { more: batch.length === CLEAR_BATCH_SIZE };
   },
 });
 
@@ -982,6 +943,8 @@ export const logInteractionsImport = internalMutation({
     sourceFile: v.string(),
     storageId: v.id("_storage"),
     contentHash: v.optional(v.string()),
+    reportDate: v.optional(v.string()),
+    reportDateFrom: v.optional(v.string()),
     sourceRowCount: v.optional(v.number()),
     skippedNames: v.optional(v.array(v.string())),
     fileSize: v.optional(v.number()),
@@ -1000,6 +963,8 @@ export const logInteractionsImport = internalMutation({
       uploadedAt: Date.now(),
       contentHash: args.contentHash,
       reportKind: "interactions" as const,
+      reportDate: args.reportDate,
+      reportDateFrom: args.reportDateFrom !== args.reportDate ? args.reportDateFrom : undefined,
       sourceRowCount: args.sourceRowCount,
       skippedNames: args.skippedNames,
       fileSize: args.fileSize,
