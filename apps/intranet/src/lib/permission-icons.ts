@@ -1,6 +1,5 @@
 import { type Role } from "@advantis/types";
 import {
-  Activity,
   BookOpen,
   Clock3,
   FolderLock,
@@ -35,7 +34,6 @@ export const CAPABILITY_ICONS: Record<Capability, LucideIcon> = {
   access_integrations: Plug,
   access_files: FolderLock,
   manage_uploads: UploadCloud,
-  view_activity_admin: Activity,
   manage_announcements: Megaphone,
   manage_guidebooks: BookOpen,
   manage_blog: Newspaper,
@@ -52,7 +50,7 @@ export const CAPABILITY_GROUPS: {
   key: "people" | "communication" | "content" | "time" | "files" | "ai";
   capabilities: Capability[];
 }[] = [
-  { key: "people", capabilities: ["manage_members", "view_activity_admin"] },
+  { key: "people", capabilities: ["manage_members"] },
   {
     key: "communication",
     capabilities: ["manage_announcements", "manage_inquiries", "manage_it_ticket_threads"],

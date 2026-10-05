@@ -4,23 +4,17 @@ import { userQuery } from "../functions";
 import { batchUserSummaries } from "../lib/users";
 
 /**
- * Read-only merge of the three privileged-action audit tables
- * (`activityAuditLog`, `onedriveAudit`, `integrationsAuditLog`), plus
- * deletes and restores from the trash (`auditLog`, domain `content`) — each has
- * its own writer and its own narrower reader (ActivityTrack's settings tab,
- * the OneDrive audit panel), but nothing combines them, so
+ * Read-only merge of the privileged-action audit tables (`onedriveAudit`,
+ * `integrationsAuditLog`), plus deletes and restores from the trash
+ * (`auditLog`, domain `content`) — each has its own writer and its own
+ * narrower reader (the OneDrive audit panel), but nothing combines them, so
  * `integrationsAuditLog` in particular has never had a UI to read it at
  * all. Admin-only, since this is a cross-cutting view of everything, not
  * scoped to one subsystem's own manager-level access.
  */
 
 const sourceArg = v.optional(
-  v.union(
-    v.literal("activity"),
-    v.literal("onedrive"),
-    v.literal("integrations"),
-    v.literal("content"),
-  ),
+  v.union(v.literal("onedrive"), v.literal("integrations"), v.literal("content")),
 );
 
 export const list = userQuery({
@@ -29,10 +23,7 @@ export const list = userQuery({
   handler: async (ctx, { source, limit }) => {
     const take = Math.min(limit ?? 100, 500);
 
-    const [activityRows, onedriveRows, integrationsRows, contentRows] = await Promise.all([
-      !source || source === "activity"
-        ? ctx.db.query("activityAuditLog").withIndex("by_at").order("desc").take(take)
-        : [],
+    const [onedriveRows, integrationsRows, contentRows] = await Promise.all([
       !source || source === "onedrive"
         ? ctx.db.query("onedriveAudit").withIndex("by_at").order("desc").take(take)
         : [],
@@ -49,7 +40,6 @@ export const list = userQuery({
     ]);
 
     const merged = [
-      ...activityRows.map((r) => ({ ...r, source: "activity" as const })),
       ...onedriveRows.map((r) => ({ ...r, source: "onedrive" as const })),
       ...integrationsRows.map((r) => ({ ...r, source: "integrations" as const })),
       ...contentRows.map((r) => ({ ...r, source: "content" as const })),

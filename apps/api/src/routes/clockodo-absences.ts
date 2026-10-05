@@ -15,10 +15,9 @@ import { authed } from "../lib/middleware.js";
 
 /**
  * Live Clockodo absence reads — no Convex mirror. Absences change rarely and
- * don't need to be reactive (unlike ActivityTrack's working/break/clocked-out
- * signal), so these read Clockodo through the short shared cache instead of
- * syncing a stored copy via webhook + hourly cron. See AGENTS.md's Clockodo
- * section for the fuller rationale.
+ * don't need to be reactive, so these read Clockodo through the short shared
+ * cache instead of syncing a stored copy via webhook + hourly cron. See
+ * AGENTS.md's Clockodo section for the fuller rationale.
  */
 
 interface AbsenceDTO {

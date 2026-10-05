@@ -10,6 +10,7 @@ import {
   effectiveRole,
   getCurrentUser,
   getUserByClerkId,
+  liveCapabilities,
 } from "./auth";
 
 export type RoleRequirement = "manager" | "admin";
@@ -130,7 +131,10 @@ export async function loadCaller(
   const roles = user.sandboxRole
     ? []
     : await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
-  return new Caller(user, new Set(roles.flatMap((role) => role?.capabilities ?? [])));
+  return new Caller(
+    user,
+    new Set(roles.flatMap((role) => (role ? liveCapabilities(role.capabilities) : []))),
+  );
 }
 
 /** The browser session's caller, or null when signed out or not active. */

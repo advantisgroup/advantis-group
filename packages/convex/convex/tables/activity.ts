@@ -1,3 +1,5 @@
+// ActivityTrack was removed on 2026-10-05. These tables stay only until their
+// production data is deleted; then remove this file and its schema entry.
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 

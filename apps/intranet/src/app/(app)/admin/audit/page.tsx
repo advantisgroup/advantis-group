@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { Activity, Download, Plug, ScrollText, Search, Trash2 } from "lucide-react";
+import { Download, Plug, ScrollText, Search, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Mark } from "@/components/branding/ProviderMark";
@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
 
-type Source = "activity" | "onedrive" | "integrations" | "content";
+type Source = "onedrive" | "integrations" | "content";
 type Range = "today" | "7d" | "30d" | "all";
 type AuditEntry = FunctionReturnType<typeof api.org.auditLog.list>[number];
 
@@ -38,8 +38,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 function SourceIcon({ source }: { source: Source }) {
   if (source === "onedrive") return <Mark provider="onedrive" className="size-4" />;
   if (source === "integrations") return <Plug className="size-4 text-muted-foreground" />;
-  if (source === "content") return <Trash2 className="size-4 text-muted-foreground" />;
-  return <Activity className="size-4 text-muted-foreground" />;
+  return <Trash2 className="size-4 text-muted-foreground" />;
 }
 
 function AuditRow({
@@ -218,7 +217,6 @@ export default function AuditLogPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("auditLog.allSources")}</SelectItem>
-            <SelectItem value="activity">{t("auditLog.source_activity")}</SelectItem>
             <SelectItem value="onedrive">{t("auditLog.source_onedrive")}</SelectItem>
             <SelectItem value="integrations">{t("auditLog.source_integrations")}</SelectItem>
             <SelectItem value="content">{t("auditLog.source_content")}</SelectItem>

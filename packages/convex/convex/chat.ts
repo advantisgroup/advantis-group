@@ -88,8 +88,7 @@ export const listConversations = userQuery({
 
         // Fallback for conversations/memberships from before lastMessagePreview
         // /unreadCount existed: only taken once, since sendMessage/markRead
-        // populate both fields on every subsequent write, exactly like the
-        // lastSample fallback in activity/stats.ts.
+        // populate both fields on every subsequent write.
         const [preview, unread] = await Promise.all([
           conversation.lastMessagePreview !== undefined
             ? conversation.lastMessagePreview

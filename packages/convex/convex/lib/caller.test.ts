@@ -176,6 +176,18 @@ describe("loading", () => {
     expect(canUseAi).toBe(true);
   });
 
+  test("a retired capability still stored on a role grants nothing", async () => {
+    const { t, userId } = await seed();
+    const capabilities = await t.run(async (ctx) => {
+      const user = await ctx.db.get(userId);
+      await ctx.db.patch(user!.customRoleIds![0]!, {
+        capabilities: ["view_activity_admin", "use_ai"],
+      });
+      return (await loadCaller(ctx, user))?.toJSON().capabilities;
+    });
+    expect(capabilities).toEqual(["use_ai"]);
+  });
+
   test.each([["suspended"], ["removed"]] as const)("a %s user gets no caller", async (status) => {
     const { t, userId } = await seed({ status });
     expect(await t.run(async (ctx) => loadCaller(ctx, await ctx.db.get(userId)))).toBeNull();

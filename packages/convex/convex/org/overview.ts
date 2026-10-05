@@ -2,8 +2,6 @@ import { v } from "convex/values";
 
 import type { Doc } from "../_generated/dataModel";
 import { userQuery } from "../functions";
-import type { QueryCtx } from "../_generated/server";
-import { readConfig } from "../activity/lib/settings";
 import { FEATURE_FLAG_REGISTRY, type FeatureFlagKey } from "../lib/featureFlags";
 import { displayName } from "../lib/users";
 
@@ -20,13 +18,13 @@ import { displayName } from "../lib/users";
  *               heartbeats and member edits.
  * - `timelines` — per-day throughput history; only its tail bucket moves, so
  *               a fat re-read is acceptable at its low change rate.
- * - `systems` — integration/agent/flag health.
+ * - `systems` — integration/flag health.
  *
  * Everything here is Managers+ (`requireManager`), matching the overview page
  * itself — the narrower capability holders the `/admin` layout lets in
  * (`manage_uploads`, `access_integrations`, …) land on their own subpage
- * instead. The two strictly-admin slices (password-reset queue, audit volume,
- * webhook diagnostics) are additionally gated inside their query and simply
+ * instead. The strictly-admin slices (password-reset queue, audit volume)
+ * are additionally gated inside their query and simply
  * omitted for a plain manager, rather than throwing and blanking the page.
  */
 
@@ -37,9 +35,6 @@ const STALE_TICKET_MS = 14 * DAY_MS;
 
 /** An active member who hasn't loaded the intranet in this long is dormant. */
 const DORMANT_MS = 30 * DAY_MS;
-
-/** An active agent whose last heartbeat is older than this is presumed dead. */
-const AGENT_STALE_MS = DAY_MS;
 
 /**
  * Start of the local day containing `at`, for a client-supplied
@@ -513,54 +508,24 @@ export const timelines = userQuery({
   },
 });
 
-async function agentFleet(ctx: QueryCtx, now: number) {
-  const config = await readConfig(ctx);
-  const [activeDevices, pendingDevices] = await Promise.all([
-    ctx.db
-      .query("devices")
-      .withIndex("by_status", (q) => q.eq("status", "active"))
-      .collect(),
-    ctx.db
-      .query("devices")
-      .withIndex("by_status", (q) => q.eq("status", "pending"))
-      .collect(),
-  ]);
-
-  const versions = new Map<string, number>();
-  for (const d of activeDevices) {
-    const key = d.agentVersion ?? "unknown";
-    versions.set(key, (versions.get(key) ?? 0) + 1);
-  }
-
-  return {
-    total: activeDevices.length,
-    online: activeDevices.filter((d) => now - d.lastSeen < config.offlineThresholdSeconds * 1000)
-      .length,
-    stale: activeDevices.filter((d) => now - d.lastSeen > AGENT_STALE_MS).length,
-    pending: pendingDevices.length,
-    versions: [...versions.entries()]
-      .map(([version, count]) => ({ version, count }))
-      .sort((a, b) => b.count - a.count || a.version.localeCompare(b.version)),
-  };
-}
-
-/** Integration, agent-fleet, killswitch and live-incident health. */
+/**
+ * Integration, killswitch and live-incident health. `genesys`/`clockodo`
+ * health rows and an `activitytrack` flag row are leftovers of the removed
+ * ActivityTrack poller and are skipped.
+ */
 export const systems = userQuery({
   role: "manager",
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
-    const isAdmin = ctx.caller.isAdmin;
-    const canSeeAgents = ctx.caller.can("view_activity_admin");
 
-    const [health, flags, publishedUpdates, webhookRows, agents] = await Promise.all([
+    const [health, flags, publishedUpdates] = await Promise.all([
       ctx.db.query("integrationHealth").collect(),
       ctx.db.query("featureFlags").collect(),
       ctx.db.query("updates").withIndex("by_publishedAt").order("desc").take(50),
-      isAdmin ? ctx.db.query("clockodoWebhookLog").withIndex("by_at").order("desc").take(50) : [],
-      canSeeAgents ? agentFleet(ctx, now) : null,
     ]);
 
+    const knownFlags = flags.filter((f) => f.key in FEATURE_FLAG_REGISTRY);
     const live = publishedUpdates.filter(
       (u) =>
         u.publishedAt <= now &&
@@ -568,10 +533,9 @@ export const systems = userQuery({
           (u.type === "maintenance" && (u.status === "scheduled" || u.status === "in_progress"))),
     );
 
-    const lastWebhook = webhookRows[0] ?? null;
-
     return {
       integrations: health
+        .filter((h) => h.source !== "genesys" && h.source !== "clockodo")
         .map((h) => ({
           source: h.source,
           status: h.status,
@@ -581,19 +545,18 @@ export const systems = userQuery({
           updatedAt: h.updatedAt,
         }))
         .sort((a, b) => a.source.localeCompare(b.source)),
-      agents,
       // Only the pulled killswitches are worth showing — an enabled flag is
       // the normal state and says nothing.
-      disabledFlags: flags
+      disabledFlags: knownFlags
         .filter((f) => !f.enabled)
         .map((f) => ({
           key: f.key,
-          label: FEATURE_FLAG_REGISTRY[f.key as FeatureFlagKey]?.label ?? f.key,
+          label: FEATURE_FLAG_REGISTRY[f.key as FeatureFlagKey].label,
           reason: f.reason ?? null,
           updatedAt: f.updatedAt,
         }))
         .sort((a, b) => b.updatedAt - a.updatedAt),
-      flagsTotal: flags.length,
+      flagsTotal: knownFlags.length,
       liveUpdates: live.map((u) => ({
         _id: u._id,
         type: u.type,
@@ -601,13 +564,6 @@ export const systems = userQuery({
         status: u.status ?? null,
         startedAt: u.startedAt,
       })),
-      clockodoWebhook: isAdmin
-        ? {
-            lastAt: lastWebhook?.at ?? null,
-            lastOk: lastWebhook?.ok ?? null,
-            failures: webhookRows.filter((r) => !r.ok && r.at > now - DAY_MS).length,
-          }
-        : null,
     };
   },
 });

@@ -1,7 +1,8 @@
-import { ConvexError } from "convex/values";
+import { ConvexError, type Infer } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
+import { type capabilityValidator } from "./validators";
 
 /**
  * Identity and role basics. Permission checks for the person making a request
@@ -10,8 +11,13 @@ import { type MutationCtx, type QueryCtx } from "../_generated/server";
  */
 
 export type Role = Doc<"users">["role"];
-export type Capability = Doc<"customRoles">["capabilities"][number];
+export type Capability = Infer<typeof capabilityValidator>;
 export type SandboxRole = Exclude<Role, "admin">;
+
+/** A role's stored capabilities minus retired ones (see `storedCapabilityValidator`). */
+export function liveCapabilities(capabilities: Doc<"customRoles">["capabilities"]): Capability[] {
+  return capabilities.filter((c): c is Capability => c !== "view_activity_admin");
+}
 
 type RoleView = Pick<Doc<"users">, "role"> & { sandboxRole?: SandboxRole | null };
 

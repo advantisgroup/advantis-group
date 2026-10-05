@@ -237,10 +237,8 @@ async function detectDnsProvider(domain: string): Promise<DnsProviderInfo | null
 /** Adds `domain` (the company's own, independently-owned domain) to the
  * platform's single Vercel project via the Domains API. Lives here (a plain
  * Convex action using `fetch` + a deployment env var) rather than behind an
- * `apps/api` hop, mirroring how `activity/genesys.ts`/`activity/clockodo.ts`
- * already call their external APIs directly from Convex actions — this is
- * a plain bearer-token REST call with no OAuth flow or Node-only
- * dependency, the same shape as those.
+ * `apps/api` hop, like `integrations/clockodo/*` — this is a plain
+ * bearer-token REST call with no OAuth flow or Node-only dependency.
  *
  * Confirmed against a real response: each `verification` record also
  * carries a `reason` (e.g. `"pending_domain_verification"`) alongside

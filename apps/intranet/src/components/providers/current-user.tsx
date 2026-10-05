@@ -10,7 +10,6 @@ export type Capability =
   | "access_integrations"
   | "access_files"
   | "manage_uploads"
-  | "view_activity_admin"
   | "manage_announcements"
   | "manage_guidebooks"
   | "manage_blog"

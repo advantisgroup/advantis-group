@@ -3,7 +3,8 @@ import { v } from "convex/values";
 
 export const integrationsTables = {
   // Integration health, one row per external source. `genesys`/`clockodo`
-  // rows come from ActivityTrack's poller.
+  // rows were written by the removed ActivityTrack poller; the literals stay
+  // so existing rows still validate.
   integrationHealth: defineTable({
     source: v.union(
       v.literal("genesys"),
@@ -132,6 +133,7 @@ export const integrationsTables = {
    */
   auditLog: defineTable({
     domain: v.union(
+      // Only old rows: ActivityTrack, the last writer, was removed.
       v.literal("activity"),
       v.literal("onedrive"),
       v.literal("integrations"),
@@ -171,6 +173,8 @@ export const integrationsTables = {
    * that only shows up once a day — this table is the durable record so a
    * failure can be inspected (event, token presence/length, reason) whenever
    * it's noticed, not just in the moment it happens. Pruned after 30 days.
+   * No longer written: both webhook routes are gone, so this only drains
+   * until it's empty (then drop it and its prune cron).
    */
   clockodoWebhookLog: defineTable({
     endpoint: v.union(v.literal("webhooks/clockodo"), v.literal("integrations/clockodo/webhook")),

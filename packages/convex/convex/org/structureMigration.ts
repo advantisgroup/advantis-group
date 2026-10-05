@@ -5,8 +5,7 @@ import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 /**
  * One-time cleanup of the free-text `users.department`/`users.teams` into
- * real `departments`/`teams` rows. Unlike the ActivityTrack import
- * (`activity/migration*.ts`), this reads a single, same-deployment table
+ * real `departments`/`teams` rows. It reads a single, same-deployment table
  * that's small enough (one row per employee) to scan and write in ordinary
  * mutations — no cross-deployment paging or resumable cursor is needed here.
  *

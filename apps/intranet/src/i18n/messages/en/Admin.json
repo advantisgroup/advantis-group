@@ -342,9 +342,8 @@
   },
   "auditLog": {
     "title": "Audit log",
-    "description": "Every privileged action across ActivityTrack, OneDrive uploads, and integrations, in one place.",
+    "description": "Every privileged action across OneDrive uploads and integrations, in one place.",
     "allSources": "All sources",
-    "source_activity": "ActivityTrack",
     "source_onedrive": "OneDrive",
     "source_integrations": "Integrations",
     "unknownPerson": "Unknown",
@@ -450,12 +449,8 @@
       "noIntegrations": "No integrations reporting yet.",
       "noIncidents": "No live incidents or maintenance",
       "lastOk": "last healthy {age}",
-      "webhook": "Clockodo webhook",
-      "webhookDetail": "last event {age} · {failures} failures in 24h",
       "flagOff": "{key} is switched off",
       "source": {
-        "genesys": "Genesys",
-        "clockodo": "Clockodo",
         "clerk": "Clerk webhooks",
         "resend": "Resend webhooks",
         "onedrive": "OneDrive webhooks"

@@ -4,16 +4,7 @@ import { toClockodoIdString } from "../lib/clockodoId";
 import { appError } from "../lib/errors";
 import { writeIntegrationsAudit } from "./lib/audit";
 
-/**
- * Single write path for linking an intranet employee to a Clockodo user id.
- * `users.clockodoUserId` is canonical for anyone with an intranet account;
- * `people.clockodoUserId` is what ActivityTrack's poller actually reads
- * (`activity/state.ts`'s `mappings` query), so a linked person's roster row
- * is mirrored here too — otherwise linking through this page would silently
- * do nothing for their live presence signal. Unlinked roster rows (no
- * `userId` — contractors tracked without an intranet login) are untouched by
- * this mutation; they keep using the roster's own free-text editor.
- */
+/** Single write path for linking an intranet employee to a Clockodo user id. */
 export const linkClockodoUser = userMutation({
   can: "manage_clockodo_team",
   args: {
@@ -27,16 +18,6 @@ export const linkClockodoUser = userMutation({
 
     const clockodoUserIdStr = toClockodoIdString(clockodoUserId);
     await ctx.db.patch(userId, { clockodoUserId: clockodoUserIdStr });
-
-    const person = await ctx.db
-      .query("people")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .first();
-    if (person) {
-      await ctx.db.patch(person._id, {
-        clockodoUserId: clockodoUserIdStr,
-      });
-    }
 
     await writeIntegrationsAudit(ctx, actor._id, "clockodo", "clockodo.link", user.email);
   },
@@ -52,6 +33,9 @@ export const unlinkClockodoUser = userMutation({
 
     await ctx.db.patch(userId, { clockodoUserId: undefined });
 
+    // A leftover ActivityTrack `people` row still carrying the id would be
+    // picked up again by `migrateLegacyClockodoLink` on the next /clockodo
+    // visit, silently undoing this unlink.
     const person = await ctx.db
       .query("people")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
@@ -64,6 +48,11 @@ export const unlinkClockodoUser = userMutation({
   },
 });
 
+/**
+ * One-time move of a Clockodo link that only lives on the person's old
+ * ActivityTrack `people` row (the table is kept until its data is deleted)
+ * onto `users.clockodoUserId`, the only place absences read it from.
+ */
 export const migrateLegacyClockodoLink = userMutation({
   args: {},
   handler: async (ctx) => {

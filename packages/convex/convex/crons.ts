@@ -3,10 +3,8 @@ import { cronJobs } from "convex/server";
 import { internal } from "./_generated/api";
 
 /**
- * Scheduled jobs. ActivityTrack polls Genesys + Clockodo and folds the results
- * into the fused employee state, plus daily retention pruning. Convex crons run
- * on the free tier and can fire frequently. Adjust the schedule to your team's
- * hours / timezone.
+ * Scheduled jobs: retention pruning, digests and integration upkeep. Adjust
+ * the schedule to your team's hours / timezone.
  *
  * This file deploys unchanged to *every* Convex deployment: prod, every
  * `npx convex dev` deployment, and every branch's Vercel preview deployment
@@ -29,28 +27,6 @@ import { internal } from "./_generated/api";
 const crons = cronJobs();
 
 if (process.env.DISABLE_CRONS !== "true") {
-  // Poll integrations hourly during business hours, weekdays only. The
-  // webhooks are the fast path for state changes; this poll is the safety
-  // net that keeps the fused state honest when a webhook is slow, misconfigured,
-  // or disabled server-side (which has happened) — a webhook-only gap used to
-  // leave people frozen in whatever state they were last seen in (e.g.
-  // "clocked in and working" hours after they actually clocked out).
-  crons.cron(
-    "activity: poll integrations",
-    "0 7-20 * * 1-5",
-    internal.activity.integrations.pollAll,
-    {},
-  );
-
-  // Mirrors the latest published desktop-agent version so the overview can
-  // flag devices that haven't updated yet.
-  crons.hourly(
-    "activity: refresh latest agent version",
-    { minuteUTC: 50 },
-    internal.activity.agentVersion.refreshLatestAgentVersion,
-    {},
-  );
-
   crons.daily(
     "marketing: anonymize website inquiries past their retention period",
     { hourUTC: 2, minuteUTC: 50 },
@@ -106,13 +82,6 @@ if (process.env.DISABLE_CRONS !== "true") {
     internal.org.trash.purgeExpired,
     {},
   );
-  crons.daily(
-    "activity: prune old raw samples",
-    { hourUTC: 3, minuteUTC: 0 },
-    internal.activity.maintenance.pruneOldSamples,
-    {},
-  );
-
   // Backfills the completed-month badge cache (performanceBadgeCache) so
   // teamDashboard/employeeDetail stop recomputing every completed month's team
   // totals from scratch on every request — a completed month's badges never
@@ -121,20 +90,6 @@ if (process.env.DISABLE_CRONS !== "true") {
     "performance: cache completed month badges",
     { hourUTC: 3, minuteUTC: 5 },
     internal.performance.queries.cacheCompletedMonthBadges,
-    {},
-  );
-
-  crons.daily(
-    "activity: prune old state history",
-    { hourUTC: 3, minuteUTC: 15 },
-    internal.activity.maintenance.pruneOldStateSamples,
-    {},
-  );
-
-  crons.daily(
-    "activity: prune old resolved events",
-    { hourUTC: 3, minuteUTC: 30 },
-    internal.activity.events.purgeOldEvents,
     {},
   );
 

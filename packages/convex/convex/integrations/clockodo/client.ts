@@ -2,12 +2,9 @@ import { ConvexError } from "convex/values";
 
 /**
  * Low-level authenticated Clockodo HTTP client, shared by every
- * `integrations/clockodo/*` action. Kept independent from
- * `activity/clockodo.ts` (the read-only ActivityTrack poller's own client) —
- * duplicating a small header-building helper is cheaper than coupling
- * admin-triggered writes to the code path that keeps live presence polling
- * running, matching how `apps/api/src/lib/clockodo.ts` already duplicates
- * the same headers independently for its own concern.
+ * `integrations/clockodo/*` action. `apps/api/src/lib/clockodo.ts` duplicates
+ * the same headers independently for its own concern — a small helper is
+ * cheaper to duplicate than to share across the two runtimes.
  */
 
 const CLOCKODO_BASE = () => process.env.CLOCKODO_BASE_URL ?? "https://my.clockodo.com";

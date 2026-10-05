@@ -1,29 +1,13 @@
-import { internalMutation, serverMutation } from "../functions";
-import { v } from "convex/values";
-
-/**
- * Durable record of every inbound Clockodo webhook delivery — see the schema
- * comment on `clockodoWebhookLog`. Server-key gated like the other
- * apps/api-invoked mutations in `clockodoSync.ts`.
- */
-export const logWebhookDelivery = serverMutation({
-  args: {
-    endpoint: v.union(v.literal("webhooks/clockodo"), v.literal("integrations/clockodo/webhook")),
-    eventName: v.optional(v.string()),
-    ok: v.boolean(),
-    reason: v.string(),
-    tokenPresent: v.boolean(),
-    tokenLength: v.optional(v.number()),
-    resourceId: v.optional(v.string()),
-  },
-  handler: async (ctx, { ...args }) => {
-    await ctx.db.insert("clockodoWebhookLog", { ...args, at: Date.now() });
-  },
-});
+import { internalMutation } from "../functions";
 
 const RETENTION_DAYS = 30;
 const BATCH = 4_000;
 
+/**
+ * Nothing writes `clockodoWebhookLog` any more — the only Clockodo webhook
+ * (ActivityTrack's time-entry relay) was removed. This keeps pruning the
+ * rows that are left until the table is empty and can be dropped.
+ */
 export const pruneOldWebhookLogs = internalMutation({
   args: {},
   handler: async (ctx) => {

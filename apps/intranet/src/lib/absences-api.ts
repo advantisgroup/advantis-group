@@ -8,9 +8,9 @@ import { type ApiQuery, useApiQuery } from "@/hooks/use-api-query";
 
 /**
  * Live Clockodo absence reads via apps/api — no Convex mirror, no
- * reactivity. Absences change rarely and don't need to be reactive (unlike
- * ActivityTrack's working/break/clocked-out signal), so every call here goes
- * through apps/api's short-lived Clockodo cache instead of a synced copy.
+ * reactivity. Absences change rarely and don't need to be reactive, so
+ * every call here goes through apps/api's short-lived Clockodo cache instead
+ * of a synced copy.
  */
 
 export type AbsenceType = "vacation" | "sick" | "personal" | "other";

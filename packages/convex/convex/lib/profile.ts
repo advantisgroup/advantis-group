@@ -10,11 +10,10 @@ import { type QueryCtx } from "../_generated/server";
  * - **Profile** — a `users` row (schema.ts). The one canonical intranet
  *   identity. Every feature-specific concept below links back to one.
  * - **Subprofile** — a feature's own identity-shaped record representing
- *   "this profile, in this feature's context" (the Clockodo link, an
- *   ActivityTrack `people` row, a `humanResources` `employeeProfiles` row,
- *   a chat `conversationMembers` row). A subprofile may or may not be
- *   linked yet — a feature can know about a person before an intranet
- *   account exists for them (e.g. a tracked ActivityTrack person, an
+ *   "this profile, in this feature's context" (the Clockodo link, a
+ *   `humanResources` `employeeProfiles` row, a chat `conversationMembers`
+ *   row). A subprofile may or may not be linked yet — a feature can know
+ *   about a person before an intranet account exists for them (e.g. an
  *   applicant not yet hired).
  * - **Partial profile** — this file's `PartialProfile`: the small, stable
  *   projection (id, display name, avatar) used anywhere a full `Doc<"users">`

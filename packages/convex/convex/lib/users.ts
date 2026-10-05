@@ -25,7 +25,7 @@ export async function markUserRemoved(
  * Best-effort human display name for an intranet user: "First Last", falling
  * back to email, then a fixed placeholder for a since-deleted user. This was
  * previously re-implemented (identically) in updates.ts, announcements.ts,
- * onedrive.ts, and activity/lib/users.ts — consolidated here.
+ * and onedrive.ts — consolidated here.
  */
 export function displayName(user: Doc<"users"> | null): string {
   if (!user) return "unknown";

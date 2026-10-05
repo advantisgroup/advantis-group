@@ -6,7 +6,6 @@ import { alertAdmins } from "../lib/notify";
 /**
  * apps/api reports each webhook delivery it handles (Clerk, Resend, OneDrive)
  * so the admin Systems panel can tell a quiet integration from a broken one.
- * Same `integrationHealth` rows ActivityTrack keeps for Genesys and Clockodo.
  */
 export const apiRecordWebhook = serverMutation({
   args: {

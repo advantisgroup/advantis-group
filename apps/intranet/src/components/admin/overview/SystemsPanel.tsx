@@ -23,19 +23,12 @@ import { relativeTime } from "@/lib/format";
 
 import { MetricRow, Panel, PanelSkeleton } from "./primitives";
 
-/** The webhook row is about Clockodo's feed specifically, so it wears Clockodo. */
-function ClockodoMark({ className }: { className?: string }) {
-  return <Mark provider="clockodo" className={className} />;
-}
-
-const markFor = (provider: "genesys" | "clerk" | "resend" | "onedrive") =>
+const markFor = (provider: "clerk" | "resend" | "onedrive") =>
   function ProviderRowMark({ className }: { className?: string }) {
     return <Mark provider={provider} className={className} />;
   };
 
 const PROVIDER_MARKS: Record<string, ComponentType<{ className?: string }>> = {
-  clockodo: ClockodoMark,
-  genesys: markFor("genesys"),
   clerk: markFor("clerk"),
   resend: markFor("resend"),
   onedrive: markFor("onedrive"),
@@ -122,19 +115,6 @@ export function SystemsPanel() {
                 />
               );
             })
-          )}
-
-          {data.clockodoWebhook?.lastAt && (
-            <MetricRow
-              icon={ClockodoMark}
-              label={t("overview.systems.webhook")}
-              sublabel={t("overview.systems.webhookDetail", {
-                age: relativeTime(data.clockodoWebhook.lastAt),
-                failures: data.clockodoWebhook.failures,
-              })}
-              tone={data.clockodoWebhook.failures > 0 ? "warn" : "neutral"}
-              href="/admin/integrations/clockodo"
-            />
           )}
 
           {/* admins have the flags panel right beside this one */}

@@ -2,7 +2,7 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
 import { reportsViaValidator } from "../lib/reporting";
-import { capabilityValidator, roleValidator } from "../lib/validators";
+import { roleValidator, storedCapabilityValidator } from "../lib/validators";
 
 export const identityTables = {
   // --- Intranet: identity & access ----------------------------------------
@@ -402,7 +402,7 @@ export const identityTables = {
   /** Manager-defined roles (e.g. "Team Lead") granting a set of capabilities. */
   customRoles: defineTable({
     name: v.string(),
-    capabilities: v.array(capabilityValidator),
+    capabilities: v.array(storedCapabilityValidator),
     // AI requests per 24 hours for people who get `use_ai` from this role.
     // Missing means the workspace default (aiSettings).
     aiDailyLimit: v.optional(v.number()),

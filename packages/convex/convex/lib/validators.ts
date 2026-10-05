@@ -16,7 +16,6 @@ export const capabilityValidator = v.union(
   v.literal("access_integrations"),
   v.literal("access_files"),
   v.literal("manage_uploads"),
-  v.literal("view_activity_admin"),
   v.literal("manage_announcements"),
   v.literal("manage_guidebooks"),
   v.literal("manage_blog"),
@@ -25,6 +24,17 @@ export const capabilityValidator = v.union(
   v.literal("manage_clockodo_team"),
   v.literal("use_ai"),
   v.literal("manage_inquiries"),
+);
+
+/**
+ * What a stored `customRoles.capabilities` entry may hold: every live
+ * capability plus retired ones existing rows can still carry
+ * (`view_activity_admin`, from the removed ActivityTrack). Retired entries
+ * grant nothing — `Capability` excludes them, so reads drop them.
+ */
+export const storedCapabilityValidator = v.union(
+  capabilityValidator,
+  v.literal("view_activity_admin"),
 );
 
 // --- Applicant Management (Bewerbermanagement) validators -------------------

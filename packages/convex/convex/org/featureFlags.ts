@@ -55,7 +55,9 @@ export const details = userQuery({
   role: "admin",
   args: {},
   handler: async (ctx) => {
-    const rows = await ctx.db.query("featureFlags").collect();
+    const rows = (await ctx.db.query("featureFlags").collect()).filter(
+      (row) => row.key in FEATURE_FLAG_REGISTRY,
+    );
     const waiting = rows.some((row) => row.key === "marketingSubmissions" && !row.enabled)
       ? (await ctx.db.query("notifyEmails").collect()).length
       : 0;

@@ -16,17 +16,14 @@ import type { MutationCtx, QueryCtx } from "../_generated/server";
  * This is the only list of flag keys — the intranet derives its
  * `FeatureFlagKey` type from `setFlag`'s args.
  */
-export const FEATURE_FLAG_KEYS = ["activitytrack", "chat", "ai", "marketingSubmissions"] as const;
+// A key that's no longer listed here (ActivityTrack's "activitytrack") can
+// still have a row in `featureFlags`; readers skip rows not in the registry.
+export const FEATURE_FLAG_KEYS = ["chat", "ai", "marketingSubmissions"] as const;
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
 export const FEATURE_FLAG_REGISTRY: Record<
   FeatureFlagKey,
   { label: string; premadeReason: string }
 > = {
-  activitytrack: {
-    label: "ActivityTrack",
-    premadeReason:
-      "ActivityTrack has been disabled by an administrator. Desktop, phone, and time-tracking activity signals will not be recorded or shown while it's disabled.",
-  },
   chat: {
     label: "Chat",
     premadeReason:

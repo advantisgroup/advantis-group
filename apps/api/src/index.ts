@@ -6,7 +6,6 @@ import { dynamicCors } from "./lib/cors.js";
 import { PORT } from "./lib/env.js";
 import { ApiError, isFeatureDisabledError, reportApiFailure } from "./lib/errors.js";
 import { getRequestContext } from "./lib/request-context.js";
-import { activityRoute } from "./routes/activity.js";
 import { aiRunsRoute } from "./routes/ai-runs.js";
 import { applicantsRoute } from "./routes/applicants.js";
 import { applicantVaultRoute } from "./routes/applicantVault.js";
@@ -27,7 +26,6 @@ import { wikiChatRoute } from "./routes/wiki-chat.js";
 import { wikiFormatAssistRoute } from "./routes/wiki-format-assist.js";
 import { wikiImportRoute } from "./routes/wiki-import.js";
 import { internalBackupsRoute } from "./routes/internal/backups.js";
-import { internalClockodoRoute } from "./routes/internal/clockodo.js";
 import { internalDigestRoute } from "./routes/internal/digest.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
 import { internalOnedriveRoute } from "./routes/internal/onedrive.js";
@@ -82,12 +80,10 @@ export const app = new Elysia()
   .use(resendWebhookRoute)
   .use(internalBackupsRoute)
   .use(internalNotificationsRoute)
-  .use(internalClockodoRoute)
   .use(internalDigestRoute)
   .use(internalOnedriveRoute)
   .use(internalPushRoute)
   .use(internalUpdatesRoute)
-  .use(activityRoute)
   .use(aiRunsRoute)
   .use(askRoute)
   .use(dailyBriefRoute)

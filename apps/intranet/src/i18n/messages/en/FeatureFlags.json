@@ -61,7 +61,6 @@
   "summaryOff": "{count, plural, one {# of {total} features is off} other {# of {total} features are off}}",
   "summaryNoUpdate": "{count, plural, one {# without an update} other {# without an update}}",
   "descriptions": {
-    "activitytrack": "Records desktop, phone and time-tracking activity and shows it on the activity pages.",
     "chat": "Direct and group messages between colleagues.",
     "ai": "Everything that sends requests to the AI model.",
     "marketingSubmissions": "The contact forms on the public website. While off, visitors can leave their email to be told when they're back."

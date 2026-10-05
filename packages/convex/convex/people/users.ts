@@ -4,7 +4,13 @@ import { type Doc } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
 import { roleValidator } from "../schema";
 import { clearVaultPasswordForUser } from "../hr/lib/vault";
-import { effectiveCustomRoleIds, effectiveRole, getCurrentUser, isSandboxed } from "../lib/auth";
+import {
+  effectiveCustomRoleIds,
+  effectiveRole,
+  getCurrentUser,
+  isSandboxed,
+  liveCapabilities,
+} from "../lib/auth";
 import { internalQuery, query, sandboxSafeMutation, userQuery, userMutation } from "../functions";
 import { getServerCaller, getSessionCaller, requireSessionCaller } from "../lib/caller";
 import { pushToClerk } from "./clerkSync";
@@ -65,9 +71,9 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     customRoles: customRoles.map((role) => ({
       _id: role._id,
       name: role.name,
-      capabilities: role.capabilities,
+      capabilities: liveCapabilities(role.capabilities),
     })),
-    capabilities: [...new Set(customRoles.flatMap((role) => role.capabilities))],
+    capabilities: [...new Set(customRoles.flatMap((role) => liveCapabilities(role.capabilities)))],
     applicantAccessDelegate: sandboxed ? false : (user.applicantAccessDelegate ?? false),
     applicantAccess: sandboxed ? false : (user.applicantAccess ?? false),
     roleLabel: sandboxed ? null : (user.roleLabel ?? null),
@@ -266,8 +272,9 @@ export const get = userQuery({
 
 /**
  * Integration link status for the settings "Connections" card: whether the
- * viewer's Clockodo absences can be mirrored (directly via
- * users.clockodoUserId, or through their ActivityTrack person record).
+ * viewer is linked to Clockodo directly (users.clockodoUserId), or only
+ * through a leftover ActivityTrack person row that `migrateLegacyClockodoLink`
+ * can still move over.
  */
 export const myConnections = userQuery({
   args: {},
@@ -279,8 +286,6 @@ export const myConnections = userQuery({
       .first();
     return {
       clockodoDirect: user.clockodoUserId != null,
-      personLinked: person != null,
-      personName: person?.name ?? null,
       personHasClockodo: person?.clockodoUserId != null,
     };
   },
@@ -1015,6 +1020,8 @@ export const exportMine = userQuery({
       ),
       announcements: announcements.map(strip),
       wikiEntries: wikiEntries.map(strip),
+      // ActivityTrack is gone but its `people` rows aren't deleted yet; until
+      // they are, they're still this person's data.
       activityProfile: activityPerson ? strip(activityPerson) : null,
       // Names and dates only — never the key material.
       passkeys: passkeys.map((p) => ({ name: p.name ?? null, createdAt: p._creationTime })),

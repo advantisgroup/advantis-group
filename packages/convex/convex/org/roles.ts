@@ -5,7 +5,7 @@ import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { capabilityValidator } from "../schema";
 import { MAX_DAILY_RUN_LIMIT, isValidDailyRunLimit } from "../lib/aiRuns";
-import { effectiveCustomRoleIds, type Capability } from "../lib/auth";
+import { effectiveCustomRoleIds, liveCapabilities, type Capability } from "../lib/auth";
 
 /**
  * Manager-defined roles (e.g. "Team Lead") that grant a scoped set of
@@ -56,6 +56,7 @@ export const list = userQuery({
     const holders = await holdersByRole(ctx);
     return roles.map((role) => ({
       ...role,
+      capabilities: liveCapabilities(role.capabilities),
       memberIds: (holders.get(role._id) ?? []).map((user) => user._id),
     }));
   },
@@ -71,6 +72,7 @@ export const get = userQuery({
     const holders = await holdersByRole(ctx);
     return {
       ...role,
+      capabilities: liveCapabilities(role.capabilities),
       // The base role too, so the page can say who'd have all of it anyway.
       members: (holders.get(role._id) ?? []).map((user) => ({
         userId: user._id,

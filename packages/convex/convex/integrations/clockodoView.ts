@@ -4,11 +4,7 @@ import { userQuery } from "../functions";
 import { toClockodoIdString } from "../lib/clockodoId";
 
 /**
- * Every intranet user, joined to their Clockodo link (if any), ActivityTrack
- * roster row (if any) and tracked device (if any) — one round trip instead
- * of the client doing several sequential lookups per row. `deviceId` is the
- * agent-minted UUID string used by the `timeline/[deviceId]` route, not the
- * Convex document id.
+ * Every intranet user, joined to their Clockodo link (if any).
  *
  * Previously filtered out every not-yet-linked user, so an admin could never
  * see who *isn't* connected to Clockodo from this list. Follows the
@@ -25,40 +21,24 @@ export const listWithLinks = userQuery({
       email: v.string(),
       linked: v.boolean(),
       clockodoUserId: v.union(v.string(), v.null()),
-      personId: v.union(v.id("people"), v.null()),
-      deviceId: v.union(v.string(), v.null()),
     }),
   ),
   handler: async (ctx) => {
     const users = (await ctx.db.query("users").collect()).filter((u) => u.status !== "removed");
 
-    return await Promise.all(
-      users.map(async (u) => {
-        const person = await ctx.db
-          .query("people")
-          .withIndex("by_userId", (q) => q.eq("userId", u._id))
-          .first();
-        const device = person
-          ? await ctx.db
-              .query("devices")
-              .withIndex("by_personId", (q) => q.eq("personId", person._id))
-              .first()
-          : null;
-        // Normalize legacy `number` rows (pending backfill) to `string`.
-        const clockodoUserId =
-          typeof u.clockodoUserId === "number"
-            ? toClockodoIdString(u.clockodoUserId)
-            : (u.clockodoUserId ?? null);
-        return {
-          userId: u._id,
-          name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
-          email: u.email,
-          linked: clockodoUserId !== null,
-          clockodoUserId,
-          personId: person?._id ?? null,
-          deviceId: device?.deviceId ?? null,
-        };
-      }),
-    );
+    return users.map((u) => {
+      // Normalize legacy `number` rows (pending backfill) to `string`.
+      const clockodoUserId =
+        typeof u.clockodoUserId === "number"
+          ? toClockodoIdString(u.clockodoUserId)
+          : (u.clockodoUserId ?? null);
+      return {
+        userId: u._id,
+        name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
+        email: u.email,
+        linked: clockodoUserId !== null,
+        clockodoUserId,
+      };
+    });
   },
 });

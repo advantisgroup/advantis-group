@@ -6,7 +6,6 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
 import {
-  Activity,
   ArrowUpRight,
   CircleCheck,
   Globe,
@@ -31,7 +30,6 @@ import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const FEATURE_ICONS: Record<string, LucideIcon> = {
-  activitytrack: Activity,
   chat: MessagesSquare,
   ai: Sparkles,
   marketingSubmissions: Globe,
