@@ -223,22 +223,6 @@ export interface DurationFlag {
   rawText: string;
 }
 
-/** Parses one of the three call-duration fields and, if the cell's value
- * failed the plausibility check, also returns a `DurationFlag` describing
- * what was rejected — so the row-building loops in `readCallExport`/
- * `readCallCsv` can surface it instead of just losing the value silently. */
-function parseDurationField(
-  field: FlaggableDurationField,
-  v: CellValue,
-): { value: number | null; flag?: DurationFlag } {
-  let rejected: number | undefined;
-  const value = parseDuration(v, (raw) => {
-    rejected = raw;
-  });
-  if (rejected === undefined) return { value };
-  return { value, flag: { field, rawSeconds: rejected, rawText: String(v) } };
-}
-
 /** Seconds as H:MM:SS or M:SS. */
 export function fmtDuration(sec: number | null): string {
   if (sec === null) return "–";
