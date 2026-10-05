@@ -208,8 +208,8 @@ export function parseDuration(
     );
   }
 
-  const f = parseFloat(s.replace(",", "."));
-  if (!Number.isFinite(f)) return null;
+  const f = parseLocaleNumber(s);
+  if (f === null) return null;
   const raw = Math.round(f);
   onBareNumber?.(raw);
   return capMillisToSeconds(raw, msThresholdSeconds);

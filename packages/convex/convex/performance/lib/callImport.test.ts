@@ -34,6 +34,13 @@ describe("call report durations", () => {
     expect(report.rows[0].talkAvgSec).toBe(5);
   });
 
+  test("a German-formatted millisecond text cell keeps its thousands", () => {
+    const report = readCallCsv(
+      ["Agent;Datum;Bearbeitet;Gespräch Gesamt", "Anna;01.10.2026;64;13.861.588"].join("\n"),
+    )!;
+    expect(report.rows[0]).toMatchObject({ talkTotalSec: 13_862, talkAvgSec: 217 });
+  });
+
   test("explicit HH:MM:SS cells are never rescaled", () => {
     const report = readCallCsv(
       [
