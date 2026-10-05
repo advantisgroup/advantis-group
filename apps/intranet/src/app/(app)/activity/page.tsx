@@ -38,7 +38,7 @@ import { formatCountdown, nextPollAt } from "@/lib/activity/pollSchedule";
 import { describeStatus, type StatusInput } from "@/lib/activity/status";
 import { useNow } from "@/lib/activity/useNow";
 import { useQueryParam } from "@/lib/activity/useQueryParam";
-import { useSlashFocus } from "@/lib/activity/useSlashFocus";
+import { useSlashFocus } from "@/hooks/use-slash-focus";
 import { isOlderVersion } from "@/lib/activity/version";
 import { cn } from "@/lib/utils";
 

@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 
-import { STATE_COLOR } from "@/components/activity/charts/theme";
+import { STATE_COLOR } from "@/components/charts/theme";
 import type { StateName, StateSegment } from "@/lib/activity/activity";
 import { formatDuration, hhmm } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";

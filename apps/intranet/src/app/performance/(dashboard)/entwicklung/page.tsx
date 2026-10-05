@@ -15,8 +15,8 @@ import {
   YAxis,
 } from "recharts";
 
-import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
-import { CHART, tooltipStyle } from "@/components/activity/charts/theme";
+import { FilterableBarChart } from "@/components/charts/FilterableBarChart";
+import { CHART, tooltipStyle } from "@/components/charts/theme";
 import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
 import { fmtDayShort, fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";

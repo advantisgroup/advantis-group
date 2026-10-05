@@ -10,8 +10,8 @@ import { useQuery } from "convex/react";
 import { Activity, LayoutDashboard, ListTodo, Phone, TrendingUp } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
-import { CHART } from "@/components/activity/charts/theme";
+import { FilterableBarChart } from "@/components/charts/FilterableBarChart";
+import { CHART } from "@/components/charts/theme";
 import { RouteTabs, type RouteTab } from "@/components/layout/RouteTabs";
 import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
 import {

@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
-import { MOTION } from "./motion-tokens";
+import { MOTION } from "@/components/motion/motion-tokens";
 
 /**
  * Mounts/unmounts `children` with a fade (+ slight rise) on BOTH enter and exit,

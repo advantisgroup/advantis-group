@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, Fingerprint, Minus, ShieldAlert, Smartphone } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { MOTION } from "@/components/activity/motion/motion-tokens";
+import { MOTION } from "@/components/motion/motion-tokens";
 import { SettingsSection } from "@/components/ui/settings-rows";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";

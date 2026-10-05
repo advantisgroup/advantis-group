@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useNow } from "@/lib/activity/useNow";
+import { useNow } from "@/hooks/use-now";
 import { formatIsoDate, initials } from "@/lib/format";
 import { profileColorStyle, profileGradientClass } from "@/lib/profile-gradient";
 import { activeStatusMessage } from "@/lib/status-message";
@@ -55,7 +55,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
   const setRoleLabelMutation = useMutation(api.people.users.setRoleLabel);
   const handleError = useErrorHandler();
-  const now = useNow();
+  const now = useNow(true, 30_000);
 
   const isSelf = user._id === me._id;
   const [statusOpen, setStatusOpen] = useState(false);

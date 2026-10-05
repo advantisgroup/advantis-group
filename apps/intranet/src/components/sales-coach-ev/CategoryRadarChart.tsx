@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import { CHART } from "@/components/activity/charts/theme";
+import { CHART } from "@/components/charts/theme";
 
 export function CategoryRadarChart({ points }: { points: { label: string; value: number }[] }) {
   if (points.length === 0) return null;

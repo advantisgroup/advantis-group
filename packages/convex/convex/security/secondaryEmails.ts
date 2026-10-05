@@ -1,7 +1,7 @@
 import { serverUserMutation, serverUserQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
-import { safeEqual, sha256hex } from "../activity/lib/crypto";
+import { safeEqual, sha256hex } from "../lib/crypto";
 import { type Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";

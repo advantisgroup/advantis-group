@@ -6,7 +6,7 @@ import { Clock, Phone, Timer } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import { CHART, tooltipStyle } from "@/components/activity/charts/theme";
+import { CHART, tooltipStyle } from "@/components/charts/theme";
 import { type InteractionTotal } from "@/components/performance/InteractionsTable";
 import { MetricTile } from "@/components/performance/MetricTile";
 import {

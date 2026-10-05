@@ -11,7 +11,7 @@ import { ConvexError, v } from "convex/values";
 import { type Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { type MutationCtx } from "../_generated/server";
-import { hashPassword, verifyPassword } from "../activity/lib/crypto";
+import { hashPassword, verifyPassword } from "../lib/crypto";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 
 import {

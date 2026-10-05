@@ -2,7 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import { CHART, tooltipStyle } from "./theme";
+import { CHART, tooltipStyle } from "@/components/charts/theme";
 
 interface Datum {
   label: string;

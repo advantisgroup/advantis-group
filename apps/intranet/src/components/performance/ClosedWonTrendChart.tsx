@@ -13,7 +13,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { CHART, tooltipStyle } from "@/components/activity/charts/theme";
+import { CHART, tooltipStyle } from "@/components/charts/theme";
 import { fmtDayShort, fmtNum } from "@/components/performance/PerformanceFormat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 

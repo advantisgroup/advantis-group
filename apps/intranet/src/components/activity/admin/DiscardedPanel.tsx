@@ -4,7 +4,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { ShieldAlert } from "lucide-react";
 
-import { STATE_COLOR } from "@/components/activity/charts/theme";
+import { STATE_COLOR } from "@/components/charts/theme";
 import { ProviderBadge, type Provider } from "@/components/branding/ProviderMark";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";

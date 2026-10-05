@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { internalQuery, query } from "../functions";
 import type { QueryCtx } from "../_generated/server";
-import { sha256hex } from "./lib/crypto";
+import { sha256hex } from "../lib/crypto";
 import { assertSignalSecret } from "./lib/deviceAuth";
 
 /**

@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { type Doc } from "../_generated/dataModel";
-import { sha256hex } from "../activity/lib/crypto";
+import { sha256hex } from "../lib/crypto";
 import { internalAction, internalMutation, internalQuery } from "../functions";
 import { internalApiFetch } from "../lib/internalApi";
 import { inquiryStateValidator } from "../tables/marketing";

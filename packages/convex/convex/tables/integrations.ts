@@ -2,6 +2,24 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export const integrationsTables = {
+  // Integration health, one row per external source. `genesys`/`clockodo`
+  // rows come from ActivityTrack's poller.
+  integrationHealth: defineTable({
+    source: v.union(
+      v.literal("genesys"),
+      v.literal("clockodo"),
+      // Webhooks apps/api receives; see integrations/health.ts.
+      v.literal("clerk"),
+      v.literal("resend"),
+      v.literal("onedrive"),
+    ),
+    status: v.union(v.literal("ok"), v.literal("unavailable"), v.literal("unconfigured")),
+    message: v.optional(v.string()),
+    lastOkAt: v.optional(v.number()),
+    lastErrorAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index("by_source", ["source"]),
+
   // --- OneDrive integration ------------------------------------------------
   // The intranet is the front page for one OneDrive subscription. Graph holds
   // the bytes; Convex is the system-of-record for *who* uploaded/requested what,

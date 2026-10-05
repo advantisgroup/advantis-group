@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { writeAudit } from "./lib/audit";
 import { appError } from "../lib/errors";
 import { assertSignalSecret, issueDeviceToken, invalidateDeviceToken } from "./lib/deviceAuth";
-import { hashNonce, safeEqual } from "./lib/crypto";
+import { safeEqual, sha256hex } from "../lib/crypto";
 
 /** All devices with their linked person's name (if any). Any signed-in user. */
 export const list = userQuery({
@@ -121,7 +121,7 @@ export const requestEnrollment = gatedMutation("activitytrack")({
   handler: async (ctx, { secret, deviceId, hostname, windowsUser, agentVersion, claimNonce }) => {
     assertSignalSecret(secret);
     const now = Date.now();
-    const claimNonceHash = await hashNonce(claimNonce);
+    const claimNonceHash = await sha256hex(claimNonce);
     const existing = await ctx.db
       .query("devices")
       .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
@@ -177,7 +177,7 @@ export const claimToken = gatedMutation("activitytrack")({
       .unique();
     if (!device) return { status: "unknown" as const };
 
-    const claimNonceHash = await hashNonce(claimNonce);
+    const claimNonceHash = await sha256hex(claimNonce);
     if (!device.claimNonceHash || !safeEqual(device.claimNonceHash, claimNonceHash)) {
       return { status: "denied" as const };
     }

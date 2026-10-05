@@ -36,7 +36,6 @@ import type * as activity_lib_businessHours from "../activity/lib/businessHours.
 import type * as activity_lib_clockodo from "../activity/lib/clockodo.js";
 import type * as activity_lib_clockodoDay from "../activity/lib/clockodoDay.js";
 import type * as activity_lib_contracts from "../activity/lib/contracts.js";
-import type * as activity_lib_crypto from "../activity/lib/crypto.js";
 import type * as activity_lib_deviceAuth from "../activity/lib/deviceAuth.js";
 import type * as activity_lib_events from "../activity/lib/events.js";
 import type * as activity_lib_genesys from "../activity/lib/genesys.js";
@@ -149,6 +148,7 @@ import type * as lib_caller from "../lib/caller.js";
 import type * as lib_chat from "../lib/chat.js";
 import type * as lib_clerk from "../lib/clerk.js";
 import type * as lib_clockodoId from "../lib/clockodoId.js";
+import type * as lib_crypto from "../lib/crypto.js";
 import type * as lib_errors from "../lib/errors.js";
 import type * as lib_featureFlags from "../lib/featureFlags.js";
 import type * as lib_internalApi from "../lib/internalApi.js";
@@ -343,7 +343,6 @@ declare const fullApi: ApiFromModules<{
   "activity/lib/clockodo": typeof activity_lib_clockodo;
   "activity/lib/clockodoDay": typeof activity_lib_clockodoDay;
   "activity/lib/contracts": typeof activity_lib_contracts;
-  "activity/lib/crypto": typeof activity_lib_crypto;
   "activity/lib/deviceAuth": typeof activity_lib_deviceAuth;
   "activity/lib/events": typeof activity_lib_events;
   "activity/lib/genesys": typeof activity_lib_genesys;
@@ -456,6 +455,7 @@ declare const fullApi: ApiFromModules<{
   "lib/chat": typeof lib_chat;
   "lib/clerk": typeof lib_clerk;
   "lib/clockodoId": typeof lib_clockodoId;
+  "lib/crypto": typeof lib_crypto;
   "lib/errors": typeof lib_errors;
   "lib/featureFlags": typeof lib_featureFlags;
   "lib/internalApi": typeof lib_internalApi;

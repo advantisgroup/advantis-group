@@ -1,12 +1,12 @@
 /**
- * Crypto helpers for the ActivityTrack desktop-agent auth, using the Web Crypto
- * API available in Convex action / mutation contexts.
+ * Web Crypto helpers, available in Convex action / mutation contexts. Used by
+ * the HR vault and Performance passwords, step-up/TOTP, password resets and
+ * marketing mail tokens.
  *
- *   - `hashPassword` / `verifyPassword` — PBKDF2-SHA256 for the tray-app debug
- *     login. Encoded form: `pbkdf2$<iterations>$<saltB64>$<hashB64>`.
- *   - `hashNonce` / `sha256hex` — SHA-256 hex digest, used for the device
- *     pairing nonce and the device bearer-token hash.
- *   - `randomToken` — a high-entropy opaque device token (hex).
+ *   - `hashPassword` / `verifyPassword` — PBKDF2-SHA256. Encoded form:
+ *     `pbkdf2$<iterations>$<saltB64>$<hashB64>`.
+ *   - `sha256hex` — SHA-256 hex digest.
+ *   - `randomToken` — a high-entropy opaque token (hex).
  *   - `safeEqual` — constant-time-ish compare.
  */
 const ITERATIONS = 100_000;
@@ -77,9 +77,6 @@ export async function sha256hex(input: string): Promise<string> {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
-
-/** SHA-256 hex digest of a device's one-time pairing nonce. */
-export const hashNonce = sha256hex;
 
 /** A high-entropy opaque token (32 random bytes, hex-encoded). */
 export function randomToken(): string {

@@ -27,7 +27,7 @@ import {
   SettingsSection,
 } from "@/components/ui/settings-rows";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { downloadFile, toJson } from "@/lib/activity/export";
+import { downloadFile, toJson } from "@/lib/export";
 import { initials, roleLabel } from "@/lib/format";
 
 export default function SettingsAccountPage() {

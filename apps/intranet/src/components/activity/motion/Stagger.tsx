@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
-import { MOTION } from "./motion-tokens";
+import { MOTION } from "@/components/motion/motion-tokens";
 
 /**
  * List container whose children animate in on mount (gently staggered) and

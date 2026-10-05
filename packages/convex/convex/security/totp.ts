@@ -1,7 +1,7 @@
 import { serverQuery, serverUserMutation, serverUserQuery } from "../functions";
 import { ConvexError, v } from "convex/values";
 
-import { safeEqual, sha256hex } from "../activity/lib/crypto";
+import { safeEqual, sha256hex } from "../lib/crypto";
 import { trackEvent } from "../lib/analytics";
 import { notifySecurityChange } from "../lib/stepUp";
 import { getServerCaller } from "../lib/caller";

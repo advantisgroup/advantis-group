@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 
 import { api } from "../_generated/api";
 import { type Id } from "../_generated/dataModel";
-import { sha256hex } from "../activity/lib/crypto";
+import { sha256hex } from "../lib/crypto";
 import schema from "../schema";
 import { modules } from "../test.setup";
 

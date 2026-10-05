@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { downloadFile, toCsv, toJson } from "@/lib/activity/export";
+import { downloadFile, toCsv, toJson } from "@/lib/export";
 import { useI18n } from "@/lib/activity/i18n";
 
 /**

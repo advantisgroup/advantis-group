@@ -62,7 +62,7 @@ import { nextSort, type Sort, sortSign } from "@/components/ui/sortable-head";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { isoToday } from "@/lib/absences";
 import { useAbsencesCalendar } from "@/lib/absences-api";
-import { useNow } from "@/lib/activity/useNow";
+import { useNow } from "@/hooks/use-now";
 import { TEAMS, teamColor } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
@@ -91,7 +91,7 @@ function DirectoryPageContent() {
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
   const canManageMembers = useHasCapability("manage_members");
-  const now = useNow();
+  const now = useNow(true, 30_000);
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");

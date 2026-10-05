@@ -2,7 +2,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
 import { api, internal } from "../_generated/api";
-import { hashPassword } from "../activity/lib/crypto";
+import { hashPassword } from "../lib/crypto";
 import type { Id } from "../_generated/dataModel";
 import schema from "../schema";
 import { modules } from "../test.setup";

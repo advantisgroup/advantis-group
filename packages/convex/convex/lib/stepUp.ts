@@ -1,7 +1,7 @@
 import { ConvexError } from "convex/values";
 
 import { internal } from "../_generated/api";
-import { safeEqual, sha256hex } from "../activity/lib/crypto";
+import { safeEqual, sha256hex } from "./crypto";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { effectiveRole, MANAGER_ROLES } from "./auth";

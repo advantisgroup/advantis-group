@@ -3,7 +3,7 @@ import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { writeAudit } from "./lib/audit";
-import { hashPassword } from "./lib/crypto";
+import { hashPassword } from "../lib/crypto";
 import { appError } from "../lib/errors";
 import { type AppConfig, CONFIG_KEYS, readConfig } from "./lib/settings";
 

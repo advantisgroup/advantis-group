@@ -1,6 +1,6 @@
 "use client";
 
-import { STATE_COLOR } from "@/components/activity/charts/theme";
+import { STATE_COLOR } from "@/components/charts/theme";
 import type { StateName, StateSegment } from "@/lib/activity/activity";
 import { hhmm } from "@/lib/activity/fmt";
 import { cn } from "@/lib/utils";

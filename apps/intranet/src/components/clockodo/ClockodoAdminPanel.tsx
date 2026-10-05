@@ -40,7 +40,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { useSlashFocus } from "@/lib/activity/useSlashFocus";
+import { useSlashFocus } from "@/hooks/use-slash-focus";
 import { cn } from "@/lib/utils";
 
 const WEEKDAYS = [

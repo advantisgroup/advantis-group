@@ -22,7 +22,7 @@ import { api } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import schema from "../schema";
 import { modules } from "../test.setup";
-import { sha256hex } from "../activity/lib/crypto";
+import { sha256hex } from "../lib/crypto";
 
 // convex-test wants every function module plus `_generated`. The extglob
 // pattern from its docs (`!(*.*.*)`) silently misses `_generated/*.js` under

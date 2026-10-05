@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/lib/activity/i18n";
 import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
-import { useSlashFocus } from "@/lib/activity/useSlashFocus";
+import { useSlashFocus } from "@/hooks/use-slash-focus";
 
 import type { GenericId } from "convex/values";
 

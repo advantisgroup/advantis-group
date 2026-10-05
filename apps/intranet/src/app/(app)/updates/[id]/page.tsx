@@ -32,7 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UpdateArtBanner } from "@/components/updates/UpdateArtBanner";
 import { UpdateMarkdown } from "@/components/updates/UpdateMarkdown";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { useNow } from "@/lib/activity/useNow";
+import { useNow } from "@/hooks/use-now";
 import { formatDateTime, initials } from "@/lib/format";
 import { formatDuration, statusesForType, type UpdateType } from "@/lib/updates";
 
@@ -62,7 +62,7 @@ function StatusCard({
   t: ReturnType<typeof useTranslations>;
   locale: string;
 }) {
-  const now = useNow();
+  const now = useNow(true, 30_000);
   const startedAt = data.startedAt ?? data.publishedAt;
   const durationMs = (data.resolvedAt ?? now) - startedAt;
   return (

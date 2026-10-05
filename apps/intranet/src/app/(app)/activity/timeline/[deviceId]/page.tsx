@@ -22,7 +22,7 @@ import {
 
 import { StateStripLegend } from "@/components/activity/charts/StateStrip";
 import { StateTimelineChart } from "@/components/activity/charts/StateTimelineChart";
-import { STATE_COLOR } from "@/components/activity/charts/theme";
+import { STATE_COLOR } from "@/components/charts/theme";
 import { InfoTip } from "@/components/ui/info-tip";
 import { SourceSignals } from "@/components/activity/state/StateBits";
 import { StatusSummary } from "@/components/activity/state/StatusSummary";

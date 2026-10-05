@@ -4,7 +4,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 
 import { STATE_NAMES, type HourStateBucket, type StateName } from "@/lib/activity/activity";
 
-import { CHART, STATE_COLOR, tooltipStyle } from "./theme";
+import { CHART, STATE_COLOR, tooltipStyle } from "@/components/charts/theme";
 
 /**
  * Stacked minutes-per-state by hour of day. Sits below the hour heatmap on the

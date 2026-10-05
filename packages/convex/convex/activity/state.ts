@@ -5,7 +5,7 @@ import type { QueryCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
 import { requireSessionCaller } from "../lib/caller";
 import { appError } from "../lib/errors";
-import { safeEqual } from "./lib/crypto";
+import { safeEqual } from "../lib/crypto";
 import { getActivitySubprofile } from "./lib/people";
 import { applyStateSignal, getStateRow } from "./lib/signals";
 

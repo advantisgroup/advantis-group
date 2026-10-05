@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterPill } from "@/components/ui/filter-pill";
-import { useNow } from "@/lib/activity/useNow";
+import { useNow } from "@/hooks/use-now";
 import { useSave } from "@/hooks/use-save";
 import { formatDateTime, relativeTime } from "@/lib/format";
 import { bucketFor, notificationVisual } from "@/lib/notification-kinds";
@@ -85,7 +85,7 @@ export default function NotificationsPage() {
     [notifications, tab, types],
   );
 
-  const now = useNow();
+  const now = useNow(true, 30_000);
   const oldCount = filtered.filter((n) => n.readAt && now - n.createdAt > OLD_AFTER_MS).length;
   const visible =
     showOld || tab === "unread"

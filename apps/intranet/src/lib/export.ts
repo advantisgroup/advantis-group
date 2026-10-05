@@ -1,7 +1,7 @@
 /**
  * Client-side data export helpers. Turns query results into a JSON or CSV file
  * and triggers a browser download — no server round-trip beyond the read that
- * already fetched the data. Used by the per-employee export on the timeline.
+ * already fetched the data.
  */
 
 /** Trigger a browser download of `content` as a file named `name`. */

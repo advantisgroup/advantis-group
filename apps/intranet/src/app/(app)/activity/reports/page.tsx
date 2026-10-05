@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { sumDaily, weekStartOf, weeklyTrend, type DailyStat } from "@/lib/activity/activity";
-import { downloadFile, toCsv } from "@/lib/activity/export";
+import { downloadFile, toCsv } from "@/lib/export";
 import { formatDuration, todayLocalDay } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 

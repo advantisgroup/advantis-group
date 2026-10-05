@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
-import { downloadFile, toCsv } from "@/lib/activity/export";
+import { downloadFile, toCsv } from "@/lib/export";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 

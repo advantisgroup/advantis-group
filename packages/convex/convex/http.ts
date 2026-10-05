@@ -7,7 +7,7 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { ingestPayloadSchema, type ActivitySample } from "./activity/lib/contracts";
 import { z } from "zod";
-import { verifyPassword } from "./activity/lib/crypto";
+import { verifyPassword } from "./lib/crypto";
 import { DEBUG_PASSWORD_SETTING_KEY } from "./activity/settings";
 
 /** True for the ConvexError a feature-gated function throws (see `functions.ts`). */

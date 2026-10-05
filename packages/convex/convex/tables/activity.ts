@@ -223,23 +223,6 @@ export const activityTables = {
     .index("by_employee_time", ["employeeId", "at"])
     .index("by_at", ["at"]),
 
-  // Integration health, one row per external source.
-  integrationHealth: defineTable({
-    source: v.union(
-      v.literal("genesys"),
-      v.literal("clockodo"),
-      // Webhooks apps/api receives; see integrations/health.ts.
-      v.literal("clerk"),
-      v.literal("resend"),
-      v.literal("onedrive"),
-    ),
-    status: v.union(v.literal("ok"), v.literal("unavailable"), v.literal("unconfigured")),
-    message: v.optional(v.string()),
-    lastOkAt: v.optional(v.number()),
-    lastErrorAt: v.optional(v.number()),
-    updatedAt: v.number(),
-  }).index("by_source", ["source"]),
-
   // Server-computed daily rollups (active vs idle seconds).
   dailyStats: defineTable({
     deviceId: v.string(),

@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
-import { hashPassword, randomToken, verifyPassword } from "../activity/lib/crypto";
+import { hashPassword, randomToken, verifyPassword } from "../lib/crypto";
 import { getCurrentUser } from "../lib/auth";
 import { toProfileOption } from "../lib/profile";
 import {

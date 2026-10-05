@@ -13,8 +13,8 @@ import {
   YAxis,
 } from "recharts";
 
-import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
-import { CHART, tooltipStyle } from "@/components/activity/charts/theme";
+import { FilterableBarChart } from "@/components/charts/FilterableBarChart";
+import { CHART, tooltipStyle } from "@/components/charts/theme";
 import { useEmployeeDetailData } from "@/components/performance/PerformanceEmployeeDetailContext";
 import { fmtNum, fmtPct, fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";

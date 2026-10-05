@@ -1,6 +1,6 @@
 import { type Id } from "../../_generated/dataModel";
 import { type MutationCtx } from "../../_generated/server";
-import { safeEqual, sha256hex, randomToken } from "./crypto";
+import { safeEqual, sha256hex, randomToken } from "../../lib/crypto";
 import { appError } from "../../lib/errors";
 
 /**

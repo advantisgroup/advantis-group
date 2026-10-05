@@ -2,7 +2,7 @@ import { internalMutation, mutation, userMutation, userQuery } from "../function
 import { v } from "convex/values";
 import { writeAudit } from "./lib/audit";
 import { appError } from "../lib/errors";
-import { safeEqual } from "./lib/crypto";
+import { safeEqual } from "../lib/crypto";
 import { displayName } from "../lib/users";
 import { type Severity, logEvent } from "./lib/events";
 

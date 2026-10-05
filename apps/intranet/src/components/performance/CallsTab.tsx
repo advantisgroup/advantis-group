@@ -4,8 +4,8 @@ import { useMemo } from "react";
 
 import { useLocale, useTranslations } from "next-intl";
 
-import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
-import { CHART } from "@/components/activity/charts/theme";
+import { FilterableBarChart } from "@/components/charts/FilterableBarChart";
+import { CHART } from "@/components/charts/theme";
 import {
   DeltaPair,
   fmtDayShort,

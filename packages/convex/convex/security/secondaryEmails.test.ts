@@ -9,7 +9,7 @@ import { api } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import schema from "../schema";
 import { modules } from "../test.setup";
-import { sha256hex } from "../activity/lib/crypto";
+import { sha256hex } from "../lib/crypto";
 
 const serverKey = "test-server-key";
 

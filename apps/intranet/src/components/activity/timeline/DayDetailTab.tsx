@@ -7,7 +7,7 @@ import { useQuery } from "convex/react";
 
 import { StateStripLegend } from "@/components/activity/charts/StateStrip";
 import { StateTimelineChart } from "@/components/activity/charts/StateTimelineChart";
-import { STATE_COLOR } from "@/components/activity/charts/theme";
+import { STATE_COLOR } from "@/components/charts/theme";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";

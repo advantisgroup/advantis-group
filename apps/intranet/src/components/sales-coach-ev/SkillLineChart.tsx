@@ -10,7 +10,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { CHART, tooltipStyle } from "@/components/activity/charts/theme";
+import { CHART, tooltipStyle } from "@/components/charts/theme";
 
 export function SkillLineChart({ points }: { points: { label: string; score: number }[] }) {
   if (points.length < 2) return null;

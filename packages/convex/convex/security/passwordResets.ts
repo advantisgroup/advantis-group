@@ -22,7 +22,7 @@ import {
   type StepMethod,
   type StepUpHint,
 } from "../lib/stepUp";
-import { hashPassword, randomToken, sha256hex } from "../activity/lib/crypto";
+import { hashPassword, randomToken, sha256hex } from "../lib/crypto";
 import { trackEvent } from "../lib/analytics";
 import { effectiveRole, getCurrentUser } from "../lib/auth";
 import { notifyUsers } from "../lib/notify";
