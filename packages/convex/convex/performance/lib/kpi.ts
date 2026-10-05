@@ -269,24 +269,45 @@ export function computeTeamBenchmark(
   return bench;
 }
 
-/** 'Preis: 3; Kein Bedarf: 2' -> [{reason: 'Preis', count: 3}, ...],
- * summed across employees and sorted by count descending. */
+const COUNTED = /^(.+?)\s*[:=]\s*(\d+)\s*$/;
+
+/** One reasons text -> its (reason, count) entries. The Salesforce import
+ * writes "Preis: 3; Kein Bedarf, später: 2" (`mostCommonText`), so entries
+ * are separated by ";" or a line break and a reason may itself contain
+ * commas. The upload template is free text, though, and people separate
+ * with commas too — so inside an entry a comma only splits where the text
+ * before it ends in its own ": count". Anything without a count counts 1. */
+export function parseReasons(text: string): { reason: string; count: number }[] {
+  const out: { reason: string; count: number }[] = [];
+  const push = (raw: string) => {
+    const p = raw.trim();
+    if (!p) return;
+    const m = COUNTED.exec(p);
+    out.push(m ? { reason: m[1].trim(), count: Number(m[2]) } : { reason: p, count: 1 });
+  };
+  for (const entry of text.split(/[;\n]+/)) {
+    let buffer: string[] = [];
+    for (const seg of entry.split(",")) {
+      buffer.push(seg);
+      if (COUNTED.test(seg.trim())) {
+        push(buffer.join(","));
+        buffer = [];
+      }
+    }
+    push(buffer.join(","));
+  }
+  return out;
+}
+
+/** Reasons texts of several employees summed per reason, largest first. */
 export function aggregateReasons(
   texts: (string | undefined)[],
 ): { reason: string; count: number }[] {
   const agg = new Map<string, number>();
   for (const t of texts) {
     if (!t) continue;
-    for (const part of t.split(/[;,\n]+/)) {
-      const p = part.trim();
-      if (!p) continue;
-      const m = /^(.+?)[:=]\s*(\d+)\s*$/.exec(p);
-      if (m) {
-        const key = m[1].trim();
-        agg.set(key, (agg.get(key) ?? 0) + Number(m[2]));
-      } else {
-        agg.set(p, (agg.get(p) ?? 0) + 1);
-      }
+    for (const { reason, count } of parseReasons(t)) {
+      agg.set(reason, (agg.get(reason) ?? 0) + count);
     }
   }
   return [...agg.entries()]

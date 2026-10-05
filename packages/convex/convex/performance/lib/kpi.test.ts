@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
-import { sumTeam, type Snapshot } from "./kpi";
+import { aggregateReasons, parseReasons, sumTeam, type Snapshot } from "./kpi";
+import { mostCommonText } from "./types";
 
 const snap = (id: string, fields: Partial<Snapshot> = {}): Snapshot => ({
   employeeId: id,
@@ -31,5 +32,43 @@ describe("sumTeam", () => {
 
   test("a metric nobody measured stays undefined, not 0", () => {
     expect(sumTeam([snap("a", { leadsCreated: 3 })]).wonMonth).toBeUndefined();
+  });
+});
+
+describe("parseReasons", () => {
+  test("round-trips the Salesforce import's text, commas inside reasons included", () => {
+    const text = mostCommonText(
+      new Map([
+        ["Kein Bedarf, später melden", 3],
+        ["Preis", 2],
+      ]),
+    );
+    expect(parseReasons(text)).toEqual([
+      { reason: "Kein Bedarf, später melden", count: 3 },
+      { reason: "Preis", count: 2 },
+    ]);
+  });
+
+  test("template text separated by commas or line breaks", () => {
+    expect(parseReasons("Preis: 3, Kein Bedarf: 2\nFalsche Nummer = 1")).toEqual([
+      { reason: "Preis", count: 3 },
+      { reason: "Kein Bedarf", count: 2 },
+      { reason: "Falsche Nummer", count: 1 },
+    ]);
+  });
+
+  test("entries without a count count once and keep their commas", () => {
+    expect(parseReasons("Preis: 3, Sonstiges, unklar; Wettbewerber")).toEqual([
+      { reason: "Preis", count: 3 },
+      { reason: "Sonstiges, unklar", count: 1 },
+      { reason: "Wettbewerber", count: 1 },
+    ]);
+  });
+
+  test("aggregateReasons sums across employees, largest first", () => {
+    expect(aggregateReasons(["Preis: 1; Kein Bedarf, später: 2", undefined, "Preis: 4"])).toEqual([
+      { reason: "Preis", count: 5 },
+      { reason: "Kein Bedarf, später", count: 2 },
+    ]);
   });
 });
