@@ -18,7 +18,7 @@ import {
   workdaysBetween,
   type Forecast,
 } from "./workdays";
-import { type MetricFields } from "./types";
+import { METRIC_KEYS, type MetricFields } from "./types";
 
 export interface Snapshot extends Partial<MetricFields> {
   employeeId: string;
@@ -73,18 +73,24 @@ export function enrich(snap: Snapshot): Snapshot {
   };
 }
 
-/** Team hitrate as sum(wonMonth)/sum(workableCreated) across employees,
- * excluding anyone whose own hitrate exceeds 100% — that only happens when
- * Closed-Won leads close from a prior month's Workable Leads, and folding
- * such an employee's Leads/Workable Leads into the team sum would skew the
- * team's real conversion rate upward. Other team totals (leads, workable,
- * won counts) are unaffected — only the Hitrate figure excludes them. */
-export function teamHitrate(snaps: Snapshot[]): number | undefined {
-  const included = snaps.filter((s) => {
-    const own = rate(s.wonMonth, s.workableCreated);
-    return own === undefined || own <= 100;
-  });
-  return rate(nsum(included.map((s) => s.wonMonth)), nsum(included.map((s) => s.workableCreated)));
+/** Team total of the month: every metric summed over the employees, the
+ * call duration weighted (talk time ÷ calls) and the rates as Σ/Σ. The
+ * hitrate deliberately counts *everyone*: someone above 100 % (closing
+ * Workables from a prior month) is still part of the team's result, and
+ * leaving them out made the card's percentage disagree with the
+ * "won / workable" sums printed under it. */
+export function sumTeam(snaps: Snapshot[]): Snapshot {
+  const total: Snapshot = { employeeId: "team", name: "Team", reportDate: null };
+  for (const k of METRIC_KEYS) total[k] = nsum(snaps.map((s) => s[k]));
+  total.talkAvgSec =
+    total.talkTotalSec && total.callsToday
+      ? Math.round(total.talkTotalSec / total.callsToday)
+      : undefined;
+  total.reportDate = snaps.reduce<string | null>(
+    (max, s) => (s.reportDate && (!max || s.reportDate > max) ? s.reportDate : max),
+    null,
+  );
+  return enrich(total);
 }
 
 /** Workdays of the month up to `asOf` with no call report at all —

@@ -6,7 +6,7 @@ import {
   enrich,
   missingCallDays,
   monthBounds,
-  teamHitrate,
+  sumTeam,
   type BadgeResult,
   type Snapshot,
 } from "./kpi";
@@ -254,25 +254,7 @@ export async function teamTotals(
     return next;
   });
 
-  const totalRaw: Snapshot = {
-    employeeId: "team",
-    name: "Team",
-    reportDate: null,
-  };
-  for (const k of METRIC_KEYS) {
-    const vals = withCalls.map((s) => s[k]).filter((v): v is number => v !== undefined);
-    totalRaw[k] = vals.length ? vals.reduce((a, b) => a + b, 0) : undefined;
-  }
-  totalRaw.talkAvgSec =
-    totalRaw.talkTotalSec && totalRaw.callsToday
-      ? Math.round(totalRaw.talkTotalSec / totalRaw.callsToday)
-      : undefined;
-  let total = enrich(totalRaw);
-  total.hitrate = teamHitrate(withCalls);
-  total.reportDate = withCalls.reduce<string | null>(
-    (max, s) => (s.reportDate && (!max || s.reportDate > max) ? s.reportDate : max),
-    null,
-  );
+  let total = sumTeam(withCalls);
   const unqualified = aggregateReasons(withCalls.map((s) => s.unqualifiedReasons));
   total = addForecast(total, ym); // team: workday basis
 
