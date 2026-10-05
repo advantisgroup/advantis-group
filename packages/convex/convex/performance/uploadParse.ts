@@ -47,7 +47,7 @@ import {
   type SnapshotFields,
 } from "./lib/types";
 import { normalizeZipLocalHeaders } from "./lib/xlsxZip";
-import { toISODate, todayUTC } from "./lib/workdays";
+import { toISODate, todayBerlin } from "./lib/workdays";
 import { parseAggregatedTemplate } from "./lib/aggregatedTemplate";
 
 // Safely under Convex's 8192-element array-argument limit, with headroom
@@ -449,7 +449,7 @@ async function processReport(
     if (interactionRows) {
       if (interactionRows.length === 0) {
         // Recognized, but no employee-attributable interaction at all.
-        return { status: "empty", reportDate: toISODate(todayUTC()) };
+        return { status: "empty", reportDate: toISODate(todayBerlin()) };
       }
       const { inserts, months, skipped } = await buildInteractionInserts(
         ctx,

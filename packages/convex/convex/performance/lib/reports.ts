@@ -13,7 +13,7 @@ import {
 import { MAX_PLAUSIBLE_DAY_SECONDS } from "./callImport";
 import { EXCLUDED_OWNERS } from "./salesforceImport";
 import { DAILY_KEYS, METRIC_KEYS } from "./types";
-import { parseISODate } from "./workdays";
+import { parseISODate, todayBerlin } from "./workdays";
 
 // ------------------------------------------------------------------ helpers
 
@@ -276,7 +276,7 @@ export async function teamTotals(
   const unqualified = aggregateReasons(withCalls.map((s) => s.unqualifiedReasons));
   total = addForecast(total, ym); // team: workday basis
 
-  const asOf = total.reportDate ? parseISODate(total.reportDate) : new Date();
+  const asOf = total.reportDate ? parseISODate(total.reportDate) : todayBerlin();
   const present =
     calls.size > 0 ? await reportDatesWithCalls(ctx, companyId, ym, cache) : undefined;
   const missing = present ? missingCallDays(ym, asOf, present) : undefined;

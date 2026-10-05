@@ -34,7 +34,7 @@ import {
 } from "./lib/kpi";
 import { EXCLUDED_OWNERS } from "./lib/salesforceImport";
 import { DAILY_KEYS, type MetricFields } from "./lib/types";
-import { isWorkday, parseISODate, todayUTC, toISODate } from "./lib/workdays";
+import { isWorkday, parseISODate, todayBerlin, toISODate } from "./lib/workdays";
 import { loadViewer, requireTeamView, requireViewableEmployee } from "./lib/access";
 import {
   type Ctx,
@@ -198,7 +198,7 @@ async function closedWonTrend(
     perDate.set(r.closeDate, (perDate.get(r.closeDate) ?? 0) + 1);
   }
 
-  const today = todayUTC();
+  const today = todayBerlin();
   const endDate = parseISODate(end);
   const last = endDate.getTime() < today.getTime() ? endDate : today;
   const days: WonDay[] = [];
@@ -254,7 +254,7 @@ async function stateFieldTrend(
     byDate.set(r.reportDate, (byDate.get(r.reportDate) ?? 0) + v);
   }
 
-  const today = todayUTC();
+  const today = todayBerlin();
   const endDate = parseISODate(end);
   const last = endDate.getTime() < today.getTime() ? endDate : today;
   const out: StateFieldDay[] = [];
@@ -350,7 +350,7 @@ async function employeeHistoryList(
     const c = calls.get(employeeId);
     for (const k of DAILY_KEYS) s[k] = c?.[k];
     s.talkAvgSec = c?.talkAvgSec;
-    const asOf = s.reportDate ? parseISODate(s.reportDate) : new Date();
+    const asOf = s.reportDate ? parseISODate(s.reportDate) : todayBerlin();
     const missing = c?.workDays
       ? missingCallDays(ym, asOf, await reportDatesWithCalls(ctx, companyId, ym, cache))
       : undefined;
@@ -469,8 +469,11 @@ async function badgeHistoryForEmployee(
   return out;
 }
 
+/** The current month in Berlin. Note: inside a cached Convex query this
+ * only moves on when the query re-runs (any data change), which is fine for
+ * a month boundary. */
 function defaultYm(): string {
-  return toISODate(new Date()).slice(0, 7);
+  return toISODate(todayBerlin()).slice(0, 7);
 }
 
 // ------------------------------------------------------------------ queries

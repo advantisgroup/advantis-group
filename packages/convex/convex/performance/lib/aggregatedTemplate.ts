@@ -7,7 +7,7 @@ import {
   type SheetRow,
   type SnapshotFields,
 } from "./types";
-import { toISODate } from "./workdays";
+import { toISODate, todayBerlin } from "./workdays";
 
 export const TEMPLATE_ALIAS_LOOKUP = new Map<string, string>();
 
@@ -55,7 +55,7 @@ export function toDateOrToday(v: CellValue): string {
       if (d) return toISODate(d);
     }
   }
-  return toISODate(new Date());
+  return toISODate(todayBerlin());
 }
 
 /** Reads the first table of an aggregated-template report: one row per

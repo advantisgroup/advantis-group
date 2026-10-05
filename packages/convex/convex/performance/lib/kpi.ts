@@ -13,7 +13,7 @@ import {
   forecast as workdayForecast,
   isWorkday,
   parseISODate,
-  todayUTC,
+  todayBerlin,
   toISODate,
   workdaysBetween,
   type Forecast,
@@ -130,7 +130,7 @@ export function addForecast(
   workedDays?: number,
   missingDays?: Date[],
 ): Snapshot {
-  const asOf = snap.reportDate ? parseISODate(snap.reportDate) : todayUTC();
+  const asOf = snap.reportDate ? parseISODate(snap.reportDate) : todayBerlin();
   const value = snap.wonMonth;
 
   let fc: EmployeeForecast;
@@ -606,7 +606,7 @@ export function badgeEligible(name: string | undefined): boolean {
   return !BADGE_EXCLUDED.has((name ?? "").trim().toLowerCase());
 }
 
-export function monthCompleted(ym: string, today: Date = todayUTC()): boolean {
+export function monthCompleted(ym: string, today: Date = todayBerlin()): boolean {
   const { end } = monthBoundsISO(ym);
   return parseISODate(end).getTime() < today.getTime();
 }

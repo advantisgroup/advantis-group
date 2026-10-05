@@ -7,7 +7,7 @@
  * also returns the relevant raw rows for the drill-down lists. Historical
  * months are backfilled from the Create/Close Date.
  */
-import { todayUTC, toISODate } from "./workdays";
+import { todayBerlin, toISODate } from "./workdays";
 import {
   mostCommonText,
   SnapshotMap,
@@ -186,7 +186,7 @@ export function readSalesforceExport(wsRows: SheetRow[]): SalesforceExport | nul
     }
   }
   if (headerIdx === null || header === null) return null;
-  if (reportDate === null) reportDate = todayUTC();
+  if (reportDate === null) reportDate = todayBerlin();
 
   const rows: Record<string, CellValue>[] = [];
   for (const r of wsRows.slice(headerIdx + 1)) {
