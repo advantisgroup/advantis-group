@@ -2,6 +2,7 @@ import {
   AtSign,
   Bell,
   CalendarCheck,
+  Clock3,
   GraduationCap,
   Lightbulb,
   Megaphone,
@@ -40,6 +41,12 @@ const VISUALS: Record<string, { icon: LucideIcon; tint: string }> = {
   },
   absence_request: { icon: Plane, tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300" },
   absence_decision: { icon: CalendarCheck, tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300" },
+  time_auto_closed: {
+    icon: Clock3,
+    tint: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
+  },
+  time_correction: { icon: Clock3, tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300" },
+  time_decision: { icon: Clock3, tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300" },
   announcement: { icon: Megaphone, tint: "bg-primary/10 text-primary" },
   upload_request: {
     icon: UploadCloud,

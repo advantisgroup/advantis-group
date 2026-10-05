@@ -36,6 +36,11 @@
       "types": "./convex/performance/lib/xlsxZip.ts",
       "import": "./convex/performance/lib/xlsxZip.ts",
       "default": "./convex/performance/lib/xlsxZip.ts"
+    },
+    "./time": {
+      "types": "./convex/time/lib/index.ts",
+      "import": "./convex/time/lib/index.ts",
+      "default": "./convex/time/lib/index.ts"
     }
   },
   "scripts": {

@@ -62,6 +62,7 @@ import deTeams from "./messages/de/Teams.json";
 import determs from "./messages/de/terms.json";
 import deTour from "./messages/de/Tour.json";
 import deUpdates from "./messages/de/Updates.json";
+import deZeiterfassung from "./messages/de/Zeiterfassung.json";
 import enAbsences from "./messages/en/Absences.json";
 import enAccess from "./messages/en/Access.json";
 import enAccessDenied from "./messages/en/AccessDenied.json";
@@ -119,6 +120,7 @@ import enTeams from "./messages/en/Teams.json";
 import enterms from "./messages/en/terms.json";
 import enTour from "./messages/en/Tour.json";
 import enUpdates from "./messages/en/Updates.json";
+import enZeiterfassung from "./messages/en/Zeiterfassung.json";
 
 export { defaultLocale, LOCALE_COOKIE, locales };
 export type { Locale };
@@ -169,6 +171,7 @@ const messagesByLocale = {
     Files: enFiles,
     FileViewer: enFileViewer,
     Updates: enUpdates,
+    Zeiterfassung: enZeiterfassung,
     AccessDenied: enAccessDenied,
     Forbidden: enForbidden,
     NotFound: enNotFound,
@@ -228,6 +231,7 @@ const messagesByLocale = {
     Files: deFiles,
     FileViewer: deFileViewer,
     Updates: deUpdates,
+    Zeiterfassung: deZeiterfassung,
     AccessDenied: deAccessDenied,
     Forbidden: deForbidden,
     NotFound: deNotFound,

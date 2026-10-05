@@ -1,0 +1,76 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { useMemo } from "react";
+
+import { usePathname } from "next/navigation";
+
+import { api } from "@advantis/convex/api";
+import { useQuery } from "convex/react";
+import { CalendarDays, Clock3, LayoutDashboard, Plane, Settings2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
+import { RouteTabs } from "@/components/layout/RouteTabs";
+import { useIsAdmin } from "@/components/providers/current-user";
+
+export default function ZeiterfassungLayout({ children }: { children: ReactNode }) {
+  const t = useTranslations("Zeiterfassung");
+  const pathname = usePathname();
+  const isAdmin = useIsAdmin();
+  const approvals = useQuery(api.time.admin.approvals, isAdmin ? {} : "skip");
+  const waiting = approvals ? approvals.absences.length + approvals.corrections.length : 0;
+  const active = pathname.split("/")[2] ?? "overview";
+  const tabs = useMemo(
+    () => [
+      {
+        value: "overview",
+        href: "/zeiterfassung",
+        label: t("tabs.overview"),
+        icon: LayoutDashboard,
+      },
+      {
+        value: "arbeitszeiten",
+        href: "/zeiterfassung/arbeitszeiten",
+        label: t("tabs.entries"),
+        icon: Clock3,
+      },
+      {
+        value: "abwesenheiten",
+        href: "/zeiterfassung/abwesenheiten",
+        label: t("tabs.absences"),
+        icon: Plane,
+      },
+      {
+        value: "kalender",
+        href: "/zeiterfassung/kalender",
+        label: t("tabs.calendar"),
+        icon: CalendarDays,
+      },
+      ...(isAdmin
+        ? [
+            {
+              value: "admin",
+              href: "/zeiterfassung/admin",
+              label: t("tabs.admin"),
+              icon: Settings2,
+              count: waiting > 0 ? waiting : undefined,
+            },
+          ]
+        : []),
+    ],
+    [t, isAdmin, waiting],
+  );
+
+  return (
+    <div className="mx-auto max-w-6xl space-y-6">
+      <PageHeaderBar
+        title={t("title")}
+        description={t("subtitle")}
+        icon={<Clock3 className="size-4" />}
+      />
+      <RouteTabs tabs={tabs} activeValue={active} />
+      <div className="mt-4">{children}</div>
+    </div>
+  );
+}

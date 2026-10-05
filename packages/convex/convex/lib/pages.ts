@@ -24,6 +24,7 @@ export interface IntranetPage {
 }
 
 const manager = (caller: Caller) => caller.isManager;
+const admin = (caller: Caller) => caller.isAdmin;
 const applicants = (caller: Caller) => caller.hasApplicantAccess;
 const clockodo = (caller: Caller) => !!caller.user.clockodoUserId;
 const clockodoTeam = (caller: Caller) => caller.can("view_clockodo_team");
@@ -95,6 +96,52 @@ export const INTRANET_PAGES: IntranetPage[] = [
     label: "Clockodo-Verwaltung",
     description: "Clockodo-Konten und Abwesenheitskonten verwalten.",
     visible: manager,
+  },
+  // Own time tracking. Admins only until the cutover opens it to everyone
+  // (apps/intranet/src/lib/maintenance.ts keeps it locked for the rest).
+  {
+    href: "/zeiterfassung",
+    label: "Zeiterfassung",
+    description: "Ein- und ausstempeln, Pausen, Stundenkonto und Resturlaub auf einen Blick.",
+    keywords: [
+      "stempeln",
+      "einstempeln",
+      "stundenkonto",
+      "überstunden",
+      "time tracking",
+      "clock in",
+    ],
+    visible: admin,
+  },
+  {
+    href: "/zeiterfassung/arbeitszeiten",
+    label: "Meine Arbeitszeiten",
+    description: "Gebuchte Zeiten je Tag, Woche oder Monat, Korrekturen beantragen, CSV-Export.",
+    keywords: ["arbeitszeit", "zeiten", "korrektur", "nachtragen", "timesheet", "export"],
+    visible: admin,
+  },
+  {
+    href: "/zeiterfassung/abwesenheiten",
+    label: "Urlaub & Krankmeldung",
+    description:
+      "Urlaub, Sonderurlaub und Abwesenheiten beantragen, krank melden, Resturlaub sehen.",
+    keywords: ["urlaub", "krank", "krankmeldung", "sonderurlaub", "resturlaub", "vacation", "sick"],
+    visible: admin,
+  },
+  {
+    href: "/zeiterfassung/kalender",
+    label: "Urlaubskalender",
+    description: "Wer im Team wann im Urlaub ist, Monat für Monat.",
+    keywords: ["team urlaub", "kalender", "planer", "vacation calendar"],
+    visible: admin,
+  },
+  {
+    href: "/zeiterfassung/admin",
+    label: "Zeiterfassung verwalten",
+    description:
+      "Freigaben, Stundenkonten, Arbeitszeitmodelle, Feiertage, Monatsabschluss und Protokoll.",
+    keywords: ["freigabe", "monatsabschluss", "feiertage", "arbeitszeitmodell", "audit"],
+    visible: admin,
   },
   {
     href: "/announcements",

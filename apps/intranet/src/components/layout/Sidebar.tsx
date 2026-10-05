@@ -33,6 +33,7 @@ import {
   Settings,
   ShieldCheck,
   SlidersHorizontal,
+  Timer,
   Users,
   UserSearch,
   Wrench,
@@ -273,6 +274,14 @@ export function Sidebar() {
           },
         ]
       : []),
+    // Own time tracking, next to Clockodo until the cutover. Non-admins don't
+    // see it while lib/maintenance.ts keeps /zeiterfassung locked.
+    {
+      section: "planning",
+      href: "/zeiterfassung",
+      labelKey: "zeiterfassung",
+      icon: Timer,
+    },
     ...(hasGuidebooks
       ? [
           {
