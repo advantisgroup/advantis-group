@@ -166,8 +166,9 @@ refused once live).
 4. `apps/intranet/src/lib/maintenance.ts`: add `/zeiterfassung` to
    `OPEN_PREFIXES`; `lib/pages.ts`: drop `visible: admin` from the
    `/zeiterfassung*` entries.
-5. `AppShell.tsx`: mount `TimeClockHeaderControl` (add `hidden lg:flex`)
-   instead of `ClockodoHeaderControl`; remove the preview from the overview.
+5. `AppShell.tsx`: drop `ClockodoHeaderControl` — `TimeClockHeaderControl`
+   and the morning `ClockInPrompt` are already mounted for everyone
+   `time.mode.status` lets in.
 6. Sidebar: drop the Clockodo item; dashboard/calendar/directory "out today"
    should read `time.absences.calendar` instead of `useAbsencesCalendar`.
 7. Redirect `/clockodo/*` to the matching `/zeiterfassung/*` page, then remove

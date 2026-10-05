@@ -24,6 +24,8 @@ import { SandboxBanner } from "@/components/layout/SandboxBanner";
 import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ClockodoHeaderControl } from "@/components/layout/ClockodoHeaderControl";
+import { TimeClockHeaderControl } from "@/components/layout/TimeClockHeaderControl";
+import { ClockInPrompt } from "@/components/zeiterfassung/ClockInPrompt";
 import { useFillPagePresent } from "@/components/layout/fill-page";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
 import {
@@ -93,6 +95,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const isAdmin = useIsAdmin();
   const maintenanceLocked = !isAdmin && isMaintenanceLocked(pathname);
   const pageContent = maintenanceLocked ? <MaintenanceScreen /> : children;
+  // Own Zeiterfassung: header pill + morning clock-in prompt, only for those
+  // who may use it (everyone after go-live, testers before — see time/mode).
+  const timeMode = useQuery(api.time.mode.status);
+  const timeEnabled = timeMode?.canUse === true;
 
   // Chat and the announcement composer are full-screen, self-managing views
   // (their own header and sticky composer/toolbar), so they opt out of the
@@ -300,6 +306,11 @@ function AppShellInner({ children }: { children: ReactNode }) {
               <ClockodoHeaderControl />
             </ErrorBoundary>
           )}
+          {!isUpdatesReading && timeEnabled && (
+            <ErrorBoundary fallback={() => null}>
+              <TimeClockHeaderControl className="hidden lg:flex" />
+            </ErrorBoundary>
+          )}
           {/* Tour progress — compact checkmark chip; self-hides when finished. */}
           {!isUpdatesReading && <TourProgressChip />}
           {!isUpdatesReading && <OnboardingTrigger />}
@@ -352,6 +363,11 @@ function AppShellInner({ children }: { children: ReactNode }) {
       <BrowserNotificationBridge />
       <PushSubscriptionSync />
       <KeyboardShortcuts />
+      {timeEnabled && (
+        <ErrorBoundary fallback={() => null}>
+          <ClockInPrompt />
+        </ErrorBoundary>
+      )}
       <AiDock />
       <AskPanel />
       <StartPageRedirect />

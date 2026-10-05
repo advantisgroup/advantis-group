@@ -357,5 +357,16 @@
     "purgeDescription": "Löscht alle Zeiteinträge, Abwesenheiten, Arbeitszeitmodelle, Urlaubskonten, Stundenkonten, Monatssperren und das Protokoll der Zeiterfassung – für alle Personen. Feiertage bleiben. Das lässt sich nicht rückgängig machen.",
     "purgeConfirm": "Endgültig löschen",
     "purged": "{count, plural, =0 {Keine Testdaten vorhanden} one {# Datensatz gelöscht} other {# Datensätze gelöscht}}"
+  },
+  "prompt": {
+    "greeting": {
+      "morning": "Guten Morgen, {name}!",
+      "day": "Hallo {name}!",
+      "evening": "Guten Abend, {name}!"
+    },
+    "description": "Stempel dich ein, um deine Arbeit zu starten.",
+    "hint": "Du kannst dich auch später über die Stempeluhr oben rechts oder unter „Zeiterfassung“ einstempeln – zum Beispiel, wenn du dich nur krankmelden oder deine Zeiten ansehen willst.",
+    "later": "Später",
+    "clockIn": "Einstempeln"
   }
 }
