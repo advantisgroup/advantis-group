@@ -4,6 +4,7 @@ import { type Doc, type Id } from "../../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../../_generated/server";
 import { type Caller } from "../../lib/caller";
 import { displayName } from "../../lib/users";
+import { countsOnDashboard } from "./reports";
 
 /**
  * Who may see which Performance dashboard. Access runs entirely through the
@@ -74,7 +75,7 @@ export async function loadViewer(ctx: Ctx, caller: Caller): Promise<PerformanceV
   const ledDepartmentIds = new Set<Id<"departments">>(ledDepartments.map((d) => d._id));
   const employeeByCompany = new Map<Id<"companies">, Id<"performanceEmployees">>();
   for (const e of myEmployees) {
-    if (e.companyId && e.active) employeeByCompany.set(e.companyId, e._id);
+    if (e.companyId && countsOnDashboard(e)) employeeByCompany.set(e.companyId, e._id);
   }
 
   const dashboards: DashboardAccess[] = [];
@@ -155,6 +156,10 @@ export async function requireViewableEmployee(
   const employee = await ctx.db.get(employeeId);
   if (!employee || !employee.companyId) throw notFound("Mitarbeiter nicht gefunden.");
   if (!canViewEmployee(viewer, employee)) throw forbidden();
+  // Hidden names (Einstellungen → Anzeigen) are off the dashboard for
+  // everyone but admins, in every view.
+  if (!viewer.isAdmin && !countsOnDashboard(employee))
+    throw notFound("Mitarbeiter nicht gefunden.");
   return { employee, companyId: employee.companyId };
 }
 

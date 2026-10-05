@@ -259,7 +259,8 @@ export const autoLink = userMutation({
     for (const login of logins) {
       if (!login.employeeId || !login.linkedUserId || taken.has(login.linkedUserId)) continue;
       const employee = employees.find((e) => e._id === login.employeeId);
-      if (!employee || employee.userId) continue;
+      if (!employee || employee.userId || EXCLUDED_OWNERS.has(employee.name.toLowerCase()))
+        continue;
       await link(employee, login.linkedUserId);
       fromLogins++;
     }

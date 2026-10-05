@@ -159,8 +159,9 @@ export const performanceTables = {
     active: v.boolean(),
     companyId: v.optional(v.id("companies")),
     /** The intranet account behind this report name — what lets that person
-     * see their own numbers. Set by an admin on the Zuordnung page (or the
-     * one-time migration from the old login links). */
+     * see their own numbers. Set by an admin under Performance →
+     * Einstellungen ("Automatisch zuordnen" also takes over the old
+     * Performance-login links). */
     userId: v.optional(v.id("users")),
   })
     .index("by_company", ["companyId"])
@@ -177,6 +178,8 @@ export const performanceTables = {
     ym: v.string(),
     badges: v.record(v.string(), v.object({ value: v.number(), winners: v.array(v.string()) })),
     computedAt: v.number(),
+    /** Badge rules the row was computed with; older rows are recomputed. */
+    rulesVersion: v.optional(v.number()),
   })
     .index("by_ym", ["ym"])
     .index("by_company_ym", ["companyId", "ym"]),

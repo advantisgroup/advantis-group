@@ -233,12 +233,17 @@ export default function DashboardPage() {
     widget("announcements", <AnnouncementsCard />),
     widget("whosout", <WhosOutCard />),
     widget("celebrations", <CelebrationsCard />),
+    // Team leads without the manager role don't get the admin section, so
+    // their team's Performance card sits here instead.
+    ...(hasTeamPerformance && !isManager
+      ? [widget("teamperformance", <TeamPerformanceCard companyId={teamDashboardId!} />)]
+      : []),
   ]);
 
   const adminWidgets = toGrid([
     widget("managerbrief", <ManagerBriefCard />),
     ...(user.teams.length ? [widget("teamavailability", <TeamAvailabilityCard />)] : []),
-    ...(hasTeamPerformance
+    ...(hasTeamPerformance && isManager
       ? [widget("teamperformance", <TeamPerformanceCard companyId={teamDashboardId!} />)]
       : []),
     widget("errormeasures", <OpenMeasuresCard />),

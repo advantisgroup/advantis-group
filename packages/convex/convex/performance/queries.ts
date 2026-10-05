@@ -38,7 +38,12 @@ import {
 } from "./lib/kpi";
 import { type MetricFields } from "./lib/types";
 import { isWorkday, parseISODate, todayBerlin, toISODate, workdaysElapsed } from "./lib/workdays";
-import { loadViewer, requireTeamView, requireViewableEmployee } from "./lib/access";
+import {
+  loadViewer,
+  requireTeamView,
+  requireViewableEmployee,
+  resolveDashboard,
+} from "./lib/access";
 import {
   type CallDay,
   type Ctx,
@@ -339,9 +344,9 @@ async function badgeCacheState(ctx: Ctx, companyId: Id<"companies">) {
   return { byYm, uploads };
 }
 
-/** Rows computed before this were awarded under older rules (two
+/** Rows without this version were awarded under older rules (two
  * hardcoded names left out, months frozen on the 1st) and are recomputed. */
-const BADGE_RULES_SINCE = Date.UTC(2026, 9, 6);
+const BADGE_RULES_VERSION = 2;
 
 /** A cached month can be used when it was computed under the current rules,
  * no report of that month was imported after it was computed, and every
@@ -352,7 +357,7 @@ function cachedBadgesUsable(
   roster: ReadonlyMap<Id<"performanceEmployees">, string>,
   opts: { nextMonthSales?: boolean } = {},
 ): boolean {
-  if (row.computedAt < BADGE_RULES_SINCE) return false;
+  if (row.rulesVersion !== BADGE_RULES_VERSION) return false;
   if (badgeCacheStale(row.ym, row.computedAt, uploads, opts)) return false;
   return Object.values(row.badges).every((b) =>
     b.winners.every((w) => roster.has(w as Id<"performanceEmployees">)),
@@ -415,14 +420,21 @@ export const cacheCompletedMonthBadges = internalMutation({
           continue;
         }
         const badges = awardBadges((await teamTotals(ctx, company._id, ym, cache)).snaps);
-        if (row) await ctx.db.patch(row._id, { badges, computedAt: now });
-        else
+        if (row) {
+          await ctx.db.patch(row._id, {
+            badges,
+            computedAt: now,
+            rulesVersion: BADGE_RULES_VERSION,
+          });
+        } else {
           await ctx.db.insert("performanceBadgeCache", {
             companyId: company._id,
             ym,
             badges,
             computedAt: now,
+            rulesVersion: BADGE_RULES_VERSION,
           });
+        }
         computed++;
       }
     }
@@ -962,12 +974,7 @@ export const drilldown = userQuery({
 
     let empFilter = employeeName;
     let companyId: Id<"companies">;
-    const dashboard = companyIdArg
-      ? viewer.dashboards.find((d) => d.companyId === companyIdArg)
-      : (viewer.dashboards.find((d) => d.canViewTeam) ?? viewer.dashboards[0]);
-    if (!dashboard) {
-      throw new ConvexError({ code: "forbidden", message: "Kein Zugriff auf dieses Dashboard." });
-    }
+    const dashboard = resolveDashboard(viewer, companyIdArg);
     if (dashboard.canViewTeam) {
       companyId = dashboard.companyId;
     } else {
