@@ -34,7 +34,7 @@ async function setup(employeeNames: string[] = ["Anna Müller", "Ben Becker"]) {
   let uploads = 0;
   async function upload(
     filename: string,
-    content: string | Uint8Array,
+    content: string | Uint8Array<ArrayBuffer>,
     opts: { force?: boolean } = {},
   ) {
     const bytes = typeof content === "string" ? new TextEncoder().encode(content) : content;

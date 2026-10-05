@@ -528,6 +528,9 @@ async function processReport(
 
   const calls = readCallExport(rows);
   if (calls) {
+    if (calls.rows.length === 0) {
+      return { status: "empty", reportDate: toISODate(calls.reportDate) };
+    }
     const { snapshots, skipped, flaggedRows } = await buildCallSnapshots(
       ctx,
       companyId,
