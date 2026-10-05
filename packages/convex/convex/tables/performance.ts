@@ -383,6 +383,16 @@ export const performanceTables = {
     // (e.g. the blank template).
     .index("by_company_contentHash", ["companyId", "contentHash"]),
 
+  // One row per dashboard, owned by the upload pipeline (`performance/
+  // import.ts`). The raw dates say which report the drill-down tables
+  // currently hold, so re-importing an older Lead/Opp file never replaces
+  // newer lists.
+  performanceImportState: defineTable({
+    companyId: v.id("companies"),
+    rawLeadsReportDate: v.optional(v.string()),
+    rawOppsReportDate: v.optional(v.string()),
+  }).index("by_company", ["companyId"]),
+
   // A single employee/day/field whose parsed duration failed the physical
   // 24h plausibility check (see callImport.ts's `capExplicitDuration`) gets
   // excluded from `performanceReports` and parked here instead of being

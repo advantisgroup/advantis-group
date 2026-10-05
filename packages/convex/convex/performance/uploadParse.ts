@@ -110,11 +110,58 @@ async function runApplyImport(
     batchId?: string;
     uploadedBy?: string;
     replaceLogId?: Id<"performanceUploadLog">;
+    deferLog?: boolean;
   },
 ): Promise<{ rowsImported: number }> {
   return runSafely("applyImport", () =>
     ctx.runMutation(internal.performance.import.applyImport, args),
   );
+}
+
+/** A Lead/Opp import: snapshots first, then the drill-down tables — only
+ * when this report is at least as new as what they hold, so re-importing
+ * last week's file doesn't put last week's open leads back — and the log
+ * row last, so a failure on the way leaves nothing that blocks a retry. */
+async function importSalesforce(
+  ctx: ActionCtx,
+  base: Omit<Parameters<typeof runApplyImport>[1], "reportKind" | "deferLog" | "snapshots">,
+  kind: "lead" | "opp",
+  snapshots: EmployeeSnapshot[],
+  writeRaw: () => Promise<void>,
+): Promise<ImportResult> {
+  const reportDate = base.reportDate!;
+  const result = await runApplyImport(ctx, {
+    ...base,
+    snapshots,
+    reportKind: kind,
+    deferLog: true,
+  });
+  const current = await ctx.runQuery(internal.performance.import.getRawReportDates, {
+    companyId: base.companyId,
+  });
+  const currentDate = kind === "lead" ? current.leads : current.opps;
+  const replaceRaw = currentDate === undefined || reportDate >= currentDate;
+  if (replaceRaw) await writeRaw();
+  const { flaggedRows: _flagged, ...log } = base;
+  await runSafely("recordUpload", () =>
+    ctx.runMutation(internal.performance.import.recordUpload, {
+      ...log,
+      reportKind: kind,
+      rowsImported: result.rowsImported,
+      ...(replaceRaw
+        ? kind === "lead"
+          ? { rawLeadsReportDate: reportDate }
+          : { rawOppsReportDate: reportDate }
+        : {}),
+    }),
+  );
+  return {
+    status: "ok",
+    rowsImported: result.rowsImported,
+    reportKind: kind,
+    reportDate,
+    ...(replaceRaw ? {} : { rawKept: currentDate }),
+  };
 }
 
 /** Loops a batched `clear*` mutation (see performanceImport.ts's
@@ -349,9 +396,23 @@ async function writeInteractions(
   }
 }
 
+export type ReportKind = "lead" | "opp" | "call" | "template" | "interactions";
+
 export type ImportResult =
-  | { status: "ok"; rowsImported: number; skipped?: string[]; flagged?: number }
-  | { status: "empty"; reportDate: string }
+  | {
+      status: "ok";
+      rowsImported: number;
+      reportKind: ReportKind;
+      reportDate: string;
+      /** First day, for a report spanning several days (interactions). */
+      reportDateFrom?: string;
+      skipped?: string[];
+      flagged?: number;
+      /** Set when the drill-down lists were left alone because they already
+       * hold a newer report (the date given). */
+      rawKept?: string;
+    }
+  | { status: "empty"; reportKind?: ReportKind; reportDate: string }
   | { status: "duplicate"; filename: string; uploadedAt: number };
 
 /**
@@ -418,169 +479,115 @@ async function processReport(
       ? parseCsvText(csvText, sniffDelimiter(firstLine(csvText)))
       : readSheetRows(bytes);
 
+  const base = {
+    companyId,
+    sourceFile: filename,
+    storageId,
+    contentHash,
+    fileSize,
+    batchId,
+    uploadedBy,
+    replaceLogId,
+  };
+
   const sf = readSalesforceExport(rows);
   if (sf) {
+    const reportDate = toISODate(sf.reportDate);
+    const sfBase = { ...base, reportDate, sourceRowCount: sf.rows.length };
     if (sf.kind === "lead") {
       const { snapshots, raw } = aggregateLeadReport(sf.rows, sf.reportDate);
-      const result = await runApplyImport(ctx, {
-        companyId,
-        snapshots,
-        sourceFile: filename,
-        storageId,
-        contentHash,
-        reportKind: "lead",
-        reportDate: toISODate(sf.reportDate),
-        sourceRowCount: sf.rows.length,
-        fileSize,
-        batchId,
-        uploadedBy,
-        replaceLogId,
-      });
-      await writeRawLeads(ctx, companyId, raw);
-      return { status: "ok", rowsImported: result.rowsImported };
+      return importSalesforce(ctx, sfBase, "lead", snapshots, () =>
+        writeRawLeads(ctx, companyId, raw),
+      );
     }
     const { snapshots, raw, wonOpps } = aggregateOppReport(sf.rows, sf.reportDate);
-    const result = await runApplyImport(ctx, {
-      companyId,
-      snapshots,
-      sourceFile: filename,
-      storageId,
-      contentHash,
-      reportKind: "opp",
-      reportDate: toISODate(sf.reportDate),
-      sourceRowCount: sf.rows.length,
-      fileSize,
-      batchId,
-      uploadedBy,
-      replaceLogId,
+    return importSalesforce(ctx, sfBase, "opp", snapshots, async () => {
+      await writeRawOpps(ctx, companyId, raw);
+      await writeWonOpps(ctx, companyId, wonOpps);
     });
-    await writeRawOpps(ctx, companyId, raw);
-    await writeWonOpps(ctx, companyId, wonOpps);
-    return { status: "ok", rowsImported: result.rowsImported };
   }
 
-  if (csvText !== null) {
-    const text = csvText;
-    const detected = readCallCsv(text);
-    if (detected) {
-      if (detected.rows.length === 0) {
-        // A report with zero activity (e.g. a weekend): ignored entirely,
-        // no data, no upload-log entry.
-        return { status: "empty", reportDate: toISODate(detected.reportDate) };
-      }
-      const { snapshots, skipped, flaggedRows } = await buildCallSnapshots(
-        ctx,
-        companyId,
-        detected.rows,
-      );
-      const result = await runApplyImport(ctx, {
-        companyId,
-        snapshots,
-        sourceFile: filename,
-        storageId,
-        contentHash,
-        reportKind: "call",
-        reportDate: toISODate(detected.reportDate),
-        sourceRowCount: detected.rows.length,
-        skippedNames: skipped,
-        flaggedRows,
-        fileSize,
-        batchId,
-        uploadedBy,
-        replaceLogId,
-      });
-      return {
-        status: "ok",
-        rowsImported: result.rowsImported,
-        skipped,
-        flagged: flaggedRows.length,
-      };
-    }
-
-    const interactionRows = readInteractionsCsv(text);
-    if (interactionRows) {
-      if (interactionRows.length === 0) {
-        // Recognized, but no employee-attributable interaction at all.
-        return { status: "empty", reportDate: toISODate(todayBerlin()) };
-      }
-      const range = interactionDateRange(interactionRows);
-      const { inserts, skipped } = await buildInteractionInserts(ctx, companyId, interactionRows);
-      await writeInteractions(ctx, companyId, inserts, range, filename);
-      await runSafely("logInteractionsImport", () =>
-        ctx.runMutation(internal.performance.import.logInteractionsImport, {
-          companyId,
-          sourceFile: filename,
-          storageId,
-          contentHash,
-          reportDate: range.to,
-          reportDateFrom: range.from,
-          sourceRowCount: interactionRows.length,
-          skippedNames: skipped,
-          fileSize,
-          batchId,
-          uploadedBy,
-          rowsImported: inserts.length,
-          replaceLogId,
-        }),
-      );
-      return { status: "ok", rowsImported: inserts.length, skipped };
-    }
-  }
-
-  const calls = csvText === null ? readCallExport(rows) : null;
+  const calls = csvText !== null ? readCallCsv(csvText) : readCallExport(rows);
   if (calls) {
-    if (calls.rows.length === 0) {
-      return { status: "empty", reportDate: toISODate(calls.reportDate) };
-    }
+    const reportDate = toISODate(calls.reportDate);
+    // A report with zero activity (e.g. a weekend): ignored entirely, no
+    // data, no upload-log entry.
+    if (calls.rows.length === 0) return { status: "empty", reportKind: "call", reportDate };
     const { snapshots, skipped, flaggedRows } = await buildCallSnapshots(
       ctx,
       companyId,
       calls.rows,
     );
     const result = await runApplyImport(ctx, {
-      companyId,
+      ...base,
       snapshots,
-      sourceFile: filename,
-      storageId,
-      contentHash,
       reportKind: "call",
-      reportDate: toISODate(calls.reportDate),
+      reportDate,
       sourceRowCount: calls.rows.length,
       skippedNames: skipped,
       flaggedRows,
-      fileSize,
-      batchId,
-      uploadedBy,
-      replaceLogId,
     });
     return {
       status: "ok",
       rowsImported: result.rowsImported,
+      reportKind: "call",
+      reportDate,
       skipped,
       flagged: flaggedRows.length,
+    };
+  }
+
+  const interactionRows = csvText !== null ? readInteractionsCsv(csvText) : null;
+  if (interactionRows) {
+    if (interactionRows.length === 0) {
+      // Recognized, but no employee-attributable interaction at all.
+      return {
+        status: "empty",
+        reportKind: "interactions",
+        reportDate: toISODate(todayBerlin()),
+      };
+    }
+    const range = interactionDateRange(interactionRows);
+    const { inserts, skipped } = await buildInteractionInserts(ctx, companyId, interactionRows);
+    await writeInteractions(ctx, companyId, inserts, range, filename);
+    await runSafely("logInteractionsImport", () =>
+      ctx.runMutation(internal.performance.import.logInteractionsImport, {
+        ...base,
+        reportDate: range.to,
+        reportDateFrom: range.from,
+        sourceRowCount: interactionRows.length,
+        skippedNames: skipped,
+        rowsImported: inserts.length,
+      }),
+    );
+    return {
+      status: "ok",
+      rowsImported: inserts.length,
+      reportKind: "interactions",
+      reportDate: range.to,
+      reportDateFrom: range.from !== range.to ? range.from : undefined,
+      skipped,
     };
   }
 
   const template = parseAggregatedTemplate(rows);
   if (!template) throw unrecognizedFile();
   if (template.snapshots.length === 0) {
-    return { status: "empty", reportDate: template.reportDate };
+    return { status: "empty", reportKind: "template", reportDate: template.reportDate };
   }
   const result = await runApplyImport(ctx, {
-    companyId,
+    ...base,
     snapshots: template.snapshots,
-    sourceFile: filename,
-    storageId,
-    contentHash,
     reportKind: "template",
     reportDate: template.reportDate,
     sourceRowCount: template.snapshots.length,
-    fileSize,
-    batchId,
-    uploadedBy,
-    replaceLogId,
   });
-  return { status: "ok", rowsImported: result.rowsImported };
+  return {
+    status: "ok",
+    rowsImported: result.rowsImported,
+    reportKind: "template",
+    reportDate: template.reportDate,
+  };
 }
 
 /**

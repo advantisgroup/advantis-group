@@ -438,14 +438,13 @@ export const applyImport = internalMutation({
     // place instead of inserting a new one, so re-processing an
     // already-uploaded file doesn't leave a duplicate log entry behind.
     replaceLogId: v.optional(v.id("performanceUploadLog")),
+    // Lead/Opp imports still have to refill the drill-down tables after
+    // this; they write the log row last (`recordUpload`), so a failure in
+    // between leaves no log entry that would block the retry as duplicate.
+    deferLog: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<{ rowsImported: number }> => {
     const now = Date.now();
-    // A re-import doesn't necessarily carry a fresh `uploadedBy` (the
-    // original uploader isn't necessarily who clicked "re-import") — fall
-    // back to whatever the row already had instead of blanking it out.
-    const existingLog = args.replaceLogId ? await ctx.db.get(args.replaceLogId) : null;
-    const uploadedBy = args.uploadedBy ?? existingLog?.uploadedBy;
     const employeeCache = await loadEmployeeCache(ctx, args.companyId);
     for (const snap of args.snapshots) {
       await upsertSnapshot(
@@ -473,27 +472,144 @@ export const applyImport = internalMutation({
         employeeCache,
       );
     }
-    const logFields = {
-      companyId: args.companyId,
-      filename: args.sourceFile,
-      storageId: args.storageId,
-      rowsImported: args.snapshots.length,
-      uploadedAt: now,
-      contentHash: args.contentHash,
-      reportKind: args.reportKind,
-      reportDate: args.reportDate,
-      sourceRowCount: args.sourceRowCount,
-      skippedNames: args.skippedNames,
-      fileSize: args.fileSize,
-      batchId: args.batchId,
-      uploadedBy,
-    };
-    if (args.replaceLogId) {
-      await ctx.db.patch(args.replaceLogId, logFields);
-    } else {
-      await ctx.db.insert("performanceUploadLog", logFields);
+    if (!args.deferLog) {
+      await writeUploadLog(ctx, { ...args, rowsImported: args.snapshots.length });
     }
     return { rowsImported: args.snapshots.length };
+  },
+});
+
+interface UploadLogInput {
+  companyId: Id<"companies">;
+  sourceFile: string;
+  storageId: Id<"_storage">;
+  rowsImported: number;
+  contentHash?: string;
+  reportKind?: Doc<"performanceUploadLog">["reportKind"];
+  reportDate?: string;
+  reportDateFrom?: string;
+  sourceRowCount?: number;
+  skippedNames?: string[];
+  fileSize?: number;
+  batchId?: string;
+  uploadedBy?: string;
+  replaceLogId?: Id<"performanceUploadLog">;
+}
+
+async function writeUploadLog(ctx: MutationCtx, args: UploadLogInput): Promise<void> {
+  // A re-import doesn't necessarily carry a fresh `uploadedBy` (the
+  // original uploader isn't necessarily who clicked "re-import") — fall
+  // back to whatever the row already had instead of blanking it out.
+  const existingLog = args.replaceLogId ? await ctx.db.get(args.replaceLogId) : null;
+  const logFields = {
+    companyId: args.companyId,
+    filename: args.sourceFile,
+    storageId: args.storageId,
+    rowsImported: args.rowsImported,
+    uploadedAt: Date.now(),
+    contentHash: args.contentHash,
+    reportKind: args.reportKind,
+    reportDate: args.reportDate,
+    reportDateFrom:
+      args.reportDateFrom && args.reportDateFrom !== args.reportDate
+        ? args.reportDateFrom
+        : undefined,
+    sourceRowCount: args.sourceRowCount,
+    skippedNames: args.skippedNames,
+    fileSize: args.fileSize,
+    batchId: args.batchId,
+    uploadedBy: args.uploadedBy ?? existingLog?.uploadedBy,
+  };
+  if (existingLog) {
+    await ctx.db.patch(existingLog._id, logFields);
+  } else {
+    await ctx.db.insert("performanceUploadLog", logFields);
+  }
+}
+
+const uploadLogArgs = {
+  companyId: v.id("companies"),
+  sourceFile: v.string(),
+  storageId: v.id("_storage"),
+  rowsImported: v.number(),
+  contentHash: v.optional(v.string()),
+  reportKind: v.optional(
+    v.union(
+      v.literal("lead"),
+      v.literal("opp"),
+      v.literal("call"),
+      v.literal("template"),
+      v.literal("interactions"),
+    ),
+  ),
+  reportDate: v.optional(v.string()),
+  reportDateFrom: v.optional(v.string()),
+  sourceRowCount: v.optional(v.number()),
+  skippedNames: v.optional(v.array(v.string())),
+  fileSize: v.optional(v.number()),
+  batchId: v.optional(v.string()),
+  uploadedBy: v.optional(v.string()),
+  replaceLogId: v.optional(v.id("performanceUploadLog")),
+};
+
+/** The last step of a Lead/Opp import: the log row, plus which report the
+ * drill-down tables now hold (when they were replaced). */
+export const recordUpload = internalMutation({
+  args: {
+    ...uploadLogArgs,
+    rawLeadsReportDate: v.optional(v.string()),
+    rawOppsReportDate: v.optional(v.string()),
+  },
+  handler: async (ctx, { rawLeadsReportDate, rawOppsReportDate, ...log }): Promise<void> => {
+    await writeUploadLog(ctx, log);
+    if (rawLeadsReportDate || rawOppsReportDate) {
+      const state = await loadImportState(ctx, log.companyId);
+      const patch = {
+        ...(rawLeadsReportDate ? { rawLeadsReportDate } : {}),
+        ...(rawOppsReportDate ? { rawOppsReportDate } : {}),
+      };
+      if (state) await ctx.db.patch(state._id, patch);
+      else await ctx.db.insert("performanceImportState", { companyId: log.companyId, ...patch });
+    }
+  },
+});
+
+// ------------------------------------------------------------ import state
+
+async function loadImportState(
+  ctx: { db: QueryCtx["db"] },
+  companyId: Id<"companies">,
+): Promise<Doc<"performanceImportState"> | null> {
+  return await ctx.db
+    .query("performanceImportState")
+    .withIndex("by_company", (q) => q.eq("companyId", companyId))
+    .first();
+}
+
+/** Which report date the drill-down tables currently hold. Dashboards
+ * imported before `performanceImportState` existed fall back to the date
+ * stamped on the stored rows (all rows of a table come from one report). */
+export const getRawReportDates = internalQuery({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }): Promise<{ leads?: string; opps?: string }> => {
+    const state = await loadImportState(ctx, companyId);
+    const leads =
+      state?.rawLeadsReportDate ??
+      (
+        await ctx.db
+          .query("performanceRawLeads")
+          .withIndex("by_company_createDate", (q) => q.eq("companyId", companyId))
+          .first()
+      )?.reportDate;
+    const opps =
+      state?.rawOppsReportDate ??
+      (
+        await ctx.db
+          .query("performanceRawOpps")
+          .withIndex("by_company", (q) => q.eq("companyId", companyId))
+          .first()
+      )?.reportDate;
+    return { leads, opps };
   },
 });
 
@@ -954,27 +1070,6 @@ export const logInteractionsImport = internalMutation({
     replaceLogId: v.optional(v.id("performanceUploadLog")),
   },
   handler: async (ctx, args): Promise<void> => {
-    const existingLog = args.replaceLogId ? await ctx.db.get(args.replaceLogId) : null;
-    const logFields = {
-      companyId: args.companyId,
-      filename: args.sourceFile,
-      storageId: args.storageId,
-      rowsImported: args.rowsImported,
-      uploadedAt: Date.now(),
-      contentHash: args.contentHash,
-      reportKind: "interactions" as const,
-      reportDate: args.reportDate,
-      reportDateFrom: args.reportDateFrom !== args.reportDate ? args.reportDateFrom : undefined,
-      sourceRowCount: args.sourceRowCount,
-      skippedNames: args.skippedNames,
-      fileSize: args.fileSize,
-      batchId: args.batchId,
-      uploadedBy: args.uploadedBy ?? existingLog?.uploadedBy,
-    };
-    if (args.replaceLogId) {
-      await ctx.db.patch(args.replaceLogId, logFields);
-    } else {
-      await ctx.db.insert("performanceUploadLog", logFields);
-    }
+    await writeUploadLog(ctx, { ...args, reportKind: "interactions" });
   },
 });

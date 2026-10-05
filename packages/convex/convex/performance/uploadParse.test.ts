@@ -59,6 +59,85 @@ function interactionsCsv(rows: [string, string, string][]): string {
   ].join("\n");
 }
 
+function leadCsv(asOf: string, rows: [string, string, string][]): string {
+  return [
+    `As of ${asOf}`,
+    "Lead Owner;Lead Status;Create Date;Last Activity",
+    ...rows.map(([owner, status, created]) => `${owner};${status};${created};`),
+  ].join("\n");
+}
+
+describe("Salesforce import", () => {
+  test("an older report updates its day but never replaces newer drill-down lists", async () => {
+    const { t, ids, upload } = await setup();
+    const newer = await upload(
+      "lead-0510.csv",
+      leadCsv("2026-10-05", [
+        ["Anna Müller", "Open", "01.10.2026"],
+        ["Anna Müller", "Analysis", "02.10.2026"],
+      ]),
+    );
+    expect(newer).toMatchObject({ status: "ok", reportKind: "lead", reportDate: "2026-10-05" });
+
+    const older = await upload(
+      "lead-0110.csv",
+      leadCsv("2026-10-01", [["Ben Becker", "Open", "01.10.2026"]]),
+    );
+    expect(older).toMatchObject({ status: "ok", reportDate: "2026-10-01", rawKept: "2026-10-05" });
+
+    const raw = await t.run((ctx) =>
+      ctx.db
+        .query("performanceRawLeads")
+        .withIndex("by_company_owner", (q) => q.eq("companyId", ids.companyId))
+        .collect(),
+    );
+    expect(raw.map((r) => [r.owner, r.reportDate])).toEqual([
+      ["Anna Müller", "2026-10-05"],
+      ["Anna Müller", "2026-10-05"],
+    ]);
+    const benReport = await t.run((ctx) =>
+      ctx.db
+        .query("performanceReports")
+        .withIndex("by_company_reportDate", (q) =>
+          q.eq("companyId", ids.companyId).eq("reportDate", "2026-10-01"),
+        )
+        .collect(),
+    );
+    expect(benReport).toHaveLength(1);
+
+    // The same or a newer day does replace them.
+    await upload("lead-0610.csv", leadCsv("2026-10-06", [["Ben Becker", "Open", "06.10.2026"]]));
+    const after = await t.run((ctx) =>
+      ctx.db
+        .query("performanceRawLeads")
+        .withIndex("by_company_owner", (q) => q.eq("companyId", ids.companyId))
+        .collect(),
+    );
+    expect(after.map((r) => r.owner)).toEqual(["Ben Becker"]);
+  });
+
+  test("the upload log row is written after the drill-down tables", async () => {
+    const { t, ids, upload } = await setup();
+    await upload("lead.csv", leadCsv("2026-10-05", [["Anna Müller", "Open", "01.10.2026"]]));
+    const [log] = await t.run((ctx) =>
+      ctx.db
+        .query("performanceUploadLog")
+        .withIndex("by_company_uploadedAt", (q) => q.eq("companyId", ids.companyId))
+        .collect(),
+    );
+    const [raw] = await t.run((ctx) => ctx.db.query("performanceRawLeads").collect());
+    expect(log).toMatchObject({ reportKind: "lead", reportDate: "2026-10-05", rowsImported: 1 });
+    expect(log._creationTime).toBeGreaterThanOrEqual(raw._creationTime);
+  });
+});
+
+describe("unrecognised files", () => {
+  test("get a German error naming the expected exports", async () => {
+    const { upload } = await setup();
+    await expect(upload("irgendwas.csv", "Foo;Bar\n1;2")).rejects.toThrow("Dateityp nicht erkannt");
+  });
+});
+
 describe("interactions import", () => {
   test("replaces only the days the file contains", async () => {
     const { t, ids, upload } = await setup();
