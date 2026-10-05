@@ -3,9 +3,15 @@
 import { Award, Phone, Target, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { ComparisonFootnote, MissingReportWarning } from "@/components/performance/ComparisonNotes";
 import { MetricTile } from "@/components/performance/MetricTile";
 import { useEmployeeDetailData } from "@/components/performance/PerformanceEmployeeDetailContext";
-import { DeltaTriple, fmtNum, fmtPct } from "@/components/performance/PerformanceFormat";
+import {
+  type DeltaFormat,
+  DeltaTriple,
+  fmtNum,
+  fmtPct,
+} from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { UnqualifiedReasonsChart } from "@/components/performance/UnqualifiedReasonsChart";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +34,7 @@ function PrimaryKpiCard({
   dVm,
   dVj,
   dTeam,
+  format,
 }: {
   accent: "emerald" | "purple" | "slate" | "amber";
   label: string;
@@ -36,6 +43,7 @@ function PrimaryKpiCard({
   dVm?: number;
   dVj?: number;
   dTeam?: number;
+  format?: DeltaFormat;
 }) {
   const border = {
     emerald: "border-t-emerald-500",
@@ -51,7 +59,7 @@ function PrimaryKpiCard({
         </span>
         <span className="text-3xl font-semibold tabular-nums">{value}</span>
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-        <DeltaTriple dVm={dVm} dVj={dVj} dTeam={dTeam} />
+        <DeltaTriple dVm={dVm} dVj={dVj} dTeam={dTeam} format={format} />
       </CardContent>
     </Card>
   );
@@ -106,9 +114,12 @@ export default function EmployeeOverviewPage() {
   }
 
   const fc = data.cur.fc;
+  const workedDays = fc?.basis === "Arbeitstage";
 
   return (
     <div className="space-y-6">
+      <MissingReportWarning fc={fc} />
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <PrimaryKpiCard
           accent="emerald"
@@ -118,6 +129,7 @@ export default function EmployeeOverviewPage() {
           dVm={data.dVm.workableRate}
           dVj={data.dVj.workableRate}
           dTeam={data.dTeam.workableRate}
+          format="pts"
         />
         <PrimaryKpiCard
           accent="purple"
@@ -127,6 +139,7 @@ export default function EmployeeOverviewPage() {
           dVm={data.dVm.hitrate}
           dVj={data.dVj.hitrate}
           dTeam={data.dTeam.hitrate}
+          format="pts"
         />
         <PrimaryKpiCard
           accent="slate"
@@ -148,15 +161,14 @@ export default function EmployeeOverviewPage() {
         />
         <PrimaryKpiCard
           accent="amber"
-          label={t("dashboardWonPerWorkday")}
+          label={workedDays ? t("dashboardWonPerWorkdayEmployee") : t("dashboardWonPerWorkday")}
           value={fmtNum(data.cur.wonPerDay)}
           subtitle={
-            fc
-              ? t("dashboardWonPerWorkdaySubtitle", {
-                  elapsed: fc.elapsed,
-                  total: fc.total,
-                })
-              : undefined
+            !fc
+              ? undefined
+              : workedDays
+                ? t("dashboardWonPerWorkdayEmployeeSubtitle", { elapsed: fc.elapsed })
+                : t("dashboardWonPerWorkdaySubtitle", { elapsed: fc.elapsed, total: fc.total })
           }
           dVm={data.dVm.wonPerDay}
           dVj={data.dVj.wonPerDay}
@@ -249,6 +261,11 @@ export default function EmployeeOverviewPage() {
       </Card>
 
       <UnqualifiedReasonsChart reasons={data.reasons} />
+
+      <div className="space-y-1 text-xs text-muted-foreground">
+        <ComparisonFootnote comparison={data.comparison} />
+        {workedDays && <p>{t("wonPerWorkdayFootnote")}</p>}
+      </div>
     </div>
   );
 }

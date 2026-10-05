@@ -38,6 +38,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTip } from "@/components/ui/info-tip";
 import {
   Select,
   SelectContent,
@@ -45,7 +46,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatIsoDate } from "@/lib/format";
 import { usePerformanceApi } from "@/lib/performance";
 
 interface DashboardTopData {
@@ -139,6 +139,45 @@ function DashboardTopSection({
   return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }
 
+const SOURCES = ["lead", "opp", "call", "interactions"] as const;
+const SOURCE_LABEL = {
+  lead: "dataStatusLead",
+  opp: "dataStatusOpp",
+  call: "dataStatusCall",
+  interactions: "dataStatusInteractions",
+} as const;
+
+/** "Datenstand" per source, so one that stopped arriving stands out: a
+ * source more than a day behind the newest one is shown in warning colour. */
+function DataStatusLine({ status }: { status: Record<(typeof SOURCES)[number], string | null> }) {
+  const t = useTranslations("Performance");
+  const locale = useLocale();
+  const newest = SOURCES.map((s) => status[s]).reduce<string | null>(
+    (max, d) => (d && (!max || d > max) ? d : max),
+    null,
+  );
+  if (!newest) return null;
+  const dayBefore = new Date(Date.parse(`${newest}T00:00:00Z`) - 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  return (
+    <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+      <span>{t("dataStatusLabel")}:</span>
+      {SOURCES.filter((s) => status[s]).map((s) => {
+        const stale = status[s]! < dayBefore;
+        const label = `${t(SOURCE_LABEL[s])} ${fmtDayShort(status[s]!, locale)}`;
+        return stale ? (
+          <InfoTip key={s} text={t("dataStatusStale")}>
+            <span className="font-medium text-warn">{label}</span>
+          </InfoTip>
+        ) : (
+          <span key={s}>{label}</span>
+        );
+      })}
+    </span>
+  );
+}
+
 function DashboardChrome({
   dashboard,
   children,
@@ -196,41 +235,43 @@ function DashboardChrome({
     },
   ];
 
+  // Entwicklung always shows the last 3 months and Interaktionen has its own
+  // period filter — a month picker there would only mislead.
+  const usesMonth = activeTab !== "entwicklung" && activeTab !== "interaktionen";
+
   return (
     <div className="min-h-screen bg-muted/20">
       <PerformanceHeader />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         <div className="flex flex-wrap items-center gap-3">
-          <Select
-            value={ym ?? data?.ym ?? ""}
-            onValueChange={(v) => setYm(v)}
-            disabled={!data || data.months.length === 0}
-          >
-            <SelectTrigger className="w-56">
-              <SelectValue placeholder={t("dashboardMonthLabel")} />
-            </SelectTrigger>
-            <SelectContent>
-              {[...(data?.months ?? [])].reverse().map((m) => (
-                <SelectItem key={m} value={m}>
-                  {fmtYm(m, locale)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {data && (
-            <Badge variant={data.monthDone ? "muted" : "success"}>
-              {data.monthDone ? t("dashboardMonthClosed") : t("dashboardMonthOpen")}
-            </Badge>
+          {usesMonth && (
+            <>
+              <Select
+                value={ym ?? data?.ym ?? ""}
+                onValueChange={(v) => setYm(v)}
+                disabled={!data || data.months.length === 0}
+              >
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder={t("dashboardMonthLabel")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {[...(data?.months ?? [])].reverse().map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {fmtYm(m, locale)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {data && (
+                <Badge variant={data.monthDone ? "muted" : "success"}>
+                  {data.monthDone ? t("dashboardMonthClosed") : t("dashboardMonthOpen")}
+                </Badge>
+              )}
+            </>
           )}
-          {data?.total.reportDate && (
-            <span className="text-xs text-muted-foreground">
-              {t("dashboardLastUpdated", {
-                date: formatIsoDate(data.total.reportDate, locale),
-              })}
-            </span>
-          )}
-          {data && data.snaps.length > 0 && (
+          {data && <DataStatusLine status={data.dataStatus} />}
+          {usesMonth && data && data.snaps.length > 0 && (
             <Button
               variant="outline"
               size="sm"

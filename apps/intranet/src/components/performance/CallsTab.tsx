@@ -7,9 +7,11 @@ import { useLocale, useTranslations } from "next-intl";
 import { FilterableBarChart } from "@/components/charts/FilterableBarChart";
 import { CHART } from "@/components/charts/theme";
 import {
+  type DeltaFormat,
   DeltaPair,
   fmtDayShort,
   fmtDuration,
+  fmtDurationPrecise,
   fmtNum,
 } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
@@ -27,7 +29,7 @@ interface CallMetrics {
 
 interface CallsData {
   hasCalls: boolean;
-  days: { date: string; values: CallMetrics }[];
+  days: { date: string; values: CallMetrics; loggedIn: number }[];
   dVm: CallMetrics;
   dVj: CallMetrics;
 }
@@ -37,18 +39,20 @@ function CallStatCard({
   value,
   dVm,
   dVj,
+  format,
 }: {
   label: string;
   value: string;
   dVm?: number;
   dVj?: number;
+  format?: DeltaFormat;
 }) {
   return (
     <Card>
       <CardContent className="flex flex-col gap-1.5 p-4">
         <span className="text-xs text-muted-foreground">{label}</span>
         <span className="text-xl font-semibold tabular-nums">{value}</span>
-        <DeltaPair dVm={dVm} dVj={dVj} />
+        <DeltaPair dVm={dVm} dVj={dVj} format={format} />
       </CardContent>
     </Card>
   );
@@ -91,8 +95,12 @@ export function CallsTab({
     );
   }
 
-  const daysWithData = data.days.filter((d) => d.values.callsToday !== undefined).length;
-  const loginPerDay = daysWithData ? Math.round((totals?.loginSec ?? 0) / daysWithData) : undefined;
+  // Per person and day logged in: the team's login time spread over every
+  // person-day with login time (one employee: their own login days).
+  const loginPersonDays = data.days.reduce((a, d) => a + d.loggedIn, 0);
+  const loginPerDay = loginPersonDays
+    ? Math.round((totals?.loginSec ?? 0) / loginPersonDays)
+    : undefined;
 
   return (
     <div className="space-y-6">
@@ -117,21 +125,24 @@ export function CallsTab({
         />
         <CallStatCard
           label={t("callsAvgDurationLabel")}
-          value={fmtDuration(totals?.talkAvgSec)}
+          value={fmtDurationPrecise(totals?.talkAvgSec)}
           dVm={data.dVm.talkAvgSec}
           dVj={data.dVj.talkAvgSec}
+          format="duration"
         />
         <CallStatCard
           label={t("callsTotalTalkLabel")}
           value={fmtDuration(totals?.talkTotalSec)}
           dVm={data.dVm.talkTotalSec}
           dVj={data.dVj.talkTotalSec}
+          format="duration"
         />
         <CallStatCard
           label={t("callsLoginLabel")}
           value={fmtDuration(totals?.loginSec)}
           dVm={data.dVm.loginSec}
           dVj={data.dVj.loginSec}
+          format="duration"
         />
         <CallStatCard label={t("callsLoginPerDayLabel")} value={fmtDuration(loginPerDay)} />
       </div>
