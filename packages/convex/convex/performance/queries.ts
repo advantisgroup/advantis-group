@@ -822,6 +822,22 @@ export interface InteractionRecord {
   direction: string | undefined;
 }
 
+/** The newest day with interactions of one employee — where their
+ * Interaktionen tab opens instead of an empty today. */
+export const latestInteractionDay = userQuery({
+  args: { employeeId: v.id("performanceEmployees") },
+  handler: async (ctx, { employeeId }): Promise<string | null> => {
+    const viewer = await loadViewer(ctx, ctx.caller);
+    await requireViewableEmployee(ctx, viewer, employeeId);
+    const last = await ctx.db
+      .query("performanceInteractions")
+      .withIndex("by_employee_date", (q) => q.eq("employeeId", employeeId))
+      .order("desc")
+      .first();
+    return last?.date ?? null;
+  },
+});
+
 /** Every individual interaction on one day — the drill-down behind an
  * `interactionsMonth` day row. Team-wide (admin) when `employeeId` is
  * omitted, one employee's own interactions otherwise — same
@@ -885,12 +901,12 @@ const LISTS: Record<string, { title: string; desc: string; kind: "lead" | "opp" 
     kind: "lead",
   },
   leads14: {
-    title: "Leads: Last Activity >2 Wochen",
+    title: "Leads: letzte Aktivität >2 Wochen",
     desc: "Aktive Leads (Open/Analysis) ohne Aktivität seit mehr als 14 Tagen.",
     kind: "lead",
   },
   opp_overdue: {
-    title: "Overdue Opportunities",
+    title: "Überfällige Opportunities",
     desc: "Offene Opportunities, deren Close Date in der Vergangenheit liegt.",
     kind: "opp",
   },
@@ -900,7 +916,7 @@ const LISTS: Record<string, { title: string; desc: string; kind: "lead" | "opp" 
     kind: "opp",
   },
   opps14: {
-    title: "Opportunities: Last Activity >2 Wochen",
+    title: "Opportunities: letzte Aktivität >2 Wochen",
     desc: "Offene Opportunities ohne Aktivität seit mehr als 14 Tagen.",
     kind: "opp",
   },

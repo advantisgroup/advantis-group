@@ -159,26 +159,31 @@ function EmployeeChrome({
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-xl font-semibold">{data?.employee.name}</h1>
-          <Select
-            value={ym ?? data?.ym ?? ""}
-            onValueChange={(v) => setYm(v)}
-            disabled={!data || data.months.length === 0}
-          >
-            <SelectTrigger className="w-56">
-              <SelectValue placeholder={t("dashboardMonthLabel")} />
-            </SelectTrigger>
-            <SelectContent>
-              {[...(data?.months ?? [])].reverse().map((m) => (
-                <SelectItem key={m} value={m}>
-                  {fmtYm(m, locale)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {data && (
-            <Badge variant={data.monthDone ? "muted" : "success"}>
-              {data.monthDone ? t("dashboardMonthClosed") : t("dashboardMonthOpen")}
-            </Badge>
+          {/* Entwicklung shows every month, Interaktionen pages by day. */}
+          {activeTab !== "entwicklung" && activeTab !== "interaktionen" && (
+            <>
+              <Select
+                value={ym ?? data?.ym ?? ""}
+                onValueChange={(v) => setYm(v)}
+                disabled={!data || data.months.length === 0}
+              >
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder={t("dashboardMonthLabel")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {[...(data?.months ?? [])].reverse().map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {fmtYm(m, locale)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {data && (
+                <Badge variant={data.monthDone ? "muted" : "success"}>
+                  {data.monthDone ? t("dashboardMonthClosed") : t("dashboardMonthOpen")}
+                </Badge>
+              )}
+            </>
           )}
         </div>
 
