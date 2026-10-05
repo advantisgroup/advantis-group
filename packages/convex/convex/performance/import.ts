@@ -103,8 +103,12 @@ async function upsertSnapshot(
   sourceFile: string,
   uploadedAt: number,
   cache: EmployeeCache,
+  clearFields: (keyof SnapshotFields)[] = [],
 ): Promise<void> {
   const employeeId = await findOrCreateEmployee(ctx, companyId, employeeName, cache);
+  const cleared = Object.fromEntries(
+    clearFields.filter((key) => !(key in fields)).map((key) => [key, undefined]),
+  ) as SnapshotFields;
   // Convex indexes aren't unique constraints (see the schema comment on
   // by_employee_date), so more than one row can in principle match — e.g. a
   // raced concurrent upload. Merge into the first match and drop any extras
@@ -126,11 +130,12 @@ async function upsertSnapshot(
     // historical data doesn't change once reported, only new days get
     // new data. Skipping a no-op write avoids burning a mutation on
     // every row of every file in a bulk re-import for nothing.
-    const unchanged = (Object.keys(fields) as (keyof SnapshotFields)[]).every(
-      (key) => existing[key] === fields[key],
+    const next = { ...fields, ...cleared };
+    const unchanged = (Object.keys(next) as (keyof SnapshotFields)[]).every(
+      (key) => existing[key] === next[key],
     );
     if (!unchanged) {
-      await ctx.db.patch(existing._id, { ...fields, sourceFile, uploadedAt });
+      await ctx.db.patch(existing._id, { ...next, sourceFile, uploadedAt });
     }
   } else {
     await ctx.db.insert("performanceReports", {
@@ -443,6 +448,11 @@ export const applyImport = internalMutation({
     // this; they write the log row last (`recordUpload`), so a failure in
     // between leaves no log entry that would block the retry as duplicate.
     deferLog: v.optional(v.boolean()),
+    // Fields this report knows are "not measured" for every row it writes,
+    // removed from a stored row that had them — a call report without an
+    // outbound column clears the Outbound value older imports filled from
+    // "Bearbeitet".
+    clearFields: v.optional(v.array(v.literal("callsOutbound"))),
   },
   handler: async (ctx, args): Promise<{ rowsImported: number }> => {
     const now = Date.now();
@@ -457,6 +467,7 @@ export const applyImport = internalMutation({
         args.sourceFile,
         now,
         employeeCache,
+        args.clearFields,
       );
     }
     for (const flagged of args.flaggedRows ?? []) {

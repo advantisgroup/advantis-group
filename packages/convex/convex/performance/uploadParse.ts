@@ -112,6 +112,7 @@ async function runApplyImport(
     uploadedBy?: string;
     replaceLogId?: Id<"performanceUploadLog">;
     deferLog?: boolean;
+    clearFields?: "callsOutbound"[];
   },
 ): Promise<{ rowsImported: number }> {
   return runSafely("applyImport", () =>
@@ -532,6 +533,7 @@ async function processReport(
       sourceRowCount: calls.rows.length,
       skippedNames: skipped,
       flaggedRows,
+      clearFields: calls.hasOutbound ? undefined : ["callsOutbound"],
     });
     return {
       status: "ok",

@@ -166,6 +166,36 @@ describe("import lock", () => {
   });
 });
 
+describe("call report import", () => {
+  test("re-importing without an outbound column clears the old Outbound = Bearbeitet value", async () => {
+    const { t, ids, upload } = await setup();
+    await t.run((ctx) =>
+      ctx.db.insert("performanceReports", {
+        employeeId: ids.employees[0],
+        companyId: ids.companyId,
+        reportDate: "2026-10-01",
+        callsToday: 12,
+        callsOutbound: 12,
+        sourceFile: "alt.csv",
+        uploadedAt: 0,
+      }),
+    );
+    const result = await upload(
+      "call.csv",
+      ["Agentenname;Datum;Bearbeitet;Angenommen", "Anna Müller;01.10.2026;12;9"].join("\n"),
+    );
+    expect(result).toMatchObject({ status: "ok", reportKind: "call", reportDate: "2026-10-01" });
+    const [row] = await t.run((ctx) =>
+      ctx.db
+        .query("performanceReports")
+        .withIndex("by_employee_date", (q) => q.eq("employeeId", ids.employees[0]))
+        .collect(),
+    );
+    expect(row).toMatchObject({ callsToday: 12, callsAnswered: 9 });
+    expect(row.callsOutbound).toBeUndefined();
+  });
+});
+
 describe("upload page queries", () => {
   async function withAdmin() {
     const ctx = await setup();

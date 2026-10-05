@@ -374,6 +374,8 @@ export interface CallReport {
   /** One row per agent and day — interval rows already summed up. Empty
    * when the report is recognised but nobody had activity (a weekend). */
   rows: CallRow[];
+  /** Whether the file has a real outbound column at all. */
+  hasOutbound: boolean;
 }
 
 type CallField = keyof typeof CALL_ALIASES;
@@ -617,7 +619,7 @@ function readCallTable(table: SheetRow[], minCallColumns: number): CallReport | 
     rows.length > 0
       ? rows.reduce((max, r) => (r.date.getTime() > max.getTime() ? r.date : max), rows[0].date)
       : fallbackDate;
-  return { reportDate, rows };
+  return { reportDate, rows, hasOutbound: colmap.callsOutbound !== undefined };
 }
 
 /** Calls of a row: "Bearbeitet" (all handled calls) when the report has
