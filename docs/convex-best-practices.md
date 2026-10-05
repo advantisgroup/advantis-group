@@ -26,10 +26,10 @@ are deliberate. Re-audit rather than trusting the counts if it matters.
 | Argument validators on public functions | Followed — every `query`/`mutation`/`action` in `convex/` declares `args`. |
 | Access control on public functions | Followed — the `user*`/`serverUser*` builders in `functions.ts` resolve the caller and check the declared `role`/`can`/`applicant` requirement before the handler runs. |
 | Avoid `.filter` on db queries | Mostly followed — 9 remaining call sites (`people/accessRequests.ts`, `people/invites.ts`, `lib/auth.ts`, `performance/companies.ts`, `org/structureMigration.ts`, `performance/import.ts`, `migrations/backfillPerformanceCompanyId.ts`). |
-| `.collect` only on small result sets | ~265 `.collect()` calls. Fine for the org-scale tables (`users`, `departments`, `presence`); worth checking before adding one on an append-only table (`activitySamples`, `stateSamples`, `auditLog`, `messages`). |
-| Only schedule/`ctx.run*` **internal** functions | Deliberate exception: `activity/state.ts`'s `pushSignal`/`reportHealth`/`mappings` are public *by design* — `apps/api` calls them server-to-server behind `ACTIVITYTRACK_SIGNAL_SECRET` (see AGENTS.md's ActivityTrack section). Action-side access checks go through the internal `users.callerForAction` (`lib/auth.ts`'s `requireCapabilityForAction` / `requireAdminForAction`). |
+| `.collect` only on small result sets | ~265 `.collect()` calls. Fine for the org-scale tables (`users`, `departments`, `presence`); worth checking before adding one on an append-only table (`auditLog`, `messages`). |
+| Only schedule/`ctx.run*` **internal** functions | Deliberate exception: the `api*`-prefixed functions are public *by design* — `apps/api` calls them server-to-server behind `CONVEX_SERVER_KEY`. Action-side access checks go through the internal `users.callerForAction` (`lib/auth.ts`'s `requireCapabilityForAction` / `requireAdminForAction`). |
 | Table name as first `ctx.db` argument | Not adopted — 0 of ~258 `ctx.db.get` calls pass one. Harmless today, required later for custom ID generation. |
-| No `Date.now()` in queries | Not followed, mostly unavoidably — "is this person working right now", "is this measure overdue", "is this invite expired" are inherently clock-relative. See the [note below](#dont-use-datenow-in-queries). |
+| No `Date.now()` in queries | Not followed, mostly unavoidably — "is this person online right now", "is this measure overdue", "is this invite expired" are inherently clock-relative. See the [note below](#dont-use-datenow-in-queries). |
 
 ## Await all promises
 
@@ -179,10 +179,8 @@ denormalization tools.
 > `integrationHealth` and the various `*Categories` tables have one row per
 > person or per configured thing — collecting them is correct and several
 > queries depend on it. The tables that grow without bound are
-> `activitySamples`, `stateSamples`, `discardedStateSamples`, `dailyStats`,
-> `messages`, `auditLog`/`activityAuditLog`/`onedriveAudit`/
-> `integrationsAuditLog`, `notifications`, `clockodoWebhookLog` and
-> `integrationsRawDebugLog`. Reach for `.take()` on an index (newest-first,
+> `messages`, `auditLog`/`onedriveAudit`/`integrationsAuditLog`,
+> `notifications`, `clockodoWebhookLog` and `integrationsRawDebugLog`. Reach for `.take()` on an index (newest-first,
 > so truncation drops the oldest rows rather than the newest) or
 > `.paginate()` on those, never `.collect()`.
 
@@ -272,9 +270,8 @@ HTTP actions get no validator for free — validate the request body yourself
 (upstream suggests [Zod](https://zod.dev), which is already a
 `packages/convex` dependency).
 
-> **In this repo:** `convex/http.ts` is the one place this applies. The agent
-> ingest route (`activity/ingest.ts`) is the highest-risk surface, since it
-> takes a body from an unattended Windows tray app.
+> **In this repo:** `convex/http.ts` is the one place this applies — its
+> unauthenticated `/analytics/duration` beacon validates the body with Zod.
 
 ## Use some form of access control for all public functions
 
@@ -340,10 +337,8 @@ per-function checks.
 > The same builders apply a row-level rule that hides trashed rows
 > (`lib/trash.ts`). Don't hand-roll a `ctx.auth` check.
 >
-> Two areas layer their own gate on top and are worth reading before touching:
-> `apps/api`'s server-key-gated endpoints (the only holder of
-> `ACTIVITYTRACK_SIGNAL_SECRET`), and the per-device bearer tokens in
-> `activity/deviceAuth.ts`.
+> `apps/api`'s server-key-gated endpoints layer their own gate on top and are
+> worth reading before touching.
 
 ## Only schedule and `ctx.run*` internal functions
 
@@ -401,19 +396,16 @@ crons.daily(
 );
 ```
 
-> **In this repo — deliberate exception:** `activity/state.ts`'s `pushSignal`,
-> `reportHealth` and `mappings` are public on purpose. `apps/api` is a
-> separate service, so it cannot call `internal.*`; it authenticates with
-> `ACTIVITYTRACK_SIGNAL_SECRET` and the mutation validates that secret itself.
-> Same story for the `api*`-prefixed functions across `integrations/onedrive.ts`,
-> `hr/applicants.ts`, `hr/employees.ts` and `integrations/clockodoAbsences.ts`
-> — the `api` prefix in the *name* marks "reached from apps/api, guarded by a
+> **In this repo — deliberate exception:** the `api*`-prefixed functions
+> across `integrations/onedrive.ts`, `hr/applicants.ts`, `hr/employees.ts` and
+> `integrations/clockodoAbsences.ts` are public on purpose. `apps/api` is a
+> separate service, so it cannot call `internal.*` — the `api` prefix in the *name* marks "reached from apps/api, guarded by a
 > server key," and the guard is inside the handler. Don't "fix" these to
 > `internal`; you'll break the integration relays.
 >
 > The genuinely reviewable ones are the intra-Convex `ctx.runQuery(api.…)`
-> calls: `blog/analytics.ts` reading `api.blog.posts.get` is the one left (the
-> `activity/state.ts` ones are deliberate). The action-side access checks
+> calls: `blog/analytics.ts` reading `api.blog.posts.get` is the one left.
+> The action-side access checks
 > that used to round-trip through `api.users.me` now go through `userAction`,
 > which reads the internal `users.callerForAction`.
 
@@ -482,10 +474,8 @@ for the useful types (`QueryCtx`, `MutationCtx`, `ActionCtx`, `Doc`, `Id`).
 > **In this repo:** the same idea, different layout — there is no
 > `convex/model`. Shared logic lives in `convex/lib/*` (`auth.ts`,
 > `users.ts`, `profile.ts`, `clockodoId.ts`) and in per-feature `lib/`
-> folders (`convex/activity/lib/state.ts`, `businessHours.ts`, `patterns.ts`,
-> `convex/performance/lib/`). Follow the existing layout rather than
-> introducing `model/` alongside it. The pure-logic split in
-> `activity/lib/state.ts` (fusion rules, no `ctx`) is the reference example.
+> folders (`convex/performance/lib/`, `convex/hr/lib/`). Follow the existing
+> layout rather than introducing `model/` alongside it.
 
 ## Use `runAction` only when crossing runtimes
 
@@ -563,9 +553,7 @@ aggregation) is a legitimate reason to loop. So is doing a side effect
 between the calls — read data, hand it to an external service, write the
 result back — which is the normal shape of every integration poller.
 
-> **In this repo:** `activity/clockodo.ts` and `activity/genesys.ts` are the
-> fetch-then-write shape and are fine as they are. `performance/import.ts` is
-> the batched-migration shape.
+> **In this repo:** `performance/import.ts` is the batched-migration shape.
 
 ## Use `ctx.runQuery` / `ctx.runMutation` sparingly *inside* queries and mutations
 
@@ -674,10 +662,9 @@ Two fixes:
    down (to the minute, or the day) so every request within that period shares
    one cache entry.
 
-> **In this repo:** widely used, and often unavoidable — ActivityTrack's whole
-> premise is "is this person working *right now*", and overdue/expiry checks
-> (`errorMeasures.dueAt`, `invites.expiresAt`, device `lastSeen` windows) are
-> inherently clock-relative. Treat this as a "don't make it worse" rule:
+> **In this repo:** widely used, and often unavoidable — overdue/expiry checks
+> (`errorMeasures.dueAt`, `invites.expiresAt`, presence `lastActiveAt`
+> windows) are inherently clock-relative. Treat this as a "don't make it worse" rule:
 >
 > - Don't put `Date.now()` inside a `.withIndex` range bound in a query. That
 >   makes the read range itself move continuously. Take the bound as an
@@ -687,6 +674,3 @@ Two fixes:
 >   something overdue) is the cheap case; it doesn't change what was read.
 > - When a client passes a time argument, round it (to the minute or the local
 >   day) so subscribers share cache entries rather than each minting their own.
-> - `activity/lib/businessHours.ts` is the single source of truth for "when
->   does a workday plausibly happen" — don't add a second clock-derived
->   judgement elsewhere.

@@ -10,8 +10,8 @@ view should update as records change. Client components use `useQuery`,
 `useMutation`, or `useAction` against the generated API; public Convex
 functions authorize through the `user*` builders in `functions.ts` first.
 
-Convex remains the source of truth for intranet records, permissions, audit
-data, and reactive ActivityTrack state. An action is appropriate when an
+Convex remains the source of truth for intranet records, permissions and
+audit data. An action is appropriate when an
 operation needs a Convex-side runtime, but it is not a substitute for a
 third-party API client.
 

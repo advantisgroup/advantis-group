@@ -1,14 +1,13 @@
 # Architecture overview
 
 Hand-checked against the code — update it when an arrow below stops being
-true. Generated diagrams (gitdiagram etc.) guess, and get the Clockodo and
-ingest paths wrong.
+true. Generated diagrams (gitdiagram etc.) guess, and get the Clockodo paths
+wrong.
 
 ```mermaid
 flowchart TD
   employee(["Employee"])
   visitor(["Public visitor"])
-  agent(["Desktop agent<br/>(Windows tray app)"])
   backup(["GitHub Action<br/>nightly backup"])
 
   subgraph apps["apps/"]
@@ -19,19 +18,19 @@ flowchart TD
 
   subgraph convex["packages/convex"]
     functions["Function modules<br/>convex/<feature>/*.ts"]
-    http["HTTP actions<br/>/ingest, /agent/*"]
+    http["HTTP actions<br/>/analytics/duration"]
     crons["crons.ts"]
     lib["lib/<br/>auth, stepUp, internalApi, …"]
     db[("Database<br/>schema.ts → tables/*")]
   end
 
   subgraph external["External services"]
-    services["Anthropic · Microsoft Graph · Clockodo<br/>Genesys · Resend · Upstash · Clerk"]
+    services["Anthropic · Microsoft Graph · Clockodo<br/>Resend · Upstash · Clerk"]
   end
 
   employee --> intranet
   visitor --> marketing
-  agent -- "activity samples" --> http
+  marketing -- "visit duration beacon" --> http
 
   intranet -- "queries & mutations" --> functions
   intranet -- "AI, files, absences, security" --> api
@@ -46,7 +45,7 @@ flowchart TD
 
   api -- "outbound calls" --> services
   services -- "webhooks" --> api
-  functions -- "Genesys & Clockodo polling,<br/>Clerk admin calls" --> services
+  functions -- "Clockodo & Clerk<br/>admin calls" --> services
   backup -- "convex export" --> db
   backup -- "/internal/backups, server key" --> api
 ```
@@ -62,12 +61,9 @@ flowchart TD
   uploads. apps/api resolves the Clerk session, then calls Convex's `api*`
   functions with `CONVEX_SERVER_KEY` (checked by `assertServerKey`).
 - **Convex → apps/api.** The other direction, via `lib/internalApi.ts`:
-  Clockodo absences for the ActivityTrack poller, transactional and
-  broadcast email (apps/api owns Resend), OneDrive subscription renewal.
-- **Desktop agent → Convex HTTP.** `POST /ingest` with a per-device token;
-  `ingest.ts` resolves device → person → employee itself (see AGENTS.md's
-  ActivityTrack section).
-- **Webhooks land on apps/api** (Clerk, Graph, Resend, Genesys, Clockodo)
+  transactional and broadcast email (apps/api owns Resend), OneDrive
+  subscription renewal.
+- **Webhooks land on apps/api** (Clerk, Graph, Resend)
   and are relayed into Convex with the server key. Clerk, Resend and Graph
   deliveries are also recorded in `integrationHealth` for the admin panel.
 - **Convex → Clerk** for invites (inline, so the admin sees a rejection) and

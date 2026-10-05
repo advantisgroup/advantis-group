@@ -10,12 +10,11 @@ date rather than duplicating its content elsewhere.
 
 Bun workspaces + Turborepo monorepo.
 
-- `apps/intranet` — Next.js internal tool (Clerk auth). Includes
-  `/activity` ("ActivityTrack"), guidebooks, absences, admin tools.
+- `apps/intranet` — Next.js internal tool (Clerk auth). Includes guidebooks,
+  absences, admin tools.
 - `apps/marketing` — Next.js public marketing site.
-- `apps/api` — Elysia server-to-server API (agent enrollment, integration
-  webhooks/relays). Holds `ACTIVITYTRACK_SIGNAL_SECRET` and is the only thing
-  allowed to write signals into Convex on behalf of external systems.
+- `apps/api` — Elysia API: Clerk-authed endpoints the intranet calls (AI,
+  Clockodo, OneDrive, …) plus server-to-server integration webhooks.
 - `packages/convex` — shared Convex backend (schema + functions) consumed by
   both Next.js apps and the API service.
 - `packages/config`, `packages/types` — shared config/types.
@@ -203,9 +202,8 @@ heading.
 The ones that bite hardest here:
 
 - **`.collect()` only on org-scale tables.** `users`/`presence`/`departments`
-  are fine; `activitySamples`, `stateSamples`, `messages`, the audit tables
-  and `notifications` grow without bound and need `.take()` on an index
-  (newest-first) or `.paginate()`.
+  are fine; `messages`, the audit tables and `notifications` grow without
+  bound and need `.take()` on an index (newest-first) or `.paginate()`.
 - **Access control through the caller.** Put the requirement on the builder;
   for "how much of this record do I reveal" ask `ctx.caller.can(…)`. Outside a
   handler (internal functions, shared helpers) use `requireSessionCaller` /
@@ -214,10 +212,9 @@ The ones that bite hardest here:
 - **Users are never deleted.** Removing someone sets `status: "removed"`
   (`markUserRemoved`); 129 fields point at `users`. Lists should skip
   `removed` rows.
-- **The public `api*` functions are deliberate.** `activity/state.ts`'s
-  `pushSignal`/`reportHealth`/`mappings` and every `api*`-prefixed function
-  elsewhere are reached from `apps/api` server-to-server behind a server key
-  and validate it in-handler. Converting them to `internal` breaks the
+- **The public `api*` functions are deliberate.** Every `api*`-prefixed
+  function is reached from `apps/api` server-to-server behind a server key
+  and validates it in-handler. Converting them to `internal` breaks the
   integration relays.
 - **No `Date.now()` inside a query's `.withIndex` range bound.** Comparing it
   against already-read rows (overdue labels) is cheap; making the read range
@@ -226,58 +223,23 @@ The ones that bite hardest here:
 ## Profile / Subprofile architecture
 
 `users` is the one canonical intranet identity ("Profile"); every
-feature-owned identity-linked record (the Clockodo link, ActivityTrack's
-`people`, HumanResources' `employeeProfiles`, Chat's `conversationMembers`)
-is a "Subprofile." See [`docs/architecture/profiles.md`](./docs/architecture/profiles.md)
-for the full vocabulary, the slim "Partial profile" projection
+feature-owned identity-linked record (the Clockodo link, HumanResources'
+`employeeProfiles`, Chat's `conversationMembers`) is a "Subprofile." See
+[`docs/architecture/profiles.md`](./docs/architecture/profiles.md) for the
+full vocabulary, the slim "Partial profile" projection
 (`packages/convex/convex/lib/profile.ts`), and the enrichment convention a
 subprofile-fetching query should follow (always the same shape; a
 `linked`/`status` discriminant instead of a bare `null` or a silently
 filtered-out row).
 
-## ActivityTrack (`/activity`)
-
-The highest-complexity area of the codebase. A fused "is this person working
-right now" state, combined from three independent sources:
-
-1. **Desktop agent** ("workstation") — a Windows tray app, not in this repo.
-   Authenticates with a per-device bearer token (`devices` table /
-   `activity/deviceAuth.ts`) and POSTs raw idle/active samples to the Convex
-   HTTP action `POST /ingest` (`convex/http.ts` → `convex/activity/ingest.ts`).
-   The agent only ever knows its own `deviceId` — it has no concept of
-   `employeeId`, so it cannot call the secret-guarded `pushSignal` mutation
-   directly. `ingest.ts` resolves `deviceId → devices.personId → people.employeeId`
-   itself and feeds the workstation signal into the fused-state cache via
-   `applyStateSignal` (`convex/activity/lib/signals.ts`). If you touch device
-   linking or the ingest path, keep that resolution intact or the
-   "Workstation" row on the dashboard silently goes blank again.
-2. **Genesys** — telephony routing status/presence, polled + webhook-relayed
-   through `apps/api`.
-3. **Clockodo** — time tracking, polled + webhook-relayed through `apps/api`.
-
-Both integrations reach Convex through `apps/api`'s Elysia routes, which are
-the only holders of `ACTIVITYTRACK_SIGNAL_SECRET` and call the shared
-`applyStateSignal` (via the public `pushSignal` mutation) server-to-server.
-
-Fusion priority (highest wins): `ABSENT → CLOCKED_OUT → BREAK → IN_CALL →
-WRAP_UP → ACTIVE → IDLE`. Pure logic lives in
-`packages/convex/convex/activity/lib/state.ts`; written-verdict copy lives in
-`apps/intranet/src/lib/activity/status.ts`.
-
-Business-hours / out-of-hours quarantine logic:
-`packages/convex/convex/activity/lib/businessHours.ts` is the single source
-of truth for "when does a workday plausibly happen" — don't duplicate that
-decision elsewhere.
-
 ## Clockodo absences (`/absences`, `/calendar`, directory "out today")
 
-Distinct from ActivityTrack's Clockodo *entry* polling above — this is the
-vacation/sick/personal absence data shown on the absences page, calendar, and
-directory "out today" badges. There is **no Convex mirror**: absences change
-rarely and don't need to be reactive, so every read fetches Clockodo fresh
-through `apps/api` instead of syncing a stored copy via webhook + cron (the
-old approach — `clockodoSync.ts`/`absenceSync.ts`/the `/webhooks/clockodo`
-route — has been removed).
+The vacation/sick/personal absence data shown on the absences page,
+calendar, and directory "out today" badges. There is **no Convex mirror**:
+absences change rarely and don't need to be reactive, so every read fetches
+Clockodo fresh through `apps/api` instead of syncing a stored copy via
+webhook + cron (the old approach — `clockodoSync.ts`/`absenceSync.ts`/the
+`/webhooks/clockodo` route — has been removed).
 
 - `apps/api/src/lib/clockodo.ts` — the one place that calls Clockodo's
   `/absences` endpoint and maps its raw type/status codes to the app's coarse
@@ -289,9 +251,6 @@ route — has been removed).
   **Privacy**: the calendar endpoint only surfaces `vacation`-type absences
   for people other than the caller — sick/personal/other absences are visible
   to that person alone (their own `/me` list still shows everything).
-- `apps/api/src/routes/internal/clockodo.ts` — server-key-gated, called by
-  Convex's ActivityTrack poller (`activity/clockodo.ts`'s `fetchAbsences`) so
-  the raw Clockodo fetch isn't duplicated in Convex's Node runtime too.
 - `packages/convex/convex/integrations/clockodoAbsences.ts` — server-key
   gated lookups (`resolveCaller`, `roster`) apps/api uses to join a Clockodo
   user id against the intranet roster, since Clockodo doesn't know intranet
@@ -302,15 +261,30 @@ route — has been removed).
   mount/param change, which is fine given how rarely absences change.
 - The old `absences` Convex table is no longer in `schema.ts`. Any old mirrored
   rows still sit in the deployment's data, but nothing reads them.
+- `integrations/clockodoLink.ts`'s `migrateLegacyClockodoLink` moves a link
+  that only exists on a leftover ActivityTrack `people` row onto
+  `users.clockodoUserId` (run automatically on `/clockodo`, or from the
+  settings Connections card). It goes away with the `people` table.
 
-## Third-party product mentions (Genesys, Clockodo)
+## Removed: ActivityTrack
 
-Genesys and Clockodo are third-party trademarks referenced throughout the
-ActivityTrack UI (labels, tooltips, FAQ copy, settings). When adding or
-touching UI that names either product, check with the user before sourcing
-or embedding official logo assets — trademark usage has its own legal
-constraints beyond a copyright line, and no logo files exist in this repo
-today (`apps/intranet/public/` only has Advantis's own logos).
+ActivityTrack (`/activity`, the desktop agent's `/ingest`, Genesys/Clockodo
+state polling) was removed on 2026-10-05. Its tables
+(`packages/convex/convex/tables/activity.ts`) stay in the schema only until
+their production data is deleted — don't build on them. Retired values
+existing documents can still hold stay accepted by the schema but grant or
+show nothing: the `view_activity_admin` capability
+(`storedCapabilityValidator`), a `featureFlags` row keyed `activitytrack`,
+`integrationHealth` sources `genesys`/`clockodo` and `auditLog` domain
+`activity`.
+
+## Third-party product mentions (Clockodo)
+
+Clockodo is a third-party trademark referenced in the UI (labels, tooltips,
+settings). When adding or touching UI that names it, check with the user
+before sourcing or embedding official logo assets — trademark usage has its
+own legal constraints beyond a copyright line, and no logo files exist in
+this repo today (`apps/intranet/public/` only has Advantis's own logos).
 
 ## Password resets (HR vault, Performance login)
 
@@ -380,8 +354,7 @@ picks up this guard, and still needs the var set even then.
 ## House style
 
 - No comments explaining _what_ code does — only _why_, for non-obvious
-  constraints (see existing files in `packages/convex/convex/activity/` for
-  the norm: dense "why" comments on tricky invariants, nothing else).
+  constraints (dense "why" comments on tricky invariants, nothing else).
 - **Primary actions never live inline in a view.** Create/add/log flows
   (new applicant, log a contact, schedule an appointment, …) open a dialog
   — a bottom sheet on mobile — or navigate to a dedicated page; they are
@@ -410,9 +383,7 @@ picks up this guard, and still needs the var set even then.
   that can't occur. Match the existing minimal, direct style.
 - i18n strings live in `apps/intranet/src/i18n/messages/{en,de}/` — always
   update both languages together (`bun run check:i18n` fails otherwise).
-  ActivityTrack's are the `ActivityTrack` namespace, read through its
-  `useI18n()` hook (`lib/activity/i18n.tsx`), which keeps the dotted
-  `t("people.add")` call shape. The files are split
+  The files are split
   one file per top-level namespace (`messages/en/Admin.json`,
   `messages/de/Admin.json`, etc.), matching the `useTranslations("Admin")`
   call sites 1:1, and `src/i18n/request.ts` statically imports every one of

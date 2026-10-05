@@ -25,9 +25,8 @@ Ein Monorepo (Bun-Workspaces + Turborepo) mit drei Apps und einem gemeinsamen Ba
 
 - Browser → Convex direkt (Queries/Mutations, authentifiziert per Clerk-JWT).
 - Browser → `apps/api` für alles, was Secrets braucht (KI/Anthropic, OneDrive/Graph, Clockodo, Passkeys/TOTP/Step-up, Bewerber-Tresor, Performance-Uploads). Die API prüft die Clerk-Session und ruft Convex mit dem `CONVEX_SERVER_KEY` auf.
-- Convex → `apps/api` (über `lib/internalApi.ts`): Absenzen für den Poller, Mailversand, OneDrive-Abo-Erneuerung.
-- Desktop-Agent (Windows-Tray-App, **nicht in diesem Repo**) → Convex HTTP `POST /ingest` mit Geräte-Token.
-- Webhooks (Clerk, Resend, Microsoft Graph, Genesys, Clockodo) landen auf `apps/api` und werden per Server-Key nach Convex weitergereicht.
+- Convex → `apps/api` (über `lib/internalApi.ts`): Mailversand, OneDrive-Abo-Erneuerung.
+- Webhooks (Clerk, Resend, Microsoft Graph) landen auf `apps/api` und werden per Server-Key nach Convex weitergereicht.
 - Marketing hat eigene API-Routen (`apps/marketing/src/app/api/[[...slugs]]`: `email`, `notify`, `submissions`, `whitepaper`), die Mails direkt über Resend versenden und Leads in Convex speichern.
 - Nächtliches Backup: GitHub Action → `convex export` → age-verschlüsselt → OneDrive über die API.
 
@@ -40,7 +39,7 @@ apps/
   api/src/{routes,lib}                        routes/ öffentlich, routes/internal/ nur Convex, routes/webhooks/
 packages/convex/convex/
   schema.ts + tables/*.ts                     Tabellen nach Bereich
-  <feature>/*.ts                              Funktionen je Feature (activity, hr, performance, security, …)
+  <feature>/*.ts                              Funktionen je Feature (hr, performance, security, …)
   functions.ts                                Builder (userQuery, serverMutation, …) – immer diese nutzen
   http.ts, crons.ts, auth.config.ts
 scripts/                                      Preview-/Ignore-Build-Skripte, Backup-Upload, Update-Publisher
@@ -48,7 +47,7 @@ docs/                                         Architektur- und Betriebsdoku
 .github/workflows/                            code-quality, convex-deploy, convex-backup
 ```
 
-**Intranet-Bereiche** (`apps/intranet/src/app/(app)`): activity (ActivityTrack), admin, announcements, applicants/hr, approvals, blog, calendar, chat, clockodo (Absenzen), directory, drafts, errors/fehlermanagement, files (OneDrive), guidebooks, it-tickets, notifications, playground, sales-coach-ev, sales-cockpit, settings, suggestions, updates, wiki-chat. Zusätzlich öffentlich (ohne Clerk): `/performance` (eigener Passwort-Login, mandantenfähiges Sales-KPI-Dashboard), `/wallbox-sales-academy`, `/password`, `/privacy`, `/terms`, `/imprint`, `/sign-in`, `/sign-up`.
+**Intranet-Bereiche** (`apps/intranet/src/app/(app)`): admin, announcements, applicants/hr, approvals, blog, calendar, chat, clockodo (Absenzen), directory, drafts, errors/fehlermanagement, files (OneDrive), guidebooks, it-tickets, notifications, playground, sales-coach-ev, sales-cockpit, settings, suggestions, updates, wiki-chat. Zusätzlich öffentlich (ohne Clerk): `/performance` (eigener Passwort-Login, mandantenfähiges Sales-KPI-Dashboard), `/wallbox-sales-academy`, `/password`, `/privacy`, `/terms`, `/imprint`, `/sign-in`, `/sign-up`.
 
 **Mandanten-Domains (Performance):** Das Intranet-Middleware (`apps/intranet/src/proxy.ts`) schaut den `Host` in Convex (`companies.getByDomain`) nach; ist er eine aktive Kundendomain, wird auf `/performance` umgeschrieben, ohne Clerk. Neue Kundendomains werden per Vercel-Domains-API automatisch zum Projekt hinzugefügt (`VERCEL_API_TOKEN`, siehe Abschnitt 4). Die API erlaubt diese Domains dynamisch per CORS.
 
@@ -77,8 +76,7 @@ docs/                                         Architektur- und Betriebsdoku
 | **Resend** | Mailversand (Intranet-Transaktionsmails, Updates-Broadcasts, Marketing-Kontaktformulare, Whitepaper), Webhook für Zustell-Events | `apps/api/src/lib/resend.ts`, `apps/marketing/src/app/api/…` |
 | **Anthropic (Claude)** | KI: Wiki-Chat, Sales Coach EV, Tagesbrief, „Ask", Navigation, Wiki-Formatierung/-Import | `apps/api/src/lib/anthropic.ts`, `routes/*` |
 | **Microsoft Graph / OneDrive** | Dateibrowser im Intranet, Backup-Ziel; **persönliches** MS-Konto (chefsache@) mit Delegated-Flow | `apps/api/src/lib/onedrive/*` |
-| **Clockodo** | Zeiterfassung + Absenzen (Absenzen werden live abgefragt, nicht gespiegelt) | `apps/api/src/lib/clockodo.ts`, `convex/activity/clockodo.ts` |
-| **Genesys Cloud** | Telefonie-Status für ActivityTrack (Polling + Webhook) | `convex/activity/genesys.ts` |
+| **Clockodo** | Zeiterfassung + Absenzen (Absenzen werden live abgefragt, nicht gespiegelt) | `apps/api/src/lib/clockodo.ts`, `convex/integrations/clockodo/*` |
 | **Upstash Redis (KV)** | Rate-Limiting (API und Marketing-Formulare), Clockodo-Cache | `apps/api/src/lib/redis.ts`, `apps/marketing/src/lib/rate-limit.ts` |
 | **PostHog (EU)** | Produkt-Analytics im Intranet (Proxy `/ingest`), serverseitige Events aus Convex | `apps/intranet/src/instrumentation-client.ts`, `convex/integrations/posthog.ts` |
 | **GitHub** | Repo, Actions (Quality, Convex-Deploy, nächtliches Backup) | `.github/workflows` |
@@ -111,15 +109,7 @@ Hinweis zu den Beispiel-Deployments: `.env.example` der Apps nennt `wry-turtle-3
 | `ALLOWED_EMAIL_DOMAINS` | Erlaubte Firmen-Domains; andere Adressen gelten als „extern" |
 | `INTERNAL_URL` | Basis-URL des Intranets in Links (Mails, Passwort-Reset, Step-up) |
 | `API_URL` / `API_INTERNAL_URL` | Basis-URL von `apps/api` für Aufrufe von Convex → API |
-| `ACTIVITYTRACK_SIGNAL_SECRET` | Schützt `pushSignal`, Geräte-Token-Ableitung und Agent-Ingest (auch in `apps/api` gesetzt) |
-| `ACTIVITYTRACK_WEBHOOK_SECRET` | Auth der Genesys-/Clockodo-Webhook-Relays |
-| `ACTIVITYTRACK_GITHUB_TOKEN` | Liest die neueste Desktop-Agent-Version (Cron stündlich) |
-| `ACTIVITYTRACK_OLD_CONVEX_URL` | Nur für die einmalige Migration vom alten ActivityTrack; nach dem Cutover entfernbar |
-| `GENESYS_CLIENT_ID`, `GENESYS_CLIENT_SECRET`, `GENESYS_REGION` | OAuth-Client für Genesys Cloud |
-| `CLOCKODO_API_USER`, `CLOCKODO_API_KEY`, `CLOCKODO_BASE_URL`, `CLOCKODO_EXTERNAL_APP` | Clockodo-API-Zugang (Poller) |
-| `CLOCKODO_BREAK_SERVICE_IDS` | Optional: Service-IDs, die als Pause zählen |
-| `ACTIVITY_TIMEZONE` / `CLOCKODO_TIMEZONE`, `ACTIVITY_DAY_START_HOUR`, `CLOCKODO_DAY_END_HOUR` | Geschäftszeiten (Default Europe/Berlin, 7–20 Uhr) |
-| `API_TOKENS_ENCRYPTION_KEY` | Verschlüsselungsschlüssel für Geräte-Tokens (aus Kompatibilitätsgründen mitgeführt) |
+| `CLOCKODO_API_USER`, `CLOCKODO_API_KEY`, `CLOCKODO_BASE_URL`, `CLOCKODO_EXTERNAL_APP` | Clockodo-API-Zugang (Admin-Aktionen) |
 | `PERFORMANCE_ADMIN_EMAILS`, `PERFORMANCE_SUPER_ADMIN_EMAILS` | Wer sich den Performance-Admin bzw. Super-Admin selbst zuweisen darf |
 | `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` | Fügt Kundendomains automatisch zum Vercel-Projekt hinzu (Performance-Mandanten) |
 | `PASSWORD_RESET_CONTACT_EMAIL` | Kontaktadresse in den Passwort-Reset-Texten |
@@ -140,8 +130,7 @@ Hinweis zu den Beispiel-Deployments: `.env.example` der Apps nennt `wry-turtle-3
 | `WIKI_CHAT_ENC_KEY`, `SALES_COACH_EV_ENC_KEY`, `TOTP_ENC_KEY` | 32-Byte-Base64-Schlüssel (AES-256-GCM) für Chat-Verlauf, Call-Transkripte, Authenticator-Secrets. **Verlust = Daten unlesbar; nicht rotieren ohne Migration.** |
 | `RESEND_API_KEY`, `INTERNAL_EMAIL_FROM`, `RESEND_WEBHOOK_SECRET` | Mailversand, Absender, Signatur des Resend-Webhooks |
 | `KV_REST_API_URL`, `KV_REST_API_TOKEN` (`KV_REST_API_READ_ONLY_TOKEN`, `KV_URL`, `REDIS_URL`) | Upstash Redis |
-| `CLOCKODO_API_URL`, `CLOCKODO_API_USER`, `CLOCKODO_API_KEY`, `CLOCKODO_EXTERNAL_APP`, `CLOCKODO_WEBHOOK_TOKEN` | Clockodo-Zugriff und Webhook-Token |
-| `ACTIVITYTRACK_SIGNAL_SECRET`, `ACTIVITYTRACK_WEBHOOK_SECRET` | s. o. |
+| `CLOCKODO_API_URL`, `CLOCKODO_API_USER`, `CLOCKODO_API_KEY`, `CLOCKODO_EXTERNAL_APP` | Clockodo-Zugriff |
 | `MS_GRAPH_CLIENT_ID`, `MS_GRAPH_CLIENT_SECRET`, `ONEDRIVE_REFRESH_TOKEN`, `ONEDRIVE_AUTHORITY` | Microsoft-Graph-App und Startwert des Refresh-Tokens (der laufende Token wird verschlüsselt in Convex abgelegt und rotiert) |
 | `ONEDRIVE_ROOT_PATH`, `ONEDRIVE_TEAM_PATH`, `ONEDRIVE_GF_PATH` | Ordnerstruktur in OneDrive |
 | `ONEDRIVE_WEBHOOK_SECRET`, `ONEDRIVE_WEBHOOK_URL` | Change-Notifications von Graph (`/webhooks/onedrive`) |
@@ -175,7 +164,7 @@ Schema: `packages/convex/convex/schema.ts`, Tabellen nach Bereich in `tables/`. 
 
 - **identity.ts:** `users` (zentrale Identität, Rollen `admin`/`manager`/`employee`, Status inkl. `removed`), `passkeys`, `totpCredentials`, `departments`, `teams`, `userTeams`, `customRoles`, `invites`, `accessRequests`, `userPreferences`, Audit-Tabellen.
 - **security.ts:** Step-up-Auth (`authPolicy`, `stepUp*`, `knownDevices`, `sessionRiskSignals`), Zweit-Mailadressen, Passwort-Resets (`passwordReset*`).
-- **activity.ts (ActivityTrack):** siehe unten.
+- **activity.ts (ActivityTrack, entfernt):** siehe unten.
 - **comms.ts:** `announcements*`, `events`, `suggestions*`, `updates*` (Störungen/Wartung/Changelog inkl. Mail-Empfänger), `featureFlags`.
 - **chat.ts:** `conversations`, `conversationMembers`, `messages`, `notifications`, `presence`, `typing`, Upload-Claims.
 - **content.ts:** Guidebooks, Wiki, `blogPosts`, `analyticsPageviews`/`analyticsEvents`, Sales Academy (`academy*`).
@@ -183,24 +172,18 @@ Schema: `packages/convex/convex/schema.ts`, Tabellen nach Bereich in `tables/`. 
 - **itTickets.ts:** IT-Tickets, Threads, Nachrichten, Offboarding-Checklisten, Vertretungen.
 - **sales.ts:** Sales Coach EV (`salesCoachEv*`), Fehlermanagement (`error*`), Sales Cockpit (`salesCockpit*`).
 - **performance.ts:** mandantenfähiges KPI-Dashboard (`companies`, `performanceLogins`, `performanceReports`, Rohdaten-Tabellen …).
-- **integrations.ts:** `onedriveUploads/Audit/Auth`, `auditLog`, `integrationsAuditLog`, `integrationsRawDebugLog`, `clockodoWebhookLog`, `backupRuns`.
+- **integrations.ts:** `integrationHealth`, `onedriveUploads/Audit/Auth`, `auditLog`, `integrationsAuditLog`, `integrationsRawDebugLog`, `clockodoWebhookLog`, `backupRuns`.
 - **ai.ts:** `wikiChats` (verschlüsselt), `aiRuns`, `aiFeedback`, `drafts*`.
 - **marketing.ts:** `emails`, `notifyEmails`, `whitepaperLeads`.
 
 Konventionen: Nutzer werden **nie gelöscht** (`status: "removed"`, sehr viele Fremdverweise); Inhalte werden per **Papierkorb** gelöscht (`deletedAt`, 30 Tage, `lib/trash.ts`).
 
-### Was das Mitarbeiter-Tracking (ActivityTrack) speichert
+### Mitarbeiter-Tracking (ActivityTrack) – entfernt
 
-Drei Quellen werden zu einem Zustand je Mitarbeiter verschmolzen (Priorität: `ABSENT → CLOCKED_OUT → BREAK → IN_CALL → WRAP_UP → ACTIVE → IDLE`):
+ActivityTrack (`/activity`, Desktop-Agent-Ingest `POST /ingest`, Genesys-/Clockodo-Statuspolling) wurde am 2026-10-05 vollständig entfernt. Code, Crons, API-Routen und Oberfläche sind weg; es wird nichts mehr erfasst.
 
-1. **Desktop-Agent** (Windows, nicht im Repo) → `POST /ingest` (Convex `http.ts`, Geräte-Bearer-Token, Rate-Limit 3 s je Gerät). Pro Sample: `deviceId`, `windowsUser`, `hostname`, `idleMs`, `active`, `capturedAt`, `tzOffsetMinutes`, `agentVersion`, `platform`. Es werden **Leerlaufzeit und Aktiv/Inaktiv** erfasst – **keine** Tastatur-/Fensterinhalte, Screenshots oder besuchten Programme (nach Code-Stand; TODO: klären, ob der Agent selbst mehr erfasst – Quellcode liegt außerhalb).
-2. **Genesys** → Routing-Status, Presence, Wrap-up (Polling + Webhook).
-3. **Clockodo** → arbeitet/Pause/abwesend/ausgestempelt (Polling + Webhook).
-
-Tabellen: `devices` (Registrierung, Freigabe durch Manager, Token-Hash), `people` (Zuordnung zu Intranet-Nutzer/Genesys-/Clockodo-ID), `activitySamples` (Rohdaten), `employeeStates` (aktueller fusionierter Zustand), `stateSamples` (Zustandsverlauf bei Änderung), `discardedStateSamples` (Quarantäne für „Arbeit" außerhalb der Geschäftszeiten, Default 7–20 Uhr Europe/Berlin), `dailyStats` (Tagessummen aktiv/inaktiv, bleiben bestehen), `activityPatternReports` (Wochenberichte, nur auf Anfrage), `activityAuditLog`, `activitySystemEvents`, `integrationHealth`, `activitySettings`.
-
-**Aufbewahrung:** Rohsamples und Zustandsverlauf (inkl. Quarantäne) werden nachts per Cron gelöscht, wenn älter als `retentionDays` (**Default 90 Tage**, in den ActivityTrack-Einstellungen änderbar). `dailyStats` und Wochenberichte bleiben. Abgeschlossene Events werden separat bereinigt, das Clockodo-Webhook-Log ebenfalls. Feature ist per Feature-Flag `activitytrack` abschaltbar.
-TODO: klären mit Datenschutz/Betriebsrat: Rechtsgrundlage, Zugriffskreis (`view_activity_admin`), Dokumentation der Mitarbeiterinformation.
+Die Tabellen (`tables/activity.ts`: `devices`, `people`, `activitySamples`, `employeeStates`, `stateSamples`, `discardedStateSamples`, `dailyStats`, `activityPatternReports`, `activityAuditLog`, `activitySystemEvents`, `activitySettings`, `activityMigration*`) stehen nur noch im Schema, bis die Produktionsdaten gelöscht sind; danach Datei und Schema-Eintrag entfernen. Die nächtliche Löschung nach `retentionDays` läuft **nicht mehr** – die Daten bleiben bis zur manuellen Löschung liegen.
+TODO: klären mit Datenschutz/Betriebsrat: Zeitpunkt der Löschung der Altdaten und Anpassung der Datenschutzerklärung (`privacy.json` beschreibt das Tracking noch).
 
 ---
 
@@ -208,7 +191,7 @@ TODO: klären mit Datenschutz/Betriebsrat: Rechtsgrundlage, Zugriffskreis (`view
 
 - **Clerk** ist einzige Login-Quelle für Marketing, Intranet und API. Laut Code (`auth.config.ts`, `.env.example`, `docs`) läuft alles über **eine** Clerk-Instanz mit Root-Domain `advantisgroup.de`. Das PDF nennt aber **zwei** Instanzen (`yx1jw1nzih8f` Hauptseite, `cgifmba2kp71` Intranet). Im Code finden sich Reste der früheren Trennung (`INTERNAL_CLERK_JWT_ISSUER_DOMAIN` im Preview-Skript, Relink-Logik „Clerk instance merge" in `lib/auth.ts`). **TODO: klären, ob die zweite Instanz noch existiert/aktiv ist oder nur noch übrig ist.**
 - Convex vertraut dem Clerk-JWT-Template `convex` (muss die Primär-Mail als `email`-Claim enthalten). Für Step-up gibt es ein weiteres Claim `reverificationAge` (`{{user.factor_verification_age}}`) – siehe `docs/password-resets.md`.
-- **Rollen:** `admin`, `manager`, `employee` + **Custom-Roles** mit Fähigkeiten (`manage_members`, `access_integrations`, `access_files`, `manage_uploads`, `view_activity_admin`, `manage_announcements`, `manage_guidebooks`, `manage_blog`, `manage_it_ticket_threads`, `view_clockodo_team`, `manage_clockodo_team`, `use_ai`). Admin-Sandbox-Modus (`sandboxRole`) für Rollen-Vorschau. Zugriff wird in Convex über die Builder in `functions.ts` (`userQuery({ role, can })`, `ctx.caller`) durchgesetzt – **keine eigenen `ctx.auth`-Checks schreiben**.
+- **Rollen:** `admin`, `manager`, `employee` + **Custom-Roles** mit Fähigkeiten (`manage_members`, `access_integrations`, `access_files`, `manage_uploads`, `manage_announcements`, `manage_guidebooks`, `manage_blog`, `manage_it_ticket_threads`, `view_clockodo_team`, `manage_clockodo_team`, `use_ai`). Admin-Sandbox-Modus (`sandboxRole`) für Rollen-Vorschau. Zugriff wird in Convex über die Builder in `functions.ts` (`userQuery({ role, can })`, `ctx.caller`) durchgesetzt – **keine eigenen `ctx.auth`-Checks schreiben**.
 - **Neue Mitarbeiter-Accounts:** Nur per **Einladung** (Admin/Manager → `people/invites.ts` legt Invite an, Clerk-Einladung geht per Mail raus, 7 Tage gültig) oder per **Zugriffsanfrage** mit Freigabe (`people/accessRequests.ts`). Der Clerk-Webhook `user.created` erzeugt **nie** automatisch Mitglieder, er hält nur bestehende Spiegel aktuell. Erster Admin: E-Mail in `ADMIN_EMAILS`. Adressen außerhalb `ALLOWED_EMAIL_DOMAINS` sind „extern", werden aber gleich behandelt (mit Bestätigungsdialog in der UI).
 - **Entfernen:** `markUserRemoved` setzt `status: "removed"` und sperrt/löscht in Clerk (geplant, mit Retry: `people/clerkSync.ts`).
 - **Zusatzfaktoren:** eigene Passkeys (WebAuthn, `WEBAUTHN_RP_ID=advantisgroup.de`), TOTP mit Recovery-Codes, Step-up-Richtlinien (`authPolicy`), bekannte Geräte.
@@ -256,11 +239,11 @@ TODO: klären, ob Resend/SES-Domain `send.`-Subdomain wie im PDF beschrieben gep
 ## 9. Vercel-Konfiguration
 
 - **Im Repo:** `apps/api/vercel.json` (nur Schema, `headers: []`). Rewrites/Redirects stehen in den `next.config.ts`:
-  - Intranet: Rewrites `/hr/*`→`/applicants/*`, `/clockodo/manage/*`→`/admin/integrations/clockodo/*`, PostHog-Proxy `/ingest/*` → `eu.i.posthog.com`; permanente Redirects u. a. `/admin/activity/*`→`/activity/*`, `/absences/*`→`/clockodo/*`, `/applicants/*`→`/hr/*`, `/t/*`→`/playground/*`. Erlaubte Bild-Hosts: `*.convex.cloud`, `backend.advantisgroup.de`, `img.clerk.com`.
+  - Intranet: Rewrites `/hr/*`→`/applicants/*`, `/clockodo/manage/*`→`/admin/integrations/clockodo/*`, PostHog-Proxy `/ingest/*` → `eu.i.posthog.com`; permanente Redirects u. a. `/absences/*`→`/clockodo/*`, `/applicants/*`→`/hr/*`, `/t/*`→`/playground/*`. Erlaubte Bild-Hosts: `*.convex.cloud`, `backend.advantisgroup.de`, `img.clerk.com`.
   - Marketing: `skipTrailingSlashRedirect: true` (bewusst – würde sonst jede URL mit Slash umleiten), Sprach-Routing per next-intl (`localePrefix: always`), Whitepaper-PDF wird per `outputFileTracingIncludes` mitgebündelt.
   - Sicherheits-Header (CSP etc.) sind im Repo **nicht** gesetzt. TODO: klären, ob sie im Vercel-Dashboard konfiguriert sind.
 - **Nur im Dashboard (nicht im Repo):** Firewall-/Bot-Schutz/„Attack Challenge Mode", Domains und Zuordnung zu Projekten, Umgebungsvariablen je Umgebung, Deployment Protection, Ignored-Build-Step, Team-Mitglieder.
-  - **TODO: klären: Ist der Challenge-/Bot-Schutz bewusst so streng? Warum?** (Das PDF fragt danach; aus dem Code nicht ableitbar. Er kann Webhooks (Clerk, Resend, Graph, Genesys, Clockodo), den Desktop-Agent (`/ingest` läuft allerdings auf Convex, nicht Vercel) und Server-zu-Server-Aufrufe der API blockieren – bei Problemen dort zuerst schauen.)
+  - **TODO: klären: Ist der Challenge-/Bot-Schutz bewusst so streng? Warum?** (Das PDF fragt danach; aus dem Code nicht ableitbar. Er kann Webhooks (Clerk, Resend, Graph) und Server-zu-Server-Aufrufe der API blockieren – bei Problemen dort zuerst schauen.)
 - **Domains:** `advantisgroup.de` (Marketing), `intern.advantisgroup.de` (Intranet), API-Subdomain (`api.advantisgroup.de` laut Kommentaren), `backend.advantisgroup.de` (Convex-Custom-Domain), Mandanten-Domains werden dynamisch angelegt (`convex/performance/companies.ts`).
 
 ---
@@ -269,13 +252,13 @@ TODO: klären, ob Resend/SES-Domain `send.`-Subdomain wie im PDF beschrieben gep
 
 **Bewusste Entscheidungen**
 - Absenzen werden nicht gespiegelt, sondern live von Clockodo geholt (kurz in Upstash gecacht). Kalender zeigt anderen nur Urlaub; Krank/Sonstiges sieht nur die Person selbst. Alte `absences`-Tabelle existiert nicht mehr im Schema, alte Zeilen können noch in der DB liegen.
-- Die öffentlichen `api*`-Funktionen in Convex (z. B. `pushSignal`, `reportHealth`) sind **absichtlich** öffentlich und prüfen den Server-Key selbst. Nicht auf `internal` umstellen – bricht die Integrationen.
+- Die öffentlichen `api*`-Funktionen in Convex sind **absichtlich** öffentlich und prüfen den Server-Key selbst. Nicht auf `internal` umstellen – bricht die Integrationen.
 - Aufbewahrung Bewerberdaten: `APPLICANT_RETENTION_DAYS` = 183 Tage (Cron 02:40 UTC), Talentpool bis 24 Monate. **TODO: klären mit Datenschutz, ob 183 Tage passen.**
-- Wichtig: `.collect()` nur auf kleinen Tabellen (`users`, `presence`, `departments`); wachsende Tabellen (`activitySamples`, `stateSamples`, `messages`, Audit, `notifications`) nur mit `.take()`/`.paginate()`.
+- Wichtig: `.collect()` nur auf kleinen Tabellen (`users`, `presence`, `departments`); wachsende Tabellen (`messages`, Audit, `notifications`) nur mit `.take()`/`.paginate()`.
 - `packages/convex` ist ohne Build-Schritt; einzelne Pfade (`performance/callImport`, `xlsxZip`) werden vom Intranet als rohes TS transpiliert.
 - Radix-Dialog-Override im Root-`package.json` (vaul-Duplikat sperrt sonst Klicks) – siehe `docs/radix-vaul-dedupe.md`.
-- Übersetzungen immer **zusammen** pflegen: `apps/intranet/src/i18n/messages/{en,de}/*.json` (neue Namespaces in `i18n/request.ts` eintragen!) und `lib/activity/locales/{en,de}.ts`; Marketing hat de/en/zh/fr.
-- Bibliotheken für Drittmarken (Genesys/Clockodo): keine Logos im Repo, vor Einbau rechtlich klären.
+- Übersetzungen immer **zusammen** pflegen: `apps/intranet/src/i18n/messages/{en,de}/*.json` (neue Namespaces in `i18n/request.ts` eintragen!); Marketing hat de/en/zh/fr.
+- Bibliotheken für Drittmarken (Clockodo): keine Logos im Repo, vor Einbau rechtlich klären.
 
 **Stolperfallen**
 - **Lokales Marketing-Preview:** `apps/marketing/src/proxy.ts` läuft immer durch Clerk; ohne echte Keys liefert jede Route einen Clerk-Fehler. Die dokumentierte Stub-Variante (`AGENTS.md`) niemals committen.
@@ -283,8 +266,7 @@ TODO: klären, ob Resend/SES-Domain `send.`-Subdomain wie im PDF beschrieben gep
 - Vorschau-Backends resetten sich, wenn das Convex-Deployment-Limit erreicht ist (Dashboard prüfen).
 - `INTERNAL_CLERK_JWT_ISSUER_DOMAIN` im Preview-Skript ist ein Relikt der Zwei-Instanzen-Zeit (s. Abschnitt 6).
 - Passwort-Resets: Clerk sperrt das Claim `fva`; deshalb heißt es `reverificationAge`.
-- Die ActivityTrack-Migration (`convex/activity/migration*.ts`, `ACTIVITYTRACK_OLD_CONVEX_URL`) ist abgeschlossen bzw. entfernbar. TODO: klären, ob das alte ActivityTrack-Convex-Projekt noch läuft (Kosten/Daten).
-- Der Desktop-Agent (Tauri, Windows) liegt in einem **anderen** Repo („ActivityTrack"). TODO: klären, wo, wer Zugriff hat, wie Updates verteilt werden (Version wird über `ACTIVITYTRACK_GITHUB_TOKEN` aus GitHub gelesen).
+- ActivityTrack ist entfernt. TODO: klären, ob das alte eigenständige ActivityTrack-Convex-Projekt noch läuft (Kosten/Daten), und den Desktop-Agent (Tauri, Windows, eigenes Repo „ActivityTrack") auf allen Rechnern deinstallieren.
 - OneDrive läuft über ein **persönliches** Microsoft-Konto (chefsache@) – Personenabhängigkeit! Ziel der Übergabe: auf Firmenkonto/SharePoint umstellen. Der Refresh-Token rotiert und liegt verschlüsselt in Convex (`onedriveAuth`); Neu-Autorisierung per `bun run onedrive:auth` in `apps/api`.
 - Alle `NEXT_PUBLIC_*`-Werte ändern sich erst nach neuem Build.
 - Kein Bash/Shell-Zwang: Der Code läuft unter Windows/macOS/Linux; `bun` muss installiert sein.

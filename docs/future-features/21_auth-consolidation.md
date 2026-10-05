@@ -294,10 +294,6 @@ area re-inventing how.
   8's grace period ends.** Every phase up to 8 keeps the standalone-password
   path alive as a fallback; Phase 8 is the first phase that actually turns
   one off, and only after the fixed, communicated 30-day window.
-- **Single sign-on for the ActivityTrack tray-app debug password
-  (`activitySettings`).** Called out in `docs/password-resets.md` as out of
-  scope for the same reason it's out of scope here — it's one shared
-  admin-set secret, not a per-person credential.
 - **Forcing passkey enrollment.** `authPolicy.requirePasskeyScope` already
   exists as an org-wide lever; this plan makes passkeys *more useful* once
   set up, it doesn't change whether they're required.

@@ -1,7 +1,7 @@
 # Clockodo time & absences
 
 Ideas for the time-tracking and absence surfaces (`/clockodo`, `/calendar`,
-`/absences`), distinct from ActivityTrack's Clockodo *entry* polling.
+`/absences`).
 
 - **Overtime balance tracker** — a visual weekly/monthly trend of accrued
   overtime per person.

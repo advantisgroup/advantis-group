@@ -10,10 +10,6 @@ Two areas keep a password of their own, outside Clerk:
 Neither can be recovered — both store a PBKDF2 hash and nothing else. This is
 the flow that gets someone back in without anyone ever learning their password.
 
-> The ActivityTrack tray-app debug password (`activitySettings`) is out of
-> scope: it's one shared secret an admin sets, not a per-person credential, so
-> "forgot mine" doesn't apply.
-
 ## The flow
 
 1. **Failed attempt.** The forgot-password panel only renders after the lock

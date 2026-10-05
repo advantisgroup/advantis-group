@@ -14,11 +14,8 @@ shaped `User`/partial-`User` object regardless of which endpoint you hit.
   "this profile, in this feature's context." A subprofile may or may not be
   linked to a profile yet — a feature can know about a person before an
   intranet account exists for them. Examples:
-  - The **Clockodo link** (`users.clockodoUserId`, mirrored onto
-    `people.clockodoUserId` for ActivityTrack's poller —
-    see `lib/clockodoId.ts`).
-  - **ActivityTrack's `people`** table — a tracked coworker, who may or may
-    not have an intranet account (`people.userId`).
+  - The **Clockodo link** (`users.clockodoUserId`, see
+    `lib/clockodoId.ts`).
   - **HumanResources' `employeeProfiles`** table — an HR record, which may
     or may not have an intranet account (`employeeProfiles.userId`).
   - **Chat's `conversationMembers`** — always linked (chat requires an
@@ -103,10 +100,8 @@ Clockodo yet" could never see that from the data.
 1. Identify the feature-owned table/field that represents "this profile,
    in my feature" (or the join needed to resolve it).
 2. Write one function — `getXSubprofile(ctx, userId)` — that is the single
-   place this join happens. See `activity/people.ts`'s
-   `getActivitySubprofile` for the pattern: it replaced three independent
-   copies of the same `people.by_userId` lookup previously duplicated
-   across `activity/state.ts`'s `myState`/`stateBatch`/`historyBatch`.
+   place this join happens, instead of repeating the same `by_userId`
+   lookup in every query that needs it.
 3. Give the return type a name and a matching `v.object(...)` validator
    (export both), with a `linked: boolean` (or an explicit `status` union
    for more than two states) — never a bare `null`, never an omitted row.

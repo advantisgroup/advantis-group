@@ -2,7 +2,7 @@
 
 This is a backlog of extensions to things the intranet already owns. It avoids
 generic "employee engagement" features and avoids creating a second source of
-truth next to Clockodo, ActivityTrack, Convex, OneDrive, or the existing
+truth next to Clockodo, Convex, OneDrive, or the existing
 specialist modules.
 
 ## Best first additions
@@ -32,7 +32,7 @@ implemented as dashboard cards, dialogs, or focused pages, not a new framework.
 | **Department home**                           | Gives a department its own useful landing area without building a social-network clone.                                                                                | Departments, teams, directory, events, announcements, guidebooks.                                         | A read-first page with department contacts, upcoming leave/events, pinned guides, and manager-owned links. Keep editing in existing admin/profile surfaces.                      |
 | **New-starter manager checklist**             | Lets a manager see whether a new hire has an intranet profile, invite, team, access, required guidebooks, and training progress.                                       | Invites, users, teams, access requests, guidebook reads, academy participants, tour progress.             | A per-person checklist in the member/profile view with deep links. Completion is derived from existing data wherever possible.                                                   |
 | **Offboarding checklist**                     | Makes access removal and ownership handover visible before someone’s last day.                                                                                         | User status, OneDrive access, devices, guidebooks, tickets, conversations, audit log.                     | A manager/admin checklist that records confirmations and links to existing removal actions. Start with visibility and an audit entry; automate only safe reversible steps later. |
-| **Coverage finder**                           | Helps a manager identify who can cover an absence by team, role, current availability, and relevant knowledge.                                                         | Directory filters, teams, public absence data, ActivityTrack in-office signal, guidebooks, sales lexicon. | Start with a search panel that combines existing projections. Treat ActivityTrack as a current-state hint, not a productivity score.                                             |
+| **Coverage finder**                           | Helps a manager identify who can cover an absence by team, role, current availability, and relevant knowledge.                                                         | Directory filters, teams, public absence data, presence, guidebooks, sales lexicon. | Start with a search panel that combines existing projections. Treat presence as a current-state hint, not a productivity score.                                             |
 | **Calendar planning conflicts**               | Warns a manager while creating an event if much of the selected team is already on vacation or has a conflicting intranet event.                                       | Calendar event dialog, team membership, absence calendar.                                                 | A non-blocking conflict summary in the existing event dialog; never expose private absence reasons.                                                                              |
 | **Recurring calendar event templates**        | Makes routine stand-ups, training sessions, and company dates faster to create without copying events one by one.                                                      | Calendar event creation/duplication and ICS export.                                                       | Add “save as template” and “create series” with a finite generated set of normal events. Avoid a complicated recurrence engine in the first release.                             |
 | **Corrective-action ownership and due dates** | Turns error measures into clearly managed follow-up rather than a list managers must remember to revisit.                                                              | Error reports, measures, measure documents, dashboard open-measures card, notifications.                  | Add optional owner, due date, and status. Notify the owner before the due date and surface overdue items in the manager morning brief.                                           |
@@ -40,7 +40,7 @@ implemented as dashboard cards, dialogs, or focused pages, not a new framework.
 | **Applicant hand-off brief**                  | Reduces recruiting hand-off friction by collecting the applicant’s latest contact, interview, appointment, documents, and next step in a print/share-friendly summary. | Applicant contacts, emails, interviews, appointments, documents, audit log.                               | A read-only `Overview` panel and optional PDF/print layout; editing stays in the current subpages.                                                                               |
 | **Applicant pipeline health**                 | Shows recruiting managers bottlenecks such as candidates waiting on feedback or interviews without a scheduled follow-up.                                              | Applicant status, contacts, interviews, appointments, profile/access model.                               | A capability-gated manager widget driven by elapsed time and missing next steps, with direct links to the applicant.                                                             |
 | **Sales follow-up bridge**                    | Lets a sales manager turn an agreed coaching topic or flagged performance row into a concrete follow-up in the existing sales surfaces.                                | Performance topics, flagged rows, Sales Coach EV, Sales Cockpit flows.                                    | Add “create/open follow-up topic” deep links and a small “open topics” card. Do not copy performance data into a new task table.                                                 |
-| **Integration health that explains impact**   | Admins can see whether Clockodo, Genesys, or the desktop agent is degraded and which intranet areas may be stale.                                                      | Activity integration health, admin integrations, API error handling, update banners.                      | A plain-language status panel with last successful sync, affected screen, and safe troubleshooting link; alert only admins unless users are actually blocked.                    |
+| **Integration health that explains impact**   | Admins can see whether Clockodo, OneDrive or another integration is degraded and which intranet areas may be stale.                                                   | Integration health, admin integrations, API error handling, update banners.                               | A plain-language status panel with last successful sync, affected screen, and safe troubleshooting link; alert only admins unless users are actually blocked.                    |
 
 ## Higher-leverage platform improvements
 
@@ -59,10 +59,9 @@ in small slices.
 
 ## Things to deliberately handle carefully
 
-- **ActivityTrack is not a performance score.** Use its `inOffice` and
-  current-status data for present-tense coordination, while retaining the
-  existing “no data” state. Do not turn it into leaderboards, rankings, or
-  automated disciplinary signals.
+- **No employee activity tracking.** ActivityTrack was removed on purpose
+  (2026-10-05). Don't reintroduce device, phone or time-tracking state as a
+  presence signal, leaderboard, ranking or disciplinary input.
 
 - **Keep absence privacy intact.** The current calendar intentionally exposes
   other people’s vacation but not sick/personal/other absence details. New
