@@ -1,7 +1,6 @@
 const INTRANET_HOSTNAME = "intern.advantisgroup.de";
 
 const PATH_LABELS: Record<string, string> = {
-  activity: "ActivityTrack",
   announcements: "Announcements",
   calendar: "Calendar",
   chat: "Chat",

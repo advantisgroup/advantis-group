@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { ArrowLeft, Check, ExternalLink, Pencil, X } from "lucide-react";
+import { ArrowLeft, Check, Pencil, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -68,12 +68,6 @@ const PERMISSION_ITEMS = [
     descKey: "exemptFromFlextimeDesc",
   },
 ] as const;
-
-const STATUS_ACCENT: Record<string, string> = {
-  working: "var(--ok)",
-  break: "var(--warn)",
-  clockedOut: "var(--muted-foreground)",
-};
 
 function StatusDot({ color, children }: { color: string; children: ReactNode }) {
   return (
@@ -205,10 +199,6 @@ export default function ClockodoEmployeeDetailPage() {
   const canManageClockodo = useHasCapability("manage_clockodo_team");
   const links = useQuery(api.integrations.clockodoView.listWithLinks);
 
-  const liveStatus = useQuery(api.activity.state.clockodoStatusForRoster, {
-    clockodoUserIds: [clockodoUserId],
-  });
-
   const [detail, setDetail] = useState<Awaited<ReturnType<typeof getClockodoUserDetail>> | null>(
     null,
   );
@@ -322,7 +312,6 @@ export default function ClockodoEmployeeDetailPage() {
   const vacationDesc = [...holidaysQuota].sort((a, b) => b.yearSince - a.yearSince);
   const latestTargetHours = targetHours.at(-1);
   const latestVacation = holidaysQuota.at(-1);
-  const status = liveStatus?.[0]?.status ?? null;
 
   const roleLabel = user.role === "owner" ? t("roleOwner") : t("roleWorker");
   const languageLabel = user.language === "en" ? "English" : "Deutsch";
@@ -399,16 +388,6 @@ export default function ClockodoEmployeeDetailPage() {
         }
       }}
     />
-  );
-
-  const activityLink = link?.deviceId && (
-    <Link
-      href={`/activity/timeline/${encodeURIComponent(link.deviceId)}`}
-      className="shrink-0 text-muted-foreground hover:text-fg"
-      title={t("activityTrackLink")}
-    >
-      <ExternalLink className="h-4 w-4" />
-    </Link>
   );
 
   const roleSelect = (className: string) => (
@@ -544,9 +523,6 @@ export default function ClockodoEmployeeDetailPage() {
             <StatusDot color={user.active === false ? "var(--muted-foreground)" : "var(--ok)"}>
               {user.active === false ? t("inactive") : t("active")}
             </StatusDot>
-            {status && (
-              <StatusDot color={STATUS_ACCENT[status]}>{t(`liveStatus.${status}`)}</StatusDot>
-            )}
             {hoursThisWeek !== null && <span>{t("hoursThisWeek", { hours: hoursThisWeek })}</span>}
           </p>
         </div>
@@ -562,10 +538,7 @@ export default function ClockodoEmployeeDetailPage() {
               title={t("linkedEmployee")}
               control={
                 editing ? (
-                  <div className="flex items-center gap-2">
-                    {linkSelect(control)}
-                    {activityLink}
-                  </div>
+                  linkSelect(control)
                 ) : link ? (
                   <PersonLink userId={link.userId} className="text-sm">
                     {link.name}

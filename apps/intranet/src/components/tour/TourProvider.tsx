@@ -104,7 +104,6 @@ export function TourProvider({ children }: { children: ReactNode }) {
     if (!hasFilesAccess) ids.add("files");
     if (!user.clockodoUserId && !hasClockodoTeamAccess) ids.add("absences");
     if (off("chat")) ids.add("chat");
-    if (off("activitytrack")) ids.add("activity");
     return ids;
   }, [isAdmin, featureFlags, hasFilesAccess, hasClockodoTeamAccess, user.clockodoUserId]);
 

@@ -189,10 +189,9 @@
   --radius-xl: calc(var(--radius) + 8px);
   --radius-xxl: calc(var(--radius) + 16px);
 
-  /* ── ActivityTrack design tokens (ported) ──────────────────────────────
-     Semantic surface/text/status colours used by the activity dashboard
-     components, mapped onto the intranet's theme variables so they flip with
-     light/dark automatically. */
+  /* ── Semantic design tokens ─────────────────────────────────────────────
+     Semantic surface/text/status colours, mapped onto the intranet's theme
+     variables so they flip with light/dark automatically. */
   --color-fg: var(--foreground);
   --color-bg: var(--background);
   --color-bg-2: var(--sidebar);
@@ -210,7 +209,7 @@
   --color-accent-2: var(--signal);
   --color-accent-fg: oklch(98% 0.01 30);
 
-  /* Editorial display sizes (used by activity hero headings). */
+  /* Editorial display sizes. */
   --text-display-sm: 1.75rem;
   --text-display-sm--line-height: 1.1;
   --text-display-sm--letter-spacing: -0.02em;
@@ -316,10 +315,8 @@
 
 @layer base {
   :root {
-    /* Dark — ActivityTrack "Canvas" / Claude dark mode: warm charcoal neutrals
-       with a faint clay undertone, kept on the Advantis red brand accent.
-       Surface/text/border values ported verbatim from ActivityTrack web's
-       `.dark` palette (RGB channels). */
+    /* Dark — "Canvas" / Claude dark mode: warm charcoal neutrals with a faint
+       clay undertone, kept on the Advantis red brand accent (RGB channels). */
     --background: rgb(23 22 20);
     --foreground: rgb(240 238 232);
 
@@ -372,14 +369,13 @@
     --sales-ai: oklch(45% 0.9 240);
     --oldschool: oklch(25% 0.5 10);
 
-    /* ActivityTrack semantic status colours (dark) — traffic-light + signal
-       blue. Ported from ActivityTrack web's `.dark` palette. */
+    /* Semantic status colours (dark) — traffic-light + signal blue. */
     --ok: rgb(52 199 144);
     --warn: rgb(228 156 66);
     --info: rgb(88 162 232);
     --signal: rgb(96 150 248);
 
-    /* ActivityTrack chart tokens (dark) */
+    /* Chart tokens (dark) */
     --chart-active: #34c790;
     --chart-idle: #e49c42;
     --chart-accent: #6096f8;
@@ -411,19 +407,6 @@
     --chart-3: #199e70; /* aqua */
     --chart-4: #c98500; /* yellow */
     --chart-5: #d55181; /* magenta */
-
-    /* Fused-state palette (dark) — the employee states as they appear in
-       timeline strips, the minute grid and the stacked hourly chart. The four
-       chromatic states are CVD-validated against the card surface (#22201d);
-       BREAK/CLOCKED_OUT/ABSENT are deliberately recessive "not working" grays
-       whose identity relief is the legend + hover labels. */
-    --state-active: #22a06b;
-    --state-incall: #2d76c4;
-    --state-wrapup: #927cee;
-    --state-idle: #c9821f;
-    --state-break: #8a8275;
-    --state-clockedout: #6e675c;
-    --state-absent: #5a554c;
 
     --radius: 0.75rem;
 
@@ -487,13 +470,13 @@
     --sales-ai: oklch(48% 0.9 240);
     --oldschool: oklch(32% 0.5 10);
 
-    /* ActivityTrack semantic status colours (light) */
+    /* Semantic status colours (light) */
     --ok: rgb(22 158 110);
     --warn: rgb(190 112 12);
     --info: rgb(14 142 196);
     --signal: rgb(43 96 232);
 
-    /* ActivityTrack chart tokens (light) */
+    /* Chart tokens (light) */
     --chart-active: #129e6e;
     --chart-idle: #be700c;
     --chart-accent: #2b60e8;
@@ -518,16 +501,6 @@
     --chart-3: #129e6e; /* aqua */
     --chart-4: #eda100; /* yellow */
     --chart-5: #e87ba4; /* magenta */
-
-    /* Fused-state palette (light) — own steps, validated against the light
-       card surface (not a flipped copy of dark). */
-    --state-active: #129e6e;
-    --state-incall: #1c5fb8;
-    --state-wrapup: #8f6ee8;
-    --state-idle: #b06a0a;
-    --state-break: #a49b8d;
-    --state-clockedout: #bcb4a5;
-    --state-absent: #cfc8bb;
 
     --radius: 0.75rem;
     --clerk-color-primary: var(--primary);
@@ -1473,10 +1446,9 @@ input[type="week"] {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   ActivityTrack helpers + keyframes (ported). Plain classes used by the
-   activity dashboard components (.kicker labels, live signal dot, tabular
-   nums, glass surfaces) plus the entrance/loop keyframes referenced by the
-   --animate-* theme tokens above.
+   Shared helpers + keyframes. Plain classes (.kicker labels, live signal
+   dot, tabular nums, glass surfaces) plus the entrance/loop keyframes
+   referenced by the --animate-* theme tokens above.
    ───────────────────────────────────────────────────────────────────────── */
 .kicker {
   font-size: 0.6875rem;

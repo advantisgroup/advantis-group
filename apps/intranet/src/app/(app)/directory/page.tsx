@@ -142,18 +142,6 @@ function DirectoryPageContent() {
   const setPreferences = useMutation(api.people.preferences.setMine);
   const savedDirectoryViews = preferences?.savedDirectoryViews ?? [];
 
-  // Device-active + clocked-in via Clockodo — a much more meaningful signal
-  // than the old "has an open intranet tab" heuristic, but not everyone is
-  // on the ActivityTrack roster, so `null` means "no data" rather than
-  // "not in office" (see `personStatus`).
-  const userIds = useMemo(() => (people ?? []).map((p) => p._id), [people]);
-  const officePresence = useQuery(api.activity.state.inOfficeForUsers, { userIds });
-  const inOfficeByUserId = useMemo(() => {
-    const map = new Map<string, boolean | null>();
-    for (const row of officePresence ?? []) map.set(row.userId, row.inOffice);
-    return map;
-  }, [officePresence]);
-
   // "Out today" is Clockodo-derived and fetched live (see AGENTS.md's
   // Clockodo section) — Convex has no HTTP access, so directoryList itself
   // can no longer join this in; the page joins it client-side instead.
@@ -220,13 +208,7 @@ function DirectoryPageContent() {
     else if (team !== "all") rows = rows.filter((p) => p.teams.includes(team));
     if (availableNow) {
       rows = rows.filter((person) => {
-        const status = personStatus(
-          person,
-          now,
-          inOfficeByUserId.get(person._id),
-          outUntilByUser.get(person._id),
-        );
-        return status.kind === "inOffice" || status.kind === "online";
+        return personStatus(person, now, outUntilByUser.get(person._id)).kind === "online";
       });
     }
     const key = (p: Person) =>
@@ -235,26 +217,15 @@ function DirectoryPageContent() {
     return [...rows].sort(
       (a, b) => dir * (key(a).localeCompare(key(b)) || a.name.localeCompare(b.name)),
     );
-  }, [
-    availableNow,
-    inOfficeByUserId,
-    me.teams,
-    myTeamsOnly,
-    now,
-    outUntilByUser,
-    people,
-    role,
-    sort,
-    team,
-  ]);
+  }, [availableNow, me.teams, myTeamsOnly, now, outUntilByUser, people, role, sort, team]);
 
   const statuses = useMemo(() => {
     const map = new Map<string, PersonStatus>();
     for (const p of filtered) {
-      map.set(p._id, personStatus(p, now, inOfficeByUserId.get(p._id), outUntilByUser.get(p._id)));
+      map.set(p._id, personStatus(p, now, outUntilByUser.get(p._id)));
     }
     return map;
-  }, [filtered, now, inOfficeByUserId, outUntilByUser]);
+  }, [filtered, now, outUntilByUser]);
 
   function toggleSort(key: SortKey) {
     setSort((s) => nextSort(s, key));

@@ -446,12 +446,10 @@
     },
     "systems": {
       "title": "Systems",
-      "hint": "Integrations, agents and anything switched off",
+      "hint": "Integrations and anything switched off",
       "noIntegrations": "No integrations reporting yet.",
       "noIncidents": "No live incidents or maintenance",
       "lastOk": "last healthy {age}",
-      "agents": "Desktop agents",
-      "agentsDetail": "{online} online · {stale} stale · {pending} pending",
       "webhook": "Clockodo webhook",
       "webhookDetail": "last event {age} · {failures} failures in 24h",
       "flagOff": "{key} is switched off",

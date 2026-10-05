@@ -162,10 +162,8 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
 /**
  * The admin-scoped navigation that slides in while the user is inside
  * `/admin/*` (but not `/admin/integrations/*`, which has its own dedicated
- * sidebar/gate; ActivityTrack lives entirely outside `/admin` now, at
- * `/activity`, with its own sliding panel — see `ActivitySidebar`).
- * Config-driven exactly like `ActivitySidebar`, reusing the same sidebar
- * primitives. The first item returns to the normal intranet nav. Items are
+ * sidebar/gate). Config-driven, reusing the main sidebar's primitives. The
+ * first item returns to the normal intranet nav. Items are
  * grouped by function (access & people, organization, system) rather than
  * one long flat list.
  */
@@ -178,9 +176,9 @@ export function AdminSidebar() {
   const isAdmin = useIsAdmin();
   const hasUploadsView = useHasCapability("manage_uploads");
 
-  // Pending upload requests badge the Uploads entry the same way Devices is
-  // badged in ActivitySidebar — a manager approving requests shouldn't have
-  // to open the section just to see there's something waiting.
+  // Pending upload requests badge the Uploads entry — a manager approving
+  // requests shouldn't have to open the section just to see there's
+  // something waiting.
   const pendingUploads = useQuery(
     api.integrations.onedrive.listPending,
     isManager || hasUploadsView ? {} : "skip",

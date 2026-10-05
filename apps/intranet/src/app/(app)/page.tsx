@@ -31,11 +31,9 @@ import {
   RecentActivityCard,
   TeamAvailabilityCard,
   TeamPerformanceCard,
-  TeamStatusCard,
 } from "@/components/dashboard/AdminWidgets";
 import {
   ChatsCard,
-  MyDayCard,
   MyPerformanceCard,
   MyTicketsCard,
   MyWeekCard,
@@ -58,12 +56,7 @@ import {
 import { useLatestWikiPages, WikiCarousel } from "@/components/dashboard/WikiWidgets";
 import { Link } from "@/components/Link";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
-import {
-  useCurrentUser,
-  useHasCapability,
-  useIsAdmin,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { useCurrentUser, useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -74,7 +67,6 @@ import { cn } from "@/lib/utils";
 const CARD_IDS = [
   "aibrief",
   "chats",
-  "myday",
   "myweek",
   "mytickets",
   "profilecompletion",
@@ -85,7 +77,6 @@ const CARD_IDS = [
   "whosout",
   "celebrations",
   "teamavailability",
-  "teamstatus",
   "teamperformance",
   "managerbrief",
   "errormeasures",
@@ -114,7 +105,6 @@ export default function DashboardPage() {
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
   const aiEnabled = useAiEnabled();
-  const hasActivityCapability = useHasCapability("view_activity_admin");
   const { session: performanceSession } = usePerformanceSession();
   const hasMyPerformance = Boolean(performanceSession?.valid && performanceSession.employeeId);
   const profileGaps = missingProfileFields(user);
@@ -200,7 +190,6 @@ export default function DashboardPage() {
   const cardLabels: Record<CardId, string> = {
     aibrief: t("briefTitle"),
     chats: t("unreadChats"),
-    myday: t("yourDayTitle"),
     myweek: t("myWeekTitle"),
     profilecompletion: t("profileCompletionTitle"),
     myperformance: t("myPerformanceTitle"),
@@ -210,7 +199,6 @@ export default function DashboardPage() {
     whosout: t("whosOutToday"),
     celebrations: t("celebrationsTitle"),
     teamavailability: t("teamAvailabilityTitle"),
-    teamstatus: t("teamStatusTitle"),
     teamperformance: t("teamPerformanceTitle"),
     managerbrief: t("managerBriefTitle"),
     errormeasures: t("errorMeasuresTitle"),
@@ -230,7 +218,6 @@ export default function DashboardPage() {
 
   const forYouWidgets = toGrid([
     widget("chats", <ChatsCard />),
-    widget("myday", <MyDayCard />),
     widget("myweek", <MyWeekCard />),
     widget("mytickets", <MyTicketsCard />),
     ...(profileGaps.length
@@ -252,7 +239,6 @@ export default function DashboardPage() {
   const adminWidgets = toGrid([
     widget("managerbrief", <ManagerBriefCard />),
     ...(user.teams.length ? [widget("teamavailability", <TeamAvailabilityCard />)] : []),
-    ...(hasActivityCapability ? [widget("teamstatus", <TeamStatusCard />)] : []),
     ...(hasTeamPerformance ? [widget("teamperformance", <TeamPerformanceCard />)] : []),
     widget("errormeasures", <OpenMeasuresCard />),
     widget("adminstats", <AdminStatsCard />),
@@ -267,7 +253,6 @@ export default function DashboardPage() {
     if (id === "myperformance") return hasMyPerformance;
     if (id === "profilecompletion") return profileGaps.length > 0;
     if (id === "newwiki") return hasNewWiki;
-    if (id === "teamstatus") return hasActivityCapability;
     if (id === "teamavailability") return isManager && user.teams.length > 0;
     if (id === "teamperformance") return hasTeamPerformance;
     if (id === "applicantpipeline") return hasApplicantPipelineHealth;

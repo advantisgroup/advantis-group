@@ -47,7 +47,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Zeigt, ob dein Konto mit Clockodo verknüpft ist — direkt oder über einen ActivityTrack-Eintrag. Nur wenn hier **„Verknüpft“** steht, synchronisieren deine Abwesenheiten automatisch aus Clockodo.",
+          body: "Zeigt, ob dein Konto mit Clockodo verknüpft ist. Nur wenn hier **„Verknüpft“** steht, synchronisieren deine Abwesenheiten automatisch aus Clockodo.",
         },
         {
           kind: "callout",

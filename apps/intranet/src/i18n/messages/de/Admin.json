@@ -446,12 +446,10 @@
     },
     "systems": {
       "title": "Systeme",
-      "hint": "Integrationen, Agents und alles Abgeschaltete",
+      "hint": "Integrationen und alles Abgeschaltete",
       "noIntegrations": "Noch keine Integration meldet sich.",
       "noIncidents": "Keine aktiven Störungen oder Wartungen",
       "lastOk": "zuletzt gesund {age}",
-      "agents": "Desktop-Agents",
-      "agentsDetail": "{online} online · {stale} veraltet · {pending} ausstehend",
       "webhook": "Clockodo-Webhook",
       "webhookDetail": "letztes Ereignis {age} · {failures} Fehler in 24 h",
       "flagOff": "{key} ist abgeschaltet",

@@ -104,7 +104,7 @@
   "linkRequiredAction": "Back to workspace",
   "migrationCode": "Checking existing connection",
   "migrationTitle": "Migrating your Clockodo link",
-  "migrationDescription": "We are checking your previous ActivityTrack connection and moving it to the new Clockodo workspace.",
+  "migrationDescription": "We are checking your previous Clockodo connection and moving it to the new Clockodo workspace.",
   "clockStatus": {
     "working": "Working {duration}",
     "break": "On break {duration}",

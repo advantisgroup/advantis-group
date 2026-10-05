@@ -41,7 +41,6 @@ import {
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useSlashFocus } from "@/hooks/use-slash-focus";
-import { cn } from "@/lib/utils";
 
 const WEEKDAYS = [
   "monday",
@@ -79,17 +78,9 @@ interface ClockodoRow extends ClockodoUser {
   vacationDaysPerYear: number | null;
   linkedUserId: string | null;
   linkedUserName: string | null;
-  deviceId: string | null;
 }
 
 type SortKey = "name" | "weeklyHours" | "vacationDaysPerYear";
-type LiveStatus = "working" | "break" | "clockedOut" | null;
-
-const STATUS_DOT: Record<NonNullable<LiveStatus>, string> = {
-  working: "bg-emerald-500",
-  break: "bg-amber-500",
-  clockedOut: "bg-muted-foreground/40",
-};
 
 function csvEscape(value: unknown): string {
   const str = String(value ?? "");
@@ -267,7 +258,6 @@ export function ClockodoAdminPanel() {
             vacationDaysPerYear: latestHolidaysQuota?.daysPerYear ?? null,
             linkedUserId: null,
             linkedUserName: null,
-            deviceId: null,
           };
         }),
       );
@@ -288,20 +278,12 @@ export function ClockodoAdminPanel() {
       ...row,
       linkedUserId: link?.userId ?? null,
       linkedUserName: link?.name ?? null,
-      deviceId: link?.deviceId ?? null,
     };
   });
 
-  // Live "who's clocked in" — cheap, reads the ActivityTrack poll cache
-  // rather than hitting Clockodo. "Hours this week" below is the one
-  // column that needs a live per-user Clockodo call, so it's fetched
-  // separately and shows a loading dash until it resolves.
-  const clockodoUserIds = useMemo(() => merged.map((r) => r.id), [merged]);
-  const liveStatuses = useQuery(
-    api.activity.state.clockodoStatusForRoster,
-    clockodoUserIds.length > 0 ? { clockodoUserIds } : "skip",
-  );
-  const statusByUserId = new Map((liveStatuses ?? []).map((s) => [s.clockodoUserId, s.status]));
+  // "Hours this week" is the one column that needs a live per-user Clockodo
+  // call, so it's fetched separately and shows a loading dash until it
+  // resolves.
 
   useEffect(() => {
     if (rows === null || rows.length === 0) return;
@@ -614,7 +596,6 @@ export function ClockodoAdminPanel() {
                   unreadable at phone width. sm and up: the real table. */}
               <div className="space-y-2 sm:hidden">
                 {visible.map((row) => {
-                  const status = statusByUserId.get(row.id) ?? null;
                   const hours = hoursByUserId.get(row.id);
                   return (
                     <Card
@@ -648,12 +629,6 @@ export function ClockodoAdminPanel() {
                             </div>
                             <p className="truncate text-xs text-muted-foreground">{row.email}</p>
                           </div>
-                          {status && (
-                            <span className="flex shrink-0 items-center gap-1.5 text-xs">
-                              <span className={cn("size-2 rounded-full", STATUS_DOT[status])} />
-                              {t(`liveStatus.${status}`)}
-                            </span>
-                          )}
                         </div>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/70 pt-2 text-xs text-muted-foreground">
                           <span>
@@ -696,7 +671,6 @@ export function ClockodoAdminPanel() {
                         onClick={() => toggleSort("name")}
                       />
                       <TableHead>{t("email")}</TableHead>
-                      <TableHead>{t("statusColumn")}</TableHead>
                       <SortableHead
                         label={t("weeklyHours")}
                         active={sort.key === "weeklyHours"}
@@ -715,7 +689,6 @@ export function ClockodoAdminPanel() {
                   </TableHeader>
                   <TableBody>
                     {visible.map((row) => {
-                      const status = statusByUserId.get(row.id) ?? null;
                       const hours = hoursByUserId.get(row.id);
                       return (
                         <TableRow
@@ -747,16 +720,6 @@ export function ClockodoAdminPanel() {
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">{row.email}</TableCell>
-                          <TableCell>
-                            {status ? (
-                              <span className="flex items-center gap-1.5 text-xs">
-                                <span className={cn("size-2 rounded-full", STATUS_DOT[status])} />
-                                {t(`liveStatus.${status}`)}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
                           <TableCell>
                             {row.weeklyHours !== null ? `${row.weeklyHours}h` : "—"}
                           </TableCell>

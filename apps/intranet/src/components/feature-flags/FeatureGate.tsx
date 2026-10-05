@@ -22,7 +22,7 @@ export function useFeatureFlags() {
  * `featureKey` is off, except for admins — they always keep access so they
  * can go re-enable it from `/admin/feature-flags`. `label` is the
  * already-translated display name (callers typically pull it from the `Nav`
- * namespace, e.g. `t("activity")`/`t("chat")`, so the same product name is
+ * namespace, e.g. `t("chat")`, so the same product name is
  * used everywhere instead of duplicating it here).
  */
 export function FeatureGate({

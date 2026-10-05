@@ -7,14 +7,12 @@ import {
   Award,
   ClipboardCheck,
   Clock3,
-  Coffee,
   Lock,
   Plane,
   ScrollText,
   TrendingUp,
   UserPlus,
   Users2,
-  Wifi,
   Wrench,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -119,55 +117,6 @@ export function ManagerBriefCard() {
             value={overdueMeasures.length}
             href="/fehlermanagement/measures"
           />
-        </div>
-      )}
-    </DashCard>
-  );
-}
-
-/** Org-wide presence counts, Managers+ only (the parent gates whether this
- * mounts at all — `dashboardSummary` also enforces it server-side). */
-export function TeamStatusCard() {
-  const t = useTranslations("Dashboard");
-  const summary = useQuery(api.activity.stats.dashboardSummary);
-
-  return (
-    <DashCard icon={<Users2 />} title={t("teamStatusTitle")}>
-      {summary === undefined ? (
-        <RowSkeletons />
-      ) : (
-        <div className="space-y-1">
-          <StatLine
-            icon={<Wifi />}
-            label={t("teamOnline", {
-              online: summary.online,
-              total: summary.total,
-            })}
-            value=""
-            href="/activity"
-          />
-          <StatLine
-            icon={<TrendingUp />}
-            label={t("teamActive", { active: summary.active })}
-            value=""
-            href="/activity"
-          />
-          {summary.onBreak > 0 && (
-            <StatLine
-              icon={<Coffee />}
-              label={t("teamOnBreak", { count: summary.onBreak })}
-              value=""
-              href="/activity"
-            />
-          )}
-          {summary.absent > 0 && (
-            <StatLine
-              icon={<Plane />}
-              label={t("teamAbsent", { count: summary.absent })}
-              value=""
-              href="/activity"
-            />
-          )}
         </div>
       )}
     </DashCard>

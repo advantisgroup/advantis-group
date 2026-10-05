@@ -14,23 +14,6 @@ export const CHART = {
   fg: "var(--chart-fg)",
 } as const;
 
-/**
- * Per-state colours for the fused-state breakdown (idle/in-call/break/…).
- * CSS variables (defined per theme in globals.css) so strips and stacked bars
- * recolour with light/dark instead of the old fixed ActivityTrack hexes that
- * clashed with the intranet palette. The four chromatic states are
- * CVD-validated per mode; BREAK/ABSENT are intentionally recessive greys.
- */
-export const STATE_COLOR = {
-  ACTIVE: "var(--state-active)", // green (= working)
-  IN_CALL: "var(--state-incall)", // blue (telephony)
-  WRAP_UP: "var(--state-wrapup)", // violet (after-call work)
-  IDLE: "var(--state-idle)", // amber (attention)
-  BREAK: "var(--state-break)", // muted (legitimate pause)
-  CLOCKED_OUT: "var(--state-clockedout)", // dim (assumed done for the day)
-  ABSENT: "var(--state-absent)", // dimmest (not expected in)
-} as const;
-
 /** Common tooltip styling props for Recharts <Tooltip />. */
 export const tooltipStyle = {
   contentStyle: {

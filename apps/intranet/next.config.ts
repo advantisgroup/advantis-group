@@ -60,12 +60,6 @@ const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
   async redirects() {
     return [
-      // ActivityTrack moved out from under /admin — keep old bookmarks/links working.
-      {
-        source: "/admin/activity/:path*",
-        destination: "/activity/:path*",
-        permanent: true,
-      },
       {
         source: "/absences/:path*",
         destination: "/clockodo/:path*",

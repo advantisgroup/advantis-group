@@ -54,7 +54,7 @@ export function AcademySessionProvider({ children }: { children: ReactNode }) {
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<StoredSession>;
         // One-shot hydration from storage on mount, same pattern as
-        // hooks/use-deep-link-id.ts and lib/activity/useQueryParam.ts.
+        // hooks/use-deep-link-id.ts.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         if (parsed.participant) setParticipant(parsed.participant);
         if (parsed.isAdminSession) setIsAdminSession(true);

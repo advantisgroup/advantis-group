@@ -49,7 +49,6 @@
     "notifications": "Benachrichtigungen",
     "settings": "Einstellungen",
     "admin": "Verwaltung",
-    "activity": "Aktivitätsverfolgung",
     "files": "Dateien"
   },
   "steps": {
@@ -218,7 +217,7 @@
       },
       "connections": {
         "title": "Deine Integrationen",
-        "description": "Sieh, ob dein Clockodo-Konto verknüpft ist (damit deine Abwesenheiten ins Intranet synchronisieren) und ob ein ActivityTrack-Eintrag auf dich zeigt."
+        "description": "Sieh, ob dein Clockodo-Konto verknüpft ist (damit deine Abwesenheiten ins Intranet synchronisieren)."
       },
       "help": {
         "title": "Jederzeit wieder",
@@ -233,16 +232,6 @@
       "members": {
         "title": "Mitgliederverwaltung",
         "description": "Im Tab „Mitglieder“ kannst du Rollen ändern, Teams verwalten, Nutzer sperren oder entfernen."
-      }
-    },
-    "activity": {
-      "nav": {
-        "title": "Aktivitätsverfolgung",
-        "description": "Überwache Geräteaktivität, Mitarbeiterstatus und erstelle Berichte für deine Flotte."
-      },
-      "stats": {
-        "title": "Flottenübersicht",
-        "description": "Live-Zählungen zeigen, wer aktiv, inaktiv oder offline ist – über alle erfassten Geräte."
       }
     },
     "files": {

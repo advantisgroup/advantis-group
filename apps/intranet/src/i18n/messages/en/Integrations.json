@@ -11,14 +11,12 @@
   "vacationDaysPerYear": "Vacation days / year",
   "linkedEmployee": "Linked employee",
   "notLinked": "Not linked",
-  "activityTrackLink": "Open ActivityTrack presence",
-  "notTrackedYet": "Not tracked in ActivityTrack yet",
   "created": "Clockodo user created.",
   "updated": "Saved.",
   "linked": "Linked.",
   "unlinked": "Unlinked.",
   "confirmUnlinkTitle": "Unlink this Clockodo account?",
-  "confirmUnlinkBody": "The intranet account loses its time-tracking and ActivityTrack presence link until someone relinks it here.",
+  "confirmUnlinkBody": "The intranet account loses its time-tracking link until someone relinks it here.",
   "empty": "No Clockodo users yet.",
   "loadError": "Couldn't load Clockodo users. Reload the page to try again; if it keeps failing, check the Clockodo status under Admin → Overview.",
   "searchPlaceholder": "Search by name or email",
@@ -77,7 +75,6 @@
   "unknownActor": "Unknown",
   "selectAll": "Select all",
   "selectedCount": "{count, plural, one {# selected} other {# selected}}",
-  "statusColumn": "Status",
   "hoursThisWeekColumn": "Hours this week",
   "hoursThisWeek": "{hours}h this week",
   "exportCsv": "Export CSV",
@@ -89,11 +86,6 @@
   "bulkSetVacation": "Set vacation days for {count, plural, one {# employee} other {# employees}}",
   "bulkSetHours": "Set weekly hours for {count, plural, one {# employee} other {# employees}}",
   "bulkUpdated": "Updated {count, plural, one {# employee} other {# employees}}.",
-  "liveStatus": {
-    "working": "Working",
-    "break": "On break",
-    "clockedOut": "Clocked out"
-  },
   "auditAction": {
     "clockodo": {
       "link": "Linked to intranet account",

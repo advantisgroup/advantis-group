@@ -49,7 +49,6 @@
     "notifications": "Notifications",
     "settings": "Settings",
     "admin": "Admin Panel",
-    "activity": "Activity Tracking",
     "files": "Files"
   },
   "steps": {
@@ -218,7 +217,7 @@
       },
       "connections": {
         "title": "Your integrations",
-        "description": "See whether your Clockodo account is linked (so your absences sync into the intranet) and whether an ActivityTrack record points at you."
+        "description": "See whether your Clockodo account is linked (so your absences sync into the intranet)."
       },
       "help": {
         "title": "Come back anytime",
@@ -233,16 +232,6 @@
       "members": {
         "title": "Member management",
         "description": "The Members tab lets you change roles, manage teams, suspend, or remove users."
-      }
-    },
-    "activity": {
-      "nav": {
-        "title": "Activity tracking",
-        "description": "Monitor device activity, employee states, and generate reports for your fleet."
-      },
-      "stats": {
-        "title": "Fleet overview",
-        "description": "Live counts show who's active, idle, or offline across all tracked devices."
       }
     },
     "files": {

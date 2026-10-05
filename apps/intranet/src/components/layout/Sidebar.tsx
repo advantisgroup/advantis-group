@@ -7,7 +7,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 import {
-  Activity,
   AlertTriangle,
   BookOpen,
   Calendar,
@@ -49,7 +48,6 @@ import {
   sidebarAppGuidebooks,
 } from "@/components/guidebooks/registry";
 import { AccountMenu } from "@/components/layout/AccountMenu";
-import { ActivitySidebar } from "@/components/layout/ActivitySidebar";
 import { ADMIN_NAV_GROUPS } from "@/components/layout/AdminSidebar";
 import {
   resolveSidebarSections,
@@ -347,15 +345,6 @@ export function Sidebar() {
       icon: LineChart,
       external: true,
     },
-    {
-      section: "apps",
-      href: "/activity",
-      labelKey: "activity",
-      icon: Activity,
-      managerOnly: true,
-      featureKey: "activitytrack",
-      external: true,
-    },
     { section: "apps", href: "/sales-cockpit", labelKey: "salesCockpit", icon: PhoneCall },
     { section: "apps", href: "/sales-coach-ev", labelKey: "salesCoachEv", icon: Zap },
     // Products that happen to be registered as guidebooks — their own route
@@ -435,10 +424,9 @@ export function Sidebar() {
 
   // Editing only makes sense for the workspace nav, so leaving it (or a tour
   // starting) ends it.
-  const inActivityArea = pathname.startsWith("/activity");
   const organizationMode = mode === "organization" && hasOrganization;
   const tourActive = !!useTour().state?.active;
-  const canCustomize = !inActivityArea && !organizationMode && !tourActive;
+  const canCustomize = !organizationMode && !tourActive;
   useEffect(() => {
     if (!canCustomize) setEditing(false);
   }, [canCustomize, setEditing]);
@@ -567,8 +555,7 @@ export function Sidebar() {
             )}
           </div>
         ) : (
-          hasOrganization &&
-          !inActivityArea && (
+          hasOrganization && (
             <div className="grid grid-cols-2 rounded-lg bg-sidebar-accent/70 p-1 group-data-[state=collapsed]/sidebar:hidden">
               <button
                 type="button"
@@ -610,9 +597,7 @@ export function Sidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {inActivityArea ? (
-          <ActivitySidebar />
-        ) : organizationMode ? (
+        {organizationMode ? (
           <>
             <div className="group-data-[state=collapsed]/sidebar:hidden">
               <div className="mb-2 rounded-lg border border-sidebar-border bg-sidebar-accent/35 px-3 py-2">

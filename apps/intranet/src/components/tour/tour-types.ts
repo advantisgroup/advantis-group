@@ -10,8 +10,7 @@ export type CheckpointId =
   | "help"
   | "notifications"
   | "settings"
-  | "admin"
-  | "activity";
+  | "admin";
 
 export type CheckpointStatus = "pending" | "active" | "completed" | "skipped";
 

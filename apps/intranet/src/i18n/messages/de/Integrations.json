@@ -11,14 +11,12 @@
   "vacationDaysPerYear": "Urlaubstage / Jahr",
   "linkedEmployee": "Verknüpfter Mitarbeiter",
   "notLinked": "Nicht verknüpft",
-  "activityTrackLink": "ActivityTrack-Anwesenheit öffnen",
-  "notTrackedYet": "Noch nicht in ActivityTrack erfasst",
   "created": "Clockodo-Benutzer angelegt.",
   "updated": "Gespeichert.",
   "linked": "Verknüpft.",
   "unlinked": "Verknüpfung aufgehoben.",
   "confirmUnlinkTitle": "Diesen Clockodo-Account entknüpfen?",
-  "confirmUnlinkBody": "Das Intranet-Konto verliert die Zeiterfassungs- und ActivityTrack-Präsenzverknüpfung, bis jemand sie hier wiederherstellt.",
+  "confirmUnlinkBody": "Das Intranet-Konto verliert die Zeiterfassungsverknüpfung, bis jemand sie hier wiederherstellt.",
   "empty": "Noch keine Clockodo-Benutzer.",
   "loadError": "Clockodo-Benutzer konnten nicht geladen werden. Lade die Seite neu; klappt es weiter nicht, prüf den Clockodo-Status unter Verwaltung → Übersicht.",
   "searchPlaceholder": "Nach Name oder E-Mail suchen",
@@ -77,7 +75,6 @@
   "unknownActor": "Unbekannt",
   "selectAll": "Alle auswählen",
   "selectedCount": "{count} ausgewählt",
-  "statusColumn": "Status",
   "hoursThisWeekColumn": "Stunden diese Woche",
   "hoursThisWeek": "{hours}h diese Woche",
   "exportCsv": "CSV exportieren",
@@ -89,11 +86,6 @@
   "bulkSetVacation": "Urlaubstage für {count} Mitarbeiter festlegen",
   "bulkSetHours": "Sollstunden für {count} Mitarbeiter festlegen",
   "bulkUpdated": "{count} Mitarbeiter aktualisiert.",
-  "liveStatus": {
-    "working": "Arbeitet",
-    "break": "Pause",
-    "clockedOut": "Ausgestempelt"
-  },
   "auditAction": {
     "clockodo": {
       "link": "Mit Intranet-Konto verknüpft",

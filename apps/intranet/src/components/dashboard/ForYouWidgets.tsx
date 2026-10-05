@@ -5,11 +5,7 @@ import { useQuery } from "convex/react";
 import {
   Award,
   CalendarDays,
-  Circle,
   CircleUserRound,
-  Clock,
-  Coffee,
-  LogOut,
   MessageSquare,
   Plane,
   TrendingUp,
@@ -23,11 +19,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useStartOfToday } from "@/hooks/use-today";
 import { localIsoDate } from "@/lib/absences";
 import { useMyAbsences } from "@/lib/absences-api";
-import { formatDateTime, formatIsoDate, formatTime, initials } from "@/lib/format";
+import { formatDateTime, formatIsoDate, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { DashCard, Empty, Row, RowSkeletons, StatLine } from "./primitives";
-import { todayLocalDay } from "@/lib/activity/fmt";
 import { useMemo } from "react";
 
 const PROFILE_FIELDS = ["avatar", "jobTitle", "phone"] as const;
@@ -181,110 +176,6 @@ export function ChatsCard() {
             }
           />
         ))
-      )}
-    </DashCard>
-  );
-}
-
-/** The caller's own fused Clockodo/ActivityTrack status — self-data, not
- * team surveillance, so it's visible to every employee. */
-export function MyDayCard() {
-  const t = useTranslations("Dashboard");
-  const locale = useLocale();
-
-  const today = todayLocalDay();
-
-  const dayStart = useMemo(() => new Date(`${today}T00:00:00`).getTime(), [today]);
-
-  const statesRaw = useQuery(api.activity.state.stateBatch, {
-    since: dayStart,
-  });
-
-  const states = useMemo(() => {
-    if (!statesRaw) return [];
-
-    return statesRaw.map((v) => {
-      if (!v?.state) return null;
-
-      const base = {
-        finalState: v.state.finalState,
-        finalStateSince: v.state.finalStateSince,
-      };
-
-      if (v.state.clockodoWorking) {
-        return {
-          ...base,
-          key: "clockodoWorking",
-          icon: Circle,
-          tint: "text-success",
-        };
-      }
-
-      if (v.state.clockodoBreak) {
-        return {
-          ...base,
-          key: "clockodoBreak",
-          icon: Coffee,
-          tint: "text-warning",
-        };
-      }
-
-      if (v.state.clockodoAbsent) {
-        return {
-          ...base,
-          key: "clockodoAbsent",
-          icon: LogOut,
-          tint: "text-muted-foreground",
-        };
-      }
-
-      if (v.state.clockodoClockedOut) {
-        return {
-          ...base,
-          key: "clockodoClockedOut",
-          icon: LogOut,
-          tint: "text-muted-foreground",
-        };
-      }
-
-      return {
-        ...base,
-        key: "active",
-        icon: Circle,
-        tint: "text-success",
-      };
-    });
-  }, [statesRaw]);
-
-  return (
-    <DashCard icon={<Clock />} title={t("yourDayTitle")}>
-      {statesRaw === null ? (
-        <RowSkeletons />
-      ) : statesRaw === undefined || states.length === 0 ? (
-        <Empty href="/settings/workspace" linkLabel={t("openSettings")}>
-          {t("clockodoNotLinked")}
-        </Empty>
-      ) : (
-        states.map((status) => {
-          if (!status) return null;
-
-          const StatusIcon = status.icon;
-
-          return (
-            <StatLine
-              key={status.finalState}
-              icon={<StatusIcon className={status.tint} />}
-              label={t(status.key)}
-              value={
-                status.finalStateSince
-                  ? t("sinceTime", {
-                      time: formatTime(status.finalStateSince, locale),
-                    })
-                  : ""
-              }
-            />
-          );
-        })
       )}
     </DashCard>
   );

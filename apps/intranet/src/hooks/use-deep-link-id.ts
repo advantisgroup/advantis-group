@@ -7,10 +7,10 @@ import { usePathname, useRouter } from "next/navigation";
 /**
  * Deep-link the id of a single item to highlight or open a detail dialog
  * for, carried in `?{key}=` (e.g. from a notification's `link`). Reads it
- * once after mount and strips it from the URL — same SSR-safe,
- * no-`useSearchParams` shape as `lib/activity/useQueryParam.ts`, but
- * one-shot rather than round-tripped: once consumed, the id lives in the
- * caller's own state (dialog-open flag, highlighted row), not the URL.
+ * once after mount and strips it from the URL — SSR-safe and without
+ * `useSearchParams`, so no forced Suspense boundary. Once consumed, the id
+ * lives in the caller's own state (dialog-open flag, highlighted row), not
+ * the URL.
  */
 export function useDeepLinkId(key: string): string | null {
   const router = useRouter();

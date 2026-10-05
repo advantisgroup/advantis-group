@@ -7,8 +7,7 @@ import { useEffect, useState } from "react";
  * that should stay in a *real, persistent* URL (e.g. `/admin/fragen?q=...`
  * highlighting one question) rather than being consumed once and removed.
  * Avoids `useSearchParams()` on purpose — same reasoning as
- * `lib/activity/useQueryParam.ts` and `hooks/use-deep-link-id.ts`: no
- * forced Suspense boundary.
+ * `hooks/use-deep-link-id.ts`: no forced Suspense boundary.
  */
 export function useReadQueryParam(key: string): string | null {
   const [value, setValue] = useState<string | null>(null);

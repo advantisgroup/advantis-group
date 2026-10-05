@@ -7,7 +7,6 @@ import { useQuery } from "convex/react";
 import {
   CircleCheck,
   CircleSlash,
-  Laptop,
   Megaphone,
   Plug,
   PowerOff,
@@ -43,7 +42,7 @@ const PROVIDER_MARKS: Record<string, ComponentType<{ className?: string }>> = {
 };
 
 /**
- * Integration, agent-fleet and killswitch health, plus anything currently
+ * Integration and killswitch health, plus anything currently
  * declared broken on `/updates`.
  *
  * Status uses the reserved status tokens (`ok`/`warn`) and always ships an icon
@@ -123,21 +122,6 @@ export function SystemsPanel() {
                 />
               );
             })
-          )}
-
-          {data.agents && (
-            <MetricRow
-              icon={Laptop}
-              label={t("overview.systems.agents")}
-              sublabel={t("overview.systems.agentsDetail", {
-                online: data.agents.online,
-                stale: data.agents.stale,
-                pending: data.agents.pending,
-              })}
-              value={data.agents.total}
-              tone={data.agents.stale > 0 || data.agents.pending > 0 ? "warn" : "neutral"}
-              href="/activity"
-            />
           )}
 
           {data.clockodoWebhook?.lastAt && (

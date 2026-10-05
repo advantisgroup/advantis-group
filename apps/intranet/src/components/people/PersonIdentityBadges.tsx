@@ -9,9 +9,9 @@ import { teamColor, teamLabelKey } from "@/lib/teams";
 export type PersonRole = "admin" | "manager" | "employee";
 
 /**
- * Consistent role/department/team badge row, shared by the three "list of
- * people" surfaces (Directory, Admin Members, Activity People roster) so
- * they stop each showing a different subset of the same fields. Each caller
+ * Consistent role/department/team badge row, shared by the "list of people"
+ * surfaces (Directory, Admin Members) so they stop each showing a different
+ * subset of the same fields. Each caller
  * still owns its own layout/actions around this — only the identity badges
  * are shared.
  *

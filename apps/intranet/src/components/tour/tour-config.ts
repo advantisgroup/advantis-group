@@ -358,26 +358,6 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
       },
     ],
   },
-  {
-    id: "activity",
-    route: "/activity",
-    managerOnly: true,
-    steps: [
-      {
-        id: "activity.nav",
-        targetAttr: "tour-nav-activity",
-        popoutSide: "right",
-        route: "/activity",
-        skipOnMobile: true,
-      },
-      {
-        id: "activity.stats",
-        targetAttr: "tour-activity-stats",
-        popoutSide: "bottom",
-        route: "/activity",
-      },
-    ],
-  },
 ];
 
 export const ALL_CHECKPOINT_IDS = TOUR_CHECKPOINTS.map((c) => c.id);

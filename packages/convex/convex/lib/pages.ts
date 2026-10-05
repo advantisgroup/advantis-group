@@ -344,49 +344,6 @@ export const INTRANET_PAGES: IntranetPage[] = [
     keywords: ["kennzahlen", "kpi", "calls", "performance"],
   },
   {
-    href: "/activity",
-    label: "ActivityTrack",
-    description: "Geräte- und Aktivitätsdaten der Teams.",
-    keywords: ["aktivität", "geräte", "tracking"],
-    visible: manager,
-  },
-  {
-    href: "/activity/people",
-    label: "ActivityTrack: Personen",
-    description: "Aktivität je Person.",
-    visible: manager,
-  },
-  {
-    href: "/activity/devices",
-    label: "ActivityTrack: Geräte",
-    description: "Registrierte Geräte und ihr Status.",
-    visible: manager,
-  },
-  {
-    href: "/activity/reports",
-    label: "ActivityTrack: Berichte",
-    description: "Auswertungen aus ActivityTrack.",
-    visible: manager,
-  },
-  {
-    href: "/activity/settings",
-    label: "ActivityTrack: Einstellungen",
-    description: "Einstellungen für ActivityTrack.",
-    visible: manager,
-  },
-  {
-    href: "/activity/help",
-    label: "ActivityTrack: Hilfe",
-    description: "Wie ActivityTrack funktioniert.",
-    visible: manager,
-  },
-  {
-    href: "/activity/migration",
-    label: "ActivityTrack: Migration",
-    description: "Umzug von Geräten auf die neue Erfassung.",
-    visible: manager,
-  },
-  {
     href: "/hr",
     label: "Bewerbermanagement",
     description: "Bewerbungen, Termine und Mitarbeiterakten.",
@@ -539,7 +496,7 @@ export const INTRANET_PAGES: IntranetPage[] = [
   {
     href: "/admin/integrations",
     label: "Integrationen",
-    description: "Anbindungen an Clockodo, Genesys, OneDrive und mehr.",
+    description: "Anbindungen an Clockodo, OneDrive und mehr.",
     visible: manager,
   },
   {

@@ -38,8 +38,7 @@ export function ConnectionsCard() {
   const [migrating, setMigrating] = useState(false);
   if (!connections) return null;
 
-  const clockodoLinked =
-    connections.clockodoDirect || (connections.personLinked && connections.personHasClockodo);
+  const clockodoLinked = connections.clockodoDirect || connections.personHasClockodo;
   const clockodoHint = clockodoLinked
     ? connections.clockodoDirect
       ? t("clockodoDirect")
@@ -77,15 +76,6 @@ export function ConnectionsCard() {
               <LinkState linked={clockodoLinked} />
             </span>
           }
-        />
-        <SettingsRow
-          title={t("activityTrack")}
-          description={
-            connections.personLinked
-              ? (connections.personName ?? undefined)
-              : t("personUnlinkedHint")
-          }
-          control={<LinkState linked={connections.personLinked} />}
         />
       </SettingsSection>
     </div>

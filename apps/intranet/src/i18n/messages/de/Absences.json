@@ -104,7 +104,7 @@
   "linkRequiredAction": "Zurück zum Workspace",
   "migrationCode": "Bestehende Verknüpfung wird geprüft",
   "migrationTitle": "Deine Clockodo-Verknüpfung wird migriert",
-  "migrationDescription": "Wir prüfen deine bisherige ActivityTrack-Verknüpfung und übernehmen sie in den neuen Clockodo-Bereich.",
+  "migrationDescription": "Wir prüfen deine bisherige Clockodo-Verknüpfung und übernehmen sie in den neuen Clockodo-Bereich.",
   "clockStatus": {
     "working": "Arbeitszeit {duration}",
     "break": "Pause {duration}",
