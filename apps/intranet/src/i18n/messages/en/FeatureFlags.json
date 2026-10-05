@@ -68,5 +68,11 @@
   },
   "panel": {
     "manage": "Manage"
+  },
+  "maintenanceScreen": {
+    "code": "In progress",
+    "title": "Currently being reworked",
+    "description": "IT is reworking this area, so it is temporarily unavailable. We'll open it again as soon as it's ready.",
+    "backToDashboard": "Back to dashboard"
   }
 }

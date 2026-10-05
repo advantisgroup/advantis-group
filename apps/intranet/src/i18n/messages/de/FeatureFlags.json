@@ -68,5 +68,11 @@
   },
   "panel": {
     "manage": "Verwalten"
+  },
+  "maintenanceScreen": {
+    "code": "In Bearbeitung",
+    "title": "Wird gerade überarbeitet",
+    "description": "Dieser Bereich wird gerade von der IT überarbeitet und ist vorübergehend nicht verfügbar. Sobald er fertig ist, schalten wir ihn wieder frei.",
+    "backToDashboard": "Zurück zur Startseite"
   }
 }

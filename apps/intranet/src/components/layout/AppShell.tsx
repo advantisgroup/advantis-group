@@ -19,6 +19,7 @@ import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider"
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { GracePeriodBanner } from "@/components/layout/GracePeriodBanner";
 import { KeyboardShortcuts } from "@/components/layout/KeyboardShortcuts";
+import { MaintenanceScreen } from "@/components/layout/MaintenanceScreen";
 import { SandboxBanner } from "@/components/layout/SandboxBanner";
 import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -40,6 +41,7 @@ import { PushSubscriptionSync } from "@/components/notifications/PushSubscriptio
 import { OnboardingPanel } from "@/components/onboarding/OnboardingPanel";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import { OnboardingTrigger } from "@/components/onboarding/OnboardingTrigger";
+import { useIsAdmin } from "@/components/providers/current-user";
 import { TourCompletionScreen } from "@/components/tour/TourCompletionScreen";
 import { TourOverlay } from "@/components/tour/TourOverlay";
 import { TourPopout } from "@/components/tour/TourPopout";
@@ -48,6 +50,7 @@ import { TourProvider, useTour } from "@/components/tour/TourProvider";
 import { TourSpotlight } from "@/components/tour/TourSpotlight";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { UpdateBanner } from "@/components/updates/UpdateBanner";
+import { isMaintenanceLocked } from "@/lib/maintenance";
 import { cn } from "@/lib/utils";
 
 /**
@@ -86,6 +89,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const mainContentRef = useRef<HTMLDivElement>(null);
   const { state: tourState, phase: tourPhase, targetRect } = useTour();
   const tourActive = (tourState?.active && tourPhase === "active") ?? false;
+  // Temporarily locked areas (lib/maintenance.ts) — admins still see everything.
+  const isAdmin = useIsAdmin();
+  const maintenanceLocked = !isAdmin && isMaintenanceLocked(pathname);
+  const pageContent = maintenanceLocked ? <MaintenanceScreen /> : children;
 
   // Chat and the announcement composer are full-screen, self-managing views
   // (their own header and sticky composer/toolbar), so they opt out of the
@@ -324,14 +331,14 @@ function AppShellInner({ children }: { children: ReactNode }) {
           {/* Isolate page crashes so the surrounding shell stays usable.
               Keyed by route so navigating away clears a previous error. */}
           {immersive ? (
-            <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
+            <ErrorBoundary key={pathname}>{pageContent}</ErrorBoundary>
           ) : (
             // Lenis needs a single content element inside the scroller to
             // translate. Only rendered off the immersive branch — those routes
             // size themselves to the viewport through <main>, and an extra div
             // would break their `h-full` chain.
             <div ref={mainContentRef} className={fillPage ? "h-full" : undefined}>
-              <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
+              <ErrorBoundary key={pathname}>{pageContent}</ErrorBoundary>
             </div>
           )}
         </main>
