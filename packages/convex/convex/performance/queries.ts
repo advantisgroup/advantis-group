@@ -4,15 +4,14 @@
  * script's `latest_snapshots`/`month_calls`/`call_days`/`team_totals`/
  * `employee_history`/`drilldown` routes.
  *
- * Every query takes the caller's Performance session `token` (not Clerk
- * identity — see `performanceAuth.ts`) and enforces the same visibility
- * rule as the source's `may_view_employee`: an admin sees everyone, a
- * `mitarbeiter` login only its own linked employee.
+ * Every query runs as the signed-in intranet user and goes through
+ * `lib/access.ts`: admins see every dashboard, a team/department lead their
+ * dashboard's team view, everyone else only their own employee page.
  */
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
-import { internalMutation, query } from "../functions";
+import { internalMutation, userQuery } from "../functions";
 import { type QueryCtx } from "../_generated/server";
 import {
   addForecast,
@@ -36,13 +35,7 @@ import {
 import { EXCLUDED_OWNERS } from "./lib/salesforceImport";
 import { DAILY_KEYS, type MetricFields } from "./lib/types";
 import { isWorkday, parseISODate, todayUTC, toISODate } from "./lib/workdays";
-import {
-  hasPermission,
-  requireCanViewEmployee as requireCanView,
-  requirePermission,
-  requireSessionLogin as requireSession,
-  resolveCompanyId,
-} from "./lib/auth";
+import { loadViewer, requireTeamView, requireViewableEmployee } from "./lib/access";
 import {
   type Ctx,
   type MonthCalls,
@@ -482,19 +475,16 @@ function defaultYm(): string {
 
 // ------------------------------------------------------------------ queries
 
-/** Team dashboard: requires `view_all_employees` for the resolved company
- * (own company for a company-scoped login; `companyId` arg required for a
- * cross-company super-admin — see `resolveCompanyId`). */
-export const teamDashboard = query({
+/** Team dashboard: admins and the dashboard's team/department leads. Without
+ * `companyId` the viewer's default dashboard (see `resolveDashboard`). */
+export const teamDashboard = userQuery({
   args: {
-    token: v.string(),
     ym: v.optional(v.string()),
     companyId: v.optional(v.id("companies")),
   },
-  handler: async (ctx, { token, ym: ymArg, companyId: companyIdArg }) => {
-    const login = await requireSession(ctx, token);
-    const companyId = resolveCompanyId(login, companyIdArg);
-    await requirePermission(ctx, login, "view_all_employees", companyId);
+  handler: async (ctx, { ym: ymArg, companyId: companyIdArg }) => {
+    const viewer = await loadViewer(ctx, ctx.caller);
+    const companyId = requireTeamView(viewer, companyIdArg);
 
     const ym = ymArg ?? defaultYm();
     const cache = newQueryCache();
@@ -561,12 +551,11 @@ export interface DevelopmentMonth {
  * filter for the same reason. `monthly` gives one point per month for the
  * funnel/hitrate/unqualified metrics (naturally monthly, not daily); the
  * rest are full daily series over the whole window. */
-export const teamDevelopment = query({
-  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
-  handler: async (ctx, { token, companyId: companyIdArg }) => {
-    const login = await requireSession(ctx, token);
-    const companyId = resolveCompanyId(login, companyIdArg);
-    await requirePermission(ctx, login, "view_all_employees", companyId);
+export const teamDevelopment = userQuery({
+  args: { companyId: v.optional(v.id("companies")) },
+  handler: async (ctx, { companyId: companyIdArg }) => {
+    const viewer = await loadViewer(ctx, ctx.caller);
+    const companyId = requireTeamView(viewer, companyIdArg);
 
     const cache = newQueryCache();
     const currentYm = defaultYm();
@@ -608,30 +597,17 @@ export const teamDevelopment = query({
 
 /** One employee's detail/history page. Visible to an admin, or to the
  * employee themself. */
-export const employeeDetail = query({
+export const employeeDetail = userQuery({
   args: {
-    token: v.string(),
     employeeId: v.id("performanceEmployees"),
     ym: v.optional(v.string()),
   },
-  handler: async (ctx, { token, employeeId, ym: ymArg }) => {
-    const login = await requireSession(ctx, token);
-
-    const employee = await ctx.db.get(employeeId);
-    if (!employee || EXCLUDED_OWNERS.has(employee.name.toLowerCase())) {
-      throw new ConvexError({
-        code: "not_found",
-        message: "Employee not found.",
-      });
+  handler: async (ctx, { employeeId, ym: ymArg }) => {
+    const viewer = await loadViewer(ctx, ctx.caller);
+    const { employee, companyId } = await requireViewableEmployee(ctx, viewer, employeeId);
+    if (EXCLUDED_OWNERS.has(employee.name.toLowerCase())) {
+      throw new ConvexError({ code: "not_found", message: "Mitarbeiter nicht gefunden." });
     }
-    await requireCanView(ctx, login, employee);
-    if (!employee.companyId) {
-      throw new ConvexError({
-        code: "not_found",
-        message: "Employee has no company (pending migration).",
-      });
-    }
-    const companyId = employee.companyId;
 
     const cache = newQueryCache();
     const hist = await employeeHistoryList(ctx, companyId, employeeId, cache);
@@ -735,9 +711,8 @@ export interface InteractionDay {
  * omitted) but an explicit `start`/`end` (both required together) overrides
  * it — the Interaktionen tab's day/week/month period filter uses this to
  * scope to a single day or week instead of always a full month. */
-export const interactionsMonth = query({
+export const interactionsMonth = userQuery({
   args: {
-    token: v.string(),
     ym: v.optional(v.string()),
     start: v.optional(v.string()),
     end: v.optional(v.string()),
@@ -746,30 +721,12 @@ export const interactionsMonth = query({
   },
   handler: async (
     ctx,
-    { token, ym: ymArg, start: startArg, end: endArg, employeeId, companyId: companyIdArg },
+    { ym: ymArg, start: startArg, end: endArg, employeeId, companyId: companyIdArg },
   ) => {
-    const login = await requireSession(ctx, token);
-    let companyId: Id<"companies">;
-    if (employeeId) {
-      const employee = await ctx.db.get(employeeId);
-      if (!employee) {
-        throw new ConvexError({
-          code: "not_found",
-          message: "Employee not found.",
-        });
-      }
-      await requireCanView(ctx, login, employee);
-      if (!employee.companyId) {
-        throw new ConvexError({
-          code: "not_found",
-          message: "Employee has no company (pending migration).",
-        });
-      }
-      companyId = employee.companyId;
-    } else {
-      companyId = resolveCompanyId(login, companyIdArg);
-      await requirePermission(ctx, login, "view_all_employees", companyId);
-    }
+    const viewer = await loadViewer(ctx, ctx.caller);
+    const companyId: Id<"companies"> = employeeId
+      ? (await requireViewableEmployee(ctx, viewer, employeeId)).companyId
+      : requireTeamView(viewer, companyIdArg);
 
     const ym = ymArg ?? defaultYm();
     const { start, end } = startArg && endArg ? { start: startArg, end: endArg } : monthBounds(ym);
@@ -865,36 +822,17 @@ export interface InteractionRecord {
  * `interactionsMonth` day row. Team-wide (admin) when `employeeId` is
  * omitted, one employee's own interactions otherwise — same
  * admin-or-self visibility rule as `employeeDetail`. */
-export const interactionsDayDetail = query({
+export const interactionsDayDetail = userQuery({
   args: {
-    token: v.string(),
     date: v.string(),
     employeeId: v.optional(v.id("performanceEmployees")),
     companyId: v.optional(v.id("companies")),
   },
-  handler: async (ctx, { token, date, employeeId, companyId: companyIdArg }) => {
-    const login = await requireSession(ctx, token);
-    let companyId: Id<"companies">;
-    if (employeeId) {
-      const employee = await ctx.db.get(employeeId);
-      if (!employee) {
-        throw new ConvexError({
-          code: "not_found",
-          message: "Employee not found.",
-        });
-      }
-      await requireCanView(ctx, login, employee);
-      if (!employee.companyId) {
-        throw new ConvexError({
-          code: "not_found",
-          message: "Employee has no company (pending migration).",
-        });
-      }
-      companyId = employee.companyId;
-    } else {
-      companyId = resolveCompanyId(login, companyIdArg);
-      await requirePermission(ctx, login, "view_all_employees", companyId);
-    }
+  handler: async (ctx, { date, employeeId, companyId: companyIdArg }) => {
+    const viewer = await loadViewer(ctx, ctx.caller);
+    const companyId: Id<"companies"> = employeeId
+      ? (await requireViewableEmployee(ctx, viewer, employeeId)).companyId
+      : requireTeamView(viewer, companyIdArg);
 
     const rows = employeeId
       ? await ctx.db
@@ -969,45 +907,41 @@ function daysBetween(iso: string | undefined, ref: Date): number | null {
   return Math.round((ref.getTime() - parseISODate(iso).getTime()) / 86_400_000);
 }
 
-export const drilldown = query({
+export const drilldown = userQuery({
   args: {
-    token: v.string(),
     key: v.string(),
     employeeName: v.optional(v.string()),
     companyId: v.optional(v.id("companies")),
   },
-  handler: async (ctx, { token, key, employeeName, companyId: companyIdArg }) => {
+  handler: async (ctx, { key, employeeName, companyId: companyIdArg }) => {
     const def = LISTS[key];
     if (!def) throw new ConvexError({ code: "not_found", message: "Unknown list." });
-    const login = await requireSession(ctx, token);
+    const viewer = await loadViewer(ctx, ctx.caller);
 
     let empFilter = employeeName;
     let companyId: Id<"companies">;
-    if (login.isSuperAdmin || (await hasPermission(ctx, login, "view_all_employees"))) {
-      companyId = resolveCompanyId(login, companyIdArg);
-      await requirePermission(ctx, login, "view_all_employees", companyId);
+    const dashboard = companyIdArg
+      ? viewer.dashboards.find((d) => d.companyId === companyIdArg)
+      : (viewer.dashboards.find((d) => d.canViewTeam) ?? viewer.dashboards[0]);
+    if (!dashboard) {
+      throw new ConvexError({ code: "forbidden", message: "Kein Zugriff auf dieses Dashboard." });
+    }
+    if (dashboard.canViewTeam) {
+      companyId = dashboard.companyId;
     } else {
-      if (!login.employeeId) {
-        throw new ConvexError({
-          code: "forbidden",
-          message: "No linked employee.",
-        });
-      }
-      const employee = await ctx.db.get(login.employeeId);
+      // Own numbers only: pin the list to the viewer's own employee name.
+      const employee = dashboard.employeeId ? await ctx.db.get(dashboard.employeeId) : null;
       if (!employee || !employee.companyId) {
-        throw new ConvexError({
-          code: "forbidden",
-          message: "No linked employee.",
-        });
+        throw new ConvexError({ code: "forbidden", message: "Dir ist kein Mitarbeiter zugeordnet." });
       }
       if (empFilter && empFilter !== employee.name) {
-        throw new ConvexError({ code: "forbidden", message: "Not allowed." });
+        throw new ConvexError({ code: "forbidden", message: "Kein Zugriff." });
       }
       empFilter = employee.name;
       companyId = employee.companyId;
     }
 
-    // A `mitarbeiter` login (or an admin drilling into one name) only ever
+    // An employee viewing their own list (or a lead drilling into one name) only ever
     // wants one owner's rows — push that into the index instead of reading
     // every open lead/opp in the table just to filter it away in memory.
     // The team-wide view (no `empFilter`) genuinely needs every row, so it

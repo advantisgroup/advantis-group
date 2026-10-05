@@ -6,15 +6,15 @@ import * as XLSX from "xlsx";
 
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { Errors } from "../lib/errors.js";
+import { authed } from "../lib/middleware.js";
 import { scanFile } from "../lib/onedrive/scan.js";
-import { requirePerformanceAdmin } from "../lib/performance.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
 const ALLOWED_EXTENSIONS = [".xlsx", ".xlsm", ".csv"];
 
 const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-// Matches performanceImport.ts's aggregated-template HEADER_ALIASES —
+// Matches performance/import.ts's aggregated-template HEADER_ALIASES —
 // these exact labels round-trip cleanly back through that parser.
 const TEMPLATE_HEADER = [
   "Mitarbeiter",
@@ -80,14 +80,22 @@ function extractConvexMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
+/** Access runs through the intranet sign-in (Clerk): uploads are for
+ * intranet admins, the export for whoever sees the dashboard's team view —
+ * both checked in Convex (`performance/access.ts`, `performance/export.ts`). */
 export const performanceRoute = new Elysia({ prefix: "/performance" })
+  .use(authed)
   .post(
     "/uploads",
-    async ({ request, body }) => {
-      const admin = await requirePerformanceAdmin(request);
+    async ({ caller, body }) => {
+      const companyId = body.companyId as Id<"companies">;
+      const { uploadedBy } = await getConvex().query(api.performance.access.apiUploadAccess, {
+        serverKey: getConvexServerKey(),
+        clerkUserId: caller.clerkUserId,
+        companyId,
+      });
 
-      const rateKey = request.headers.get("authorization") ?? "unknown";
-      await rateLimit("performance.upload", rateKey, 30, "1 h");
+      await rateLimit("performance.upload", caller.clerkUserId, 120, "1 h");
 
       const file = body.file;
       const force = body.force === "true";
@@ -119,7 +127,7 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       if (!force) {
         const priorUpload = await getConvex().query(api.performance.import.apiFindUploadByHash, {
           serverKey: getConvexServerKey(),
-          companyId: admin.companyId,
+          companyId,
           contentHash,
         });
         if (priorUpload) {
@@ -155,14 +163,14 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       try {
         const result = await getConvex().action(api.performance.uploadParse.apiImportReport, {
           serverKey: getConvexServerKey(),
-          companyId: admin.companyId,
+          companyId,
           filename: file.name,
           storageId,
           contentHash,
           force,
           fileSize: bytes.length,
           batchId,
-          uploadedBy: admin.name || admin.email,
+          uploadedBy,
         });
 
         if (result.status === "empty" || result.status === "duplicate") {
@@ -181,8 +189,10 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       }
     },
     {
+      signedIn: true,
       body: t.Object({
         file: t.File(),
+        companyId: t.String(),
         force: t.Optional(t.String()),
         batchId: t.Optional(t.String()),
       }),
@@ -191,20 +201,21 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
 
   // Blank upload template with the aggregated-format's recognized headers
   // — no Convex round-trip, the headers are static.
-  .get("/template", async ({ request }) => {
-    await requirePerformanceAdmin(request);
-    return xlsxResponse([TEMPLATE_HEADER], "Vorlage", "performance-vorlage.xlsx");
-  })
+  .get(
+    "/template",
+    () => xlsxResponse([TEMPLATE_HEADER], "Vorlage", "performance-vorlage.xlsx"),
+    { signedIn: true },
+  )
 
   // Per-employee KPI export for one month (port of the reference script's
   // `employee_export`).
   .get(
     "/export",
-    async ({ request, query }) => {
-      const admin = await requirePerformanceAdmin(request);
+    async ({ caller, query }) => {
       const rows = await getConvex().query(api.performance.export.apiExportTeam, {
         serverKey: getConvexServerKey(),
-        companyId: admin.companyId,
+        clerkUserId: caller.clerkUserId,
+        companyId: query.companyId as Id<"companies"> | undefined,
         ym: query.ym,
       });
       const aoa = [
@@ -232,5 +243,11 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       ];
       return xlsxResponse(aoa, "Report", `performance-${query.ym}.xlsx`);
     },
-    { query: t.Object({ ym: t.String({ pattern: "^\\d{4}-\\d{2}$" }) }) },
+    {
+      signedIn: true,
+      query: t.Object({
+        ym: t.String({ pattern: "^\\d{4}-\\d{2}$" }),
+        companyId: t.Optional(t.String()),
+      }),
+    },
   );

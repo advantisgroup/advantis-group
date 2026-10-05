@@ -1,6 +1,6 @@
 "use node";
 
-import { action, serverAction } from "../functions";
+import { serverAction, userAction } from "../functions";
 
 /**
  * Report-file detection/parsing for the Performance upload pipeline —
@@ -577,8 +577,8 @@ async function processReport(
 
 /**
  * Server-key gated: only `apps/api`'s upload route calls this, after it has
- * already verified the caller holds a valid, admin-role Performance
- * session — same trust boundary as the `api*`-prefixed OneDrive functions
+ * checked via `access.apiUploadAccess` that the signed-in intranet user is
+ * an admin — same trust boundary as the `api*`-prefixed OneDrive functions
  * in `onedrive.ts`.
  */
 export const apiImportReport = serverAction({
@@ -631,23 +631,26 @@ export const apiImportReport = serverAction({
   },
 });
 
+async function requireCompanyExists(ctx: ActionCtx, companyId: Id<"companies">): Promise<void> {
+  if (!(await ctx.runQuery(internal.performance.import.companyExists, { companyId }))) {
+    throw new ConvexError({ code: "not_found", message: "Dashboard nicht gefunden." });
+  }
+}
+
 /** Re-processes a file already sitting in storage from a prior upload —
  * rereads it fresh through the (possibly since-fixed) detection/parsing
  * logic and patches the existing log row in place, rather than requiring
  * the admin to re-select and re-upload the same file from their computer.
- * Session-token gated (called directly from the browser, not through
- * apps/api) since there's no new file to stage/scan here. */
-export const reimportUpload = action({
+ * Admin-only, called directly from the browser (not through apps/api) since
+ * there's no new file to stage/scan here. */
+export const reimportUpload = userAction({
+  role: "admin",
   args: {
-    token: v.string(),
     logId: v.id("performanceUploadLog"),
-    companyId: v.optional(v.id("companies")),
+    companyId: v.id("companies"),
   },
-  handler: async (ctx, { token, logId, companyId: companyIdArg }): Promise<ImportResult> => {
-    const { companyId } = await ctx.runQuery(internal.performance.import.requireAdminByToken, {
-      token,
-      companyId: companyIdArg,
-    });
+  handler: async (ctx, { logId, companyId }): Promise<ImportResult> => {
+    await requireCompanyExists(ctx, companyId);
     const log = await ctx.runQuery(internal.performance.import.getUploadLogRow, {
       logId,
     });
@@ -674,20 +677,17 @@ export const reimportUpload = action({
  * each file's parse is small and fast, and the DB layer already skips a
  * write when the reprocessed values come out unchanged (see
  * `upsertSnapshot`), so re-running an already-correct file is cheap. */
-export const reimportBatch = action({
+export const reimportBatch = userAction({
+  role: "admin",
   args: {
-    token: v.string(),
     batchId: v.string(),
-    companyId: v.optional(v.id("companies")),
+    companyId: v.id("companies"),
   },
   handler: async (
     ctx,
-    { token, batchId, companyId: companyIdArg },
+    { batchId, companyId },
   ): Promise<{ results: (ImportResult & { logId: string })[] }> => {
-    const { companyId } = await ctx.runQuery(internal.performance.import.requireAdminByToken, {
-      token,
-      companyId: companyIdArg,
-    });
+    await requireCompanyExists(ctx, companyId);
     const rows = await ctx.runQuery(internal.performance.import.getUploadLogRowsByBatch, {
       batchId,
     });

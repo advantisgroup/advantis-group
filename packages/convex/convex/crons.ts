@@ -137,14 +137,7 @@ if (process.env.DISABLE_CRONS !== "true") {
     {},
   );
 
-  // Links Performance/Academy logins whose intranet account showed up later.
-  crons.daily(
-    "performance: reconcile auto-links",
-    { hourUTC: 4, minuteUTC: 15 },
-    internal.performance.auth.reconcileAutoLinks,
-    {},
-  );
-
+  // Links Academy logins whose intranet account showed up later.
   crons.daily(
     "academy: reconcile auto-links",
     { hourUTC: 4, minuteUTC: 18 },

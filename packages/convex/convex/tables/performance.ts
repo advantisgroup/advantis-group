@@ -2,36 +2,40 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export const performanceTables = {
-  // --- Performance (sales KPI dashboard) -----------------------------------
-  // Multi-tenant: each client company brings its own, fully independent
-  // domain (e.g. "salespirates.de") — there is no Advantis-owned wildcard
-  // root. `companies.ts` adds that domain to the Vercel project via the
-  // Domains API on creation; Vercel then reports the DNS record(s)
-  // (`dnsVerification`) the domain's owner must add on their own registrar
-  // before it verifies — one manual step per company, unavoidable since
-  // nobody can write into a DNS zone they don't control, not a gap in the
-  // automation. Everything else (the company row, its built-in roles, the
-  // Vercel API call itself) is zero-touch.
+  // --- Performance (KPI dashboards) ---------------------------------------
+  // One `companies` row = one dashboard (the table keeps its historical
+  // name; the UI calls it "Dashboard"). Since 10/2026 access runs entirely
+  // through the intranet (Clerk): a dashboard is linked to intranet teams
+  // and/or departments (`teamIds`/`departmentIds`). Intranet admins see
+  // every dashboard, the lead of a linked team/department sees the team
+  // view, everyone else only their own employee page (via
+  // `performanceEmployees.userId`). See `performance/lib/access.ts`.
+  //
+  // The domain/provisioning fields below are leftovers of the old
+  // multi-tenant setup (own password logins per customer domain). They are
+  // optional now and no longer read; kept so existing rows still validate.
   companies: defineTable({
     name: v.string(),
     // Internal identifier only (session/self-setup scoping) — auto-derived
     // from `domain` at creation time, never itself used for routing.
     slug: v.string(),
-    // The company's own domain, exact-matched against the request Host
-    // header (`companies.getByDomain`) — e.g. "salespirates.de" or
-    // "app.salespirates.de". Whatever they actually point at Vercel.
-    domain: v.string(),
-    status: v.union(
+    /** Intranet teams whose members belong to this dashboard. */
+    teamIds: v.optional(v.array(v.id("teams"))),
+    /** Intranet departments whose members belong to this dashboard. */
+    departmentIds: v.optional(v.array(v.id("departments"))),
+    // Legacy (old tenant domain routing) — no longer read.
+    domain: v.optional(v.string()),
+    status: v.optional(
+      v.union(
       v.literal("provisioning"), // row just created, about to call Vercel
       v.literal("pending_dns"), // added to Vercel, waiting on the owner's ownership-verification DNS record
       v.literal("pending_routing"), // ownership verified, but no A/CNAME actually routes traffic to Vercel yet
       v.literal("active"), // ownership verified AND traffic correctly routed — actually live
       v.literal("failed"), // a real error (not just "not verified yet")
+      ),
     ),
-    // Per-company replacement for the old global `PERFORMANCE_ADMIN_EMAILS`
-    // env var — the emails that can self-claim this company's built-in Admin
-    // role via `setupAccount`, set once at creation time.
-    adminBootstrapEmails: v.array(v.string()),
+    // Legacy: emails that could self-claim the old password Admin login.
+    adminBootstrapEmails: v.optional(v.array(v.string())),
     // The ownership-verification TXT record Vercel reports is still needed
     // — shown verbatim in the admin UI so whoever owns the domain knows
     // exactly what to add. Proves domain ownership; does NOT by itself mean
@@ -62,7 +66,12 @@ export const performanceTables = {
     .index("by_domain", ["domain"])
     .index("by_status", ["status"]),
 
-  // Named bundles of permission keys (`performance/lib/permissions.ts`),
+  // LEGACY (until 10/2026): `companyRoles`, `performanceLogins` and
+  // `performanceSessions` belonged to the old separate password login. No
+  // code reads them any more; they stay defined only so existing rows keep
+  // validating until they are deleted.
+  //
+  // Named bundles of permission keys (old `performance/lib/permissions.ts`),
   // scoped per company — the customization layer letting a company's own
   // admin (or a cross-company `isSuperAdmin`) reshape who-can-do-what
   // without a code change. Every company is seeded with three built-ins
@@ -91,7 +100,7 @@ export const performanceTables = {
     passwordHash: v.string(),
     // Deprecated: superseded by `companyId`/`roleId`/`isSuperAdmin` below.
     // Kept optional (not removed) only until
-    // `migrations/backfillPerformanceCompanyId.ts` has re-derived every
+    // the old `backfillPerformanceCompanyId` migration had re-derived every
     // row's `roleId` from it — safe to delete this field once that's
     // confirmed complete.
     role: v.optional(v.union(v.literal("admin"), v.literal("mitarbeiter"))),
@@ -149,8 +158,13 @@ export const performanceTables = {
     name: v.string(),
     active: v.boolean(),
     companyId: v.optional(v.id("companies")),
+    /** The intranet account behind this report name — what lets that person
+     * see their own numbers. Set by an admin on the Zuordnung page (or the
+     * one-time migration from the old login links). */
+    userId: v.optional(v.id("users")),
   })
     .index("by_company", ["companyId"])
+    .index("by_userId", ["userId"])
     .index("by_company_name", ["companyId", "name"]),
 
   // Backfilled nightly (see crons.ts's `cacheCompletedMonthBadges`) with one

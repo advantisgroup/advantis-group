@@ -1,10 +1,10 @@
 import {
   internalMutation,
   internalQuery,
-  mutation,
-  query,
   serverMutation,
   serverQuery,
+  userMutation,
+  userQuery,
 } from "../functions";
 /**
  * Database-side half of the Performance feature's report-upload pipeline.
@@ -29,7 +29,6 @@ import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { monthBounds } from "./lib/kpi";
 import { EXCLUDED_OWNERS } from "./lib/salesforceImport";
 import { type SnapshotFields } from "./lib/types";
-import { requirePermission, requireSessionLogin, resolveCompanyId } from "./lib/auth";
 import { TEMPLATE_ALIAS_LOOKUP } from "./lib/aggregatedTemplate";
 
 /** A one-shot URL `apps/api` POSTs the original report file to (Convex
@@ -728,13 +727,19 @@ export const insertWonOppsChunk = internalMutation({
   },
 });
 
+/** Admin-only functions below all act on one explicitly chosen dashboard. */
+async function requireCompany(ctx: QueryCtx, companyId: Id<"companies">): Promise<void> {
+  if (!(await ctx.db.get(companyId))) {
+    throw new ConvexError({ code: "not_found", message: "Dashboard nicht gefunden." });
+  }
+}
+
 /** Most recent uploads, for the admin upload page's log table. */
-export const listUploadLog = query({
-  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
-  handler: async (ctx, { token, companyId: companyIdArg }) => {
-    const login = await requireSessionLogin(ctx, token);
-    const companyId = resolveCompanyId(login, companyIdArg);
-    await requirePermission(ctx, login, "upload_reports", companyId);
+export const listUploadLog = userQuery({
+  role: "admin",
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    await requireCompany(ctx, companyId);
     const rows = await ctx.db
       .query("performanceUploadLog")
       .withIndex("by_company_uploadedAt", (q) => q.eq("companyId", companyId))
@@ -772,12 +777,11 @@ export interface UnscannedCallUpload {
   batchId?: string;
 }
 
-export const listUnscannedCallUploads = query({
-  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
-  handler: async (ctx, { token, companyId: companyIdArg }): Promise<UnscannedCallUpload[]> => {
-    const login = await requireSessionLogin(ctx, token);
-    const companyId = resolveCompanyId(login, companyIdArg);
-    await requirePermission(ctx, login, "upload_reports", companyId);
+export const listUnscannedCallUploads = userQuery({
+  role: "admin",
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }): Promise<UnscannedCallUpload[]> => {
+    await requireCompany(ctx, companyId);
     const rows = await ctx.db
       .query("performanceUploadLog")
       .withIndex("by_company_uploadedAt", (q) => q.eq("companyId", companyId))
@@ -805,12 +809,11 @@ export const listUnscannedCallUploads = query({
 /** Team roster for the client-side rescan to match agent names against —
  * same set `getTeamEmployeeNames` gives the server-side import path, just
  * exposed to a signed-in admin instead of `internal.*`-only. */
-export const listEmployeeNames = query({
-  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
-  handler: async (ctx, { token, companyId: companyIdArg }): Promise<string[]> => {
-    const login = await requireSessionLogin(ctx, token);
-    const companyId = resolveCompanyId(login, companyIdArg);
-    await requirePermission(ctx, login, "upload_reports", companyId);
+export const listEmployeeNames = userQuery({
+  role: "admin",
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }): Promise<string[]> => {
+    await requireCompany(ctx, companyId);
     const employees = await ctx.db
       .query("performanceEmployees")
       .withIndex("by_company", (q) => q.eq("companyId", companyId))
@@ -825,14 +828,13 @@ export const listEmployeeNames = query({
  * time; a rescan only ever finds *additional* implausible-duration cells
  * the parser now catches, so this just files those and marks the upload as
  * checked. Safe to call repeatedly (`upsertFlaggedRow`'s usual dedup). */
-export const recordScanResults = mutation({
+export const recordScanResults = userMutation({
+  role: "admin",
   args: {
-    token: v.string(),
     logId: v.id("performanceUploadLog"),
     flaggedRows: v.array(flaggedRowInputValidator),
   },
-  handler: async (ctx, { token, logId, flaggedRows }): Promise<{ flagged: number }> => {
-    const login = await requireSessionLogin(ctx, token);
+  handler: async (ctx, { logId, flaggedRows }): Promise<{ flagged: number }> => {
     const log = await ctx.db.get(logId);
     if (!log || !log.companyId) {
       throw new ConvexError({
@@ -840,7 +842,6 @@ export const recordScanResults = mutation({
         message: "Upload-log entry not found.",
       });
     }
-    await requirePermission(ctx, login, "upload_reports", log.companyId);
     const companyId = log.companyId;
     const now = Date.now();
     const employeeCache = await loadEmployeeCache(ctx, companyId);
@@ -866,12 +867,11 @@ export const recordScanResults = mutation({
 /** Pending call-report rows needing admin attention (see
  * `performanceFlaggedRows` in schema.ts), newest first, joined with the
  * employee's current name for display. */
-export const listFlaggedRows = query({
-  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
-  handler: async (ctx, { token, companyId: companyIdArg }) => {
-    const login = await requireSessionLogin(ctx, token);
-    const companyId = resolveCompanyId(login, companyIdArg);
-    await requirePermission(ctx, login, "view_flagged_rows", companyId);
+export const listFlaggedRows = userQuery({
+  role: "admin",
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    await requireCompany(ctx, companyId);
     const rows = await ctx.db
       .query("performanceFlaggedRows")
       .withIndex("by_company_status", (q) => q.eq("companyId", companyId).eq("status", "pending"))
@@ -904,15 +904,14 @@ export const listFlaggedRows = query({
  * no other measured field to have created one already (see
  * `buildCallSnapshots`: a row with nothing left after a flagged field never
  * reaches `upsertSnapshot`). */
-export const resolveFlaggedRow = mutation({
+export const resolveFlaggedRow = userMutation({
+  role: "admin",
   args: {
-    token: v.string(),
     id: v.id("performanceFlaggedRows"),
     action: v.union(v.literal("ignore"), v.literal("force"), v.literal("edit")),
     value: v.optional(v.number()),
   },
-  handler: async (ctx, { token, id, action, value }): Promise<void> => {
-    const login = await requireSessionLogin(ctx, token);
+  handler: async (ctx, { id, action, value }): Promise<void> => {
     const row = await ctx.db.get(id);
     if (!row || !row.companyId) {
       throw new ConvexError({
@@ -920,7 +919,6 @@ export const resolveFlaggedRow = mutation({
         message: "Flagged row not found.",
       });
     }
-    await requirePermission(ctx, login, "resolve_flagged_rows", row.companyId);
 
     if (action === "ignore") {
       await ctx.db.patch(id, { status: "ignored", resolvedAt: Date.now() });
@@ -968,21 +966,11 @@ export const resolveFlaggedRow = mutation({
 // touch ctx.db directly — these internal query wrappers are how they read
 // the admin session and the log rows to reprocess.
 
-/** Actions can't call `requirePermission` directly (it needs `ctx.db`) —
- * this wraps the "can upload reports" check as an internal query an action
- * can `ctx.runQuery` into, and resolves which company the caller's import
- * is scoped to (their own, or an explicit `companyId` for a super-admin). */
-export const requireAdminByToken = internalQuery({
-  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
-  handler: async (
-    ctx,
-    { token, companyId: companyIdArg },
-  ): Promise<{ companyId: Id<"companies"> }> => {
-    const login = await requireSessionLogin(ctx, token);
-    const companyId = resolveCompanyId(login, companyIdArg);
-    await requirePermission(ctx, login, "upload_reports", companyId);
-    return { companyId };
-  },
+/** Lets the re-import actions confirm the dashboard exists (the admin
+ * check itself happens in the `userAction` builder). */
+export const companyExists = internalQuery({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }): Promise<boolean> => (await ctx.db.get(companyId)) !== null,
 });
 
 export const getUploadLogRow = internalQuery({
