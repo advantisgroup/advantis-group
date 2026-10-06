@@ -49,6 +49,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   AbsenceTypeLabel,
   Chip,
+  balanceClassName,
   clockStatusClassName,
   FieldLabel,
   Segmented,
@@ -176,7 +177,7 @@ function People() {
                   <TableCell
                     className={cn(
                       "text-right tabular-nums",
-                      !row.trackingDisabled && row.balanceMinutes < 0 && "text-warn",
+                      !row.trackingDisabled && balanceClassName(row.balanceMinutes),
                     )}
                   >
                     {row.trackingDisabled ? "–" : formatMinutes(row.balanceMinutes, true)}

@@ -137,6 +137,13 @@ export function WarningChips({ warnings }: { warnings: readonly DayWarning[] }) 
   );
 }
 
+/** Hours-account figure: plus green, minus red, zero neutral. */
+export function balanceClassName(minutes: number): string | undefined {
+  if (minutes > 0) return "text-ok";
+  if (minutes < 0) return "text-destructive";
+  return undefined;
+}
+
 export function Chip({
   children,
   tone = "muted",

@@ -22,7 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { Absences } from "@/components/zeiterfassung/Absences";
 import { AuditLog } from "@/components/zeiterfassung/AdminPanel";
 import { Entries } from "@/components/zeiterfassung/Entries";
-import { FieldLabel, Segmented } from "@/components/zeiterfassung/parts";
+import { balanceClassName, FieldLabel, Segmented } from "@/components/zeiterfassung/parts";
 import {
   formatDay,
   formatDays,
@@ -66,7 +66,11 @@ export function PersonAdmin({ userId }: { userId: Id<"users"> }) {
         <Kpi
           featured
           label={t("overview.balance")}
-          value={formatMinutes(detail.balance.minutes, true)}
+          value={
+            <span className={balanceClassName(detail.balance.minutes)}>
+              {formatMinutes(detail.balance.minutes, true)}
+            </span>
+          }
           hint={
             detail.balance.since
               ? t("admin.balanceSince", {

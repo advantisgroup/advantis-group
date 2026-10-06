@@ -18,6 +18,7 @@ import { ClockCard } from "@/components/zeiterfassung/ClockCard";
 import {
   AbsenceStatusBadge,
   AbsenceTypeLabel,
+  balanceClassName,
   Chip,
   SectionBoundary,
   WarningChips,
@@ -90,8 +91,15 @@ export function Overview() {
         />
         <Kpi
           label={t("overview.balance")}
-          value={summary ? formatMinutes(summary.balance.minutes, true) : "–"}
-          tone={summary && summary.balance.minutes < 0 ? "warn" : "neutral"}
+          value={
+            summary ? (
+              <span className={balanceClassName(summary.balance.minutes)}>
+                {formatMinutes(summary.balance.minutes, true)}
+              </span>
+            ) : (
+              "–"
+            )
+          }
           hint={mode?.preview ? t("overview.balanceHintPreview") : t("overview.balanceHint")}
         />
         <Kpi
