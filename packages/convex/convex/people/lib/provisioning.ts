@@ -86,8 +86,11 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
       ...(firstName && !existing.firstName ? { firstName } : {}),
       ...(lastName && !existing.lastName ? { lastName } : {}),
       ...(email && existing.email !== email ? { email } : {}),
-      // backfill the external flag for rows provisioned before it existed
-      ...(existing.external === undefined ? { external } : {}),
+      // backfill the external flag, and refresh it when the sign-in address
+      // changed (e.g. moved from a client address to @advantisgroup.de)
+      ...(existing.external === undefined || (email && existing.email !== email)
+        ? { external }
+        : {}),
     });
     return { status: "active", userId: existing._id, role: existing.role };
   }
