@@ -306,7 +306,12 @@
     "trackingOnHint": "Die Person stempelt selbst; Stundenkonto und Morgen-Hinweis sind aktiv.",
     "trackingOffHint": "Diese Person erfasst keine Arbeitszeit: keine Stempeluhr, kein Morgen-Hinweis, kein Stundenkonto in der Übersicht. Abwesenheiten (z. B. Urlaub) funktionieren weiter.",
     "trackingOnToast": "Zeiterfassung eingeschaltet",
-    "trackingOffToast": "Zeiterfassung ausgeschaltet"
+    "trackingOffToast": "Zeiterfassung ausgeschaltet",
+    "earlyAccess": "Schon vor dem Start nutzen",
+    "earlyAccessOffHint": "Während der Vorschau sieht die Person nur ihre Daten. Einschalten, wenn sie schon jetzt hier stempeln soll (z. B. weil sie Clockodo nie genutzt hat).",
+    "earlyAccessOnHint": "Stempelt und beantragt schon hier, ab {date}.",
+    "earlyAccessOnToast": "Freigeschaltet – stempelt ab morgen hier",
+    "earlyAccessOffToast": "Wieder nur Vorschau"
   },
   "audit": {
     "system": "System",
@@ -421,6 +426,9 @@
     "title": "Neu: die eigene Zeiterfassung",
     "description": "Ab dem {date} stempelst du hier statt in Clockodo. Bis dahin kannst du dich schon umsehen – stempeln, Urlaub beantragen und Zeiten ändern geht aber erst ab dem Start. Bis dahin bitte weiter Clockodo nutzen.",
     "descriptionNoDate": "Bald stempelst du hier statt in Clockodo. Bis dahin kannst du dich schon umsehen – stempeln, Urlaub beantragen und Zeiten ändern geht aber erst ab dem Start. Bis dahin bitte weiter Clockodo nutzen.",
-    "adminNote": "Vorschau für alle: Mitarbeiter sehen nur ihre Daten und können noch nichts ändern. Du kannst als Admin weiter verwalten, importieren und korrigieren – gestempelt wird von niemandem."
+    "adminNote": "Vorschau für alle: Mitarbeiter sehen nur ihre Daten und können noch nichts ändern. Stempeln können vorab nur Personen mit „Schon vor dem Start nutzen“ (Verwaltung → Person → Einstellungen). Du kannst als Admin weiter verwalten, importieren und korrigieren.",
+    "earlyTitle": "Du bist schon freigeschaltet",
+    "earlyDescription": "Du stempelst ab sofort hier – nicht mehr in Clockodo. Für alle anderen startet die Zeiterfassung am {date}.",
+    "earlyDescriptionNoDate": "Du stempelst ab sofort hier – nicht mehr in Clockodo. Für alle anderen startet die Zeiterfassung bald."
   }
 }

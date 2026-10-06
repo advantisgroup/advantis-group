@@ -172,6 +172,8 @@ export const timeTables = {
   timeProfiles: defineTable({
     userId: v.id("users"),
     trackingDisabled: v.boolean(),
+    /** Uses the module fully from this Berlin date on, before go-live (preview). */
+    earlyAccessFrom: v.optional(v.string()),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
 

@@ -153,7 +153,7 @@ export const save = userMutation({
     reason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     const subject = subjectFor(ctx.caller, args.userId);
     validateSpan(args.start, args.end);
     const original = args.entryId ? await loadOwnEntry(ctx, subject, args.entryId) : null;
@@ -239,7 +239,7 @@ export const save = userMutation({
 export const remove = userMutation({
   args: { entryId: v.id("timeEntries"), reason: v.optional(v.string()) },
   handler: async (ctx, { entryId, reason: rawReason }) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     const existing = await ctx.db.get(entryId);
     if (!existing) throw timeError("conflict", "changed_meanwhile", "Entry not found");
     const subject = subjectFor(ctx.caller, existing.userId);
@@ -311,7 +311,7 @@ export const remove = userMutation({
 export const withdraw = userMutation({
   args: { entryId: v.id("timeEntries") },
   handler: async (ctx, { entryId }) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     const row = await ctx.db.get(entryId);
     if (!row || row.status !== "pending") {
       throw timeError("conflict", "not_pending", "Not a pending correction");
@@ -361,7 +361,7 @@ export const decide = userMutation({
     note: v.optional(v.string()),
   },
   handler: async (ctx, { entryId, approve, note: rawNote }) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     const request = await ctx.db.get(entryId);
     if (!request || request.status !== "pending") {
       throw timeError("conflict", "not_pending", "Not a pending correction");

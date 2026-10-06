@@ -14,9 +14,12 @@ import { formatDay } from "@/lib/zeiterfassung";
 export function PreviewBanner({
   liveFrom,
   isAdmin,
+  earlyAccess,
 }: {
   liveFrom: string | null;
   isAdmin: boolean;
+  /** This person already uses the module (Verwaltung → Person). */
+  earlyAccess: boolean;
 }) {
   const t = useTranslations("Zeiterfassung.preview");
   const locale = useLocale();
@@ -25,9 +28,17 @@ export function PreviewBanner({
   return (
     <Alert className="border-primary/30 bg-primary/5">
       <Sparkles className="size-4 text-primary" />
-      <AlertTitle>{t("title")}</AlertTitle>
+      <AlertTitle>{earlyAccess ? t("earlyTitle") : t("title")}</AlertTitle>
       <AlertDescription className="space-y-1">
-        <p>{date ? t("description", { date }) : t("descriptionNoDate")}</p>
+        <p>
+          {earlyAccess
+            ? date
+              ? t("earlyDescription", { date })
+              : t("earlyDescriptionNoDate")
+            : date
+              ? t("description", { date })
+              : t("descriptionNoDate")}
+        </p>
         {isAdmin && <p className="text-xs">{t("adminNote")}</p>}
       </AlertDescription>
     </Alert>

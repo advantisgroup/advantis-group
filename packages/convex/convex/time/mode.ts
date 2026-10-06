@@ -1,27 +1,39 @@
 import { ConvexError, v } from "convex/values";
 
 import { userMutation, userQuery } from "../functions";
-import { canClockTime, canUseTime, canWriteTime, timeLiveFrom, timeMode } from "./lib/mode";
+import {
+  canClockTime,
+  canUseTime,
+  canWriteTime,
+  hasEarlyAccess,
+  timeLiveFrom,
+  timeMode,
+} from "./lib/mode";
 import { isTrackingDisabled } from "./lib/store";
 
 /** What the intranet needs to decide whether to show the module at all. */
 export const status = userQuery({
   args: {},
-  handler: async (ctx) => ({
-    /** Test stage (only admins and testers get in). */
-    testMode: timeMode() === "test",
-    /** Preview stage: everyone looks, nobody clocks yet. */
-    preview: timeMode() === "preview",
-    /** Announced go-live date (YYYY-MM-DD), if configured. */
-    liveFrom: timeLiveFrom(),
-    canUse: canUseTime(ctx.caller),
-    /** May file requests / corrections (admins: manage). */
-    canWrite: canWriteTime(ctx.caller),
-    /** May clock in and out. */
-    canClock: canClockTime(ctx.caller),
-    /** False for people who don't record working time (no clock, no prompt). */
-    tracking: !(await isTrackingDisabled(ctx, ctx.caller.id)),
-  }),
+  handler: async (ctx) => {
+    const early = await hasEarlyAccess(ctx);
+    return {
+      /** Test stage (only admins and testers get in). */
+      testMode: timeMode() === "test",
+      /** Preview stage: everyone looks, nobody clocks yet. */
+      preview: timeMode() === "preview",
+      /** Announced go-live date (YYYY-MM-DD), if configured. */
+      liveFrom: timeLiveFrom(),
+      /** Uses the module already during the preview. */
+      earlyAccess: early,
+      canUse: canUseTime(ctx.caller),
+      /** May file requests / corrections (admins: manage). */
+      canWrite: canWriteTime(ctx.caller, early),
+      /** May clock in and out. */
+      canClock: canClockTime(ctx.caller, early),
+      /** False for people who don't record working time (no clock, no prompt). */
+      tracking: !(await isTrackingDisabled(ctx, ctx.caller.id)),
+    };
+  },
 });
 
 /**

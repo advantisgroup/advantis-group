@@ -39,7 +39,7 @@ export const unlock = userMutation({
   role: "admin",
   args: { month: v.string(), reason: v.string() },
   handler: async (ctx, { month, reason: rawReason }) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     const reason = rawReason.trim();
     if (!isIsoMonth(month) || !reason) {
       throw timeError("bad_request", "invalid_range", "A month and a reason are required");
@@ -65,7 +65,7 @@ export const lock = userMutation({
   role: "admin",
   args: { month: v.string(), reason: v.optional(v.string()) },
   handler: async (ctx, { month, reason }) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     if (!isIsoMonth(month)) throw timeError("bad_request", "invalid_range", "Bad month");
     const now = Date.now();
     const existing = await lockRow(ctx, month);

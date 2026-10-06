@@ -79,7 +79,9 @@ export default function ZeiterfassungLayout({ children }: { children: ReactNode 
         icon={<Clock3 className="size-4" />}
       />
       {mode.testMode && <TestModeBanner />}
-      {mode.preview && <PreviewBanner liveFrom={mode.liveFrom} isAdmin={isAdmin} />}
+      {mode.preview && (
+        <PreviewBanner liveFrom={mode.liveFrom} isAdmin={isAdmin} earlyAccess={mode.earlyAccess} />
+      )}
       <RouteTabs tabs={tabs} activeValue={active} />
       <div className="mt-4">{children}</div>
     </div>

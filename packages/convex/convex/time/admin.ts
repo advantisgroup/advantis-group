@@ -16,6 +16,7 @@ import {
   loadAbsences,
   loadHolidays,
   loadSchedules,
+  earlyAccessFrom,
   isTrackingDisabled,
   openEntries,
   timeError,
@@ -128,6 +129,7 @@ export const personDetail = userQuery({
       balance,
       vacation,
       trackingDisabled: await isTrackingDisabled(ctx, userId),
+      earlyAccessFrom: await earlyAccessFrom(ctx, userId),
     };
   },
 });
@@ -137,12 +139,17 @@ export const setTracking = userMutation({
   role: "admin",
   args: { userId: v.id("users"), disabled: v.boolean() },
   handler: async (ctx, { userId, disabled }) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     const existing = await ctx.db
       .query("timeProfiles")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .unique();
-    const row = { userId, trackingDisabled: disabled, updatedAt: Date.now() };
+    const row = {
+      userId,
+      trackingDisabled: disabled,
+      earlyAccessFrom: existing?.earlyAccessFrom,
+      updatedAt: Date.now(),
+    };
     let id = existing?._id;
     if (id) await ctx.db.replace(id, row);
     else id = await ctx.db.insert("timeProfiles", row);
@@ -152,6 +159,43 @@ export const setTracking = userMutation({
       entity: "profile",
       entityId: id,
       action: disabled ? "tracking_off" : "tracking_on",
+      before: existing ?? undefined,
+      after: row,
+    });
+  },
+});
+
+/**
+ * Lets one person use the module fully before go-live (preview stage) from
+ * `from` on — e.g. people who never clocked in Clockodo. `from: null` ends it.
+ */
+export const setEarlyAccess = userMutation({
+  role: "admin",
+  args: { userId: v.id("users"), from: v.union(v.string(), v.null()) },
+  handler: async (ctx, { userId, from }) => {
+    await assertTimeWrite(ctx);
+    if (from !== null && !isIsoDate(from)) {
+      throw timeError("bad_request", "invalid_range", "Bad date");
+    }
+    const existing = await ctx.db
+      .query("timeProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+    const row = {
+      userId,
+      trackingDisabled: existing?.trackingDisabled ?? false,
+      earlyAccessFrom: from ?? undefined,
+      updatedAt: Date.now(),
+    };
+    let id = existing?._id;
+    if (id) await ctx.db.replace(id, row);
+    else id = await ctx.db.insert("timeProfiles", row);
+    await writeAudit(ctx, {
+      actorId: ctx.caller.id,
+      subjectUserId: userId,
+      entity: "profile",
+      entityId: id,
+      action: from ? "early_access_on" : "early_access_off",
       before: existing ?? undefined,
       after: row,
     });
@@ -222,7 +266,7 @@ export const setSchedule = userMutation({
     reason: v.optional(v.string()),
   },
   handler: async (ctx, { userId, validFrom, minutesPerWeekday, reason }) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     if (!isIsoDate(validFrom) || !isValidWeek(minutesPerWeekday)) {
       throw timeError("bad_request", "invalid_range", "Bad schedule");
     }
@@ -250,7 +294,7 @@ export const removeSchedule = userMutation({
   role: "admin",
   args: { id: v.id("workSchedules"), reason: v.optional(v.string()) },
   handler: async (ctx, { id, reason }) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     const existing = await ctx.db.get(id);
     if (!existing) return;
     await ctx.db.delete(id);
@@ -277,7 +321,7 @@ export const setAllowance = userMutation({
     reason: v.optional(v.string()),
   },
   handler: async (ctx, { userId, year, days, carriedOver, reason }) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     const valid = (value: number) => Number.isFinite(value) && value >= 0 && value <= 366;
     if (!Number.isInteger(year) || !valid(days) || !valid(carriedOver)) {
       throw timeError("bad_request", "invalid_range", "Bad allowance");
@@ -321,7 +365,7 @@ export const setOpeningBalance = userMutation({
     reason: v.optional(v.string()),
   },
   handler: async (ctx, { userId, openingMinutes, openingDate, reason }) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     if (!isIsoDate(openingDate) || !Number.isInteger(openingMinutes)) {
       throw timeError("bad_request", "invalid_range", "Bad opening balance");
     }
@@ -353,7 +397,7 @@ export const recomputeTotals = userMutation({
   role: "admin",
   args: { userId: v.id("users"), from: v.string() },
   handler: async (ctx, { userId, from }) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     if (!isIsoDate(from)) throw timeError("bad_request", "invalid_range", "Bad date");
     await invalidateTotalsFrom(ctx, userId, from);
     await ctx.scheduler.runAfter(0, internal.time.jobs.refreshTotalsFrom, { userId, from });

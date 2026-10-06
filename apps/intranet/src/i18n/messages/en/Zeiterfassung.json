@@ -306,7 +306,12 @@
     "trackingOnHint": "This person clocks in themselves; hours account and morning reminder are active.",
     "trackingOffHint": "This person doesn't record working time: no time clock, no morning reminder, no hours account in the overview. Absences (e.g. vacation) still work.",
     "trackingOnToast": "Time tracking switched on",
-    "trackingOffToast": "Time tracking switched off"
+    "trackingOffToast": "Time tracking switched off",
+    "earlyAccess": "Use before the start",
+    "earlyAccessOffHint": "During the preview this person only sees their data. Switch on if they should already clock in here (e.g. because they never used Clockodo).",
+    "earlyAccessOnHint": "Already clocks and files requests here, from {date}.",
+    "earlyAccessOnToast": "Enabled – clocks in here from tomorrow",
+    "earlyAccessOffToast": "Back to preview only"
   },
   "audit": {
     "system": "System",
@@ -421,6 +426,9 @@
     "title": "New: our own time tracking",
     "description": "From {date} you clock in here instead of Clockodo. Until then you can look around – clocking, requesting leave and changing times only work from the start date. Until then please keep using Clockodo.",
     "descriptionNoDate": "Soon you will clock in here instead of Clockodo. Until then you can look around – clocking, requesting leave and changing times only work from the start date. Until then please keep using Clockodo.",
-    "adminNote": "Preview for everyone: employees only see their own data and can't change anything yet. As an admin you can still manage, import and correct – nobody clocks in."
+    "adminNote": "Preview for everyone: employees only see their own data and can't change anything yet. Only people with “Use before the start” (Admin → person → settings) can already clock in. As an admin you can still manage, import and correct.",
+    "earlyTitle": "You're already enabled",
+    "earlyDescription": "You clock in here from now on – not in Clockodo anymore. For everyone else time tracking starts on {date}.",
+    "earlyDescriptionNoDate": "You clock in here from now on – not in Clockodo anymore. For everyone else time tracking starts soon."
   }
 }

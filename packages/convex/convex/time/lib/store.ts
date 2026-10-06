@@ -85,6 +85,15 @@ export async function isTrackingDisabled(ctx: QueryCtx, userId: Id<"users">): Pr
   return row?.trackingDisabled === true;
 }
 
+/** Date from which this person may use the module before go-live, if any. */
+export async function earlyAccessFrom(ctx: QueryCtx, userId: Id<"users">): Promise<string | null> {
+  const row = await ctx.db
+    .query("timeProfiles")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .unique();
+  return row?.earlyAccessFrom ?? null;
+}
+
 /** Everyone who doesn't record working time. */
 export async function trackingDisabledIds(ctx: QueryCtx): Promise<Set<Id<"users">>> {
   const rows = await ctx.db.query("timeProfiles").collect();

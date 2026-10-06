@@ -759,6 +759,37 @@ describe("preview", () => {
     expect(live.balance.minutes).toBeLessThan(600);
   });
 
+  test("early access: chosen people use it fully from their start date", async () => {
+    const s = await setup();
+    setNow("2026-10-06", "15:00");
+    await s.admin.mutation(api.time.admin.setEarlyAccess, {
+      userId: s.ids.alice,
+      from: "2026-10-07",
+    });
+    expect(await s.alice.query(api.time.mode.status, {})).toMatchObject({
+      earlyAccess: false,
+      canClock: false,
+    });
+    await expect(s.alice.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Vorschau/);
+
+    setNow("2026-10-07", "08:00");
+    expect(await s.alice.query(api.time.mode.status, {})).toMatchObject({
+      earlyAccess: true,
+      canWrite: true,
+      canClock: true,
+    });
+    await s.alice.mutation(api.time.clock.clockIn, {});
+    // Everyone else still waits — admins included.
+    await expect(s.bob.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Vorschau/);
+    await expect(s.admin.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Vorschau/);
+
+    // Switching tracking off keeps the early access; ending it locks again.
+    await s.admin.mutation(api.time.admin.setTracking, { userId: s.ids.alice, disabled: false });
+    expect((await s.alice.query(api.time.mode.status, {})).earlyAccess).toBe(true);
+    await s.admin.mutation(api.time.admin.setEarlyAccess, { userId: s.ids.alice, from: null });
+    expect((await s.alice.query(api.time.mode.status, {})).canClock).toBe(false);
+  });
+
   test("the test data wipe is refused", async () => {
     const s = await setup();
     await expect(

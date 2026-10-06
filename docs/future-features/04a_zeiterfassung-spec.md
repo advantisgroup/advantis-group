@@ -155,7 +155,11 @@ Convex env `TIME_MODE`:
   employees can't file requests or corrections; admins still manage (import,
   schedules, corrections, decisions). The hours account stays at the imported
   opening balance, since Clockodo is still the record. A banner announces the
-  start date from `TIME_LIVE_FROM` (YYYY-MM-DD).
+  start date from `TIME_LIVE_FROM` (YYYY-MM-DD). Admins can give single people
+  early access (Verwaltung → Person → Einstellungen, `timeProfiles.
+  earlyAccessFrom`, from the next day on): they use the module as if live. Admins can give single people
+  early access (Verwaltung → Person → Einstellungen, `timeProfiles.
+  earlyAccessFrom`, from the next day on): they use the module as if live.
 - `live`: everyone uses it.
 
 Until `live`, admin notifications also reach the testers and the directory's

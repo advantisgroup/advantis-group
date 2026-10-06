@@ -65,7 +65,7 @@ export const applyPerson = userMutation({
     opening: v.object({ minutes: v.number(), date: v.string() }),
   },
   handler: async (ctx, args) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     if (!isIsoDate(args.opening.date)) {
       throw timeError("bad_request", "invalid_range", "Bad opening date");
     }
@@ -159,7 +159,7 @@ export const importEntries = userMutation({
     ),
   },
   handler: async (ctx, { userId, entries }) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     if (entries.length > MAX_BATCH)
       throw timeError("bad_request", "invalid_range", "Batch too big");
     const now = Date.now();
@@ -234,7 +234,7 @@ export const importAbsences = userMutation({
     ),
   },
   handler: async (ctx, { userId, absences }) => {
-    assertTimeWrite(ctx);
+    await assertTimeWrite(ctx);
     if (absences.length > MAX_BATCH) {
       throw timeError("bad_request", "invalid_range", "Batch too big");
     }
