@@ -122,6 +122,6 @@ export function useTimeErrorToast() {
   );
 }
 
-export type AbsenceType = "vacation" | "sick" | "special" | "other";
+export type AbsenceType = "vacation" | "sick" | "special" | "overtime" | "other";
 export type AbsenceStatus = "pending" | "approved" | "rejected" | "cancelled";
 export type ClockStatus = "working" | "break" | "out";

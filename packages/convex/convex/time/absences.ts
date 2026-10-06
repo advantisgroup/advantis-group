@@ -31,6 +31,7 @@ const TYPE_LABEL: Record<string, string> = {
   vacation: "Urlaub",
   sick: "Krankmeldung",
   special: "Sonderurlaub",
+  overtime: "Überstundenabbau",
   other: "Abwesenheit",
 };
 

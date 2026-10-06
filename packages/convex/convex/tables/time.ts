@@ -26,10 +26,13 @@ export const correctionActionValidator = v.union(
   v.literal("edit"),
   v.literal("delete"),
 );
+/** `overtime` = Überstundenabbau: a day off paid from the hours account, so
+ *  unlike the others it does not lower the day's target. */
 export const timeAbsenceTypeValidator = v.union(
   v.literal("vacation"),
   v.literal("sick"),
   v.literal("special"),
+  v.literal("overtime"),
   v.literal("other"),
 );
 export const timeAbsenceStatusValidator = v.union(
@@ -63,11 +66,15 @@ export const timeTables = {
     decidedAt: v.optional(v.number()),
     decisionNote: v.optional(v.string()),
     createdBy: v.optional(v.id("users")),
+    /** Source id of an imported row (`clockodo:<id>`), so re-running the
+     *  import updates instead of duplicating. */
+    importId: v.optional(v.string()),
     updatedAt: v.number(),
   })
     .index("by_user_start", ["userId", "start"])
     .index("by_status", ["status"])
-    .index("by_end", ["end"]),
+    .index("by_end", ["end"])
+    .index("by_import", ["importId"]),
 
   /** Target minutes per weekday (Mon..Sun) from `validFrom` (YYYY-MM-DD) on. */
   workSchedules: defineTable({
@@ -92,11 +99,14 @@ export const timeTables = {
     decidedBy: v.optional(v.id("users")),
     decidedAt: v.optional(v.number()),
     decisionNote: v.optional(v.string()),
+    /** See `timeEntries.importId`. */
+    importId: v.optional(v.string()),
     updatedAt: v.number(),
   })
     .index("by_user_start", ["userId", "startDate"])
     .index("by_status", ["status"])
-    .index("by_end", ["endDate"]),
+    .index("by_end", ["endDate"])
+    .index("by_import", ["importId"]),
 
   /** Vacation entitlement per person and year. No row = the 24-day default. */
   vacationAllowances: defineTable({
@@ -168,6 +178,7 @@ export const timeTables = {
       v.literal("balance"),
       v.literal("holiday"),
       v.literal("monthLock"),
+      v.literal("import"),
     ),
     entityId: v.string(),
     action: v.string(),

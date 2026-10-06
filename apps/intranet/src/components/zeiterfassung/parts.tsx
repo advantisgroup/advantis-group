@@ -5,7 +5,7 @@ import { type ReactNode, useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type DayWarning } from "@advantis/convex/time";
 import { useMutation, useQuery } from "convex/react";
-import { CircleDashed, Plane, Sparkles, Thermometer, TriangleAlert } from "lucide-react";
+import { CircleDashed, Hourglass, Plane, Sparkles, Thermometer, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -23,7 +23,7 @@ import {
 
 /** Pieces the Zeiterfassung pages share: colours, badges and the clock hook. */
 
-export const ABSENCE_TYPES: AbsenceType[] = ["vacation", "sick", "special", "other"];
+export const ABSENCE_TYPES: AbsenceType[] = ["vacation", "sick", "special", "overtime", "other"];
 
 export const ABSENCE_STYLE: Record<
   AbsenceType,
@@ -46,6 +46,12 @@ export const ABSENCE_STYLE: Record<
     className: "text-violet-700 dark:text-violet-300 bg-violet-500/15",
     barClassName: "bg-violet-500",
     accent: "var(--color-violet-500)",
+  },
+  overtime: {
+    icon: Hourglass,
+    className: "text-rose-700 dark:text-rose-300 bg-rose-500/15",
+    barClassName: "bg-rose-500",
+    accent: "var(--color-rose-500)",
   },
   other: {
     icon: CircleDashed,

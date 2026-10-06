@@ -96,8 +96,11 @@ export function targetMinutesOn(
   for (const absence of absences) {
     const fraction = absenceFractionOn(absence, date);
     if (fraction === 0) continue;
-    absenceFraction += fraction;
     absenceTypes.push(absence.type);
+    // Überstundenabbau keeps the target: the missing hours come off the
+    // hours account instead.
+    if (absence.type === "overtime") continue;
+    absenceFraction += fraction;
   }
   const off = Math.min(1, holidayFraction + Math.min(absenceFraction, 1 - holidayFraction));
   return {
