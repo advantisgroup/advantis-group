@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { userQuery } from "../functions";
 import { assertTimeAccess, timeMode } from "./lib/mode";
-import { addDays, berlinInstant, isIsoDate } from "./lib/berlin";
+import { addDays, berlinDate, berlinInstant, isIsoDate } from "./lib/berlin";
 import { hoursAccount, loadAbsences, subjectFor, timeError, vacationFor } from "./lib/store";
 
 /**
@@ -21,13 +21,28 @@ export const summary = userQuery({
     const year = Number(today.slice(0, 4));
     let through = addDays(today, -1);
     if (timeMode() === "preview") {
-      // Preview: Clockodo is still the record, so days after the import would
-      // only count down the target. Show the imported balance as it was.
-      const opening = await ctx.db
-        .query("timeBalances")
-        .withIndex("by_user", (q) => q.eq("userId", subject))
-        .unique();
-      if (opening && opening.openingDate <= through) through = addDays(opening.openingDate, -1);
+      // Preview: Clockodo is still the record and nobody clocks here yet, so
+      // days after the last recorded one would only count down the target.
+      // Count up to the last day with an entry (imported or entered by an
+      // admin), or show just the opening balance.
+      const [opening, latest] = await Promise.all([
+        ctx.db
+          .query("timeBalances")
+          .withIndex("by_user", (q) => q.eq("userId", subject))
+          .unique(),
+        ctx.db
+          .query("timeEntries")
+          .withIndex("by_user_start", (q) => q.eq("userId", subject))
+          .order("desc")
+          .first(),
+      ]);
+      const lastRecorded = latest ? berlinDate(latest.start) : null;
+      const floor = opening ? addDays(opening.openingDate, -1) : null;
+      const cap = [lastRecorded, floor]
+        .filter((d): d is string => d !== null)
+        .sort()
+        .at(-1);
+      if (cap && cap < through) through = cap;
     }
     const [balance, vacation, pending, recent] = await Promise.all([
       hoursAccount(ctx, subject, through),

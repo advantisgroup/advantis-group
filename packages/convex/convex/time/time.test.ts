@@ -744,6 +744,16 @@ describe("preview", () => {
     setNow("2026-10-09", "10:00");
     const summary = await s.alice.query(api.time.overview.summary, { today: "2026-10-09" });
     expect(summary.balance.minutes).toBe(600);
+
+    // An admin enters the 6th (9 h on an 8 h day): counted up to that day.
+    await s.admin.mutation(api.time.entries.save, {
+      userId: s.ids.alice,
+      kind: "work",
+      start: local("2026-10-06", "08:00"),
+      end: local("2026-10-06", "17:00"),
+    });
+    const entered = await s.alice.query(api.time.overview.summary, { today: "2026-10-09" });
+    expect(entered.balance.minutes).toBe(600 + 60);
     vi.stubEnv("TIME_MODE", "live");
     const live = await s.alice.query(api.time.overview.summary, { today: "2026-10-09" });
     expect(live.balance.minutes).toBeLessThan(600);
