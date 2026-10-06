@@ -28,7 +28,10 @@
     "out": "Ausstempeln",
     "pause": "Pause",
     "resume": "Weiterarbeiten",
-    "open": "Zeiterfassung öffnen"
+    "open": "Zeiterfassung öffnen",
+    "previewTitle": "Stempeln ab dem {date}",
+    "previewTitleNoDate": "Stempeln geht bald los",
+    "previewHint": "Bis dahin bitte weiter in Clockodo stempeln."
   },
   "overview": {
     "clockUnavailable": "Die Stempeluhr ist gerade nicht verfügbar",
@@ -358,7 +361,8 @@
     "not_pending": "Das wurde inzwischen schon entschieden.",
     "changed_meanwhile": "Der Eintrag hat sich inzwischen geändert. Bitte neu laden.",
     "no_working_days": "Im gewählten Zeitraum gibt es keine Arbeitstage.",
-    "tracking_disabled": "Für diese Person ist die Zeiterfassung ausgeschaltet."
+    "tracking_disabled": "Für diese Person ist die Zeiterfassung ausgeschaltet.",
+    "time_preview": "Die Zeiterfassung ist noch in der Vorschau – das geht erst ab dem Start."
   },
   "testMode": {
     "title": "Testmodus – nur für Admins und Tester sichtbar",
@@ -411,5 +415,11 @@
     "progress": "Importiere {index} von {count}: {name} …",
     "finished": "{count, plural, one {1 Person importiert} other {# Personen importiert}}",
     "trackingOff": "ohne Zeiterfassung"
+  },
+  "preview": {
+    "title": "Neu: die eigene Zeiterfassung",
+    "description": "Ab dem {date} stempelst du hier statt in Clockodo. Bis dahin kannst du dich schon umsehen – stempeln, Urlaub beantragen und Zeiten ändern geht aber erst ab dem Start. Bis dahin bitte weiter Clockodo nutzen.",
+    "descriptionNoDate": "Bald stempelst du hier statt in Clockodo. Bis dahin kannst du dich schon umsehen – stempeln, Urlaub beantragen und Zeiten ändern geht aber erst ab dem Start. Bis dahin bitte weiter Clockodo nutzen.",
+    "adminNote": "Vorschau für alle: Mitarbeiter sehen nur ihre Daten und können noch nichts ändern. Du kannst als Admin weiter verwalten, importieren und korrigieren – gestempelt wird von niemandem."
   }
 }

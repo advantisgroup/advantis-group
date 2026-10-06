@@ -4,7 +4,7 @@ import { type MutationCtx } from "../_generated/server";
 import { userMutation, userQuery } from "../functions";
 import { timeAbsenceStatusValidator, timeAbsenceTypeValidator } from "../tables/time";
 import { isIsoDate } from "./lib/berlin";
-import { assertTimeAccess } from "./lib/mode";
+import { assertTimeAccess, assertTimeWrite } from "./lib/mode";
 import { isValidWeek } from "./lib/schedule";
 import { carryOverExpiry } from "./lib/vacation";
 import {
@@ -65,7 +65,7 @@ export const applyPerson = userMutation({
     opening: v.object({ minutes: v.number(), date: v.string() }),
   },
   handler: async (ctx, args) => {
-    assertTimeAccess(ctx);
+    assertTimeWrite(ctx);
     if (!isIsoDate(args.opening.date)) {
       throw timeError("bad_request", "invalid_range", "Bad opening date");
     }
@@ -159,7 +159,7 @@ export const importEntries = userMutation({
     ),
   },
   handler: async (ctx, { userId, entries }) => {
-    assertTimeAccess(ctx);
+    assertTimeWrite(ctx);
     if (entries.length > MAX_BATCH)
       throw timeError("bad_request", "invalid_range", "Batch too big");
     const now = Date.now();
@@ -234,7 +234,7 @@ export const importAbsences = userMutation({
     ),
   },
   handler: async (ctx, { userId, absences }) => {
-    assertTimeAccess(ctx);
+    assertTimeWrite(ctx);
     if (absences.length > MAX_BATCH) {
       throw timeError("bad_request", "invalid_range", "Batch too big");
     }

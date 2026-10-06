@@ -1,6 +1,6 @@
 "use client";
 
-import { Coffee, Pause, Play, Square } from "lucide-react";
+import { CalendarClock, Coffee, Pause, Play, Square } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusGradient, useTimeClock } from "@/components/zeiterfassung/parts";
 import { type DayView } from "@/components/zeiterfassung/use-days";
 import { cn } from "@/lib/utils";
-import { formatClock, formatMinutes, useNow } from "@/lib/zeiterfassung";
+import { formatClock, formatDay, formatMinutes, useNow, useTimeMode } from "@/lib/zeiterfassung";
 
 /** "3:57:12" since `since` — the stopwatch employees know from Clockodo. */
 function stopwatch(since: number, now: number): string {
@@ -28,6 +28,7 @@ export function ClockCard({ today }: { today: DayView | undefined }) {
   const t = useTranslations("Zeiterfassung");
   const locale = useLocale();
   const clock = useTimeClock();
+  const { mode, canClock } = useTimeMode();
   const now = useNow(1_000);
   const status = clock.state?.status ?? null;
   const since =
@@ -79,67 +80,84 @@ export function ClockCard({ today }: { today: DayView | undefined }) {
               </p>
             </div>
 
-            <div className="flex w-full max-w-sm flex-col gap-2 sm:flex-row sm:justify-center">
-              {status === "out" && (
-                <Button
-                  size="xl"
-                  variant="emerald"
-                  className="w-full sm:w-auto sm:min-w-56"
-                  onClick={() => void clock.clockIn()}
-                  disabled={clock.busy}
-                >
-                  <Play className="fill-current" />
-                  {t("clock.in")}
-                </Button>
-              )}
-              {status === "working" && (
-                <>
-                  <Button
-                    size="xl"
-                    variant="outline"
-                    className="w-full bg-background/70 sm:w-auto"
-                    onClick={() => void clock.startBreak()}
-                    disabled={clock.busy}
-                  >
-                    <Pause className="fill-current" />
-                    {t("clock.pause")}
-                  </Button>
-                  <Button
-                    size="xl"
-                    className="w-full sm:w-auto sm:min-w-44"
-                    onClick={() => void clock.clockOut()}
-                    disabled={clock.busy}
-                  >
-                    <Square className="fill-current" />
-                    {t("clock.out")}
-                  </Button>
-                </>
-              )}
-              {status === "break" && (
-                <>
+            {mode && !canClock ? (
+              <div className="flex max-w-sm flex-col items-center gap-1.5 rounded-xl border border-dashed border-border px-5 py-4">
+                <span className="inline-flex items-center gap-2 text-sm font-semibold">
+                  <CalendarClock className="size-4 text-primary" />
+                  {mode.liveFrom
+                    ? t("clock.previewTitle", {
+                        date: formatDay(mode.liveFrom, locale, {
+                          day: "2-digit",
+                          month: "2-digit",
+                        }),
+                      })
+                    : t("clock.previewTitleNoDate")}
+                </span>
+                <span className="text-sm text-muted-foreground">{t("clock.previewHint")}</span>
+              </div>
+            ) : (
+              <div className="flex w-full max-w-sm flex-col gap-2 sm:flex-row sm:justify-center">
+                {status === "out" && (
                   <Button
                     size="xl"
                     variant="emerald"
-                    className="w-full sm:w-auto sm:min-w-44"
-                    onClick={() => void clock.endBreak()}
+                    className="w-full sm:w-auto sm:min-w-56"
+                    onClick={() => void clock.clockIn()}
                     disabled={clock.busy}
                   >
                     <Play className="fill-current" />
-                    {t("clock.resume")}
+                    {t("clock.in")}
                   </Button>
-                  <Button
-                    size="xl"
-                    variant="outline"
-                    className="w-full bg-background/70 sm:w-auto"
-                    onClick={() => void clock.clockOut()}
-                    disabled={clock.busy}
-                  >
-                    <Square className="fill-current" />
-                    {t("clock.out")}
-                  </Button>
-                </>
-              )}
-            </div>
+                )}
+                {status === "working" && (
+                  <>
+                    <Button
+                      size="xl"
+                      variant="outline"
+                      className="w-full bg-background/70 sm:w-auto"
+                      onClick={() => void clock.startBreak()}
+                      disabled={clock.busy}
+                    >
+                      <Pause className="fill-current" />
+                      {t("clock.pause")}
+                    </Button>
+                    <Button
+                      size="xl"
+                      className="w-full sm:w-auto sm:min-w-44"
+                      onClick={() => void clock.clockOut()}
+                      disabled={clock.busy}
+                    >
+                      <Square className="fill-current" />
+                      {t("clock.out")}
+                    </Button>
+                  </>
+                )}
+                {status === "break" && (
+                  <>
+                    <Button
+                      size="xl"
+                      variant="emerald"
+                      className="w-full sm:w-auto sm:min-w-44"
+                      onClick={() => void clock.endBreak()}
+                      disabled={clock.busy}
+                    >
+                      <Play className="fill-current" />
+                      {t("clock.resume")}
+                    </Button>
+                    <Button
+                      size="xl"
+                      variant="outline"
+                      className="w-full bg-background/70 sm:w-auto"
+                      onClick={() => void clock.clockOut()}
+                      disabled={clock.busy}
+                    >
+                      <Square className="fill-current" />
+                      {t("clock.out")}
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
 
             {today && (
               <div className="w-full max-w-sm space-y-1.5">

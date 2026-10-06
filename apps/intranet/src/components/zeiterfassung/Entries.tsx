@@ -38,6 +38,7 @@ import {
   useBerlinToday,
   useNow,
   useTimeErrorToast,
+  useTimeMode,
 } from "@/lib/zeiterfassung";
 
 type View = "week" | "month";
@@ -68,6 +69,7 @@ export function Entries({
   const [editing, setEditing] = useState<TimeEntry | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<TimeEntry | null>(null);
+  const { readOnly } = useTimeMode();
 
   const from = view === "week" ? mondayOf(anchor) : monthStart(monthOf(anchor));
   const to = view === "week" ? addDays(from, 6) : monthEnd(monthOf(anchor));
@@ -197,10 +199,12 @@ export function Entries({
             <Download />
             <span className="max-sm:sr-only">{t("csv.export")}</span>
           </Button>
-          <Button size="sm" onClick={() => setAdding(open ?? today)}>
-            <Plus />
-            {t("entries.add")}
-          </Button>
+          {!readOnly && (
+            <Button size="sm" onClick={() => setAdding(open ?? today)}>
+              <Plus />
+              {t("entries.add")}
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -270,6 +274,7 @@ function DayRow({
   const locale = useLocale();
   const now = useNow(30_000);
   const withdraw = useMutation(api.time.entries.withdraw);
+  const { readOnly } = useTimeMode();
   const showError = useTimeErrorToast();
   const active = day.entries.filter((row) => row.status === "active");
   const requests = day.entries.filter(
@@ -392,7 +397,7 @@ function DayRow({
                     </p>
                   )}
                 </div>
-                {row.end !== undefined && !day.locked && (
+                {!readOnly && row.end !== undefined && !day.locked && (
                   <div className="flex shrink-0 items-center gap-1">
                     <Button
                       variant="ghost"
@@ -432,7 +437,7 @@ function DayRow({
                     : [t("entries.waiting"), row.reason].filter(Boolean).join(" · ")}
                 </p>
               </div>
-              {row.status === "pending" && (
+              {!readOnly && row.status === "pending" && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -448,7 +453,7 @@ function DayRow({
               )}
             </div>
           ))}
-          {!day.locked && !future && (
+          {!readOnly && !day.locked && !future && (
             <Button variant="ghost" size="sm" onClick={onAdd} className="mt-1">
               <Plus />
               {t("entries.addForDay")}

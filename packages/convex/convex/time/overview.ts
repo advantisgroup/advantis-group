@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { userQuery } from "../functions";
-import { assertTimeAccess } from "./lib/mode";
+import { assertTimeAccess, timeMode } from "./lib/mode";
 import { addDays, berlinInstant, isIsoDate } from "./lib/berlin";
 import { hoursAccount, loadAbsences, subjectFor, timeError, vacationFor } from "./lib/store";
 
@@ -19,8 +19,18 @@ export const summary = userQuery({
     if (!isIsoDate(today)) throw timeError("bad_request", "invalid_range", "Bad date");
     const absences = await loadAbsences(ctx, subject);
     const year = Number(today.slice(0, 4));
+    let through = addDays(today, -1);
+    if (timeMode() === "preview") {
+      // Preview: Clockodo is still the record, so days after the import would
+      // only count down the target. Show the imported balance as it was.
+      const opening = await ctx.db
+        .query("timeBalances")
+        .withIndex("by_user", (q) => q.eq("userId", subject))
+        .unique();
+      if (opening && opening.openingDate <= through) through = addDays(opening.openingDate, -1);
+    }
     const [balance, vacation, pending, recent] = await Promise.all([
-      hoursAccount(ctx, subject, addDays(today, -1)),
+      hoursAccount(ctx, subject, through),
       vacationFor(ctx, subject, year, today, absences),
       ctx.db
         .query("timeEntries")

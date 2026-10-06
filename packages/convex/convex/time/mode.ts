@@ -1,24 +1,33 @@
 import { ConvexError, v } from "convex/values";
 
 import { userMutation, userQuery } from "../functions";
-import { canUseTime, isTimeTestMode } from "./lib/mode";
+import { canClockTime, canUseTime, canWriteTime, timeLiveFrom, timeMode } from "./lib/mode";
 import { isTrackingDisabled } from "./lib/store";
 
 /** What the intranet needs to decide whether to show the module at all. */
 export const status = userQuery({
   args: {},
   handler: async (ctx) => ({
-    testMode: isTimeTestMode(),
+    /** Test stage (only admins and testers get in). */
+    testMode: timeMode() === "test",
+    /** Preview stage: everyone looks, nobody clocks yet. */
+    preview: timeMode() === "preview",
+    /** Announced go-live date (YYYY-MM-DD), if configured. */
+    liveFrom: timeLiveFrom(),
     canUse: canUseTime(ctx.caller),
+    /** May file requests / corrections (admins: manage). */
+    canWrite: canWriteTime(ctx.caller),
+    /** May clock in and out. */
+    canClock: canClockTime(ctx.caller),
     /** False for people who don't record working time (no clock, no prompt). */
     tracking: !(await isTrackingDisabled(ctx, ctx.caller.id)),
   }),
 });
 
 /**
- * Everything the module stores except holidays. Test mode only — after
- * go-live this refuses, so real working-time records can never be wiped
- * from the UI.
+ * Everything the module stores except holidays. Test stage only — in preview
+ * (imported Clockodo data) and after go-live this refuses, so real
+ * working-time records can never be wiped from the UI.
  */
 const PURGEABLE = [
   "timeEntries",
@@ -37,7 +46,7 @@ const BATCH = 200;
 export const purgeTestData = userMutation({
   args: { confirm: v.literal("TESTDATEN LÖSCHEN") },
   handler: async (ctx) => {
-    if (!isTimeTestMode() || !canUseTime(ctx.caller)) {
+    if (timeMode() !== "test" || !canWriteTime(ctx.caller)) {
       throw new ConvexError({
         code: "forbidden",
         reason: "time_not_test_mode",

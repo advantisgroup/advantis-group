@@ -677,6 +677,86 @@ describe("test mode", () => {
   });
 });
 
+describe("preview", () => {
+  beforeEach(() => {
+    vi.stubEnv("TIME_MODE", "preview");
+    vi.stubEnv("TIME_LIVE_FROM", "2026-10-12");
+    vi.stubEnv("TIME_TESTERS", "");
+  });
+
+  test("everyone looks, nobody clocks, only admins change things", async () => {
+    const s = await setup();
+    expect(await s.alice.query(api.time.mode.status, {})).toMatchObject({
+      testMode: false,
+      preview: true,
+      liveFrom: "2026-10-12",
+      canUse: true,
+      canWrite: false,
+      canClock: false,
+    });
+    expect(await s.admin.query(api.time.mode.status, {})).toMatchObject({
+      canUse: true,
+      canWrite: true,
+      canClock: false,
+    });
+
+    setNow("2026-10-07", "09:00");
+    await s.alice.query(api.time.overview.summary, { today: "2026-10-07" });
+    await s.alice.query(api.time.entries.range, { from: "2026-10-05", to: "2026-10-11" });
+    await expect(s.alice.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Vorschau/);
+    await expect(s.admin.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Vorschau/);
+    await expect(
+      s.alice.mutation(api.time.absences.request, {
+        type: "vacation",
+        startDate: "2026-10-20",
+        endDate: "2026-10-20",
+        halfDayStart: false,
+        halfDayEnd: false,
+      }),
+    ).rejects.toThrow(/Vorschau/);
+
+    // Admins still fix imported data directly.
+    await s.admin.mutation(api.time.entries.save, {
+      userId: s.ids.alice,
+      kind: "work",
+      start: local("2026-10-06", "08:00"),
+      end: local("2026-10-06", "16:00"),
+    });
+    expect((await workedOn(s.alice, "2026-10-06")).workedMinutes).toBe(480);
+  });
+
+  test("the hours account stays at the imported balance", async () => {
+    const s = await setup();
+    await s.t.run(async (ctx) => {
+      await ctx.db.insert("workSchedules", {
+        userId: s.ids.alice,
+        validFrom: "2026-01-01",
+        minutesPerWeekday: [480, 480, 480, 480, 480, 0, 0],
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("timeBalances", {
+        userId: s.ids.alice,
+        openingMinutes: 600,
+        openingDate: "2026-10-06",
+        updatedAt: Date.now(),
+      });
+    });
+    setNow("2026-10-09", "10:00");
+    const summary = await s.alice.query(api.time.overview.summary, { today: "2026-10-09" });
+    expect(summary.balance.minutes).toBe(600);
+    vi.stubEnv("TIME_MODE", "live");
+    const live = await s.alice.query(api.time.overview.summary, { today: "2026-10-09" });
+    expect(live.balance.minutes).toBeLessThan(600);
+  });
+
+  test("the test data wipe is refused", async () => {
+    const s = await setup();
+    await expect(
+      s.admin.mutation(api.time.mode.purgeTestData, { confirm: "TESTDATEN LÖSCHEN" }),
+    ).rejects.toThrow(/Testmodus/);
+  });
+});
+
 describe("Clockodo import", () => {
   test("applies a person, imports history once and updates on re-run", async () => {
     const s = await setup();

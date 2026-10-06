@@ -96,10 +96,11 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const maintenanceLocked = !isAdmin && isMaintenanceLocked(pathname);
   const pageContent = maintenanceLocked ? <MaintenanceScreen /> : children;
   // Own Zeiterfassung: header pill + morning clock-in prompt, only for those
-  // who may use it (everyone after go-live, testers before — see time/mode).
+  // who may clock right now (everyone after go-live, admins and testers in
+  // the test stage, nobody in the preview — see time/lib/mode) and who
+  // record their working time at all.
   const timeMode = useQuery(api.time.mode.status);
-  // Header pill and morning prompt only for people who clock themselves.
-  const timeEnabled = timeMode?.canUse === true && timeMode.tracking;
+  const timeEnabled = timeMode?.canClock === true && timeMode.tracking;
 
   // Chat and the announcement composer are full-screen, self-managing views
   // (their own header and sticky composer/toolbar), so they opt out of the

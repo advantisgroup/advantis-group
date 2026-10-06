@@ -142,19 +142,30 @@ Built as specified; where the spec left room:
 - **Hours account** counts from the opening date (else the first schedule or
   entry) up to yesterday.
 
-### Test mode (before go-live)
+### Rollout stages (before go-live)
 
-Convex env `TIME_MODE` anything but `live` (default: unset) = test mode:
-only admins and the emails in `TIME_TESTERS` may call `time.*` (everyone
-else gets the maintenance screen and no sidebar item), admin notifications
-also reach the testers, the directory's "Im Büro" stays empty, and a banner
-offers "Testdaten löschen" (`time.mode.purgeTestData`, everything except
-holidays, refused once live).
+Convex env `TIME_MODE`:
+
+- `test` (default, unset or anything unknown): only admins and the emails in
+  `TIME_TESTERS` may call `time.*` (everyone else gets the maintenance screen
+  and no sidebar item). A banner offers "Testdaten löschen"
+  (`time.mode.purgeTestData`, everything except holidays — test stage only).
+- `preview`: everyone sees the module (sidebar item marked "Neu") and their
+  own data, read-only. Nobody clocks (no header pill, no morning prompt);
+  employees can't file requests or corrections; admins still manage (import,
+  schedules, corrections, decisions). The hours account stays at the imported
+  opening balance, since Clockodo is still the record. A banner announces the
+  start date from `TIME_LIVE_FROM` (YYYY-MM-DD).
+- `live`: everyone uses it.
+
+Until `live`, admin notifications also reach the testers and the directory's
+"Im Büro" stays empty.
 
 ### Cutover checklist
 
-0. Delete the test data (banner button), then set Convex env
-   `TIME_MODE=live`.
+0. Delete the test data (banner button, test stage), import (step 1), set
+   `TIME_MODE=preview` + `TIME_LIVE_FROM` for the preview week, and on the
+   cutover morning re-import with a fresh export and set `TIME_MODE=live`.
 
 1. Clockodo import (Verwaltung → Import): export Clockodo's data as JSON
    (read-only calls to Clockodo's own API from a logged-in admin tab: users,
@@ -168,9 +179,8 @@ holidays, refused once live).
    becomes absence type `overtime`, which keeps the day's target.
 2. Seed holidays for the current and next year (Verwaltung → Feiertage).
 3. Set each part-timer's schedule (default is 8 h Mon–Fri).
-4. `apps/intranet/src/lib/maintenance.ts`: add `/zeiterfassung` to
-   `OPEN_PREFIXES`; `lib/pages.ts`: drop `visible: admin` from the
-   `/zeiterfassung*` entries.
+4. ~~maintenance/pages gating~~ — done: `/zeiterfassung` is open in
+   `maintenance.ts`, `lib/pages.ts` follows `canUseTime`.
 5. `AppShell.tsx`: drop `ClockodoHeaderControl` — `TimeClockHeaderControl`
    and the morning `ClockInPrompt` are already mounted for everyone
    `time.mode.status` lets in.

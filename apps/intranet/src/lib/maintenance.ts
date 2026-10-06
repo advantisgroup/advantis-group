@@ -20,6 +20,8 @@ const OPEN_PREFIXES = [
   // Organisation
   "/calendar",
   "/clockodo",
+  // Eigene Zeiterfassung – Zugriff regelt Convex (TIME_MODE), nicht diese Liste
+  "/zeiterfassung",
   // Hilfe & Fehler
   "/it-tickets",
   "/help",

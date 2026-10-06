@@ -28,7 +28,10 @@
     "out": "Clock out",
     "pause": "Break",
     "resume": "Resume",
-    "open": "Open time tracking"
+    "open": "Open time tracking",
+    "previewTitle": "Clocking starts on {date}",
+    "previewTitleNoDate": "Clocking starts soon",
+    "previewHint": "Until then please keep clocking in Clockodo."
   },
   "overview": {
     "clockUnavailable": "The clock isn't available right now",
@@ -358,7 +361,8 @@
     "not_pending": "That was decided in the meantime.",
     "changed_meanwhile": "The entry changed in the meantime. Please reload.",
     "no_working_days": "There are no working days in that period.",
-    "tracking_disabled": "Time tracking is switched off for this person."
+    "tracking_disabled": "Time tracking is switched off for this person.",
+    "time_preview": "Time tracking is still in preview – this works from the start date."
   },
   "testMode": {
     "title": "Test mode – visible to admins and testers only",
@@ -411,5 +415,11 @@
     "progress": "Importing {index} of {count}: {name} …",
     "finished": "{count, plural, one {1 person imported} other {# people imported}}",
     "trackingOff": "no time tracking"
+  },
+  "preview": {
+    "title": "New: our own time tracking",
+    "description": "From {date} you clock in here instead of Clockodo. Until then you can look around – clocking, requesting leave and changing times only work from the start date. Until then please keep using Clockodo.",
+    "descriptionNoDate": "Soon you will clock in here instead of Clockodo. Until then you can look around – clocking, requesting leave and changing times only work from the start date. Until then please keep using Clockodo.",
+    "adminNote": "Preview for everyone: employees only see their own data and can't change anything yet. As an admin you can still manage, import and correct – nobody clocks in."
   }
 }

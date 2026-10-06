@@ -4,7 +4,7 @@ import { internal } from "../_generated/api";
 import { type Doc } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
 import { userMutation, userQuery } from "../functions";
-import { assertTimeAccess } from "./lib/mode";
+import { assertTimeAccess, assertTimeWrite } from "./lib/mode";
 import { addDays, berlinDate, berlinInstant, isIsoDate } from "./lib/berlin";
 import { absenceWorkingDays } from "./lib/days";
 import { isValidWeek } from "./lib/schedule";
@@ -137,7 +137,7 @@ export const setTracking = userMutation({
   role: "admin",
   args: { userId: v.id("users"), disabled: v.boolean() },
   handler: async (ctx, { userId, disabled }) => {
-    assertTimeAccess(ctx);
+    assertTimeWrite(ctx);
     const existing = await ctx.db
       .query("timeProfiles")
       .withIndex("by_user", (q) => q.eq("userId", userId))
@@ -222,7 +222,7 @@ export const setSchedule = userMutation({
     reason: v.optional(v.string()),
   },
   handler: async (ctx, { userId, validFrom, minutesPerWeekday, reason }) => {
-    assertTimeAccess(ctx);
+    assertTimeWrite(ctx);
     if (!isIsoDate(validFrom) || !isValidWeek(minutesPerWeekday)) {
       throw timeError("bad_request", "invalid_range", "Bad schedule");
     }
@@ -250,7 +250,7 @@ export const removeSchedule = userMutation({
   role: "admin",
   args: { id: v.id("workSchedules"), reason: v.optional(v.string()) },
   handler: async (ctx, { id, reason }) => {
-    assertTimeAccess(ctx);
+    assertTimeWrite(ctx);
     const existing = await ctx.db.get(id);
     if (!existing) return;
     await ctx.db.delete(id);
@@ -277,7 +277,7 @@ export const setAllowance = userMutation({
     reason: v.optional(v.string()),
   },
   handler: async (ctx, { userId, year, days, carriedOver, reason }) => {
-    assertTimeAccess(ctx);
+    assertTimeWrite(ctx);
     const valid = (value: number) => Number.isFinite(value) && value >= 0 && value <= 366;
     if (!Number.isInteger(year) || !valid(days) || !valid(carriedOver)) {
       throw timeError("bad_request", "invalid_range", "Bad allowance");
@@ -321,7 +321,7 @@ export const setOpeningBalance = userMutation({
     reason: v.optional(v.string()),
   },
   handler: async (ctx, { userId, openingMinutes, openingDate, reason }) => {
-    assertTimeAccess(ctx);
+    assertTimeWrite(ctx);
     if (!isIsoDate(openingDate) || !Number.isInteger(openingMinutes)) {
       throw timeError("bad_request", "invalid_range", "Bad opening balance");
     }
@@ -353,7 +353,7 @@ export const recomputeTotals = userMutation({
   role: "admin",
   args: { userId: v.id("users"), from: v.string() },
   handler: async (ctx, { userId, from }) => {
-    assertTimeAccess(ctx);
+    assertTimeWrite(ctx);
     if (!isIsoDate(from)) throw timeError("bad_request", "invalid_range", "Bad date");
     await invalidateTotalsFrom(ctx, userId, from);
     await ctx.scheduler.runAfter(0, internal.time.jobs.refreshTotalsFrom, { userId, from });

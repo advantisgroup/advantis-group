@@ -1,5 +1,5 @@
 import { userMutation, userQuery } from "../functions";
-import { assertTimeAccess } from "./lib/mode";
+import { assertTimeAccess, assertTimeClock } from "./lib/mode";
 import { berlinDate } from "./lib/berlin";
 import {
   assertDatesOpen,
@@ -34,7 +34,7 @@ export const state = userQuery({
 export const clockIn = userMutation({
   args: {},
   handler: async (ctx) => {
-    assertTimeAccess(ctx);
+    assertTimeClock(ctx);
     if (await isTrackingDisabled(ctx, ctx.caller.id)) {
       throw timeError("conflict", "tracking_disabled", "Time tracking is off for this person");
     }
@@ -69,7 +69,7 @@ export const clockIn = userMutation({
 export const startBreak = userMutation({
   args: {},
   handler: async (ctx) => {
-    assertTimeAccess(ctx);
+    assertTimeClock(ctx);
     const open = await openEntries(ctx, ctx.caller.id);
     if (!open.some((row) => row.kind === "work")) {
       throw timeError("conflict", "not_clocked_in", "Not clocked in");
@@ -103,7 +103,7 @@ export const startBreak = userMutation({
 export const endBreak = userMutation({
   args: {},
   handler: async (ctx) => {
-    assertTimeAccess(ctx);
+    assertTimeClock(ctx);
     const open = await openEntries(ctx, ctx.caller.id);
     const pause = open.find((row) => row.kind === "break");
     if (!pause) throw timeError("conflict", "not_on_break", "Not on a break");
@@ -126,7 +126,7 @@ export const endBreak = userMutation({
 export const clockOut = userMutation({
   args: {},
   handler: async (ctx) => {
-    assertTimeAccess(ctx);
+    assertTimeClock(ctx);
     const open = await openEntries(ctx, ctx.caller.id);
     const work = open.find((row) => row.kind === "work");
     if (!work) throw timeError("conflict", "not_clocked_in", "Not clocked in");
