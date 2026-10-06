@@ -62,7 +62,8 @@
     "to": "To",
     "duration": "Duration",
     "trackingOffTitle": "Time tracking is switched off for you",
-    "trackingOffHint": "You don't need to clock in. You can still enter vacation and other absences."
+    "trackingOffHint": "You don't need to clock in. You can still enter vacation and other absences.",
+    "balanceHintPreview": "As imported from Clockodo"
   },
   "entries": {
     "running": "running",

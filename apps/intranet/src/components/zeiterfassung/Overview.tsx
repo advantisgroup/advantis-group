@@ -92,7 +92,7 @@ export function Overview() {
           label={t("overview.balance")}
           value={summary ? formatMinutes(summary.balance.minutes, true) : "–"}
           tone={summary && summary.balance.minutes < 0 ? "warn" : "neutral"}
-          hint={t("overview.balanceHint")}
+          hint={mode?.preview ? t("overview.balanceHintPreview") : t("overview.balanceHint")}
         />
         <Kpi
           label={t("overview.vacation")}

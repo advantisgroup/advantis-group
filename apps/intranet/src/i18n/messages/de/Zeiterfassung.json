@@ -62,7 +62,8 @@
     "to": "Bis",
     "duration": "Dauer",
     "trackingOffTitle": "Für dich ist die Zeiterfassung ausgeschaltet",
-    "trackingOffHint": "Du musst nicht stempeln. Urlaub und andere Abwesenheiten kannst du trotzdem eintragen."
+    "trackingOffHint": "Du musst nicht stempeln. Urlaub und andere Abwesenheiten kannst du trotzdem eintragen.",
+    "balanceHintPreview": "Stand aus Clockodo"
   },
   "entries": {
     "running": "läuft",
