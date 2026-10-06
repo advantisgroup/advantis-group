@@ -86,11 +86,10 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
       ...(firstName && !existing.firstName ? { firstName } : {}),
       ...(lastName && !existing.lastName ? { lastName } : {}),
       ...(email && existing.email !== email ? { email } : {}),
-      // backfill the external flag, and refresh it when the sign-in address
-      // changed (e.g. moved from a client address to @advantisgroup.de)
-      ...(existing.external === undefined || (email && existing.email !== email)
-        ? { external }
-        : {}),
+      // keep the external flag in line with the current sign-in address
+      // (backfills old rows; follows a move to @advantisgroup.de, even when
+      // the Clerk webhook already updated the email)
+      ...(email && existing.external !== external ? { external } : {}),
     });
     return { status: "active", userId: existing._id, role: existing.role };
   }
