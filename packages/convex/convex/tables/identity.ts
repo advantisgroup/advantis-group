@@ -435,6 +435,10 @@ export const identityTables = {
     teamIds: v.optional(v.array(v.id("teams"))),
     jobTitle: v.optional(v.string()),
     phone: v.optional(v.string()),
+    // Name as the inviter typed it — Clerk's invite sign-up doesn't ask for
+    // one, so without this new members show up as just their email.
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
   })
     .index("by_token", ["token"])
     .index("by_email", ["email"])

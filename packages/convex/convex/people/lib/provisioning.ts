@@ -3,6 +3,7 @@ import { type WithoutSystemFields } from "convex/server";
 import { type Doc, type Id } from "../../_generated/dataModel";
 import { type MutationCtx } from "../../_generated/server";
 import { type Role, getUserByClerkId, isAdminEmail, isEmailDomainAllowed } from "../../lib/auth";
+import { pushToClerk } from "../clerkSync";
 
 export type EnsureUserResult =
   | { status: "active"; userId: Id<"users">; role: Role }
@@ -124,11 +125,13 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
     }
 
     if (invite && invite.expiresAt > now) {
+      const first = firstName || invite.firstName;
+      const last = lastName || invite.lastName;
       const userId = await createOrRestoreUser(ctx, {
         clerkUserId,
         email,
-        firstName,
-        lastName,
+        firstName: first,
+        lastName: last,
         role: invite.role,
         external,
         createdAt: now,
@@ -142,6 +145,10 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
       });
       for (const teamId of invite.teamIds ?? []) {
         await ctx.db.insert("userTeams", { userId, teamId });
+      }
+      // Clerk only has the name if they typed one; hand it the invite's.
+      if ((!firstName && first) || (!lastName && last)) {
+        await pushToClerk(ctx, { kind: "rename", clerkUserId, firstName: first, lastName: last });
       }
       await ctx.db.patch(invite._id, {
         status: "accepted",

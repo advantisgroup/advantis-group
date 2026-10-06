@@ -44,6 +44,37 @@ function SuccessCard({ email, onReset }: { email: string; onReset: () => void })
   );
 }
 
+/** Clerk's invite sign-up doesn't ask for a name, so the inviter types it. */
+function NameFields({
+  firstName,
+  lastName,
+  onFirstName,
+  onLastName,
+}: {
+  firstName: string;
+  lastName: string;
+  onFirstName: (value: string) => void;
+  onLastName: (value: string) => void;
+}) {
+  const t = useTranslations("Admin");
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground">
+          {t("onboardFieldFirstName")}
+        </label>
+        <Input value={firstName} onChange={(e) => onFirstName(e.target.value)} />
+      </div>
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground">
+          {t("onboardFieldLastName")}
+        </label>
+        <Input value={lastName} onChange={(e) => onLastName(e.target.value)} />
+      </div>
+    </div>
+  );
+}
+
 function PersonalEmailFlow({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Admin");
   const handleError = useErrorHandler();
@@ -52,6 +83,8 @@ function PersonalEmailFlow({ isAdmin }: { isAdmin: boolean }) {
   const teams = useQuery(api.org.structure.listTeams, {}) ?? [];
 
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [role, setRole] = useState<Role>("employee");
   const [departmentId, setDepartmentId] = useState<string>(NONE);
   const [teamId, setTeamId] = useState<string>(NONE);
@@ -62,6 +95,8 @@ function PersonalEmailFlow({ isAdmin }: { isAdmin: boolean }) {
 
   function reset() {
     setEmail("");
+    setFirstName("");
+    setLastName("");
     setRole("employee");
     setDepartmentId(NONE);
     setTeamId(NONE);
@@ -82,6 +117,8 @@ function PersonalEmailFlow({ isAdmin }: { isAdmin: boolean }) {
         teamIds: teamId === NONE ? undefined : [teamId as Id<"teams">],
         jobTitle: jobTitle.trim() || undefined,
         phone: phone.trim() || undefined,
+        firstName: firstName.trim() || undefined,
+        lastName: lastName.trim() || undefined,
       });
       toast.success(t("sendInvite"));
       setSentEmail(trimmed);
@@ -108,6 +145,13 @@ function PersonalEmailFlow({ isAdmin }: { isAdmin: boolean }) {
           onChange={(e) => setEmail(e.target.value)}
         />
       </div>
+
+      <NameFields
+        firstName={firstName}
+        lastName={lastName}
+        onFirstName={setFirstName}
+        onLastName={setLastName}
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
@@ -182,6 +226,8 @@ function CompanyEmailGuide({ isAdmin }: { isAdmin: boolean }) {
   const create = useAction(api.people.invites.create);
 
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [role, setRole] = useState<Role>("employee");
   const [busy, setBusy] = useState(false);
   const [sentEmail, setSentEmail] = useState<string | null>(null);
@@ -191,7 +237,12 @@ function CompanyEmailGuide({ isAdmin }: { isAdmin: boolean }) {
     if (!trimmed.includes("@")) return;
     setBusy(true);
     try {
-      await create({ email: trimmed, role });
+      await create({
+        email: trimmed,
+        role,
+        firstName: firstName.trim() || undefined,
+        lastName: lastName.trim() || undefined,
+      });
       toast.success(t("sendInvite"));
       setSentEmail(trimmed);
     } catch (e) {
@@ -207,6 +258,8 @@ function CompanyEmailGuide({ isAdmin }: { isAdmin: boolean }) {
         email={sentEmail}
         onReset={() => {
           setEmail("");
+          setFirstName("");
+          setLastName("");
           setRole("employee");
           setSentEmail(null);
         }}
@@ -231,6 +284,12 @@ function CompanyEmailGuide({ isAdmin }: { isAdmin: boolean }) {
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
+        <NameFields
+          firstName={firstName}
+          lastName={lastName}
+          onFirstName={setFirstName}
+          onLastName={setLastName}
+        />
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">{t("role")}</label>
           <RoleSelect value={role} onChange={setRole} canElevate={isAdmin} />
