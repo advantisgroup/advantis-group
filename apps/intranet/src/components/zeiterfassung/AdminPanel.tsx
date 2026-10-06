@@ -156,7 +156,9 @@ function People() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {row.status === "absent" && row.absentType ? (
+                    {row.trackingDisabled ? (
+                      <Chip>{t("admin.trackingOff")}</Chip>
+                    ) : row.status === "absent" && row.absentType ? (
                       <span className="text-xs">
                         <AbsenceTypeLabel type={row.absentType} />
                       </span>
@@ -172,9 +174,12 @@ function People() {
                     )}
                   </TableCell>
                   <TableCell
-                    className={cn("text-right tabular-nums", row.balanceMinutes < 0 && "text-warn")}
+                    className={cn(
+                      "text-right tabular-nums",
+                      !row.trackingDisabled && row.balanceMinutes < 0 && "text-warn",
+                    )}
                   >
-                    {formatMinutes(row.balanceMinutes, true)}
+                    {row.trackingDisabled ? "–" : formatMinutes(row.balanceMinutes, true)}
                   </TableCell>
                   <TableCell className="hidden text-right tabular-nums md:table-cell">
                     {formatDays(row.vacationRemaining, locale)}

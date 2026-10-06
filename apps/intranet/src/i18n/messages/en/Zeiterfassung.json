@@ -57,7 +57,9 @@
     "allEntries": "All hours",
     "from": "From",
     "to": "To",
-    "duration": "Duration"
+    "duration": "Duration",
+    "trackingOffTitle": "Time tracking is switched off for you",
+    "trackingOffHint": "You don't need to clock in. You can still enter vacation and other absences."
   },
   "entries": {
     "running": "running",
@@ -294,7 +296,13 @@
     "allowanceDays": "Vacation days",
     "openingSaved": "Opening balance saved",
     "openingHours": "Hours (negative with a minus)",
-    "openingDate": "Start date"
+    "openingDate": "Start date",
+    "trackingOff": "No time tracking",
+    "tracking": "Time tracking for this person",
+    "trackingOnHint": "This person clocks in themselves; hours account and morning reminder are active.",
+    "trackingOffHint": "This person doesn't record working time: no time clock, no morning reminder, no hours account in the overview. Absences (e.g. vacation) still work.",
+    "trackingOnToast": "Time tracking switched on",
+    "trackingOffToast": "Time tracking switched off"
   },
   "audit": {
     "system": "System",
@@ -349,7 +357,8 @@
     "already_pending": "A correction for this entry is already waiting.",
     "not_pending": "That was decided in the meantime.",
     "changed_meanwhile": "The entry changed in the meantime. Please reload.",
-    "no_working_days": "There are no working days in that period."
+    "no_working_days": "There are no working days in that period.",
+    "tracking_disabled": "Time tracking is switched off for this person."
   },
   "testMode": {
     "title": "Test mode – visible to admins and testers only",
@@ -400,6 +409,7 @@
     "confirmTitle": "{count, plural, one {Import 1 person?} other {Import # people?}}",
     "confirmDescription": "Target hours, vacation entitlement and the opening balance are overwritten; time entries and absences from Clockodo are added or updated.",
     "progress": "Importing {index} of {count}: {name} …",
-    "finished": "{count, plural, one {1 person imported} other {# people imported}}"
+    "finished": "{count, plural, one {1 person imported} other {# people imported}}",
+    "trackingOff": "no time tracking"
   }
 }

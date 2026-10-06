@@ -609,16 +609,16 @@ describe("test mode", () => {
 
   test("admins and testers get in, nobody else", async () => {
     const s = await setup();
-    expect(await s.admin.query(api.time.mode.status, {})).toEqual({
+    expect(await s.admin.query(api.time.mode.status, {})).toMatchObject({
       testMode: true,
       canUse: true,
     });
-    expect(await s.alice.query(api.time.mode.status, {})).toEqual({
+    expect(await s.alice.query(api.time.mode.status, {})).toMatchObject({
       testMode: true,
       canUse: true,
     });
     vi.stubEnv("TIME_TESTERS", "");
-    expect(await s.alice.query(api.time.mode.status, {})).toEqual({
+    expect(await s.alice.query(api.time.mode.status, {})).toMatchObject({
       testMode: true,
       canUse: false,
     });
@@ -757,5 +757,26 @@ describe("Clockodo import", () => {
     expect(summary.balance.minutes).toBe(356 - 360);
     const user = await s.t.run((ctx) => ctx.db.get(s.ids.alice));
     expect(user?.clockodoUserId).toBe("364581");
+  });
+});
+
+describe("time tracking off for a person", () => {
+  test("no clocking, flagged in the overview, switch is audited", async () => {
+    const s = await setup();
+    setNow("2026-10-06", "09:00");
+    expect((await s.bob.query(api.time.mode.status, {})).tracking).toBe(true);
+    await expect(
+      s.bob.mutation(api.time.admin.setTracking, { userId: s.ids.bob, disabled: true }),
+    ).rejects.toThrow();
+    await s.admin.mutation(api.time.admin.setTracking, { userId: s.ids.bob, disabled: true });
+    expect((await s.bob.query(api.time.mode.status, {})).tracking).toBe(false);
+    await expect(s.bob.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/tracking/i);
+    const people = await s.admin.query(api.time.admin.people, { today: "2026-10-06" });
+    expect(people.find((row) => row.userId === s.ids.bob)?.trackingDisabled).toBe(true);
+    expect(people.find((row) => row.userId === s.ids.alice)?.trackingDisabled).toBe(false);
+    expect((await audit(s.t)).some((row) => row.action === "tracking_off")).toBe(true);
+
+    await s.admin.mutation(api.time.admin.setTracking, { userId: s.ids.bob, disabled: false });
+    await s.bob.mutation(api.time.clock.clockIn, {});
   });
 });

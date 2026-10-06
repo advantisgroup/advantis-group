@@ -1,7 +1,14 @@
 import { userMutation, userQuery } from "../functions";
 import { assertTimeAccess } from "./lib/mode";
 import { berlinDate } from "./lib/berlin";
-import { assertDatesOpen, invalidateTotals, openEntries, timeError, writeAudit } from "./lib/store";
+import {
+  assertDatesOpen,
+  invalidateTotals,
+  isTrackingDisabled,
+  openEntries,
+  timeError,
+  writeAudit,
+} from "./lib/store";
 
 /**
  * Clocking in the browser: one open work segment while you work, an open
@@ -28,6 +35,9 @@ export const clockIn = userMutation({
   args: {},
   handler: async (ctx) => {
     assertTimeAccess(ctx);
+    if (await isTrackingDisabled(ctx, ctx.caller.id)) {
+      throw timeError("conflict", "tracking_disabled", "Time tracking is off for this person");
+    }
     const open = await openEntries(ctx, ctx.caller.id);
     if (open.some((row) => row.kind === "work")) {
       throw timeError("conflict", "already_clocked_in", "Already clocked in");

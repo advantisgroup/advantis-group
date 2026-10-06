@@ -92,6 +92,7 @@ export function timeErrorReason(error: unknown): string | null {
 }
 
 const KNOWN_REASONS = new Set([
+  "tracking_disabled",
   "month_locked",
   "overlap",
   "already_clocked_in",

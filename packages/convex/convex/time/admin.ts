@@ -16,8 +16,10 @@ import {
   loadAbsences,
   loadHolidays,
   loadSchedules,
+  isTrackingDisabled,
   openEntries,
   timeError,
+  trackingDisabledIds,
   vacationFor,
   writeAudit,
 } from "./lib/store";
@@ -47,13 +49,14 @@ export const people = userQuery({
   handler: async (ctx, { today }) => {
     assertTimeAccess(ctx);
     if (!isIsoDate(today)) throw timeError("bad_request", "invalid_range", "Bad date");
-    const [users, open, pending] = await Promise.all([
+    const [users, open, pending, untracked] = await Promise.all([
       staff(ctx),
       openEntries(ctx),
       ctx.db
         .query("timeEntries")
         .withIndex("by_status", (q) => q.eq("status", "pending"))
         .collect(),
+      trackingDisabledIds(ctx),
     ]);
     const year = Number(today.slice(0, 4));
     const since = berlinInstant(addDays(today, -31));
@@ -87,6 +90,7 @@ export const people = userQuery({
           pendingAbsences: absences.filter((row) => row.status === "pending").length,
           pendingCorrections: pending.filter((row) => row.userId === user._id).length,
           autoClosed: recent.filter((row) => row.autoClosed && row.status === "active").length,
+          trackingDisabled: untracked.has(user._id),
         };
       }),
     );
@@ -123,7 +127,34 @@ export const personDetail = userQuery({
       opening,
       balance,
       vacation,
+      trackingDisabled: await isTrackingDisabled(ctx, userId),
     };
+  },
+});
+
+/** Switch working-time recording off (or back on) for one person. */
+export const setTracking = userMutation({
+  role: "admin",
+  args: { userId: v.id("users"), disabled: v.boolean() },
+  handler: async (ctx, { userId, disabled }) => {
+    assertTimeAccess(ctx);
+    const existing = await ctx.db
+      .query("timeProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+    const row = { userId, trackingDisabled: disabled, updatedAt: Date.now() };
+    let id = existing?._id;
+    if (id) await ctx.db.replace(id, row);
+    else id = await ctx.db.insert("timeProfiles", row);
+    await writeAudit(ctx, {
+      actorId: ctx.caller.id,
+      subjectUserId: userId,
+      entity: "profile",
+      entityId: id,
+      action: disabled ? "tracking_off" : "tracking_on",
+      before: existing ?? undefined,
+      after: row,
+    });
   },
 });
 

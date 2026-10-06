@@ -37,7 +37,8 @@ export type TimeError =
   | "already_pending"
   | "not_pending"
   | "changed_meanwhile"
-  | "no_working_days";
+  | "no_working_days"
+  | "tracking_disabled";
 
 /** `code` is the shared one the intranet's error handling knows; `reason`
  *  lets the Zeiterfassung screens say exactly what went wrong. */
@@ -74,6 +75,21 @@ export async function writeAudit(
 }
 
 // --- Loading ------------------------------------------------------------------
+
+/** Whether this person records working time at all (see `timeProfiles`). */
+export async function isTrackingDisabled(ctx: QueryCtx, userId: Id<"users">): Promise<boolean> {
+  const row = await ctx.db
+    .query("timeProfiles")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .unique();
+  return row?.trackingDisabled === true;
+}
+
+/** Everyone who doesn't record working time. */
+export async function trackingDisabledIds(ctx: QueryCtx): Promise<Set<Id<"users">>> {
+  const rows = await ctx.db.query("timeProfiles").collect();
+  return new Set(rows.filter((row) => row.trackingDisabled).map((row) => row.userId));
+}
 
 export async function loadSchedules(ctx: QueryCtx, userId: Id<"users">) {
   return ctx.db

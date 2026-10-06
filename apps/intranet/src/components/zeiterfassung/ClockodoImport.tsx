@@ -85,7 +85,10 @@ export function ClockodoImport() {
           return {
             plan: person,
             userId: (match?.userId as Id<"users"> | undefined) ?? null,
-            include: Boolean(match) && (person.active || person.entries.length > 0),
+            include:
+              Boolean(match) &&
+              !match?.trackingDisabled &&
+              (person.active || person.entries.length > 0),
             takeBalance: person.balanceMinutes !== null && clocksNow,
           };
         }),
@@ -236,6 +239,8 @@ export function ClockodoImport() {
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span className="font-medium text-foreground">{person.name}</span>
                           {!person.active && <Chip>{t("inactive")}</Chip>}
+                          {candidates.find((user) => user.userId === row.userId)
+                            ?.trackingDisabled && <Chip>{t("trackingOff")}</Chip>}
                         </div>
                         <div className="text-xs text-muted-foreground">{person.email}</div>
                         {person.warnings.map((warning) => (

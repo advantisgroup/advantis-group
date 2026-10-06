@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 
 import { userMutation, userQuery } from "../functions";
 import { canUseTime, isTimeTestMode } from "./lib/mode";
+import { isTrackingDisabled } from "./lib/store";
 
 /** What the intranet needs to decide whether to show the module at all. */
 export const status = userQuery({
@@ -9,6 +10,8 @@ export const status = userQuery({
   handler: async (ctx) => ({
     testMode: isTimeTestMode(),
     canUse: canUseTime(ctx.caller),
+    /** False for people who don't record working time (no clock, no prompt). */
+    tracking: !(await isTrackingDisabled(ctx, ctx.caller.id)),
   }),
 });
 

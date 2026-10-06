@@ -57,7 +57,9 @@
     "allEntries": "Alle Zeiten",
     "from": "Von",
     "to": "Bis",
-    "duration": "Dauer"
+    "duration": "Dauer",
+    "trackingOffTitle": "Für dich ist die Zeiterfassung ausgeschaltet",
+    "trackingOffHint": "Du musst nicht stempeln. Urlaub und andere Abwesenheiten kannst du trotzdem eintragen."
   },
   "entries": {
     "running": "läuft",
@@ -294,7 +296,13 @@
     "allowanceDays": "Urlaubstage",
     "openingSaved": "Anfangssaldo gespeichert",
     "openingHours": "Stunden (negativ mit Minus)",
-    "openingDate": "Stichtag"
+    "openingDate": "Stichtag",
+    "trackingOff": "Ohne Zeiterfassung",
+    "tracking": "Zeiterfassung für diese Person",
+    "trackingOnHint": "Die Person stempelt selbst; Stundenkonto und Morgen-Hinweis sind aktiv.",
+    "trackingOffHint": "Diese Person erfasst keine Arbeitszeit: keine Stempeluhr, kein Morgen-Hinweis, kein Stundenkonto in der Übersicht. Abwesenheiten (z. B. Urlaub) funktionieren weiter.",
+    "trackingOnToast": "Zeiterfassung eingeschaltet",
+    "trackingOffToast": "Zeiterfassung ausgeschaltet"
   },
   "audit": {
     "system": "System",
@@ -349,7 +357,8 @@
     "already_pending": "Für diesen Eintrag wartet schon eine Korrektur.",
     "not_pending": "Das wurde inzwischen schon entschieden.",
     "changed_meanwhile": "Der Eintrag hat sich inzwischen geändert. Bitte neu laden.",
-    "no_working_days": "Im gewählten Zeitraum gibt es keine Arbeitstage."
+    "no_working_days": "Im gewählten Zeitraum gibt es keine Arbeitstage.",
+    "tracking_disabled": "Für diese Person ist die Zeiterfassung ausgeschaltet."
   },
   "testMode": {
     "title": "Testmodus – nur für Admins und Tester sichtbar",
@@ -400,6 +409,7 @@
     "confirmTitle": "{count, plural, one {1 Person importieren?} other {# Personen importieren?}}",
     "confirmDescription": "Sollzeiten, Urlaubsanspruch und Startwert des Stundenkontos werden überschrieben, Zeiteinträge und Abwesenheiten aus Clockodo ergänzt oder aktualisiert.",
     "progress": "Importiere {index} von {count}: {name} …",
-    "finished": "{count, plural, one {1 Person importiert} other {# Personen importiert}}"
+    "finished": "{count, plural, one {1 Person importiert} other {# Personen importiert}}",
+    "trackingOff": "ohne Zeiterfassung"
   }
 }

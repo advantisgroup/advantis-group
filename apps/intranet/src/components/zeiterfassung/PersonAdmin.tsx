@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { Absences } from "@/components/zeiterfassung/Absences";
 import { AuditLog } from "@/components/zeiterfassung/AdminPanel";
 import { Entries } from "@/components/zeiterfassung/Entries";
@@ -107,6 +108,45 @@ export function PersonAdmin({ userId }: { userId: Id<"users"> }) {
 
 type Detail = NonNullable<ReturnType<typeof useQuery<typeof api.time.admin.personDetail>>>;
 
+/** On/off switch for people who don't record working time (e.g. the boss). */
+function TrackingCard({ detail }: { detail: Detail }) {
+  const t = useTranslations("Zeiterfassung");
+  const setTracking = useMutation(api.time.admin.setTracking);
+  const showError = useTimeErrorToast();
+  const [busy, setBusy] = useState(false);
+
+  async function toggle(enabled: boolean) {
+    setBusy(true);
+    try {
+      await setTracking({ userId: detail.userId, disabled: !enabled });
+      toast.success(enabled ? t("admin.trackingOnToast") : t("admin.trackingOffToast"));
+    } catch (error) {
+      showError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="lg:col-span-2">
+      <CardContent className="flex items-start justify-between gap-4 p-5">
+        <div className="min-w-0">
+          <p className="text-base font-semibold">{t("admin.tracking")}</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            {detail.trackingDisabled ? t("admin.trackingOffHint") : t("admin.trackingOnHint")}
+          </p>
+        </div>
+        <Switch
+          checked={!detail.trackingDisabled}
+          disabled={busy}
+          onCheckedChange={(value) => void toggle(value)}
+          aria-label={t("admin.tracking")}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
 function Settings({ detail }: { detail: Detail }) {
   const t = useTranslations("Zeiterfassung");
   const locale = useLocale();
@@ -123,6 +163,7 @@ function Settings({ detail }: { detail: Detail }) {
 
   return (
     <div className="grid gap-5 lg:grid-cols-2">
+      <TrackingCard detail={detail} />
       <Card className="lg:col-span-2">
         <CardHeader className="flex-row items-center justify-between">
           <div>

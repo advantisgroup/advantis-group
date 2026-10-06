@@ -166,6 +166,15 @@ export const timeTables = {
     .index("by_user_month", ["userId", "month"])
     .index("by_month", ["month"]),
 
+  /** Per-person switches. `trackingDisabled`: this person doesn't record
+   *  working time at all (e.g. the managing director) — no clock, no prompt,
+   *  no hours account in the overview. Absences still work. */
+  timeProfiles: defineTable({
+    userId: v.id("users"),
+    trackingDisabled: v.boolean(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
   /** Append-only. `actorId` unset = a scheduled job. Kept at least 2 years. */
   timeAuditLog: defineTable({
     actorId: v.optional(v.id("users")),
@@ -179,6 +188,7 @@ export const timeTables = {
       v.literal("holiday"),
       v.literal("monthLock"),
       v.literal("import"),
+      v.literal("profile"),
     ),
     entityId: v.string(),
     action: v.string(),

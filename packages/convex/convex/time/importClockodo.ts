@@ -12,6 +12,7 @@ import {
   invalidateTotalsFrom,
   loadSchedules,
   timeError,
+  trackingDisabledIds,
   writeAudit,
 } from "./lib/store";
 
@@ -34,7 +35,10 @@ export const candidates = userQuery({
   args: {},
   handler: async (ctx) => {
     assertTimeAccess(ctx);
-    const users = await ctx.db.query("users").collect();
+    const [users, untracked] = await Promise.all([
+      ctx.db.query("users").collect(),
+      trackingDisabledIds(ctx),
+    ]);
     return users
       .filter((user) => user.status === "active" && !user.external)
       .map((user) => ({
@@ -42,6 +46,7 @@ export const candidates = userQuery({
         name: displayName(user),
         email: user.email,
         clockodoUserId: user.clockodoUserId == null ? null : String(user.clockodoUserId),
+        trackingDisabled: untracked.has(user._id),
       }))
       .sort((a, b) => a.name.localeCompare(b.name, "de"));
   },
