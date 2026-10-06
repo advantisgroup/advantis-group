@@ -13,7 +13,7 @@ import {
   monthStart,
   monthsBetween,
 } from "./berlin";
-import { summarizeDays, totals } from "./days";
+import { BREAK30_AFTER_MINUTES, measureDay, summarizeDays, totals } from "./days";
 import { isMonthLocked } from "./lock";
 import { carryOverExpiry, vacationSummary } from "./vacation";
 import { isTimeTestMode, timeTesterEmails } from "./mode";
@@ -400,6 +400,53 @@ export async function notifyAdmins(
     ctx,
     targets.map((user) => user._id),
     args,
+  );
+}
+
+/**
+ * After clocking out (not on the 18:00 rule, which has its own note): if the
+ * day ran past 6:15 with less than 30 minutes of break, tell the person and
+ * the admins. Nothing is deducted — the day keeps its "Pause < 30 Min." chip
+ * until it's corrected.
+ */
+export async function noteMissingBreak(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  date: string,
+): Promise<void> {
+  const segments = (
+    await ctx.db
+      .query("timeEntries")
+      .withIndex("by_user_start", (q) =>
+        q
+          .eq("userId", userId)
+          .gte("start", berlinInstant(date))
+          .lt("start", berlinInstant(addDays(date, 1))),
+      )
+      .collect()
+  ).filter((row) => row.status === "active");
+  const day = measureDay(segments, Date.now());
+  const worked = Math.round(day.workedMs / 60_000);
+  const breaks = Math.round(day.breakMs / 60_000);
+  if (worked <= BREAK30_AFTER_MINUTES || breaks >= 30) return;
+  const hours = `${Math.floor(worked / 60)}:${String(worked % 60).padStart(2, "0")}`;
+  const link = `/zeiterfassung/arbeitszeiten?date=${date}`;
+  await notifyUsers(ctx, [userId], {
+    type: "time_break_missing",
+    title: "Pause nicht gemacht",
+    body: `Du hast am ${dateFormatter(date)} ${hours} Std. gearbeitet, aber keine 30 Minuten Pause gestempelt. Falls du doch Pause hattest, trag sie bitte nach.`,
+    link,
+  });
+  const person = await ctx.db.get(userId);
+  await notifyAdmins(
+    ctx,
+    {
+      type: "time_break_missing",
+      title: `Pause fehlt: ${displayName(person)}`,
+      body: `${dateFormatter(date)}: ${hours} Std. gearbeitet, weniger als 30 Minuten Pause.`,
+      link: `/zeiterfassung/admin/${userId}?date=${date}`,
+    },
+    userId,
   );
 }
 

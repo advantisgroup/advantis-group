@@ -159,6 +159,13 @@ export function measureDay(
   };
 }
 
+/**
+ * § 4 ArbZG wants 30 minutes of break above 6 hours; the company flags it
+ * from 6:15 on (Vahan, 06.10.2026) so a few minutes over don't count. Breaks
+ * are never deducted automatically — this is only a note.
+ */
+export const BREAK30_AFTER_MINUTES = 6 * 60 + 15;
+
 export function dayWarnings(
   workedMinutes: number,
   breakMinutes: number,
@@ -166,7 +173,7 @@ export function dayWarnings(
 ): DayWarning[] {
   const warnings: DayWarning[] = [];
   if (workedMinutes > 9 * 60 && breakMinutes < 45) warnings.push("break45");
-  else if (workedMinutes > 6 * 60 && breakMinutes < 30) warnings.push("break30");
+  else if (workedMinutes > BREAK30_AFTER_MINUTES && breakMinutes < 30) warnings.push("break30");
   if (workedMinutes > 10 * 60) warnings.push("over10h");
   if (restMinutes !== null && restMinutes < 11 * 60) warnings.push("rest11h");
   return warnings;

@@ -677,6 +677,34 @@ describe("test mode", () => {
   });
 });
 
+describe("missing break", () => {
+  test("clocking out after 6:15 without a break tells the person and the admins", async () => {
+    const s = await setup();
+    setNow("2026-10-05", "08:00");
+    await s.alice.mutation(api.time.clock.clockIn, {});
+    setNow("2026-10-05", "14:10");
+    await s.alice.mutation(api.time.clock.clockOut, {});
+    expect(
+      (await notificationsOf(s.t, s.ids.alice)).filter((n) => n.type === "time_break_missing"),
+    ).toHaveLength(0);
+
+    setNow("2026-10-06", "08:00");
+    await s.alice.mutation(api.time.clock.clockIn, {});
+    setNow("2026-10-06", "16:00");
+    await s.alice.mutation(api.time.clock.clockOut, {});
+    const mine = (await notificationsOf(s.t, s.ids.alice)).filter(
+      (n) => n.type === "time_break_missing",
+    );
+    expect(mine).toHaveLength(1);
+    expect(mine[0].body).toContain("8:00");
+    expect(
+      (await notificationsOf(s.t, s.ids.admin)).filter((n) => n.type === "time_break_missing"),
+    ).toHaveLength(1);
+    // Nothing is deducted.
+    expect((await workedOn(s.alice, "2026-10-06")).workedMinutes).toBe(480);
+  });
+});
+
 describe("preview", () => {
   beforeEach(() => {
     vi.stubEnv("TIME_MODE", "preview");

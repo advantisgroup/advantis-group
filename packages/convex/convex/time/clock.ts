@@ -5,6 +5,7 @@ import {
   assertDatesOpen,
   invalidateTotals,
   isTrackingDisabled,
+  noteMissingBreak,
   openEntries,
   timeError,
   writeAudit,
@@ -145,5 +146,6 @@ export const clockOut = userMutation({
       });
     }
     await invalidateTotals(ctx, ctx.caller.id, [berlinDate(work.start)]);
+    await noteMissingBreak(ctx, ctx.caller.id, berlinDate(work.start));
   },
 });
