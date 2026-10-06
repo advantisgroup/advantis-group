@@ -7,3 +7,4 @@ export * from "./holidays";
 export * from "./lock";
 export * from "./schedule";
 export * from "./vacation";
+export * from "./clockodo";

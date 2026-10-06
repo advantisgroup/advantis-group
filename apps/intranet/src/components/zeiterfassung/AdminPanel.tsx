@@ -53,6 +53,7 @@ import {
   FieldLabel,
   Segmented,
 } from "@/components/zeiterfassung/parts";
+import { ClockodoImport } from "@/components/zeiterfassung/ClockodoImport";
 import { matchesSearch } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
@@ -65,9 +66,9 @@ import {
   useTimeErrorToast,
 } from "@/lib/zeiterfassung";
 
-type Section = "people" | "approvals" | "holidays" | "locks" | "audit";
+type Section = "people" | "approvals" | "holidays" | "locks" | "audit" | "import";
 
-const SECTIONS: Section[] = ["people", "approvals", "holidays", "locks", "audit"];
+const SECTIONS: Section[] = ["people", "approvals", "holidays", "locks", "audit", "import"];
 
 /** Admin area: people, approvals, holidays, month locks and the audit log. */
 export function AdminPanel({ initialSection }: { initialSection?: string | null }) {
@@ -96,6 +97,7 @@ export function AdminPanel({ initialSection }: { initialSection?: string | null 
       {section === "holidays" && <Holidays />}
       {section === "locks" && <Locks />}
       {section === "audit" && <AuditLog />}
+      {section === "import" && <ClockodoImport />}
     </div>
   );
 }

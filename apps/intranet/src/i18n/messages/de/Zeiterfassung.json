@@ -151,7 +151,8 @@
     "vacation": "Urlaub",
     "sick": "Krank",
     "special": "Sonderurlaub",
-    "other": "Sonstiges"
+    "other": "Sonstiges",
+    "overtime": "Überstundenabbau"
   },
   "absenceStatus": {
     "pending": "Beantragt",
@@ -213,7 +214,8 @@
       "approvals": "Freigaben",
       "holidays": "Feiertage",
       "locks": "Monatsabschluss",
-      "audit": "Protokoll"
+      "audit": "Protokoll",
+      "import": "Import"
     },
     "search": "Person suchen…",
     "noPeople": "Niemand gefunden",
@@ -368,5 +370,36 @@
     "hint": "Du kannst dich auch später über die Stempeluhr oben rechts oder unter „Zeiterfassung“ einstempeln – zum Beispiel, wenn du dich nur krankmelden oder deine Zeiten ansehen willst.",
     "later": "Später",
     "clockIn": "Einstempeln"
+  },
+  "import": {
+    "title": "Daten aus Clockodo übernehmen",
+    "intro": "Clockodo-Export (JSON) auswählen. Danach siehst du pro Person, wem sie im Intranet zugeordnet wird, ihre Sollzeit, den Urlaubsanspruch und das Stundenkonto. Der Import kann später mit einem neueren Export wiederholt werden – nichts wird doppelt angelegt.",
+    "chooseFile": "Export-Datei wählen",
+    "otherFile": "Andere Datei wählen",
+    "badFile": "Das ist kein Clockodo-Export.",
+    "summary": "Export vom {date}: {people} Personen, {entries} Zeiteinträge, {absences} Abwesenheiten.",
+    "col": {
+      "clockodo": "Clockodo",
+      "intranet": "Intranet-Person",
+      "week": "Soll/Woche",
+      "vacation": "Urlaub",
+      "balance": "Stundenkonto übernehmen",
+      "data": "Daten"
+    },
+    "inactive": "inaktiv",
+    "notImported": "Nicht übernehmen",
+    "include": "{name} übernehmen",
+    "takeBalance": "Stundenkonto von {name} übernehmen",
+    "entries": "{count, plural, one {# Eintrag} other {# Einträge}}",
+    "absences": "{count, plural, one {# Abwesenheit} other {# Abwesenheiten}}",
+    "lastEntry": "zuletzt {date}",
+    "duplicate": "Eine Intranet-Person ist mehrfach ausgewählt.",
+    "balanceHint": "Übernommenes Stundenkonto gilt als Startwert zum {date}; ohne Haken startet die Person bei 0.",
+    "startCount": "{count, plural, one {1 Person importieren} other {# Personen importieren}}",
+    "start": "Import starten",
+    "confirmTitle": "{count, plural, one {1 Person importieren?} other {# Personen importieren?}}",
+    "confirmDescription": "Sollzeiten, Urlaubsanspruch und Startwert des Stundenkontos werden überschrieben, Zeiteinträge und Abwesenheiten aus Clockodo ergänzt oder aktualisiert.",
+    "progress": "Importiere {index} von {count}: {name} …",
+    "finished": "{count, plural, one {1 Person importiert} other {# Personen importiert}}"
   }
 }

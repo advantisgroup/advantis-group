@@ -156,11 +156,16 @@ holidays, refused once live).
 0. Delete the test data (banner button), then set Convex env
    `TIME_MODE=live`.
 
-1. Run the Clockodo import (separate task): per person `setOpeningBalance`
-   (minutes + cutover date), `setAllowance` for the current year
-   (entitlement + carry-over), entries with `source: "import"` and
-   absences; then `time.admin.recomputeTotals` per person to cache the
-   locked months.
+1. Clockodo import (Verwaltung → Import): export Clockodo's data as JSON
+   (read-only calls to Clockodo's own API from a logged-in admin tab: users,
+   `/api/targethours`, `/api/v2/userReports`, `/api/v4/absences`,
+   `/api/v2/entries` since Oct 2024), choose the file, check the mapping and
+   whose hours account to take over (people who don't clock in Clockodo only
+   have a target-hours deficit there), import. Schedules, the current year's
+   allowance and the opening balance (dated the export day) are replaced;
+   entries and absences are upserted by Clockodo id, so the import is re-run
+   with a fresh export on the cutover morning. Clockodo's "Überstundenabbau"
+   becomes absence type `overtime`, which keeps the day's target.
 2. Seed holidays for the current and next year (Verwaltung → Feiertage).
 3. Set each part-timer's schedule (default is 8 h Mon–Fri).
 4. `apps/intranet/src/lib/maintenance.ts`: add `/zeiterfassung` to

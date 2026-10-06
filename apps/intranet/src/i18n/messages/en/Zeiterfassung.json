@@ -151,7 +151,8 @@
     "vacation": "Vacation",
     "sick": "Sick",
     "special": "Special leave",
-    "other": "Other"
+    "other": "Other",
+    "overtime": "Overtime off"
   },
   "absenceStatus": {
     "pending": "Requested",
@@ -213,7 +214,8 @@
       "approvals": "Approvals",
       "holidays": "Holidays",
       "locks": "Month locks",
-      "audit": "Audit log"
+      "audit": "Audit log",
+      "import": "Import"
     },
     "search": "Search people…",
     "noPeople": "Nobody found",
@@ -368,5 +370,36 @@
     "hint": "You can also clock in later via the time clock at the top right or under “Time tracking” – for example if you only want to report sick or look at your hours.",
     "later": "Later",
     "clockIn": "Clock in"
+  },
+  "import": {
+    "title": "Import data from Clockodo",
+    "intro": "Choose the Clockodo export (JSON). You then see for each person who they map to in the intranet, their target hours, vacation entitlement and hours account. The import can be repeated later with a newer export – nothing is created twice.",
+    "chooseFile": "Choose export file",
+    "otherFile": "Choose another file",
+    "badFile": "This is not a Clockodo export.",
+    "summary": "Export from {date}: {people} people, {entries} time entries, {absences} absences.",
+    "col": {
+      "clockodo": "Clockodo",
+      "intranet": "Intranet person",
+      "week": "Target/week",
+      "vacation": "Vacation",
+      "balance": "Take over hours account",
+      "data": "Data"
+    },
+    "inactive": "inactive",
+    "notImported": "Don't import",
+    "include": "Import {name}",
+    "takeBalance": "Take over hours account of {name}",
+    "entries": "{count, plural, one {# entry} other {# entries}}",
+    "absences": "{count, plural, one {# absence} other {# absences}}",
+    "lastEntry": "last {date}",
+    "duplicate": "An intranet person is selected more than once.",
+    "balanceHint": "A taken-over hours account is the opening balance on {date}; without the tick the person starts at 0.",
+    "startCount": "{count, plural, one {Import 1 person} other {Import # people}}",
+    "start": "Start import",
+    "confirmTitle": "{count, plural, one {Import 1 person?} other {Import # people?}}",
+    "confirmDescription": "Target hours, vacation entitlement and the opening balance are overwritten; time entries and absences from Clockodo are added or updated.",
+    "progress": "Importing {index} of {count}: {name} …",
+    "finished": "{count, plural, one {1 person imported} other {# people imported}}"
   }
 }

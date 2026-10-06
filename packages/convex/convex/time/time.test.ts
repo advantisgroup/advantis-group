@@ -676,3 +676,86 @@ describe("test mode", () => {
     ).rejects.toThrow(/Testmodus/);
   });
 });
+
+describe("Clockodo import", () => {
+  test("applies a person, imports history once and updates on re-run", async () => {
+    const s = await setup();
+    setNow("2026-10-06", "09:00");
+    const opening = { minutes: 356, date: "2026-10-06" };
+    const person = {
+      userId: s.ids.alice,
+      clockodoId: 364581,
+      schedules: [{ validFrom: "2024-10-17", minutesPerWeekday: [360, 360, 360, 360, 360, 0, 0] }],
+      allowance: { year: 2026, days: 24, carriedOver: 0 },
+      opening,
+    };
+    await s.admin.mutation(api.time.importClockodo.applyPerson, person);
+    await expect(s.alice.mutation(api.time.importClockodo.applyPerson, person)).rejects.toThrow();
+
+    const entries = [
+      {
+        importId: "clockodo:entry:1",
+        start: local("2025-03-03", "08:00"),
+        end: local("2025-03-03", "14:00"),
+      },
+      {
+        importId: "clockodo:entry:2",
+        start: local("2026-10-05", "08:22"),
+        end: local("2026-10-05", "14:29"),
+      },
+    ];
+    expect(
+      await s.admin.mutation(api.time.importClockodo.importEntries, {
+        userId: s.ids.alice,
+        entries,
+      }),
+    ).toEqual({ inserted: 2, updated: 0 });
+    const again = [{ ...entries[0] }, { ...entries[1], end: local("2026-10-05", "14:45") }];
+    expect(
+      await s.admin.mutation(api.time.importClockodo.importEntries, {
+        userId: s.ids.alice,
+        entries: again,
+      }),
+    ).toEqual({ inserted: 0, updated: 1 });
+
+    const absences = [
+      {
+        importId: "clockodo:absence:9",
+        type: "overtime" as const,
+        status: "approved" as const,
+        startDate: "2026-10-07",
+        endDate: "2026-10-07",
+        halfDayStart: false,
+        halfDayEnd: false,
+      },
+    ];
+    expect(
+      await s.admin.mutation(api.time.importClockodo.importAbsences, {
+        userId: s.ids.alice,
+        absences,
+      }),
+    ).toEqual({ inserted: 1, updated: 0 });
+    expect(
+      await s.admin.mutation(api.time.importClockodo.importAbsences, {
+        userId: s.ids.alice,
+        absences,
+      }),
+    ).toEqual({ inserted: 0, updated: 0 });
+
+    const rows = await s.t.run((ctx) =>
+      ctx.db
+        .query("timeEntries")
+        .withIndex("by_user_start", (q) => q.eq("userId", s.ids.alice))
+        .collect(),
+    );
+    expect(rows.map((row) => row.source)).toEqual(["import", "import"]);
+
+    // The account starts from Clockodo's balance on the export day: the
+    // imported history before it does not count twice.
+    setNow("2026-10-07", "09:00");
+    const summary = await s.alice.query(api.time.overview.summary, { today: "2026-10-07" });
+    expect(summary.balance.minutes).toBe(356 - 360);
+    const user = await s.t.run((ctx) => ctx.db.get(s.ids.alice));
+    expect(user?.clockodoUserId).toBe("364581");
+  });
+});
