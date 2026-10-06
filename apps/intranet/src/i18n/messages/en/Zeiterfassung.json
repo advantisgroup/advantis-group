@@ -350,8 +350,8 @@
     "no_working_days": "There are no working days in that period."
   },
   "testMode": {
-    "title": "Test mode – visible to testers only",
-    "description": "Time tracking isn't live yet: only the testers configured in Convex can see it, notifications go only to them, and nobody shows as “In the office” in the directory.",
+    "title": "Test mode – visible to admins and testers only",
+    "description": "Time tracking isn't live yet: employees will see it after the Clockodo import. Notifications go only to admins and testers, and nobody shows as “In the office” in the directory.",
     "purge": "Delete test data",
     "purgeTitle": "Delete all test data?",
     "purgeDescription": "Deletes all time entries, absences, work schedules, vacation allowances, hours accounts, month locks and the time tracking log – for everyone. Holidays are kept. This can't be undone.",

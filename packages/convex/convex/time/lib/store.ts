@@ -361,13 +361,19 @@ export async function notifyAdmins(
   args: { type: string; title: string; body?: string; link?: string },
   except?: Id<"users">,
 ): Promise<void> {
-  // In test mode the real admins must not hear about test data: the testers
-  // get these notifications instead (see lib/mode.ts).
-  const recipients = isTimeTestMode() ? await activeTesters(ctx) : await activeAdmins(ctx);
-  const admins = recipients.filter((admin) => admin._id !== except);
+  // In test mode the admins are testing too, so they hear about test data;
+  // the extra testers (lib/mode.ts) get the same notifications.
+  const admins = await activeAdmins(ctx);
+  const recipients = isTimeTestMode() ? [...admins, ...(await activeTesters(ctx))] : admins;
+  const seen = new Set<Id<"users">>();
+  const targets = recipients.filter((user) => {
+    if (user._id === except || seen.has(user._id)) return false;
+    seen.add(user._id);
+    return true;
+  });
   await notifyUsers(
     ctx,
-    admins.map((admin) => admin._id),
+    targets.map((user) => user._id),
     args,
   );
 }

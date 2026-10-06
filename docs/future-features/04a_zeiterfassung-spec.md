@@ -145,11 +145,11 @@ Built as specified; where the spec left room:
 ### Test mode (before go-live)
 
 Convex env `TIME_MODE` anything but `live` (default: unset) = test mode:
-only the emails in `TIME_TESTERS` may call `time.*` (admins included — the
-others get the maintenance screen and no sidebar item), admin notifications
-go to the testers, the directory's "Im Büro" stays empty, and a banner offers
-"Testdaten löschen" (`time.mode.purgeTestData`, everything except holidays,
-refused once live).
+only admins and the emails in `TIME_TESTERS` may call `time.*` (everyone
+else gets the maintenance screen and no sidebar item), admin notifications
+also reach the testers, the directory's "Im Büro" stays empty, and a banner
+offers "Testdaten löschen" (`time.mode.purgeTestData`, everything except
+holidays, refused once live).
 
 ### Cutover checklist
 

@@ -10,10 +10,10 @@ import { type Caller } from "../../lib/caller";
  * - `TIME_TESTERS` (Convex env): comma/space separated emails of the people
  *   who may use the module while it is in test mode. Unset = nobody.
  *
- * In test mode only testers can call any `time.*` function, admin
- * notifications go to the testers instead of the real admins, the directory
- * "Im Büro" signal stays empty, and `time.mode.purgeTestData` can wipe
- * everything the tests created. Switching to `TIME_MODE=live` is part of the
+ * In test mode only admins and testers can call any `time.*` function (the
+ * admins try it out, everyone else sees the maintenance screen), admin
+ * notifications also reach the testers, the directory "Im Büro" signal stays
+ * empty, and `time.mode.purgeTestData` can wipe everything the tests created. Switching to `TIME_MODE=live` is part of the
  * cutover checklist in docs/future-features/04a_zeiterfassung-spec.md.
  */
 export function isTimeTestMode(): boolean {
@@ -34,7 +34,7 @@ export function isTimeTester(email: string | undefined | null): boolean {
 
 /** Whether this caller may use the module right now. */
 export function canUseTime(caller: Caller): boolean {
-  return !isTimeTestMode() || isTimeTester(caller.user.email);
+  return !isTimeTestMode() || caller.isAdmin || isTimeTester(caller.user.email);
 }
 
 /** First line of every public `time.*` handler. */

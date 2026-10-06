@@ -607,23 +607,28 @@ describe("test mode", () => {
     vi.stubEnv("TIME_TESTERS", "Alice@advantisgroup.de, bob@advantisgroup.de");
   });
 
-  test("only testers get in — admins included", async () => {
+  test("admins and testers get in, nobody else", async () => {
     const s = await setup();
     expect(await s.admin.query(api.time.mode.status, {})).toEqual({
       testMode: true,
-      canUse: false,
+      canUse: true,
     });
-    await expect(s.admin.query(api.time.overview.summary, { today: "2026-10-05" })).rejects.toThrow(
-      /Testmodus/,
-    );
-    await expect(s.admin.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Testmodus/);
     expect(await s.alice.query(api.time.mode.status, {})).toEqual({
       testMode: true,
       canUse: true,
     });
+    vi.stubEnv("TIME_TESTERS", "");
+    expect(await s.alice.query(api.time.mode.status, {})).toEqual({
+      testMode: true,
+      canUse: false,
+    });
+    await expect(s.alice.query(api.time.overview.summary, { today: "2026-10-05" })).rejects.toThrow(
+      /Testmodus/,
+    );
+    await expect(s.alice.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Testmodus/);
   });
 
-  test("notifications go to testers, not admins; nobody shows as in the office", async () => {
+  test("notifications reach admins and testers; nobody shows as in the office", async () => {
     const s = await setup();
     setNow("2026-10-05", "09:00");
     await s.alice.mutation(api.time.clock.clockIn, {});
@@ -635,7 +640,7 @@ describe("test mode", () => {
       halfDayStart: false,
       halfDayEnd: false,
     });
-    expect(await notificationsOf(s.t, s.ids.admin)).toHaveLength(0);
+    expect((await notificationsOf(s.t, s.ids.admin)).length).toBeGreaterThan(0);
     expect((await notificationsOf(s.t, s.ids.bob)).length).toBeGreaterThan(0);
   });
 

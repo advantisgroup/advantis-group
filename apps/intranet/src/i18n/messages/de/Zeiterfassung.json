@@ -350,8 +350,8 @@
     "no_working_days": "Im gewählten Zeitraum gibt es keine Arbeitstage."
   },
   "testMode": {
-    "title": "Testmodus – nur für Tester sichtbar",
-    "description": "Die Zeiterfassung ist noch nicht freigeschaltet: Nur die in Convex hinterlegten Tester sehen sie, Benachrichtigungen gehen nur an sie, und im Mitarbeiterverzeichnis erscheint niemand als „Im Büro“.",
+    "title": "Testmodus – nur für Admins und Tester sichtbar",
+    "description": "Die Zeiterfassung ist noch nicht freigeschaltet: Mitarbeiter sehen sie erst nach dem Clockodo-Import. Benachrichtigungen gehen nur an Admins und Tester, und im Mitarbeiterverzeichnis erscheint niemand als „Im Büro“.",
     "purge": "Testdaten löschen",
     "purgeTitle": "Alle Testdaten löschen?",
     "purgeDescription": "Löscht alle Zeiteinträge, Abwesenheiten, Arbeitszeitmodelle, Urlaubskonten, Stundenkonten, Monatssperren und das Protokoll der Zeiterfassung – für alle Personen. Feiertage bleiben. Das lässt sich nicht rückgängig machen.",
