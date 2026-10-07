@@ -2,6 +2,7 @@ import { ConvexError } from "convex/values";
 
 import { type Doc, type Id } from "../../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../../_generated/server";
+import { effectiveRole } from "../../lib/auth";
 import { type Caller } from "../../lib/caller";
 import { displayName } from "../../lib/users";
 import { countsOnDashboard } from "./reports";
@@ -40,6 +41,25 @@ export interface PerformanceViewer {
   isAdmin: boolean;
   /** Dashboards the viewer can open at all, sorted by name. */
   dashboards: DashboardAccess[];
+  /** Set while an admin uses "Ansicht als": the viewer above is then the
+   * person being previewed, built as if Performance were already live. */
+  viewingAs?: { userId: Id<"users">; name: string };
+}
+
+/** How long an "Ansicht als" preview lasts before it ends by itself. */
+export const VIEW_AS_TTL_MS = 8 * 60 * 60 * 1000;
+
+/** The admin's running "Ansicht als" preview, if any and not expired. */
+export async function activeViewAs(
+  ctx: Ctx,
+  adminUserId: Id<"users">,
+): Promise<Doc<"performanceViewAs"> | null> {
+  const row = await ctx.db
+    .query("performanceViewAs")
+    .withIndex("by_admin", (q) => q.eq("adminUserId", adminUserId))
+    .first();
+  if (!row || Date.now() - row.startedAt > VIEW_AS_TTL_MS) return null;
+  return row;
 }
 
 const forbidden = (message = "Kein Zugriff auf dieses Dashboard.") =>
@@ -57,12 +77,39 @@ export function performanceIsLive(): boolean {
   return process.env.PERFORMANCE_MODE === "live";
 }
 
-/** Works out once per request what `caller` may see. Every table read here is
- * small (a handful of dashboards, teams and departments). */
-export async function loadViewer(ctx: Ctx, caller: Caller): Promise<PerformanceViewer> {
-  const user = caller.user;
-  const isAdmin = caller.isAdmin;
-  if (!isAdmin && !performanceIsLive()) {
+/**
+ * Works out once per request what `caller` may see. Every table read here is
+ * small (a handful of dashboards, teams and departments).
+ *
+ * While an admin runs "Ansicht als", reads see what the previewed person
+ * would see. Writes and uploads pass `{ ownRights: true }` so a preview can
+ * never act in someone else's name.
+ */
+export async function loadViewer(
+  ctx: Ctx,
+  caller: Caller,
+  options: { ownRights?: boolean } = {},
+): Promise<PerformanceViewer> {
+  if (caller.isAdmin && !options.ownRights) {
+    const preview = await activeViewAs(ctx, caller.user._id);
+    const target = preview ? await ctx.db.get(preview.targetUserId) : null;
+    if (target && target.status === "active") {
+      const viewer = await viewerFor(ctx, target, effectiveRole(target) === "admin", true);
+      return { ...viewer, viewingAs: { userId: target._id, name: displayName(target) } };
+    }
+  }
+  return viewerFor(ctx, caller.user, caller.isAdmin, false);
+}
+
+/** What `user` may see. `ignoreRollout` builds it as if Performance were
+ * already live (the "Ansicht als" preview of the release). */
+export async function viewerFor(
+  ctx: Ctx,
+  user: Doc<"users">,
+  isAdmin: boolean,
+  ignoreRollout: boolean,
+): Promise<PerformanceViewer> {
+  if (!isAdmin && !ignoreRollout && !performanceIsLive()) {
     return { userId: user._id, name: displayName(user), isAdmin, dashboards: [] };
   }
 

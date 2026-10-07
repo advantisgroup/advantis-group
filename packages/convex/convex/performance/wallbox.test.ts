@@ -231,6 +231,27 @@ describe("wallbox dashboard", () => {
     ).rejects.toThrow("Kein Zugriff");
   });
 
+  test("a first name joins the acquirer row even when the members report came first", async () => {
+    const { ids, upload, as } = await setup();
+    await upload(
+      ids.wallbox,
+      "members.csv",
+      membersCsv("2026-10-06 16:51:40", ["In Progess - Michael", "In Progess - Michael"]),
+    );
+    await upload(
+      ids.wallbox,
+      "opps.csv",
+      oppsCsv("2026-10-06", [["Sascha Quadt", "D GmbH", "Michael Eysselein", false, false]]),
+    );
+    const view = await as("lead").query(api.performance.wallbox.overview, {
+      companyId: ids.wallbox,
+    });
+    const michael = view.people.filter((p) => p.name.toLowerCase().startsWith("michael"));
+    expect(michael).toEqual([
+      expect.objectContaining({ name: "Michael Eysselein", inProgress: 2, opps: 1 }),
+    ]);
+  });
+
   test("opps without Acquired By are listed under their placeholder row", async () => {
     const { ids, upload, as } = await setup();
     await upload(

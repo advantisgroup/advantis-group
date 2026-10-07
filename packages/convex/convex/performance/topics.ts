@@ -70,7 +70,7 @@ export const saveTopic = userMutation({
     status: v.optional(statusValidator),
   },
   handler: async (ctx, args): Promise<{ id: Id<"performanceTopics"> }> => {
-    const viewer = await loadViewer(ctx, ctx.caller);
+    const viewer = await loadViewer(ctx, ctx.caller, { ownRights: true });
     const employee = await getEmployeeOrThrow(ctx, args.employeeId);
     requireCanManageTopics(viewer, employee);
 
@@ -118,7 +118,7 @@ export const deleteTopic = userMutation({
     id: v.id("performanceTopics"),
   },
   handler: async (ctx, { employeeId, id }): Promise<{ ok: true }> => {
-    const viewer = await loadViewer(ctx, ctx.caller);
+    const viewer = await loadViewer(ctx, ctx.caller, { ownRights: true });
     const employee = await getEmployeeOrThrow(ctx, employeeId);
     requireCanManageTopics(viewer, employee);
     const existing = await getOwnTopic(ctx, id, employeeId);
@@ -136,7 +136,7 @@ export const setTopicStatus = userMutation({
     status: statusValidator,
   },
   handler: async (ctx, { employeeId, id, status }): Promise<{ ok: true }> => {
-    const viewer = await loadViewer(ctx, ctx.caller);
+    const viewer = await loadViewer(ctx, ctx.caller, { ownRights: true });
     const employee = await getEmployeeOrThrow(ctx, employeeId);
     if (!canViewEmployee(viewer, employee)) {
       throw new ConvexError({ code: "forbidden", message: "Kein Zugriff." });

@@ -425,5 +425,15 @@
   },
   "uploadNotImported": "Not imported into: {dashboards} — busy or failed there. Please upload the file there again.",
   "adminsOnlyBadge": "Visible to admins only",
-  "adminsOnlyHint": "Performance is not released yet: others see \"being reworked\". Release via the Convex variable PERFORMANCE_MODE=live and the maintenance list."
+  "adminsOnlyHint": "Performance is not released yet: others see \"being reworked\". Release via the Convex variable PERFORMANCE_MODE=live and the maintenance list.",
+  "viewAs": "View as",
+  "viewAsActive": "Viewing as {name}",
+  "viewAsEnd": "Stop viewing as",
+  "viewAsHint": "Shows Performance the way this person sees it (even before release). Uploads and settings stay yours.",
+  "viewAsSearch": "Search person …",
+  "viewAsNone": "Nobody found",
+  "viewAsAdmin": "Admin – sees everything",
+  "viewAsTeam": "{dashboard}: team view",
+  "viewAsOwn": "{dashboard}: own numbers",
+  "viewAsNothing": "{dashboard}: no numbers yet"
 }

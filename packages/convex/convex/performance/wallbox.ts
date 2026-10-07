@@ -295,7 +295,18 @@ function peopleRows(
     rows.set(key, cur);
     return cur;
   };
-  for (const p of members?.people ?? []) {
+  // A first name the members upload couldn't resolve ("In Progress -
+  // Michael", e.g. when the opp report came in after it, or the person isn't
+  // in the linked team) joins the opp report's acquirer with that first name,
+  // if exactly one has it — otherwise "Michael" and "Michael Eysselein" would
+  // be two rows for one person.
+  const acquirerNames = (opps?.people ?? [])
+    .filter((p) => p.role === "acquirer")
+    .map((p) => p.name);
+  for (const raw of members?.people ?? []) {
+    const single = raw.name.trim().split(/\s+/).length === 1;
+    const full = single ? matchFirstName(raw.name, acquirerNames) : null;
+    const p = full ? { ...raw, name: full } : raw;
     const r = row(p);
     r.inProgress += p.inProgress ?? 0;
     r.inProgressEv += p.inProgressEv ?? 0;

@@ -393,6 +393,16 @@ export const performanceTables = {
     // (e.g. the blank template).
     .index("by_company_contentHash", ["companyId", "contentHash"]),
 
+  // "Ansicht als": an admin looking at Performance as another intranet user
+  // would see it (one row per admin; deleted when they stop). Read-only
+  // preview — `lib/access.ts` builds the viewer for the target instead, so
+  // every query shows exactly that person's data. Expires on its own.
+  performanceViewAs: defineTable({
+    adminUserId: v.id("users"),
+    targetUserId: v.id("users"),
+    startedAt: v.number(),
+  }).index("by_admin", ["adminUserId"]),
+
   // Wallbox campaign (dashboard kind `wallbox`): one row per uploaded report
   // day and source, aggregated at import time — the reports are full
   // point-in-time snapshots, so keeping each day's counts gives the

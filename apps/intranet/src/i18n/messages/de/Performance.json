@@ -425,5 +425,15 @@
   },
   "uploadNotImported": "Nicht übernommen in: {dashboards} – dort gerade belegt oder fehlgeschlagen. Bitte die Datei dort noch einmal hochladen.",
   "adminsOnlyBadge": "Nur für Admins sichtbar",
-  "adminsOnlyHint": "Performance ist noch nicht freigegeben: andere sehen „Wird gerade überarbeitet“. Freigabe über die Convex-Variable PERFORMANCE_MODE=live und die Wartungsliste."
+  "adminsOnlyHint": "Performance ist noch nicht freigegeben: andere sehen „Wird gerade überarbeitet“. Freigabe über die Convex-Variable PERFORMANCE_MODE=live und die Wartungsliste.",
+  "viewAs": "Ansicht als",
+  "viewAsActive": "Ansicht als {name}",
+  "viewAsEnd": "Ansicht beenden",
+  "viewAsHint": "Zeigt Performance so, wie die Person es sieht (auch vor der Freigabe). Hochladen und Einstellungen bleiben bei dir.",
+  "viewAsSearch": "Person suchen …",
+  "viewAsNone": "Niemand gefunden",
+  "viewAsAdmin": "Admin – sieht alles",
+  "viewAsTeam": "{dashboard}: Team-Ansicht",
+  "viewAsOwn": "{dashboard}: eigene Zahlen",
+  "viewAsNothing": "{dashboard}: noch keine Zahlen"
 }

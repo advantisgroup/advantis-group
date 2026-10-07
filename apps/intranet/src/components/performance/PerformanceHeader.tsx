@@ -10,6 +10,7 @@ import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMa
 import { DashboardSwitcher } from "@/components/performance/DashboardSwitcher";
 import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { usePerformanceNav } from "@/components/performance/usePerformanceNav";
+import { ViewAsControl } from "@/components/performance/ViewAsControl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -51,7 +52,7 @@ export function PerformanceHeader() {
 
       <div className="flex-1" />
 
-      {me?.isAdmin && !me.live && (
+      {me?.canViewAs && !me.live && (
         <Badge
           variant="warning"
           className="hidden shrink-0 sm:inline-flex"
@@ -60,6 +61,7 @@ export function PerformanceHeader() {
           {t("adminsOnlyBadge")}
         </Badge>
       )}
+      <ViewAsControl className="max-w-[40vw]" />
       <DashboardSwitcher className="max-w-[45vw]" />
 
       <div className="hidden items-center gap-1 md:flex">

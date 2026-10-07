@@ -128,6 +128,39 @@ describe("performance access", () => {
     );
   });
 
+  test("an admin previews another person with Ansicht als, read-only", async () => {
+    const { as, ids } = await setup();
+    await expect(
+      as("anna").mutation(api.performance.access.setViewAs, { userId: ids.lead }),
+    ).rejects.toThrow();
+
+    const options = await as("admin").query(api.performance.access.viewAsOptions, {});
+    expect(options.map((o) => o.name)).toContain("Anna Müller");
+
+    await as("admin").mutation(api.performance.access.setViewAs, { userId: ids.anna });
+    const me = await as("admin").query(api.performance.access.me, {});
+    expect(me.isAdmin).toBe(false);
+    expect(me.canViewAs).toBe(true);
+    expect(me.viewingAs).toEqual({ userId: ids.anna, name: "Anna Müller" });
+    expect(me.dashboards).toEqual([
+      expect.objectContaining({ name: "Sales", canViewTeam: false, employeeId: ids.annaEmp }),
+    ]);
+    await expect(as("admin").query(api.performance.queries.teamDashboard, {})).rejects.toThrow(
+      "Team-Ansicht",
+    );
+    // The preview doesn't touch the admin's own writes.
+    await as("admin").mutation(api.performance.topics.saveTopic, {
+      employeeId: ids.benEmp,
+      ym: "2026-10",
+      topic: "Ziel",
+    });
+
+    await as("admin").mutation(api.performance.access.setViewAs, { userId: null });
+    const back = await as("admin").query(api.performance.access.me, {});
+    expect(back.isAdmin).toBe(true);
+    expect(back.viewingAs).toBeNull();
+  });
+
   test("only an empty dashboard can be deleted, and only by an admin", async () => {
     const { as, ids, t } = await setup();
     const empty = await t.run((ctx) =>

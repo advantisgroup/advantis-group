@@ -361,7 +361,8 @@ export function Sidebar() {
       href: "/performance",
       labelKey: "performance",
       icon: LineChart,
-      external: true,
+      // Part of the intranet now (no separate login), so no external hint.
+      isNew: true,
     },
     { section: "apps", href: "/sales-cockpit", labelKey: "salesCockpit", icon: PhoneCall },
     { section: "apps", href: "/sales-coach-ev", labelKey: "salesCoachEv", icon: Zap },
