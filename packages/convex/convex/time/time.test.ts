@@ -694,6 +694,16 @@ describe("phone bookings", () => {
     expect(work).toMatchObject({ startDevice: "mobile", endDevice: "desktop" });
     expect(pause?.startDevice).toBe("desktop");
     expect(pause?.endDevice).toBeUndefined();
+    // Only the phone clock-in told the admins; Alice herself gets nothing.
+    const phone = (await notificationsOf(s.t, s.ids.admin)).filter(
+      (n) => n.type === "time_phone_booking",
+    );
+    expect(phone).toHaveLength(1);
+    expect(phone[0].title).toBe("Handy: Alice eingestempelt");
+    expect(phone[0].body).toContain("08:00 Uhr");
+    expect(
+      (await notificationsOf(s.t, s.ids.alice)).filter((n) => n.type === "time_phone_booking"),
+    ).toHaveLength(0);
   });
 });
 

@@ -403,6 +403,39 @@ export async function notifyAdmins(
   );
 }
 
+const PHONE_ACTION = {
+  clockIn: "eingestempelt",
+  clockOut: "ausgestempelt",
+  breakStart: "Pause begonnen",
+  breakEnd: "Pause beendet",
+} as const;
+
+/** A clock action made on a phone: a short note to every admin. */
+export async function notePhoneBooking(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  action: keyof typeof PHONE_ACTION,
+  at: number,
+): Promise<void> {
+  const person = await ctx.db.get(userId);
+  const time = new Intl.DateTimeFormat("de-DE", {
+    timeZone: "Europe/Berlin",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(at);
+  const date = berlinDate(at);
+  await notifyAdmins(
+    ctx,
+    {
+      type: "time_phone_booking",
+      title: `Handy: ${displayName(person)} ${PHONE_ACTION[action]}`,
+      body: `${dateFormatter(date)}, ${time} Uhr – per Handy gestempelt.`,
+      link: `/zeiterfassung/admin/${userId}?date=${date}`,
+    },
+    userId,
+  );
+}
+
 /**
  * After clocking out (not on the 18:00 rule, which has its own note): if the
  * day ran past 6:15 with less than 30 minutes of break, tell the person and

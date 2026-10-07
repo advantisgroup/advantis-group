@@ -9,6 +9,7 @@ import {
   invalidateTotals,
   isTrackingDisabled,
   noteMissingBreak,
+  notePhoneBooking,
   openEntries,
   timeError,
   writeAudit,
@@ -69,6 +70,7 @@ export const clockIn = userMutation({
       action: "clockIn",
       after: row,
     });
+    if (device === "mobile") await notePhoneBooking(ctx, ctx.caller.id, "clockIn", now);
     return id;
   },
 });
@@ -104,6 +106,7 @@ export const startBreak = userMutation({
       action: "breakStart",
       after: row,
     });
+    if (device === "mobile") await notePhoneBooking(ctx, ctx.caller.id, "breakStart", now);
     return id;
   },
 });
@@ -128,6 +131,7 @@ export const endBreak = userMutation({
       after: { ...pause, ...ended },
     });
     await invalidateTotals(ctx, ctx.caller.id, [berlinDate(pause.start)]);
+    if (device === "mobile") await notePhoneBooking(ctx, ctx.caller.id, "breakEnd", now);
   },
 });
 
@@ -156,5 +160,6 @@ export const clockOut = userMutation({
     }
     await invalidateTotals(ctx, ctx.caller.id, [berlinDate(work.start)]);
     await noteMissingBreak(ctx, ctx.caller.id, berlinDate(work.start));
+    if (device === "mobile") await notePhoneBooking(ctx, ctx.caller.id, "clockOut", now);
   },
 });

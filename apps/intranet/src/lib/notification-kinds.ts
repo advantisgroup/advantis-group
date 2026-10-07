@@ -3,6 +3,7 @@ import {
   Bell,
   CalendarCheck,
   Clock3,
+  Coffee,
   GraduationCap,
   Lightbulb,
   Megaphone,
@@ -10,6 +11,7 @@ import {
   MessageSquareText,
   Plane,
   Share2,
+  Smartphone,
   ShieldCheck,
   TriangleAlert,
   UploadCloud,
@@ -47,6 +49,14 @@ const VISUALS: Record<string, { icon: LucideIcon; tint: string }> = {
   },
   time_correction: { icon: Clock3, tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300" },
   time_decision: { icon: Clock3, tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300" },
+  time_break_missing: {
+    icon: Coffee,
+    tint: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
+  },
+  time_phone_booking: {
+    icon: Smartphone,
+    tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
+  },
   announcement: { icon: Megaphone, tint: "bg-primary/10 text-primary" },
   upload_request: {
     icon: UploadCloud,
