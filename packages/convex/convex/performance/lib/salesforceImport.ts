@@ -5,9 +5,11 @@
  * The reports contain one row per lead or opportunity. This module detects
  * the report type automatically, aggregates the KPIs per employee, and
  * also returns the relevant raw rows for the drill-down lists. Historical
- * months are backfilled from the Create/Close Date.
+ * months are backfilled from the Create/Close Date. Accepts xlsx and CSV
+ * exports with English or German column labels.
  */
-import { todayUTC, toISODate } from "./workdays";
+import { findDateInText, normHeader, parseDateCell, parseLocaleNumber } from "./callImport";
+import { todayBerlin, toISODate } from "./workdays";
 import {
   mostCommonText,
   SnapshotMap,
@@ -48,14 +50,82 @@ export function isExcludedOwner(owner: CellValue): boolean {
   return EXCLUDED_OWNERS.has(norm(owner));
 }
 
-// The customer number is optional: older opp exports don't have the column.
-const CUSTOMER_NO_HEADERS = [
-  "Customer Number",
-  "Customer No",
-  "Kundennummer",
-  "Account Number",
-  "Customer ID",
-];
+// --------------------------------------------------------------- headers
+// Salesforce writes column labels in the exporting user's language, so each
+// field accepts the English and the German label (matched case-, space- and
+// umlaut-insensitively via `normHeader`). The customer number is optional:
+// older opp exports don't have the column.
+
+type LeadField = "owner" | "status" | "statusDetails" | "createDate" | "lastActivity";
+type OppField =
+  | "owner"
+  | "stage"
+  | "stageDetails"
+  | "createdDate"
+  | "closeDate"
+  | "lastActivity"
+  | "age"
+  | "customerNumber";
+
+const LEAD_HEADERS: Record<LeadField, string[]> = {
+  owner: ["Lead Owner", "Lead-Inhaber", "Leadinhaber", "Lead Inhaber"],
+  status: ["Lead Status", "Lead-Status", "Leadstatus"],
+  statusDetails: ["Status Details", "Statusdetails", "Status-Details", "Lead Status Details"],
+  createDate: [
+    "Create Date",
+    "Created Date",
+    "Erstelldatum",
+    "Erstellt am",
+    "Erstellungsdatum",
+    "Erstellt",
+  ],
+  lastActivity: ["Last Activity", "Letzte Aktivität", "Letzte Aktivitaet", "Last Activity Date"],
+};
+
+const OPP_HEADERS: Record<OppField, string[]> = {
+  owner: [
+    "Opportunity Owner",
+    "Opportunity-Inhaber",
+    "Opportunityinhaber",
+    "Opportunity Inhaber",
+    "Verkaufschance-Inhaber",
+  ],
+  stage: ["Stage", "Phase", "Opportunity-Phase", "Verkaufsphase"],
+  stageDetails: ["Stage Details", "Phasendetails", "Phase Details", "Phase-Details"],
+  createdDate: ["Created Date", "Create Date", "Erstelldatum", "Erstellt am", "Erstellungsdatum"],
+  closeDate: ["Close Date", "Schlusstermin", "Abschlussdatum", "Abschlusstermin"],
+  lastActivity: ["Last Activity", "Letzte Aktivität", "Letzte Aktivitaet", "Last Activity Date"],
+  age: ["Age", "Alter", "Alter (Tage)"],
+  customerNumber: [
+    "Customer Number",
+    "Customer No",
+    "Kundennummer",
+    "Kunden-Nr.",
+    "Kundennr",
+    "Account Number",
+    "Accountnummer",
+    "Customer ID",
+  ],
+};
+
+function headerLookup<F extends string>(aliases: Record<F, string[]>): Map<string, F> {
+  const map = new Map<string, F>();
+  for (const [field, labels] of Object.entries(aliases) as [F, string[]][]) {
+    for (const label of labels) if (!map.has(normHeader(label))) map.set(normHeader(label), field);
+  }
+  return map;
+}
+const LEAD_LOOKUP = headerLookup(LEAD_HEADERS);
+const OPP_LOOKUP = headerLookup(OPP_HEADERS);
+
+function mapColumns<F extends string>(header: SheetRow, lookup: Map<string, F>): Map<F, number> {
+  const cols = new Map<F, number>();
+  header.forEach((h, idx) => {
+    const field = lookup.get(normHeader(h));
+    if (field && !cols.has(field)) cols.set(field, idx);
+  });
+  return cols;
+}
 
 // ---------------------------------------------------------------- helpers
 
@@ -69,42 +139,12 @@ function isPerson(owner: CellValue): boolean {
   return !norm(owner).startsWith(QUEUE_PREFIX);
 }
 
-type DateParser = (s: string) => Date | null;
-
-const DATE_FORMATS: DateParser[] = [
-  (s) => {
-    const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(s); // dd.mm.yyyy
-    return m ? new Date(Date.UTC(+m[3], +m[2] - 1, +m[1])) : null;
-  },
-  (s) => {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); // yyyy-mm-dd
-    return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : null;
-  },
-  (s) => {
-    const m = /^(\d{2})\.(\d{2})\.(\d{2})$/.exec(s); // dd.mm.yy
-    return m ? new Date(Date.UTC(2000 + +m[3], +m[2] - 1, +m[1])) : null;
-  },
-  (s) => {
-    const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s); // m/d/yyyy
-    return m ? new Date(Date.UTC(+m[3], +m[1] - 1, +m[2])) : null;
-  },
-];
-
 /** Parses a cell into a UTC-midnight `Date`, or null. Accepts a `Date`
  * already produced by the sheet parser (see `types.ts`'s note on
- * `CellValue`) or one of the four date-string formats the reference
- * script accepts. */
+ * `CellValue`), dd.mm.yyyy, dd.mm.yy, yyyy-mm-dd and m/d/yyyy — with or
+ * without a time ("01.10.2026 14:03", "2026-10-01T12:03:00Z"). */
 export function toDate(v: CellValue): Date | null {
-  if (v instanceof Date) {
-    return new Date(Date.UTC(v.getUTCFullYear(), v.getUTCMonth(), v.getUTCDate()));
-  }
-  if (v === null || v === undefined || v === "") return null;
-  const s = String(v).trim();
-  for (const parse of DATE_FORMATS) {
-    const d = parse(s);
-    if (d) return d;
-  }
-  return null;
+  return parseDateCell(typeof v === "number" ? null : v);
 }
 
 function ym(d: Date): string {
@@ -131,17 +171,32 @@ function inactive(last: Date | null, created: Date | null, ref: Date): boolean {
   return basis !== null && daysBetween(basis, ref) > NO_ACTION_DAYS;
 }
 
-function customerNumber(row: Record<string, CellValue>): string | undefined {
-  for (const header of CUSTOMER_NO_HEADERS) {
-    const v = row[header];
-    if (v !== null && v !== undefined && v !== "") {
-      let s = String(v).trim();
-      // Excel may deliver numbers as e.g. 477209.0
-      if (s.endsWith(".0") && /^\d+$/.test(s.slice(0, -2))) s = s.slice(0, -2);
-      return s;
-    }
-  }
-  return undefined;
+function customerNumber(v: CellValue): string | undefined {
+  if (v === null || v === undefined || v === "") return undefined;
+  let s = String(v).trim();
+  // Excel may deliver numbers as e.g. 477209.0
+  if (s.endsWith(".0") && /^\d+$/.test(s.slice(0, -2))) s = s.slice(0, -2);
+  return s || undefined;
+}
+
+// Salesforce translates the standard closed stages in a German-language
+// export; the KPI rules below compare against the English values.
+const GERMAN_STAGES = new Map([
+  ["geschlossen und gewonnen", "closed won"],
+  ["geschlossen/gewonnen", "closed won"],
+  ["gewonnen", "closed won"],
+  ["geschlossen und verloren", "closed lost"],
+  ["geschlossen/verloren", "closed lost"],
+  ["verloren", "closed lost"],
+]);
+
+function canonicalStage(v: CellValue): string {
+  const s = norm(v);
+  return GERMAN_STAGES.get(s) ?? s;
+}
+
+function text(v: CellValue): string {
+  return v === null || v === undefined ? "" : String(v).trim();
 }
 
 function bump<K extends keyof MetricFields>(
@@ -156,56 +211,55 @@ function bump<K extends keyof MetricFields>(
 
 // ------------------------------------------------------------- detection
 
-export interface SalesforceExport {
-  kind: "lead" | "opp";
-  reportDate: Date;
-  rows: Record<string, CellValue>[];
+export type LeadRecord = Partial<Record<LeadField, CellValue>>;
+export type OppRecord = Partial<Record<OppField, CellValue>>;
+
+export type SalesforceExport =
+  | { kind: "lead"; reportDate: Date; rows: LeadRecord[] }
+  | { kind: "opp"; reportDate: Date; rows: OppRecord[] };
+
+// "As of 2026-10-01", "Stand: 01.10.2026 14:03", "Stichtag 01.10.26" — the
+// line Salesforce (or whoever saved the report) writes above the table.
+const AS_OF_RE = /\b(as of|stand|stichtag|zum|generiert|exportiert|erstellt am)\b/i;
+
+function toRecords<F extends string>(
+  rows: SheetRow[],
+  cols: Map<F, number>,
+): Partial<Record<F, CellValue>>[] {
+  const out: Partial<Record<F, CellValue>>[] = [];
+  for (const r of rows) {
+    if (!r || r.every((v) => v === null || v === undefined || v === "")) continue;
+    const rec: Partial<Record<F, CellValue>> = {};
+    for (const [field, idx] of cols) rec[field] = r[idx];
+    out.push(rec);
+  }
+  return out;
 }
 
-const AS_OF_RE = /As of (\d{4}-\d{2}-\d{2})/;
-
-/** Finds the "As of" date and header row of a Salesforce export. Returns
- * null when the sheet doesn't look like a Salesforce export at all. */
+/** Finds the "As of" date and header row of a Salesforce export (xlsx rows
+ * or a parsed CSV). Returns null when the sheet doesn't look like a
+ * Salesforce export at all. */
 export function readSalesforceExport(wsRows: SheetRow[]): SalesforceExport | null {
   let reportDate: Date | null = null;
-  let headerIdx: number | null = null;
-  let header: SheetRow | null = null;
-
   for (let i = 0; i < Math.min(wsRows.length, 30); i++) {
-    const row = wsRows[i];
-    const cells = row.filter((c) => c !== null && c !== undefined && c !== "");
-    for (const c of cells) {
-      const m = AS_OF_RE.exec(String(c));
-      if (m) reportDate = toDate(m[1]);
-    }
-    const vals = new Set(cells.map(norm));
-    if (vals.has("lead status") || (vals.has("stage") && vals.has("opportunity owner"))) {
-      headerIdx = i;
-      header = row;
-      break;
-    }
-  }
-  if (headerIdx === null || header === null) return null;
-  if (reportDate === null) reportDate = todayUTC();
-
-  const rows: Record<string, CellValue>[] = [];
-  for (const r of wsRows.slice(headerIdx + 1)) {
-    if (!r || r.every((v) => v === null || v === undefined || v === "")) continue;
-    const rec: Record<string, CellValue> = {};
-    for (let j = 0; j < header.length; j++) {
-      const h = header[j];
-      if (h !== null && h !== undefined && h !== "") {
-        rec[String(h).trim()] = r[j];
+    const row = wsRows[i] ?? [];
+    for (const c of row) {
+      if (reportDate === null && typeof c === "string" && AS_OF_RE.test(c)) {
+        reportDate = findDateInText(c);
       }
     }
-    rows.push(rec);
+    const lead = mapColumns(row, LEAD_LOOKUP);
+    const opp = mapColumns(row, OPP_LOOKUP);
+    const isLead = lead.has("status") && lead.has("owner");
+    const isOpp = opp.has("stage") && opp.has("owner");
+    if (!isLead && !isOpp) continue;
+    const date = reportDate ?? todayBerlin();
+    const body = wsRows.slice(i + 1);
+    return isLead
+      ? { kind: "lead", reportDate: date, rows: toRecords(body, lead) }
+      : { kind: "opp", reportDate: date, rows: toRecords(body, opp) };
   }
-  const kind: "lead" | "opp" = header.some(
-    (h) => h !== null && h !== undefined && h !== "" && norm(h) === "lead status",
-  )
-    ? "lead"
-    : "opp";
-  return { kind, reportDate, rows };
+  return null;
 }
 
 // ----------------------------------------------------- aggregation: leads
@@ -231,7 +285,7 @@ const LEAD_STATE_FIELDS: (keyof MetricFields)[] = [
 ];
 
 export function aggregateLeadReport(
-  rows: Record<string, CellValue>[],
+  rows: LeadRecord[],
   reportDate: Date,
 ): { snapshots: EmployeeSnapshot[]; raw: RawLead[] } {
   const curYm = ym(reportDate);
@@ -243,13 +297,13 @@ export function aggregateLeadReport(
   const monthlyOwnerYm = new Map<string, { owner: string; ym: string }>();
 
   for (const r of rows) {
-    const ownerRaw = r["Lead Owner"];
-    const status = norm(r["Lead Status"]);
-    if (status === "total" || !isPerson(ownerRaw)) continue;
+    const ownerRaw = r.owner;
+    const status = norm(r.status);
+    if (status === "total" || status === "summe" || !isPerson(ownerRaw)) continue;
     const owner = String(ownerRaw).trim();
-    const created = toDate(r["Create Date"]);
-    const last = toDate(r["Last Activity"]);
-    const details = norm(r["Status Details"]);
+    const created = toDate(r.createDate);
+    const last = toDate(r.lastActivity);
+    const details = norm(r.statusDetails);
 
     if (created) {
       const createdYm = ym(created);
@@ -271,15 +325,15 @@ export function aggregateLeadReport(
       raw.push({
         reportDate: reportDateIso,
         owner,
-        status: String(r["Lead Status"] ?? "").trim(),
-        statusDetails: String(r["Status Details"] ?? "").trim(),
+        status: text(r.status),
+        statusDetails: text(r.statusDetails),
         createDate: created ? toISODate(created) : undefined,
         lastActivity: last ? toISODate(last) : undefined,
       });
     }
 
     if (status === "unqualified" && created && ym(created) === curYm) {
-      const reasonKey = (r["Status Details"] as string | undefined) || "Ohne Angabe";
+      const reasonKey = text(r.statusDetails) || "Ohne Angabe";
       const ownerReasons = reasons.get(owner) ?? new Map<string, number>();
       ownerReasons.set(reasonKey, (ownerReasons.get(reasonKey) ?? 0) + 1);
       reasons.set(owner, ownerReasons);
@@ -344,7 +398,7 @@ export interface WonOpp {
 }
 
 export function aggregateOppReport(
-  rows: Record<string, CellValue>[],
+  rows: OppRecord[],
   reportDate: Date,
 ): { snapshots: EmployeeSnapshot[]; raw: RawOpp[]; wonOpps: WonOpp[] } {
   const curYm = ym(reportDate);
@@ -356,17 +410,16 @@ export function aggregateOppReport(
   const monthlyOwnerYm = new Map<string, { owner: string; ym: string }>();
 
   for (const r of rows) {
-    const ownerRaw = r["Opportunity Owner"];
-    const stage = norm(r["Stage"]);
-    if (!isPerson(ownerRaw) || stage === "" || stage === "total") continue;
+    const ownerRaw = r.owner;
+    const stage = canonicalStage(r.stage);
+    if (!isPerson(ownerRaw) || stage === "" || stage === "total" || stage === "summe") continue;
     const owner = String(ownerRaw).trim();
-    const created = toDate(r["Created Date"]);
-    const close = toDate(r["Close Date"]);
-    const last = toDate(r["Last Activity"]);
-    const details = norm(r["Stage Details"]);
-    const ageRaw = r["Age"];
-    const ageNum = ageRaw !== null && ageRaw !== undefined && ageRaw !== "" ? Number(ageRaw) : NaN;
-    const age = Number.isFinite(ageNum) ? Math.trunc(ageNum) : daysSince(created, reportDate);
+    const created = toDate(r.createdDate);
+    const close = toDate(r.closeDate);
+    const last = toDate(r.lastActivity);
+    const details = norm(r.stageDetails);
+    const ageNum = parseLocaleNumber(r.age);
+    const age = ageNum !== null ? Math.trunc(ageNum) : daysSince(created, reportDate);
 
     if (stage === "closed won" && close) {
       const closeYm = ym(close);
@@ -394,13 +447,13 @@ export function aggregateOppReport(
       raw.push({
         reportDate: reportDateIso,
         owner,
-        stage: String(r["Stage"] ?? "").trim(),
-        stageDetails: String(r["Stage Details"] ?? "").trim(),
+        stage: text(r.stage),
+        stageDetails: text(r.stageDetails),
         createdDate: created ? toISODate(created) : undefined,
         closeDate: close ? toISODate(close) : undefined,
         age: age ?? undefined,
         lastActivity: last ? toISODate(last) : undefined,
-        customerNumber: customerNumber(r),
+        customerNumber: customerNumber(r.customerNumber),
       });
     }
   }

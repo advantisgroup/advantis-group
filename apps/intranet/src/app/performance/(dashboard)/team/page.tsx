@@ -2,12 +2,12 @@
 
 import { useDashboardData } from "@/components/performance/PerformanceDashboardContext";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { TeamTable } from "@/components/performance/TeamTable";
+import { TeamActivityTable } from "@/components/performance/TeamActivityTable";
 
 export default function DashboardTeamPage() {
   const data = useDashboardData();
 
   if (!data) return <PerformanceContentSkeleton />;
 
-  return <TeamTable data={data} />;
+  return <TeamActivityTable data={data} />;
 }

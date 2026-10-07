@@ -28,7 +28,6 @@ function TopicForm({
   topic,
   employeeId,
   ym,
-  token,
   onCancel,
   onSaved,
 }: {
@@ -36,7 +35,6 @@ function TopicForm({
   topic: Doc<"performanceTopics"> | null;
   employeeId: Id<"performanceEmployees">;
   ym: string;
-  token: string;
   onCancel: () => void;
   onSaved: () => void;
 }) {
@@ -55,7 +53,6 @@ function TopicForm({
     setSaving(true);
     try {
       await saveTopic({
-        token,
         employeeId,
         id: topic?._id,
         ym,
@@ -132,13 +129,12 @@ interface Props {
   topic: Doc<"performanceTopics"> | null;
   employeeId: Id<"performanceEmployees">;
   ym: string;
-  token: string;
 }
 
 /** Create/edit dialog for a Performance "topic" (monthly goal/todo) — the
  * primary create/edit action never sits inline on the detail page, per
  * house style. */
-export function TopicDialog({ open, onOpenChange, topic, employeeId, ym, token }: Props) {
+export function TopicDialog({ open, onOpenChange, topic, employeeId, ym }: Props) {
   return (
     <TopicForm
       key={topic?._id ?? "new"}
@@ -146,7 +142,6 @@ export function TopicDialog({ open, onOpenChange, topic, employeeId, ym, token }
       topic={topic}
       employeeId={employeeId}
       ym={ym}
-      token={token}
       onCancel={() => onOpenChange(false)}
       onSaved={() => onOpenChange(false)}
     />

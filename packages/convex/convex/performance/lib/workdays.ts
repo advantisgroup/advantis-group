@@ -1,9 +1,11 @@
+import { bavarianHolidays } from "../../time/lib/holidays";
+import { berlinDate } from "../../time/lib/berlin";
+
 /**
- * German nationwide public holidays and workday math, ported from the
- * reference script's `werktage.py`. Only the nine holidays that are public
- * holidays in every German state are considered — state-specific ones
- * (Epiphany, Corpus Christi, Reformation Day, All Saints') are deliberately
- * left out, same as the source.
+ * Workday math for the Performance forecasts. Days off are the same as in
+ * the Zeiterfassung: Bavarian (Nürnberg) public holidays plus the company's
+ * own full days off (`time/lib/holidays.ts`). Half days (24.12., 31.12.)
+ * still count as workdays.
  *
  * Dates are handled as UTC-midnight `Date`s internally (so day arithmetic
  * never shifts across a local-timezone DST boundary) and as ISO
@@ -19,62 +21,33 @@ export function toISODate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Today at UTC midnight — the fallback report date when a source file has
- * no detectable date of its own. */
-export function todayUTC(): Date {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+/** Today's date in Berlin (as a UTC-midnight `Date`, like every date here).
+ * Between midnight and 02:00 German time UTC is still on the previous day,
+ * which used to file late-night uploads and "today" on the wrong date. */
+export function todayBerlin(): Date {
+  return parseISODate(berlinDate(Date.now()));
 }
 
 function addDays(d: Date, n: number): Date {
   return new Date(d.getTime() + n * 86_400_000);
 }
 
-/** Easter Sunday via the anonymous Gregorian Easter algorithm. */
-function easterSunday(year: number): Date {
-  const a = year % 19;
-  const b = Math.floor(year / 100);
-  const c = year % 100;
-  const d = Math.floor(b / 4);
-  const e = b % 4;
-  const f = Math.floor((b + 8) / 25);
-  const g = Math.floor((b - f + 1) / 3);
-  const h = (19 * a + b - d - g + 15) % 30;
-  const i = Math.floor(c / 4);
-  const k = c % 4;
-  const l = (32 + 2 * e + 2 * i - h - k) % 7;
-  const m = Math.floor((a + 11 * h + 22 * l) / 451);
-  const total = h + l - 7 * m + 114;
-  const month = Math.floor(total / 31);
-  const day = (total % 31) + 1;
-  return new Date(Date.UTC(year, month - 1, day));
-}
-
 const holidaysCache = new Map<number, Map<string, string>>();
 
-/** Nationwide holidays of a year: ISO date -> name. */
+/** Full days off of a year (Nürnberg + company rules): ISO date -> name. */
 export function holidays(year: number): Map<string, string> {
   const cached = holidaysCache.get(year);
   if (cached) return cached;
-
-  const easter = easterSunday(year);
-  const entries: [Date, string][] = [
-    [new Date(Date.UTC(year, 0, 1)), "Neujahr"],
-    [addDays(easter, -2), "Karfreitag"],
-    [addDays(easter, 1), "Ostermontag"],
-    [new Date(Date.UTC(year, 4, 1)), "Tag der Arbeit"],
-    [addDays(easter, 39), "Christi Himmelfahrt"],
-    [addDays(easter, 50), "Pfingstmontag"],
-    [new Date(Date.UTC(year, 9, 3)), "Tag der Deutschen Einheit"],
-    [new Date(Date.UTC(year, 11, 25)), "1. Weihnachtstag"],
-    [new Date(Date.UTC(year, 11, 26)), "2. Weihnachtstag"],
-  ];
-  const map = new Map(entries.map(([d, name]) => [toISODate(d), name]));
+  const map = new Map(
+    bavarianHolidays(year)
+      .filter((h) => h.fraction >= 1)
+      .map((h) => [h.date, h.name] as const),
+  );
   holidaysCache.set(year, map);
   return map;
 }
 
-/** Monday–Friday and not a nationwide holiday. */
+/** Monday–Friday and not a day off. */
 export function isWorkday(d: Date): boolean {
   const day = d.getUTCDay(); // 0 = Sunday, 6 = Saturday
   if (day === 0 || day === 6) return false;

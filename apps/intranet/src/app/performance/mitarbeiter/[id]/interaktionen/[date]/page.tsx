@@ -1,51 +1,37 @@
 "use client";
 
-import { useEffect } from "react";
-
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { InteractionRecordsTable } from "@/components/performance/InteractionRecordsTable";
 import { PerformanceBackLink } from "@/components/performance/PerformanceBackLink";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatIsoDate } from "@/lib/format";
-import { clearPerformanceToken } from "@/lib/performanceAuth";
 
 export default function EmployeeInteractionDayPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const router = useRouter();
   const params = useParams<{ id: string; date: string }>();
   const employeeId = params.id as Id<"performanceEmployees">;
-  const { token, session } = usePerformanceSession();
-
-  useEffect(() => {
-    if (session && !session.valid) {
-      clearPerformanceToken();
-      router.replace("/performance/login");
-    }
-  }, [session, router]);
-
+  const { me } = usePerformanceAccess();
   const canView =
-    session?.valid &&
-    (session.permissions.includes("view_all_employees") || session.employeeId === employeeId);
+    !!me && (me.isAdmin || me.dashboards.some((d) => d.canViewTeam || d.employeeId === employeeId));
 
   const data = useQuery(
     api.performance.queries.interactionsDayDetail,
-    canView ? { token, date: params.date, employeeId } : "skip",
+    canView ? { date: params.date, employeeId } : "skip",
   );
 
-  if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid) return null;
+  if (me === undefined) return <PerformancePageSkeleton />;
 
   if (!canView) {
     return (

@@ -2,36 +2,45 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export const performanceTables = {
-  // --- Performance (sales KPI dashboard) -----------------------------------
-  // Multi-tenant: each client company brings its own, fully independent
-  // domain (e.g. "salespirates.de") — there is no Advantis-owned wildcard
-  // root. `companies.ts` adds that domain to the Vercel project via the
-  // Domains API on creation; Vercel then reports the DNS record(s)
-  // (`dnsVerification`) the domain's owner must add on their own registrar
-  // before it verifies — one manual step per company, unavoidable since
-  // nobody can write into a DNS zone they don't control, not a gap in the
-  // automation. Everything else (the company row, its built-in roles, the
-  // Vercel API call itself) is zero-touch.
+  // --- Performance (KPI dashboards) ---------------------------------------
+  // One `companies` row = one dashboard (the table keeps its historical
+  // name; the UI calls it "Dashboard"). Since 10/2026 access runs entirely
+  // through the intranet (Clerk): a dashboard is linked to intranet teams
+  // and/or departments (`teamIds`/`departmentIds`). Intranet admins see
+  // every dashboard, the lead of a linked team/department sees the team
+  // view, everyone else only their own employee page (via
+  // `performanceEmployees.userId`). See `performance/lib/access.ts`.
+  //
+  // The domain/provisioning fields below are leftovers of the old
+  // multi-tenant setup (own password logins per customer domain). They are
+  // optional now and no longer read; kept so existing rows still validate.
   companies: defineTable({
     name: v.string(),
     // Internal identifier only (session/self-setup scoping) — auto-derived
     // from `domain` at creation time, never itself used for routing.
     slug: v.string(),
-    // The company's own domain, exact-matched against the request Host
-    // header (`companies.getByDomain`) — e.g. "salespirates.de" or
-    // "app.salespirates.de". Whatever they actually point at Vercel.
-    domain: v.string(),
-    status: v.union(
-      v.literal("provisioning"), // row just created, about to call Vercel
-      v.literal("pending_dns"), // added to Vercel, waiting on the owner's ownership-verification DNS record
-      v.literal("pending_routing"), // ownership verified, but no A/CNAME actually routes traffic to Vercel yet
-      v.literal("active"), // ownership verified AND traffic correctly routed — actually live
-      v.literal("failed"), // a real error (not just "not verified yet")
+    /** Intranet teams whose members belong to this dashboard. */
+    teamIds: v.optional(v.array(v.id("teams"))),
+    /** Intranet departments whose members belong to this dashboard. */
+    departmentIds: v.optional(v.array(v.id("departments"))),
+    /** What the dashboard shows: `sales` (Salesforce leads/opps + calls, the
+     * default), `wallbox` (the Wallbox campaign reports + calls) or `calls`
+     * (Genesys calls only, e.g. Onboarding). Calls come from the shared call
+     * report into every dashboard; see `uploadParse.ts`. */
+    kind: v.optional(v.union(v.literal("sales"), v.literal("wallbox"), v.literal("calls"))),
+    // Legacy (old tenant domain routing) — no longer read.
+    domain: v.optional(v.string()),
+    status: v.optional(
+      v.union(
+        v.literal("provisioning"), // row just created, about to call Vercel
+        v.literal("pending_dns"), // added to Vercel, waiting on the owner's ownership-verification DNS record
+        v.literal("pending_routing"), // ownership verified, but no A/CNAME actually routes traffic to Vercel yet
+        v.literal("active"), // ownership verified AND traffic correctly routed — actually live
+        v.literal("failed"), // a real error (not just "not verified yet")
+      ),
     ),
-    // Per-company replacement for the old global `PERFORMANCE_ADMIN_EMAILS`
-    // env var — the emails that can self-claim this company's built-in Admin
-    // role via `setupAccount`, set once at creation time.
-    adminBootstrapEmails: v.array(v.string()),
+    // Legacy: emails that could self-claim the old password Admin login.
+    adminBootstrapEmails: v.optional(v.array(v.string())),
     // The ownership-verification TXT record Vercel reports is still needed
     // — shown verbatim in the admin UI so whoever owns the domain knows
     // exactly what to add. Proves domain ownership; does NOT by itself mean
@@ -62,7 +71,12 @@ export const performanceTables = {
     .index("by_domain", ["domain"])
     .index("by_status", ["status"]),
 
-  // Named bundles of permission keys (`performance/lib/permissions.ts`),
+  // LEGACY (until 10/2026): `companyRoles`, `performanceLogins` and
+  // `performanceSessions` belonged to the old separate password login. No
+  // code reads them any more; they stay defined only so existing rows keep
+  // validating until they are deleted.
+  //
+  // Named bundles of permission keys (old `performance/lib/permissions.ts`),
   // scoped per company — the customization layer letting a company's own
   // admin (or a cross-company `isSuperAdmin`) reshape who-can-do-what
   // without a code change. Every company is seeded with three built-ins
@@ -91,7 +105,7 @@ export const performanceTables = {
     passwordHash: v.string(),
     // Deprecated: superseded by `companyId`/`roleId`/`isSuperAdmin` below.
     // Kept optional (not removed) only until
-    // `migrations/backfillPerformanceCompanyId.ts` has re-derived every
+    // the old `backfillPerformanceCompanyId` migration had re-derived every
     // row's `roleId` from it — safe to delete this field once that's
     // confirmed complete.
     role: v.optional(v.union(v.literal("admin"), v.literal("mitarbeiter"))),
@@ -149,22 +163,28 @@ export const performanceTables = {
     name: v.string(),
     active: v.boolean(),
     companyId: v.optional(v.id("companies")),
+    /** The intranet account behind this report name — what lets that person
+     * see their own numbers. Set by an admin under Performance →
+     * Einstellungen ("Automatisch zuordnen" also takes over the old
+     * Performance-login links). */
+    userId: v.optional(v.id("users")),
   })
     .index("by_company", ["companyId"])
+    .index("by_userId", ["userId"])
     .index("by_company_name", ["companyId", "name"]),
 
   // Backfilled nightly (see crons.ts's `cacheCompletedMonthBadges`) with one
-  // row per completed month once its badges are computed. A completed
-  // month's underlying reports never change (see the "historical data
-  // doesn't change once reported" convention on `performanceReports`), so
-  // once a row exists here it's permanent — reading it lets
-  // `performanceQueries.allBadgesMap` skip recomputing that month's team
-  // totals from scratch on every request.
+  // row per completed month, from the 3rd day after month end (late uploads
+  // of the last day usually land on the 1st). `performance/queries.ts`
+  // recomputes a cached month when a report for it was imported after
+  // `computedAt`, so the cache only saves work, it never freezes old numbers.
   performanceBadgeCache: defineTable({
     companyId: v.optional(v.id("companies")),
     ym: v.string(),
     badges: v.record(v.string(), v.object({ value: v.number(), winners: v.array(v.string()) })),
     computedAt: v.number(),
+    /** Badge rules the row was computed with; older rows are recomputed. */
+    rulesVersion: v.optional(v.number()),
   })
     .index("by_ym", ["ym"])
     .index("by_company_ym", ["companyId", "ym"]),
@@ -270,8 +290,8 @@ export const performanceTables = {
   // handled it. `date` is the calendar day of `startedAt` (ISO
   // "YYYY-MM-DD", UTC) — kept alongside the timestamp so day-scoped queries
   // can use an index instead of re-deriving the date from every row.
-  // Wholesale-replaced per calendar month on import (see
-  // `interactionImport.ts`), same rationale as `performanceRawLeads`/`Opps`.
+  // An import replaces exactly the date range its file covers (first to
+  // last day), see `uploadParse.ts`'s `writeInteractions`.
   performanceInteractions: defineTable({
     employeeId: v.id("performanceEmployees"),
     companyId: v.optional(v.id("companies")),
@@ -323,12 +343,18 @@ export const performanceTables = {
         v.literal("call"),
         v.literal("template"),
         v.literal("interactions"),
+        v.literal("wallbox_members"),
+        v.literal("wallbox_opps"),
       ),
     ),
     // The report's own date (YYYY-MM-DD), as detected from its content —
     // not the upload time. Undefined for the aggregated template, which
     // spans multiple days itself.
     reportDate: v.optional(v.string()),
+    // First day of a report that spans several days (an Interaktionen
+    // export, a call report over several days); `reportDate` is then its
+    // last day. Absent for single-day reports.
+    reportDateFrom: v.optional(v.string()),
     // Total data rows in the source file, before any team-matching filter
     // — lets the UI show "40 of 41 matched" instead of just the imported
     // count.
@@ -360,10 +386,77 @@ export const performanceTables = {
     .index("by_contentHash", ["contentHash"])
     .index("by_batchId", ["batchId"])
     .index("by_company_uploadedAt", ["companyId", "uploadedAt"])
+    // The upload page's "Tagesstatus": which report kinds exist per day.
+    .index("by_company_reportDate", ["companyId", "reportDate"])
     // Duplicate-upload detection must be per-company — two different client
     // companies could upload files with identical bytes/hash by coincidence
     // (e.g. the blank template).
     .index("by_company_contentHash", ["companyId", "contentHash"]),
+
+  // Wallbox campaign (dashboard kind `wallbox`): one row per uploaded report
+  // day and source, aggregated at import time — the reports are full
+  // point-in-time snapshots, so keeping each day's counts gives the
+  // "Entwicklung" history for free. Re-uploading the same day replaces it.
+  // People are kept as an array (not a record keyed by name: Convex field
+  // names must be ASCII, and names have umlauts).
+  performanceWallboxSnapshots: defineTable({
+    companyId: v.id("companies"),
+    reportDate: v.string(),
+    source: v.union(v.literal("members"), v.literal("opps")),
+    campaign: v.optional(v.string()),
+    total: v.number(),
+    /** members: campaign member statuses (base status, "min. 1 EV" split out). */
+    statuses: v.optional(
+      v.array(v.object({ status: v.string(), count: v.number(), ev: v.number() })),
+    ),
+    /** members: "In Progress - <Vorname>" per employee. opps: per Acquired
+     * By (`role: "acquirer"`) and per Opportunity Owner (`role: "owner"`). */
+    people: v.array(
+      v.object({
+        name: v.string(),
+        role: v.union(v.literal("member"), v.literal("acquirer"), v.literal("owner")),
+        employeeId: v.optional(v.id("performanceEmployees")),
+        inProgress: v.optional(v.number()),
+        inProgressEv: v.optional(v.number()),
+        opps: v.optional(v.number()),
+        open: v.optional(v.number()),
+        won: v.optional(v.number()),
+        lost: v.optional(v.number()),
+      }),
+    ),
+    sourceFile: v.string(),
+    uploadedAt: v.number(),
+  }).index("by_company_source_date", ["companyId", "source", "reportDate"]),
+
+  // The newest Wallbox opportunity report row by row, for the lists behind
+  // the tables (which accounts, who owns them). Replaced only by a report
+  // at least as new, like `performanceRawOpps`.
+  performanceWallboxOpps: defineTable({
+    companyId: v.id("companies"),
+    reportDate: v.string(),
+    account: v.string(),
+    owner: v.string(),
+    acquiredBy: v.string(),
+    acquiredByEmployeeId: v.optional(v.id("performanceEmployees")),
+    closed: v.boolean(),
+    won: v.boolean(),
+  }).index("by_company", ["companyId"]),
+
+  // One row per dashboard, owned by the upload pipeline (`performance/
+  // import.ts`). The raw dates say which report the drill-down tables
+  // currently hold, so re-importing an older Lead/Opp file never replaces
+  // newer lists. The lock keeps two imports for the same dashboard (two
+  // admins, two browser tabs) from running their clear-then-insert steps
+  // interleaved; it expires on its own in case an action dies mid-import.
+  performanceImportState: defineTable({
+    companyId: v.id("companies"),
+    lockToken: v.optional(v.string()),
+    lockedUntil: v.optional(v.number()),
+    lockedBy: v.optional(v.string()),
+    rawLeadsReportDate: v.optional(v.string()),
+    rawOppsReportDate: v.optional(v.string()),
+    wallboxOppsReportDate: v.optional(v.string()),
+  }).index("by_company", ["companyId"]),
 
   // A single employee/day/field whose parsed duration failed the physical
   // 24h plausibility check (see callImport.ts's `capExplicitDuration`) gets

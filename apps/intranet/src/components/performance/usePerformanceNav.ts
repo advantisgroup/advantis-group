@@ -1,22 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { usePathname } from "next/navigation";
 
-import { usePathname, useRouter } from "next/navigation";
-
-import { api } from "@advantis/convex/api";
-import { useMutation, useQuery } from "convex/react";
-import {
-  Building2,
-  LayoutDashboard,
-  type LucideIcon,
-  ShieldCheck,
-  Upload,
-  Users,
-} from "lucide-react";
+import { LayoutDashboard, type LucideIcon, Settings2, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { clearPerformanceToken, getPerformanceToken } from "@/lib/performanceAuth";
+import { dashboardHome, usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 
 export interface PerformanceNavItem {
   href: string;
@@ -26,72 +15,34 @@ export interface PerformanceNavItem {
 }
 
 /**
- * The one place Performance's navigation is decided, straight from the
- * session's permissions — every page shows the same set, so moving between
- * Uploads, Users and Roles never needs a detour through the dashboard.
- *
- * Reads the session with a plain `useQuery` rather than
- * `usePerformanceSession`, which would kick off a second Clerk-link
- * promotion alongside the page's own.
+ * Performance's navigation: the dashboard for everyone, plus Uploads and
+ * Settings for intranet admins.
  */
 export function usePerformanceNav() {
   const t = useTranslations("Performance");
-  const router = useRouter();
   const pathname = usePathname();
-  const [token] = useState(() => getPerformanceToken() ?? "");
-  const session = useQuery(api.performance.auth.validateSession, { token });
-  const logout = useMutation(api.performance.auth.logout);
+  const { me, dashboard } = usePerformanceAccess();
 
-  if (!session?.valid) return { items: [], passwordHref: null, exit: undefined };
+  if (!me) return { items: [] };
 
-  const can = (p: string) => session.permissions.includes(p);
-  const matches = (prefix: string) => pathname.startsWith(prefix);
-
-  const extra: Omit<PerformanceNavItem, "active">[] = [
-    ...(can("upload_reports")
-      ? [{ href: "/performance/upload", label: t("navUploads"), icon: Upload }]
-      : []),
-    ...(can("manage_logins")
-      ? [{ href: "/performance/benutzer", label: t("usersLink"), icon: Users }]
-      : []),
-    // Super-admins land on the company list; a scoped admin only has roles.
-    ...(session.isSuperAdmin
-      ? [{ href: "/performance/admin/companies", label: t("companiesLink"), icon: Building2 }]
-      : can("manage_roles")
-        ? [{ href: "/performance/admin/companies/roles", label: t("rolesLink"), icon: ShieldCheck }]
-        : []),
-  ];
-  const activeExtra = (href: string) =>
-    matches(href.startsWith("/performance/admin") ? "/performance/admin" : href);
-  const onExtra = extra.some((item) => activeExtra(item.href));
-
-  const dashboardHref = can("view_all_employees")
-    ? "/performance/ueberblick"
-    : session.employeeId
-      ? `/performance/mitarbeiter/${session.employeeId}`
-      : "/performance";
+  const extra: Omit<PerformanceNavItem, "active">[] = me.isAdmin
+    ? [
+        { href: "/performance/upload", label: t("navUploads"), icon: Upload },
+        { href: "/performance/einstellungen", label: t("navSettings"), icon: Settings2 },
+      ]
+    : [];
+  const onExtra = extra.some((item) => pathname.startsWith(item.href));
 
   const items: PerformanceNavItem[] = [
     {
-      href: dashboardHref,
+      href: dashboardHome(dashboard),
       label: t("navDashboard"),
       icon: LayoutDashboard,
-      active: !onExtra && !matches("/performance/passwort"),
+      active: !onExtra,
     },
-    ...extra.map((item) => ({ ...item, active: activeExtra(item.href) })),
+    ...extra.map((item) => ({ ...item, active: pathname.startsWith(item.href) })),
   ];
 
-  function exit() {
-    if (token) void logout({ token });
-    clearPerformanceToken();
-    router.replace("/performance/login");
-  }
-
-  return {
-    // A lone "Dashboard" link isn't navigation, just noise.
-    items: items.length > 1 ? items : [],
-    passwordHref: session.viaClerk ? null : "/performance/passwort",
-    // A Clerk-linked session has no Performance login to sign out of.
-    exit: session.viaClerk ? undefined : exit,
-  };
+  // A lone "Dashboard" link isn't navigation, just noise.
+  return { items: items.length > 1 ? items : [] };
 }

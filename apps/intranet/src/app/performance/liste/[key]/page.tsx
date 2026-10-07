@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { dashboardHome, usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { PerformanceBackLink } from "@/components/performance/PerformanceBackLink";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -31,7 +31,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatIsoDate } from "@/lib/format";
-import { clearPerformanceToken } from "@/lib/performanceAuth";
 
 const LIST_KEYS = ["analysis30", "leads14", "opp_overdue", "opp30", "opps14"] as const;
 type ListKey = (typeof LIST_KEYS)[number];
@@ -62,30 +61,35 @@ interface OppItem {
 }
 
 const ALL_EMPLOYEES = "__all__";
+const BACK_TABS = new Set(["ueberblick", "calls", "team", "interaktionen", "entwicklung"]);
 
 export default function DrilldownPage() {
+  // Suspense because the back link reads `?from=` via useSearchParams.
+  return (
+    <Suspense fallback={<PerformancePageSkeleton />}>
+      <DrilldownPageInner />
+    </Suspense>
+  );
+}
+
+function DrilldownPageInner() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const router = useRouter();
   const params = useParams<{ key: string }>();
   const validKey = (LIST_KEYS as readonly string[]).includes(params.key)
     ? (params.key as ListKey)
     : null;
-  const { token, session } = usePerformanceSession();
+  const { me, dashboard } = usePerformanceAccess();
   const [empFilter, setEmpFilter] = useState<string>(ALL_EMPLOYEES);
-
-  useEffect(() => {
-    // Wait for the query to resolve — a visitor with no password cookie may
-    // still resolve via their linked Clerk identity.
-    if (session && !session.valid) {
-      clearPerformanceToken();
-      router.replace("/performance/login");
-    }
-  }, [session, router]);
+  // Back to the tab the list was opened from (`?from=<tab>` on the link).
+  const from = useSearchParams().get("from");
+  const backHref =
+    from && BACK_TABS.has(from) ? `/performance/${from}` : dashboardHome(dashboard ?? null);
+  const fmtDate = (iso: string | undefined) => (iso ? formatIsoDate(iso, locale) : "–");
 
   const data = useQuery(
     api.performance.queries.drilldown,
-    session?.valid && validKey ? { token, key: validKey } : "skip",
+    me && validKey ? { key: validKey, companyId: dashboard?.companyId } : "skip",
   );
 
   const owners = useMemo(() => {
@@ -102,15 +106,14 @@ export default function DrilldownPage() {
     return all.filter((i) => i.owner === empFilter);
   }, [data?.items, empFilter]);
 
-  if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid) return null;
+  if (me === undefined) return <PerformancePageSkeleton />;
 
   return (
     <div className="min-h-screen bg-muted/20">
       <PerformanceHeader />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
-        <PerformanceBackLink href="/performance" />
+        <PerformanceBackLink href={backHref} />
         {!validKey ? (
           <Card>
             <CardContent className="p-6 text-center text-sm text-muted-foreground">
@@ -183,8 +186,8 @@ export default function DrilldownPage() {
                           <TableCell className="max-w-xs truncate">
                             {item.statusDetails ?? "–"}
                           </TableCell>
-                          <TableCell>{item.createDate ?? "–"}</TableCell>
-                          <TableCell>{item.lastActivity ?? "–"}</TableCell>
+                          <TableCell>{fmtDate(item.createDate)}</TableCell>
+                          <TableCell>{fmtDate(item.lastActivity)}</TableCell>
                           <TableCell className="text-right tabular-nums">
                             {item.ageDays ?? "–"}
                           </TableCell>
@@ -220,8 +223,8 @@ export default function DrilldownPage() {
                           <TableCell className="max-w-xs truncate">
                             {item.stageDetails ?? "–"}
                           </TableCell>
-                          <TableCell>{item.createdDate ?? "–"}</TableCell>
-                          <TableCell>{item.closeDate ?? "–"}</TableCell>
+                          <TableCell>{fmtDate(item.createdDate)}</TableCell>
+                          <TableCell>{fmtDate(item.closeDate)}</TableCell>
                           {data?.hasCustomerNo && (
                             <TableCell>{item.customerNumber ?? "–"}</TableCell>
                           )}

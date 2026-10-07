@@ -12,6 +12,9 @@ export default defineConfig({
       // `assertServerKey` compares against this on every `api*` function —
       // the same guard apps/api passes in production.
       CONVEX_SERVER_KEY: "test-server-key",
+      // Performance tests cover the opened-up rules; access.test.ts checks
+      // the admins-only rollout stage by switching this off.
+      PERFORMANCE_MODE: "live",
     },
   },
 });
