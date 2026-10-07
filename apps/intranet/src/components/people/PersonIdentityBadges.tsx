@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { teamColor, teamLabelKey } from "@/lib/teams";
+import { teamColor, teamLabel } from "@/lib/teams";
 
 export type PersonRole = "admin" | "manager" | "employee";
 
@@ -43,7 +43,7 @@ export function PersonIdentityBadges({
   for (const id of teams ?? []) {
     tags.push({
       key: id,
-      label: tTeams(teamLabelKey(id)),
+      label: teamLabel(tTeams, id),
       dotClassName: teamColor(id),
     });
   }

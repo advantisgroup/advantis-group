@@ -30,7 +30,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { addDaysIso, isoToday } from "@/lib/absences";
 import { useAbsencesCalendar } from "@/lib/absences-api";
 import { formatIsoDate, initials } from "@/lib/format";
-import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
+import { TEAMS, teamColor, teamLabel } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -124,7 +124,7 @@ export function TeamsEditor({ userId, teams }: { userId: Id<"users">; teams: str
         <Button size="sm" variant="outline" className="h-9 w-full justify-start">
           <Users2 className="size-3.5" />
           <span className="truncate">
-            {teams.length > 0 ? teams.map((id) => tTeams(teamLabelKey(id))).join(", ") : t("teams")}
+            {teams.length > 0 ? teams.map((id) => teamLabel(tTeams, id)).join(", ") : t("teams")}
           </span>
           {teams.length > 0 && (
             <span className="ml-auto flex shrink-0 items-center gap-1">

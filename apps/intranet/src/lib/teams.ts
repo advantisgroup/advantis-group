@@ -30,3 +30,14 @@ export function teamColor(id: string): string {
 export function teamLabelKey(id: string): string {
   return TEAMS.find((t) => t.id === id)?.labelKey ?? id;
 }
+
+/** Display label for a team slug: the translated label for the built-in
+ * teams, the slug itself for teams created later under Abteilungen & Teams
+ * (they have no i18n entry, and "Teams.ev-pilot" is no label). */
+export function teamLabel(
+  tTeams: { (key: string): string; has: (key: string) => boolean },
+  id: string,
+): string {
+  const key = teamLabelKey(id);
+  return tTeams.has(key) ? tTeams(key) : id;
+}

@@ -26,7 +26,7 @@ import { useNow } from "@/hooks/use-now";
 import { formatIsoDate, initials } from "@/lib/format";
 import { profileColorStyle, profileGradientClass } from "@/lib/profile-gradient";
 import { activeStatusMessage } from "@/lib/status-message";
-import { teamColor, teamLabelKey } from "@/lib/teams";
+import { teamColor, teamLabel } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { ManagementRail } from "./ProfileAdmin";
 import { ContactRow, DetailRow, InfoPanel, RoleBadge, Section, useUser } from "./ProfileParts";
@@ -203,7 +203,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
             {user.teams.map((team) => (
               <Badge key={team} variant="muted" className="gap-1.5">
                 <span className={cn("size-1.5 rounded-full", teamColor(team))} />
-                {tTeams(teamLabelKey(team))}
+                {teamLabel(tTeams, team)}
               </Badge>
             ))}
           </div>

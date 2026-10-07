@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { initials } from "@/lib/format";
-import { teamColor, teamLabelKey } from "@/lib/teams";
+import { teamColor, teamLabel } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
 import { ContactActions } from "./ContactActions";
@@ -133,7 +133,7 @@ export function PersonTable({
                     {person.teams.map((id) => (
                       <Badge key={id} variant="outline" className="gap-1 text-[10px]">
                         <span className={cn("size-1.5 rounded-full", teamColor(id))} />
-                        {tTeams(teamLabelKey(id))}
+                        {teamLabel(tTeams, id)}
                       </Badge>
                     ))}
                   </span>
