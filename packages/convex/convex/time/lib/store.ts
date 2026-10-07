@@ -13,7 +13,7 @@ import {
   monthStart,
   monthsBetween,
 } from "./berlin";
-import { summarizeDays, totals } from "./days";
+import { BREAK30_AFTER_MINUTES, measureDay, summarizeDays, totals } from "./days";
 import { isMonthLocked } from "./lock";
 import { carryOverExpiry, vacationSummary } from "./vacation";
 import { isTimeTestMode, timeTesterEmails } from "./mode";
@@ -37,7 +37,8 @@ export type TimeError =
   | "already_pending"
   | "not_pending"
   | "changed_meanwhile"
-  | "no_working_days";
+  | "no_working_days"
+  | "tracking_disabled";
 
 /** `code` is the shared one the intranet's error handling knows; `reason`
  *  lets the Zeiterfassung screens say exactly what went wrong. */
@@ -74,6 +75,30 @@ export async function writeAudit(
 }
 
 // --- Loading ------------------------------------------------------------------
+
+/** Whether this person records working time at all (see `timeProfiles`). */
+export async function isTrackingDisabled(ctx: QueryCtx, userId: Id<"users">): Promise<boolean> {
+  const row = await ctx.db
+    .query("timeProfiles")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .unique();
+  return row?.trackingDisabled === true;
+}
+
+/** Date from which this person may use the module before go-live, if any. */
+export async function earlyAccessFrom(ctx: QueryCtx, userId: Id<"users">): Promise<string | null> {
+  const row = await ctx.db
+    .query("timeProfiles")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .unique();
+  return row?.earlyAccessFrom ?? null;
+}
+
+/** Everyone who doesn't record working time. */
+export async function trackingDisabledIds(ctx: QueryCtx): Promise<Set<Id<"users">>> {
+  const rows = await ctx.db.query("timeProfiles").collect();
+  return new Set(rows.filter((row) => row.trackingDisabled).map((row) => row.userId));
+}
 
 export async function loadSchedules(ctx: QueryCtx, userId: Id<"users">) {
   return ctx.db
@@ -361,14 +386,100 @@ export async function notifyAdmins(
   args: { type: string; title: string; body?: string; link?: string },
   except?: Id<"users">,
 ): Promise<void> {
-  // In test mode the real admins must not hear about test data: the testers
-  // get these notifications instead (see lib/mode.ts).
-  const recipients = isTimeTestMode() ? await activeTesters(ctx) : await activeAdmins(ctx);
-  const admins = recipients.filter((admin) => admin._id !== except);
+  // In test mode the admins are testing too, so they hear about test data;
+  // the extra testers (lib/mode.ts) get the same notifications.
+  const admins = await activeAdmins(ctx);
+  const recipients = isTimeTestMode() ? [...admins, ...(await activeTesters(ctx))] : admins;
+  const seen = new Set<Id<"users">>();
+  const targets = recipients.filter((user) => {
+    if (user._id === except || seen.has(user._id)) return false;
+    seen.add(user._id);
+    return true;
+  });
   await notifyUsers(
     ctx,
-    admins.map((admin) => admin._id),
+    targets.map((user) => user._id),
     args,
+  );
+}
+
+const PHONE_ACTION = {
+  clockIn: "eingestempelt",
+  clockOut: "ausgestempelt",
+  breakStart: "Pause begonnen",
+  breakEnd: "Pause beendet",
+} as const;
+
+/** A clock action made on a phone: a short note to every admin. */
+export async function notePhoneBooking(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  action: keyof typeof PHONE_ACTION,
+  at: number,
+): Promise<void> {
+  const person = await ctx.db.get(userId);
+  const time = new Intl.DateTimeFormat("de-DE", {
+    timeZone: "Europe/Berlin",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(at);
+  const date = berlinDate(at);
+  await notifyAdmins(
+    ctx,
+    {
+      type: "time_phone_booking",
+      title: `Handy: ${displayName(person)} ${PHONE_ACTION[action]}`,
+      body: `${dateFormatter(date)}, ${time} Uhr – per Handy gestempelt.`,
+      link: `/zeiterfassung/admin/${userId}?date=${date}`,
+    },
+    userId,
+  );
+}
+
+/**
+ * After clocking out (not on the 18:00 rule, which has its own note): if the
+ * day ran past 6:15 with less than 30 minutes of break, tell the person and
+ * the admins. Nothing is deducted — the day keeps its "Pause < 30 Min." chip
+ * until it's corrected.
+ */
+export async function noteMissingBreak(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  date: string,
+): Promise<void> {
+  const segments = (
+    await ctx.db
+      .query("timeEntries")
+      .withIndex("by_user_start", (q) =>
+        q
+          .eq("userId", userId)
+          .gte("start", berlinInstant(date))
+          .lt("start", berlinInstant(addDays(date, 1))),
+      )
+      .collect()
+  ).filter((row) => row.status === "active");
+  const day = measureDay(segments, Date.now());
+  const worked = Math.round(day.workedMs / 60_000);
+  const breaks = Math.round(day.breakMs / 60_000);
+  if (worked <= BREAK30_AFTER_MINUTES || breaks >= 30) return;
+  const hours = `${Math.floor(worked / 60)}:${String(worked % 60).padStart(2, "0")}`;
+  const link = `/zeiterfassung/arbeitszeiten?date=${date}`;
+  await notifyUsers(ctx, [userId], {
+    type: "time_break_missing",
+    title: "Pause nicht gemacht",
+    body: `Du hast am ${dateFormatter(date)} ${hours} Std. gearbeitet, aber keine 30 Minuten Pause gestempelt. Falls du doch Pause hattest, trag sie bitte nach.`,
+    link,
+  });
+  const person = await ctx.db.get(userId);
+  await notifyAdmins(
+    ctx,
+    {
+      type: "time_break_missing",
+      title: `Pause fehlt: ${displayName(person)}`,
+      body: `${dateFormatter(date)}: ${hours} Std. gearbeitet, weniger als 30 Minuten Pause.`,
+      link: `/zeiterfassung/admin/${userId}?date=${date}`,
+    },
+    userId,
   );
 }
 

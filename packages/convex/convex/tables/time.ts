@@ -9,6 +9,8 @@ import { v } from "convex/values";
  */
 
 export const timeEntryKindValidator = v.union(v.literal("work"), v.literal("break"));
+/** Which kind of device a clock action came from (as the browser reports it). */
+export const clockDeviceValidator = v.union(v.literal("mobile"), v.literal("desktop"));
 export const timeEntrySourceValidator = v.union(
   v.literal("clock"),
   v.literal("manual"),
@@ -26,10 +28,13 @@ export const correctionActionValidator = v.union(
   v.literal("edit"),
   v.literal("delete"),
 );
+/** `overtime` = Überstundenabbau: a day off paid from the hours account, so
+ *  unlike the others it does not lower the day's target. */
 export const timeAbsenceTypeValidator = v.union(
   v.literal("vacation"),
   v.literal("sick"),
   v.literal("special"),
+  v.literal("overtime"),
   v.literal("other"),
 );
 export const timeAbsenceStatusValidator = v.union(
@@ -54,6 +59,10 @@ export const timeTables = {
     source: timeEntrySourceValidator,
     status: timeEntryStatusValidator,
     autoClosed: v.optional(v.boolean()),
+    /** Device of the clock action that started / ended a clocked segment —
+     *  phone bookings are marked for the person and the admins. */
+    startDevice: v.optional(clockDeviceValidator),
+    endDevice: v.optional(clockDeviceValidator),
     note: v.optional(v.string()),
     correctionOf: v.optional(v.id("timeEntries")),
     correctionAction: v.optional(correctionActionValidator),
@@ -63,11 +72,15 @@ export const timeTables = {
     decidedAt: v.optional(v.number()),
     decisionNote: v.optional(v.string()),
     createdBy: v.optional(v.id("users")),
+    /** Source id of an imported row (`clockodo:<id>`), so re-running the
+     *  import updates instead of duplicating. */
+    importId: v.optional(v.string()),
     updatedAt: v.number(),
   })
     .index("by_user_start", ["userId", "start"])
     .index("by_status", ["status"])
-    .index("by_end", ["end"]),
+    .index("by_end", ["end"])
+    .index("by_import", ["importId"]),
 
   /** Target minutes per weekday (Mon..Sun) from `validFrom` (YYYY-MM-DD) on. */
   workSchedules: defineTable({
@@ -92,11 +105,14 @@ export const timeTables = {
     decidedBy: v.optional(v.id("users")),
     decidedAt: v.optional(v.number()),
     decisionNote: v.optional(v.string()),
+    /** See `timeEntries.importId`. */
+    importId: v.optional(v.string()),
     updatedAt: v.number(),
   })
     .index("by_user_start", ["userId", "startDate"])
     .index("by_status", ["status"])
-    .index("by_end", ["endDate"]),
+    .index("by_end", ["endDate"])
+    .index("by_import", ["importId"]),
 
   /** Vacation entitlement per person and year. No row = the 24-day default. */
   vacationAllowances: defineTable({
@@ -156,6 +172,17 @@ export const timeTables = {
     .index("by_user_month", ["userId", "month"])
     .index("by_month", ["month"]),
 
+  /** Per-person switches. `trackingDisabled`: this person doesn't record
+   *  working time at all (e.g. the managing director) — no clock, no prompt,
+   *  no hours account in the overview. Absences still work. */
+  timeProfiles: defineTable({
+    userId: v.id("users"),
+    trackingDisabled: v.boolean(),
+    /** Uses the module fully from this Berlin date on, before go-live (preview). */
+    earlyAccessFrom: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
   /** Append-only. `actorId` unset = a scheduled job. Kept at least 2 years. */
   timeAuditLog: defineTable({
     actorId: v.optional(v.id("users")),
@@ -168,6 +195,8 @@ export const timeTables = {
       v.literal("balance"),
       v.literal("holiday"),
       v.literal("monthLock"),
+      v.literal("import"),
+      v.literal("profile"),
     ),
     entityId: v.string(),
     action: v.string(),

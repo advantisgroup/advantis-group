@@ -15,6 +15,7 @@ import {
   Lock,
   Pencil,
   Plus,
+  Smartphone,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -37,7 +38,9 @@ import {
   formatMonth,
   useBerlinToday,
   useNow,
+  bookedByPhone,
   useTimeErrorToast,
+  useTimeMode,
 } from "@/lib/zeiterfassung";
 
 type View = "week" | "month";
@@ -68,6 +71,7 @@ export function Entries({
   const [editing, setEditing] = useState<TimeEntry | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<TimeEntry | null>(null);
+  const { readOnly } = useTimeMode();
 
   const from = view === "week" ? mondayOf(anchor) : monthStart(monthOf(anchor));
   const to = view === "week" ? addDays(from, 6) : monthEnd(monthOf(anchor));
@@ -136,6 +140,7 @@ export function Entries({
         [
           ...day.warnings.map((warning) => t(`warnings.${warning}.label`)),
           ...(day.autoClosed ? [t("entries.autoClosed")] : []),
+          ...(bookedByPhone(day.entries) ? [t("entries.mobile")] : []),
         ].join(", "),
       ]
         .map(cell)
@@ -197,10 +202,12 @@ export function Entries({
             <Download />
             <span className="max-sm:sr-only">{t("csv.export")}</span>
           </Button>
-          <Button size="sm" onClick={() => setAdding(open ?? today)}>
-            <Plus />
-            {t("entries.add")}
-          </Button>
+          {!readOnly && (
+            <Button size="sm" onClick={() => setAdding(open ?? today)}>
+              <Plus />
+              {t("entries.add")}
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -270,6 +277,7 @@ function DayRow({
   const locale = useLocale();
   const now = useNow(30_000);
   const withdraw = useMutation(api.time.entries.withdraw);
+  const { readOnly } = useTimeMode();
   const showError = useTimeErrorToast();
   const active = day.entries.filter((row) => row.status === "active");
   const requests = day.entries.filter(
@@ -312,6 +320,12 @@ function DayRow({
           {day.autoClosed && (
             <Chip tone="warn" hint={t("entries.autoClosedHint")}>
               {t("entries.autoClosed")}
+            </Chip>
+          )}
+          {bookedByPhone(active) && (
+            <Chip tone="info" hint={t("entries.mobileHint")}>
+              <Smartphone className="size-3" />
+              {t("entries.mobile")}
             </Chip>
           )}
           {day.pending > 0 && <Chip>{t("entries.pendingChip", { count: day.pending })}</Chip>}
@@ -386,13 +400,26 @@ function DayRow({
                       {formatMinutes(Math.round(((row.end ?? now) - row.start) / 60_000))}
                     </span>
                   </p>
-                  {(row.note || row.source !== "clock") && (
-                    <p className="truncate text-xs text-muted-foreground">
-                      {[t(`entries.source.${row.source}`), row.note].filter(Boolean).join(" · ")}
+                  {(row.note || row.source !== "clock" || bookedByPhone([row])) && (
+                    <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                      {bookedByPhone([row]) && <Smartphone className="size-3 shrink-0 text-info" />}
+                      {[
+                        t(`entries.source.${row.source}`),
+                        row.startDevice === "mobile" && row.endDevice === "mobile"
+                          ? t("entries.mobileBoth")
+                          : row.startDevice === "mobile"
+                            ? t("entries.mobileStart")
+                            : row.endDevice === "mobile"
+                              ? t("entries.mobileEnd")
+                              : null,
+                        row.note,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </p>
                   )}
                 </div>
-                {row.end !== undefined && !day.locked && (
+                {!readOnly && row.end !== undefined && !day.locked && (
                   <div className="flex shrink-0 items-center gap-1">
                     <Button
                       variant="ghost"
@@ -432,7 +459,7 @@ function DayRow({
                     : [t("entries.waiting"), row.reason].filter(Boolean).join(" · ")}
                 </p>
               </div>
-              {row.status === "pending" && (
+              {!readOnly && row.status === "pending" && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -448,7 +475,7 @@ function DayRow({
               )}
             </div>
           ))}
-          {!day.locked && !future && (
+          {!readOnly && !day.locked && !future && (
             <Button variant="ghost" size="sm" onClick={onAdd} className="mt-1">
               <Plus />
               {t("entries.addForDay")}

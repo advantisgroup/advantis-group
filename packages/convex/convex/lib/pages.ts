@@ -1,3 +1,4 @@
+import { canUseTime } from "../time/lib/mode";
 import { type Caller } from "./caller";
 
 /**
@@ -97,8 +98,8 @@ export const INTRANET_PAGES: IntranetPage[] = [
     description: "Clockodo-Konten und Abwesenheitskonten verwalten.",
     visible: manager,
   },
-  // Own time tracking. Admins only until the cutover opens it to everyone
-  // (apps/intranet/src/lib/maintenance.ts keeps it locked for the rest).
+  // Own time tracking: whoever may open it in the current rollout stage
+  // (time/lib/mode — test: admins and testers, preview and live: everyone).
   {
     href: "/zeiterfassung",
     label: "Zeiterfassung",
@@ -111,14 +112,14 @@ export const INTRANET_PAGES: IntranetPage[] = [
       "time tracking",
       "clock in",
     ],
-    visible: admin,
+    visible: canUseTime,
   },
   {
     href: "/zeiterfassung/arbeitszeiten",
     label: "Meine Arbeitszeiten",
     description: "Gebuchte Zeiten je Tag, Woche oder Monat, Korrekturen beantragen, CSV-Export.",
     keywords: ["arbeitszeit", "zeiten", "korrektur", "nachtragen", "timesheet", "export"],
-    visible: admin,
+    visible: canUseTime,
   },
   {
     href: "/zeiterfassung/abwesenheiten",
@@ -126,14 +127,14 @@ export const INTRANET_PAGES: IntranetPage[] = [
     description:
       "Urlaub, Sonderurlaub und Abwesenheiten beantragen, krank melden, Resturlaub sehen.",
     keywords: ["urlaub", "krank", "krankmeldung", "sonderurlaub", "resturlaub", "vacation", "sick"],
-    visible: admin,
+    visible: canUseTime,
   },
   {
     href: "/zeiterfassung/kalender",
     label: "Urlaubskalender",
     description: "Wer im Team wann im Urlaub ist, Monat für Monat.",
     keywords: ["team urlaub", "kalender", "planer", "vacation calendar"],
-    visible: admin,
+    visible: canUseTime,
   },
   {
     href: "/zeiterfassung/admin",

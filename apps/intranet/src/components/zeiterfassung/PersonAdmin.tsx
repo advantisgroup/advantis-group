@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { DEFAULT_MINUTES_PER_WEEKDAY, scheduleOn } from "@advantis/convex/time";
+import { addDays, DEFAULT_MINUTES_PER_WEEKDAY, scheduleOn } from "@advantis/convex/time";
 import { useMutation, useQuery } from "convex/react";
 import { ArrowLeft, Pencil, Plus, Trash2, UserX } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -18,15 +18,17 @@ import { Input } from "@/components/ui/input";
 import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { Absences } from "@/components/zeiterfassung/Absences";
 import { AuditLog } from "@/components/zeiterfassung/AdminPanel";
 import { Entries } from "@/components/zeiterfassung/Entries";
-import { FieldLabel, Segmented } from "@/components/zeiterfassung/parts";
+import { balanceClassName, FieldLabel, Segmented } from "@/components/zeiterfassung/parts";
 import {
   formatDay,
   formatDays,
   formatMinutes,
   useBerlinToday,
+  useTimeMode,
   useTimeErrorToast,
 } from "@/lib/zeiterfassung";
 
@@ -64,7 +66,11 @@ export function PersonAdmin({ userId }: { userId: Id<"users"> }) {
         <Kpi
           featured
           label={t("overview.balance")}
-          value={formatMinutes(detail.balance.minutes, true)}
+          value={
+            <span className={balanceClassName(detail.balance.minutes)}>
+              {formatMinutes(detail.balance.minutes, true)}
+            </span>
+          }
           hint={
             detail.balance.since
               ? t("admin.balanceSince", {
@@ -107,7 +113,98 @@ export function PersonAdmin({ userId }: { userId: Id<"users"> }) {
 
 type Detail = NonNullable<ReturnType<typeof useQuery<typeof api.time.admin.personDetail>>>;
 
+/** On/off switch for people who don't record working time (e.g. the boss). */
+function TrackingCard({ detail }: { detail: Detail }) {
+  const t = useTranslations("Zeiterfassung");
+  const setTracking = useMutation(api.time.admin.setTracking);
+  const showError = useTimeErrorToast();
+  const [busy, setBusy] = useState(false);
+
+  async function toggle(enabled: boolean) {
+    setBusy(true);
+    try {
+      await setTracking({ userId: detail.userId, disabled: !enabled });
+      toast.success(enabled ? t("admin.trackingOnToast") : t("admin.trackingOffToast"));
+    } catch (error) {
+      showError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="lg:col-span-2">
+      <CardContent className="flex items-start justify-between gap-4 p-5">
+        <div className="min-w-0">
+          <p className="text-base font-semibold">{t("admin.tracking")}</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            {detail.trackingDisabled ? t("admin.trackingOffHint") : t("admin.trackingOnHint")}
+          </p>
+        </div>
+        <Switch
+          checked={!detail.trackingDisabled}
+          disabled={busy}
+          onCheckedChange={(value) => void toggle(value)}
+          aria-label={t("admin.tracking")}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Preview stage only: let this person clock here before everyone else. */
+function EarlyAccessCard({ detail }: { detail: Detail }) {
+  const t = useTranslations("Zeiterfassung");
+  const locale = useLocale();
+  const today = useBerlinToday();
+  const setEarlyAccess = useMutation(api.time.admin.setEarlyAccess);
+  const showError = useTimeErrorToast();
+  const [busy, setBusy] = useState(false);
+  const from = detail.earlyAccessFrom;
+
+  async function toggle(enabled: boolean) {
+    setBusy(true);
+    try {
+      // From tomorrow: today is still recorded the old way.
+      await setEarlyAccess({ userId: detail.userId, from: enabled ? addDays(today, 1) : null });
+      toast.success(enabled ? t("admin.earlyAccessOnToast") : t("admin.earlyAccessOffToast"));
+    } catch (error) {
+      showError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="lg:col-span-2">
+      <CardContent className="flex items-start justify-between gap-4 p-5">
+        <div className="min-w-0">
+          <p className="text-base font-semibold">{t("admin.earlyAccess")}</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            {from
+              ? t("admin.earlyAccessOnHint", {
+                  date: formatDay(from, locale, {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  }),
+                })
+              : t("admin.earlyAccessOffHint")}
+          </p>
+        </div>
+        <Switch
+          checked={!!from}
+          disabled={busy || detail.trackingDisabled}
+          onCheckedChange={(value) => void toggle(value)}
+          aria-label={t("admin.earlyAccess")}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
 function Settings({ detail }: { detail: Detail }) {
+  const { mode } = useTimeMode();
   const t = useTranslations("Zeiterfassung");
   const locale = useLocale();
   const today = useBerlinToday();
@@ -123,6 +220,8 @@ function Settings({ detail }: { detail: Detail }) {
 
   return (
     <div className="grid gap-5 lg:grid-cols-2">
+      <TrackingCard detail={detail} />
+      {mode?.preview && <EarlyAccessCard detail={detail} />}
       <Card className="lg:col-span-2">
         <CardHeader className="flex-row items-center justify-between">
           <div>

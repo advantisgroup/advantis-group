@@ -5,18 +5,20 @@ import { type ReactNode } from "react";
 import { api } from "@advantis/convex/api";
 import { addDays, berlinDate, mondayOf } from "@advantis/convex/time";
 import { useQuery } from "convex/react";
-import { ArrowRight, CalendarClock, Coffee, Info, TriangleAlert } from "lucide-react";
+import { ArrowRight, CalendarClock, Clock3, Coffee, Info, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { ClockCard } from "@/components/zeiterfassung/ClockCard";
 import {
   AbsenceStatusBadge,
   AbsenceTypeLabel,
+  balanceClassName,
   Chip,
   SectionBoundary,
   WarningChips,
@@ -40,6 +42,7 @@ export function Overview() {
   const monday = mondayOf(today);
   const { days } = useDays(undefined, monday, addDays(monday, 6));
   const summary = useQuery(api.time.overview.summary, { today });
+  const mode = useQuery(api.time.mode.status);
   const todayView = days?.find((day) => day.date === today);
   const week = days?.reduce(
     (sum, day) => ({
@@ -49,6 +52,21 @@ export function Overview() {
     { worked: 0, target: 0 },
   );
   const weekWarnings = (days ?? []).filter((day) => day.date <= today && day.warnings.length > 0);
+
+  if (mode && !mode.tracking) {
+    return (
+      <EmptyState
+        icon={<Clock3 />}
+        title={t("overview.trackingOffTitle")}
+        description={t("overview.trackingOffHint")}
+        action={
+          <Button variant="outline" asChild>
+            <Link href="/zeiterfassung/abwesenheiten">{t("tabs.absences")}</Link>
+          </Button>
+        }
+      />
+    );
+  }
 
   const notices = summary
     ? [
@@ -73,9 +91,16 @@ export function Overview() {
         />
         <Kpi
           label={t("overview.balance")}
-          value={summary ? formatMinutes(summary.balance.minutes, true) : "–"}
-          tone={summary && summary.balance.minutes < 0 ? "warn" : "neutral"}
-          hint={t("overview.balanceHint")}
+          value={
+            summary ? (
+              <span className={balanceClassName(summary.balance.minutes)}>
+                {formatMinutes(summary.balance.minutes, true)}
+              </span>
+            ) : (
+              "–"
+            )
+          }
+          hint={mode?.preview ? t("overview.balanceHintPreview") : t("overview.balanceHint")}
         />
         <Kpi
           label={t("overview.vacation")}

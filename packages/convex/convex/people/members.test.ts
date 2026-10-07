@@ -139,3 +139,36 @@ describe("signing in under a new Clerk id", () => {
     expect((await t.run((ctx) => ctx.db.get(bobId)))?.clerkUserId).toBe("bob-shared");
   });
 });
+
+describe("accepting an invite", () => {
+  test("takes the name the inviter typed when Clerk has none", async () => {
+    const t = setup();
+    const adminId = await seedUser(t, "admin", "admin");
+    await t.run(async (ctx) =>
+      ctx.db.insert("invites", {
+        email: "dohlen@advantisgroup.de",
+        role: "employee",
+        invitedByUserId: adminId,
+        token: "token",
+        status: "pending",
+        expiresAt: Date.now() + 60_000,
+        createdAt: Date.now(),
+        firstName: "Dalia",
+        lastName: "Dohlen",
+      }),
+    );
+
+    const result = await t
+      .withIdentity({ subject: "dalia", email: "dohlen@advantisgroup.de" })
+      .mutation(api.people.users.ensureCurrentUser, {});
+
+    expect(result.status).toBe("active");
+    const user = await t.run((ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", "dalia"))
+        .unique(),
+    );
+    expect(user).toMatchObject({ firstName: "Dalia", lastName: "Dohlen", role: "employee" });
+  });
+});

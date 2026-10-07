@@ -49,10 +49,12 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   AbsenceTypeLabel,
   Chip,
+  balanceClassName,
   clockStatusClassName,
   FieldLabel,
   Segmented,
 } from "@/components/zeiterfassung/parts";
+import { ClockodoImport } from "@/components/zeiterfassung/ClockodoImport";
 import { matchesSearch } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
@@ -65,9 +67,9 @@ import {
   useTimeErrorToast,
 } from "@/lib/zeiterfassung";
 
-type Section = "people" | "approvals" | "holidays" | "locks" | "audit";
+type Section = "people" | "approvals" | "holidays" | "locks" | "audit" | "import";
 
-const SECTIONS: Section[] = ["people", "approvals", "holidays", "locks", "audit"];
+const SECTIONS: Section[] = ["people", "approvals", "holidays", "locks", "audit", "import"];
 
 /** Admin area: people, approvals, holidays, month locks and the audit log. */
 export function AdminPanel({ initialSection }: { initialSection?: string | null }) {
@@ -96,6 +98,7 @@ export function AdminPanel({ initialSection }: { initialSection?: string | null 
       {section === "holidays" && <Holidays />}
       {section === "locks" && <Locks />}
       {section === "audit" && <AuditLog />}
+      {section === "import" && <ClockodoImport />}
     </div>
   );
 }
@@ -154,7 +157,9 @@ function People() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {row.status === "absent" && row.absentType ? (
+                    {row.trackingDisabled ? (
+                      <Chip>{t("admin.trackingOff")}</Chip>
+                    ) : row.status === "absent" && row.absentType ? (
                       <span className="text-xs">
                         <AbsenceTypeLabel type={row.absentType} />
                       </span>
@@ -170,9 +175,12 @@ function People() {
                     )}
                   </TableCell>
                   <TableCell
-                    className={cn("text-right tabular-nums", row.balanceMinutes < 0 && "text-warn")}
+                    className={cn(
+                      "text-right tabular-nums",
+                      !row.trackingDisabled && balanceClassName(row.balanceMinutes),
+                    )}
                   >
-                    {formatMinutes(row.balanceMinutes, true)}
+                    {row.trackingDisabled ? "–" : formatMinutes(row.balanceMinutes, true)}
                   </TableCell>
                   <TableCell className="hidden text-right tabular-nums md:table-cell">
                     {formatDays(row.vacationRemaining, locale)}

@@ -29,6 +29,8 @@ export const createInviteRecord = internalMutation({
     teamIds: v.optional(v.array(v.id("teams"))),
     jobTitle: v.optional(v.string()),
     phone: v.optional(v.string()),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
@@ -69,6 +71,8 @@ export const createInviteRecord = internalMutation({
       teamIds: args.teamIds,
       jobTitle: args.jobTitle,
       phone: args.phone,
+      firstName: args.firstName?.trim() || undefined,
+      lastName: args.lastName?.trim() || undefined,
     };
 
     let inviteId;
@@ -117,6 +121,8 @@ export const create = userAction({
     teamIds: v.optional(v.array(v.id("teams"))),
     jobTitle: v.optional(v.string()),
     phone: v.optional(v.string()),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ inviteId: string; token: string }> => {
     // Only admins may grant admin/manager; managers can only invite employees.

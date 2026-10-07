@@ -228,8 +228,10 @@ describe("worked time", () => {
 });
 
 describe("ArbZG warnings", () => {
-  test("over 6 h needs 30 minutes", () => {
+  test("over 6 h needs 30 minutes, flagged from 6:15", () => {
     expect(day("2026-10-05", [work("2026-10-05", "08:00", "15:00")]).warnings).toEqual(["break30"]);
+    expect(day("2026-10-05", [work("2026-10-05", "08:00", "14:16")]).warnings).toEqual(["break30"]);
+    expect(day("2026-10-05", [work("2026-10-05", "08:00", "14:15")]).warnings).toEqual([]);
     expect(day("2026-10-05", [work("2026-10-05", "08:00", "14:00")]).warnings).toEqual([]);
   });
 

@@ -14,14 +14,15 @@ import { MaintenanceScreen } from "@/components/layout/MaintenanceScreen";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { RouteTabs } from "@/components/layout/RouteTabs";
 import { useIsAdmin } from "@/components/providers/current-user";
+import { PreviewBanner } from "@/components/zeiterfassung/PreviewBanner";
 import { TestModeBanner } from "@/components/zeiterfassung/TestModeBanner";
 
 export default function ZeiterfassungLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Zeiterfassung");
   const pathname = usePathname();
   const isAdmin = useIsAdmin();
-  // Test mode (Convex TIME_MODE ≠ live): only TIME_TESTERS get in, admins too
-  // see the maintenance screen, so nobody is bothered before go-live.
+  // Rollout stage (Convex TIME_MODE): test = admins and testers only,
+  // preview = everyone looks but nobody clocks yet, live = everyone.
   const mode = useQuery(api.time.mode.status);
   const approvals = useQuery(api.time.admin.approvals, isAdmin && mode?.canUse ? {} : "skip");
   const waiting = approvals ? approvals.absences.length + approvals.corrections.length : 0;
@@ -78,6 +79,9 @@ export default function ZeiterfassungLayout({ children }: { children: ReactNode 
         icon={<Clock3 className="size-4" />}
       />
       {mode.testMode && <TestModeBanner />}
+      {mode.preview && (
+        <PreviewBanner liveFrom={mode.liveFrom} isAdmin={isAdmin} earlyAccess={mode.earlyAccess} />
+      )}
       <RouteTabs tabs={tabs} activeValue={active} />
       <div className="mt-4">{children}</div>
     </div>

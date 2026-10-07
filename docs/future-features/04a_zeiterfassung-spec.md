@@ -36,7 +36,7 @@ Enforce on the server (Convex builders / `ctx.caller`), not only in the UI.
 | Clocking      | Start / stop in the browser (header control + page). Breaks are clocked as separate pause segments. No phone/NFC clocking for now.                                                                                                                                                                                                                                                                                              |
 | Location      | Not recorded.                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 18:00 rule    | At 18:00 Europe/Berlin every still-open work entry is closed automatically: end = start of the day's first work segment + that person's regular daily hours for that weekday (from their schedule), minus time already booked in earlier closed segments that day. Mark `autoClosed: true`, notify the person (in-app notification) with a hint to correct it via a correction request. Admins see auto-closed entries flagged. |
-| Breaks        | Only a **warning**, never auto-deducted: > 6 h work → 30 min break required, > 9 h → 45 min (ArbZG §4). Also warn on > 10 h/day and < 11 h rest between days.                                                                                                                                                                                                                                                                   |
+| Breaks        | Only a **warning**, never auto-deducted: > 6 h work → 30 min (flagged from 6:15, plus a notification to the person and the admins on clock-out), > 9 h → 45 min (ArbZG §4). Also warn on > 10 h/day and < 11 h rest.                                                                                                                                                                                                                                                                   |
 | Corrections   | Employees may add/edit/delete their own entries for past days (not today's running entry) → saved as **pending correction**, admin approves or rejects. Approved corrections apply; the original stays in the audit log.                                                                                                                                                                                                        |
 | Month lock    | A month locks automatically on the **15th of the following month, 00:00 Europe/Berlin**. After that no one but an admin (with an explicit unlock + reason) can change it.                                                                                                                                                                                                                                                       |
 | Overtime      | Running **hours account** (Stundenkonto): worked − target, cumulative, with an opening balance per person (from import). No payout/expiry logic.                                                                                                                                                                                                                                                                                |
@@ -142,30 +142,49 @@ Built as specified; where the spec left room:
 - **Hours account** counts from the opening date (else the first schedule or
   entry) up to yesterday.
 
-### Test mode (before go-live)
+### Rollout stages (before go-live)
 
-Convex env `TIME_MODE` anything but `live` (default: unset) = test mode:
-only the emails in `TIME_TESTERS` may call `time.*` (admins included — the
-others get the maintenance screen and no sidebar item), admin notifications
-go to the testers, the directory's "Im Büro" stays empty, and a banner offers
-"Testdaten löschen" (`time.mode.purgeTestData`, everything except holidays,
-refused once live).
+Convex env `TIME_MODE`:
+
+- `test` (default, unset or anything unknown): only admins and the emails in
+  `TIME_TESTERS` may call `time.*` (everyone else gets the maintenance screen
+  and no sidebar item). A banner offers "Testdaten löschen"
+  (`time.mode.purgeTestData`, everything except holidays — test stage only).
+- `preview`: everyone sees the module (sidebar item marked "Neu") and their
+  own data, read-only. Nobody clocks (no header pill, no morning prompt);
+  employees can't file requests or corrections; admins still manage (import,
+  schedules, corrections, decisions). The hours account stays at the imported
+  opening balance, since Clockodo is still the record. A banner announces the
+  start date from `TIME_LIVE_FROM` (YYYY-MM-DD). Admins can give single people
+  early access (Verwaltung → Person → Einstellungen, `timeProfiles.
+  earlyAccessFrom`, from the next day on): they use the module as if live. Admins can give single people
+  early access (Verwaltung → Person → Einstellungen, `timeProfiles.
+  earlyAccessFrom`, from the next day on): they use the module as if live.
+- `live`: everyone uses it.
+
+Until `live`, admin notifications also reach the testers and the directory's
+"Im Büro" stays empty.
 
 ### Cutover checklist
 
-0. Delete the test data (banner button), then set Convex env
-   `TIME_MODE=live`.
+0. Delete the test data (banner button, test stage), import (step 1), set
+   `TIME_MODE=preview` + `TIME_LIVE_FROM` for the preview week, and on the
+   cutover morning re-import with a fresh export and set `TIME_MODE=live`.
 
-1. Run the Clockodo import (separate task): per person `setOpeningBalance`
-   (minutes + cutover date), `setAllowance` for the current year
-   (entitlement + carry-over), entries with `source: "import"` and
-   absences; then `time.admin.recomputeTotals` per person to cache the
-   locked months.
+1. Clockodo import (Verwaltung → Import): export Clockodo's data as JSON
+   (read-only calls to Clockodo's own API from a logged-in admin tab: users,
+   `/api/targethours`, `/api/v2/userReports`, `/api/v4/absences`,
+   `/api/v2/entries` since Oct 2024), choose the file, check the mapping and
+   whose hours account to take over (people who don't clock in Clockodo only
+   have a target-hours deficit there), import. Schedules, the current year's
+   allowance and the opening balance (dated the export day) are replaced;
+   entries and absences are upserted by Clockodo id, so the import is re-run
+   with a fresh export on the cutover morning. Clockodo's "Überstundenabbau"
+   becomes absence type `overtime`, which keeps the day's target.
 2. Seed holidays for the current and next year (Verwaltung → Feiertage).
 3. Set each part-timer's schedule (default is 8 h Mon–Fri).
-4. `apps/intranet/src/lib/maintenance.ts`: add `/zeiterfassung` to
-   `OPEN_PREFIXES`; `lib/pages.ts`: drop `visible: admin` from the
-   `/zeiterfassung*` entries.
+4. ~~maintenance/pages gating~~ — done: `/zeiterfassung` is open in
+   `maintenance.ts`, `lib/pages.ts` follows `canUseTime`.
 5. `AppShell.tsx`: drop `ClockodoHeaderControl` — `TimeClockHeaderControl`
    and the morning `ClockInPrompt` are already mounted for everyone
    `time.mode.status` lets in.

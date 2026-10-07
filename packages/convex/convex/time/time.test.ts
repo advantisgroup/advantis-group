@@ -607,23 +607,28 @@ describe("test mode", () => {
     vi.stubEnv("TIME_TESTERS", "Alice@advantisgroup.de, bob@advantisgroup.de");
   });
 
-  test("only testers get in — admins included", async () => {
+  test("admins and testers get in, nobody else", async () => {
     const s = await setup();
-    expect(await s.admin.query(api.time.mode.status, {})).toEqual({
-      testMode: true,
-      canUse: false,
-    });
-    await expect(s.admin.query(api.time.overview.summary, { today: "2026-10-05" })).rejects.toThrow(
-      /Testmodus/,
-    );
-    await expect(s.admin.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Testmodus/);
-    expect(await s.alice.query(api.time.mode.status, {})).toEqual({
+    expect(await s.admin.query(api.time.mode.status, {})).toMatchObject({
       testMode: true,
       canUse: true,
     });
+    expect(await s.alice.query(api.time.mode.status, {})).toMatchObject({
+      testMode: true,
+      canUse: true,
+    });
+    vi.stubEnv("TIME_TESTERS", "");
+    expect(await s.alice.query(api.time.mode.status, {})).toMatchObject({
+      testMode: true,
+      canUse: false,
+    });
+    await expect(s.alice.query(api.time.overview.summary, { today: "2026-10-05" })).rejects.toThrow(
+      /Testmodus/,
+    );
+    await expect(s.alice.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Testmodus/);
   });
 
-  test("notifications go to testers, not admins; nobody shows as in the office", async () => {
+  test("notifications reach admins and testers; nobody shows as in the office", async () => {
     const s = await setup();
     setNow("2026-10-05", "09:00");
     await s.alice.mutation(api.time.clock.clockIn, {});
@@ -635,7 +640,7 @@ describe("test mode", () => {
       halfDayStart: false,
       halfDayEnd: false,
     });
-    expect(await notificationsOf(s.t, s.ids.admin)).toHaveLength(0);
+    expect((await notificationsOf(s.t, s.ids.admin)).length).toBeGreaterThan(0);
     expect((await notificationsOf(s.t, s.ids.bob)).length).toBeGreaterThan(0);
   });
 
@@ -669,5 +674,288 @@ describe("test mode", () => {
     await expect(
       s.alice.mutation(api.time.mode.purgeTestData, { confirm: "TESTDATEN LÖSCHEN" }),
     ).rejects.toThrow(/Testmodus/);
+  });
+});
+
+describe("phone bookings", () => {
+  test("the device of each clock action is kept on the segment", async () => {
+    const s = await setup();
+    setNow("2026-10-05", "08:00");
+    await s.alice.mutation(api.time.clock.clockIn, { device: "mobile" });
+    setNow("2026-10-05", "12:00");
+    await s.alice.mutation(api.time.clock.startBreak, { device: "desktop" });
+    setNow("2026-10-05", "12:30");
+    await s.alice.mutation(api.time.clock.endBreak, {});
+    setNow("2026-10-05", "16:30");
+    await s.alice.mutation(api.time.clock.clockOut, { device: "desktop" });
+    const rows = await s.t.run((ctx) => ctx.db.query("timeEntries").collect());
+    const work = rows.find((row) => row.kind === "work");
+    const pause = rows.find((row) => row.kind === "break");
+    expect(work).toMatchObject({ startDevice: "mobile", endDevice: "desktop" });
+    expect(pause?.startDevice).toBe("desktop");
+    expect(pause?.endDevice).toBeUndefined();
+    // Only the phone clock-in told the admins; Alice herself gets nothing.
+    const phone = (await notificationsOf(s.t, s.ids.admin)).filter(
+      (n) => n.type === "time_phone_booking",
+    );
+    expect(phone).toHaveLength(1);
+    expect(phone[0].title).toBe("Handy: Alice eingestempelt");
+    expect(phone[0].body).toContain("08:00 Uhr");
+    expect(
+      (await notificationsOf(s.t, s.ids.alice)).filter((n) => n.type === "time_phone_booking"),
+    ).toHaveLength(0);
+  });
+});
+
+describe("missing break", () => {
+  test("clocking out after 6:15 without a break tells the person and the admins", async () => {
+    const s = await setup();
+    setNow("2026-10-05", "08:00");
+    await s.alice.mutation(api.time.clock.clockIn, {});
+    setNow("2026-10-05", "14:10");
+    await s.alice.mutation(api.time.clock.clockOut, {});
+    expect(
+      (await notificationsOf(s.t, s.ids.alice)).filter((n) => n.type === "time_break_missing"),
+    ).toHaveLength(0);
+
+    setNow("2026-10-06", "08:00");
+    await s.alice.mutation(api.time.clock.clockIn, {});
+    setNow("2026-10-06", "16:00");
+    await s.alice.mutation(api.time.clock.clockOut, {});
+    const mine = (await notificationsOf(s.t, s.ids.alice)).filter(
+      (n) => n.type === "time_break_missing",
+    );
+    expect(mine).toHaveLength(1);
+    expect(mine[0].body).toContain("8:00");
+    expect(
+      (await notificationsOf(s.t, s.ids.admin)).filter((n) => n.type === "time_break_missing"),
+    ).toHaveLength(1);
+    // Nothing is deducted.
+    expect((await workedOn(s.alice, "2026-10-06")).workedMinutes).toBe(480);
+  });
+});
+
+describe("preview", () => {
+  beforeEach(() => {
+    vi.stubEnv("TIME_MODE", "preview");
+    vi.stubEnv("TIME_LIVE_FROM", "2026-10-12");
+    vi.stubEnv("TIME_TESTERS", "");
+  });
+
+  test("everyone looks, nobody clocks, only admins change things", async () => {
+    const s = await setup();
+    expect(await s.alice.query(api.time.mode.status, {})).toMatchObject({
+      testMode: false,
+      preview: true,
+      liveFrom: "2026-10-12",
+      canUse: true,
+      canWrite: false,
+      canClock: false,
+    });
+    expect(await s.admin.query(api.time.mode.status, {})).toMatchObject({
+      canUse: true,
+      canWrite: true,
+      canClock: false,
+    });
+
+    setNow("2026-10-07", "09:00");
+    await s.alice.query(api.time.overview.summary, { today: "2026-10-07" });
+    await s.alice.query(api.time.entries.range, { from: "2026-10-05", to: "2026-10-11" });
+    await expect(s.alice.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Vorschau/);
+    await expect(s.admin.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Vorschau/);
+    await expect(
+      s.alice.mutation(api.time.absences.request, {
+        type: "vacation",
+        startDate: "2026-10-20",
+        endDate: "2026-10-20",
+        halfDayStart: false,
+        halfDayEnd: false,
+      }),
+    ).rejects.toThrow(/Vorschau/);
+
+    // Admins still fix imported data directly.
+    await s.admin.mutation(api.time.entries.save, {
+      userId: s.ids.alice,
+      kind: "work",
+      start: local("2026-10-06", "08:00"),
+      end: local("2026-10-06", "16:00"),
+    });
+    expect((await workedOn(s.alice, "2026-10-06")).workedMinutes).toBe(480);
+  });
+
+  test("the hours account stays at the imported balance", async () => {
+    const s = await setup();
+    await s.t.run(async (ctx) => {
+      await ctx.db.insert("workSchedules", {
+        userId: s.ids.alice,
+        validFrom: "2026-01-01",
+        minutesPerWeekday: [480, 480, 480, 480, 480, 0, 0],
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("timeBalances", {
+        userId: s.ids.alice,
+        openingMinutes: 600,
+        openingDate: "2026-10-06",
+        updatedAt: Date.now(),
+      });
+    });
+    setNow("2026-10-09", "10:00");
+    const summary = await s.alice.query(api.time.overview.summary, { today: "2026-10-09" });
+    expect(summary.balance.minutes).toBe(600);
+
+    // An admin enters the 6th (9 h on an 8 h day): counted up to that day.
+    await s.admin.mutation(api.time.entries.save, {
+      userId: s.ids.alice,
+      kind: "work",
+      start: local("2026-10-06", "08:00"),
+      end: local("2026-10-06", "17:00"),
+    });
+    const entered = await s.alice.query(api.time.overview.summary, { today: "2026-10-09" });
+    expect(entered.balance.minutes).toBe(600 + 60);
+    vi.stubEnv("TIME_MODE", "live");
+    const live = await s.alice.query(api.time.overview.summary, { today: "2026-10-09" });
+    expect(live.balance.minutes).toBeLessThan(600);
+  });
+
+  test("early access: chosen people use it fully from their start date", async () => {
+    const s = await setup();
+    setNow("2026-10-06", "15:00");
+    await s.admin.mutation(api.time.admin.setEarlyAccess, {
+      userId: s.ids.alice,
+      from: "2026-10-07",
+    });
+    expect(await s.alice.query(api.time.mode.status, {})).toMatchObject({
+      earlyAccess: false,
+      canClock: false,
+    });
+    await expect(s.alice.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Vorschau/);
+
+    setNow("2026-10-07", "08:00");
+    expect(await s.alice.query(api.time.mode.status, {})).toMatchObject({
+      earlyAccess: true,
+      canWrite: true,
+      canClock: true,
+    });
+    await s.alice.mutation(api.time.clock.clockIn, {});
+    // Everyone else still waits — admins included.
+    await expect(s.bob.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Vorschau/);
+    await expect(s.admin.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/Vorschau/);
+
+    // Switching tracking off keeps the early access; ending it locks again.
+    await s.admin.mutation(api.time.admin.setTracking, { userId: s.ids.alice, disabled: false });
+    expect((await s.alice.query(api.time.mode.status, {})).earlyAccess).toBe(true);
+    await s.admin.mutation(api.time.admin.setEarlyAccess, { userId: s.ids.alice, from: null });
+    expect((await s.alice.query(api.time.mode.status, {})).canClock).toBe(false);
+  });
+
+  test("the test data wipe is refused", async () => {
+    const s = await setup();
+    await expect(
+      s.admin.mutation(api.time.mode.purgeTestData, { confirm: "TESTDATEN LÖSCHEN" }),
+    ).rejects.toThrow(/Testmodus/);
+  });
+});
+
+describe("Clockodo import", () => {
+  test("applies a person, imports history once and updates on re-run", async () => {
+    const s = await setup();
+    setNow("2026-10-06", "09:00");
+    const opening = { minutes: 356, date: "2026-10-06" };
+    const person = {
+      userId: s.ids.alice,
+      clockodoId: 364581,
+      schedules: [{ validFrom: "2024-10-17", minutesPerWeekday: [360, 360, 360, 360, 360, 0, 0] }],
+      allowance: { year: 2026, days: 24, carriedOver: 0 },
+      opening,
+    };
+    await s.admin.mutation(api.time.importClockodo.applyPerson, person);
+    await expect(s.alice.mutation(api.time.importClockodo.applyPerson, person)).rejects.toThrow();
+
+    const entries = [
+      {
+        importId: "clockodo:entry:1",
+        start: local("2025-03-03", "08:00"),
+        end: local("2025-03-03", "14:00"),
+      },
+      {
+        importId: "clockodo:entry:2",
+        start: local("2026-10-05", "08:22"),
+        end: local("2026-10-05", "14:29"),
+      },
+    ];
+    expect(
+      await s.admin.mutation(api.time.importClockodo.importEntries, {
+        userId: s.ids.alice,
+        entries,
+      }),
+    ).toEqual({ inserted: 2, updated: 0 });
+    const again = [{ ...entries[0] }, { ...entries[1], end: local("2026-10-05", "14:45") }];
+    expect(
+      await s.admin.mutation(api.time.importClockodo.importEntries, {
+        userId: s.ids.alice,
+        entries: again,
+      }),
+    ).toEqual({ inserted: 0, updated: 1 });
+
+    const absences = [
+      {
+        importId: "clockodo:absence:9",
+        type: "overtime" as const,
+        status: "approved" as const,
+        startDate: "2026-10-07",
+        endDate: "2026-10-07",
+        halfDayStart: false,
+        halfDayEnd: false,
+      },
+    ];
+    expect(
+      await s.admin.mutation(api.time.importClockodo.importAbsences, {
+        userId: s.ids.alice,
+        absences,
+      }),
+    ).toEqual({ inserted: 1, updated: 0 });
+    expect(
+      await s.admin.mutation(api.time.importClockodo.importAbsences, {
+        userId: s.ids.alice,
+        absences,
+      }),
+    ).toEqual({ inserted: 0, updated: 0 });
+
+    const rows = await s.t.run((ctx) =>
+      ctx.db
+        .query("timeEntries")
+        .withIndex("by_user_start", (q) => q.eq("userId", s.ids.alice))
+        .collect(),
+    );
+    expect(rows.map((row) => row.source)).toEqual(["import", "import"]);
+
+    // The account starts from Clockodo's balance on the export day: the
+    // imported history before it does not count twice.
+    setNow("2026-10-07", "09:00");
+    const summary = await s.alice.query(api.time.overview.summary, { today: "2026-10-07" });
+    expect(summary.balance.minutes).toBe(356 - 360);
+    const user = await s.t.run((ctx) => ctx.db.get(s.ids.alice));
+    expect(user?.clockodoUserId).toBe("364581");
+  });
+});
+
+describe("time tracking off for a person", () => {
+  test("no clocking, flagged in the overview, switch is audited", async () => {
+    const s = await setup();
+    setNow("2026-10-06", "09:00");
+    expect((await s.bob.query(api.time.mode.status, {})).tracking).toBe(true);
+    await expect(
+      s.bob.mutation(api.time.admin.setTracking, { userId: s.ids.bob, disabled: true }),
+    ).rejects.toThrow();
+    await s.admin.mutation(api.time.admin.setTracking, { userId: s.ids.bob, disabled: true });
+    expect((await s.bob.query(api.time.mode.status, {})).tracking).toBe(false);
+    await expect(s.bob.mutation(api.time.clock.clockIn, {})).rejects.toThrow(/tracking/i);
+    const people = await s.admin.query(api.time.admin.people, { today: "2026-10-06" });
+    expect(people.find((row) => row.userId === s.ids.bob)?.trackingDisabled).toBe(true);
+    expect(people.find((row) => row.userId === s.ids.alice)?.trackingDisabled).toBe(false);
+    expect((await audit(s.t)).some((row) => row.action === "tracking_off")).toBe(true);
+
+    await s.admin.mutation(api.time.admin.setTracking, { userId: s.ids.bob, disabled: false });
+    await s.bob.mutation(api.time.clock.clockIn, {});
   });
 });

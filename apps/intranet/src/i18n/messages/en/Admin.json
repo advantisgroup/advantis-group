@@ -75,6 +75,8 @@
   "onboardModePersonal": "Personal email",
   "onboardModeCompany": "Company email",
   "onboardPersonalIntro": "Recommended path: a personal email address works exactly the same for intranet access — you can start right away, without waiting on IT to set up a company mailbox first. The person just signs in with the invited address. A company address can always be added later.",
+  "onboardFieldFirstName": "First name",
+  "onboardFieldLastName": "Last name",
   "onboardFieldDepartment": "Department",
   "onboardFieldDepartmentPlaceholder": "Choose a department",
   "onboardFieldTeam": "Team",

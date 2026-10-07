@@ -54,13 +54,13 @@ export function ClockInPrompt() {
   const today = berlinParts(Date.now());
 
   useEffect(() => {
-    if (decided || !mode?.canUse || status !== "out") return;
+    if (decided || !mode?.canClock || status !== "out") return;
     const { hour, date } = berlinParts(Date.now());
     if (hour < FROM_HOUR || hour >= TO_HOUR) return;
     if (dismissedOn() === date) return;
     setOpen(true);
     setDecided(true);
-  }, [decided, mode?.canUse, status]);
+  }, [decided, mode?.canClock, status]);
 
   // Clocked in somewhere else (header pill, another tab) — nothing to ask.
   useEffect(() => {

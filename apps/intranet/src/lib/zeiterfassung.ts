@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { api } from "@advantis/convex/api";
 import { berlinDate, berlinInstant, TIME_ZONE } from "@advantis/convex/time";
+import { useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -92,6 +94,8 @@ export function timeErrorReason(error: unknown): string | null {
 }
 
 const KNOWN_REASONS = new Set([
+  "time_preview",
+  "tracking_disabled",
   "month_locked",
   "overlap",
   "already_clocked_in",
@@ -122,6 +126,48 @@ export function useTimeErrorToast() {
   );
 }
 
-export type AbsenceType = "vacation" | "sick" | "special" | "other";
+export type AbsenceType = "vacation" | "sick" | "special" | "overtime" | "other";
 export type AbsenceStatus = "pending" | "approved" | "rejected" | "cancelled";
 export type ClockStatus = "working" | "break" | "out";
+
+/**
+ * Rollout stage of the module for the signed-in person (see Convex
+ * time/lib/mode.ts). While loading everything counts as read-only, so no
+ * button flashes up that would then be refused.
+ */
+export function useTimeMode() {
+  const mode = useQuery(api.time.mode.status);
+  return {
+    mode,
+    /** Can't file requests or corrections (employees during the preview). */
+    readOnly: !(mode?.canWrite ?? false),
+    /** May clock in and out. */
+    canClock: mode?.canClock ?? false,
+  };
+}
+
+/**
+ * Phone or computer, as the browser reports it — recorded with every clock
+ * action so phone bookings are marked. Tablets count as phones.
+ */
+export function clientDevice(): "mobile" | "desktop" {
+  if (typeof navigator === "undefined") return "desktop";
+  const hinted = (navigator as Navigator & { userAgentData?: { mobile?: boolean } }).userAgentData;
+  if (hinted?.mobile) return "mobile";
+  const ua = navigator.userAgent;
+  if (/Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua)) return "mobile";
+  // iPadOS reports itself as a Mac.
+  if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return "mobile";
+  return "desktop";
+}
+
+/** Whether any clock action behind these segments came from a phone. */
+export function bookedByPhone(
+  rows: readonly { startDevice?: string; endDevice?: string; status?: string }[],
+): boolean {
+  return rows.some(
+    (row) =>
+      (row.status === undefined || row.status === "active") &&
+      (row.startDevice === "mobile" || row.endDevice === "mobile"),
+  );
+}

@@ -75,6 +75,8 @@
   "onboardModePersonal": "Private E-Mail",
   "onboardModeCompany": "Firmen-E-Mail",
   "onboardPersonalIntro": "Empfohlener Weg: Für den Intranet-Zugang macht eine private E-Mail-Adresse keinen Unterschied — du kannst sofort loslegen, ohne vorher mit IT eine Firmen-Mailbox einzurichten. Die Person meldet sich einfach mit der eingeladenen Adresse an. Eine Firmenadresse kann später jederzeit ergänzt werden.",
+  "onboardFieldFirstName": "Vorname",
+  "onboardFieldLastName": "Nachname",
   "onboardFieldDepartment": "Abteilung",
   "onboardFieldDepartmentPlaceholder": "Abteilung wählen",
   "onboardFieldTeam": "Team",

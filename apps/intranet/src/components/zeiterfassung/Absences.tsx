@@ -45,6 +45,7 @@ import {
   formatDays,
   useBerlinToday,
   useTimeErrorToast,
+  useTimeMode,
 } from "@/lib/zeiterfassung";
 
 /** Your absences: the vacation account, requests and sick days. */
@@ -55,6 +56,7 @@ export function Absences({ userId, direct }: { userId?: Id<"users">; direct: boo
   const rows = useQuery(api.time.absences.list, { userId });
   const summary = useQuery(api.time.overview.summary, { userId, today });
   const cancel = useMutation(api.time.absences.cancel);
+  const { readOnly } = useTimeMode();
   const showError = useTimeErrorToast();
   const [dialog, setDialog] = useState<AbsenceType | null>(null);
 
@@ -132,16 +134,18 @@ export function Absences({ userId, direct }: { userId?: Id<"users">; direct: boo
         />
       </KpiStrip>
 
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button variant="outline" size="sm" onClick={() => setDialog("sick")}>
-          <Thermometer />
-          {t("absences.reportSick")}
-        </Button>
-        <Button size="sm" onClick={() => setDialog("vacation")}>
-          <Plus />
-          {t("absences.request")}
-        </Button>
-      </div>
+      {!readOnly && (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => setDialog("sick")}>
+            <Thermometer />
+            {t("absences.reportSick")}
+          </Button>
+          <Button size="sm" onClick={() => setDialog("vacation")}>
+            <Plus />
+            {t("absences.request")}
+          </Button>
+        </div>
+      )}
 
       {rows === undefined ? (
         <div className="space-y-2">
@@ -192,12 +196,13 @@ export function Absences({ userId, direct }: { userId?: Id<"users">; direct: boo
                     <AbsenceStatusBadge status={row.status} />
                   </TableCell>
                   <TableCell className="text-right">
-                    {(row.status === "pending" || (direct && row.status === "approved")) && (
-                      <Button variant="ghost" size="sm" onClick={() => void withdraw(row._id)}>
-                        <X />
-                        {t("absences.cancel")}
-                      </Button>
-                    )}
+                    {!readOnly &&
+                      (row.status === "pending" || (direct && row.status === "approved")) && (
+                        <Button variant="ghost" size="sm" onClick={() => void withdraw(row._id)}>
+                          <X />
+                          {t("absences.cancel")}
+                        </Button>
+                      )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -217,7 +222,7 @@ export function Absences({ userId, direct }: { userId?: Id<"users">; direct: boo
                 </span>
                 <span className="flex flex-col items-end gap-1">
                   <AbsenceStatusBadge status={row.status} />
-                  {row.status === "pending" && (
+                  {!readOnly && row.status === "pending" && (
                     <button
                       type="button"
                       className="text-xs text-muted-foreground underline-offset-2 hover:underline"

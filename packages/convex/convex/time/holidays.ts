@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 import { internalMutation, userMutation, userQuery } from "../functions";
-import { assertTimeAccess } from "./lib/mode";
+import { assertTimeAccess, assertTimeWrite } from "./lib/mode";
 import { isIsoDate } from "./lib/berlin";
 import { bavarianHolidays, HOLIDAY_REGION } from "./lib/holidays";
 import {
@@ -42,7 +42,7 @@ export const save = userMutation({
     fraction: fractionValidator,
   },
   handler: async (ctx, args) => {
-    assertTimeAccess(ctx);
+    await assertTimeWrite(ctx);
     const name = args.name.trim();
     if (!isIsoDate(args.date) || !name) {
       throw timeError("bad_request", "invalid_range", "A date and a name are required");
@@ -80,7 +80,7 @@ export const remove = userMutation({
   role: "admin",
   args: { id: v.id("holidays") },
   handler: async (ctx, { id }) => {
-    assertTimeAccess(ctx);
+    await assertTimeWrite(ctx);
     const existing = await ctx.db.get(id);
     if (!existing) return;
     await assertDatesOpen(ctx, [existing.date]);
@@ -124,7 +124,7 @@ export const seedYear = userMutation({
   role: "admin",
   args: { year: v.number() },
   handler: async (ctx, { year }) => {
-    assertTimeAccess(ctx);
+    await assertTimeWrite(ctx);
     if (!Number.isInteger(year) || year < 2000 || year > 2100) {
       throw timeError("bad_request", "invalid_range", "Bad year");
     }

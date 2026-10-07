@@ -100,6 +100,9 @@ export async function beginRegistration(clerkUserId: string) {
       residentKey: "required",
       userVerification: "required",
     },
+    // Offer the device's own unlock (Windows Hello PIN, Touch ID) first —
+    // people sign in on their fixed work PC, and that needs no phone.
+    preferredAuthenticatorType: "localDevice",
   });
   return { options, flowId: await createChallenge("registration", options.challenge, clerkUserId) };
 }

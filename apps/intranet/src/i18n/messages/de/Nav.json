@@ -88,5 +88,6 @@
   "toolMoveUp": "{name} nach oben",
   "toolMoveDown": "{name} nach unten",
   "toolRemove": "{name} entfernen",
-  "policies": "Richtlinien"
+  "policies": "Richtlinien",
+  "newBadge": "Neu"
 }

@@ -102,6 +102,8 @@ interface NavItem {
   external?: boolean;
   /** Tour targeting attribute value. */
   tourAttr?: string;
+  /** Shows a small "Neu" chip (e.g. a module in its preview week). */
+  isNew?: boolean;
 }
 
 interface NavGroup {
@@ -276,8 +278,8 @@ export function Sidebar() {
           },
         ]
       : []),
-    // Own time tracking, next to Clockodo until the cutover. While Convex runs
-    // it in test mode only the testers see it — admins included.
+    // Own time tracking, next to Clockodo until the cutover. Test stage: only
+    // admins and testers see it; preview: everyone, marked as new.
     ...(timeMode?.canUse
       ? [
           {
@@ -285,6 +287,7 @@ export function Sidebar() {
             href: "/zeiterfassung",
             labelKey: "zeiterfassung",
             icon: Timer,
+            isNew: timeMode.preview,
           },
         ]
       : []),
@@ -517,6 +520,10 @@ export function Sidebar() {
             ) : null}
             {item.badge ? (
               <SidebarMenuBadge>{item.badge > 99 ? "99+" : item.badge}</SidebarMenuBadge>
+            ) : item.isNew ? (
+              <span className="ml-auto shrink-0 rounded-full bg-primary/12 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-primary group-data-[state=collapsed]/sidebar:hidden">
+                {t("newBadge")}
+              </span>
             ) : null}
           </Link>
         </SidebarMenuButton>

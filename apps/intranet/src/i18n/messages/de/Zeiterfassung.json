@@ -28,7 +28,10 @@
     "out": "Ausstempeln",
     "pause": "Pause",
     "resume": "Weiterarbeiten",
-    "open": "Zeiterfassung öffnen"
+    "open": "Zeiterfassung öffnen",
+    "previewTitle": "Stempeln ab dem {date}",
+    "previewTitleNoDate": "Stempeln geht bald los",
+    "previewHint": "Bis dahin bitte weiter in Clockodo stempeln."
   },
   "overview": {
     "clockUnavailable": "Die Stempeluhr ist gerade nicht verfügbar",
@@ -57,7 +60,10 @@
     "allEntries": "Alle Zeiten",
     "from": "Von",
     "to": "Bis",
-    "duration": "Dauer"
+    "duration": "Dauer",
+    "trackingOffTitle": "Für dich ist die Zeiterfassung ausgeschaltet",
+    "trackingOffHint": "Du musst nicht stempeln. Urlaub und andere Abwesenheiten kannst du trotzdem eintragen.",
+    "balanceHintPreview": "Stand aus Clockodo"
   },
   "entries": {
     "running": "läuft",
@@ -113,7 +119,12 @@
     "deleted": "Eintrag gelöscht",
     "deleteTitle": "Eintrag löschen?",
     "deleteHintDirect": "Der Eintrag zählt nicht mehr, bleibt aber im Protokoll erhalten.",
-    "deleteHint": "Die Löschung wird als Korrektur beantragt und gilt nach Freigabe."
+    "deleteHint": "Die Löschung wird als Korrektur beantragt und gilt nach Freigabe.",
+    "mobile": "Handy",
+    "mobileHint": "Mindestens eine Stempelung an diesem Tag wurde mit dem Handy gemacht.",
+    "mobileStart": "per Handy eingestempelt",
+    "mobileEnd": "per Handy ausgestempelt",
+    "mobileBoth": "per Handy ein- und ausgestempelt"
   },
   "csv": {
     "export": "CSV-Export",
@@ -132,7 +143,7 @@
   "warnings": {
     "break30": {
       "label": "Pause < 30 Min.",
-      "hint": "Über 6 Stunden Arbeit brauchen mindestens 30 Minuten Pause (§ 4 ArbZG). Pausen zählen ab 15 Minuten."
+      "hint": "Über 6 Stunden Arbeit brauchen mindestens 30 Minuten Pause (§ 4 ArbZG); markiert wird ab 6:15 Std. Die Pause wird nicht automatisch abgezogen – bitte nachtragen, falls sie fehlt. Pausen zählen ab 15 Minuten."
     },
     "break45": {
       "label": "Pause < 45 Min.",
@@ -151,7 +162,8 @@
     "vacation": "Urlaub",
     "sick": "Krank",
     "special": "Sonderurlaub",
-    "other": "Sonstiges"
+    "other": "Sonstiges",
+    "overtime": "Überstundenabbau"
   },
   "absenceStatus": {
     "pending": "Beantragt",
@@ -213,7 +225,8 @@
       "approvals": "Freigaben",
       "holidays": "Feiertage",
       "locks": "Monatsabschluss",
-      "audit": "Protokoll"
+      "audit": "Protokoll",
+      "import": "Import"
     },
     "search": "Person suchen…",
     "noPeople": "Niemand gefunden",
@@ -292,7 +305,18 @@
     "allowanceDays": "Urlaubstage",
     "openingSaved": "Anfangssaldo gespeichert",
     "openingHours": "Stunden (negativ mit Minus)",
-    "openingDate": "Stichtag"
+    "openingDate": "Stichtag",
+    "trackingOff": "Ohne Zeiterfassung",
+    "tracking": "Zeiterfassung für diese Person",
+    "trackingOnHint": "Die Person stempelt selbst; Stundenkonto und Morgen-Hinweis sind aktiv.",
+    "trackingOffHint": "Diese Person erfasst keine Arbeitszeit: keine Stempeluhr, kein Morgen-Hinweis, kein Stundenkonto in der Übersicht. Abwesenheiten (z. B. Urlaub) funktionieren weiter.",
+    "trackingOnToast": "Zeiterfassung eingeschaltet",
+    "trackingOffToast": "Zeiterfassung ausgeschaltet",
+    "earlyAccess": "Schon vor dem Start nutzen",
+    "earlyAccessOffHint": "Während der Vorschau sieht die Person nur ihre Daten. Einschalten, wenn sie schon jetzt hier stempeln soll (z. B. weil sie Clockodo nie genutzt hat).",
+    "earlyAccessOnHint": "Stempelt und beantragt schon hier, ab {date}.",
+    "earlyAccessOnToast": "Freigeschaltet – stempelt ab morgen hier",
+    "earlyAccessOffToast": "Wieder nur Vorschau"
   },
   "audit": {
     "system": "System",
@@ -347,11 +371,13 @@
     "already_pending": "Für diesen Eintrag wartet schon eine Korrektur.",
     "not_pending": "Das wurde inzwischen schon entschieden.",
     "changed_meanwhile": "Der Eintrag hat sich inzwischen geändert. Bitte neu laden.",
-    "no_working_days": "Im gewählten Zeitraum gibt es keine Arbeitstage."
+    "no_working_days": "Im gewählten Zeitraum gibt es keine Arbeitstage.",
+    "tracking_disabled": "Für diese Person ist die Zeiterfassung ausgeschaltet.",
+    "time_preview": "Die Zeiterfassung ist noch in der Vorschau – das geht erst ab dem Start."
   },
   "testMode": {
-    "title": "Testmodus – nur für Tester sichtbar",
-    "description": "Die Zeiterfassung ist noch nicht freigeschaltet: Nur die in Convex hinterlegten Tester sehen sie, Benachrichtigungen gehen nur an sie, und im Mitarbeiterverzeichnis erscheint niemand als „Im Büro“.",
+    "title": "Testmodus – nur für Admins und Tester sichtbar",
+    "description": "Die Zeiterfassung ist noch nicht freigeschaltet: Mitarbeiter sehen sie erst nach dem Clockodo-Import. Benachrichtigungen gehen nur an Admins und Tester, und im Mitarbeiterverzeichnis erscheint niemand als „Im Büro“.",
     "purge": "Testdaten löschen",
     "purgeTitle": "Alle Testdaten löschen?",
     "purgeDescription": "Löscht alle Zeiteinträge, Abwesenheiten, Arbeitszeitmodelle, Urlaubskonten, Stundenkonten, Monatssperren und das Protokoll der Zeiterfassung – für alle Personen. Feiertage bleiben. Das lässt sich nicht rückgängig machen.",
@@ -368,5 +394,46 @@
     "hint": "Du kannst dich auch später über die Stempeluhr oben rechts oder unter „Zeiterfassung“ einstempeln – zum Beispiel, wenn du dich nur krankmelden oder deine Zeiten ansehen willst.",
     "later": "Später",
     "clockIn": "Einstempeln"
+  },
+  "import": {
+    "title": "Daten aus Clockodo übernehmen",
+    "intro": "Clockodo-Export (JSON) auswählen. Danach siehst du pro Person, wem sie im Intranet zugeordnet wird, ihre Sollzeit, den Urlaubsanspruch und das Stundenkonto. Der Import kann später mit einem neueren Export wiederholt werden – nichts wird doppelt angelegt.",
+    "chooseFile": "Export-Datei wählen",
+    "otherFile": "Andere Datei wählen",
+    "badFile": "Das ist kein Clockodo-Export.",
+    "summary": "Export vom {date}: {people} Personen, {entries} Zeiteinträge, {absences} Abwesenheiten.",
+    "col": {
+      "clockodo": "Clockodo",
+      "intranet": "Intranet-Person",
+      "week": "Soll/Woche",
+      "vacation": "Urlaub",
+      "balance": "Stundenkonto übernehmen",
+      "data": "Daten"
+    },
+    "inactive": "inaktiv",
+    "notImported": "Nicht übernehmen",
+    "include": "{name} übernehmen",
+    "takeBalance": "Stundenkonto von {name} übernehmen",
+    "entries": "{count, plural, one {# Eintrag} other {# Einträge}}",
+    "absences": "{count, plural, one {# Abwesenheit} other {# Abwesenheiten}}",
+    "lastEntry": "zuletzt {date}",
+    "duplicate": "Eine Intranet-Person ist mehrfach ausgewählt.",
+    "balanceHint": "Übernommenes Stundenkonto gilt als Startwert zum {date}; ohne Haken startet die Person bei 0.",
+    "startCount": "{count, plural, one {1 Person importieren} other {# Personen importieren}}",
+    "start": "Import starten",
+    "confirmTitle": "{count, plural, one {1 Person importieren?} other {# Personen importieren?}}",
+    "confirmDescription": "Sollzeiten, Urlaubsanspruch und Startwert des Stundenkontos werden überschrieben, Zeiteinträge und Abwesenheiten aus Clockodo ergänzt oder aktualisiert.",
+    "progress": "Importiere {index} von {count}: {name} …",
+    "finished": "{count, plural, one {1 Person importiert} other {# Personen importiert}}",
+    "trackingOff": "ohne Zeiterfassung"
+  },
+  "preview": {
+    "title": "Neu: die eigene Zeiterfassung",
+    "description": "Ab dem {date} stempelst du hier statt in Clockodo. Bis dahin kannst du dich schon umsehen – stempeln, Urlaub beantragen und Zeiten ändern geht aber erst ab dem Start. Bis dahin bitte weiter Clockodo nutzen.",
+    "descriptionNoDate": "Bald stempelst du hier statt in Clockodo. Bis dahin kannst du dich schon umsehen – stempeln, Urlaub beantragen und Zeiten ändern geht aber erst ab dem Start. Bis dahin bitte weiter Clockodo nutzen.",
+    "adminNote": "Vorschau für alle: Mitarbeiter sehen nur ihre Daten und können noch nichts ändern. Stempeln können vorab nur Personen mit „Schon vor dem Start nutzen“ (Verwaltung → Person → Einstellungen). Du kannst als Admin weiter verwalten, importieren und korrigieren.",
+    "earlyTitle": "Du bist schon freigeschaltet",
+    "earlyDescription": "Du stempelst ab sofort hier – nicht mehr in Clockodo. Für alle anderen startet die Zeiterfassung am {date}.",
+    "earlyDescriptionNoDate": "Du stempelst ab sofort hier – nicht mehr in Clockodo. Für alle anderen startet die Zeiterfassung bald."
   }
 }
