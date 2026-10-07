@@ -208,6 +208,11 @@ describe("wallbox dashboard", () => {
       employeeId: mine.employeeId!,
     });
     expect(own?.row).toMatchObject({ opps: 1, won: 1 });
+    // The employee page picks its tabs from the dashboard kind.
+    const detail = await as("vahan").query(api.performance.queries.employeeDetail, {
+      employeeId: mine.employeeId!,
+    });
+    expect(detail.employee).toMatchObject({ companyId: ids.wallbox, kind: "wallbox" });
     await expect(
       as("vahan").query(api.performance.wallbox.overview, { companyId: ids.wallbox }),
     ).rejects.toThrow("Team-Ansicht");
@@ -224,6 +229,28 @@ describe("wallbox dashboard", () => {
         name: "Andreas Horn",
       }),
     ).rejects.toThrow("Kein Zugriff");
+  });
+
+  test("opps without Acquired By are listed under their placeholder row", async () => {
+    const { ids, upload, as } = await setup();
+    await upload(
+      ids.wallbox,
+      "opps.csv",
+      oppsCsv("2026-10-06", [
+        ["Andreas Horn", "A GmbH", "", false, false],
+        ["Andreas Horn", "B GmbH", "Nadine WEIDENHAMMER", true, true],
+      ]),
+    );
+    const view = await as("lead").query(api.performance.wallbox.overview, {
+      companyId: ids.wallbox,
+    });
+    const unnamed = view.people.find((p) => p.employeeId === null && p.opps > 0)!;
+    const list = await as("lead").query(api.performance.wallbox.oppList, {
+      companyId: ids.wallbox,
+      by: "acquirer",
+      name: unnamed.name,
+    });
+    expect(list.rows.map((r) => r.account)).toEqual(["A GmbH"]);
   });
 
   test("Wallbox reports are refused on other dashboards and Salesforce reports on Wallbox", async () => {

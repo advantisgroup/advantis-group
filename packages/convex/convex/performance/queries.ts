@@ -36,6 +36,7 @@ import {
   type Snapshot,
   type UploadStamp,
 } from "./lib/kpi";
+import { dashboardKind } from "./lib/roster";
 import { type MetricFields } from "./lib/types";
 import { isWorkday, parseISODate, todayBerlin, toISODate, workdaysElapsed } from "./lib/workdays";
 import {
@@ -671,7 +672,12 @@ export const employeeDetail = userQuery({
     );
 
     return {
-      employee: { id: employee._id, name: employee.name },
+      employee: {
+        id: employee._id,
+        name: employee.name,
+        companyId,
+        kind: dashboardKind(await ctx.db.get(companyId)),
+      },
       hist,
       cur,
       ym,

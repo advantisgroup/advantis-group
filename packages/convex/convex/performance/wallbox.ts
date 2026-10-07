@@ -480,7 +480,8 @@ export const oppList = userQuery({
       .query("performanceWallboxOpps")
       .withIndex("by_company", (q) => q.eq("companyId", companyId))
       .collect();
-    const key = name?.toLowerCase();
+    // Opps without an "Acquired By" are counted under this label.
+    const key = name === "(ohne Angabe)" ? "" : name?.toLowerCase();
     const picked = rows.filter((r) =>
       by === "owner"
         ? r.owner.toLowerCase() === key
