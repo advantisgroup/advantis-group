@@ -188,3 +188,18 @@ describe("nameKey", () => {
     expect(nameKey("Müller Anna")).toBe(nameKey("Anna Muller"));
   });
 });
+
+describe("transition stubs for an older intranet build", () => {
+  test("old session calls answer 'no session' instead of failing", async () => {
+    const { as, t } = await setup();
+    expect(await as("anna").query(api.performance.auth.validateSession, { token: "" })).toEqual({
+      valid: false,
+    });
+    expect(await as("anna").mutation(api.performance.auth.createSessionForLinkedAccount, {})).toBe(
+      null,
+    );
+    expect(await t.query(api.performance.companies.getByDomain, { domain: "perf.07er.de" })).toBe(
+      null,
+    );
+  });
+});
