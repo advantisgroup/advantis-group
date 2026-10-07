@@ -1,13 +1,20 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
-import { Activity, LayoutDashboard, ListTodo, Phone, TrendingUp } from "lucide-react";
+import {
+  Activity,
+  BatteryCharging,
+  LayoutDashboard,
+  ListTodo,
+  Phone,
+  TrendingUp,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { FilterableBarChart } from "@/components/charts/FilterableBarChart";
@@ -18,12 +25,19 @@ import {
   LastDayInteractions,
   type LastDayInteractionRow,
 } from "@/components/performance/LastDayInteractions";
-import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
+import {
+  employeeHome,
+  type PerformanceDashboardKind,
+  usePerformanceAccess,
+} from "@/components/performance/PerformanceAccess";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceEmployeeDetailProvider } from "@/components/performance/PerformanceEmployeeDetailContext";
 import { buildCallActivityChartData, fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
-import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
+import {
+  PerformanceContentSkeleton,
+  PerformancePageSkeleton,
+} from "@/components/performance/PerformanceSkeleton";
 import {
   PerformanceYmProvider,
   usePerformanceYm,
@@ -55,12 +69,14 @@ function EmployeeTopSection({
   data,
   interactionDays,
   activeTab,
+  kind,
   t,
   locale,
 }: {
   data: EmployeeTopData;
   interactionDays: LastDayInteractionRow[] | undefined;
   activeTab: string;
+  kind: PerformanceDashboardKind;
   t: ReturnType<typeof useTranslations>;
   locale: string;
 }) {
@@ -95,8 +111,17 @@ function EmployeeTopSection({
     if (!interactionDays) return null;
     return <LastDayInteractions days={interactionDays} locale={locale} />;
   }
+  if (kind !== "sales") return null;
   return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }
+
+/** Which tabs an employee page has, by the kind of their dashboard: Wallbox
+ * and calls-only people have no Salesforce numbers, topics or badges. */
+const TABS_BY_KIND: Record<PerformanceDashboardKind, readonly string[]> = {
+  sales: ["ueberblick", "entwicklung", "calls", "topics", "interaktionen"],
+  wallbox: ["wallbox", "calls", "interaktionen"],
+  calls: ["calls", "interaktionen"],
+};
 
 function EmployeeChrome({
   employeeId,
@@ -108,17 +133,35 @@ function EmployeeChrome({
   const t = useTranslations("Performance");
   const locale = useLocale();
   const pathname = usePathname();
+  const router = useRouter();
+  const { me, dashboard } = usePerformanceAccess();
   const [ym, setYm] = usePerformanceYm();
   const data = useQuery(api.performance.queries.employeeDetail, { employeeId, ym });
 
   const activeTab = pathname.split("/").filter(Boolean)[3] ?? "ueberblick";
+  // Until the detail loads: their own dashboard, else the one being viewed.
+  const kind: PerformanceDashboardKind =
+    data?.employee.kind ??
+    me?.dashboards.find((d) => d.employeeId === employeeId)?.kind ??
+    dashboard?.kind ??
+    "sales";
+  const offTab = !TABS_BY_KIND[kind].includes(activeTab);
+  useEffect(() => {
+    if (data && offTab) router.replace(employeeHome(employeeId, data.employee.kind));
+  }, [data, offTab, employeeId, router]);
   // Only the Interaktionen tab shows the month's single interactions.
   const interactions = useQuery(
     api.performance.queries.interactionsMonth,
     activeTab === "interaktionen" ? { ym, employeeId } : "skip",
   );
 
-  const tabs: RouteTab[] = [
+  const allTabs: RouteTab[] = [
+    {
+      value: "wallbox",
+      href: `/performance/mitarbeiter/${employeeId}/wallbox`,
+      label: t("tabWallbox"),
+      icon: BatteryCharging,
+    },
     {
       value: "ueberblick",
       href: `/performance/mitarbeiter/${employeeId}/ueberblick`,
@@ -151,6 +194,10 @@ function EmployeeChrome({
       icon: Activity,
     },
   ];
+  const tabs = allTabs.filter((tab) => TABS_BY_KIND[kind].includes(tab.value));
+  // Entwicklung shows every month, Interaktionen pages by day, Wallbox is
+  // report snapshots.
+  const usesMonth = !["entwicklung", "interaktionen", "wallbox"].includes(activeTab);
 
   return (
     <div className="min-h-screen bg-muted/20">
@@ -159,8 +206,7 @@ function EmployeeChrome({
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-xl font-semibold">{data?.employee.name}</h1>
-          {/* Entwicklung shows every month, Interaktionen pages by day. */}
-          {activeTab !== "entwicklung" && activeTab !== "interaktionen" && (
+          {usesMonth && (
             <>
               <Select
                 value={ym ?? data?.ym ?? ""}
@@ -192,6 +238,7 @@ function EmployeeChrome({
             data={data}
             interactionDays={interactions?.days}
             activeTab={activeTab}
+            kind={kind}
             t={t}
             locale={locale}
           />
@@ -204,7 +251,7 @@ function EmployeeChrome({
         </Card>
 
         <PerformanceEmployeeDetailProvider data={data}>
-          {children}
+          {offTab ? <PerformanceContentSkeleton /> : children}
         </PerformanceEmployeeDetailProvider>
       </main>
       <PerformanceBottomTabs />
