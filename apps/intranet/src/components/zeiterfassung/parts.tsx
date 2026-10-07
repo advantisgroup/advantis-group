@@ -10,6 +10,8 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { SwipeToConfirm } from "@/components/zeiterfassung/SwipeToConfirm";
 import { ErrorFallback } from "@/components/ErrorFallback";
 import { InfoTip } from "@/components/ui/info-tip";
 import { cn } from "@/lib/utils";
@@ -213,8 +215,13 @@ export function elapsed(since: number, now: number): string {
   return hours > 0 ? `${hours}h ${total % 60}m` : `${total % 60}m`;
 }
 
+type ClockAction = "in" | "out" | "pause" | "resume";
+
 /** The clock and its four actions, shared by the overview card and the
- *  header pill so both always agree. Reactive: no polling. */
+ *  header pill so both always agree. Reactive: no polling. Every action asks
+ *  for a slide-to-confirm first (`confirmDialog` must be rendered by the
+ *  caller); the `…Now` variants skip it for places that already are a
+ *  confirmation (the morning prompt's own slider). */
 export function useTimeClock() {
   const t = useTranslations("Zeiterfassung");
   const state = useQuery(api.time.clock.state);
@@ -225,17 +232,31 @@ export function useTimeClock() {
   const showError = useTimeErrorToast();
   const now = useNow(15_000);
   const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<ClockAction | null>(null);
 
   const run = (action: () => Promise<unknown>, done: string) => async () => {
     setBusy(true);
     try {
       await action();
       toast.success(done);
+      return true;
     } catch (error) {
       showError(error);
+      return false;
     } finally {
       setBusy(false);
     }
+  };
+
+  const actions: Record<ClockAction, () => Promise<boolean>> = {
+    in: run(() => clockIn({ device: clientDevice() }), t("clock.toastIn")),
+    out: run(() => clockOut({ device: clientDevice() }), t("clock.toastOut")),
+    pause: run(() => startBreak({ device: clientDevice() }), t("clock.toastBreak")),
+    resume: run(() => endBreak({ device: clientDevice() }), t("clock.toastResume")),
+  };
+
+  const ask = (action: ClockAction) => async () => {
+    setPending(action);
   };
 
   const since =
@@ -244,15 +265,52 @@ export function useTimeClock() {
       : state?.status === "working"
         ? state.workStart
         : null;
+
+  const confirmDialog = (
+    <ResponsiveDialog
+      open={pending !== null}
+      onOpenChange={(open) => {
+        if (!open) setPending(null);
+      }}
+      title={pending ? t(`clock.confirm.${pending}`) : ""}
+      description={t("clock.confirm.hint")}
+    >
+      {pending && (
+        <div className="pb-2 pt-1">
+          <SwipeToConfirm
+            key={pending}
+            label={t(`clock.confirm.slide.${pending}`)}
+            tone={
+              pending === "in" || pending === "resume"
+                ? "emerald"
+                : pending === "pause"
+                  ? "amber"
+                  : "primary"
+            }
+            disabled={busy}
+            onConfirm={() => {
+              const action = pending;
+              void actions[action]().then((ok) => {
+                if (ok) setPending(null);
+              });
+            }}
+          />
+        </div>
+      )}
+    </ResponsiveDialog>
+  );
+
   return {
     state,
     now,
     busy,
     duration: since ? elapsed(since, now) : null,
-    clockIn: run(() => clockIn({ device: clientDevice() }), t("clock.toastIn")),
-    clockOut: run(() => clockOut({ device: clientDevice() }), t("clock.toastOut")),
-    startBreak: run(() => startBreak({ device: clientDevice() }), t("clock.toastBreak")),
-    endBreak: run(() => endBreak({ device: clientDevice() }), t("clock.toastResume")),
+    clockIn: ask("in"),
+    clockOut: ask("out"),
+    startBreak: ask("pause"),
+    endBreak: ask("resume"),
+    clockInNow: actions.in,
+    confirmDialog,
   };
 }
 

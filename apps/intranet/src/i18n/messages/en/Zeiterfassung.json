@@ -31,7 +31,20 @@
     "open": "Open time tracking",
     "previewTitle": "Clocking starts on {date}",
     "previewTitleNoDate": "Clocking starts soon",
-    "previewHint": "Until then please keep clocking in Clockodo."
+    "previewHint": "Until then please keep clocking in Clockodo.",
+    "confirm": {
+      "in": "Clock in?",
+      "out": "Clock out?",
+      "pause": "Start a break?",
+      "resume": "Back to work?",
+      "hint": "Slide the button all the way to the right to confirm – so nobody clocks by accident.",
+      "slide": {
+        "in": "Slide to clock in",
+        "out": "Slide to clock out",
+        "pause": "Slide for a break",
+        "resume": "Slide to resume"
+      }
+    }
   },
   "overview": {
     "clockUnavailable": "The clock isn't available right now",
@@ -393,7 +406,8 @@
     "description": "Clock in to start your work.",
     "hint": "You can also clock in later via the time clock at the top right or under “Time tracking” – for example if you only want to report sick or look at your hours.",
     "later": "Later",
-    "clockIn": "Clock in"
+    "clockIn": "Clock in",
+    "slide": "Slide to clock in"
   },
   "import": {
     "title": "Import data from Clockodo",

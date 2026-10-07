@@ -12,6 +12,7 @@ import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { useTimeClock } from "@/components/zeiterfassung/parts";
+import { SwipeToConfirm } from "@/components/zeiterfassung/SwipeToConfirm";
 
 /** Berlin hours during which the first visit of the day gets the prompt. */
 const FROM_HOUR = 7;
@@ -74,8 +75,7 @@ export function ClockInPrompt() {
 
   async function clockIn() {
     rememberDismissed(today.date);
-    await clock.clockIn();
-    setOpen(false);
+    if (await clock.clockInNow()) setOpen(false);
   }
 
   const greeting = today.hour < 11 ? "morning" : today.hour < 17 ? "day" : "evening";
@@ -89,24 +89,21 @@ export function ClockInPrompt() {
       title={t(`greeting.${greeting}`, { name: user.firstName ?? "" })}
       description={t("description")}
       footer={
-        <>
-          <Button variant="ghost" onClick={dismiss} className="w-full sm:w-auto">
-            {t("later")}
-          </Button>
-          <Button
-            variant="emerald"
-            size="lg"
-            onClick={() => void clockIn()}
-            disabled={clock.busy}
-            className="w-full sm:w-auto sm:min-w-44"
-          >
-            <Play className="fill-current" />
-            {t("clockIn")}
-          </Button>
-        </>
+        <Button variant="ghost" onClick={dismiss} className="w-full sm:w-auto">
+          {t("later")}
+        </Button>
       }
     >
-      <p className="text-sm text-muted-foreground">{t("hint")}</p>
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">{t("hint")}</p>
+        <SwipeToConfirm
+          label={t("slide")}
+          tone="emerald"
+          icon={<Play className="size-5 fill-current" />}
+          disabled={clock.busy}
+          onConfirm={() => void clockIn()}
+        />
+      </div>
     </ResponsiveDialog>
   );
 }

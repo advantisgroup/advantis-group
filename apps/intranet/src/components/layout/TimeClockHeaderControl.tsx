@@ -32,94 +32,97 @@ export function TimeClockHeaderControl({ className }: { className?: string }) {
       : `${t(`clock.status.${status}`)} · ${clock.duration ?? ""}`;
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "relative flex min-w-0 items-center gap-2 overflow-hidden rounded-md border border-border/70 bg-card px-2.5 py-1.5 text-left transition-colors hover:bg-accent",
-            className,
-          )}
-          aria-label={t("clock.open")}
-        >
-          <StatusGradient status={status} />
-          <span
+    <>
+      {clock.confirmDialog}
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
             className={cn(
-              "relative z-10 grid size-6 shrink-0 place-items-center rounded-full",
-              clockStatusClassName(status),
+              "relative flex min-w-0 items-center gap-2 overflow-hidden rounded-md border border-border/70 bg-card px-2.5 py-1.5 text-left transition-colors hover:bg-accent",
+              className,
             )}
+            aria-label={t("clock.open")}
           >
-            <Icon className="size-3.5" />
-            {status === "working" && (
-              <span className="absolute right-0 top-0 size-1.5 animate-pulse rounded-full bg-ok" />
-            )}
-          </span>
-          <span className="relative z-10 min-w-0 leading-tight">
-            <span className="block text-[11px] font-medium">{t("title")}</span>
+            <StatusGradient status={status} />
             <span
               className={cn(
-                "block text-[10px] tabular-nums",
-                status === "working" ? "text-foreground" : "text-muted-foreground",
+                "relative z-10 grid size-6 shrink-0 place-items-center rounded-full",
+                clockStatusClassName(status),
               )}
             >
-              {detail}
+              <Icon className="size-3.5" />
+              {status === "working" && (
+                <span className="absolute right-0 top-0 size-1.5 animate-pulse rounded-full bg-ok" />
+              )}
             </span>
-          </span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{t("title")}</p>
-            <p className="text-xs text-muted-foreground">{detail}</p>
+            <span className="relative z-10 min-w-0 leading-tight">
+              <span className="block text-[11px] font-medium">{t("title")}</span>
+              <span
+                className={cn(
+                  "block text-[10px] tabular-nums",
+                  status === "working" ? "text-foreground" : "text-muted-foreground",
+                )}
+              >
+                {detail}
+              </span>
+            </span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{t("title")}</p>
+              <p className="text-xs text-muted-foreground">{detail}</p>
+            </div>
+            <Link
+              href="/zeiterfassung"
+              className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-fg hover:underline"
+            >
+              {t("clock.open")}
+            </Link>
           </div>
-          <Link
-            href="/zeiterfassung"
-            className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-fg hover:underline"
-          >
-            {t("clock.open")}
-          </Link>
-        </div>
-        {status === "out" ? (
-          <Button
-            size="sm"
-            className="w-full"
-            onClick={() => void clock.clockIn()}
-            disabled={clock.busy}
-          >
-            <Play className="size-4" />
-            {t("clock.in")}
-          </Button>
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            {status === "working" ? (
+          {status === "out" ? (
+            <Button
+              size="sm"
+              className="w-full"
+              onClick={() => void clock.clockIn()}
+              disabled={clock.busy}
+            >
+              <Play className="size-4" />
+              {t("clock.in")}
+            </Button>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {status === "working" ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void clock.startBreak()}
+                  disabled={clock.busy}
+                >
+                  <Pause className="size-4" />
+                  {t("clock.pause")}
+                </Button>
+              ) : (
+                <Button size="sm" onClick={() => void clock.endBreak()} disabled={clock.busy}>
+                  <Play className="size-4" />
+                  {t("clock.resume")}
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => void clock.startBreak()}
+                onClick={() => void clock.clockOut()}
                 disabled={clock.busy}
               >
-                <Pause className="size-4" />
-                {t("clock.pause")}
+                <Square className="size-4" />
+                {t("clock.out")}
               </Button>
-            ) : (
-              <Button size="sm" onClick={() => void clock.endBreak()} disabled={clock.busy}>
-                <Play className="size-4" />
-                {t("clock.resume")}
-              </Button>
-            )}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => void clock.clockOut()}
-              disabled={clock.busy}
-            >
-              <Square className="size-4" />
-              {t("clock.out")}
-            </Button>
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
+    </>
   );
 }

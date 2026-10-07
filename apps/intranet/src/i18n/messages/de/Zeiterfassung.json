@@ -31,7 +31,20 @@
     "open": "Zeiterfassung öffnen",
     "previewTitle": "Stempeln ab dem {date}",
     "previewTitleNoDate": "Stempeln geht bald los",
-    "previewHint": "Bis dahin bitte weiter in Clockodo stempeln."
+    "previewHint": "Bis dahin bitte weiter in Clockodo stempeln.",
+    "confirm": {
+      "in": "Einstempeln?",
+      "out": "Ausstempeln?",
+      "pause": "Pause starten?",
+      "resume": "Weiterarbeiten?",
+      "hint": "Zum Bestätigen den Knopf ganz nach rechts schieben – so stempelt niemand aus Versehen.",
+      "slide": {
+        "in": "Zum Einstempeln schieben",
+        "out": "Zum Ausstempeln schieben",
+        "pause": "Für Pause schieben",
+        "resume": "Zum Weiterarbeiten schieben"
+      }
+    }
   },
   "overview": {
     "clockUnavailable": "Die Stempeluhr ist gerade nicht verfügbar",
@@ -393,7 +406,8 @@
     "description": "Stempel dich ein, um deine Arbeit zu starten.",
     "hint": "Du kannst dich auch später über die Stempeluhr oben rechts oder unter „Zeiterfassung“ einstempeln – zum Beispiel, wenn du dich nur krankmelden oder deine Zeiten ansehen willst.",
     "later": "Später",
-    "clockIn": "Einstempeln"
+    "clockIn": "Einstempeln",
+    "slide": "Zum Einstempeln schieben"
   },
   "import": {
     "title": "Daten aus Clockodo übernehmen",
