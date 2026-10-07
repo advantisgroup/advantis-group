@@ -6,7 +6,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
-import { Pencil, Plus, Settings2, Sparkles } from "lucide-react";
+import { Pencil, Plus, Settings2, Sparkles, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -25,6 +25,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  useConfirm,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,6 +68,8 @@ function DashboardDialog({
   const options = useQuery(api.performance.dashboards.orgOptions, open ? {} : "skip");
   const create = useMutation(api.performance.dashboards.create);
   const update = useMutation(api.performance.dashboards.update);
+  const remove = useMutation(api.performance.dashboards.remove);
+  const confirm = useConfirm();
   const [name, setName] = useState(dashboard?.name ?? "");
   const [kind, setKind] = useState<DashboardKind>(dashboard?.kind ?? "sales");
   const [teamIds, setTeamIds] = useState<Set<string>>(
@@ -96,6 +99,26 @@ function DashboardDialog({
       if (dashboard) await update({ companyId: dashboard.companyId, ...payload });
       else await create(payload);
       toast.success(t("settingsSaved"));
+      onOpenChange(false);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteDashboard() {
+    if (!dashboard) return;
+    const ok = await confirm({
+      title: t("settingsDeleteTitle", { dashboard: dashboard.name }),
+      description: t("settingsDeleteHint"),
+      confirmLabel: t("settingsDelete"),
+    });
+    if (!ok) return;
+    setSaving(true);
+    try {
+      await remove({ companyId: dashboard.companyId });
+      toast.success(t("settingsDeleted"));
       onOpenChange(false);
     } catch (err) {
       handleError(err);
@@ -180,6 +203,17 @@ function DashboardDialog({
           )}
         </div>
         <DialogFooter>
+          {dashboard && (
+            <Button
+              variant="ghost"
+              className="text-destructive hover:text-destructive sm:mr-auto"
+              onClick={() => void deleteDashboard()}
+              disabled={saving}
+            >
+              <Trash2 className="mr-1.5 h-4 w-4" />
+              {t("settingsDelete")}
+            </Button>
+          )}
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("topicCancel")}
           </Button>

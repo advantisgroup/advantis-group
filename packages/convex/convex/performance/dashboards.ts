@@ -149,6 +149,80 @@ export const update = userMutation({
   },
 });
 
+/**
+ * Deletes a dashboard that holds no report data (e.g. the empty one left
+ * over from the old perf.07er.de tenant). Anything with names, uploads or
+ * numbers is refused, so nothing imported can be lost by a click here.
+ * Leftovers of the old password system (roles, logins, sessions) go with it;
+ * old security records that point at it read it as missing, which they
+ * already handle.
+ */
+export const remove = userMutation({
+  role: "admin",
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }): Promise<void> => {
+    await getDashboard(ctx, companyId);
+    const hasData = await Promise.all([
+      ctx.db
+        .query("performanceEmployees")
+        .withIndex("by_company", (q) => q.eq("companyId", companyId))
+        .first(),
+      ctx.db
+        .query("performanceUploadLog")
+        .withIndex("by_company_uploadedAt", (q) => q.eq("companyId", companyId))
+        .first(),
+      ctx.db
+        .query("performanceReports")
+        .withIndex("by_company_reportDate", (q) => q.eq("companyId", companyId))
+        .first(),
+      ctx.db
+        .query("performanceInteractions")
+        .withIndex("by_company_date", (q) => q.eq("companyId", companyId))
+        .first(),
+      ctx.db
+        .query("performanceRawLeads")
+        .withIndex("by_company_createDate", (q) => q.eq("companyId", companyId))
+        .first(),
+      ctx.db
+        .query("performanceRawOpps")
+        .withIndex("by_company", (q) => q.eq("companyId", companyId))
+        .first(),
+      ctx.db
+        .query("performanceWonOpps")
+        .withIndex("by_company_closeDate", (q) => q.eq("companyId", companyId))
+        .first(),
+      ctx.db
+        .query("performanceWallboxSnapshots")
+        .withIndex("by_company_source_date", (q) => q.eq("companyId", companyId))
+        .first(),
+      ctx.db
+        .query("performanceWallboxOpps")
+        .withIndex("by_company", (q) => q.eq("companyId", companyId))
+        .first(),
+    ]);
+    if (hasData.some(Boolean)) {
+      throw new ConvexError({
+        code: "conflict",
+        message:
+          "Dieses Dashboard enthält noch Namen oder Report-Daten und kann nicht gelöscht werden.",
+      });
+    }
+
+    const [roles, importState] = await Promise.all([
+      ctx.db
+        .query("companyRoles")
+        .withIndex("by_company", (q) => q.eq("companyId", companyId))
+        .collect(),
+      ctx.db
+        .query("performanceImportState")
+        .withIndex("by_company", (q) => q.eq("companyId", companyId))
+        .collect(),
+    ]);
+    for (const row of [...roles, ...importState]) await ctx.db.delete(row._id);
+    await ctx.db.delete(companyId);
+  },
+});
+
 /** Every report name on a dashboard with the intranet person behind it, and
  * an unambiguous name match as a suggestion where nobody is linked yet. */
 export const employees = userQuery({

@@ -128,6 +128,27 @@ describe("performance access", () => {
     );
   });
 
+  test("only an empty dashboard can be deleted, and only by an admin", async () => {
+    const { as, ids, t } = await setup();
+    const empty = await t.run((ctx) =>
+      ctx.db.insert("companies", {
+        name: "07",
+        slug: "07",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }),
+    );
+    await expect(
+      as("lead").mutation(api.performance.dashboards.remove, { companyId: empty }),
+    ).rejects.toThrow();
+    await expect(
+      as("admin").mutation(api.performance.dashboards.remove, { companyId: ids.salesDash }),
+    ).rejects.toThrow("kann nicht gelöscht werden");
+    await as("admin").mutation(api.performance.dashboards.remove, { companyId: empty });
+    expect(await t.run((ctx) => ctx.db.get(empty))).toBeNull();
+    expect(await t.run((ctx) => ctx.db.get(ids.salesDash))).not.toBeNull();
+  });
+
   test("only admins manage dashboards and links", async () => {
     const { as, ids } = await setup();
     await expect(as("lead").query(api.performance.dashboards.list, {})).rejects.toThrow();
