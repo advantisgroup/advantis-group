@@ -418,5 +418,6 @@
     "myHistory": "Verlauf",
     "employeeEmpty": "Im aktuellen Wallbox-Report ist für diese Person noch nichts eingetragen.",
     "notWallbox": "Diese Person gehört zu keinem Wallbox-Dashboard."
-  }
+  },
+  "uploadNotImported": "Nicht übernommen in: {dashboards} – dort gerade belegt oder fehlgeschlagen. Bitte die Datei dort noch einmal hochladen."
 }

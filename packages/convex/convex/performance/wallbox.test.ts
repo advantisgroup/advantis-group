@@ -309,4 +309,51 @@ describe("wallbox dashboard", () => {
     );
     expect(again?.reportKind).toBe("call");
   });
+
+  test("roster sync links only exact names, never a similar one", async () => {
+    const { t, ids, upload } = await setup();
+    await t.run(async (ctx) => {
+      // An old unlinked row with a similar name must not be taken over.
+      await ctx.db.insert("performanceEmployees", {
+        name: "Nadine Weidenhammerer",
+        active: true,
+        companyId: ids.wallbox,
+      });
+    });
+    await upload(ids.sales, "calls.csv", callCsv([["Sam Sales", 1]]));
+    const rows = await t.run((ctx) =>
+      ctx.db
+        .query("performanceEmployees")
+        .withIndex("by_company", (q) => q.eq("companyId", ids.wallbox))
+        .collect(),
+    );
+    const similar = rows.find((r) => r.name === "Nadine Weidenhammerer");
+    expect(similar?.userId).toBeUndefined();
+    expect(rows.find((r) => r.userId === ids.nadine)?.name).toBe("Nadine Weidenhammer");
+  });
+});
+
+describe("wallbox report detection", () => {
+  const split = (csv: string) => csv.split("\n").map((l) => l.split(";"));
+
+  test("footer text below the table is not an opportunity", () => {
+    const csv = [
+      "As of 2026-10-06",
+      "Opportunity Owner;Account Name;Acquired By;Closed;Won",
+      "Andreas Horn;A GmbH;Nadine Weidenhammer;false;false",
+      "",
+      "Confidential Information - Do Not Distribute",
+      "Copyright (c) 2000-2026 salesforce.com, inc.",
+    ].join("\n");
+    const parsed = readWallboxExport(split(csv));
+    expect(parsed?.kind === "opps" && parsed.rows.length).toBe(1);
+  });
+
+  test("a sales opportunity export with a Stage column is not a Wallbox report", () => {
+    const csv = [
+      "Opportunity Owner;Account Name;Acquired By;Stage;Closed;Won",
+      "Andreas Horn;A GmbH;Nadine Weidenhammer;Closed Won;true;true",
+    ].join("\n");
+    expect(readWallboxExport(split(csv))).toBeNull();
+  });
 });

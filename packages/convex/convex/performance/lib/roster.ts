@@ -1,7 +1,6 @@
 import { type Doc, type Id } from "../../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../../_generated/server";
 import { displayName } from "../../lib/users";
-import { matchEmployee } from "./callImport";
 
 /** The kinds of dashboard (see `companies.kind` in the schema). */
 export type DashboardKind = "sales" | "wallbox" | "calls";
@@ -34,6 +33,15 @@ export async function dashboardMembers(
   const teamIds = new Set<string>(company.teamIds ?? []);
   const departmentIds = new Set<string>(company.departmentIds ?? []);
   if (teamIds.size === 0 && departmentIds.size === 0) return [];
+  // Archived teams/departments no longer count.
+  for (const id of [...teamIds]) {
+    const team = await ctx.db.get(id as Id<"teams">);
+    if (!team || team.archivedAt) teamIds.delete(id);
+  }
+  for (const id of [...departmentIds]) {
+    const dep = await ctx.db.get(id as Id<"departments">);
+    if (!dep || dep.archivedAt) departmentIds.delete(id);
+  }
   const [users, memberships] = await Promise.all([
     ctx.db.query("users").collect(),
     teamIds.size > 0 ? ctx.db.query("userTeams").collect() : Promise.resolve([]),
@@ -61,7 +69,7 @@ export async function syncTeamRoster(
   company: Doc<"companies">,
 ): Promise<{ added: number; linked: number }> {
   if (dashboardKind(company) === "sales") return { added: 0, linked: 0 };
-  const members = await dashboardMembers(ctx, company);
+  const members = (await dashboardMembers(ctx, company)).filter((u) => !u.external);
   if (members.length === 0) return { added: 0, linked: 0 };
   const employees = await ctx.db
     .query("performanceEmployees")
@@ -73,16 +81,12 @@ export async function syncTeamRoster(
   for (const user of members) {
     if (byUser.has(user._id)) continue;
     const name = displayName(user);
-    const unlinked = employees.filter((e) => !e.userId);
-    const match =
-      unlinked.find((e) => nameKey(e.name) === nameKey(name)) ??
-      (() => {
-        const hit = matchEmployee(
-          name,
-          unlinked.map((e) => e.name),
-        );
-        return hit ? unlinked.find((e) => e.name === hit) : undefined;
-      })();
+    // Exact (normalised) name only: the fuzzy report matcher treats prefixes
+    // as equal ("Maria" ~ "Marian"), which is fine for a report row but
+    // would silently hand someone another person's numbers here. Anything
+    // less certain is left for an admin under Einstellungen.
+    const sameName = employees.filter((e) => !e.userId && nameKey(e.name) === nameKey(name));
+    const match = sameName.length === 1 ? sameName[0] : undefined;
     if (match) {
       await ctx.db.patch(match._id, { userId: user._id });
       match.userId = user._id;
@@ -113,10 +117,12 @@ export async function syncTeamRoster(
 export async function rosterOf(
   ctx: QueryCtx | MutationCtx,
   companyId: Id<"companies">,
-): Promise<{ id: Id<"performanceEmployees">; name: string; active: boolean }[]> {
+): Promise<
+  { id: Id<"performanceEmployees">; name: string; active: boolean; userId?: Id<"users"> }[]
+> {
   const employees = await ctx.db
     .query("performanceEmployees")
     .withIndex("by_company", (q) => q.eq("companyId", companyId))
     .collect();
-  return employees.map((e) => ({ id: e._id, name: e.name, active: e.active }));
+  return employees.map((e) => ({ id: e._id, name: e.name, active: e.active, userId: e.userId }));
 }

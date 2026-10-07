@@ -1099,8 +1099,6 @@ export const resolveFlaggedRow = userMutation({
 // touch ctx.db directly — these internal query wrappers are how they read
 // the admin session and the log rows to reprocess.
 
-/** Lets the re-import actions confirm the dashboard exists (the admin
- * check itself happens in the `userAction` builder). */
 /** The id of an earlier log row of the same file in `companyId`, so a call
  * or interactions report fanned out to other dashboards replaces its row
  * there on a re-import instead of adding a second one. */
@@ -1129,6 +1127,8 @@ export const logWallboxImport = internalMutation({
   },
 });
 
+/** Lets the re-import actions confirm the dashboard exists (the admin
+ * check itself happens in the `userAction` builder). */
 export const companyExists = internalQuery({
   args: { companyId: v.id("companies") },
   handler: async (ctx, { companyId }): Promise<boolean> => (await ctx.db.get(companyId)) !== null,
@@ -1177,6 +1177,32 @@ export const clearInteractionsInRange = internalMutation({
       .take(CLEAR_BATCH_SIZE);
     await Promise.all(batch.map((row) => ctx.db.delete(row._id)));
     return { more: batch.length === CLEAR_BATCH_SIZE };
+  },
+});
+
+/** Like `clearInteractionsInRange`, but only for the given employees — a
+ * shared Genesys export fanned out into another dashboard replaces just the
+ * agents it actually contains there. */
+export const clearInteractionsForEmployees = internalMutation({
+  args: {
+    employeeIds: v.array(v.id("performanceEmployees")),
+    from: v.string(),
+    to: v.string(),
+  },
+  handler: async (ctx, { employeeIds, from, to }): Promise<{ more: boolean }> => {
+    let deleted = 0;
+    for (const employeeId of employeeIds) {
+      const batch = await ctx.db
+        .query("performanceInteractions")
+        .withIndex("by_employee_date", (q) =>
+          q.eq("employeeId", employeeId).gte("date", from).lte("date", to),
+        )
+        .take(CLEAR_BATCH_SIZE - deleted);
+      await Promise.all(batch.map((row) => ctx.db.delete(row._id)));
+      deleted += batch.length;
+      if (deleted >= CLEAR_BATCH_SIZE) return { more: true };
+    }
+    return { more: false };
   },
 });
 

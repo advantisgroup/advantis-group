@@ -77,6 +77,26 @@ function isBlank(r: SheetRow | undefined): boolean {
   return !r || r.every((c) => c === null || c === undefined || c === "");
 }
 
+/** The data rows below the header: up to the first blank row (Salesforce
+ * puts its footer — totals, "Confidential Information …", "Generated
+ * By …" — below one), without a footer row that follows directly. */
+function tableBody(rows: SheetRow[]): SheetRow[] {
+  const out: SheetRow[] = [];
+  for (const r of rows) {
+    if (isBlank(r)) {
+      if (out.length > 0) break;
+      continue;
+    }
+    if (isFooter(r)) break;
+    out.push(r);
+  }
+  return out;
+}
+
+const STAGE_HEADERS = new Set(
+  ["Stage", "Phase", "Opportunity-Phase", "Verkaufsphase"].map((h) => normHeader(h)),
+);
+
 export interface MemberRow {
   status: string;
   customerNumber?: string;
@@ -118,11 +138,18 @@ export function readWallboxExport(rows: SheetRow[]): WallboxExport | null {
     const members = mapColumns(row, MEMBER_LOOKUP);
     const opps = mapColumns(row, OPP_LOOKUP);
     const isMembers = members.has("status");
-    const isOpps = opps.has("acquiredBy") && opps.has("won") && opps.has("owner");
+    // A sales opportunity export has a Stage column; the Wallbox one doesn't.
+    const hasStage = row.some((h) => STAGE_HEADERS.has(normHeader(h)));
+    const isOpps =
+      opps.has("acquiredBy") &&
+      opps.has("won") &&
+      opps.has("closed") &&
+      opps.has("owner") &&
+      !hasStage;
     if (!isMembers && !isOpps) continue;
 
     const date = reportDate ?? todayBerlin();
-    const body = rows.slice(i + 1).filter((r) => !isBlank(r) && !isFooter(r));
+    const body = tableBody(rows.slice(i + 1));
     if (isOpps) {
       const col = (r: SheetRow, f: OppField) => {
         const idx = opps.get(f);
@@ -140,7 +167,8 @@ export function readWallboxExport(rows: SheetRow[]): WallboxExport | null {
             closed: truthy(col(r, "closed")) || truthy(col(r, "won")),
             won: truthy(col(r, "won")),
           }))
-          .filter((r) => r.owner || r.acquiredBy || r.account),
+          // Every opportunity has an account; anything else is report text.
+          .filter((r) => r.account),
       };
     }
     const col = (r: SheetRow, f: MemberField) => {

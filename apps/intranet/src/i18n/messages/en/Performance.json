@@ -418,5 +418,6 @@
     "myHistory": "History",
     "employeeEmpty": "The current Wallbox report has nothing for this person yet.",
     "notWallbox": "This person isn't on a Wallbox dashboard."
-  }
+  },
+  "uploadNotImported": "Not imported into: {dashboards} — busy or failed there. Please upload the file there again."
 }

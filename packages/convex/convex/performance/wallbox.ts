@@ -10,7 +10,6 @@ import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { internalMutation, internalQuery, userQuery } from "../functions";
 import { loadViewer, requireViewableEmployee, resolveDashboard } from "./lib/access";
-import { matchEmployee } from "./lib/callImport";
 import { countsOnDashboard } from "./lib/reports";
 import { dashboardKind, nameKey, rosterOf, syncTeamRoster } from "./lib/roster";
 import { matchFirstName, summarizeOpps } from "./lib/wallboxImport";
@@ -57,7 +56,7 @@ async function knownFullNames(ctx: Ctx, companyId: Id<"companies">): Promise<str
   const acquirers = (latestOpps?.people ?? [])
     .filter((p) => p.role === "acquirer")
     .map((p) => p.name);
-  return [...new Set([...roster.map((r) => r.name), ...acquirers])];
+  return [...new Set([...roster.filter((r) => r.userId).map((r) => r.name), ...acquirers])];
 }
 
 const statusValidator = v.object({ status: v.string(), count: v.number(), ev: v.number() });
@@ -83,9 +82,10 @@ export const saveMembers = internalMutation({
     const people = args.people.map((p) => {
       const full = matchFirstName(p.name, fullNames);
       if (!full) unmatched.push(p.name);
-      const employee = full
-        ? roster.find((r) => nameKey(r.name) === nameKey(full) || matchEmployee(full, [r.name]))
-        : undefined;
+      const matches = full
+        ? roster.filter((r) => r.userId && nameKey(r.name) === nameKey(full))
+        : [];
+      const employee = matches.length === 1 ? matches[0] : undefined;
       return {
         name: full ?? p.name,
         role: "member" as const,
@@ -117,9 +117,8 @@ const oppRowValidator = v.object({
   won: v.boolean(),
 });
 
-/** The opp report: our employees are the "Acquired By" names (a missing one
- * is added to the roster, like Salesforce owners on a sales dashboard);
- * owners are field sales and only counted. */
+/** The opp report: our employees are the "Acquired By" names, owners are
+ * field sales and only counted. */
 export const saveOpps = internalMutation({
   args: {
     companyId: v.id("companies"),
@@ -128,28 +127,21 @@ export const saveOpps = internalMutation({
     rows: v.array(oppRowValidator),
     sourceFile: v.string(),
   },
-  handler: async (ctx, args): Promise<{ added: string[]; listKept?: string }> => {
+  handler: async (ctx, args): Promise<{ listKept?: string }> => {
     const company = await requireWallbox(ctx, args.companyId);
     await syncTeamRoster(ctx, company);
     const roster = await rosterOf(ctx, args.companyId);
-    const names = roster.map((r) => r.name);
-    const idByName = new Map(roster.map((r) => [r.name, r.id]));
-    const added: string[] = [];
-    const employeeFor = async (
-      acquiredBy: string,
-    ): Promise<Id<"performanceEmployees"> | undefined> => {
+    // Acquirers are matched to the team's own rows (linked to an intranet
+    // account) but never added: someone outside the linked teams still shows
+    // up in the tables by name, without getting a roster row — so their
+    // calls don't flow into this dashboard either.
+    const team = roster.filter((r) => r.userId);
+    const employeeFor = (acquiredBy: string): Id<"performanceEmployees"> | undefined => {
       if (!acquiredBy) return undefined;
-      const hit = matchEmployee(acquiredBy, names);
-      if (hit) return idByName.get(hit);
-      const id = await ctx.db.insert("performanceEmployees", {
-        name: acquiredBy,
-        active: true,
-        companyId: args.companyId,
-      });
-      names.push(acquiredBy);
-      idByName.set(acquiredBy, id);
-      added.push(acquiredBy);
-      return id;
+      // Exact (normalised, any word order) only — the numbers end up on
+      // that person's own page.
+      const exact = team.filter((r) => nameKey(r.name) === nameKey(acquiredBy));
+      return exact.length === 1 ? exact[0].id : undefined;
     };
 
     const summary = summarizeOpps(args.rows);
@@ -157,7 +149,7 @@ export const saveOpps = internalMutation({
     const acquirerIds = new Map<string, Id<"performanceEmployees"> | undefined>();
     for (const a of summary.byAcquirer) {
       const realName = a.name === "(ohne Angabe)" ? "" : a.name;
-      const employeeId = await employeeFor(realName);
+      const employeeId = employeeFor(realName);
       acquirerIds.set(realName.toLowerCase(), employeeId);
       people.push({ role: "acquirer", employeeId, ...a });
     }
@@ -181,7 +173,7 @@ export const saveOpps = internalMutation({
       .withIndex("by_company", (q) => q.eq("companyId", args.companyId))
       .first();
     const current = state?.wallboxOppsReportDate;
-    if (current && args.reportDate < current) return { added, listKept: current };
+    if (current && args.reportDate < current) return { listKept: current };
     const old = await ctx.db
       .query("performanceWallboxOpps")
       .withIndex("by_company", (q) => q.eq("companyId", args.companyId))
@@ -201,7 +193,7 @@ export const saveOpps = internalMutation({
         companyId: args.companyId,
         wallboxOppsReportDate: args.reportDate,
       });
-    return { added };
+    return {};
   },
 });
 
@@ -224,10 +216,12 @@ export const prepareCallTargets = internalMutation({
     for (const company of companies) {
       await syncTeamRoster(ctx, company);
       const roster = await rosterOf(ctx, company._id);
+      // Wallbox / calls-only dashboards: only their team's linked rows.
+      const team = dashboardKind(company) === "sales" ? roster : roster.filter((r) => r.userId);
       out.push({
         companyId: company._id,
         name: company.name,
-        employees: roster
+        employees: team
           .filter((r) => countsOnDashboard({ name: r.name, active: true }))
           .map((r) => ({ id: r.id, name: r.name })),
       });

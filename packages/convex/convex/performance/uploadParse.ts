@@ -311,6 +311,42 @@ function buildCallSnapshots(
   return { snapshots, matchedAgents, flaggedRows };
 }
 
+/**
+ * Writes a shared report into one more dashboard: under that dashboard's own
+ * import lock, and without failing the whole upload when it can't — the
+ * origin is already imported by then, so a busy or failing target is
+ * reported back (`notImportedInto`) instead of thrown.
+ */
+async function intoOtherDashboard(
+  ctx: ActionCtx,
+  target: CallTarget,
+  by: string | undefined,
+  write: () => Promise<void>,
+): Promise<boolean> {
+  const token = crypto.randomUUID();
+  try {
+    await ctx.runMutation(internal.performance.import.acquireImportLock, {
+      companyId: target.companyId,
+      token,
+      by,
+    });
+  } catch {
+    return false;
+  }
+  try {
+    await write();
+    return true;
+  } catch (err) {
+    console.error(`[performanceUploadParse] fan-out into ${target.name} failed:`, err);
+    return false;
+  } finally {
+    await ctx.runMutation(internal.performance.import.releaseImportLock, {
+      companyId: target.companyId,
+      token,
+    });
+  }
+}
+
 /** The log row a fanned-out report replaces in another dashboard (same
  * file imported there before), so a re-import doesn't add a second one. */
 async function fanOutLogId(
@@ -375,13 +411,26 @@ async function writeInteractions(
   inserts: InteractionInsert[],
   range: { from: string; to: string },
   sourceFile: string,
+  /** Fanned out into another dashboard: replace only the agents this file
+   * has there, not everyone's interactions in the range. */
+  onlyMatched = false,
 ): Promise<void> {
-  await clearInBatches("clearInteractionsInRange", () =>
-    ctx.runMutation(internal.performance.import.clearInteractionsInRange, {
-      companyId,
-      ...range,
-    }),
-  );
+  if (onlyMatched) {
+    const employeeIds = [...new Set(inserts.map((r) => r.employeeId))];
+    await clearInBatches("clearInteractionsForEmployees", () =>
+      ctx.runMutation(internal.performance.import.clearInteractionsForEmployees, {
+        employeeIds,
+        ...range,
+      }),
+    );
+  } else {
+    await clearInBatches("clearInteractionsInRange", () =>
+      ctx.runMutation(internal.performance.import.clearInteractionsInRange, {
+        companyId,
+        ...range,
+      }),
+    );
+  }
   const uploadedAt = Date.now();
   for (let i = 0; i < inserts.length; i += RAW_CHUNK_SIZE) {
     const chunk = inserts.slice(i, i + RAW_CHUNK_SIZE);
@@ -420,6 +469,8 @@ export type ImportResult =
       rawKept?: string;
       /** Other dashboards a shared call/interactions report also went into. */
       alsoImportedInto?: string[];
+      /** …and the ones it should have gone into but couldn't (busy/failed). */
+      notImportedInto?: string[];
     }
   | { status: "empty"; reportKind?: ReportKind; reportDate: string }
   | { status: "duplicate"; filename: string; uploadedAt: number };
@@ -622,29 +673,34 @@ async function processReport(
     let rowsImported = 0;
     let flagged = 0;
     const alsoImportedInto: string[] = [];
+    const notImportedInto: string[] = [];
     for (const { target, snapshots, flaggedRows } of perTarget) {
       const isOrigin = target.companyId === companyId;
       if (!isOrigin && snapshots.length === 0) continue;
-      const result = await runApplyImport(ctx, {
-        ...base,
-        companyId: target.companyId,
-        replaceLogId: isOrigin
-          ? replaceLogId
-          : await fanOutLogId(ctx, target.companyId, contentHash),
-        snapshots,
-        reportKind: "call",
-        reportDate,
-        reportDateFrom,
-        sourceRowCount: calls.rows.length,
-        skippedNames: skipped,
-        flaggedRows,
-        clearFields: calls.hasOutbound ? undefined : ["callsOutbound"],
-      });
-      if (isOrigin) {
-        rowsImported = result.rowsImported;
-        flagged = flaggedRows.length;
-      } else {
+      const write = async () => {
+        const result = await runApplyImport(ctx, {
+          ...base,
+          companyId: target.companyId,
+          replaceLogId: isOrigin
+            ? replaceLogId
+            : await fanOutLogId(ctx, target.companyId, contentHash),
+          snapshots,
+          reportKind: "call",
+          reportDate,
+          reportDateFrom,
+          sourceRowCount: calls.rows.length,
+          skippedNames: skipped,
+          flaggedRows,
+          clearFields: calls.hasOutbound ? undefined : ["callsOutbound"],
+        });
+        if (isOrigin) rowsImported = result.rowsImported;
+        flagged += flaggedRows.length;
+      };
+      if (isOrigin) await write();
+      else if (await intoOtherDashboard(ctx, target, uploadedBy, write)) {
         alsoImportedInto.push(target.name);
+      } else {
+        notImportedInto.push(target.name);
       }
     }
     return {
@@ -656,6 +712,7 @@ async function processReport(
       skipped,
       flagged,
       alsoImportedInto,
+      notImportedInto,
     };
   }
 
@@ -681,26 +738,35 @@ async function processReport(
     ].sort();
     let rowsImported = 0;
     const alsoImportedInto: string[] = [];
+    const notImportedInto: string[] = [];
     for (const { target, inserts } of perTarget) {
       const isOrigin = target.companyId === companyId;
       if (!isOrigin && inserts.length === 0) continue;
-      await writeInteractions(ctx, target.companyId, inserts, range, filename);
-      await runSafely("logInteractionsImport", async () =>
-        ctx.runMutation(internal.performance.import.logInteractionsImport, {
-          ...base,
-          companyId: target.companyId,
-          replaceLogId: isOrigin
-            ? replaceLogId
-            : await fanOutLogId(ctx, target.companyId, contentHash),
-          reportDate: range.to,
-          reportDateFrom: range.from,
-          sourceRowCount: interactionRows.length,
-          skippedNames: skipped,
-          rowsImported: inserts.length,
-        }),
-      );
-      if (isOrigin) rowsImported = inserts.length;
-      else alsoImportedInto.push(target.name);
+      const write = async () => {
+        await writeInteractions(ctx, target.companyId, inserts, range, filename, !isOrigin);
+        await runSafely("logInteractionsImport", async () =>
+          ctx.runMutation(internal.performance.import.logInteractionsImport, {
+            ...base,
+            companyId: target.companyId,
+            replaceLogId: isOrigin
+              ? replaceLogId
+              : await fanOutLogId(ctx, target.companyId, contentHash),
+            reportDate: range.to,
+            reportDateFrom: range.from,
+            sourceRowCount: interactionRows.length,
+            skippedNames: skipped,
+            rowsImported: inserts.length,
+          }),
+        );
+      };
+      if (isOrigin) {
+        await write();
+        rowsImported = inserts.length;
+      } else if (await intoOtherDashboard(ctx, target, uploadedBy, write)) {
+        alsoImportedInto.push(target.name);
+      } else {
+        notImportedInto.push(target.name);
+      }
     }
     return {
       status: "ok",
@@ -710,6 +776,7 @@ async function processReport(
       reportDateFrom: range.from !== range.to ? range.from : undefined,
       skipped,
       alsoImportedInto,
+      notImportedInto,
     };
   }
 

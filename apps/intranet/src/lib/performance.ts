@@ -63,6 +63,8 @@ export interface UploadReportResult {
   rawKept?: string;
   // Other dashboards a shared call/interactions report also went into.
   alsoImportedInto?: string[];
+  /** Dashboards the shared report couldn't go into (busy or failed). */
+  notImportedInto?: string[];
 }
 
 /** Vercel cuts request bodies at ~4.5 MB before they reach apps/api. */

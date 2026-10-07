@@ -77,6 +77,7 @@ interface QueueItem {
   reportDateFrom?: string;
   rawKept?: string;
   alsoImportedInto?: string[];
+  notImportedInto?: string[];
 }
 
 const REPORT_KIND_LABEL_KEY: Record<string, string> = {
@@ -626,6 +627,7 @@ export default function PerformanceUploadPage() {
         reportDateFrom: result.reportDateFrom,
         rawKept: result.rawKept,
         alsoImportedInto: result.alsoImportedInto,
+        notImportedInto: result.notImportedInto,
       });
       // The plausibility check runs silently during import — without this,
       // an admin watching the queue sees a plain green "done" and has no
@@ -936,6 +938,11 @@ export default function PerformanceUploadPage() {
                     {!!item.alsoImportedInto?.length && (
                       <p className="mt-1 pl-7 text-xs text-muted-foreground">
                         {t("uploadAlsoImported", { dashboards: item.alsoImportedInto.join(", ") })}
+                      </p>
+                    )}
+                    {!!item.notImportedInto?.length && (
+                      <p className="mt-1 pl-7 text-xs text-warning">
+                        {t("uploadNotImported", { dashboards: item.notImportedInto.join(", ") })}
                       </p>
                     )}
                     {item.rawKept && (

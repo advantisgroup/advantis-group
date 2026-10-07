@@ -393,12 +393,6 @@ export const performanceTables = {
     // (e.g. the blank template).
     .index("by_company_contentHash", ["companyId", "contentHash"]),
 
-  // One row per dashboard, owned by the upload pipeline (`performance/
-  // import.ts`). The raw dates say which report the drill-down tables
-  // currently hold, so re-importing an older Lead/Opp file never replaces
-  // newer lists. The lock keeps two imports for the same dashboard (two
-  // admins, two browser tabs) from running their clear-then-insert steps
-  // interleaved; it expires on its own in case an action dies mid-import.
   // Wallbox campaign (dashboard kind `wallbox`): one row per uploaded report
   // day and source, aggregated at import time — the reports are full
   // point-in-time snapshots, so keeping each day's counts gives the
@@ -448,6 +442,12 @@ export const performanceTables = {
     won: v.boolean(),
   }).index("by_company", ["companyId"]),
 
+  // One row per dashboard, owned by the upload pipeline (`performance/
+  // import.ts`). The raw dates say which report the drill-down tables
+  // currently hold, so re-importing an older Lead/Opp file never replaces
+  // newer lists. The lock keeps two imports for the same dashboard (two
+  // admins, two browser tabs) from running their clear-then-insert steps
+  // interleaved; it expires on its own in case an action dies mid-import.
   performanceImportState: defineTable({
     companyId: v.id("companies"),
     lockToken: v.optional(v.string()),
