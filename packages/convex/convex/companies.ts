@@ -1,0 +1,31 @@
+// Moved to `performance/companies.ts`. Re-exported so the old `api.companies.*`
+// path keeps working for open tabs and queued jobs until the shim cleanup
+// in docs/future-features/22_convex-restructure.md.
+export {
+  upsertProvisioningRow,
+  applyDomainResult,
+  markFailed,
+  updateCompany,
+  deleteLoginsBatch,
+  deleteSessionsBatch,
+  deleteEmployeesAndTopicsBatch,
+  deleteBadgeCacheBatch,
+  deleteReportsBatch,
+  deleteRawLeadsBatch,
+  deleteRawOppsBatch,
+  deleteWonOppsBatch,
+  deleteInteractionsBatch,
+  deleteUploadLogBatch,
+  deleteFlaggedRowsBatch,
+  deleteRolesBatch,
+  deleteCompanyRow,
+  deleteCompany,
+  getByIdInternal,
+  getBySlugInternal,
+  getRoleByName,
+  getRoleByIdInternal,
+  getByDomain,
+  listCompanies,
+  createCompany,
+  checkDomainVerification,
+} from "./performance/companies";

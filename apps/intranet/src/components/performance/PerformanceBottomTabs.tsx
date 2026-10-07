@@ -4,12 +4,13 @@ import { useState } from "react";
 
 import Link from "next/link";
 
-import { ArrowLeft, Menu } from "lucide-react";
+import { ArrowLeft, KeyRound, LogOut, Menu } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { BottomNavTabButtons, useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
+import { usePerformanceCompany } from "@/components/performance/PerformanceCompanyProvider";
 import { usePerformanceNav } from "@/components/performance/usePerformanceNav";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -25,8 +26,9 @@ const ROW = "flex items-center gap-3 rounded-md px-2 py-2.5 text-sm hover:bg-acc
 export function PerformanceBottomTabs() {
   const t = useTranslations("Performance");
   const { tabs, activeValue } = useBottomNavTabs();
-  const { items } = usePerformanceNav();
+  const { items, passwordHref, exit } = usePerformanceNav();
   const [menuOpen, setMenuOpen] = useState(false);
+  const onAdvantisHost = usePerformanceCompany() === null;
   const close = () => setMenuOpen(false);
 
   return (
@@ -72,10 +74,31 @@ export function PerformanceBottomTabs() {
             </nav>
           )}
           <div className="flex flex-col py-2">
-            <Link href="/" onClick={close} className={ROW}>
-              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-              {t("backToIntranet")}
-            </Link>
+            {passwordHref && (
+              <Link href={passwordHref} onClick={close} className={ROW}>
+                <KeyRound className="h-4 w-4 text-muted-foreground" />
+                {t("passwordLink")}
+              </Link>
+            )}
+            {onAdvantisHost && (
+              <Link href="/" onClick={close} className={ROW}>
+                <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+                {t("backToIntranet")}
+              </Link>
+            )}
+            {exit && (
+              <button
+                type="button"
+                onClick={() => {
+                  close();
+                  exit();
+                }}
+                className={cn(ROW, "text-left text-destructive")}
+              >
+                <LogOut className="h-4 w-4" />
+                {t("exit")}
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-1 border-t pt-3">
             <PerformanceAccountMenu />

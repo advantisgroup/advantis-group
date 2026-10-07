@@ -3,122 +3,40 @@ import { type MutationCtx, type QueryCtx } from "../../_generated/server";
 import {
   addForecast,
   aggregateReasons,
-  callCoverage,
   enrich,
+  missingCallDays,
   monthBounds,
-  monthCompleted,
-  sumTeam,
+  teamHitrate,
   type BadgeResult,
-  type CallCoverage,
   type Snapshot,
 } from "./kpi";
 import { MAX_PLAUSIBLE_DAY_SECONDS } from "./callImport";
 import { EXCLUDED_OWNERS } from "./salesforceImport";
-import { DAILY_KEYS, METRIC_KEYS, type MetricFields } from "./types";
+import { DAILY_KEYS, METRIC_KEYS } from "./types";
+import { parseISODate } from "./workdays";
 
-/** Everything here only reads, and is called from queries as well as the
- * badge-cache cron (a mutation). */
+// ------------------------------------------------------------------ helpers
+
+/** `teamTotals` and everything it transitively reads are also called from
+ * `cacheCompletedMonthBadges` (a mutation, backfilling the badge cache
+ * below) as well as every query in this file — widened to accept either
+ * context since both only ever read through it. */
 export type Ctx = QueryCtx | MutationCtx;
-
-type EmployeeId = Id<"performanceEmployees">;
-type DailyKey = (typeof DAILY_KEYS)[number];
-
-/** The fields of a `performanceReports` row the KPI math reads. */
-export type ReportRow = Pick<
-  Doc<"performanceReports">,
-  "employeeId" | "reportDate" | "unqualifiedReasons"
-> &
-  Partial<MetricFields>;
-
-// ------------------------------------------------------------------- roster
-
-/** Whether a report name counts on the dashboard at all: not one of the
- * import's excluded owners and not hidden by an admin (Performance →
- * Einstellungen, `performanceEmployees.active`). */
-export function countsOnDashboard(
-  e: Pick<Doc<"performanceEmployees">, "name" | "active">,
-): boolean {
-  return e.active && !EXCLUDED_OWNERS.has(e.name.toLowerCase());
-}
-
-/** The dashboard's counted employees — the one place that decides who shows
- * up in team tables, totals, badges, marks and drill-downs. `ownerKeys`
- * holds the lowercased names for the tables keyed by the Salesforce owner
- * name instead of an employee id (raw leads/opps, won opps). */
-export interface Roster {
-  names: Map<EmployeeId, string>;
-  ownerKeys: Set<string>;
-}
-
-/**
- * Per-request memoization. A query never sees writes from other requests
- * while it runs, so caching for the life of one call is exact. Keys carry
- * the dashboard id because the badge cron walks several dashboards.
- */
-export interface QueryCache {
-  roster: Map<Id<"companies">, Roster>;
-  rows: Map<string, Doc<"performanceReports">[]>;
-  months: Map<string, MonthSummary>;
-  badges?: Record<string, Record<string, BadgeResult>>;
-}
-
-export function newQueryCache(): QueryCache {
-  return { roster: new Map(), rows: new Map(), months: new Map() };
-}
-
-export async function loadRoster(
-  ctx: Ctx,
-  companyId: Id<"companies">,
-  cache?: QueryCache,
-): Promise<Roster> {
-  const hit = cache?.roster.get(companyId);
-  if (hit) return hit;
-  const employees = await ctx.db
-    .query("performanceEmployees")
-    .withIndex("by_company", (q) => q.eq("companyId", companyId))
-    .collect();
-  const counted = employees.filter(countsOnDashboard);
-  const roster: Roster = {
-    names: new Map(counted.map((e) => [e._id, e.name])),
-    ownerKeys: new Set(counted.map((e) => e.name.trim().toLowerCase())),
-  };
-  cache?.roster.set(companyId, roster);
-  return roster;
-}
 
 export async function employeeNameMap(
   ctx: Ctx,
   companyId: Id<"companies">,
-  cache?: QueryCache,
-): Promise<Map<EmployeeId, string>> {
-  return (await loadRoster(ctx, companyId, cache)).names;
-}
-
-/** Every report row of the dashboard in month `ym` (one indexed range read,
- * memoized). */
-export async function monthRows(
-  ctx: Ctx,
-  companyId: Id<"companies">,
-  ym: string,
-  cache: QueryCache,
-): Promise<Doc<"performanceReports">[]> {
-  const key = `${companyId}:${ym}`;
-  const hit = cache.rows.get(key);
-  if (hit) return hit;
-  const { start, end } = monthBounds(ym);
-  const rows = await ctx.db
-    .query("performanceReports")
-    .withIndex("by_company_reportDate", (q) =>
-      q.eq("companyId", companyId).gte("reportDate", start).lte("reportDate", end),
-    )
+): Promise<Map<Id<"performanceEmployees">, string>> {
+  const employees = await ctx.db
+    .query("performanceEmployees")
+    .withIndex("by_company", (q) => q.eq("companyId", companyId))
     .collect();
-  cache.rows.set(key, rows);
-  return rows;
+  return new Map(
+    employees.filter((e) => !EXCLUDED_OWNERS.has(e.name.toLowerCase())).map((e) => [e._id, e.name]),
+  );
 }
 
-// ------------------------------------------------------------- snapshots
-
-export function reportToSnapshot(r: ReportRow, name: string): Snapshot {
+export function reportToSnapshot(r: Doc<"performanceReports">, name: string): Snapshot {
   const snap: Snapshot = {
     employeeId: r.employeeId,
     name,
@@ -132,8 +50,59 @@ export function reportToSnapshot(r: ReportRow, name: string): Snapshot {
   return snap;
 }
 
+/**
+ * Per-request memoization: `teamDashboard`/`employeeDetail` each ask for the
+ * same (ym, employeeId) report range several times over via different helper
+ * paths (team totals, call days, badge history, …), and — unlike Convex's
+ * subscriber-level dedup, which only avoids redundant work *between*
+ * clients — nothing dedupes repeats *within* one query execution. A query
+ * handler never observes writes from other requests mid-execution, so
+ * caching by key for the life of one call is exact, not approximate.
+ */
+export interface QueryCache {
+  reports: Map<string, Doc<"performanceReports">[]>;
+  badges?: Record<string, Record<string, BadgeResult>>;
+}
+
+export function newQueryCache(): QueryCache {
+  return { reports: new Map() };
+}
+
+export async function reportsInRange(
+  ctx: Ctx,
+  companyId: Id<"companies">,
+  ym: string,
+  employeeId: Id<"performanceEmployees"> | undefined,
+  cache: QueryCache,
+): Promise<Doc<"performanceReports">[]> {
+  const key = `${ym}:${employeeId ?? ""}`;
+  const hit = cache.reports.get(key);
+  if (hit) return hit;
+
+  const { start, end } = monthBounds(ym);
+  const rows = employeeId
+    ? await ctx.db
+        .query("performanceReports")
+        .withIndex("by_employee_date", (q) =>
+          q.eq("employeeId", employeeId).gte("reportDate", start).lte("reportDate", end),
+        )
+        .collect()
+    : await ctx.db
+        .query("performanceReports")
+        .withIndex("by_company_reportDate", (q) =>
+          q.eq("companyId", companyId).gte("reportDate", start).lte("reportDate", end),
+        )
+        .collect();
+  cache.reports.set(key, rows);
+  return rows;
+}
+
 /** Merges `next` onto `base`, keeping `base`'s value for any field `next`
- * didn't measure (a plain spread would copy explicit `undefined`s over). */
+ * didn't measure. A plain `{...base, ...next}` spread is unsafe here:
+ * `reportToSnapshot` always sets `unqualifiedReasons` as an own key (even
+ * when `undefined`), so a later row without a Lead report would spread an
+ * explicit `undefined` over an earlier real value instead of leaving it
+ * alone. */
 export function mergeSnapshot(base: Snapshot, next: Snapshot): Snapshot {
   const merged = { ...base } as unknown as Record<string, unknown>;
   for (const [k, v] of Object.entries(next)) {
@@ -142,56 +111,89 @@ export function mergeSnapshot(base: Snapshot, next: Snapshot): Snapshot {
   return merged as unknown as Snapshot;
 }
 
-/** Latest known value per field and employee ("Monatswert = jüngster
- * Snapshot"). Each import only writes the fields its file measured, and a
- * Lead/Opp report and a call report routinely land on different dates — so
- * rows are folded oldest first, each measured field overriding, instead of
- * taking the newest row wholesale. Sorted by name. */
-export function foldSnapshots(
-  rows: readonly ReportRow[],
-  names: ReadonlyMap<EmployeeId, string>,
-): Snapshot[] {
+/** Latest report per employee within the month — "Monatswert = jüngster
+ * Snapshot des Mitarbeiters in diesem Monat", per-field. `performanceReports`
+ * is one row per report *date*, and each import only writes the fields its
+ * source file actually measured (see the schema comment: undefined means
+ * "not measured this snapshot", not zero) — a Lead/Opp report and a call
+ * report for the same employee routinely land on different dates within the
+ * same month. Taking a single newest-dated row wholesale would let a
+ * call-only import (which never touches leadsCreated/workableCreated/etc.)
+ * blank out an earlier Lead/Opp import's month-to-date totals the moment its
+ * date becomes the newest — those totals are still sitting untouched in the
+ * older row, just no longer surfaced. Folding every row in ascending-date
+ * order (each row's *measured* fields override the running merge; anything
+ * it left unmeasured carries forward) reconstructs the true "latest known
+ * value per field" instead. */
+export async function latestSnapshots(
+  ctx: Ctx,
+  companyId: Id<"companies">,
+  ym: string,
+  employeeId: Id<"performanceEmployees"> | undefined,
+  cache: QueryCache,
+): Promise<Snapshot[]> {
+  const names = await employeeNameMap(ctx, companyId);
+  const rows = await reportsInRange(ctx, companyId, ym, employeeId, cache);
   const sorted = [...rows].sort((a, b) => a.reportDate.localeCompare(b.reportDate));
-  const merged = new Map<EmployeeId, Snapshot>();
+  const merged = new Map<Id<"performanceEmployees">, Snapshot>();
   for (const r of sorted) {
-    const name = names.get(r.employeeId);
-    if (name === undefined) continue;
-    const snap = reportToSnapshot(r, name);
+    if (!names.has(r.employeeId)) continue;
+    const snap = reportToSnapshot(r, names.get(r.employeeId)!);
     const cur = merged.get(r.employeeId);
     merged.set(r.employeeId, cur ? mergeSnapshot(cur, snap) : snap);
   }
-  return [...merged.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const snaps = [...merged.values()];
+  snaps.sort((a, b) => a.name.localeCompare(b.name));
+  return snaps;
 }
 
-export const DAILY_DURATION_KEYS = new Set<DailyKey>(["talkTotalSec", "loginSec"]);
+export const DAILY_DURATION_KEYS = new Set<(typeof DAILY_KEYS)[number]>([
+  "talkTotalSec",
+  "loginSec",
+]);
 
 /** A single employee's single-day duration can't plausibly exceed 24h (see
- * callImport.ts's MAX_PLAUSIBLE_DAY_SECONDS). Guards the sums below against
- * a bad historical row blowing up an otherwise normal day or month. */
-export function plausibleDailyValue(key: DailyKey, v: number): number | undefined {
+ * callImport.ts's MAX_PLAUSIBLE_DAY_SECONDS). Guards the team/day sums below
+ * against a bad historical row — imported before the parser caught this, or
+ * edited by hand — blowing up an otherwise-normal day's or month's total. */
+export function plausibleDailyValue(
+  key: (typeof DAILY_KEYS)[number],
+  v: number,
+): number | undefined {
   return DAILY_DURATION_KEYS.has(key) && v > MAX_PLAUSIBLE_DAY_SECONDS ? undefined : v;
 }
 
-export interface MonthCalls extends Partial<Record<DailyKey, number>> {
+export interface MonthCalls extends Partial<Record<(typeof DAILY_KEYS)[number], number>> {
   talkAvgSec?: number;
-  /** Days with at least one call — the employee's worked days. */
+  nDays: number;
   workDays: number;
-  /** Days with Genesys login time. */
-  loginDays: number;
 }
 
-/** Call metrics summed over the month per employee (day values, so summed
- * rather than read as a snapshot). The average call duration is weighted
- * (talk time ÷ calls), not an average of daily averages. */
-export function sumCalls(rows: readonly ReportRow[]): Map<EmployeeId, MonthCalls> {
+/** Call metrics summed over the month per employee — day-values, so they're
+ * summed across report days rather than read as a latest snapshot. The
+ * average call duration is weighted (total talk time / total calls), not
+ * an average of daily averages, which would be skewed by uneven call
+ * counts. */
+export async function monthCallsMap(
+  ctx: Ctx,
+  companyId: Id<"companies">,
+  ym: string,
+  employeeId: Id<"performanceEmployees"> | undefined,
+  cache: QueryCache,
+): Promise<Map<Id<"performanceEmployees">, MonthCalls>> {
+  const rows = await reportsInRange(ctx, companyId, ym, employeeId, cache);
   const sums = new Map<
-    EmployeeId,
-    { vals: Partial<Record<DailyKey, number>>; workDays: number; loginDays: number }
+    Id<"performanceEmployees">,
+    {
+      vals: Partial<Record<(typeof DAILY_KEYS)[number], number>>;
+      nDays: number;
+      workDays: number;
+    }
   >();
   for (const r of rows) {
-    const cur = sums.get(r.employeeId) ?? { vals: {}, workDays: 0, loginDays: 0 };
+    const cur = sums.get(r.employeeId) ?? { vals: {}, nDays: 0, workDays: 0 };
+    cur.nDays++;
     if ((r.callsToday ?? 0) > 0) cur.workDays++;
-    if ((r.loginSec ?? 0) > 0) cur.loginDays++;
     for (const k of DAILY_KEYS) {
       const v = r[k];
       if (v === undefined) continue;
@@ -200,208 +202,93 @@ export function sumCalls(rows: readonly ReportRow[]): Map<EmployeeId, MonthCalls
     }
     sums.set(r.employeeId, cur);
   }
-  const out = new Map<EmployeeId, MonthCalls>();
-  for (const [id, { vals, workDays, loginDays }] of sums) {
+  const out = new Map<Id<"performanceEmployees">, MonthCalls>();
+  for (const [id, { vals, nDays, workDays }] of sums) {
     const calls = vals.callsToday ?? 0;
     out.set(id, {
       ...vals,
       talkAvgSec: vals.talkTotalSec && calls ? Math.round(vals.talkTotalSec / calls) : undefined,
+      nDays,
       workDays,
-      loginDays,
     });
   }
   return out;
 }
 
-export interface MonthSummary {
+/** Report dates in the month that have `callsToday` measured at all — the
+ * basis for telling "nobody reported this day" apart from "this employee
+ * had the day off". */
+export async function reportDatesWithCalls(
+  ctx: Ctx,
+  companyId: Id<"companies">,
+  ym: string,
+  cache: QueryCache,
+): Promise<Set<string>> {
+  const rows = await reportsInRange(ctx, companyId, ym, undefined, cache);
+  return new Set(rows.filter((r) => r.callsToday !== undefined).map((r) => r.reportDate));
+}
+
+export interface TeamTotals {
   total: Snapshot;
   snaps: Snapshot[];
   unqualified: { reason: string; count: number }[];
-  /** Which days the call reports cover; null when the month has none. */
-  coverage: CallCoverage | null;
-  /** Newest day with Salesforce figures / with call figures. */
-  asOf: { sales: string | null; calls: string | null };
 }
 
-const DAILY_SET = new Set<string>(DAILY_KEYS);
-
-/** Last day to count, separately for the Salesforce figures and the call
- * figures — they arrive on different days, so each is cut at its own
- * like-for-like point (see `comparisonCutoff`). */
-export interface Cutoff {
-  sales?: string;
-  calls?: string;
-}
-
-/** Drops whatever a row measured after its source's cutoff. */
-export function cutRows(rows: readonly ReportRow[], cutoff: Cutoff | undefined): ReportRow[] {
-  if (!cutoff || (!cutoff.sales && !cutoff.calls)) return [...rows];
-  const out: ReportRow[] = [];
-  for (const r of rows) {
-    const keepSales = !cutoff.sales || r.reportDate <= cutoff.sales;
-    const keepCalls = !cutoff.calls || r.reportDate <= cutoff.calls;
-    if (keepSales && keepCalls) {
-      out.push(r);
-      continue;
-    }
-    if (!keepSales && !keepCalls) continue;
-    const next: ReportRow = { employeeId: r.employeeId, reportDate: r.reportDate };
-    if (keepSales) next.unqualifiedReasons = r.unqualifiedReasons;
-    for (const k of METRIC_KEYS) {
-      if (r[k] !== undefined && DAILY_SET.has(k) === keepCalls) next[k] = r[k];
-    }
-    out.push(next);
-  }
-  return out;
-}
-
-function latestDates(rows: readonly ReportRow[]): MonthSummary["asOf"] {
-  let sales: string | null = null;
-  let calls: string | null = null;
-  for (const r of rows) {
-    if (r.callsToday !== undefined && (!calls || r.reportDate > calls)) calls = r.reportDate;
-    if (sales && r.reportDate <= sales) continue;
-    if (METRIC_KEYS.some((k) => !DAILY_SET.has(k) && r[k] !== undefined)) sales = r.reportDate;
-  }
-  return { sales, calls };
-}
-
-/**
- * A month's team total and per-employee snapshots, with call metrics summed
- * over the month and the FC1 forecast added.
- *
- * `cutoff` counts only rows up to that date (the "same point last month"
- * comparison). `coverage` overrides the call coverage worked out from
- * `rows` — `null` for "don't judge missing days" (an employee's own history,
- * where a day without their row may just be a day off).
- *
- * Workdays without any call report are counted as worked for everyone with
- * call data and flagged on the forecast: dropping them from the divisor
- * inflated FC1 whenever an upload was missing.
- */
-export function summarizeMonth(
-  rows: readonly ReportRow[],
-  names: ReadonlyMap<EmployeeId, string>,
-  ym: string,
-  opts: { cutoff?: Cutoff; coverage?: CallCoverage | null; today?: Date } = {},
-): MonthSummary {
-  const counted = cutRows(
-    rows.filter((r) => names.has(r.employeeId)),
-    opts.cutoff,
-  );
-  const calls = sumCalls(counted);
-  const withCalls = foldSnapshots(counted, names).map((s) => {
-    const c = calls.get(s.employeeId as EmployeeId);
-    const next: Snapshot = { ...s };
-    for (const k of DAILY_KEYS) next[k] = c?.[k];
-    next.talkAvgSec = c?.talkAvgSec;
-    next.callDays = c?.workDays;
-    next.loginDays = c?.loginDays;
-    return next;
-  });
-
-  const teamRaw = sumTeam(withCalls);
-  // A finished month (looked at whole, not cut) counts to its last day:
-  // FC1 is then the actual result even if the last days had no upload.
-  const complete = !opts.cutoff && monthCompleted(ym, opts.today);
-  const monthEnd = monthBounds(ym).end;
-  const coverage =
-    opts.coverage !== undefined
-      ? opts.coverage
-      : callCoverage(counted, ym, teamRaw.reportDate, complete);
-  const missing = coverage?.missing ?? [];
-  const total = addForecast(teamRaw, ym, {
-    missing,
-    through: complete ? monthEnd : undefined,
-  });
-
-  const snaps = withCalls.map((s) => {
-    const workDays = calls.get(s.employeeId as EmployeeId)?.workDays ?? 0;
-    return addForecast(
-      enrich(s),
-      ym,
-      workDays > 0
-        ? {
-            worked: workDays + missing.length,
-            through: complete ? monthEnd : (coverage?.through ?? undefined),
-            missing,
-          }
-        : { through: complete ? monthEnd : undefined },
-    );
-  });
-
-  return {
-    total,
-    snaps,
-    unqualified: aggregateReasons(withCalls.map((s) => s.unqualifiedReasons)),
-    coverage,
-    asOf: latestDates(counted),
-  };
-}
-
-/** `summarizeMonth` over the dashboard's rows of `ym`, memoized. */
+/** Team KPI total for the month, and every employee's snapshot with call
+ * metrics folded in (the "latest snapshot" only carries that one day's
+ * daily values — the display values are the month-summed ones) and the
+ * FC1 forecast added. */
 export async function teamTotals(
   ctx: Ctx,
   companyId: Id<"companies">,
   ym: string,
   cache: QueryCache = newQueryCache(),
-  cutoff?: Cutoff,
-): Promise<MonthSummary> {
-  const key = `${companyId}:${ym}:${cutoff?.sales ?? ""}:${cutoff?.calls ?? ""}`;
-  const hit = cache.months.get(key);
-  if (hit) return hit;
-  const roster = await loadRoster(ctx, companyId, cache);
-  const rows = await monthRows(ctx, companyId, ym, cache);
-  const summary = summarizeMonth(rows, roster.names, ym, { cutoff });
-  cache.months.set(key, summary);
-  return summary;
-}
+): Promise<TeamTotals> {
+  const rawSnaps = await latestSnapshots(ctx, companyId, ym, undefined, cache);
+  const calls = await monthCallsMap(ctx, companyId, ym, undefined, cache);
+  const withCalls = rawSnaps.map((s) => {
+    const c = calls.get(s.employeeId as Id<"performanceEmployees">);
+    const next: Snapshot = { ...s };
+    for (const k of DAILY_KEYS) next[k] = c?.[k];
+    next.talkAvgSec = c?.talkAvgSec;
+    return next;
+  });
 
-// ------------------------------------------------------------ day series
-
-export interface CallDay {
-  date: string;
-  values: Partial<Record<DailyKey, number>>;
-  /** Employees with Genesys login time that day. */
-  loggedIn: number;
-}
-
-function monthDays(ym: string): string[] {
-  const { start, end } = monthBounds(ym);
-  const days: string[] = [];
-  const [y, m] = ym.split("-").map(Number);
-  const last = Number(end.slice(8));
-  for (let d = Number(start.slice(8)); d <= last; d++) {
-    days.push(`${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
+  const totalRaw: Snapshot = {
+    employeeId: "team",
+    name: "Team",
+    reportDate: null,
+  };
+  for (const k of METRIC_KEYS) {
+    const vals = withCalls.map((s) => s[k]).filter((v): v is number => v !== undefined);
+    totalRaw[k] = vals.length ? vals.reduce((a, b) => a + b, 0) : undefined;
   }
-  return days;
-}
+  totalRaw.talkAvgSec =
+    totalRaw.talkTotalSec && totalRaw.callsToday
+      ? Math.round(totalRaw.talkTotalSec / totalRaw.callsToday)
+      : undefined;
+  let total = enrich(totalRaw);
+  total.hitrate = teamHitrate(withCalls);
+  total.reportDate = withCalls.reduce<string | null>(
+    (max, s) => (s.reportDate && (!max || s.reportDate > max) ? s.reportDate : max),
+    null,
+  );
+  const unqualified = aggregateReasons(withCalls.map((s) => s.unqualifiedReasons));
+  total = addForecast(total, ym); // team: workday basis
 
-/** Every calendar day of the month with that day's summed call metrics
- * (team-wide, or one employee) — the day-by-day charts. */
-export function callDays(
-  rows: readonly ReportRow[],
-  names: ReadonlyMap<EmployeeId, string>,
-  ym: string,
-  employeeId?: EmployeeId,
-): CallDay[] {
-  const byDate = new Map<string, Partial<Record<DailyKey, number>>>();
-  const loggedIn = new Map<string, number>();
-  for (const r of rows) {
-    if (!names.has(r.employeeId) || (employeeId && r.employeeId !== employeeId)) continue;
-    const cur = byDate.get(r.reportDate) ?? {};
-    for (const k of DAILY_KEYS) {
-      const v = r[k];
-      if (v === undefined) continue;
-      const safe = plausibleDailyValue(k, v);
-      if (safe !== undefined) cur[k] = (cur[k] ?? 0) + safe;
-    }
-    byDate.set(r.reportDate, cur);
-    if ((r.loginSec ?? 0) > 0) loggedIn.set(r.reportDate, (loggedIn.get(r.reportDate) ?? 0) + 1);
-  }
-  return monthDays(ym).map((date) => ({
-    date,
-    values: byDate.get(date) ?? {},
-    loggedIn: loggedIn.get(date) ?? 0,
-  }));
+  const asOf = total.reportDate ? parseISODate(total.reportDate) : new Date();
+  const present =
+    calls.size > 0 ? await reportDatesWithCalls(ctx, companyId, ym, cache) : undefined;
+  const missing = present ? missingCallDays(ym, asOf, present) : undefined;
+
+  const snaps = withCalls.map((s) =>
+    addForecast(
+      enrich(s),
+      ym,
+      calls.get(s.employeeId as Id<"performanceEmployees">)?.workDays,
+      missing,
+    ),
+  );
+
+  return { total, snaps, unqualified };
 }

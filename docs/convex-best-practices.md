@@ -25,7 +25,7 @@ are deliberate. Re-audit rather than trusting the counts if it matters.
 | --- | --- |
 | Argument validators on public functions | Followed — every `query`/`mutation`/`action` in `convex/` declares `args`. |
 | Access control on public functions | Followed — the `user*`/`serverUser*` builders in `functions.ts` resolve the caller and check the declared `role`/`can`/`applicant` requirement before the handler runs. |
-| Avoid `.filter` on db queries | Mostly followed — a few remaining call sites (`people/accessRequests.ts`, `people/invites.ts`, `lib/auth.ts`, `org/structureMigration.ts`, `performance/import.ts`). |
+| Avoid `.filter` on db queries | Mostly followed — 9 remaining call sites (`people/accessRequests.ts`, `people/invites.ts`, `lib/auth.ts`, `performance/companies.ts`, `org/structureMigration.ts`, `performance/import.ts`, `migrations/backfillPerformanceCompanyId.ts`). |
 | `.collect` only on small result sets | ~265 `.collect()` calls. Fine for the org-scale tables (`users`, `departments`, `presence`); worth checking before adding one on an append-only table (`auditLog`, `messages`). |
 | Only schedule/`ctx.run*` **internal** functions | Deliberate exception: the `api*`-prefixed functions are public *by design* — `apps/api` calls them server-to-server behind `CONVEX_SERVER_KEY`. Action-side access checks go through the internal `users.callerForAction` (`lib/auth.ts`'s `requireCapabilityForAction` / `requireAdminForAction`). |
 | Table name as first `ctx.db` argument | Not adopted — 0 of ~258 `ctx.db.get` calls pass one. Harmless today, required later for custom ID generation. |

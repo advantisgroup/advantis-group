@@ -95,26 +95,14 @@ export function fmtYm(ym: string, locale: string): string {
   });
 }
 
-/** How a delta's magnitude is shown: a plain count, percentage points
- * (rates) or a duration (seconds in, "1h 5m" out). */
-export type DeltaFormat = "num" | "pts" | "duration";
-
-function fmtDeltaMagnitude(abs: number, format: DeltaFormat): string {
-  if (format === "duration") return fmtDurationPrecise(abs);
-  if (format === "pts") return `${fmtNum(abs)} Pkt.`;
-  return fmtNum(abs);
-}
-
 /** Small colored delta indicator. `invert` flips which sign counts as
  * "good" — for metrics where lower is better (e.g. overdue counts). */
 export function DeltaBadge({
   value,
   invert = false,
-  format = "num",
 }: {
   value: number | undefined | null;
   invert?: boolean;
-  format?: DeltaFormat;
 }) {
   if (value === undefined || value === null || value === 0) return null;
   const good = invert ? value < 0 : value > 0;
@@ -127,23 +115,29 @@ export function DeltaBadge({
       )}
     >
       <Icon className="h-3 w-3" />
-      {fmtDeltaMagnitude(Math.abs(value), format)}
+      {fmtNum(Math.abs(value))}
     </span>
   );
 }
 
 /** "VM ↑X.X · VJ ↓Y.Y" pair — the standard month-over-month/year-over-year
  * comparison shown under most Performance KPI values. */
-export function DeltaPair({
-  dVm,
-  dVj,
-  format,
-}: {
-  dVm: number | undefined;
-  dVj: number | undefined;
-  format?: DeltaFormat;
-}) {
-  return <DeltaTriple dVm={dVm} dVj={dVj} dTeam={undefined} format={format} />;
+export function DeltaPair({ dVm, dVj }: { dVm: number | undefined; dVj: number | undefined }) {
+  if (dVm === undefined && dVj === undefined) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+      {dVm !== undefined && (
+        <span className="inline-flex items-center gap-1">
+          VM <DeltaBadge value={dVm} />
+        </span>
+      )}
+      {dVj !== undefined && (
+        <span className="inline-flex items-center gap-1">
+          VJ <DeltaBadge value={dVj} />
+        </span>
+      )}
+    </div>
+  );
 }
 
 /** "VM ↑X.X · VJ ↓Y.Y · Ø Team ↑Z.Z" — the employee detail's KPI cards
@@ -153,29 +147,27 @@ export function DeltaTriple({
   dVm,
   dVj,
   dTeam,
-  format,
 }: {
   dVm: number | undefined;
   dVj: number | undefined;
   dTeam: number | undefined;
-  format?: DeltaFormat;
 }) {
   if (dVm === undefined && dVj === undefined && dTeam === undefined) return null;
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
       {dVm !== undefined && (
         <span className="inline-flex items-center gap-1">
-          VM <DeltaBadge value={dVm} format={format} />
+          VM <DeltaBadge value={dVm} />
         </span>
       )}
       {dVj !== undefined && (
         <span className="inline-flex items-center gap-1">
-          VJ <DeltaBadge value={dVj} format={format} />
+          VJ <DeltaBadge value={dVj} />
         </span>
       )}
       {dTeam !== undefined && (
         <span className="inline-flex items-center gap-1">
-          Ø Team <DeltaBadge value={dTeam} format={format} />
+          Ø Team <DeltaBadge value={dTeam} />
         </span>
       )}
     </div>

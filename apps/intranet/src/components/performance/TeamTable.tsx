@@ -13,7 +13,6 @@ import { Link } from "@/components/Link";
 import { fmtNum, fmtPct } from "@/components/performance/PerformanceFormat";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -317,12 +316,7 @@ export function TeamTable({ data }: { data: TeamDashboardData }) {
                   className="text-right"
                 />
                 <TableHead>{t("colBadges")}</TableHead>
-                <TableHead>
-                  <span className="inline-flex items-center gap-1">
-                    {t("colMark")}
-                    <InfoTip text={t("marksHint")} />
-                  </span>
-                </TableHead>
+                <TableHead>{t("colMark")}</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>

@@ -1,18 +1,22 @@
+import { mutation } from "../functions";
 /**
  * CRUD for Performance "topics" — admin-set monthly goals/todos for an
  * employee. Ported from the reference script's `topic_save`/`topic_delete`/
  * `topic_status` routes.
  *
- * Creating, editing, and deleting a topic is for admins and the
- * dashboard's team lead; the employee themself may only change its status.
+ * Creating, editing, and deleting a topic is admin-only; the employee
+ * themself may only change its status (matches `topic_status` being
+ * `login_required` rather than `admin_required` in the source).
  */
 import { ConvexError, v } from "convex/values";
 
-import { userMutation } from "../functions";
-
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
-import { canViewEmployee, loadViewer, type PerformanceViewer } from "./lib/access";
+import {
+  requireCanViewEmployee as requireCanView,
+  requirePermission,
+  requireSessionLogin as requireLogin,
+} from "./lib/auth";
 
 async function getEmployeeOrThrow(
   ctx: MutationCtx,
@@ -26,17 +30,6 @@ async function getEmployeeOrThrow(
     });
   }
   return employee;
-}
-
-/** Admins and leads of the employee's dashboard may set goals. */
-function requireCanManageTopics(viewer: PerformanceViewer, employee: Doc<"performanceEmployees">) {
-  const lead = viewer.dashboards.some((d) => d.companyId === employee.companyId && d.canViewTeam);
-  if (!viewer.isAdmin && !lead) {
-    throw new ConvexError({
-      code: "forbidden",
-      message: "Topics anlegen dürfen nur Teamleitung und Admins.",
-    });
-  }
 }
 
 const TOPIC_STATUSES = ["offen", "erreicht", "nicht_erreicht"] as const;
@@ -59,8 +52,9 @@ async function getOwnTopic(
 }
 
 /** Create a new topic, or edit an existing one when `id` is given. */
-export const saveTopic = userMutation({
+export const saveTopic = mutation({
   args: {
+    token: v.string(),
     employeeId: v.id("performanceEmployees"),
     id: v.optional(v.id("performanceTopics")),
     ym: v.string(),
@@ -70,9 +64,9 @@ export const saveTopic = userMutation({
     status: v.optional(statusValidator),
   },
   handler: async (ctx, args): Promise<{ id: Id<"performanceTopics"> }> => {
-    const viewer = await loadViewer(ctx, ctx.caller);
+    const login = await requireLogin(ctx, args.token);
     const employee = await getEmployeeOrThrow(ctx, args.employeeId);
-    requireCanManageTopics(viewer, employee);
+    await requirePermission(ctx, login, "manage_roster", employee.companyId);
 
     const topic = args.topic.trim();
     if (!topic) {
@@ -104,7 +98,7 @@ export const saveTopic = userMutation({
       todo,
       endDate,
       status,
-      createdBy: viewer.name,
+      createdBy: login.name,
       createdAt: now,
       updatedAt: now,
     });
@@ -112,15 +106,16 @@ export const saveTopic = userMutation({
   },
 });
 
-export const deleteTopic = userMutation({
+export const deleteTopic = mutation({
   args: {
+    token: v.string(),
     employeeId: v.id("performanceEmployees"),
     id: v.id("performanceTopics"),
   },
-  handler: async (ctx, { employeeId, id }): Promise<{ ok: true }> => {
-    const viewer = await loadViewer(ctx, ctx.caller);
+  handler: async (ctx, { token, employeeId, id }): Promise<{ ok: true }> => {
+    const login = await requireLogin(ctx, token);
     const employee = await getEmployeeOrThrow(ctx, employeeId);
-    requireCanManageTopics(viewer, employee);
+    await requirePermission(ctx, login, "manage_roster", employee.companyId);
     const existing = await getOwnTopic(ctx, id, employeeId);
     await ctx.db.delete(existing._id);
     return { ok: true };
@@ -129,18 +124,17 @@ export const deleteTopic = userMutation({
 
 /** Set a topic's status — the employee themself may do this too, not just
  * an admin. */
-export const setTopicStatus = userMutation({
+export const setTopicStatus = mutation({
   args: {
+    token: v.string(),
     employeeId: v.id("performanceEmployees"),
     id: v.id("performanceTopics"),
     status: statusValidator,
   },
-  handler: async (ctx, { employeeId, id, status }): Promise<{ ok: true }> => {
-    const viewer = await loadViewer(ctx, ctx.caller);
+  handler: async (ctx, { token, employeeId, id, status }): Promise<{ ok: true }> => {
+    const login = await requireLogin(ctx, token);
     const employee = await getEmployeeOrThrow(ctx, employeeId);
-    if (!canViewEmployee(viewer, employee)) {
-      throw new ConvexError({ code: "forbidden", message: "Kein Zugriff." });
-    }
+    await requireCanView(ctx, login, employee);
     const existing = await getOwnTopic(ctx, id, employeeId);
     await ctx.db.patch(existing._id, { status, updatedAt: Date.now() });
     return { ok: true };

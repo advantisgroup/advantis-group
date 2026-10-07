@@ -388,9 +388,8 @@ export const INTRANET_PAGES: IntranetPage[] = [
   {
     href: "/performance",
     label: "Performance-Dashboard",
-    description:
-      "Kennzahlen deines Teams: Leads, Closed Won, Calls und Interaktionen. Admins laden hier täglich die Reports hoch.",
-    keywords: ["kennzahlen", "kpi", "calls", "performance", "report", "upload", "dashboard"],
+    description: "Kennzahlen zu Calls und Interaktionen.",
+    keywords: ["kennzahlen", "kpi", "calls", "performance"],
   },
   {
     href: "/hr",

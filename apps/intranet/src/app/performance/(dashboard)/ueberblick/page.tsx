@@ -2,16 +2,13 @@
 
 import { useMemo } from "react";
 
-import { Upload } from "lucide-react";
+import { AlertTriangle, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
-import { ComparisonFootnote, MissingReportWarning } from "@/components/performance/ComparisonNotes";
-import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { useDashboardData } from "@/components/performance/PerformanceDashboardContext";
 import {
   DeltaBadge,
-  type DeltaFormat,
   DeltaPair,
   fmtNum,
   fmtPct,
@@ -20,7 +17,6 @@ import {
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { TeamTable } from "@/components/performance/TeamTable";
 import { UnqualifiedReasonsChart } from "@/components/performance/UnqualifiedReasonsChart";
-import { WallboxOverview } from "@/components/performance/WallboxOverview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +32,6 @@ function PrimaryKpiCard({
   subtitle,
   dVm,
   dVj,
-  format,
 }: {
   accent: "emerald" | "purple" | "slate" | "amber";
   label: string;
@@ -44,7 +39,6 @@ function PrimaryKpiCard({
   subtitle?: string;
   dVm?: number;
   dVj?: number;
-  format?: DeltaFormat;
 }) {
   const border = {
     emerald: "border-t-emerald-500",
@@ -60,7 +54,7 @@ function PrimaryKpiCard({
         </span>
         <span className="text-3xl font-semibold tabular-nums">{value}</span>
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-        <DeltaPair dVm={dVm} dVj={dVj} format={format} />
+        <DeltaPair dVm={dVm} dVj={dVj} />
       </CardContent>
     </Card>
   );
@@ -97,19 +91,14 @@ function StatCard({
   );
 }
 
-function ListStatCard({ href, label, value }: { href: string; label: string; value?: number }) {
+function ListStatCard({ href, label, value }: { href: string; label: string; value: string }) {
   return (
     <Link href={href}>
       <Card className="h-full transition-colors hover:bg-muted/50">
         <CardContent className="flex flex-col gap-1.5 p-4">
           <span className="text-xs text-muted-foreground">{label}</span>
-          <span
-            className={cn(
-              "text-xl font-semibold tabular-nums underline decoration-dotted underline-offset-4",
-              value ? "text-warn" : "text-foreground",
-            )}
-          >
-            {fmtNum(value)}
+          <span className="text-xl font-semibold tabular-nums text-warn underline decoration-dotted underline-offset-4">
+            {value}
           </span>
         </CardContent>
       </Card>
@@ -118,14 +107,6 @@ function ListStatCard({ href, label, value }: { href: string; label: string; val
 }
 
 export default function DashboardOverviewPage() {
-  const dashboard = usePerformanceAccess().dashboard;
-  if (dashboard?.kind === "wallbox") return <WallboxOverview companyId={dashboard.companyId} />;
-  // Calls-only dashboards have no Überblick; the layout redirects.
-  if (dashboard?.kind === "calls") return null;
-  return <SalesOverview />;
-}
-
-function SalesOverview() {
   const t = useTranslations("Performance");
   const locale = useLocale();
   const data = useDashboardData();
@@ -177,11 +158,17 @@ function SalesOverview() {
       <p className="text-sm text-muted-foreground">
         {t("dashboardSubtitle", {
           ym: fmtYm(data.ym, locale),
+          date: data.total.reportDate ? formatIsoDate(data.total.reportDate, locale) : "–",
           count: data.snaps.length,
         })}
       </p>
 
-      <MissingReportWarning fc={fc} />
+      {fc?.incomplete && fc.missingDays.length > 0 && (
+        <div className="flex items-start gap-2 rounded-md border border-warn/40 bg-warn/10 p-3 text-sm text-warn">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          {t("dashboardMissingReport", { days: fc.missingDays.join(", ") })}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <PrimaryKpiCard
@@ -191,7 +178,6 @@ function SalesOverview() {
           subtitle={`${fmtNum(data.total.workableCreated)} / ${fmtNum(data.total.leadsCreated)}`}
           dVm={data.dVm.workableRate}
           dVj={data.dVj.workableRate}
-          format="pts"
         />
         <PrimaryKpiCard
           accent="purple"
@@ -200,7 +186,6 @@ function SalesOverview() {
           subtitle={`${fmtNum(data.total.wonMonth)} / ${fmtNum(data.total.workableCreated)}`}
           dVm={data.dVm.hitrate}
           dVj={data.dVj.hitrate}
-          format="pts"
         />
         <PrimaryKpiCard
           accent="slate"
@@ -304,9 +289,9 @@ function SalesOverview() {
         {LIST_KEYS.map((key) => (
           <ListStatCard
             key={key}
-            href={`/performance/liste/${key}?from=ueberblick`}
+            href={`/performance/liste/${key}`}
             label={t(`list.${key}.title`)}
-            value={listValues[key]}
+            value={fmtNum(listValues[key])}
           />
         ))}
       </div>
@@ -315,17 +300,14 @@ function SalesOverview() {
 
       <TeamTable data={data} />
 
-      <div className="space-y-1 text-xs text-muted-foreground">
-        <ComparisonFootnote comparison={data.comparison} />
-        {fc && (
-          <p>
-            {t("dashboardForecastFootnote", {
-              elapsed: fc.elapsed,
-              total: fc.total,
-            })}
-          </p>
-        )}
-      </div>
+      {fc && (
+        <p className="text-xs text-muted-foreground">
+          {t("dashboardForecastFootnote", {
+            elapsed: fc.elapsed,
+            total: fc.total,
+          })}
+        </p>
+      )}
     </div>
   );
 }

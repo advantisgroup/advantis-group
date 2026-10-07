@@ -6,8 +6,7 @@
  */
 import { v } from "convex/values";
 
-import { serverUserQuery } from "../functions";
-import { loadViewer, requireTeamView } from "./lib/access";
+import { serverQuery } from "../functions";
 import { teamTotals } from "./lib/reports";
 
 export interface ExportRow {
@@ -31,13 +30,10 @@ export interface ExportRow {
   unqualifiedReasons: string;
 }
 
-/** Per-employee KPI export for one month — for whoever may see the team
- * view of that dashboard (admins, the dashboard's lead). */
-export const apiExportTeam = serverUserQuery({
-  args: { companyId: v.optional(v.id("companies")), ym: v.string() },
-  handler: async (ctx, { companyId: companyIdArg, ym }): Promise<ExportRow[]> => {
-    const viewer = await loadViewer(ctx, ctx.caller);
-    const companyId = requireTeamView(viewer, companyIdArg);
+/** Per-employee KPI export for one month. */
+export const apiExportTeam = serverQuery({
+  args: { companyId: v.id("companies"), ym: v.string() },
+  handler: async (ctx, { companyId, ym }): Promise<ExportRow[]> => {
     const { snaps } = await teamTotals(ctx, companyId, ym);
     return snaps.map((s) => ({
       name: s.name,

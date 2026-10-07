@@ -23,7 +23,7 @@ const SCOPES: Scope[] = ["hr", "performance"];
 /** Where to send someone once the new password is in place. */
 const AFTER_RESET_HREF: Record<Scope, string> = {
   hr: "/applicants",
-  performance: "/performance",
+  performance: "/performance/login",
 };
 
 type Check =

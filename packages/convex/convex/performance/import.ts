@@ -1,10 +1,10 @@
 import {
   internalMutation,
   internalQuery,
+  mutation,
+  query,
   serverMutation,
   serverQuery,
-  userMutation,
-  userQuery,
 } from "../functions";
 /**
  * Database-side half of the Performance feature's report-upload pipeline.
@@ -26,8 +26,11 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
+import { monthBounds } from "./lib/kpi";
 import { EXCLUDED_OWNERS } from "./lib/salesforceImport";
 import { type SnapshotFields } from "./lib/types";
+import { requirePermission, requireSessionLogin, resolveCompanyId } from "./lib/auth";
+import { TEMPLATE_ALIAS_LOOKUP } from "./lib/aggregatedTemplate";
 
 /** A one-shot URL `apps/api` POSTs the original report file to (Convex
  * file storage), before parsing and importing it. Public (not internal) —
@@ -50,6 +53,82 @@ export const apiDeleteStorage = serverMutation({
     await ctx.storage.delete(storageId);
   },
 });
+
+// ------------------------------------------------- aggregated template import
+// Fallback format when a file is neither a Salesforce export nor a call
+// report: one row per employee, with the metrics already aggregated by
+// whoever filled in the template (see `/performance/vorlage.xlsx`,
+// added in a later phase).
+
+const HEADER_ALIASES: Record<string, string[]> = {
+  employee: ["mitarbeiter", "employee", "name", "salesrep", "vertriebler", "mitarbeiterin"],
+  date: ["datum", "date", "reportdatum", "reportdate", "stichtag"],
+  leadsCreated: [
+    "leadserstelltmonat",
+    "leadscreatedthismonth",
+    "leadscreated",
+    "leadserstellt",
+    "leadsmonat",
+  ],
+  workableCreated: [
+    "workableerstelltmonat",
+    "workablecreatedthismonth",
+    "workablecreated",
+    "workableerstellt",
+    "workablemonat",
+  ],
+  leadsAnalysis: ["leadsstatusanalysis", "leadsanalysis", "statusanalysis"],
+  leadsDetailsIdent: [
+    "leadsdetailsidentificationrunning",
+    "detailsidentificationrunning",
+    "leadsstatusdetailsidentificationrunning",
+    "detailsidentification",
+  ],
+  oppsOpen: [
+    "opportunitiesoffengesamt",
+    "opportunitiesgesamtoffen",
+    "oppsopen",
+    "opportunitiesopen",
+    "opportunitiesoffen",
+  ],
+  oppsClose7d: [
+    "opportunitiesclosedate7tage",
+    "oppsclosedate7tage",
+    "closedate7days",
+    "opportunitiesclosedatein7tagen",
+    "oppsclose7d",
+    "opportunitiesclosedateindenkommenden7tagen",
+  ],
+  oppsPending: [
+    "oppspendingcreditdocuments",
+    "opportunitiespendingcreditdocuments",
+    "pendingcreditdocuments",
+    "oppspending",
+    "opportunitiespending",
+    "stagedetailspendingcreditoderpendingdocuments",
+  ],
+  wonMonth: ["wonmonat", "wonthismonth", "won", "gewonnenmonat"],
+  callsToday: ["callsheute", "callstoday", "anzahlcallstoday", "anzahlcallsheute", "calls"],
+  overduesAnalysis: ["overduesanalysis", "overdueanalysis", "analysis30", "analysis30tage"],
+  overduesOpps: ["overduesopportunities", "overdueopportunities", "overduesopps"],
+  oppsOver30: ["opportunities30tage", "opps30tage", "opportunity30", "opps30"],
+  leadsNoAction14: ["leadslastactivity2wochen", "leadslastaction2wochen", "leadsinaktiv2wochen"],
+  oppsNoAction14: [
+    "oppslastactivity2wochen",
+    "opportunitieslastactivity2wochen",
+    "oppsinaktiv2wochen",
+  ],
+  unqualifiedReasons: [
+    "unqualifiedreasons",
+    "unqualifiedreason",
+    "unqualifiziertgruende",
+    "unqualifiedgruende",
+    "gruendeunqualified",
+  ],
+};
+for (const [field, aliases] of Object.entries(HEADER_ALIASES)) {
+  for (const alias of aliases) TEMPLATE_ALIAS_LOOKUP.set(alias, field);
+}
 
 // ----------------------------------------------------------------- upserts
 
@@ -103,12 +182,8 @@ async function upsertSnapshot(
   sourceFile: string,
   uploadedAt: number,
   cache: EmployeeCache,
-  clearFields: (keyof SnapshotFields)[] = [],
 ): Promise<void> {
   const employeeId = await findOrCreateEmployee(ctx, companyId, employeeName, cache);
-  const cleared = Object.fromEntries(
-    clearFields.filter((key) => !(key in fields)).map((key) => [key, undefined]),
-  ) as SnapshotFields;
   // Convex indexes aren't unique constraints (see the schema comment on
   // by_employee_date), so more than one row can in principle match — e.g. a
   // raced concurrent upload. Merge into the first match and drop any extras
@@ -130,12 +205,11 @@ async function upsertSnapshot(
     // historical data doesn't change once reported, only new days get
     // new data. Skipping a no-op write avoids burning a mutation on
     // every row of every file in a bulk re-import for nothing.
-    const next = { ...fields, ...cleared };
-    const unchanged = (Object.keys(next) as (keyof SnapshotFields)[]).every(
-      (key) => existing[key] === next[key],
+    const unchanged = (Object.keys(fields) as (keyof SnapshotFields)[]).every(
+      (key) => existing[key] === fields[key],
     );
     if (!unchanged) {
-      await ctx.db.patch(existing._id, { ...next, sourceFile, uploadedAt });
+      await ctx.db.patch(existing._id, { ...fields, sourceFile, uploadedAt });
     }
   } else {
     await ctx.db.insert("performanceReports", {
@@ -259,6 +333,31 @@ export const getTeamEmployeesWithId = internalQuery({
     return employees
       .filter((e) => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
       .map((e) => ({ id: e._id, name: e.name }));
+  },
+});
+
+/** Employees with at least one Performance report in each of `months`
+ * ("YYYY-MM") — the "already active in the Performance Dashboard this
+ * month" gate for imported interactions, so a raw Genesys export doesn't
+ * pull in agents from queues/departments this feature doesn't track. */
+export const getActiveEmployeeIdsByMonth = internalQuery({
+  args: { companyId: v.id("companies"), months: v.array(v.string()) },
+  handler: async (
+    ctx,
+    { companyId, months },
+  ): Promise<Record<string, Id<"performanceEmployees">[]>> => {
+    const out: Record<string, Id<"performanceEmployees">[]> = {};
+    for (const ym of months) {
+      const { start, end } = monthBounds(ym);
+      const rows = await ctx.db
+        .query("performanceReports")
+        .withIndex("by_company_reportDate", (q) =>
+          q.eq("companyId", companyId).gte("reportDate", start).lte("reportDate", end),
+        )
+        .collect();
+      out[ym] = [...new Set(rows.map((r) => r.employeeId))];
+    }
+    return out;
   },
 });
 
@@ -433,7 +532,6 @@ export const applyImport = internalMutation({
     contentHash: v.optional(v.string()),
     reportKind: v.optional(reportKindValidator),
     reportDate: v.optional(v.string()),
-    reportDateFrom: v.optional(v.string()),
     sourceRowCount: v.optional(v.number()),
     skippedNames: v.optional(v.array(v.string())),
     flaggedRows: v.optional(v.array(flaggedRowInputValidator)),
@@ -444,18 +542,14 @@ export const applyImport = internalMutation({
     // place instead of inserting a new one, so re-processing an
     // already-uploaded file doesn't leave a duplicate log entry behind.
     replaceLogId: v.optional(v.id("performanceUploadLog")),
-    // Lead/Opp imports still have to refill the drill-down tables after
-    // this; they write the log row last (`recordUpload`), so a failure in
-    // between leaves no log entry that would block the retry as duplicate.
-    deferLog: v.optional(v.boolean()),
-    // Fields this report knows are "not measured" for every row it writes,
-    // removed from a stored row that had them — a call report without an
-    // outbound column clears the Outbound value older imports filled from
-    // "Bearbeitet".
-    clearFields: v.optional(v.array(v.literal("callsOutbound"))),
   },
   handler: async (ctx, args): Promise<{ rowsImported: number }> => {
     const now = Date.now();
+    // A re-import doesn't necessarily carry a fresh `uploadedBy` (the
+    // original uploader isn't necessarily who clicked "re-import") — fall
+    // back to whatever the row already had instead of blanking it out.
+    const existingLog = args.replaceLogId ? await ctx.db.get(args.replaceLogId) : null;
+    const uploadedBy = args.uploadedBy ?? existingLog?.uploadedBy;
     const employeeCache = await loadEmployeeCache(ctx, args.companyId);
     for (const snap of args.snapshots) {
       await upsertSnapshot(
@@ -467,7 +561,6 @@ export const applyImport = internalMutation({
         args.sourceFile,
         now,
         employeeCache,
-        args.clearFields,
       );
     }
     for (const flagged of args.flaggedRows ?? []) {
@@ -484,184 +577,27 @@ export const applyImport = internalMutation({
         employeeCache,
       );
     }
-    if (!args.deferLog) {
-      await writeUploadLog(ctx, { ...args, rowsImported: args.snapshots.length });
+    const logFields = {
+      companyId: args.companyId,
+      filename: args.sourceFile,
+      storageId: args.storageId,
+      rowsImported: args.snapshots.length,
+      uploadedAt: now,
+      contentHash: args.contentHash,
+      reportKind: args.reportKind,
+      reportDate: args.reportDate,
+      sourceRowCount: args.sourceRowCount,
+      skippedNames: args.skippedNames,
+      fileSize: args.fileSize,
+      batchId: args.batchId,
+      uploadedBy,
+    };
+    if (args.replaceLogId) {
+      await ctx.db.patch(args.replaceLogId, logFields);
+    } else {
+      await ctx.db.insert("performanceUploadLog", logFields);
     }
     return { rowsImported: args.snapshots.length };
-  },
-});
-
-interface UploadLogInput {
-  companyId: Id<"companies">;
-  sourceFile: string;
-  storageId: Id<"_storage">;
-  rowsImported: number;
-  contentHash?: string;
-  reportKind?: Doc<"performanceUploadLog">["reportKind"];
-  reportDate?: string;
-  reportDateFrom?: string;
-  sourceRowCount?: number;
-  skippedNames?: string[];
-  fileSize?: number;
-  batchId?: string;
-  uploadedBy?: string;
-  replaceLogId?: Id<"performanceUploadLog">;
-}
-
-async function writeUploadLog(ctx: MutationCtx, args: UploadLogInput): Promise<void> {
-  // A re-import doesn't necessarily carry a fresh `uploadedBy` (the
-  // original uploader isn't necessarily who clicked "re-import") — fall
-  // back to whatever the row already had instead of blanking it out.
-  const existingLog = args.replaceLogId ? await ctx.db.get(args.replaceLogId) : null;
-  const logFields = {
-    companyId: args.companyId,
-    filename: args.sourceFile,
-    storageId: args.storageId,
-    rowsImported: args.rowsImported,
-    uploadedAt: Date.now(),
-    contentHash: args.contentHash,
-    reportKind: args.reportKind,
-    reportDate: args.reportDate,
-    reportDateFrom:
-      args.reportDateFrom && args.reportDateFrom !== args.reportDate
-        ? args.reportDateFrom
-        : undefined,
-    sourceRowCount: args.sourceRowCount,
-    skippedNames: args.skippedNames,
-    fileSize: args.fileSize,
-    batchId: args.batchId,
-    uploadedBy: args.uploadedBy ?? existingLog?.uploadedBy,
-  };
-  if (existingLog) {
-    await ctx.db.patch(existingLog._id, logFields);
-  } else {
-    await ctx.db.insert("performanceUploadLog", logFields);
-  }
-}
-
-const uploadLogArgs = {
-  companyId: v.id("companies"),
-  sourceFile: v.string(),
-  storageId: v.id("_storage"),
-  rowsImported: v.number(),
-  contentHash: v.optional(v.string()),
-  reportKind: v.optional(
-    v.union(
-      v.literal("lead"),
-      v.literal("opp"),
-      v.literal("call"),
-      v.literal("template"),
-      v.literal("interactions"),
-      v.literal("wallbox_members"),
-      v.literal("wallbox_opps"),
-    ),
-  ),
-  reportDate: v.optional(v.string()),
-  reportDateFrom: v.optional(v.string()),
-  sourceRowCount: v.optional(v.number()),
-  skippedNames: v.optional(v.array(v.string())),
-  fileSize: v.optional(v.number()),
-  batchId: v.optional(v.string()),
-  uploadedBy: v.optional(v.string()),
-  replaceLogId: v.optional(v.id("performanceUploadLog")),
-};
-
-/** The last step of a Lead/Opp import: the log row, plus which report the
- * drill-down tables now hold (when they were replaced). */
-export const recordUpload = internalMutation({
-  args: {
-    ...uploadLogArgs,
-    rawLeadsReportDate: v.optional(v.string()),
-    rawOppsReportDate: v.optional(v.string()),
-  },
-  handler: async (ctx, { rawLeadsReportDate, rawOppsReportDate, ...log }): Promise<void> => {
-    await writeUploadLog(ctx, log);
-    if (rawLeadsReportDate || rawOppsReportDate) {
-      const state = await loadImportState(ctx, log.companyId);
-      const patch = {
-        ...(rawLeadsReportDate ? { rawLeadsReportDate } : {}),
-        ...(rawOppsReportDate ? { rawOppsReportDate } : {}),
-      };
-      if (state) await ctx.db.patch(state._id, patch);
-      else await ctx.db.insert("performanceImportState", { companyId: log.companyId, ...patch });
-    }
-  },
-});
-
-// ------------------------------------------------------- import state/lock
-
-async function loadImportState(
-  ctx: { db: QueryCtx["db"] },
-  companyId: Id<"companies">,
-): Promise<Doc<"performanceImportState"> | null> {
-  return await ctx.db
-    .query("performanceImportState")
-    .withIndex("by_company", (q) => q.eq("companyId", companyId))
-    .first();
-}
-
-/** Which report date the drill-down tables currently hold. Dashboards
- * imported before `performanceImportState` existed fall back to the date
- * stamped on the stored rows (all rows of a table come from one report). */
-export const getRawReportDates = internalQuery({
-  args: { companyId: v.id("companies") },
-  handler: async (ctx, { companyId }): Promise<{ leads?: string; opps?: string }> => {
-    const state = await loadImportState(ctx, companyId);
-    const leads =
-      state?.rawLeadsReportDate ??
-      (
-        await ctx.db
-          .query("performanceRawLeads")
-          .withIndex("by_company_createDate", (q) => q.eq("companyId", companyId))
-          .first()
-      )?.reportDate;
-    const opps =
-      state?.rawOppsReportDate ??
-      (
-        await ctx.db
-          .query("performanceRawOpps")
-          .withIndex("by_company", (q) => q.eq("companyId", companyId))
-          .first()
-      )?.reportDate;
-    return { leads, opps };
-  },
-});
-
-// Convex actions run for at most 10 minutes; a lock older than that belongs
-// to an import that died without releasing it.
-const IMPORT_LOCK_MS = 10 * 60_000;
-
-/** Takes the dashboard's import lock for `token`, or throws the German
- * "already running" message while another import holds it. Re-entrant for
- * the same token (a batch re-import takes it once per file). */
-export const acquireImportLock = internalMutation({
-  args: { companyId: v.id("companies"), token: v.string(), by: v.optional(v.string()) },
-  handler: async (ctx, { companyId, token, by }): Promise<void> => {
-    const now = Date.now();
-    const state = await loadImportState(ctx, companyId);
-    if (state?.lockToken && state.lockToken !== token && (state.lockedUntil ?? 0) > now) {
-      throw new ConvexError({
-        code: "import_locked",
-        message: "Gerade läuft schon ein Import für dieses Dashboard – bitte kurz warten.",
-      });
-    }
-    const lock = { lockToken: token, lockedUntil: now + IMPORT_LOCK_MS, lockedBy: by };
-    if (state) await ctx.db.patch(state._id, lock);
-    else await ctx.db.insert("performanceImportState", { companyId, ...lock });
-  },
-});
-
-export const releaseImportLock = internalMutation({
-  args: { companyId: v.id("companies"), token: v.string() },
-  handler: async (ctx, { companyId, token }): Promise<void> => {
-    const state = await loadImportState(ctx, companyId);
-    if (state?.lockToken === token) {
-      await ctx.db.patch(state._id, {
-        lockToken: undefined,
-        lockedUntil: undefined,
-        lockedBy: undefined,
-      });
-    }
   },
 });
 
@@ -792,105 +728,31 @@ export const insertWonOppsChunk = internalMutation({
   },
 });
 
-/** Admin-only functions below all act on one explicitly chosen dashboard. */
-async function requireCompany(ctx: QueryCtx, companyId: Id<"companies">): Promise<void> {
-  if (!(await ctx.db.get(companyId))) {
-    throw new ConvexError({ code: "not_found", message: "Dashboard nicht gefunden." });
-  }
-}
-
-const UPLOAD_LOG_PAGE = 60;
-const UPLOAD_LOG_MAX = 1000;
-
-/** Most recent uploads, for the admin upload page's log table. `limit`
- * grows with "Mehr laden"; `hasMore` says whether older rows exist. */
-export const listUploadLog = userQuery({
-  role: "admin",
-  args: { companyId: v.id("companies"), limit: v.optional(v.number()) },
-  handler: async (ctx, { companyId, limit }) => {
-    await requireCompany(ctx, companyId);
-    const take = Math.min(Math.max(Math.floor(limit ?? UPLOAD_LOG_PAGE), 1), UPLOAD_LOG_MAX);
-    const fetched = await ctx.db
+/** Most recent uploads, for the admin upload page's log table. */
+export const listUploadLog = query({
+  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
+  handler: async (ctx, { token, companyId: companyIdArg }) => {
+    const login = await requireSessionLogin(ctx, token);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "upload_reports", companyId);
+    const rows = await ctx.db
       .query("performanceUploadLog")
       .withIndex("by_company_uploadedAt", (q) => q.eq("companyId", companyId))
       .order("desc")
-      .take(take + 1);
-    const rows = fetched.slice(0, take);
-    return {
-      hasMore: fetched.length > take,
-      rows: rows.map((r) => ({
-        _id: r._id,
-        filename: r.filename,
-        rowsImported: r.rowsImported,
-        uploadedAt: r.uploadedAt,
-        reportKind: r.reportKind,
-        reportDate: r.reportDate,
-        reportDateFrom: r.reportDateFrom,
-        sourceRowCount: r.sourceRowCount,
-        skippedNames: r.skippedNames,
-        fileSize: r.fileSize,
-        batchId: r.batchId,
-        uploadedBy: r.uploadedBy,
-        scannedForFlags: r.scannedForFlags,
-      })),
-    };
-  },
-});
-
-const DAILY_STATUS_KINDS = [
-  "lead",
-  "opp",
-  "wallbox_members",
-  "wallbox_opps",
-  "call",
-  "interactions",
-] as const;
-type DailyStatusKind = (typeof DAILY_STATUS_KINDS)[number];
-
-/** "Tagesstatus" on the upload page: for each of the given report days
- * (the client passes the last few workdays, Berlin calendar), which of the
- * four daily exports have been imported. A multi-day interactions or call
- * file counts for every day it covers. */
-export const dailyUploadStatus = userQuery({
-  role: "admin",
-  args: { companyId: v.id("companies"), dates: v.array(v.string()) },
-  handler: async (
-    ctx,
-    { companyId, dates },
-  ): Promise<{ date: string; kinds: DailyStatusKind[] }[]> => {
-    await requireCompany(ctx, companyId);
-    const days = [...new Set(dates)]
-      .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
-      .sort()
-      .slice(-14);
-    if (days.length === 0) return [];
-    const from = days[0];
-    const to = days[days.length - 1];
-    // Multi-day files are filed under their last day; look a month past
-    // `to` so one that ends later but starts inside the window still counts.
-    const until = new Date(Date.parse(`${to}T00:00:00Z`) + 31 * 86_400_000)
-      .toISOString()
-      .slice(0, 10);
-    const rows = await ctx.db
-      .query("performanceUploadLog")
-      .withIndex("by_company_reportDate", (q) =>
-        q.eq("companyId", companyId).gte("reportDate", from).lte("reportDate", until),
-      )
-      .take(2000);
-    const byDay = new Map(days.map((d) => [d, new Set<DailyStatusKind>()]));
-    for (const r of rows) {
-      const kind = r.reportKind;
-      if (!r.reportDate || !kind || !(DAILY_STATUS_KINDS as readonly string[]).includes(kind)) {
-        continue;
-      }
-      const start = r.reportDateFrom ?? r.reportDate;
-      for (const d of days) {
-        if (d >= start && d <= r.reportDate) byDay.get(d)!.add(kind as DailyStatusKind);
-      }
-    }
-    return days.map((date) => ({
-      date,
-      kinds: DAILY_STATUS_KINDS.filter((k) => byDay.get(date)!.has(k)),
+      .take(60);
+    return rows.map((r) => ({
+      _id: r._id,
+      filename: r.filename,
+      rowsImported: r.rowsImported,
+      uploadedAt: r.uploadedAt,
+      reportKind: r.reportKind,
+      reportDate: r.reportDate,
+      sourceRowCount: r.sourceRowCount,
+      skippedNames: r.skippedNames,
+      fileSize: r.fileSize,
+      batchId: r.batchId,
+      uploadedBy: r.uploadedBy,
+      scannedForFlags: r.scannedForFlags,
     }));
   },
 });
@@ -910,11 +772,12 @@ export interface UnscannedCallUpload {
   batchId?: string;
 }
 
-export const listUnscannedCallUploads = userQuery({
-  role: "admin",
-  args: { companyId: v.id("companies") },
-  handler: async (ctx, { companyId }): Promise<UnscannedCallUpload[]> => {
-    await requireCompany(ctx, companyId);
+export const listUnscannedCallUploads = query({
+  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
+  handler: async (ctx, { token, companyId: companyIdArg }): Promise<UnscannedCallUpload[]> => {
+    const login = await requireSessionLogin(ctx, token);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "upload_reports", companyId);
     const rows = await ctx.db
       .query("performanceUploadLog")
       .withIndex("by_company_uploadedAt", (q) => q.eq("companyId", companyId))
@@ -942,11 +805,12 @@ export const listUnscannedCallUploads = userQuery({
 /** Team roster for the client-side rescan to match agent names against —
  * same set `getTeamEmployeeNames` gives the server-side import path, just
  * exposed to a signed-in admin instead of `internal.*`-only. */
-export const listEmployeeNames = userQuery({
-  role: "admin",
-  args: { companyId: v.id("companies") },
-  handler: async (ctx, { companyId }): Promise<string[]> => {
-    await requireCompany(ctx, companyId);
+export const listEmployeeNames = query({
+  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
+  handler: async (ctx, { token, companyId: companyIdArg }): Promise<string[]> => {
+    const login = await requireSessionLogin(ctx, token);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "upload_reports", companyId);
     const employees = await ctx.db
       .query("performanceEmployees")
       .withIndex("by_company", (q) => q.eq("companyId", companyId))
@@ -961,13 +825,14 @@ export const listEmployeeNames = userQuery({
  * time; a rescan only ever finds *additional* implausible-duration cells
  * the parser now catches, so this just files those and marks the upload as
  * checked. Safe to call repeatedly (`upsertFlaggedRow`'s usual dedup). */
-export const recordScanResults = userMutation({
-  role: "admin",
+export const recordScanResults = mutation({
   args: {
+    token: v.string(),
     logId: v.id("performanceUploadLog"),
     flaggedRows: v.array(flaggedRowInputValidator),
   },
-  handler: async (ctx, { logId, flaggedRows }): Promise<{ flagged: number }> => {
+  handler: async (ctx, { token, logId, flaggedRows }): Promise<{ flagged: number }> => {
+    const login = await requireSessionLogin(ctx, token);
     const log = await ctx.db.get(logId);
     if (!log || !log.companyId) {
       throw new ConvexError({
@@ -975,6 +840,7 @@ export const recordScanResults = userMutation({
         message: "Upload-log entry not found.",
       });
     }
+    await requirePermission(ctx, login, "upload_reports", log.companyId);
     const companyId = log.companyId;
     const now = Date.now();
     const employeeCache = await loadEmployeeCache(ctx, companyId);
@@ -1000,11 +866,12 @@ export const recordScanResults = userMutation({
 /** Pending call-report rows needing admin attention (see
  * `performanceFlaggedRows` in schema.ts), newest first, joined with the
  * employee's current name for display. */
-export const listFlaggedRows = userQuery({
-  role: "admin",
-  args: { companyId: v.id("companies") },
-  handler: async (ctx, { companyId }) => {
-    await requireCompany(ctx, companyId);
+export const listFlaggedRows = query({
+  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
+  handler: async (ctx, { token, companyId: companyIdArg }) => {
+    const login = await requireSessionLogin(ctx, token);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "view_flagged_rows", companyId);
     const rows = await ctx.db
       .query("performanceFlaggedRows")
       .withIndex("by_company_status", (q) => q.eq("companyId", companyId).eq("status", "pending"))
@@ -1037,14 +904,15 @@ export const listFlaggedRows = userQuery({
  * no other measured field to have created one already (see
  * `buildCallSnapshots`: a row with nothing left after a flagged field never
  * reaches `upsertSnapshot`). */
-export const resolveFlaggedRow = userMutation({
-  role: "admin",
+export const resolveFlaggedRow = mutation({
   args: {
+    token: v.string(),
     id: v.id("performanceFlaggedRows"),
     action: v.union(v.literal("ignore"), v.literal("force"), v.literal("edit")),
     value: v.optional(v.number()),
   },
-  handler: async (ctx, { id, action, value }): Promise<void> => {
+  handler: async (ctx, { token, id, action, value }): Promise<void> => {
+    const login = await requireSessionLogin(ctx, token);
     const row = await ctx.db.get(id);
     if (!row || !row.companyId) {
       throw new ConvexError({
@@ -1052,6 +920,7 @@ export const resolveFlaggedRow = userMutation({
         message: "Flagged row not found.",
       });
     }
+    await requirePermission(ctx, login, "resolve_flagged_rows", row.companyId);
 
     if (action === "ignore") {
       await ctx.db.patch(id, { status: "ignored", resolvedAt: Date.now() });
@@ -1099,39 +968,21 @@ export const resolveFlaggedRow = userMutation({
 // touch ctx.db directly — these internal query wrappers are how they read
 // the admin session and the log rows to reprocess.
 
-/** The id of an earlier log row of the same file in `companyId`, so a call
- * or interactions report fanned out to other dashboards replaces its row
- * there on a re-import instead of adding a second one. */
-export const findUploadLogIdByHash = internalQuery({
-  args: { companyId: v.id("companies"), contentHash: v.string() },
-  handler: async (ctx, { companyId, contentHash }) => {
-    if (!contentHash) return null;
-    const row = await ctx.db
-      .query("performanceUploadLog")
-      .withIndex("by_company_contentHash", (q) =>
-        q.eq("companyId", companyId).eq("contentHash", contentHash),
-      )
-      .first();
-    return row?._id ?? null;
+/** Actions can't call `requirePermission` directly (it needs `ctx.db`) —
+ * this wraps the "can upload reports" check as an internal query an action
+ * can `ctx.runQuery` into, and resolves which company the caller's import
+ * is scoped to (their own, or an explicit `companyId` for a super-admin). */
+export const requireAdminByToken = internalQuery({
+  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
+  handler: async (
+    ctx,
+    { token, companyId: companyIdArg },
+  ): Promise<{ companyId: Id<"companies"> }> => {
+    const login = await requireSessionLogin(ctx, token);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "upload_reports", companyId);
+    return { companyId };
   },
-});
-
-/** Upload-log row for a Wallbox report (written last, after the data). */
-export const logWallboxImport = internalMutation({
-  args: {
-    ...uploadLogArgs,
-    reportKind: v.union(v.literal("wallbox_members"), v.literal("wallbox_opps")),
-  },
-  handler: async (ctx, args): Promise<void> => {
-    await writeUploadLog(ctx, args);
-  },
-});
-
-/** Lets the re-import actions confirm the dashboard exists (the admin
- * check itself happens in the `userAction` builder). */
-export const companyExists = internalQuery({
-  args: { companyId: v.id("companies") },
-  handler: async (ctx, { companyId }): Promise<boolean> => (await ctx.db.get(companyId)) !== null,
 });
 
 export const getUploadLogRow = internalQuery({
@@ -1150,10 +1001,10 @@ export const getUploadLogRowsByBatch = internalQuery({
 
 // ------------------------------------------------------------- interactions
 // Raw per-interaction rows (`performanceInteractions`) are a full snapshot
-// of the source export for the days it covers, not a delta — replaced for
-// exactly the date range the file contains (its first to its last day), so
-// a file with only yesterday never wipes the rest of the month. See
-// `uploadParse.ts`'s `writeInteractions`, the only caller.
+// of the source export for the months it covers, not a delta — wholesale-
+// replaced per calendar month on import, same rationale as
+// `performanceRawLeads`/`Opps`. See `performanceUploadParse.ts`'s
+// `writeInteractions`, the only caller.
 
 const interactionInsertValidator = v.object({
   employeeId: v.id("performanceEmployees"),
@@ -1163,46 +1014,33 @@ const interactionInsertValidator = v.object({
   direction: v.optional(v.string()),
 });
 
-/** Deletes up to `CLEAR_BATCH_SIZE` interactions dated `from`..`to` (ISO,
- * inclusive) per call — batched like `clearRawLeads`, the caller loops
- * while `more`. */
-export const clearInteractionsInRange = internalMutation({
-  args: { companyId: v.id("companies"), from: v.string(), to: v.string() },
-  handler: async (ctx, { companyId, from, to }): Promise<{ more: boolean }> => {
-    const batch = await ctx.db
-      .query("performanceInteractions")
-      .withIndex("by_company_date", (q) =>
-        q.eq("companyId", companyId).gte("date", from).lte("date", to),
-      )
-      .take(CLEAR_BATCH_SIZE);
-    await Promise.all(batch.map((row) => ctx.db.delete(row._id)));
-    return { more: batch.length === CLEAR_BATCH_SIZE };
-  },
-});
-
-/** Like `clearInteractionsInRange`, but only for the given employees — a
- * shared Genesys export fanned out into another dashboard replaces just the
- * agents it actually contains there. */
-export const clearInteractionsForEmployees = internalMutation({
-  args: {
-    employeeIds: v.array(v.id("performanceEmployees")),
-    from: v.string(),
-    to: v.string(),
-  },
-  handler: async (ctx, { employeeIds, from, to }): Promise<{ more: boolean }> => {
-    let deleted = 0;
-    for (const employeeId of employeeIds) {
+/** Batched like `clearRawLeads`/`clearRawOpps`/`clearWonOpps` above — deletes
+ * up to `CLEAR_BATCH_SIZE` rows across the given months per call and reports
+ * `more` whenever it deleted anything, so the caller loops until a full pass
+ * over every month finds nothing left instead of risking the same unbounded
+ * collect-then-delete blowing Convex's per-execution read limit on a month
+ * with heavy interaction volume. */
+export const clearInteractionsForMonths = internalMutation({
+  args: { companyId: v.id("companies"), months: v.array(v.string()) },
+  handler: async (ctx, { companyId, months }): Promise<{ more: boolean }> => {
+    let remaining = CLEAR_BATCH_SIZE;
+    let deletedAny = false;
+    for (const ym of months) {
+      if (remaining <= 0) break;
+      const { start, end } = monthBounds(ym);
       const batch = await ctx.db
         .query("performanceInteractions")
-        .withIndex("by_employee_date", (q) =>
-          q.eq("employeeId", employeeId).gte("date", from).lte("date", to),
+        .withIndex("by_company_date", (q) =>
+          q.eq("companyId", companyId).gte("date", start).lte("date", end),
         )
-        .take(CLEAR_BATCH_SIZE - deleted);
-      await Promise.all(batch.map((row) => ctx.db.delete(row._id)));
-      deleted += batch.length;
-      if (deleted >= CLEAR_BATCH_SIZE) return { more: true };
+        .take(remaining);
+      if (batch.length > 0) {
+        await Promise.all(batch.map((row) => ctx.db.delete(row._id)));
+        deletedAny = true;
+        remaining -= batch.length;
+      }
     }
-    return { more: false };
+    return { more: deletedAny };
   },
 });
 
@@ -1233,8 +1071,6 @@ export const logInteractionsImport = internalMutation({
     sourceFile: v.string(),
     storageId: v.id("_storage"),
     contentHash: v.optional(v.string()),
-    reportDate: v.optional(v.string()),
-    reportDateFrom: v.optional(v.string()),
     sourceRowCount: v.optional(v.number()),
     skippedNames: v.optional(v.array(v.string())),
     fileSize: v.optional(v.number()),
@@ -1244,6 +1080,25 @@ export const logInteractionsImport = internalMutation({
     replaceLogId: v.optional(v.id("performanceUploadLog")),
   },
   handler: async (ctx, args): Promise<void> => {
-    await writeUploadLog(ctx, { ...args, reportKind: "interactions" });
+    const existingLog = args.replaceLogId ? await ctx.db.get(args.replaceLogId) : null;
+    const logFields = {
+      companyId: args.companyId,
+      filename: args.sourceFile,
+      storageId: args.storageId,
+      rowsImported: args.rowsImported,
+      uploadedAt: Date.now(),
+      contentHash: args.contentHash,
+      reportKind: "interactions" as const,
+      sourceRowCount: args.sourceRowCount,
+      skippedNames: args.skippedNames,
+      fileSize: args.fileSize,
+      batchId: args.batchId,
+      uploadedBy: args.uploadedBy ?? existingLog?.uploadedBy,
+    };
+    if (args.replaceLogId) {
+      await ctx.db.patch(args.replaceLogId, logFields);
+    } else {
+      await ctx.db.insert("performanceUploadLog", logFields);
+    }
   },
 });

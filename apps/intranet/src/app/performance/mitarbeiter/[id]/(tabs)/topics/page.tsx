@@ -6,9 +6,9 @@ import { useParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Doc, type Id } from "@advantis/convex/dataModel";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { useEmployeeDetailData } from "@/components/performance/PerformanceEmployeeDetailContext";
@@ -25,22 +25,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { formatIsoDate } from "@/lib/format";
+import { getPerformanceToken } from "@/lib/performanceAuth";
 
 export default function EmployeeTopicsPage() {
   const t = useTranslations("Performance");
   const tc = useTranslations("Common");
-  const locale = useLocale();
   const params = useParams<{ id: string }>();
   const employeeId = params.id as Id<"performanceEmployees">;
+  const token = getPerformanceToken() ?? "";
   const [ym] = usePerformanceYm();
   const handleError = useErrorHandler();
 
-  const { me } = usePerformanceAccess();
-  // Goals are set by admins and team leads (the server checks the exact team).
-  const isAdmin = !!me && (me.isAdmin || me.dashboards.some((d) => d.canViewTeam));
+  const session = useQuery(api.performance.auth.validateSession, { token });
+  const isAdmin = session?.valid && session.permissions.includes("manage_roster");
 
   const data = useEmployeeDetailData();
   const setTopicStatus = useMutation(api.performance.topics.setTopicStatus);
@@ -78,9 +76,7 @@ export default function EmployeeTopicsPage() {
                   <p className="text-sm font-medium">{topic.topic}</p>
                   {topic.todo && <p className="mt-1 text-xs text-muted-foreground">{topic.todo}</p>}
                   {topic.endDate && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {formatIsoDate(topic.endDate, locale)}
-                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">{topic.endDate}</p>
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
@@ -88,6 +84,7 @@ export default function EmployeeTopicsPage() {
                     value={topic.status}
                     onValueChange={(v) =>
                       void setTopicStatus({
+                        token,
                         employeeId,
                         id: topic._id,
                         status: v as "offen" | "erreicht" | "nicht_erreicht",
@@ -134,13 +131,16 @@ export default function EmployeeTopicsPage() {
         </CardContent>
       </Card>
 
-      <TopicDialog
-        open={topicDialog.open}
-        onOpenChange={(open) => setTopicDialog(open ? topicDialog : { open: false })}
-        topic={topicDialog.open ? topicDialog.topic : null}
-        employeeId={employeeId}
-        ym={ym ?? data.ym}
-      />
+      {token && (
+        <TopicDialog
+          open={topicDialog.open}
+          onOpenChange={(open) => setTopicDialog(open ? topicDialog : { open: false })}
+          topic={topicDialog.open ? topicDialog.topic : null}
+          employeeId={employeeId}
+          ym={ym ?? data.ym}
+          token={token}
+        />
+      )}
 
       <Dialog
         open={deleteTarget !== null}
@@ -159,8 +159,9 @@ export default function EmployeeTopicsPage() {
             <Button
               variant="destructive"
               onClick={() => {
-                if (deleteTarget) {
+                if (deleteTarget && token) {
                   void deleteTopic({
+                    token,
                     employeeId,
                     id: deleteTarget._id,
                   })

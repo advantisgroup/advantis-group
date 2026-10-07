@@ -5,16 +5,16 @@ import { Elysia, t } from "elysia";
 import * as XLSX from "xlsx";
 
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
-import { ApiError, Errors } from "../lib/errors.js";
-import { authed } from "../lib/middleware.js";
+import { Errors } from "../lib/errors.js";
 import { scanFile } from "../lib/onedrive/scan.js";
+import { requirePerformanceAdmin } from "../lib/performance.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
 const ALLOWED_EXTENSIONS = [".xlsx", ".xlsm", ".csv"];
 
 const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-// Matches performance/lib/aggregatedTemplate.ts's HEADER_ALIASES —
+// Matches performanceImport.ts's aggregated-template HEADER_ALIASES —
 // these exact labels round-trip cleanly back through that parser.
 const TEMPLATE_HEADER = [
   "Mitarbeiter",
@@ -71,45 +71,23 @@ function xlsxResponse(aoa: unknown[][], sheetName: string, filename: string): Re
   });
 }
 
-// Vercel rejects request bodies over ~4.5 MB before they reach the route;
-// the intranet refuses bigger files client-side with the same limit.
-const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
-
-function convexErrorData(err: unknown): { code?: string; message?: string } | undefined {
-  if (!(err instanceof ConvexError)) return undefined;
-  const data = err.data as { code?: string; message?: string } | string | undefined;
-  return typeof data === "string" ? { message: data } : data;
-}
-
-/** The parser's own German message ("Dateityp nicht erkannt – …") as the
- * response's `error`, which the upload queue shows verbatim. */
-function importError(err: unknown): ApiError {
-  const data = convexErrorData(err);
-  const message = data?.message;
-  if (data?.code === "import_locked" && message) {
-    return new ApiError(409, "conflict", message);
+function extractConvexMessage(err: unknown, fallback: string): string {
+  if (err instanceof ConvexError) {
+    const data = err.data as { message?: string } | string | undefined;
+    if (typeof data === "string") return data;
+    if (data?.message) return data.message;
   }
-  if (message) return Errors.badRequest(message);
-  console.error("[performance] import failed:", err);
-  return Errors.badRequest("Import fehlgeschlagen. Bitte erneut versuchen oder die Datei prüfen.");
+  return fallback;
 }
 
-/** Access runs through the intranet sign-in (Clerk): uploads are for
- * intranet admins, the export for whoever sees the dashboard's team view —
- * both checked in Convex (`performance/access.ts`, `performance/export.ts`). */
 export const performanceRoute = new Elysia({ prefix: "/performance" })
-  .use(authed)
   .post(
     "/uploads",
-    async ({ caller, body }) => {
-      const companyId = body.companyId as Id<"companies">;
-      const { uploadedBy } = await getConvex().query(api.performance.access.apiUploadAccess, {
-        serverKey: getConvexServerKey(),
-        clerkUserId: caller.clerkUserId,
-        companyId,
-      });
+    async ({ request, body }) => {
+      const admin = await requirePerformanceAdmin(request);
 
-      await rateLimit("performance.upload", caller.clerkUserId, 120, "1 h");
+      const rateKey = request.headers.get("authorization") ?? "unknown";
+      await rateLimit("performance.upload", rateKey, 30, "1 h");
 
       const file = body.file;
       const force = body.force === "true";
@@ -118,11 +96,6 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       const extension = ALLOWED_EXTENSIONS.find((ext) => lowerName.endsWith(ext));
       if (!extension) {
         throw Errors.badRequest("Bitte eine .xlsx-, .xlsm- oder .csv-Datei auswählen.");
-      }
-      if (file.size > MAX_UPLOAD_BYTES) {
-        throw Errors.badRequest(
-          "Die Datei ist größer als 4 MB. Bitte den Export auf weniger Spalten oder einen kürzeren Zeitraum beschränken oder als .xlsx speichern.",
-        );
       }
 
       const bytes = new Uint8Array(await file.arrayBuffer());
@@ -146,7 +119,7 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       if (!force) {
         const priorUpload = await getConvex().query(api.performance.import.apiFindUploadByHash, {
           serverKey: getConvexServerKey(),
-          companyId,
+          companyId: admin.companyId,
           contentHash,
         });
         if (priorUpload) {
@@ -182,14 +155,14 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       try {
         const result = await getConvex().action(api.performance.uploadParse.apiImportReport, {
           serverKey: getConvexServerKey(),
-          companyId,
+          companyId: admin.companyId,
           filename: file.name,
           storageId,
           contentHash,
           force,
           fileSize: bytes.length,
           batchId,
-          uploadedBy,
+          uploadedBy: admin.name || admin.email,
         });
 
         if (result.status === "empty" || result.status === "duplicate") {
@@ -204,21 +177,12 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
         }
         return result;
       } catch (err) {
-        // Nothing was imported or logged — don't keep the staged copy.
-        await getConvex()
-          .mutation(api.performance.import.apiDeleteStorage, {
-            serverKey: getConvexServerKey(),
-            storageId,
-          })
-          .catch(() => undefined);
-        throw importError(err);
+        throw Errors.badRequest(extractConvexMessage(err, "Import failed"));
       }
     },
     {
-      signedIn: true,
       body: t.Object({
         file: t.File(),
-        companyId: t.String(),
         force: t.Optional(t.String()),
         batchId: t.Optional(t.String()),
       }),
@@ -227,19 +191,20 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
 
   // Blank upload template with the aggregated-format's recognized headers
   // — no Convex round-trip, the headers are static.
-  .get("/template", () => xlsxResponse([TEMPLATE_HEADER], "Vorlage", "performance-vorlage.xlsx"), {
-    signedIn: true,
+  .get("/template", async ({ request }) => {
+    await requirePerformanceAdmin(request);
+    return xlsxResponse([TEMPLATE_HEADER], "Vorlage", "performance-vorlage.xlsx");
   })
 
   // Per-employee KPI export for one month (port of the reference script's
   // `employee_export`).
   .get(
     "/export",
-    async ({ caller, query }) => {
+    async ({ request, query }) => {
+      const admin = await requirePerformanceAdmin(request);
       const rows = await getConvex().query(api.performance.export.apiExportTeam, {
         serverKey: getConvexServerKey(),
-        clerkUserId: caller.clerkUserId,
-        companyId: query.companyId as Id<"companies"> | undefined,
+        companyId: admin.companyId,
         ym: query.ym,
       });
       const aoa = [
@@ -267,11 +232,5 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       ];
       return xlsxResponse(aoa, "Report", `performance-${query.ym}.xlsx`);
     },
-    {
-      signedIn: true,
-      query: t.Object({
-        ym: t.String({ pattern: "^\\d{4}-\\d{2}$" }),
-        companyId: t.Optional(t.String()),
-      }),
-    },
+    { query: t.Object({ ym: t.String({ pattern: "^\\d{4}-\\d{2}$" }) }) },
   );

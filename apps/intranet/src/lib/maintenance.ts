@@ -22,8 +22,6 @@ const OPEN_PREFIXES = [
   "/clockodo",
   // Eigene Zeiterfassung – Zugriff regelt Convex (TIME_MODE), nicht diese Liste
   "/zeiterfassung",
-  // "/performance" bleibt gesperrt, bis der Umbau für alle freigegeben ist
-  // (Convex-Env PERFORMANCE_MODE=live, dann hier eintragen). Stand 07.10.2026.
   // Hilfe & Fehler
   "/it-tickets",
   "/help",

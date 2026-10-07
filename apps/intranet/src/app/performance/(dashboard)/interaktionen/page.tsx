@@ -6,7 +6,6 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 
-import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { InteractionsTable } from "@/components/performance/InteractionsTable";
 import {
   computePeriodRange,
@@ -23,19 +22,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getPerformanceToken } from "@/lib/performanceAuth";
 
 const ALL_EMPLOYEES = "__all__";
 
 export default function DashboardInteractionsPage() {
   const t = useTranslations("Performance");
-  const companyId = usePerformanceAccess().dashboard?.companyId;
+  const token = getPerformanceToken() ?? "";
   const [granularity, setGranularity] = useState<PeriodGranularity>("month");
   const [anchor, setAnchor] = useState(todayIso);
   const [employeeFilter, setEmployeeFilter] = useState<string>(ALL_EMPLOYEES);
   const { start, end } = computePeriodRange(anchor, granularity);
 
   const data = useQuery(api.performance.queries.interactionsMonth, {
-    companyId,
+    token,
     start,
     end,
   });

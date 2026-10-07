@@ -1,197 +1,196 @@
 /**
  * Read queries backing the Performance dashboards — team overview, employee
- * detail/history, and the KPI drill-down lists.
+ * detail/history, and the KPI drill-down lists. Ported from the reference
+ * script's `latest_snapshots`/`month_calls`/`call_days`/`team_totals`/
+ * `employee_history`/`drilldown` routes.
  *
- * Every query runs as the signed-in intranet user and goes through
- * `lib/access.ts`: admins see every dashboard, a team/department lead their
- * dashboard's team view, everyone else only their own employee page.
- *
- * Reads are kept to indexed ranges and memoized per request (`QueryCache`):
- * a month's report rows are read once and every figure of that month —
- * totals, call days, coverage, the like-for-like comparison cut — is
- * computed from them in memory (`lib/reports.ts`).
+ * Every query takes the caller's Performance session `token` (not Clerk
+ * identity — see `performanceAuth.ts`) and enforces the same visibility
+ * rule as the source's `may_view_employee`: an admin sees everyone, a
+ * `mitarbeiter` login only its own linked employee.
  */
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
-import { internalMutation, userQuery } from "../functions";
+import { internalMutation, query } from "../functions";
 import { type QueryCtx } from "../_generated/server";
 import {
+  addForecast,
   aggregateReasons,
   awardBadges,
-  badgeCacheReady,
-  badgeCacheStale,
   BADGES,
-  comparisonCutoff,
-  comparisonDeltas,
+  computeDeltas,
   computeTeamBenchmark,
   employeeSignals,
+  enrich,
   hitrateMinBase,
-  marksForMonth,
+  missingCallDays,
   monthBounds,
   monthCompleted,
+  performanceMarks,
   shiftYm,
   teamAverages,
   type BadgeResult,
   type Snapshot,
-  type UploadStamp,
 } from "./lib/kpi";
-import { dashboardKind } from "./lib/roster";
-import { type MetricFields } from "./lib/types";
-import { isWorkday, parseISODate, todayBerlin, toISODate, workdaysElapsed } from "./lib/workdays";
+import { EXCLUDED_OWNERS } from "./lib/salesforceImport";
+import { DAILY_KEYS, type MetricFields } from "./lib/types";
+import { isWorkday, parseISODate, todayUTC, toISODate } from "./lib/workdays";
 import {
-  loadViewer,
-  requireTeamView,
-  requireViewableEmployee,
-  resolveDashboard,
-} from "./lib/access";
+  hasPermission,
+  requireCanViewEmployee as requireCanView,
+  requirePermission,
+  requireSessionLogin as requireSession,
+  resolveCompanyId,
+} from "./lib/auth";
 import {
-  type CallDay,
   type Ctx,
-  type Cutoff,
-  type MonthSummary,
+  type MonthCalls,
   type QueryCache,
-  callDays,
-  countsOnDashboard,
   employeeNameMap,
-  loadRoster,
-  monthRows,
+  latestSnapshots,
+  monthCallsMap,
   newQueryCache,
-  summarizeMonth,
+  plausibleDailyValue,
+  reportDatesWithCalls,
+  reportsInRange,
   teamTotals,
 } from "./lib/reports";
 
-/** The current month in Berlin. Inside a cached Convex query this only
- * moves on when the query re-runs, which is fine for a month boundary. */
-function currentYm(): string {
-  return toISODate(todayBerlin()).slice(0, 7);
+interface CallDay {
+  date: string;
+  values: Partial<Record<(typeof DAILY_KEYS)[number], number>>;
 }
 
-/** The month a page opens on: the current one once it has data, before
- * that (the 1st, before the first upload) the previous one. */
-function defaultYm(monthsWithData: readonly string[]): string {
-  const current = currentYm();
-  if (monthsWithData.includes(current)) return current;
-  const previous = shiftYm(current, -1);
-  return monthsWithData.includes(previous) ? previous : current;
-}
-
-function hasCallData(s: Snapshot | undefined): boolean {
-  return !!(s?.callsToday || s?.talkTotalSec || s?.loginSec);
-}
-
-/** All months with at least one report of the dashboard, oldest first —
- * one indexed existence check per month between the first and the newest
- * report instead of reading every report ever imported. */
-async function teamMonths(ctx: Ctx, companyId: Id<"companies">): Promise<string[]> {
-  const earliest = await ctx.db
-    .query("performanceReports")
-    .withIndex("by_company_reportDate", (q) => q.eq("companyId", companyId))
-    .order("asc")
-    .first();
-  if (!earliest) return [];
-  const latest = await ctx.db
-    .query("performanceReports")
-    .withIndex("by_company_reportDate", (q) => q.eq("companyId", companyId))
-    .order("desc")
-    .first();
-
-  const yms: string[] = [];
-  const lastYm = latest!.reportDate.slice(0, 7);
-  for (let ym = earliest.reportDate.slice(0, 7); ym <= lastYm; ym = shiftYm(ym, 1)) {
-    const { start, end } = monthBounds(ym);
-    const hit = await ctx.db
-      .query("performanceReports")
-      .withIndex("by_company_reportDate", (q) =>
-        q.eq("companyId", companyId).gte("reportDate", start).lte("reportDate", end),
-      )
-      .first();
-    if (hit) yms.push(ym);
-  }
-  return yms;
-}
-
-// ----------------------------------------------------------- comparisons
-
-export interface ComparisonInfo {
-  /** "sameWorkday": a running month against the reference months as they
-   * stood after the same number of workdays. "full": a completed month,
-   * full against full. */
-  mode: "full" | "sameWorkday";
-  /** Workdays of the shown month behind the comparison. */
-  workday: number;
-  /** Last day of the previous month / year counted (sales figures). */
-  vmCutoff: string | null;
-  vjCutoff: string | null;
-}
-
-interface Reference {
-  cut: Snapshot | undefined;
-  full: Snapshot | undefined;
-  cutoff: Cutoff | undefined;
-}
-
-function cutoffFor(ym: string, refYm: string, asOf: MonthSummary["asOf"]): Cutoff | undefined {
-  const sales = comparisonCutoff(ym, refYm, asOf.sales);
-  const calls = comparisonCutoff(ym, refYm, asOf.calls ?? asOf.sales);
-  return sales || calls ? { sales, calls } : undefined;
-}
-
-function comparisonInfo(
-  ym: string,
-  asOf: MonthSummary["asOf"],
-  vm: Reference | undefined,
-  vj: Reference | undefined,
-): ComparisonInfo {
-  const done = monthCompleted(ym);
-  const latest = asOf.sales ?? asOf.calls;
-  return {
-    mode: done ? "full" : "sameWorkday",
-    workday: workdaysElapsed(ym, latest ? parseISODate(latest) : todayBerlin()),
-    vmCutoff: vm?.cutoff?.sales ?? null,
-    vjCutoff: vj?.cutoff?.sales ?? null,
-  };
-}
-
-/** The team's reference month, whole and cut at the like-for-like point. */
-async function teamReference(
+/** Every calendar day of the month with that day's summed call metrics
+ * (team-wide, or one employee) — feeds the day-by-day chart. */
+async function callDaysList(
   ctx: QueryCtx,
   companyId: Id<"companies">,
   ym: string,
-  refYm: string,
-  asOf: MonthSummary["asOf"],
-  months: readonly string[],
+  employeeId: Id<"performanceEmployees"> | undefined,
   cache: QueryCache,
-): Promise<Reference | undefined> {
-  if (!months.includes(refYm)) return undefined;
-  const full = (await teamTotals(ctx, companyId, refYm, cache)).total;
-  const cutoff = cutoffFor(ym, refYm, asOf);
-  if (!cutoff) return { cut: full, full, cutoff };
-  const cut = (await teamTotals(ctx, companyId, refYm, cache, cutoff)).total;
-  return { cut, full, cutoff };
+): Promise<CallDay[]> {
+  const names = await employeeNameMap(ctx, companyId);
+  const rows = await reportsInRange(ctx, companyId, ym, employeeId, cache);
+  const byDate = new Map<string, Partial<Record<(typeof DAILY_KEYS)[number], number>>>();
+  for (const r of rows) {
+    if (!names.has(r.employeeId)) continue;
+    const cur = byDate.get(r.reportDate) ?? {};
+    for (const k of DAILY_KEYS) {
+      const v = r[k];
+      if (v === undefined) continue;
+      const safe = plausibleDailyValue(k, v);
+      if (safe !== undefined) cur[k] = (cur[k] ?? 0) + safe;
+    }
+    byDate.set(r.reportDate, cur);
+  }
+  const { start, end } = monthBounds(ym);
+  const out: CallDay[] = [];
+  const last = parseISODate(end);
+  for (
+    let d = parseISODate(start);
+    d.getTime() <= last.getTime();
+    d = new Date(d.getTime() + 86_400_000)
+  ) {
+    const iso = toISODate(d);
+    out.push({ date: iso, values: byDate.get(iso) ?? {} });
+  }
+  return out;
 }
 
-// ------------------------------------------------------------ day series
+export interface LoggedInDay {
+  date: string;
+  count: number;
+}
+
+/** Every calendar day of the month with the count of distinct employees who
+ * had a lead created that day ("logged in" — created leads that day =
+ * attendance, per the Team tab's brief) — feeds the day-by-day chart there.
+ * Reads `performanceRawLeads`, which is a full snapshot of currently-active
+ * leads (see the schema comment), so an employee's older leads that have
+ * since converted/closed can drop out of this count for past days —
+ * accepted trade-off, there's no daily-attendance history stored anywhere
+ * else to fall back to. */
+async function loggedInDaysList(
+  ctx: QueryCtx,
+  companyId: Id<"companies">,
+  ym: string,
+): Promise<LoggedInDay[]> {
+  const { start, end } = monthBounds(ym);
+  const rows = await ctx.db
+    .query("performanceRawLeads")
+    .withIndex("by_company_createDate", (q) =>
+      q.eq("companyId", companyId).gte("createDate", start).lte("createDate", end),
+    )
+    .collect();
+
+  const byDate = new Map<string, Set<string>>();
+  for (const r of rows) {
+    if (!r.createDate || EXCLUDED_OWNERS.has(r.owner.toLowerCase())) continue;
+    const owners = byDate.get(r.createDate) ?? new Set<string>();
+    owners.add(r.owner);
+    byDate.set(r.createDate, owners);
+  }
+
+  const out: LoggedInDay[] = [];
+  const last = parseISODate(end);
+  for (
+    let d = parseISODate(start);
+    d.getTime() <= last.getTime();
+    d = new Date(d.getTime() + 86_400_000)
+  ) {
+    const iso = toISODate(d);
+    out.push({ date: iso, count: byDate.get(iso)?.size ?? 0 });
+  }
+  return out;
+}
+
+async function hasCallData(
+  ctx: QueryCtx,
+  companyId: Id<"companies">,
+  ym: string,
+  employeeId: Id<"performanceEmployees"> | undefined,
+  cache: QueryCache,
+): Promise<boolean> {
+  const calls = await monthCallsMap(ctx, companyId, ym, employeeId, cache);
+  const check = (c: MonthCalls | undefined) => !!(c?.callsToday || c?.talkTotalSec || c?.loginSec);
+  if (employeeId) return check(calls.get(employeeId));
+  return [...calls.values()].some(check);
+}
 
 export interface WonDay {
   date: string;
   won: number;
 }
 
-/** Daily Closed Won (team, or one employee) over the trailing 3 calendar
- * months ending with the actual current month, workdays only. Reads
- * `performanceWonOpps` (one row per opportunity at its real Close Date)
- * rather than diffing the cumulative `wonMonth` between uploads. Ignores the
- * selected month on purpose — it always shows "the last 3 months". */
+/** Daily closed-won series (team-wide, or one employee) for the trailing 3
+ * calendar months ending with the *actual* current month, workdays only —
+ * feeds the trend chart shown above the dashboard / at the top of the
+ * employee detail page. Deliberately ignores the dashboard's selected `ym`
+ * filter — it's meant to always show "the last 3 months", not "3 months
+ * ending with whatever month you're browsing". Reads `performanceWonOpps`
+ * (one row per opportunity, keyed by its actual Close Date) rather than
+ * diffing `performanceReports.wonMonth` day-over-day — that cumulative
+ * counter only advances on days an Opportunity report is actually
+ * uploaded, so with uploads spaced days or weeks apart it produced one
+ * lump-sum spike instead of a real daily trend. */
 async function closedWonTrend(
   ctx: QueryCtx,
   companyId: Id<"companies">,
-  employeeName: string | undefined,
-  cache: QueryCache,
+  employeeId: Id<"performanceEmployees"> | undefined,
 ): Promise<{ days: WonDay[]; avg: number }> {
-  const current = currentYm();
-  const { start } = monthBounds(shiftYm(current, -2));
-  const { end } = monthBounds(current);
+  const currentYm = defaultYm();
+  const { start } = monthBounds(shiftYm(currentYm, -2));
+  const { end } = monthBounds(currentYm);
+
+  let ownerName: string | undefined;
+  if (employeeId) {
+    const employee = await ctx.db.get(employeeId);
+    if (!employee) return { days: [], avg: 0 };
+    ownerName = employee.name;
+  }
+
   const rows = await ctx.db
     .query("performanceWonOpps")
     .withIndex("by_company_closeDate", (q) =>
@@ -199,19 +198,22 @@ async function closedWonTrend(
     )
     .collect();
 
-  const { ownerKeys } = await loadRoster(ctx, companyId, cache);
-  const only = employeeName?.trim().toLowerCase();
   const perDate = new Map<string, number>();
   for (const r of rows) {
-    const key = r.owner.trim().toLowerCase();
-    if (!ownerKeys.has(key) || (only !== undefined && key !== only)) continue;
+    if (EXCLUDED_OWNERS.has(r.owner.toLowerCase())) continue;
+    if (ownerName !== undefined && r.owner !== ownerName) continue;
     perDate.set(r.closeDate, (perDate.get(r.closeDate) ?? 0) + 1);
   }
 
-  const today = toISODate(todayBerlin());
-  const last = end < today ? end : today;
+  const today = todayUTC();
+  const endDate = parseISODate(end);
+  const last = endDate.getTime() < today.getTime() ? endDate : today;
   const days: WonDay[] = [];
-  for (let d = parseISODate(start); toISODate(d) <= last; d = new Date(d.getTime() + 86_400_000)) {
+  for (
+    let d = parseISODate(start);
+    d.getTime() <= last.getTime();
+    d = new Date(d.getTime() + 86_400_000)
+  ) {
     if (!isWorkday(d)) continue;
     const iso = toISODate(d);
     days.push({ date: iso, won: perDate.get(iso) ?? 0 });
@@ -225,269 +227,303 @@ export interface StateFieldDay {
   value: number;
 }
 
-const STATE_TREND_FIELDS = ["leadsAnalysis", "leadsDetailsIdent", "oppsOpen"] as const;
+/** Daily team-wide trend of a "state" metric (a level, not a daily event
+ * count — e.g. `oppsOpen`, `leadsAnalysis`, `leadsDetailsIdent`) over the
+ * same trailing-3-month window as `closedWonTrend`, for the team-level
+ * Entwicklung tab. Each import writes one row per employee for its own
+ * report date with that day's *known* state — summing every employee's
+ * value on a day something was actually uploaded gives that day's true
+ * team total; a day with no upload at all gets no rows, so its value is
+ * carried forward from the last day we did have data, rather than reading
+ * as a (wrong) drop to zero. */
+async function stateFieldTrend(
+  ctx: QueryCtx,
+  companyId: Id<"companies">,
+  field: keyof MetricFields,
+): Promise<StateFieldDay[]> {
+  const currentYm = defaultYm();
+  const { start } = monthBounds(shiftYm(currentYm, -2));
+  const { end } = monthBounds(currentYm);
+  const names = await employeeNameMap(ctx, companyId);
 
-/** Daily team totals of "state" metrics (levels, not daily events) from
- * `start` to `last`: the sum over employees on each day a report carried
- * the field, carried forward over days without an upload instead of
- * dropping to zero. One pass over rows already read. */
-function stateTrends(
-  rows: readonly Doc<"performanceReports">[],
-  names: ReadonlyMap<Id<"performanceEmployees">, string>,
-  start: string,
-  last: string,
-): Record<(typeof STATE_TREND_FIELDS)[number], StateFieldDay[]> {
-  const byField = new Map<keyof MetricFields, Map<string, number>>(
-    STATE_TREND_FIELDS.map((f) => [f, new Map()]),
-  );
+  const rows = await ctx.db
+    .query("performanceReports")
+    .withIndex("by_company_reportDate", (q) =>
+      q.eq("companyId", companyId).gte("reportDate", start).lte("reportDate", end),
+    )
+    .collect();
+
+  const byDate = new Map<string, number>();
   for (const r of rows) {
     if (!names.has(r.employeeId)) continue;
-    for (const f of STATE_TREND_FIELDS) {
-      const v = r[f];
-      if (v === undefined) continue;
-      const m = byField.get(f)!;
-      m.set(r.reportDate, (m.get(r.reportDate) ?? 0) + v);
-    }
+    const v = r[field];
+    if (v === undefined) continue;
+    byDate.set(r.reportDate, (byDate.get(r.reportDate) ?? 0) + v);
   }
-  const out = {} as Record<(typeof STATE_TREND_FIELDS)[number], StateFieldDay[]>;
-  for (const f of STATE_TREND_FIELDS) {
-    const m = byField.get(f)!;
-    const series: StateFieldDay[] = [];
-    let carry = 0;
-    for (
-      let d = parseISODate(start);
-      toISODate(d) <= last;
-      d = new Date(d.getTime() + 86_400_000)
-    ) {
-      const iso = toISODate(d);
-      const v = m.get(iso);
-      if (v !== undefined) carry = v;
-      series.push({ date: iso, value: carry });
-    }
-    out[f] = series;
+
+  const today = todayUTC();
+  const endDate = parseISODate(end);
+  const last = endDate.getTime() < today.getTime() ? endDate : today;
+  const out: StateFieldDay[] = [];
+  let carry = 0;
+  for (
+    let d = parseISODate(start);
+    d.getTime() <= last.getTime();
+    d = new Date(d.getTime() + 86_400_000)
+  ) {
+    const iso = toISODate(d);
+    const v = byDate.get(iso);
+    if (v !== undefined) carry = v;
+    out.push({ date: iso, value: carry });
   }
   return out;
 }
 
-// ------------------------------------------------------------ data status
+/** All months that have at least one report — the month selector's
+ * options. */
+async function monthsWithData(
+  ctx: Ctx,
+  companyId: Id<"companies">,
+  employeeId?: Id<"performanceEmployees">,
+): Promise<string[]> {
+  const names = await employeeNameMap(ctx, companyId);
 
-export interface DataStatus {
-  lead: string | null;
-  opp: string | null;
-  call: string | null;
-  interactions: string | null;
+  if (employeeId) {
+    const rows = await ctx.db
+      .query("performanceReports")
+      .withIndex("by_employee_date", (q) => q.eq("employeeId", employeeId))
+      .collect();
+    const yms = new Set<string>();
+    for (const r of rows) {
+      if (!names.has(r.employeeId)) continue;
+      yms.add(r.reportDate.slice(0, 7));
+    }
+    return [...yms].sort();
+  }
+
+  // Team-wide: `performanceReports` gains roughly one row per employee per
+  // report day and never shrinks, so a plain `.collect()` here read every
+  // report ever imported just to bucket its date — the largest single read
+  // cost on `teamDashboard`/`employeeDetail` (the latter via
+  // `allBadgesMap`), both of which call this on every page load. A normal
+  // import never writes an excluded owner's row in the first place (see
+  // `isPerson` in salesforceImport.ts), so a per-month existence check —
+  // one indexed read instead of the whole table — is safe in practice, not
+  // just cheap.
+  const earliest = await ctx.db
+    .query("performanceReports")
+    .withIndex("by_company_reportDate", (q) => q.eq("companyId", companyId))
+    .order("asc")
+    .first();
+  if (!earliest) return [];
+  const latest = await ctx.db
+    .query("performanceReports")
+    .withIndex("by_company_reportDate", (q) => q.eq("companyId", companyId))
+    .order("desc")
+    .first();
+
+  const yms: string[] = [];
+  let ym = earliest.reportDate.slice(0, 7);
+  const lastYm = latest!.reportDate.slice(0, 7);
+  while (ym <= lastYm) {
+    const { start, end } = monthBounds(ym);
+    const hit = await ctx.db
+      .query("performanceReports")
+      .withIndex("by_company_reportDate", (q) =>
+        q.eq("companyId", companyId).gte("reportDate", start).lte("reportDate", end),
+      )
+      .first();
+    if (hit) yms.push(ym);
+    ym = shiftYm(ym, 1);
+  }
+  return yms;
 }
 
-/** Newest report date per source, so a source that stopped arriving is
- * visible instead of hiding behind one "Datenstand". From the newest
- * upload log rows (each carries its report's own date) and the newest
- * interaction. */
-async function dataStatus(ctx: QueryCtx, companyId: Id<"companies">): Promise<DataStatus> {
-  const [logs, lastInteraction] = await Promise.all([
-    ctx.db
-      .query("performanceUploadLog")
-      .withIndex("by_company_uploadedAt", (q) => q.eq("companyId", companyId))
-      .order("desc")
-      .take(100),
-    ctx.db
-      .query("performanceInteractions")
-      .withIndex("by_company_date", (q) => q.eq("companyId", companyId))
-      .order("desc")
-      .first(),
-  ]);
-  const out: DataStatus = {
-    lead: null,
-    opp: null,
-    call: null,
-    interactions: lastInteraction?.date ?? null,
-  };
-  for (const l of logs) {
-    const kind = l.reportKind;
-    if (!l.reportDate || (kind !== "lead" && kind !== "opp" && kind !== "call")) continue;
-    if (!out[kind] || l.reportDate > out[kind]!) out[kind] = l.reportDate;
+/** History of an employee's month-end (or, for the current month, latest)
+ * snapshot for every month they have data, oldest first. */
+async function employeeHistoryList(
+  ctx: QueryCtx,
+  companyId: Id<"companies">,
+  employeeId: Id<"performanceEmployees">,
+  cache: QueryCache,
+): Promise<Snapshot[]> {
+  const months = await monthsWithData(ctx, companyId, employeeId);
+  const hist: Snapshot[] = [];
+  for (const ym of months) {
+    const snaps = await latestSnapshots(ctx, companyId, ym, employeeId, cache);
+    if (snaps.length === 0) continue;
+    let s = snaps[0];
+    const calls = await monthCallsMap(ctx, companyId, ym, employeeId, cache);
+    const c = calls.get(employeeId);
+    for (const k of DAILY_KEYS) s[k] = c?.[k];
+    s.talkAvgSec = c?.talkAvgSec;
+    const asOf = s.reportDate ? parseISODate(s.reportDate) : new Date();
+    const missing = c?.workDays
+      ? missingCallDays(ym, asOf, await reportDatesWithCalls(ctx, companyId, ym, cache))
+      : undefined;
+    s = addForecast(enrich(s), ym, c?.workDays, missing);
+    s.ym = ym;
+    hist.push(s);
   }
-  return out;
+  return hist;
 }
 
 // ------------------------------------------------------------------ badges
 
-/** Uploads of the dashboard after `since` — what can invalidate cached
- * badges. */
-async function uploadsSince(
+async function awardBadgesForMonth(
   ctx: Ctx,
   companyId: Id<"companies">,
-  since: number,
-): Promise<UploadStamp[]> {
-  const rows = await ctx.db
-    .query("performanceUploadLog")
-    .withIndex("by_company_uploadedAt", (q) => q.eq("companyId", companyId).gt("uploadedAt", since))
-    .collect();
-  return rows.map((r) => ({
-    uploadedAt: r.uploadedAt,
-    reportDate: r.reportDate,
-    reportKind: r.reportKind,
-  }));
+  ym: string,
+  cache: QueryCache,
+): Promise<Record<string, BadgeResult>> {
+  const { snaps } = await teamTotals(ctx, companyId, ym, cache);
+  return awardBadges(snaps);
 }
 
-/** Cached badge rows of the dashboard by month, and the uploads that came
- * in after the oldest of them. */
-async function badgeCacheState(ctx: Ctx, companyId: Id<"companies">) {
-  const rows = await ctx.db
-    .query("performanceBadgeCache")
-    .withIndex("by_company_ym", (q) => q.eq("companyId", companyId))
-    .collect();
-  const byYm = new Map(rows.map((r) => [r.ym, r]));
-  const oldest = rows.reduce<number | undefined>(
-    (min, r) => (min === undefined || r.computedAt < min ? r.computedAt : min),
-    undefined,
-  );
-  const uploads = oldest === undefined ? [] : await uploadsSince(ctx, companyId, oldest);
-  return { byYm, uploads };
-}
-
-/** Rows without this version were awarded under older rules (two
- * hardcoded names left out, months frozen on the 1st) and are recomputed. */
-const BADGE_RULES_VERSION = 2;
-
-/** A cached month can be used when it was computed under the current rules,
- * no report of that month was imported after it was computed, and every
- * winner is still on the dashboard. */
-function cachedBadgesUsable(
-  row: Doc<"performanceBadgeCache">,
-  uploads: readonly UploadStamp[],
-  roster: ReadonlyMap<Id<"performanceEmployees">, string>,
-  opts: { nextMonthSales?: boolean } = {},
-): boolean {
-  if (row.rulesVersion !== BADGE_RULES_VERSION) return false;
-  if (badgeCacheStale(row.ym, row.computedAt, uploads, opts)) return false;
-  return Object.values(row.badges).every((b) =>
-    b.winners.every((w) => roster.has(w as Id<"performanceEmployees">)),
-  );
-}
-
-/** Badges of every completed month. Uses `performanceBadgeCache` where the
- * row is still valid, computes the rest live (a month in its first days
- * after month end, or one with a newer upload). */
+/** Badges of every completed month. A completed month's reports don't change
+ * (see the "historical data doesn't change once reported" convention in
+ * performanceImport.ts's `upsertSnapshot`), so once a month is done its badge
+ * result is permanent — `performanceBadgeCache` (backfilled nightly by
+ * `cacheCompletedMonthBadges`) is a point read for any month it already has.
+ * A month that isn't cached yet (freshly completed, before the next cron
+ * run) still falls back to computing it live here, so this is never wrong,
+ * only sometimes not yet cached. Also memoized on `cache` for the life of one
+ * request: employeeDetail calls this (directly or via
+ * badgeCountsForEmployee/badgeHistoryForEmployee) up to three times. */
 async function allBadgesMap(
   ctx: QueryCtx,
   companyId: Id<"companies">,
-  months: readonly string[],
   cache: QueryCache,
 ): Promise<Record<string, Record<string, BadgeResult>>> {
   if (cache.badges) return cache.badges;
-  const roster = await loadRoster(ctx, companyId, cache);
-  const { byYm, uploads } = await badgeCacheState(ctx, companyId);
+  const months = await monthsWithData(ctx, companyId);
   const data: Record<string, Record<string, BadgeResult>> = {};
   for (const ym of months) {
     if (!monthCompleted(ym)) continue;
-    const row = byYm.get(ym);
-    const got =
-      row && badgeCacheReady(ym) && cachedBadgesUsable(row, uploads, roster.names)
-        ? row.badges
-        : awardBadges((await teamTotals(ctx, companyId, ym, cache)).snaps);
+    const cached = await ctx.db
+      .query("performanceBadgeCache")
+      .withIndex("by_company_ym", (q) => q.eq("companyId", companyId).eq("ym", ym))
+      .unique();
+    const got = cached ? cached.badges : await awardBadgesForMonth(ctx, companyId, ym, cache);
     if (Object.keys(got).length > 0) data[ym] = got;
   }
   cache.badges = data;
   return data;
 }
 
-/**
- * Keeps `performanceBadgeCache` current — run daily (crons.ts). A month is
- * frozen only from its `BADGE_CACHE_DELAY_DAYS`th day after month end (the
- * last day's call report comes later), and recomputed when a report of
- * that month was imported after it was computed. A still-valid row gets
- * its `computedAt` moved forward, meaning "known to be current as of": the
- * next check then only has to look at uploads since this run.
- */
+/** Backfills `performanceBadgeCache` for every completed month that doesn't
+ * have a row yet — run nightly (see crons.ts). Skips months already cached,
+ * since a completed month's badges never change once computed. */
 export const cacheCompletedMonthBadges = internalMutation({
   args: {},
-  handler: async (ctx): Promise<{ computed: number; confirmed: number }> => {
+  handler: async (ctx): Promise<{ cached: number }> => {
     const companies = await ctx.db.query("companies").collect();
-    const now = Date.now();
-    let computed = 0;
-    let confirmed = 0;
+    let cached = 0;
     for (const company of companies) {
+      const months = await monthsWithData(ctx, company._id);
       const cache = newQueryCache();
-      const roster = await loadRoster(ctx, company._id, cache);
-      const { byYm, uploads } = await badgeCacheState(ctx, company._id);
-      for (const ym of await teamMonths(ctx, company._id)) {
-        if (!badgeCacheReady(ym)) continue;
-        const row = byYm.get(ym);
-        if (row && cachedBadgesUsable(row, uploads, roster.names, { nextMonthSales: true })) {
-          if (uploads.some((u) => u.uploadedAt > row.computedAt)) {
-            await ctx.db.patch(row._id, { computedAt: now });
-            confirmed++;
-          }
-          continue;
-        }
-        const badges = awardBadges((await teamTotals(ctx, company._id, ym, cache)).snaps);
-        if (row) {
-          await ctx.db.patch(row._id, {
-            badges,
-            computedAt: now,
-            rulesVersion: BADGE_RULES_VERSION,
-          });
-        } else {
-          await ctx.db.insert("performanceBadgeCache", {
-            companyId: company._id,
-            ym,
-            badges,
-            computedAt: now,
-            rulesVersion: BADGE_RULES_VERSION,
-          });
-        }
-        computed++;
+      for (const ym of months) {
+        if (!monthCompleted(ym)) continue;
+        const existing = await ctx.db
+          .query("performanceBadgeCache")
+          .withIndex("by_company_ym", (q) => q.eq("companyId", company._id).eq("ym", ym))
+          .unique();
+        if (existing) continue;
+        const badges = await awardBadgesForMonth(ctx, company._id, ym, cache);
+        await ctx.db.insert("performanceBadgeCache", {
+          companyId: company._id,
+          ym,
+          badges,
+          computedAt: Date.now(),
+        });
+        cached++;
       }
     }
-    return { computed, confirmed };
+    return { cached };
   },
 });
 
-function badgeCounts(
-  all: Record<string, Record<string, BadgeResult>>,
-): Record<string, Record<string, number>> {
-  const counts: Record<string, Record<string, number>> = {};
+async function badgeCountsForEmployee(
+  ctx: QueryCtx,
+  companyId: Id<"companies">,
+  employeeId: Id<"performanceEmployees">,
+  cache: QueryCache,
+): Promise<Record<string, number>> {
+  const all = await allBadgesMap(ctx, companyId, cache);
+  const counts: Record<string, number> = {};
+  for (const badge of BADGES) counts[badge.key] = 0;
   for (const badges of Object.values(all)) {
     for (const [key, info] of Object.entries(badges)) {
-      for (const employeeId of info.winners) {
-        counts[employeeId] ??= {};
-        counts[employeeId][key] = (counts[employeeId][key] ?? 0) + 1;
-      }
+      if (info.winners.includes(employeeId)) counts[key] = (counts[key] ?? 0) + 1;
     }
   }
   return counts;
 }
 
+async function badgeHistoryForEmployee(
+  ctx: QueryCtx,
+  companyId: Id<"companies">,
+  employeeId: Id<"performanceEmployees">,
+  cache: QueryCache,
+): Promise<{ ym: string; key: string; value: number }[]> {
+  const all = await allBadgesMap(ctx, companyId, cache);
+  const out: { ym: string; key: string; value: number }[] = [];
+  for (const ym of Object.keys(all).sort().reverse()) {
+    for (const [key, info] of Object.entries(all[ym])) {
+      if (info.winners.includes(employeeId)) out.push({ ym, key, value: info.value });
+    }
+  }
+  return out;
+}
+
+function defaultYm(): string {
+  return toISODate(new Date()).slice(0, 7);
+}
+
 // ------------------------------------------------------------------ queries
 
-/** Team dashboard: admins and the dashboard's team/department leads.
- * Without `companyId` the viewer's default dashboard; without `ym` the
- * current month (the previous one until the current has data). */
-export const teamDashboard = userQuery({
+/** Team dashboard: requires `view_all_employees` for the resolved company
+ * (own company for a company-scoped login; `companyId` arg required for a
+ * cross-company super-admin — see `resolveCompanyId`). */
+export const teamDashboard = query({
   args: {
+    token: v.string(),
     ym: v.optional(v.string()),
     companyId: v.optional(v.id("companies")),
   },
-  handler: async (ctx, { ym: ymArg, companyId: companyIdArg }) => {
-    const viewer = await loadViewer(ctx, ctx.caller);
-    const companyId = requireTeamView(viewer, companyIdArg);
+  handler: async (ctx, { token, ym: ymArg, companyId: companyIdArg }) => {
+    const login = await requireSession(ctx, token);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "view_all_employees", companyId);
 
+    const ym = ymArg ?? defaultYm();
     const cache = newQueryCache();
-    const months = await teamMonths(ctx, companyId);
-    const ym = ymArg ?? defaultYm(months);
-    const roster = await loadRoster(ctx, companyId, cache);
-    const summary = await teamTotals(ctx, companyId, ym, cache);
-    const { total, snaps, unqualified, coverage, asOf } = summary;
-    const days = callDays(await monthRows(ctx, companyId, ym, cache), roster.names, ym);
+    const months = await monthsWithData(ctx, companyId);
+    const { total, snaps, unqualified } = await teamTotals(ctx, companyId, ym, cache);
+    const days = await callDaysList(ctx, companyId, ym, undefined, cache);
+    const hasCalls = await hasCallData(ctx, companyId, ym, undefined, cache);
+    const wonTrend = await closedWonTrend(ctx, companyId, undefined);
+    const loggedIn = await loggedInDaysList(ctx, companyId, ym);
 
     const vmYm = shiftYm(ym, -1);
     const vjYm = shiftYm(ym, -12);
-    const vm = await teamReference(ctx, companyId, ym, vmYm, asOf, months, cache);
-    const vj = await teamReference(ctx, companyId, ym, vjYm, asOf, months, cache);
+    const totalVm = months.includes(vmYm)
+      ? (await teamTotals(ctx, companyId, vmYm, cache)).total
+      : undefined;
+    const totalVj = months.includes(vjYm)
+      ? (await teamTotals(ctx, companyId, vjYm, cache)).total
+      : undefined;
 
-    const allBadges = await allBadgesMap(ctx, companyId, months, cache);
-    const monthDone = monthCompleted(ym);
-    const latest = asOf.sales ?? asOf.calls;
+    const badgeCounts: Record<string, Record<string, number>> = {};
+    const allBadges = await allBadgesMap(ctx, companyId, cache);
+    for (const badges of Object.values(allBadges)) {
+      for (const [key, info] of Object.entries(badges)) {
+        for (const employeeId of info.winners) {
+          badgeCounts[employeeId] ??= {};
+          badgeCounts[employeeId][key] = (badgeCounts[employeeId][key] ?? 0) + 1;
+        }
+      }
+    }
 
     return {
       ym,
@@ -496,20 +532,14 @@ export const teamDashboard = userQuery({
       snaps,
       unqualified,
       days,
-      hasCalls: hasCallData(total),
-      wonTrend: await closedWonTrend(ctx, companyId, undefined, cache),
-      loggedIn: days.map((d) => ({ date: d.date, count: d.loggedIn })),
-      badgeCounts: badgeCounts(allBadges),
-      marks: marksForMonth(snaps, {
-        completed: monthDone,
-        workdaysElapsed: workdaysElapsed(ym, latest ? parseISODate(latest) : todayBerlin()),
-      }),
-      monthDone,
-      coverage,
-      dataStatus: await dataStatus(ctx, companyId),
-      comparison: comparisonInfo(ym, asOf, vm, vj),
-      dVm: comparisonDeltas(total, vm?.cut, vm?.full),
-      dVj: comparisonDeltas(total, vj?.cut, vj?.full),
+      hasCalls,
+      wonTrend,
+      loggedIn,
+      badgeCounts,
+      marks: performanceMarks(snaps),
+      monthDone: monthCompleted(ym),
+      dVm: computeDeltas(total, totalVm),
+      dVj: computeDeltas(total, totalVj),
       vmYm,
       vjYm,
     };
@@ -525,24 +555,24 @@ export interface DevelopmentMonth {
   hitrate?: number;
 }
 
-/** Team-level "Entwicklung" tab: the trailing 3 calendar months ending with
- * the actual current month (ignores the selected month, like
- * `closedWonTrend`). Each month's rows are read once and every series is
- * computed from them. */
-export const teamDevelopment = userQuery({
-  args: { companyId: v.optional(v.id("companies")) },
-  handler: async (ctx, { companyId: companyIdArg }) => {
-    const viewer = await loadViewer(ctx, ctx.caller);
-    const companyId = requireTeamView(viewer, companyIdArg);
+/** Team-level "Entwicklung" tab: trailing 3 calendar months ending with the
+ * actual current month, admin only — same window convention as
+ * `closedWonTrend`, deliberately ignoring the dashboard's selected `ym`
+ * filter for the same reason. `monthly` gives one point per month for the
+ * funnel/hitrate/unqualified metrics (naturally monthly, not daily); the
+ * rest are full daily series over the whole window. */
+export const teamDevelopment = query({
+  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
+  handler: async (ctx, { token, companyId: companyIdArg }) => {
+    const login = await requireSession(ctx, token);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "view_all_employees", companyId);
 
     const cache = newQueryCache();
-    const current = currentYm();
-    const months = [shiftYm(current, -2), shiftYm(current, -1), current];
-    const roster = await loadRoster(ctx, companyId, cache);
+    const currentYm = defaultYm();
+    const months = [shiftYm(currentYm, -2), shiftYm(currentYm, -1), currentYm];
 
     const monthly: DevelopmentMonth[] = [];
-    const callsPerDay: CallDay[] = [];
-    const rows: Doc<"performanceReports">[] = [];
     for (const ym of months) {
       const { total, unqualified } = await teamTotals(ctx, companyId, ym, cache);
       monthly.push({
@@ -553,98 +583,79 @@ export const teamDevelopment = userQuery({
         wonMonth: total.wonMonth,
         hitrate: total.hitrate,
       });
-      const monthReports = await monthRows(ctx, companyId, ym, cache);
-      callsPerDay.push(...callDays(monthReports, roster.names, ym));
-      rows.push(...monthReports);
     }
 
-    const today = toISODate(todayBerlin());
-    const end = monthBounds(current).end;
-    const trends = stateTrends(
-      rows,
-      roster.names,
-      monthBounds(months[0]).start,
-      end < today ? end : today,
-    );
-    const wonTrend = await closedWonTrend(ctx, companyId, undefined, cache);
+    const wonTrend = await closedWonTrend(ctx, companyId, undefined);
+    const callsPerDay: CallDay[] = [];
+    for (const ym of months) {
+      callsPerDay.push(...(await callDaysList(ctx, companyId, ym, undefined, cache)));
+    }
+    const leadsAnalysisPerDay = await stateFieldTrend(ctx, companyId, "leadsAnalysis");
+    const leadsDetailsIdentPerDay = await stateFieldTrend(ctx, companyId, "leadsDetailsIdent");
+    const oppsOpenPerDay = await stateFieldTrend(ctx, companyId, "oppsOpen");
 
     return {
       monthly,
       closedWonPerDay: wonTrend.days,
       wonPerDayAvg: wonTrend.avg,
       callsPerDay,
-      leadsAnalysisPerDay: trends.leadsAnalysis,
-      leadsDetailsIdentPerDay: trends.leadsDetailsIdent,
-      oppsOpenPerDay: trends.oppsOpen,
+      leadsAnalysisPerDay,
+      leadsDetailsIdentPerDay,
+      oppsOpenPerDay,
     };
   },
 });
 
-/** One employee's detail/history page — an admin, the dashboard's lead, or
- * the employee themself. Reads the employee's own rows once (all months)
- * plus the team's rows of the shown month (benchmarks, call coverage). */
-export const employeeDetail = userQuery({
+/** One employee's detail/history page. Visible to an admin, or to the
+ * employee themself. */
+export const employeeDetail = query({
   args: {
+    token: v.string(),
     employeeId: v.id("performanceEmployees"),
     ym: v.optional(v.string()),
   },
-  handler: async (ctx, { employeeId, ym: ymArg }) => {
-    const viewer = await loadViewer(ctx, ctx.caller);
-    const { employee, companyId } = await requireViewableEmployee(ctx, viewer, employeeId);
-    if (!countsOnDashboard(employee)) {
-      throw new ConvexError({ code: "not_found", message: "Mitarbeiter nicht gefunden." });
+  handler: async (ctx, { token, employeeId, ym: ymArg }) => {
+    const login = await requireSession(ctx, token);
+
+    const employee = await ctx.db.get(employeeId);
+    if (!employee || EXCLUDED_OWNERS.has(employee.name.toLowerCase())) {
+      throw new ConvexError({
+        code: "not_found",
+        message: "Employee not found.",
+      });
     }
+    await requireCanView(ctx, login, employee);
+    if (!employee.companyId) {
+      throw new ConvexError({
+        code: "not_found",
+        message: "Employee has no company (pending migration).",
+      });
+    }
+    const companyId = employee.companyId;
 
     const cache = newQueryCache();
-    const names = new Map([[employeeId, employee.name]]);
-    const own = await ctx.db
-      .query("performanceReports")
-      .withIndex("by_employee_date", (q) => q.eq("employeeId", employeeId))
-      .collect();
-    const byMonth = new Map<string, Doc<"performanceReports">[]>();
-    for (const r of own) {
-      const ym = r.reportDate.slice(0, 7);
-      byMonth.set(ym, [...(byMonth.get(ym) ?? []), r]);
-    }
-    const histMonths = [...byMonth.keys()].sort();
-    const ym =
-      ymArg && (byMonth.has(ymArg) || ymArg === currentYm()) ? ymArg : defaultYm(histMonths);
-    const months = [...new Set([...histMonths, currentYm(), ym])].sort();
+    const hist = await employeeHistoryList(ctx, companyId, employeeId, cache);
+    const today = defaultYm();
+    const months = [...new Set([...hist.map((h) => h.ym!), today])].sort();
+    const ym = ymArg && months.includes(ymArg) ? ymArg : today;
 
-    const team = await teamTotals(ctx, companyId, ym, cache);
-    const summarize = (m: string, cutoff?: Cutoff): Snapshot | undefined =>
-      summarizeMonth(byMonth.get(m) ?? [], names, m, {
-        cutoff,
-        // Days without any call report are only judged for the shown month
-        // (from the team's rows); elsewhere a missing row may be a day off.
-        coverage: m === ym && !cutoff ? team.coverage : null,
-      }).snaps[0];
-
-    const hist: Snapshot[] = [];
-    for (const m of histMonths) {
-      const s = summarize(m);
-      if (s) hist.push({ ...s, ym: m });
-    }
-    const cur = hist.find((h) => h.ym === ym);
-
-    const reference = (refYm: string): Reference | undefined => {
-      if (!byMonth.has(refYm)) return undefined;
-      const full = summarize(refYm);
-      const cutoff = cutoffFor(ym, refYm, team.asOf);
-      return { cut: cutoff ? summarize(refYm, cutoff) : full, full, cutoff };
-    };
-    const vm = reference(shiftYm(ym, -1));
-    const vj = reference(shiftYm(ym, -12));
+    const histMap = new Map(hist.map((h) => [h.ym, h]));
+    const cur = histMap.get(ym);
+    const vm = histMap.get(shiftYm(ym, -1));
+    const vj = histMap.get(shiftYm(ym, -12));
+    const reasons = cur ? aggregateReasons([cur.unqualifiedReasons]) : [];
 
     let alerts: ReturnType<typeof employeeSignals>["alerts"] = [];
     let highlights: ReturnType<typeof employeeSignals>["highlights"] = [];
     let avg: Record<string, number | undefined> = {};
     let bench: Record<string, number | undefined> = {};
     if (cur) {
-      avg = teamAverages(team.snaps, team.total);
-      ({ alerts, highlights } = employeeSignals(cur, avg, vm?.cut, hitrateMinBase(team.snaps)));
-      bench = computeTeamBenchmark(team.total, team.snaps);
+      const { total: teamTotal, snaps: teamSnaps } = await teamTotals(ctx, companyId, ym, cache);
+      avg = teamAverages(teamSnaps, teamTotal);
+      ({ alerts, highlights } = employeeSignals(cur, avg, vm, hitrateMinBase(teamSnaps)));
+      bench = computeTeamBenchmark(teamTotal, teamSnaps);
     }
+    const dTeam = computeDeltas(cur, bench);
 
     const topics = await ctx.db
       .query("performanceTopics")
@@ -656,51 +667,42 @@ export const employeeDetail = userQuery({
       return (a.endDate ?? "9999").localeCompare(b.endDate ?? "9999");
     });
 
-    const allBadges = await allBadgesMap(ctx, companyId, await teamMonths(ctx, companyId), cache);
-    const myBadges: Record<string, number> = {};
-    for (const badge of BADGES) myBadges[badge.key] = 0;
-    const badgeHist: { ym: string; key: string; value: number }[] = [];
-    for (const m of Object.keys(allBadges).sort().reverse()) {
-      for (const [key, info] of Object.entries(allBadges[m])) {
-        if (!info.winners.includes(employeeId)) continue;
-        myBadges[key] = (myBadges[key] ?? 0) + 1;
-        badgeHist.push({ ym: m, key, value: info.value });
-      }
-    }
+    const myBadges = await badgeCountsForEmployee(ctx, companyId, employeeId, cache);
+    const allBadges = await allBadgesMap(ctx, companyId, cache);
     const monthBadges = Object.fromEntries(
       Object.entries(allBadges[ym] ?? {}).filter(([, info]) => info.winners.includes(employeeId)),
     );
+    const badgeHist = await badgeHistoryForEmployee(ctx, companyId, employeeId, cache);
+    const nBadges = Object.values(myBadges).reduce((a, b) => a + b, 0);
+
+    const days = await callDaysList(ctx, companyId, ym, employeeId, cache);
+    const hasCalls = await hasCallData(ctx, companyId, ym, employeeId, cache);
+    const wonTrend = await closedWonTrend(ctx, companyId, employeeId);
 
     return {
-      employee: {
-        id: employee._id,
-        name: employee.name,
-        companyId,
-        kind: dashboardKind(await ctx.db.get(companyId)),
-      },
+      employee: { id: employee._id, name: employee.name },
       hist,
       cur,
       ym,
       months,
-      reasons: aggregateReasons([cur?.unqualifiedReasons]),
+      reasons,
       alerts,
       highlights,
       avg,
       bench,
-      dTeam: comparisonDeltas(cur, bench, undefined),
+      dTeam,
       topics,
       myBadges,
       monthBadges,
       badgeHist,
-      nBadges: badgeHist.length,
-      days: callDays(byMonth.get(ym) ?? [], names, ym),
-      hasCalls: hasCallData(cur),
-      wonTrend: await closedWonTrend(ctx, companyId, employee.name, cache),
-      comparison: comparisonInfo(ym, team.asOf, vm, vj),
-      dVm: comparisonDeltas(cur, vm?.cut, vm?.full),
-      dVj: comparisonDeltas(cur, vj?.cut, vj?.full),
-      vm: vm?.cut,
-      vj: vj?.cut,
+      nBadges,
+      days,
+      hasCalls,
+      wonTrend,
+      dVm: computeDeltas(cur, vm),
+      dVj: computeDeltas(cur, vj),
+      vm,
+      vj,
       monthDone: monthCompleted(ym),
     };
   },
@@ -733,8 +735,9 @@ export interface InteractionDay {
  * omitted) but an explicit `start`/`end` (both required together) overrides
  * it — the Interaktionen tab's day/week/month period filter uses this to
  * scope to a single day or week instead of always a full month. */
-export const interactionsMonth = userQuery({
+export const interactionsMonth = query({
   args: {
+    token: v.string(),
     ym: v.optional(v.string()),
     start: v.optional(v.string()),
     end: v.optional(v.string()),
@@ -743,14 +746,32 @@ export const interactionsMonth = userQuery({
   },
   handler: async (
     ctx,
-    { ym: ymArg, start: startArg, end: endArg, employeeId, companyId: companyIdArg },
+    { token, ym: ymArg, start: startArg, end: endArg, employeeId, companyId: companyIdArg },
   ) => {
-    const viewer = await loadViewer(ctx, ctx.caller);
-    const companyId: Id<"companies"> = employeeId
-      ? (await requireViewableEmployee(ctx, viewer, employeeId)).companyId
-      : requireTeamView(viewer, companyIdArg);
+    const login = await requireSession(ctx, token);
+    let companyId: Id<"companies">;
+    if (employeeId) {
+      const employee = await ctx.db.get(employeeId);
+      if (!employee) {
+        throw new ConvexError({
+          code: "not_found",
+          message: "Employee not found.",
+        });
+      }
+      await requireCanView(ctx, login, employee);
+      if (!employee.companyId) {
+        throw new ConvexError({
+          code: "not_found",
+          message: "Employee has no company (pending migration).",
+        });
+      }
+      companyId = employee.companyId;
+    } else {
+      companyId = resolveCompanyId(login, companyIdArg);
+      await requirePermission(ctx, login, "view_all_employees", companyId);
+    }
 
-    const ym = ymArg ?? currentYm();
+    const ym = ymArg ?? defaultYm();
     const { start, end } = startArg && endArg ? { start: startArg, end: endArg } : monthBounds(ym);
     const rows = employeeId
       ? await ctx.db
@@ -840,37 +861,40 @@ export interface InteractionRecord {
   direction: string | undefined;
 }
 
-/** The newest day with interactions of one employee — where their
- * Interaktionen tab opens instead of an empty today. */
-export const latestInteractionDay = userQuery({
-  args: { employeeId: v.id("performanceEmployees") },
-  handler: async (ctx, { employeeId }): Promise<string | null> => {
-    const viewer = await loadViewer(ctx, ctx.caller);
-    await requireViewableEmployee(ctx, viewer, employeeId);
-    const last = await ctx.db
-      .query("performanceInteractions")
-      .withIndex("by_employee_date", (q) => q.eq("employeeId", employeeId))
-      .order("desc")
-      .first();
-    return last?.date ?? null;
-  },
-});
-
 /** Every individual interaction on one day — the drill-down behind an
  * `interactionsMonth` day row. Team-wide (admin) when `employeeId` is
  * omitted, one employee's own interactions otherwise — same
  * admin-or-self visibility rule as `employeeDetail`. */
-export const interactionsDayDetail = userQuery({
+export const interactionsDayDetail = query({
   args: {
+    token: v.string(),
     date: v.string(),
     employeeId: v.optional(v.id("performanceEmployees")),
     companyId: v.optional(v.id("companies")),
   },
-  handler: async (ctx, { date, employeeId, companyId: companyIdArg }) => {
-    const viewer = await loadViewer(ctx, ctx.caller);
-    const companyId: Id<"companies"> = employeeId
-      ? (await requireViewableEmployee(ctx, viewer, employeeId)).companyId
-      : requireTeamView(viewer, companyIdArg);
+  handler: async (ctx, { token, date, employeeId, companyId: companyIdArg }) => {
+    const login = await requireSession(ctx, token);
+    let companyId: Id<"companies">;
+    if (employeeId) {
+      const employee = await ctx.db.get(employeeId);
+      if (!employee) {
+        throw new ConvexError({
+          code: "not_found",
+          message: "Employee not found.",
+        });
+      }
+      await requireCanView(ctx, login, employee);
+      if (!employee.companyId) {
+        throw new ConvexError({
+          code: "not_found",
+          message: "Employee has no company (pending migration).",
+        });
+      }
+      companyId = employee.companyId;
+    } else {
+      companyId = resolveCompanyId(login, companyIdArg);
+      await requirePermission(ctx, login, "view_all_employees", companyId);
+    }
 
     const rows = employeeId
       ? await ctx.db
@@ -919,12 +943,12 @@ const LISTS: Record<string, { title: string; desc: string; kind: "lead" | "opp" 
     kind: "lead",
   },
   leads14: {
-    title: "Leads: letzte Aktivität >2 Wochen",
+    title: "Leads: Last Activity >2 Wochen",
     desc: "Aktive Leads (Open/Analysis) ohne Aktivität seit mehr als 14 Tagen.",
     kind: "lead",
   },
   opp_overdue: {
-    title: "Überfällige Opportunities",
+    title: "Overdue Opportunities",
     desc: "Offene Opportunities, deren Close Date in der Vergangenheit liegt.",
     kind: "opp",
   },
@@ -934,72 +958,56 @@ const LISTS: Record<string, { title: string; desc: string; kind: "lead" | "opp" 
     kind: "opp",
   },
   opps14: {
-    title: "Opportunities: letzte Aktivität >2 Wochen",
+    title: "Opportunities: Last Activity >2 Wochen",
     desc: "Offene Opportunities ohne Aktivität seit mehr als 14 Tagen.",
     kind: "opp",
   },
 };
-
-/** The team's open leads created more than `days` days before the report
- * date (or without a create date) — both lead lists only ever keep those
- * (a lead can't be inactive for longer than it exists), so the rest of the
- * table is never read. The table is replaced wholesale per import, so every
- * row carries the same report date. */
-async function teamLeadsOlderThan(
-  ctx: QueryCtx,
-  companyId: Id<"companies">,
-  days: number,
-): Promise<Doc<"performanceRawLeads">[]> {
-  const any = await ctx.db
-    .query("performanceRawLeads")
-    .withIndex("by_company_createDate", (q) => q.eq("companyId", companyId))
-    .first();
-  if (!any) return [];
-  const bound = toISODate(new Date(parseISODate(any.reportDate).getTime() - days * 86_400_000));
-  return ctx.db
-    .query("performanceRawLeads")
-    .withIndex("by_company_createDate", (q) => q.eq("companyId", companyId).lt("createDate", bound))
-    .collect();
-}
 
 function daysBetween(iso: string | undefined, ref: Date): number | null {
   if (!iso) return null;
   return Math.round((ref.getTime() - parseISODate(iso).getTime()) / 86_400_000);
 }
 
-export const drilldown = userQuery({
+export const drilldown = query({
   args: {
+    token: v.string(),
     key: v.string(),
     employeeName: v.optional(v.string()),
     companyId: v.optional(v.id("companies")),
   },
-  handler: async (ctx, { key, employeeName, companyId: companyIdArg }) => {
+  handler: async (ctx, { token, key, employeeName, companyId: companyIdArg }) => {
     const def = LISTS[key];
     if (!def) throw new ConvexError({ code: "not_found", message: "Unknown list." });
-    const viewer = await loadViewer(ctx, ctx.caller);
+    const login = await requireSession(ctx, token);
 
     let empFilter = employeeName;
     let companyId: Id<"companies">;
-    const dashboard = resolveDashboard(viewer, companyIdArg);
-    if (dashboard.canViewTeam) {
-      companyId = dashboard.companyId;
+    if (login.isSuperAdmin || (await hasPermission(ctx, login, "view_all_employees"))) {
+      companyId = resolveCompanyId(login, companyIdArg);
+      await requirePermission(ctx, login, "view_all_employees", companyId);
     } else {
-      // Own numbers only: pin the list to the viewer's own employee name.
-      const employee = dashboard.employeeId ? await ctx.db.get(dashboard.employeeId) : null;
+      if (!login.employeeId) {
+        throw new ConvexError({
+          code: "forbidden",
+          message: "No linked employee.",
+        });
+      }
+      const employee = await ctx.db.get(login.employeeId);
       if (!employee || !employee.companyId) {
         throw new ConvexError({
           code: "forbidden",
-          message: "Dir ist kein Mitarbeiter zugeordnet.",
+          message: "No linked employee.",
         });
       }
       if (empFilter && empFilter !== employee.name) {
-        throw new ConvexError({ code: "forbidden", message: "Kein Zugriff." });
+        throw new ConvexError({ code: "forbidden", message: "Not allowed." });
       }
       empFilter = employee.name;
       companyId = employee.companyId;
     }
 
-    // An employee viewing their own list (or a lead drilling into one name) only ever
+    // A `mitarbeiter` login (or an admin drilling into one name) only ever
     // wants one owner's rows — push that into the index instead of reading
     // every open lead/opp in the table just to filter it away in memory.
     // The team-wide view (no `empFilter`) genuinely needs every row, so it
@@ -1013,7 +1021,10 @@ export const drilldown = userQuery({
                 q.eq("companyId", companyId).eq("owner", empFilter),
               )
               .collect()
-          : await teamLeadsOlderThan(ctx, companyId, key === "analysis30" ? 30 : 14)
+          : await ctx.db
+              .query("performanceRawLeads")
+              .withIndex("by_company_createDate", (q) => q.eq("companyId", companyId))
+              .collect()
         : empFilter
           ? await ctx.db
               .query("performanceRawOpps")
@@ -1025,8 +1036,7 @@ export const drilldown = userQuery({
               .query("performanceRawOpps")
               .withIndex("by_company", (q) => q.eq("companyId", companyId))
               .collect();
-    const { ownerKeys } = await loadRoster(ctx, companyId);
-    rows = rows.filter((r) => ownerKeys.has(r.owner.trim().toLowerCase()));
+    rows = rows.filter((r) => !EXCLUDED_OWNERS.has(r.owner.toLowerCase()));
 
     interface Item {
       reportDate: string;

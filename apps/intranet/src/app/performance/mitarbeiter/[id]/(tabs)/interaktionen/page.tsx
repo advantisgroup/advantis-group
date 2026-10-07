@@ -15,35 +15,23 @@ import { shiftAnchor, todayIso } from "@/components/performance/lib";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { Button } from "@/components/ui/button";
 import { formatIsoDate } from "@/lib/format";
+import { getPerformanceToken } from "@/lib/performanceAuth";
 
 export default function EmployeeInteractionsPage() {
-  const params = useParams<{ id: string }>();
-  const employeeId = params.id as Id<"performanceEmployees">;
-  const latest = useQuery(api.performance.queries.latestInteractionDay, { employeeId });
-
-  if (latest === undefined) return <PerformanceContentSkeleton />;
-  // Opens on the newest day with data — today is usually still empty, the
-  // export comes the next morning.
-  return <DayView employeeId={employeeId} initial={latest ?? todayIso()} latest={latest} />;
-}
-
-function DayView({
-  employeeId,
-  initial,
-  latest,
-}: {
-  employeeId: Id<"performanceEmployees">;
-  initial: string;
-  latest: string | null;
-}) {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const [anchor, setAnchor] = useState(initial);
+  const params = useParams<{ id: string }>();
+  const employeeId = params.id as Id<"performanceEmployees">;
+  const token = getPerformanceToken() ?? "";
+  const [anchor, setAnchor] = useState(todayIso);
 
   const data = useQuery(api.performance.queries.interactionsDayDetail, {
+    token,
     date: anchor,
     employeeId,
   });
+
+  if (!data) return <PerformanceContentSkeleton />;
 
   return (
     <div className="space-y-4">
@@ -69,18 +57,14 @@ function DayView({
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
-        {latest && anchor !== latest && (
-          <Button variant="ghost" size="sm" onClick={() => setAnchor(latest)}>
-            {t("interactionsLatestDay")}
+        {anchor !== todayIso() && (
+          <Button variant="ghost" size="sm" onClick={() => setAnchor(todayIso())}>
+            {t("today")}
           </Button>
         )}
       </div>
 
-      {data ? (
-        <InteractionRecordsTable records={data.records} total={data.total} showEmployee={false} />
-      ) : (
-        <PerformanceContentSkeleton />
-      )}
+      <InteractionRecordsTable records={data.records} total={data.total} showEmployee={false} />
     </div>
   );
 }

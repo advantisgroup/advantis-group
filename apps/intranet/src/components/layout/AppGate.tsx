@@ -26,12 +26,7 @@ function FullScreenLoader() {
   );
 }
 
-/**
- * Sign-in, access-request and step-up gate for every signed-in intranet
- * page. `bare` skips the intranet chrome (sidebar, header) for areas with
- * their own layout, like Performance.
- */
-export function AppGate({ children, bare = false }: { children: ReactNode; bare?: boolean }) {
+export function AppGate({ children }: { children: ReactNode }) {
   const { isLoaded, isSignedIn, sessionId, getToken } = useAuth();
   const { user, isLoaded: userLoaded } = useUser();
   const ensure = useMutation(api.people.users.ensureCurrentUser);
@@ -111,7 +106,9 @@ export function AppGate({ children, bare = false }: { children: ReactNode; bare?
 
   return (
     <CurrentUserProvider user={me as CurrentUser}>
-      <ConfirmProvider>{bare ? children : <AppShell>{children}</AppShell>}</ConfirmProvider>
+      <ConfirmProvider>
+        <AppShell>{children}</AppShell>
+      </ConfirmProvider>
     </CurrentUserProvider>
   );
 }

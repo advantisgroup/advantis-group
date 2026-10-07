@@ -99,18 +99,6 @@ export interface InteractionRow {
   direction: string | undefined;
 }
 
-/** First and last calendar day (ISO) the parsed rows cover — the range an
- * import replaces. Callers only pass a non-empty list. */
-export function interactionDateRange(rows: InteractionRow[]): { from: string; to: string } {
-  let from = rows[0].date;
-  let to = rows[0].date;
-  for (const r of rows) {
-    if (r.date < from) from = r.date;
-    if (r.date > to) to = r.date;
-  }
-  return { from, to };
-}
-
 /** Detects and parses the "Interaktionen" CSV export. Returns null when the
  * file isn't recognized as this report type at all (missing the
  * employee/date/duration columns this format requires) — as opposed to

@@ -13,13 +13,12 @@ import {
   forecast as workdayForecast,
   isWorkday,
   parseISODate,
-  todayBerlin,
+  todayUTC,
   toISODate,
   workdaysBetween,
-  workdaysElapsed,
   type Forecast,
 } from "./workdays";
-import { METRIC_KEYS, type MetricFields } from "./types";
+import { type MetricFields } from "./types";
 
 export interface Snapshot extends Partial<MetricFields> {
   employeeId: string;
@@ -34,9 +33,6 @@ export interface Snapshot extends Partial<MetricFields> {
   fc?: EmployeeForecast;
   fc1?: number;
   wonPerDay?: number;
-  // Added by `summarizeMonth`: days with calls / with Genesys login time.
-  callDays?: number;
-  loginDays?: number;
   // Set only by `employeeHistory`-style callers.
   ym?: string;
 }
@@ -77,120 +73,76 @@ export function enrich(snap: Snapshot): Snapshot {
   };
 }
 
-/** Team total of the month: every metric summed over the employees, the
- * call duration weighted (talk time ÷ calls) and the rates as Σ/Σ. The
- * hitrate deliberately counts *everyone*: someone above 100 % (closing
- * Workables from a prior month) is still part of the team's result, and
- * leaving them out made the card's percentage disagree with the
- * "won / workable" sums printed under it. */
-export function sumTeam(snaps: Snapshot[]): Snapshot {
-  const total: Snapshot = { employeeId: "team", name: "Team", reportDate: null };
-  for (const k of METRIC_KEYS) total[k] = nsum(snaps.map((s) => s[k]));
-  total.talkAvgSec =
-    total.talkTotalSec && total.callsToday
-      ? Math.round(total.talkTotalSec / total.callsToday)
-      : undefined;
-  total.reportDate = snaps.reduce<string | null>(
-    (max, s) => (s.reportDate && (!max || s.reportDate > max) ? s.reportDate : max),
-    null,
-  );
-  return enrich(total);
+/** Team hitrate as sum(wonMonth)/sum(workableCreated) across employees,
+ * excluding anyone whose own hitrate exceeds 100% — that only happens when
+ * Closed-Won leads close from a prior month's Workable Leads, and folding
+ * such an employee's Leads/Workable Leads into the team sum would skew the
+ * team's real conversion rate upward. Other team totals (leads, workable,
+ * won counts) are unaffected — only the Hitrate figure excludes them. */
+export function teamHitrate(snaps: Snapshot[]): number | undefined {
+  const included = snaps.filter((s) => {
+    const own = rate(s.wonMonth, s.workableCreated);
+    return own === undefined || own <= 100;
+  });
+  return rate(nsum(included.map((s) => s.wonMonth)), nsum(included.map((s) => s.workableCreated)));
 }
 
-const DAY_MS = 86_400_000;
-
-function addDaysISO(iso: string, n: number): string {
-  return toISODate(new Date(parseISODate(iso).getTime() + n * DAY_MS));
-}
-
-/** Which days of a month the call reports cover. `through` is how far the
- * month counts as reported: the newest call-report day, or the day before
- * the newest report of any kind if that is later — a Lead report uploaded
- * in the morning shouldn't flag that same day's call report (not exported
- * until evening) as missing, but every earlier workday without one is. */
-export interface CallCoverage {
-  through: string;
-  /** Workdays up to `through` without any call report (ISO dates). */
-  missing: string[];
-}
-
-/** `rows` are the month's report rows of the counted employees (already
- * cut off where needed); null when the month has no call data at all. */
-export function callCoverage(
-  rows: readonly { reportDate: string; callsToday?: number }[],
-  ym: string,
-  latestReportDate: string | null,
-  /** A finished month is judged up to its last day. */
-  complete = false,
-): CallCoverage | null {
-  const callDates = new Set<string>();
-  for (const r of rows) if (r.callsToday !== undefined) callDates.add(r.reportDate);
-  if (callDates.size === 0) return null;
+/** Workdays of the month up to `asOf` with no call report at all —
+ * `presentDates` is the set of report dates that *do* have `callsToday`
+ * measured (fetched by the caller). Distinguishes a missing report from
+ * an individual employee's day off. */
+export function missingCallDays(ym: string, asOf: Date, presentDates: ReadonlySet<string>): Date[] {
   const { start, end } = monthBoundsISO(ym);
-  let through = [...callDates].reduce((a, b) => (b > a ? b : a));
-  if (latestReportDate) {
-    const dayBefore = addDaysISO(latestReportDate, -1);
-    if (dayBefore > through) through = dayBefore;
+  const startDate = parseISODate(start);
+  const endDate = parseISODate(end);
+  const last = asOf.getTime() < endDate.getTime() ? asOf : endDate;
+  const missing: Date[] = [];
+  for (let d = startDate; d.getTime() <= last.getTime(); d = new Date(d.getTime() + 86_400_000)) {
+    if (isWorkday(d) && !presentDates.has(toISODate(d))) missing.push(d);
   }
-  if (complete || through > end) through = end;
-  const missing: string[] = [];
-  for (let d = start; d <= through; d = addDaysISO(d, 1)) {
-    if (isWorkday(parseISODate(d)) && !callDates.has(d)) missing.push(d);
-  }
-  return { through, missing };
+  return missing;
 }
 
-function formatDDMM(iso: string): string {
-  const [, m, d] = iso.split("-");
-  return `${d}.${m}.`;
+function formatDDMM(d: Date): string {
+  return `${String(d.getUTCDate()).padStart(2, "0")}.${String(d.getUTCMonth() + 1).padStart(2, "0")}.`;
 }
 
 export interface EmployeeForecast extends Omit<Forecast, "perDay" | "fc1"> {
   perDay: number | undefined;
   fc1: number | undefined;
-  /** "Arbeitstage": days this person actually worked (call activity).
-   * "Werktage": the calendar's workdays (Mon–Fri without Nürnberg holidays). */
   basis: "Arbeitstage" | "Werktage";
   incomplete: boolean;
   missingDays: string[];
 }
 
-export interface ForecastBasis {
-  /** Days this employee worked so far — days with calls plus workdays
-   * without any call report (`missing`), which are counted as worked: a
-   * missing upload must not shrink the divisor and inflate FC1. Absent or
-   * 0 falls back to the calendar's workdays. */
-  worked?: number;
-  /** Last day the worked days cover (defaults to the snapshot's date). */
-  through?: string;
-  /** Workdays without any call report, shown as a warning. */
-  missing?: string[];
-}
-
 /**
- * Adds the FC1 (Closed Won) forecast to a snapshot: Closed Won per day so
- * far × days in the month. Per employee the days are worked days
- * ("Arbeitstage"); for the team, or someone without call data, the
- * calendar's workdays ("Werktage"). Remaining days to month-end are always
- * workdays.
+ * Adds the FC1 (Closed Won) forecast to a snapshot.
+ *
+ * Employee (`workedDays` set): basis is worked days — days call activity
+ * actually happened. A day with no call counts as off; remaining days to
+ * month-end are assumed to be workdays (Mon–Fri, no nationwide holiday).
+ *
+ * Team, or a month with no call data: basis is the month's workdays.
  */
-export function addForecast(snap: Snapshot, ym: string, basis: ForecastBasis = {}): Snapshot {
-  const asOfIso = basis.through ?? snap.reportDate;
-  const asOf = asOfIso ? parseISODate(asOfIso) : todayBerlin();
+export function addForecast(
+  snap: Snapshot,
+  ym: string,
+  workedDays?: number,
+  missingDays?: Date[],
+): Snapshot {
+  const asOf = snap.reportDate ? parseISODate(snap.reportDate) : todayUTC();
   const value = snap.wonMonth;
-  const missing = basis.missing ?? [];
-  const warn = { incomplete: missing.length > 0, missingDays: missing.map(formatDDMM) };
 
   let fc: EmployeeForecast;
-  if (basis.worked) {
-    const worked = basis.worked;
-    const endDate = parseISODate(monthBoundsISO(ym).end);
+  if (workedDays) {
+    const { end } = monthBoundsISO(ym);
+    const endDate = parseISODate(end);
     const remaining =
       asOf.getTime() < endDate.getTime()
-        ? workdaysBetween(new Date(asOf.getTime() + DAY_MS), endDate)
+        ? workdaysBetween(new Date(asOf.getTime() + 86_400_000), endDate)
         : 0;
-    const total = worked + remaining;
-    const perDay = value !== undefined ? round2(value / worked) : undefined;
+    const total = workedDays + remaining;
+    const perDay = value !== undefined ? round2(value / workedDays) : undefined;
     let fc1: number | undefined;
     if (value === undefined) {
       fc1 = undefined;
@@ -199,15 +151,19 @@ export function addForecast(snap: Snapshot, ym: string, basis: ForecastBasis = {
     } else {
       fc1 = perDay !== undefined ? Math.round(perDay * total) : undefined;
     }
+    // A hint only when a workday has no report at all — an individual's
+    // day off isn't a data problem.
+    const missing = missingDays ?? [];
     fc = {
       total,
-      elapsed: worked,
+      elapsed: workedDays,
       remaining,
       perDay,
       fc1,
       isActual: remaining === 0,
       basis: "Arbeitstage",
-      ...warn,
+      incomplete: missing.length > 0,
+      missingDays: missing.map(formatDDMM),
     };
   } else {
     const wt = workdayForecast(value ?? null, ym, asOf);
@@ -216,7 +172,8 @@ export function addForecast(snap: Snapshot, ym: string, basis: ForecastBasis = {
       perDay: wt.perDay ?? undefined,
       fc1: wt.fc1 ?? undefined,
       basis: "Werktage",
-      ...warn,
+      incomplete: false,
+      missingDays: [],
     };
   }
   return { ...snap, fc, fc1: fc.fc1, wonPerDay: fc.perDay };
@@ -274,55 +231,6 @@ export function computeDeltas(
   return out;
 }
 
-/** The `n`th workday (1-based) of month `ym`, or undefined if it has fewer. */
-export function nthWorkday(ym: string, n: number): string | undefined {
-  const { start, end } = monthBoundsISO(ym);
-  let seen = 0;
-  for (let d = start; d <= end; d = addDaysISO(d, 1)) {
-    if (isWorkday(parseISODate(d)) && ++seen === n) return d;
-  }
-  return undefined;
-}
-
-/**
- * Where to cut a comparison month (VM/VJ) so it is compared like for like.
- * A month still running is compared with the reference month as it stood
- * after the same number of workdays — month-to-date against a complete
- * month made everything red early in the month. A completed month is
- * compared full against full (returns undefined). `asOf` is the running
- * month's data date; no data yet means "as of today".
- */
-export function comparisonCutoff(
-  ym: string,
-  refYm: string,
-  asOf: string | null,
-  today: Date = todayBerlin(),
-): string | undefined {
-  if (monthCompleted(ym, today)) return undefined;
-  const asOfDate = asOf ? parseISODate(asOf) : today;
-  const n = workdaysElapsed(ym, asOfDate);
-  if (n === 0) return addDaysISO(monthBoundsISO(refYm).start, -1);
-  return nthWorkday(refYm, n) ?? monthBoundsISO(refYm).end;
-}
-
-/** VM/VJ deltas of `cur` against a reference month. Everything is compared
- * with the reference as of the same point (`cut`, see `comparisonCutoff`)
- * — except FC1, which projects the month's end and is therefore compared
- * with the reference month's final result (`full`). */
-export function comparisonDeltas(
-  cur: DeltaSource | undefined,
-  cut: DeltaSource | undefined,
-  full: DeltaSource | undefined,
-): Record<string, number | undefined> {
-  const out = computeDeltas(cur, cut);
-  if (full) {
-    const c = numField(cur, "fc1");
-    const r = numField(full, "fc1") ?? numField(full, "wonMonth");
-    out.fc1 = c !== undefined && r !== undefined ? round1(c - r) : undefined;
-  }
-  return out;
-}
-
 export function shiftYm(ym: string, months: number): string {
   const [y, m] = ym.split("-").map(Number);
   const idx = y * 12 + (m - 1) + months;
@@ -355,45 +263,24 @@ export function computeTeamBenchmark(
   return bench;
 }
 
-const COUNTED = /^(.+?)\s*[:=]\s*(\d+)\s*$/;
-
-/** One reasons text -> its (reason, count) entries. The Salesforce import
- * writes "Preis: 3; Kein Bedarf, später: 2" (`mostCommonText`), so entries
- * are separated by ";" or a line break and a reason may itself contain
- * commas. The upload template is free text, though, and people separate
- * with commas too — so inside an entry a comma only splits where the text
- * before it ends in its own ": count". Anything without a count counts 1. */
-export function parseReasons(text: string): { reason: string; count: number }[] {
-  const out: { reason: string; count: number }[] = [];
-  const push = (raw: string) => {
-    const p = raw.trim();
-    if (!p) return;
-    const m = COUNTED.exec(p);
-    out.push(m ? { reason: m[1].trim(), count: Number(m[2]) } : { reason: p, count: 1 });
-  };
-  for (const entry of text.split(/[;\n]+/)) {
-    let buffer: string[] = [];
-    for (const seg of entry.split(",")) {
-      buffer.push(seg);
-      if (COUNTED.test(seg.trim())) {
-        push(buffer.join(","));
-        buffer = [];
-      }
-    }
-    push(buffer.join(","));
-  }
-  return out;
-}
-
-/** Reasons texts of several employees summed per reason, largest first. */
+/** 'Preis: 3; Kein Bedarf: 2' -> [{reason: 'Preis', count: 3}, ...],
+ * summed across employees and sorted by count descending. */
 export function aggregateReasons(
   texts: (string | undefined)[],
 ): { reason: string; count: number }[] {
   const agg = new Map<string, number>();
   for (const t of texts) {
     if (!t) continue;
-    for (const { reason, count } of parseReasons(t)) {
-      agg.set(reason, (agg.get(reason) ?? 0) + count);
+    for (const part of t.split(/[;,\n]+/)) {
+      const p = part.trim();
+      if (!p) continue;
+      const m = /^(.+?)[:=]\s*(\d+)\s*$/.exec(p);
+      if (m) {
+        const key = m[1].trim();
+        agg.set(key, (agg.get(key) ?? 0) + Number(m[2]));
+      } else {
+        agg.set(p, (agg.get(p) ?? 0) + 1);
+      }
     }
   }
   return [...agg.entries()]
@@ -449,7 +336,7 @@ const SIGNAL_DEFS: SignalDef[] = [
   },
   {
     key: "wonPerDay",
-    label: "Won je Arbeitstag",
+    label: "Won je Werktag",
     kind: "count",
     invert: false,
     weight: 1.0,
@@ -503,7 +390,7 @@ const SIGNAL_DEFS: SignalDef[] = [
   },
   {
     key: "overduesOpps",
-    label: "Überfällige Opportunities",
+    label: "Overdue Opportunities",
     kind: "count",
     invert: true,
     weight: 1.3,
@@ -521,7 +408,7 @@ const SIGNAL_DEFS: SignalDef[] = [
   },
   {
     key: "leadsNoAction14",
-    label: "Leads: letzte Aktivität >2 Wo.",
+    label: "Leads: Last Activity >2 Wo.",
     kind: "count",
     invert: true,
     weight: 1.1,
@@ -530,7 +417,7 @@ const SIGNAL_DEFS: SignalDef[] = [
   },
   {
     key: "oppsNoAction14",
-    label: "Opps: letzte Aktivität >2 Wo.",
+    label: "Opps: Last Activity >2 Wo.",
     kind: "count",
     invert: true,
     weight: 1.1,
@@ -711,7 +598,15 @@ export const BADGES = [
   },
 ] as const;
 
-export function monthCompleted(ym: string, today: Date = todayBerlin()): boolean {
+/** These employees don't participate in badge awarding. They still appear
+ * in every other view — only awards are withheld. */
+export const BADGE_EXCLUDED = new Set(["andrea weber", "diana kaiser"]);
+
+export function badgeEligible(name: string | undefined): boolean {
+  return !BADGE_EXCLUDED.has((name ?? "").trim().toLowerCase());
+}
+
+export function monthCompleted(ym: string, today: Date = todayUTC()): boolean {
   const { end } = monthBoundsISO(ym);
   return parseISODate(end).getTime() < today.getTime();
 }
@@ -721,56 +616,14 @@ export interface BadgeResult {
   winners: string[]; // employeeIds
 }
 
-/** Days after month end before a month's badges are frozen in the cache —
- * the last day's call report usually arrives a day or two later. */
-export const BADGE_CACHE_DELAY_DAYS = 3;
-
-export function badgeCacheReady(ym: string, today: Date = todayBerlin()): boolean {
-  return addDaysISO(monthBoundsISO(ym).end, BADGE_CACHE_DELAY_DAYS) <= toISODate(today);
-}
-
-export interface UploadStamp {
-  uploadedAt: number;
-  reportDate?: string;
-  reportKind?: string;
-}
-
-/** A cached month is stale once a report of that month was (re-)imported
- * after the badges were computed. Interactions don't feed badges; an
- * upload template carries its own per-row dates, so it counts for every
- * month. With `nextMonthSales`, Lead/Opportunity reports of the following
- * month count too: they also write the previous month's closings (Close
- * Date last month, filed at its last day), so a late correction shows up
- * there — the daily cron checks this, page views don't. */
-export function badgeCacheStale(
-  ym: string,
-  computedAt: number,
-  uploads: readonly UploadStamp[],
-  opts: { nextMonthSales?: boolean } = {},
-): boolean {
-  const next = shiftYm(ym, 1);
-  return uploads.some((u) => {
-    if (u.uploadedAt <= computedAt || u.reportKind === "interactions") return false;
-    if (u.reportDate === undefined) return true;
-    const uploadYm = u.reportDate.slice(0, 7);
-    if (uploadYm === ym) return true;
-    return (
-      !!opts.nextMonthSales &&
-      uploadYm === next &&
-      (u.reportKind === "lead" || u.reportKind === "opp")
-    );
-  });
-}
-
-/** Winner(s) per badge for a month. Ties award the badge multiple times.
- * Everyone in `snaps` takes part — hiding someone from awards means hiding
- * them from the dashboard (Einstellungen), which drops them before this. */
+/** Winner(s) per badge for a month. Ties award the badge multiple times. */
 export function awardBadges(snaps: Snapshot[]): Record<string, BadgeResult> {
   const res: Record<string, BadgeResult> = {};
   // Hitrate only with a solid basis — otherwise whoever works the fewest
-  // leads wins.
+  // leads wins. The basis is scoped to the whole team, even though some
+  // employees are excluded from winning.
   const hrBase = hitrateMinBase(snaps);
-  const participants = snaps;
+  const participants = snaps.filter((s) => badgeEligible(s.name));
 
   const hrCand = participants.filter(
     (s) => s.hitrate !== undefined && (s.workableCreated ?? 0) >= hrBase,
@@ -805,22 +658,6 @@ export interface PerformanceMark {
   score: number;
 }
 
-/** Marks need at least this many employees with a solid basis… */
-export const MARKS_MIN_EMPLOYEES = 6;
-/** …and, in a running month, this many workdays behind it. */
-export const MARKS_MIN_WORKDAYS = 5;
-
-/** `performanceMarks`, but only once a month says something: completed, or
- * at least `MARKS_MIN_WORKDAYS` workdays in. Day 2's numbers labelled
- * people "Braucht Aufmerksamkeit" on noise. */
-export function marksForMonth(
-  snaps: Snapshot[],
-  month: { completed: boolean; workdaysElapsed: number },
-): Record<string, PerformanceMark> {
-  if (!month.completed && month.workdaysElapsed < MARKS_MIN_WORKDAYS) return {};
-  return performanceMarks(snaps);
-}
-
 /**
  * High-/low-performer marks from the combination of hitrate and Closed
  * Won. Both metrics are normalized 0–1 within the month and averaged with
@@ -833,8 +670,7 @@ export function performanceMarks(snaps: Snapshot[]): Record<string, PerformanceM
     (s) =>
       s.hitrate !== undefined && s.wonMonth !== undefined && (s.workableCreated ?? 0) >= hrBase,
   );
-  // With few people the top and bottom three are almost everyone.
-  if (cand.length < MARKS_MIN_EMPLOYEES) return {};
+  if (cand.length < 4) return {};
 
   const normalizer = (vals: number[]): ((v: number) => number) => {
     const lo = Math.min(...vals);

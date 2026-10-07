@@ -1,7 +1,6 @@
 "use client";
 
 import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
 import {
   AlertTriangle,
@@ -19,6 +18,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
+import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { useCurrentUser, useIsAdmin } from "@/components/providers/current-user";
 import { isoToday } from "@/lib/absences";
 import { useAbsencesCalendar, usePendingAbsenceCount } from "@/lib/absences-api";
@@ -192,11 +192,14 @@ export function TeamAvailabilityCard() {
   );
 }
 
-/** Team KPI snapshot — the parent only mounts this for someone who sees a
- * sales dashboard's team view (admins, team leads). */
-export function TeamPerformanceCard({ companyId }: { companyId: Id<"companies"> }) {
+/** Team KPI snapshot — the parent only mounts this for an account with a
+ * valid Performance session and `view_all_employees`, which may be a
+ * password login with no Clerk link, so this needs the real session token
+ * (not a hardcoded "") to resolve. */
+export function TeamPerformanceCard() {
   const t = useTranslations("Dashboard");
-  const dashboard = useQuery(api.performance.queries.teamDashboard, { companyId });
+  const { token } = usePerformanceSession();
+  const dashboard = useQuery(api.performance.queries.teamDashboard, { token });
 
   return (
     <DashCard icon={<TrendingUp />} title={t("teamPerformanceTitle")}>

@@ -1,6 +1,5 @@
 import {
   cleanAgentName,
-  decodeCsvBytes,
   matchEmployee,
   readCallCsv,
   readCallExport,
@@ -18,6 +17,10 @@ export interface RescanFlaggedRow extends DurationFlag {
 export interface RescanResult {
   flaggedRows: RescanFlaggedRow[];
   skipped: string[];
+}
+
+function stripBom(text: string): string {
+  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
 }
 
 /** "2026-07-01" (UTC) — matches `toISODate` in
@@ -62,7 +65,7 @@ export async function rescanCallReport(
 
   let rows: CallRow[] | null;
   if (lower.endsWith(".csv")) {
-    const text = decodeCsvBytes(new Uint8Array(await res.arrayBuffer()));
+    const text = stripBom(await res.text());
     rows = readCallCsv(text)?.rows ?? null;
   } else {
     const bytes = new Uint8Array(await res.arrayBuffer());

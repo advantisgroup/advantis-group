@@ -1,0 +1,33 @@
+// Moved to `performance/import.ts`. Re-exported so the old `api.performanceImport.*`
+// path keeps working for open tabs and queued jobs until the shim cleanup
+// in docs/future-features/22_convex-restructure.md.
+export {
+  apiGenerateUploadUrl,
+  apiDeleteStorage,
+  purgeExcludedOwners,
+  findImplausibleDurations,
+  getTeamEmployeeNames,
+  getTeamEmployeesWithId,
+  getActiveEmployeeIdsByMonth,
+  applyImport,
+  findUploadByHash,
+  apiFindUploadByHash,
+  clearRawLeads,
+  insertRawLeadsChunk,
+  clearRawOpps,
+  insertRawOppsChunk,
+  clearWonOpps,
+  insertWonOppsChunk,
+  listUploadLog,
+  listUnscannedCallUploads,
+  listEmployeeNames,
+  recordScanResults,
+  listFlaggedRows,
+  resolveFlaggedRow,
+  requireAdminByToken,
+  getUploadLogRow,
+  getUploadLogRowsByBatch,
+  clearInteractionsForMonths,
+  insertInteractionsChunk,
+  logInteractionsImport,
+} from "./performance/import";
