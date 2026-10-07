@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import { ComparisonFootnote, MissingReportWarning } from "@/components/performance/ComparisonNotes";
+import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { useDashboardData } from "@/components/performance/PerformanceDashboardContext";
 import {
   DeltaBadge,
@@ -19,6 +20,7 @@ import {
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { TeamTable } from "@/components/performance/TeamTable";
 import { UnqualifiedReasonsChart } from "@/components/performance/UnqualifiedReasonsChart";
+import { WallboxOverview } from "@/components/performance/WallboxOverview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -116,6 +118,14 @@ function ListStatCard({ href, label, value }: { href: string; label: string; val
 }
 
 export default function DashboardOverviewPage() {
+  const dashboard = usePerformanceAccess().dashboard;
+  if (dashboard?.kind === "wallbox") return <WallboxOverview companyId={dashboard.companyId} />;
+  // Calls-only dashboards have no Überblick; the layout redirects.
+  if (dashboard?.kind === "calls") return null;
+  return <SalesOverview />;
+}
+
+function SalesOverview() {
   const t = useTranslations("Performance");
   const locale = useLocale();
   const data = useDashboardData();

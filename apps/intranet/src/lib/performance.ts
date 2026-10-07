@@ -31,7 +31,14 @@ export function setLastPerformanceYm(ym: string): void {
   }
 }
 
-export type PerformanceReportKind = "lead" | "opp" | "call" | "template" | "interactions";
+export type PerformanceReportKind =
+  | "lead"
+  | "opp"
+  | "call"
+  | "template"
+  | "interactions"
+  | "wallbox_members"
+  | "wallbox_opps";
 
 export interface UploadReportResult {
   ok: boolean;
@@ -54,6 +61,8 @@ export interface UploadReportResult {
   // The drill-down lists were kept because they already hold this newer
   // report date.
   rawKept?: string;
+  // Other dashboards a shared call/interactions report also went into.
+  alsoImportedInto?: string[];
 }
 
 /** Vercel cuts request bodies at ~4.5 MB before they reach apps/api. */

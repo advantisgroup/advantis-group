@@ -72,9 +72,22 @@ export function usePerformanceAccess(): PerformanceAccessValue {
   return value;
 }
 
+export type PerformanceDashboardKind = PerformanceDashboard["kind"];
+
+/** The team view's first tab: a calls-only dashboard has no Überblick. */
+export function teamHome(kind: PerformanceDashboardKind): string {
+  return kind === "calls" ? "/performance/calls" : "/performance/ueberblick";
+}
+
+/** An employee page's first tab for the kind of dashboard they're on. */
+export function employeeHome(employeeId: string, kind: PerformanceDashboardKind): string {
+  const tab = kind === "wallbox" ? "wallbox" : kind === "calls" ? "calls" : "ueberblick";
+  return `/performance/mitarbeiter/${employeeId}/${tab}`;
+}
+
 /** Where "Dashboard" leads for this viewer on the current dashboard. */
 export function dashboardHome(dashboard: PerformanceDashboard | null): string {
-  if (dashboard?.canViewTeam) return "/performance/ueberblick";
-  if (dashboard?.employeeId) return `/performance/mitarbeiter/${dashboard.employeeId}`;
+  if (dashboard?.canViewTeam) return teamHome(dashboard.kind);
+  if (dashboard?.employeeId) return employeeHome(dashboard.employeeId, dashboard.kind);
   return "/performance";
 }

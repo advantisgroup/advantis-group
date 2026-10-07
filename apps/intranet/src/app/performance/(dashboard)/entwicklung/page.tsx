@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 
 import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -21,12 +22,20 @@ import { usePerformanceAccess } from "@/components/performance/PerformanceAccess
 import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
 import { fmtDayShort, fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
+import { WallboxDevelopment } from "@/components/performance/WallboxDevelopment";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DashboardDevelopmentPage() {
+  const dashboard = usePerformanceAccess().dashboard;
+  if (dashboard?.kind === "wallbox") return <WallboxDevelopment companyId={dashboard.companyId} />;
+  // Calls-only dashboards have no Entwicklung; the layout redirects.
+  if (dashboard?.kind === "calls") return null;
+  return <SalesDevelopment companyId={dashboard?.companyId} />;
+}
+
+function SalesDevelopment({ companyId }: { companyId: Id<"companies"> | undefined }) {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const companyId = usePerformanceAccess().dashboard?.companyId;
   const data = useQuery(api.performance.queries.teamDevelopment, { companyId });
 
   const funnelChart = useMemo(
