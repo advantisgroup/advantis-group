@@ -8,48 +8,36 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { dashboardHome, usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { InteractionRecordsTable } from "@/components/performance/InteractionRecordsTable";
 import { PerformanceBackLink } from "@/components/performance/PerformanceBackLink";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatIsoDate } from "@/lib/format";
-import { clearPerformanceToken } from "@/lib/performanceAuth";
 
 export default function DashboardInteractionDayPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
   const router = useRouter();
   const params = useParams<{ date: string }>();
-  const { token, session } = usePerformanceSession();
+  const { me, dashboard } = usePerformanceAccess();
+  const canViewTeam = !!dashboard?.canViewTeam;
 
   useEffect(() => {
-    if (session && !session.valid) {
-      clearPerformanceToken();
-      router.replace("/performance/login");
-    }
-  }, [session, router]);
-
-  useEffect(() => {
-    // Team-wide day detail is admin-only, same gate as PerformanceDashboardLayout.
-    if (!session?.valid || session.permissions.includes("view_all_employees")) return;
-    if (session.employeeId) {
-      router.replace(`/performance/mitarbeiter/${session.employeeId}`);
-    }
-  }, [session, router]);
+    // The team-wide day detail is for the team view only.
+    if (me && !canViewTeam) router.replace(dashboardHome(dashboard));
+  }, [me, canViewTeam, dashboard, router]);
 
   const data = useQuery(
     api.performance.queries.interactionsDayDetail,
-    session?.valid && session.permissions.includes("view_all_employees")
-      ? { token, date: params.date }
-      : "skip",
+    canViewTeam && dashboard ? { date: params.date, companyId: dashboard.companyId } : "skip",
   );
 
-  if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid || !session.permissions.includes("view_all_employees")) return null;
+  if (me === undefined) return <PerformancePageSkeleton />;
+  if (!canViewTeam) return null;
 
   return (
     <div className="min-h-screen bg-muted/20">

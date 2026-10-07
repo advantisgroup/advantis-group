@@ -82,10 +82,10 @@ if (process.env.DISABLE_CRONS !== "true") {
     internal.org.trash.purgeExpired,
     {},
   );
-  // Backfills the completed-month badge cache (performanceBadgeCache) so
-  // teamDashboard/employeeDetail stop recomputing every completed month's team
-  // totals from scratch on every request — a completed month's badges never
-  // change, so this only ever has new months (the one that just closed) to do.
+  // Keeps the completed-month badge cache (performanceBadgeCache) current so
+  // teamDashboard/employeeDetail don't recompute every past month per view.
+  // Freezes a month from its 3rd day after month end (late call reports)
+  // and recomputes one when a report of that month is imported later.
   crons.daily(
     "performance: cache completed month badges",
     { hourUTC: 3, minuteUTC: 5 },
@@ -137,14 +137,7 @@ if (process.env.DISABLE_CRONS !== "true") {
     {},
   );
 
-  // Links Performance/Academy logins whose intranet account showed up later.
-  crons.daily(
-    "performance: reconcile auto-links",
-    { hourUTC: 4, minuteUTC: 15 },
-    internal.performance.auth.reconcileAutoLinks,
-    {},
-  );
-
+  // Links Academy logins whose intranet account showed up later.
   crons.daily(
     "academy: reconcile auto-links",
     { hourUTC: 4, minuteUTC: 18 },

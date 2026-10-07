@@ -1,36 +1,26 @@
 import type { ReactNode } from "react";
 
-import { headers } from "next/headers";
+import { auth } from "@clerk/nextjs/server";
 
+import { AppGate } from "@/components/layout/AppGate";
 import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
-import { PerformanceCompanyProvider } from "@/components/performance/PerformanceCompanyProvider";
-import { ConfirmProvider } from "@/components/ui/dialog";
+import { PerformanceAccessProvider } from "@/components/performance/PerformanceAccess";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-// Performance runs outside the Clerk-gated `(app)` shell (own auth, own
-// header — same carve-out as `/guest`), so it never inherits the shell's
-// TooltipProvider (bundled inside SidebarProvider), BottomNavTabsProvider
-// (mounted in AppShell), or ConfirmProvider (mounted in AppGate) — the last
-// of which turns `useConfirm()` into a hard crash ("useConfirm must be used
-// within a ConfirmProvider") the moment any page under here calls it, e.g.
-// the companies admin page's delete confirmation. Every page under here —
-// not just the RouteTabs ones — needs all three, so they're provided once
-// at the root instead of per-page.
+// Performance has its own header and bottom tabs instead of the intranet's
+// sidebar, but the same sign-in: Clerk plus `AppGate` (access request,
+// step-up), rendered `bare`. That leaves the TooltipProvider (bundled in
+// SidebarProvider) and BottomNavTabsProvider (in AppShell) to provide here.
 export default async function PerformanceLayout({ children }: { children: ReactNode }) {
-  // Set by proxy.ts's tenant-domain rewrite; absent on the main intranet
-  // host, where PerformanceCompanyProvider falls back to Advantis's slug.
-  const headerList = await headers();
-  const companyId = headerList.get("x-performance-company-id");
-  const slug = headerList.get("x-performance-company-slug");
-  const company = companyId && slug ? { companyId, slug } : null;
+  await auth.protect();
 
   return (
-    <TooltipProvider delayDuration={150}>
-      <BottomNavTabsProvider>
-        <ConfirmProvider>
-          <PerformanceCompanyProvider company={company}>{children}</PerformanceCompanyProvider>
-        </ConfirmProvider>
-      </BottomNavTabsProvider>
-    </TooltipProvider>
+    <AppGate bare>
+      <TooltipProvider delayDuration={150}>
+        <BottomNavTabsProvider>
+          <PerformanceAccessProvider>{children}</PerformanceAccessProvider>
+        </BottomNavTabsProvider>
+      </TooltipProvider>
+    </AppGate>
   );
 }

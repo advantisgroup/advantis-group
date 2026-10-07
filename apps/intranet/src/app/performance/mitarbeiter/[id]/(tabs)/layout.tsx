@@ -7,7 +7,14 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
-import { Activity, LayoutDashboard, ListTodo, Phone, TrendingUp } from "lucide-react";
+import {
+  Activity,
+  BatteryCharging,
+  LayoutDashboard,
+  ListTodo,
+  Phone,
+  TrendingUp,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { FilterableBarChart } from "@/components/charts/FilterableBarChart";
@@ -18,16 +25,23 @@ import {
   LastDayInteractions,
   type LastDayInteractionRow,
 } from "@/components/performance/LastDayInteractions";
+import {
+  employeeHome,
+  type PerformanceDashboardKind,
+  usePerformanceAccess,
+} from "@/components/performance/PerformanceAccess";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceEmployeeDetailProvider } from "@/components/performance/PerformanceEmployeeDetailContext";
 import { buildCallActivityChartData, fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
-import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
+import {
+  PerformanceContentSkeleton,
+  PerformancePageSkeleton,
+} from "@/components/performance/PerformanceSkeleton";
 import {
   PerformanceYmProvider,
   usePerformanceYm,
 } from "@/components/performance/PerformanceYmContext";
-import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -37,7 +51,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { clearPerformanceToken } from "@/lib/performanceAuth";
 
 interface EmployeeTopData {
   hasCalls: boolean;
@@ -56,12 +69,14 @@ function EmployeeTopSection({
   data,
   interactionDays,
   activeTab,
+  kind,
   t,
   locale,
 }: {
   data: EmployeeTopData;
   interactionDays: LastDayInteractionRow[] | undefined;
   activeTab: string;
+  kind: PerformanceDashboardKind;
   t: ReturnType<typeof useTranslations>;
   locale: string;
 }) {
@@ -96,36 +111,57 @@ function EmployeeTopSection({
     if (!interactionDays) return null;
     return <LastDayInteractions days={interactionDays} locale={locale} />;
   }
+  if (kind !== "sales") return null;
   return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }
 
+/** Which tabs an employee page has, by the kind of their dashboard: Wallbox
+ * and calls-only people have no Salesforce numbers, topics or badges. */
+const TABS_BY_KIND: Record<PerformanceDashboardKind, readonly string[]> = {
+  sales: ["ueberblick", "entwicklung", "calls", "topics", "interaktionen"],
+  wallbox: ["wallbox", "calls", "interaktionen"],
+  calls: ["calls", "interaktionen"],
+};
+
 function EmployeeChrome({
-  token,
   employeeId,
   children,
 }: {
-  token: string;
   employeeId: Id<"performanceEmployees">;
   children: ReactNode;
 }) {
   const t = useTranslations("Performance");
   const locale = useLocale();
   const pathname = usePathname();
+  const router = useRouter();
+  const { me, dashboard } = usePerformanceAccess();
   const [ym, setYm] = usePerformanceYm();
-  const data = useQuery(api.performance.queries.employeeDetail, {
-    token,
-    employeeId,
-    ym,
-  });
-  const interactions = useQuery(api.performance.queries.interactionsMonth, {
-    token,
-    ym,
-    employeeId,
-  });
+  const data = useQuery(api.performance.queries.employeeDetail, { employeeId, ym });
 
   const activeTab = pathname.split("/").filter(Boolean)[3] ?? "ueberblick";
+  // Until the detail loads: their own dashboard, else the one being viewed.
+  const kind: PerformanceDashboardKind =
+    data?.employee.kind ??
+    me?.dashboards.find((d) => d.employeeId === employeeId)?.kind ??
+    dashboard?.kind ??
+    "sales";
+  const offTab = !TABS_BY_KIND[kind].includes(activeTab);
+  useEffect(() => {
+    if (data && offTab) router.replace(employeeHome(employeeId, data.employee.kind));
+  }, [data, offTab, employeeId, router]);
+  // Only the Interaktionen tab shows the month's single interactions.
+  const interactions = useQuery(
+    api.performance.queries.interactionsMonth,
+    activeTab === "interaktionen" ? { ym, employeeId } : "skip",
+  );
 
-  const tabs: RouteTab[] = [
+  const allTabs: RouteTab[] = [
+    {
+      value: "wallbox",
+      href: `/performance/mitarbeiter/${employeeId}/wallbox`,
+      label: t("tabWallbox"),
+      icon: BatteryCharging,
+    },
     {
       value: "ueberblick",
       href: `/performance/mitarbeiter/${employeeId}/ueberblick`,
@@ -158,46 +194,55 @@ function EmployeeChrome({
       icon: Activity,
     },
   ];
+  const tabs = allTabs.filter((tab) => TABS_BY_KIND[kind].includes(tab.value));
+  // Entwicklung shows every month, Interaktionen pages by day, Wallbox is
+  // report snapshots.
+  const usesMonth = !["entwicklung", "interaktionen", "wallbox"].includes(activeTab);
 
   return (
     <div className="min-h-screen bg-muted/20">
       <PerformanceHeader />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-xl font-semibold">{data?.employee.name}</h1>
+          {usesMonth && (
+            <>
+              <Select
+                value={ym ?? data?.ym ?? ""}
+                onValueChange={(v) => setYm(v)}
+                disabled={!data || data.months.length === 0}
+              >
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder={t("dashboardMonthLabel")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {[...(data?.months ?? [])].reverse().map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {fmtYm(m, locale)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {data && (
+                <Badge variant={data.monthDone ? "muted" : "success"}>
+                  {data.monthDone ? t("dashboardMonthClosed") : t("dashboardMonthOpen")}
+                </Badge>
+              )}
+            </>
+          )}
+        </div>
+
         {data && (
           <EmployeeTopSection
             data={data}
             interactionDays={interactions?.days}
             activeTab={activeTab}
+            kind={kind}
             t={t}
             locale={locale}
           />
         )}
-
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold">{data?.employee.name}</h1>
-          <Select
-            value={ym ?? data?.ym ?? ""}
-            onValueChange={(v) => setYm(v)}
-            disabled={!data || data.months.length === 0}
-          >
-            <SelectTrigger className="w-56">
-              <SelectValue placeholder={t("dashboardMonthLabel")} />
-            </SelectTrigger>
-            <SelectContent>
-              {[...(data?.months ?? [])].reverse().map((m) => (
-                <SelectItem key={m} value={m}>
-                  {fmtYm(m, locale)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {data && (
-            <Badge variant={data.monthDone ? "muted" : "success"}>
-              {data.monthDone ? t("dashboardMonthClosed") : t("dashboardMonthOpen")}
-            </Badge>
-          )}
-        </div>
 
         <Card className="overflow-hidden">
           <div className="px-2">
@@ -206,7 +251,7 @@ function EmployeeChrome({
         </Card>
 
         <PerformanceEmployeeDetailProvider data={data}>
-          {children}
+          {offTab ? <PerformanceContentSkeleton /> : children}
         </PerformanceEmployeeDetailProvider>
       </main>
       <PerformanceBottomTabs />
@@ -216,26 +261,17 @@ function EmployeeChrome({
 
 export default function EmployeeDetailLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Performance");
-  const router = useRouter();
   const params = useParams<{ id: string }>();
   const employeeId = params.id as Id<"performanceEmployees">;
-  const { token, session } = usePerformanceSession();
+  const { me } = usePerformanceAccess();
 
-  useEffect(() => {
-    // Wait for the query to resolve — a visitor with no password cookie may
-    // still resolve via their linked Clerk identity.
-    if (session && !session.valid) {
-      clearPerformanceToken();
-      router.replace("/performance/login");
-    }
-  }, [session, router]);
-
+  // Rough client-side check so a plain employee opening someone else's link
+  // gets a note instead of an error; the server decides exactly
+  // (`performance/lib/access.ts`).
   const canView =
-    session?.valid &&
-    (session.permissions.includes("view_all_employees") || session.employeeId === employeeId);
+    !!me && (me.isAdmin || me.dashboards.some((d) => d.canViewTeam || d.employeeId === employeeId));
 
-  if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid) return null;
+  if (me === undefined) return <PerformancePageSkeleton />;
   if (!canView) {
     return (
       <div className="min-h-screen bg-muted/20">
@@ -254,9 +290,7 @@ export default function EmployeeDetailLayout({ children }: { children: ReactNode
 
   return (
     <PerformanceYmProvider>
-      <EmployeeChrome token={token} employeeId={employeeId}>
-        {children}
-      </EmployeeChrome>
+      <EmployeeChrome employeeId={employeeId}>{children}</EmployeeChrome>
     </PerformanceYmProvider>
   );
 }

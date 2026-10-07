@@ -1,6 +1,6 @@
 "use node";
 
-import { action, serverAction } from "../functions";
+import { serverAction, userAction } from "../functions";
 
 /**
  * Report-file detection/parsing for the Performance upload pipeline —
@@ -25,13 +25,21 @@ import { internal } from "../_generated/api";
 import { type ActionCtx } from "../_generated/server";
 import {
   cleanAgentName,
+  decodeCsvBytes,
+  firstLine,
   matchEmployee,
+  parseCsvText,
   readCallCsv,
   readCallExport,
+  sniffDelimiter,
   type CallRow,
   type DurationFlag,
 } from "./lib/callImport";
-import { readInteractionsCsv, type InteractionRow } from "./lib/interactionImport";
+import {
+  interactionDateRange,
+  readInteractionsCsv,
+  type InteractionRow,
+} from "./lib/interactionImport";
 import {
   aggregateLeadReport,
   aggregateOppReport,
@@ -47,16 +55,13 @@ import {
   type SnapshotFields,
 } from "./lib/types";
 import { normalizeZipLocalHeaders } from "./lib/xlsxZip";
-import { toISODate, todayUTC } from "./lib/workdays";
+import { toISODate, todayBerlin } from "./lib/workdays";
 import { parseAggregatedTemplate } from "./lib/aggregatedTemplate";
+import { readWallboxExport, summarizeMembers } from "./lib/wallboxImport";
 
 // Safely under Convex's 8192-element array-argument limit, with headroom
 // for the rest of each row's payload size.
 const RAW_CHUNK_SIZE = 2000;
-
-function stripBom(text: string): string {
-  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-}
 
 /** Reads the first sheet of a workbook into an array of rows, matching
  * openpyxl's `ws.iter_rows(values_only=True)`. `cellDates: true` makes
@@ -99,6 +104,7 @@ async function runApplyImport(
     contentHash: string;
     reportKind?: "lead" | "opp" | "call" | "template";
     reportDate?: string;
+    reportDateFrom?: string;
     sourceRowCount?: number;
     skippedNames?: string[];
     flaggedRows?: FlaggedRowInput[];
@@ -106,11 +112,59 @@ async function runApplyImport(
     batchId?: string;
     uploadedBy?: string;
     replaceLogId?: Id<"performanceUploadLog">;
+    deferLog?: boolean;
+    clearFields?: "callsOutbound"[];
   },
 ): Promise<{ rowsImported: number }> {
   return runSafely("applyImport", () =>
     ctx.runMutation(internal.performance.import.applyImport, args),
   );
+}
+
+/** A Lead/Opp import: snapshots first, then the drill-down tables — only
+ * when this report is at least as new as what they hold, so re-importing
+ * last week's file doesn't put last week's open leads back — and the log
+ * row last, so a failure on the way leaves nothing that blocks a retry. */
+async function importSalesforce(
+  ctx: ActionCtx,
+  base: Omit<Parameters<typeof runApplyImport>[1], "reportKind" | "deferLog" | "snapshots">,
+  kind: "lead" | "opp",
+  snapshots: EmployeeSnapshot[],
+  writeRaw: () => Promise<void>,
+): Promise<ImportResult> {
+  const reportDate = base.reportDate!;
+  const result = await runApplyImport(ctx, {
+    ...base,
+    snapshots,
+    reportKind: kind,
+    deferLog: true,
+  });
+  const current = await ctx.runQuery(internal.performance.import.getRawReportDates, {
+    companyId: base.companyId,
+  });
+  const currentDate = kind === "lead" ? current.leads : current.opps;
+  const replaceRaw = currentDate === undefined || reportDate >= currentDate;
+  if (replaceRaw) await writeRaw();
+  const { flaggedRows: _flagged, ...log } = base;
+  await runSafely("recordUpload", () =>
+    ctx.runMutation(internal.performance.import.recordUpload, {
+      ...log,
+      reportKind: kind,
+      rowsImported: result.rowsImported,
+      ...(replaceRaw
+        ? kind === "lead"
+          ? { rawLeadsReportDate: reportDate }
+          : { rawOppsReportDate: reportDate }
+        : {}),
+    }),
+  );
+  return {
+    status: "ok",
+    rowsImported: result.rowsImported,
+    reportKind: kind,
+    reportDate,
+    ...(replaceRaw ? {} : { rawKept: currentDate }),
+  };
 }
 
 /** Loops a batched `clear*` mutation (see performanceImport.ts's
@@ -201,40 +255,47 @@ export interface FlaggedRowInput extends DurationFlag {
   reportDate: string;
 }
 
-/** One row per employee/day, matched against the known team; agents with
- * no unambiguous team match are skipped (reported in `skipped`), same as
- * `import_calls`. Requires at least one Lead/Opportunity report to have
- * been imported already, so there's a team to match against. A row whose
- * duration cell got rejected by `parseDurationField` isn't dropped
- * silently — it's reported in `flaggedRows` for admin review instead. */
-async function buildCallSnapshots(
-  ctx: ActionCtx,
-  companyId: Id<"companies">,
-  rows: CallRow[],
-): Promise<{
-  snapshots: EmployeeSnapshot[];
-  skipped: string[];
-  flaggedRows: FlaggedRowInput[];
-}> {
-  const known: string[] = await ctx.runQuery(internal.performance.import.getTeamEmployeeNames, {
-    companyId,
-  });
-  if (known.length === 0) {
+/** Every dashboard's roster a shared Genesys report is matched against
+ * (`wallbox.prepareCallTargets`), origin dashboard first. */
+type CallTarget = {
+  companyId: Id<"companies">;
+  name: string;
+  employees: { id: Id<"performanceEmployees">; name: string }[];
+};
+
+async function callTargets(ctx: ActionCtx, origin: Id<"companies">): Promise<CallTarget[]> {
+  const all: CallTarget[] = await runSafely("prepareCallTargets", () =>
+    ctx.runMutation(internal.performance.wallbox.prepareCallTargets, {}),
+  );
+  const withRoster = all.filter((t) => t.employees.length > 0 || t.companyId === origin);
+  if (withRoster.every((t) => t.employees.length === 0)) {
     throw new ConvexError({
       code: "no_employees",
       message:
-        "Es sind noch keine Mitarbeiter vorhanden. Bitte zuerst den Lead- oder Opportunity-Report hochladen.",
+        "Es sind noch keine Mitarbeiter vorhanden. Bitte zuerst den Salesforce-Report hochladen oder unter Einstellungen Teams zuordnen.",
     });
   }
+  return withRoster.sort((a, b) => (a.companyId === origin ? -1 : b.companyId === origin ? 1 : 0));
+}
+
+/** One row per employee/day for one dashboard, matched against its roster.
+ * A row whose duration cell got rejected by `parseDurationField` isn't
+ * dropped silently — it's reported in `flaggedRows` for admin review. */
+function buildCallSnapshots(
+  known: string[],
+  rows: CallRow[],
+): {
+  snapshots: EmployeeSnapshot[];
+  matchedAgents: Set<string>;
+  flaggedRows: FlaggedRowInput[];
+} {
   const snapshots: EmployeeSnapshot[] = [];
-  const skipped: string[] = [];
+  const matchedAgents = new Set<string>();
   const flaggedRows: FlaggedRowInput[] = [];
   for (const rec of rows) {
     const emp = matchEmployee(rec.employee, known);
-    if (!emp) {
-      skipped.push(cleanAgentName(rec.employee));
-      continue;
-    }
+    if (!emp) continue;
+    matchedAgents.add(cleanAgentName(rec.employee));
     const reportDate = toISODate(rec.date);
     for (const flag of rec.flags ?? []) {
       flaggedRows.push({ employeeName: emp, reportDate, ...flag });
@@ -247,7 +308,57 @@ async function buildCallSnapshots(
     if (Object.keys(fields).length === 0) continue;
     snapshots.push({ employeeName: emp, reportDate, fields });
   }
-  return { snapshots, skipped, flaggedRows };
+  return { snapshots, matchedAgents, flaggedRows };
+}
+
+/**
+ * Writes a shared report into one more dashboard: under that dashboard's own
+ * import lock, and without failing the whole upload when it can't — the
+ * origin is already imported by then, so a busy or failing target is
+ * reported back (`notImportedInto`) instead of thrown.
+ */
+async function intoOtherDashboard(
+  ctx: ActionCtx,
+  target: CallTarget,
+  by: string | undefined,
+  write: () => Promise<void>,
+): Promise<boolean> {
+  const token = crypto.randomUUID();
+  try {
+    await ctx.runMutation(internal.performance.import.acquireImportLock, {
+      companyId: target.companyId,
+      token,
+      by,
+    });
+  } catch {
+    return false;
+  }
+  try {
+    await write();
+    return true;
+  } catch (err) {
+    console.error(`[performanceUploadParse] fan-out into ${target.name} failed:`, err);
+    return false;
+  } finally {
+    await ctx.runMutation(internal.performance.import.releaseImportLock, {
+      companyId: target.companyId,
+      token,
+    });
+  }
+}
+
+/** The log row a fanned-out report replaces in another dashboard (same
+ * file imported there before), so a re-import doesn't add a second one. */
+async function fanOutLogId(
+  ctx: ActionCtx,
+  companyId: Id<"companies">,
+  contentHash: string,
+): Promise<Id<"performanceUploadLog"> | undefined> {
+  const id = await ctx.runQuery(internal.performance.import.findUploadLogIdByHash, {
+    companyId,
+    contentHash,
+  });
+  return id ?? undefined;
 }
 
 interface InteractionInsert {
@@ -258,61 +369,29 @@ interface InteractionInsert {
   direction?: string;
 }
 
-/** Matches each interaction's `Benutzer` name(s) against the team roster
- * and keeps only those already active in the Performance Dashboard for the
- * interaction's own calendar month — per the import rule: a raw Genesys
- * export otherwise pulls in every agent who touched the queue, not just
- * the sales team this feature tracks. A multi-agent interaction (transfer/
- * conference) produces one insert per matched, active employee. */
-async function buildInteractionInserts(
-  ctx: ActionCtx,
-  companyId: Id<"companies">,
+/** Matches each interaction's `Benutzer` name(s) against one dashboard's
+ * roster. A multi-agent interaction (transfer/conference) produces one
+ * insert per matched employee. */
+function buildInteractionInserts(
+  employees: { id: Id<"performanceEmployees">; name: string }[],
   rows: InteractionRow[],
-): Promise<{
-  inserts: InteractionInsert[];
-  months: string[];
-  skipped: string[];
-}> {
-  const employees: { id: Id<"performanceEmployees">; name: string }[] = await ctx.runQuery(
-    internal.performance.import.getTeamEmployeesWithId,
-    {
-      companyId,
-    },
-  );
-  if (employees.length === 0) {
-    throw new ConvexError({
-      code: "no_employees",
-      message:
-        "Es sind noch keine Mitarbeiter vorhanden. Bitte zuerst den Lead- oder Opportunity-Report hochladen.",
-    });
-  }
+): { inserts: InteractionInsert[]; matchedAgents: Set<string> } {
   const known = employees.map((e) => e.name);
   const idByName = new Map(employees.map((e) => [e.name, e.id]));
-
-  const months = [...new Set(rows.map((r) => r.date.slice(0, 7)))];
-  const activeByMonth: Record<string, Id<"performanceEmployees">[]> = await ctx.runQuery(
-    internal.performance.import.getActiveEmployeeIdsByMonth,
-    {
-      companyId,
-      months,
-    },
-  );
-  const activeSets = new Map(Object.entries(activeByMonth).map(([ym, ids]) => [ym, new Set(ids)]));
-
   const inserts: InteractionInsert[] = [];
-  const skipped = new Set<string>();
+  const matchedAgents = new Set<string>();
+  const matchCache = new Map<string, string | null>();
   for (const row of rows) {
-    const active = activeSets.get(row.date.slice(0, 7));
     for (const rawName of row.names) {
-      const matched = matchEmployee(rawName, known);
-      if (!matched) {
-        skipped.add(rawName);
-        continue;
+      let matched = matchCache.get(rawName);
+      if (matched === undefined) {
+        matched = matchEmployee(rawName, known);
+        matchCache.set(rawName, matched);
       }
-      const employeeId = idByName.get(matched)!;
-      if (!active?.has(employeeId)) continue;
+      if (!matched) continue;
+      matchedAgents.add(rawName);
       inserts.push({
-        employeeId,
+        employeeId: idByName.get(matched)!,
         date: row.date,
         startedAt: row.startedAt,
         durationSec: row.durationSec,
@@ -320,25 +399,38 @@ async function buildInteractionInserts(
       });
     }
   }
-  return { inserts, months, skipped: [...skipped] };
+  return { inserts, matchedAgents };
 }
 
-/** Wholesale-replaces every month the upload covers, then writes the new
- * rows in bounded-size chunks (see `RAW_CHUNK_SIZE`) — same clear-then-
- * insert shape as `writeRawLeads`/`writeRawOpps`. */
+/** Replaces the file's own date range (first to last day it contains),
+ * then writes the new rows in bounded-size chunks (see `RAW_CHUNK_SIZE`) —
+ * same clear-then-insert shape as `writeRawLeads`/`writeRawOpps`. */
 async function writeInteractions(
   ctx: ActionCtx,
   companyId: Id<"companies">,
   inserts: InteractionInsert[],
-  months: string[],
+  range: { from: string; to: string },
   sourceFile: string,
+  /** Fanned out into another dashboard: replace only the agents this file
+   * has there, not everyone's interactions in the range. */
+  onlyMatched = false,
 ): Promise<void> {
-  await clearInBatches("clearInteractionsForMonths", () =>
-    ctx.runMutation(internal.performance.import.clearInteractionsForMonths, {
-      companyId,
-      months,
-    }),
-  );
+  if (onlyMatched) {
+    const employeeIds = [...new Set(inserts.map((r) => r.employeeId))];
+    await clearInBatches("clearInteractionsForEmployees", () =>
+      ctx.runMutation(internal.performance.import.clearInteractionsForEmployees, {
+        employeeIds,
+        ...range,
+      }),
+    );
+  } else {
+    await clearInBatches("clearInteractionsInRange", () =>
+      ctx.runMutation(internal.performance.import.clearInteractionsInRange, {
+        companyId,
+        ...range,
+      }),
+    );
+  }
   const uploadedAt = Date.now();
   for (let i = 0; i < inserts.length; i += RAW_CHUNK_SIZE) {
     const chunk = inserts.slice(i, i + RAW_CHUNK_SIZE);
@@ -353,9 +445,34 @@ async function writeInteractions(
   }
 }
 
+export type ReportKind =
+  | "lead"
+  | "opp"
+  | "call"
+  | "template"
+  | "interactions"
+  | "wallbox_members"
+  | "wallbox_opps";
+
 export type ImportResult =
-  | { status: "ok"; rowsImported: number; skipped?: string[]; flagged?: number }
-  | { status: "empty"; reportDate: string }
+  | {
+      status: "ok";
+      rowsImported: number;
+      reportKind: ReportKind;
+      reportDate: string;
+      /** First day, for a report spanning several days (interactions). */
+      reportDateFrom?: string;
+      skipped?: string[];
+      flagged?: number;
+      /** Set when the drill-down lists were left alone because they already
+       * hold a newer report (the date given). */
+      rawKept?: string;
+      /** Other dashboards a shared call/interactions report also went into. */
+      alsoImportedInto?: string[];
+      /** …and the ones it should have gone into but couldn't (busy/failed). */
+      notImportedInto?: string[];
+    }
+  | { status: "empty"; reportKind?: ReportKind; reportDate: string }
   | { status: "duplicate"; filename: string; uploadedAt: number };
 
 /**
@@ -374,6 +491,24 @@ export type ImportResult =
 // to the matched prefix also self-heals the log entry's filename back to
 // something readable the next time it's (re)written.
 const EXTENSION_RE = /\.(xlsx|xlsm|csv)\b/i;
+
+function unrecognizedFile(): ConvexError<{ code: string; message: string }> {
+  return new ConvexError({
+    code: "unrecognized_report",
+    message:
+      "Dateityp nicht erkannt – erwartet: Salesforce Lead- oder Opportunity-Export, Wallbox-Kampagnen- oder Wallbox-Opportunity-Report, Genesys Call-Report, Genesys Interaktionen-Export oder die Upload-Vorlage (Spalte „Mitarbeiter“ plus mindestens eine Kennzahl).",
+  });
+}
+
+function wrongDashboard(
+  what: string,
+  where: string,
+): ConvexError<{ code: string; message: string }> {
+  return new ConvexError({
+    code: "wrong_dashboard",
+    message: `${what} gehört ins ${where}. Bitte oben das passende Dashboard wählen und dort hochladen.`,
+  });
+}
 
 async function processReport(
   ctx: ActionCtx,
@@ -407,178 +542,269 @@ async function processReport(
     });
   }
 
-  if (extension === ".csv") {
-    const text = stripBom(await blob.text());
-    const detected = readCallCsv(text);
-    if (detected) {
-      if (detected.rows.length === 0) {
-        // A report with zero activity (e.g. a weekend): ignored entirely,
-        // no data, no upload-log entry.
-        return { status: "empty", reportDate: toISODate(detected.reportDate) };
-      }
-      const { snapshots, skipped, flaggedRows } = await buildCallSnapshots(
-        ctx,
-        companyId,
-        detected.rows,
-      );
-      const result = await runApplyImport(ctx, {
-        companyId,
-        snapshots,
-        sourceFile: filename,
-        storageId,
-        contentHash,
-        reportKind: "call",
-        reportDate: toISODate(detected.reportDate),
-        sourceRowCount: detected.rows.length,
-        skippedNames: skipped,
-        flaggedRows,
-        fileSize,
-        batchId,
-        uploadedBy,
-        replaceLogId,
-      });
-      return {
-        status: "ok",
-        rowsImported: result.rowsImported,
-        skipped,
-        flagged: flaggedRows.length,
-      };
-    }
-
-    const interactionRows = readInteractionsCsv(text);
-    if (interactionRows) {
-      if (interactionRows.length === 0) {
-        // Recognized, but no employee-attributable interaction at all.
-        return { status: "empty", reportDate: toISODate(todayUTC()) };
-      }
-      const { inserts, months, skipped } = await buildInteractionInserts(
-        ctx,
-        companyId,
-        interactionRows,
-      );
-      await writeInteractions(ctx, companyId, inserts, months, filename);
-      await runSafely("logInteractionsImport", () =>
-        ctx.runMutation(internal.performance.import.logInteractionsImport, {
-          companyId,
-          sourceFile: filename,
-          storageId,
-          contentHash,
-          sourceRowCount: interactionRows.length,
-          skippedNames: skipped,
-          fileSize,
-          batchId,
-          uploadedBy,
-          rowsImported: inserts.length,
-          replaceLogId,
-        }),
-      );
-      return { status: "ok", rowsImported: inserts.length, skipped };
-    }
-
-    throw new ConvexError({
-      code: "unrecognized_report",
-      message:
-        "CSV nicht erkannt. Erwartet wird ein Call-Report mit Agentenname und Call-Spalten, oder ein Interaktionen-Export.",
-    });
-  }
-
   const bytes = new Uint8Array(await blob.arrayBuffer());
-  const rows = readSheetRows(bytes);
-  console.warn(`[performanceUploadParse] ${filename}: parsed ${rows.length} sheet rows`);
+  const csvText = extension === ".csv" ? decodeCsvBytes(bytes) : null;
+  const rows =
+    csvText !== null
+      ? parseCsvText(csvText, sniffDelimiter(firstLine(csvText)))
+      : readSheetRows(bytes);
 
-  const sf = readSalesforceExport(rows);
-  if (sf) {
-    if (sf.kind === "lead") {
-      const { snapshots, raw } = aggregateLeadReport(sf.rows, sf.reportDate);
-      const result = await runApplyImport(ctx, {
-        companyId,
-        snapshots,
-        sourceFile: filename,
-        storageId,
-        contentHash,
-        reportKind: "lead",
-        reportDate: toISODate(sf.reportDate),
-        sourceRowCount: sf.rows.length,
-        fileSize,
-        batchId,
-        uploadedBy,
-        replaceLogId,
-      });
-      await writeRawLeads(ctx, companyId, raw);
-      return { status: "ok", rowsImported: result.rowsImported };
-    }
-    const { snapshots, raw, wonOpps } = aggregateOppReport(sf.rows, sf.reportDate);
-    const result = await runApplyImport(ctx, {
-      companyId,
-      snapshots,
-      sourceFile: filename,
-      storageId,
-      contentHash,
-      reportKind: "opp",
-      reportDate: toISODate(sf.reportDate),
-      sourceRowCount: sf.rows.length,
-      fileSize,
-      batchId,
-      uploadedBy,
-      replaceLogId,
-    });
-    await writeRawOpps(ctx, companyId, raw);
-    await writeWonOpps(ctx, companyId, wonOpps);
-    return { status: "ok", rowsImported: result.rowsImported };
-  }
-
-  const calls = readCallExport(rows);
-  if (calls) {
-    const { snapshots, skipped, flaggedRows } = await buildCallSnapshots(
-      ctx,
-      companyId,
-      calls.rows,
-    );
-    const result = await runApplyImport(ctx, {
-      companyId,
-      snapshots,
-      sourceFile: filename,
-      storageId,
-      contentHash,
-      reportKind: "call",
-      reportDate: toISODate(calls.reportDate),
-      sourceRowCount: calls.rows.length,
-      skippedNames: skipped,
-      flaggedRows,
-      fileSize,
-      batchId,
-      uploadedBy,
-      replaceLogId,
-    });
-    return {
-      status: "ok",
-      rowsImported: result.rowsImported,
-      skipped,
-      flagged: flaggedRows.length,
-    };
-  }
-
-  const template = parseAggregatedTemplate(rows);
-  const result = await runApplyImport(ctx, {
+  const base = {
     companyId,
-    snapshots: template,
     sourceFile: filename,
     storageId,
     contentHash,
-    reportKind: "template",
-    sourceRowCount: template.length,
     fileSize,
     batchId,
     uploadedBy,
     replaceLogId,
+  };
+  const kind = await ctx.runQuery(internal.performance.wallbox.companyKind, { companyId });
+
+  const wallbox = readWallboxExport(rows);
+  if (wallbox) {
+    if (kind !== "wallbox") {
+      throw wrongDashboard(
+        wallbox.kind === "members"
+          ? "Der Wallbox-Kampagnen-Report"
+          : "Der Wallbox-Opportunity-Report",
+        "Wallbox-Dashboard",
+      );
+    }
+    const reportDate = toISODate(wallbox.reportDate);
+    const reportKind = wallbox.kind === "members" ? "wallbox_members" : "wallbox_opps";
+    let skipped: string[] = [];
+    let rawKept: string | undefined;
+    if (wallbox.kind === "members") {
+      const summary = summarizeMembers(wallbox.rows);
+      const { unmatched } = await runSafely("saveWallboxMembers", () =>
+        ctx.runMutation(internal.performance.wallbox.saveMembers, {
+          companyId,
+          reportDate,
+          campaign: wallbox.campaign,
+          total: summary.total,
+          statuses: summary.statuses,
+          people: summary.people,
+          sourceFile: filename,
+        }),
+      );
+      skipped = unmatched;
+    } else {
+      const res = await runSafely("saveWallboxOpps", () =>
+        ctx.runMutation(internal.performance.wallbox.saveOpps, {
+          companyId,
+          reportDate,
+          campaign: wallbox.campaign,
+          rows: wallbox.rows,
+          sourceFile: filename,
+        }),
+      );
+      rawKept = res.listKept;
+    }
+    await runSafely("logWallboxImport", () =>
+      ctx.runMutation(internal.performance.import.logWallboxImport, {
+        ...base,
+        reportKind,
+        reportDate,
+        rowsImported: wallbox.rows.length,
+        sourceRowCount: wallbox.rows.length,
+        skippedNames: skipped.length > 0 ? skipped : undefined,
+      }),
+    );
+    return {
+      status: "ok",
+      rowsImported: wallbox.rows.length,
+      reportKind,
+      reportDate,
+      skipped,
+      ...(rawKept ? { rawKept } : {}),
+    };
+  }
+
+  const sf = readSalesforceExport(rows);
+  if (sf && kind !== "sales") {
+    throw wrongDashboard(
+      sf.kind === "lead" ? "Der Salesforce-Lead-Report" : "Der Salesforce-Opportunity-Report",
+      "Sales-Dashboard",
+    );
+  }
+  if (sf) {
+    const reportDate = toISODate(sf.reportDate);
+    const sfBase = { ...base, reportDate, sourceRowCount: sf.rows.length };
+    if (sf.kind === "lead") {
+      const { snapshots, raw } = aggregateLeadReport(sf.rows, sf.reportDate);
+      return importSalesforce(ctx, sfBase, "lead", snapshots, () =>
+        writeRawLeads(ctx, companyId, raw),
+      );
+    }
+    const { snapshots, raw, wonOpps } = aggregateOppReport(sf.rows, sf.reportDate);
+    return importSalesforce(ctx, sfBase, "opp", snapshots, async () => {
+      await writeRawOpps(ctx, companyId, raw);
+      await writeWonOpps(ctx, companyId, wonOpps);
+    });
+  }
+
+  const calls = csvText !== null ? readCallCsv(csvText) : readCallExport(rows);
+  if (calls) {
+    const reportDate = toISODate(calls.reportDate);
+    // A report with zero activity (e.g. a weekend): ignored entirely, no
+    // data, no upload-log entry.
+    if (calls.rows.length === 0) return { status: "empty", reportKind: "call", reportDate };
+    // One shared Genesys report for everyone: it goes into every dashboard
+    // whose roster has the agent (Sales, Wallbox, Onboarding, …).
+    const targets = await callTargets(ctx, companyId);
+    const firstDay = toISODate(
+      calls.rows.reduce((min, r) => (r.date < min ? r.date : min), calls.rows[0].date),
+    );
+    const reportDateFrom = firstDay !== reportDate ? firstDay : undefined;
+    const perTarget = targets.map((t) => ({
+      target: t,
+      ...buildCallSnapshots(
+        t.employees.map((e) => e.name),
+        calls.rows,
+      ),
+    }));
+    const matched = new Set(perTarget.flatMap((p) => [...p.matchedAgents]));
+    const skipped = [
+      ...new Set(
+        calls.rows.map((r) => cleanAgentName(r.employee)).filter((n) => n && !matched.has(n)),
+      ),
+    ].sort();
+    let rowsImported = 0;
+    let flagged = 0;
+    const alsoImportedInto: string[] = [];
+    const notImportedInto: string[] = [];
+    for (const { target, snapshots, flaggedRows } of perTarget) {
+      const isOrigin = target.companyId === companyId;
+      if (!isOrigin && snapshots.length === 0) continue;
+      const write = async () => {
+        const result = await runApplyImport(ctx, {
+          ...base,
+          companyId: target.companyId,
+          replaceLogId: isOrigin
+            ? replaceLogId
+            : await fanOutLogId(ctx, target.companyId, contentHash),
+          snapshots,
+          reportKind: "call",
+          reportDate,
+          reportDateFrom,
+          sourceRowCount: calls.rows.length,
+          skippedNames: skipped,
+          flaggedRows,
+          clearFields: calls.hasOutbound ? undefined : ["callsOutbound"],
+        });
+        if (isOrigin) rowsImported = result.rowsImported;
+        flagged += flaggedRows.length;
+      };
+      if (isOrigin) await write();
+      else if (await intoOtherDashboard(ctx, target, uploadedBy, write)) {
+        alsoImportedInto.push(target.name);
+      } else {
+        notImportedInto.push(target.name);
+      }
+    }
+    return {
+      status: "ok",
+      rowsImported,
+      reportKind: "call",
+      reportDate,
+      reportDateFrom,
+      skipped,
+      flagged,
+      alsoImportedInto,
+      notImportedInto,
+    };
+  }
+
+  const interactionRows = csvText !== null ? readInteractionsCsv(csvText) : null;
+  if (interactionRows) {
+    if (interactionRows.length === 0) {
+      // Recognized, but no employee-attributable interaction at all.
+      return {
+        status: "empty",
+        reportKind: "interactions",
+        reportDate: toISODate(todayBerlin()),
+      };
+    }
+    const range = interactionDateRange(interactionRows);
+    const targets = await callTargets(ctx, companyId);
+    const perTarget = targets.map((t) => ({
+      target: t,
+      ...buildInteractionInserts(t.employees, interactionRows),
+    }));
+    const matched = new Set(perTarget.flatMap((p) => [...p.matchedAgents]));
+    const skipped = [
+      ...new Set(interactionRows.flatMap((r) => r.names).filter((n) => !matched.has(n))),
+    ].sort();
+    let rowsImported = 0;
+    const alsoImportedInto: string[] = [];
+    const notImportedInto: string[] = [];
+    for (const { target, inserts } of perTarget) {
+      const isOrigin = target.companyId === companyId;
+      if (!isOrigin && inserts.length === 0) continue;
+      const write = async () => {
+        await writeInteractions(ctx, target.companyId, inserts, range, filename, !isOrigin);
+        await runSafely("logInteractionsImport", async () =>
+          ctx.runMutation(internal.performance.import.logInteractionsImport, {
+            ...base,
+            companyId: target.companyId,
+            replaceLogId: isOrigin
+              ? replaceLogId
+              : await fanOutLogId(ctx, target.companyId, contentHash),
+            reportDate: range.to,
+            reportDateFrom: range.from,
+            sourceRowCount: interactionRows.length,
+            skippedNames: skipped,
+            rowsImported: inserts.length,
+          }),
+        );
+      };
+      if (isOrigin) {
+        await write();
+        rowsImported = inserts.length;
+      } else if (await intoOtherDashboard(ctx, target, uploadedBy, write)) {
+        alsoImportedInto.push(target.name);
+      } else {
+        notImportedInto.push(target.name);
+      }
+    }
+    return {
+      status: "ok",
+      rowsImported,
+      reportKind: "interactions",
+      reportDate: range.to,
+      reportDateFrom: range.from !== range.to ? range.from : undefined,
+      skipped,
+      alsoImportedInto,
+      notImportedInto,
+    };
+  }
+
+  const template = parseAggregatedTemplate(rows);
+  if (!template) throw unrecognizedFile();
+  if (kind !== "sales") throw wrongDashboard("Die Upload-Vorlage", "Sales-Dashboard");
+  if (template.snapshots.length === 0) {
+    return { status: "empty", reportKind: "template", reportDate: template.reportDate };
+  }
+  const result = await runApplyImport(ctx, {
+    ...base,
+    snapshots: template.snapshots,
+    reportKind: "template",
+    reportDate: template.reportDate,
+    sourceRowCount: template.snapshots.length,
   });
-  return { status: "ok", rowsImported: result.rowsImported };
+  return {
+    status: "ok",
+    rowsImported: result.rowsImported,
+    reportKind: "template",
+    reportDate: template.reportDate,
+  };
 }
 
 /**
  * Server-key gated: only `apps/api`'s upload route calls this, after it has
- * already verified the caller holds a valid, admin-role Performance
- * session — same trust boundary as the `api*`-prefixed OneDrive functions
+ * checked via `access.apiUploadAccess` that the signed-in intranet user is
+ * an admin — same trust boundary as the `api*`-prefixed OneDrive functions
  * in `onedrive.ts`.
  */
 export const apiImportReport = serverAction({
@@ -601,53 +827,75 @@ export const apiImportReport = serverAction({
     ctx,
     { companyId, filename, storageId, contentHash, force, fileSize, batchId, uploadedBy },
   ): Promise<ImportResult> => {
-    // Checked before any parsing — covers every report type (Salesforce
-    // Lead/Opp, call report, aggregated template) uniformly, and skips the
-    // (potentially expensive) parse entirely for a re-upload. Scoped to
-    // `companyId` — two different client companies uploading
-    // byte-identical files must not collide.
-    if (!force) {
-      const priorUpload = await ctx.runQuery(internal.performance.import.findUploadByHash, {
-        companyId,
-        contentHash,
-      });
-      if (priorUpload) {
-        return {
-          status: "duplicate",
-          filename: priorUpload.filename,
-          uploadedAt: priorUpload.uploadedAt,
-        };
+    return withImportLock(ctx, companyId, uploadedBy, async () => {
+      // Checked before any parsing — covers every report type uniformly,
+      // and skips the parse entirely for a re-upload. Inside the lock, so
+      // the same file dropped twice at once is imported only once. Scoped
+      // to `companyId` — two dashboards may get byte-identical files.
+      if (!force) {
+        const priorUpload = await ctx.runQuery(internal.performance.import.findUploadByHash, {
+          companyId,
+          contentHash,
+        });
+        if (priorUpload) {
+          return {
+            status: "duplicate",
+            filename: priorUpload.filename,
+            uploadedAt: priorUpload.uploadedAt,
+          };
+        }
       }
-    }
-
-    return processReport(ctx, companyId, {
-      filename,
-      storageId,
-      contentHash,
-      fileSize,
-      batchId,
-      uploadedBy,
+      return processReport(ctx, companyId, {
+        filename,
+        storageId,
+        contentHash,
+        fileSize,
+        batchId,
+        uploadedBy,
+      });
     });
   },
 });
+
+/** Runs one import (or a batch re-import) while holding the dashboard's
+ * import lock, so two imports never interleave their clear-then-insert
+ * steps and duplicate rows. A second import meanwhile fails right away
+ * with a German "please wait" message instead of queueing. */
+async function withImportLock<T>(
+  ctx: ActionCtx,
+  companyId: Id<"companies">,
+  by: string | undefined,
+  run: () => Promise<T>,
+): Promise<T> {
+  const token = crypto.randomUUID();
+  await ctx.runMutation(internal.performance.import.acquireImportLock, { companyId, token, by });
+  try {
+    return await run();
+  } finally {
+    await ctx.runMutation(internal.performance.import.releaseImportLock, { companyId, token });
+  }
+}
+
+async function requireCompanyExists(ctx: ActionCtx, companyId: Id<"companies">): Promise<void> {
+  if (!(await ctx.runQuery(internal.performance.import.companyExists, { companyId }))) {
+    throw new ConvexError({ code: "not_found", message: "Dashboard nicht gefunden." });
+  }
+}
 
 /** Re-processes a file already sitting in storage from a prior upload —
  * rereads it fresh through the (possibly since-fixed) detection/parsing
  * logic and patches the existing log row in place, rather than requiring
  * the admin to re-select and re-upload the same file from their computer.
- * Session-token gated (called directly from the browser, not through
- * apps/api) since there's no new file to stage/scan here. */
-export const reimportUpload = action({
+ * Admin-only, called directly from the browser (not through apps/api) since
+ * there's no new file to stage/scan here. */
+export const reimportUpload = userAction({
+  role: "admin",
   args: {
-    token: v.string(),
     logId: v.id("performanceUploadLog"),
-    companyId: v.optional(v.id("companies")),
+    companyId: v.id("companies"),
   },
-  handler: async (ctx, { token, logId, companyId: companyIdArg }): Promise<ImportResult> => {
-    const { companyId } = await ctx.runQuery(internal.performance.import.requireAdminByToken, {
-      token,
-      companyId: companyIdArg,
-    });
+  handler: async (ctx, { logId, companyId }): Promise<ImportResult> => {
+    await requireCompanyExists(ctx, companyId);
     const log = await ctx.runQuery(internal.performance.import.getUploadLogRow, {
       logId,
     });
@@ -657,15 +905,17 @@ export const reimportUpload = action({
         message: "Upload-log entry not found.",
       });
     }
-    return processReport(ctx, companyId, {
-      filename: log.filename,
-      storageId: log.storageId,
-      contentHash: log.contentHash ?? "",
-      fileSize: log.fileSize,
-      batchId: log.batchId,
-      uploadedBy: log.uploadedBy,
-      replaceLogId: logId,
-    });
+    return withImportLock(ctx, companyId, log.uploadedBy, () =>
+      processReport(ctx, companyId, {
+        filename: log.filename,
+        storageId: log.storageId,
+        contentHash: log.contentHash ?? "",
+        fileSize: log.fileSize,
+        batchId: log.batchId,
+        uploadedBy: log.uploadedBy,
+        replaceLogId: logId,
+      }),
+    );
   },
 });
 
@@ -674,40 +924,52 @@ export const reimportUpload = action({
  * each file's parse is small and fast, and the DB layer already skips a
  * write when the reprocessed values come out unchanged (see
  * `upsertSnapshot`), so re-running an already-correct file is cheap. */
-export const reimportBatch = action({
+export const reimportBatch = userAction({
+  role: "admin",
   args: {
-    token: v.string(),
     batchId: v.string(),
-    companyId: v.optional(v.id("companies")),
+    companyId: v.id("companies"),
   },
   handler: async (
     ctx,
-    { token, batchId, companyId: companyIdArg },
+    { batchId, companyId },
   ): Promise<{ results: (ImportResult & { logId: string })[] }> => {
-    const { companyId } = await ctx.runQuery(internal.performance.import.requireAdminByToken, {
-      token,
-      companyId: companyIdArg,
-    });
+    await requireCompanyExists(ctx, companyId);
     const rows = await ctx.runQuery(internal.performance.import.getUploadLogRowsByBatch, {
       batchId,
     });
-    const results: (ImportResult & { logId: string })[] = [];
-    for (const log of rows) {
-      // A batch id is only ever shared by files uploaded together by the
-      // same company — skip anything that somehow doesn't match instead of
-      // silently importing it into the wrong company.
-      if (log.companyId !== companyId) continue;
-      const result = await processReport(ctx, companyId, {
-        filename: log.filename,
-        storageId: log.storageId,
-        contentHash: log.contentHash ?? "",
-        fileSize: log.fileSize,
-        batchId: log.batchId,
-        uploadedBy: log.uploadedBy,
-        replaceLogId: log._id,
-      });
-      results.push({ ...result, logId: log._id });
-    }
-    return { results };
+    return withImportLock(ctx, companyId, undefined, async () => {
+      const results: (ImportResult & { logId: string })[] = [];
+      // Salesforce files first (they create the roster the call and
+      // interaction files match against), oldest report first within each.
+      const ordered = [...rows].sort(
+        (a, b) =>
+          kindOrder(a.reportKind) - kindOrder(b.reportKind) ||
+          (a.reportDate ?? "").localeCompare(b.reportDate ?? ""),
+      );
+      for (const log of ordered) {
+        // A batch id is only ever shared by files uploaded together by the
+        // same company — skip anything that somehow doesn't match instead
+        // of silently importing it into the wrong company.
+        if (log.companyId !== companyId) continue;
+        const result = await processReport(ctx, companyId, {
+          filename: log.filename,
+          storageId: log.storageId,
+          contentHash: log.contentHash ?? "",
+          fileSize: log.fileSize,
+          batchId: log.batchId,
+          uploadedBy: log.uploadedBy,
+          replaceLogId: log._id,
+        });
+        results.push({ ...result, logId: log._id });
+      }
+      return { results };
+    });
   },
 });
+
+function kindOrder(kind: ReportKind | undefined): number {
+  if (kind === "lead" || kind === "opp" || kind === "wallbox_opps") return 0;
+  if (kind === "wallbox_members" || kind === "template") return 1;
+  return 2;
+}

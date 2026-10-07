@@ -4,7 +4,9 @@ import { useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
+import { addDays, bavarianHolidays, berlinDate, weekdayOf } from "@advantis/convex/time";
 import { useAction, useQuery } from "convex/react";
+import Link from "next/link";
 import {
   AlertCircle,
   AlertTriangle,
@@ -28,6 +30,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { FlaggedRowsDialog } from "@/components/performance/FlaggedRowsDialog";
+import { type PerformanceDashboardKind } from "@/components/performance/PerformanceAccess";
 import { PerformanceShell, usePerformanceGate } from "@/components/performance/PerformanceShell";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { RescanOlderUploads } from "@/components/performance/RescanOlderUploads";
@@ -46,7 +49,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, formatIsoDate, relativeTime } from "@/lib/format";
-import { downloadPerformanceFile, uploadPerformanceReport } from "@/lib/performanceAuth";
+import {
+  MAX_REPORT_UPLOAD_BYTES,
+  type PerformanceReportKind,
+  usePerformanceApi,
+} from "@/lib/performance";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +72,12 @@ interface QueueItem {
   error?: string;
   duplicateOf?: { filename: string; uploadedAt: number };
   batchId?: string;
+  reportKind?: PerformanceReportKind;
+  reportDate?: string;
+  reportDateFrom?: string;
+  rawKept?: string;
+  alsoImportedInto?: string[];
+  notImportedInto?: string[];
 }
 
 const REPORT_KIND_LABEL_KEY: Record<string, string> = {
@@ -73,7 +86,68 @@ const REPORT_KIND_LABEL_KEY: Record<string, string> = {
   call: "uploadKindCall",
   template: "uploadKindTemplate",
   interactions: "uploadKindInteractions",
+  wallbox_members: "uploadKindWallboxMembers",
+  wallbox_opps: "uploadKindWallboxOpps",
 };
+
+type DailyKind = "lead" | "opp" | "wallbox_members" | "wallbox_opps" | "call" | "interactions";
+
+/** The reports a dashboard expects every workday; optional ones are shown
+ * but never reported as missing. */
+const DAILY_KINDS: Record<PerformanceDashboardKind, { kind: DailyKind; optional?: boolean }[]> = {
+  sales: [{ kind: "lead" }, { kind: "opp" }, { kind: "call" }, { kind: "interactions" }],
+  wallbox: [
+    { kind: "wallbox_members" },
+    { kind: "wallbox_opps" },
+    { kind: "call" },
+    { kind: "interactions", optional: true },
+  ],
+  calls: [{ kind: "call" }, { kind: "interactions", optional: true }],
+};
+const STATUS_WORKDAYS = 7;
+
+/** Salesforce exports create the names the call and interaction reports
+ * are matched against, and the Wallbox opp report the full names the
+ * campaign report's first names resolve to — so those go first when several
+ * files are dropped at once. Only the filename is looked at — the server
+ * detects the real kind from the content either way. */
+function uploadOrder(file: File): number {
+  const name = file.name.toLowerCase();
+  if (name.includes("wallbox")) return /opp/.test(name) ? 0 : 1;
+  if (/lead|opp|salesforce|verkaufschance/.test(name)) return 0;
+  if (/interakt|interaction/.test(name)) return 3;
+  return 2;
+}
+
+/** The last `count` Mon–Fri days that aren't Nürnberg holidays, oldest
+ * first, ending today (Berlin). */
+function recentWorkdays(count: number): string[] {
+  const out: string[] = [];
+  const holidaysByYear = new Map<number, Set<string>>();
+  const isHoliday = (date: string) => {
+    const year = Number(date.slice(0, 4));
+    let set = holidaysByYear.get(year);
+    if (!set) {
+      set = new Set(
+        bavarianHolidays(year)
+          .filter((h) => h.fraction >= 1)
+          .map((h) => h.date),
+      );
+      holidaysByYear.set(year, set);
+    }
+    return set.has(date);
+  };
+  for (let date = berlinDate(Date.now()); out.length < count; date = addDays(date, -1)) {
+    if (weekdayOf(date) < 5 && !isHoliday(date)) out.push(date);
+  }
+  return out.reverse();
+}
+
+function formatReportDays(from: string | undefined, to: string, locale: string): string {
+  return from && from !== to
+    ? `${formatIsoDate(from, locale)} – ${formatIsoDate(to, locale)}`
+    : formatIsoDate(to, locale);
+}
 
 function FileIcon({ name }: { name: string }) {
   const isCsv = name.toLowerCase().endsWith(".csv");
@@ -99,13 +173,50 @@ function StatusIcon({ status }: { status: QueueStatus }) {
   }
 }
 
+/** Unmatched report names, spelled out (not hidden in a tooltip) with the
+ * place to fix them. */
+function SkippedNames({ names, className }: { names: string[]; className?: string }) {
+  const t = useTranslations("Performance");
+  const [open, setOpen] = useState(false);
+  if (names.length === 0) return null;
+  return (
+    <div className={cn("text-xs text-muted-foreground", className)}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1 font-medium text-warn hover:underline"
+        aria-expanded={open}
+      >
+        {open ? (
+          <ChevronDown className="h-3 w-3 shrink-0" />
+        ) : (
+          <ChevronRight className="h-3 w-3 shrink-0" />
+        )}
+        {t("uploadSkippedShow", { count: names.length })}
+      </button>
+      {open && (
+        <div className="mt-1 space-y-1 pl-4">
+          <p className="break-words">{names.join(", ")}</p>
+          <p>
+            {t("uploadSkippedHint")}{" "}
+            <Link href="/performance/einstellungen" className="font-medium underline">
+              {t("uploadSettingsLink")}
+            </Link>
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface UploadLogRow {
   _id: string;
   filename: string;
   rowsImported: number;
   uploadedAt: number;
-  reportKind?: "lead" | "opp" | "call" | "template" | "interactions";
+  reportKind?: PerformanceReportKind;
   reportDate?: string;
+  reportDateFrom?: string;
   sourceRowCount?: number;
   skippedNames?: string[];
   fileSize?: number;
@@ -116,12 +227,12 @@ interface UploadLogRow {
 function LogRow({
   row,
   locale,
-  token,
+  companyId,
   indent,
 }: {
   row: UploadLogRow;
   locale: string;
-  token: string;
+  companyId: Id<"companies">;
   indent?: boolean;
 }) {
   const t = useTranslations("Performance");
@@ -137,7 +248,7 @@ function LogRow({
     setReimporting(true);
     try {
       const result = await reimportUpload({
-        token,
+        companyId,
         logId: row._id as Id<"performanceUploadLog">,
       });
       if (result.status === "ok") toast.success(t("uploadReimportOk"));
@@ -187,34 +298,17 @@ function LogRow({
           <span className="text-muted-foreground">–</span>
         )}
       </TableCell>
-      <TableCell>{row.reportDate ? formatIsoDate(row.reportDate, locale) : "–"}</TableCell>
-      <TableCell>
-        <span className="inline-flex items-center gap-1.5">
-          {row.sourceRowCount && row.sourceRowCount !== row.rowsImported
-            ? t("uploadLogMatched", {
-                matched: row.rowsImported,
-                total: row.sourceRowCount,
-              })
-            : row.rowsImported}
-          {row.skippedNames && row.skippedNames.length > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge
-                  variant="outline"
-                  className="cursor-default gap-1 font-normal text-muted-foreground"
-                >
-                  <Info className="h-3 w-3 shrink-0" />
-                  {t("uploadSkippedCount", {
-                    count: row.skippedNames.length,
-                  })}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs whitespace-normal break-words">
-                {t("uploadSkipped", { names: row.skippedNames.join(", ") })}
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </span>
+      <TableCell className="whitespace-nowrap">
+        {row.reportDate ? formatReportDays(row.reportDateFrom, row.reportDate, locale) : "–"}
+      </TableCell>
+      <TableCell className="max-w-[18rem]">
+        {row.sourceRowCount && row.sourceRowCount !== row.rowsImported
+          ? t("uploadLogMatched", {
+              matched: row.rowsImported,
+              total: row.sourceRowCount,
+            })
+          : row.rowsImported}
+        <SkippedNames names={row.skippedNames ?? []} className="mt-0.5" />
       </TableCell>
       <TableCell className="hidden md:table-cell">
         {row.fileSize ? formatFileSize(row.fileSize) : "–"}
@@ -251,14 +345,14 @@ function BatchRows({
   expanded,
   onToggle,
   locale,
-  token,
+  companyId,
 }: {
   batchId: string;
   rows: UploadLogRow[];
   expanded: boolean;
   onToggle: () => void;
   locale: string;
-  token: string;
+  companyId: Id<"companies">;
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
@@ -270,7 +364,7 @@ function BatchRows({
   async function reimportAll() {
     setReimporting(true);
     try {
-      const { results } = await reimportBatch({ token, batchId });
+      const { results } = await reimportBatch({ companyId, batchId });
       const ok = results.filter((r) => r.status === "ok").length;
       toast.success(t("uploadReimportBatchOk", { count: ok, total: results.length }));
     } catch (err) {
@@ -321,43 +415,164 @@ function BatchRows({
         </TableCell>
       </TableRow>
       {expanded &&
-        rows.map((row) => <LogRow key={row._id} row={row} locale={locale} token={token} indent />)}
+        rows.map((row) => (
+          <LogRow key={row._id} row={row} locale={locale} companyId={companyId} indent />
+        ))}
     </>
   );
 }
+
+/** "Tagesstatus": which of the dashboard's daily exports are in for each of
+ * the last workdays, so the admin sees at a glance what's still missing. */
+function DailyStatus({
+  companyId,
+  dashboardKind,
+}: {
+  companyId: Id<"companies">;
+  dashboardKind: PerformanceDashboardKind;
+}) {
+  const t = useTranslations("Performance");
+  const locale = useLocale();
+  // Recomputed per render on purpose: cheap, and it rolls over at midnight.
+  const days = recentWorkdays(STATUS_WORKDAYS);
+  const status = useQuery(api.performance.import.dailyUploadStatus, { companyId, dates: days });
+  if (!status) return null;
+
+  const today = berlinDate(Date.now());
+  const kindLabel = (k: string) => t(REPORT_KIND_LABEL_KEY[k] ?? k);
+  const expected = DAILY_KINDS[dashboardKind];
+  const latest = status[status.length - 1];
+  const missing = latest
+    ? expected.filter((k) => !k.optional && !latest.kinds.includes(k.kind)).map((k) => k.kind)
+    : [];
+  const summary =
+    missing.length === 0
+      ? latest?.date === today
+        ? t("dailyStatusCompleteToday")
+        : null
+      : latest?.date === today
+        ? t("dailyStatusMissingToday", { kinds: missing.map(kindLabel).join(", ") })
+        : t("dailyStatusMissingLatest", {
+            date: formatIsoDate(latest.date, locale),
+            kinds: missing.map(kindLabel).join(", "),
+          });
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 className="text-sm font-medium">{t("dailyStatusTitle")}</h2>
+          {summary && (
+            <p
+              className={cn("text-xs font-medium", missing.length === 0 ? "text-ok" : "text-warn")}
+            >
+              {summary}
+            </p>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">{t("dailyStatusHint")}</p>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[28rem] text-xs">
+            <thead>
+              <tr className="text-muted-foreground">
+                <th className="py-1 pr-2 text-left font-normal" />
+                {status.map((d) => (
+                  <th key={d.date} className="px-1 py-1 text-center font-normal">
+                    {d.date === today
+                      ? t("dailyStatusToday")
+                      : new Date(`${d.date}T12:00:00Z`).toLocaleDateString(locale, {
+                          weekday: "short",
+                          day: "2-digit",
+                          month: "2-digit",
+                        })}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {expected.map(({ kind, optional }) => (
+                <tr key={kind} className="border-t border-border/50">
+                  <td className="py-1.5 pr-2 font-medium">
+                    {kindLabel(kind)}
+                    {optional && (
+                      <span className="ml-1 font-normal text-muted-foreground">
+                        ({t("dailyStatusOptional")})
+                      </span>
+                    )}
+                  </td>
+                  {status.map((d) => {
+                    const has = d.kinds.includes(kind);
+                    return (
+                      <td key={d.date} className="px-1 py-1.5 text-center">
+                        {has ? (
+                          <CheckCircle2
+                            className="mx-auto h-4 w-4 text-ok"
+                            aria-label={t("dailyStatusPresent")}
+                          />
+                        ) : (
+                          <span
+                            className="mx-auto block h-1.5 w-1.5 rounded-full bg-muted-foreground/40"
+                            aria-label={t("dailyStatusMissing")}
+                          />
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+const LOG_PAGE = 60;
 
 export default function PerformanceUploadPage() {
   const t = useTranslations("Performance");
   const tc = useTranslations("Common");
   const locale = useLocale();
-  const { token, loading, session } = usePerformanceGate((s) =>
-    s.permissions.includes("upload_reports"),
-  );
+  const { loading, me, dashboard } = usePerformanceGate((m) => m.isAdmin);
+  const companyId = dashboard?.companyId;
+  const performanceApi = usePerformanceApi();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [flaggedDialogOpen, setFlaggedDialogOpen] = useState(false);
 
-  const log = useQuery(api.performance.import.listUploadLog, session ? { token } : "skip");
+  const [logLimit, setLogLimit] = useState(LOG_PAGE);
+  const logPage = useQuery(
+    api.performance.import.listUploadLog,
+    me && companyId ? { companyId, limit: logLimit } : "skip",
+  );
+  // Keeps the previous page on screen while "Mehr laden" fetches the next.
+  const lastLogPage = useRef(logPage);
+  if (logPage !== undefined) lastLogPage.current = logPage;
+  const shownLog = logPage ?? lastLogPage.current;
+  const log = shownLog?.rows;
 
   function updateItem(id: string, patch: Partial<QueueItem>) {
     setQueue((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   }
 
   async function enqueue(files: File[]) {
-    if (!token || files.length === 0) return;
+    if (!companyId || files.length === 0) return;
     // Shared by every file dropped/picked together, so the upload log can
     // later show them as one batch — tagged even for a single file; the
     // log only renders batch chrome once a batchId actually repeats.
     const batchId = crypto.randomUUID();
-    const items: QueueItem[] = files.map((file) => {
+    const sorted = [...files].sort((a, b) => uploadOrder(a) - uploadOrder(b));
+    const items: QueueItem[] = sorted.map((file) => {
       const accepted = ACCEPTED_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
+      const tooLarge = accepted && file.size > MAX_REPORT_UPLOAD_BYTES;
       return {
         id: crypto.randomUUID(),
         file,
-        status: accepted ? "queued" : "error",
+        status: accepted && !tooLarge ? "queued" : "error",
         progress: 0,
-        error: accepted ? undefined : t("uploadUnsupportedType"),
+        error: !accepted ? t("uploadUnsupportedType") : tooLarge ? t("uploadTooLarge") : undefined,
         batchId,
       };
     });
@@ -370,9 +585,10 @@ export default function PerformanceUploadPage() {
   }
 
   async function runUpload(id: string, file: File, opts?: { force?: boolean; batchId?: string }) {
-    if (!token) return;
+    if (!companyId) return;
     updateItem(id, { status: "uploading", progress: 0, error: undefined });
-    const result = await uploadPerformanceReport(file, token, {
+    const result = await performanceApi.uploadReport(file, {
+      companyId,
       onProgress: (frac) =>
         updateItem(id, {
           progress: frac,
@@ -387,7 +603,11 @@ export default function PerformanceUploadPage() {
         error: result.error ?? t("uploadFailed"),
       });
     } else if (result.status === "empty") {
-      updateItem(id, { status: "empty" });
+      updateItem(id, {
+        status: "empty",
+        reportKind: result.reportKind,
+        reportDate: result.reportDate,
+      });
     } else if (result.status === "duplicate") {
       updateItem(id, {
         status: "duplicate",
@@ -402,6 +622,12 @@ export default function PerformanceUploadPage() {
         rowsImported: result.rowsImported,
         skipped: result.skipped,
         flaggedCount: result.flagged,
+        reportKind: result.reportKind,
+        reportDate: result.reportDate,
+        reportDateFrom: result.reportDateFrom,
+        rawKept: result.rawKept,
+        alsoImportedInto: result.alsoImportedInto,
+        notImportedInto: result.notImportedInto,
       });
       // The plausibility check runs silently during import — without this,
       // an admin watching the queue sees a plain green "done" and has no
@@ -475,34 +701,42 @@ export default function PerformanceUploadPage() {
   }, [log]);
 
   if (loading) return <PerformancePageSkeleton />;
-  if (!session) return null;
+  if (!me || !companyId || !dashboard) return null;
+  const kind = dashboard.kind;
 
   return (
     <PerformanceShell
-      title={t("uploadTitle")}
-      description={t("uploadIntro")}
+      title={t("uploadTitleFor", { dashboard: dashboard.name })}
+      description={t(
+        kind === "wallbox"
+          ? "uploadIntroWallbox"
+          : kind === "calls"
+            ? "uploadIntroCalls"
+            : "uploadIntro",
+      )}
       width="max-w-7xl"
       actions={
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            void downloadPerformanceFile("/performance/template", token, "performance-vorlage.xlsx")
-          }
-        >
-          <Download className="mr-2 h-4 w-4" />
-          {t("templateDownload")}
-        </Button>
+        kind === "sales" && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              void performanceApi.download("/performance/template", "performance-vorlage.xlsx")
+            }
+          >
+            <Download className="mr-2 h-4 w-4" />
+            {t("templateDownload")}
+          </Button>
+        )
       }
     >
-      {token && (
-        <FlaggedRowsDialog
-          token={token}
-          open={flaggedDialogOpen}
-          onOpenChange={setFlaggedDialogOpen}
-        />
-      )}
-      {token && <RescanOlderUploads token={token} />}
+      <FlaggedRowsDialog
+        companyId={companyId}
+        open={flaggedDialogOpen}
+        onOpenChange={setFlaggedDialogOpen}
+      />
+      <DailyStatus companyId={companyId} dashboardKind={kind} />
+      <RescanOlderUploads companyId={companyId} />
 
       <Card>
         <CardContent className="space-y-4 p-4">
@@ -577,6 +811,11 @@ export default function PerformanceUploadPage() {
                   </Button>
                 )}
               </div>
+              {queue.length > 1 && kind !== "calls" && (
+                <p className="text-xs text-muted-foreground">
+                  {t(kind === "wallbox" ? "uploadSortedHintWallbox" : "uploadSortedHint")}
+                </p>
+              )}
               <ul className="space-y-2">
                 {queue.map((item) => (
                   <li key={item.id} className="rounded-md border border-border/70 p-3">
@@ -688,13 +927,30 @@ export default function PerformanceUploadPage() {
                         />
                       </div>
                     )}
-                    {item.skipped && item.skipped.length > 0 && (
+                    {item.reportKind && item.reportDate && (
                       <p className="mt-1 pl-7 text-xs text-muted-foreground">
-                        {t("uploadSkipped", {
-                          names: item.skipped.join(", "),
+                        {t("uploadKindDetected", {
+                          kind: t(REPORT_KIND_LABEL_KEY[item.reportKind] ?? item.reportKind),
+                          date: formatReportDays(item.reportDateFrom, item.reportDate, locale),
                         })}
                       </p>
                     )}
+                    {!!item.alsoImportedInto?.length && (
+                      <p className="mt-1 pl-7 text-xs text-muted-foreground">
+                        {t("uploadAlsoImported", { dashboards: item.alsoImportedInto.join(", ") })}
+                      </p>
+                    )}
+                    {!!item.notImportedInto?.length && (
+                      <p className="mt-1 pl-7 text-xs text-warning">
+                        {t("uploadNotImported", { dashboards: item.notImportedInto.join(", ") })}
+                      </p>
+                    )}
+                    {item.rawKept && (
+                      <p className="mt-1 pl-7 text-xs text-muted-foreground">
+                        {t("uploadRawKept", { date: formatIsoDate(item.rawKept, locale) })}
+                      </p>
+                    )}
+                    {item.skipped && <SkippedNames names={item.skipped} className="mt-1 pl-7" />}
                   </li>
                 ))}
               </ul>
@@ -732,16 +988,34 @@ export default function PerformanceUploadPage() {
                       expanded={expandedBatches.has(group.key)}
                       onToggle={() => toggleBatch(group.key)}
                       locale={locale}
-                      token={token}
+                      companyId={companyId}
                     />
                   ) : (
-                    <LogRow key={group.key} row={group.rows[0]} locale={locale} token={token} />
+                    <LogRow
+                      key={group.key}
+                      row={group.rows[0]}
+                      locale={locale}
+                      companyId={companyId}
+                    />
                   ),
                 )}
               </TableBody>
             </Table>
           )}
         </Card>
+        {shownLog?.hasMore && (
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={logPage === undefined}
+              onClick={() => setLogLimit((n) => n + LOG_PAGE)}
+            >
+              {logPage === undefined && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+              {t("uploadLogMore")}
+            </Button>
+          </div>
+        )}
       </section>
     </PerformanceShell>
   );

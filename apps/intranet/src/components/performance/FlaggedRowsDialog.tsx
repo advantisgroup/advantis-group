@@ -43,7 +43,7 @@ type FlaggedRow = {
   uploadedAt: number;
 };
 
-function FlaggedRowActions({ row, token }: { row: FlaggedRow; token: string }) {
+function FlaggedRowActions({ row }: { row: FlaggedRow }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
   const resolve = useMutation(api.performance.import.resolveFlaggedRow);
@@ -55,7 +55,6 @@ function FlaggedRowActions({ row, token }: { row: FlaggedRow; token: string }) {
     setBusy(action);
     try {
       await resolve({
-        token,
         id: row._id as Id<"performanceFlaggedRows">,
         action,
         value,
@@ -148,11 +147,11 @@ function FlaggedRowActions({ row, token }: { row: FlaggedRow; token: string }) {
  * instead of the admin having to notice the banner and click into it
  * themselves — falls back to internal state when omitted. */
 export function FlaggedRowsDialog({
-  token,
+  companyId,
   open: openProp,
   onOpenChange: onOpenChangeProp,
 }: {
-  token: string;
+  companyId: Id<"companies">;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
@@ -161,7 +160,7 @@ export function FlaggedRowsDialog({
   const [openState, setOpenState] = useState(false);
   const open = openProp ?? openState;
   const setOpen = onOpenChangeProp ?? setOpenState;
-  const rows = useQuery(api.performance.import.listFlaggedRows, { token });
+  const rows = useQuery(api.performance.import.listFlaggedRows, { companyId });
 
   if (!rows || rows.length === 0) return null;
 
@@ -221,7 +220,7 @@ export function FlaggedRowsDialog({
                       {row.sourceFile}
                     </TableCell>
                     <TableCell>
-                      <FlaggedRowActions row={row} token={token} />
+                      <FlaggedRowActions row={row} />
                     </TableCell>
                   </TableRow>
                 ))}

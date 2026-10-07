@@ -55,7 +55,6 @@ import {
 } from "@/components/dashboard/TeamCompanyWidgets";
 import { useLatestWikiPages, WikiCarousel } from "@/components/dashboard/WikiWidgets";
 import { Link } from "@/components/Link";
-import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { useCurrentUser, useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { useErrorHandler } from "@/hooks/use-error-handler";
@@ -105,14 +104,14 @@ export default function DashboardPage() {
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
   const aiEnabled = useAiEnabled();
-  const { session: performanceSession } = usePerformanceSession();
-  const hasMyPerformance = Boolean(performanceSession?.valid && performanceSession.employeeId);
+  const performance = useQuery(api.performance.access.me, {});
+  // Both cards show Salesforce KPIs, so only a sales dashboard feeds them.
+  const salesDashboards = performance?.dashboards.filter((d) => d.kind === "sales");
+  const myEmployeeId = salesDashboards?.find((d) => d.employeeId)?.employeeId ?? null;
+  const teamDashboardId = salesDashboards?.find((d) => d.canViewTeam)?.companyId ?? null;
+  const hasMyPerformance = myEmployeeId !== null;
   const profileGaps = missingProfileFields(user);
-  const hasTeamPerformance =
-    isManager &&
-    Boolean(
-      performanceSession?.valid && performanceSession.permissions.includes("view_all_employees"),
-    );
+  const hasTeamPerformance = teamDashboardId !== null;
   const hasApplicantPipelineHealth = isManager && (isAdmin || user.applicantAccess);
 
   const startOfToday = useStartOfToday();
@@ -223,7 +222,9 @@ export default function DashboardPage() {
     ...(profileGaps.length
       ? [widget("profilecompletion", <ProfileCompletionCard missingFields={profileGaps} />)]
       : []),
-    ...(hasMyPerformance ? [widget("myperformance", <MyPerformanceCard />)] : []),
+    ...(hasMyPerformance
+      ? [widget("myperformance", <MyPerformanceCard employeeId={myEmployeeId!} />)]
+      : []),
   ]);
 
   const hasNewWiki = (newWikiPages?.length ?? 0) > 0;
@@ -234,12 +235,19 @@ export default function DashboardPage() {
     widget("announcements", <AnnouncementsCard />),
     widget("whosout", <WhosOutCard />),
     widget("celebrations", <CelebrationsCard />),
+    // Team leads without the manager role don't get the admin section, so
+    // their team's Performance card sits here instead.
+    ...(hasTeamPerformance && !isManager
+      ? [widget("teamperformance", <TeamPerformanceCard companyId={teamDashboardId!} />)]
+      : []),
   ]);
 
   const adminWidgets = toGrid([
     widget("managerbrief", <ManagerBriefCard />),
     ...(user.teams.length ? [widget("teamavailability", <TeamAvailabilityCard />)] : []),
-    ...(hasTeamPerformance ? [widget("teamperformance", <TeamPerformanceCard />)] : []),
+    ...(hasTeamPerformance && isManager
+      ? [widget("teamperformance", <TeamPerformanceCard companyId={teamDashboardId!} />)]
+      : []),
     widget("errormeasures", <OpenMeasuresCard />),
     widget("adminstats", <AdminStatsCard />),
     ...(hasApplicantPipelineHealth
