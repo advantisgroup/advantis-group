@@ -164,6 +164,24 @@ describe("performance access", () => {
   });
 });
 
+describe("rollout stage", () => {
+  test("before PERFORMANCE_MODE=live only admins see dashboards", async () => {
+    const { as } = await setup();
+    const before = process.env.PERFORMANCE_MODE;
+    delete process.env.PERFORMANCE_MODE;
+    try {
+      const lead = await as("lead").query(api.performance.access.me, {});
+      expect(lead.live).toBe(false);
+      expect(lead.dashboards).toEqual([]);
+      await expect(as("anna").query(api.performance.queries.teamDashboard, {})).rejects.toThrow();
+      const admin = await as("admin").query(api.performance.access.me, {});
+      expect(admin.dashboards.length).toBe(2);
+    } finally {
+      process.env.PERFORMANCE_MODE = before;
+    }
+  });
+});
+
 describe("nameKey", () => {
   test("ignores order, case, accents and ß", () => {
     expect(nameKey("Eyßelein, Michael")).toBe(nameKey("michael eysselein"));

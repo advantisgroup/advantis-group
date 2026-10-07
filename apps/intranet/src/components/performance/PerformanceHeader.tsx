@@ -8,7 +8,9 @@ import { Link } from "@/components/Link";
 import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
 import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
 import { DashboardSwitcher } from "@/components/performance/DashboardSwitcher";
+import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { usePerformanceNav } from "@/components/performance/usePerformanceNav";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +22,7 @@ import { cn } from "@/lib/utils";
 export function PerformanceHeader() {
   const t = useTranslations("Performance");
   const { items } = usePerformanceNav();
+  const { me } = usePerformanceAccess();
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/90 px-4 backdrop-blur">
@@ -48,6 +51,15 @@ export function PerformanceHeader() {
 
       <div className="flex-1" />
 
+      {me?.isAdmin && !me.live && (
+        <Badge
+          variant="warning"
+          className="hidden shrink-0 sm:inline-flex"
+          title={t("adminsOnlyHint")}
+        >
+          {t("adminsOnlyBadge")}
+        </Badge>
+      )}
       <DashboardSwitcher className="max-w-[45vw]" />
 
       <div className="hidden items-center gap-1 md:flex">

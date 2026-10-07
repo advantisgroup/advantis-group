@@ -6,7 +6,7 @@
 import { ConvexError, v } from "convex/values";
 
 import { serverUserQuery, userQuery } from "../functions";
-import { loadViewer, requireAdmin } from "./lib/access";
+import { loadViewer, performanceIsLive, requireAdmin } from "./lib/access";
 
 export const me = userQuery({
   args: {},
@@ -15,6 +15,8 @@ export const me = userQuery({
     return {
       name: viewer.name,
       isAdmin: viewer.isAdmin,
+      /** False while Performance is admins-only (`PERFORMANCE_MODE`). */
+      live: performanceIsLive(),
       dashboards: viewer.dashboards,
     };
   },

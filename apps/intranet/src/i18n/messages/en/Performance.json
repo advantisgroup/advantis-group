@@ -419,5 +419,7 @@
     "employeeEmpty": "The current Wallbox report has nothing for this person yet.",
     "notWallbox": "This person isn't on a Wallbox dashboard."
   },
-  "uploadNotImported": "Not imported into: {dashboards} — busy or failed there. Please upload the file there again."
+  "uploadNotImported": "Not imported into: {dashboards} — busy or failed there. Please upload the file there again.",
+  "adminsOnlyBadge": "Visible to admins only",
+  "adminsOnlyHint": "Performance is not released yet: others see \"being reworked\". Release via the Convex variable PERFORMANCE_MODE=live and the maintenance list."
 }

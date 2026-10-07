@@ -419,5 +419,7 @@
     "employeeEmpty": "Im aktuellen Wallbox-Report ist für diese Person noch nichts eingetragen.",
     "notWallbox": "Diese Person gehört zu keinem Wallbox-Dashboard."
   },
-  "uploadNotImported": "Nicht übernommen in: {dashboards} – dort gerade belegt oder fehlgeschlagen. Bitte die Datei dort noch einmal hochladen."
+  "uploadNotImported": "Nicht übernommen in: {dashboards} – dort gerade belegt oder fehlgeschlagen. Bitte die Datei dort noch einmal hochladen.",
+  "adminsOnlyBadge": "Nur für Admins sichtbar",
+  "adminsOnlyHint": "Performance ist noch nicht freigegeben: andere sehen „Wird gerade überarbeitet“. Freigabe über die Convex-Variable PERFORMANCE_MODE=live und die Wartungsliste."
 }

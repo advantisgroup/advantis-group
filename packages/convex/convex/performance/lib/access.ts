@@ -47,11 +47,24 @@ const forbidden = (message = "Kein Zugriff auf dieses Dashboard.") =>
 
 const notFound = (message: string) => new ConvexError({ code: "not_found", message });
 
+/**
+ * Rollout switch: until the Convex env var `PERFORMANCE_MODE` is `live`,
+ * Performance is admins-only — everyone else gets no dashboards, so every
+ * query refuses and the home cards stay hidden. Set it to `live` in the
+ * Convex dashboard to open it up (no deploy needed).
+ */
+export function performanceIsLive(): boolean {
+  return process.env.PERFORMANCE_MODE === "live";
+}
+
 /** Works out once per request what `caller` may see. Every table read here is
  * small (a handful of dashboards, teams and departments). */
 export async function loadViewer(ctx: Ctx, caller: Caller): Promise<PerformanceViewer> {
   const user = caller.user;
   const isAdmin = caller.isAdmin;
+  if (!isAdmin && !performanceIsLive()) {
+    return { userId: user._id, name: displayName(user), isAdmin, dashboards: [] };
+  }
 
   const [companies, memberships, ledTeams, ledDepartments, myEmployees] = await Promise.all([
     ctx.db.query("companies").collect(),
