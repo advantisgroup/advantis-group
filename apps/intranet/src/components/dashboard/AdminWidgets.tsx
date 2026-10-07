@@ -193,7 +193,7 @@ export function TeamAvailabilityCard() {
 }
 
 /** Team KPI snapshot — the parent only mounts this for someone who sees a
- * Performance team view (admins, team leads). */
+ * sales dashboard's team view (admins, team leads). */
 export function TeamPerformanceCard({ companyId }: { companyId: Id<"companies"> }) {
   const t = useTranslations("Dashboard");
   const dashboard = useQuery(api.performance.queries.teamDashboard, { companyId });

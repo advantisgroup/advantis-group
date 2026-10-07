@@ -28,6 +28,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -41,6 +48,8 @@ import {
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 type DashboardRow = FunctionReturnType<typeof api.performance.dashboards.list>[number];
+type DashboardKind = DashboardRow["kind"];
+const KINDS: DashboardKind[] = ["sales", "wallbox", "calls"];
 
 /** Name plus the intranet teams/departments whose members belong to it. */
 function DashboardDialog({
@@ -59,6 +68,7 @@ function DashboardDialog({
   const create = useMutation(api.performance.dashboards.create);
   const update = useMutation(api.performance.dashboards.update);
   const [name, setName] = useState(dashboard?.name ?? "");
+  const [kind, setKind] = useState<DashboardKind>(dashboard?.kind ?? "sales");
   const [teamIds, setTeamIds] = useState<Set<string>>(
     () => new Set(dashboard?.teams.map((x) => x.id) ?? []),
   );
@@ -79,6 +89,7 @@ function DashboardDialog({
     try {
       const payload = {
         name,
+        kind,
         teamIds: [...teamIds] as Id<"teams">[],
         departmentIds: [...departmentIds] as Id<"departments">[],
       };
@@ -142,6 +153,24 @@ function DashboardDialog({
               onChange={(e) => setName(e.target.value)}
               placeholder="Sales"
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="dashboard-kind">{t("settingsKindLabel")}</Label>
+            <Select value={kind} onValueChange={(v) => setKind(v as DashboardKind)}>
+              <SelectTrigger id="dashboard-kind">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {KINDS.map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {t(`settingsKind.${k}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {kind !== "sales" && (
+              <p className="text-xs text-muted-foreground">{t("settingsKindHint")}</p>
+            )}
           </div>
           {group(t("settingsTeams"), options?.teams, teamIds, (id) =>
             setTeamIds((s) => toggle(s, id)),
@@ -308,7 +337,12 @@ export default function PerformanceSettingsPage() {
                 onClick={() => setSelectedId(d.companyId)}
               >
                 <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
-                  <CardTitle className="text-base">{d.name}</CardTitle>
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <CardTitle className="text-base">{d.name}</CardTitle>
+                    <Badge variant={d.kind === "sales" ? "muted" : "secondary"}>
+                      {t(`settingsKindBadge.${d.kind}`)}
+                    </Badge>
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"

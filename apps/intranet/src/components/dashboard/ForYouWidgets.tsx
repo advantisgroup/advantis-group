@@ -230,7 +230,8 @@ export function MyTicketsCard() {
 }
 
 /** Personal performance snapshot — only rendered for people whose intranet
- * account is linked to a Performance report name; the parent decides. */
+ * account is linked to a report name on a sales dashboard; the parent
+ * decides. */
 export function MyPerformanceCard({ employeeId }: { employeeId: Id<"performanceEmployees"> }) {
   const t = useTranslations("Dashboard");
   const detail = useQuery(api.performance.queries.employeeDetail, { employeeId });

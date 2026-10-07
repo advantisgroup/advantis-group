@@ -105,8 +105,10 @@ export default function DashboardPage() {
   const isAdmin = useIsAdmin();
   const aiEnabled = useAiEnabled();
   const performance = useQuery(api.performance.access.me, {});
-  const myEmployeeId = performance?.dashboards.find((d) => d.employeeId)?.employeeId ?? null;
-  const teamDashboardId = performance?.dashboards.find((d) => d.canViewTeam)?.companyId ?? null;
+  // Both cards show Salesforce KPIs, so only a sales dashboard feeds them.
+  const salesDashboards = performance?.dashboards.filter((d) => d.kind === "sales");
+  const myEmployeeId = salesDashboards?.find((d) => d.employeeId)?.employeeId ?? null;
+  const teamDashboardId = salesDashboards?.find((d) => d.canViewTeam)?.companyId ?? null;
   const hasMyPerformance = myEmployeeId !== null;
   const profileGaps = missingProfileFields(user);
   const hasTeamPerformance = teamDashboardId !== null;
