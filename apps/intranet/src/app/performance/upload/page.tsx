@@ -30,6 +30,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { FlaggedRowsDialog } from "@/components/performance/FlaggedRowsDialog";
+import { type PerformanceDashboardKind } from "@/components/performance/PerformanceAccess";
 import { PerformanceShell, usePerformanceGate } from "@/components/performance/PerformanceShell";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { RescanOlderUploads } from "@/components/performance/RescanOlderUploads";
@@ -75,6 +76,7 @@ interface QueueItem {
   reportDate?: string;
   reportDateFrom?: string;
   rawKept?: string;
+  alsoImportedInto?: string[];
 }
 
 const REPORT_KIND_LABEL_KEY: Record<string, string> = {
@@ -83,20 +85,37 @@ const REPORT_KIND_LABEL_KEY: Record<string, string> = {
   call: "uploadKindCall",
   template: "uploadKindTemplate",
   interactions: "uploadKindInteractions",
+  wallbox_members: "uploadKindWallboxMembers",
+  wallbox_opps: "uploadKindWallboxOpps",
 };
 
-const DAILY_KINDS = ["lead", "opp", "call", "interactions"] as const;
+type DailyKind = "lead" | "opp" | "wallbox_members" | "wallbox_opps" | "call" | "interactions";
+
+/** The reports a dashboard expects every workday; optional ones are shown
+ * but never reported as missing. */
+const DAILY_KINDS: Record<PerformanceDashboardKind, { kind: DailyKind; optional?: boolean }[]> = {
+  sales: [{ kind: "lead" }, { kind: "opp" }, { kind: "call" }, { kind: "interactions" }],
+  wallbox: [
+    { kind: "wallbox_members" },
+    { kind: "wallbox_opps" },
+    { kind: "call" },
+    { kind: "interactions", optional: true },
+  ],
+  calls: [{ kind: "call" }, { kind: "interactions", optional: true }],
+};
 const STATUS_WORKDAYS = 7;
 
 /** Salesforce exports create the names the call and interaction reports
- * are matched against, so they go first when several files are dropped at
- * once. Only the filename is looked at — the server detects the real
- * kind from the content either way. */
+ * are matched against, and the Wallbox opp report the full names the
+ * campaign report's first names resolve to — so those go first when several
+ * files are dropped at once. Only the filename is looked at — the server
+ * detects the real kind from the content either way. */
 function uploadOrder(file: File): number {
   const name = file.name.toLowerCase();
+  if (name.includes("wallbox")) return /opp/.test(name) ? 0 : 1;
   if (/lead|opp|salesforce|verkaufschance/.test(name)) return 0;
-  if (/interakt|interaction/.test(name)) return 2;
-  return 1;
+  if (/interakt|interaction/.test(name)) return 3;
+  return 2;
 }
 
 /** The last `count` Mon–Fri days that aren't Nürnberg holidays, oldest
@@ -402,9 +421,15 @@ function BatchRows({
   );
 }
 
-/** "Tagesstatus": which of the four daily exports are in for each of the
- * last workdays, so the admin sees at a glance what's still missing. */
-function DailyStatus({ companyId }: { companyId: Id<"companies"> }) {
+/** "Tagesstatus": which of the dashboard's daily exports are in for each of
+ * the last workdays, so the admin sees at a glance what's still missing. */
+function DailyStatus({
+  companyId,
+  dashboardKind,
+}: {
+  companyId: Id<"companies">;
+  dashboardKind: PerformanceDashboardKind;
+}) {
   const t = useTranslations("Performance");
   const locale = useLocale();
   // Recomputed per render on purpose: cheap, and it rolls over at midnight.
@@ -414,8 +439,11 @@ function DailyStatus({ companyId }: { companyId: Id<"companies"> }) {
 
   const today = berlinDate(Date.now());
   const kindLabel = (k: string) => t(REPORT_KIND_LABEL_KEY[k] ?? k);
+  const expected = DAILY_KINDS[dashboardKind];
   const latest = status[status.length - 1];
-  const missing = latest ? DAILY_KINDS.filter((k) => !latest.kinds.includes(k)) : [];
+  const missing = latest
+    ? expected.filter((k) => !k.optional && !latest.kinds.includes(k.kind)).map((k) => k.kind)
+    : [];
   const summary =
     missing.length === 0
       ? latest?.date === today
@@ -461,9 +489,16 @@ function DailyStatus({ companyId }: { companyId: Id<"companies"> }) {
               </tr>
             </thead>
             <tbody>
-              {DAILY_KINDS.map((kind) => (
+              {expected.map(({ kind, optional }) => (
                 <tr key={kind} className="border-t border-border/50">
-                  <td className="py-1.5 pr-2 font-medium">{kindLabel(kind)}</td>
+                  <td className="py-1.5 pr-2 font-medium">
+                    {kindLabel(kind)}
+                    {optional && (
+                      <span className="ml-1 font-normal text-muted-foreground">
+                        ({t("dailyStatusOptional")})
+                      </span>
+                    )}
+                  </td>
                   {status.map((d) => {
                     const has = d.kinds.includes(kind);
                     return (
@@ -590,6 +625,7 @@ export default function PerformanceUploadPage() {
         reportDate: result.reportDate,
         reportDateFrom: result.reportDateFrom,
         rawKept: result.rawKept,
+        alsoImportedInto: result.alsoImportedInto,
       });
       // The plausibility check runs silently during import — without this,
       // an admin watching the queue sees a plain green "done" and has no
@@ -664,23 +700,32 @@ export default function PerformanceUploadPage() {
 
   if (loading) return <PerformancePageSkeleton />;
   if (!me || !companyId || !dashboard) return null;
+  const kind = dashboard.kind;
 
   return (
     <PerformanceShell
       title={t("uploadTitleFor", { dashboard: dashboard.name })}
-      description={t("uploadIntro")}
+      description={t(
+        kind === "wallbox"
+          ? "uploadIntroWallbox"
+          : kind === "calls"
+            ? "uploadIntroCalls"
+            : "uploadIntro",
+      )}
       width="max-w-7xl"
       actions={
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            void performanceApi.download("/performance/template", "performance-vorlage.xlsx")
-          }
-        >
-          <Download className="mr-2 h-4 w-4" />
-          {t("templateDownload")}
-        </Button>
+        kind === "sales" && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              void performanceApi.download("/performance/template", "performance-vorlage.xlsx")
+            }
+          >
+            <Download className="mr-2 h-4 w-4" />
+            {t("templateDownload")}
+          </Button>
+        )
       }
     >
       <FlaggedRowsDialog
@@ -688,7 +733,7 @@ export default function PerformanceUploadPage() {
         open={flaggedDialogOpen}
         onOpenChange={setFlaggedDialogOpen}
       />
-      <DailyStatus companyId={companyId} />
+      <DailyStatus companyId={companyId} dashboardKind={kind} />
       <RescanOlderUploads companyId={companyId} />
 
       <Card>
@@ -764,8 +809,10 @@ export default function PerformanceUploadPage() {
                   </Button>
                 )}
               </div>
-              {queue.length > 1 && (
-                <p className="text-xs text-muted-foreground">{t("uploadSortedHint")}</p>
+              {queue.length > 1 && kind !== "calls" && (
+                <p className="text-xs text-muted-foreground">
+                  {t(kind === "wallbox" ? "uploadSortedHintWallbox" : "uploadSortedHint")}
+                </p>
               )}
               <ul className="space-y-2">
                 {queue.map((item) => (
@@ -884,6 +931,11 @@ export default function PerformanceUploadPage() {
                           kind: t(REPORT_KIND_LABEL_KEY[item.reportKind] ?? item.reportKind),
                           date: formatReportDays(item.reportDateFrom, item.reportDate, locale),
                         })}
+                      </p>
+                    )}
+                    {!!item.alsoImportedInto?.length && (
+                      <p className="mt-1 pl-7 text-xs text-muted-foreground">
+                        {t("uploadAlsoImported", { dashboards: item.alsoImportedInto.join(", ") })}
                       </p>
                     )}
                     {item.rawKept && (
