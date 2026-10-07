@@ -15,6 +15,7 @@ import {
   Lock,
   Pencil,
   Plus,
+  Smartphone,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -37,6 +38,7 @@ import {
   formatMonth,
   useBerlinToday,
   useNow,
+  bookedByPhone,
   useTimeErrorToast,
   useTimeMode,
 } from "@/lib/zeiterfassung";
@@ -138,6 +140,7 @@ export function Entries({
         [
           ...day.warnings.map((warning) => t(`warnings.${warning}.label`)),
           ...(day.autoClosed ? [t("entries.autoClosed")] : []),
+          ...(bookedByPhone(day.entries) ? [t("entries.mobile")] : []),
         ].join(", "),
       ]
         .map(cell)
@@ -319,6 +322,12 @@ function DayRow({
               {t("entries.autoClosed")}
             </Chip>
           )}
+          {bookedByPhone(active) && (
+            <Chip tone="info" hint={t("entries.mobileHint")}>
+              <Smartphone className="size-3" />
+              {t("entries.mobile")}
+            </Chip>
+          )}
           {day.pending > 0 && <Chip>{t("entries.pendingChip", { count: day.pending })}</Chip>}
           {day.locked && (
             <Chip hint={t("entries.lockedHint")}>
@@ -391,9 +400,22 @@ function DayRow({
                       {formatMinutes(Math.round(((row.end ?? now) - row.start) / 60_000))}
                     </span>
                   </p>
-                  {(row.note || row.source !== "clock") && (
-                    <p className="truncate text-xs text-muted-foreground">
-                      {[t(`entries.source.${row.source}`), row.note].filter(Boolean).join(" · ")}
+                  {(row.note || row.source !== "clock" || bookedByPhone([row])) && (
+                    <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                      {bookedByPhone([row]) && <Smartphone className="size-3 shrink-0 text-info" />}
+                      {[
+                        t(`entries.source.${row.source}`),
+                        row.startDevice === "mobile" && row.endDevice === "mobile"
+                          ? t("entries.mobileBoth")
+                          : row.startDevice === "mobile"
+                            ? t("entries.mobileStart")
+                            : row.endDevice === "mobile"
+                              ? t("entries.mobileEnd")
+                              : null,
+                        row.note,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </p>
                   )}
                 </div>

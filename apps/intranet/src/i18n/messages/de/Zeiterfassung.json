@@ -119,7 +119,12 @@
     "deleted": "Eintrag gelöscht",
     "deleteTitle": "Eintrag löschen?",
     "deleteHintDirect": "Der Eintrag zählt nicht mehr, bleibt aber im Protokoll erhalten.",
-    "deleteHint": "Die Löschung wird als Korrektur beantragt und gilt nach Freigabe."
+    "deleteHint": "Die Löschung wird als Korrektur beantragt und gilt nach Freigabe.",
+    "mobile": "Handy",
+    "mobileHint": "Mindestens eine Stempelung an diesem Tag wurde mit dem Handy gemacht.",
+    "mobileStart": "per Handy eingestempelt",
+    "mobileEnd": "per Handy ausgestempelt",
+    "mobileBoth": "per Handy ein- und ausgestempelt"
   },
   "csv": {
     "export": "CSV-Export",

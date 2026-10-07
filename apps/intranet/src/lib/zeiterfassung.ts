@@ -145,3 +145,29 @@ export function useTimeMode() {
     canClock: mode?.canClock ?? false,
   };
 }
+
+/**
+ * Phone or computer, as the browser reports it — recorded with every clock
+ * action so phone bookings are marked. Tablets count as phones.
+ */
+export function clientDevice(): "mobile" | "desktop" {
+  if (typeof navigator === "undefined") return "desktop";
+  const hinted = (navigator as Navigator & { userAgentData?: { mobile?: boolean } }).userAgentData;
+  if (hinted?.mobile) return "mobile";
+  const ua = navigator.userAgent;
+  if (/Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua)) return "mobile";
+  // iPadOS reports itself as a Mac.
+  if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return "mobile";
+  return "desktop";
+}
+
+/** Whether any clock action behind these segments came from a phone. */
+export function bookedByPhone(
+  rows: readonly { startDevice?: string; endDevice?: string; status?: string }[],
+): boolean {
+  return rows.some(
+    (row) =>
+      (row.status === undefined || row.status === "active") &&
+      (row.startDevice === "mobile" || row.endDevice === "mobile"),
+  );
+}

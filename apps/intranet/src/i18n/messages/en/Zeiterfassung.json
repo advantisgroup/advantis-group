@@ -119,7 +119,12 @@
     "deleted": "Entry deleted",
     "deleteTitle": "Delete entry?",
     "deleteHintDirect": "The entry stops counting but stays in the audit log.",
-    "deleteHint": "The removal is requested as a correction and applies once approved."
+    "deleteHint": "The removal is requested as a correction and applies once approved.",
+    "mobile": "Phone",
+    "mobileHint": "At least one clock action on this day was made on a phone.",
+    "mobileStart": "clocked in on a phone",
+    "mobileEnd": "clocked out on a phone",
+    "mobileBoth": "clocked in and out on a phone"
   },
   "csv": {
     "export": "Export CSV",

@@ -17,6 +17,7 @@ import {
   type AbsenceStatus,
   type AbsenceType,
   type ClockStatus,
+  clientDevice,
   useNow,
   useTimeErrorToast,
 } from "@/lib/zeiterfassung";
@@ -248,10 +249,10 @@ export function useTimeClock() {
     now,
     busy,
     duration: since ? elapsed(since, now) : null,
-    clockIn: run(() => clockIn({}), t("clock.toastIn")),
-    clockOut: run(() => clockOut({}), t("clock.toastOut")),
-    startBreak: run(() => startBreak({}), t("clock.toastBreak")),
-    endBreak: run(() => endBreak({}), t("clock.toastResume")),
+    clockIn: run(() => clockIn({ device: clientDevice() }), t("clock.toastIn")),
+    clockOut: run(() => clockOut({ device: clientDevice() }), t("clock.toastOut")),
+    startBreak: run(() => startBreak({ device: clientDevice() }), t("clock.toastBreak")),
+    endBreak: run(() => endBreak({ device: clientDevice() }), t("clock.toastResume")),
   };
 }
 
