@@ -552,6 +552,8 @@ const uploadLogArgs = {
       v.literal("call"),
       v.literal("template"),
       v.literal("interactions"),
+      v.literal("wallbox_members"),
+      v.literal("wallbox_opps"),
     ),
   ),
   reportDate: v.optional(v.string()),
@@ -835,7 +837,14 @@ export const listUploadLog = userQuery({
   },
 });
 
-const DAILY_STATUS_KINDS = ["lead", "opp", "call", "interactions"] as const;
+const DAILY_STATUS_KINDS = [
+  "lead",
+  "opp",
+  "wallbox_members",
+  "wallbox_opps",
+  "call",
+  "interactions",
+] as const;
 type DailyStatusKind = (typeof DAILY_STATUS_KINDS)[number];
 
 /** "Tagesstatus" on the upload page: for each of the given report days
@@ -1092,6 +1101,34 @@ export const resolveFlaggedRow = userMutation({
 
 /** Lets the re-import actions confirm the dashboard exists (the admin
  * check itself happens in the `userAction` builder). */
+/** The id of an earlier log row of the same file in `companyId`, so a call
+ * or interactions report fanned out to other dashboards replaces its row
+ * there on a re-import instead of adding a second one. */
+export const findUploadLogIdByHash = internalQuery({
+  args: { companyId: v.id("companies"), contentHash: v.string() },
+  handler: async (ctx, { companyId, contentHash }) => {
+    if (!contentHash) return null;
+    const row = await ctx.db
+      .query("performanceUploadLog")
+      .withIndex("by_company_contentHash", (q) =>
+        q.eq("companyId", companyId).eq("contentHash", contentHash),
+      )
+      .first();
+    return row?._id ?? null;
+  },
+});
+
+/** Upload-log row for a Wallbox report (written last, after the data). */
+export const logWallboxImport = internalMutation({
+  args: {
+    ...uploadLogArgs,
+    reportKind: v.union(v.literal("wallbox_members"), v.literal("wallbox_opps")),
+  },
+  handler: async (ctx, args): Promise<void> => {
+    await writeUploadLog(ctx, args);
+  },
+});
+
 export const companyExists = internalQuery({
   args: { companyId: v.id("companies") },
   handler: async (ctx, { companyId }): Promise<boolean> => (await ctx.db.get(companyId)) !== null,

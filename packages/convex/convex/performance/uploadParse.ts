@@ -57,6 +57,7 @@ import {
 import { normalizeZipLocalHeaders } from "./lib/xlsxZip";
 import { toISODate, todayBerlin } from "./lib/workdays";
 import { parseAggregatedTemplate } from "./lib/aggregatedTemplate";
+import { readWallboxExport, summarizeMembers } from "./lib/wallboxImport";
 
 // Safely under Convex's 8192-element array-argument limit, with headroom
 // for the rest of each row's payload size.
@@ -254,40 +255,47 @@ export interface FlaggedRowInput extends DurationFlag {
   reportDate: string;
 }
 
-/** One row per employee/day, matched against the known team; agents with
- * no unambiguous team match are skipped (reported in `skipped`), same as
- * `import_calls`. Requires at least one Lead/Opportunity report to have
- * been imported already, so there's a team to match against. A row whose
- * duration cell got rejected by `parseDurationField` isn't dropped
- * silently — it's reported in `flaggedRows` for admin review instead. */
-async function buildCallSnapshots(
-  ctx: ActionCtx,
-  companyId: Id<"companies">,
-  rows: CallRow[],
-): Promise<{
-  snapshots: EmployeeSnapshot[];
-  skipped: string[];
-  flaggedRows: FlaggedRowInput[];
-}> {
-  const known: string[] = await ctx.runQuery(internal.performance.import.getTeamEmployeeNames, {
-    companyId,
-  });
-  if (known.length === 0) {
+/** Every dashboard's roster a shared Genesys report is matched against
+ * (`wallbox.prepareCallTargets`), origin dashboard first. */
+type CallTarget = {
+  companyId: Id<"companies">;
+  name: string;
+  employees: { id: Id<"performanceEmployees">; name: string }[];
+};
+
+async function callTargets(ctx: ActionCtx, origin: Id<"companies">): Promise<CallTarget[]> {
+  const all: CallTarget[] = await runSafely("prepareCallTargets", () =>
+    ctx.runMutation(internal.performance.wallbox.prepareCallTargets, {}),
+  );
+  const withRoster = all.filter((t) => t.employees.length > 0 || t.companyId === origin);
+  if (withRoster.every((t) => t.employees.length === 0)) {
     throw new ConvexError({
       code: "no_employees",
       message:
-        "Es sind noch keine Mitarbeiter vorhanden. Bitte zuerst den Lead- oder Opportunity-Report hochladen.",
+        "Es sind noch keine Mitarbeiter vorhanden. Bitte zuerst den Salesforce-Report hochladen oder unter Einstellungen Teams zuordnen.",
     });
   }
+  return withRoster.sort((a, b) => (a.companyId === origin ? -1 : b.companyId === origin ? 1 : 0));
+}
+
+/** One row per employee/day for one dashboard, matched against its roster.
+ * A row whose duration cell got rejected by `parseDurationField` isn't
+ * dropped silently — it's reported in `flaggedRows` for admin review. */
+function buildCallSnapshots(
+  known: string[],
+  rows: CallRow[],
+): {
+  snapshots: EmployeeSnapshot[];
+  matchedAgents: Set<string>;
+  flaggedRows: FlaggedRowInput[];
+} {
   const snapshots: EmployeeSnapshot[] = [];
-  const skipped: string[] = [];
+  const matchedAgents = new Set<string>();
   const flaggedRows: FlaggedRowInput[] = [];
   for (const rec of rows) {
     const emp = matchEmployee(rec.employee, known);
-    if (!emp) {
-      skipped.push(cleanAgentName(rec.employee));
-      continue;
-    }
+    if (!emp) continue;
+    matchedAgents.add(cleanAgentName(rec.employee));
     const reportDate = toISODate(rec.date);
     for (const flag of rec.flags ?? []) {
       flaggedRows.push({ employeeName: emp, reportDate, ...flag });
@@ -300,7 +308,21 @@ async function buildCallSnapshots(
     if (Object.keys(fields).length === 0) continue;
     snapshots.push({ employeeName: emp, reportDate, fields });
   }
-  return { snapshots, skipped, flaggedRows };
+  return { snapshots, matchedAgents, flaggedRows };
+}
+
+/** The log row a fanned-out report replaces in another dashboard (same
+ * file imported there before), so a re-import doesn't add a second one. */
+async function fanOutLogId(
+  ctx: ActionCtx,
+  companyId: Id<"companies">,
+  contentHash: string,
+): Promise<Id<"performanceUploadLog"> | undefined> {
+  const id = await ctx.runQuery(internal.performance.import.findUploadLogIdByHash, {
+    companyId,
+    contentHash,
+  });
+  return id ?? undefined;
 }
 
 interface InteractionInsert {
@@ -311,38 +333,17 @@ interface InteractionInsert {
   direction?: string;
 }
 
-/** Matches each interaction's `Benutzer` name(s) against the dashboard's
- * roster. Agents outside the roster (other queues) are reported as skipped
- * rather than imported; whether a matched employee already has a report
- * that month doesn't matter, so the upload order of the day's files
- * doesn't either. A multi-agent interaction (transfer/conference) produces
- * one insert per matched employee. */
-async function buildInteractionInserts(
-  ctx: ActionCtx,
-  companyId: Id<"companies">,
+/** Matches each interaction's `Benutzer` name(s) against one dashboard's
+ * roster. A multi-agent interaction (transfer/conference) produces one
+ * insert per matched employee. */
+function buildInteractionInserts(
+  employees: { id: Id<"performanceEmployees">; name: string }[],
   rows: InteractionRow[],
-): Promise<{
-  inserts: InteractionInsert[];
-  skipped: string[];
-}> {
-  const employees: { id: Id<"performanceEmployees">; name: string }[] = await ctx.runQuery(
-    internal.performance.import.getTeamEmployeesWithId,
-    {
-      companyId,
-    },
-  );
-  if (employees.length === 0) {
-    throw new ConvexError({
-      code: "no_employees",
-      message:
-        "Es sind noch keine Mitarbeiter vorhanden. Bitte zuerst den Lead- oder Opportunity-Report hochladen.",
-    });
-  }
+): { inserts: InteractionInsert[]; matchedAgents: Set<string> } {
   const known = employees.map((e) => e.name);
   const idByName = new Map(employees.map((e) => [e.name, e.id]));
-
   const inserts: InteractionInsert[] = [];
-  const skipped = new Set<string>();
+  const matchedAgents = new Set<string>();
   const matchCache = new Map<string, string | null>();
   for (const row of rows) {
     for (const rawName of row.names) {
@@ -351,13 +352,10 @@ async function buildInteractionInserts(
         matched = matchEmployee(rawName, known);
         matchCache.set(rawName, matched);
       }
-      if (!matched) {
-        skipped.add(rawName);
-        continue;
-      }
-      const employeeId = idByName.get(matched)!;
+      if (!matched) continue;
+      matchedAgents.add(rawName);
       inserts.push({
-        employeeId,
+        employeeId: idByName.get(matched)!,
         date: row.date,
         startedAt: row.startedAt,
         durationSec: row.durationSec,
@@ -365,7 +363,7 @@ async function buildInteractionInserts(
       });
     }
   }
-  return { inserts, skipped: [...skipped].sort() };
+  return { inserts, matchedAgents };
 }
 
 /** Replaces the file's own date range (first to last day it contains),
@@ -398,7 +396,14 @@ async function writeInteractions(
   }
 }
 
-export type ReportKind = "lead" | "opp" | "call" | "template" | "interactions";
+export type ReportKind =
+  | "lead"
+  | "opp"
+  | "call"
+  | "template"
+  | "interactions"
+  | "wallbox_members"
+  | "wallbox_opps";
 
 export type ImportResult =
   | {
@@ -413,6 +418,8 @@ export type ImportResult =
       /** Set when the drill-down lists were left alone because they already
        * hold a newer report (the date given). */
       rawKept?: string;
+      /** Other dashboards a shared call/interactions report also went into. */
+      alsoImportedInto?: string[];
     }
   | { status: "empty"; reportKind?: ReportKind; reportDate: string }
   | { status: "duplicate"; filename: string; uploadedAt: number };
@@ -438,7 +445,17 @@ function unrecognizedFile(): ConvexError<{ code: string; message: string }> {
   return new ConvexError({
     code: "unrecognized_report",
     message:
-      "Dateityp nicht erkannt – erwartet: Salesforce Lead- oder Opportunity-Export, Genesys Call-Report, Genesys Interaktionen-Export oder die Upload-Vorlage (Spalte „Mitarbeiter“ plus mindestens eine Kennzahl).",
+      "Dateityp nicht erkannt – erwartet: Salesforce Lead- oder Opportunity-Export, Wallbox-Kampagnen- oder Wallbox-Opportunity-Report, Genesys Call-Report, Genesys Interaktionen-Export oder die Upload-Vorlage (Spalte „Mitarbeiter“ plus mindestens eine Kennzahl).",
+  });
+}
+
+function wrongDashboard(
+  what: string,
+  where: string,
+): ConvexError<{ code: string; message: string }> {
+  return new ConvexError({
+    code: "wrong_dashboard",
+    message: `${what} gehört ins ${where}. Bitte oben das passende Dashboard wählen und dort hochladen.`,
   });
 }
 
@@ -491,8 +508,75 @@ async function processReport(
     uploadedBy,
     replaceLogId,
   };
+  const kind = await ctx.runQuery(internal.performance.wallbox.companyKind, { companyId });
+
+  const wallbox = readWallboxExport(rows);
+  if (wallbox) {
+    if (kind !== "wallbox") {
+      throw wrongDashboard(
+        wallbox.kind === "members"
+          ? "Der Wallbox-Kampagnen-Report"
+          : "Der Wallbox-Opportunity-Report",
+        "Wallbox-Dashboard",
+      );
+    }
+    const reportDate = toISODate(wallbox.reportDate);
+    const reportKind = wallbox.kind === "members" ? "wallbox_members" : "wallbox_opps";
+    let skipped: string[] = [];
+    let rawKept: string | undefined;
+    if (wallbox.kind === "members") {
+      const summary = summarizeMembers(wallbox.rows);
+      const { unmatched } = await runSafely("saveWallboxMembers", () =>
+        ctx.runMutation(internal.performance.wallbox.saveMembers, {
+          companyId,
+          reportDate,
+          campaign: wallbox.campaign,
+          total: summary.total,
+          statuses: summary.statuses,
+          people: summary.people,
+          sourceFile: filename,
+        }),
+      );
+      skipped = unmatched;
+    } else {
+      const res = await runSafely("saveWallboxOpps", () =>
+        ctx.runMutation(internal.performance.wallbox.saveOpps, {
+          companyId,
+          reportDate,
+          campaign: wallbox.campaign,
+          rows: wallbox.rows,
+          sourceFile: filename,
+        }),
+      );
+      rawKept = res.listKept;
+    }
+    await runSafely("logWallboxImport", () =>
+      ctx.runMutation(internal.performance.import.logWallboxImport, {
+        ...base,
+        reportKind,
+        reportDate,
+        rowsImported: wallbox.rows.length,
+        sourceRowCount: wallbox.rows.length,
+        skippedNames: skipped.length > 0 ? skipped : undefined,
+      }),
+    );
+    return {
+      status: "ok",
+      rowsImported: wallbox.rows.length,
+      reportKind,
+      reportDate,
+      skipped,
+      ...(rawKept ? { rawKept } : {}),
+    };
+  }
 
   const sf = readSalesforceExport(rows);
+  if (sf && kind !== "sales") {
+    throw wrongDashboard(
+      sf.kind === "lead" ? "Der Salesforce-Lead-Report" : "Der Salesforce-Opportunity-Report",
+      "Sales-Dashboard",
+    );
+  }
   if (sf) {
     const reportDate = toISODate(sf.reportDate);
     const sfBase = { ...base, reportDate, sourceRowCount: sf.rows.length };
@@ -515,34 +599,63 @@ async function processReport(
     // A report with zero activity (e.g. a weekend): ignored entirely, no
     // data, no upload-log entry.
     if (calls.rows.length === 0) return { status: "empty", reportKind: "call", reportDate };
-    const { snapshots, skipped, flaggedRows } = await buildCallSnapshots(
-      ctx,
-      companyId,
-      calls.rows,
-    );
+    // One shared Genesys report for everyone: it goes into every dashboard
+    // whose roster has the agent (Sales, Wallbox, Onboarding, …).
+    const targets = await callTargets(ctx, companyId);
     const firstDay = toISODate(
       calls.rows.reduce((min, r) => (r.date < min ? r.date : min), calls.rows[0].date),
     );
     const reportDateFrom = firstDay !== reportDate ? firstDay : undefined;
-    const result = await runApplyImport(ctx, {
-      ...base,
-      snapshots,
-      reportKind: "call",
-      reportDate,
-      reportDateFrom,
-      sourceRowCount: calls.rows.length,
-      skippedNames: skipped,
-      flaggedRows,
-      clearFields: calls.hasOutbound ? undefined : ["callsOutbound"],
-    });
+    const perTarget = targets.map((t) => ({
+      target: t,
+      ...buildCallSnapshots(
+        t.employees.map((e) => e.name),
+        calls.rows,
+      ),
+    }));
+    const matched = new Set(perTarget.flatMap((p) => [...p.matchedAgents]));
+    const skipped = [
+      ...new Set(
+        calls.rows.map((r) => cleanAgentName(r.employee)).filter((n) => n && !matched.has(n)),
+      ),
+    ].sort();
+    let rowsImported = 0;
+    let flagged = 0;
+    const alsoImportedInto: string[] = [];
+    for (const { target, snapshots, flaggedRows } of perTarget) {
+      const isOrigin = target.companyId === companyId;
+      if (!isOrigin && snapshots.length === 0) continue;
+      const result = await runApplyImport(ctx, {
+        ...base,
+        companyId: target.companyId,
+        replaceLogId: isOrigin
+          ? replaceLogId
+          : await fanOutLogId(ctx, target.companyId, contentHash),
+        snapshots,
+        reportKind: "call",
+        reportDate,
+        reportDateFrom,
+        sourceRowCount: calls.rows.length,
+        skippedNames: skipped,
+        flaggedRows,
+        clearFields: calls.hasOutbound ? undefined : ["callsOutbound"],
+      });
+      if (isOrigin) {
+        rowsImported = result.rowsImported;
+        flagged = flaggedRows.length;
+      } else {
+        alsoImportedInto.push(target.name);
+      }
+    }
     return {
       status: "ok",
-      rowsImported: result.rowsImported,
+      rowsImported,
       reportKind: "call",
       reportDate,
       reportDateFrom,
       skipped,
-      flagged: flaggedRows.length,
+      flagged,
+      alsoImportedInto,
     };
   }
 
@@ -557,30 +670,52 @@ async function processReport(
       };
     }
     const range = interactionDateRange(interactionRows);
-    const { inserts, skipped } = await buildInteractionInserts(ctx, companyId, interactionRows);
-    await writeInteractions(ctx, companyId, inserts, range, filename);
-    await runSafely("logInteractionsImport", () =>
-      ctx.runMutation(internal.performance.import.logInteractionsImport, {
-        ...base,
-        reportDate: range.to,
-        reportDateFrom: range.from,
-        sourceRowCount: interactionRows.length,
-        skippedNames: skipped,
-        rowsImported: inserts.length,
-      }),
-    );
+    const targets = await callTargets(ctx, companyId);
+    const perTarget = targets.map((t) => ({
+      target: t,
+      ...buildInteractionInserts(t.employees, interactionRows),
+    }));
+    const matched = new Set(perTarget.flatMap((p) => [...p.matchedAgents]));
+    const skipped = [
+      ...new Set(interactionRows.flatMap((r) => r.names).filter((n) => !matched.has(n))),
+    ].sort();
+    let rowsImported = 0;
+    const alsoImportedInto: string[] = [];
+    for (const { target, inserts } of perTarget) {
+      const isOrigin = target.companyId === companyId;
+      if (!isOrigin && inserts.length === 0) continue;
+      await writeInteractions(ctx, target.companyId, inserts, range, filename);
+      await runSafely("logInteractionsImport", async () =>
+        ctx.runMutation(internal.performance.import.logInteractionsImport, {
+          ...base,
+          companyId: target.companyId,
+          replaceLogId: isOrigin
+            ? replaceLogId
+            : await fanOutLogId(ctx, target.companyId, contentHash),
+          reportDate: range.to,
+          reportDateFrom: range.from,
+          sourceRowCount: interactionRows.length,
+          skippedNames: skipped,
+          rowsImported: inserts.length,
+        }),
+      );
+      if (isOrigin) rowsImported = inserts.length;
+      else alsoImportedInto.push(target.name);
+    }
     return {
       status: "ok",
-      rowsImported: inserts.length,
+      rowsImported,
       reportKind: "interactions",
       reportDate: range.to,
       reportDateFrom: range.from !== range.to ? range.from : undefined,
       skipped,
+      alsoImportedInto,
     };
   }
 
   const template = parseAggregatedTemplate(rows);
   if (!template) throw unrecognizedFile();
+  if (kind !== "sales") throw wrongDashboard("Die Upload-Vorlage", "Sales-Dashboard");
   if (template.snapshots.length === 0) {
     return { status: "empty", reportKind: "template", reportDate: template.reportDate };
   }
@@ -767,5 +902,7 @@ export const reimportBatch = userAction({
 });
 
 function kindOrder(kind: ReportKind | undefined): number {
-  return kind === "lead" || kind === "opp" ? 0 : kind === "template" ? 1 : 2;
+  if (kind === "lead" || kind === "opp" || kind === "wallbox_opps") return 0;
+  if (kind === "wallbox_members" || kind === "template") return 1;
+  return 2;
 }

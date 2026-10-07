@@ -23,6 +23,11 @@ export const performanceTables = {
     teamIds: v.optional(v.array(v.id("teams"))),
     /** Intranet departments whose members belong to this dashboard. */
     departmentIds: v.optional(v.array(v.id("departments"))),
+    /** What the dashboard shows: `sales` (Salesforce leads/opps + calls, the
+     * default), `wallbox` (the Wallbox campaign reports + calls) or `calls`
+     * (Genesys calls only, e.g. Onboarding). Calls come from the shared call
+     * report into every dashboard; see `uploadParse.ts`. */
+    kind: v.optional(v.union(v.literal("sales"), v.literal("wallbox"), v.literal("calls"))),
     // Legacy (old tenant domain routing) — no longer read.
     domain: v.optional(v.string()),
     status: v.optional(
@@ -338,6 +343,8 @@ export const performanceTables = {
         v.literal("call"),
         v.literal("template"),
         v.literal("interactions"),
+        v.literal("wallbox_members"),
+        v.literal("wallbox_opps"),
       ),
     ),
     // The report's own date (YYYY-MM-DD), as detected from its content —
@@ -392,6 +399,55 @@ export const performanceTables = {
   // newer lists. The lock keeps two imports for the same dashboard (two
   // admins, two browser tabs) from running their clear-then-insert steps
   // interleaved; it expires on its own in case an action dies mid-import.
+  // Wallbox campaign (dashboard kind `wallbox`): one row per uploaded report
+  // day and source, aggregated at import time — the reports are full
+  // point-in-time snapshots, so keeping each day's counts gives the
+  // "Entwicklung" history for free. Re-uploading the same day replaces it.
+  // People are kept as an array (not a record keyed by name: Convex field
+  // names must be ASCII, and names have umlauts).
+  performanceWallboxSnapshots: defineTable({
+    companyId: v.id("companies"),
+    reportDate: v.string(),
+    source: v.union(v.literal("members"), v.literal("opps")),
+    campaign: v.optional(v.string()),
+    total: v.number(),
+    /** members: campaign member statuses (base status, "min. 1 EV" split out). */
+    statuses: v.optional(
+      v.array(v.object({ status: v.string(), count: v.number(), ev: v.number() })),
+    ),
+    /** members: "In Progress - <Vorname>" per employee. opps: per Acquired
+     * By (`role: "acquirer"`) and per Opportunity Owner (`role: "owner"`). */
+    people: v.array(
+      v.object({
+        name: v.string(),
+        role: v.union(v.literal("member"), v.literal("acquirer"), v.literal("owner")),
+        employeeId: v.optional(v.id("performanceEmployees")),
+        inProgress: v.optional(v.number()),
+        inProgressEv: v.optional(v.number()),
+        opps: v.optional(v.number()),
+        open: v.optional(v.number()),
+        won: v.optional(v.number()),
+        lost: v.optional(v.number()),
+      }),
+    ),
+    sourceFile: v.string(),
+    uploadedAt: v.number(),
+  }).index("by_company_source_date", ["companyId", "source", "reportDate"]),
+
+  // The newest Wallbox opportunity report row by row, for the lists behind
+  // the tables (which accounts, who owns them). Replaced only by a report
+  // at least as new, like `performanceRawOpps`.
+  performanceWallboxOpps: defineTable({
+    companyId: v.id("companies"),
+    reportDate: v.string(),
+    account: v.string(),
+    owner: v.string(),
+    acquiredBy: v.string(),
+    acquiredByEmployeeId: v.optional(v.id("performanceEmployees")),
+    closed: v.boolean(),
+    won: v.boolean(),
+  }).index("by_company", ["companyId"]),
+
   performanceImportState: defineTable({
     companyId: v.id("companies"),
     lockToken: v.optional(v.string()),
@@ -399,6 +455,7 @@ export const performanceTables = {
     lockedBy: v.optional(v.string()),
     rawLeadsReportDate: v.optional(v.string()),
     rawOppsReportDate: v.optional(v.string()),
+    wallboxOppsReportDate: v.optional(v.string()),
   }).index("by_company", ["companyId"]),
 
   // A single employee/day/field whose parsed duration failed the physical

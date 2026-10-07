@@ -5,6 +5,7 @@ import { type MutationCtx, type QueryCtx } from "../../_generated/server";
 import { type Caller } from "../../lib/caller";
 import { displayName } from "../../lib/users";
 import { countsOnDashboard } from "./reports";
+import { dashboardKind, type DashboardKind } from "./roster";
 
 /**
  * Who may see which Performance dashboard. Access runs entirely through the
@@ -25,6 +26,8 @@ type Ctx = QueryCtx | MutationCtx;
 export interface DashboardAccess {
   companyId: Id<"companies">;
   name: string;
+  /** What the dashboard shows (Salesforce sales, Wallbox campaign, calls only). */
+  kind: DashboardKind;
   /** Admin, or lead of a team/department linked to this dashboard. */
   canViewTeam: boolean;
   /** The viewer's own employee row on this dashboard, if one is linked. */
@@ -93,6 +96,7 @@ export async function loadViewer(ctx: Ctx, caller: Caller): Promise<PerformanceV
     dashboards.push({
       companyId: company._id,
       name: company.name,
+      kind: dashboardKind(company),
       canViewTeam: isAdmin || leads,
       employeeId,
     });

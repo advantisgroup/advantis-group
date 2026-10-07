@@ -10,6 +10,7 @@ import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { userMutation, userQuery } from "../functions";
 import { slugify } from "../lib/text";
 import { displayName } from "../lib/users";
+import { dashboardKind, nameKey, syncTeamRoster } from "./lib/roster";
 import { EXCLUDED_OWNERS } from "./lib/salesforceImport";
 
 const notFound = (message: string) => new ConvexError({ code: "not_found", message });
@@ -23,21 +24,9 @@ async function getDashboard(
   return company;
 }
 
-/** Lowercase, no accents, ß→ss, single spaces, word order ignored — so
- * "Eyßelein, Michael" in a report matches "Michael Eyßelein" in the intranet. */
-export function nameKey(name: string): string {
-  return name
-    .replace(/ß/g, "ss")
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .split(" ")
-    .filter(Boolean)
-    .sort()
-    .join(" ");
-}
+export { nameKey };
+
+const kindValidator = v.union(v.literal("sales"), v.literal("wallbox"), v.literal("calls"));
 
 export const list = userQuery({
   role: "admin",
@@ -63,6 +52,7 @@ export const list = userQuery({
         return {
           companyId: c._id,
           name: c.name,
+          kind: dashboardKind(c),
           teams: (c.teamIds ?? []).map((id) => ({ id, name: teamName.get(id) ?? "?" })),
           departments: (c.departmentIds ?? []).map((id) => ({
             id,
@@ -103,12 +93,13 @@ export const orgOptions = userQuery({
 const orgArgs = {
   teamIds: v.array(v.id("teams")),
   departmentIds: v.array(v.id("departments")),
+  kind: v.optional(kindValidator),
 };
 
 export const create = userMutation({
   role: "admin",
   args: { name: v.string(), ...orgArgs },
-  handler: async (ctx, { name, teamIds, departmentIds }): Promise<Id<"companies">> => {
+  handler: async (ctx, { name, teamIds, departmentIds, kind }): Promise<Id<"companies">> => {
     const trimmed = name.trim();
     if (!trimmed)
       throw new ConvexError({ code: "validation", message: "Bitte einen Namen eingeben." });
@@ -123,26 +114,38 @@ export const create = userMutation({
       slug = `${base}-${i}`;
     }
     const now = Date.now();
-    return await ctx.db.insert("companies", {
+    const companyId = await ctx.db.insert("companies", {
       name: trimmed,
       slug,
       teamIds,
       departmentIds,
+      kind: kind ?? "sales",
       createdAt: now,
       updatedAt: now,
     });
+    const company = await ctx.db.get(companyId);
+    if (company) await syncTeamRoster(ctx, company);
+    return companyId;
   },
 });
 
 export const update = userMutation({
   role: "admin",
   args: { companyId: v.id("companies"), name: v.string(), ...orgArgs },
-  handler: async (ctx, { companyId, name, teamIds, departmentIds }): Promise<void> => {
+  handler: async (ctx, { companyId, name, teamIds, departmentIds, kind }): Promise<void> => {
     await getDashboard(ctx, companyId);
     const trimmed = name.trim();
     if (!trimmed)
       throw new ConvexError({ code: "validation", message: "Bitte einen Namen eingeben." });
-    await ctx.db.patch(companyId, { name: trimmed, teamIds, departmentIds, updatedAt: Date.now() });
+    await ctx.db.patch(companyId, {
+      name: trimmed,
+      teamIds,
+      departmentIds,
+      ...(kind ? { kind } : {}),
+      updatedAt: Date.now(),
+    });
+    const company = await ctx.db.get(companyId);
+    if (company) await syncTeamRoster(ctx, company);
   },
 });
 
