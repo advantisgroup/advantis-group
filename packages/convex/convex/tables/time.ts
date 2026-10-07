@@ -9,6 +9,8 @@ import { v } from "convex/values";
  */
 
 export const timeEntryKindValidator = v.union(v.literal("work"), v.literal("break"));
+/** Which kind of device a clock action came from (as the browser reports it). */
+export const clockDeviceValidator = v.union(v.literal("mobile"), v.literal("desktop"));
 export const timeEntrySourceValidator = v.union(
   v.literal("clock"),
   v.literal("manual"),
@@ -57,6 +59,10 @@ export const timeTables = {
     source: timeEntrySourceValidator,
     status: timeEntryStatusValidator,
     autoClosed: v.optional(v.boolean()),
+    /** Device of the clock action that started / ended a clocked segment —
+     *  phone bookings are marked for the person and the admins. */
+    startDevice: v.optional(clockDeviceValidator),
+    endDevice: v.optional(clockDeviceValidator),
     note: v.optional(v.string()),
     correctionOf: v.optional(v.id("timeEntries")),
     correctionAction: v.optional(correctionActionValidator),

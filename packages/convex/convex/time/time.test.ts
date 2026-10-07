@@ -677,6 +677,26 @@ describe("test mode", () => {
   });
 });
 
+describe("phone bookings", () => {
+  test("the device of each clock action is kept on the segment", async () => {
+    const s = await setup();
+    setNow("2026-10-05", "08:00");
+    await s.alice.mutation(api.time.clock.clockIn, { device: "mobile" });
+    setNow("2026-10-05", "12:00");
+    await s.alice.mutation(api.time.clock.startBreak, { device: "desktop" });
+    setNow("2026-10-05", "12:30");
+    await s.alice.mutation(api.time.clock.endBreak, {});
+    setNow("2026-10-05", "16:30");
+    await s.alice.mutation(api.time.clock.clockOut, { device: "desktop" });
+    const rows = await s.t.run((ctx) => ctx.db.query("timeEntries").collect());
+    const work = rows.find((row) => row.kind === "work");
+    const pause = rows.find((row) => row.kind === "break");
+    expect(work).toMatchObject({ startDevice: "mobile", endDevice: "desktop" });
+    expect(pause?.startDevice).toBe("desktop");
+    expect(pause?.endDevice).toBeUndefined();
+  });
+});
+
 describe("missing break", () => {
   test("clocking out after 6:15 without a break tells the person and the admins", async () => {
     const s = await setup();

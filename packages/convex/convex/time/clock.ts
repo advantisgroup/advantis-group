@@ -1,4 +1,7 @@
+import { v } from "convex/values";
+
 import { userMutation, userQuery } from "../functions";
+import { clockDeviceValidator } from "../tables/time";
 import { assertTimeAccess, assertTimeClock } from "./lib/mode";
 import { berlinDate } from "./lib/berlin";
 import {
@@ -32,9 +35,11 @@ export const state = userQuery({
   },
 });
 
+const deviceArgs = { device: v.optional(clockDeviceValidator) };
+
 export const clockIn = userMutation({
-  args: {},
-  handler: async (ctx) => {
+  args: deviceArgs,
+  handler: async (ctx, { device }) => {
     await assertTimeClock(ctx);
     if (await isTrackingDisabled(ctx, ctx.caller.id)) {
       throw timeError("conflict", "tracking_disabled", "Time tracking is off for this person");
@@ -51,6 +56,7 @@ export const clockIn = userMutation({
       start: now,
       source: "clock" as const,
       status: "active" as const,
+      ...(device ? { startDevice: device } : {}),
       createdBy: ctx.caller.id,
       updatedAt: now,
     };
@@ -68,8 +74,8 @@ export const clockIn = userMutation({
 });
 
 export const startBreak = userMutation({
-  args: {},
-  handler: async (ctx) => {
+  args: deviceArgs,
+  handler: async (ctx, { device }) => {
     await assertTimeClock(ctx);
     const open = await openEntries(ctx, ctx.caller.id);
     if (!open.some((row) => row.kind === "work")) {
@@ -85,6 +91,7 @@ export const startBreak = userMutation({
       start: now,
       source: "clock" as const,
       status: "active" as const,
+      ...(device ? { startDevice: device } : {}),
       createdBy: ctx.caller.id,
       updatedAt: now,
     };
@@ -102,14 +109,15 @@ export const startBreak = userMutation({
 });
 
 export const endBreak = userMutation({
-  args: {},
-  handler: async (ctx) => {
+  args: deviceArgs,
+  handler: async (ctx, { device }) => {
     await assertTimeClock(ctx);
     const open = await openEntries(ctx, ctx.caller.id);
     const pause = open.find((row) => row.kind === "break");
     if (!pause) throw timeError("conflict", "not_on_break", "Not on a break");
     const now = Date.now();
-    await ctx.db.patch(pause._id, { end: now, updatedAt: now });
+    const ended = { end: now, updatedAt: now, ...(device ? { endDevice: device } : {}) };
+    await ctx.db.patch(pause._id, ended);
     await writeAudit(ctx, {
       actorId: ctx.caller.id,
       subjectUserId: ctx.caller.id,
@@ -117,7 +125,7 @@ export const endBreak = userMutation({
       entityId: pause._id,
       action: "breakEnd",
       before: pause,
-      after: { ...pause, end: now, updatedAt: now },
+      after: { ...pause, ...ended },
     });
     await invalidateTotals(ctx, ctx.caller.id, [berlinDate(pause.start)]);
   },
@@ -125,16 +133,17 @@ export const endBreak = userMutation({
 
 /** Ends a running break along with the work segment. */
 export const clockOut = userMutation({
-  args: {},
-  handler: async (ctx) => {
+  args: deviceArgs,
+  handler: async (ctx, { device }) => {
     await assertTimeClock(ctx);
     const open = await openEntries(ctx, ctx.caller.id);
     const work = open.find((row) => row.kind === "work");
     if (!work) throw timeError("conflict", "not_clocked_in", "Not clocked in");
     const now = Date.now();
     await assertDatesOpen(ctx, [berlinDate(work.start)]);
+    const ended = { end: now, updatedAt: now, ...(device ? { endDevice: device } : {}) };
     for (const row of open) {
-      await ctx.db.patch(row._id, { end: now, updatedAt: now });
+      await ctx.db.patch(row._id, ended);
       await writeAudit(ctx, {
         actorId: ctx.caller.id,
         subjectUserId: ctx.caller.id,
@@ -142,7 +151,7 @@ export const clockOut = userMutation({
         entityId: row._id,
         action: row.kind === "work" ? "clockOut" : "breakEnd",
         before: row,
-        after: { ...row, end: now, updatedAt: now },
+        after: { ...row, ...ended },
       });
     }
     await invalidateTotals(ctx, ctx.caller.id, [berlinDate(work.start)]);
