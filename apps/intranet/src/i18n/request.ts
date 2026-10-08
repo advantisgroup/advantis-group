@@ -44,6 +44,7 @@ import deInquiries from "./messages/de/Inquiries.json";
 import deItTickets from "./messages/de/ItTickets.json";
 import deNav from "./messages/de/Nav.json";
 import deNotFound from "./messages/de/NotFound.json";
+import deMail from "./messages/de/Mail.json";
 import deNotifications from "./messages/de/Notifications.json";
 import deOnboarding from "./messages/de/Onboarding.json";
 import dePlayground from "./messages/de/Playground.json";
@@ -102,6 +103,7 @@ import enInquiries from "./messages/en/Inquiries.json";
 import enItTickets from "./messages/en/ItTickets.json";
 import enNav from "./messages/en/Nav.json";
 import enNotFound from "./messages/en/NotFound.json";
+import enMail from "./messages/en/Mail.json";
 import enNotifications from "./messages/en/Notifications.json";
 import enOnboarding from "./messages/en/Onboarding.json";
 import enPlayground from "./messages/en/Playground.json";
@@ -163,6 +165,7 @@ const messagesByLocale = {
     Settings: enSettings,
     Roles: enRoles,
     Integrations: enIntegrations,
+    Mail: enMail,
     Notifications: enNotifications,
     Command: enCommand,
     Performance: enPerformance,
@@ -223,6 +226,7 @@ const messagesByLocale = {
     Settings: deSettings,
     Roles: deRoles,
     Integrations: deIntegrations,
+    Mail: deMail,
     Notifications: deNotifications,
     Command: deCommand,
     Performance: dePerformance,

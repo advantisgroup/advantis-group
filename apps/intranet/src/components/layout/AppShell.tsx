@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 
 import { usePathname, useRouter } from "next/navigation";
 
@@ -28,6 +28,7 @@ import { TimeClockHeaderControl } from "@/components/layout/TimeClockHeaderContr
 import { ClockInPrompt } from "@/components/zeiterfassung/ClockInPrompt";
 import { useFillPagePresent } from "@/components/layout/fill-page";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
+import { MailHeaderButton } from "@/components/mail/MailPanel";
 import {
   PageHeaderActionsSlot,
   PageHeaderBarProvider,
@@ -324,6 +325,13 @@ function AppShellInner({ children }: { children: ReactNode }) {
           {/* Preferences + account live in the top bar on desktop, but move to
               the sidebar footer on mobile to keep the header compact. */}
           <SettingsMenu className="hidden md:inline-flex" />
+          {/* Own IONOS inbox, read-only; renders nothing until mail is on for
+              this person. Suspense because it reads the `?postfach=` deep link. */}
+          <ErrorBoundary fallback={() => null}>
+            <Suspense fallback={null}>
+              <MailHeaderButton />
+            </Suspense>
+          </ErrorBoundary>
           <div className="mx-1 hidden h-6 w-px bg-border/70 md:block" />
           <AccountMenu triggerClassName="hidden md:flex" />
         </header>

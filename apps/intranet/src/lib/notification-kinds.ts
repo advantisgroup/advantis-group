@@ -5,6 +5,7 @@ import {
   Clock3,
   Coffee,
   GraduationCap,
+  Mail,
   Lightbulb,
   Megaphone,
   MessageSquare,
@@ -57,6 +58,7 @@ const VISUALS: Record<string, { icon: LucideIcon; tint: string }> = {
     icon: Smartphone,
     tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
   },
+  mail_received: { icon: Mail, tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300" },
   announcement: { icon: Megaphone, tint: "bg-primary/10 text-primary" },
   upload_request: {
     icon: UploadCloud,
@@ -93,6 +95,12 @@ const VISUALS: Record<string, { icon: LucideIcon; tint: string }> = {
 export const NOTIFICATION_TYPES = Object.keys(VISUALS);
 
 const FALLBACK = { icon: Bell, tint: "bg-muted text-muted-foreground" };
+
+/** Mail notifications open the mail panel over the current page rather than
+ *  sending the person to the dashboard. */
+export function notificationHref(link: string, pathname: string): string {
+  return link.startsWith("/?postfach=") ? `${pathname}${link.slice(1)}` : link;
+}
 
 export function notificationVisual(type: string): { icon: LucideIcon; tint: string } {
   return VISUALS[type] ?? FALLBACK;

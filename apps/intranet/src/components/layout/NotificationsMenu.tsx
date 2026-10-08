@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
@@ -22,7 +22,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSave } from "@/hooks/use-save";
 import { relativeTime } from "@/lib/format";
-import { bucketFor, notificationVisual, type NotificationBucket } from "@/lib/notification-kinds";
+import {
+  bucketFor,
+  notificationHref,
+  notificationVisual,
+  type NotificationBucket,
+} from "@/lib/notification-kinds";
 import { cn } from "@/lib/utils";
 
 const BUCKET_ORDER: NotificationBucket[] = ["today", "yesterday", "earlier"];
@@ -30,6 +35,7 @@ const BUCKET_ORDER: NotificationBucket[] = ["today", "yesterday", "earlier"];
 export function NotificationsMenu() {
   const t = useTranslations("Notifications");
   const router = useRouter();
+  const pathname = usePathname();
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
   const notifications = useQuery(api.notifications.notifications.list, { limit: 20 });
@@ -143,7 +149,7 @@ export function NotificationsMenu() {
                       onClick={() => {
                         void markRead({ notificationId: n._id });
                         setMobileOpen(false);
-                        if (n.link) router.push(n.link);
+                        if (n.link) router.push(notificationHref(n.link, pathname));
                       }}
                       className="min-w-0 flex-1 text-left"
                     >

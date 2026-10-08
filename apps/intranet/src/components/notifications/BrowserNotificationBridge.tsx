@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 
+import { notificationHref } from "@/lib/notification-kinds";
 import { usePushActive } from "@/lib/web-push";
 
 /**
@@ -51,7 +52,7 @@ export function BrowserNotificationBridge() {
       });
       native.onclick = () => {
         window.focus();
-        if (n.link) router.push(n.link);
+        if (n.link) router.push(notificationHref(n.link, window.location.pathname));
         native.close();
       };
     }

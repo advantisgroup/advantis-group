@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -25,7 +25,7 @@ import { FilterPill } from "@/components/ui/filter-pill";
 import { useNow } from "@/hooks/use-now";
 import { useSave } from "@/hooks/use-save";
 import { formatDateTime, relativeTime } from "@/lib/format";
-import { bucketFor, notificationVisual } from "@/lib/notification-kinds";
+import { bucketFor, notificationHref, notificationVisual } from "@/lib/notification-kinds";
 import { cn } from "@/lib/utils";
 
 type Category = "absence" | "announcement" | "uploads" | "chat" | "system";
@@ -214,6 +214,7 @@ export default function NotificationsPage() {
 function NotificationRow({ n }: { n: NotificationDoc }) {
   const t = useTranslations("Notifications");
   const router = useRouter();
+  const pathname = usePathname();
   const locale = useLocale();
   const markRead = useSave(api.notifications.notifications.markRead);
   const markUnread = useSave(api.notifications.notifications.markUnread);
@@ -225,7 +226,7 @@ function NotificationRow({ n }: { n: NotificationDoc }) {
 
   function open() {
     if (!n.readAt) void markRead({ notificationId: n._id });
-    if (n.link) router.push(n.link);
+    if (n.link) router.push(notificationHref(n.link, pathname));
   }
 
   return (
