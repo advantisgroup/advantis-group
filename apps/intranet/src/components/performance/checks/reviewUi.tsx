@@ -49,7 +49,7 @@ export function ReviewCell({
   return (
     <div className="text-right tabular-nums">
       <div className="font-medium">{fmtReviewValue(col, cur)}</div>
-      <div className="flex justify-end gap-1.5 text-[10px] text-muted-foreground">
+      <div className="flex justify-end gap-1.5 whitespace-nowrap text-[10px] text-muted-foreground">
         <span className="inline-flex items-center gap-0.5">
           VM <DeltaBadge value={d(vm)} invert={invert} format={format} />
         </span>
