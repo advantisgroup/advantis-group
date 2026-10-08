@@ -118,6 +118,18 @@ export const mailRoute = new Elysia()
       // Before touching IONOS, so this can't be used to test passwords.
       await caller.convex.query(api.mail.accounts.apiRequireAdmin, {});
       const email = body.email.trim().toLowerCase();
+      // Admin-only screen: name the actual reason, the generic copy hid it.
+      let passwordEnc: string;
+      try {
+        passwordEnc = encryptMailPassword(body.password);
+      } catch (error) {
+        console.error("[mail.set] MAIL_ENC_KEY", error);
+        throw new ApiError(
+          500,
+          "internal",
+          "MAIL_ENC_KEY fehlt oder ist ungültig (32 Byte, base64, nur Production).",
+        );
+      }
       // Checked against IONOS first, so a typo shows up here and not as a
       // silent failure in the next poll.
       try {
@@ -126,16 +138,16 @@ export const mailRoute = new Elysia()
         if (error instanceof MailAuthError) {
           throw Errors.badRequest("IONOS hat Adresse oder Passwort abgelehnt.");
         }
-        throw new ProviderError({
-          provider: "ionos-imap",
-          operation: "login",
-          detail: error instanceof Error ? error.message : String(error),
-        });
+        const reason =
+          (error as { code?: string }).code ??
+          (error instanceof Error ? error.message : String(error));
+        console.error("[mail.set] IONOS login", reason, error);
+        throw new ApiError(502, "upstream", `IONOS nicht erreichbar (${reason}).`);
       }
       await caller.convex.mutation(api.mail.accounts.apiSetAccount, {
         userId: params.userId as Id<"users">,
         email,
-        passwordEnc: encryptMailPassword(body.password),
+        passwordEnc,
       });
       return { ok: true };
     },

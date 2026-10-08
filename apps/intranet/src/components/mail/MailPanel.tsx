@@ -694,11 +694,20 @@ function AccountDialog({ row, onClose }: { row: AdminRow; onClose: () => void })
       toast.success(t("admin.saved"));
       onClose();
     } catch (err) {
-      setError(
-        err instanceof ApiResponseError && err.code === "bad_request"
-          ? t("admin.rejected")
-          : t("loadFailed"),
-      );
+      if (err instanceof ApiResponseError && err.code === "bad_request") {
+        setError(t("admin.rejected"));
+      } else {
+        // Admin-only dialog: the cause is what's needed to fix it.
+        const cause =
+          err instanceof ApiResponseError
+            ? [err.serverMessage ?? err.code, err.requestId && `ID ${err.requestId}`]
+                .filter(Boolean)
+                .join(" · ")
+            : err instanceof Error
+              ? err.message
+              : String(err);
+        setError(`${t("admin.failed")}: ${cause}`);
+      }
     } finally {
       setSaving(false);
     }

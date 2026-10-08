@@ -49,6 +49,7 @@
     "removeTitle": "Postfach von {name} trennen?",
     "removeBody": "Das gespeicherte Passwort wird gelöscht. Das IONOS-Postfach selbst bleibt unverändert.",
     "removed": "Postfach getrennt",
-    "search": "Person suchen"
+    "search": "Person suchen",
+    "failed": "Speichern fehlgeschlagen"
   }
 }

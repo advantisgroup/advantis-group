@@ -49,6 +49,7 @@
     "removeTitle": "Disconnect {name}'s mailbox?",
     "removeBody": "The stored password is deleted. The IONOS mailbox itself stays unchanged.",
     "removed": "Mailbox disconnected",
-    "search": "Search people"
+    "search": "Search people",
+    "failed": "Saving failed"
   }
 }

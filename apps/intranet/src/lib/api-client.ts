@@ -15,6 +15,8 @@ interface ApiResult<T> {
 export class ApiResponseError extends Error {
   readonly code?: ErrorCode;
   readonly requestId?: string;
+  /** The server's own wording; only for admin screens that show the cause. */
+  readonly serverMessage?: string;
 
   constructor(error: unknown) {
     const parsed = parseError(error);
@@ -22,6 +24,7 @@ export class ApiResponseError extends Error {
     this.name = "ApiResponseError";
     this.code = parsed.code;
     this.requestId = parsed.requestId;
+    this.serverMessage = parsed.message;
   }
 }
 
