@@ -186,6 +186,7 @@ import type * as people_tourProgress from "../people/tourProgress.js";
 import type * as people_users from "../people/users.js";
 import type * as performance_access from "../performance/access.js";
 import type * as performance_auth from "../performance/auth.js";
+import type * as performance_checks from "../performance/checks.js";
 import type * as performance_companies from "../performance/companies.js";
 import type * as performance_dashboards from "../performance/dashboards.js";
 import type * as performance_export from "../performance/export.js";
@@ -194,6 +195,7 @@ import type * as performance_legacy from "../performance/legacy.js";
 import type * as performance_lib_access from "../performance/lib/access.js";
 import type * as performance_lib_aggregatedTemplate from "../performance/lib/aggregatedTemplate.js";
 import type * as performance_lib_callImport from "../performance/lib/callImport.js";
+import type * as performance_lib_checkKpis from "../performance/lib/checkKpis.js";
 import type * as performance_lib_interactionImport from "../performance/lib/interactionImport.js";
 import type * as performance_lib_kpi from "../performance/lib/kpi.js";
 import type * as performance_lib_reports from "../performance/lib/reports.js";
@@ -204,6 +206,7 @@ import type * as performance_lib_wallboxImport from "../performance/lib/wallboxI
 import type * as performance_lib_workdays from "../performance/lib/workdays.js";
 import type * as performance_lib_xlsxZip from "../performance/lib/xlsxZip.js";
 import type * as performance_queries from "../performance/queries.js";
+import type * as performance_reviews from "../performance/reviews.js";
 import type * as performance_topics from "../performance/topics.js";
 import type * as performance_uploadParse from "../performance/uploadParse.js";
 import type * as performance_wallbox from "../performance/wallbox.js";
@@ -477,6 +480,7 @@ declare const fullApi: ApiFromModules<{
   "people/users": typeof people_users;
   "performance/access": typeof performance_access;
   "performance/auth": typeof performance_auth;
+  "performance/checks": typeof performance_checks;
   "performance/companies": typeof performance_companies;
   "performance/dashboards": typeof performance_dashboards;
   "performance/export": typeof performance_export;
@@ -485,6 +489,7 @@ declare const fullApi: ApiFromModules<{
   "performance/lib/access": typeof performance_lib_access;
   "performance/lib/aggregatedTemplate": typeof performance_lib_aggregatedTemplate;
   "performance/lib/callImport": typeof performance_lib_callImport;
+  "performance/lib/checkKpis": typeof performance_lib_checkKpis;
   "performance/lib/interactionImport": typeof performance_lib_interactionImport;
   "performance/lib/kpi": typeof performance_lib_kpi;
   "performance/lib/reports": typeof performance_lib_reports;
@@ -495,6 +500,7 @@ declare const fullApi: ApiFromModules<{
   "performance/lib/workdays": typeof performance_lib_workdays;
   "performance/lib/xlsxZip": typeof performance_lib_xlsxZip;
   "performance/queries": typeof performance_queries;
+  "performance/reviews": typeof performance_reviews;
   "performance/topics": typeof performance_topics;
   "performance/uploadParse": typeof performance_uploadParse;
   "performance/wallbox": typeof performance_wallbox;

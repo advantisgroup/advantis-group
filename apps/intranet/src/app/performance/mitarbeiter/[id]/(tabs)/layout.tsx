@@ -10,8 +10,8 @@ import { useQuery } from "convex/react";
 import {
   Activity,
   BatteryCharging,
+  ClipboardCheck,
   LayoutDashboard,
-  ListTodo,
   Phone,
   TrendingUp,
 } from "lucide-react";
@@ -111,14 +111,15 @@ function EmployeeTopSection({
     if (!interactionDays) return null;
     return <LastDayInteractions days={interactionDays} locale={locale} />;
   }
-  if (kind !== "sales") return null;
+  if (kind !== "sales" || activeTab === "checks") return null;
   return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }
 
 /** Which tabs an employee page has, by the kind of their dashboard: Wallbox
- * and calls-only people have no Salesforce numbers, topics or badges. */
+ * and calls-only people have no Salesforce numbers, checks or badges. The
+ * Checks tab replaced "Topics" (10/2026) and is for team leads/admins only. */
 const TABS_BY_KIND: Record<PerformanceDashboardKind, readonly string[]> = {
-  sales: ["ueberblick", "entwicklung", "calls", "topics", "interaktionen"],
+  sales: ["ueberblick", "entwicklung", "calls", "checks", "interaktionen"],
   wallbox: ["wallbox", "calls", "interaktionen"],
   calls: ["calls", "interaktionen"],
 };
@@ -145,7 +146,15 @@ function EmployeeChrome({
     me?.dashboards.find((d) => d.employeeId === employeeId)?.kind ??
     dashboard?.kind ??
     "sales";
-  const offTab = !TABS_BY_KIND[kind].includes(activeTab);
+  // Team lead of this employee's dashboard, or admin: sees the Checks tab.
+  const canLead =
+    !!me &&
+    (me.isAdmin ||
+      me.dashboards.some(
+        (d) => d.canViewTeam && (!data || d.companyId === data.employee.companyId),
+      ));
+  const tabsForViewer = TABS_BY_KIND[kind].filter((tab) => tab !== "checks" || canLead);
+  const offTab = !tabsForViewer.includes(activeTab);
   useEffect(() => {
     if (data && offTab) router.replace(employeeHome(employeeId, data.employee.kind));
   }, [data, offTab, employeeId, router]);
@@ -181,11 +190,10 @@ function EmployeeChrome({
       icon: Phone,
     },
     {
-      value: "topics",
-      href: `/performance/mitarbeiter/${employeeId}/topics`,
-      label: t("tabTopics"),
-      icon: ListTodo,
-      count: data?.topics.length,
+      value: "checks",
+      href: `/performance/mitarbeiter/${employeeId}/checks`,
+      label: t("checks.tabChecks"),
+      icon: ClipboardCheck,
     },
     {
       value: "interaktionen",
@@ -194,10 +202,10 @@ function EmployeeChrome({
       icon: Activity,
     },
   ];
-  const tabs = allTabs.filter((tab) => TABS_BY_KIND[kind].includes(tab.value));
+  const tabs = allTabs.filter((tab) => tabsForViewer.includes(tab.value));
   // Entwicklung shows every month, Interaktionen pages by day, Wallbox is
   // report snapshots.
-  const usesMonth = !["entwicklung", "interaktionen", "wallbox"].includes(activeTab);
+  const usesMonth = !["entwicklung", "interaktionen", "wallbox", "checks"].includes(activeTab);
 
   return (
     <div className="min-h-screen bg-muted/20">

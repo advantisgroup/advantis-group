@@ -397,6 +397,88 @@ export const performanceTables = {
     // (e.g. the blank template).
     .index("by_company_contentHash", ["companyId", "contentHash"]),
 
+  // Employee checks (monthly, required) and KPI checks (optional) a team
+  // lead or admin fills in with an employee — the KPI figures are frozen
+  // into the check when it's created, so later re-imports don't change what
+  // was discussed. Rating per KPI row is a traffic light.
+  performanceChecks: defineTable({
+    companyId: v.id("companies"),
+    employeeId: v.id("performanceEmployees"),
+    type: v.union(v.literal("employee"), v.literal("kpi")),
+    /** Day of the conversation (ISO). */
+    date: v.string(),
+    kpis: v.object({
+      asOf: v.string(),
+      ym: v.string(),
+      week: v.object({ start: v.string(), end: v.string(), missingDays: v.array(v.string()) }),
+      rows: v.array(
+        v.object({
+          key: v.string(),
+          month: v.union(v.number(), v.null()),
+          vm: v.union(v.number(), v.null()),
+          vj: v.union(v.number(), v.null()),
+          week: v.union(v.number(), v.null()),
+        }),
+      ),
+      reasons: v.object({
+        month: v.array(v.object({ reason: v.string(), count: v.number() })),
+        week: v.array(v.object({ reason: v.string(), count: v.number() })),
+      }),
+    }),
+    ratings: v.array(
+      v.object({
+        key: v.string(),
+        rating: v.optional(v.union(v.literal("green"), v.literal("yellow"), v.literal("red"))),
+        note: v.optional(v.string()),
+      }),
+    ),
+    /** Employee check: up to three "Top" and three "Go for" topics. */
+    tops: v.array(v.string()),
+    goFors: v.array(v.string()),
+    note: v.optional(v.string()),
+    createdBy: v.id("users"),
+    createdByName: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_employee_date", ["employeeId", "date"])
+    .index("by_company_date", ["companyId", "date"]),
+
+  // Everything someone has to do by a date: agreements from employee checks,
+  // measures per KPI from KPI checks, and measures from a business review.
+  // Open ones show in Monitoring, done ones move to "Erledigte Aufgaben".
+  performanceActions: defineTable({
+    companyId: v.id("companies"),
+    /** Unset for a business-review measure about the whole team. */
+    employeeId: v.optional(v.id("performanceEmployees")),
+    source: v.union(v.literal("agreement"), v.literal("kpi"), v.literal("review")),
+    checkId: v.optional(v.id("performanceChecks")),
+    reviewId: v.optional(v.id("performanceReviews")),
+    kpiKey: v.optional(v.string()),
+    text: v.string(),
+    dueDate: v.optional(v.string()),
+    doneAt: v.optional(v.number()),
+    doneByName: v.optional(v.string()),
+    createdAt: v.number(),
+    createdByName: v.string(),
+  })
+    .index("by_company", ["companyId"])
+    .index("by_employee", ["employeeId"])
+    .index("by_check", ["checkId"])
+    .index("by_review", ["reviewId"]),
+
+  // Monthly business review of a dashboard: the month's KPI table is built
+  // live; this row keeps what was said (notes) — its measures live in
+  // `performanceActions` (`source: "review"`).
+  performanceReviews: defineTable({
+    companyId: v.id("companies"),
+    ym: v.string(),
+    notes: v.string(),
+    createdByName: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_company_ym", ["companyId", "ym"]),
+
   // Large report uploads (> ~4 MB, Vercel's request-body cap): apps/api
   // hands the browser a Convex upload URL together with a ticket, the
   // browser uploads straight to storage, and apps/api claims the ticket

@@ -63,7 +63,7 @@ import {
 
 /** The current month in Berlin. Inside a cached Convex query this only
  * moves on when the query re-runs, which is fine for a month boundary. */
-function currentYm(): string {
+export function currentYm(): string {
   return toISODate(todayBerlin()).slice(0, 7);
 }
 
@@ -131,7 +131,11 @@ interface Reference {
   cutoff: Cutoff | undefined;
 }
 
-function cutoffFor(ym: string, refYm: string, asOf: MonthSummary["asOf"]): Cutoff | undefined {
+export function cutoffFor(
+  ym: string,
+  refYm: string,
+  asOf: MonthSummary["asOf"],
+): Cutoff | undefined {
   const sales = comparisonCutoff(ym, refYm, asOf.sales);
   const calls = comparisonCutoff(ym, refYm, asOf.calls ?? asOf.sales);
   return sales || calls ? { sales, calls } : undefined;

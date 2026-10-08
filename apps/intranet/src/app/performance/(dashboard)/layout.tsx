@@ -6,7 +6,16 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { Activity, Download, LayoutDashboard, Phone, TrendingUp, Users } from "lucide-react";
+import {
+  Activity,
+  ClipboardList,
+  Download,
+  LayoutDashboard,
+  Phone,
+  Presentation,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { FilterableBarChart } from "@/components/charts/FilterableBarChart";
@@ -138,6 +147,8 @@ function DashboardTopSection({
       </Card>
     );
   }
+  // Monitoring and the business review have their own content only.
+  if (activeTab === "monitoring" || activeTab === "business-review") return null;
   // The Entwicklung tab already shows a closed-won trend chart itself
   // (over its own trailing-3-month window) further down the page — no
   // top-of-page chart needed here too.
@@ -253,6 +264,23 @@ function DashboardChrome({
       icon: TrendingUp,
     },
   ];
+  // Checks, Monitoring and the business review are about the Salesforce KPIs.
+  if (kind === "sales") {
+    allTabs.push(
+      {
+        value: "monitoring",
+        href: "/performance/monitoring",
+        label: t("checks.tabMonitoring"),
+        icon: ClipboardList,
+      },
+      {
+        value: "business-review",
+        href: "/performance/business-review",
+        label: t("checks.tabReview"),
+        icon: Presentation,
+      },
+    );
+  }
   const tabs = kind === "calls" ? allTabs.filter((tab) => CALLS_ONLY_TABS.has(tab.value)) : allTabs;
 
   // Entwicklung always shows the last 3 months and Interaktionen has its own
@@ -260,7 +288,7 @@ function DashboardChrome({
   // Überblick and Entwicklung are report snapshots, not months.
   const usesMonth =
     kind === "sales"
-      ? activeTab !== "entwicklung" && activeTab !== "interaktionen"
+      ? !["entwicklung", "interaktionen", "monitoring", "business-review"].includes(activeTab)
       : activeTab === "calls" || activeTab === "team";
 
   return (
