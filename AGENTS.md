@@ -296,6 +296,31 @@ Until cutover it is locked for non-admins by `apps/intranet/src/lib/maintenance.
 - `convex/_generated/api.d.ts` lists the new modules by hand (codegen needs a
   deployment) — keep it in sync when adding a file under `convex/time/`.
 
+## IONOS mailbox panel (header mail button)
+
+Each person's own IONOS inbox, read-only, in a right-hand panel opened from
+the header (`components/mail/MailPanel.tsx`). Admins-only until the Convex env
+var `MAIL_MODE` is `live` (`mail/lib/access.ts`).
+
+- An admin stores address + password centrally (panel → "Postfächer
+  verwalten" → `PUT /mail/accounts/:userId`). apps/api checks the login with
+  IONOS, encrypts the password with `MAIL_ENC_KEY` and only then hands it to
+  `mail.accounts.apiSetAccount`. Convex never sees it in plain text.
+- Reads (`/mail/inbox`, `/mail/messages/:uid`, attachments) only ever open the
+  **caller's own** mailbox (`apiMyAccount`) — admins included; setting a
+  password never lets anyone else read that inbox. Nothing is stored: every
+  open is a live IMAP read with EXAMINE/BODY.PEEK, so IONOS read state,
+  folders and messages stay untouched.
+- Mail HTML renders in a sandboxed `srcdoc` iframe (no scripts, opaque
+  origin, CSP blocking remote images until "load images").
+- `crons.ts` runs `mail.poll.run` every two minutes → `/internal/mail/poll`
+  → `mail.poll.record`, which updates the unread badge and writes
+  `mail_received` notifications (deep link `/?postfach=<uid>`, opened over the
+  current page via `notificationHref`). A first poll after (re)setting a
+  password only records a baseline. A rejected login alerts admins once.
+- Every mail route refuses on Vercel Preview (`assertMailAvailable`), and
+  `MAIL_ENC_KEY` must only be set for Production.
+
 ## Removed: ActivityTrack
 
 ActivityTrack (`/activity`, the desktop agent's `/ingest`, Genesys/Clockodo

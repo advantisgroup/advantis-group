@@ -25,7 +25,7 @@ flowchart TD
   end
 
   subgraph external["External services"]
-    services["Anthropic · Microsoft Graph · Clockodo<br/>Resend · Upstash · Clerk"]
+    services["Anthropic · Microsoft Graph · Clockodo<br/>Resend · Upstash · Clerk · IONOS IMAP"]
   end
 
   employee --> intranet
@@ -58,11 +58,11 @@ flowchart TD
 - **Browser → apps/api.** Anything that needs a secret Convex can't or
   shouldn't hold: AI (Anthropic), OneDrive (Graph), Clockodo absences and
   clock entries, passkeys/TOTP/step-up, the applicant vault, Performance
-  uploads. apps/api resolves the Clerk session, then calls Convex's `api*`
+  uploads, the read-only IONOS mailbox (IMAP). apps/api resolves the Clerk session, then calls Convex's `api*`
   functions with `CONVEX_SERVER_KEY` (checked by `assertServerKey`).
 - **Convex → apps/api.** The other direction, via `lib/internalApi.ts`:
   transactional and broadcast email (apps/api owns Resend), OneDrive
-  subscription renewal.
+  subscription renewal, the two-minute IONOS inbox poll.
 - **Webhooks land on apps/api** (Clerk, Graph, Resend)
   and are relayed into Convex with the server key. Clerk, Resend and Graph
   deliveries are also recorded in `integrationHealth` for the admin panel.
@@ -78,6 +78,10 @@ flowchart TD
   whitepaper requests through Resend directly.
 - **Absences are never mirrored.** apps/api fetches them live from
   Clockodo on every read (cached briefly in Upstash).
+- **Mail is never mirrored either.** `mailAccounts` holds only the IONOS
+  address, the password encrypted by apps/api (`MAIL_ENC_KEY`) and where the
+  inbox stood at the last poll; apps/api reads messages live over IMAP
+  (EXAMINE + BODY.PEEK, so nothing in the mailbox changes).
 
 ## Where code lives
 
