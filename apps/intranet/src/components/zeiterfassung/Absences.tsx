@@ -33,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { AbsenceOverlaps } from "@/components/zeiterfassung/Overlaps";
 import {
   ABSENCE_TYPES,
   AbsenceStatusBadge,
@@ -285,6 +286,12 @@ function AbsenceDialog({
   const single = startDate === endDate;
   const valid = !!startDate && !!endDate && endDate >= startDate;
   const instant = type === "sick" || direct;
+  const overlaps = useQuery(
+    api.time.absences.overlaps,
+    initialType !== null && valid && type !== "sick"
+      ? { from: startDate, to: endDate, userId }
+      : "skip",
+  );
 
   async function submit() {
     if (!valid) return;
@@ -383,6 +390,7 @@ function AbsenceDialog({
             </label>
           )}
         </div>
+        {type !== "sick" && valid && <AbsenceOverlaps rows={overlaps} />}
         <div>
           <FieldLabel htmlFor="absence-note">{t("absences.note")}</FieldLabel>
           <Textarea

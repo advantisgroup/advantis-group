@@ -449,5 +449,13 @@
     "earlyTitle": "Du bist schon freigeschaltet",
     "earlyDescription": "Du stempelst ab sofort hier – nicht mehr in Clockodo. Für alle anderen startet die Zeiterfassung am {date}.",
     "earlyDescriptionNoDate": "Du stempelst ab sofort hier – nicht mehr in Clockodo. Für alle anderen startet die Zeiterfassung bald."
+  },
+  "overlaps": {
+    "title": "{count, plural, one {Im Zeitraum ist auch # Person weg} other {Im Zeitraum sind auch # Personen weg}}",
+    "sameTeamCount": "{count, plural, one {# aus dem gleichen Team} other {# aus dem gleichen Team}}",
+    "lead": "Teamleitung",
+    "sameTeam": "gleiches Team",
+    "pending": "beantragt",
+    "none": "In diesem Zeitraum ist sonst niemand weg."
   }
 }

@@ -45,6 +45,20 @@ import {
   emptyDraft,
   isoDay,
 } from "@/components/calendar/EventDialog";
+import {
+  APPOINTMENT_ACCENT,
+  APPOINTMENT_CHIP,
+  APPOINTMENT_DOT,
+  type Appointment,
+  AppointmentChip,
+  AppointmentDetails,
+  type AppointmentDraft,
+  AppointmentDialog,
+  AppointmentInbox,
+  counterpart,
+  draftFromAppointment,
+  newAppointmentDraft,
+} from "@/components/calendar/Appointments";
 import { DaysOffDialog } from "@/components/calendar/DaysOffDialog";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { PersonLink } from "@/components/profile/PersonLink";
@@ -137,12 +151,13 @@ type DetailState =
   | { kind: "day"; day: string }
   | { kind: "event"; id: Id<"events"> }
   | { kind: "absence"; id: string }
+  | { kind: "appointment"; id: Id<"appointments">; fallback?: Appointment }
   | null;
 
 type CalendarView = "month" | "week" | "list";
 
-type FilterKind = "event" | (typeof ABSENCE_TYPES)[number];
-const ALL_KINDS: FilterKind[] = ["event", ...ABSENCE_TYPES];
+type FilterKind = "event" | "appointment" | (typeof ABSENCE_TYPES)[number];
+const ALL_KINDS: FilterKind[] = ["event", "appointment", ...ABSENCE_TYPES];
 
 export default function CalendarPage() {
   const t = useTranslations("Calendar");
@@ -172,6 +187,8 @@ export default function CalendarPage() {
     if (prefs?.defaultCalendarView) setView(prefs.defaultCalendarView);
   }, [prefs]);
   const [eventDraft, setEventDraft] = useState<EventDraft | null>(null);
+  const [apptDraft, setApptDraft] = useState<AppointmentDraft | null>(null);
+  const contacts = useQuery(api.appointments.contacts);
   const [hiddenKinds, setHiddenKinds] = useState<Set<FilterKind>>(new Set());
   const [deptFilter, setDeptFilter] = useState("all");
   const [onlyMyAbsences, setOnlyMyAbsences] = useState(false);
@@ -232,6 +249,10 @@ export default function CalendarPage() {
     end: rangeEnd.getTime(),
   });
   const absences = useAbsencesCalendar(isoDay(rangeStart), isoDay(rangeEnd));
+  const appointments = useQuery(api.appointments.listForRange, {
+    start: rangeStart.getTime(),
+    end: rangeEnd.getTime() + 86399999,
+  });
   const daysOff = useDaysOff(isoDay(rangeStart), isoDay(rangeEnd));
 
   const goPrev = useCallback(() => {
@@ -245,7 +266,7 @@ export default function CalendarPage() {
   // open or the focus sits in a form control.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (detail !== null || eventDraft !== null) return;
+      if (detail !== null || eventDraft !== null || apptDraft !== null) return;
       const target = e.target as HTMLElement | null;
       if (target?.closest("input, textarea, select, [contenteditable]")) return;
       if (e.key === "ArrowLeft") goPrev();
@@ -254,7 +275,7 @@ export default function CalendarPage() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [detail, eventDraft, goPrev, goNext]);
+  }, [detail, eventDraft, apptDraft, goPrev, goNext]);
 
   const weekdays = useMemo(() => {
     const monday = startOfWeek(new Date(), { weekStartsOn });
@@ -290,6 +311,29 @@ export default function CalendarPage() {
     });
   }, [absences, hiddenKinds, onlyMyAbsences, deptFilter, me._id]);
 
+  const filteredAppointments = useMemo(
+    () => (hiddenKinds.has("appointment") ? [] : (appointments ?? [])),
+    [appointments, hiddenKinds],
+  );
+
+  function kindLabel(kind: FilterKind) {
+    if (kind === "event") return t("event");
+    if (kind === "appointment") return t("appt.legend");
+    return tAbs(kind);
+  }
+  function kindDot(kind: FilterKind) {
+    if (kind === "event") return "bg-primary";
+    if (kind === "appointment") return APPOINTMENT_DOT;
+    return ABSENCE_DOTS[kind];
+  }
+  function openAppointment(a: Appointment) {
+    setDetail({ kind: "appointment", id: a._id, fallback: a });
+  }
+
+  const detailAppointment =
+    detail?.kind === "appointment"
+      ? (appointments?.find((a) => a._id === detail.id) ?? detail.fallback)
+      : undefined;
   const detailEvent =
     detail?.kind === "event" ? events?.find((e) => e._id === detail.id) : undefined;
   const detailAbsence =
@@ -297,6 +341,7 @@ export default function CalendarPage() {
   const detailDay = detail?.kind === "day" ? detail.day : null;
   const dayEntries = detailDay
     ? {
+        appointments: filteredAppointments.filter((a) => isoDay(new Date(a.start)) === detailDay),
         events: (filteredEvents ?? []).filter(
           (e) => eventDay(e, e.start) <= detailDay && detailDay <= eventDay(e, e.end),
         ),
@@ -425,6 +470,12 @@ export default function CalendarPage() {
   function daysOffOn(day: Date): DayOff[] {
     return daysOff?.byDay.get(isoDay(day)) ?? [];
   }
+  function appointmentsOn(day: Date): Appointment[] {
+    const iso = isoDay(day);
+    return filteredAppointments
+      .filter((a) => isoDay(new Date(a.start)) === iso)
+      .sort((a, b) => a.start - b.start);
+  }
   function absencesOn(day: Date): CalAbsence[] {
     const iso = isoDay(day);
     return filteredAbsences?.filter((a) => a.startDate <= iso && iso <= a.endDate) ?? [];
@@ -463,10 +514,17 @@ export default function CalendarPage() {
     .map((day) => ({
       day,
       dayEvents: eventsOn(day),
+      dayAppointments: appointmentsOn(day),
       dayAbsences: absencesOn(day),
       dayOff: daysOffOn(day),
     }))
-    .filter((d) => d.dayEvents.length > 0 || d.dayAbsences.length > 0 || d.dayOff.length > 0);
+    .filter(
+      (d) =>
+        d.dayEvents.length > 0 ||
+        d.dayAppointments.length > 0 ||
+        d.dayAbsences.length > 0 ||
+        d.dayOff.length > 0,
+    );
 
   function toggleKind(kind: FilterKind) {
     setHiddenKinds((prev) => {
@@ -580,6 +638,20 @@ export default function CalendarPage() {
                   label: t("daysOffManage"),
                   icon: CalendarOff,
                   onClick: () => setDaysOffOpen(true),
+                  variant: "outline" as const,
+                },
+              ]
+            : []),
+          ...(contacts?.isLead || (contacts?.recipients.length ?? 0) > 0
+            ? [
+                {
+                  key: "add-appointment",
+                  label: contacts?.isLead ? t("appt.bookButton") : t("appt.requestButton"),
+                  icon: CalendarClock,
+                  onClick: () =>
+                    setApptDraft(
+                      newAppointmentDraft(contacts?.isLead ? "book" : "request", isoDay(cursor)),
+                    ),
                   variant: "outline" as const,
                 },
               ]
@@ -708,15 +780,8 @@ export default function CalendarPage() {
           label={t("type")}
           options={ALL_KINDS.map((kind) => ({
             value: kind,
-            label: kind === "event" ? t("event") : tAbs(kind),
-            leading: (
-              <span
-                className={cn(
-                  "size-2 shrink-0 rounded-full",
-                  kind === "event" ? "bg-primary" : ABSENCE_DOTS[kind],
-                )}
-              />
-            ),
+            label: kindLabel(kind),
+            leading: <span className={cn("size-2 shrink-0 rounded-full", kindDot(kind))} />,
           }))}
           selected={
             hiddenKinds.size === 0 ? [] : ALL_KINDS.filter((kind) => !hiddenKinds.has(kind))
@@ -745,13 +810,8 @@ export default function CalendarPage() {
         <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
           {ALL_KINDS.filter((kind) => !hiddenKinds.has(kind)).map((kind) => (
             <span key={kind} className="inline-flex items-center gap-1.5">
-              <span
-                className={cn(
-                  "size-2 rounded-full",
-                  kind === "event" ? "bg-primary" : ABSENCE_DOTS[kind],
-                )}
-              />
-              {kind === "event" ? t("event") : tAbs(kind)}
+              <span className={cn("size-2 rounded-full", kindDot(kind))} />
+              {kindLabel(kind)}
             </span>
           ))}
         </div>
@@ -798,11 +858,11 @@ export default function CalendarPage() {
                   <span
                     className={cn(
                       "size-2.5 shrink-0 rounded-full",
-                      kind === "event" ? "bg-primary" : ABSENCE_DOTS[kind],
+                      kindDot(kind),
                       hidden && "opacity-40",
                     )}
                   />
-                  {kind === "event" ? t("event") : tAbs(kind)}
+                  {kindLabel(kind)}
                 </button>
               );
             })}
@@ -829,6 +889,8 @@ export default function CalendarPage() {
         )}
       </ResponsiveDialog>
 
+      <AppointmentInbox onOpen={openAppointment} />
+
       {/* Month grid (leading column: ISO week numbers) */}
       {view === "month" && (
         <div className="grid grid-cols-7 overflow-hidden rounded-xl border border-border/70 bg-card text-sm md:grid-cols-[1.75rem_repeat(7,minmax(0,1fr))] shadow-none">
@@ -845,14 +907,20 @@ export default function CalendarPage() {
           ))}
           {gridDays.map((day, i) => {
             const dayEvents = eventsOn(day);
+            const dayAppointments = appointmentsOn(day);
             const dayAbsences = absencesOn(day);
             const dayOff = daysOffOn(day);
             const inMonth = isSameMonth(day, cursor);
             const isToday = isSameDay(day, new Date());
-            const shownEvents = dayEvents.slice(0, 3);
-            const absenceSlots = Math.max(0, 3 - shownEvents.length);
+            const shownAppointments = dayAppointments.slice(0, 2);
+            const shownEvents = dayEvents.slice(0, 3 - shownAppointments.length);
+            const absenceSlots = Math.max(0, 3 - shownAppointments.length - shownEvents.length);
             const aggregateAbsences = dayAbsences.length > absenceSlots && dayAbsences.length > 1;
-            const eventOverflow = dayEvents.length - shownEvents.length;
+            const eventOverflow =
+              dayEvents.length -
+              shownEvents.length +
+              dayAppointments.length -
+              shownAppointments.length;
             return (
               <Fragment key={day.toISOString()}>
                 {i % 7 === 0 && (
@@ -880,6 +948,9 @@ export default function CalendarPage() {
                   </div>
                   <DayOffLabels days={dayOff} className="hidden md:block" />
                   <div className="flex flex-wrap gap-1 md:hidden">
+                    {dayAppointments.slice(0, 2).map((a) => (
+                      <span key={a._id} className={cn("size-1.5 rounded-full", APPOINTMENT_DOT)} />
+                    ))}
                     {dayEvents.slice(0, 2).map((event) => (
                       <span key={event._id} className="size-1.5 rounded-full bg-primary" />
                     ))}
@@ -891,6 +962,13 @@ export default function CalendarPage() {
                     ))}
                   </div>
                   <div className="hidden space-y-1 md:block">
+                    {shownAppointments.map((a) => (
+                      <AppointmentChip
+                        key={a._id}
+                        appointment={a}
+                        onOpen={() => openAppointment(a)}
+                      />
+                    ))}
                     {shownEvents.map((e) => (
                       <EventChip key={e._id} e={e} day={day} />
                     ))}
@@ -922,6 +1000,7 @@ export default function CalendarPage() {
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-7">
           {gridDays.map((day) => {
             const dayEvents = eventsOn(day);
+            const dayAppointments = appointmentsOn(day);
             const dayAbsences = absencesOn(day);
             const dayOff = daysOffOn(day);
             const isToday = isSameDay(day, new Date());
@@ -952,12 +1031,22 @@ export default function CalendarPage() {
                 </button>
                 <div className="flex-1 space-y-1 p-1.5">
                   <DayOffLabels days={dayOff} />
-                  {dayEvents.length === 0 && dayAbsences.length === 0 && dayOff.length === 0 ? (
+                  {dayEvents.length === 0 &&
+                  dayAppointments.length === 0 &&
+                  dayAbsences.length === 0 &&
+                  dayOff.length === 0 ? (
                     <p className="px-1 py-2 text-[11px] text-muted-foreground/70">
                       {t("noEntries")}
                     </p>
                   ) : (
                     <>
+                      {dayAppointments.map((a) => (
+                        <AppointmentChip
+                          key={a._id}
+                          appointment={a}
+                          onOpen={() => openAppointment(a)}
+                        />
+                      ))}
                       {dayEvents.map((e) => (
                         <EventChip key={e._id} e={e} day={day} />
                       ))}
@@ -982,7 +1071,7 @@ export default function CalendarPage() {
               <p className="text-sm text-muted-foreground">{t("noUpcoming")}</p>
             </div>
           ) : (
-            agendaDays.map(({ day, dayEvents, dayAbsences, dayOff }) => (
+            agendaDays.map(({ day, dayEvents, dayAppointments, dayAbsences, dayOff }) => (
               <div
                 key={day.toISOString()}
                 className="flex gap-4 border-b border-border/60 px-4 py-3 last:border-b-0"
@@ -1015,6 +1104,35 @@ export default function CalendarPage() {
                         {d.kind === "holiday" ? t("publicHoliday") : t("officeClosed")}
                       </span>
                     </div>
+                  ))}
+                  {dayAppointments.map((a) => (
+                    <button
+                      key={a._id}
+                      onClick={() => openAppointment(a)}
+                      className={cn(
+                        "flex w-full items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2 text-left transition-colors hover:bg-accent",
+                        a.status === "requested" && "border-dashed border-violet-500/50",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "flex size-7 shrink-0 items-center justify-center rounded-md",
+                          APPOINTMENT_CHIP,
+                        )}
+                      >
+                        <CalendarClock className="size-3.5" />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        {a.title}
+                        <span className="font-normal text-muted-foreground">
+                          {" "}
+                          · {counterpart(a)}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                        {formatTime(a.start, locale)}
+                      </span>
+                    </button>
                   ))}
                   {dayEvents.map((e) => (
                     <button
@@ -1063,15 +1181,18 @@ export default function CalendarPage() {
         onOpenChange={(o) => !o && setDetail(null)}
         title={
           detailEvent?.title ??
+          detailAppointment?.title ??
           detailAbsence?.userName ??
           (detailDay ? longDate(detailDay) : t("title"))
         }
         accent={
           detailEvent
             ? eventAccent(detailEvent)
-            : detailAbsence
-              ? ABSENCE_ACCENT[detailAbsence.type]
-              : undefined
+            : detailAppointment
+              ? APPOINTMENT_ACCENT
+              : detailAbsence
+                ? ABSENCE_ACCENT[detailAbsence.type]
+                : undefined
         }
         closeLabel={tc("close")}
         header={
@@ -1089,6 +1210,21 @@ export default function CalendarPage() {
                   {detailEvent.title}
                 </h2>
                 <p className="text-sm text-muted-foreground">{eventWhen(detailEvent)}</p>
+              </>
+            )}
+            {detailAppointment && (
+              <>
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <span
+                    className="size-2 rounded-full"
+                    style={{ background: APPOINTMENT_ACCENT }}
+                  />
+                  {t("appt.legend")}
+                </span>
+                <h2 className="text-lg font-semibold leading-snug tracking-tight">
+                  {detailAppointment.title}
+                </h2>
+                <p className="text-sm text-muted-foreground">{counterpart(detailAppointment)}</p>
               </>
             )}
             {detailAbsence && (
@@ -1193,6 +1329,19 @@ export default function CalendarPage() {
           </>
         )}
 
+        {detailAppointment && (
+          <AppointmentDetails
+            appointment={detailAppointment}
+            myId={me._id as Id<"users">}
+            isAdmin={isAdmin}
+            onEdit={() => {
+              setDetail(null);
+              setApptDraft(draftFromAppointment(detailAppointment));
+            }}
+            onDone={() => setDetail(null)}
+          />
+        )}
+
         {detailAbsence && (
           <SidePanelSection title={t("details")}>
             <SidePanelProperties
@@ -1209,6 +1358,32 @@ export default function CalendarPage() {
 
         {detailDay && dayEntries && (
           <>
+            {dayEntries.appointments.length > 0 && (
+              <SidePanelSection title={t("appt.section")}>
+                <div className="-mx-2 space-y-0.5">
+                  {dayEntries.appointments.map((a) => (
+                    <button
+                      key={a._id}
+                      type="button"
+                      onClick={() => openAppointment(a)}
+                      className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
+                    >
+                      <span
+                        className="h-8 w-1 shrink-0 rounded-full"
+                        style={{ background: APPOINTMENT_ACCENT }}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{a.title}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {`${formatTime(a.start, locale)} – ${formatTime(a.end, locale)}`} ·{" "}
+                          {counterpart(a)}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </SidePanelSection>
+            )}
             <SidePanelSection
               title={t("events")}
               action={
@@ -1284,6 +1459,7 @@ export default function CalendarPage() {
       </SidePanel>
 
       <EventDialog draft={eventDraft} onOpenChange={(open) => !open && setEventDraft(null)} />
+      <AppointmentDialog draft={apptDraft} onOpenChange={(open) => !open && setApptDraft(null)} />
     </div>
   );
 }

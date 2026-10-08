@@ -449,5 +449,13 @@
     "earlyTitle": "You're already enabled",
     "earlyDescription": "You clock in here from now on – not in Clockodo anymore. For everyone else time tracking starts on {date}.",
     "earlyDescriptionNoDate": "You clock in here from now on – not in Clockodo anymore. For everyone else time tracking starts soon."
+  },
+  "overlaps": {
+    "title": "{count, plural, one {# other person is away then} other {# other people are away then}}",
+    "sameTeamCount": "{count} from the same team",
+    "lead": "Team lead",
+    "sameTeam": "same team",
+    "pending": "requested",
+    "none": "Nobody else is away in this period."
   }
 }

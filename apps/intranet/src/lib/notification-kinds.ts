@@ -2,6 +2,7 @@ import {
   AtSign,
   Bell,
   CalendarCheck,
+  CalendarClock,
   Clock3,
   Coffee,
   GraduationCap,
@@ -44,6 +45,10 @@ const VISUALS: Record<string, { icon: LucideIcon; tint: string }> = {
   },
   absence_request: { icon: Plane, tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300" },
   absence_decision: { icon: CalendarCheck, tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300" },
+  appointment: {
+    icon: CalendarClock,
+    tint: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
+  },
   time_auto_closed: {
     icon: Clock3,
     tint: "bg-amber-500/15 text-amber-600 dark:text-amber-300",

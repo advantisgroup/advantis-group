@@ -76,5 +76,9 @@
     "earlier": "Früher"
   },
   "weeklyDigestTitle": "Wöchentliche Zusammenfassung per Mail",
-  "weeklyDigestHint": "Jeden Montag: was letzte Woche angekündigt, gepostet und ins Wiki gestellt wurde, offene Richtlinien und die Termine der nächsten Woche. Nur wenn es etwas Neues gibt."
+  "weeklyDigestHint": "Jeden Montag: was letzte Woche angekündigt, gepostet und ins Wiki gestellt wurde, offene Richtlinien und die Termine der nächsten Woche. Nur wenn es etwas Neues gibt.",
+  "cat_appointment": "Termine",
+  "type_appointment": "Termine und Terminanfragen",
+  "desc_appointment": "Neue, geänderte und abgesagte Termine sowie Anfragen und Antworten dazu.",
+  "section_appointmentHint": "Termine mit deiner Teamleitung oder deinem Team."
 }

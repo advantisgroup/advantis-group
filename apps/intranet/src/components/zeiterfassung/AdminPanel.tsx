@@ -46,6 +46,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { AbsenceOverlaps } from "@/components/zeiterfassung/Overlaps";
 import {
   AbsenceTypeLabel,
   Chip,
@@ -303,6 +304,9 @@ function Approvals({ data }: { data: ApprovalsData | undefined }) {
                     </span>
                   </p>
                   {row.note && <p className="text-xs text-muted-foreground">{row.note}</p>}
+                  <div className="pt-1">
+                    <AbsenceOverlaps rows={row.overlaps} compact />
+                  </div>
                 </div>
                 {actions({ kind: "absence", id: row._id })}
               </li>

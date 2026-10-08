@@ -76,5 +76,9 @@
     "earlier": "Earlier"
   },
   "weeklyDigestTitle": "Weekly summary email",
-  "weeklyDigestHint": "Every Monday: what was announced, posted and added to the wiki last week, policies waiting for you, and next week's events. Only sent when there's something new."
+  "weeklyDigestHint": "Every Monday: what was announced, posted and added to the wiki last week, policies waiting for you, and next week's events. Only sent when there's something new.",
+  "cat_appointment": "Appointments",
+  "type_appointment": "Appointments and requests",
+  "desc_appointment": "New, changed and cancelled appointments, plus requests and answers.",
+  "section_appointmentHint": "Appointments with your team lead or your team."
 }
