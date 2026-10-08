@@ -1,6 +1,4 @@
 {
-  "customerCare": "Customer Care",
-  "inbound": "Inbound",
-  "outbound": "Outbound",
-  "dashboard": "Dashboard"
+  "sales": "Sales",
+  "wallboxPilot": "Wallbox-Pilot"
 }

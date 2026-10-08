@@ -512,6 +512,22 @@ export const setTeams = userMutation({
     // De-dupe and drop blanks.
     const clean = [...new Set(teams.map((t) => t.trim()).filter(Boolean))];
     await ctx.db.patch(userId, { teams: clean });
+    // Keep the real memberships (userTeams) in step with the tags, so a team
+    // ticked on the profile also counts for team leads, Performance and the
+    // calendar. Archived teams are left alone.
+    const [allTeams, memberships] = await Promise.all([
+      ctx.db.query("teams").collect(),
+      ctx.db
+        .query("userTeams")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .collect(),
+    ]);
+    for (const team of allTeams.filter((row) => !row.archivedAt)) {
+      const member = memberships.find((row) => row.teamId === team._id);
+      const wanted = clean.includes(team.slug);
+      if (wanted && !member) await ctx.db.insert("userTeams", { userId, teamId: team._id });
+      if (!wanted && member) await ctx.db.delete(member._id);
+    }
     return { ok: true };
   },
 });

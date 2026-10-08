@@ -172,3 +172,33 @@ describe("accepting an invite", () => {
     expect(user).toMatchObject({ firstName: "Dalia", lastName: "Dohlen", role: "employee" });
   });
 });
+
+describe("team tags on the profile", () => {
+  test("ticking a team also adds the membership; unticking removes it", async () => {
+    const t = setup();
+    const adminId = await seedUser(t, "admin", "admin");
+    const bobId = await seedUser(t, "bob");
+    const teamId = await t.run((ctx) =>
+      ctx.db.insert("teams", {
+        name: "Sales",
+        slug: "customer-care",
+        createdAt: Date.now(),
+        createdBy: adminId,
+      }),
+    );
+    const admin = t.withIdentity({ subject: "admin" });
+    const memberships = () =>
+      t.run((ctx) =>
+        ctx.db
+          .query("userTeams")
+          .withIndex("by_user", (q) => q.eq("userId", bobId))
+          .collect(),
+      );
+
+    await admin.mutation(api.people.users.setTeams, { userId: bobId, teams: ["customer-care"] });
+    expect((await memberships()).map((m) => m.teamId)).toEqual([teamId]);
+
+    await admin.mutation(api.people.users.setTeams, { userId: bobId, teams: [] });
+    expect(await memberships()).toEqual([]);
+  });
+});
