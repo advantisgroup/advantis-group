@@ -250,6 +250,9 @@ const CALL_FIELDS: (keyof CallRow & keyof MetricFields)[] = [
   "loginSec",
 ];
 
+/** Salesforce report exports end at this many rows. */
+const SALESFORCE_EXPORT_LIMIT = 100_000;
+
 export interface FlaggedRowInput extends DurationFlag {
   employeeName: string;
   reportDate: string;
@@ -629,6 +632,16 @@ async function processReport(
     );
   }
   if (sf) {
+    // Salesforce stops an export at 100,000 rows without saying so. A cut
+    // report misses the newest leads/opps and would overwrite today's
+    // numbers with too-low ones (10/2026: "KI_Lead_Reportall" with every
+    // lead since 2025) — refuse it instead.
+    if (sf.rows.length >= SALESFORCE_EXPORT_LIMIT) {
+      throw new ConvexError({
+        code: "validation",
+        message: `Der Report hat ${sf.rows.length.toLocaleString("de-DE")} Zeilen und ist damit am Export-Limit von Salesforce (100.000) abgeschnitten – die neuesten ${sf.kind === "lead" ? "Leads" : "Opportunities"} fehlen. Bitte den Report in Salesforce filtern (z. B. Erstelldatum: aktueller und letzter Monat ODER Status offen) und neu exportieren.`,
+      });
+    }
     const reportDate = toISODate(sf.reportDate);
     const sfBase = { ...base, reportDate, sourceRowCount: sf.rows.length };
     if (sf.kind === "lead") {
