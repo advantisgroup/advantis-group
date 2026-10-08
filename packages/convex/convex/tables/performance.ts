@@ -28,6 +28,10 @@ export const performanceTables = {
      * (Genesys calls only, e.g. Onboarding). Calls come from the shared call
      * report into every dashboard; see `uploadParse.ts`. */
     kind: v.optional(v.union(v.literal("sales"), v.literal("wallbox"), v.literal("calls"))),
+    /** Only report names linked to an intranet person count (team tables,
+     * totals, badges). Hides people from partner firms (e.g. S2B) who show
+     * up in the shared Salesforce/Genesys exports. Unset = on. */
+    teamOnly: v.optional(v.boolean()),
     // Legacy (old tenant domain routing) — no longer read.
     domain: v.optional(v.string()),
     status: v.optional(
@@ -392,6 +396,19 @@ export const performanceTables = {
     // companies could upload files with identical bytes/hash by coincidence
     // (e.g. the blank template).
     .index("by_company_contentHash", ["companyId", "contentHash"]),
+
+  // Large report uploads (> ~4 MB, Vercel's request-body cap): apps/api
+  // hands the browser a Convex upload URL together with a ticket, the
+  // browser uploads straight to storage, and apps/api claims the ticket
+  // with the resulting storageId. The ticket ties that storageId to the
+  // admin and a short time window, so a client can't point the import at
+  // an arbitrary stored file.
+  performanceUploadTickets: defineTable({
+    clerkUserId: v.string(),
+    companyId: v.id("companies"),
+    createdAt: v.number(),
+    usedAt: v.optional(v.number()),
+  }),
 
   // "Ansicht als": an admin looking at Performance as another intranet user
   // would see it (one row per admin; deleted when they stop). Read-only

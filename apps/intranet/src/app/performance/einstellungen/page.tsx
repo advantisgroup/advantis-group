@@ -72,6 +72,7 @@ function DashboardDialog({
   const confirm = useConfirm();
   const [name, setName] = useState(dashboard?.name ?? "");
   const [kind, setKind] = useState<DashboardKind>(dashboard?.kind ?? "sales");
+  const [teamOnly, setTeamOnly] = useState<boolean>(dashboard?.teamOnly ?? true);
   const [teamIds, setTeamIds] = useState<Set<string>>(
     () => new Set(dashboard?.teams.map((x) => x.id) ?? []),
   );
@@ -93,6 +94,7 @@ function DashboardDialog({
       const payload = {
         name,
         kind,
+        teamOnly,
         teamIds: [...teamIds] as Id<"teams">[],
         departmentIds: [...departmentIds] as Id<"departments">[],
       };
@@ -201,6 +203,19 @@ function DashboardDialog({
           {group(t("settingsDepartments"), options?.departments, departmentIds, (id) =>
             setDepartmentIds((s) => toggle(s, id)),
           )}
+          <label className="flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-sm">
+            <Checkbox
+              className="mt-0.5"
+              checked={teamOnly}
+              onCheckedChange={(v) => setTeamOnly(v === true)}
+            />
+            <span>
+              <span className="font-medium">{t("settingsTeamOnly")}</span>
+              <span className="block text-xs text-muted-foreground">
+                {t("settingsTeamOnlyHint")}
+              </span>
+            </span>
+          </label>
         </div>
         <DialogFooter>
           {dashboard && (

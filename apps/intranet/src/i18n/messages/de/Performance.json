@@ -333,7 +333,7 @@
   "dailyStatusMissingLatest": "Für {date} fehlt noch: {kinds}",
   "dailyStatusPresent": "vorhanden",
   "dailyStatusMissing": "fehlt",
-  "uploadTooLarge": "Die Datei ist größer als 4 MB und kann nicht hochgeladen werden. Bitte den Export auf weniger Spalten oder einen kürzeren Zeitraum beschränken oder als .xlsx speichern (deutlich kleiner als .csv).",
+  "uploadTooLarge": "Die Datei ist größer als 25 MB und kann nicht hochgeladen werden. Bitte den Export auf weniger Spalten oder einen kürzeren Zeitraum beschränken oder als .xlsx speichern (deutlich kleiner als .csv).",
   "dashboardWonPerWorkdayEmployee": "Won je Arbeitstag",
   "dashboardWonPerWorkdayEmployeeSubtitle": "Tagesdurchschnitt · {elapsed} Arbeitstage",
   "compareFootnoteRunning": "VM/VJ: Der laufende Monat wird mit Vormonat und Vorjahresmonat zum selben Werktag verglichen (Werktag {workday}, also bis {date}). FC1 wird mit dem Endergebnis des Vergleichsmonats verglichen.",
@@ -368,6 +368,8 @@
   "tabWallbox": "Wallbox",
   "settingsKindLabel": "Art",
   "settingsKindHint": "Bei Wallbox und Nur Calls kommen die Personen automatisch aus den verknüpften Intranet-Teams.",
+  "settingsTeamOnly": "Nur Mitarbeiter aus dem Team anzeigen",
+  "settingsTeamOnlyHint": "Zählt nur Namen, die unten einer Person im Intranet zugeordnet sind. Andere aus dem Report (z. B. S2B) erscheinen nicht in Team-Tabellen und Summen.",
   "settingsKind": {
     "sales": "Sales – Salesforce + Calls",
     "wallbox": "Wallbox – Kampagnen-Reports + Calls",

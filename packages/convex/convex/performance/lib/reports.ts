@@ -41,6 +41,24 @@ export function countsOnDashboard(
   return e.active && !EXCLUDED_OWNERS.has(e.name.toLowerCase());
 }
 
+/** Whether the dashboard counts only report names linked to an intranet
+ * person (`companies.teamOnly`, on unless switched off). */
+export function teamOnly(company: Pick<Doc<"companies">, "teamOnly">): boolean {
+  return company.teamOnly !== false;
+}
+
+/** The employees linked to an active intranet account — everyone else in a
+ * shared export (partner firms like S2B, people who left) is not ours. */
+export async function linkedToIntranet<T extends Pick<Doc<"performanceEmployees">, "userId">>(
+  ctx: Ctx,
+  employees: T[],
+): Promise<T[]> {
+  const users = await Promise.all(
+    employees.map((e) => (e.userId ? ctx.db.get(e.userId) : Promise.resolve(null))),
+  );
+  return employees.filter((_, i) => users[i]?.status === "active");
+}
+
 /** The dashboard's counted employees — the one place that decides who shows
  * up in team tables, totals, badges, marks and drill-downs. `ownerKeys`
  * holds the lowercased names for the tables keyed by the Salesforce owner
@@ -73,11 +91,15 @@ export async function loadRoster(
 ): Promise<Roster> {
   const hit = cache?.roster.get(companyId);
   if (hit) return hit;
-  const employees = await ctx.db
-    .query("performanceEmployees")
-    .withIndex("by_company", (q) => q.eq("companyId", companyId))
-    .collect();
-  const counted = employees.filter(countsOnDashboard);
+  const [company, employees] = await Promise.all([
+    ctx.db.get(companyId),
+    ctx.db
+      .query("performanceEmployees")
+      .withIndex("by_company", (q) => q.eq("companyId", companyId))
+      .collect(),
+  ]);
+  let counted = employees.filter(countsOnDashboard);
+  if (company && teamOnly(company)) counted = await linkedToIntranet(ctx, counted);
   const roster: Roster = {
     names: new Map(counted.map((e) => [e._id, e.name])),
     ownerKeys: new Set(counted.map((e) => e.name.trim().toLowerCase())),

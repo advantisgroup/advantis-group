@@ -333,7 +333,7 @@
   "dailyStatusMissingLatest": "Still missing for {date}: {kinds}",
   "dailyStatusPresent": "uploaded",
   "dailyStatusMissing": "missing",
-  "uploadTooLarge": "The file is larger than 4 MB and can't be uploaded. Limit the export to fewer columns or a shorter period, or save it as .xlsx (much smaller than .csv).",
+  "uploadTooLarge": "The file is larger than 25 MB and can't be uploaded. Limit the export to fewer columns or a shorter period, or save it as .xlsx (much smaller than .csv).",
   "dashboardWonPerWorkdayEmployee": "Won per worked day",
   "dashboardWonPerWorkdayEmployeeSubtitle": "Daily average · {elapsed} worked days",
   "compareFootnoteRunning": "VM/VJ: the running month is compared with last month and the same month last year at the same workday (workday {workday}, i.e. up to {date}). FC1 is compared with the comparison month's final result.",
@@ -368,6 +368,8 @@
   "tabWallbox": "Wallbox",
   "settingsKindLabel": "Type",
   "settingsKindHint": "For Wallbox and calls-only dashboards the people come from the linked intranet teams automatically.",
+  "settingsTeamOnly": "Only show team members",
+  "settingsTeamOnlyHint": "Counts only names linked to an intranet person below. Others in the report (e.g. S2B) are left out of team tables and totals.",
   "settingsKind": {
     "sales": "Sales – Salesforce + calls",
     "wallbox": "Wallbox – campaign reports + calls",

@@ -30,12 +30,26 @@ async function setup() {
       createdAt: now,
       updatedAt: now,
     });
-    const employee = (name: string, active = true) =>
-      ctx.db.insert("performanceEmployees", { name, active, companyId });
-    const anna = await employee("Anna Müller");
-    const ben = await employee("Ben Becker");
+    // Report names behind our own people are linked to an intranet
+    // account; a partner's (S2B) agent in the same export is not.
+    const intranetUser = (clerkUserId: string, firstName: string, lastName: string) =>
+      ctx.db.insert("users", {
+        clerkUserId,
+        email: `${clerkUserId}@advantisgroup.de`,
+        firstName,
+        lastName,
+        role: "employee",
+        status: "active",
+        external: false,
+        createdAt: now,
+      });
+    const employee = (name: string, active = true, userId?: Id<"users">) =>
+      ctx.db.insert("performanceEmployees", { name, active, companyId, userId });
+    const anna = await employee("Anna Müller", true, await intranetUser("anna", "Anna", "Müller"));
+    const ben = await employee("Ben Becker", true, await intranetUser("ben", "Ben", "Becker"));
     const hidden = await employee("Test Konto", false);
-    return { admin, companyId, anna, ben, hidden };
+    const partner = await employee("Paula Partner");
+    return { admin, companyId, anna, ben, hidden, partner };
   });
 
   const report = (
@@ -73,6 +87,27 @@ describe("teamDashboard", () => {
     expect(data.total.callsToday).toBe(50);
     expect(data.total.hitrate).toBe(30);
     expect(Object.keys(data.badgeCounts)).not.toContain(ids.hidden);
+  });
+
+  test("only people linked to the intranet count, unless the dashboard says otherwise", async () => {
+    const { t, ids, report, admin } = await setup();
+    await report(ids.anna, "2026-08-31", { wonMonth: 4, callsToday: 20 });
+    await report(ids.partner, "2026-08-31", { wonMonth: 9, callsToday: 40 });
+
+    const teamOnly = await admin.query(api.performance.queries.teamDashboard, {
+      companyId: ids.companyId,
+      ym: "2026-08",
+    });
+    expect(teamOnly.snaps.map((s) => s.name)).toEqual(["Anna Müller"]);
+    expect(teamOnly.total.wonMonth).toBe(4);
+
+    await t.run((ctx) => ctx.db.patch(ids.companyId, { teamOnly: false }));
+    const everyone = await admin.query(api.performance.queries.teamDashboard, {
+      companyId: ids.companyId,
+      ym: "2026-08",
+    });
+    expect(everyone.snaps.map((s) => s.name).sort()).toEqual(["Anna Müller", "Paula Partner"]);
+    expect(everyone.total.wonMonth).toBe(13);
   });
 
   test("a running month is compared with last month as of the same workday", async () => {

@@ -53,6 +53,7 @@ export const list = userQuery({
           companyId: c._id,
           name: c.name,
           kind: dashboardKind(c),
+          teamOnly: c.teamOnly !== false,
           teams: (c.teamIds ?? []).map((id) => ({ id, name: teamName.get(id) ?? "?" })),
           departments: (c.departmentIds ?? []).map((id) => ({
             id,
@@ -94,12 +95,17 @@ const orgArgs = {
   teamIds: v.array(v.id("teams")),
   departmentIds: v.array(v.id("departments")),
   kind: v.optional(kindValidator),
+  /** Count only names linked to an intranet person (default on). */
+  teamOnly: v.optional(v.boolean()),
 };
 
 export const create = userMutation({
   role: "admin",
   args: { name: v.string(), ...orgArgs },
-  handler: async (ctx, { name, teamIds, departmentIds, kind }): Promise<Id<"companies">> => {
+  handler: async (
+    ctx,
+    { name, teamIds, departmentIds, kind, teamOnly },
+  ): Promise<Id<"companies">> => {
     const trimmed = name.trim();
     if (!trimmed)
       throw new ConvexError({ code: "validation", message: "Bitte einen Namen eingeben." });
@@ -120,6 +126,7 @@ export const create = userMutation({
       teamIds,
       departmentIds,
       kind: kind ?? "sales",
+      teamOnly: teamOnly ?? true,
       createdAt: now,
       updatedAt: now,
     });
@@ -132,7 +139,10 @@ export const create = userMutation({
 export const update = userMutation({
   role: "admin",
   args: { companyId: v.id("companies"), name: v.string(), ...orgArgs },
-  handler: async (ctx, { companyId, name, teamIds, departmentIds, kind }): Promise<void> => {
+  handler: async (
+    ctx,
+    { companyId, name, teamIds, departmentIds, kind, teamOnly },
+  ): Promise<void> => {
     await getDashboard(ctx, companyId);
     const trimmed = name.trim();
     if (!trimmed)
@@ -142,6 +152,7 @@ export const update = userMutation({
       teamIds,
       departmentIds,
       ...(kind ? { kind } : {}),
+      ...(teamOnly !== undefined ? { teamOnly } : {}),
       updatedAt: Date.now(),
     });
     const company = await ctx.db.get(companyId);

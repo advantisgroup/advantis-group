@@ -41,6 +41,75 @@ export const apiGenerateUploadUrl = serverMutation({
   },
 });
 
+/** How long an upload ticket stays valid, and the largest report accepted
+ * through the direct-to-storage path. */
+export const UPLOAD_TICKET_TTL_MS = 30 * 60 * 1000;
+export const MAX_DIRECT_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+/** Step 1 of a large upload: a Convex upload URL plus a ticket for it. The
+ * caller (apps/api) has already checked the admin's upload access. */
+export const apiCreateUploadTicket = serverMutation({
+  args: { clerkUserId: v.string(), companyId: v.id("companies") },
+  handler: async (ctx, { clerkUserId, companyId }) => {
+    // Old tickets of this person are no use any more.
+    const now = Date.now();
+    const stale = await ctx.db
+      .query("performanceUploadTickets")
+      .filter((q) => q.lt(q.field("createdAt"), now - UPLOAD_TICKET_TTL_MS))
+      .take(50);
+    for (const t of stale) await ctx.db.delete(t._id);
+    const ticketId = await ctx.db.insert("performanceUploadTickets", {
+      clerkUserId,
+      companyId,
+      createdAt: now,
+    });
+    return { ticketId, uploadUrl: await ctx.storage.generateUploadUrl() };
+  },
+});
+
+/** Step 2: binds the uploaded file to the ticket (same admin and dashboard,
+ * unused, not expired, file stored after the ticket was issued and not
+ * already part of an upload) and returns where apps/api can read it. */
+export const apiClaimUploadTicket = serverMutation({
+  args: {
+    ticketId: v.id("performanceUploadTickets"),
+    clerkUserId: v.string(),
+    companyId: v.id("companies"),
+    storageId: v.id("_storage"),
+  },
+  handler: async (ctx, { ticketId, clerkUserId, companyId, storageId }) => {
+    const reject = (message: string) => new ConvexError({ code: "bad_request", message });
+    const ticket = await ctx.db.get(ticketId);
+    const now = Date.now();
+    if (
+      !ticket ||
+      ticket.usedAt !== undefined ||
+      ticket.clerkUserId !== clerkUserId ||
+      ticket.companyId !== companyId ||
+      now - ticket.createdAt > UPLOAD_TICKET_TTL_MS
+    ) {
+      throw reject("Upload abgelaufen. Bitte die Datei noch einmal hochladen.");
+    }
+    const file = await ctx.db.system.get(storageId);
+    if (!file || file._creationTime < ticket.createdAt) {
+      throw reject("Datei nicht gefunden. Bitte noch einmal hochladen.");
+    }
+    const inUse = await ctx.db
+      .query("performanceUploadLog")
+      .filter((q) => q.eq(q.field("storageId"), storageId))
+      .first();
+    if (inUse) throw reject("Datei nicht gefunden. Bitte noch einmal hochladen.");
+    if (file.size > MAX_DIRECT_UPLOAD_BYTES) {
+      await ctx.storage.delete(storageId);
+      throw reject("Die Datei ist größer als 25 MB. Bitte den Export kürzer fassen.");
+    }
+    await ctx.db.patch(ticketId, { usedAt: now });
+    const url = await ctx.storage.getUrl(storageId);
+    if (!url) throw reject("Datei nicht gefunden. Bitte noch einmal hochladen.");
+    return { url, size: file.size, contentType: file.contentType ?? null };
+  },
+});
+
 /** Discards a staged file — used when the report turned out to have no
  * activity to import (see `apiImportReport`'s `{status: "empty"}`), so an
  * empty day's file doesn't linger in storage forever. */
