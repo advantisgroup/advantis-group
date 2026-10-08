@@ -200,6 +200,13 @@ if (process.env.DISABLE_CRONS !== "true") {
     internal.time.jobs.vacationYear,
     {},
   );
+  // IONOS has no push; two minutes keeps "new mail" timely without hammering it.
+  crons.interval(
+    "mail: check IONOS inboxes for new mail",
+    { minutes: 2 },
+    internal.mail.poll.run,
+    {},
+  );
 }
 
 export default crons;
