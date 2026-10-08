@@ -14,6 +14,7 @@ import { clockodoAbsencesRoute } from "./routes/clockodo-absences.js";
 import { dailyBriefRoute } from "./routes/daily-brief.js";
 import { inquiryAiRoute } from "./routes/inquiry-ai.js";
 import { clockodoEntriesRoute } from "./routes/clockodo-entries.js";
+import { mailRoute } from "./routes/mail.js";
 import { navigateRoute } from "./routes/navigate.js";
 import { onedriveRoute } from "./routes/onedrive.js";
 import { performanceRoute } from "./routes/performance.js";
@@ -27,6 +28,7 @@ import { wikiFormatAssistRoute } from "./routes/wiki-format-assist.js";
 import { wikiImportRoute } from "./routes/wiki-import.js";
 import { internalBackupsRoute } from "./routes/internal/backups.js";
 import { internalDigestRoute } from "./routes/internal/digest.js";
+import { internalMailRoute } from "./routes/internal/mail.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
 import { internalOnedriveRoute } from "./routes/internal/onedrive.js";
 import { internalPushRoute } from "./routes/internal/push.js";
@@ -81,6 +83,7 @@ export const app = new Elysia()
   .use(internalBackupsRoute)
   .use(internalNotificationsRoute)
   .use(internalDigestRoute)
+  .use(internalMailRoute)
   .use(internalOnedriveRoute)
   .use(internalPushRoute)
   .use(internalUpdatesRoute)
@@ -88,6 +91,7 @@ export const app = new Elysia()
   .use(askRoute)
   .use(dailyBriefRoute)
   .use(inquiryAiRoute)
+  .use(mailRoute)
   .use(navigateRoute)
   .use(clockodoAbsencesRoute)
   .use(clockodoEntriesRoute)
