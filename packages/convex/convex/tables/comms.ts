@@ -37,6 +37,44 @@ export const commsTables = {
     .index("by_personal_rich_date", ["personalForUserId", "sourceRichDateId"])
     .index("by_deletedAt", ["deletedAt"]),
 
+  // --- Calendar: appointments ----------------------------------------------
+  /**
+   * One-to-one (or small) appointments between a lead and employees: a team
+   * lead or admin books one ("confirmed" straight away), or an employee asks
+   * their lead or an admin for one ("requested" until answered). Only the
+   * people involved ever see it.
+   */
+  appointments: defineTable({
+    title: v.string(),
+    note: v.optional(v.string()),
+    location: v.optional(v.string()),
+    start: v.number(), // epoch ms
+    end: v.number(),
+    /** The lead or admin the appointment is with. */
+    organizerId: v.id("users"),
+    attendeeIds: v.array(v.id("users")),
+    status: v.union(
+      v.literal("requested"),
+      v.literal("confirmed"),
+      v.literal("declined"),
+      v.literal("cancelled"),
+    ),
+    /** Set when an employee asked for it. */
+    requestedBy: v.optional(v.id("users")),
+    /** Why a request was declined or the appointment cancelled. */
+    decisionNote: v.optional(v.string()),
+    /** Attendees who can't make a confirmed appointment, with their reason. */
+    declines: v.optional(
+      v.array(v.object({ userId: v.id("users"), reason: v.string(), at: v.number() })),
+    ),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_start", ["start"])
+    .index("by_organizer_status", ["organizerId", "status"])
+    .index("by_requester", ["requestedBy"]),
+
   // --- Announcements -------------------------------------------------------
   announcements: defineTable({
     title: v.string(),

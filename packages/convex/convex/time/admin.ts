@@ -24,6 +24,7 @@ import {
   vacationFor,
   writeAudit,
 } from "./lib/store";
+import { overlappingAbsences } from "./lib/overlaps";
 
 /** Admin area of Zeiterfassung: everyone's numbers, approvals and settings. */
 
@@ -231,10 +232,17 @@ export const approvals = userQuery({
           loadHolidays(ctx, row.startDate, row.endDate),
         ]);
         const user = users.get(row.userId);
+        const overlaps = await overlappingAbsences(ctx, {
+          subject: row.userId,
+          from: row.startDate,
+          to: row.endDate,
+          adminView: true,
+        });
         return {
           ...row,
           days: absenceWorkingDays(row, schedules, holidays),
           person: user ? person(user) : null,
+          overlaps,
         };
       }),
     );

@@ -449,6 +449,60 @@ describe("absences", () => {
     });
     expect(forBob.absences.map((row) => row.type).sort()).toEqual(["sick", "vacation"]);
   });
+
+  test("a request shows who else is away then; colleagues see vacation only", async () => {
+    const s = await setup();
+    setNow("2026-10-06", "09:00");
+    const team = await s.t.run(async (ctx) => {
+      const teamId = await ctx.db.insert("teams", {
+        name: "Sales",
+        slug: "sales",
+        reportsToUserId: s.ids.bob,
+        createdAt: Date.now(),
+        createdBy: s.ids.admin,
+      });
+      await ctx.db.insert("userTeams", { userId: s.ids.alice, teamId });
+      return teamId;
+    });
+    expect(team).toBeTruthy();
+    for (const type of ["vacation", "sick"] as const) {
+      await s.bob.mutation(api.time.absences.request, {
+        type,
+        startDate: type === "vacation" ? "2026-10-19" : "2026-10-22",
+        endDate: type === "vacation" ? "2026-10-21" : "2026-10-22",
+        halfDayStart: false,
+        halfDayEnd: false,
+      });
+    }
+
+    const forAlice = await s.alice.query(api.time.absences.overlaps, {
+      from: "2026-10-20",
+      to: "2026-10-23",
+    });
+    expect(forAlice).toHaveLength(1);
+    expect(forAlice[0]).toMatchObject({
+      name: "Bob",
+      type: "vacation",
+      status: "pending",
+      sameTeam: true,
+      lead: true,
+      teams: ["Sales"],
+    });
+    expect(
+      await s.alice.query(api.time.absences.overlaps, { from: "2026-10-22", to: "2026-10-23" }),
+    ).toEqual([]);
+
+    await s.alice.mutation(api.time.absences.request, {
+      type: "vacation",
+      startDate: "2026-10-21",
+      endDate: "2026-10-22",
+      halfDayStart: false,
+      halfDayEnd: false,
+    });
+    const approvals = await s.admin.query(api.time.admin.approvals, {});
+    const alices = approvals.absences.find((row) => row.userId === s.ids.alice)!;
+    expect(alices.overlaps.map((row) => row.type).sort()).toEqual(["sick", "vacation"]);
+  });
 });
 
 describe("18:00 rule", () => {

@@ -6,6 +6,7 @@ import { createNotification } from "../lib/notify";
 import { timeAbsenceTypeValidator } from "../tables/time";
 import { addDays, isIsoDate } from "./lib/berlin";
 import { absenceWorkingDays } from "./lib/days";
+import { overlappingAbsences } from "./lib/overlaps";
 import {
   assertDatesOpen,
   datesOfRange,
@@ -275,5 +276,20 @@ export const calendar = userQuery({
         })),
       holidays: holidays.map(({ date, name, fraction }) => ({ date, name, fraction })),
     };
+  },
+});
+
+/**
+ * Who else is away in a range, for the vacation dialog: lets the person pick
+ * other dates before asking. Admins asking for someone else see every type.
+ */
+export const overlaps = userQuery({
+  args: { from: v.string(), to: v.string(), userId: v.optional(v.id("users")) },
+  handler: async (ctx, { from, to, userId }) => {
+    assertTimeAccess(ctx);
+    if (!isIsoDate(from) || !isIsoDate(to) || to < from) return [];
+    if (to > addDays(from, 366)) return [];
+    const subject = subjectFor(ctx.caller, userId);
+    return overlappingAbsences(ctx, { subject, from, to, adminView: ctx.caller.isAdmin });
   },
 });
