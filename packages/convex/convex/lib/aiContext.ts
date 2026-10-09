@@ -1,7 +1,6 @@
 import { ConvexError } from "convex/values";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
-import { requireVaultUnlocked } from "../hr/lib/access";
 import { userMatchesAudience } from "./audience";
 import { type Caller } from "./caller";
 import { navigateSearch } from "./navigateSearch";
@@ -122,7 +121,6 @@ async function ticketContext(ctx: QueryCtx, id: string): Promise<AskContext> {
 
 async function applicantContext(ctx: QueryCtx, caller: Caller, id: string): Promise<AskContext> {
   caller.require(caller.hasApplicantAccess);
-  await requireVaultUnlocked(ctx, caller.id);
 
   const applicantId = ctx.db.normalizeId("applicants", id);
   const applicant = applicantId ? await ctx.db.get(applicantId) : null;

@@ -229,7 +229,7 @@ describe("accountLinks.forUser", () => {
     });
   });
 
-  test("reports applicant access granted via role admin, independent of applicantAccess flag", async () => {
+  test("an admin without the applicantAccess flag has no HR access", async () => {
     const t = setup();
     await seedAdmin(t);
     const admin = await t.run(async (ctx) =>
@@ -246,15 +246,10 @@ describe("accountLinks.forUser", () => {
     const result = await asUser(t, "admin").query(api.security.accountLinks.forUser, {
       userId: admin,
     });
-    expect(result?.applicant).toEqual({
-      status: "granted",
-      isDelegate: false,
-      vaultPasswordSet: false,
-      hasPasskey: false,
-    });
+    expect(result?.applicant).toEqual({ status: "no_access" });
   });
 
-  test("reports applicant access granted via applicantAccess flag, with vault password and passkey set", async () => {
+  test("reports applicant access granted via applicantAccess flag, with passkey set", async () => {
     const t = setup();
     await seedAdmin(t);
     const employee = await seedEmployee(t, {
@@ -264,11 +259,6 @@ describe("accountLinks.forUser", () => {
       applicantAccessDelegate: true,
     });
     await t.run(async (ctx) => {
-      await ctx.db.insert("applicantVaultPasswords", {
-        userId: employee,
-        hash: "hash",
-        updatedAt: Date.now(),
-      });
       await ctx.db.insert("passkeys", {
         userId: employee,
         credentialId: "cred-1",
@@ -287,7 +277,6 @@ describe("accountLinks.forUser", () => {
     expect(result?.applicant).toEqual({
       status: "granted",
       isDelegate: true,
-      vaultPasswordSet: true,
       hasPasskey: true,
     });
   });

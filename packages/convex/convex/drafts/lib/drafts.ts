@@ -155,12 +155,7 @@ export async function canUseSurface(
   surface: string,
 ): Promise<boolean> {
   if (!APPLICANT_SURFACES.has(surface)) return true;
-  if (!caller.hasApplicantAccess) return false;
-  const unlock = await ctx.db
-    .query("applicantVaultUnlocks")
-    .withIndex("by_user", (q) => q.eq("userId", caller.id))
-    .unique();
-  return !!unlock && unlock.expiresAt > Date.now();
+  return caller.hasApplicantAccess;
 }
 
 export function personName(user: Doc<"users">) {

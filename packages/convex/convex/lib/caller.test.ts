@@ -103,11 +103,14 @@ describe("ownership and granting", () => {
 });
 
 describe("per-person grants", () => {
-  test("applicant access: admins, or granted directly, never while sandboxed", () => {
-    expect(caller({ role: "admin" }).hasApplicantAccess).toBe(true);
+  test("applicant access: only granted directly (admins too), never while sandboxed", () => {
+    expect(caller({ role: "admin" }).hasApplicantAccess).toBe(false);
     expect(caller({ role: "manager" }).hasApplicantAccess).toBe(false);
     expect(caller({ applicantAccess: true }).hasApplicantAccess).toBe(true);
-    expect(caller({ role: "admin", sandboxRole: "manager" }).hasApplicantAccess).toBe(false);
+    expect(caller({ role: "admin", applicantAccess: true }).hasApplicantAccess).toBe(true);
+    expect(
+      caller({ role: "admin", applicantAccess: true, sandboxRole: "manager" }).hasApplicantAccess,
+    ).toBe(false);
   });
 
   test("applicant delegate and area membership", () => {

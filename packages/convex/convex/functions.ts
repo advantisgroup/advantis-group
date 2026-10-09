@@ -27,7 +27,6 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { requireVaultUnlocked } from "./hr/lib/access";
 import { type Capability, assertServerKey, getCurrentUser } from "./lib/auth";
 import {
   Caller,
@@ -186,8 +185,8 @@ export function serverAction<Args extends PropertyValidators, Output>(definition
 type Requirement = {
   role?: RoleRequirement;
   can?: Capability;
-  /** Applicant Management: `access` and `delegate` also need the vault
-   *  unlocked; `member` doesn't, for the vault's own unlock screens. */
+  /** Applicant Management (HR): `access` = on the HR list, `delegate` = may
+   *  grant HR access, `member` = either. */
   applicant?: "access" | "delegate" | "member";
 };
 
@@ -200,18 +199,6 @@ function check(caller: Caller, { role, can, applicant }: Requirement): Caller {
   return caller;
 }
 
-async function checkWithVault(
-  ctx: QueryCtx | MutationCtx,
-  caller: Caller,
-  requirement: Requirement,
-): Promise<Caller> {
-  check(caller, requirement);
-  if (requirement.applicant === "access" || requirement.applicant === "delegate") {
-    await requireVaultUnlocked(ctx, caller.id);
-  }
-  return caller;
-}
-
 function refuseSandbox(caller: Caller): Caller {
   if (caller.sandboxed) throw sandboxError();
   return caller;
@@ -220,7 +207,7 @@ function refuseSandbox(caller: Caller): Caller {
 export const userQuery = customQuery(rawQuery, {
   args: {},
   input: async (ctx, _args, requirement: Requirement) => {
-    const caller = await checkWithVault(ctx, await requireSessionCaller(ctx), requirement);
+    const caller = check(await requireSessionCaller(ctx), requirement);
     return { ctx: { caller, ...readerCtx(ctx) }, args: {} };
   },
 });
@@ -229,7 +216,7 @@ export const userMutation = customMutation(rawMutation, {
   args: {},
   input: async (ctx, _args, requirement: Requirement) => {
     const caller = refuseSandbox(await requireSessionCaller(ctx));
-    await checkWithVault(ctx, caller, requirement);
+    check(caller, requirement);
     return { ctx: { caller, ...writerCtx(ctx) }, args: {} };
   },
 });
@@ -252,7 +239,7 @@ export const serverUserQuery = customQuery(rawQuery, {
   input: async (ctx, { serverKey, clerkUserId }, requirement: Requirement) => {
     assertServerKey(serverKey);
     const caller = await requireServerCaller(ctx, clerkUserId);
-    await checkWithVault(ctx, caller, requirement);
+    check(caller, requirement);
     return { ctx: { caller, ...readerCtx(ctx) }, args: {} };
   },
 });
@@ -262,7 +249,7 @@ export const serverUserMutation = customMutation(rawMutation, {
   input: async (ctx, { serverKey, clerkUserId }, requirement: Requirement) => {
     assertServerKey(serverKey);
     const caller = await requireServerCaller(ctx, clerkUserId);
-    await checkWithVault(ctx, caller, requirement);
+    check(caller, requirement);
     return { ctx: { caller, ...writerCtx(ctx) }, args: {} };
   },
 });

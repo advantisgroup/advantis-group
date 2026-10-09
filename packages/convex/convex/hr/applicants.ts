@@ -565,23 +565,13 @@ export const convertTermin = userMutation({
 // Server-key gated — called by the Elysia API's PDF-extraction route
 // ===========================================================================
 
-/** Resolve a Clerk identity's Applicant Management access, for the API's auth check.
- * Also requires the vault to be unlocked — CV extraction writes real applicant
- * data, so it shouldn't be reachable while the feature is locked, even via
- * the server-key-gated API path. */
+/** Resolve a Clerk identity's Applicant Management access, for the API's auth check. */
 export const apiCheckAccess = serverQuery({
   args: { clerkUserId: v.string() },
   handler: async (ctx, { clerkUserId }) => {
     const caller = await getServerCaller(ctx, clerkUserId);
     if (!caller) return null;
-    const user = caller.user;
-    if (!caller.hasApplicantAccess) return { userId: user._id, hasAccess: false };
-    const unlock = await ctx.db
-      .query("applicantVaultUnlocks")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .unique();
-    const vaultUnlocked = !!unlock && unlock.expiresAt > Date.now();
-    return { userId: user._id, hasAccess: vaultUnlocked };
+    return { userId: caller.user._id, hasAccess: caller.hasApplicantAccess };
   },
 });
 

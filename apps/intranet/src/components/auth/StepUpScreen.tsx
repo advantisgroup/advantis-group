@@ -105,8 +105,7 @@ function EnrollStep({
 
 /** Full-screen, non-dismissible gate — mounted by `AppGate` in place of the
  * app whenever the current session hasn't cleared what sign-in policy
- * requires. Nothing underneath ever renders while this is up, same as
- * `ApplicantVaultGate`'s lock screen.
+ * requires. Nothing underneath ever renders while this is up.
  *
  * `onDismiss` is only ever called after a full success → hold → fade
  * sequence, and only once the live `status` itself confirms "satisfied" —

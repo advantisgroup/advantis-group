@@ -1,7 +1,4 @@
-import { ConvexError } from "convex/values";
-
-import { type Doc, type Id } from "../../_generated/dataModel";
-import { type MutationCtx, type QueryCtx } from "../../_generated/server";
+import { type Doc } from "../../_generated/dataModel";
 import { type SandboxRole, effectiveRole, isSandboxed, MANAGER_ROLES } from "../../lib/auth";
 
 /**
@@ -13,9 +10,13 @@ type ApplicantView = Pick<Doc<"users">, "role" | "applicantAccess" | "applicantA
   sandboxRole?: SandboxRole | null;
 };
 
-/** An admin, or granted access directly. Never while sandboxed. */
+/**
+ * On the HR list (`applicantAccess`). Deliberately no admin bypass: HR holds
+ * contracts and payroll, so being admin is not enough — an admin who should
+ * see HR is put on the list like anyone else. Never while sandboxed.
+ */
 export function hasApplicantAccess(user: ApplicantView): boolean {
-  return !isSandboxed(user) && (effectiveRole(user) === "admin" || user.applicantAccess === true);
+  return !isSandboxed(user) && user.applicantAccess === true;
 }
 
 /** An admin, or a designated delegate who can grant access to others. */
@@ -43,26 +44,4 @@ export function isApplicantEligible(
     MANAGER_ROLES.includes(user.role) ||
     customRoles.some((role) => role?.capabilities.includes("manage_members") ?? false)
   );
-}
-
-/**
- * The vault: a personal secondary password on top of the checks above —
- * defense-in-depth against a leaked or unattended session. Deliberately no
- * admin bypass. Throws `vault_locked` (not `forbidden`) so the client shows an
- * unlock prompt instead of an access-denied screen.
- */
-export async function requireVaultUnlocked(
-  ctx: QueryCtx | MutationCtx,
-  userId: Id<"users">,
-): Promise<void> {
-  const unlock = await ctx.db
-    .query("applicantVaultUnlocks")
-    .withIndex("by_user", (q) => q.eq("userId", userId))
-    .unique();
-  if (!unlock || unlock.expiresAt <= Date.now()) {
-    throw new ConvexError({
-      code: "vault_locked",
-      message: "Applicant Management is locked — please re-enter the password.",
-    });
-  }
 }

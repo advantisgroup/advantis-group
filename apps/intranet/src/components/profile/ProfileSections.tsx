@@ -509,14 +509,9 @@ export function LinkedAccountsSection({ userId }: { userId: Id<"users"> }) {
       : null;
   const applicantValue =
     applicant.status === "granted"
-      ? [
-          applicant.isDelegate ? t("linkedAccountsDelegate") : t("linkedAccountsGranted"),
-          applicant.hasPasskey
-            ? t("linkedAccountsPasskey")
-            : applicant.vaultPasswordSet
-              ? t("linkedAccountsPassword")
-              : t("linkedAccountsNoVaultSetup"),
-        ].join(" · ")
+      ? applicant.isDelegate
+        ? t("linkedAccountsDelegate")
+        : t("linkedAccountsGranted")
       : null;
 
   const rows = [

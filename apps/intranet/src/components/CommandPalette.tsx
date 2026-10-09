@@ -194,12 +194,9 @@ export function CommandPalette({ className }: { className?: string } = {}) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, hasFilesAccess, settledQuery]);
-  // A locked vault makes applicants.list throw, which would take the whole
-  // palette down — only search applicants while it's unlocked.
-  const vault = useQuery(api.hr.vault.status, open && hasApplicantAccess ? {} : "skip");
   const applicants = useQuery(
     api.hr.applicants.list,
-    open && hasApplicantAccess && vault?.unlocked && query.trim() ? {} : "skip",
+    open && hasApplicantAccess && query.trim() ? {} : "skip",
   );
 
   // ⌘K / Ctrl-K toggles the palette from anywhere.

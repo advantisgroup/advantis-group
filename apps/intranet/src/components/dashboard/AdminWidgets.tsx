@@ -8,7 +8,6 @@ import {
   Award,
   ClipboardCheck,
   Clock3,
-  Lock,
   Plane,
   ScrollText,
   TrendingUp,
@@ -19,7 +18,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
-import { useCurrentUser, useIsAdmin } from "@/components/providers/current-user";
+import { useCurrentUser } from "@/components/providers/current-user";
 import { isoToday } from "@/lib/absences";
 import { useAbsencesCalendar, usePendingAbsenceCount } from "@/lib/absences-api";
 import { formatIsoDate, relativeTime } from "@/lib/format";
@@ -226,29 +225,20 @@ export function TeamPerformanceCard({ companyId }: { companyId: Id<"companies"> 
   );
 }
 
-/** Recruiting remains owned by the existing vault-gated HR workspace. This
+/** Recruiting remains owned by the HR workspace (fixed HR list). This
  * card only turns its existing first-contact, appointment and activity data
  * into direct routes back to the relevant filtered list. */
 export function ApplicantPipelineHealthCard() {
   const t = useTranslations("Dashboard");
   const user = useCurrentUser();
-  const isAdmin = useIsAdmin();
-  const canReadApplicants = isAdmin || user.applicantAccess;
-  const vaultStatus = useQuery(api.hr.vault.status, canReadApplicants ? {} : "skip");
-  const applicants = useQuery(
-    api.hr.applicants.list,
-    canReadApplicants && vaultStatus?.unlocked ? {} : "skip",
-  );
+  const canReadApplicants = user.applicantAccess;
+  const applicants = useQuery(api.hr.applicants.list, canReadApplicants ? {} : "skip");
   const counts = applicants ? applicantPipelineHealthCounts(applicants) : null;
 
   return (
     <DashCard icon={<UserPlus />} title={t("applicantPipelineHealthTitle")}>
-      {!canReadApplicants || vaultStatus === undefined || applicants === undefined ? (
+      {!canReadApplicants || applicants === undefined ? (
         <RowSkeletons />
-      ) : !vaultStatus.unlocked ? (
-        <Empty href="/hr" linkLabel={t("openApplicants")}>
-          {t("vaultLockedHint")}
-        </Empty>
       ) : (
         <div className="space-y-1">
           <StatLine
@@ -310,19 +300,13 @@ export function OpenMeasuresCard() {
 }
 
 /** Pending absence approvals + open applicant pipeline. Managers+; the
- * applicant stat only fires once the caller both has access and has their
- * vault unlocked, so a locked vault degrades to a hint instead of an error. */
+ * applicant stat only shows for people on the HR list. */
 export function AdminStatsCard() {
   const t = useTranslations("Dashboard");
   const user = useCurrentUser();
-  const isAdmin = useIsAdmin();
   const pendingCount = usePendingAbsenceCount(true);
-  const hasApplicantAccess = isAdmin || user.applicantAccess || user.applicantAccessDelegate;
-  const vaultStatus = useQuery(api.hr.vault.status, hasApplicantAccess ? {} : "skip");
-  const pipeline = useQuery(
-    api.hr.applicants.pipelineCount,
-    hasApplicantAccess && vaultStatus?.unlocked ? {} : "skip",
-  );
+  const hasApplicantAccess = user.applicantAccess;
+  const pipeline = useQuery(api.hr.applicants.pipelineCount, hasApplicantAccess ? {} : "skip");
 
   return (
     <DashCard icon={<ScrollText />} title={t("adminStatsTitle")}>
@@ -337,17 +321,14 @@ export function AdminStatsCard() {
             href="/zeiterfassung/admin?section=approvals"
           />
         )}
-        {hasApplicantAccess &&
-          (vaultStatus === undefined ? null : !vaultStatus.unlocked ? (
-            <StatLine icon={<Lock />} label={t("vaultLockedHint")} value="" href="/hr" />
-          ) : pipeline !== undefined ? (
-            <StatLine
-              icon={<Users2 />}
-              label={t("openApplicantPipeline")}
-              value={pipeline.open}
-              href="/hr"
-            />
-          ) : null)}
+        {hasApplicantAccess && pipeline !== undefined && (
+          <StatLine
+            icon={<Users2 />}
+            label={t("openApplicantPipeline")}
+            value={pipeline.open}
+            href="/hr"
+          />
+        )}
       </div>
     </DashCard>
   );
