@@ -211,7 +211,7 @@ describe("worked time", () => {
     expect(result.open).toBe(true);
   });
 
-  test("a gap between segments counts as a break, short ones don't", () => {
+  test("a gap between segments counts as a break, short ones don't for ArbZG", () => {
     expect(
       day("2026-10-05", [
         work("2026-10-05", "08:00", "12:00"),
@@ -222,8 +222,23 @@ describe("worked time", () => {
       day("2026-10-05", [
         work("2026-10-05", "08:00", "12:00"),
         work("2026-10-05", "12:10", "16:30"),
-      ]).warnings,
-    ).toEqual(["break30"]);
+      ]),
+    ).toMatchObject({ breakMinutes: 10, countedBreakMinutes: 0, warnings: ["break30"] });
+  });
+
+  test("the day's break total includes short breaks", () => {
+    const result = day("2026-10-05", [
+      work("2026-10-05", "08:00", "17:00"),
+      pause("2026-10-05", "10:00", "10:08"),
+      pause("2026-10-05", "12:00", "12:34"),
+      pause("2026-10-05", "15:00", "15:10"),
+    ]);
+    expect(result).toMatchObject({
+      workedMinutes: 540 - 52,
+      breakMinutes: 52,
+      countedBreakMinutes: 34,
+      warnings: [],
+    });
   });
 });
 

@@ -460,7 +460,7 @@ export async function noteMissingBreak(
   ).filter((row) => row.status === "active");
   const day = measureDay(segments, Date.now());
   const worked = Math.round(day.workedMs / 60_000);
-  const breaks = Math.round(day.breakMs / 60_000);
+  const breaks = Math.round(day.countedBreakMs / 60_000);
   if (worked <= BREAK30_AFTER_MINUTES || breaks >= 30) return;
   const hours = `${Math.floor(worked / 60)}:${String(worked % 60).padStart(2, "0")}`;
   const link = `/zeiterfassung/arbeitszeiten?date=${date}`;
