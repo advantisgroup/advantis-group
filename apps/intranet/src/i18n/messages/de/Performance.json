@@ -573,5 +573,21 @@
       "leadsNoAction14": "Leads ohne Aktivität 14 T.",
       "oppsNoAction14": "Opps ohne Aktivität 14 T."
     }
+  },
+  "kpiInfo": {
+    "workableRate": "Anteil der in diesem Monat erstellten Leads, die workable sind (Status Analysis, Converted oder Not Interested): Workable ÷ Leads erstellt. VM/VJ = Veränderung in Prozentpunkten gegenüber Vormonat bzw. Vorjahresmonat.",
+    "hitrate": "Abschlussquote: Closed Won in diesem Monat ÷ Workable Leads, die in diesem Monat erstellt wurden. VM/VJ = Veränderung in Prozentpunkten.",
+    "won": "Opportunities in Phase Closed Won mit Close Date in diesem Monat – Stand des letzten Opportunity-Reports.",
+    "wonPerDay": "Closed Won geteilt durch die bisher vergangenen Werktage des Monats (Mo–Fr ohne bayerische Feiertage). Zeigt das Tempo, unabhängig davon, wie weit der Monat ist.",
+    "forecast": "FC1: Hochrechnung aufs Monatsende – Won je Werktag × alle Werktage des Monats. So viele Abschlüsse kommen heraus, wenn das Team im gleichen Tempo weitermacht. Nach Monatsende steht hier das Endergebnis.",
+    "workdays": "Werktage des Monats (Mo–Fr ohne bayerische Feiertage): wie viele schon vergangen sind und wie viele es insgesamt gibt. Grundlage für Won je Werktag und die Hochrechnungen.",
+    "leadsCreated": "Alle Leads mit Erstelldatum in diesem Monat, egal mit welchem Status. FC2 = Hochrechnung aufs Monatsende im bisherigen Tempo.",
+    "workableCreated": "In diesem Monat erstellte Leads mit Status Analysis, Converted oder Not Interested. FC3 = Hochrechnung aufs Monatsende im bisherigen Tempo.",
+    "leadsAnalysis": "Alle Leads, die am Stichtag des Lead-Reports im Status Analysis stehen – egal wann sie erstellt wurden. Bestand, kein Monatswert.",
+    "leadsDetailsIdent": "Leads mit Status-Details „Identification running“ am Stichtag des Lead-Reports. Bestand, kein Monatswert.",
+    "oppsOpen": "Alle Opportunities, die am Stichtag weder Closed Won noch Closed Lost sind. Bestand, kein Monatswert.",
+    "oppsClose7d": "Offene Opportunities, deren Close Date in den nächsten 7 Tagen liegt.",
+    "oppsPending": "Offene Opportunities mit Phasendetails „Pending Credit“ oder „Pending Documents“.",
+    "listClick": "Klick öffnet die Liste."
   }
 }

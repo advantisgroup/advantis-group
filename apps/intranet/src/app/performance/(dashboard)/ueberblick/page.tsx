@@ -24,6 +24,7 @@ import { WallboxOverview } from "@/components/performance/WallboxOverview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTip } from "@/components/ui/info-tip";
 import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -37,9 +38,12 @@ function PrimaryKpiCard({
   dVm,
   dVj,
   format,
+  info,
 }: {
   accent: "emerald" | "purple" | "slate" | "amber";
   label: string;
+  /** Explanation behind the "i" in the corner. */
+  info: string;
   value: string;
   subtitle?: string;
   dVm?: number;
@@ -53,8 +57,9 @@ function PrimaryKpiCard({
     amber: "border-t-amber-500",
   }[accent];
   return (
-    <Card className={cn("border-t-2", border)}>
-      <CardContent className="flex flex-col gap-1.5 p-4">
+    <Card className={cn("relative border-t-2", border)}>
+      <InfoTip text={info} className="absolute right-3 top-3" />
+      <CardContent className="flex flex-col gap-1.5 p-4 pr-8">
         <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {label}
         </span>
@@ -72,16 +77,19 @@ function StatCard({
   badge,
   dVm,
   dVj,
+  info,
 }: {
   label: string;
   value: string;
   badge?: string;
+  info: string;
   dVm?: number;
   dVj?: number;
 }) {
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-1.5 p-4">
+    <Card className="relative">
+      <InfoTip text={info} className="absolute right-3 top-3" />
+      <CardContent className="flex flex-col gap-1.5 p-4 pr-8">
         <span className="text-xs text-muted-foreground">{label}</span>
         <div className="flex items-baseline gap-2">
           <span className="text-xl font-semibold tabular-nums">{value}</span>
@@ -97,23 +105,35 @@ function StatCard({
   );
 }
 
-function ListStatCard({ href, label, value }: { href: string; label: string; value?: number }) {
+function ListStatCard({
+  href,
+  label,
+  value,
+  info,
+}: {
+  href: string;
+  label: string;
+  value?: number;
+  info: string;
+}) {
+  // The whole card links to the list; the "i" sits above the link so
+  // hovering or tapping it explains instead of navigating.
   return (
-    <Link href={href}>
-      <Card className="h-full transition-colors hover:bg-muted/50">
-        <CardContent className="flex flex-col gap-1.5 p-4">
-          <span className="text-xs text-muted-foreground">{label}</span>
-          <span
-            className={cn(
-              "text-xl font-semibold tabular-nums underline decoration-dotted underline-offset-4",
-              value ? "text-warn" : "text-foreground",
-            )}
-          >
-            {fmtNum(value)}
-          </span>
-        </CardContent>
-      </Card>
-    </Link>
+    <Card className="relative h-full transition-colors hover:bg-muted/50">
+      <Link href={href} className="absolute inset-0 rounded-[inherit]" aria-label={label} />
+      <InfoTip text={info} className="absolute right-3 top-3 z-10" />
+      <CardContent className="flex flex-col gap-1.5 p-4 pr-8">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span
+          className={cn(
+            "text-xl font-semibold tabular-nums underline decoration-dotted underline-offset-4",
+            value ? "text-warn" : "text-foreground",
+          )}
+        >
+          {fmtNum(value)}
+        </span>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -187,6 +207,7 @@ function SalesOverview() {
         <PrimaryKpiCard
           accent="emerald"
           label={t("dashboardWorkableRate")}
+          info={t("kpiInfo.workableRate")}
           value={fmtPct(data.total.workableRate)}
           subtitle={`${fmtNum(data.total.workableCreated)} / ${fmtNum(data.total.leadsCreated)}`}
           dVm={data.dVm.workableRate}
@@ -196,6 +217,7 @@ function SalesOverview() {
         <PrimaryKpiCard
           accent="purple"
           label={t("dashboardMetricHitrate")}
+          info={t("kpiInfo.hitrate")}
           value={fmtPct(data.total.hitrate)}
           subtitle={`${fmtNum(data.total.wonMonth)} / ${fmtNum(data.total.workableCreated)}`}
           dVm={data.dVm.hitrate}
@@ -205,6 +227,7 @@ function SalesOverview() {
         <PrimaryKpiCard
           accent="slate"
           label={t("dashboardMetricWon")}
+          info={t("kpiInfo.won")}
           value={fmtNum(data.total.wonMonth)}
           subtitle={t("dashboardClosedWonSubtitle", {
             date: data.total.reportDate ? formatIsoDate(data.total.reportDate, locale) : "–",
@@ -213,6 +236,7 @@ function SalesOverview() {
         <PrimaryKpiCard
           accent="amber"
           label={t("dashboardWonPerWorkday")}
+          info={t("kpiInfo.wonPerDay")}
           value={fmtNum(data.total.wonPerDay)}
           subtitle={
             fc
@@ -228,8 +252,12 @@ function SalesOverview() {
       </div>
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[2fr_1fr]">
-        <Card className="border-none bg-foreground text-background">
-          <CardContent className="flex flex-col gap-1.5 p-5">
+        <Card className="relative border-none bg-foreground text-background">
+          <InfoTip
+            text={t("kpiInfo.forecast")}
+            className="absolute right-4 top-4 text-background/70 hover:text-background focus-visible:text-background"
+          />
+          <CardContent className="flex flex-col gap-1.5 p-5 pr-10">
             <span className="text-xs font-medium uppercase tracking-wide text-background/70">
               {fc?.isActual ? t("dashboardForecastTitleDone") : t("dashboardForecastTitle")}
             </span>
@@ -258,8 +286,9 @@ function SalesOverview() {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="flex flex-col gap-2 p-5">
+        <Card className="relative">
+          <InfoTip text={t("kpiInfo.workdays")} className="absolute right-4 top-4" />
+          <CardContent className="flex flex-col gap-2 p-5 pr-10">
             <span className="text-xs text-muted-foreground">{t("dashboardWorkdaysTitle")}</span>
             <span className="text-2xl font-semibold tabular-nums">
               {fc?.elapsed ?? "–"}{" "}
@@ -278,6 +307,7 @@ function SalesOverview() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard
           label={t("dashboardLeadsCreatedMonth")}
+          info={t("kpiInfo.leadsCreated")}
           value={fmtNum(data.total.leadsCreated)}
           badge={fc2 !== undefined ? `FC2 ${fmtNum(fc2)}` : undefined}
           dVm={data.dVm.leadsCreated}
@@ -285,6 +315,7 @@ function SalesOverview() {
         />
         <StatCard
           label={t("dashboardWorkableCreatedMonth")}
+          info={t("kpiInfo.workableCreated")}
           value={fmtNum(data.total.workableCreated)}
           badge={fc3 !== undefined ? `FC3 ${fmtNum(fc3)}` : undefined}
           dVm={data.dVm.workableCreated}
@@ -292,20 +323,35 @@ function SalesOverview() {
         />
         <StatCard
           label={t("dashboardLeadsAnalysisLabel")}
+          info={t("kpiInfo.leadsAnalysis")}
           value={fmtNum(data.total.leadsAnalysis)}
         />
         <StatCard
           label={t("dashboardLeadsDetailsIdentLabel")}
+          info={t("kpiInfo.leadsDetailsIdent")}
           value={fmtNum(data.total.leadsDetailsIdent)}
         />
-        <StatCard label={t("dashboardOppsOpenLabel")} value={fmtNum(data.total.oppsOpen)} />
-        <StatCard label={t("dashboardOppsClose7dLabel")} value={fmtNum(data.total.oppsClose7d)} />
-        <StatCard label={t("dashboardOppsPendingLabel")} value={fmtNum(data.total.oppsPending)} />
+        <StatCard
+          info={t("kpiInfo.oppsOpen")}
+          label={t("dashboardOppsOpenLabel")}
+          value={fmtNum(data.total.oppsOpen)}
+        />
+        <StatCard
+          info={t("kpiInfo.oppsClose7d")}
+          label={t("dashboardOppsClose7dLabel")}
+          value={fmtNum(data.total.oppsClose7d)}
+        />
+        <StatCard
+          info={t("kpiInfo.oppsPending")}
+          label={t("dashboardOppsPendingLabel")}
+          value={fmtNum(data.total.oppsPending)}
+        />
         {LIST_KEYS.map((key) => (
           <ListStatCard
             key={key}
             href={`/performance/liste/${key}?from=ueberblick`}
             label={t(`list.${key}.title`)}
+            info={`${t(`list.${key}.desc`)} ${t("kpiInfo.listClick")}`}
             value={listValues[key]}
           />
         ))}

@@ -573,5 +573,21 @@
       "leadsNoAction14": "Leads inactive 14 d",
       "oppsNoAction14": "Opps inactive 14 d"
     }
+  },
+  "kpiInfo": {
+    "workableRate": "Share of this month's new leads that are workable (status Analysis, Converted or Not Interested): Workable ÷ leads created. VM/VJ = change in percentage points vs. last month / same month last year.",
+    "hitrate": "Closing rate: Closed Won this month ÷ workable leads created this month. VM/VJ = change in percentage points.",
+    "won": "Opportunities in stage Closed Won with a close date this month, as of the latest opportunity report.",
+    "wonPerDay": "Closed Won divided by the workdays passed so far this month (Mon–Fri without Bavarian holidays). Shows the pace regardless of how far the month is.",
+    "forecast": "FC1: projection to month end – won per workday × all workdays of the month. What the team lands at if it keeps this pace. After month end this shows the final result.",
+    "workdays": "Workdays of the month (Mon–Fri without Bavarian holidays): how many have passed and how many there are in total. Basis for won per workday and the projections.",
+    "leadsCreated": "All leads with a create date this month, whatever their status. FC2 = projection to month end at the current pace.",
+    "workableCreated": "Leads created this month with status Analysis, Converted or Not Interested. FC3 = projection to month end at the current pace.",
+    "leadsAnalysis": "All leads in status Analysis on the lead report's date, whenever they were created. A stock figure, not a monthly one.",
+    "leadsDetailsIdent": "Leads with status details “Identification running” on the lead report's date. A stock figure, not a monthly one.",
+    "oppsOpen": "All opportunities that are neither Closed Won nor Closed Lost on the report date. A stock figure, not a monthly one.",
+    "oppsClose7d": "Open opportunities whose close date is within the next 7 days.",
+    "oppsPending": "Open opportunities with stage details “Pending Credit” or “Pending Documents”.",
+    "listClick": "Click to open the list."
   }
 }
