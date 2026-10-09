@@ -20,11 +20,6 @@ async function seed() {
         ...extra,
       });
     const hr = await user("hr", { applicantAccess: true });
-    await ctx.db.insert("applicantVaultUnlocks", {
-      userId: hr,
-      unlockedAt: Date.now(),
-      expiresAt: Date.now() + 60_000,
-    });
     const alice = await user("alice", { jobTitle: "Support", department: "Service" });
     const bob = await user("bob", { jobTitle: "Vertrieb" });
     const carol = await user("carol");

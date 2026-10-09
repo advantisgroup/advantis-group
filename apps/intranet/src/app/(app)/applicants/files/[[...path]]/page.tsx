@@ -13,9 +13,7 @@ import { HR_FOLDER_BASE } from "@/lib/onedrive-scopes";
 /** Dedicated explorer for HR's OneDrive storage (Team/HR/…), reachable at
  * /hr/files via the `/hr → /applicants` rewrite. Gated by Applicant
  * Management access, mirroring the indirect write grant apps/api hands out
- * for this one subtree (see access.ts's `canWriteHR`) — deliberately not
- * vault-gated, since that protects the employee *document* records in
- * Convex, not general OneDrive folder browsing. */
+ * for this one subtree (see access.ts's `canWriteHR`). */
 export default function HRFilesPage() {
   const t = useTranslations("Applicants");
   const hasAccess = useHasApplicantAccess();

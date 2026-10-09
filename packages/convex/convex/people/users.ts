@@ -3,7 +3,6 @@ import { ConvexError, v } from "convex/values";
 import { type Doc } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
 import { roleValidator } from "../schema";
-import { clearVaultPasswordForUser } from "../hr/lib/vault";
 import {
   effectiveCustomRoleIds,
   effectiveRole,
@@ -17,7 +16,7 @@ import { pushToClerk } from "./clerkSync";
 import { listUserPermissions } from "../lib/permissions";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { loadReportingLookup, reportingLines, resolveManager } from "../lib/reporting";
-import { requireVaultUnlocked, isApplicantEligible } from "../hr/lib/access";
+import { isApplicantEligible } from "../hr/lib/access";
 import { ensureUser } from "../people/lib/provisioning";
 import { profileOptionValidator, toProfileOption } from "../lib/profile";
 
@@ -748,19 +747,11 @@ export const setApplicantDelegate = userMutation({
   args: { userId: v.id("users"), delegate: v.boolean() },
   handler: async (ctx, { userId, delegate }) => {
     const admin = ctx.caller.user;
-    await requireVaultUnlocked(ctx, admin._id);
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await ctx.db.patch(userId, { applicantAccessDelegate: delegate });
-    // Losing delegate rights only strips vault access if the user has no
-    // other way into the area — their own granted `applicantAccess` (or
-    // admin role) still lets them in, and their password should keep
-    // working for that.
-    if (!delegate && target.role !== "admin" && !target.applicantAccess) {
-      await clearVaultPasswordForUser(ctx, userId);
-    }
     const auditAt = Date.now();
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: admin._id,
@@ -807,13 +798,6 @@ export const setApplicantAccess = userMutation({
       }
     }
     await ctx.db.patch(userId, { applicantAccess: access });
-    // Revoking access deletes the user's own vault password/unlock — for
-    // security, a former member's password must not outlive their access.
-    // If they're still a delegate (or admin) they keep their password,
-    // since they can still reach the area.
-    if (!access && target.role !== "admin" && !target.applicantAccessDelegate) {
-      await clearVaultPasswordForUser(ctx, userId);
-    }
     const auditAt = Date.now();
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: actor._id,

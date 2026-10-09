@@ -420,7 +420,7 @@ describe("drafts", () => {
     expect(await bob.query(api.drafts.drafts.get, key)).not.toBeNull();
   });
 
-  test("applicant drafts stay behind the vault", async () => {
+  test("applicant drafts need HR access", async () => {
     const t = setup();
     const alice = await seedUser(t, "user_alice");
     const key = { surface: "cvReview" as const, subjectKey: "run_1" };
@@ -429,25 +429,18 @@ describe("drafts", () => {
         .query("users")
         .filter((q) => q.eq(q.field("clerkUserId"), "user_alice"))
         .first();
-      await ctx.db.patch(user!._id, { applicantAccess: true });
       return user!._id;
     });
 
     await expect(alice.mutation(api.drafts.drafts.save, { ...key, data: "{}" })).rejects.toThrow();
 
-    const unlockId = await t.run((ctx) =>
-      ctx.db.insert("applicantVaultUnlocks", {
-        userId,
-        unlockedAt: Date.now(),
-        expiresAt: Date.now() + 60_000,
-      }),
-    );
+    await t.run((ctx) => ctx.db.patch(userId, { applicantAccess: true }));
     await alice.mutation(api.drafts.drafts.save, { ...key, data: '{"name":"Jana"}' });
     expect(await alice.query(api.drafts.drafts.get, key)).toMatchObject({
       data: '{"name":"Jana"}',
     });
 
-    await t.run((ctx) => ctx.db.patch(unlockId, { expiresAt: Date.now() - 1 }));
+    await t.run((ctx) => ctx.db.patch(userId, { applicantAccess: false }));
     expect(await alice.query(api.drafts.drafts.get, key)).toBeNull();
   });
 

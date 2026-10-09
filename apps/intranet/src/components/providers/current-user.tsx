@@ -108,12 +108,10 @@ export function useHasCapability(capability: Capability): boolean {
   return user.role === "admin" || user.role === "manager" || user.capabilities.includes(capability);
 }
 
-/** True when the user can see the Applicant Management nav item at all —
- * either they have feature access, or they're a delegate who can grant it to
- * others (see `useCanManageApplicantAccess` for the delegate-only case). */
+/** True when the user is on the HR list (`applicantAccess`). Admins are not
+ * let in automatically — HR holds contracts and payroll. */
 export function useHasApplicantAccess(): boolean {
-  const user = useCurrentUser();
-  return user.role === "admin" || user.applicantAccess || user.applicantAccessDelegate;
+  return useCurrentUser().applicantAccess;
 }
 
 /** True when the user can grant/revoke Applicant Management access for others. */

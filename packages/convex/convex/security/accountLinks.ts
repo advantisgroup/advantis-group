@@ -54,7 +54,6 @@ export type ApplicantAccessSubprofile =
   | {
       status: "granted";
       isDelegate: boolean;
-      vaultPasswordSet: boolean;
       hasPasskey: boolean;
     };
 
@@ -62,23 +61,15 @@ export async function getApplicantAccessSubprofile(
   ctx: QueryCtx,
   user: Pick<Doc<"users">, "_id" | "role" | "applicantAccess" | "applicantAccessDelegate">,
 ): Promise<ApplicantAccessSubprofile> {
-  const granted = user.role === "admin" || user.applicantAccess === true;
-  if (!granted) return { status: "no_access" };
+  if (user.applicantAccess !== true) return { status: "no_access" };
 
-  const [passwordRow, passkey] = await Promise.all([
-    ctx.db
-      .query("applicantVaultPasswords")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .unique(),
-    ctx.db
-      .query("passkeys")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .first(),
-  ]);
+  const passkey = await ctx.db
+    .query("passkeys")
+    .withIndex("by_user", (q) => q.eq("userId", user._id))
+    .first();
   return {
     status: "granted",
     isDelegate: user.applicantAccessDelegate === true,
-    vaultPasswordSet: !!passwordRow,
     hasPasskey: !!passkey,
   };
 }

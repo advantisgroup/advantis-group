@@ -1,7 +1,6 @@
 "use client";
 
 import { RoleSelect } from "@/app/(app)/admin/RoleSelect";
-import { VaultStepUpDialog } from "@/components/applicants/VaultStepUpDialog";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,7 +75,6 @@ function AdminControls({
   const tApplicants = useTranslations("Applicants");
   const me = useCurrentUser();
   const confirm = useConfirm();
-  const [stepUpOpen, setStepUpOpen] = useState(false);
   const setRole = useMutation(api.people.users.setRole);
   const setStatus = useMutation(api.people.users.setStatus);
   const removeMember = useMutation(api.people.members.remove);
@@ -182,7 +180,7 @@ function AdminControls({
       destructive: !!user.applicantAccessDelegate,
     });
     if (!ok) return;
-    setStepUpOpen(true);
+    doToggleApplicantDelegate();
   }
 
   const hasCustomRoles = user.customRoles.length > 0;
@@ -324,11 +322,6 @@ function AdminControls({
           )}
         </div>
       )}
-      <VaultStepUpDialog
-        open={stepUpOpen}
-        onOpenChange={setStepUpOpen}
-        onVerified={doToggleApplicantDelegate}
-      />
     </div>
   );
 }

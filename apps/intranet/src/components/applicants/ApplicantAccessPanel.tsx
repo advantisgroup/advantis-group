@@ -5,12 +5,11 @@ import { useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { KeyRound, ShieldCheck, UserMinus } from "lucide-react";
+import { ShieldCheck, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { InfoTip } from "@/components/ui/info-tip";
-import { VaultStepUpDialog } from "@/components/applicants/VaultStepUpDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,19 +27,13 @@ export function ApplicantAccessPanel() {
   const t = useTranslations("Applicants");
   const tRoles = useTranslations("Roles");
   const eligible = useQuery(api.people.users.eligibleForApplicantAccess);
-  const passwordStatuses = useQuery(api.hr.vault.memberPasswordStatuses);
   const setAccess = useMutation(api.people.users.setApplicantAccess);
-  const resetPassword = useMutation(api.hr.vault.resetPassword);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
   const [pickerId, setPickerId] = useState("");
-  const [stepUpAction, setStepUpAction] = useState<(() => void) | null>(null);
 
   const granted = (eligible ?? []).filter((u) => u.applicantAccess);
   const grantable = (eligible ?? []).filter((u) => !u.applicantAccess);
-  const passwordIsSetByUser = new Map(
-    (passwordStatuses ?? []).map((s) => [s.userId, s.passwordIsSet]),
-  );
 
   function doGrant(userId: Id<"users">, name: string) {
     setAccess({ userId, access: true })
@@ -57,12 +50,6 @@ export function ApplicantAccessPanel() {
       .catch(handleError);
   }
 
-  function doResetPassword(userId: Id<"users">, name: string) {
-    resetPassword({ userId })
-      .then(() => toast.success(t("resetPasswordSuccess", { name })))
-      .catch(handleError);
-  }
-
   async function grant(userId: Id<"users">, name: string) {
     const ok = await confirm({
       title: t("grantAccessTitle"),
@@ -76,7 +63,7 @@ export function ApplicantAccessPanel() {
       destructive: false,
     });
     if (!ok) return;
-    setStepUpAction(() => () => doGrant(userId, name));
+    doGrant(userId, name);
   }
 
   async function revoke(userId: Id<"users">, name: string) {
@@ -91,17 +78,7 @@ export function ApplicantAccessPanel() {
       confirmLabel: t("revokeAccessConfirm"),
     });
     if (!ok) return;
-    setStepUpAction(() => () => doRevoke(userId, name));
-  }
-
-  async function resetPasswordFor(userId: Id<"users">, name: string) {
-    const ok = await confirm({
-      title: t("resetPasswordTitle", { name }),
-      description: t("resetPasswordDescription", { name }),
-      confirmLabel: t("resetPasswordConfirm"),
-    });
-    if (!ok) return;
-    setStepUpAction(() => () => doResetPassword(userId, name));
+    doRevoke(userId, name);
   }
 
   return (
@@ -161,22 +138,6 @@ export function ApplicantAccessPanel() {
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <Badge variant="muted">{tRoles(u.role)}</Badge>
-                  <Badge variant={passwordIsSetByUser.get(u._id) ? "muted" : "outline"}>
-                    {passwordIsSetByUser.get(u._id)
-                      ? t("resetPasswordSet")
-                      : t("resetPasswordNotSet")}
-                  </Badge>
-                  {passwordIsSetByUser.get(u._id) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label={t("resetPasswordConfirm")}
-                      onClick={() => void resetPasswordFor(u._id, u.name)}
-                    >
-                      <KeyRound className="size-4" />
-                      <span className="hidden md:inline">{t("resetPassword")}</span>
-                    </Button>
-                  )}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -193,15 +154,6 @@ export function ApplicantAccessPanel() {
           ))
         )}
       </div>
-
-      <VaultStepUpDialog
-        open={!!stepUpAction}
-        onOpenChange={(o) => !o && setStepUpAction(null)}
-        onVerified={() => {
-          stepUpAction?.();
-          setStepUpAction(null);
-        }}
-      />
     </div>
   );
 }

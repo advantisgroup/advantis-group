@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import { CalendarClock, ShieldCheck, Sparkles, UserRoundSearch, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { ApplicantVaultGate } from "@/components/applicants/ApplicantVaultGate";
 import { RouteTabs } from "@/components/layout/RouteTabs";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import {
@@ -23,8 +22,8 @@ const LIST_TABS = ["list", "employees", "termine", "neu", "pool", "profile", "ac
 
 /**
  * Access scope for Bewerbermanagement. Gated behind `useHasApplicantAccess()`
- * (admins, granted users, and delegates) — a narrower, per-user allowlist on
- * top of normal intranet auth, not tied to the manager/employee tier. Real
+ * — the fixed HR list (`applicantAccess`), not tied to role; admins are not
+ * let in automatically. Real
  * enforcement is server-side (`requireApplicantAccess` in Convex); this only
  * avoids flashing the UI at someone who'll immediately get 403s from every
  * query.
@@ -53,7 +52,7 @@ export default function ApplicantsLayout({ children }: { children: ReactNode }) 
   // The detail layout (`[id]/layout.tsx`) applies its own centered
   // max-w-6xl wrapper, so this just steps out of the way.
   if (!isListRoute) {
-    return <ApplicantVaultGate>{children}</ApplicantVaultGate>;
+    return children;
   }
 
   const tabs = [
@@ -94,12 +93,10 @@ export default function ApplicantsLayout({ children }: { children: ReactNode }) 
   ];
 
   return (
-    <ApplicantVaultGate>
-      <div className="mx-auto max-w-6xl space-y-6">
-        <PageHeaderBar title={t("pageTitle")} description={t("pageDescription")} icon={<Users />} />
-        <RouteTabs tabs={tabs} activeValue={segment} />
-        <div className="mt-4">{children}</div>
-      </div>
-    </ApplicantVaultGate>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <PageHeaderBar title={t("pageTitle")} description={t("pageDescription")} icon={<Users />} />
+      <RouteTabs tabs={tabs} activeValue={segment} />
+      <div className="mt-4">{children}</div>
+    </div>
   );
 }

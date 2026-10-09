@@ -5,7 +5,6 @@ import { type Id } from "./_generated/dataModel";
 import { getCurrentUser } from "./lib/auth";
 import { type Caller } from "./lib/caller";
 import { type QueryCtx } from "./_generated/server";
-import { requireVaultUnlocked } from "./hr/lib/access";
 
 /**
  * Issue a short-lived upload URL for chat attachments, avatars and
@@ -47,10 +46,7 @@ async function resolveGatedUrl(
     .query("employeeDocuments")
     .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
     .first();
-  if (applicantDocument || employeeDocument) {
-    if (!caller.hasApplicantAccess) return null;
-    await requireVaultUnlocked(ctx, caller.id);
-  }
+  if ((applicantDocument || employeeDocument) && !caller.hasApplicantAccess) return null;
   return ctx.storage.getUrl(storageId);
 }
 
