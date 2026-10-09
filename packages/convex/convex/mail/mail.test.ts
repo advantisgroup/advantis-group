@@ -185,4 +185,30 @@ describe("mail poll", () => {
     );
     expect(alerts).toHaveLength(1);
   });
+
+  test("reading mail in the panel clears its notifications and the badge", async () => {
+    const { t, admin } = await setup();
+    await setAccount(t, admin);
+    await pollOnce(t, { uidValidity: "7", uidNext: 50, newCount: 0 });
+    await pollOnce(t, { uidValidity: "7", uidNext: 52, newCount: 2, uids: [50, 51] });
+
+    await t.mutation(api.mail.accounts.apiMarkedSeen, {
+      serverKey,
+      clerkUserId: "admin",
+      unseen: 1,
+      uid: 50,
+    });
+    const after = await notifications(t);
+    expect(after.find((n) => n.link === "/?postfach=50")?.readAt).toEqual(expect.any(Number));
+    expect(after.find((n) => n.link === "/?postfach=51")?.readAt).toBeUndefined();
+    const status = await t.withIdentity({ subject: "admin" }).query(api.mail.accounts.myStatus, {});
+    expect(status).toMatchObject({ unseen: 1 });
+
+    await t.mutation(api.mail.accounts.apiMarkedSeen, {
+      serverKey,
+      clerkUserId: "admin",
+      unseen: 0,
+    });
+    expect((await notifications(t)).every((n) => n.readAt)).toBe(true);
+  });
 });

@@ -14,6 +14,7 @@ import {
   downloadAttachment,
   encryptMailPassword,
   listInbox,
+  markSeen,
   readMessage,
 } from "../lib/mail.js";
 import { authed, requireFirstPartyOrigin } from "../lib/middleware.js";
@@ -53,7 +54,7 @@ async function imap<T>(convex: CallerConvex, run: () => Promise<T>): Promise<T> 
 }
 
 /**
- * The caller's own IONOS inbox, read-only. Every route reads only the
+ * The caller's own IONOS inbox: read, and mark as read. Every route reaches only the
  * signed-in person's mailbox — there's no way to name someone else's — and
  * setting a password (admins) never opens that inbox to the admin.
  */
@@ -108,6 +109,32 @@ export const mailRoute = new Elysia()
       });
     },
     { signedIn: true, params: t.Object({ uid: t.Numeric(), part: t.String() }) },
+  )
+  .post(
+    "/mail/messages/:uid/seen",
+    async ({ caller, request, params }) => {
+      requireFirstPartyOrigin(request);
+      assertMailAvailable();
+      await rateLimit("mail-read", caller.clerkUserId, 120, "10 m");
+      const creds = await ownCredentials(caller.convex);
+      const unseen = await imap(caller.convex, () => markSeen(creds, params.uid));
+      await caller.convex.mutation(api.mail.accounts.apiMarkedSeen, { unseen, uid: params.uid });
+      return { unseen };
+    },
+    { signedIn: true, params: t.Object({ uid: t.Numeric() }) },
+  )
+  .post(
+    "/mail/seen-all",
+    async ({ caller, request }) => {
+      requireFirstPartyOrigin(request);
+      assertMailAvailable();
+      await rateLimit("mail-read", caller.clerkUserId, 120, "10 m");
+      const creds = await ownCredentials(caller.convex);
+      const unseen = await imap(caller.convex, () => markSeen(creds, "all"));
+      await caller.convex.mutation(api.mail.accounts.apiMarkedSeen, { unseen });
+      return { unseen };
+    },
+    { signedIn: true },
   )
   .put(
     "/mail/accounts/:userId",

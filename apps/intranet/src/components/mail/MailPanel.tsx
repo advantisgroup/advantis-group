@@ -8,6 +8,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
   ArrowLeft,
+  CheckCheck,
   ExternalLink,
   ImageOff,
   Inbox,
@@ -41,6 +42,7 @@ import {
   type MailMessage,
   downloadMailAttachment,
   fetchInboxPage,
+  markMailSeen,
   setMailAccount,
   useInbox,
   useMailMessage,
@@ -172,9 +174,6 @@ function PanelHeader({
           <p className="truncate text-[15px] font-semibold">
             {view.kind === "manage" ? t("admin.title") : t("title")}
           </p>
-          <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10.5px] font-medium text-muted-foreground">
-            {t("readOnly")}
-          </span>
           <InfoTip text={t("readOnlyHint")} />
         </div>
         {email && view.kind !== "manage" && (
@@ -270,6 +269,19 @@ function InboxList({ onOpen }: { onOpen: (uid: number) => void }) {
   const [older, setOlder] = useState<InboxItem[]>([]);
   const [nextBefore, setNextBefore] = useState<number | null | undefined>(undefined);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [markingAll, setMarkingAll] = useState(false);
+
+  async function markAllSeen() {
+    setMarkingAll(true);
+    try {
+      await markMailSeen(client, "all");
+      inbox.refresh();
+    } catch {
+      toast.error(t("loadFailed"));
+    } finally {
+      setMarkingAll(false);
+    }
+  }
 
   useEffect(() => {
     // A refresh starts over from the newest page.
@@ -330,8 +342,24 @@ function InboxList({ onOpen }: { onOpen: (uid: number) => void }) {
 
   return (
     <div className="-mx-5">
-      <div className="flex items-center justify-between px-5 py-2 text-xs text-muted-foreground">
+      <div className="flex items-center gap-1 px-5 py-2 text-xs text-muted-foreground">
         <span className="tabular-nums">{inbox.data.total}</span>
+        <span className="flex-1" />
+        {items.some((i) => !i.seen) && (
+          <button
+            type="button"
+            onClick={() => void markAllSeen()}
+            disabled={markingAll}
+            className="flex items-center gap-1 rounded-md px-1.5 py-1 transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60"
+          >
+            {markingAll ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <CheckCheck className="size-3.5" />
+            )}
+            {t("markAllRead")}
+          </button>
+        )}
         <button
           type="button"
           onClick={inbox.refresh}
@@ -414,6 +442,13 @@ function MessageView({ uid }: { uid: number }) {
   const client = useIntranetApiClient();
   const message = useMailMessage(uid);
   const [downloading, setDownloading] = useState<string | null>(null);
+
+  const loaded = message.data?.uid === uid ? message.data : undefined;
+  useEffect(() => {
+    // Opening a mail reads it, in IONOS too — the unread badge and the "new
+    // mail" notification clear with it. Failing to flag it isn't worth a toast.
+    if (loaded && !loaded.seen) void markMailSeen(client, uid).catch(() => {});
+  }, [loaded, client, uid]);
 
   if (message.status === "error") {
     return (

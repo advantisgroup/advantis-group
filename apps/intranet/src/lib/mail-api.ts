@@ -100,3 +100,12 @@ export function setMailAccount(
     body: JSON.stringify(body),
   });
 }
+
+export function markMailSeen(
+  api: IntranetApiClient,
+  uid: number | "all",
+): Promise<{ unseen: number }> {
+  return api.fetchJson(uid === "all" ? "/mail/seen-all" : `/mail/messages/${uid}/seen`, {
+    method: "POST",
+  });
+}

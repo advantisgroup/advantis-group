@@ -6,11 +6,11 @@ import { Errors } from "./errors.js";
 import { optionalEnv } from "./env.js";
 
 /**
- * Read-only access to a person's IONOS inbox over IMAP. Every call opens a
- * fresh connection, selects INBOX with EXAMINE (`readOnly`) and fetches with
- * BODY.PEEK, so nothing done here changes the mailbox — not even the
- * read/unread state the person sees in IONOS webmail. Nothing is cached or
- * stored: messages are read live on each request.
+ * A person's IONOS inbox over IMAP. Every call opens a fresh connection and
+ * selects INBOX with EXAMINE (`readOnly`), fetching with BODY.PEEK — except
+ * `markSeen`, the one write: it sets the read flag, as opening a mail in any
+ * other client would. Nothing is sent, moved or deleted, and nothing is
+ * cached or stored: messages are read live on each request.
  */
 
 const ENC_KEY = "MAIL_ENC_KEY";
@@ -41,7 +41,11 @@ export function assertMailAvailable(): void {
   }
 }
 
-async function withInbox<T>(creds: MailCredentials, fn: (client: ImapFlow) => Promise<T>) {
+async function withInbox<T>(
+  creds: MailCredentials,
+  fn: (client: ImapFlow) => Promise<T>,
+  { write = false }: { write?: boolean } = {},
+) {
   const client = new ImapFlow({
     host: optionalEnv("MAIL_IMAP_HOST") ?? "imap.ionos.de",
     port: Number(optionalEnv("MAIL_IMAP_PORT") ?? 993),
@@ -64,7 +68,7 @@ async function withInbox<T>(creds: MailCredentials, fn: (client: ImapFlow) => Pr
     throw error;
   }
   try {
-    await client.mailboxOpen("INBOX", { readOnly: true });
+    await client.mailboxOpen("INBOX", { readOnly: !write });
     return await fn(client);
   } finally {
     await client.logout().catch(() => client.close());
@@ -110,6 +114,26 @@ export function attachmentsOf(node: MessageStructureObject | undefined): MailAtt
       size: node.size ?? 0,
     },
   ];
+}
+
+/** Marks one message (or every unread one) as read; returns the unread count after. */
+export async function markSeen(creds: MailCredentials, uid: number | "all"): Promise<number> {
+  return withInbox(
+    creds,
+    async (client) => {
+      if (uid === "all") {
+        const unread = await client.search({ seen: false }, { uid: true });
+        if (unread && unread.length > 0) {
+          await client.messageFlagsAdd(unread, ["\\Seen"], { uid: true });
+        }
+      } else {
+        await client.messageFlagsAdd(String(uid), ["\\Seen"], { uid: true });
+      }
+      const left = await client.search({ seen: false });
+      return left ? left.length : 0;
+    },
+    { write: true },
+  );
 }
 
 export async function checkLogin(creds: MailCredentials): Promise<void> {

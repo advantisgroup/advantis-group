@@ -5,8 +5,7 @@
   "refresh": "Refresh",
   "back": "Back",
   "manage": "Manage mailboxes",
-  "readOnly": "Read only",
-  "readOnlyHint": "The mailbox is only displayed here. Read status, folders and messages in IONOS stay unchanged. Reply and delete in IONOS webmail.",
+  "readOnlyHint": "Read here; reply, send and delete in IONOS webmail. Opened mail counts as read in IONOS too.",
   "webmail": "IONOS webmail",
   "notConnected": "No mailbox connected yet.",
   "notConnectedHint": "An admin sets up your IONOS mailbox.",
@@ -51,5 +50,6 @@
     "removed": "Mailbox disconnected",
     "search": "Search people",
     "failed": "Saving failed"
-  }
+  },
+  "markAllRead": "Mark all read"
 }

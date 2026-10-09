@@ -150,3 +150,29 @@ export const apiMarkAuthFailed = serverUserMutation({
     if (account && account.error !== "auth") await ctx.db.patch(account._id, { error: "auth" });
   },
 });
+
+/** After the caller read mail in the panel: the new unread count for the
+ *  badge, and the matching "new mail" notifications count as read too. */
+export const apiMarkedSeen = serverUserMutation({
+  args: { unseen: v.number(), uid: v.optional(v.number()) },
+  handler: async (ctx, { unseen, uid }) => {
+    const account = await accountFor(ctx, ctx.caller.id);
+    if (account) await ctx.db.patch(account._id, { unseen });
+    const recent = await ctx.db
+      .query("notifications")
+      .withIndex("by_user", (q) => q.eq("userId", ctx.caller.id))
+      .order("desc")
+      .take(200);
+    const now = Date.now();
+    for (const n of recent) {
+      if (n.readAt || n.type !== "mail_received") continue;
+      // A summary ("5 neue E-Mails") has no single message; it clears once
+      // nothing is left unread.
+      const matches =
+        uid === undefined ||
+        n.link === `/?postfach=${uid}` ||
+        (unseen === 0 && n.link === "/?postfach=posteingang");
+      if (matches) await ctx.db.patch(n._id, { readAt: now });
+    }
+  },
+});

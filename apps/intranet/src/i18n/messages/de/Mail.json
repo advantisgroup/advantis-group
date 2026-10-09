@@ -5,8 +5,7 @@
   "refresh": "Aktualisieren",
   "back": "Zurück",
   "manage": "Postfächer verwalten",
-  "readOnly": "Nur lesen",
-  "readOnlyHint": "Das Postfach wird hier nur angezeigt. Gelesen-Status, Ordner und Mails in IONOS bleiben unverändert. Antworten und Löschen weiter im IONOS-Webmail.",
+  "readOnlyHint": "Hier lesen; Antworten, Senden und Löschen im IONOS-Webmail. Geöffnete Mails gelten auch in IONOS als gelesen.",
   "webmail": "IONOS-Webmail",
   "notConnected": "Noch kein Postfach verbunden.",
   "notConnectedHint": "Ein Admin hinterlegt dein IONOS-Postfach.",
@@ -51,5 +50,6 @@
     "removed": "Postfach getrennt",
     "search": "Person suchen",
     "failed": "Speichern fehlgeschlagen"
-  }
+  },
+  "markAllRead": "Alle als gelesen"
 }
