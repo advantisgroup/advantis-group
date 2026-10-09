@@ -7,7 +7,7 @@ import { berlinDate } from "./lib/berlin";
 import {
   assertDatesOpen,
   invalidateTotals,
-  isTrackingDisabled,
+  isClockingOff,
   noteMissingBreak,
   notePhoneBooking,
   openEntries,
@@ -42,7 +42,7 @@ export const clockIn = userMutation({
   args: deviceArgs,
   handler: async (ctx, { device }) => {
     await assertTimeClock(ctx);
-    if (await isTrackingDisabled(ctx, ctx.caller.id)) {
+    if (await isClockingOff(ctx, ctx.caller.id)) {
       throw timeError("conflict", "tracking_disabled", "Time tracking is off for this person");
     }
     const open = await openEntries(ctx, ctx.caller.id);

@@ -152,6 +152,101 @@ function TrackingCard({ detail }: { detail: Detail }) {
   );
 }
 
+/** Fixed hours: booked automatically every working day, no clocking. */
+function AutoBookCard({ detail }: { detail: Detail }) {
+  const t = useTranslations("Zeiterfassung");
+  const today = useBerlinToday();
+  const setAutoBook = useMutation(api.time.autoBook.setAutoBook);
+  const showError = useTimeErrorToast();
+  const current = detail.autoBook;
+  const [from, setFrom] = useState(current?.from ?? today);
+  const [start, setStart] = useState(current?.start ?? "08:00");
+  const [breakMinutes, setBreakMinutes] = useState(String(current?.breakMinutes ?? 30));
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setFrom(current?.from ?? today);
+    setStart(current?.start ?? "08:00");
+    setBreakMinutes(String(current?.breakMinutes ?? 30));
+  }, [current?.from, current?.start, current?.breakMinutes, today]);
+
+  async function save(enabled: boolean) {
+    setBusy(true);
+    try {
+      const result = await setAutoBook({
+        userId: detail.userId,
+        settings: enabled ? { from, start, breakMinutes: Number(breakMinutes) || 0 } : null,
+      });
+      toast.success(
+        enabled
+          ? t("admin.autoBookSaved", { count: result.inserted + result.updated })
+          : t("admin.autoBookOffToast"),
+      );
+    } catch (error) {
+      showError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="lg:col-span-2">
+      <CardContent className="space-y-4 p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-base font-semibold">{t("admin.autoBook")}</p>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              {t("admin.autoBookHint")}
+            </p>
+          </div>
+          <Switch
+            checked={!!current}
+            disabled={busy}
+            onCheckedChange={(value) => void save(value)}
+            aria-label={t("admin.autoBook")}
+          />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
+          <div className="space-y-1.5">
+            <FieldLabel htmlFor="auto-from">{t("admin.autoBookFrom")}</FieldLabel>
+            <Input
+              id="auto-from"
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <FieldLabel htmlFor="auto-start">{t("admin.autoBookStart")}</FieldLabel>
+            <Input
+              id="auto-start"
+              type="time"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <FieldLabel htmlFor="auto-break">{t("admin.autoBookBreak")}</FieldLabel>
+            <Input
+              id="auto-break"
+              type="number"
+              min={0}
+              max={120}
+              value={breakMinutes}
+              onChange={(e) => setBreakMinutes(e.target.value)}
+            />
+          </div>
+          {current && (
+            <Button variant="outline" disabled={busy} onClick={() => void save(true)}>
+              {t("admin.autoBookApply")}
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 /** Preview stage only: let this person clock here before everyone else. */
 function EarlyAccessCard({ detail }: { detail: Detail }) {
   const t = useTranslations("Zeiterfassung");
@@ -221,6 +316,7 @@ function Settings({ detail }: { detail: Detail }) {
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       <TrackingCard detail={detail} />
+      <AutoBookCard detail={detail} />
       {mode?.preview && <EarlyAccessCard detail={detail} />}
       <Card className="lg:col-span-2">
         <CardHeader className="flex-row items-center justify-between">

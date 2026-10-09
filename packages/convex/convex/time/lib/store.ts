@@ -85,6 +85,21 @@ export async function isTrackingDisabled(ctx: QueryCtx, userId: Id<"users">): Pr
   return row?.trackingDisabled === true;
 }
 
+/** This person's switches (`timeProfiles`), if any were ever set. */
+export async function loadProfile(ctx: QueryCtx, userId: Id<"users">) {
+  return ctx.db
+    .query("timeProfiles")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .unique();
+}
+
+/** Doesn't clock: no clock, no morning prompt — either no time recording at
+ *  all, or fixed hours booked automatically. */
+export async function isClockingOff(ctx: QueryCtx, userId: Id<"users">): Promise<boolean> {
+  const row = await loadProfile(ctx, userId);
+  return row?.trackingDisabled === true || row?.autoBook !== undefined;
+}
+
 /** Date from which this person may use the module before go-live, if any. */
 export async function earlyAccessFrom(ctx: QueryCtx, userId: Id<"users">): Promise<string | null> {
   const row = await ctx.db

@@ -76,7 +76,9 @@
     "duration": "Duration",
     "trackingOffTitle": "Time tracking is switched off for you",
     "trackingOffHint": "You don't need to clock in. You can still enter vacation and other absences.",
-    "balanceHintPreview": "As imported from Clockodo"
+    "balanceHintPreview": "As imported from Clockodo",
+    "autoBookTitle": "Fixed working hours",
+    "autoBookHint": "You don't need to clock in. Your working time is booked automatically every working day: from {start} as per your schedule, with a {breakMinutes}-minute break at noon on days over 6 hours. Vacation, sick leave and holidays are taken into account."
   },
   "entries": {
     "running": "running",
@@ -99,7 +101,8 @@
       "clock": "Clocked",
       "manual": "Added manually",
       "auto18": "Auto-closed",
-      "import": "Imported"
+      "import": "Imported",
+      "auto": "Fixed hours"
     },
     "edit": "Edit",
     "delete": "Delete",
@@ -329,7 +332,15 @@
     "earlyAccessOffHint": "During the preview this person only sees their data. Switch on if they should already clock in here (e.g. because they never used Clockodo).",
     "earlyAccessOnHint": "Already clocks and files requests here, from {date}.",
     "earlyAccessOnToast": "Enabled – clocks in here from tomorrow",
-    "earlyAccessOffToast": "Back to preview only"
+    "earlyAccessOffToast": "Back to preview only",
+    "autoBook": "Book fixed hours automatically",
+    "autoBookHint": "For people who don't clock: every working day gets the scheduled hours, from the start time, with a break at noon on days over 6 hours. Holidays and approved absences are skipped; days the person records themselves are left alone. Switching it on books every day since the date.",
+    "autoBookFrom": "From",
+    "autoBookStart": "Start",
+    "autoBookBreak": "Break (min)",
+    "autoBookApply": "Apply",
+    "autoBookSaved": "Fixed hours saved – {count} entries written",
+    "autoBookOffToast": "Fixed hours switched off"
   },
   "audit": {
     "system": "System",

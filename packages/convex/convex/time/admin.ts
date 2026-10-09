@@ -15,6 +15,7 @@ import {
   invalidateTotalsFrom,
   loadAbsences,
   loadHolidays,
+  loadProfile,
   loadSchedules,
   earlyAccessFrom,
   isTrackingDisabled,
@@ -131,6 +132,7 @@ export const personDetail = userQuery({
       vacation,
       trackingDisabled: await isTrackingDisabled(ctx, userId),
       earlyAccessFrom: await earlyAccessFrom(ctx, userId),
+      autoBook: (await loadProfile(ctx, userId))?.autoBook ?? null,
     };
   },
 });
@@ -149,6 +151,8 @@ export const setTracking = userMutation({
       userId,
       trackingDisabled: disabled,
       earlyAccessFrom: existing?.earlyAccessFrom,
+      // No time recording at all also ends fixed hours.
+      autoBook: disabled ? undefined : existing?.autoBook,
       updatedAt: Date.now(),
     };
     let id = existing?._id;
@@ -186,6 +190,7 @@ export const setEarlyAccess = userMutation({
       userId,
       trackingDisabled: existing?.trackingDisabled ?? false,
       earlyAccessFrom: from ?? undefined,
+      autoBook: existing?.autoBook,
       updatedAt: Date.now(),
     };
     let id = existing?._id;

@@ -102,9 +102,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // Own Zeiterfassung: header pill + morning clock-in prompt, only for those
   // who may clock right now (everyone after go-live, admins and testers in
   // the test stage, nobody in the preview — see time/lib/mode) and who
-  // record their working time at all.
+  // record their working time themselves (not off, not fixed hours).
   const timeMode = useQuery(api.time.mode.status);
-  const timeEnabled = timeMode?.canClock === true && timeMode.tracking;
+  const timeEnabled = timeMode?.canClock === true && timeMode.tracking && !timeMode.autoBook;
 
   // Chat and the announcement composer are full-screen, self-managing views
   // (their own header and sticky composer/toolbar), so they opt out of the

@@ -16,6 +16,8 @@ export const timeEntrySourceValidator = v.union(
   v.literal("manual"),
   v.literal("auto18"),
   v.literal("import"),
+  /** Booked by the fixed-hours job (`timeProfiles.autoBook`). */
+  v.literal("auto"),
 );
 export const timeEntryStatusValidator = v.union(
   v.literal("active"),
@@ -180,6 +182,12 @@ export const timeTables = {
     trackingDisabled: v.boolean(),
     /** Uses the module fully from this Berlin date on, before go-live (preview). */
     earlyAccessFrom: v.optional(v.string()),
+    /** Doesn't clock: fixed hours are booked every working day from `from`
+     *  on, starting at `start` ("HH:MM"), as long as the day's target, with
+     *  `breakMinutes` at noon on days over six hours (time/lib/autoBook.ts). */
+    autoBook: v.optional(
+      v.object({ from: v.string(), start: v.string(), breakMinutes: v.number() }),
+    ),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
 

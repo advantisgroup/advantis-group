@@ -9,13 +9,14 @@ import {
   timeLiveFrom,
   timeMode,
 } from "./lib/mode";
-import { isTrackingDisabled } from "./lib/store";
+import { loadProfile } from "./lib/store";
 
 /** What the intranet needs to decide whether to show the module at all. */
 export const status = userQuery({
   args: {},
   handler: async (ctx) => {
     const early = await hasEarlyAccess(ctx);
+    const profile = await loadProfile(ctx, ctx.caller.id);
     return {
       /** Test stage (only admins and testers get in). */
       testMode: timeMode() === "test",
@@ -31,7 +32,9 @@ export const status = userQuery({
       /** May clock in and out. */
       canClock: canClockTime(ctx.caller, early),
       /** False for people who don't record working time (no clock, no prompt). */
-      tracking: !(await isTrackingDisabled(ctx, ctx.caller.id)),
+      tracking: profile?.trackingDisabled !== true,
+      /** Fixed hours booked automatically: no clock, no prompt either. */
+      autoBook: profile?.autoBook ?? null,
     };
   },
 });

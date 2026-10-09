@@ -79,9 +79,26 @@ export function Overview() {
 
   return (
     <div className="space-y-5">
-      <SectionBoundary title={t("overview.clockUnavailable")}>
-        <ClockCard today={todayView} />
-      </SectionBoundary>
+      {mode?.autoBook ? (
+        <Card className="border-border/70 shadow-none">
+          <CardContent className="flex items-start gap-3 p-5">
+            <CalendarClock className="mt-0.5 size-5 shrink-0 text-primary" />
+            <div className="min-w-0">
+              <p className="font-semibold">{t("overview.autoBookTitle")}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t("overview.autoBookHint", {
+                  start: mode.autoBook.start,
+                  breakMinutes: mode.autoBook.breakMinutes,
+                })}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <SectionBoundary title={t("overview.clockUnavailable")}>
+          <ClockCard today={todayView} />
+        </SectionBoundary>
+      )}
       <KpiStrip className="grid-cols-3 lg:grid-cols-3">
         <Kpi
           label={t("overview.week")}

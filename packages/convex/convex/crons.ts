@@ -186,6 +186,13 @@ if (process.env.DISABLE_CRONS !== "true") {
     internal.time.jobs.autoCloseOpenEntries,
     {},
   );
+  // Fixed hours (timeProfiles.autoBook): book days once they are over.
+  crons.hourly(
+    "time: book fixed hours",
+    { minuteUTC: 15 },
+    internal.time.autoBook.bookFixedHours,
+    {},
+  );
   // 15th 00:05 Berlin: lock last month; 1 Dec: seed next year's holidays.
   crons.hourly(
     "time: lock months and seed holidays",

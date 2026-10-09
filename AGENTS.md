@@ -291,6 +291,9 @@ live); `/zeiterfassung` is in `maintenance.ts`'s `OPEN_PREFIXES`.
   Managers get nothing extra here.
 - Month lock: any change touching a locked month throws `reason:
   "month_locked"`, admins included — they unlock with a reason first.
+  Exceptions that write history as it was: the Clockodo import and the
+  initial backfill when an admin switches on fixed hours (`time/autoBook.ts`,
+  `timeProfiles.autoBook`; the hourly job itself skips locked months).
 - `timeMonthTotals` caches a locked month's worked/target minutes for the
   hours account. Anything that changes a month's inputs must call
   `invalidateTotals`/`invalidateTotalsFrom`; a missing row is computed live.

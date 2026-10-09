@@ -76,7 +76,9 @@
     "duration": "Dauer",
     "trackingOffTitle": "Für dich ist die Zeiterfassung ausgeschaltet",
     "trackingOffHint": "Du musst nicht stempeln. Urlaub und andere Abwesenheiten kannst du trotzdem eintragen.",
-    "balanceHintPreview": "Stand aus Clockodo"
+    "balanceHintPreview": "Stand aus Clockodo",
+    "autoBookTitle": "Feste Arbeitszeit",
+    "autoBookHint": "Du musst nicht stempeln. Deine Arbeitszeit wird an jedem Arbeitstag automatisch eingetragen: ab {start} Uhr laut deinem Arbeitszeitmodell, bei mehr als 6 Stunden mit {breakMinutes} Min. Pause um 12 Uhr. Urlaub, Krankheit und Feiertage werden berücksichtigt."
   },
   "entries": {
     "running": "läuft",
@@ -99,7 +101,8 @@
       "clock": "Gestempelt",
       "manual": "Nachgetragen",
       "auto18": "Automatisch beendet",
-      "import": "Importiert"
+      "import": "Importiert",
+      "auto": "Feste Arbeitszeit"
     },
     "edit": "Bearbeiten",
     "delete": "Löschen",
@@ -329,7 +332,15 @@
     "earlyAccessOffHint": "Während der Vorschau sieht die Person nur ihre Daten. Einschalten, wenn sie schon jetzt hier stempeln soll (z. B. weil sie Clockodo nie genutzt hat).",
     "earlyAccessOnHint": "Stempelt und beantragt schon hier, ab {date}.",
     "earlyAccessOnToast": "Freigeschaltet – stempelt ab morgen hier",
-    "earlyAccessOffToast": "Wieder nur Vorschau"
+    "earlyAccessOffToast": "Wieder nur Vorschau",
+    "autoBook": "Feste Arbeitszeit automatisch eintragen",
+    "autoBookHint": "Für Personen, die nicht stempeln: An jedem Arbeitstag wird die Sollzeit aus dem Arbeitszeitmodell eingetragen – ab der Startzeit, bei mehr als 6 Stunden mit Pause um 12 Uhr. Feiertage und genehmigte Abwesenheiten werden ausgelassen; Tage, an denen die Person selbst etwas erfasst, bleiben unberührt. Beim Einschalten werden alle Tage ab dem Datum nachgetragen.",
+    "autoBookFrom": "Ab",
+    "autoBookStart": "Beginn",
+    "autoBookBreak": "Pause (Min.)",
+    "autoBookApply": "Übernehmen",
+    "autoBookSaved": "Feste Arbeitszeit gespeichert – {count} Einträge geschrieben",
+    "autoBookOffToast": "Feste Arbeitszeit ausgeschaltet"
   },
   "audit": {
     "system": "System",
