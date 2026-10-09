@@ -34,8 +34,6 @@ export interface DaySummary {
   workedMinutes: number;
   /** All break time of the day, short breaks included. */
   breakMinutes: number;
-  /** Break time that counts under ArbZG: pieces of at least 15 minutes. */
-  countedBreakMinutes: number;
   firstStart: number | null;
   lastEnd: number | null;
   holiday: HolidayLike | null;
@@ -124,8 +122,7 @@ interface Span {
 
 /**
  * Worked and break time of one day's segments (ms). `breakMs` is every break,
- * short ones included (what the day shows); `countedBreakMs` only the pieces
- * of at least 15 minutes that count under § 4 ArbZG.
+ * short ones included — shown for the day and used for the break hint.
  */
 export function measureDay(
   segments: readonly SegmentLike[],
@@ -133,7 +130,6 @@ export function measureDay(
 ): {
   workedMs: number;
   breakMs: number;
-  countedBreakMs: number;
   first: number | null;
   last: number | null;
   open: boolean;
@@ -167,7 +163,6 @@ export function measureDay(
   return {
     workedMs: Math.max(0, grossMs - insideBreakMs),
     breakMs: sum(pieces),
-    countedBreakMs: sum(pieces.filter((ms) => ms >= 15 * MINUTE)),
     first: merged[0]?.start ?? null,
     last: merged.at(-1)?.end ?? null,
     open,
@@ -176,8 +171,10 @@ export function measureDay(
 
 /**
  * § 4 ArbZG wants 30 minutes of break above 6 hours; the company flags it
- * from 6:15 on (Vahan, 06.10.2026) so a few minutes over don't count. Breaks
- * are never deducted automatically — this is only a note.
+ * from 6:15 on (Vahan, 06.10.2026) so a few minutes over don't count. All
+ * breaks of the day add up, short ones included (Vahan, 09.10.2026) — the
+ * law's 15-minute pieces are not checked. Breaks are never deducted
+ * automatically — this is only a note.
  */
 export const BREAK30_AFTER_MINUTES = 6 * 60 + 15;
 
@@ -226,7 +223,6 @@ export function summarizeDays(input: {
     const target = targetMinutesOn(date, input.schedules, holiday, input.absences);
     const workedMinutes = Math.round(measured.workedMs / MINUTE);
     const breakMinutes = Math.round(measured.breakMs / MINUTE);
-    const countedBreakMinutes = Math.round(measured.countedBreakMs / MINUTE);
     const rest =
       previousLast !== null && measured.first !== null
         ? Math.round((measured.first - previousLast) / MINUTE)
@@ -238,13 +234,12 @@ export function summarizeDays(input: {
       targetMinutes: target.target,
       workedMinutes,
       breakMinutes,
-      countedBreakMinutes,
       firstStart: measured.first,
       lastEnd: measured.last,
       holiday,
       absenceFraction: target.absenceFraction,
       absenceTypes: target.absenceTypes,
-      warnings: workedMinutes > 0 ? dayWarnings(workedMinutes, countedBreakMinutes, rest) : [],
+      warnings: workedMinutes > 0 ? dayWarnings(workedMinutes, breakMinutes, rest) : [],
       open: measured.open,
     };
   });

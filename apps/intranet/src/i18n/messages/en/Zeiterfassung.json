@@ -159,7 +159,7 @@
   "warnings": {
     "break30": {
       "label": "Break < 30 min",
-      "hint": "More than 6 hours of work need at least 30 minutes of break (§ 4 ArbZG); flagged from 6:15 h. Breaks are never deducted automatically – add it if it's missing. Breaks count from 15 minutes."
+      "hint": "More than 6 hours of work need at least 30 minutes of break (§ 4 ArbZG); flagged from 6:15 h. Breaks are never deducted automatically – add it if it's missing. All breaks of the day add up, short ones included."
     },
     "break45": {
       "label": "Break < 45 min",

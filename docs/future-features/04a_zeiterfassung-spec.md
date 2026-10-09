@@ -117,8 +117,9 @@ Built as specified; where the spec left room:
   for the usual single entry. A break still open at 18:00 ends with it. The
   entry gets `source: "auto18"`, `autoClosed: true`, an audit row and an
   in-app notification.
-- **Breaks** count for the ArbZG check as explicit pause segments plus gaps
-  between work segments, each only from 15 minutes (§ 4 ArbZG). Warnings
+- **Breaks** count for the break hint as explicit pause segments plus gaps
+  between work segments, all of them added up — short ones included (company
+  decision 09.10.2026; the law's 15-minute pieces are not checked). Warnings
   only; nothing is deducted.
 - **Corrections** — any manual change by a non-admin (add, edit, delete of a
   closed entry, any past day or today) is a pending row; approving an edit

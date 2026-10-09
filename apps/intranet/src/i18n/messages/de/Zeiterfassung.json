@@ -159,7 +159,7 @@
   "warnings": {
     "break30": {
       "label": "Pause < 30 Min.",
-      "hint": "Über 6 Stunden Arbeit brauchen mindestens 30 Minuten Pause (§ 4 ArbZG); markiert wird ab 6:15 Std. Die Pause wird nicht automatisch abgezogen – bitte nachtragen, falls sie fehlt. Pausen zählen ab 15 Minuten."
+      "hint": "Über 6 Stunden Arbeit brauchen mindestens 30 Minuten Pause (§ 4 ArbZG); markiert wird ab 6:15 Std. Die Pause wird nicht automatisch abgezogen – bitte nachtragen, falls sie fehlt. Alle Pausen des Tages zählen zusammen, auch kurze."
     },
     "break45": {
       "label": "Pause < 45 Min.",
