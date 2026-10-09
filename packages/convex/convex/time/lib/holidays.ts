@@ -3,9 +3,9 @@ import { addDays } from "./berlin";
 /**
  * Days off in Nürnberg: Bavaria's public holidays plus the company's own
  * rules. Mariä Himmelfahrt (15.08.) is only a public holiday in Bavarian
- * municipalities with a Catholic majority — Nürnberg isn't one — so it isn't
- * listed as a public holiday; the company gives the day off instead. Buß- und
- * Bettag is school-free but not a public holiday in Bavaria.
+ * municipalities with a Catholic majority — Nürnberg isn't one — and the
+ * company doesn't give the day off either (Vahan, 09.10.2026), so it isn't
+ * listed. Buß- und Bettag is school-free but not a public holiday in Bavaria.
  */
 
 export const HOLIDAY_REGION = "BY-NUE";
@@ -48,7 +48,6 @@ export function bavarianHolidays(year: number): HolidaySeed[] {
     { date: addDays(easter, 39), name: "Christi Himmelfahrt", fraction: 1 },
     { date: addDays(easter, 50), name: "Pfingstmontag", fraction: 1 },
     { date: addDays(easter, 60), name: "Fronleichnam", fraction: 1 },
-    { date: fixed("08-15"), name: "Betriebsfrei (Mariä Himmelfahrt)", fraction: 1 },
     { date: fixed("10-03"), name: "Tag der Deutschen Einheit", fraction: 1 },
     { date: fixed("11-01"), name: "Allerheiligen", fraction: 1 },
     { date: fixed("12-24"), name: "Heiligabend (halber Tag)", fraction: 0.5 },

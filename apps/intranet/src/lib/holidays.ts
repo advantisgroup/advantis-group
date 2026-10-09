@@ -2,9 +2,9 @@
  * German public holidays: the nationwide ones plus each state's own. Dates
  * are ISO `YYYY-MM-DD` strings, computed with UTC arithmetic so a day never
  * shifts across a DST change. Mariä Himmelfahrt in Bavaria and Fronleichnam
- * in Saxony and Thuringia only apply in some municipalities; they're listed
- * for the state where they apply in most of it (Bavaria), and left out where
- * they're the exception.
+ * in Saxony and Thuringia only apply in some municipalities, so they're left
+ * out there. For Bavaria the list is Nürnberg's, where the company sits:
+ * 15.08. is a normal workday (Vahan, 09.10.2026).
  */
 
 export type HolidayRegion =
@@ -119,7 +119,7 @@ export function publicHolidays(year: number, region: HolidayRegion | null): Holi
 
   const regional: Record<HolidayRegion, Def[]> = {
     BW: [epiphany, corpusChristi, allSaints],
-    BY: [epiphany, corpusChristi, assumption, allSaints],
+    BY: [epiphany, corpusChristi, allSaints],
     BE: [womensDay],
     BB: [easterSunday, whitSunday, reformation],
     HB: [reformation],

@@ -109,7 +109,7 @@ describe("holidays", () => {
   test("Bavaria (Nürnberg) plus the company rules", () => {
     const list = bavarianHolidays(2026);
     const byDate = new Map(list.map((h) => [h.date, h]));
-    expect(list).toHaveLength(15);
+    expect(list).toHaveLength(14);
     for (const date of [
       "2026-01-01",
       "2026-01-06",
@@ -126,12 +126,10 @@ describe("holidays", () => {
     ]) {
       expect(byDate.get(date)?.fraction).toBe(1);
     }
-    expect(byDate.get("2026-08-15")).toMatchObject({
-      fraction: 1,
-      name: expect.stringContaining("Betriebsfrei"),
-    });
     expect(byDate.get("2026-12-24")?.fraction).toBe(0.5);
     expect(byDate.get("2026-12-31")?.fraction).toBe(0.5);
+    // Not a holiday in Nürnberg (only in Catholic-majority municipalities).
+    expect(byDate.has("2026-08-15")).toBe(false);
     // Not public holidays in Bavaria.
     expect(byDate.has("2026-11-18")).toBe(false);
     expect(byDate.has("2026-10-31")).toBe(false);

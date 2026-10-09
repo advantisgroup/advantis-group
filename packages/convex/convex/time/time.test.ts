@@ -349,7 +349,7 @@ describe("month lock", () => {
     expect(months.find((row) => row.month === "2026-10")?.locked).toBe(false);
     // The same job seeded this year's holidays.
     const holidays = await s.alice.query(api.time.holidays.list, { year: 2026 });
-    expect(holidays).toHaveLength(15);
+    expect(holidays).toHaveLength(14);
   });
 });
 
@@ -601,7 +601,7 @@ describe("hours account and settings", () => {
   test("holidays are seeded once per year and only by admins", async () => {
     const s = await setup();
     setNow("2026-10-06", "09:00");
-    expect(await s.admin.mutation(api.time.holidays.seedYear, { year: 2027 })).toBe(15);
+    expect(await s.admin.mutation(api.time.holidays.seedYear, { year: 2027 })).toBe(14);
     expect(await s.admin.mutation(api.time.holidays.seedYear, { year: 2027 })).toBe(0);
     await expect(s.alice.mutation(api.time.holidays.seedYear, { year: 2028 })).rejects.toThrow();
     const list = await s.alice.query(api.time.holidays.list, { year: 2027 });
