@@ -2,7 +2,6 @@ export type CheckpointId =
   | "dashboard"
   | "announcements"
   | "calendar"
-  | "absences"
   | "chat"
   | "directory"
   | "files"

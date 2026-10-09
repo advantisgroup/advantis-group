@@ -27,8 +27,6 @@ export interface IntranetPage {
 const manager = (caller: Caller) => caller.isManager;
 const admin = (caller: Caller) => caller.isAdmin;
 const applicants = (caller: Caller) => caller.hasApplicantAccess;
-const clockodo = (caller: Caller) => !!caller.user.clockodoUserId;
-const clockodoTeam = (caller: Caller) => caller.can("view_clockodo_team");
 
 export const INTRANET_PAGES: IntranetPage[] = [
   {
@@ -49,54 +47,6 @@ export const INTRANET_PAGES: IntranetPage[] = [
     description: "Firmentermine, Meetings und Abwesenheiten im Kalender.",
     keywords: ["termine", "events", "meeting", "calendar"],
     deepLinks: [{ href: "/calendar?new=1", label: "Neuen Termin anlegen" }],
-  },
-  {
-    href: "/clockodo",
-    label: "Abwesenheiten / Urlaub",
-    description: "Urlaub und Abwesenheiten beantragen und den eigenen Resturlaub sehen (Clockodo).",
-    keywords: ["urlaub", "krank", "abwesenheit", "vacation", "absence", "freier tag", "clockodo"],
-    visible: clockodo,
-  },
-  {
-    href: "/clockodo/requests",
-    label: "Meine Abwesenheitsanträge",
-    description: "Gestellte Urlaubs- und Abwesenheitsanträge und ihr Status.",
-    keywords: ["urlaubsantrag", "antrag", "requests"],
-    visible: clockodo,
-  },
-  {
-    href: "/clockodo/timetable",
-    label: "Arbeitszeiten",
-    description: "Erfasste Arbeitszeiten und Stunden aus Clockodo.",
-    keywords: ["zeiterfassung", "stunden", "timesheet", "arbeitszeit"],
-    visible: clockodo,
-  },
-  {
-    href: "/clockodo/reports",
-    label: "Abwesenheitsberichte",
-    description: "Auswertungen über Urlaub und Abwesenheiten.",
-    keywords: ["bericht", "report", "auswertung"],
-    visible: clockodoTeam,
-  },
-  {
-    href: "/clockodo/approvals",
-    label: "Abwesenheiten genehmigen",
-    description: "Urlaubs- und Abwesenheitsanträge des Teams genehmigen oder ablehnen.",
-    keywords: ["urlaub genehmigen", "approve", "freigeben"],
-    visible: clockodoTeam,
-  },
-  {
-    href: "/clockodo/planner",
-    label: "Urlaubsplaner",
-    description: "Wer im Team wann abwesend ist, als Planer.",
-    keywords: ["planer", "team abwesenheiten", "planner"],
-    visible: clockodoTeam,
-  },
-  {
-    href: "/clockodo/admin",
-    label: "Clockodo-Verwaltung",
-    description: "Clockodo-Konten und Abwesenheitskonten verwalten.",
-    visible: manager,
   },
   // Own time tracking: whoever may open it in the current rollout stage
   // (time/lib/mode — test: admins and testers, preview and live: everyone).
@@ -545,7 +495,7 @@ export const INTRANET_PAGES: IntranetPage[] = [
   {
     href: "/admin/integrations",
     label: "Integrationen",
-    description: "Anbindungen an Clockodo, OneDrive und mehr.",
+    description: "Konten bei Drittanbietern anlegen und verwalten.",
     visible: manager,
   },
   {
@@ -626,7 +576,6 @@ export const NOT_DESTINATIONS: Record<string, string> = {
   "/sales-cockpit/projekte/new": "listed as a deep link of /sales-cockpit/projekte",
   "/updates/new": "writing updates is an admin step inside /updates",
   "/errors": "admin-only preview of the full-page error screens (403, 404, crash)",
-  "/admin/integrations/clockodo": "a tab of /admin/integrations",
   "/applicants": "served as /hr",
   "/playground": "admin-only developer playground",
   "/playground/chat": "developer playground",

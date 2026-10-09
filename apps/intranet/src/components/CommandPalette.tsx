@@ -35,7 +35,6 @@ import {
   Megaphone,
   MessageSquare,
   Newspaper,
-  Plane,
   Plus,
   Radio,
   Search,
@@ -147,7 +146,6 @@ export function CommandPalette({ className }: { className?: string } = {}) {
   const isAdmin = useIsAdmin();
   const hasApplicantAccess = useHasApplicantAccess();
   const hasFilesAccess = useHasCapability("access_files");
-  const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
   const user = useCurrentUser();
   const guidebooks = accessibleGuidebooks(user);
   const { ask, pageSubject } = useAsk();
@@ -285,9 +283,7 @@ export function CommandPalette({ className }: { className?: string } = {}) {
     const all = [
       { href: "/", label: tNav("dashboard"), icon: LayoutDashboard },
       { href: "/calendar", label: tNav("calendar"), icon: Calendar },
-      ...(user.clockodoUserId || hasClockodoTeamAccess
-        ? [{ href: "/clockodo", label: tNav("absences"), icon: Plane }]
-        : []),
+      { href: "/zeiterfassung", label: tNav("zeiterfassung"), icon: Clock },
       {
         href: "/announcements",
         label: tNav("announcements"),
@@ -320,16 +316,7 @@ export function CommandPalette({ className }: { className?: string } = {}) {
         : []),
     ];
     return all.filter((p) => !p.managerOnly || isManager).filter((p) => !p.hidden);
-  }, [
-    tNav,
-    isManager,
-    isAdmin,
-    hasApplicantAccess,
-    hasClockodoTeamAccess,
-    hasFilesAccess,
-    guidebooks.length,
-    user.clockodoUserId,
-  ]);
+  }, [tNav, isManager, isAdmin, hasApplicantAccess, hasFilesAccess, guidebooks.length]);
 
   const actions = useMemo(
     () =>

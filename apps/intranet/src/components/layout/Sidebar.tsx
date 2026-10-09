@@ -12,7 +12,6 @@ import {
   Calendar,
   CheckCheck,
   ClipboardList,
-  Clock3,
   Cloud,
   Contact,
   ExternalLink,
@@ -188,7 +187,6 @@ export function Sidebar() {
   const hasFilesAccess = useHasCapability("access_files");
   const hasBlogAccess = useHasCapability("manage_blog");
   const hasApplicantAccess = useHasApplicantAccess();
-  const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
   const hasInquiries = useHasCapability("manage_inquiries");
   const inquiryCounts = useQuery(api.marketing.inbox.counts, hasInquiries ? {} : "skip");
   const approvalCover = useQuery(api.org.delegations.mine);
@@ -267,19 +265,8 @@ export function Sidebar() {
       icon: Calendar,
       tourAttr: "tour-nav-calendar",
     },
-    ...(user.clockodoUserId || hasClockodoTeamAccess || hasApprovalCover
-      ? [
-          {
-            section: "planning" as const,
-            href: "/clockodo",
-            labelKey: "absences",
-            icon: Clock3,
-            tourAttr: "tour-nav-absences",
-          },
-        ]
-      : []),
-    // Own time tracking, next to Clockodo until the cutover. Test stage: only
-    // admins and testers see it; preview: everyone, marked as new.
+    // Own time tracking (replaces Clockodo). Test stage: only admins and
+    // testers see it; preview: everyone, marked as new.
     ...(timeMode?.canUse
       ? [
           {

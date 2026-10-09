@@ -21,7 +21,7 @@
   },
   "absence": {
     "title": "Ich brauche frei",
-    "when": "Urlaub oder eine andere Abwesenheit, zur Genehmigung an Clockodo.",
+    "when": "Urlaub oder eine andere Abwesenheit beantragen – in der Zeiterfassung.",
     "cta": "Abwesenheit beantragen"
   },
   "howto": {

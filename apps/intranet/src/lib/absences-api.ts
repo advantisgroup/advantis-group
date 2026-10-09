@@ -2,8 +2,7 @@
 
 import { useCallback } from "react";
 
-import { unwrapApiResult, useIntranetApiClient } from "@/lib/api-client";
-import { type EdenApiClient } from "@/lib/eden";
+import { useIntranetApiClient } from "@/lib/api-client";
 import { type ApiQuery, useApiQuery } from "@/hooks/use-api-query";
 
 /**
@@ -119,14 +118,4 @@ export function usePendingApprovals(
     { enabled, source: "clockodo.absences.pending" },
   );
   return { ...query, approvals: query.data };
-}
-
-/** Approve or deny a pending absence — a plain async helper (not a hook)
- * since it's called from an event handler, not on render. */
-export async function setAbsenceApprovalStatus(
-  eden: EdenApiClient,
-  id: string,
-  status: "approved" | "denied",
-): Promise<void> {
-  await unwrapApiResult(eden.clockodo.absences({ id }).status.put({ status }));
 }

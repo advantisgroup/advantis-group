@@ -52,7 +52,7 @@ export function GreetingHeader() {
       <p className="mt-1 text-sm text-muted-foreground">{t(greeting.subtitleKey, { name })}</p>
       {nextAbsence && (
         <Link
-          href="/clockodo/requests"
+          href="/zeiterfassung/abwesenheiten"
           className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full border border-border/70 px-3 py-1.5 text-xs sm:py-1 font-medium text-muted-foreground transition-colors hover:bg-accent"
         >
           <Plane className="size-3.5 text-primary" />

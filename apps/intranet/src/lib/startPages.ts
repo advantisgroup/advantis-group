@@ -7,7 +7,7 @@
 export const START_PAGES = [
   "/",
   "/calendar",
-  "/clockodo",
+  "/zeiterfassung",
   "/announcements",
   "/chat",
   "/files",

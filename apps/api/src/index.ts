@@ -13,7 +13,6 @@ import { askRoute } from "./routes/ask.js";
 import { clockodoAbsencesRoute } from "./routes/clockodo-absences.js";
 import { dailyBriefRoute } from "./routes/daily-brief.js";
 import { inquiryAiRoute } from "./routes/inquiry-ai.js";
-import { clockodoEntriesRoute } from "./routes/clockodo-entries.js";
 import { mailRoute } from "./routes/mail.js";
 import { navigateRoute } from "./routes/navigate.js";
 import { onedriveRoute } from "./routes/onedrive.js";
@@ -94,7 +93,6 @@ export const app = new Elysia()
   .use(mailRoute)
   .use(navigateRoute)
   .use(clockodoAbsencesRoute)
-  .use(clockodoEntriesRoute)
   .use(onedriveRoute)
   .use(performanceRoute)
   .use(passkeysRoute)

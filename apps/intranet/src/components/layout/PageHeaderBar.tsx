@@ -172,8 +172,8 @@ export function PageHeaderTabsSlot() {
 /**
  * Opt-in replacement for `<PageHeader>` that renders this section's
  * title/icon/description into the sticky Intranet Header instead of an
- * in-page block — see `apps/intranet/src/app/(app)/clockodo/layout.tsx` for
- * the reference usage. Only for "normal tab" pages that share the standard
+ * in-page block — see `apps/intranet/src/app/(app)/zeiterfassung/layout.tsx`
+ * for a usage. Only for "normal tab" pages that share the standard
  * app shell; immersive areas (Performance) keep their own
  * header. Typically called once per section (from its layout), not per tab.
  */

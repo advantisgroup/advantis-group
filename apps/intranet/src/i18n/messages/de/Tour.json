@@ -41,7 +41,6 @@
     "dashboard": "Dashboard",
     "announcements": "Ankündigungen",
     "calendar": "Kalender",
-    "absences": "Abwesenheiten",
     "chat": "Chat",
     "directory": "Mitarbeiter",
     "guidebooks": "Wiki",
@@ -116,24 +115,6 @@
       "add": {
         "title": "Termine erstellen",
         "description": "Als Führungskraft kannst du Termine für alle oder eine einzelne Abteilung erstellen. In den Termin-Details kannst du bearbeiten oder duplizieren, und ein Klick auf einen Tag bietet eine Schnellanlage."
-      }
-    },
-    "absences": {
-      "nav": {
-        "title": "Abwesenheiten",
-        "description": "Beantrage und verfolge Urlaub, Krankheitstage und persönliche Zeit."
-      },
-      "stats": {
-        "title": "Abwesenheit beantragen",
-        "description": "Trage hier einen neuen Urlaub, Krankheitstag oder eine persönliche Abwesenheit ein, oder exportiere deine genehmigten Abwesenheiten als Kalenderdatei."
-      },
-      "filters": {
-        "title": "Antrag finden",
-        "description": "Durchsuche deine Anträge nach Art oder Begründung."
-      },
-      "list": {
-        "title": "Deine Anträge",
-        "description": "Jede von dir beantragte Abwesenheit mit aktuellem Status — ausstehend, genehmigt oder abgelehnt. Führungskräfte nutzen für Team-Anträge den Reiter „Genehmigungen“."
       }
     },
     "chat": {

@@ -1,17 +1,11 @@
 import { type DocContent, DocViewer } from "../doc-viewer";
 
 /**
- * Converted from the Word document "Abwesenheiten_Genehmigen.docx".
+ * Approving absences in the Zeiterfassung (Verwaltung → Freigaben).
  * Content is intentionally German-only, like the other guidebooks.
  * Manager+ only (see registry.ts minRole) — no screenshots needed for now.
  */
-const IMG = "/guidebooks/abwesenheiten-genehmigen";
-
 const DOC: DocContent = {
-  download: {
-    href: `${IMG}/Abwesenheiten_Genehmigen.docx`,
-    fileName: "Abwesenheiten_Genehmigen.docx",
-  },
   sections: [
     {
       id: "antraege-entscheiden",
@@ -21,44 +15,29 @@ const DOC: DocContent = {
           kind: "links",
           items: [
             {
-              label: "Zu den Abwesenheiten (Reiter „Genehmigungen“)",
-              href: "/clockodo/approvals",
+              label: "Zu den Freigaben (Zeiterfassung → Verwaltung)",
+              href: "/zeiterfassung/admin?section=approvals",
             },
           ],
         },
         {
           kind: "text",
-          body: "Jeder offene Antrag zeigt Name, Abteilung, Art, Zeitraum, Anzahl Arbeitstage und eine optionale Begründung. Rechts daneben zwei Buttons: **„Ablehnen“** und **„Genehmigen“**.",
-        },
-        {
-          kind: "callout",
-          tone: "warning",
-          body: "Ein Klick entscheidet sofort — es gibt keine Rückfrage und kein Notizfeld. Soll die Person wissen, warum ein Antrag abgelehnt wurde, schreib ihr kurz im Chat.",
+          body: "Unter **Zeiterfassung → Verwaltung → Freigaben** stehen alle offenen Abwesenheitsanträge und Korrekturen der Arbeitszeit. Jeder Antrag zeigt Name, Art und Zeitraum. Rechts daneben zwei Buttons: **„Ablehnen“** und **„Freigeben“**.",
         },
         {
           kind: "callout",
           tone: "info",
-          body: "Mit Team-Zugriff auf Clockodo siehst du alle offenen Anträge im Unternehmen. Deine eigenen Anträge kannst du nicht selbst genehmigen. Dieselben Anträge stehen auch unter **„Freigaben“** in der Seitenleiste.",
+          body: "Beim Ablehnen kannst du eine Begründung eintragen — die Person sieht sie bei ihrem Antrag.",
         },
       ],
     },
     {
-      id: "clockodo-vs-intranet",
-      title: "Alles landet in Clockodo",
+      id: "ueberschneidungen",
+      title: "Wer ist gleichzeitig weg?",
       blocks: [
         {
           kind: "text",
-          body: "Abwesenheiten werden direkt in Clockodo gespeichert — egal ob sie im Intranet oder in Clockodo selbst beantragt wurden. Hier erscheinen deshalb alle offenen Anträge, und deine Entscheidung gilt sofort auch in Clockodo.",
-        },
-      ],
-    },
-    {
-      id: "ueberblick",
-      title: "Überblick behalten",
-      blocks: [
-        {
-          kind: "text",
-          body: "Oben im Reiter „Genehmigungen“ zeigt **„Abwesend in den nächsten 14 Tagen“** auf einen Blick, wer aus deinem Team in den kommenden zwei Wochen weg ist.",
+          body: "Bei jedem Urlaubsantrag steht, wer im selben Zeitraum abwesend ist. Kolleg:innen aus demselben Team und Teamleitungen stehen oben und sind markiert. Gesperrt wird nichts — du entscheidest selbst.",
         },
       ],
     },
@@ -66,5 +45,5 @@ const DOC: DocContent = {
 };
 
 export function AbwesenheitenGenehmigenGuidebook() {
-  return <DocViewer doc={DOC} downloadable />;
+  return <DocViewer doc={DOC} />;
 }

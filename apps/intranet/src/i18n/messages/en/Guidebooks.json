@@ -168,7 +168,7 @@
   },
   "abwesenheitenGenehmigen": {
     "title": "Approving Absences",
-    "description": "Review, approve or deny your team's requests — including Clockodo-sourced ones."
+    "description": "Review, approve or deny absence requests in the time tracking."
   },
   "verwaltungMitglieder": {
     "title": "Admin: Members & Access",

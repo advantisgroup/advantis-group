@@ -162,7 +162,7 @@ export default function ApprovalsPage() {
             label={t("absenceApprovals")}
             value={approvals?.length ?? "–"}
             hint={soonAbsences > 0 ? t("startingSoon", { count: soonAbsences }) : undefined}
-            href="/clockodo/approvals"
+            href="/zeiterfassung/admin?section=approvals"
           />
         )}
         {isManager && (
@@ -199,7 +199,7 @@ export default function ApprovalsPage() {
             icon={<Plane />}
             title={t("absenceApprovals")}
             description={t("absenceApprovalsHint")}
-            action={<ReviewAll href="/clockodo/approvals" />}
+            action={<ReviewAll href="/zeiterfassung/admin?section=approvals" />}
             bodyClassName="p-0"
           >
             {approvals === undefined ? (

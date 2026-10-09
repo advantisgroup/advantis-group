@@ -232,10 +232,14 @@ subprofile-fetching query should follow (always the same shape; a
 `linked`/`status` discriminant instead of a bare `null` or a silently
 filtered-out row).
 
-## Clockodo absences (`/absences`, `/calendar`, directory "out today")
+## Clockodo absences (`/calendar`, dashboard, directory "out today")
 
-The vacation/sick/personal absence data shown on the absences page,
-calendar, and directory "out today" badges. There is **no Convex mirror**:
+The vacation/sick/personal absence data shown in the calendar, dashboard
+widgets and directory "out today" badges. The `/clockodo` tab (time table,
+planner, requests, approvals, Clockodo user admin) was removed on 2026-10-09;
+only these reads and the header clock pill (`ClockodoHeaderControl`, removed
+at the Zeiterfassung go-live) still talk to Clockodo, plus the one-off import
+in Zeiterfassung → Verwaltung → Import. There is **no Convex mirror**:
 absences change rarely and don't need to be reactive, so every read fetches
 Clockodo fresh through `apps/api` instead of syncing a stored copy via
 webhook + cron (the old approach — `clockodoSync.ts`/`absenceSync.ts`/the
@@ -263,15 +267,14 @@ webhook + cron (the old approach — `clockodoSync.ts`/`absenceSync.ts`/the
   rows still sit in the deployment's data, but nothing reads them.
 - `integrations/clockodoLink.ts`'s `migrateLegacyClockodoLink` moves a link
   that only exists on a leftover ActivityTrack `people` row onto
-  `users.clockodoUserId` (run automatically on `/clockodo`, or from the
-  settings Connections card). It goes away with the `people` table.
+  `users.clockodoUserId` (from the settings Connections card). It goes away with the `people` table.
 
 ## Zeiterfassung (`/zeiterfassung`, own time tracking)
 
 Replaces Clockodo for working time and absences; spec and cutover plan in
 [`docs/future-features/04a_zeiterfassung-spec.md`](./docs/future-features/04a_zeiterfassung-spec.md).
-Until cutover it is locked for non-admins by `apps/intranet/src/lib/maintenance.ts`
-(not in `OPEN_PREFIXES`) and the Clockodo screens keep working beside it.
+Access before go-live is governed by Convex `TIME_MODE` (test → preview →
+live); `/zeiterfassung` is in `maintenance.ts`'s `OPEN_PREFIXES`.
 
 - Tables: `packages/convex/convex/tables/time.ts`. Absences are `timeAbsences`
   (a legacy `absences` table may still hold prod rows).

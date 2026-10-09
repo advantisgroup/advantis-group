@@ -20,7 +20,6 @@ import { useTranslations } from "next-intl";
 
 import { useAiEnabled } from "@/components/ai/use-ai-enabled";
 import { PageHeader } from "@/components/PageHeader";
-import { useCurrentUser } from "@/components/providers/current-user";
 import { Link } from "@/components/Link";
 
 interface Choice {
@@ -38,16 +37,13 @@ interface Choice {
  */
 export default function HelpPage() {
   const t = useTranslations("Help");
-  const user = useCurrentUser();
   const aiEnabled = useAiEnabled();
 
   const report: Choice[] = [
     { key: "it", href: "/it-tickets?new=1", icon: <Wrench /> },
     { key: "error", href: "/fehlermanagement?new=1", icon: <ClipboardX /> },
     { key: "idea", href: "/suggestions?new=1", icon: <Lightbulb /> },
-    ...(user.clockodoUserId
-      ? [{ key: "absence", href: "/clockodo/requests", icon: <Plane /> }]
-      : []),
+    { key: "absence", href: "/zeiterfassung/abwesenheiten", icon: <Plane /> },
   ];
   const find: Choice[] = [
     { key: "howto", href: "/guidebooks", icon: <BookOpen /> },

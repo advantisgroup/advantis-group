@@ -54,6 +54,7 @@ import { TourSpotlight } from "@/components/tour/TourSpotlight";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { UpdateBanner } from "@/components/updates/UpdateBanner";
 import { isMaintenanceLocked } from "@/lib/maintenance";
+import { START_PAGES } from "@/lib/startPages";
 import { cn } from "@/lib/utils";
 
 /**
@@ -74,7 +75,9 @@ function StartPageRedirect() {
     } catch {
       return;
     }
-    const target = prefs?.startPage;
+    // "/clockodo" was a start page until the Clockodo tab was removed.
+    const stored = prefs?.startPage === "/clockodo" ? "/zeiterfassung" : prefs?.startPage;
+    const target = START_PAGES.find((page) => page === stored);
     if (target && target !== "/" && pathname === "/") {
       router.replace(target);
     }

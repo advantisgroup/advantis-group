@@ -91,12 +91,6 @@ function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: strin
   return aStart <= bEnd && bStart <= aEnd;
 }
 
-async function requireOwnAbsence(id: number, clockodoUserId: number) {
-  const absence = await clockodo.getAbsence(id);
-  if (absence.users_id !== clockodoUserId) throw Errors.forbidden();
-  return absence;
-}
-
 /** Clockodo's time_since/time_until params reject the fractional seconds
  * Date#toISOString() includes ("Wrong format") — they need exactly
  * YYYY-MM-DDTHH:MM:SSZ. */
@@ -317,85 +311,4 @@ export const clockodoAbsencesRoute = new Elysia()
       return { absences: pending };
     },
     { signedIn: true },
-  )
-  .put(
-    "/clockodo/absences/:id/status",
-    async ({ caller, params, body }) => {
-      const me = await caller.convex.query(api.integrations.clockodoAbsences.resolveCaller, {});
-      if (me.status === "no_account" || !me.canManageTeam) {
-        throw Errors.forbidden();
-      }
-
-      const id = Number(params.id);
-      if (!Number.isSafeInteger(id)) throw Errors.badRequest("Invalid absence id");
-
-      const absence = await clockodo.getAbsence(id);
-      // Self-approval safeguard: an approver can't action their own request
-      // — someone else with the permission has to.
-      if (me.status === "linked" && String(absence.users_id) === me.clockodoUserId) {
-        throw Errors.forbidden("Cannot approve or deny your own absence request");
-      }
-
-      const updated = await clockodo.setAbsenceStatus(id, body.status === "approved" ? 1 : 2);
-      return { absence: toDto(updated) };
-    },
-    {
-      signedIn: true,
-      params: t.Object({ id: t.String() }),
-      body: t.Object({
-        status: t.Union([t.Literal("approved"), t.Literal("denied")]),
-      }),
-    },
-  )
-  .post(
-    "/clockodo/absences/me",
-    async ({ request, body }) => {
-      const me = await resolveClockodoCaller(request);
-      const absence = await clockodo.createAbsence({
-        users_id: me.clockodoUserId,
-        date_since: body.dateSince,
-        date_until: body.dateUntil,
-        type: body.clockodoType,
-        note: body.note || null,
-        count_days: body.halfDay ? 0.5 : null,
-        status: 0,
-      });
-      return { absence: toDto(absence) };
-    },
-    {
-      body: t.Object({
-        clockodoType: t.Integer(),
-        dateSince: t.String(),
-        dateUntil: t.String(),
-        halfDay: t.Boolean(),
-        note: t.Optional(t.String()),
-      }),
-    },
-  )
-  .put(
-    "/clockodo/absences/me/:id",
-    async ({ request, params, body }) => {
-      const me = await resolveClockodoCaller(request);
-      const id = Number(params.id);
-      if (!Number.isSafeInteger(id)) throw Errors.badRequest("Invalid absence id");
-      await requireOwnAbsence(id, me.clockodoUserId);
-      const absence = await clockodo.updateAbsence(id, {
-        date_since: body.dateSince,
-        date_until: body.dateUntil,
-        type: body.clockodoType,
-        note: body.note || null,
-        count_days: body.halfDay ? 0.5 : null,
-      });
-      return { absence: toDto(absence) };
-    },
-    {
-      params: t.Object({ id: t.String() }),
-      body: t.Object({
-        clockodoType: t.Integer(),
-        dateSince: t.String(),
-        dateUntil: t.String(),
-        halfDay: t.Boolean(),
-        note: t.Optional(t.String()),
-      }),
-    },
   );

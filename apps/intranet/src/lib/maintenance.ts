@@ -19,7 +19,6 @@ const OPEN_PREFIXES = [
   "/settings",
   // Organisation
   "/calendar",
-  "/clockodo",
   // Eigene Zeiterfassung – Zugriff regelt Convex (TIME_MODE), nicht diese Liste
   "/zeiterfassung",
   // "/performance" bleibt gesperrt, bis der Umbau für alle freigegeben ist

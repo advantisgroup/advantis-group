@@ -334,7 +334,7 @@ export function AdminStatsCard() {
             icon={<Plane />}
             label={t("pendingApprovals")}
             value={pendingCount}
-            href="/clockodo/approvals"
+            href="/zeiterfassung/admin?section=approvals"
           />
         )}
         {hasApplicantAccess &&

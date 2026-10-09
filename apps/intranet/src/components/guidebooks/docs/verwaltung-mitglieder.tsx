@@ -69,30 +69,25 @@ const DOC: DocContent = {
       ],
     },
     {
-      id: "clockodo",
-      title: "Externes System: Clockodo-Zugang einrichten",
+      id: "zeiterfassung",
+      title: "Zeiterfassung einrichten",
       blocks: [
         {
           kind: "callout",
           tone: "info",
-          body: "Clockodo (Zeiterfassung) ist ein eigenständiges System, unabhängig vom Intranet-Login. Das muss zusätzlich angelegt werden — ist aber der einzige Zugang, der wirklich extern eingerichtet werden muss; eine Firmen-Mailbox ist wie oben beschrieben nicht nötig.",
+          body: "Die Zeiterfassung läuft im Intranet — ein eigenes Konto in einem anderen System ist nicht nötig. Neue Mitarbeiter brauchen nur ein Arbeitszeitmodell und ihren Urlaubsanspruch.",
         },
         {
           kind: "links",
-          items: [{ label: "Clockodo-Verwaltung öffnen", href: "/clockodo/admin" }],
+          items: [{ label: "Zeiterfassung-Verwaltung öffnen", href: "/zeiterfassung/admin" }],
         },
         {
           kind: "steps",
           items: [
-            "Auf „Clockodo-Benutzer anlegen“ klicken.",
-            "Name, E-Mail-Adresse (am besten dieselbe wie bei der Intranet-Einladung — die Verknüpfung läuft über den Abgleich der Adresse) und optional Urlaubstage/Jahr eintragen.",
-            "Speichern.",
+            "Unter „Mitarbeitende“ die Person öffnen.",
+            "Im Reiter „Einstellungen“ das Arbeitszeitmodell (Stunden pro Wochentag, gültig ab Eintritt) und den Urlaubsanspruch eintragen.",
+            "Die Person einem Team zuordnen, damit Teamleitung und Urlaubs-Überschneidungen stimmen.",
           ],
-        },
-        {
-          kind: "callout",
-          tone: "warning",
-          body: "Die Verknüpfung zwischen Intranet-Konto und Clockodo-Konto läuft automatisch über eine übereinstimmende E-Mail-Adresse — bei Tippfehlern oder unterschiedlichen Adressen bleibt die Person „nicht verknüpft“. Der Filter „Nicht verknüpft“ in der Clockodo-Verwaltung zeigt das an.",
         },
       ],
     },

@@ -57,13 +57,12 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Clockodo ist bei uns auch das **führende System für Abwesenheiten** — Urlaub, Krankheit und Co. werden dort gespeichert. Beantragen kannst du sie im Intranet oder in Clockodo selbst; beides landet am selben Ort.",
+          body: "Clockodo ist bei uns auch das **führende System für Abwesenheiten** — Urlaub, Krankheit und Co. werden dort gespeichert. Beantragt werden sie direkt in Clockodo.",
         },
         {
           kind: "steps",
           items: [
-            "Im Intranet: in der Seitenleiste **„Clockodo“** öffnen, den Reiter **„Meine Anträge“** wählen und auf **„Neue Abwesenheit“** klicken.",
-            "Oder in Clockodo: auf **„Meine Anträge“** gehen.",
+            "In Clockodo auf **„Meine Anträge“** gehen.",
             "Über den blauen Button **„+ Abwesenheit“** einen neuen Antrag anlegen.",
             "Abwesenheitstyp auswählen (z. B. Urlaub, Sonderurlaub, Krankheit, Homeoffice) und den Zeitraum angeben.",
             "Optional eine Notiz hinterlegen — privat für die Führungskraft oder öffentlich für alle Kolleg:innen im Abwesenheitsplaner sichtbar.",
@@ -73,7 +72,7 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "info",
-          body: "Anträge aus beiden Wegen erscheinen sofort im Intranet unter **„Clockodo“ → „Meine Anträge“**. Führungskräfte können sie im Intranet oder in Clockodo genehmigen.",
+          body: "Führungskräfte genehmigen die Anträge in Clockodo. Genehmigte Abwesenheiten erscheinen automatisch im Intranet-Kalender.",
         },
       ],
     },

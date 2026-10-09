@@ -41,7 +41,6 @@
     "dashboard": "Dashboard",
     "announcements": "Announcements",
     "calendar": "Calendar",
-    "absences": "Absences",
     "chat": "Chat",
     "directory": "Directory",
     "guidebooks": "Guidebooks",
@@ -116,24 +115,6 @@
       "add": {
         "title": "Create events",
         "description": "As a manager you can create events for everyone or a single department. From an event's details you can edit or duplicate it, and clicking a day offers a quick-create shortcut."
-      }
-    },
-    "absences": {
-      "nav": {
-        "title": "Absences",
-        "description": "Request and track vacation, sick days, and personal time."
-      },
-      "stats": {
-        "title": "Request time off",
-        "description": "Log a new vacation, sick day, or personal absence here, or export your approved time off as a calendar file."
-      },
-      "filters": {
-        "title": "Find a request",
-        "description": "Search your requests by type or reason."
-      },
-      "list": {
-        "title": "Your requests",
-        "description": "Every absence you've requested, with its live status — pending, approved, or denied. Managers reviewing team requests use the Approvals tab instead."
       }
     },
     "chat": {

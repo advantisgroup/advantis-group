@@ -21,7 +21,7 @@
   },
   "absence": {
     "title": "I need time off",
-    "when": "Vacation or other absence, sent to Clockodo for approval.",
+    "when": "Request vacation or another absence – in the time tracking.",
     "cta": "Request absence"
   },
   "howto": {

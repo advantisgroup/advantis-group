@@ -103,7 +103,7 @@ function WithAbsences() {
           // Clockodo doesn't say when a request last changed; the first day
           // off is the date people think of it by.
           updatedAt: new Date(`${a.startDate}T00:00:00`).getTime(),
-          href: "/clockodo/requests",
+          href: "/zeiterfassung/abwesenheiten",
         }),
       ),
     [absences, t, locale],

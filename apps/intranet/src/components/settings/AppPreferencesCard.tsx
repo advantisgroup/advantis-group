@@ -34,7 +34,7 @@ export function AppPreferenceRows() {
   const pageLabel: Record<(typeof START_PAGES)[number], string> = {
     "/": t("pageDashboard"),
     "/calendar": t("pageCalendar"),
-    "/clockodo": t("pageAbsences"),
+    "/zeiterfassung": t("pageZeiterfassung"),
     "/announcements": t("pageAnnouncements"),
     "/chat": t("pageChat"),
     "/files": t("pageFiles"),

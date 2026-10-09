@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 import { Mark } from "@/components/branding/ProviderMark";
 import { ClockStartPicker } from "@/components/clockodo/ClockStartPicker";
 import { ClockStatusGradient } from "@/components/clockodo/ClockStatusGradient";
-import { Link } from "@/components/Link";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -81,13 +80,15 @@ export function ClockodoHeaderControl() {
             <p className="truncate text-sm font-medium">{state.accountName}</p>
             <p className="text-xs text-muted-foreground">{detail}</p>
           </div>
-          <Link
-            href="/clockodo"
+          <a
+            href="https://my.clockodo.com/de/"
+            target="_blank"
+            rel="noreferrer"
             className="inline-flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground underline-offset-2 hover:text-fg hover:underline"
           >
             <Mark provider="clockodo" className="size-3.5" />
             {t("openClockodo")}
-          </Link>
+          </a>
         </div>
         {working ? (
           <Button

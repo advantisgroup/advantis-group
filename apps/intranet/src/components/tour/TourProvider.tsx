@@ -92,7 +92,6 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const stateRef = useRef<TourLocalState | null>(null);
 
   const hasFilesAccess = useHasCapability("access_files");
-  const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
   const featureFlags = useFeatureFlags();
 
   // Sections whose page this person can't open — the same rules the sidebar
@@ -102,10 +101,9 @@ export function TourProvider({ children }: { children: ReactNode }) {
       !isAdmin && featureFlags?.find((f) => f.key === key)?.enabled === false;
     const ids = new Set<CheckpointId>();
     if (!hasFilesAccess) ids.add("files");
-    if (!user.clockodoUserId && !hasClockodoTeamAccess) ids.add("absences");
     if (off("chat")) ids.add("chat");
     return ids;
-  }, [isAdmin, featureFlags, hasFilesAccess, hasClockodoTeamAccess, user.clockodoUserId]);
+  }, [isAdmin, featureFlags, hasFilesAccess]);
 
   // Checkpoints visible to this user (filter manager-only checkpoints and
   // role-gated steps for employees — their target UI doesn't render for them)

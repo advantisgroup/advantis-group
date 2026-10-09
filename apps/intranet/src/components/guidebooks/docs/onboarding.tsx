@@ -83,7 +83,7 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "tip",
-          body: "Am einfachsten beantragst du direkt im Intranet: Seitenleiste **„Clockodo“** → **„Meine Anträge“** → **„Neue Abwesenheit“**. Dort siehst du auch deine genommenen Urlaubstage und den Status aller Anträge.",
+          body: "Ab dem Start der Zeiterfassung im Intranet beantragst du Urlaub dort: Seitenleiste **„Zeiterfassung“** → **„Abwesenheiten“**. Dort siehst du auch deine genommenen Urlaubstage und den Status aller Anträge.",
         },
       ],
     },

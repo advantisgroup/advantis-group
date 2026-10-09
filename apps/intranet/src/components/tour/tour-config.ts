@@ -122,37 +122,6 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
     ],
   },
   {
-    id: "absences",
-    route: "/clockodo/requests",
-    steps: [
-      {
-        id: "absences.nav",
-        targetAttr: "tour-nav-absences",
-        popoutSide: "right",
-        route: "/clockodo/requests",
-        skipOnMobile: true,
-      },
-      {
-        id: "absences.stats",
-        targetAttr: "tour-absences-new",
-        popoutSide: "bottom",
-        route: "/clockodo/requests",
-      },
-      {
-        id: "absences.filters",
-        targetAttr: "tour-absences-search",
-        popoutSide: "bottom",
-        route: "/clockodo/requests",
-      },
-      {
-        id: "absences.list",
-        targetAttr: "tour-absences-list",
-        popoutSide: "top",
-        route: "/clockodo/requests",
-      },
-    ],
-  },
-  {
     id: "chat",
     route: "/chat",
     steps: [
