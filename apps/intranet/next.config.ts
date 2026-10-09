@@ -38,10 +38,6 @@ const nextConfig: NextConfig = {
         source: "/hr/:path*",
         destination: "/applicants/:path*",
       },
-      {
-        source: "/clockodo/manage/:path*",
-        destination: "/admin/integrations/clockodo/:path*",
-      },
       // PostHog ingest proxy (mirrors apps/marketing) — same-origin so
       // ad-blockers don't strip analytics for signed-in employees either.
       {
@@ -60,11 +56,25 @@ const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
   async redirects() {
     return [
+      // The Clockodo tab was replaced by the own Zeiterfassung (09.10.2026);
+      // old bookmarks land on the matching page there.
+      { source: "/absences/:path*", destination: "/zeiterfassung/abwesenheiten", permanent: false },
       {
-        source: "/absences/:path*",
-        destination: "/clockodo/:path*",
-        permanent: true,
+        source: "/clockodo/requests",
+        destination: "/zeiterfassung/abwesenheiten",
+        permanent: false,
       },
+      {
+        source: "/clockodo/approvals",
+        destination: "/zeiterfassung/admin?section=approvals",
+        permanent: false,
+      },
+      {
+        source: "/clockodo/timetable",
+        destination: "/zeiterfassung/arbeitszeiten",
+        permanent: false,
+      },
+      { source: "/clockodo/:path*", destination: "/zeiterfassung", permanent: false },
       {
         source: "/applicants/:path*",
         destination: "/hr/:path*",
@@ -72,8 +82,8 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/admin/integrations/clockodo/:path*",
-        destination: "/clockodo/manage/:path*",
-        permanent: true,
+        destination: "/admin/integrations",
+        permanent: false,
       },
       {
         source: "/t/:path*",
