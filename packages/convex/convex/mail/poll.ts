@@ -16,8 +16,10 @@ export const targets = internalQuery({
     const accounts = await ctx.db.query("mailAccounts").collect();
     const out = [];
     for (const account of accounts) {
+      // Everyone with a stored mailbox, not only those who can open the panel
+      // yet: admins need to see a password stop working before rollout.
       const user = await ctx.db.get(account.userId);
-      if (!user || !userCanUseMail(user)) continue;
+      if (!user || user.status !== "active") continue;
       out.push({
         id: account._id,
         email: account.email,
@@ -103,6 +105,8 @@ export const record = internalMutation({
         error: undefined,
       });
       if (!sameMailbox || result.newCount === 0) continue;
+      const owner = await ctx.db.get(account.userId);
+      if (!owner || !userCanUseMail(owner)) continue;
 
       if (result.newCount > MAX_SINGLE_NOTIFICATIONS) {
         await createNotification(ctx, {

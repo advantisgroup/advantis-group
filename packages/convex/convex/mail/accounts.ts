@@ -93,7 +93,8 @@ export const apiSetAccount = serverUserMutation({
       uidValidity: undefined,
       uidNext: undefined,
       unseen: undefined,
-      checkedAt: undefined,
+      // apps/api only gets here after IONOS accepted this login.
+      checkedAt: now,
       error: undefined,
     };
     if (existing) await ctx.db.patch(existing._id, fields);

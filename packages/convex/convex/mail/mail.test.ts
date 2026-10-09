@@ -58,8 +58,11 @@ describe("mail accounts", () => {
     const own = await t.withIdentity({ subject: "admin" }).query(api.mail.accounts.myStatus, {});
     expect(own).toMatchObject({ connected: true, email: "box@advantisgroup.de" });
 
+    // Both are checked, so admins see a broken password before rollout.
     const targets = await t.query(internal.mail.poll.targets, {});
-    expect(targets).toHaveLength(1);
+    expect(targets).toHaveLength(2);
+    const list = await t.withIdentity({ subject: "admin" }).query(api.mail.accounts.adminList, {});
+    expect(list.find((r) => r.userId === anna)?.checkedAt).toEqual(expect.any(Number));
   });
 
   test("credentials only reach the mailbox owner", async () => {
@@ -143,6 +146,16 @@ describe("mail poll", () => {
 
     const status = await t.withIdentity({ subject: "admin" }).query(api.mail.accounts.myStatus, {});
     expect(status).toMatchObject({ unseen: 2, error: null });
+  });
+
+  test("before MAIL_MODE=live employees are checked but not notified", async () => {
+    const { t, anna } = await setup();
+    await setAccount(t, anna);
+    await pollOnce(t, { uidValidity: "7", uidNext: 50, newCount: 0 });
+    await pollOnce(t, { uidValidity: "7", uidNext: 52, newCount: 2, uids: [50, 51] });
+    expect(await notifications(t)).toHaveLength(0);
+    const [row] = await t.run((ctx) => ctx.db.query("mailAccounts").collect());
+    expect(row).toMatchObject({ uidNext: 52, unseen: 2 });
   });
 
   test("a changed UIDVALIDITY resets the baseline without notifying", async () => {
