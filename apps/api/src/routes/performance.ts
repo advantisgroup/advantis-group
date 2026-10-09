@@ -91,8 +91,24 @@ function importError(err: unknown): ApiError {
   }
   if (message) return Errors.badRequest(message);
   console.error("[performance] import failed:", err);
-  return Errors.badRequest("Import fehlgeschlagen. Bitte erneut versuchen oder die Datei prüfen.");
+  const raw = err instanceof Error ? err.message : String(err);
+  if (/timed? ?out|timeout/i.test(raw)) {
+    return Errors.badRequest(
+      "Die Verarbeitung hat zu lange gedauert und wurde abgebrochen. Die Datei ist vermutlich zu groß – bitte den Report in Salesforce filtern (z. B. nur aktueller und letzter Monat oder offene Leads) bzw. weniger Spalten exportieren und neu hochladen.",
+    );
+  }
+  if (/memory/i.test(raw)) {
+    return Errors.badRequest(
+      "Die Datei ist zu groß zum Verarbeiten (Arbeitsspeicher reicht nicht). Bitte den Report in Salesforce filtern bzw. weniger Spalten exportieren und neu hochladen.",
+    );
+  }
+  return Errors.badRequest(
+    "Import fehlgeschlagen, ohne genauen Grund vom Server. Bitte erneut versuchen; wenn es wieder passiert, der IT Dateiname und Uhrzeit schicken.",
+  );
 }
+
+const STAGING_FAILED =
+  "Die Datei konnte nicht zwischengespeichert werden. Bitte in ein paar Minuten erneut versuchen.";
 
 /** Access runs through the intranet sign-in (Clerk): uploads are for
  * intranet admins, the export for whoever sees the dashboard's team view —
@@ -179,7 +195,7 @@ async function importReportBytes(input: {
     });
     if (!staged.ok) {
       console.error("[performance] staging upload failed:", staged.status);
-      throw Errors.internal("Could not store the file");
+      throw Errors.badRequest(STAGING_FAILED);
     }
     storageId = ((await staged.json()) as { storageId: Id<"_storage"> }).storageId;
   }
@@ -316,7 +332,7 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       const res = await fetch(claimed.url);
       if (!res.ok) {
         console.error("[performance] reading stored upload failed:", res.status);
-        throw Errors.internal("Could not read the file");
+        throw Errors.badRequest(STAGING_FAILED);
       }
       return importReportBytes({
         companyId,

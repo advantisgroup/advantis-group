@@ -492,6 +492,18 @@ export const performanceTables = {
     usedAt: v.optional(v.number()),
   }),
 
+  // Uploads that failed, with the message the uploader saw — the upload
+  // log only holds successful imports, so without this nobody else (and
+  // not the uploader after a reload) can see why a report didn't arrive.
+  performanceUploadFailures: defineTable({
+    companyId: v.id("companies"),
+    filename: v.string(),
+    fileSize: v.optional(v.number()),
+    message: v.string(),
+    uploadedBy: v.string(),
+    at: v.number(),
+  }).index("by_company_at", ["companyId", "at"]),
+
   // "Ansicht als": an admin looking at Performance as another intranet user
   // would see it (one row per admin; deleted when they stop). Read-only
   // preview — `lib/access.ts` builds the viewer for the target instead, so

@@ -212,6 +212,7 @@ import type * as performance_lib_xlsxZip from "../performance/lib/xlsxZip.js";
 import type * as performance_queries from "../performance/queries.js";
 import type * as performance_reviews from "../performance/reviews.js";
 import type * as performance_topics from "../performance/topics.js";
+import type * as performance_uploadFailures from "../performance/uploadFailures.js";
 import type * as performance_uploadParse from "../performance/uploadParse.js";
 import type * as performance_wallbox from "../performance/wallbox.js";
 import type * as presence from "../presence.js";
@@ -512,6 +513,7 @@ declare const fullApi: ApiFromModules<{
   "performance/queries": typeof performance_queries;
   "performance/reviews": typeof performance_reviews;
   "performance/topics": typeof performance_topics;
+  "performance/uploadFailures": typeof performance_uploadFailures;
   "performance/uploadParse": typeof performance_uploadParse;
   "performance/wallbox": typeof performance_wallbox;
   presence: typeof presence;

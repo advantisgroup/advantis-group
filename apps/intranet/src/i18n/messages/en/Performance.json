@@ -49,6 +49,8 @@
   "uploadStatusQueued": "Queued",
   "uploadStatusUploading": "Uploading… {percent}%",
   "uploadStatusProcessing": "Processing…",
+  "uploadFailuresTitle": "Failed uploads (last 14 days)",
+  "uploadFailuresHint": "These files did not arrive. The message says why.",
   "uploadLogTitle": "Recent uploads",
   "uploadLogEmpty": "No uploads yet.",
   "uploadLogFile": "File",

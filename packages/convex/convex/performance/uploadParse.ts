@@ -531,7 +531,7 @@ async function processReport(
   if (!match) {
     throw new ConvexError({
       code: "validation",
-      message: "Unsupported file extension.",
+      message: "Bitte eine .xlsx-, .xlsm- oder .csv-Datei hochladen.",
     });
   }
   const extension = `.${match[1].toLowerCase()}`;
@@ -541,7 +541,7 @@ async function processReport(
   if (!blob) {
     throw new ConvexError({
       code: "not_found",
-      message: "Uploaded file is no longer available.",
+      message: "Die hochgeladene Datei ist nicht mehr vorhanden. Bitte erneut hochladen.",
     });
   }
 
@@ -884,9 +884,30 @@ async function withImportLock<T>(
   await ctx.runMutation(internal.performance.import.acquireImportLock, { companyId, token, by });
   try {
     return await run();
+  } catch (err) {
+    throw readableImportError(err);
   } finally {
     await ctx.runMutation(internal.performance.import.releaseImportLock, { companyId, token });
   }
+}
+
+/** Convex hands the caller only "Server Error" for anything that isn't a
+ * ConvexError, so the uploader would see a generic failure. This turns an
+ * unexpected error into a German message that still says what broke. */
+function readableImportError(err: unknown): unknown {
+  if (err instanceof ConvexError) return err;
+  const detail = (err instanceof Error ? err.message : String(err)).trim().slice(0, 300);
+  console.error("[performanceUploadParse] import failed:", err);
+  const unreadable =
+    /zip|corrupt|end of data|unsupported file|invalid html|cannot read|password|encrypt/i.test(
+      detail,
+    );
+  return new ConvexError({
+    code: unreadable ? "unreadable_file" : "import_failed",
+    message: unreadable
+      ? `Die Datei konnte nicht gelesen werden (${detail}). Bitte den Report in Salesforce bzw. Genesys neu als .xlsx oder .csv exportieren und die Datei vor dem Hochladen nicht in Excel bearbeiten oder mit Passwort speichern.`
+      : `Beim Verarbeiten ist ein unerwarteter Fehler aufgetreten: ${detail || "unbekannt"}. Bitte erneut versuchen; wenn es wieder passiert, der IT diese Meldung schicken.`,
+  });
 }
 
 async function requireCompanyExists(ctx: ActionCtx, companyId: Id<"companies">): Promise<void> {

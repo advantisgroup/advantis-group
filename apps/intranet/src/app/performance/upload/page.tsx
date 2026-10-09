@@ -5,7 +5,7 @@ import { useMemo, useRef, useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { addDays, bavarianHolidays, berlinDate, weekdayOf } from "@advantis/convex/time";
-import { useAction, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -528,6 +528,41 @@ function DailyStatus({
   );
 }
 
+/** Uploads that didn't arrive, with the reason the uploader was shown —
+ * so another admin (or the uploader after a reload) can see why. */
+function FailedUploads({ companyId, locale }: { companyId: Id<"companies">; locale: string }) {
+  const t = useTranslations("Performance");
+  const failures = useQuery(api.performance.uploadFailures.list, { companyId });
+  if (!failures || failures.length === 0) return null;
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-sm font-medium text-destructive">{t("uploadFailuresTitle")}</h2>
+        <p className="text-xs text-muted-foreground">{t("uploadFailuresHint")}</p>
+      </div>
+      <Card>
+        <ul className="divide-y">
+          {failures.map((f) => (
+            <li key={f.id} className="flex gap-3 p-3 text-sm">
+              <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex flex-wrap items-baseline gap-x-2">
+                  <span className="truncate font-medium">{f.filename}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatDateTime(f.at, locale)} · {f.uploadedBy}
+                    {f.fileSize !== null && <> · {formatFileSize(f.fileSize)}</>}
+                  </span>
+                </div>
+                <p className="text-destructive">{f.message}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </section>
+  );
+}
+
 const LOG_PAGE = 60;
 
 export default function PerformanceUploadPage() {
@@ -537,6 +572,7 @@ export default function PerformanceUploadPage() {
   const { loading, me, dashboard } = usePerformanceGate((m) => m.isAdmin);
   const companyId = dashboard?.companyId;
   const performanceApi = usePerformanceApi();
+  const recordFailure = useMutation(api.performance.uploadFailures.record);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [queue, setQueue] = useState<QueueItem[]>([]);
@@ -598,10 +634,16 @@ export default function PerformanceUploadPage() {
       batchId: opts?.batchId,
     });
     if (!result.ok) {
-      updateItem(id, {
-        status: "error",
-        error: result.error ?? t("uploadFailed"),
-      });
+      const error = result.error ?? t("uploadFailed");
+      updateItem(id, { status: "error", error });
+      // Best effort: the list below must not turn a failed upload into a
+      // second error.
+      void recordFailure({
+        companyId,
+        filename: file.name,
+        fileSize: file.size,
+        message: error,
+      }).catch(() => undefined);
     } else if (result.status === "empty") {
       updateItem(id, {
         status: "empty",
@@ -958,6 +1000,8 @@ export default function PerformanceUploadPage() {
           )}
         </CardContent>
       </Card>
+
+      {companyId && <FailedUploads companyId={companyId} locale={locale} />}
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium">{t("uploadLogTitle")}</h2>

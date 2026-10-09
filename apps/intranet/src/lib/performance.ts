@@ -77,8 +77,38 @@ export const MAX_REPORT_UPLOAD_BYTES = 25 * 1024 * 1024;
 export const UPLOAD_TOO_LARGE_MESSAGE =
   "Die Datei ist größer als 25 MB und kann nicht hochgeladen werden. Bitte den Export auf weniger Spalten oder einen kürzeren Zeitraum beschränken oder als .xlsx speichern (deutlich kleiner als .csv).";
 
-const OFFLINE_MESSAGE =
-  "Keine Verbindung zum Server. Bitte Internetverbindung prüfen und erneut versuchen.";
+// A request that dies without any response is either a dropped connection
+// or a server-side timeout whose error page carries no CORS headers — the
+// browser can't tell the two apart, so the message names both.
+const NO_RESPONSE_MESSAGE =
+  "Keine Antwort vom Server – entweder ist die Internetverbindung weg oder die Verarbeitung hat zu lange gedauert (sehr großer Report). Bitte Verbindung prüfen und erneut versuchen; große Reports vorher in Salesforce filtern. Taucht die Datei kurz danach in der Upload-Liste auf, ist sie trotzdem angekommen.";
+
+const TIMEOUT_MESSAGE =
+  "Die Verarbeitung hat zu lange gedauert und wurde abgebrochen. Bitte den Report in Salesforce filtern (z. B. nur aktueller und letzter Monat oder offene Leads) bzw. weniger Spalten exportieren und neu hochladen.";
+
+/** What the uploader is told for a failed request: the server's own German
+ * message when there is one, else an explanation by HTTP status. */
+function failureMessage(res: { status: number; body: Record<string, unknown> } | null): string {
+  if (!res) return NO_RESPONSE_MESSAGE;
+  const own = errorMessage(res.body.error) ?? errorMessage(res.body);
+  if (own) return own;
+  switch (res.status) {
+    case 401:
+      return "Nicht mehr angemeldet. Bitte die Seite neu laden und erneut hochladen.";
+    case 403:
+      return "Keine Berechtigung für Uploads auf diesem Dashboard (nur Admins).";
+    case 413:
+      return UPLOAD_TOO_LARGE_MESSAGE;
+    case 429:
+      return "Zu viele Uploads in kurzer Zeit. Bitte ein paar Minuten warten und erneut versuchen.";
+    case 502:
+    case 503:
+    case 504:
+      return TIMEOUT_MESSAGE;
+    default:
+      return `Upload fehlgeschlagen (Server-Antwort ${res.status}). Bitte erneut versuchen; wenn es wieder passiert, der IT Dateiname und Uhrzeit schicken.`;
+  }
+}
 
 /** POSTs `body` with XHR (for upload progress) and resolves with status and
  * parsed JSON body (empty object when it isn't JSON). */
@@ -163,38 +193,16 @@ export function usePerformanceApi() {
         if (options.force) form.append("force", "true");
         if (options.batchId) form.append("batchId", options.batchId);
         const headers = await client.headers();
-        return new Promise((resolve) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open("POST", `${apiBaseUrl}/performance/uploads`);
-          headers.forEach((value, key) => xhr.setRequestHeader(key, value));
-          xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable) options.onProgress?.(e.loaded / e.total);
-          };
-          xhr.onload = () => {
-            let body: Record<string, unknown> = {};
-            try {
-              body = JSON.parse(xhr.responseText) as Record<string, unknown>;
-            } catch {
-              // Non-JSON error body (e.g. a proxy error page).
-            }
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve({ ok: true, ...(body as Partial<UploadReportResult>) });
-            } else if (xhr.status === 413) {
-              resolve({ ok: false, error: UPLOAD_TOO_LARGE_MESSAGE });
-            } else {
-              // apps/api's envelope is `{ error, code, requestId }`; `error`
-              // carries the parser's German message.
-              resolve({ ok: false, error: errorMessage(body.error) ?? errorMessage(body) });
-            }
-          };
-          xhr.onerror = () =>
-            resolve({
-              ok: false,
-              error:
-                "Keine Verbindung zum Server. Bitte Internetverbindung prüfen und erneut versuchen.",
-            });
-          xhr.send(form);
-        });
+        const res = await xhrPost(
+          `${apiBaseUrl}/performance/uploads`,
+          form,
+          headers,
+          options.onProgress,
+        );
+        if (!res || res.status < 200 || res.status >= 300) {
+          return { ok: false, error: failureMessage(res) };
+        }
+        return { ok: true, ...(res.body as Partial<UploadReportResult>) };
       },
 
       /** Files over ~4 MB: ticket from apps/api, upload straight into Convex
@@ -202,9 +210,7 @@ export function usePerformanceApi() {
       async uploadLarge(file: File, options: UploadReportOptions): Promise<UploadReportResult> {
         const fail = (res: { status: number; body: Record<string, unknown> } | null) => ({
           ok: false as const,
-          error: res
-            ? (errorMessage(res.body.error) ?? errorMessage(res.body) ?? "Upload fehlgeschlagen.")
-            : OFFLINE_MESSAGE,
+          error: failureMessage(res),
         });
         const headers = await client.headers();
         const json = {

@@ -49,6 +49,8 @@
   "uploadStatusQueued": "Wartet",
   "uploadStatusUploading": "Wird hochgeladen … {percent}%",
   "uploadStatusProcessing": "Wird verarbeitet …",
+  "uploadFailuresTitle": "Fehlgeschlagene Uploads (letzte 14 Tage)",
+  "uploadFailuresHint": "Diese Dateien sind nicht angekommen. Die Meldung sagt, woran es lag.",
   "uploadLogTitle": "Letzte Uploads",
   "uploadLogEmpty": "Noch keine Uploads.",
   "uploadLogFile": "Datei",
