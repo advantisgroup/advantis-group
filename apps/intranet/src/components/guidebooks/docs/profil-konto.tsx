@@ -42,21 +42,6 @@ const DOC: DocContent = {
       ],
     },
     {
-      id: "verknuepfungen",
-      title: "Verknüpfungen prüfen",
-      blocks: [
-        {
-          kind: "text",
-          body: "Zeigt, ob dein Konto mit Clockodo verknüpft ist. Nur wenn hier **„Verknüpft“** steht, synchronisieren deine Abwesenheiten automatisch aus Clockodo.",
-        },
-        {
-          kind: "callout",
-          tone: "warning",
-          body: "Steht dort **„Nicht verknüpft“**, bitte einen Admin, dein Clockodo-Konto zu verknüpfen — sonst tauchen deine Abwesenheiten nicht automatisch im Intranet auf (siehe Guidebook „Zeiterfassung mit Clockodo“).",
-        },
-      ],
-    },
-    {
       id: "benachrichtigungen",
       title: "Benachrichtigungen einstellen",
       blocks: [

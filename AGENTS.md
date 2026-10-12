@@ -14,7 +14,7 @@ Bun workspaces + Turborepo monorepo.
   absences, admin tools.
 - `apps/marketing` — Next.js public marketing site.
 - `apps/api` — Elysia API: Clerk-authed endpoints the intranet calls (AI,
-  Clockodo, OneDrive, …) plus server-to-server integration webhooks.
+  OneDrive, …) plus server-to-server integration webhooks.
 - `packages/convex` — shared Convex backend (schema + functions) consumed by
   both Next.js apps and the API service.
 - `packages/config`, `packages/types` — shared config/types.
@@ -223,7 +223,7 @@ The ones that bite hardest here:
 ## Profile / Subprofile architecture
 
 `users` is the one canonical intranet identity ("Profile"); every
-feature-owned identity-linked record (the Clockodo link, HumanResources'
+feature-owned identity-linked record (HumanResources'
 `employeeProfiles`, Chat's `conversationMembers`) is a "Subprofile." See
 [`docs/architecture/profiles.md`](./docs/architecture/profiles.md) for the
 full vocabulary, the slim "Partial profile" projection
@@ -232,42 +232,26 @@ subprofile-fetching query should follow (always the same shape; a
 `linked`/`status` discriminant instead of a bare `null` or a silently
 filtered-out row).
 
-## Clockodo absences (`/calendar`, dashboard, directory "out today")
+## Clockodo (removed 2026-10-12)
 
-The vacation/sick/personal absence data shown in the calendar, dashboard
-widgets and directory "out today" badges. The `/clockodo` tab (time table,
-planner, requests, approvals, Clockodo user admin) was removed on 2026-10-09;
-only these reads and the header clock pill (`ClockodoHeaderControl`, removed
-at the Zeiterfassung go-live) still talk to Clockodo, plus the one-off import
-in Zeiterfassung → Verwaltung → Import. There is **no Convex mirror**:
-absences change rarely and don't need to be reactive, so every read fetches
-Clockodo fresh through `apps/api` instead of syncing a stored copy via
-webhook + cron (the old approach — `clockodoSync.ts`/`absenceSync.ts`/the
-`/webhooks/clockodo` route — has been removed).
+The Clockodo integration is gone since the Zeiterfassung go-live: no header
+pill, no apps/api absence routes, no Convex `integrations/clockodo*`, no
+settings link. Absences in the calendar, dashboard widgets, directory "out
+today", profile, `/requests` and `/approvals` come from Convex `time.*` via
+`apps/intranet/src/lib/time-absences.ts` (maps the time types onto the
+coarse `vacation | sick | personal | other`: special → personal, overtime →
+other). **Privacy** stays in `time.absences.calendar`: others only see
+approved vacation. Pending approvals (badge, NeedsYou, `/approvals`) are
+admin-only from `time.admin.approvals`; links go to
+`/zeiterfassung/admin?section=approvals`.
 
-- `apps/api/src/lib/clockodo.ts` — the one place that calls Clockodo's
-  `/absences` endpoint and maps its raw type/status codes to the app's coarse
-  `vacation | sick | personal | other` / `pending | approved | denied |
-  cancelled`.
-- `apps/api/src/routes/clockodo-absences.ts` — Clerk-authed public endpoints
-  (`GET /clockodo/absences/me`, `/calendar`, `/pending-count`) the intranet
-  frontend calls via `useEdenApi()` (`apps/intranet/src/lib/eden.ts`).
-  **Privacy**: the calendar endpoint only surfaces `vacation`-type absences
-  for people other than the caller — sick/personal/other absences are visible
-  to that person alone (their own `/me` list still shows everything).
-- `packages/convex/convex/integrations/clockodoAbsences.ts` — server-key
-  gated lookups (`resolveCaller`, `roster`) apps/api uses to join a Clockodo
-  user id against the intranet roster, since Clockodo doesn't know intranet
-  identities.
-- `apps/intranet/src/lib/absences-api.ts` — the `useMyAbsences` /
-  `useAbsencesCalendar` / `usePendingAbsenceCount` hooks every consumer page
-  uses. Not reactive like a Convex `useQuery` — each fetches once per
-  mount/param change, which is fine given how rarely absences change.
-- The old `absences` Convex table is no longer in `schema.ts`. Any old mirrored
-  rows still sit in the deployment's data, but nothing reads them.
-- `integrations/clockodoLink.ts`'s `migrateLegacyClockodoLink` moves a link
-  that only exists on a leftover ActivityTrack `people` row onto
-  `users.clockodoUserId` (from the settings Connections card). It goes away with the `people` table.
+What stays on purpose: the file-based import (`time/importClockodo.ts`,
+`time/lib/clockodo.ts`, `ClockodoImport.tsx`); schema fields/tables that may
+hold production data (`users.clockodoUserId`, `clockodoWebhookLog`,
+`integrationsRawDebugLog`, the legacy `absences` rows); the capability
+literals `view_clockodo_team` / `manage_clockodo_team` (stored roles may
+carry them; hidden in the role editor, only `org/delegations` still checks
+`manage_clockodo_team`); the `/clockodo/*` redirects in `next.config.ts`.
 
 ## Zeiterfassung (`/zeiterfassung`, own time tracking)
 
@@ -338,14 +322,6 @@ show nothing: the `view_activity_admin` capability
 (`storedCapabilityValidator`), a `featureFlags` row keyed `activitytrack`,
 `integrationHealth` sources `genesys`/`clockodo` and `auditLog` domain
 `activity`.
-
-## Third-party product mentions (Clockodo)
-
-Clockodo is a third-party trademark referenced in the UI (labels, tooltips,
-settings). When adding or touching UI that names it, check with the user
-before sourcing or embedding official logo assets — trademark usage has its
-own legal constraints beyond a copyright line, and no logo files exist in
-this repo today (`apps/intranet/public/` only has Advantis's own logos).
 
 ## Password resets (HR vault, Performance login)
 

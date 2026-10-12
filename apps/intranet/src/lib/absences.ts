@@ -27,8 +27,8 @@ export function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd
   return aStart <= bEnd && bStart <= aEnd;
 }
 
-/** `YYYY-MM-DD` of `date` in the viewer's own timezone — Clockodo's absence
- * dates are calendar days, and `toISOString()` would report yesterday for the
+/** `YYYY-MM-DD` of `date` in the viewer's own timezone — absence dates
+ * are calendar days, and `toISOString()` would report yesterday for the
  * first hours after local midnight. */
 export function localIsoDate(date: Date): string {
   const y = date.getFullYear();

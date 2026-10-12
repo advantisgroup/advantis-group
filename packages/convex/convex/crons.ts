@@ -93,13 +93,6 @@ if (process.env.DISABLE_CRONS !== "true") {
     {},
   );
 
-  crons.daily(
-    "clockodo: prune old webhook delivery log",
-    { hourUTC: 3, minuteUTC: 45 },
-    internal.integrations.clockodoWebhookLog.pruneOldWebhookLogs,
-    {},
-  );
-
   // Spent/expired reset tokens and long-settled requests. The audit trail
   // (passwordResetAuditLog) is deliberately not touched — it outlives both.
   crons.daily(

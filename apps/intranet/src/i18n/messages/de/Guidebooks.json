@@ -146,10 +146,6 @@
     "title": "E-Mail-Signatur — Outlook & IONOS",
     "description": "Signatur in Outlook (Desktop & Web) und im IONOS-Webmail einrichten."
   },
-  "clockodoZeiterfassung": {
-    "title": "Zeiterfassung — Clockodo",
-    "description": "Ein-/Ausstempeln, Pausen erfassen und Zeiteinträge nachträglich korrigieren."
-  },
   "onboarding": {
     "title": "Onboarding-Checkliste",
     "description": "Alles Wichtige für die erste Woche — Zugänge, Signatur, Zeiterfassung und Kolleg:innen finden."
@@ -164,7 +160,7 @@
   },
   "profilKonto": {
     "title": "Profil, Benachrichtigungen & Konto",
-    "description": "Profil vervollständigen, Verknüpfungen prüfen und Benachrichtigungen einstellen."
+    "description": "Profil vervollständigen und Benachrichtigungen einstellen."
   },
   "abwesenheitenGenehmigen": {
     "title": "Abwesenheiten genehmigen",
@@ -294,12 +290,30 @@
     "badAnswer": "Schlechte Antwort",
     "sources": "{count, plural, one {# Quelle} other {# Quellen}}",
     "steps": {
-      "wiki": { "running": "Durchsucht das Wiki", "done": "Wiki durchsucht" },
-      "search": { "running": "Durchsucht {kind}", "done": "{kind} durchsucht" },
-      "open": { "running": "Liest", "done": "Gelesen" },
-      "overview": { "running": "Prüft deine Übersicht", "done": "Deine Übersicht geprüft" },
-      "web": { "running": "Sucht im Web", "done": "Im Web gesucht" },
-      "think": { "running": "Denkt nach", "done": "Nachgedacht" },
+      "wiki": {
+        "running": "Durchsucht das Wiki",
+        "done": "Wiki durchsucht"
+      },
+      "search": {
+        "running": "Durchsucht {kind}",
+        "done": "{kind} durchsucht"
+      },
+      "open": {
+        "running": "Liest",
+        "done": "Gelesen"
+      },
+      "overview": {
+        "running": "Prüft deine Übersicht",
+        "done": "Deine Übersicht geprüft"
+      },
+      "web": {
+        "running": "Sucht im Web",
+        "done": "Im Web gesucht"
+      },
+      "think": {
+        "running": "Denkt nach",
+        "done": "Nachgedacht"
+      },
       "kind": {
         "wiki": "Wiki",
         "people": "Personen",

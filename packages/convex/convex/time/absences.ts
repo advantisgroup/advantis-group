@@ -266,6 +266,7 @@ export const calendar = userQuery({
           _id: row._id,
           userId: row.userId,
           userName: displayName(users.get(row.userId)!),
+          userDepartment: users.get(row.userId)!.department ?? null,
           type: row.type,
           status: row.status,
           startDate: row.startDate,

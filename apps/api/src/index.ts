@@ -9,7 +9,6 @@ import { getRequestContext } from "./lib/request-context.js";
 import { aiRunsRoute } from "./routes/ai-runs.js";
 import { applicantsRoute } from "./routes/applicants.js";
 import { askRoute } from "./routes/ask.js";
-import { clockodoAbsencesRoute } from "./routes/clockodo-absences.js";
 import { dailyBriefRoute } from "./routes/daily-brief.js";
 import { inquiryAiRoute } from "./routes/inquiry-ai.js";
 import { mailRoute } from "./routes/mail.js";
@@ -91,7 +90,6 @@ export const app = new Elysia()
   .use(inquiryAiRoute)
   .use(mailRoute)
   .use(navigateRoute)
-  .use(clockodoAbsencesRoute)
   .use(onedriveRoute)
   .use(performanceRoute)
   .use(passkeysRoute)

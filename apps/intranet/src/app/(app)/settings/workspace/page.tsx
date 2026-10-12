@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl";
 
 import { AppPreferencesCard } from "@/components/settings/AppPreferencesCard";
-import { ConnectionsCard } from "@/components/settings/ConnectionsCard";
 import { AppearancePicker, LanguagePicker } from "@/components/settings/PreferencePickers";
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
 
@@ -24,7 +23,6 @@ export default function SettingsWorkspacePage() {
         </div>
       </SettingsSection>
       <AppPreferencesCard />
-      <ConnectionsCard />
     </>
   );
 }

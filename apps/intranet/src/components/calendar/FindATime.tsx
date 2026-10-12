@@ -6,7 +6,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { useAbsencesCalendar } from "@/lib/absences-api";
+import { useAbsencesCalendar } from "@/lib/time-absences";
 
 const DAYS_AHEAD = 7;
 const SLOT_STEP_MIN = 30;

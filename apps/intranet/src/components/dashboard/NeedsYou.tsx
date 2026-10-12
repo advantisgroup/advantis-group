@@ -19,10 +19,10 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
-import { useHasCapability, useIsManager } from "@/components/providers/current-user";
+import { useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isoToday } from "@/lib/absences";
-import { usePendingApprovals } from "@/lib/absences-api";
+import { usePendingApprovals } from "@/lib/time-absences";
 import { formatIsoDate, formatTime, relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -77,9 +77,7 @@ export function NeedsYouPanel() {
   const tAbsences = useTranslations("Absences");
   const locale = useLocale();
   const isManager = useIsManager();
-  const canManageClockodo = useHasCapability("manage_clockodo_team");
-  const approvalCover = useQuery(api.org.delegations.mine);
-  const canReviewAbsences = canManageClockodo || (approvalCover?.length ?? 0) > 0;
+  const canReviewAbsences = useIsAdmin();
   const { approvals } = usePendingApprovals(canReviewAbsences);
   const accessRequests = useQuery(
     api.people.accessRequests.list,
@@ -113,7 +111,7 @@ export function NeedsYouPanel() {
           icon: <Plane />,
           title: t("needsYouAbsence", { name: a.userName, type: tAbsences(a.type) }),
           meta: `${formatIsoDate(a.startDate, locale)} – ${formatIsoDate(a.endDate, locale)}`,
-          href: "/approvals",
+          href: "/zeiterfassung/admin?section=approvals",
           urgent: startsIn <= 3,
           at: new Date(`${a.startDate}T00:00:00`).getTime(),
         });

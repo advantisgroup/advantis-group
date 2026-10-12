@@ -19,7 +19,7 @@ interface Item {
   doneAt?: number;
 }
 
-const DEFAULT_KEYS = ["contract", "account", "clockodo", "equipment", "welcome", "training"];
+const DEFAULT_KEYS = ["contract", "account", "equipment", "welcome", "training"];
 
 export function OnboardingChecklist({
   employeeProfileId,

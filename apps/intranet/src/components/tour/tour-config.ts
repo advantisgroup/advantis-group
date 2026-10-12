@@ -294,12 +294,6 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         route: "/settings/workspace",
       },
       {
-        id: "settings.connections",
-        targetAttr: "tour-settings-connections",
-        popoutSide: "top",
-        route: "/settings/workspace",
-      },
-      {
         id: "settings.help",
         targetAttr: "tour-settings-onboarding",
         popoutSide: "bottom",

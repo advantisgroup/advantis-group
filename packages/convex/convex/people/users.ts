@@ -225,10 +225,7 @@ export const options = userQuery({
  * Directory page only: `list` plus live presence. Isolated from `list` so the
  * sitewide presence heartbeat only invalidates the one page that actually
  * renders online status, not every command palette / admin panel that merely
- * lists users. "Out today" absence status is fetched separately by the page
- * itself from apps/api's live Clockodo endpoint (this query can't — Convex
- * queries have no HTTP access, and absences aren't mirrored into Convex
- * anymore; see AGENTS.md's Clockodo section).
+ * lists users. "Out today" comes separately from `time.absences.calendar`.
  */
 export const directoryList = userQuery({
   args: listArgs,
@@ -265,27 +262,6 @@ export const get = userQuery({
     return {
       ...(await withAvatar(ctx, user)),
       lastActiveAt: presence?.lastActiveAt ?? null,
-    };
-  },
-});
-
-/**
- * Integration link status for the settings "Connections" card: whether the
- * viewer is linked to Clockodo directly (users.clockodoUserId), or only
- * through a leftover ActivityTrack person row that `migrateLegacyClockodoLink`
- * can still move over.
- */
-export const myConnections = userQuery({
-  args: {},
-  handler: async (ctx) => {
-    const user = ctx.caller.user;
-    const person = await ctx.db
-      .query("people")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
-      .first();
-    return {
-      clockodoDirect: user.clockodoUserId != null,
-      personHasClockodo: person?.clockodoUserId != null,
     };
   },
 });

@@ -48,8 +48,6 @@ function normalizeErrorCode(value: unknown): ErrorCode | undefined {
   }
   if (value.startsWith("notFound.")) return "not_found";
   if (value.startsWith("validation.")) return "bad_request";
-  if (value === "clockodo.rateLimited") return "rate_limited";
-  if (value === "clockodo.upstream") return "upstream";
 
   return undefined;
 }

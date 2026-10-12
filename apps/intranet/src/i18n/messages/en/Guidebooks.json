@@ -146,10 +146,6 @@
     "title": "Email Signature — Outlook & IONOS",
     "description": "Set up a signature in Outlook (desktop & web) and in IONOS webmail."
   },
-  "clockodoZeiterfassung": {
-    "title": "Time Tracking — Clockodo",
-    "description": "Clock in/out, log breaks, and correct time entries after the fact."
-  },
   "onboarding": {
     "title": "Onboarding Checklist",
     "description": "Everything for your first week — accounts, signature, time tracking and finding colleagues."
@@ -164,7 +160,7 @@
   },
   "profilKonto": {
     "title": "Profile, Notifications & Account",
-    "description": "Complete your profile, check connections and set notification preferences."
+    "description": "Complete your profile and set up notifications."
   },
   "abwesenheitenGenehmigen": {
     "title": "Approving Absences",
@@ -294,12 +290,30 @@
     "badAnswer": "Bad answer",
     "sources": "{count, plural, one {# source} other {# sources}}",
     "steps": {
-      "wiki": { "running": "Searching the wiki", "done": "Searched the wiki" },
-      "search": { "running": "Searching {kind}", "done": "Searched {kind}" },
-      "open": { "running": "Reading", "done": "Read" },
-      "overview": { "running": "Checking your overview", "done": "Checked your overview" },
-      "web": { "running": "Searching the web", "done": "Searched the web" },
-      "think": { "running": "Thinking", "done": "Thought" },
+      "wiki": {
+        "running": "Searching the wiki",
+        "done": "Searched the wiki"
+      },
+      "search": {
+        "running": "Searching {kind}",
+        "done": "Searched {kind}"
+      },
+      "open": {
+        "running": "Reading",
+        "done": "Read"
+      },
+      "overview": {
+        "running": "Checking your overview",
+        "done": "Checked your overview"
+      },
+      "web": {
+        "running": "Searching the web",
+        "done": "Searched the web"
+      },
+      "think": {
+        "running": "Thinking",
+        "done": "Thought"
+      },
       "kind": {
         "wiki": "the wiki",
         "people": "people",

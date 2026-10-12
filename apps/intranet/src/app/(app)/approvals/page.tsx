@@ -22,11 +22,7 @@ import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
 import { PersonLink } from "@/components/profile/PersonLink";
 import { PersonPicker } from "@/components/people/PersonPicker";
-import {
-  useCurrentUser,
-  useHasCapability,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { useCurrentUser, useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Kpi, KpiStrip } from "@/components/ui/kpi-strip";
@@ -34,7 +30,7 @@ import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { isoToday } from "@/lib/absences";
-import { usePendingApprovals } from "@/lib/absences-api";
+import { usePendingApprovals } from "@/lib/time-absences";
 import { msToDateInput } from "@/lib/error-management";
 import { formatIsoDate, relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -110,10 +106,9 @@ export default function ApprovalsPage() {
   const tError = useTranslations("ErrorManagement");
   const locale = useLocale();
   const isManager = useIsManager();
-  const canManageClockodo = useHasCapability("manage_clockodo_team");
   const approvalCover = useQuery(api.org.delegations.mine);
   const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
-  const canReviewAbsences = canManageClockodo || hasApprovalCover;
+  const canReviewAbsences = useIsAdmin();
   const { approvals } = usePendingApprovals(canReviewAbsences);
   const accessRequests = useQuery(
     api.people.accessRequests.list,
@@ -315,7 +310,7 @@ export default function ApprovalsPage() {
           </Panel>
         )}
 
-        {canManageClockodo && <ApprovalCoverPanel />}
+        {canReviewAbsences && <ApprovalCoverPanel />}
       </div>
     </div>
   );

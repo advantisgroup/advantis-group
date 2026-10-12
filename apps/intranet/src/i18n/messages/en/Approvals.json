@@ -2,7 +2,7 @@
   "title": "Approvals",
   "description": "Requests that are waiting for your decision.",
   "absenceApprovals": "Absence approvals",
-  "absenceApprovalsHint": "Clockodo requests waiting for a manager decision.",
+  "absenceApprovalsHint": "Absence requests from the time tracking waiting for a decision.",
   "noAbsenceApprovals": "No absence requests are waiting.",
   "accessRequests": "Access requests",
   "accessRequestsHint": "People waiting for access to the intranet.",

@@ -31,7 +31,6 @@ import { cn } from "@/lib/utils";
  * colour, and why integrations get marks instead of their names.
  */
 export type Provider =
-  | "clockodo"
   | "genesys"
   | "onedrive"
   | "outlook"
@@ -54,7 +53,6 @@ interface ProviderDef {
 }
 
 const PROVIDERS: Record<Provider, ProviderDef> = {
-  clockodo: { name: "Clockodo", logo: "/logos/clockodo.svg", color: "#3657F7" },
   // No `logo` until the official file is actually in public/logos/ — a path to
   // a missing file costs a 404 and a broken-image flash on every render, and
   // OneDrive renders on every attachment chip.
@@ -172,10 +170,9 @@ export function ProviderInline({ provider }: { provider: Provider }) {
   );
 }
 
-const BRAND_PATTERN = /\b(Genesys|Clockodo|OneDrive|Outlook|Salesforce)\b/g;
+const BRAND_PATTERN = /\b(Genesys|OneDrive|Outlook|Salesforce)\b/g;
 const BRAND_BY_NAME: Record<string, Provider> = {
   Genesys: "genesys",
-  Clockodo: "clockodo",
   OneDrive: "onedrive",
   Outlook: "outlook",
   Salesforce: "salesforce",

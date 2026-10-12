@@ -54,8 +54,8 @@ function clip(text: string, max = 90) {
 /**
  * Everything the signed-in person has asked for, across the areas that take
  * requests — IT tickets, suggestions, error reports and file uploads — newest
- * first, each with a link straight to it. Absence requests live in Clockodo
- * and are added by the page from the Clockodo API.
+ * first, each with a link straight to it. Absence requests come from the
+ * Zeiterfassung (`time.absences.list`) and are added by the page.
  */
 export const mine = userQuery({
   args: {},

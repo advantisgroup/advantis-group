@@ -44,16 +44,11 @@ const DOC: DocContent = {
     },
     {
       id: "zeiterfassung",
-      title: "Zeiterfassung mit Clockodo",
+      title: "Zeiterfassung",
       blocks: [
         {
           kind: "text",
-          body: "Den Clockodo-Zugang bekommst du ebenfalls von der Verwaltung zugeschickt.",
-        },
-        {
-          kind: "callout",
-          tone: "tip",
-          body: "Wie man sich ein-/ausstempelt und Pausen erfasst, steht im Guidebook **„Zeiterfassung mit Clockodo“**.",
+          body: "Deine Arbeitszeit erfasst du direkt im Intranet: Seitenleiste **„Zeiterfassung“** — dort stempelst du ein und aus, machst Pausen und siehst dein Stundenkonto. Ein eigener Zugang ist nicht nötig.",
         },
       ],
     },
@@ -78,12 +73,12 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "text",
-          body: "Urlaub, Krankheit & Co. werden in **Clockodo** gespeichert — Clockodo ist das führende System für Abwesenheiten (siehe Guidebook „Zeiterfassung mit Clockodo“).",
+          body: "Urlaub, Krankheit & Co. beantragst du in der Zeiterfassung im Intranet.",
         },
         {
           kind: "callout",
           tone: "tip",
-          body: "Ab dem Start der Zeiterfassung im Intranet beantragst du Urlaub dort: Seitenleiste **„Zeiterfassung“** → **„Abwesenheiten“**. Dort siehst du auch deine genommenen Urlaubstage und den Status aller Anträge.",
+          body: "Seitenleiste **„Zeiterfassung“** → **„Abwesenheiten“**. Dort siehst du auch deine genommenen Urlaubstage und den Status aller Anträge.",
         },
       ],
     },
@@ -112,10 +107,6 @@ const DOC: DocContent = {
             {
               label: "IONOS-Webmail anmelden",
               href: "https://webmail.ionos.de/",
-            },
-            {
-              label: "Clockodo-Login",
-              href: "https://my.clockodo.com/de/login",
             },
             {
               label: "OneDrive — Advantis GmbH",

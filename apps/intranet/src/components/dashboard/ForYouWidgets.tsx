@@ -18,7 +18,7 @@ import type { CurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useStartOfToday } from "@/hooks/use-today";
 import { localIsoDate } from "@/lib/absences";
-import { useMyAbsences } from "@/lib/absences-api";
+import { useMyAbsences } from "@/lib/time-absences";
 import { formatDateTime, formatIsoDate, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 

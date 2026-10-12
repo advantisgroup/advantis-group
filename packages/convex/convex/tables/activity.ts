@@ -84,7 +84,7 @@ export const activityTables = {
   // `number` for the same real-world Clockodo id — a pre-existing mismatch.
   // `users.clockodoUserId` is canonical once a person is linked (see
   // `activity/people.ts`, which blocks editing this field directly after
-  // linking); use `lib/clockodoId.ts`'s `toClockodoIdString` at any boundary
+  // linking); convert with `String(id)` at any boundary
   // that compares the two rather than unifying the storage type here.
   people: defineTable({
     name: v.string(),

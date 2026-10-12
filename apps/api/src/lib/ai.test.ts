@@ -43,7 +43,9 @@ describe("AI transcripts", () => {
     };
     const result = {
       role: "user" as const,
-      content: [{ type: "tool_result", tool_use_id: "t1", content: "- page:/clockodo — Urlaub" }],
+      content: [
+        { type: "tool_result", tool_use_id: "t1", content: "- page:/zeiterfassung — Urlaub" },
+      ],
     };
 
     recordRequest(transcript, cursor, { system, messages: [question] });
@@ -65,7 +67,7 @@ describe("AI transcripts", () => {
     ]);
     expect(transcript.turns[3]).toMatchObject({
       role: "user",
-      parts: [{ type: "toolResult", toolCallId: "t1", text: "- page:/clockodo — Urlaub" }],
+      parts: [{ type: "toolResult", toolCallId: "t1", text: "- page:/zeiterfassung — Urlaub" }],
     });
   });
 

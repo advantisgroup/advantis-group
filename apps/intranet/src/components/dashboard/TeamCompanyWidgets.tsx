@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { htmlToText } from "@/components/ui/rich-text";
 import { addLocalDays, useStartOfToday } from "@/hooks/use-today";
 import { isoToday } from "@/lib/absences";
-import { useAbsencesCalendar } from "@/lib/absences-api";
+import { useAbsencesCalendar } from "@/lib/time-absences";
 import { formatDateTime, formatIsoDate, initials, relativeTime } from "@/lib/format";
 
 import { DashCard, Empty, Row, RowSkeletons } from "./primitives";

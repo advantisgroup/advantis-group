@@ -2,7 +2,7 @@
   "title": "Freigaben",
   "description": "Anfragen, die auf deine Entscheidung warten.",
   "absenceApprovals": "Abwesenheitsanträge",
-  "absenceApprovalsHint": "Clockodo-Anfragen, die auf eine Entscheidung warten.",
+  "absenceApprovalsHint": "Abwesenheitsanträge aus der Zeiterfassung, die auf eine Entscheidung warten.",
   "noAbsenceApprovals": "Keine Abwesenheitsanträge offen.",
   "accessRequests": "Zugriffsanträge",
   "accessRequestsHint": "Personen, die auf Zugang zum Intranet warten.",

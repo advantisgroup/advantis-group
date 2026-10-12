@@ -75,7 +75,7 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "warning",
-          body: "Für Firmenkonten (Outlook, IONOS, Clockodo, Intranet) **niemals** das gleiche Passwort wie für private Konten verwenden. Der Passwort-Manager im Browser merkt sich für jeden Dienst ein eigenes, starkes Passwort — du musst es dir nicht selbst merken.",
+          body: "Für Firmenkonten (Outlook, IONOS, Intranet) **niemals** das gleiche Passwort wie für private Konten verwenden. Der Passwort-Manager im Browser merkt sich für jeden Dienst ein eigenes, starkes Passwort — du musst es dir nicht selbst merken.",
         },
       ],
     },

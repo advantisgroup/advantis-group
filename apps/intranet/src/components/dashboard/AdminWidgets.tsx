@@ -20,7 +20,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/components/Link";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { isoToday } from "@/lib/absences";
-import { useAbsencesCalendar, usePendingAbsenceCount } from "@/lib/absences-api";
+import { useAbsencesCalendar, usePendingAbsenceCount } from "@/lib/time-absences";
 import { formatIsoDate, relativeTime } from "@/lib/format";
 import { applicantPipelineHealthCounts } from "@/lib/applicant-pipeline-health";
 

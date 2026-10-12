@@ -1,8 +1,8 @@
 {
-  "title": "Clockodo",
+  "title": "Abwesenheiten",
   "vacation": "Urlaub",
   "sick": "Krank",
-  "personal": "Persönlich",
+  "personal": "Sonderurlaub",
   "other": "Sonstiges",
   "reason": "Grund",
   "status": "Status",

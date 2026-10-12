@@ -5,7 +5,6 @@ import { type Role } from "@advantis/types";
 import {
   CalendarCheck,
   CalendarDays,
-  Clock,
   Cloud,
   Fingerprint,
   FileSearch,
@@ -28,7 +27,6 @@ import { CaseSearchGuidebook } from "./case-search";
 import { AbwesenheitenGenehmigenGuidebook } from "./docs/abwesenheiten-genehmigen";
 import { AnkuendigungenTermineGuidebook } from "./docs/ankuendigungen-termine";
 import { ChatTippsGuidebook } from "./docs/chat-tipps";
-import { ClockodoZeiterfassungGuidebook } from "./docs/clockodo-zeiterfassung";
 import { EmailSignaturenGuidebook } from "./docs/email-signaturen";
 import { KalenderGuidebook } from "./docs/kalender";
 import { OnboardingGuidebook } from "./docs/onboarding";
@@ -211,16 +209,6 @@ export const GUIDEBOOKS: Guidebook[] = [
     topic: "collaboration",
     teams: [],
     Component: KalenderGuidebook,
-  },
-  {
-    slug: "clockodo-zeiterfassung",
-    titleKey: "clockodoZeiterfassung.title",
-    descriptionKey: "clockodoZeiterfassung.description",
-    icon: Clock,
-    category: "guide",
-    topic: "time-account",
-    teams: [],
-    Component: ClockodoZeiterfassungGuidebook,
   },
   {
     slug: "profil-konto",

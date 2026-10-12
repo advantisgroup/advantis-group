@@ -110,7 +110,7 @@
       },
       "view": {
         "title": "Events and absences together",
-        "description": "Events and approved absences (including those synced from Clockodo) share one calendar. Multi-day entries span every day they cover; click a day for its overview or any chip for details."
+        "description": "Events and approved absences from the time tracking share one calendar. Multi-day entries span every day they cover; click a day for its overview or any chip for details."
       },
       "add": {
         "title": "Create events",
@@ -195,10 +195,6 @@
       "prefs": {
         "title": "Make the app yours",
         "description": "Pick your default calendar view, the page you land on after signing in, and which day your week starts — saved to your account."
-      },
-      "connections": {
-        "title": "Your integrations",
-        "description": "See whether your Clockodo account is linked (so your absences sync into the intranet)."
       },
       "help": {
         "title": "Come back anytime",

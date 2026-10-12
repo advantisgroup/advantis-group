@@ -110,7 +110,7 @@
       },
       "view": {
         "title": "Termine und Abwesenheiten zusammen",
-        "description": "Termine und genehmigte Abwesenheiten (auch die aus Clockodo synchronisierten) teilen sich einen Kalender. Mehrtägige Einträge erscheinen an jedem abgedeckten Tag; klicke auf einen Tag für die Übersicht oder auf einen Eintrag für Details."
+        "description": "Termine und genehmigte Abwesenheiten aus der Zeiterfassung teilen sich einen Kalender. Mehrtägige Einträge erscheinen an jedem abgedeckten Tag; klicke auf einen Tag für die Übersicht oder auf einen Eintrag für Details."
       },
       "add": {
         "title": "Termine erstellen",
@@ -195,10 +195,6 @@
       "prefs": {
         "title": "Mach die App zu deiner",
         "description": "Wähle deine Standard-Kalenderansicht, die Seite nach der Anmeldung und den Wochenstart — gespeichert in deinem Konto."
-      },
-      "connections": {
-        "title": "Deine Integrationen",
-        "description": "Sieh, ob dein Clockodo-Konto verknüpft ist (damit deine Abwesenheiten ins Intranet synchronisieren)."
       },
       "help": {
         "title": "Jederzeit wieder",

@@ -10,8 +10,8 @@ export function roleLabel(
   return user.roleLabel?.trim() || tRoles(user.role);
 }
 
-/** Two-letter initials for an avatar fallback. Upstream data (e.g. Clockodo's
- * API) has been observed returning non-string shapes for name/email fields
+/** Two-letter initials for an avatar fallback. Upstream data (e.g. a
+ * third-party API) has been observed returning non-string shapes for name/email fields
  * on some records — guard so a malformed value degrades to "?" instead of
  * crashing `.split()`. */
 export function initials(name: string | null | undefined, email?: string): string {

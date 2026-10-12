@@ -61,7 +61,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { nextSort, type Sort, sortSign } from "@/components/ui/sortable-head";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { isoToday } from "@/lib/absences";
-import { useAbsencesCalendar } from "@/lib/absences-api";
+import { useAbsencesCalendar } from "@/lib/time-absences";
 import { useNow } from "@/hooks/use-now";
 import { TEAMS, teamColor } from "@/lib/teams";
 import { cn } from "@/lib/utils";
@@ -142,9 +142,8 @@ function DirectoryPageContent() {
   const setPreferences = useMutation(api.people.preferences.setMine);
   const savedDirectoryViews = preferences?.savedDirectoryViews ?? [];
 
-  // "Out today" is Clockodo-derived and fetched live (see AGENTS.md's
-  // Clockodo section) — Convex has no HTTP access, so directoryList itself
-  // can no longer join this in; the page joins it client-side instead.
+  // "Out today" from the Zeiterfassung (approved vacation only for others),
+  // joined client-side.
   const today = isoToday();
   const outToday = useAbsencesCalendar(today, today);
   const outUntilByUser = useMemo(() => {

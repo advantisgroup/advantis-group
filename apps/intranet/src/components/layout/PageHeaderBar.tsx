@@ -65,7 +65,7 @@ let registrationOrder = 0;
 /**
  * Two independent state slots (not one merged object) because a section's
  * layout owns `identity` for the lifetime of the section, while individual
- * tabs within it (e.g. Clockodo's admin tab) mount/unmount and contribute
+ * tabs within it (e.g. an admin tab) mount/unmount and contribute
  * `actions` on their own — a single shared object would have whichever
  * effect commits last clobber the other's contribution.
  *

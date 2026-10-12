@@ -9,7 +9,6 @@ export {
   list,
   directoryList,
   get,
-  myConnections,
   orgContext,
   updateProfile,
   setExpertise,

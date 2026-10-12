@@ -18,7 +18,6 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
-import { useCurrentUser } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CountTabs } from "@/components/ui/count-tabs";
@@ -26,7 +25,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { localIsoDate } from "@/lib/absences";
 import { formatIsoDate } from "@/lib/format";
-import { type MyAbsence, useMyAbsences } from "@/lib/absences-api";
+import { type MyAbsence, useMyAbsences } from "@/lib/time-absences";
 
 type State = "open" | "active" | "done" | "declined";
 type Kind = "ticket" | "suggestion" | "error" | "upload" | "absence";
@@ -77,15 +76,6 @@ const ABSENCE_STATE: Record<MyAbsence["status"], State> = {
  * stands, so nobody has to remember which of five places to check.
  */
 export default function MyRequestsPage() {
-  const user = useCurrentUser();
-  // Absences come from Clockodo, and only for people linked to it — the
-  // Clockodo call only happens inside the wrapper that needs it.
-  return user.clockodoUserId ? <WithAbsences /> : <RequestsView absences={NO_ROWS} />;
-}
-
-const NO_ROWS: Row[] = [];
-
-function WithAbsences() {
   const t = useTranslations("Absences");
   const locale = useLocale();
   const { absences } = useMyAbsences();
@@ -100,8 +90,7 @@ function WithAbsences() {
           }`,
           state: ABSENCE_STATE[a.status],
           status: a.status,
-          // Clockodo doesn't say when a request last changed; the first day
-          // off is the date people think of it by.
+          // The first day off is the date people think of a request by.
           updatedAt: new Date(`${a.startDate}T00:00:00`).getTime(),
           href: "/zeiterfassung/abwesenheiten",
         }),

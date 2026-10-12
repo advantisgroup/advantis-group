@@ -23,7 +23,6 @@ import { MaintenanceScreen } from "@/components/layout/MaintenanceScreen";
 import { SandboxBanner } from "@/components/layout/SandboxBanner";
 import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { ClockodoHeaderControl } from "@/components/layout/ClockodoHeaderControl";
 import { TimeClockHeaderControl } from "@/components/layout/TimeClockHeaderControl";
 import { ClockInPrompt } from "@/components/zeiterfassung/ClockInPrompt";
 import { useFillPagePresent } from "@/components/layout/fill-page";
@@ -307,11 +306,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
           {!isUpdatesReading && <PageHeaderActionsSlot />}
           {/* Silent fallback: a header widget crashing shouldn't take out
               every page in the app the way an unwrapped one would. */}
-          {!isUpdatesReading && (
-            <ErrorBoundary fallback={() => null}>
-              <ClockodoHeaderControl />
-            </ErrorBoundary>
-          )}
           {!isUpdatesReading && timeEnabled && (
             <ErrorBoundary fallback={() => null}>
               <TimeClockHeaderControl className="hidden lg:flex" />

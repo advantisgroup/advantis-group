@@ -81,7 +81,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { usePendingAbsenceCount } from "@/lib/absences-api";
+import { usePendingAbsenceCount } from "@/lib/time-absences";
 import { isMaintenanceLocked } from "@/lib/maintenance";
 import { cn } from "@/lib/utils";
 
@@ -193,8 +193,7 @@ export function Sidebar() {
   // Test mode: only the testers named in Convex (TIME_TESTERS) see it.
   const timeMode = useQuery(api.time.mode.status);
   const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
-  const canManageClockodo = useHasCapability("manage_clockodo_team");
-  const pendingAbsences = usePendingAbsenceCount(canManageClockodo || hasApprovalCover);
+  const pendingAbsences = usePendingAbsenceCount(isAdmin);
   const { setOpenMobile, state, isMobile, editing, setEditing } = useSidebar();
   const featureFlags = useFeatureFlags();
   const disabledFeatures = new Set(

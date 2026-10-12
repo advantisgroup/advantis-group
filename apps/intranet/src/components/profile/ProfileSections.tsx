@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { addDaysIso, isoToday } from "@/lib/absences";
-import { useAbsencesCalendar } from "@/lib/absences-api";
+import { useAbsencesCalendar } from "@/lib/time-absences";
 import { formatIsoDate, initials } from "@/lib/format";
 import { TEAMS, teamColor, teamLabel } from "@/lib/teams";
 import { cn } from "@/lib/utils";

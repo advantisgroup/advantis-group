@@ -1,8 +1,8 @@
 {
-  "title": "Clockodo",
+  "title": "Absences",
   "vacation": "Vacation",
   "sick": "Sick",
-  "personal": "Personal",
+  "personal": "Special leave",
   "other": "Other",
   "reason": "Reason",
   "status": "Status",

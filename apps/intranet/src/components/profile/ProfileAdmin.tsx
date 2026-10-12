@@ -51,7 +51,6 @@ function starterSteps(user: ProfileUser): StarterStep[] {
     { key: "contact", complete: Boolean(user.jobTitle && user.phone) },
     { key: "department", complete: Boolean(user.department) },
     { key: "team", complete: user.teams.length > 0 },
-    { key: "clockodo", complete: user.clockodoUserId !== null },
     { key: "hireDate", complete: Boolean(user.hireDate) },
   ];
 }

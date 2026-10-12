@@ -8,7 +8,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/components/Link";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { isoToday } from "@/lib/absences";
-import { useMyAbsences } from "@/lib/absences-api";
+import { useMyAbsences } from "@/lib/time-absences";
 import { formatIsoDate } from "@/lib/format";
 import { pickGreeting } from "@/lib/greetings";
 

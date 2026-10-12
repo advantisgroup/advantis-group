@@ -14,10 +14,8 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * Header pill for the own time tracking — the Zeiterfassung twin of
- * `ClockodoHeaderControl`. Not mounted in the app shell yet: the cutover
- * swaps it in for the Clockodo one. Until then only the /zeiterfassung
- * overview shows it.
+ * Header pill for the own time tracking, mounted in the app shell for
+ * everyone who clocks (and on the /zeiterfassung overview).
  */
 export function TimeClockHeaderControl({ className }: { className?: string }) {
   const t = useTranslations("Zeiterfassung");

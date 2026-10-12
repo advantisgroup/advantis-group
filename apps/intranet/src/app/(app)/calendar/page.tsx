@@ -85,7 +85,7 @@ import { SidePanel, SidePanelProperties, SidePanelSection } from "@/components/u
 import { type DayOff, useDaysOff } from "@/hooks/use-days-off";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { useAbsencesCalendar } from "@/lib/absences-api";
+import { useAbsencesCalendar } from "@/lib/time-absences";
 import { formatIsoDate, formatTime } from "@/lib/format";
 import { buildIcs, downloadIcs } from "@/lib/ics";
 import { formatRichDate } from "@/lib/rich-date";

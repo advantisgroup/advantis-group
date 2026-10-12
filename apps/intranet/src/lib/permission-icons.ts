@@ -45,7 +45,10 @@ export const CAPABILITY_ICONS: Record<Capability, LucideIcon> = {
 };
 
 /** Every capability, by the area of the intranet it opens — how the role
- * editor lists them. A new capability goes in exactly one group. */
+ * editor lists them. A new capability goes in exactly one group. The old
+ * Clockodo team capabilities (`view_clockodo_team`, `manage_clockodo_team`)
+ * are left out on purpose: stored roles may still carry them, but nothing
+ * reads them since the Zeiterfassung (admins approve there). */
 export const CAPABILITY_GROUPS: {
   key: "people" | "communication" | "content" | "time" | "files" | "ai";
   capabilities: Capability[];
@@ -56,7 +59,6 @@ export const CAPABILITY_GROUPS: {
     capabilities: ["manage_announcements", "manage_inquiries", "manage_it_ticket_threads"],
   },
   { key: "content", capabilities: ["manage_guidebooks", "manage_blog"] },
-  { key: "time", capabilities: ["view_clockodo_team", "manage_clockodo_team"] },
   { key: "files", capabilities: ["access_files", "manage_uploads", "access_integrations"] },
   { key: "ai", capabilities: ["use_ai"] },
 ];
