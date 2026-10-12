@@ -140,7 +140,10 @@
     "mobileHint": "At least one clock action on this day was made on a phone.",
     "mobileStart": "clocked in on a phone",
     "mobileEnd": "clocked out on a phone",
-    "mobileBoth": "clocked in and out on a phone"
+    "mobileBoth": "clocked in and out on a phone",
+    "fixStart": "Change start",
+    "startFixed": "Start changed",
+    "saveStart": "Save"
   },
   "csv": {
     "export": "Export CSV",

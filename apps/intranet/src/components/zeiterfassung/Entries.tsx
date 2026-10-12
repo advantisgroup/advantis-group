@@ -4,7 +4,16 @@ import { useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { addDays, addMonths, monthEnd, monthOf, monthStart, mondayOf } from "@advantis/convex/time";
+import {
+  addDays,
+  addMonths,
+  berlinDate,
+  berlinInstant,
+  monthEnd,
+  monthOf,
+  monthStart,
+  mondayOf,
+} from "@advantis/convex/time";
 import { useMutation } from "convex/react";
 import {
   ChevronDown,
@@ -24,6 +33,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DeleteEntryDialog, EntryDialog } from "@/components/zeiterfassung/EntryDialogs";
 import { AbsenceTypeLabel, Chip, Segmented, WarningChips } from "@/components/zeiterfassung/parts";
@@ -229,6 +239,7 @@ export function Entries({
                 onAdd={() => setAdding(day.date)}
                 onEdit={setEditing}
                 onDelete={setDeleting}
+                canFixStart={direct}
               />
             ))}
           </ul>
@@ -264,7 +275,9 @@ function DayRow({
   onAdd,
   onEdit,
   onDelete,
+  canFixStart = false,
 }: {
+  canFixStart?: boolean;
   day: DayView;
   today: string;
   expanded: boolean;
@@ -419,6 +432,9 @@ function DayRow({
                     </p>
                   )}
                 </div>
+                {canFixStart && row.end === undefined && row.kind === "work" && (
+                  <RunningStartEditor entryId={row._id} start={row.start} />
+                )}
                 {!readOnly && row.end !== undefined && !day.locked && (
                   <div className="flex shrink-0 items-center gap-1">
                     <Button
@@ -489,4 +505,57 @@ function DayRow({
 
 export function entriesInitialDate(value: string | null): string | null {
   return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+}
+
+/** Admins: move the start of a still-running entry (e.g. clocked in late). */
+function RunningStartEditor({ entryId, start }: { entryId: TimeEntry["_id"]; start: number }) {
+  const t = useTranslations("Zeiterfassung");
+  const locale = useLocale();
+  const setRunningStart = useMutation(api.time.entries.setRunningStart);
+  const showError = useTimeErrorToast();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(formatClock(start, locale));
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+    if (!match) return;
+    const date = berlinDate(start);
+    setBusy(true);
+    try {
+      await setRunningStart({
+        entryId,
+        start: berlinInstant(date, Number(match[1]) * 60 + Number(match[2])),
+      });
+      toast.success(t("entries.startFixed"));
+      setEditing(false);
+    } catch (error) {
+      showError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!editing) {
+    return (
+      <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
+        <Pencil />
+        {t("entries.fixStart")}
+      </Button>
+    );
+  }
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      <Input
+        type="time"
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        className="h-8 w-28"
+        aria-label={t("entries.fixStart")}
+      />
+      <Button size="sm" disabled={busy} onClick={() => void save()}>
+        {t("entries.saveStart")}
+      </Button>
+    </div>
+  );
 }

@@ -140,7 +140,10 @@
     "mobileHint": "Mindestens eine Stempelung an diesem Tag wurde mit dem Handy gemacht.",
     "mobileStart": "per Handy eingestempelt",
     "mobileEnd": "per Handy ausgestempelt",
-    "mobileBoth": "per Handy ein- und ausgestempelt"
+    "mobileBoth": "per Handy ein- und ausgestempelt",
+    "fixStart": "Beginn ändern",
+    "startFixed": "Beginn geändert",
+    "saveStart": "Speichern"
   },
   "csv": {
     "export": "CSV-Export",

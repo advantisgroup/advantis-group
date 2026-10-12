@@ -235,6 +235,51 @@ export const save = userMutation({
   },
 });
 
+/**
+ * Admins only: move the start of a work entry that is still running — e.g.
+ * someone was there before they clocked in. Same Berlin day, in the past, no
+ * overlap with anything else that day; breaks inside are left as they are.
+ */
+export const setRunningStart = userMutation({
+  role: "admin",
+  args: { entryId: v.id("timeEntries"), start: v.number(), reason: v.optional(v.string()) },
+  handler: async (ctx, { entryId, start, reason }) => {
+    await assertTimeWrite(ctx);
+    const row = await ctx.db.get(entryId);
+    if (!row || !isActive(row) || row.end !== undefined || row.kind !== "work") {
+      throw timeError("conflict", "changed_meanwhile", "No running work entry");
+    }
+    const now = Date.now();
+    if (!Number.isFinite(start) || start >= now || berlinDate(start) !== berlinDate(row.start)) {
+      throw timeError("bad_request", "invalid_range", "Start must be earlier today");
+    }
+    await assertDatesOpen(ctx, [berlinDate(start)]);
+    const others = (await dayInputs(ctx, row.userId, berlinDate(start), berlinDate(start))).entries;
+    const clash = others.some(
+      (other) =>
+        other._id !== row._id &&
+        other.kind === "work" &&
+        isActive(other) &&
+        (other.end ?? Number.POSITIVE_INFINITY) > start &&
+        other.start < row.start,
+    );
+    if (clash) throw timeError("conflict", "overlap", "Overlaps another entry");
+    const patch = { start, updatedAt: now };
+    await ctx.db.patch(row._id, patch);
+    await writeAudit(ctx, {
+      actorId: ctx.caller.id,
+      subjectUserId: row.userId,
+      entity: "entry",
+      entityId: row._id,
+      action: "setRunningStart",
+      before: row,
+      after: { ...row, ...patch },
+      reason: reason?.trim() || undefined,
+    });
+    await invalidateTotals(ctx, row.userId, [berlinDate(start)]);
+  },
+});
+
 /** Remove a closed entry — directly for admins, as a request for everyone else. */
 export const remove = userMutation({
   args: { entryId: v.id("timeEntries"), reason: v.optional(v.string()) },
