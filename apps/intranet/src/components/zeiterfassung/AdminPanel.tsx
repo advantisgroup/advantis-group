@@ -337,12 +337,13 @@ function Approvals({ data }: { data: ApprovalsData | undefined }) {
                     <span className="text-muted-foreground">
                       ({t(row.kind === "work" ? "entries.kindWork" : "entries.kindBreak")})
                     </span>{" "}
-                    {row.original && row.correctionAction === "edit" && (
-                      <span className="text-muted-foreground line-through">
-                        {formatClock(row.original.start, locale)}–
-                        {row.original.end ? formatClock(row.original.end, locale) : ""}
-                      </span>
-                    )}{" "}
+                    {row.original &&
+                      (row.correctionAction === "edit" || row.correctionAction === "start") && (
+                        <span className="text-muted-foreground line-through">
+                          {formatClock(row.original.start, locale)}–
+                          {row.original.end ? formatClock(row.original.end, locale) : ""}
+                        </span>
+                      )}{" "}
                     {formatClock(row.start, locale)}–{row.end ? formatClock(row.end, locale) : ""}
                   </p>
                   {row.reason && <p className="text-xs text-muted-foreground">{row.reason}</p>}

@@ -29,6 +29,8 @@ export const correctionActionValidator = v.union(
   v.literal("add"),
   v.literal("edit"),
   v.literal("delete"),
+  /** Earlier start for a still-running work entry (forgot to clock in). */
+  v.literal("start"),
 );
 /** `overtime` = Überstundenabbau: a day off paid from the hours account, so
  *  unlike the others it does not lower the day's target. */

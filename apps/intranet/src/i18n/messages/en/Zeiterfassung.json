@@ -109,7 +109,8 @@
     "request": {
       "add": "Addition",
       "edit": "Change",
-      "delete": "Removal"
+      "delete": "Removal",
+      "start": "Earlier start"
     },
     "rejected": "Rejected",
     "waiting": "Waiting for approval",
@@ -143,7 +144,8 @@
     "mobileBoth": "clocked in and out on a phone",
     "fixStart": "Change start",
     "startFixed": "Start changed",
-    "saveStart": "Save"
+    "saveStart": "Save",
+    "startRequested": "Requested – an admin still has to approve the earlier start"
   },
   "csv": {
     "export": "Export CSV",

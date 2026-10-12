@@ -432,7 +432,7 @@ function DayRow({
                     </p>
                   )}
                 </div>
-                {canFixStart && row.end === undefined && row.kind === "work" && (
+                {(canFixStart || !readOnly) && row.end === undefined && row.kind === "work" && (
                   <RunningStartEditor entryId={row._id} start={row.start} />
                 )}
                 {!readOnly && row.end !== undefined && !day.locked && (
@@ -523,11 +523,11 @@ function RunningStartEditor({ entryId, start }: { entryId: TimeEntry["_id"]; sta
     const date = berlinDate(start);
     setBusy(true);
     try {
-      await setRunningStart({
+      const result = await setRunningStart({
         entryId,
         start: berlinInstant(date, Number(match[1]) * 60 + Number(match[2])),
       });
-      toast.success(t("entries.startFixed"));
+      toast.success(result.applied ? t("entries.startFixed") : t("entries.startRequested"));
       setEditing(false);
     } catch (error) {
       showError(error);

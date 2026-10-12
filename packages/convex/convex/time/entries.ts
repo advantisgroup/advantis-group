@@ -236,17 +236,20 @@ export const save = userMutation({
 });
 
 /**
- * Admins only: move the start of a work entry that is still running — e.g.
- * someone was there before they clocked in. Same Berlin day, in the past, no
- * overlap with anything else that day; breaks inside are left as they are.
+ * Earlier start for a work entry that is still running — someone was there
+ * before they clocked in. Same Berlin day, in the past, no overlap with other
+ * work that day. Admins change it directly (for anyone); everyone else files
+ * a request for their own entry, applied when an admin approves it.
  */
 export const setRunningStart = userMutation({
-  role: "admin",
   args: { entryId: v.id("timeEntries"), start: v.number(), reason: v.optional(v.string()) },
-  handler: async (ctx, { entryId, start, reason }) => {
+  handler: async (ctx, { entryId, start, reason: rawReason }) => {
     await assertTimeWrite(ctx);
     const row = await ctx.db.get(entryId);
     if (!row || !isActive(row) || row.end !== undefined || row.kind !== "work") {
+      throw timeError("conflict", "changed_meanwhile", "No running work entry");
+    }
+    if (!ctx.caller.isAdmin && row.userId !== ctx.caller.id) {
       throw timeError("conflict", "changed_meanwhile", "No running work entry");
     }
     const now = Date.now();
@@ -254,31 +257,80 @@ export const setRunningStart = userMutation({
       throw timeError("bad_request", "invalid_range", "Start must be earlier today");
     }
     await assertDatesOpen(ctx, [berlinDate(start)]);
-    const others = (await dayInputs(ctx, row.userId, berlinDate(start), berlinDate(start))).entries;
-    const clash = others.some(
-      (other) =>
-        other._id !== row._id &&
-        other.kind === "work" &&
-        isActive(other) &&
-        (other.end ?? Number.POSITIVE_INFINITY) > start &&
-        other.start < row.start,
-    );
-    if (clash) throw timeError("conflict", "overlap", "Overlaps another entry");
-    const patch = { start, updatedAt: now };
-    await ctx.db.patch(row._id, patch);
+    await assertStartFree(ctx, row, start);
+    const reason = rawReason?.trim() || undefined;
+
+    if (ctx.caller.isAdmin) {
+      const patch = { start, updatedAt: now };
+      await ctx.db.patch(row._id, patch);
+      await writeAudit(ctx, {
+        actorId: ctx.caller.id,
+        subjectUserId: row.userId,
+        entity: "entry",
+        entityId: row._id,
+        action: "setRunningStart",
+        before: row,
+        after: { ...row, ...patch },
+        reason,
+      });
+      await invalidateTotals(ctx, row.userId, [berlinDate(start)]);
+      return { applied: true };
+    }
+
+    if (await hasPendingFor(ctx, row._id)) {
+      throw timeError("conflict", "already_pending", "A correction is already waiting");
+    }
+    const request = {
+      userId: row.userId,
+      kind: "work" as const,
+      start,
+      source: "manual" as const,
+      status: "pending" as const,
+      correctionOf: row._id,
+      correctionAction: "start" as const,
+      reason,
+      createdBy: ctx.caller.id,
+      updatedAt: now,
+    };
+    const id = await ctx.db.insert("timeEntries", request);
     await writeAudit(ctx, {
       actorId: ctx.caller.id,
       subjectUserId: row.userId,
       entity: "entry",
-      entityId: row._id,
-      action: "setRunningStart",
+      entityId: id,
+      action: "requestCorrection",
       before: row,
-      after: { ...row, ...patch },
-      reason: reason?.trim() || undefined,
+      after: request,
+      reason,
     });
-    await invalidateTotals(ctx, row.userId, [berlinDate(start)]);
+    await notifyAdmins(
+      ctx,
+      {
+        type: "time_correction",
+        title: "Früherer Arbeitsbeginn beantragt",
+        body: `${displayName(ctx.caller.user)} · ${formatDate(berlinDate(start))}`,
+        link: "/zeiterfassung/admin?section=approvals",
+      },
+      ctx.caller.id,
+    );
+    return { applied: false };
   },
 });
+
+/** No other work of the same day may lie between the new and the old start. */
+async function assertStartFree(ctx: MutationCtx, row: Doc<"timeEntries">, start: number) {
+  const date = berlinDate(start);
+  const others = (await dayInputs(ctx, row.userId, date, date)).entries;
+  const clash = others.some(
+    (other) =>
+      other._id !== row._id &&
+      other.kind === "work" &&
+      isActive(other) &&
+      (other.end ?? Number.POSITIVE_INFINITY) > start &&
+      other.start < row.start,
+  );
+  if (clash) throw timeError("conflict", "overlap", "Overlaps another entry");
+}
 
 /** Remove a closed entry — directly for admins, as a request for everyone else. */
 export const remove = userMutation({
@@ -416,6 +468,45 @@ export const decide = userMutation({
     const dates = [berlinDate(request.start), ...(original ? [berlinDate(original.start)] : [])];
     await assertDatesOpen(ctx, dates);
     const decisionNote = rawNote?.trim() || undefined;
+    if (request.correctionAction === "start") {
+      // Earlier start for a (possibly still) running entry: move the
+      // original's start; the request itself is only the record.
+      if (approve) {
+        if (!original || !isActive(original) || original.kind !== "work") {
+          throw timeError("conflict", "changed_meanwhile", "The entry changed in the meantime");
+        }
+        await assertStartFree(ctx, original, request.start);
+        await ctx.db.patch(original._id, { start: request.start, updatedAt: now });
+      }
+      const decidedStart = {
+        status: approve ? ("deleted" as const) : ("rejected" as const),
+        decidedBy: ctx.caller.id,
+        decidedAt: now,
+        decisionNote,
+        updatedAt: now,
+      };
+      await ctx.db.patch(request._id, decidedStart);
+      await writeAudit(ctx, {
+        actorId: ctx.caller.id,
+        subjectUserId: request.userId,
+        entity: "entry",
+        entityId: request._id,
+        action: approve ? "approveCorrection" : "rejectCorrection",
+        before: { request, original },
+        after: { ...request, ...decidedStart },
+        reason: decisionNote,
+      });
+      if (approve) await invalidateTotals(ctx, request.userId, dates);
+      const startDate = berlinDate(request.start);
+      await createNotification(ctx, {
+        userId: request.userId,
+        type: "time_decision",
+        title: approve ? "Früherer Beginn übernommen" : "Früherer Beginn abgelehnt",
+        body: [formatDate(startDate), decisionNote].filter(Boolean).join(" · "),
+        link: entryLink(startDate),
+      });
+      return;
+    }
     const status = !approve
       ? ("rejected" as const)
       : request.correctionAction === "delete"

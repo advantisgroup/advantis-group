@@ -109,7 +109,8 @@
     "request": {
       "add": "Nachtrag",
       "edit": "Änderung",
-      "delete": "Löschung"
+      "delete": "Löschung",
+      "start": "Früherer Beginn"
     },
     "rejected": "Abgelehnt",
     "waiting": "Wartet auf Freigabe",
@@ -143,7 +144,8 @@
     "mobileBoth": "per Handy ein- und ausgestempelt",
     "fixStart": "Beginn ändern",
     "startFixed": "Beginn geändert",
-    "saveStart": "Speichern"
+    "saveStart": "Speichern",
+    "startRequested": "Beantragt – ein Admin muss den früheren Beginn noch freigeben"
   },
   "csv": {
     "export": "CSV-Export",
