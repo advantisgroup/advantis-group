@@ -24,7 +24,14 @@ function stopwatch(since: number, now: number): string {
  * The Stempeluhr: one big running clock, one big button. Everything else on
  * the page is secondary to this, like Clockodo's stopwatch screen.
  */
-export function ClockCard({ today }: { today: DayView | undefined }) {
+export function ClockCard({
+  today,
+  balanceBefore,
+}: {
+  today: DayView | undefined;
+  /** Hours account up to yesterday. */
+  balanceBefore?: number;
+}) {
   const t = useTranslations("Zeiterfassung");
   const locale = useLocale();
   const clock = useTimeClock();
@@ -40,6 +47,14 @@ export function ClockCard({ today }: { today: DayView | undefined }) {
   const target = today?.targetMinutes ?? 0;
   const worked = today?.workedMinutes ?? 0;
   const progress = target > 0 ? Math.min(100, (worked / target) * 100) : 0;
+  // Second bar for a negative hours account: how far today goes towards
+  // evening it out (today's target plus the minus hours).
+  const evenGoal = balanceBefore !== undefined && balanceBefore < 0 ? target - balanceBefore : null;
+  const evenProgress = evenGoal ? Math.min(100, (worked / evenGoal) * 100) : 0;
+  const evenAt =
+    evenGoal !== null && status === "working" && worked < evenGoal
+      ? now + (evenGoal - worked) * 60_000
+      : null;
 
   return (
     <>
@@ -182,6 +197,38 @@ export function ClockCard({ today }: { today: DayView | undefined }) {
                         style={{ width: `${progress}%` }}
                       />
                     </div>
+                  )}
+                  {evenGoal !== null && (
+                    <>
+                      <div className="flex items-baseline justify-between pt-2 text-sm">
+                        <span className="text-muted-foreground">
+                          {worked >= evenGoal ? t("overview.evenOutDone") : t("overview.evenOut")}
+                        </span>
+                        <span className="tabular-nums">
+                          <span className="font-semibold">{formatMinutes(worked)}</span>
+                          <span className="text-muted-foreground">
+                            {" "}
+                            / {formatMinutes(evenGoal)}
+                          </span>
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/10">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-[width] duration-700",
+                            worked >= evenGoal ? "bg-emerald-500" : "bg-amber-500",
+                          )}
+                          style={{ width: `${evenProgress}%` }}
+                        />
+                      </div>
+                      {evenAt !== null && (
+                        <p className="text-right text-xs text-muted-foreground">
+                          {t("overview.evenOutAt", {
+                            time: formatClock(evenAt, locale),
+                          })}
+                        </p>
+                      )}
+                    </>
                   )}
                   {today.holiday && (
                     <p className="text-xs text-muted-foreground">{today.holiday.name}</p>

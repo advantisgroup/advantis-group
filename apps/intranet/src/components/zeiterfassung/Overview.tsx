@@ -51,6 +51,10 @@ export function Overview() {
     }),
     { worked: 0, target: 0 },
   );
+  // Live hours account: up to yesterday from the server, today's running
+  // day (worked so far minus today's target) on top, like Clockodo.
+  const todayDiff = todayView ? todayView.workedMinutes - todayView.targetMinutes : 0;
+  const liveBalance = summary ? summary.balance.minutes + todayDiff : undefined;
   const weekWarnings = (days ?? []).filter((day) => day.date <= today && day.warnings.length > 0);
 
   if (mode && !mode.tracking) {
@@ -96,7 +100,7 @@ export function Overview() {
         </Card>
       ) : (
         <SectionBoundary title={t("overview.clockUnavailable")}>
-          <ClockCard today={todayView} />
+          <ClockCard today={todayView} balanceBefore={summary?.balance.minutes} />
         </SectionBoundary>
       )}
       <KpiStrip className="grid-cols-3 lg:grid-cols-3">
@@ -109,9 +113,9 @@ export function Overview() {
         <Kpi
           label={t("overview.balance")}
           value={
-            summary ? (
-              <span className={balanceClassName(summary.balance.minutes)}>
-                {formatMinutes(summary.balance.minutes, true)}
+            liveBalance !== undefined ? (
+              <span className={balanceClassName(liveBalance)}>
+                {formatMinutes(liveBalance, true)}
               </span>
             ) : (
               "–"
@@ -157,7 +161,9 @@ export function Overview() {
                   <>
                     {summary.autoClosed.length > 0 && (
                       <Notice icon={<TriangleAlert className="size-4 text-warn" />}>
-                        {t("overview.autoClosedNotice", { count: summary.autoClosed.length })}{" "}
+                        {t("overview.autoClosedNotice", {
+                          count: summary.autoClosed.length,
+                        })}{" "}
                         <Link
                           href={`/zeiterfassung/arbeitszeiten?date=${berlinDate(summary.autoClosed[0].start)}`}
                           className="font-medium underline-offset-2 hover:underline"
@@ -168,7 +174,9 @@ export function Overview() {
                     )}
                     {weekWarnings.length > 0 && (
                       <Notice icon={<Info className="size-4 text-muted-foreground" />}>
-                        {t("overview.warningsNotice", { count: weekWarnings.length })}
+                        {t("overview.warningsNotice", {
+                          count: weekWarnings.length,
+                        })}
                       </Notice>
                     )}
                     {summary.pendingCorrections + summary.pendingAbsences > 0 && (
@@ -357,7 +365,9 @@ function WeekCard({ days, today }: { days: DayView[] | undefined; today: string 
                       <span
                         aria-hidden
                         className="absolute inset-x-1 border-t border-dashed border-muted-foreground/50"
-                        style={{ bottom: `${(day.targetMinutes / max) * 100}%` }}
+                        style={{
+                          bottom: `${(day.targetMinutes / max) * 100}%`,
+                        }}
                       />
                     )}
                     <span
