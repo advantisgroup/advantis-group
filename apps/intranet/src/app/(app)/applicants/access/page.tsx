@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { ApplicantAccessPanel } from "@/components/applicants/ApplicantAccessPanel";
 import { HrMailboxCard } from "@/components/applicants/HrMailboxCard";
+import { HrOpenPositionCard } from "@/components/applicants/HrOpenPositionCard";
 import { useCanManageApplicantAccess } from "@/components/providers/current-user";
 
 export default function ApplicantsAccessPage() {
@@ -19,6 +20,7 @@ export default function ApplicantsAccessPage() {
   if (!canManageAccess) return null;
   return (
     <div className="space-y-6">
+      <HrOpenPositionCard />
       <HrMailboxCard />
       <ApplicantAccessPanel />
     </div>

@@ -461,5 +461,12 @@
   "sendEmailFailed": "Sending failed",
   "emailSentLabel": "sent",
   "emailSentFrom": "sent from {from}",
-  "mailboxStatus_from_applicant": "Reply from an applicant"
+  "mailboxStatus_from_applicant": "Reply from an applicant",
+  "openPositionTitle": "Advertised position",
+  "openPositionDescription": "Every new CV – uploaded or from the applications inbox – is filed under this position. The position from the CV then goes into the notes. Leave empty to take the position from the CV.",
+  "openPositionPlaceholder": "e.g. Call center agent (m/f/d)",
+  "openPositionSave": "Save",
+  "openPositionSaved": "Position saved",
+  "openPositionActive": "New applicants are filed under this position.",
+  "openPositionNone": "No position set – it comes from the CV."
 }

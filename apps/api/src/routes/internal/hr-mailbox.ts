@@ -83,6 +83,7 @@ export const internalHrMailboxRoute = new Elysia().post(
             createdByUserId: body.userId as Id<"users">,
             bytes: new Uint8Array(message.pdf.content),
             fileName: message.pdf.filename,
+            fromMailbox: true,
           });
           row.status = "started";
           row.runId = runId;

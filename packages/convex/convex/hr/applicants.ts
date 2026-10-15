@@ -12,7 +12,9 @@ import {
 } from "../schema";
 import { batchUserSummaries, toUserSummary } from "../lib/users";
 import { getServerCaller } from "../lib/caller";
+import { notifyUsers } from "../lib/notify";
 import { moveToTrash } from "../lib/trash";
+import { hasApplicantAccess } from "./lib/access";
 
 /**
  * Bewerbermanagement (Applicant Management). Everything below is gated by
@@ -636,6 +638,29 @@ export const apiGenerateStagingUrl = serverMutation({
   },
 });
 
+/** A new application arrived on its own: tell everyone who works in HR. */
+async function notifyHrOfApplication(
+  ctx: MutationCtx,
+  applicantId: Id<"applicants">,
+  name: string,
+  position: string | undefined,
+): Promise<void> {
+  const active = await ctx.db
+    .query("users")
+    .withIndex("by_status", (q) => q.eq("status", "active"))
+    .collect();
+  await notifyUsers(
+    ctx,
+    active.filter(hasApplicantAccess).map((u) => u._id),
+    {
+      type: "hr_application",
+      title: `Neue Bewerbung: ${name}`,
+      body: position,
+      link: `/hr/${applicantId}/uebersicht`,
+    },
+  );
+}
+
 /** Create a new "Neue Bewerber" record from the API's Claude extraction result. */
 export const apiCreateFromExtraction = serverMutation({
   args: {
@@ -651,8 +676,12 @@ export const apiCreateFromExtraction = serverMutation({
     berufserfahrung: v.optional(v.string()),
     zusammenfassung: v.optional(v.string()),
     profilId: v.optional(v.id("applicantSkillProfiles")),
+    notizen: v.optional(v.string()),
     storageId: v.id("_storage"),
     fileName: v.string(),
+    /** Set for imports nobody started by hand (the application inbox):
+     *  everyone with HR access hears about the new applicant. */
+    notifyHr: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const applicantId = await ctx.db.insert("applicants", {
@@ -667,6 +696,7 @@ export const apiCreateFromExtraction = serverMutation({
       berufserfahrung: args.berufserfahrung,
       zusammenfassung: args.zusammenfassung,
       profilId: args.profilId,
+      notizen: args.notizen,
       createdByUserId: args.createdByUserId,
       createdAt: Date.now(),
     });
@@ -676,6 +706,7 @@ export const apiCreateFromExtraction = serverMutation({
       fileName: args.fileName,
       createdAt: Date.now(),
     });
+    if (args.notifyHr) await notifyHrOfApplication(ctx, applicantId, args.name, args.position);
     return { applicantId };
   },
 });

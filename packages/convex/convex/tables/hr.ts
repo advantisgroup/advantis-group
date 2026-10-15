@@ -221,6 +221,17 @@ export const hrTables = {
   }).index("by_at", ["at"]),
 
   /**
+   * HR-wide settings, one row. `openPosition` is the job currently
+   * advertised: every CV import files the applicant under it (the job named
+   * in the CV goes into the notes), since almost everyone applies to that.
+   */
+  hrSettings: defineTable({
+    openPosition: v.optional(v.string()),
+    updatedBy: v.id("users"),
+    updatedAt: v.number(),
+  }),
+
+  /**
    * Applicant Management "vault": a secondary password gating the whole
    * feature on top of the normal applicantAccess/delegate checks —
    * defense-in-depth against a leaked or unattended session, not a

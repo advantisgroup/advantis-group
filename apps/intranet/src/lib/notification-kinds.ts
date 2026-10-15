@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   TriangleAlert,
   UploadCloud,
+  UserPlus,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -90,6 +91,10 @@ const VISUALS: Record<string, { icon: LucideIcon; tint: string }> = {
   draft_comment: {
     icon: MessageSquareText,
     tint: "bg-teal-500/15 text-teal-600 dark:text-teal-300",
+  },
+  hr_application: {
+    icon: UserPlus,
+    tint: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
   },
   suggestion: { icon: Lightbulb, tint: "bg-amber-500/15 text-amber-600 dark:text-amber-300" },
   incident: { icon: Wrench, tint: "bg-destructive/10 text-destructive" },
