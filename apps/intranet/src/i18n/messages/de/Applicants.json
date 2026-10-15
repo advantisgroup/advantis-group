@@ -461,5 +461,12 @@
   "sendEmailFailed": "Senden fehlgeschlagen",
   "emailSentLabel": "gesendet",
   "emailSentFrom": "gesendet von {from}",
-  "mailboxStatus_from_applicant": "Antwort eines Bewerbers"
+  "mailboxStatus_from_applicant": "Antwort eines Bewerbers",
+  "openPositionTitle": "Ausgeschriebene Stelle",
+  "openPositionDescription": "Jeder neue Lebenslauf – hochgeladen oder aus dem Bewerbungs-Postfach – wird unter dieser Stelle angelegt. Die Position aus dem Lebenslauf steht dann in den Notizen. Leer lassen, um die Position aus dem Lebenslauf zu übernehmen.",
+  "openPositionPlaceholder": "z. B. Callcenter-Mitarbeiter (m/w/d)",
+  "openPositionSave": "Speichern",
+  "openPositionSaved": "Stelle gespeichert",
+  "openPositionActive": "Neue Bewerber werden unter dieser Stelle angelegt.",
+  "openPositionNone": "Keine Stelle gesetzt – die Position kommt aus dem Lebenslauf."
 }

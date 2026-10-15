@@ -77,6 +77,7 @@ import type * as hr_employees from "../hr/employees.js";
 import type * as hr_lib_access from "../hr/lib/access.js";
 import type * as hr_lib_retention from "../hr/lib/retention.js";
 import type * as hr_mailbox from "../hr/mailbox.js";
+import type * as hr_settings from "../hr/settings.js";
 import type * as hr_retention from "../hr/retention.js";
 import type * as http from "../http.js";
 import type * as humanResources from "../humanResources.js";
@@ -139,6 +140,7 @@ import type * as migrations_backfillInquiries from "../migrations/backfillInquir
 import type * as migrations_dropDesignPreviewFields from "../migrations/dropDesignPreviewFields.js";
 import type * as migrations_dropGuestFields from "../migrations/dropGuestFields.js";
 import type * as migrations_moveGuidesToWiki from "../migrations/moveGuidesToWiki.js";
+import type * as migrations_setApplicantPosition from "../migrations/setApplicantPosition.js";
 import type * as migrations_setHrAccessList from "../migrations/setHrAccessList.js";
 import type * as notifications from "../notifications.js";
 import type * as notifications_email from "../notifications/email.js";
@@ -369,6 +371,7 @@ declare const fullApi: ApiFromModules<{
   "hr/lib/access": typeof hr_lib_access;
   "hr/lib/retention": typeof hr_lib_retention;
   "hr/mailbox": typeof hr_mailbox;
+  "hr/settings": typeof hr_settings;
   "hr/retention": typeof hr_retention;
   http: typeof http;
   humanResources: typeof humanResources;
@@ -431,6 +434,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/dropDesignPreviewFields": typeof migrations_dropDesignPreviewFields;
   "migrations/dropGuestFields": typeof migrations_dropGuestFields;
   "migrations/moveGuidesToWiki": typeof migrations_moveGuidesToWiki;
+  "migrations/setApplicantPosition": typeof migrations_setApplicantPosition;
   "migrations/setHrAccessList": typeof migrations_setHrAccessList;
   notifications: typeof notifications;
   "notifications/email": typeof notifications_email;

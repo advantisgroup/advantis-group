@@ -153,35 +153,54 @@ async function stageBytes(bytes: Uint8Array<ArrayBuffer>): Promise<Id<"_storage"
   return storageId;
 }
 
+/**
+ * Files the applicant under the advertised job when HR has set one: the
+ * position a CV names is the person's last job, which is kept in the notes.
+ */
+export function positionFor(
+  openPosition: string | null,
+  cvPosition: string,
+): { position: string; notizen: string | undefined } {
+  if (!openPosition) return { position: cvPosition, notizen: undefined };
+  const keep = cvPosition && cvPosition !== openPosition;
+  return { position: openPosition, notizen: keep ? `Laut Lebenslauf: ${cvPosition}` : undefined };
+}
+
 async function createFromExtraction(
   createdByUserId: Id<"users">,
   extracted: ExtractedApplicant,
   storageId: Id<"_storage">,
   fileName: string,
+  notifyHr = false,
 ): Promise<Id<"applicants">> {
-  const profiles = await getConvex().query(api.hr.applicants.apiListProfiles, {
-    serverKey: getConvexServerKey(),
-  });
+  const serverKey = getConvexServerKey();
+  const [profiles, defaults] = await Promise.all([
+    getConvex().query(api.hr.applicants.apiListProfiles, { serverKey }),
+    getConvex().query(api.hr.settings.apiImportDefaults, { serverKey }),
+  ]);
+  const { position, notizen } = positionFor(defaults.openPosition, extracted.position);
   const profilId = autoProfil(
     profiles.map((p) => ({ id: p._id, name: p.name, skills: p.skills })),
-    extracted.position,
+    position,
   );
   const { applicantId } = await getConvex().mutation(api.hr.applicants.apiCreateFromExtraction, {
-    serverKey: getConvexServerKey(),
+    serverKey,
     createdByUserId,
     name: extracted.name,
     email: extracted.email || undefined,
     telefon: extracted.telefon || undefined,
     adresse: extracted.adresse || undefined,
     geburtsdatum: extracted.geburtsdatum || undefined,
-    position: extracted.position || undefined,
+    position: position || undefined,
     skills: extracted.skills,
     ausbildung: extracted.ausbildung || undefined,
     berufserfahrung: extracted.berufserfahrung || undefined,
     zusammenfassung: extracted.zusammenfassung || undefined,
     profilId: profilId ? (profilId as Id<"applicantSkillProfiles">) : undefined,
+    notizen,
     storageId,
     fileName,
+    notifyHr,
   });
   return applicantId;
 }
@@ -198,11 +217,14 @@ export async function startCvExtract({
   createdByUserId,
   bytes,
   fileName,
+  fromMailbox = false,
 }: {
   clerkUserId: string;
   createdByUserId: Id<"users">;
   bytes: Uint8Array<ArrayBuffer>;
   fileName: string;
+  /** Came in through the application inbox: HR gets notified. */
+  fromMailbox?: boolean;
 }): Promise<{ runId: Id<"aiRuns"> }> {
   return await startAiRun(
     {
@@ -237,6 +259,7 @@ export async function startCvExtract({
               extracted,
               storageId,
               fileName,
+              fromMailbox,
             ),
             name: extracted.name,
             fileName,
