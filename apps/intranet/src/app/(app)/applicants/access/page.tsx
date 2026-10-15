@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { ApplicantAccessPanel } from "@/components/applicants/ApplicantAccessPanel";
+import { HrMailboxCard } from "@/components/applicants/HrMailboxCard";
 import { useCanManageApplicantAccess } from "@/components/providers/current-user";
 
 export default function ApplicantsAccessPage() {
@@ -16,5 +17,10 @@ export default function ApplicantsAccessPage() {
   }, [canManageAccess, router]);
 
   if (!canManageAccess) return null;
-  return <ApplicantAccessPanel />;
+  return (
+    <div className="space-y-6">
+      <HrMailboxCard />
+      <ApplicantAccessPanel />
+    </div>
+  );
 }

@@ -75,6 +75,7 @@ import type * as hr_applicants from "../hr/applicants.js";
 import type * as hr_employees from "../hr/employees.js";
 import type * as hr_lib_access from "../hr/lib/access.js";
 import type * as hr_lib_retention from "../hr/lib/retention.js";
+import type * as hr_mailbox from "../hr/mailbox.js";
 import type * as hr_retention from "../hr/retention.js";
 import type * as http from "../http.js";
 import type * as humanResources from "../humanResources.js";
@@ -365,6 +366,7 @@ declare const fullApi: ApiFromModules<{
   "hr/employees": typeof hr_employees;
   "hr/lib/access": typeof hr_lib_access;
   "hr/lib/retention": typeof hr_lib_retention;
+  "hr/mailbox": typeof hr_mailbox;
   "hr/retention": typeof hr_retention;
   http: typeof http;
   humanResources: typeof humanResources;
