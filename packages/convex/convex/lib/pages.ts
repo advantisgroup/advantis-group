@@ -416,8 +416,8 @@ export const INTRANET_PAGES: IntranetPage[] = [
   {
     href: "/hr/access",
     label: "Bewerbermanagement: Zugriff",
-    description: "Wer auf das Bewerbermanagement zugreifen darf – und das Bewerbungs-Postfach.",
-    keywords: ["postfach", "bewerbung@"],
+    description: "Ausgeschriebene Stelle, Bewerbungs-Postfach und wer auf HR zugreifen darf.",
+    keywords: ["postfach", "bewerbung@", "stelle", "position"],
     visible: applicants,
   },
   {

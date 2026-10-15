@@ -9,10 +9,7 @@ import { useTranslations } from "next-intl";
 
 import { RouteTabs } from "@/components/layout/RouteTabs";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
-import {
-  useCanManageApplicantAccess,
-  useHasApplicantAccess,
-} from "@/components/providers/current-user";
+import { useHasApplicantAccess } from "@/components/providers/current-user";
 
 // The list-page tabs — anything else in the second path segment is an
 // applicant id, i.e. a detail route that owns its own chrome entirely
@@ -37,7 +34,6 @@ const LIST_TABS = ["list", "employees", "termine", "neu", "pool", "profile", "vo
 export default function ApplicantsLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Applicants");
   const hasAccess = useHasApplicantAccess();
-  const canManageAccess = useCanManageApplicantAccess();
   const pathname = usePathname();
 
   if (!hasAccess) {
@@ -86,16 +82,14 @@ export default function ApplicantsLayout({ children }: { children: ReactNode }) 
       label: t("tabTemplates"),
       icon: Mail,
     },
-    ...(canManageAccess
-      ? [
-          {
-            value: "access",
-            href: "/hr/access",
-            label: t("tabAccess"),
-            icon: ShieldCheck,
-          },
-        ]
-      : []),
+    // Everyone in HR: the advertised job and the inbox live here too.
+    // Granting access stays with admins (the panel checks for itself).
+    {
+      value: "access",
+      href: "/hr/access",
+      label: t("tabAccess"),
+      icon: ShieldCheck,
+    },
   ];
 
   return (
