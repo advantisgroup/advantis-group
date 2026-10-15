@@ -167,6 +167,43 @@ export const hrTables = {
   }).index("by_at", ["at"]),
 
   /**
+   * The shared HR application inbox (e.g. bewerbung@). One row at most.
+   * apps/api reads it over IMAP every few minutes and turns each new mail
+   * with a PDF into a CV import (see hr/mailbox.ts). Same encrypted-password
+   * handling as `mailAccounts`: only apps/api can decrypt it.
+   */
+  hrMailbox: defineTable({
+    email: v.string(),
+    passwordEnc: v.string(),
+    /** The HR member whose import tray (and AI allowance) the imports use. */
+    setBy: v.id("users"),
+    updatedAt: v.number(),
+    uidValidity: v.optional(v.string()),
+    uidNext: v.optional(v.number()),
+    checkedAt: v.optional(v.number()),
+    error: v.optional(v.union(v.literal("auth"), v.literal("connect"))),
+  }),
+
+  /** What the HR mailbox import did with each mail — a short log for HR,
+   *  pruned after 90 days (it names applicants). */
+  hrMailboxImports: defineTable({
+    uid: v.number(),
+    from: v.string(),
+    subject: v.string(),
+    receivedAt: v.optional(v.number()),
+    status: v.union(
+      v.literal("started"),
+      v.literal("no_pdf"),
+      v.literal("too_large"),
+      v.literal("failed"),
+    ),
+    fileName: v.optional(v.string()),
+    runId: v.optional(v.id("aiRuns")),
+    error: v.optional(v.string()),
+    at: v.number(),
+  }).index("by_at", ["at"]),
+
+  /**
    * Applicant Management "vault": a secondary password gating the whole
    * feature on top of the normal applicantAccess/delegate checks —
    * defense-in-depth against a leaked or unattended session, not a

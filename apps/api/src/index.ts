@@ -10,6 +10,7 @@ import { aiRunsRoute } from "./routes/ai-runs.js";
 import { applicantsRoute } from "./routes/applicants.js";
 import { askRoute } from "./routes/ask.js";
 import { dailyBriefRoute } from "./routes/daily-brief.js";
+import { hrMailboxRoute } from "./routes/hrMailbox.js";
 import { inquiryAiRoute } from "./routes/inquiry-ai.js";
 import { mailRoute } from "./routes/mail.js";
 import { navigateRoute } from "./routes/navigate.js";
@@ -25,6 +26,7 @@ import { wikiFormatAssistRoute } from "./routes/wiki-format-assist.js";
 import { wikiImportRoute } from "./routes/wiki-import.js";
 import { internalBackupsRoute } from "./routes/internal/backups.js";
 import { internalDigestRoute } from "./routes/internal/digest.js";
+import { internalHrMailboxRoute } from "./routes/internal/hr-mailbox.js";
 import { internalMailRoute } from "./routes/internal/mail.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
 import { internalOnedriveRoute } from "./routes/internal/onedrive.js";
@@ -81,6 +83,7 @@ export const app = new Elysia()
   .use(internalNotificationsRoute)
   .use(internalDigestRoute)
   .use(internalMailRoute)
+  .use(internalHrMailboxRoute)
   .use(internalOnedriveRoute)
   .use(internalPushRoute)
   .use(internalUpdatesRoute)
@@ -100,7 +103,8 @@ export const app = new Elysia()
   .use(wikiChatRoute)
   .use(wikiFormatAssistRoute)
   .use(wikiImportRoute)
-  .use(applicantsRoute);
+  .use(applicantsRoute)
+  .use(hrMailboxRoute);
 
 export type App = typeof app;
 

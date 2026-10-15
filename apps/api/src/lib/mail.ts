@@ -348,3 +348,141 @@ export async function pollAccount(target: PollTarget): Promise<PollResult> {
     return { ...head, ok: false, error: "connect" };
   }
 }
+
+export interface NewMessage {
+  uid: number;
+  from: string;
+  subject: string;
+  date: number | null;
+  /** The first PDF attachment, if the message has one small enough to read. */
+  pdf: { filename: string; content: Buffer } | null;
+  /** A PDF was attached but too large to take. */
+  pdfTooLarge: boolean;
+}
+
+export interface NewMessagesResult {
+  uidValidity: string;
+  uidNext: number;
+  messages: NewMessage[];
+}
+
+function isPdf(a: MailAttachment): boolean {
+  return a.contentType === "application/pdf" || /\.pdf$/i.test(a.filename);
+}
+
+/**
+ * Messages that arrived since `known` (the UIDNEXT recorded last time), each
+ * with its first PDF attachment downloaded. UIDs, not the read flag, decide
+ * what is new: people may open these mails in webmail before the intranet
+ * gets to them. Read-only (EXAMINE + BODY.PEEK) like everything here.
+ *
+ * Without a known position (first run, or the mailbox was recreated) only
+ * mail from the last `firstRunDays` is taken, at most `firstRunMax` — enough
+ * to pick up a test mail sent before setup, never a whole old inbox.
+ */
+export async function collectNewMessages(
+  creds: MailCredentials,
+  known: { uidValidity: string | null; uidNext: number | null },
+  {
+    maxPdfBytes,
+    firstRunDays = 7,
+    firstRunMax = 20,
+    maxPerRun = 25,
+  }: { maxPdfBytes: number; firstRunDays?: number; firstRunMax?: number; maxPerRun?: number },
+): Promise<NewMessagesResult> {
+  return withInbox(creds, async (client) => {
+    const mailbox = client.mailbox;
+    if (!mailbox) throw new Error("INBOX not selected");
+    const uidValidity = String(mailbox.uidValidity);
+    const uidNext = mailbox.uidNext;
+    const from = known.uidValidity === uidValidity ? known.uidNext : null;
+
+    const candidates: {
+      uid: number;
+      from: string;
+      subject: string;
+      date: number | null;
+      attachments: MailAttachment[];
+    }[] = [];
+    if (from === null) {
+      const since = new Date(Date.now() - firstRunDays * 24 * 60 * 60 * 1000);
+      const uids = (await client.search({ since }, { uid: true })) || [];
+      const recent = uids.sort((a, b) => b - a).slice(0, firstRunMax);
+      if (recent.length > 0) {
+        for await (const msg of client.fetch(
+          recent.join(","),
+          { uid: true, envelope: true, bodyStructure: true, internalDate: true },
+          { uid: true },
+        )) {
+          candidates.push(toCandidate(msg));
+        }
+      }
+    } else if (uidNext > from) {
+      for await (const msg of client.fetch(
+        `${from}:*`,
+        { uid: true, envelope: true, bodyStructure: true, internalDate: true },
+        { uid: true },
+      )) {
+        // `N:*` always matches the newest message, even when N is past it.
+        if (msg.uid < from) continue;
+        candidates.push(toCandidate(msg));
+      }
+    }
+    candidates.sort((a, b) => a.uid - b.uid);
+    // Oldest first, capped: whatever is left over is taken on the next run,
+    // so `uidNext` only advances past what was actually handled.
+    const batch = candidates.slice(0, maxPerRun);
+    const nextPosition =
+      batch.length < candidates.length ? batch[batch.length - 1].uid + 1 : uidNext;
+
+    const messages: NewMessage[] = [];
+    for (const c of batch) {
+      const pdfPart = c.attachments.find(isPdf);
+      let pdf: NewMessage["pdf"] = null;
+      let pdfTooLarge = false;
+      if (pdfPart) {
+        // Encoded size runs about a third over the file itself.
+        if (pdfPart.size > maxPdfBytes * 1.4) {
+          pdfTooLarge = true;
+        } else {
+          const download = await client.download(String(c.uid), pdfPart.part, {
+            uid: true,
+            maxBytes: maxPdfBytes + 1,
+          });
+          const chunks: Buffer[] = [];
+          if (download.content) {
+            for await (const chunk of download.content) chunks.push(chunk as Buffer);
+          }
+          const content = Buffer.concat(chunks);
+          if (content.length > maxPdfBytes) pdfTooLarge = true;
+          else if (content.length > 0) pdf = { filename: pdfPart.filename, content };
+        }
+      }
+      messages.push({
+        uid: c.uid,
+        from: c.from,
+        subject: c.subject,
+        date: c.date,
+        pdf,
+        pdfTooLarge,
+      });
+    }
+    return { uidValidity, uidNext: nextPosition, messages };
+  });
+}
+
+function toCandidate(msg: {
+  uid: number;
+  envelope?: { from?: MessageAddressObject[]; subject?: string };
+  bodyStructure?: MessageStructureObject;
+  internalDate?: Date | string;
+}) {
+  const date = msg.internalDate ? new Date(msg.internalDate).getTime() : null;
+  return {
+    uid: msg.uid,
+    from: senderLabel(msg.envelope?.from),
+    subject: msg.envelope?.subject ?? "",
+    date: date !== null && Number.isFinite(date) ? date : null,
+    attachments: attachmentsOf(msg.bodyStructure),
+  };
+}

@@ -34,7 +34,7 @@ function autoProfil(
   return hit ? hit.id : null;
 }
 
-const MAX_CV_BYTES = 3.5 * 1024 * 1024;
+export const MAX_CV_BYTES = 3.5 * 1024 * 1024;
 
 const EXTRACTION_PROMPT = `Du erhältst eine Bewerbung (Lebenslauf/Anschreiben) als PDF.
 Extrahiere die Daten des Bewerbers und antworte AUSSCHLIESSLICH mit einem JSON-Objekt, ohne Markdown, ohne Erklärung:
@@ -186,6 +186,66 @@ async function createFromExtraction(
   return applicantId;
 }
 
+/**
+ * Reads a CV with the model and creates the applicant — or, when the contact
+ * details match someone already in the list, leaves the decision in the
+ * import tray of `clerkUserId`. The upload route and the HR mailbox import
+ * (`internal/hr-mailbox.ts`) both start here; the run belongs to that person
+ * either way, so it shows in their tray and counts against their allowance.
+ */
+export async function startCvExtract({
+  clerkUserId,
+  createdByUserId,
+  bytes,
+  fileName,
+}: {
+  clerkUserId: string;
+  createdByUserId: Id<"users">;
+  bytes: Uint8Array<ArrayBuffer>;
+  fileName: string;
+}): Promise<{ runId: Id<"aiRuns"> }> {
+  return await startAiRun(
+    {
+      clerkUserId,
+      kind: "cvExtract",
+      subjectKey: `cvExtract:${randomUUID()}`,
+      href: "/hr",
+      title: fileName,
+    },
+    async (run) => {
+      const extracted = await runExtraction(run, bytes);
+      run.phase("finishing");
+
+      const duplicate = await getConvex().query(api.hr.applicants.apiFindDuplicateByContact, {
+        serverKey: getConvexServerKey(),
+        email: extracted.email || undefined,
+        telefon: extracted.telefon || undefined,
+      });
+      const storageId = await stageBytes(bytes);
+      const output: CvExtractOutput = duplicate
+        ? {
+            kind: "duplicate",
+            duplicate,
+            pendingStorageId: storageId,
+            extractedFields: extracted,
+            fileName,
+          }
+        : {
+            kind: "created",
+            applicantId: await createFromExtraction(
+              createdByUserId,
+              extracted,
+              storageId,
+              fileName,
+            ),
+            name: extracted.name,
+            fileName,
+          };
+      return JSON.stringify(output);
+    },
+  );
+}
+
 async function requireApplicantAccess(clerkUserId: string) {
   const access = await getConvex().query(api.hr.applicants.apiCheckAccess, {
     serverKey: getConvexServerKey(),
@@ -208,49 +268,12 @@ export const applicantsRoute = new Elysia()
 
       const { file } = body;
       validatePdf(file);
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      const fileName = file.name;
-
-      return await startAiRun(
-        {
-          clerkUserId,
-          kind: "cvExtract",
-          subjectKey: `cvExtract:${randomUUID()}`,
-          href: "/hr",
-          title: fileName,
-        },
-        async (run) => {
-          const extracted = await runExtraction(run, bytes);
-          run.phase("finishing");
-
-          const duplicate = await getConvex().query(api.hr.applicants.apiFindDuplicateByContact, {
-            serverKey: getConvexServerKey(),
-            email: extracted.email || undefined,
-            telefon: extracted.telefon || undefined,
-          });
-          const storageId = await stageBytes(bytes);
-          const output: CvExtractOutput = duplicate
-            ? {
-                kind: "duplicate",
-                duplicate,
-                pendingStorageId: storageId,
-                extractedFields: extracted,
-                fileName,
-              }
-            : {
-                kind: "created",
-                applicantId: await createFromExtraction(
-                  access.userId,
-                  extracted,
-                  storageId,
-                  fileName,
-                ),
-                name: extracted.name,
-                fileName,
-              };
-          return JSON.stringify(output);
-        },
-      );
+      return await startCvExtract({
+        clerkUserId,
+        createdByUserId: access.userId,
+        bytes: new Uint8Array(await file.arrayBuffer()),
+        fileName: file.name,
+      });
     },
     {
       signedIn: true,

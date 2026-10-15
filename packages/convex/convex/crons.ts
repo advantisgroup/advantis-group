@@ -207,6 +207,13 @@ if (process.env.DISABLE_CRONS !== "true") {
     internal.mail.poll.run,
     {},
   );
+  // Applications arrive one mail each (Indeed); five minutes is plenty.
+  crons.interval(
+    "hr: import applications from the HR mailbox",
+    { minutes: 5 },
+    internal.hr.mailbox.runPoll,
+    {},
+  );
 }
 
 export default crons;
