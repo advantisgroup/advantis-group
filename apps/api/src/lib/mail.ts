@@ -1,5 +1,6 @@
 import { ImapFlow, type MessageAddressObject, type MessageStructureObject } from "imapflow";
 import { simpleParser } from "mailparser";
+import nodemailer from "nodemailer";
 
 import { decrypt, encrypt } from "./crypto.js";
 import { Errors } from "./errors.js";
@@ -352,6 +353,8 @@ export async function pollAccount(target: PollTarget): Promise<PollResult> {
 export interface NewMessage {
   uid: number;
   from: string;
+  /** The sender's address, lower-cased ("" if the mail names none). */
+  fromAddress: string;
   subject: string;
   date: number | null;
   /** The first PDF attachment, if the message has one small enough to read. */
@@ -400,6 +403,7 @@ export async function collectNewMessages(
     const candidates: {
       uid: number;
       from: string;
+      fromAddress: string;
       subject: string;
       date: number | null;
       attachments: MailAttachment[];
@@ -461,6 +465,7 @@ export async function collectNewMessages(
       messages.push({
         uid: c.uid,
         from: c.from,
+        fromAddress: c.fromAddress,
         subject: c.subject,
         date: c.date,
         pdf,
@@ -481,8 +486,72 @@ function toCandidate(msg: {
   return {
     uid: msg.uid,
     from: senderLabel(msg.envelope?.from),
+    fromAddress: (msg.envelope?.from?.[0]?.address ?? "").trim().toLowerCase(),
     subject: msg.envelope?.subject ?? "",
     date: date !== null && Number.isFinite(date) ? date : null,
     attachments: attachmentsOf(msg.bodyStructure),
   };
+}
+
+export interface OutgoingMail {
+  /** Display name next to the mailbox address, e.g. "advantis GmbH". */
+  fromName: string;
+  to: string;
+  toName?: string;
+  subject: string;
+  text: string;
+}
+
+/**
+ * Sends a plain-text mail through the mailbox's own IONOS SMTP login, then
+ * files a copy in its Sent folder over IMAP (IONOS doesn't do that for SMTP
+ * clients) so the conversation reads complete in webmail. A failed copy is
+ * logged, not thrown: the mail itself went out.
+ */
+export async function sendFromMailbox(creds: MailCredentials, mail: OutgoingMail): Promise<void> {
+  const message = {
+    from: { name: mail.fromName, address: creds.email },
+    to: mail.toName ? { name: mail.toName, address: mail.to } : mail.to,
+    subject: mail.subject,
+    text: mail.text,
+  };
+  const built = await nodemailer
+    .createTransport({ streamTransport: true, buffer: true, newline: "\r\n" })
+    .sendMail(message);
+  const raw = built.message as Buffer;
+
+  const smtp = nodemailer.createTransport({
+    host: optionalEnv("MAIL_SMTP_HOST") ?? "smtp.ionos.de",
+    port: Number(optionalEnv("MAIL_SMTP_PORT") ?? 465),
+    secure: true,
+    auth: { user: creds.email, pass: creds.password },
+    connectionTimeout: 10_000,
+    greetingTimeout: 8_000,
+    socketTimeout: 30_000,
+  });
+  try {
+    await smtp.sendMail({ envelope: { from: creds.email, to: [mail.to] }, raw });
+  } catch (error) {
+    if ((error as { code?: string }).code === "EAUTH") throw new MailAuthError();
+    throw error;
+  } finally {
+    smtp.close();
+  }
+
+  try {
+    await withInbox(
+      creds,
+      async (client) => {
+        const folders = await client.list();
+        const sent =
+          folders.find((f) => f.specialUse === "\\Sent") ??
+          folders.find((f) => /^(sent|gesendet)/i.test(f.name));
+        if (!sent) return;
+        await client.append(sent.path, raw, ["\\Seen"]);
+      },
+      { write: true },
+    );
+  } catch (error) {
+    console.warn(`[mail.send] copy to Sent failed for ${creds.email}`, error);
+  }
 }

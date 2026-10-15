@@ -1,7 +1,9 @@
 import { Elysia, t } from "elysia";
 
+import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 
+import { getConvex, getConvexServerKey } from "../../lib/convex.js";
 import {
   MailAuthError,
   assertMailAvailable,
@@ -16,7 +18,7 @@ type ImportRow = {
   from: string;
   subject: string;
   receivedAt: number | null;
-  status: "started" | "no_pdf" | "too_large" | "failed";
+  status: "started" | "no_pdf" | "too_large" | "failed" | "from_applicant";
   fileName: string | null;
   runId: string | null;
   error: string | null;
@@ -60,7 +62,18 @@ export const internalHrMailboxRoute = new Elysia().post(
         runId: null,
         error: null,
       };
-      if (message.pdfTooLarge) {
+      // A reply from someone already in the list (e.g. to an invitation sent
+      // from this mailbox) is not a new application, PDF or not.
+      const known = message.fromAddress
+        ? await getConvex().query(api.hr.applicants.apiFindDuplicateByContact, {
+            serverKey: getConvexServerKey(),
+            email: message.fromAddress,
+          })
+        : null;
+      if (known) {
+        row.status = "from_applicant";
+        row.fileName = message.pdf?.filename ?? null;
+      } else if (message.pdfTooLarge) {
         row.status = "too_large";
       } else if (message.pdf) {
         row.fileName = message.pdf.filename;

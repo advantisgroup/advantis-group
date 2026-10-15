@@ -407,9 +407,17 @@ export const INTRANET_PAGES: IntranetPage[] = [
     visible: applicants,
   },
   {
+    href: "/hr/vorlagen",
+    label: "Bewerber-E-Mail-Vorlagen",
+    description: "Vorlagen für Einladung, Absage und andere Mails an Bewerber.",
+    keywords: ["mail", "vorlage", "einladung", "absage", "template"],
+    visible: applicants,
+  },
+  {
     href: "/hr/access",
     label: "Bewerbermanagement: Zugriff",
-    description: "Wer auf das Bewerbermanagement zugreifen darf.",
+    description: "Wer auf das Bewerbermanagement zugreifen darf – und das Bewerbungs-Postfach.",
+    keywords: ["postfach", "bewerbung@"],
     visible: applicants,
   },
   {

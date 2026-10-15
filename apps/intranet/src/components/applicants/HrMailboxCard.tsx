@@ -20,13 +20,14 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { ApiResponseError, useIntranetApiClient } from "@/lib/api-client";
 import { formatDateTime } from "@/lib/format";
 
-type ImportStatus = "started" | "no_pdf" | "too_large" | "failed";
+type ImportStatus = "started" | "no_pdf" | "too_large" | "failed" | "from_applicant";
 
-const STATUS_VARIANT: Record<ImportStatus, "success" | "warning" | "destructive"> = {
+const STATUS_VARIANT: Record<ImportStatus, "success" | "warning" | "destructive" | "muted"> = {
   started: "success",
   no_pdf: "warning",
   too_large: "warning",
   failed: "destructive",
+  from_applicant: "muted",
 };
 
 /**

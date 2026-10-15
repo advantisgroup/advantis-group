@@ -72,6 +72,7 @@ import type * as guidebooks_highlights from "../guidebooks/highlights.js";
 import type * as guidebooks_pages from "../guidebooks/pages.js";
 import type * as guidebooks_reads from "../guidebooks/reads.js";
 import type * as hr_applicants from "../hr/applicants.js";
+import type * as hr_emails from "../hr/emails.js";
 import type * as hr_employees from "../hr/employees.js";
 import type * as hr_lib_access from "../hr/lib/access.js";
 import type * as hr_lib_retention from "../hr/lib/retention.js";
@@ -363,6 +364,7 @@ declare const fullApi: ApiFromModules<{
   "guidebooks/pages": typeof guidebooks_pages;
   "guidebooks/reads": typeof guidebooks_reads;
   "hr/applicants": typeof hr_applicants;
+  "hr/emails": typeof hr_emails;
   "hr/employees": typeof hr_employees;
   "hr/lib/access": typeof hr_lib_access;
   "hr/lib/retention": typeof hr_lib_retention;
