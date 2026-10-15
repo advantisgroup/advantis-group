@@ -22,8 +22,12 @@ export function EmailDetailModal({
   return (
     <EntryDetailModal
       href={`/hr/${applicantId}/emails/${email._id}`}
-      title={t(`emailKategorie.${email.kategorie}`)}
-      description={formatIsoDate(email.datum, "de-DE")}
+      title={email.subject ?? t(`emailKategorie.${email.kategorie}`)}
+      description={
+        email.sentFrom
+          ? `${t(`emailKategorie.${email.kategorie}`)} · ${t("emailSentFrom", { from: email.sentFrom })} · ${formatIsoDate(email.datum, "de-DE")}`
+          : formatIsoDate(email.datum, "de-DE")
+      }
       note={email.notiz}
       onRemove={() => removeEmail({ emailId: email._id })}
     />

@@ -157,6 +157,7 @@ const importValidator = v.object({
     v.literal("no_pdf"),
     v.literal("too_large"),
     v.literal("failed"),
+    v.literal("from_applicant"),
   ),
   fileName: v.union(v.string(), v.null()),
   runId: v.union(v.string(), v.null()),

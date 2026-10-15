@@ -32,6 +32,7 @@ export function EntryListCard({
   historyLabel,
   logLabel,
   onLog,
+  secondaryAction,
   emptyIcon,
   emptyLabel,
   deleteLabel,
@@ -41,6 +42,8 @@ export function EntryListCard({
   historyLabel: string;
   logLabel: string;
   onLog: () => void;
+  /** Another header button next to "log new" (e.g. sending a mail). */
+  secondaryAction?: ReactNode;
   emptyIcon: ReactNode;
   emptyLabel: string;
   deleteLabel: string;
@@ -55,10 +58,13 @@ export function EntryListCard({
             {historyLabel}
             <span className="ml-1.5 text-muted-foreground">({rows.length})</span>
           </p>
-          <Button size="sm" className="w-full sm:w-auto" onClick={onLog}>
-            <Plus className="size-4" />
-            {logLabel}
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {secondaryAction}
+            <Button size="sm" className="w-full sm:w-auto" onClick={onLog}>
+              <Plus className="size-4" />
+              {logLabel}
+            </Button>
+          </div>
         </div>
         <CardContent className="p-0">
           {rows.length === 0 ? (

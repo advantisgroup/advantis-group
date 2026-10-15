@@ -129,8 +129,24 @@ export const hrTables = {
     datum: v.string(),
     kategorie: emailKategorieValidator,
     notiz: v.optional(v.string()),
+    /** Set when the intranet sent it (from the HR mailbox), not just logged. */
+    subject: v.optional(v.string()),
+    sentFrom: v.optional(v.string()),
+    sentBy: v.optional(v.id("users")),
     createdAt: v.number(),
   }).index("by_applicant", ["applicantId"]),
+
+  /** Mail templates HR sends to applicants from the HR mailbox. Placeholders
+   *  like {Vorname} are filled in the send dialog, where the text can still
+   *  be edited before it goes out. */
+  applicantEmailTemplates: defineTable({
+    name: v.string(),
+    kategorie: emailKategorieValidator,
+    subject: v.string(),
+    body: v.string(),
+    updatedBy: v.id("users"),
+    updatedAt: v.number(),
+  }),
 
   applicantInterviews: defineTable({
     applicantId: v.id("applicants"),
@@ -196,6 +212,7 @@ export const hrTables = {
       v.literal("no_pdf"),
       v.literal("too_large"),
       v.literal("failed"),
+      v.literal("from_applicant"),
     ),
     fileName: v.optional(v.string()),
     runId: v.optional(v.id("aiRuns")),
