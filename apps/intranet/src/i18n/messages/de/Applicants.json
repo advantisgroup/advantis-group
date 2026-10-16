@@ -151,7 +151,7 @@
   "filesRootLabel": "HR-Dateien",
   "filesAccessDenied": "Du benötigst Zugriff auf die Bewerberverwaltung, um diese Dateien zu durchsuchen.",
   "browseFiles": "HR-Dateien durchsuchen",
-  "makeEmployee": "Übernehmen",
+  "makeEmployee": "Einstellen",
   "archiveApplicant": "Archivieren",
   "archiveApplicantConfirm": "„{name}“ archivieren?",
   "applicantConverted": "Bewerber wurde als Mitarbeiterprofil übernommen",
@@ -468,5 +468,8 @@
   "openPositionSave": "Speichern",
   "openPositionSaved": "Stelle gespeichert",
   "openPositionActive": "Neue Bewerber werden unter dieser Stelle angelegt.",
-  "openPositionNone": "Keine Stelle gesetzt – die Position kommt aus dem Lebenslauf."
+  "openPositionNone": "Keine Stelle gesetzt – die Position kommt aus dem Lebenslauf.",
+  "makeEmployeeConfirm": "{name} einstellen?",
+  "makeEmployeeConfirmBody": "Nur bei einer Zusage: Die Person wird als Mitarbeiter angelegt und verschwindet aus dem Recruiting. Für einen Termin zum Vorbeikommen stattdessen in der Akte „Eintrag hinzufügen“ → „Termin planen“.",
+  "undoHireHint": "Zu früh eingestellt? Die Person steht danach wieder im Recruiting. Geht nur, solange in der Mitarbeiterakte noch keine Dokumente liegen."
 }
