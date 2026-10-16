@@ -8,6 +8,8 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import {
+  Archive,
+  ArrowLeft,
   Briefcase,
   CalendarClock,
   CalendarDays,
@@ -20,6 +22,7 @@ import {
   Plus,
   Search,
   Trash2,
+  UserCheck,
   Users,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -35,6 +38,8 @@ import {
   TerminDialog,
 } from "@/components/applicants/EntryDialogs";
 import { RecentlyViewedApplicants } from "@/components/applicants/RecentlyViewedApplicants";
+import { useApplicantDecisions } from "@/components/applicants/useApplicantDecisions";
+import { Link } from "@/components/Link";
 import { RouteTabs } from "@/components/layout/RouteTabs";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -105,6 +110,7 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
   const remove = useMutation(api.hr.applicants.remove);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
+  const decisions = useApplicantDecisions();
   const [quickAdd, setQuickAdd] = useState<"termin" | "kontakt" | "email" | "interview" | null>(
     null,
   );
@@ -135,6 +141,39 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
       next: sequence[index + 1] ?? null,
     };
   }, [allApplicants, cameFromList, fromStatus, fromRating, fromSearch, applicantId]);
+
+  // Back to the recruiting list with the filters the user came from.
+  const backHref = useMemo(() => {
+    const p = new URLSearchParams();
+    for (const key of ["status", "rating", "health", "search"]) {
+      const value = searchParams.get(key);
+      if (value) p.set(key, value);
+    }
+    const query = p.toString();
+    return query ? `/hr/list?${query}` : "/hr/list";
+  }, [searchParams]);
+
+  async function handleHire() {
+    if (!applicant) return;
+    const employeeProfileId = await decisions.hire({
+      _id: applicantId,
+      name: applicant.name,
+      position: applicant.position ?? undefined,
+      email: applicant.email ?? undefined,
+    });
+    if (employeeProfileId) router.push(`/hr/employees/${employeeProfileId}`);
+  }
+
+  async function handleArchive() {
+    if (!applicant) return;
+    const done = await decisions.archive({
+      _id: applicantId,
+      name: applicant.name,
+      position: applicant.position ?? undefined,
+      email: applicant.email ?? undefined,
+    });
+    if (done) router.push(backHref);
+  }
 
   function adjacentHref(targetId: Id<"applicants">) {
     const p = new URLSearchParams({ from: "list" });
@@ -267,6 +306,12 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
 
       <div className="flex items-center justify-between gap-1">
         <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={backHref} aria-label={t("backToList")}>
+              <ArrowLeft className="size-4" />
+              <span className="hidden md:inline">{t("backToList")}</span>
+            </Link>
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -336,7 +381,20 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* Archived or hired records are done: no second decision. */}
+            {!applicant.archivedAt && (
+              <>
+                <Button variant="outline" onClick={() => void handleHire()}>
+                  <UserCheck className="size-4" />
+                  <span className="hidden md:inline">{t("makeEmployee")}</span>
+                </Button>
+                <Button variant="outline" onClick={() => void handleArchive()}>
+                  <Archive className="size-4" />
+                  <span className="hidden md:inline">{t("archiveApplicant")}</span>
+                </Button>
+              </>
+            )}
             <AskButton subject={{ type: "applicant", id: applicantId, label: applicant.name }} />
             <ActionMenu
               ariaLabel={t("addEntry")}
