@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Construction } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
@@ -26,55 +26,62 @@ export function PerformanceHeader() {
   const { me } = usePerformanceAccess();
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/90 px-4 backdrop-blur">
-      <PerformanceWordmark className="shrink-0" />
+    <div className="sticky top-0 z-10">
+      <header className="flex h-16 items-center gap-4 border-b bg-background/90 px-4 backdrop-blur">
+        <PerformanceWordmark className="shrink-0" />
 
-      {items.length > 0 && (
-        <nav className="hidden items-center gap-0.5 md:flex">
-          {items.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={item.active ? "page" : undefined}
-              className={cn(
-                "flex h-8 items-center gap-2 rounded-md px-3 text-sm transition-colors",
-                item.active
-                  ? "bg-muted font-medium text-foreground"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      )}
+        {items.length > 0 && (
+          <nav className="hidden items-center gap-0.5 md:flex">
+            {items.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={item.active ? "page" : undefined}
+                className={cn(
+                  "flex h-8 items-center gap-2 rounded-md px-3 text-sm transition-colors",
+                  item.active
+                    ? "bg-muted font-medium text-foreground"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        )}
 
-      <div className="flex-1" />
+        <div className="flex-1" />
 
-      {me?.canViewAs && !me.live && (
-        <Badge
-          variant="warning"
-          className="hidden shrink-0 sm:inline-flex"
-          title={t("adminsOnlyHint")}
-        >
-          {t("adminsOnlyBadge")}
-        </Badge>
-      )}
-      <ViewAsControl className="max-w-[40vw]" />
-      <DashboardSwitcher className="max-w-[45vw]" />
+        {me?.canViewAs && !me.live && (
+          <Badge
+            variant="warning"
+            className="hidden shrink-0 sm:inline-flex"
+            title={t("adminsOnlyHint")}
+          >
+            {t("adminsOnlyBadge")}
+          </Badge>
+        )}
+        <ViewAsControl className="max-w-[40vw]" />
+        <DashboardSwitcher className="max-w-[45vw]" />
 
-      <div className="hidden items-center gap-1 md:flex">
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="text-muted-foreground">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t("backToIntranet")}
-          </Button>
-        </Link>
-        <div className="mx-1 h-6 w-px bg-border" aria-hidden />
-        <PerformanceAccountMenu />
-        <SettingsMenu />
+        <div className="hidden items-center gap-1 md:flex">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="text-muted-foreground">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t("backToIntranet")}
+            </Button>
+          </Link>
+          <div className="mx-1 h-6 w-px bg-border" aria-hidden />
+          <PerformanceAccountMenu />
+          <SettingsMenu />
+        </div>
+      </header>
+      {/* Shown to everyone while the dashboard is still being built. */}
+      <div className="flex items-center justify-center gap-2 border-b border-warn/30 bg-warn/10 px-4 py-1.5 text-center text-xs text-warn">
+        <Construction className="h-3.5 w-3.5 shrink-0" />
+        {t("underConstruction")}
       </div>
-    </header>
+    </div>
   );
 }

@@ -432,6 +432,7 @@
   "uploadNotImported": "Not imported into: {dashboards} — busy or failed there. Please upload the file there again.",
   "adminsOnlyBadge": "Visible to admins only",
   "adminsOnlyHint": "Performance is not released yet: others see \"being reworked\". Release via the Convex variable PERFORMANCE_MODE=live and the maintenance list.",
+  "underConstruction": "The performance dashboard is still being built – numbers and views may still change. Please report errors or wishes to IT.",
   "viewAs": "View as",
   "viewAsActive": "Viewing as {name}",
   "viewAsEnd": "Stop viewing as",

@@ -22,8 +22,9 @@ const OPEN_PREFIXES = [
   "/announcements",
   // Eigene Zeiterfassung – Zugriff regelt Convex (TIME_MODE), nicht diese Liste
   "/zeiterfassung",
-  // "/performance" bleibt gesperrt, bis der Umbau für alle freigegeben ist
-  // (Convex-Env PERFORMANCE_MODE=live, dann hier eintragen). Stand 07.10.2026.
+  // Performance: für alle freigegeben am 16.10.2026 (Convex-Env
+  // PERFORMANCE_MODE=live); Hinweis „im Aufbau“ steht im PerformanceHeader.
+  "/performance",
   // Hilfe & Fehler
   "/it-tickets",
   "/help",
