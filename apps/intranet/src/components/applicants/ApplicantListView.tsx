@@ -278,6 +278,15 @@ export function ApplicantListView() {
   }
 
   async function onConvert(applicant: Applicant) {
+    // "Hire" reads like "take this one on" — confirm it means the actual hire,
+    // not the next step (an appointment is planned inside the record).
+    const ok = await confirm({
+      title: t("makeEmployeeConfirm", { name: applicant.name }),
+      description: t("makeEmployeeConfirmBody"),
+      confirmLabel: t("makeEmployee"),
+      cancelLabel: tc("cancel"),
+    });
+    if (!ok) return;
     try {
       await convertApplicant({ applicantId: applicant._id });
       // Hire sits right next to Archive, so a misclick is easy. Offering the

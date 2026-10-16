@@ -468,5 +468,8 @@
   "openPositionSave": "Save",
   "openPositionSaved": "Position saved",
   "openPositionActive": "New applicants are filed under this position.",
-  "openPositionNone": "No position set – it comes from the CV."
+  "openPositionNone": "No position set – it comes from the CV.",
+  "makeEmployeeConfirm": "Hire {name}?",
+  "makeEmployeeConfirmBody": "Only once there's an offer: the person becomes an employee record and leaves recruiting. To invite them in, use “Add entry” → “Plan appointment” in their record instead.",
+  "undoHireHint": "Hired too early? The person goes back to recruiting. Only possible while the employee record has no documents."
 }
