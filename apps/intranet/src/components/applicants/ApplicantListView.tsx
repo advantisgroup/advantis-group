@@ -21,13 +21,13 @@ import {
   X,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { toast } from "sonner";
 
 import { AmpelDot, type Ampel } from "@/components/applicants/AmpelBadge";
 import { ApplicantBoard } from "@/components/applicants/ApplicantBoard";
 import { today } from "@/components/applicants/applicant-types";
 import { CvImportTray } from "@/components/applicants/CvImportTray";
 import { UploadCvButton } from "@/components/applicants/UploadCvButton";
+import { useApplicantDecisions } from "@/components/applicants/useApplicantDecisions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +37,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  useConfirm,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -69,7 +68,6 @@ import {
 } from "@/lib/applicant-pipeline-health";
 import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { useErrorHandler } from "@/hooks/use-error-handler";
 
 import type { FunctionReturnType } from "convex/server";
 
@@ -173,16 +171,12 @@ export function ApplicantListView() {
   const tc = useTranslations("Common");
   const locale = useLocale();
   const router = useRouter();
-  const confirm = useConfirm();
-  const handleError = useErrorHandler();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const applicants = useQuery(api.hr.applicants.list);
   const preferences = useQuery(api.people.preferences.getMine);
   const profiles = useQuery(api.hr.applicants.listProfiles);
-  const convertApplicant = useMutation(api.hr.employees.convertApplicant);
-  const revertConversion = useMutation(api.hr.employees.revertConversion);
-  const archiveApplicant = useMutation(api.hr.employees.archiveApplicant);
+  const decisions = useApplicantDecisions();
   const setPreferences = useMutation(api.people.preferences.setMine);
 
   const status = parseStatusFilter(searchParams.get("status"));
@@ -278,54 +272,11 @@ export function ApplicantListView() {
   }
 
   async function onConvert(applicant: Applicant) {
-    // "Hire" reads like "take this one on" — confirm it means the actual hire,
-    // not the next step (an appointment is planned inside the record).
-    const ok = await confirm({
-      title: t("makeEmployeeConfirm", { name: applicant.name }),
-      description: t("makeEmployeeConfirmBody"),
-      confirmLabel: t("makeEmployee"),
-      cancelLabel: tc("cancel"),
-    });
-    if (!ok) return;
-    try {
-      await convertApplicant({ applicantId: applicant._id });
-      // Hire sits right next to Archive, so a misclick is easy. Offering the
-      // reversal on the confirmation itself is the only moment the user is
-      // still looking at what just happened.
-      toast.success(t("applicantConverted"), {
-        duration: 12_000,
-        action: {
-          label: t("undoHire"),
-          onClick: () => {
-            void revertConversion({ applicantId: applicant._id })
-              .then(() => toast.success(t("undoHireDone", { name: applicant.name })))
-              .catch(() => toast.error(t("undoHireBlocked")));
-          },
-        },
-      });
-    } catch (error) {
-      handleError(error);
-    }
+    await decisions.hire(applicant);
   }
 
   async function onArchive(applicant: Applicant) {
-    const ok = await confirm({
-      title: t("archiveApplicantConfirm", { name: applicant.name }),
-      details: [
-        ...(applicant.position ? [{ label: t("position"), value: applicant.position }] : []),
-        ...(applicant.email ? [{ label: t("email"), value: applicant.email }] : []),
-      ],
-      confirmLabel: t("archiveApplicant"),
-      cancelLabel: tc("cancel"),
-      destructive: true,
-    });
-    if (!ok) return;
-    try {
-      await archiveApplicant({ applicantId: applicant._id });
-      toast.success(t("applicantArchived"));
-    } catch (error) {
-      handleError(error);
-    }
+    await decisions.archive(applicant);
   }
 
   if (applicants === undefined) return null;
