@@ -110,6 +110,43 @@ describe("teamDashboard", () => {
     expect(everyone.total.wonMonth).toBe(13);
   });
 
+  test("a name without an intranet account counts once an admin says so", async () => {
+    const { ids, report, admin } = await setup();
+    await report(ids.anna, "2026-08-31", { wonMonth: 4 });
+    await report(ids.hidden, "2026-08-31", { wonMonth: 3 });
+
+    // Hidden and without an account: switching it on shows and counts it.
+    await admin.mutation(api.performance.dashboards.setCountWithoutAccount, {
+      employeeId: ids.hidden,
+      count: true,
+    });
+    const data = await admin.query(api.performance.queries.teamDashboard, {
+      companyId: ids.companyId,
+      ym: "2026-08",
+    });
+    expect(data.snaps.map((s) => s.name).sort()).toEqual(["Anna Müller", "Test Konto"]);
+    expect(data.total.wonMonth).toBe(7);
+
+    const rows = await admin.query(api.performance.dashboards.employees, {
+      companyId: ids.companyId,
+    });
+    expect(rows.find((r) => r.name === "Test Konto")).toMatchObject({
+      active: true,
+      countWithoutAccount: true,
+      userActive: false,
+    });
+
+    await admin.mutation(api.performance.dashboards.setCountWithoutAccount, {
+      employeeId: ids.hidden,
+      count: false,
+    });
+    const after = await admin.query(api.performance.queries.teamDashboard, {
+      companyId: ids.companyId,
+      ym: "2026-08",
+    });
+    expect(after.total.wonMonth).toBe(4);
+  });
+
   test("a running month is compared with last month as of the same workday", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-10-02T15:00:00Z"));

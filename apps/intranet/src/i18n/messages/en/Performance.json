@@ -317,6 +317,8 @@
   "settingsColReportName": "Name in report",
   "settingsColPerson": "Intranet person",
   "settingsColShown": "Show",
+  "settingsCountWithoutAccount": "Count without intranet account",
+  "settingsCountWithoutAccountHint": "This name's numbers count in the team view, totals and analyses although no one with an active intranet account stands behind it (e.g. someone who left). Nobody gets an own view of them.",
   "settingsPickPerson": "Choose person",
   "settingsUnlink": "Not linked",
   "settingsUseSuggestion": "Use {name}",

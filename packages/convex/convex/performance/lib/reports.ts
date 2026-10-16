@@ -48,15 +48,17 @@ export function teamOnly(company: Pick<Doc<"companies">, "teamOnly">): boolean {
 }
 
 /** The employees linked to an active intranet account — everyone else in a
- * shared export (partner firms like S2B, people who left) is not ours. */
-export async function linkedToIntranet<T extends Pick<Doc<"performanceEmployees">, "userId">>(
-  ctx: Ctx,
-  employees: T[],
-): Promise<T[]> {
+ * shared export (partner firms like S2B, people who left) is not ours —
+ * plus those an admin marked to count without one (`countWithoutAccount`). */
+export async function linkedToIntranet<
+  T extends Pick<Doc<"performanceEmployees">, "userId" | "countWithoutAccount">,
+>(ctx: Ctx, employees: T[]): Promise<T[]> {
   const users = await Promise.all(
     employees.map((e) => (e.userId ? ctx.db.get(e.userId) : Promise.resolve(null))),
   );
-  return employees.filter((_, i) => users[i]?.status === "active");
+  return employees.filter(
+    (e, i) => e.countWithoutAccount === true || users[i]?.status === "active",
+  );
 }
 
 /** The dashboard's counted employees — the one place that decides who shows

@@ -266,6 +266,9 @@ export const employees = userQuery({
           name: e.name,
           active: e.active,
           user: user ? { id: user._id, name: displayName(user), email: user.email } : null,
+          /** Linked to an account that is still active in the intranet. */
+          userActive: user?.status === "active",
+          countWithoutAccount: e.countWithoutAccount === true,
           suggestion:
             !user && candidates.length === 1
               ? { id: candidates[0]._id, name: displayName(candidates[0]) }
@@ -318,6 +321,22 @@ export const setEmployeeActive = userMutation({
   handler: async (ctx, { employeeId, active }): Promise<void> => {
     if (!(await ctx.db.get(employeeId))) throw notFound("Mitarbeiter nicht gefunden.");
     await ctx.db.patch(employeeId, { active });
+  },
+});
+
+/** Counts a report name on a "team only" dashboard although nobody with an
+ * active intranet account stands behind it (e.g. someone who left the
+ * intranet whose numbers still belong in the team's KPIs). Switching it on
+ * also shows the name again. */
+export const setCountWithoutAccount = userMutation({
+  role: "admin",
+  args: { employeeId: v.id("performanceEmployees"), count: v.boolean() },
+  handler: async (ctx, { employeeId, count }): Promise<void> => {
+    if (!(await ctx.db.get(employeeId))) throw notFound("Mitarbeiter nicht gefunden.");
+    await ctx.db.patch(employeeId, {
+      countWithoutAccount: count || undefined,
+      ...(count ? { active: true } : {}),
+    });
   },
 });
 

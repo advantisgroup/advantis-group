@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { InfoTip } from "@/components/ui/info-tip";
 import {
   Dialog,
   DialogContent,
@@ -250,6 +251,7 @@ function EmployeeLinks({ dashboard }: { dashboard: DashboardRow }) {
   });
   const link = useMutation(api.performance.dashboards.linkEmployee);
   const setActive = useMutation(api.performance.dashboards.setEmployeeActive);
+  const setCountWithout = useMutation(api.performance.dashboards.setCountWithoutAccount);
   const autoLink = useMutation(api.performance.dashboards.autoLink);
 
   async function runAutoLink() {
@@ -311,6 +313,21 @@ function EmployeeLinks({ dashboard }: { dashboard: DashboardRow }) {
                           }).catch(handleError)
                         }
                       />
+                      {dashboard.teamOnly && !e.userActive && (
+                        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Checkbox
+                            checked={e.countWithoutAccount}
+                            onCheckedChange={(v) =>
+                              void setCountWithout({
+                                employeeId: e.id,
+                                count: v === true,
+                              }).catch(handleError)
+                            }
+                          />
+                          {t("settingsCountWithoutAccount")}
+                          <InfoTip text={t("settingsCountWithoutAccountHint")} />
+                        </label>
+                      )}
                       {e.suggestion && (
                         <Button
                           variant="ghost"
