@@ -112,6 +112,9 @@ export interface Guidebook {
    * visibility/access checks.
    */
   Component?: ComponentType;
+  /** Archiviert (19.10.2026): nicht mehr in Listen, Suche und „Verwandt“.
+   *  Der Wiki-Eintrag liegt im Archiv (migrations/wikiCleanupOct2026). */
+  archived?: boolean;
 }
 
 /**
@@ -152,6 +155,7 @@ export const GUIDEBOOKS: Guidebook[] = [
   },
   {
     slug: "onedrive-schulung",
+    archived: true,
     titleKey: "onedriveSchulung.title",
     descriptionKey: "onedriveSchulung.description",
     icon: Cloud,
@@ -162,6 +166,7 @@ export const GUIDEBOOKS: Guidebook[] = [
   },
   {
     slug: "passwoerter-browser",
+    archived: true,
     titleKey: "passwoerterBrowser.title",
     descriptionKey: "passwoerterBrowser.description",
     icon: KeyRound,
@@ -172,6 +177,7 @@ export const GUIDEBOOKS: Guidebook[] = [
   },
   {
     slug: "sicherheitsanmeldung",
+    archived: true,
     titleKey: "sicherheitsanmeldung.title",
     descriptionKey: "sicherheitsanmeldung.description",
     icon: Fingerprint,
@@ -212,6 +218,7 @@ export const GUIDEBOOKS: Guidebook[] = [
   },
   {
     slug: "profil-konto",
+    archived: true,
     titleKey: "profilKonto.title",
     descriptionKey: "profilKonto.description",
     icon: UserCog,
@@ -222,6 +229,7 @@ export const GUIDEBOOKS: Guidebook[] = [
   },
   {
     slug: "onboarding",
+    archived: true,
     titleKey: "onboarding.title",
     descriptionKey: "onboarding.description",
     icon: ListChecks,
@@ -232,6 +240,7 @@ export const GUIDEBOOKS: Guidebook[] = [
   },
   {
     slug: "abwesenheiten-genehmigen",
+    archived: true,
     titleKey: "abwesenheitenGenehmigen.title",
     descriptionKey: "abwesenheitenGenehmigen.description",
     icon: CalendarCheck,
@@ -243,6 +252,7 @@ export const GUIDEBOOKS: Guidebook[] = [
   },
   {
     slug: "verwaltung-mitglieder",
+    archived: true,
     titleKey: "verwaltungMitglieder.title",
     descriptionKey: "verwaltungMitglieder.description",
     icon: ShieldCheck,
@@ -254,6 +264,7 @@ export const GUIDEBOOKS: Guidebook[] = [
   },
   {
     slug: "ankuendigungen-termine",
+    archived: true,
     titleKey: "ankuendigungenTermine.title",
     descriptionKey: "ankuendigungenTermine.description",
     icon: Megaphone,
@@ -265,6 +276,7 @@ export const GUIDEBOOKS: Guidebook[] = [
   },
   {
     slug: "uploads-genehmigen",
+    archived: true,
     titleKey: "uploadsGenehmigen.title",
     descriptionKey: "uploadsGenehmigen.description",
     icon: UploadCloud,
@@ -296,7 +308,7 @@ export function canAccessGuidebook(
 }
 
 export function accessibleGuidebooks(user: AccessUser): Guidebook[] {
-  return GUIDEBOOKS.filter((gb) => canAccessGuidebook(user, gb));
+  return GUIDEBOOKS.filter((gb) => !gb.archived && canAccessGuidebook(user, gb));
 }
 
 /** Entries that get their own sidebar spot under Apps (see `sidebarApp`). */

@@ -140,6 +140,7 @@ import type * as migrations_backfillInquiries from "../migrations/backfillInquir
 import type * as migrations_dropDesignPreviewFields from "../migrations/dropDesignPreviewFields.js";
 import type * as migrations_dropGuestFields from "../migrations/dropGuestFields.js";
 import type * as migrations_moveGuidesToWiki from "../migrations/moveGuidesToWiki.js";
+import type * as migrations_wikiCleanupOct2026 from "../migrations/wikiCleanupOct2026.js";
 import type * as migrations_setApplicantPosition from "../migrations/setApplicantPosition.js";
 import type * as migrations_setHrAccessList from "../migrations/setHrAccessList.js";
 import type * as notifications from "../notifications.js";
@@ -434,6 +435,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/dropDesignPreviewFields": typeof migrations_dropDesignPreviewFields;
   "migrations/dropGuestFields": typeof migrations_dropGuestFields;
   "migrations/moveGuidesToWiki": typeof migrations_moveGuidesToWiki;
+  "migrations/wikiCleanupOct2026": typeof migrations_wikiCleanupOct2026;
   "migrations/setApplicantPosition": typeof migrations_setApplicantPosition;
   "migrations/setHrAccessList": typeof migrations_setHrAccessList;
   notifications: typeof notifications;
