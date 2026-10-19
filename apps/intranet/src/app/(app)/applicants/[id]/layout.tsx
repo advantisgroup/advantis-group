@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -39,19 +39,10 @@ import {
 } from "@/components/applicants/EntryDialogs";
 import { RecentlyViewedApplicants } from "@/components/applicants/RecentlyViewedApplicants";
 import { useApplicantDecisions } from "@/components/applicants/useApplicantDecisions";
-import { Link } from "@/components/Link";
 import { RouteTabs } from "@/components/layout/RouteTabs";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
@@ -59,39 +50,8 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { filterApplicants, parseRatingFilter, parseStatusFilter } from "@/lib/applicant-list-order";
 import { recordRecentlyViewed } from "@/lib/applicant-recent";
 import { formatIsoDate, initials } from "@/lib/format";
-
-const TAB_LABEL_KEYS: Record<string, string> = {
-  uebersicht: "tabOverview",
-  termine: "tabTermine",
-  dokumente: "tabDocuments",
-  kontakte: "tabKontakte",
-  emails: "tabEmails",
-  interviews: "tabInterviews",
-};
-
-/** Finds the human-readable label for whatever item id sits at the end of
- * the URL (a document filename, a Termin's date, etc.) — for the trailing
- * breadcrumb segment while an item modal is open. */
-function resolveItemLabel(
-  tab: string,
-  itemId: string,
-  applicant: NonNullable<ReturnType<typeof useApplicantQuery>>,
-): string | null {
-  switch (tab) {
-    case "dokumente":
-      return applicant.documents.find((d) => d._id === itemId)?.fileName ?? null;
-    case "termine":
-      return applicant.termine.find((t) => t._id === itemId)?.datum ?? null;
-    case "kontakte":
-      return applicant.kontakte.find((k) => k._id === itemId)?.datum ?? null;
-    case "emails":
-      return applicant.emails.find((e) => e._id === itemId)?.datum ?? null;
-    case "interviews":
-      return applicant.interviews.find((iv) => iv._id === itemId)?.datum ?? null;
-    default:
-      return null;
-  }
-}
+import { lastVisitWhere } from "@/lib/nav-history";
+import { cn } from "@/lib/utils";
 
 function useApplicantQuery(applicantId: Id<"applicants">) {
   return useQuery(api.hr.applicants.get, { applicantId });
@@ -115,9 +75,8 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
     null,
   );
 
-  const segments = pathname.split("/").filter(Boolean); // ["applicants", id, tab?, itemId?]
+  const segments = pathname.split("/").filter(Boolean); // ["hr", id, tab?, itemId?]
   const activeTab = segments[2] ?? "uebersicht";
-  const itemId = segments[3];
 
   // Next/previous applicant: only meaningful if we know which filtered list
   // the user came from — carried as query params from the workbench
@@ -153,6 +112,30 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
     return query ? `/hr/list?${query}` : "/hr/list";
   }, [searchParams]);
 
+  // Back to wherever the user came from (list, calendar, another Akte);
+  // the filtered list when there is nothing before this Akte.
+  function goBack() {
+    const previous = lastVisitWhere((url) => url.split("?")[0].split("/")[2] !== applicantId);
+    if (!previous || previous.split("?")[0].endsWith("/list")) router.push(backHref);
+    else router.push(previous);
+  }
+
+  // The Akte's tab strip sticks under the header; once it does, it shows
+  // the name so you still know whose Akte you are in.
+  const stripSentinel = useRef<HTMLDivElement>(null);
+  const [stripStuck, setStripStuck] = useState(false);
+  const loaded = !!applicant;
+  useEffect(() => {
+    const el = stripSentinel.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setStripStuck(!entry.isIntersecting && entry.boundingClientRect.top < 80),
+      { rootMargin: "-65px 0px 0px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loaded]);
+
   async function handleHire() {
     if (!applicant) return;
     const employeeProfileId = await decisions.hire({
@@ -182,11 +165,6 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
     if (fromSearch) p.set("search", fromSearch);
     return `/hr/${targetId}/${activeTab}?${p.toString()}`;
   }
-
-  const itemLabel = useMemo(() => {
-    if (!applicant || !itemId) return null;
-    return resolveItemLabel(activeTab, itemId, applicant);
-  }, [applicant, activeTab, itemId]);
 
   useEffect(() => {
     if (applicant) recordRecentlyViewed(applicantId, applicant.name);
@@ -265,54 +243,8 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/hr/list">{t("pageTitle")}</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            {itemId || activeTab !== "uebersicht" ? (
-              <BreadcrumbLink href={`/hr/${applicantId}/uebersicht`}>
-                {applicant.name}
-              </BreadcrumbLink>
-            ) : (
-              <BreadcrumbPage>{applicant.name}</BreadcrumbPage>
-            )}
-          </BreadcrumbItem>
-          {activeTab && (
-            <>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                {itemId ? (
-                  <BreadcrumbLink href={`/hr/${applicantId}/${activeTab}`}>
-                    {t(TAB_LABEL_KEYS[activeTab] ?? "tabOverview")}
-                  </BreadcrumbLink>
-                ) : (
-                  <BreadcrumbPage>{t(TAB_LABEL_KEYS[activeTab] ?? "tabOverview")}</BreadcrumbPage>
-                )}
-              </BreadcrumbItem>
-            </>
-          )}
-          {itemId && (
-            <>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>{itemLabel ?? formatIsoDate(itemId, locale)}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </>
-          )}
-        </BreadcrumbList>
-      </Breadcrumb>
-
       <div className="flex items-center justify-between gap-1">
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={backHref} aria-label={t("backToList")}>
-              <ArrowLeft className="size-4" />
-              <span className="hidden md:inline">{t("backToList")}</span>
-            </Link>
-          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -350,9 +282,19 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
         )}
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden md:rounded-b-none">
         <CardContent className="flex flex-wrap items-start justify-between gap-4 p-5">
           <div className="flex items-start gap-3.5">
+            <Button
+              variant="outline"
+              size="icon"
+              className="mt-1.5 size-9 shrink-0 rounded-full"
+              aria-label={tc("back")}
+              title={tc("back")}
+              onClick={goBack}
+            >
+              <ArrowLeft className="size-4" />
+            </Button>
             <Avatar className="size-12 border-border/70">
               <AvatarFallback className="font-display text-base font-semibold">
                 {initials(applicant.name)}
@@ -442,10 +384,40 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
             </Button>
           </div>
         </CardContent>
-        <div className="border-t border-border/70 px-2">
-          <RouteTabs tabs={tabs} activeValue={activeTab} />
-        </div>
       </Card>
+
+      {/* The Akte's own sub-pages, attached to its card and apart from the
+          HR tabs up in the header. Sticks under the header while scrolling. */}
+      <div ref={stripSentinel} aria-hidden className="!mt-0 h-0" />
+      <nav
+        aria-label={applicant.name}
+        className={cn(
+          "sticky top-0 z-20 !mt-0 hidden rounded-b-[var(--radius)] border border-t-0 border-border/70 bg-muted/60 px-2 py-1.5 backdrop-blur-xl transition-shadow md:block",
+          stripStuck && "rounded-[var(--radius)] border-t bg-background/90 shadow-md",
+        )}
+      >
+        <RouteTabs
+          tabs={tabs}
+          activeValue={activeTab}
+          inline
+          variant="segmented"
+          leading={
+            stripStuck ? (
+              <span className="mr-1 flex shrink-0 items-center gap-1.5 border-r border-border/70 pr-3">
+                <button
+                  type="button"
+                  onClick={goBack}
+                  aria-label={tc("back")}
+                  className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                >
+                  <ArrowLeft className="size-4" />
+                </button>
+                <span className="max-w-48 truncate text-sm font-semibold">{applicant.name}</span>
+              </span>
+            ) : undefined
+          }
+        />
+      </nav>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">{children}</div>

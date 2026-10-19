@@ -45,12 +45,6 @@ export default function ApplicantsLayout({ children }: { children: ReactNode }) 
     segment === "employees" && pathname.split("/").filter(Boolean).length > 2;
   const isListRoute = !isEmployeeDetail && (segment === undefined || LIST_TABS.includes(segment));
 
-  // The detail layout (`[id]/layout.tsx`) applies its own centered
-  // max-w-6xl wrapper, so this just steps out of the way.
-  if (!isListRoute) {
-    return children;
-  }
-
   const tabs = [
     {
       value: "employees",
@@ -91,6 +85,21 @@ export default function ApplicantsLayout({ children }: { children: ReactNode }) 
       icon: ShieldCheck,
     },
   ];
+
+  // An applicant's Akte (`[id]/layout.tsx`) brings its own page and its
+  // own sub-page tabs inside the record card. The header keeps showing the
+  // HR section tabs (Recruiting active), so what belongs to the Akte and
+  // what to HR as a whole stay apart. On phones the Akte keeps the bottom nav.
+  if (!isListRoute) {
+    if (isEmployeeDetail) return children;
+    return (
+      <>
+        <PageHeaderBar title={t("pageTitle")} icon={<Users />} />
+        <RouteTabs tabs={tabs} activeValue="list" bottomNav={false} />
+        {children}
+      </>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
