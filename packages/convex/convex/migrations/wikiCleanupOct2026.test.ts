@@ -20,7 +20,9 @@ async function setup() {
       createdAt: Date.now(),
     }),
   );
-  await t.mutation(internal.migrations.moveGuidesToWiki.run, { ownerEmail: "owner@advantisgroup.de" });
+  await t.mutation(internal.migrations.moveGuidesToWiki.run, {
+    ownerEmail: "owner@advantisgroup.de",
+  });
   return t;
 }
 
