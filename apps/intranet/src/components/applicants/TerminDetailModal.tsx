@@ -38,6 +38,7 @@ export function TerminDetailModal({
 
   return (
     <EntryDetailModal
+      edit={{ kind: "termin", entry: termin }}
       href={`/hr/${applicantId}/termine/${termin._id}`}
       title={t(`terminTyp.${termin.typ}`)}
       description={`${formatIsoDate(termin.datum, "de-DE")} · ${termin.uhrzeit} · ${t(`terminArt.${termin.art}`)}`}

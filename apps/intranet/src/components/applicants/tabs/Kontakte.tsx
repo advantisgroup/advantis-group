@@ -36,6 +36,7 @@ export function Kontakte({ applicant }: { applicant: ApplicantDetail }) {
         emptyIcon={<PhoneCall />}
         emptyLabel={t("noContactsYet")}
         deleteLabel={t("deleteEntry")}
+        editLabel={t("editEntry")}
         rows={applicant.kontakte.map((k) => ({
           _id: k._id,
           href: `/hr/${applicant._id}/kontakte/${k._id}`,
@@ -44,6 +45,7 @@ export function Kontakte({ applicant }: { applicant: ApplicantDetail }) {
           meta: formatIsoDate(k.datum, "de-DE"),
           note: k.notiz,
           onDelete: () => removeKontakt({ kontaktId: k._id }).catch(handleError),
+          edit: { kind: "kontakt", entry: k },
         }))}
       />
       <KontaktDialog

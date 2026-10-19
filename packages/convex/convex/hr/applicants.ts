@@ -12,6 +12,7 @@ import {
 } from "../schema";
 import { batchUserSummaries, toUserSummary } from "../lib/users";
 import { getServerCaller } from "../lib/caller";
+import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { notifyUsers } from "../lib/notify";
 import { moveToTrash } from "../lib/trash";
 import { hasApplicantAccess } from "./lib/access";
@@ -559,6 +560,153 @@ export const convertTermin = userMutation({
       });
     }
     await ctx.db.patch(terminId, { uebernommen: true });
+    return { ok: true };
+  },
+});
+
+// --- Editing entries afterwards ------------------------------------------------
+// The pencil on Termine and on every Verlauf entry. Each edit is stamped
+// (`editedAt`/`editedBy`) and audited; a moved Termin keeps where it was.
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+function checkDatum(datum: string) {
+  if (!ISO_DAY.test(datum) || Number.isNaN(Date.parse(`${datum}T00:00:00Z`))) {
+    throw new ConvexError({ code: "bad_request", message: "Ungültiges Datum" });
+  }
+}
+
+/** An emptied note removes it rather than storing "". */
+function cleanNote(notiz: string | undefined): string | undefined {
+  return notiz?.trim() || undefined;
+}
+
+function requireEntry<T>(entry: T | null): T {
+  if (!entry) throw new ConvexError({ code: "not_found", message: "Eintrag nicht gefunden" });
+  return entry;
+}
+
+async function auditEdit(
+  ctx: MutationCtx,
+  actorUserId: Id<"users">,
+  kind: string,
+  target: string,
+  at: number,
+) {
+  await recordUnifiedAudit(ctx, {
+    domain: "applicant",
+    actorUserId,
+    action: "hr_entry_edited",
+    target,
+    detail: kind,
+    at,
+  });
+}
+
+export const updateTermin = userMutation({
+  applicant: "access",
+  args: {
+    terminId: v.id("applicantAppointments"),
+    datum: v.string(),
+    uhrzeit: v.string(),
+    art: terminArtValidator,
+    typ: terminTypValidator,
+    notiz: v.optional(v.string()),
+  },
+  handler: async (ctx, { terminId, ...args }) => {
+    const termin = requireEntry(await ctx.db.get(terminId));
+    checkDatum(args.datum);
+    if (!CLOCK.test(args.uhrzeit)) {
+      throw new ConvexError({ code: "bad_request", message: "Ungültige Uhrzeit" });
+    }
+    const moved = termin.datum !== args.datum || termin.uhrzeit !== args.uhrzeit;
+    const now = Date.now();
+    await ctx.db.patch(terminId, {
+      ...args,
+      notiz: cleanNote(args.notiz),
+      editedAt: now,
+      editedBy: ctx.caller.id,
+      ...(moved ? { verschobenVon: `${termin.datum} ${termin.uhrzeit}`.trim() } : {}),
+    });
+    await auditEdit(ctx, ctx.caller.id, "termin", terminId, now);
+    return { ok: true };
+  },
+});
+
+export const updateKontakt = userMutation({
+  applicant: "access",
+  args: {
+    kontaktId: v.id("applicantContacts"),
+    datum: v.string(),
+    art: kontaktArtValidator,
+    notiz: v.optional(v.string()),
+  },
+  handler: async (ctx, { kontaktId, ...args }) => {
+    requireEntry(await ctx.db.get(kontaktId));
+    checkDatum(args.datum);
+    const now = Date.now();
+    await ctx.db.patch(kontaktId, {
+      ...args,
+      notiz: cleanNote(args.notiz),
+      editedAt: now,
+      editedBy: ctx.caller.id,
+    });
+    await auditEdit(ctx, ctx.caller.id, "kontakt", kontaktId, now);
+    return { ok: true };
+  },
+});
+
+export const updateEmail = userMutation({
+  applicant: "access",
+  args: {
+    emailId: v.id("applicantEmails"),
+    datum: v.string(),
+    kategorie: emailKategorieValidator,
+    notiz: v.optional(v.string()),
+  },
+  handler: async (ctx, { emailId, ...args }) => {
+    const email = requireEntry(await ctx.db.get(emailId));
+    checkDatum(args.datum);
+    // A mail the intranet actually sent keeps its send date.
+    if (email.sentBy && args.datum !== email.datum) {
+      throw new ConvexError({
+        code: "bad_request",
+        message: "Das Datum einer verschickten E-Mail bleibt",
+      });
+    }
+    const now = Date.now();
+    await ctx.db.patch(emailId, {
+      ...args,
+      notiz: cleanNote(args.notiz),
+      editedAt: now,
+      editedBy: ctx.caller.id,
+    });
+    await auditEdit(ctx, ctx.caller.id, "email", emailId, now);
+    return { ok: true };
+  },
+});
+
+export const updateInterview = userMutation({
+  applicant: "access",
+  args: {
+    interviewId: v.id("applicantInterviews"),
+    datum: v.string(),
+    interviewer: v.string(),
+    notiz: v.optional(v.string()),
+  },
+  handler: async (ctx, { interviewId, ...args }) => {
+    requireEntry(await ctx.db.get(interviewId));
+    checkDatum(args.datum);
+    const now = Date.now();
+    await ctx.db.patch(interviewId, {
+      ...args,
+      interviewer: args.interviewer.trim(),
+      notiz: cleanNote(args.notiz),
+      editedAt: now,
+      editedBy: ctx.caller.id,
+    });
+    await auditEdit(ctx, ctx.caller.id, "interview", interviewId, now);
     return { ok: true };
   },
 });

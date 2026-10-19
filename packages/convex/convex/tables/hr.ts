@@ -121,6 +121,9 @@ export const hrTables = {
     art: kontaktArtValidator,
     notiz: v.optional(v.string()),
     createdAt: v.number(),
+    /** Set when someone changed the entry after logging it. */
+    editedAt: v.optional(v.number()),
+    editedBy: v.optional(v.id("users")),
   }).index("by_applicant", ["applicantId"]),
 
   /** Tracked sent emails — does NOT count as first contact. */
@@ -134,6 +137,9 @@ export const hrTables = {
     sentFrom: v.optional(v.string()),
     sentBy: v.optional(v.id("users")),
     createdAt: v.number(),
+    /** Set when someone changed the entry after logging it. */
+    editedAt: v.optional(v.number()),
+    editedBy: v.optional(v.id("users")),
   }).index("by_applicant", ["applicantId"]),
 
   /** Mail templates HR sends to applicants from the HR mailbox. Placeholders
@@ -154,6 +160,9 @@ export const hrTables = {
     interviewer: v.string(),
     notiz: v.optional(v.string()),
     createdAt: v.number(),
+    /** Set when someone changed the entry after logging it. */
+    editedAt: v.optional(v.number()),
+    editedBy: v.optional(v.id("users")),
   }).index("by_applicant", ["applicantId"]),
 
   /**
@@ -170,6 +179,11 @@ export const hrTables = {
     notiz: v.optional(v.string()),
     uebernommen: v.boolean(),
     createdAt: v.number(),
+    /** Set when someone changed the entry after logging it. */
+    editedAt: v.optional(v.number()),
+    editedBy: v.optional(v.id("users")),
+    /** "YYYY-MM-DD HH:MM" the Termin had before it was last moved. */
+    verschobenVon: v.optional(v.string()),
   })
     .index("by_applicant", ["applicantId"])
     .index("by_datum", ["datum"]),

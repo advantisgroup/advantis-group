@@ -1,5 +1,11 @@
-// List content renders in the sibling layout.tsx; nothing extra at the bare
-// tab route.
-export default function ApplicantTerminePage() {
-  return null;
+import { redirect } from "next/navigation";
+
+/** The Akte has no calendar of its own: the shared one, this applicant outlined. */
+export default async function ApplicantTerminePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  redirect(`/hr/termine?von=${id}`);
 }

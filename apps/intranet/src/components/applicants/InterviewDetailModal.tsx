@@ -21,6 +21,7 @@ export function InterviewDetailModal({
 
   return (
     <EntryDetailModal
+      edit={{ kind: "interview", entry: interview }}
       href={`/hr/${applicantId}/interviews/${interview._id}`}
       title={t("interviewOn", { date: formatIsoDate(interview.datum, "de-DE") })}
       description={interview.interviewer || undefined}
