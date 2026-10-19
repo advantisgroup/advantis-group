@@ -82,7 +82,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { usePendingAbsenceCount } from "@/lib/time-absences";
-import { isMaintenanceLocked } from "@/lib/maintenance";
+import { isArchived, isMaintenanceLocked } from "@/lib/maintenance";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -135,6 +135,7 @@ function isVisible(
     (!item.managerOnly || isManager) &&
     (!item.adminOnly || isAdmin) &&
     (!item.featureKey || isAdmin || !disabledFeatures.has(item.featureKey)) &&
+    !isArchived(item.href) &&
     (isAdmin || !isMaintenanceLocked(item.href))
   );
 }

@@ -13,7 +13,6 @@ import {
   EyeOff,
   Heart,
   Megaphone,
-  PhoneCall,
   Plus,
   RotateCcw,
   ShieldCheck,
@@ -408,12 +407,6 @@ export default function DashboardPage() {
           <Link href="/files">
             <Upload className="mr-1.5 size-3.5" />
             {t("actionUpload")}
-          </Link>
-        </Button>
-        <Button variant="outline" size="sm" className="h-10 shrink-0 sm:h-8" asChild>
-          <Link href="/sales-cockpit">
-            <PhoneCall className="mr-1.5 size-3.5" />
-            {t("actionSalesCockpit")}
           </Link>
         </Button>
         <button

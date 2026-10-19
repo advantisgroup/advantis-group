@@ -1,13 +1,11 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { BookA, ChevronRight, GraduationCap, MessagesSquare, Sparkles } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useAiEnabled } from "@/components/ai/use-ai-enabled";
-import { sidebarAppGuidebooks } from "@/components/guidebooks/registry";
 import { Link } from "@/components/Link";
-import { useCurrentUser } from "@/components/providers/current-user";
 
 interface Source {
   key: string;
@@ -23,17 +21,11 @@ interface Source {
  */
 export function OtherKnowledgeSources() {
   const t = useTranslations("Guidebooks");
-  const user = useCurrentUser();
   const aiEnabled = useAiEnabled();
-  const hasAcademy = sidebarAppGuidebooks(user).some((gb) => gb.slug === "wallbox-sales-academy");
 
   const sources: Source[] = [
     ...(aiEnabled ? [{ key: "ask", href: "/wiki-chat", icon: Sparkles }] : []),
-    { key: "glossary", href: "/sales-cockpit/lexikon", icon: BookA },
-    { key: "coachWiki", href: "/sales-coach-ev/wiki", icon: MessagesSquare },
-    ...(hasAcademy
-      ? [{ key: "academy", href: "/guidebooks/wallbox-sales-academy", icon: GraduationCap }]
-      : []),
+    // Lexikon, Coach-Wiki und Academy archiviert am 19.10.2026 (lib/maintenance.ts).
   ];
 
   return (

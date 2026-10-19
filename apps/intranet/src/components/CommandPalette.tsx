@@ -68,7 +68,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { initials } from "@/lib/format";
-import { isMaintenanceLocked } from "@/lib/maintenance";
+import { isArchived, isMaintenanceLocked } from "@/lib/maintenance";
 import { useOneDriveApi } from "@/lib/onedrive-api";
 import { pathToUrl } from "@/lib/onedrive-path";
 import { cn } from "@/lib/utils";
@@ -480,6 +480,7 @@ export function CommandPalette({ className }: { className?: string } = {}) {
       ];
       for (const entry of entries) {
         if (listed.has(entry.href)) continue;
+        if (isArchived(entry.href)) continue;
         if (!isAdmin && isMaintenanceLocked(entry.href)) continue;
         if (!entry.haystack.some((text) => text.toLowerCase().includes(q))) continue;
         listed.add(entry.href);
