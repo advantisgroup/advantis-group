@@ -43,6 +43,9 @@ const ARCHIVED_PREFIXES = [
   "/sales-coach-ev",
   "/guidebooks/wallbox-sales-academy",
   "/wallbox-sales-academy",
+  // Blog-Redaktion im Intranet (19.10.2026). Die öffentliche Website zeigt
+  // bereits veröffentlichte Artikel weiter an.
+  "/blog",
 ] as const;
 
 function matchesPrefix(pathname: string, prefix: string): boolean {

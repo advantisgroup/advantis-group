@@ -19,6 +19,8 @@
   "migrationDone": "{count} Seiten migriert",
   "pinnedGroup": "Angeheftet",
   "uncategorizedGroup": "Ohne Kategorie",
+  "policiesOpenGroup": "Richtlinien – bitte lesen und bestätigen",
+  "policiesDoneGroup": "Richtlinien (bestätigt)",
   "libraryTab": "Bibliothek",
   "filesTab": "Wiki-Dateien",
   "interactiveToolsTitle": "Interaktive Tools",

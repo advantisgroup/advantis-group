@@ -19,6 +19,8 @@
   "migrationDone": "Migrated {count} pages",
   "pinnedGroup": "Pinned",
   "uncategorizedGroup": "Uncategorized",
+  "policiesOpenGroup": "Policies – please read and confirm",
+  "policiesDoneGroup": "Policies (confirmed)",
   "libraryTab": "Library",
   "filesTab": "Wiki files",
   "interactiveToolsTitle": "Interactive tools",

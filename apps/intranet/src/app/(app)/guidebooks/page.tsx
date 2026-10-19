@@ -81,6 +81,8 @@ interface GridItem {
   categoryColor: string;
   categoryDeleted: boolean;
   pinned: boolean;
+  /** Wiki-Richtlinie (muss bestätigt werden) — eigene Gruppe in der Liste. */
+  policy: boolean;
   version: number | null;
   archived: boolean;
   reviewDue: boolean;
@@ -124,6 +126,7 @@ function useGridItems(user: ReturnType<typeof useCurrentUser>, t: (key: string) 
       categoryColor: e.categoryColor ?? "#77808A",
       categoryDeleted: e.categoryDeleted,
       pinned: e.pinned,
+      policy: Boolean(e.policy),
       version: e.version,
       archived: inArchive(e),
       reviewDue: !inArchive(e) && needsReview(e),
@@ -152,6 +155,7 @@ function useGridItems(user: ReturnType<typeof useCurrentUser>, t: (key: string) 
         categoryColor: legacyTopicColor(p.topic),
         categoryDeleted: false,
         pinned: highlighted.has(p.slug),
+        policy: false,
         version: null,
         archived: false,
         reviewDue: false,
@@ -185,6 +189,7 @@ function useGridItems(user: ReturnType<typeof useCurrentUser>, t: (key: string) 
         categoryColor: gb.topic ? legacyTopicColor(gb.topic) : "#77808A",
         categoryDeleted: false,
         pinned: highlighted.has(gb.slug),
+        policy: false,
         version: null,
         archived: false,
         reviewDue: false,
@@ -438,6 +443,12 @@ export default function GuidebooksPage() {
     [items],
   );
 
+  const pendingPolicies = useQuery(api.wiki.policies.pendingMine);
+  const pendingPolicySlugs = useMemo(
+    () => new Set((pendingPolicies ?? []).map((p) => p.slug)),
+    [pendingPolicies],
+  );
+
   const filtered = useMemo(() => {
     if (!items) return [];
     const query = search.trim().toLowerCase();
@@ -479,10 +490,13 @@ export default function GuidebooksPage() {
     const flat = [{ key: "all", label: null, color: "", items: sorted }];
     if (search.trim() || showArchive || sorted.length === 0) return flat;
 
-    const pinned = sorted.filter((i) => i.pinned);
+    // Richtlinien: offene ganz oben, bestätigte ganz unten (Vahan, 19.10.2026).
+    const openPolicies = sorted.filter((i) => i.policy && pendingPolicySlugs.has(i.slug));
+    const confirmedPolicies = sorted.filter((i) => i.policy && !pendingPolicySlugs.has(i.slug));
+    const pinned = sorted.filter((i) => i.pinned && !i.policy);
     const byCategory = new Map<string, GridItem[]>();
     for (const item of sorted) {
-      if (item.pinned) continue;
+      if (item.pinned || item.policy) continue;
       const bucket = byCategory.get(item.categoryKey);
       if (bucket) bucket.push(item);
       else byCategory.set(item.categoryKey, [item]);
@@ -510,6 +524,16 @@ export default function GuidebooksPage() {
       });
 
     return [
+      ...(openPolicies.length > 0
+        ? [
+            {
+              key: "policies-open",
+              label: t("policiesOpenGroup"),
+              color: "#C2410C",
+              items: openPolicies,
+            },
+          ]
+        : []),
       ...(pinned.length > 0
         ? [{ key: "pinned", label: t("pinnedGroup"), color: "#77808A", items: pinned }]
         : []),
@@ -524,8 +548,18 @@ export default function GuidebooksPage() {
             },
           ]
         : []),
+      ...(confirmedPolicies.length > 0
+        ? [
+            {
+              key: "policies-done",
+              label: t("policiesDoneGroup"),
+              color: "#77808A",
+              items: confirmedPolicies,
+            },
+          ]
+        : []),
     ];
-  }, [sorted, search, showArchive, categoryChips, t]);
+  }, [sorted, search, showArchive, categoryChips, pendingPolicySlugs, t]);
 
   const availableTags = useMemo(() => {
     const pool = (items ?? []).filter((i) => (showArchive ? i.archived : !i.archived));
