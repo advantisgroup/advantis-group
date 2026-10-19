@@ -53,7 +53,7 @@ import { TourProvider, useTour } from "@/components/tour/TourProvider";
 import { TourSpotlight } from "@/components/tour/TourSpotlight";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { UpdateBanner } from "@/components/updates/UpdateBanner";
-import { isMaintenanceLocked } from "@/lib/maintenance";
+import { isArchived, isMaintenanceLocked } from "@/lib/maintenance";
 import { START_PAGES } from "@/lib/startPages";
 import { cn } from "@/lib/utils";
 
@@ -102,7 +102,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const tourActive = (tourState?.active && tourPhase === "active") ?? false;
   // Temporarily locked areas (lib/maintenance.ts) — admins still see everything.
   const isAdmin = useIsAdmin();
-  const maintenanceLocked = !isAdmin && isMaintenanceLocked(pathname);
+  const maintenanceLocked = isArchived(pathname) || (!isAdmin && isMaintenanceLocked(pathname));
   const pageContent = maintenanceLocked ? <MaintenanceScreen /> : children;
   // Own Zeiterfassung: header pill + morning clock-in prompt, only for those
   // who may clock right now (everyone after go-live, admins and testers in

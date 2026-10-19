@@ -32,8 +32,27 @@ const OPEN_PREFIXES = [
   "/fehlermanagement",
 ] as const;
 
+/**
+ * Archivierte Module (19.10.2026, Vahan): für ALLE gesperrt, auch für Admins,
+ * und überall ausgeblendet (Sidebar, Suche, Dashboard, Wiki-Übersicht).
+ * Code, Datenbank-Tabellen und Daten bleiben unangetastet. Zurückholen =
+ * Pfad hier entfernen (Doku: Projekt-Doc „Archiv Sales-Module“).
+ */
+const ARCHIVED_PREFIXES = [
+  "/sales-cockpit",
+  "/sales-coach-ev",
+  "/guidebooks/wallbox-sales-academy",
+  "/wallbox-sales-academy",
+] as const;
+
 function matchesPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+/** True when `pathname` belongs to an archived module (locked for everyone). */
+export function isArchived(pathname: string): boolean {
+  const path = pathname.split(/[?#]/)[0] || "/";
+  return ARCHIVED_PREFIXES.some((prefix) => matchesPrefix(path, prefix));
 }
 
 /** True when `pathname` is a locked area (the dashboard "/" always stays open). */
