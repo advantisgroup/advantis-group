@@ -500,6 +500,10 @@ export interface OutgoingMail {
   toName?: string;
   subject: string;
   text: string;
+  /** Optional HTML part; `text` stays as the plain-text alternative. */
+  html?: string;
+  /** Inline images referenced from `html` as cid:… */
+  attachments?: { filename: string; content: Buffer; contentType: string; cid: string }[];
 }
 
 /**
@@ -514,6 +518,8 @@ export async function sendFromMailbox(creds: MailCredentials, mail: OutgoingMail
     to: mail.toName ? { name: mail.toName, address: mail.to } : mail.to,
     subject: mail.subject,
     text: mail.text,
+    ...(mail.html ? { html: mail.html } : {}),
+    ...(mail.attachments?.length ? { attachments: mail.attachments } : {}),
   };
   const built = await nodemailer
     .createTransport({ streamTransport: true, buffer: true, newline: "\r\n" })

@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 
 import { api } from "@advantis/convex/api";
 
+import { renderApplicantMail } from "../lib/applicant-mail.js";
 import { ApiError, Errors } from "../lib/errors.js";
 import { type Id } from "@advantis/convex/dataModel";
 
@@ -65,8 +66,9 @@ export const hrMailboxRoute = new Elysia()
   )
   /**
    * POST /hr/applicants/:applicantId/email — sends a mail to the applicant
-   * from the HR mailbox, exactly as written in the send dialog (templates are
-   * filled in there, not here), then logs it in the applicant's history.
+   * from the HR mailbox, as written in the send dialog (templates are filled
+   * in there, not here), laid out with logo, boxes and the HR signature
+   * (lib/applicant-mail.ts), then logs it in the applicant's history.
    */
   .post(
     "/hr/applicants/:applicantId/email",
@@ -90,7 +92,17 @@ export const hrMailboxRoute = new Elysia()
             email: context.mailbox.email,
             password: decryptMailPassword(context.mailbox.passwordEnc),
           },
-          { fromName: "advantis GmbH", to: context.to, toName: context.name, subject, text },
+          {
+            fromName: "advantis GmbH",
+            to: context.to,
+            toName: context.name,
+            subject,
+            ...renderApplicantMail({
+              body: text,
+              signature: context.signature,
+              senderName: context.senderName,
+            }),
+          },
         );
       } catch (error) {
         if (error instanceof MailAuthError) {

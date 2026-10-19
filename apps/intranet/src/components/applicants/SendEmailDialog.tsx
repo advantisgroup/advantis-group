@@ -193,6 +193,7 @@ export function SendEmailDialog({
             value={body}
             onChange={(e) => setBody(e.target.value)}
           />
+          <p className="text-xs text-muted-foreground">{t("sendEmailLayoutHint")}</p>
         </div>
         {unfilled.length > 0 && (
           <p className="text-[12.5px] text-warn">

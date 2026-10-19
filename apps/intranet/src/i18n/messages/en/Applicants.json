@@ -489,5 +489,13 @@
   "previewThisTermin": "This appointment",
   "previewNewTermin": "New appointment",
   "backToApplicant": "Back to {name}",
-  "calendarHighlight": "{name}'s appointments are outlined"
+  "calendarHighlight": "{name}'s appointments are outlined",
+  "templateFormatHint": "Formatting: lines starting with \"> \" become a coloured box (with several lines the first is its heading), **text** is bold.\nLogo, signature and company line are added when sending – so don't put the sign-off with a name into the template.",
+  "signatureTitle": "Signature",
+  "signatureHint": "Appears under every mail to applicants. Line 1 = name ('{Absender}' becomes whoever sends), line 2 = role, then lines like \"Fon: …\". The company line with register and VAT number is added automatically.",
+  "signatureDefault": "Default",
+  "signatureSave": "Save signature",
+  "signatureReset": "Reset to default",
+  "signatureSaved": "Signature saved",
+  "sendEmailLayoutHint": "Sent with logo, signature and company line. \"> \" lines become a box, **text** bold."
 }
