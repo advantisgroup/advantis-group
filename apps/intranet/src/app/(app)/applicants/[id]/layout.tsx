@@ -227,7 +227,8 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
     },
     {
       value: "termine",
-      href: `/hr/${applicantId}/termine`,
+      // The shared calendar, with this applicant outlined.
+      href: `/hr/termine?von=${applicantId}`,
       label: t("tabTermine"),
       icon: CalendarClock,
       count: applicant.termine.filter((tm) => !tm.uebernommen).length,
@@ -457,6 +458,7 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
         open={quickAdd === "termin"}
         onOpenChange={(open) => !open && setQuickAdd(null)}
         fixedApplicantId={applicantId}
+        applicantName={applicant.name}
       />
       <KontaktDialog
         open={quickAdd === "kontakt"}

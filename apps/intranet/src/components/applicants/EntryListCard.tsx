@@ -4,6 +4,7 @@ import { type ReactNode } from "react";
 
 import { Plus } from "lucide-react";
 
+import { type EditableEntry } from "@/components/applicants/EditEntryDialog";
 import { EntryRow } from "@/components/applicants/EntryRow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +20,7 @@ export interface EntryListRow {
   meta: string;
   note?: string;
   onDelete: () => void;
+  edit?: EditableEntry;
 }
 
 /**
@@ -36,6 +38,7 @@ export function EntryListCard({
   emptyIcon,
   emptyLabel,
   deleteLabel,
+  editLabel,
   rows,
 }: {
   hint?: ReactNode;
@@ -47,6 +50,7 @@ export function EntryListCard({
   emptyIcon: ReactNode;
   emptyLabel: string;
   deleteLabel: string;
+  editLabel?: string;
   rows: EntryListRow[];
 }) {
   return (
@@ -91,6 +95,8 @@ export function EntryListCard({
                   note={row.note}
                   onDelete={row.onDelete}
                   deleteLabel={deleteLabel}
+                  edit={row.edit}
+                  editLabel={editLabel}
                 />
               ))}
             </div>

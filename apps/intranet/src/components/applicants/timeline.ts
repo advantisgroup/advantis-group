@@ -1,6 +1,7 @@
 import { CalendarClock, Mail, PhoneCall, Users } from "lucide-react";
 
 import { type ApplicantDetail, today } from "@/components/applicants/applicant-types";
+import { type EditableEntry } from "@/components/applicants/EditEntryDialog";
 
 import type { LucideIcon } from "lucide-react";
 import type { useTranslations } from "next-intl";
@@ -14,6 +15,8 @@ export interface TimelineEntry {
   notiz?: string;
   href: string;
   upcoming: boolean;
+  /** What the pencil next to the entry opens. */
+  edit: EditableEntry;
 }
 
 /** Everything that happened on a file — appointments, contacts, emails,
@@ -34,6 +37,7 @@ export function buildTimeline(
       notiz: tm.notiz,
       href: `/hr/${applicant._id}/termine/${tm._id}`,
       upcoming: !tm.uebernommen && tm.datum >= now,
+      edit: { kind: "termin" as const, entry: tm, applicantName: applicant.name },
     })),
     ...applicant.kontakte.map((k) => ({
       id: `kontakt:${k._id}`,
@@ -43,6 +47,7 @@ export function buildTimeline(
       notiz: k.notiz,
       href: `/hr/${applicant._id}/kontakte/${k._id}`,
       upcoming: false,
+      edit: { kind: "kontakt" as const, entry: k },
     })),
     ...applicant.emails.map((m) => ({
       id: `email:${m._id}`,
@@ -52,6 +57,7 @@ export function buildTimeline(
       notiz: m.notiz,
       href: `/hr/${applicant._id}/emails/${m._id}`,
       upcoming: false,
+      edit: { kind: "email" as const, entry: m },
     })),
     ...applicant.interviews.map((iv) => ({
       id: `interview:${iv._id}`,
@@ -61,6 +67,7 @@ export function buildTimeline(
       notiz: iv.notiz,
       href: `/hr/${applicant._id}/interviews/${iv._id}`,
       upcoming: false,
+      edit: { kind: "interview" as const, entry: iv },
     })),
   ];
   return entries.sort((a, b) =>

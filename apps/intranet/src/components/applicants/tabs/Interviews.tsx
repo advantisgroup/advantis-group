@@ -28,6 +28,7 @@ export function Interviews({ applicant }: { applicant: ApplicantDetail }) {
         emptyIcon={<Users />}
         emptyLabel={t("noInterviewsYet")}
         deleteLabel={t("deleteEntry")}
+        editLabel={t("editEntry")}
         rows={applicant.interviews.map((iv) => ({
           _id: iv._id,
           href: `/hr/${applicant._id}/interviews/${iv._id}`,
@@ -36,6 +37,7 @@ export function Interviews({ applicant }: { applicant: ApplicantDetail }) {
           meta: iv.interviewer || t("tabInterviews"),
           note: iv.notiz,
           onDelete: () => removeInterview({ interviewId: iv._id }).catch(handleError),
+          edit: { kind: "interview", entry: iv },
         }))}
       />
       <InterviewDialog open={logOpen} onOpenChange={setLogOpen} applicantId={applicant._id} />

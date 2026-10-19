@@ -1,12 +1,14 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
+import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { CopyLinkButton } from "@/components/applicants/CopyLinkButton";
+import { type EditableEntry, EditEntryDialog } from "@/components/applicants/EditEntryDialog";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
@@ -30,6 +32,7 @@ export function EntryDetailModal({
   confirmTitle,
   confirmDescription,
   extraFooter,
+  edit,
   children,
 }: {
   href: string;
@@ -40,8 +43,11 @@ export function EntryDetailModal({
   confirmTitle?: string;
   confirmDescription?: string;
   extraFooter?: ReactNode;
+  /** Adds "Bearbeiten"; the edit dialog opens on top of this one. */
+  edit?: EditableEntry;
   children?: ReactNode;
 }) {
+  const [editing, setEditing] = useState(false);
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
   const router = useRouter();
@@ -75,6 +81,12 @@ export function EntryDetailModal({
       footer={
         <>
           {extraFooter}
+          {edit && (
+            <Button variant="outline" onClick={() => setEditing(true)}>
+              <Pencil className="size-4" />
+              {tc("edit")}
+            </Button>
+          )}
           <Button
             variant="ghost"
             className="text-destructive hover:bg-destructive/10 hover:text-destructive"
@@ -88,6 +100,7 @@ export function EntryDetailModal({
       {note && <p className="text-sm">{note}</p>}
       {children}
       <CopyLinkButton href={href} className="-ml-3" />
+      <EditEntryDialog target={editing && edit ? edit : null} onClose={() => setEditing(false)} />
     </ResponsiveDialog>
   );
 }

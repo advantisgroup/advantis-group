@@ -8,7 +8,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { matchSkills } from "@advantis/types";
 import { useMutation, useQuery } from "convex/react";
-import { Briefcase, Calendar, Check, Printer, X } from "lucide-react";
+import { Briefcase, Calendar, Check, Pencil, Printer, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import {
@@ -16,6 +16,7 @@ import {
   ensureRichHtml,
   today,
 } from "@/components/applicants/applicant-types";
+import { type EditableEntry, EditEntryDialog } from "@/components/applicants/EditEntryDialog";
 import { buildTimeline } from "@/components/applicants/timeline";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,7 @@ export function Uebersicht({
     [applicant],
   );
   const latestTouchpoint = timeline[0] ?? null;
+  const [editing, setEditing] = useState<EditableEntry | null>(null);
   const nextAppointment = [...applicant.termine]
     .filter((termin) => !termin.uebernommen && termin.datum >= today())
     .sort((a, b) => (a.datum + a.uhrzeit).localeCompare(b.datum + b.uhrzeit))[0];
@@ -293,9 +295,18 @@ export function Uebersicht({
                   >
                     <entry.icon className="size-3.5" />
                   </span>
+                  <button
+                    type="button"
+                    aria-label={t("editEntry")}
+                    title={t("editEntry")}
+                    onClick={() => setEditing(entry.edit)}
+                    className="absolute right-0 top-0 flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                  >
+                    <Pencil className="size-4" />
+                  </button>
                   <Link
                     href={entry.href}
-                    className="-mx-2 -my-1 block rounded-lg px-2 py-1 text-sm transition-colors hover:bg-accent/40"
+                    className="-my-1 -ml-2 mr-8 block rounded-lg px-2 py-1 text-sm transition-colors hover:bg-accent/40"
                   >
                     <p className="flex flex-wrap items-center gap-1.5 font-medium">
                       {entry.label}
@@ -318,6 +329,7 @@ export function Uebersicht({
               ))}
             </ol>
           )}
+          <EditEntryDialog target={editing} onClose={() => setEditing(null)} />
         </CardContent>
       </Card>
 

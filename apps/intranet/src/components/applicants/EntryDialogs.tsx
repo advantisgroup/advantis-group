@@ -11,10 +11,12 @@ import { toast } from "sonner";
 import {
   EMAIL_KATEGORIEN,
   KONTAKT_ARTEN,
-  TERMIN_ARTEN,
-  TERMIN_TYPEN,
+  type TERMIN_ARTEN,
+  type TERMIN_TYPEN,
   today,
 } from "@/components/applicants/applicant-types";
+import { TerminFields } from "@/components/applicants/EditEntryDialog";
+import { TerminDayPreview } from "@/components/applicants/TerminDayPreview";
 import { FieldLabel, FormDialog } from "@/components/compose/FormDialog";
 import { useDraft } from "@/components/compose/use-draft";
 import { DialogTip } from "@/components/ui/dialog";
@@ -397,15 +399,28 @@ interface TerminDialogProps {
   /** Choices for the applicant picker; ignored when `fixedApplicantId` is set. */
   applicants?: TerminApplicantOption[];
   fixedApplicantId?: Id<"applicants">;
+  /** Pre-selects someone in the picker (the calendar opened from an Akte). */
+  initialApplicantId?: Id<"applicants">;
+  /** Name for the calendar preview when `fixedApplicantId` is set. */
+  applicantName?: string;
 }
 
-function TerminForm({ open, onOpenChange, applicants = [], fixedApplicantId }: TerminDialogProps) {
+function TerminForm({
+  open,
+  onOpenChange,
+  applicants = [],
+  fixedApplicantId,
+  initialApplicantId,
+  applicantName,
+}: TerminDialogProps) {
   const t = useTranslations("Applicants");
   const locale = useLocale();
   const createTermin = useMutation(api.hr.applicants.createTermin);
   const handleError = useErrorHandler();
 
-  const [applicantId, setApplicantId] = useState<string>(fixedApplicantId ?? "");
+  const [applicantId, setApplicantId] = useState<string>(
+    fixedApplicantId ?? initialApplicantId ?? "",
+  );
   const [datum, setDatum] = useState(today());
   const [uhrzeit, setUhrzeit] = useState("10:00");
   const [art, setArt] = useState<(typeof TERMIN_ARTEN)[number]>("telefon");
@@ -444,6 +459,7 @@ function TerminForm({ open, onOpenChange, applicants = [], fixedApplicantId }: T
       onOpenChange={onOpenChange}
       title={t("planTermin")}
       description={t("calendarDescription")}
+      contentClassName="max-w-3xl"
       checks={[
         { key: "applicant", label: t("applicant"), done: !!applicantId },
         { key: "date", label: t("date"), done: !!datum },
@@ -471,54 +487,39 @@ function TerminForm({ open, onOpenChange, applicants = [], fixedApplicantId }: T
           </Select>
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3">
-        <label className="space-y-1.5">
-          <FieldLabel>{t("date")}</FieldLabel>
-          <Input type="date" value={datum} onChange={(e) => setDatum(e.target.value)} />
-        </label>
-        <label className="space-y-1.5">
-          <FieldLabel>{t("time")}</FieldLabel>
-          <Input type="time" value={uhrzeit} onChange={(e) => setUhrzeit(e.target.value)} />
-        </label>
-        <div className="space-y-1.5">
-          <FieldLabel>{t("terminArtLabel")}</FieldLabel>
-          <Select value={art} onValueChange={(v) => setArt(v as typeof art)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TERMIN_ARTEN.map((a) => (
-                <SelectItem key={a} value={a}>
-                  {t(`terminArt.${a}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="space-y-3">
+          <TerminFields
+            datum={datum}
+            setDatum={setDatum}
+            uhrzeit={uhrzeit}
+            setUhrzeit={setUhrzeit}
+            art={art}
+            setArt={setArt}
+            typ={typ}
+            setTyp={setTyp}
+          />
+          <label className="space-y-1.5">
+            <FieldLabel>{t("note")}</FieldLabel>
+            <Input
+              placeholder={t("terminNotePlaceholder")}
+              value={notiz}
+              onChange={(e) => setNotiz(e.target.value)}
+            />
+          </label>
         </div>
-        <div className="space-y-1.5">
-          <FieldLabel>{t("terminTypLabel")}</FieldLabel>
-          <Select value={typ} onValueChange={(v) => setTyp(v as typeof typ)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TERMIN_TYPEN.map((ty) => (
-                <SelectItem key={ty} value={ty}>
-                  {t(`terminTyp.${ty}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <label className="space-y-1.5">
-        <FieldLabel>{t("note")}</FieldLabel>
-        <Input
-          placeholder={t("terminNotePlaceholder")}
-          value={notiz}
-          onChange={(e) => setNotiz(e.target.value)}
+        <TerminDayPreview
+          datum={datum}
+          uhrzeit={uhrzeit}
+          art={art}
+          newLabel={
+            applicantName ??
+            applicants.find((a) => a._id === applicantId)?.name ??
+            t("previewNewTermin")
+          }
+          onPickDay={setDatum}
         />
-      </label>
+      </div>
       {typ === "wiedervorlage" && (
         <DialogTip>{t("wiedervorlageHint", { date: formatIsoDate(datum, locale) })}</DialogTip>
       )}
