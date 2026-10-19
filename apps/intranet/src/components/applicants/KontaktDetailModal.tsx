@@ -21,6 +21,7 @@ export function KontaktDetailModal({
 
   return (
     <EntryDetailModal
+      edit={{ kind: "kontakt", entry: kontakt }}
       href={`/hr/${applicantId}/kontakte/${kontakt._id}`}
       title={t(`kontaktArt.${kontakt.art}`)}
       description={formatIsoDate(kontakt.datum, "de-DE")}

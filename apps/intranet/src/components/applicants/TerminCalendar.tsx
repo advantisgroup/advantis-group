@@ -1,23 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import { CalendarPlus, Link2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { ArrowLeft, CalendarPlus, Link2, Pencil } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { InfoTip } from "@/components/ui/info-tip";
 import { type TERMIN_ARTEN } from "@/components/applicants/applicant-types";
+import { EditEntryDialog } from "@/components/applicants/EditEntryDialog";
 import { TerminDialog } from "@/components/applicants/EntryDialogs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
@@ -58,13 +61,18 @@ export function TerminRow({
   termin,
   applicantName,
   compact,
+  highlight,
 }: {
   termin: Termin;
   applicantName?: string | null;
   compact?: boolean;
+  /** Outlined: the applicant whose Akte the calendar was opened from. */
+  highlight?: boolean;
 }) {
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
+  const locale = useLocale();
+  const [editing, setEditing] = useState(false);
   const confirm = useConfirm();
   const convertTermin = useMutation(api.hr.applicants.convertTermin);
   const removeTermin = useMutation(api.hr.applicants.removeTermin);
@@ -87,12 +95,16 @@ export function TerminRow({
     removeTermin({ terminId: termin._id }).catch(handleError);
   }
 
+  const [movedDay, movedTime] = termin.verschobenVon?.split(" ") ?? [];
+
   return (
     <div
+      data-highlight={highlight || undefined}
       className={cn(
-        "space-y-1 rounded-md border border-border/60 border-l-[3px] p-2 text-xs",
+        "space-y-1 rounded-md border border-border/60 border-l-[3px] p-2 text-xs ring-offset-1 ring-offset-background transition-shadow duration-700",
         ART_COLOR[termin.art],
         termin.uebernommen && "bg-muted/40",
+        highlight && "ring-2 ring-primary",
       )}
     >
       <div className="flex flex-wrap items-center gap-1.5">
@@ -101,6 +113,15 @@ export function TerminRow({
           {t(`terminArt.${termin.art}`)}
         </span>
         {termin.uebernommen && <span className="text-success">✓</span>}
+        <button
+          type="button"
+          aria-label={t("editTermin")}
+          title={t("editTermin")}
+          onClick={() => setEditing(true)}
+          className="-m-1 ml-auto rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          <Pencil className="size-3" />
+        </button>
       </div>
       <div className="font-medium text-foreground">
         {applicantName && (
@@ -115,6 +136,13 @@ export function TerminRow({
         {t(`terminTyp.${termin.typ}`)}
       </div>
       {termin.notiz && <p className="text-muted-foreground">{termin.notiz}</p>}
+      {movedDay && (
+        <p className="text-[11px] text-muted-foreground">
+          {t("movedFrom", {
+            slot: `${formatIsoDate(movedDay, locale)}${movedTime ? `, ${movedTime}` : ""}`,
+          })}
+        </p>
+      )}
       {!compact && (
         <div className="flex flex-wrap items-center gap-2 pt-1">
           {!termin.uebernommen && (
@@ -140,6 +168,10 @@ export function TerminRow({
           </Link>
         </div>
       )}
+      <EditEntryDialog
+        target={editing ? { kind: "termin", entry: termin, applicantName } : null}
+        onClose={() => setEditing(false)}
+      />
     </div>
   );
 }
@@ -161,6 +193,27 @@ export function TerminCalendar() {
   const applicants = useQuery(api.hr.applicants.list);
   const [planOpen, setPlanOpen] = useState(false);
 
+  // Opened from an Akte (`?von=<id>`): outline that applicant's Termine for
+  // a few seconds and offer the way back.
+  const fromId = useSearchParams().get("von");
+  const fromApplicant = applicants?.find((a) => a._id === fromId) ?? null;
+  const [glow, setGlow] = useState(false);
+  useEffect(() => {
+    if (!fromId) return;
+    setGlow(true);
+    const timer = setTimeout(() => setGlow(false), 6000);
+    return () => clearTimeout(timer);
+  }, [fromId]);
+  const loaded = termine !== undefined;
+  useEffect(() => {
+    if (!fromId || !loaded) return;
+    const visible = [...document.querySelectorAll<HTMLElement>("[data-highlight]")].find(
+      (el) => el.offsetParent !== null,
+    );
+    visible?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [fromId, loaded]);
+  const lit = (tm: { applicantId: string }) => glow && tm.applicantId === fromId;
+
   const weeks = [days.slice(0, 7), days.slice(7, 14), days.slice(14, 21), days.slice(21, 28)];
   const rangeStart = days[0].iso;
   const rangeEnd = days[days.length - 1].iso;
@@ -176,7 +229,26 @@ export function TerminCalendar() {
           {t("noApplicantsYet")}
         </p>
       ) : (
-        <div className="flex items-center justify-end gap-1.5">
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          {fromApplicant && (
+            <div className="mr-auto flex flex-wrap items-center gap-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/hr/${fromApplicant._id}/uebersicht`}>
+                  <ArrowLeft className="size-4" />
+                  {t("backToApplicant", { name: fromApplicant.name })}
+                </Link>
+              </Button>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary transition-opacity duration-700",
+                  !glow && "opacity-0",
+                )}
+              >
+                <span className="size-2 rounded-full bg-primary" />
+                {t("calendarHighlight", { name: fromApplicant.name })}
+              </span>
+            </div>
+          )}
           <InfoTip text={t("calendarDescription")} />
           <Button size="sm" onClick={() => setPlanOpen(true)}>
             <CalendarPlus className="size-4" />
@@ -232,6 +304,7 @@ export function TerminCalendar() {
                               termin={tm}
                               applicantName={tm.applicantName}
                               compact
+                              highlight={lit(tm)}
                             />
                           ))
                         )}
@@ -266,7 +339,12 @@ export function TerminCalendar() {
                   {day.isToday && ` · ${t("today")}`}
                 </p>
                 {items.map((tm) => (
-                  <TerminRow key={tm._id} termin={tm} applicantName={tm.applicantName} />
+                  <TerminRow
+                    key={tm._id}
+                    termin={tm}
+                    applicantName={tm.applicantName}
+                    highlight={lit(tm)}
+                  />
                 ))}
               </div>
             );
@@ -281,7 +359,12 @@ export function TerminCalendar() {
               {t("pastTermineWithoutContact", { count: vergangen.length })}
             </p>
             {vergangen.map((tm) => (
-              <TerminRow key={tm._id} termin={tm} applicantName={tm.applicantName} />
+              <TerminRow
+                key={tm._id}
+                termin={tm}
+                applicantName={tm.applicantName}
+                highlight={lit(tm)}
+              />
             ))}
           </CardContent>
         </Card>
@@ -292,13 +375,23 @@ export function TerminCalendar() {
           <CardContent className="space-y-2 p-4">
             <p className="text-sm font-semibold">{t("futureTermine", { count: spaeter.length })}</p>
             {spaeter.map((tm) => (
-              <TerminRow key={tm._id} termin={tm} applicantName={tm.applicantName} />
+              <TerminRow
+                key={tm._id}
+                termin={tm}
+                applicantName={tm.applicantName}
+                highlight={lit(tm)}
+              />
             ))}
           </CardContent>
         </Card>
       )}
 
-      <TerminDialog open={planOpen} onOpenChange={setPlanOpen} applicants={applicants} />
+      <TerminDialog
+        open={planOpen}
+        onOpenChange={setPlanOpen}
+        applicants={applicants}
+        initialApplicantId={fromApplicant?._id}
+      />
     </div>
   );
 }

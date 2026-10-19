@@ -42,6 +42,7 @@ export function Emails({ applicant }: { applicant: ApplicantDetail }) {
         emptyIcon={<Mail />}
         emptyLabel={t("noEmailsYet")}
         deleteLabel={t("deleteEntry")}
+        editLabel={t("editEntry")}
         rows={applicant.emails.map((m) => ({
           _id: m._id,
           href: `/hr/${applicant._id}/emails/${m._id}`,
@@ -52,6 +53,7 @@ export function Emails({ applicant }: { applicant: ApplicantDetail }) {
           meta: formatIsoDate(m.datum, "de-DE"),
           note: m.subject ?? m.notiz,
           onDelete: () => removeEmail({ emailId: m._id }).catch(handleError),
+          edit: { kind: "email", entry: m },
         }))}
       />
       <EmailDialog open={logOpen} onOpenChange={setLogOpen} applicantId={applicant._id} />

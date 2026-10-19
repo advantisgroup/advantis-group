@@ -21,6 +21,7 @@ export function EmailDetailModal({
 
   return (
     <EntryDetailModal
+      edit={{ kind: "email", entry: email }}
       href={`/hr/${applicantId}/emails/${email._id}`}
       title={email.subject ?? t(`emailKategorie.${email.kategorie}`)}
       description={
