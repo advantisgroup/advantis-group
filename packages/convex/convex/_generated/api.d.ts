@@ -135,6 +135,7 @@ import type * as marketing_stats from "../marketing/stats.js";
 import type * as marketing_templates from "../marketing/templates.js";
 import type * as marketingAnalytics from "../marketingAnalytics.js";
 import type * as members from "../members.js";
+import type * as migrations_addForeignQueues from "../migrations/addForeignQueues.js";
 import type * as migrations_backfillCustomRoleIds from "../migrations/backfillCustomRoleIds.js";
 import type * as migrations_backfillInquiries from "../migrations/backfillInquiries.js";
 import type * as migrations_dropDesignPreviewFields from "../migrations/dropDesignPreviewFields.js";
@@ -430,6 +431,7 @@ declare const fullApi: ApiFromModules<{
   "marketing/templates": typeof marketing_templates;
   marketingAnalytics: typeof marketingAnalytics;
   members: typeof members;
+  "migrations/addForeignQueues": typeof migrations_addForeignQueues;
   "migrations/backfillCustomRoleIds": typeof migrations_backfillCustomRoleIds;
   "migrations/backfillInquiries": typeof migrations_backfillInquiries;
   "migrations/dropDesignPreviewFields": typeof migrations_dropDesignPreviewFields;

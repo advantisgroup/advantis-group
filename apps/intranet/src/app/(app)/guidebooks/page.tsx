@@ -326,7 +326,7 @@ function EntryRow({
         )}
       </Link>
       <div className="absolute right-2 top-2 flex items-center gap-0.5">
-        {canManage && !item.archived && (
+        {user.role === "admin" && item.kind === "wiki" && !item.archived && (
           <button
             type="button"
             onClick={() => void onTogglePin()}
@@ -482,6 +482,15 @@ export default function GuidebooksPage() {
     [filtered],
   );
 
+  // Schnellleiste: von Admins angeheftete, gültige Wiki-Einträge für alle oben.
+  const quickBar = useMemo(
+    () =>
+      (items ?? [])
+        .filter((i) => i.pinned && !i.archived && i.kind === "wiki")
+        .sort((a, b) => a.title.localeCompare(b.title, "de")),
+    [items],
+  );
+
   // Subject headings, so the list reads as a library rather than a pile.
   // A search is already a filtered answer, so results stay flat — a heading
   // per hit would be noise, and the archive is small enough to leave alone.
@@ -492,10 +501,11 @@ export default function GuidebooksPage() {
     // Richtlinien: offene ganz oben, bestätigte ganz unten (Vahan, 19.10.2026).
     const openPolicies = sorted.filter((i) => i.policy && pendingPolicySlugs.has(i.slug));
     const confirmedPolicies = sorted.filter((i) => i.policy && !pendingPolicySlugs.has(i.slug));
-    const pinned = sorted.filter((i) => i.pinned && !i.policy);
+    // Angeheftete Einträge stehen in der Schnellleiste oben; in der Liste
+    // bleiben sie normal in ihrer Kategorie.
     const byCategory = new Map<string, GridItem[]>();
     for (const item of sorted) {
-      if (item.pinned || item.policy) continue;
+      if (item.policy) continue;
       const bucket = byCategory.get(item.categoryKey);
       if (bucket) bucket.push(item);
       else byCategory.set(item.categoryKey, [item]);
@@ -532,9 +542,6 @@ export default function GuidebooksPage() {
               items: openPolicies,
             },
           ]
-        : []),
-      ...(pinned.length > 0
-        ? [{ key: "pinned", label: t("pinnedGroup"), color: "#77808A", items: pinned }]
         : []),
       ...categorized,
       ...(byCategory.has("none")
@@ -663,6 +670,27 @@ export default function GuidebooksPage() {
                 <span className="min-w-0 flex-1 truncate text-sm font-medium">
                   {guidebookTitle(gb, t)}
                 </span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {quickBar.length > 0 && (
+        <div className="mb-6">
+          <p className="mb-2 text-xs text-muted-foreground font-medium normal-case tracking-normal">
+            {t("quickBarTitle")}
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {quickBar.map((item) => (
+              <Link
+                key={item.key}
+                href={`/guidebooks/${item.slug}`}
+                className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-3.5 py-2.5 transition-colors hover:bg-accent"
+              >
+                <Pin className="size-4 shrink-0 text-primary" />
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">{item.title}</span>
                 <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
               </Link>
             ))}
