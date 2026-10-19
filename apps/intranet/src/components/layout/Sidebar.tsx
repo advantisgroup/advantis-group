@@ -31,6 +31,7 @@ import {
   Settings,
   ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   Timer,
   Users,
   UserSearch,
@@ -40,6 +41,7 @@ import {
 import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
 
+import { useAiEnabled } from "@/components/ai/use-ai-enabled";
 import { type FeatureFlagKey, useFeatureFlags } from "@/components/feature-flags/FeatureGate";
 import {
   accessibleGuidebooks,
@@ -186,6 +188,7 @@ export function Sidebar() {
   const user = useCurrentUser();
   const hasFilesAccess = useHasCapability("access_files");
   const hasBlogAccess = useHasCapability("manage_blog");
+  const aiEnabled = useAiEnabled();
   const hasApplicantAccess = useHasApplicantAccess();
   const hasInquiries = useHasCapability("manage_inquiries");
   const inquiryCounts = useQuery(api.marketing.inbox.counts, hasInquiries ? {} : "skip");
@@ -285,6 +288,17 @@ export function Sidebar() {
             labelKey: "guidebooks",
             icon: BookOpen,
             tourAttr: "tour-nav-guidebooks",
+          },
+        ]
+      : []),
+    // KI-Assistent als eigener Reiter direkt unter dem Wiki (19.10.2026).
+    ...(aiEnabled
+      ? [
+          {
+            section: "knowledge" as const,
+            href: "/wiki-chat",
+            labelKey: "wikiChat",
+            icon: Sparkles,
           },
         ]
       : []),
