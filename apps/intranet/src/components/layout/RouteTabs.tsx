@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 
 import Link from "next/link";
 
@@ -25,12 +25,25 @@ export function RouteTabs({
   tabs,
   activeValue,
   inline = false,
+  bottomNav = true,
+  variant = "underline",
+  leading,
 }: {
   tabs: RouteTab[];
   activeValue: string;
   /** Keep the tab strip in the page on desktop — for areas outside the app
-   * shell (Performance) that have no header bar to hand the tabs to. */
+   * shell (Performance) that have no header bar to hand the tabs to, or a
+   * record's own sub-pages (an applicant's Akte) that must not mix with the
+   * section's tabs up in the header. */
   inline?: boolean;
+  /** Hand the tabs to the phone's bottom nav. Off for a section's tabs while
+   * a record below them owns the bottom nav. */
+  bottomNav?: boolean;
+  /** "segmented": pills on a tinted strip, for tabs that live inside a card. */
+  variant?: "underline" | "segmented";
+  /** Shown before the tabs in an inline strip (e.g. the record's name once
+   * the strip sticks while scrolling). */
+  leading?: ReactNode;
 }) {
   const isMobile = useIsMobile();
   const { setTabs } = useBottomNavTabs();
@@ -45,7 +58,7 @@ export function RouteTabs({
   }, [inHeader, setHeaderTabs, tabs, activeValue]);
 
   useEffect(() => {
-    if (!isMobile) return;
+    if (!isMobile || !bottomNav) return;
     // BottomNav only ever reads `label` as an aria-label (it renders icons
     // only), so folding the count into it here keeps that contract exactly
     // as it was before tabs could carry a separate `count` field.
@@ -58,10 +71,50 @@ export function RouteTabs({
     setTabs(mobileTabs, activeValue);
     return () => setTabs(null, null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMobile, tabs, activeValue]);
+  }, [isMobile, bottomNav, tabs, activeValue]);
 
   if (isMobile || inHeader) {
     return null;
+  }
+
+  if (variant === "segmented") {
+    return (
+      <div className="flex items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {leading}
+        {tabs.map((tab) => {
+          const active = tab.value === activeValue;
+          return (
+            <Link
+              key={tab.value}
+              href={tab.href}
+              onClick={routeTabClick(tab)}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "flex shrink-0 select-none items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                active
+                  ? "border-primary bg-card font-semibold text-primary shadow-sm"
+                  : "border-transparent text-muted-foreground hover:bg-card/70 hover:text-foreground",
+              )}
+            >
+              <tab.icon className="size-3.5" />
+              {tab.label}
+              {tab.count !== undefined && (
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 text-[11px] font-semibold tabular-nums",
+                    active
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {tab.count}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    );
   }
 
   return (

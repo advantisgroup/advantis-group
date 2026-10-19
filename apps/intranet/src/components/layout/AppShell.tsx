@@ -44,6 +44,7 @@ import { OnboardingPanel } from "@/components/onboarding/OnboardingPanel";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import { OnboardingTrigger } from "@/components/onboarding/OnboardingTrigger";
 import { useIsAdmin } from "@/components/providers/current-user";
+import { recordVisit } from "@/lib/nav-history";
 import { TourCompletionScreen } from "@/components/tour/TourCompletionScreen";
 import { TourOverlay } from "@/components/tour/TourOverlay";
 import { TourPopout } from "@/components/tour/TourPopout";
@@ -89,6 +90,11 @@ function StartPageRedirect() {
 
 function AppShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  // Remember in-app pages for back arrows (see lib/nav-history). Read from
+  // window so query-only changes on the same path are kept as well.
+  useEffect(() => {
+    recordVisit(window.location.pathname + window.location.search);
+  }, [pathname]);
   const heartbeat = useMutation(api.people.presence.heartbeat);
   const mainRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
