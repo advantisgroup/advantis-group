@@ -85,7 +85,11 @@ test("send context names the recipient and the HR mailbox, if there is one", asy
       clerkUserId: "hr",
       applicantId: ids.applicantId,
     });
-  expect(await ctxFor()).toEqual({ to: "jana@example.com", name: "Jana Muster", mailbox: null });
+  expect(await ctxFor()).toMatchObject({
+    to: "jana@example.com",
+    name: "Jana Muster",
+    mailbox: null,
+  });
   await t.run((ctx) =>
     ctx.db.insert("hrMailbox", {
       email: "bewerbung@advantisgroup.de",

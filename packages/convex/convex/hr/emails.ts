@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 import { serverUserMutation, serverUserQuery, userMutation, userQuery } from "../functions";
 import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { emailKategorieValidator } from "../lib/validators";
+import { DEFAULT_EMAIL_SIGNATURE } from "./settings";
 
 /**
  * Mails HR sends to applicants from the HR mailbox (bewerbung@): editable
@@ -149,10 +150,18 @@ export const apiSendContext = serverUserQuery({
       throw new ConvexError({ code: "not_found", message: "Bewerber nicht gefunden." });
     }
     const mailbox = await ctx.db.query("hrMailbox").first();
+    const settings = await ctx.db.query("hrSettings").first();
+    const sender = await ctx.db.get(ctx.caller.id);
+    const senderName =
+      [sender?.firstName, sender?.lastName].filter(Boolean).join(" ").trim() ||
+      sender?.email ||
+      "advantis GmbH";
     return {
       to: applicant.email?.trim() || null,
       name: applicant.name,
       mailbox: mailbox ? { email: mailbox.email, passwordEnc: mailbox.passwordEnc } : null,
+      senderName,
+      signature: settings?.emailSignature ?? DEFAULT_EMAIL_SIGNATURE,
     };
   },
 });

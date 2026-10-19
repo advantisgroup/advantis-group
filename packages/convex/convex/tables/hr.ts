@@ -241,6 +241,8 @@ export const hrTables = {
    */
   hrSettings: defineTable({
     openPosition: v.optional(v.string()),
+    /** Signature under every mail to applicants; `{Absender}` = whoever sends. */
+    emailSignature: v.optional(v.string()),
     updatedBy: v.id("users"),
     updatedAt: v.number(),
   }),

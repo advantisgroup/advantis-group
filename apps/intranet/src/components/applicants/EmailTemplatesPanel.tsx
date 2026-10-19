@@ -5,7 +5,7 @@ import { useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Doc, type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Mail, Pencil, Plus, Trash2 } from "lucide-react";
+import { Mail, Pencil, PenLine, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -127,6 +127,8 @@ export function EmailTemplatesPanel() {
         ))
       )}
 
+      <SignatureCard />
+
       {editing && (
         <TemplateDialog
           template={editing === "new" ? null : editing}
@@ -215,8 +217,69 @@ function TemplateDialog({ template, onClose }: { template: Template | null; onCl
             value={body}
             onChange={(e) => setBody(e.target.value)}
           />
+          <p className="whitespace-pre-line text-xs text-muted-foreground">
+            {t("templateFormatHint")}
+          </p>
         </div>
       </div>
     </ResponsiveDialog>
+  );
+}
+
+/** The signature under every mail to applicants — one for all of HR. */
+function SignatureCard() {
+  const t = useTranslations("Applicants");
+  const settings = useQuery(api.hr.settings.get);
+  const save = useMutation(api.hr.settings.setEmailSignature);
+  const handleError = useErrorHandler();
+  const [draft, setDraft] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  if (!settings) return null;
+  const value = draft ?? settings.emailSignature;
+  const dirty = draft !== null && draft !== settings.emailSignature;
+
+  async function onSave(next: string) {
+    setSaving(true);
+    try {
+      await save({ emailSignature: next });
+      setDraft(null);
+      toast.success(t("signatureSaved"));
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <PenLine className="size-4 text-muted-foreground" />
+          <p className="font-medium">{t("signatureTitle")}</p>
+          {settings.emailSignatureIsDefault && (
+            <Badge variant="muted">{t("signatureDefault")}</Badge>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground">{t("signatureHint")}</p>
+        <Textarea
+          rows={7}
+          value={value}
+          onChange={(e) => setDraft(e.target.value)}
+          className="font-mono text-xs"
+        />
+        <div className="flex flex-wrap justify-end gap-2">
+          {!settings.emailSignatureIsDefault && (
+            <Button variant="ghost" size="sm" disabled={saving} onClick={() => void onSave("")}>
+              {t("signatureReset")}
+            </Button>
+          )}
+          <Button size="sm" disabled={saving || !dirty} onClick={() => void onSave(value)}>
+            {t("signatureSave")}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

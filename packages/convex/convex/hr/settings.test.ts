@@ -40,12 +40,12 @@ test("only HR sets the advertised job; empty clears it", async () => {
     }),
   ).rejects.toThrow();
   await hr.mutation(api.hr.settings.setOpenPosition, { openPosition: "  Callcenter  " });
-  expect(await hr.query(api.hr.settings.get, {})).toEqual({ openPosition: "Callcenter" });
+  expect(await hr.query(api.hr.settings.get, {})).toMatchObject({ openPosition: "Callcenter" });
   expect(
     await t.query(api.hr.settings.apiImportDefaults, { serverKey: "test-server-key" }),
   ).toEqual({ openPosition: "Callcenter" });
   await hr.mutation(api.hr.settings.setOpenPosition, { openPosition: " " });
-  expect(await hr.query(api.hr.settings.get, {})).toEqual({ openPosition: null });
+  expect(await hr.query(api.hr.settings.get, {})).toMatchObject({ openPosition: null });
 });
 
 test("an application from the inbox notifies everyone active in HR", async () => {
@@ -115,10 +115,26 @@ test("the backfill files recent applicants under the job and keeps the CV's", as
     position: "Callcenter",
     notizen: "<p>Laut Lebenslauf: Bank</p><p>Ruft zurück</p>",
   });
-  expect(await hr.query(api.hr.settings.get, {})).toEqual({ openPosition: "Callcenter" });
+  expect(await hr.query(api.hr.settings.get, {})).toMatchObject({ openPosition: "Callcenter" });
   // Running it again changes nothing.
   expect(await t.mutation(internal.migrations.setApplicantPosition.run, args)).toEqual({
     applied: true,
     changed: 0,
   });
+});
+
+test("the mail signature defaults until HR saves one; empty goes back", async () => {
+  const { hr } = await seed();
+  const first = await hr.query(api.hr.settings.get, {});
+  expect(first.emailSignatureIsDefault).toBe(true);
+  expect(first.emailSignature.split("\n")[0]).toBe("{Absender}");
+  await hr.mutation(api.hr.settings.setEmailSignature, {
+    emailSignature: "{Absender}\r\nRecruiting\r\nFon: 1",
+  });
+  expect(await hr.query(api.hr.settings.get, {})).toMatchObject({
+    emailSignature: "{Absender}\nRecruiting\nFon: 1",
+    emailSignatureIsDefault: false,
+  });
+  await hr.mutation(api.hr.settings.setEmailSignature, { emailSignature: "  " });
+  expect((await hr.query(api.hr.settings.get, {})).emailSignatureIsDefault).toBe(true);
 });

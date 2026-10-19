@@ -489,5 +489,13 @@
   "previewThisTermin": "Dieser Termin",
   "previewNewTermin": "Neuer Termin",
   "backToApplicant": "Zurück zu {name}",
-  "calendarHighlight": "Termine von {name} sind markiert"
+  "calendarHighlight": "Termine von {name} sind markiert",
+  "templateFormatHint": "Formatierung: Zeilen mit „> “ am Anfang werden ein farbiger Kasten (bei mehreren Zeilen ist die erste die Überschrift), **Text** wird fett.\nLogo, Signatur und Firmenzeile kommen beim Versand automatisch dazu – den Gruß mit Namen also nicht in die Vorlage schreiben.",
+  "signatureTitle": "Signatur",
+  "signatureHint": "Steht unter jeder Mail an Bewerber. Zeile 1 = Name ('{Absender}' wird zur Person, die verschickt), Zeile 2 = Funktion, danach Zeilen wie „Fon: …“. Die Firmenzeile mit HRB und USt-IdNr. kommt automatisch.",
+  "signatureDefault": "Standard",
+  "signatureSave": "Signatur speichern",
+  "signatureReset": "Auf Standard zurücksetzen",
+  "signatureSaved": "Signatur gespeichert",
+  "sendEmailLayoutHint": "Geht mit Logo, Signatur und Firmenzeile raus. „> “-Zeilen werden ein Kasten, **Text** fett."
 }

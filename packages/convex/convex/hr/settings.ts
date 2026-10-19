@@ -11,6 +11,20 @@ import { recordUnifiedAudit } from "../lib/auditLogWrite";
  */
 
 const MAX_POSITION_LENGTH = 120;
+const MAX_SIGNATURE_LENGTH = 1000;
+
+/**
+ * Used until HR saves its own. Line 1 is the name (bold), line 2 the role,
+ * then "Label: Wert" lines; apps/api lays it out under the mail.
+ */
+export const DEFAULT_EMAIL_SIGNATURE = [
+  "{Absender}",
+  "Recruiting · advantis GmbH",
+  "Fon: 0911 37753859",
+  "Mail: bewerbung@advantisgroup.de",
+  "Web: advantisgroup.de",
+  "Standorte: Herboldshoferstraße 13 · Erlenstraße 36, Nürnberg",
+].join("\n");
 
 async function current(ctx: QueryCtx | MutationCtx) {
   return await ctx.db.query("hrSettings").first();
@@ -21,7 +35,37 @@ export const get = userQuery({
   args: {},
   handler: async (ctx) => {
     const row = await current(ctx);
-    return { openPosition: row?.openPosition ?? null };
+    return {
+      openPosition: row?.openPosition ?? null,
+      emailSignature: row?.emailSignature ?? DEFAULT_EMAIL_SIGNATURE,
+      emailSignatureIsDefault: !row?.emailSignature,
+    };
+  },
+});
+
+/** Empty goes back to the default signature. */
+export const setEmailSignature = userMutation({
+  applicant: "access",
+  args: { emailSignature: v.string() },
+  handler: async (ctx, args) => {
+    const emailSignature = args.emailSignature.replace(/\r\n/g, "\n").trim() || undefined;
+    if (emailSignature && emailSignature.length > MAX_SIGNATURE_LENGTH) {
+      throw new ConvexError({
+        code: "bad_request",
+        message: `Höchstens ${MAX_SIGNATURE_LENGTH} Zeichen`,
+      });
+    }
+    const now = Date.now();
+    const existing = await current(ctx);
+    const fields = { emailSignature, updatedBy: ctx.caller.id, updatedAt: now };
+    if (existing) await ctx.db.patch(existing._id, fields);
+    else await ctx.db.insert("hrSettings", fields);
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: ctx.caller.id,
+      action: "hr_email_signature_set",
+      at: now,
+    });
   },
 });
 
