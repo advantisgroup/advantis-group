@@ -28,7 +28,6 @@ import {
   PhoneCall,
   RotateCcw,
   Rss,
-  ScrollText,
   Settings,
   ShieldCheck,
   SlidersHorizontal,
@@ -289,7 +288,7 @@ export function Sidebar() {
           },
         ]
       : []),
-    { section: "knowledge", href: "/policies", labelKey: "policies", icon: ScrollText },
+    // Richtlinien stehen seit 19.10.2026 im Wiki (offene oben, bestätigte unten).
     ...(hasBlogAccess
       ? [{ section: "knowledge" as const, href: "/blog", labelKey: "blog", icon: Newspaper }]
       : []),
