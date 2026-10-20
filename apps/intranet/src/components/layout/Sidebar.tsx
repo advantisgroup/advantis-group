@@ -288,6 +288,8 @@ export function Sidebar() {
             labelKey: "guidebooks",
             icon: BookOpen,
             tourAttr: "tour-nav-guidebooks",
+            // Für alle freigegeben am 19.10.2026 — „Neu“ für ein paar Wochen.
+            isNew: true,
           },
         ]
       : []),
