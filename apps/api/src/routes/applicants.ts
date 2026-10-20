@@ -98,7 +98,9 @@ async function runExtraction(
 ): Promise<ExtractedApplicant> {
   const data = parseModelJson(
     await runModelText(run, {
-      max_tokens: 1000,
+      // Long CVs (many jobs, long summaries) ran past 1000 and failed as
+      // "truncated"; the JSON for a full CV fits comfortably in 4000.
+      max_tokens: 4000,
       messages: [
         {
           role: "user",
