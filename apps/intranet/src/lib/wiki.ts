@@ -4,7 +4,7 @@
  * stays derived (never stored) and every view computes it the same way.
  */
 
-export const MAX_PINS = 5;
+export const MAX_PINS = 8;
 export const REVIEW_WINDOW_DAYS = 7;
 
 export interface WikiEntryLike {

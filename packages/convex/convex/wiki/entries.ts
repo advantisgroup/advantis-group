@@ -5,7 +5,7 @@ import { type Caller, getServerCaller } from "../lib/caller";
 import type { Doc } from "../_generated/dataModel";
 import { moveToTrash } from "../lib/trash";
 
-const MAX_PINS = 5;
+const MAX_PINS = 8;
 
 /** Whether this caller may read the entry. Every wiki read goes through this —
  * the list, a single page, ⌘K search and the AI assistant's retrieval — so a
@@ -306,6 +306,10 @@ export const togglePin = userMutation({
   can: "manage_guidebooks",
   args: { entryId: v.id("wikiEntries") },
   handler: async (ctx, { entryId }) => {
+    // Schnellleiste im Wiki: anheften dürfen nur Admins (Vahan, 19.10.2026).
+    if (ctx.caller.user.role !== "admin") {
+      throw new ConvexError({ code: "forbidden", message: "Only admins can pin" });
+    }
     const entry = await ctx.db.get(entryId);
     if (!entry) throw new ConvexError({ code: "not_found", message: "Not found" });
     if (!entry.pinned) {
