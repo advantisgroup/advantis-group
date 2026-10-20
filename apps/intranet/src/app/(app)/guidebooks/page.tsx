@@ -24,6 +24,7 @@ import { toast } from "sonner";
 
 import { RouteTabs } from "@/components/layout/RouteTabs";
 import { useKnowledgeTabs } from "@/components/guidebooks/knowledge-tabs";
+import { QuickToolButtons } from "@/components/guidebooks/quick-tools";
 import {
   accessibleGuidebooks,
   guidebookDescription,
@@ -677,12 +678,13 @@ export default function GuidebooksPage() {
         </div>
       )}
 
-      {quickBar.length > 0 && (
+      {
         <div className="mb-6">
           <p className="mb-2 text-xs text-muted-foreground font-medium normal-case tracking-normal">
             {t("quickBarTitle")}
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
+            <QuickToolButtons />
             {quickBar.map((item) => (
               <Link
                 key={item.key}
@@ -696,7 +698,7 @@ export default function GuidebooksPage() {
             ))}
           </div>
         </div>
-      )}
+      }
 
       <div className="space-y-4">
         <div>
