@@ -124,6 +124,27 @@ export const contentTables = {
     createdAt: v.number(),
   }),
 
+  /**
+   * Das Postfach (z. B. chefsache@), in dem jeden Morgen die Preisliste
+   * ankommt; daraus schreibt wiki/priceMailbox.ts den Eintrag
+   * „listenpreise-netto“. Eine Zeile. Passwort verschlüsselt wie bei
+   * `hrMailbox` — nur apps/api kann es entschlüsseln.
+   */
+  priceMailbox: defineTable({
+    email: v.string(),
+    passwordEnc: v.string(),
+    /** Der Admin, der es eingerichtet hat (Besitzer, falls der Eintrag fehlt). */
+    setBy: v.id("users"),
+    updatedAt: v.number(),
+    uidValidity: v.optional(v.string()),
+    uidNext: v.optional(v.number()),
+    checkedAt: v.optional(v.number()),
+    error: v.optional(v.union(v.literal("auth"), v.literal("connect"))),
+    lastImportAt: v.optional(v.number()),
+    /** Neuester Tag der zuletzt übernommenen Liste (YYYY-MM-DD). */
+    lastStand: v.optional(v.string()),
+  }),
+
   wikiEntries: defineTable({
     slug: v.string(),
     categoryId: v.optional(v.id("wikiCategories")),
