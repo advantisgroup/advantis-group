@@ -228,13 +228,13 @@ if (process.env.DISABLE_CRONS !== "true") {
   // jeweils andere Lauf findet nichts Neues, weil die Position schon
   // weitergerückt ist (oder die Mail kommt erst danach).
   crons.cron(
-    "wiki: Preisliste aus dem Postfach übernehmen (Sommerzeit)",
+    "wiki: import price list from mailbox (summer time)",
     "30 6 * * *",
     internal.wiki.priceMailbox.runPoll,
     {},
   );
   crons.cron(
-    "wiki: Preisliste aus dem Postfach übernehmen (Winterzeit)",
+    "wiki: import price list from mailbox (winter time)",
     "30 7 * * *",
     internal.wiki.priceMailbox.runPoll,
     {},
