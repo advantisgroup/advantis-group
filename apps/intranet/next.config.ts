@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
   // report-rescan feature can reuse the same parsing logic the Convex
   // import pipeline uses — this is what makes Next transpile that source
   // instead of erroring on it.
-  transpilePackages: ["pdfjs-dist", "react-pdf", "@advantis/convex"],
+  transpilePackages: ["pdfjs-dist", "react-pdf", "@advantis/convex", "@advantis/types"],
   images: {
     remotePatterns: [
       // Convex file storage (avatars, chat images, announcement attachments)

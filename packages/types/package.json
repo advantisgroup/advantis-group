@@ -10,6 +10,11 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./case-support": {
+      "types": "./src/case-support/index.ts",
+      "import": "./src/case-support/index.ts",
+      "default": "./src/case-support/index.ts"
     }
   },
   "scripts": {

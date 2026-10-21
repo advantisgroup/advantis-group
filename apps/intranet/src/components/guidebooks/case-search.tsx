@@ -2,6 +2,8 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 
+import { useTranslations } from "next-intl";
+
 import {
   ArrowRight,
   ChevronDown,
@@ -13,7 +15,15 @@ import {
   X,
 } from "lucide-react";
 
+import { AiMarkdown } from "@/components/ai/AiMarkdown";
+import { aiErrorKey } from "@/components/ai/AiRunCard";
+import { AiReveal } from "@/components/ai/AiReveal";
+import { AiThinking } from "@/components/ai/AiThinking";
+import { useAiEnabled } from "@/components/ai/use-ai-enabled";
+import { useAiRun } from "@/components/ai/use-ai-run";
 import { Link } from "@/components/Link";
+import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useIntranetApiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
 import { type CaseRow, CASES } from "./case-search-data";
@@ -141,7 +151,54 @@ function EntryItem({
   );
 }
 
+/** The AI answer for the last question, grounded only in Case & Support
+ * knowledge and matching wiki entries (apps/api /case-support/ask). */
+function AiAnswer({ asked, sending }: { asked: string; sending: boolean }) {
+  const t = useTranslations("Ai");
+  const view = useAiRun({ subjectKey: "caseSupport" });
+  const working = sending || view.state === "working";
+  const failed =
+    view.state === "error" || view.state === "interrupted" || view.state === "cancelled";
+  return (
+    <div className="mx-auto max-w-3xl rounded-2xl border border-primary/25 bg-primary/[0.04] p-4">
+      <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-primary">
+        <Sparkles className="size-3.5" /> KI-Antwort aus Case &amp; Support und Wiki
+      </div>
+      <p className="mb-2 text-xs text-muted-foreground">„{asked}“</p>
+      {working ? (
+        view.text && !sending ? (
+          <div className="text-sm leading-relaxed">
+            <AiReveal text={view.text} />
+          </div>
+        ) : (
+          <AiThinking phase={view.run?.phase} elapsedSec={view.elapsedSec} />
+        )
+      ) : failed ? (
+        <p className="text-sm text-muted-foreground">
+          {view.state === "error"
+            ? t(aiErrorKey(view.run?.errorCode ?? null))
+            : view.state === "cancelled"
+              ? t("cancelledBody")
+              : t("interruptedBody")}
+        </p>
+      ) : view.text ? (
+        <div className="text-sm leading-relaxed">
+          <AiMarkdown>{view.text}</AiMarkdown>
+        </div>
+      ) : null}
+      <p className="mt-3 text-[11px] text-muted-foreground">
+        Die KI kann sich irren – im Zweifel den Eintrag unten prüfen.
+      </p>
+    </div>
+  );
+}
+
 function CaseSupport() {
+  const aiEnabled = useAiEnabled();
+  const apiClient = useIntranetApiClient();
+  const handleError = useErrorHandler();
+  const [asked, setAsked] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
   const [query, setQuery] = useState("");
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -162,6 +219,25 @@ function CaseSupport() {
     return g;
   }, []);
 
+  async function ask(text: string) {
+    const question = text.trim();
+    if (!aiEnabled || question.length < 3 || sending) return;
+    setSending(true);
+    setAsked(question);
+    try {
+      await apiClient.fetchJson<{ runId: string }>("/case-support/ask", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+    } catch (err) {
+      setAsked(null);
+      handleError(err);
+    } finally {
+      setSending(false);
+    }
+  }
+
   const toggle = (id: string) => setOpenIds((p) => ({ ...p, [id]: !p[id] }));
   const runTag = (t: string) => {
     setQuery(t);
@@ -175,7 +251,8 @@ function CaseSupport() {
       <div className="mx-auto max-w-2xl space-y-3 pt-4 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Case &amp; Support</h1>
         <p className="text-sm text-muted-foreground">
-          Beschreib das Problem in deinen eigenen Worten.
+          Beschreib das Problem in deinen eigenen Worten
+          {aiEnabled ? " – mit Enter antwortet die KI." : "."}
         </p>
         <div className="relative">
           <Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
@@ -185,6 +262,10 @@ function CaseSupport() {
             onChange={(e) => {
               setQuery(e.target.value);
               setOpenIds({});
+              if (!e.target.value.trim()) setAsked(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void ask(query);
             }}
             placeholder="z. B. Kunde kann nicht tanken, Karte wird abgelehnt"
             className="h-14 w-full rounded-2xl border border-border bg-card pl-12 pr-12 text-base shadow-sm outline-none transition focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5"
@@ -192,7 +273,10 @@ function CaseSupport() {
           {query && (
             <button
               type="button"
-              onClick={() => setQuery("")}
+              onClick={() => {
+                setQuery("");
+                setAsked(null);
+              }}
               aria-label="Suche leeren"
               className="absolute right-3 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
             >
@@ -206,7 +290,10 @@ function CaseSupport() {
               <button
                 key={ex}
                 type="button"
-                onClick={() => setQuery(ex)}
+                onClick={() => {
+                  setQuery(ex);
+                  void ask(ex);
+                }}
                 className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 {ex}
@@ -215,6 +302,8 @@ function CaseSupport() {
           </div>
         )}
       </div>
+
+      {asked && aiEnabled && <AiAnswer asked={asked} sending={sending} />}
 
       {/* Results */}
       {q.length >= 2 ? (
