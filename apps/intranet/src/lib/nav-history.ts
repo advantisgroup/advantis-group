@@ -13,6 +13,16 @@ export function recordVisit(url: string) {
   if (visited.length > MAX) visited.shift();
 }
 
+/** Whether there is an in-app page before the current one (header back arrow). */
+export function hasPreviousVisit(): boolean {
+  return visited.length > 1;
+}
+
+/** Drop the current page after a back step, so repeated back clicks walk the list. */
+export function forgetCurrentVisit() {
+  visited.pop();
+}
+
 /** Most recent page, before the current one, for which `keep` is true. */
 export function lastVisitWhere(keep: (url: string) => boolean): string | null {
   for (let i = visited.length - 2; i >= 0; i--) {
