@@ -149,3 +149,34 @@ describe("competitors watch", () => {
     expect(state.prevHash).toBe("h");
   });
 });
+
+describe("Testbetrieb", () => {
+  test("test: nur für Admins, keine Ankündigung, bis release", async () => {
+    const t = await setup();
+    await t.mutation(internal.competitors.watch.publish, { changes: [], test: true });
+    await t.mutation(internal.competitors.watch.publish, {
+      changes: [
+        {
+          source: "dkv-card-charge",
+          changes: {
+            ...empty,
+            neueProdukte: [
+              { anbieter: "DKV", produkt: "DKV Card +Charge Truck", art: "Ladekarte" },
+            ],
+          },
+        },
+      ],
+    });
+    let entry = (await t.run((ctx) => ctx.db.query("wikiEntries").collect()))[0]!;
+    expect(entry.minRole).toBe("admin");
+    expect(await announcements(t)).toHaveLength(0);
+
+    const res = await t.mutation(internal.competitors.watch.release, {});
+    expect(res.result).toBe("released");
+    entry = (await t.run((ctx) => ctx.db.query("wikiEntries").collect()))[0]!;
+    expect(entry.minRole).toBeUndefined();
+    const posted = await announcements(t);
+    expect(posted).toHaveLength(1);
+    expect(posted[0]!.title).toContain("Neu im Wiki");
+  });
+});
