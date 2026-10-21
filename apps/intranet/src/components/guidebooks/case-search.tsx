@@ -22,7 +22,6 @@ import { AiThinking } from "@/components/ai/AiThinking";
 import { useAiEnabled } from "@/components/ai/use-ai-enabled";
 import { useAiRun } from "@/components/ai/use-ai-run";
 import { Link } from "@/components/Link";
-import { useIsAdmin } from "@/components/providers/current-user";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIntranetApiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -392,7 +391,7 @@ const MORE: { id: View; label: string; icon: ReactNode }[] = [
 
 export function CaseSearchGuidebook() {
   const [view, setView] = useState<View>("list");
-  const isAdmin = useIsAdmin();
+  const aiEnabledNav = useAiEnabled();
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
@@ -420,7 +419,7 @@ export function CaseSearchGuidebook() {
             {m.label}
           </button>
         ))}
-        {isAdmin && (
+        {aiEnabledNav && (
           <Link
             href="/wiki-chat"
             className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"

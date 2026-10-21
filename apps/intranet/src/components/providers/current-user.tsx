@@ -102,9 +102,17 @@ export function isOwnerOrAdmin(user: CurrentUser, ownerId: string): boolean {
  * Mirrors the server-side `requireCapability` check; this is UI-only gating,
  * not the enforcement itself.
  */
+/** Mirrors EVERYONE_CAPABILITIES in packages/convex/convex/lib/caller.ts. */
+const EVERYONE_CAPABILITIES: readonly Capability[] = ["use_ai"];
+
 export function useHasCapability(capability: Capability): boolean {
   const user = useCurrentUser();
-  return user.role === "admin" || user.role === "manager" || user.capabilities.includes(capability);
+  return (
+    user.role === "admin" ||
+    user.role === "manager" ||
+    user.capabilities.includes(capability) ||
+    EVERYONE_CAPABILITIES.includes(capability)
+  );
 }
 
 /** True when the user is on the HR list (`applicantAccess`). Admins are not

@@ -25,9 +25,9 @@ const OPEN_PREFIXES = [
   // Performance: für alle freigegeben am 16.10.2026 (Convex-Env
   // PERFORMANCE_MODE=live); Hinweis „im Aufbau“ steht im PerformanceHeader.
   "/performance",
-  // Wissen: Wiki für alle freigegeben am 19.10.2026 (Vahan). KI-Assistent
-  // (/wiki-chat) seit 21.10.2026 wieder nur für Admins.
+  // Wissen: Wiki und KI-Assistent für alle freigegeben (19.10. / 21.10.2026, Vahan).
   "/guidebooks",
+  "/wiki-chat",
   // Hilfe & Fehler
   "/it-tickets",
   "/help",

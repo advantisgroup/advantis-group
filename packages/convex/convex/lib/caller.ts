@@ -24,6 +24,11 @@ const forbidden = () =>
  * — roles, custom-role capabilities, per-person grants and sandbox mode — so
  * the rules live in one place instead of in each handler.
  */
+/** Capabilities every (non-sandboxed) person has without a custom role.
+ *  AI for everyone since 21.10.2026 (Vahan) — the daily run limit still
+ *  applies. Keep in sync with apps/intranet current-user.tsx. */
+export const EVERYONE_CAPABILITIES: ReadonlySet<Capability> = new Set<Capability>(["use_ai"]);
+
 export class Caller {
   constructor(
     readonly user: Doc<"users">,
@@ -57,10 +62,14 @@ export class Caller {
     return this.user.role === "admin";
   }
 
-  /** Managers and admins hold every capability; employees only what their
-   *  custom roles grant, and nothing while sandboxed. */
+  /** Managers and admins hold every capability; employees what their custom
+   *  roles grant plus EVERYONE_CAPABILITIES, and nothing while sandboxed. */
   can(capability: Capability): boolean {
-    return this.isManager || (!this.sandboxed && this.capabilities.has(capability));
+    return (
+      this.isManager ||
+      (!this.sandboxed &&
+        (this.capabilities.has(capability) || EVERYONE_CAPABILITIES.has(capability)))
+    );
   }
 
   /** The author/creator, or an admin. */

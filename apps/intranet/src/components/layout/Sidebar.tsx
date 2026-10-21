@@ -293,9 +293,9 @@ export function Sidebar() {
           },
         ]
       : []),
-    // KI-Assistent: seit 21.10.2026 nur für Admins sichtbar (Vahan) — für
-    // Kollegen ausgeblendet, /wiki-chat ist zusätzlich im Wartungsmodus.
-    ...(aiEnabled && isAdmin
+    // KI-Assistent als eigener Reiter direkt unter dem Wiki — für alle mit KI
+    // (seit 21.10.2026 hat jede Person KI, siehe EVERYONE_CAPABILITIES).
+    ...(aiEnabled
       ? [
           {
             section: "knowledge" as const,

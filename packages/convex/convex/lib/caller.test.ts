@@ -55,9 +55,13 @@ describe("capabilities", () => {
   });
 
   test("employees only hold what their custom roles grant", () => {
-    const c = caller({}, ["use_ai"]);
-    expect(c.can("use_ai")).toBe(true);
+    const c = caller({}, ["manage_guidebooks"]);
+    expect(c.can("manage_guidebooks")).toBe(true);
     expect(c.can("manage_members")).toBe(false);
+  });
+
+  test("everyone holds use_ai without a role", () => {
+    expect(caller({}).can("use_ai")).toBe(true);
   });
 
   test("custom-role capabilities don't count while sandboxed", () => {
