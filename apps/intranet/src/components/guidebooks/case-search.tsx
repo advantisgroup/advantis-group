@@ -2,7 +2,17 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 
-import { Check, List, Map, MessageSquare, RotateCcw, Search, X } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Lightbulb,
+  List,
+  Map,
+  MessageSquare,
+  RotateCcw,
+  Search,
+  X,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
@@ -11,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 import { type CaseRow, CASES } from "./case-search-data";
+import { type SupportEntry, SUPPORT_ENTRIES } from "./support-data";
 import { SOPPanel } from "./sop-panel";
 import { StationsFinder } from "./stations-finder";
 
@@ -136,6 +147,22 @@ const CHECKLIST = [
 ];
 
 const MAX_RESULTS = 40;
+const MAX_SUPPORT = 12;
+
+function scoreSupport(e: SupportEntry, query: string): number {
+  const q = normalize(query);
+  let score = 0;
+  if (e.stichworte.some((k) => normalize(k) === q)) score += 12;
+  if (e.stichworte.some((k) => normalize(k).includes(q))) score += 8;
+  if (normalize(e.titel).includes(q)) score += 10;
+  if (normalize(e.kategorie).includes(q)) score += 4;
+  if (normalize(e.antwort).includes(q)) score += 3;
+  if (score === 0) {
+    if (e.stichworte.some((k) => fuzzyMatch(k, query))) score += 4;
+    if (fuzzyMatch(e.titel, query)) score += 3;
+  }
+  return score;
+}
 
 function CaseSearchTab() {
   const t = useTranslations("CaseSearch");
@@ -160,6 +187,15 @@ function CaseSearchTab() {
       .map((c) => ({ ...c, _score: q ? scoreMatch(c, q) : 0 }))
       .sort((a, b) => b._score - a._score)
       .slice(0, MAX_RESULTS);
+  }, [q, selectedType]);
+
+  const supportResults = useMemo(() => {
+    if (!q || selectedType !== "All") return [];
+    return SUPPORT_ENTRIES.map((e) => ({ e, s: scoreSupport(e, q) }))
+      .filter((x) => x.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .slice(0, MAX_SUPPORT)
+      .map((x) => x.e);
   }, [q, selectedType]);
 
   const doneCount = CHECKLIST.filter((i) => checked[i.id]).length;
@@ -286,20 +322,67 @@ function CaseSearchTab() {
           </span>
           <p className="text-sm font-medium">{t("emptyTitle")}</p>
           <p className="text-xs text-muted-foreground">
-            {t("casesAvailable", { count: CASES.length })}
+            {CASES.length} Case-Kategorien · {SUPPORT_ENTRIES.length} Support-Einträge
           </p>
         </div>
-      ) : results.length === 0 ? (
+      ) : results.length === 0 && supportResults.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-16 text-center">
           <p className="text-sm font-medium">{t("noResultsTitle", { query: q })}</p>
           <p className="text-xs text-muted-foreground">{t("noResultsHint")}</p>
         </div>
       ) : (
         <>
-          <p className="text-sm text-muted-foreground">
-            {t("resultsCount", { count: results.length })}
-            {results.length === MAX_RESULTS ? ` ${t("topN", { n: MAX_RESULTS })}` : ""}
-          </p>
+          {supportResults.length > 0 && (
+            <div className="space-y-2.5">
+              <p className="flex items-center gap-1.5 text-sm font-semibold">
+                <Lightbulb className="size-4 text-warning" />
+                Support-Wissen ({supportResults.length})
+              </p>
+              {supportResults.map((e) => (
+                <div
+                  key={e.id}
+                  className="relative overflow-hidden rounded-xl border border-border/70 bg-card p-4 pl-5"
+                >
+                  <span className="absolute inset-y-0 left-0 w-1 bg-warning" />
+                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-warning/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-foreground">
+                      {e.kategorie}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">Stand {e.stand}</span>
+                  </div>
+                  <div className="text-sm font-semibold">{highlight(e.titel, q)}</div>
+                  <p className="mt-1 text-sm leading-relaxed">{highlight(e.antwort, q)}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {e.stichworte.map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setQuery(k)}
+                        className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"
+                      >
+                        #{k}
+                      </button>
+                    ))}
+                    {e.caseRef && (
+                      <button
+                        type="button"
+                        onClick={() => setQuery(e.caseRef ?? "")}
+                        className="ml-auto flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                      >
+                        Passender Case <ArrowRight className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {results.length > 0 && (
+            <p className="text-sm text-muted-foreground">
+              {t("resultsCount", { count: results.length })}
+              {results.length === MAX_RESULTS ? ` ${t("topN", { n: MAX_RESULTS })}` : ""}
+            </p>
+          )}
           <div className="space-y-2.5">
             {results.map((c, i) => {
               const style = styleFor(c.recordType);
@@ -368,7 +451,11 @@ type Tab = "sop" | "search" | "wiki" | "stations";
 
 const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
   { id: "sop", label: "Szenarien", icon: <List className="h-4 w-4" /> },
-  { id: "search", label: "Case-Suche", icon: <Search className="h-4 w-4" /> },
+  {
+    id: "search",
+    label: "Case & Support",
+    icon: <Search className="h-4 w-4" />,
+  },
   { id: "wiki", label: "Wiki", icon: <MessageSquare className="h-4 w-4" /> },
   {
     id: "stations",

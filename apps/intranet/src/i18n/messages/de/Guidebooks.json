@@ -134,8 +134,8 @@
   "uploadFailed": "Upload fehlgeschlagen",
   "imageBlockIncomplete": "Warte, bis alle Bilder hochgeladen sind, bevor du speicherst",
   "caseSearch": {
-    "title": "Case Management — Stichwortsuche",
-    "description": "Stichwort eingeben und sofort die passenden Case-Felder und Queue finden."
+    "title": "Case & Support",
+    "description": "Stichwort eingeben: Lösungswege aus dem Support plus passende Case-Felder und Queue."
   },
   "problembehandlungen": {
     "title": "Problembehandlung — IT & Arbeitsplatz",

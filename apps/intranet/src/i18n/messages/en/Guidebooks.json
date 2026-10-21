@@ -134,8 +134,8 @@
   "uploadFailed": "Upload failed",
   "imageBlockIncomplete": "Finish uploading every image before saving",
   "caseSearch": {
-    "title": "Case Management — Keyword Search",
-    "description": "Type a keyword to instantly find the matching case fields and queue."
+    "title": "Case & Support",
+    "description": "Type a keyword: support solutions plus the matching case fields and queue."
   },
   "problembehandlungen": {
     "title": "Troubleshooting — IT & Workstation",

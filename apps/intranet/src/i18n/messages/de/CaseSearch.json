@@ -1,5 +1,5 @@
 {
-  "searchPlaceholder": "z.B. PIN, Chargeback, Blocking, Refund, Invoice …",
+  "searchPlaceholder": "z.B. VR, Prepaid, PIN, Rücklastschrift, Blocking, Invoice …",
   "clear": "Leeren",
   "allTypes": "Alle",
   "emptyTitle": "Stichwort eingeben oder Record Type wählen",
