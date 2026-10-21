@@ -25,6 +25,7 @@ import { wikiChatRoute } from "./routes/wiki-chat.js";
 import { wikiFormatAssistRoute } from "./routes/wiki-format-assist.js";
 import { wikiImportRoute } from "./routes/wiki-import.js";
 import { internalBackupsRoute } from "./routes/internal/backups.js";
+import { internalCompetitorsRoute } from "./routes/internal/competitors.js";
 import { internalDigestRoute } from "./routes/internal/digest.js";
 import { internalHrMailboxRoute } from "./routes/internal/hr-mailbox.js";
 import { internalMailRoute } from "./routes/internal/mail.js";
@@ -84,6 +85,7 @@ export const app = new Elysia()
   .use(internalDigestRoute)
   .use(internalMailRoute)
   .use(internalHrMailboxRoute)
+  .use(internalCompetitorsRoute)
   .use(internalOnedriveRoute)
   .use(internalPushRoute)
   .use(internalUpdatesRoute)

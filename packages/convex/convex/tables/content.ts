@@ -160,6 +160,32 @@ export const contentTables = {
     .index("by_author", ["authorUserId"])
     .index("by_deletedAt", ["deletedAt"]),
 
+  // Wettbewerbs-Beobachtung Tank-/Ladekarten (competitors/watch.ts): eine
+  // Zeile je beobachteter Seite mit dem zuletzt gelesenen Text und den daraus
+  // belegten Angeboten. Daraus entsteht der Wiki-Eintrag
+  // „wettbewerb-tank-ladekarten“; die Zeilen selbst sieht niemand direkt.
+  competitorSources: defineTable({
+    key: v.string(),
+    /** Normalisierter Seitentext (gekürzt) – Grundlage dafür, was als neu
+     *  oder entfallen gilt. */
+    text: v.optional(v.string()),
+    textHash: v.optional(v.string()),
+    offers: v.array(
+      v.object({
+        anbieter: v.string(),
+        produkt: v.string(),
+        art: v.string(),
+        merkmale: v.array(v.object({ label: v.string(), wert: v.string(), beleg: v.string() })),
+      }),
+    ),
+    /** Wann die Seite zuletzt erfolgreich gelesen wurde (Stand im Wiki). */
+    checkedAt: v.optional(v.number()),
+    /** Wann sich ihr Text zuletzt geändert hat. */
+    changedAt: v.optional(v.number()),
+    lastError: v.optional(v.string()),
+    lastErrorAt: v.optional(v.number()),
+  }).index("by_key", ["key"]),
+
   // Org-wide default instructions for the "format with AI" wiki-entry
   // assist (apps/api's /wiki/format-assist) — singleton-by-key, same shape
   // as activitySettings. Only ever one row (key "default") for now.
