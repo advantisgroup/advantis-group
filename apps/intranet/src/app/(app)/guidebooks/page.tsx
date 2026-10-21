@@ -24,6 +24,7 @@ import { toast } from "sonner";
 
 import { RouteTabs } from "@/components/layout/RouteTabs";
 import { useKnowledgeTabs } from "@/components/guidebooks/knowledge-tabs";
+import { PriceMailboxCard } from "@/components/guidebooks/PriceMailboxCard";
 import { QuickToolButtons } from "@/components/guidebooks/quick-tools";
 import {
   accessibleGuidebooks,
@@ -699,6 +700,8 @@ export default function GuidebooksPage() {
           </div>
         </div>
       }
+
+      {user.role === "admin" && <PriceMailboxCard />}
 
       <div className="space-y-4">
         <div>

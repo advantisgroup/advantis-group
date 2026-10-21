@@ -16,6 +16,7 @@ import { mailRoute } from "./routes/mail.js";
 import { navigateRoute } from "./routes/navigate.js";
 import { onedriveRoute } from "./routes/onedrive.js";
 import { performanceRoute } from "./routes/performance.js";
+import { priceMailboxRoute } from "./routes/priceMailbox.js";
 import { passkeysRoute } from "./routes/passkeys.js";
 import { salesCoachEvRoute } from "./routes/sales-coach-ev.js";
 import { secondaryEmailsRoute } from "./routes/secondaryEmails.js";
@@ -30,6 +31,7 @@ import { internalDigestRoute } from "./routes/internal/digest.js";
 import { internalHrMailboxRoute } from "./routes/internal/hr-mailbox.js";
 import { internalMailRoute } from "./routes/internal/mail.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
+import { internalPriceMailboxRoute } from "./routes/internal/price-mailbox.js";
 import { internalOnedriveRoute } from "./routes/internal/onedrive.js";
 import { internalPushRoute } from "./routes/internal/push.js";
 import { internalUpdatesRoute } from "./routes/internal/updates.js";
@@ -85,6 +87,7 @@ export const app = new Elysia()
   .use(internalDigestRoute)
   .use(internalMailRoute)
   .use(internalHrMailboxRoute)
+  .use(internalPriceMailboxRoute)
   .use(internalCompetitorsRoute)
   .use(internalOnedriveRoute)
   .use(internalPushRoute)
@@ -106,7 +109,8 @@ export const app = new Elysia()
   .use(wikiFormatAssistRoute)
   .use(wikiImportRoute)
   .use(applicantsRoute)
-  .use(hrMailboxRoute);
+  .use(hrMailboxRoute)
+  .use(priceMailboxRoute);
 
 export type App = typeof app;
 

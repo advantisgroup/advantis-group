@@ -223,6 +223,22 @@ if (process.env.DISABLE_CRONS !== "true") {
     internal.hr.mailbox.runPoll,
     {},
   );
+  // Die Preisliste kommt jeden Morgen vor 08:30 Uhr (Berlin). Crons laufen in
+  // UTC: 06:30 UTC ist 08:30 Sommerzeit, 07:30 UTC ist 08:30 Winterzeit. Der
+  // jeweils andere Lauf findet nichts Neues, weil die Position schon
+  // weitergerückt ist (oder die Mail kommt erst danach).
+  crons.cron(
+    "wiki: Preisliste aus dem Postfach übernehmen (Sommerzeit)",
+    "30 6 * * *",
+    internal.wiki.priceMailbox.runPoll,
+    {},
+  );
+  crons.cron(
+    "wiki: Preisliste aus dem Postfach übernehmen (Winterzeit)",
+    "30 7 * * *",
+    internal.wiki.priceMailbox.runPoll,
+    {},
+  );
 }
 
 export default crons;
