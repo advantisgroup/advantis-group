@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 import { usePathname, useRouter } from "next/navigation";
 
@@ -18,6 +18,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { GracePeriodBanner } from "@/components/layout/GracePeriodBanner";
+import { HeaderBackButton } from "@/components/layout/HeaderBackButton";
 import { KeyboardShortcuts } from "@/components/layout/KeyboardShortcuts";
 import { MaintenanceScreen } from "@/components/layout/MaintenanceScreen";
 import { SandboxBanner } from "@/components/layout/SandboxBanner";
@@ -44,7 +45,7 @@ import { OnboardingPanel } from "@/components/onboarding/OnboardingPanel";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import { OnboardingTrigger } from "@/components/onboarding/OnboardingTrigger";
 import { useIsAdmin } from "@/components/providers/current-user";
-import { recordVisit } from "@/lib/nav-history";
+import { hasPreviousVisit, recordVisit } from "@/lib/nav-history";
 import { TourCompletionScreen } from "@/components/tour/TourCompletionScreen";
 import { TourOverlay } from "@/components/tour/TourOverlay";
 import { TourPopout } from "@/components/tour/TourPopout";
@@ -92,8 +93,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   // Remember in-app pages for back arrows (see lib/nav-history). Read from
   // window so query-only changes on the same path are kept as well.
+  const [canGoBack, setCanGoBack] = useState(false);
   useEffect(() => {
     recordVisit(window.location.pathname + window.location.search);
+    setCanGoBack(hasPreviousVisit());
   }, [pathname]);
   const heartbeat = useMutation(api.people.presence.heartbeat);
   const mainRef = useRef<HTMLElement>(null);
@@ -299,6 +302,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
           ) : (
             <SidebarTrigger className="-ml-1" />
           )}
+          {/* Always-visible back arrow, so nobody has to scroll up to a
+              page's own back link. */}
+          <HeaderBackButton show={canGoBack} />
           {/* Page title and tabs get the whole left side — the title never
               shrinks, the tabs scroll sideways if they run out of room. */}
           <div className="flex min-w-0 flex-1 items-center">
