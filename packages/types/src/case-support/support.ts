@@ -42,8 +42,8 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Was muss in den Case?",
     stichworte: ["case inhalt", "betreff", "pflichtangaben"],
     antwort:
-      "Kundennummer, Ansprechpartner (Name und Kontakt) und den konkreten Grund. Der Betreff sagt, worum es geht, z. B. „Limit-Erhöhungsanfrage“ oder „Zahlungsnachweis“, nicht nur „bitte bearbeiten“.",
-    stand: "2026-09-09",
+      "Kundennummer, Ansprechpartner (Name und Kontakt) und den konkreten Grund. Der Betreff sagt, worum es geht, z. B. „Limit-Erhöhungsanfrage“ oder „Zahlungsnachweis“, nicht nur „bitte bearbeiten“. Die AP- bzw. Kundennummer muss stimmen; ohne sie kann niemand prüfen. Mit einer falschen Nummer ruft die Fachabteilung womöglich beim falschen Kunden an.",
+    stand: "2026-09-25",
     fragen: "was schreibe ich in den case pflichtfelder kundennummer telefonnummer grund",
   },
   {
@@ -52,7 +52,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Großkunden (Field/Key/Channel)",
     stichworte: ["field", "großkunde", "betreuer", "chatter"],
     antwort:
-      "Nur Cases an den Betreuer, keine Teams-Nachrichten. Ist es dringend: im Salesforce-Chatter den Betreuer mit @ markieren.",
+      "Nur Cases an den Betreuer, keine Teams-Nachrichten. Ist es dringend: im Salesforce-Chatter den Betreuer mit @ markieren. Ist der persönliche ASP abwesend, geht der Case an die Vertretung bzw. fieldaccount@uta.com; interne Durchwahlen des Field-Teams nicht an Kunden geben. Auch dringende Field-Fälle direkt als Case an den ASP.",
     stand: "2026-09-03",
     fragen: "großer kunde key account eigener betreuer account manager",
   },
@@ -111,7 +111,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Interne Kontakte nicht weitergeben",
     stichworte: ["durchwahl", "outlook", "anwalt", "telefonnummer"],
     antwort:
-      "Keine internen Durchwahlen, keine persönlichen E-Mail-Adressen und keine Telefonnummer des Anwalts an Kunden geben.",
+      "Keine internen Durchwahlen, keine persönlichen E-Mail-Adressen und keine Telefonnummer des Anwalts an Kunden geben. Auch keine persönlichen Outlook-Adressen von Kollegen (z. B. für Service-Center- oder FTP-Anfragen) herausgeben.",
     stand: "2026-07-30",
     fragen: "kunde will nummer von mitarbeiter direkt sprechen kontakt",
   },
@@ -146,12 +146,82 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     fragen: "falsch getankt diesel benzin verwechselt umsätze sehen buchungen",
   },
   {
+    id: "regel-eskalation-anrufen",
+    kategorie: "Regeln",
+    titel: "Eskalierender Kunde: Finanz direkt anrufen",
+    stichworte: ["Eskalation", "Finance", "Accounting", "Credit"],
+    antwort:
+      "Eskaliert ein Kunde, die zuständigen Finance-/Accounting-Mitarbeiter direkt anrufen, nicht nur im Case markieren.",
+    stand: "2026-07-03",
+    fragen: "Kunde eskaliert, Case liegt bei Finanz, keiner reagiert, was tun",
+  },
+  {
+    id: "regel-mehrere-themen-ein-case",
+    kategorie: "Regeln",
+    titel: "Mehrere Anliegen in einem Case",
+    stichworte: ["Case", "mehrere Themen", "zusammenfassen"],
+    antwort:
+      "Mehrere Anliegen eines Kunden (z. B. Reklamation, Umstellung auf E-Mail-Abrechnung, Limit, Kartenbestellung) können in einem Case zusammengefasst werden. Den Case an CCDEU geben.",
+    stand: "2026-07-10",
+    fragen: "Kunde hat drei Anliegen gleichzeitig, brauche ich drei Cases",
+  },
+  {
+    id: "regel-stoerung-cases",
+    kategorie: "Regeln",
+    titel: "Bei Störungen trotzdem Cases anlegen",
+    stichworte: ["Störung", "Paytech", "Ausfall", "Dokumentation"],
+    antwort:
+      "Auch bei Störungen immer Cases anlegen, damit der Ausfall dokumentiert ist. Nur echte Notfälle im Chat eskalieren; an der Tankstelle gilt die manuelle Freigabe.",
+    stand: "2026-07-22",
+    fragen: "Große Störung, viele Anrufe, muss ich trotzdem für jeden einen Case machen",
+  },
+  {
+    id: "regel-zahlungseingang-finanz",
+    kategorie: "Regeln",
+    titel: "Zahlungseingang prüfen nur durch Finanz",
+    stichworte: ["Überweisung", "Zahlungseingang", "Finanz", "bezahlt"],
+    antwort:
+      "CC kann nicht sehen, ob Überweisungen angekommen sind. Fall an die Finanzabteilung geben; der Kunde schickt den Beleg an service.finanz@uta.com.",
+    stand: "2026-07-22",
+    fragen: "Kunde sagt er hat überwiesen, ich sehe nicht ob das Geld da ist",
+  },
+  {
+    id: "wartung-was-geht",
+    kategorie: "Regeln",
+    titel: "Salesforce-Wartung oder Systemausfall",
+    stichworte: ["Wartungsfenster", "Downtime", "Salesforce", "Paytech", "CAM", "Cases"],
+    antwort:
+      "Während der geplanten Wartung der Backend-Systeme liefen weiter: Telefon, Paytech, Case Management und CAM (Limite vergeben). Cases weiter anlegen und an die jeweiligen Queues stellen; andere Abteilungen sind ggf. nicht erreichbar.",
+    stand: "2026-08-28",
+    fragen: "IT sagt Salesforce nicht nutzen wegen Wartung, was dürfen wir noch machen?",
+  },
+  {
+    id: "re-kein-notfall",
+    kategorie: "Regeln",
+    titel: "Typische Nicht-Notfälle",
+    stichworte: ["kein Notfall", "first in first out", "Case", "Gebühren", "MwSt"],
+    antwort:
+      "Nein: doppelt berechnete Karten, Gebühren nach Kündigung, MwSt-Rückerstattung, Portal-Registrierung, Modell-Abklärungen und Rechnungsfragen sind keine Notfälle – Case an die richtige Queue, Bearbeitung nach first in, first out. Auch ein verärgerter Kunde ändert daran nichts.",
+    stand: "2026-09-04",
+    fragen: "Kunde ist sauer wegen Gebühren oder Erstattung, darf das in den Chat?",
+  },
+  {
+    id: "regel-urgent-betreff",
+    kategorie: "Regeln",
+    titel: "Case eskalieren: URGENT im Betreff",
+    stichworte: ["urgent", "eskalation", "priorität", "betreff", "nachfassen"],
+    antwort:
+      "Liegt der Case schon in der Fachabteilung, wird er mit „URGENT“ im Betreff markiert und bevorzugte Bearbeitung angefragt. Einen neuen Case braucht es nicht. Themen ohne Notfall (z. B. Rabattanfragen) müssen trotzdem warten, bis sie dran sind.",
+    stand: "2026-09-23",
+    fragen: "Kunde ruft zum fünften Mal an, Case liegt schon, wie beschleunigen?",
+  },
+  {
     id: "vr-request",
     kategorie: "Limit & VR",
     titel: "Limit erhöhen (Request)",
     stichworte: ["limit", "vr", "erhöhen", "request", "credit request"],
     antwort:
-      "Button „Credit Request“ in Salesforce nutzen. Oft ist dann kein Case an Credit nötig. Immer den Bedarf in Euro abfragen.",
+      "Button „Credit Request“ in Salesforce nutzen. Oft ist dann kein Case an Credit nötig. Immer den Bedarf in Euro abfragen. Nach Freigabe über die SF-Automatik dauert es ca. 10–15 Minuten, bis die Karten wieder gehen. Zeigt der Request rot/„Systemumstellung“, später erneut versuchen.",
     stand: "2026-07-30",
     fragen:
       "limit hochsetzen mehr rahmen verfügungsrahmen kreditrahmen anheben ausgabe reicht nicht",
@@ -163,7 +233,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Request zeigt „Fail“",
     stichworte: ["fail", "fehlermeldung", "rot", "pflichtfelder"],
     antwort:
-      "Im Account fehlen Pflichtfelder. Die markierten Felder mit mindestens „1“ befüllen, dann klappt es.",
+      "Im Account fehlen Pflichtfelder. Die markierten Felder mit mindestens „1“ befüllen, dann klappt es. Betrifft vor allem kürzlich registrierte Kunden, bei denen nach der Umstellung Pflichtfelder fehlen; der Button selbst funktioniert.",
     stand: "2026-09-03",
     fragen: "antrag fehlgeschlagen fehler abgelehnt geht nicht durch",
     caseRef: "Limit check",
@@ -184,7 +254,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "VR plötzlich auf 0 oder 2 €",
     stichworte: ["0 euro", "2 euro", "runtergesetzt", "bonität", "crefo"],
     antwort:
-      "Meist schlechtere Bonität oder eine offene bzw. überfällige Rechnung. Kunden werden darüber aktuell nicht informiert. Tipp: eine Limit-Benachrichtigung im Portal einrichten.",
+      "Meist schlechtere Bonität oder eine offene bzw. überfällige Rechnung. Kunden werden darüber aktuell nicht informiert. Tipp: eine Limit-Benachrichtigung im Portal einrichten. Manche Kunden stehen auf einer Automatik, die den VR nach Verbrauch anpasst; dann klappt die Erhöhung normalerweise direkt über die Anfrage in SF.",
     stand: "2026-09-14",
     fragen: "limit weg null gesenkt plötzlich kein rahmen mehr auskunftei schufa",
     caseRef: "Credit Limit",
@@ -195,7 +265,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Mehr Limit nur gegen Kaution",
     stichworte: ["kaution", "vollabsicherung", "sicherheitsvereinbarung"],
     antwort:
-      "Bei schlechter Bonität gilt Kaution = Limit. Erhöhung nur mit zusätzlicher Kaution **und** unterschriebener Sicherheitsvereinbarung. Drohungen ändern daran nichts.",
+      "Bei schlechter Bonität gilt Kaution = Limit. Erhöhung nur mit zusätzlicher Kaution **und** unterschriebener Sicherheitsvereinbarung. Drohungen ändern daran nichts. Eine überwiesene Kaution wird erst verbucht, wenn die aktualisierte Sicherheitsvereinbarung unterschrieben vorliegt. Das Limit wird nur um die tatsächlich hinterlegte Summe erhöht.",
     stand: "2026-09-11",
     fragen: "sicherheit hinterlegen bürgschaft absicherung",
     caseRef: "Securities",
@@ -218,6 +288,26 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
       "Entweder den VR erhöhen oder auf wöchentliche Abrechnung umstellen (Case). Bis zur Abbuchung bleibt der Rahmen gebunden.",
     stand: "2026-09-29",
     fragen: "rahmen reicht nicht bis zur abbuchung abrechnung öfter",
+  },
+  {
+    id: "vm-umstellung-abbucher",
+    kategorie: "Limit & VR",
+    titel: "Vorschussmodell auf Abbucher mit Kaution umstellen",
+    stichworte: ["VM", "Vorschussmodell", "Abbucher", "Kaution", "Sicherheitsvereinbarung", "SEPA"],
+    antwort:
+      "Das entscheidet nicht der Kunde, sondern Credit; dafür braucht es eine Anfrage zur Umstellung (Case an die richtige Queue). Liegt bereits eine schriftliche Sicherheitsforderung von Credit im Case vor, gilt das als Freigabe; dann Bankverbindung/SEPA hinterlegen und umstellen. Ob die Kaution eingegangen ist, kann nur Accounting sagen.",
+    stand: "2026-07-24",
+    fragen: "VM-Kunde will lieber SEPA-Abbuchung mit Kaution statt Vorauszahlung, geht das?",
+  },
+  {
+    id: "vr-weg-trotz-zahlung",
+    kategorie: "Limit & VR",
+    titel: "Abbuchung läuft, trotzdem kein VR",
+    stichworte: ["Limit aufgebraucht", "Kaution = Limit", "App", "Kontostand"],
+    antwort:
+      "Die App bzw. das Portal zeigen nur Daten an; Ursache ist meist, dass der Verbrauch den Rahmen ausschöpft, obwohl keine Rechnung offen ist. Bei Vollabsicherung (Kaution = Limit) geht mehr Limit nur mit weiterer Kaution. Im Zweifel den tatsächlichen Bedarf abfragen und per Credit Request bzw. Case klären lassen.",
+    stand: "2026-08-07",
+    fragen: "Geld wird jede Woche abgebucht, App zeigt kaum Rahmen, Kunde kann nicht tanken",
   },
   {
     id: "karte-velocity",
@@ -297,9 +387,30 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Viele Kunden gleichzeitig betroffen",
     stichworte: ["störung", "paytech", "ausfall", "viele kunden"],
     antwort:
-      "Im Chat nachfragen, ob eine Störung bekannt ist. Beispiele für Kunden sammeln (Kundennummer, Karte, Uhrzeit). Tankstellen nutzen die manuelle Freigabe.",
+      "Im Chat nachfragen, ob eine Störung bekannt ist. Beispiele für Kunden sammeln (Kundennummer, Karte, Uhrzeit). Tankstellen nutzen die manuelle Freigabe. Bei Störungen werden Kunden nicht aktiv informiert. Konkrete Kundennummern im Chat nennen; oft stellt sich heraus, dass Einzelne nur ihr Limit erreicht haben. Zu jedem Beispiel AP-Nummer, Kartennummer oder Kennzeichen und die Uhrzeit des Versuchs in den Chat schreiben. Dann lässt sich prüfen, ob es die Störung ist oder ein anderer Grund.",
     stand: "2026-10-09",
     fragen: "nichts geht überall abgelehnt systemausfall viele anrufe",
+  },
+  {
+    id: "paytech-haengt",
+    kategorie: "Karte abgelehnt",
+    titel: "Zahlung gebucht, Karte geht trotzdem nicht",
+    stichworte: ["Paytech", "Guthaben", "IT-Ticket", "Synchronisation"],
+    antwort:
+      "Ist die Zahlung im Kundenkonto gutgeschrieben und nicht verbraucht, kann Paytech hängen. Dann IT-Ticket aufmachen; Verbuchung selbst kann nicht beschleunigt werden.",
+    stand: "2026-09-01",
+    fragen: "Zahlung ist gutgeschrieben, aber an der Tankstelle geht die Karte immer noch nicht",
+  },
+  {
+    id: "karte-nummer-erfragen",
+    kategorie: "Karte abgelehnt",
+    titel: "Ablehnung nachträglich prüfen lassen",
+    stichworte: ["Kartennummer", "Tankstelle", "Transaktionsversuch", "Prüfung"],
+    antwort:
+      "Immer die Kartennummer erfragen, damit gezielt nach Transaktionsversuchen dieser Karte gesucht werden kann; Karte und Station stehen im System bei jedem Versuch. Hat der Kunde genug VR und tankt mit anderen Karten, liegt es meist an der Tankstelle bzw. dem Lesegerät; Vorgang vor Ort erneut versuchen.",
+    stand: "2026-07-29",
+    fragen:
+      "Kunde sagt Karte ging nicht, Kollegen sehen erfolgreiche Tankungen – was brauchen sie?",
   },
   {
     id: "pp-minus",
@@ -361,6 +472,56 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     fragen: "vorkasse rechnung bezahlen",
   },
   {
+    id: "pp-kennzeichen-6",
+    kategorie: "Prepaid",
+    titel: "„6 €“ im Account = Prepaid-Kennzeichen",
+    stichworte: ["6 Euro", "Guthabenkonto", "VK-Modell", "Vorauskasse"],
+    antwort:
+      "Die 6 dient intern als Kennzeichen für ein Guthabenkonto (VK-/Vorauskassemodell). Ein Minus im Portal ist dann das Guthaben. Steht der Kunde laut SF auf Selbstzahler/VK-Modell und behauptet SEPA-Abbuchung, muss die Finanz prüfen.",
+    stand: "2026-07-21",
+    fragen: "Im Account steht Limit 6 Euro, was bedeutet das",
+  },
+  {
+    id: "pp-aufladung-portal",
+    kategorie: "Prepaid",
+    titel: "Aufladungen im Portal nachvollziehen",
+    stichworte: ["Prepaid", "Aufladung", "Portal", "Transaktionen"],
+    antwort:
+      "Nur über den Verfügungsrahmen: nach einer Vorauskasse passt sich das Ausgabelimit an. Die Überweisung selbst erscheint weder in den Abrechnungsunterlagen noch unter Transaktionen.",
+    stand: "2026-07-10",
+    fragen: "Wo sieht der Prepaid-Kunde seine Einzahlungen im Kundenportal",
+  },
+  {
+    id: "pp-guthaben-verrechnet",
+    kategorie: "Prepaid",
+    titel: "Eingezahlt, aber kein Guthaben sichtbar",
+    stichworte: ["Guthaben", "offene Rechnungen", "verrechnet", "Kaution"],
+    antwort:
+      "Prüfen, ob offene Rechnungen mit der Einzahlung verrechnet wurden; dann ist das Guthaben bereits verbraucht. Für eine Gegenüberstellung aller Einzahlungen und Rechnungen kann ein Kontoauszug bei der Fachabteilung beantragt werden.",
+    stand: "2026-08-28",
+    fragen: "Kunde hat eingezahlt, sieht aber kein Guthaben bzw. weniger als erwartet",
+  },
+  {
+    id: "pp-kein-kreditlimit",
+    kategorie: "Prepaid",
+    titel: "Prepaid-Kunde will Kreditlimit erhöhen",
+    stichworte: ["prepaid", "kreditlimit", "erhöhung", "vorschussmodell"],
+    antwort:
+      "Bei Prepaid bzw. Vorschussmodell gibt es keine Kreditlimiterhöhung. Der Kunde kann nur so viel tanken, wie er vorher eingezahlt hat. Beim Vorschussmodell wird auch nichts abgebucht.",
+    stand: "2026-09-17",
+    fragen: "Prepaid-Kunde will eine Kreditlimiterhöhung, Case liegt seit Tagen, was tun?",
+  },
+  {
+    id: "pp-wechsel-abbucher",
+    kategorie: "Prepaid",
+    titel: "Wechsel Prepaid zu Abbucher",
+    stichworte: ["prepaid", "abbucher", "umstellung", "vereinbarung", "vorauskasse"],
+    antwort:
+      "Zuerst prüfen, ob er eine Vereinbarung zum Vorauskassenmodell unterschrieben hat und ob er jemals Abbucher war. Ein Wechsel zum Abbucher ist nicht garantiert, z. B. bei sehr jungen Unternehmen. Den Wechsel über Case bzw. Credit anfragen und nichts zusagen.",
+    stand: "2026-10-07",
+    fragen: "Kunde sagt, er wurde ohne Info auf Prepaid umgestellt, will zurück zum Abbucher",
+  },
+  {
     id: "sperre-endgueltig",
     kategorie: "Sperre & Inkasso",
     titel: "Komplett gesperrt",
@@ -388,8 +549,8 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Konto bei Collection oder Anwalt",
     stichworte: ["closing", "lawyer", "anwalt", "inkasso", "collection"],
     antwort:
-      "Keine Auskunft geben. Satz: „Wir haben keine Einsicht mehr in Ihr Kundenkonto, die Kollegen melden sich.“ Intern an Collection weitergeben.",
-    stand: "2026-08-11",
+      "Keine Auskunft geben. Satz: „Wir haben keine Einsicht mehr in Ihr Kundenkonto, die Kollegen melden sich.“ Intern an Collection weitergeben. Auch auf Nachfrage keine Zusage, dass sich jemand meldet; bei Komplettsperre auf Neukundenantrag verweisen.",
+    stand: "2026-08-14",
     fragen: "inkasso anwalt forderung mahnverfahren",
   },
   {
@@ -407,7 +568,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Kaution nach Kündigung",
     stichworte: ["kaution zurück", "kündigung", "auszahlung"],
     antwort:
-      "Wird ausgezahlt, wenn alles abgerechnet ist und keine offenen Posten bestehen. Steht so in der Kündigungsbestätigung.",
+      "Wird ausgezahlt, wenn alles abgerechnet ist und keine offenen Posten bestehen. Steht so in der Kündigungsbestätigung. Liegt der gesperrte Kunde beim Anwalt, informiert ihn das Collection-Team über eine eventuell verbleibende Kaution.",
     stand: "2026-08-05",
     fragen: "sicherheit zurück geld zurück vertrag beendet",
     caseRef: "Release of Security",
@@ -423,12 +584,22 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     fragen: "pleite insolvent zahlungsunfähig",
   },
   {
+    id: "vr-nach-zahlung-automatisch",
+    kategorie: "Sperre & Inkasso",
+    titel: "Bezahlt nach Zahlungsaufforderung – wann geht die Karte wieder?",
+    stichworte: ["Zahlungsaufforderung", "Verbuchung", "VR", "Rückmeldung", "Echtzeitüberweisung"],
+    antwort:
+      "Überweisungen laufen erst durch die Buchungssysteme; auch Echtzeitüberweisungen sind nicht sofort verwendbar (meist 3–4 Tage, manchmal schneller). Nach der Verbuchung wird der VR automatisch wieder angepasst. Eine automatische Rückmeldung an den Kunden gibt es nicht; die Abbuchung per SEPA läuft danach normal weiter, sofern kein technisches Problem oder ungedecktes Konto vorliegt.",
+    stand: "2026-08-10",
+    fragen: "Kunde hat offene Rechnung überwiesen, Karten noch gesperrt, bekommt er Bescheid?",
+  },
+  {
     id: "bank-aendern",
     kategorie: "Bank & SEPA",
     titel: "Bankverbindung ändern",
     stichworte: ["bankverbindung", "iban", "ändern", "sepa"],
     antwort:
-      "Nur schriftlich per E-Mail, nie auf Zuruf. Pro Kundenkonto ist nur eine Bankverbindung möglich.",
+      "Nur schriftlich per E-Mail, nie auf Zuruf. Pro Kundenkonto ist nur eine Bankverbindung möglich. Eine zweite Bankverbindung für weitere Karten derselben Firma geht nicht. Dafür muss der Kunde ein weiteres Kundenkonto eröffnen.",
     stand: "2026-09-23",
     fragen: "neue bank neues konto kontonummer ändern lastschrift mandat",
     caseRef: "Change of bank details",
@@ -449,7 +620,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Umfirmierung",
     stichworte: ["umfirmierung", "firmenname", "gmbh", "neuer name"],
     antwort:
-      "Das Konto bleibt bestehen, die Daten werden per E-Mail aktualisiert. Das neue SEPA-Mandat kommt erst nach Abschluss der Umfirmierung. Die Abteilung ist im Verzug.",
+      "Das Konto bleibt bestehen, die Daten werden per E-Mail aktualisiert. Das neue SEPA-Mandat kommt erst nach Abschluss der Umfirmierung. Die Abteilung ist im Verzug. Umfirmierungen bearbeitet die Queue DACH_WSE_Securities; bei langem Stau im Chat um Vorziehen bitten.",
     stand: "2026-10-12",
     fragen: "name geändert rechtsform neuer firmenname",
     caseRef: "Legal name/legal form change",
@@ -460,7 +631,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Rücklastschrift",
     stichworte: ["rücklastschrift", "retoure", "zweites mal abbuchen", "gebühr"],
     antwort:
-      "Es wird kein zweites Mal abgebucht; der Kunde überweist. Die Gebühr kommt als Position auf eine spätere Abrechnung.",
+      "Es wird kein zweites Mal abgebucht; der Kunde überweist. Die Gebühr kommt als Position auf eine spätere Abrechnung. Bei Rückläufern im Verwendungszweck die Abrechnungsnummer angeben.",
     stand: "2026-10-12",
     fragen: "lastschrift zurückgegangen konto nicht gedeckt abbuchung geplatzt",
     caseRef: "direct debit rejected",
@@ -494,6 +665,48 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     fragen: "wochenende feiertag wann wird abgebucht",
   },
   {
+    id: "bank-sepa-nicht-abgebucht",
+    kategorie: "Bank & SEPA",
+    titel: "Einzugsermächtigung da, aber keine Abbuchung",
+    stichworte: ["SEPA", "Lastschrift", "nicht abgebucht", "Mandat"],
+    antwort:
+      "Case an CCDEU, damit das SEPA-Mandat geprüft wird. Bis dahin überweist der Kunde manuell.",
+    stand: "2026-07-14",
+    fragen: "Kunde hat SEPA erteilt, trotzdem wird die Rechnung nicht abgebucht",
+  },
+  {
+    id: "bank-selbst-ueberweisen",
+    kategorie: "Bank & SEPA",
+    titel: "Kunde will vor der Abbuchung selbst überweisen",
+    stichworte: ["überweisen", "abbuchung", "lastschrift", "retoure", "vorab"],
+    antwort:
+      "Gern gesehen ist das nicht. Es ist aber kein Problem, wenn das Geld am selben Tag da ist, an dem abgebucht worden wäre. Scheitert die Abbuchung, bekommt der Kunde eine Mail von der Finanzabteilung und muss überweisen; es steht dann als Retoure drin. Eine korrekte Verbuchung nicht versprechen.",
+    stand: "2026-09-25",
+    fragen: "Kunde will die Rechnung lieber selbst überweisen statt abbuchen lassen, geht das?",
+  },
+  {
+    id: "bank-abbuchung-individuell",
+    kategorie: "Bank & SEPA",
+    titel: "Viele melden: wöchentliche Abbuchung fehlt",
+    stichworte: ["wöchentlich", "abbuchung", "zahlungsziel", "störung", "sepa"],
+    antwort:
+      "Ein allgemeines Problem war nicht bekannt. Bei wöchentlicher Abrechnung gilt ein Zahlungsziel von 7 Tagen, je nach Wochentag. Ursachen können Verzögerung, abgelehnte Abbuchung oder Technik sein; das wird pro Kunde geprüft (Case).",
+    stand: "2026-10-07",
+    fragen:
+      "Mehrere Kunden sagen, die wöchentliche Abbuchung funktioniert nicht, gibt es ein Problem?",
+  },
+  {
+    id: "bank-neukunde-sepa",
+    kategorie: "Bank & SEPA",
+    titel: "Neukunde: Zahlungsaufforderung trotz SEPA",
+    stichworte: ["neukunde", "sepa", "zahlungsaufforderung", "konto nicht gedeckt", "it-ticket"],
+    antwort:
+      "Zuerst prüfen, wann die erste Rechnung überhaupt fällig ist; oft wird erst Tage später abgebucht. Ist das SEPA-Mandat unterschrieben da und die Abbuchung scheitert trotzdem, wird ein IT-Ticket eröffnet und der Kunde informiert.",
+    stand: "2026-10-06",
+    fragen:
+      "Neukunde hat SEPA unterschrieben, bekommt aber eine Zahlungsaufforderung oder „Konto nicht gedeckt“",
+  },
+  {
     id: "portal-rechnungen",
     kategorie: "Portal & Apps",
     titel: "Rechnungen herunterladen",
@@ -509,7 +722,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Login klappt nicht",
     stichworte: ["login", "passwort", "zugang", "anmelden"],
     antwort:
-      "Oft die falsche Login-Seite (altes vs. neues Portal) oder eine andere E-Mail-Adresse als die hinterlegte. Eine E-Mail-Adresse gilt nur für ein Portal. Sonst Case an CC.",
+      "Oft die falsche Login-Seite (altes vs. neues Portal) oder eine andere E-Mail-Adresse als die hinterlegte. Eine E-Mail-Adresse gilt nur für ein Portal. Sonst Case an CC. Ist die E-Mail-Adresse schon für ein anderes Portal vergeben, direkt im Gespräch nach einer neuen Adresse fragen, damit sie hinterlegt werden kann.",
     stand: "2026-07-22",
     fragen: "kann mich nicht einloggen passwort vergessen zugang gesperrt",
   },
@@ -527,7 +740,8 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     kategorie: "Portal & Apps",
     titel: "Kartenbestellung: „Error“",
     stichworte: ["kartenbestellung", "error", "bestellen", "email"],
-    antwort: "Bei der Bestellung eine andere E-Mail-Adresse als die des Logins angeben.",
+    antwort:
+      "Bei der Bestellung eine andere E-Mail-Adresse als die des Logins angeben. Rot „Error“ bei SK-Bestellung: Case an Cards; ein generelles Problem war nicht bekannt.",
     stand: "2026-09-23",
     fragen: "neue karte bestellen fehler funktioniert nicht",
   },
@@ -537,7 +751,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Limit-Benachrichtigung einrichten",
     stichworte: ["info-limit", "benachrichtigung", "ausgabelimit"],
     antwort:
-      "Altes Portal: Service Center → Benachrichtigungen. Neues Portal: Einstellungen → Abonnement & Tarif → Monatliches Ausgabelimit → „Limit-Benachrichtigung aktivieren/ändern“.",
+      "Altes Portal: Service Center → Benachrichtigungen. Neues Portal: Einstellungen → Abonnement & Tarif → Monatliches Ausgabelimit → „Limit-Benachrichtigung aktivieren/ändern“. Die monatliche Mail „Info-Limit“ ist diese Benachrichtigung: sie kommt, sobald ein Betrag X im Verfügungsrahmen unterschritten wird.",
     stand: "2026-09-14",
     fragen: "benachrichtigung warnung limit email",
   },
@@ -587,7 +801,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Welche App wofür?",
     stichworte: ["app", "edenred drive", "echarge", "zugangsdaten"],
     antwort:
-      "Edenred Drive (Stationssuche, auch ohne Login), eCharge-App (Ladekarte) und Kundenportal sind drei getrennte Zugänge. eCharge-Zugangsdaten gibt es nur, wenn sie bei der Kartenbestellung angefordert wurden; sonst ist eine neue Karte nötig.",
+      "Edenred Drive (Stationssuche, auch ohne Login), eCharge-App (Ladekarte) und Kundenportal sind drei getrennte Zugänge. eCharge-Zugangsdaten gibt es nur, wenn sie bei der Kartenbestellung angefordert wurden; sonst ist eine neue Karte nötig. Auch im Ausland (z. B. Großbritannien) zeigt die Edenred Drive App Standorte und Namen der Akzeptanzstellen.",
     stand: "2026-09-11",
     fragen: "handy app welche app laden",
   },
@@ -597,7 +811,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Fahr & Spar",
     stichworte: ["fahr und spar", "fahr & spar", "csv", "liste"],
     antwort:
-      "Seit August 2025 eingestellt, ein Login ist nicht mehr möglich. Ein Nachfolger ist in Arbeit. Das Programm kostet nichts.",
+      "Seit August 2025 eingestellt, ein Login ist nicht mehr möglich. Ein Nachfolger ist in Arbeit. Das Programm kostet nichts. Wer Fahr & Spar noch installiert hat, kann es weiter nutzen; auf einem neuen PC lässt es sich nicht mehr installieren. Kunden, die eine Ersatzlösung für ihre Listen brauchen, an den direkten ASP geben.",
     stand: "2026-09-15",
     fragen: "liste tankstellen",
   },
@@ -607,16 +821,85 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Neukunde ohne Zugangsdaten",
     stichworte: ["neukunde", "zugangsdaten", "prospect", "registrierung"],
     antwort:
-      "Meist ist das Konto noch nicht aktiv oder steht auf „Prospect“: IT-Ticket bzw. an den Sales-Mitarbeiter.",
+      "Meist ist das Konto noch nicht aktiv oder steht auf „Prospect“: IT-Ticket bzw. an den Sales-Mitarbeiter. Fehlende Registrierungsmail oder Zugangsdaten sind kein Notfall: Case an die CC-Queue; CC eröffnet bei Bedarf ein IT-Ticket.",
     stand: "2026-09-28",
     fragen: "neuer kunde keine zugangsdaten registrieren",
+  },
+  {
+    id: "portal-login-kategorie",
+    kategorie: "Portal & Apps",
+    titel: "Case-Kategorie für Login-Probleme",
+    stichworte: ["Login", "Kategorie", "Customer Portal", "Error Message"],
+    antwort:
+      "Kategorie Other Services → Customer Portal, Subcategory Error Message. Dann landet er in der Login-Queue, die zeitnah bearbeitet wird.",
+    stand: "2026-07-22",
+    fragen: "Wie kategorisiere ich den Case, wenn der Kunde nicht ins Portal kommt",
+  },
+  {
+    id: "portal-transaktionen-fehlen",
+    kategorie: "Portal & Apps",
+    titel: "Transaktionen im Portal nicht aktuell",
+    stichworte: ["Transaktionen", "Portal", "fehlen", "30.06."],
+    antwort: "Kommt ab und an vor und ist kein generelles Problem. Case anlegen.",
+    stand: "2026-07-22",
+    fragen: "Kunde sieht im Portal Transaktionen nur bis zu einem alten Datum",
+  },
+  {
+    id: "portal-daten-aelter",
+    kategorie: "Portal & Apps",
+    titel: "Daten älter als 12 Monate",
+    stichworte: ["Reporting", "Audit", "Jahreszahlen", "12 Monate"],
+    antwort:
+      "Im Portal sind nur die letzten 12 Monate sichtbar. Ältere Auswertungen (z. B. für ein Audit) per Case anfordern; Case an Reporting bzw. CCDEU.",
+    stand: "2026-07-14",
+    fragen: "Kunde braucht die Zahlen vom ganzen letzten Jahr, Portal zeigt nur 12 Monate",
+  },
+  {
+    id: "portal-mehrere-kdnr",
+    kategorie: "Portal & Apps",
+    titel: "Portalzugänge für mehrere Kundennummern",
+    stichworte: ["mehrere Konten", "Zugang", "Fuhrparkmanagement", "Case pro AP"],
+    antwort:
+      "Pro Kundennummer (AP) einen eigenen Case anlegen. Bei Unklarheit „zwei Konten“ klären, ob zwei Kundennummern oder zwei Portale gemeint sind.",
+    stand: "2026-08-31",
+    fragen: "Kunde hat vier Kundennummern und braucht überall Portalzugang",
+  },
+  {
+    id: "portal-kartenname",
+    kategorie: "Portal & Apps",
+    titel: "Name auf der Karte bzw. Rechnung ändern",
+    stichworte: ["nutzername", "karte", "name", "rechnung", "sales"],
+    antwort: "Solche Änderungen schickt der Kunde per E-Mail an sales@uta.com.",
+    stand: "2026-09-16",
+    fragen: "Auf der Karte steht der Firmenname, Kunde möchte einen Personennamen auf der Rechnung",
+  },
+  {
+    id: "portal-mehrere-accounts",
+    kategorie: "Portal & Apps",
+    titel: "Mehrere Konten, eine E-Mail-Adresse",
+    stichworte: ["mehrere accounts", "e-mail", "kartenbestellung", "login", "it-ticket"],
+    antwort:
+      "Laufen mehrere Kundenkonten auf dieselbe E-Mail-Adresse, kann der Kunde nur für ein Konto Karten bestellen. Für die übrigen Konten wird je ein IT-Ticket erstellt.",
+    stand: "2026-09-22",
+    fragen: "Kunde hat mehrere Kundenkonten und kann nur für eins Karten bestellen",
+  },
+  {
+    id: "portal-stammtankstelle-name",
+    kategorie: "Portal & Apps",
+    titel: "Stammtankstelle hat neuen Betreiber oder Namen",
+    stichworte: ["stammtankstelle", "betreiber", "marke", "name", "auswahl"],
+    antwort:
+      "Die Kundenmail an CC weiterleiten, damit es geprüft wird; der Kunde bekommt eine Antwort. Er kann die Tankstellen trotzdem schon einmal als Stammtankstelle einpflegen.",
+    stand: "2026-09-22",
+    fragen: "Die Tankstelle in der Auswahl heißt anders bzw. ist inzwischen eine andere Marke",
   },
   {
     id: "re-kopie",
     kategorie: "Rechnungen",
     titel: "Rechnungskopie",
     stichworte: ["rechnungskopie", "duplikat", "fehlende rechnung"],
-    antwort: "Case an Customer Care (CCDEU), nicht an Credit. Vorher auf das Portal hinweisen.",
+    antwort:
+      "Case an Customer Care (CCDEU), nicht an Credit. Vorher auf das Portal hinweisen. Auch Rechnungsversand immer an Customer Care; eine fehlende, nie zugestellte Rechnung ebenfalls an CCDEU.",
     stand: "2026-08-21",
     fragen: "rechnung fehlt nochmal schicken kopie",
     caseRef: "Second original UTA invoice",
@@ -637,7 +920,8 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     kategorie: "Rechnungen",
     titel: "Gebühren nach der Kündigung",
     stichworte: ["kartengebühr", "gekündigt", "abgebucht"],
-    antwort: "Reklamation an CCDEU. Die Gutschrift kommt mit dem nächsten Abrechnungslauf.",
+    antwort:
+      "Reklamation an CCDEU. Die Gutschrift kommt mit dem nächsten Abrechnungslauf. Karten werden bei Kündigung automatisch mitgekündigt, der Kunde muss sie nicht selbst sperren. Gebühren danach entstehen durch verspätete Bearbeitung.",
     stand: "2026-07-21",
     fragen: "gekündigt trotzdem gebühren abgebucht",
     caseRef: "Invoice Correction",
@@ -691,6 +975,56 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     fragen: "beleg ohne preis quittung",
   },
   {
+    id: "re-tarif-falsch",
+    kategorie: "Rechnungen",
+    titel: "Falscher Tarif seit Registrierung",
+    stichworte: ["Tarif", "Registrierung", "Papierabrechnung", "falsch angelegt"],
+    antwort:
+      "Zuerst Case an CCDEU zur Prüfung. Stellt sich heraus, dass falsch angelegt wurde, kontaktiert CC den registrierenden Sales-Mitarbeiter.",
+    stand: "2026-07-13",
+    fragen: "Kunde wurde mit falschem Tarif oder Papierrechnung angelegt",
+  },
+  {
+    id: "re-preis-ausland",
+    kategorie: "Rechnungen",
+    titel: "Reklamation Literpreis",
+    stichworte: ["Preis", "Aufschlag", "Ausland", "Reklamation", "Beleg"],
+    antwort:
+      "Solche Preisreklamationen immer als Case anlegen, Belege des Kunden anhängen. Nicht im Chat posten.",
+    stand: "2026-07-23",
+    fragen: "Kunde sagt, abgerechneter Literpreis ist viel höher als an der Säule",
+  },
+  {
+    id: "re-rechnungslauf-automatisch",
+    kategorie: "Rechnungen",
+    titel: "Rechnung noch nicht im Portal",
+    stichworte: ["Rechnungserstellung", "Automatismus", "Abrechnung verspätet", "Portal"],
+    antwort:
+      "Rechnungserstellung und Bereitstellung im Portal laufen automatisch und lassen sich manuell nicht beeinflussen. Die Dauer schwankt, weil UTA auf die Übermittlung der Transaktionen durch die Tankstellen angewiesen ist. Ohne bekannte Störung: keine technische Schwierigkeit melden, Kunden um Geduld bitten.",
+    stand: "2026-08-04",
+    fragen: "Kunde wartet auf Rechnung im Portal, ist gerade technisch etwas kaputt?",
+  },
+  {
+    id: "re-kuendigung-letzte",
+    kategorie: "Rechnungen",
+    titel: "Rechnungen nach der Kündigung",
+    stichworte: ["kündigung", "bestätigung", "letzte rechnung", "monatsende"],
+    antwort:
+      "Gilt die Kündigung zum Monatsende, wird die Rechnung zu diesem Stichtag noch ganz normal bezahlt. Fehlt die Kündigungsbestätigung, kann CC sie noch einmal senden. Nur Gebühren für Zeiträume nach der Kündigung gehen als Reklamation.",
+    stand: "2026-09-11",
+    fragen: "Kunde hat gekündigt, bekommt aber noch eine Rechnung und keine Bestätigung",
+  },
+  {
+    id: "re-maut-epn",
+    kategorie: "Rechnungen",
+    titel: "Einzelpostennachweise für Maut",
+    stichworte: ["maut", "einzelpostennachweis", "epn", "deutsche maut", "mautteam"],
+    antwort:
+      "Vorher klären, ob die deutsche oder die ausländische Maut gemeint ist; sonst bekommt der Kunde die falschen Nachweise. Das Anliegen geht an das Mautteam. Gebühren nach einer Mautbox-Rückgabe und Mautbox-Rechnungen an Nicht-Kunden laufen als Reklamation.",
+    stand: "2026-09-23",
+    fragen: "Kunde braucht die Mautnachweise für mehrere Monate und wartet schon lange",
+  },
+  {
     id: "frei-panne",
     kategorie: "Freigaben & Pannen",
     titel: "Pannennotruf",
@@ -706,8 +1040,8 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Reparaturfreigabe",
     stichworte: ["freigabe", "reparatur", "werkstatt", "149", "autorisierung"],
     antwort:
-      "Durchwahl 06027 509-149 (Cards Service). Sonst die -660, eine E-Mail an cards@uta.com (wird bevorzugt bearbeitet) oder ein Case an HQ Cards. CC kann keine Freigaben erteilen.",
-    stand: "2026-08-10",
+      "Durchwahl 06027 509-149 (Cards Service). Sonst die -660, eine E-Mail an cards@uta.com (wird bevorzugt bearbeitet) oder ein Case an HQ Cards. CC kann keine Freigaben erteilen. Werkstatt ohne Kundennummer oder mit abweichenden Daten: CC kann nichts freigeben, an Cards weiterleiten. Alternative Mailadresse laut Chat: service@uta.com. Die -9501 ist für Freigabecodes falsch, richtig ist die 06027 509-149. Im Menü dort „Cards“ wählen. Sind alle besetzt, wird an andere Teams weitergeleitet; dann neu versuchen oder bei Cards einen Rückruf anfordern.",
+    stand: "2026-09-18",
     fragen: "werkstatt will freigabe reparatur genehmigen",
   },
   {
@@ -725,7 +1059,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Tankstelle, Werkstatt, Lieferant",
     stichworte: ["tankstelle", "werkstatt", "lieferant", "einkauf", "procurement", "200"],
     antwort:
-      "einkauf@uta.com bzw. procurement@uta.com. Nummern, die mit 200… beginnen und länger als Kundennummern sind, gehören zu Lieferanten.",
+      "einkauf@uta.com bzw. procurement@uta.com. Nummern, die mit 200… beginnen und länger als Kundennummern sind, gehören zu Lieferanten. Auch Akzeptanzpartner (z. B. Waschanlage ohne Auszahlung über PayOne), Partner-Tankstellen mit geänderten Steuer-/Bankdaten und Smart-Hub-Zugänge von Vertragspartnern gehen an den Einkauf. Alles von Tankstellen oder Werkstätten geht an einkauf@uta.com, egal welches Thema: Kassendifferenz, Aufkleber, Zugang für Akzeptanzpartner, Scam-Mails.",
     stand: "2026-10-09",
     fragen: "tankstelle ruft an werkstatt lieferant akzeptanzpartner",
   },
@@ -753,7 +1087,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Kunden aus dem Ausland",
     stichworte: ["litauen", "estland", "österreich", "ausland"],
     antwort:
-      "Litauen: vilnius@uta.lt. Estland und Österreich: eigener Betreuer bzw. Ländergesellschaft.",
+      "Litauen: vilnius@uta.lt. Estland und Österreich: eigener Betreuer bzw. Ländergesellschaft. Auch Interessenten mit Firmensitz in Litauen an „UTA Lithuania“ UAB, vilnius@uta.lt verweisen.",
     stand: "2026-09-09",
     fragen: "ausländischer kunde ausland",
   },
@@ -762,7 +1096,8 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     kategorie: "Weiterleitung",
     titel: "Verdacht auf Betrug",
     stichworte: ["betrug", "fremd getankt", "prevention"],
-    antwort: "Case an CC; der Fall geht an das Prevention-Team.",
+    antwort:
+      "Case an CC; der Fall geht an das Prevention-Team. Bestellen Betrüger Karten im Namen einer Firma, die nie Kunde war: Case an CC zur Prüfung, oder die Firma schreibt eine Erklärung an sales@uta.com bzw. info@uta.com.",
     stand: "2026-09-29",
     fragen: "jemand tankt mit meiner karte fremde umsätze missbrauch gestohlen",
     caseRef: "Fraud",
@@ -773,7 +1108,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     titel: "Spam-Mails im Namen von UTA",
     stichworte: ["scam", "phishing", "fake mail", "zip"],
     antwort:
-      "Wer nie Kunde war: löschen. Kunde: die E-Mail per Mail weiterleiten lassen. Häufen sich die Fälle, im Chat melden.",
+      "Wer nie Kunde war: löschen. Kunde: die E-Mail per Mail weiterleiten lassen. Häufen sich die Fälle, im Chat melden. Verdächtige Zahlungsaufforderung (kein UTA-Briefkopf, fremde IBAN) an den zuständigen Innendienst/Betreuer weiterleiten.",
     stand: "2026-10-09",
     fragen: "verdächtige mail phishing betrugsmail",
     caseRef: "Spammails",
@@ -787,6 +1122,86 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
       "Der Kunde schickt die falsch zugestellten Rechnungen per E-Mail, damit es geprüft werden kann.",
     stand: "2026-07-27",
     fragen: "rechnung von anderem kunden falsche rechnung bekommen",
+  },
+  {
+    id: "wl-maut",
+    kategorie: "Weiterleitung",
+    titel: "Maut-Themen",
+    stichworte: ["Maut", "Mautbox", "GPS", "Mautabrechnung"],
+    antwort:
+      "Mautbox-, GPS- und Mautabrechnungsthemen an die Maut-Abteilung weitergeben. Zusätzliche Angaben wie „gefahrene Gesamtkilometer“ können auf der Abrechnung nicht hinterlegt werden.",
+    stand: "2026-07-16",
+    fragen: "Kunde hat Frage zur Mautbox oder Mautabrechnung, wohin damit",
+  },
+  {
+    id: "wl-datenausgang",
+    kategorie: "Weiterleitung",
+    titel: "FTP, API, digitaler Datenausgang",
+    stichworte: ["FTP", "API", "Schnittstelle", "Exchange Gateway", "Datenausgang"],
+    antwort:
+      "UTA bietet verschiedene Optionen im digitalen Datenausgang. Case an CCDEU (in die Queue, nicht an eine Person).",
+    stand: "2026-07-13",
+    fragen: "Kunde will FTP-Zugang oder API-Schnittstelle für seine Daten",
+  },
+  {
+    id: "wl-terminal-tankstelle",
+    kategorie: "Weiterleitung",
+    titel: "Tankstellen-Terminal gesperrt",
+    stichworte: ["Terminal", "Tankwart", "Akzeptanzstelle", "Lieferant"],
+    antwort:
+      "Technische Probleme einer Akzeptanzstelle gehen an die Lieferantenabteilung (Einkauf/Procurement). Stationsname, Ort und eine funktionierende Rückrufnummer aufnehmen.",
+    stand: "2026-07-16",
+    fragen: "Tankwart sagt, nach UTA-Zahlung geht das ganze Terminal nicht mehr",
+  },
+  {
+    id: "wl-clean-power",
+    kategorie: "Weiterleitung",
+    titel: "Clean-Power-Zertifikat",
+    stichworte: ["Clean Power", "Zertifikat", "CO2", "E-Auto", "Ökostrom"],
+    antwort:
+      "CC sieht nicht, ob das Formular von der Homepage eingegangen ist. An das Digital-Team zur Prüfung geben.",
+    stand: "2026-07-22",
+    fragen: "Kunde fragt nach Clean Power Zertifikat und CO2-Einsparung",
+  },
+  {
+    id: "wl-sticker-waehrung",
+    kategorie: "Weiterleitung",
+    titel: "Sticker, Fremdwährung, sonstige Fragen ohne Zuordnung",
+    stichworte: ["UTA-Sticker", "Logistik", "Währung", "Umrechnung", "sales@uta.com"],
+    antwort:
+      "An sales@uta.com schicken lassen, intern wird verteilt (Sticker z. B. an die Logistik). Der Kunde soll Kunden-, AP- oder Abrechnungsnummer angeben, damit er zugeordnet werden kann.",
+    stand: "2026-07-29",
+    fragen: "Kunde will UTA-Aufkleber oder hat Frage zur Währungsumrechnung im Ausland",
+  },
+  {
+    id: "wl-konditionen",
+    kategorie: "Weiterleitung",
+    titel: "Case zu Konditionen kommt zurück",
+    stichworte: ["Konditionen", "Case zurück", "Customer Care DEU"],
+    antwort:
+      "Konditionsanfragen als Case an Customer Care DEU stellen. Persönliche Outlook-Adressen der Kollegen nicht an Kunden geben.",
+    stand: "2026-07-30",
+    fragen: "Mein Case zu Konditionen wurde mir wieder zugewiesen, an wen geht der?",
+  },
+  {
+    id: "wl-ivr-menue",
+    kategorie: "Weiterleitung",
+    titel: "Durchwahlen landen im selben Menü",
+    stichworte: ["durchwahl", "menü", "ansage", "660", "668", "617", "maut"],
+    antwort:
+      "Karten (-660) und E-Charge (-668) haben dieselbe Ansage, weil beide zu Fuel & Plus gehören. Maut (-617) hat ein eigenes Menü, weil dort nach Region weitergeleitet wird.",
+    stand: "2026-09-22",
+    fragen: "Egal welche Durchwahl der Kunde anruft, er landet immer im selben Auswahlmenü",
+  },
+  {
+    id: "wl-laden-ausland",
+    kategorie: "Weiterleitung",
+    titel: "Ladekarte im Ausland abgelehnt",
+    stichworte: ["laden", "schnelllader", "ausland", "echarge", "digital"],
+    antwort:
+      "Die lange Kartennummer und eine Rückrufnummer abfragen. CC sieht die Ladetransaktionen nicht; das muss Digital prüfen. Case anlegen, zusätzlich per Teams um Bearbeitung bitten und dem Kunden einen Rückruf ankündigen.",
+    stand: "2026-09-22",
+    fragen: "Kunde steht im Ausland an der Ladesäule, Karte wird nicht akzeptiert",
   },
   {
     id: "kurz-chip",
@@ -842,5 +1257,166 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort: "Im FAQ im Kundenportal.",
     stand: "2026-09-11",
     fragen: "smart cockpit kosten",
+  },
+  {
+    id: "komm-bonitaet-kontostand",
+    kategorie: "Kommunikation",
+    titel: "Kreditentscheidung nach Bonität, nicht Kontostand",
+    stichworte: ["bonität", "kontostand", "credit", "limit", "auskunft"],
+    antwort:
+      "Credit entscheidet nach der Bonitätsauskunft, nicht danach, wie viel Geld der Kunde auf dem Konto hat. Das lässt sich am Telefon nicht beeinflussen. Hat sich die Auskunft stark verschlechtert, geht eine Erhöhung nur gegen eine weitere Sicherheit.",
+    stand: "2026-10-07",
+    fragen: "Kunde sagt, er hat genug Geld auf dem Konto, warum kein Limit?",
+  },
+  {
+    id: "komm-vm-nicht-anbieten",
+    kategorie: "Kommunikation",
+    titel: "Vorschussmodell nicht von sich aus anbieten",
+    stichworte: ["vorschussmodell", "vm", "prepaid", "credit", "rücksprache"],
+    antwort:
+      "Nein. Viele Kunden wollen das Vorschussmodell nicht. Ob ein Kunde ins VM muss, entscheidet Credit. Vorher mit Credit Rücksprache halten und nicht jedem das VM anbieten.",
+    stand: "2026-09-08",
+    fragen: "Soll ich dem Kunden bei Limitproblemen einfach Prepaid bzw. Vorschussmodell anbieten?",
+  },
+  {
+    id: "komm-mail-nicht-auffindbar",
+    kategorie: "Kommunikation",
+    titel: "Kunde hat angeblich gemailt, nichts zu finden",
+    stichworte: ["mail", "kundenakte", "postfach", "ap-nummer", "nicht gefunden"],
+    antwort:
+      "Ist weder in der Kundenakte noch im offenen Postfach eine Mail zu finden, schickt der Kunde sie noch einmal, mit der AP- bzw. Kundennummer. Das gilt besonders für Bankänderungen, die schriftlich vorliegen müssen.",
+    stand: "2026-10-14",
+    fragen: "Kunde hat drei Mails geschickt, aber im System ist keine zu finden",
+  },
+  {
+    id: "hf-prepaid-zahlt-rechnungen",
+    kategorie: "Härtefälle",
+    titel: "Prepaid-Kunde zahlt Rechnungen, Konto tief im Minus",
+    stichworte: ["Prepaid", "Minus", "Monitoring", "gesperrt"],
+    antwort:
+      "Muster: Kunde hat nie Guthaben aufgeladen, sondern Rechnungen bezahlt; durch Monitoring während der Paytech/PPS-Störung konnte er über sein Guthaben hinaus tanken. CC kann nichts tun, Fall liegt bei Credit; Kunde muss Guthaben einzahlen.",
+    stand: "2026-07-16",
+    fragen: "Prepaid-Kunde hat immer Rechnungen überwiesen, jetzt minus und gesperrt",
+  },
+  {
+    id: "hf-bonitaet-adhoc",
+    kategorie: "Härtefälle",
+    titel: "VR auf 0 nach negativem Bonitätsnachtrag",
+    stichworte: ["Bonität", "Crefo", "VR 0", "Credit Manager"],
+    antwort:
+      "Muster: Credit Limit fiel wegen negativem Bonitätsnachtrag auf 0. Credit Manager kann bei guter Zahlungserfahrung das vorherige Limit ad hoc wieder einräumen. Das ist normales Tagesgeschäft und über die CMs/CMSBs zu klären.",
+    stand: "2026-07-09",
+    fragen: "Limit plötzlich auf null, Kunde hat immer pünktlich gezahlt",
+  },
+  {
+    id: "hf-kaution-prepaid",
+    kategorie: "Härtefälle",
+    titel: "Kaution überwiesen, Karten gehen nicht",
+    stichworte: ["Kaution", "Prepaid", "falsches Konto", "Beleg"],
+    antwort:
+      "Muster: Kunde ist Prepaid-Kunde, hat vermutlich aufs falsche Konto überwiesen. Über das VK-Modell aufklären und Beleg an service.finanz@uta.com anfordern.",
+    stand: "2026-07-24",
+    fragen: "Kunde hat Kaution überwiesen und alles unterschrieben, Karten trotzdem gesperrt",
+  },
+  {
+    id: "hf-fehlueberweisung",
+    kategorie: "Härtefälle",
+    titel: "Kunde hat versehentlich an UTA überwiesen",
+    stichworte: ["Fehlüberweisung", "Rückzahlung", "Finanz"],
+    antwort:
+      "Muster: Fehlüberweisung mit fremdem Verwendungszweck. Nachweis an sales@uta.com, Fall an die Teamleitung Finanz zur Prüfung und Auszahlung. Bei aggressiven Anrufern nicht selbst diskutieren, auf die laufende Prüfung verweisen.",
+    stand: "2026-07-21",
+    fragen: "Kunde hat Geld an UTA überwiesen, das eigentlich ans Finanzamt sollte",
+  },
+  {
+    id: "hf-mahnung-ohne-abbuchung",
+    kategorie: "Härtefälle",
+    titel: "Mahnung, obwohl kein Abbuchungsversuch",
+    stichworte: ["Mahnung", "Abbuchung", "Bank", "Monitoring"],
+    antwort:
+      "Muster: systembedingt gab es Mahnungen ohne Lastschriftversuch. Fälle müssen individuell geprüft werden (Case an FIN). Betroffene wurden auf Monitoring gestellt; Kunden sagen: offene Rechnungen bitte zahlen, sonst technischer Fehler.",
+    stand: "2026-07-03",
+    fragen: "Kunde bekommt Mahnung, Bank sieht keinen Abbuchungsversuch",
+  },
+  {
+    id: "hf-unbekannte-nummer",
+    kategorie: "Härtefälle",
+    titel: "Unbekannter Kontakt im Portal (Datenschutz)",
+    stichworte: ["Datenschutz", "Kontakt", "Portal", "gleicher Name"],
+    antwort:
+      "Muster: zwei verschiedene Personen mit identischem Namen wurden vermischt. Kunden zurückrufen, Kontaktdaten prüfen und bereinigen.",
+    stand: "2026-07-15",
+    fragen: "Kunde beschwert sich über fremde Telefonnummer mit seiner Mail im Portal",
+  },
+  {
+    id: "hf-kaution-falsch-gebucht",
+    kategorie: "Härtefälle",
+    titel: "Kaution für zwei Konten auf eines gebucht",
+    stichworte: ["Kaution", "zwei Kundennummern", "Umbuchung"],
+    antwort:
+      "Mit Beleg an die Fachabteilung zur Aufteilung/Umbuchung geben; bis dahin kann auf dem zweiten Konto nicht getankt werden. Künftig je Kundennummer separat mit Kundennummer im Verwendungszweck überweisen.",
+    stand: "2026-08-12",
+    fragen: "Kunde hat Kaution für zwei Kundennummern überwiesen, alles landete auf einem Konto",
+  },
+  {
+    id: "hf-bic-falsch",
+    kategorie: "Härtefälle",
+    titel: "Neue IBAN stimmt, Bank/BIC nicht",
+    stichworte: ["IBAN-Prüfer", "BIC", "SEPA", "Bankverbindung"],
+    antwort:
+      "IBAN durch einen IBAN-Prüfer laufen lassen und die Abweichung direkt mit dem Kunden klären, bevor etwas geändert wird. Änderungen nur schriftlich per E-Mail.",
+    stand: "2026-08-12",
+    fragen: "Kunde sagt hinterlegte BIC und Bankname sind falsch, Abbuchung steht an",
+  },
+  {
+    id: "hf-vm-falsches-konto",
+    kategorie: "Härtefälle",
+    titel: "Kunde glaubt Kautionsmodell, ist aber VM",
+    stichworte: ["VM", "Sicherheitsvereinbarung", "falsches Konto", "Missverständnis"],
+    antwort:
+      "Zuerst prüfen, welches Modell tatsächlich genehmigt ist und ob der Case in der richtigen Queue liegt. Kunden anrufen und aufklären; will er umstellen, Umstellungsanfrage an Credit geben und SEPA prüfen (VM = Selbstzahler).",
+    stand: "2026-07-24",
+    fragen:
+      "Kunde hat Sicherheitsvereinbarung unterschrieben und Geld aufs falsche Konto überwiesen",
+  },
+  {
+    id: "hart-zahlung-ueberschnitten",
+    kategorie: "Härtefälle",
+    titel: "Zahlung überschnitten, Karten gesperrt",
+    stichworte: ["gesperrt", "zahlung", "nachweis", "freigabe"],
+    antwort:
+      "Der Kunde schickt den Zahlungsnachweis an service.finanz@uta.com, dann den Fall im Chat melden. Nach der Prüfung wurden die Karten wieder freigegeben. Vorher prüfen, ob der VR wirklich aufgebraucht ist oder eine gesperrte Karte benutzt wurde.",
+    stand: "2026-09-08",
+    fragen: "Kunde hat bezahlt, Karten trotzdem gesperrt, Fahrer stehen an der Tankstelle",
+  },
+  {
+    id: "hart-vr-negativ-gesperrte-karte",
+    kategorie: "Härtefälle",
+    titel: "Guthaben plötzlich negativ, Karten „gesperrt“",
+    stichworte: ["negativ", "vorschussmodell", "gesperrte karte", "paytech"],
+    antwort:
+      "In mehreren Fällen hatte der Kunde nur eine gesperrte Karte benutzt, das Guthaben laut PayTech reichte. Kartennummer abfragen, Status prüfen und den Kunden auf die aktiven Karten verweisen.",
+    stand: "2026-10-07",
+    fragen: "Prepaid-Kunde hatte Guthaben, plötzlich Minus und alle Karten gehen nicht",
+  },
+  {
+    id: "hart-keine-tankrechnung",
+    kategorie: "Härtefälle",
+    titel: "Nur Kartengebühren, keine Tankrechnung",
+    stichworte: ["rechnung fehlt", "kartengebühr", "keine transaktionen"],
+    antwort:
+      "Prüfen, ob die Karten überhaupt eingesetzt wurden. Ohne Tankvorgänge gibt es nur die Rechnung mit den Kartengebühren.",
+    stand: "2026-09-11",
+    fragen: "Kunde bekommt seit Monaten nur Rechnungen für Karten, nicht fürs Tanken",
+  },
+  {
+    id: "hart-umstellung-ohne-vereinbarung",
+    kategorie: "Härtefälle",
+    titel: "Umstellung auf Abbucher, VR fehlt",
+    stichworte: ["umstellung", "abbucher", "vereinbarung", "vr", "offene rechnungen"],
+    antwort:
+      "Prüfen, ob die Vereinbarung vorliegt und ob noch Rechnungen offen sind, die trotz SEPA nicht abgebucht wurden. Offene Rechnungen muss der Kunde überweisen. Den Fall per Case direkt an die zuständige Person bei Credit geben.",
+    stand: "2026-09-25",
+    fragen: "Kunde wurde von Guthaben auf Abbucher umgestellt, Karte meldet VR erschöpft",
   },
 ];
