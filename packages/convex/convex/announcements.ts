@@ -15,7 +15,7 @@ import { moveToTrash } from "./lib/trash";
 
 const INTRANET_BOT_CLERK_USER_ID = "system:intranet-bot";
 
-async function getOrCreateIntranetBot(ctx: MutationCtx): Promise<Id<"users">> {
+export async function getOrCreateIntranetBot(ctx: MutationCtx): Promise<Id<"users">> {
   const existing = await ctx.db
     .query("users")
     .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", INTRANET_BOT_CLERK_USER_ID))

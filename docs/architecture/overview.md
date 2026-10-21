@@ -62,7 +62,9 @@ flowchart TD
   functions with `CONVEX_SERVER_KEY` (checked by `assertServerKey`).
 - **Convex → apps/api.** The other direction, via `lib/internalApi.ts`:
   transactional and broadcast email (apps/api owns Resend), OneDrive
-  subscription renewal, the two-minute IONOS inbox poll.
+  subscription renewal, the two-minute IONOS inbox poll, and the Monday
+  competitor check (`competitors/watch.ts` → `/internal/competitors/extract`,
+  which reads Aral/Shell/Radius/DKV pages and fills one wiki entry).
 - **Webhooks land on apps/api** (Clerk, Graph, Resend)
   and are relayed into Convex with the server key. Clerk, Resend and Graph
   deliveries are also recorded in `integrationHealth` for the admin panel.

@@ -37,6 +37,7 @@ import type * as blogAnalytics from "../blogAnalytics.js";
 import type * as blogPosts from "../blogPosts.js";
 import type * as chat from "../chat.js";
 import type * as clerkSync from "../clerkSync.js";
+import type * as competitors_watch from "../competitors/watch.js";
 import type * as crons from "../crons.js";
 import type * as customRoles from "../customRoles.js";
 import type * as designFeedback from "../designFeedback.js";
@@ -334,6 +335,7 @@ declare const fullApi: ApiFromModules<{
   blogPosts: typeof blogPosts;
   chat: typeof chat;
   clerkSync: typeof clerkSync;
+  "competitors/watch": typeof competitors_watch;
   crons: typeof crons;
   customRoles: typeof customRoles;
   designFeedback: typeof designFeedback;

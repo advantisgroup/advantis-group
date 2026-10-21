@@ -56,6 +56,15 @@ if (process.env.DISABLE_CRONS !== "true") {
     {},
   );
 
+  // Montag 05:10 UTC – Wettbewerbs-Übersicht Tank-/Ladekarten im Wiki
+  // auffrischen, Ankündigung nur bei Neuigkeiten (competitors/watch.ts).
+  crons.weekly(
+    "competitors: weekly tank/charge card offers to wiki",
+    { dayOfWeek: "monday", hourUTC: 5, minuteUTC: 10 },
+    internal.competitors.watch.run,
+    {},
+  );
+
   // Monday 06:50 UTC — before people start in Berlin, summer or winter time.
   crons.weekly(
     "digest: weekly what-you-missed email",
