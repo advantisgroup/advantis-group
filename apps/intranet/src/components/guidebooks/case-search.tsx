@@ -22,6 +22,7 @@ import { AiThinking } from "@/components/ai/AiThinking";
 import { useAiEnabled } from "@/components/ai/use-ai-enabled";
 import { useAiRun } from "@/components/ai/use-ai-run";
 import { Link } from "@/components/Link";
+import { useIsAdmin } from "@/components/providers/current-user";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIntranetApiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -311,14 +312,8 @@ function CaseSupport() {
           <div className="mx-auto max-w-md space-y-3 py-10 text-center">
             <p className="text-sm font-medium">Nichts Passendes gefunden.</p>
             <p className="text-xs text-muted-foreground">
-              Anders formulieren oder die KI im Wiki-Chat fragen.
+              Anders formulieren oder im Chat „Telefonie Support“ nachfragen.
             </p>
-            <Link
-              href="/wiki-chat"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background"
-            >
-              <Sparkles className="size-4" /> Wiki-Chat fragen
-            </Link>
           </div>
         ) : (
           <div className="mx-auto max-w-3xl space-y-2">
@@ -391,6 +386,7 @@ const MORE: { id: View; label: string; icon: ReactNode }[] = [
 
 export function CaseSearchGuidebook() {
   const [view, setView] = useState<View>("list");
+  const isAdmin = useIsAdmin();
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
@@ -418,12 +414,14 @@ export function CaseSearchGuidebook() {
             {m.label}
           </button>
         ))}
-        <Link
-          href="/wiki-chat"
-          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-        >
-          <MessageSquare className="size-4" /> Wiki-Chat
-        </Link>
+        {isAdmin && (
+          <Link
+            href="/wiki-chat"
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <MessageSquare className="size-4" /> Wiki-Chat
+          </Link>
+        )}
       </div>
 
       <div className="min-h-0 flex-1">
