@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useDeferredValue, useMemo, useState } from "react";
 
 import { useTranslations } from "next-intl";
 
@@ -205,7 +205,13 @@ function CaseSupport() {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   const q = query.trim();
-  const hits = useMemo(() => (q.length >= 2 ? search(q, 25) : []), [q]);
+  // Search on the raw text (a trailing space marks the last word as finished),
+  // deferred so fast typing never blocks the input.
+  const deferred = useDeferredValue(query);
+  const hits = useMemo(
+    () => (deferred.trim().length >= 2 ? search(deferred, 25) : null),
+    [deferred],
+  );
 
   const groups = useMemo(() => {
     const g: { name: string; docs: SearchDoc[] }[] = [];
@@ -307,7 +313,7 @@ function CaseSupport() {
       {asked && aiEnabled && <AiAnswer asked={asked} sending={sending} />}
 
       {/* Results */}
-      {q.length >= 2 ? (
+      {hits ? (
         hits.length === 0 ? (
           <div className="mx-auto max-w-md space-y-3 py-10 text-center">
             <p className="text-sm font-medium">Nichts Passendes gefunden.</p>

@@ -200,6 +200,9 @@ function termSim(q: string, d: string): number {
   if (q === d) return 1;
   if (q.length >= 4 && d.length >= 4 && (d.startsWith(q) || q.startsWith(d))) return 0.8;
   // compounds: "kartensperre" ⊃ "sperr", "bankverbindung" ⊃ "bank"
+  // German compounds carry their meaning at the end: "rücklastschrift" is a
+  // kind of "lastschrift", so a suffix hit counts almost like a full one.
+  if (q.length >= 5 && d.endsWith(q)) return 0.85;
   if (q.length >= 4 && d.includes(q)) return 0.65;
   if (d.length >= 5 && q.includes(d)) return 0.55;
   if (oneTypo(q, d)) return 0.6;
@@ -222,37 +225,119 @@ export interface Hit {
   score: number;
 }
 
-export function search(query: string, limit = 30): Hit[] {
-  const qTokens = Array.from(new Set(tokens(query)));
-  if (qTokens.length === 0) return [];
+const SYN_KEYS = Array.from(SYNONYMS.keys());
 
-  const expanded = qTokens.map((t) => ({
-    term: t,
-    syns: Array.from(SYNONYMS.get(t) ?? []),
-    w: Math.max(idf(t), 1),
-  }));
+interface QueryTerm {
+  term: string;
+  syns: string[];
+  w: number;
+  /** The word still being typed: matched as a prefix, never stemmed. */
+  partial: boolean;
+}
+
+function prefixSim(q: string, d: string): number {
+  return d.startsWith(q) ? 0.9 : q.length >= 4 && d.includes(q) ? 0.6 : 0;
+}
+
+function bestPrefixInDoc(term: string, d: Indexed): number {
+  let best = 0;
+  for (const f of d.fields) {
+    for (const tok of f.tokens) {
+      const s = prefixSim(term, tok) * f.weight;
+      if (s > best) best = s;
+    }
+  }
+  return best;
+}
+
+function termScore(t: QueryTerm, d: Indexed): number {
+  let s = t.partial ? bestPrefixInDoc(t.term, d) : bestInDoc(t.term, d);
+  // A word that is being typed may also be the start of a full word that
+  // already scores higher on its own (e.g. "lastschr" → "lastschrift").
+  if (t.partial) s = Math.max(s, bestInDoc(t.term, d) * 0.9);
+  for (const syn of t.syns) {
+    const ss = bestInDoc(syn, d) * 0.85;
+    if (ss > s) s = ss;
+  }
+  return s;
+}
+
+function parseQuery(query: string): QueryTerm[] {
+  const folded = fold(query);
+  const typing = folded.length > 0 && !/\s$/.test(query);
+  const words = folded.split(" ").filter(Boolean);
+  const last = typing ? words.pop() : undefined;
+
+  const terms: QueryTerm[] = [];
+  const seen = new Set<string>();
+  for (const w of words) {
+    if (STOPWORDS.has(w)) continue;
+    const t = stem(w);
+    if (seen.has(t)) continue;
+    seen.add(t);
+    terms.push({
+      term: t,
+      syns: Array.from(SYNONYMS.get(t) ?? []),
+      w: Math.max(idf(t), 1),
+      partial: false,
+    });
+  }
+  const STOP_LIST = Array.from(STOPWORDS);
+  if (
+    last &&
+    last.length >= 3 &&
+    !STOPWORDS.has(last) &&
+    !STOP_LIST.some((sw) => sw.startsWith(last))
+  ) {
+    const syns = new Set<string>();
+    for (const key of SYN_KEYS) {
+      if (key.startsWith(last)) {
+        syns.add(key);
+        for (const o of SYNONYMS.get(key) ?? []) syns.add(o);
+      }
+    }
+    // Half a word says less than a whole one — it may not upset the ranking
+    // the finished words already built.
+    terms.push({
+      term: last,
+      syns: Array.from(syns),
+      w: Math.max(idf(stem(last)), 1) * (terms.length ? 0.5 : 1),
+      partial: true,
+    });
+  }
+  return terms;
+}
+
+/** `null` = nothing searchable typed yet (only filler words): show the list. */
+export function search(query: string, limit = 30): Hit[] | null {
+  const all = parseQuery(query);
+  if (all.length === 0) return null;
+
+  // Words that match nothing anywhere (typos beyond repair, filler words,
+  // a half-typed word) are ignored instead of pushing good entries out.
+  const perDoc = INDEX.map((d) => all.map((t) => termScore(t, d)));
+  const known = all.map((_, i) => perDoc.some((scores) => scores[i] > 0));
+  const active = all.filter((_, i) => known[i]);
+  if (active.length === 0) return all.every((t) => t.partial) ? null : [];
 
   const hits: Hit[] = [];
-  for (const d of INDEX) {
+  INDEX.forEach((d, di) => {
     let score = 0;
     let matched = 0;
-    for (const { term, syns, w } of expanded) {
-      let s = bestInDoc(term, d);
-      for (const syn of syns) {
-        const ss = bestInDoc(syn, d) * 0.85;
-        if (ss > s) s = ss;
-      }
+    all.forEach((t, ti) => {
+      if (!known[ti]) return;
+      const s = perDoc[di][ti];
       if (s > 0) matched++;
-      score += s * w;
-    }
-    if (matched === 0) continue;
-    const coverage = matched / expanded.length;
-    score *= d.boost * (0.35 + 0.65 * coverage * coverage);
+      score += s * t.w;
+    });
+    if (matched === 0) return;
+    const coverage = matched / active.length;
+    score *= d.boost * (0.5 + 0.5 * coverage);
     hits.push({ doc: d.doc, score });
-  }
+  });
 
   hits.sort((a, b) => b.score - a.score);
   if (hits.length === 0) return hits;
   const top = hits[0].score;
-  return hits.filter((h) => h.score >= top * 0.25).slice(0, limit);
+  return hits.filter((h, i) => i < 8 || h.score >= top * 0.15).slice(0, limit);
 }
