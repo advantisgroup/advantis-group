@@ -1,7 +1,8 @@
 // Support knowledge from the "Telefonie Support" Teams chat (UTA hotline),
-// anonymized. Domain content stays in German. `caseRef` is a search term that
-// jumps to the matching row(s) in CASES (case-search-data.ts) instead of
-// duplicating queue/category info here.
+// anonymized. Domain content stays in German. `caseRef` names a row in CASES
+// (case-search-data.ts) so queue/category info is not duplicated here.
+// `fragen` holds everyday phrasings so the meaning-based search finds an
+// entry even when the agent uses different words.
 
 export interface SupportEntry {
   id: string;
@@ -10,6 +11,7 @@ export interface SupportEntry {
   stichworte: string[];
   antwort: string;
   stand: string;
+  fragen: string;
   caseRef?: string;
 }
 
@@ -22,6 +24,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Immer zuerst einen Case anlegen. In den Chat nur echte Notfälle: Fahrzeuge stehen oder der Fahrer ist an der Tankstelle. Alles andere: Kunden um Geduld bitten (first in, first out).",
     stand: "2026-07-24",
+    fragen: "wann darf ich in den chat schreiben dringend eilig sofort hilfe kunde wartet",
   },
   {
     id: "regel-case-weitergeben",
@@ -31,6 +34,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Den Case immer an die Queue „DEU Customer Care“ oder die passende Fachabteilung geben. Bleibst du selbst Owner, sieht ihn niemand.",
     stand: "2026-09-17",
+    fragen: "wem gehört der case zuständig zuweisen abgeben",
   },
   {
     id: "regel-case-inhalt",
@@ -40,6 +44,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Kundennummer, Ansprechpartner (Name und Kontakt) und den konkreten Grund. Der Betreff sagt, worum es geht, z. B. „Limit-Erhöhungsanfrage“ oder „Zahlungsnachweis“, nicht nur „bitte bearbeiten“.",
     stand: "2026-09-09",
+    fragen: "was schreibe ich in den case pflichtfelder kundennummer telefonnummer grund",
   },
   {
     id: "regel-grosskunden",
@@ -49,6 +54,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Nur Cases an den Betreuer, keine Teams-Nachrichten. Ist es dringend: im Salesforce-Chatter den Betreuer mit @ markieren.",
     stand: "2026-09-03",
+    fragen: "großer kunde key account eigener betreuer account manager",
   },
   {
     id: "regel-daumen",
@@ -57,6 +63,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["daumen hoch", "übernommen", "reaktion"],
     antwort: "Wer einen Fall im Chat übernimmt, reagiert mit Daumen hoch.",
     stand: "2026-07-22",
+    fragen: "wer kümmert sich bearbeitet erledigt",
   },
   {
     id: "regel-pruefen-vorher",
@@ -66,6 +73,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Vorher klären: Gibt es schon einen Case (dann ergänzen)? Ist es ein Field-Kunde (PUMA)? Liegt das Konto bei Collection? Ist es ein Prepaid-Kunde?",
     stand: "2026-10-21",
+    fragen: "schon bearbeitet gibt es schon offen doppelt",
   },
   {
     id: "regel-puma-asp",
@@ -75,6 +83,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Feld „PUMA LN References“: Steht dort „Customer Care“, ist das CC zuständig. Steht dort ein Name, ist das der persönliche Ansprechpartner.",
     stand: "2026-09-22",
+    fragen: "wer ist zuständig betreuer verantwortlich kontaktperson",
   },
   {
     id: "komm-zahlungsprobleme",
@@ -84,6 +93,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Bei ungeklärten Fällen von einer technischen Störung sprechen. Offene Rechnungen nur nennen, wenn das 100 % sicher ist.",
     stand: "2026-07-20",
+    fragen: "kunde kann nicht zahlen geld fehlt pleite insolvent fahrer steht was sage ich",
   },
   {
     id: "komm-keine-tarife",
@@ -93,6 +103,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Keine Pakete oder Rabatte erfinden („Silber“, „Gold“ gibt es nicht). Das Vorschussmodell (VM) nicht von sich aus anbieten; vorher mit Credit klären.",
     stand: "2026-09-08",
+    fragen: "günstiger preis nachlass rabatt besser konditionen",
   },
   {
     id: "komm-interne-kontakte",
@@ -102,6 +113,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Keine internen Durchwahlen, keine persönlichen E-Mail-Adressen und keine Telefonnummer des Anwalts an Kunden geben.",
     stand: "2026-07-30",
+    fragen: "kunde will nummer von mitarbeiter direkt sprechen kontakt",
   },
   {
     id: "komm-zusagen",
@@ -111,6 +123,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Zum Beispiel nicht „in 2–3 Tagen geht die Karte wieder“. Mehrfach war der Kunde danach endgültig gesperrt.",
     stand: "2026-08-14",
+    fragen: "wie lange dauert das wann erledigt versprechen frist",
   },
   {
     id: "komm-rechnung-mitarbeiter",
@@ -120,6 +133,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Keine Rechnung an einzelne Mitarbeiter. Sie sollen sich an die eigene Buchhaltung wenden.",
     stand: "2026-10-12",
+    fragen: "fahrer will rechnung angestellter eigene abrechnung privat",
   },
   {
     id: "komm-portal-unterwegs",
@@ -129,6 +143,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Nicht nur aufs Portal verweisen. Selbst nachsehen oder über CC gehen. Es gab eine schwere Beschwerde wegen eines solchen Verweises.",
     stand: "2026-07-17",
+    fragen: "falsch getankt diesel benzin verwechselt umsätze sehen buchungen",
   },
   {
     id: "vr-request",
@@ -138,6 +153,8 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Button „Credit Request“ in Salesforce nutzen. Oft ist dann kein Case an Credit nötig. Immer den Bedarf in Euro abfragen.",
     stand: "2026-07-30",
+    fragen:
+      "limit hochsetzen mehr rahmen verfügungsrahmen kreditrahmen anheben ausgabe reicht nicht",
     caseRef: "Limit change",
   },
   {
@@ -148,6 +165,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Im Account fehlen Pflichtfelder. Die markierten Felder mit mindestens „1“ befüllen, dann klappt es.",
     stand: "2026-09-03",
+    fragen: "antrag fehlgeschlagen fehler abgelehnt geht nicht durch",
     caseRef: "Limit check",
   },
   {
@@ -158,6 +176,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Case an Credit stellen. Wird nur ein Teil genehmigt, die Differenz als Sicherheit (Kaution) anfragen.",
     stand: "2026-07-22",
+    fragen: "antrag hängt wartet keine antwort in bearbeitung",
   },
   {
     id: "vr-null",
@@ -167,6 +186,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Meist schlechtere Bonität oder eine offene bzw. überfällige Rechnung. Kunden werden darüber aktuell nicht informiert. Tipp: eine Limit-Benachrichtigung im Portal einrichten.",
     stand: "2026-09-14",
+    fragen: "limit weg null gesenkt plötzlich kein rahmen mehr auskunftei schufa",
     caseRef: "Credit Limit",
   },
   {
@@ -177,6 +197,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Bei schlechter Bonität gilt Kaution = Limit. Erhöhung nur mit zusätzlicher Kaution **und** unterschriebener Sicherheitsvereinbarung. Drohungen ändern daran nichts.",
     stand: "2026-09-11",
+    fragen: "sicherheit hinterlegen bürgschaft absicherung",
     caseRef: "Securities",
   },
   {
@@ -186,6 +207,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["field", "limit", "betreuer"],
     antwort: "Immer an den Betreuer bzw. dessen Vertretung. Ist niemand da: fieldaccount@uta.com.",
     stand: "2026-07-30",
+    fragen: "außendienst kunde limit",
   },
   {
     id: "vr-woechentlich",
@@ -195,6 +217,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Entweder den VR erhöhen oder auf wöchentliche Abrechnung umstellen (Case). Bis zur Abbuchung bleibt der Rahmen gebunden.",
     stand: "2026-09-29",
+    fragen: "rahmen reicht nicht bis zur abbuchung abrechnung öfter",
   },
   {
     id: "karte-velocity",
@@ -204,6 +227,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Das Monatslimit der einzelnen Karte ist erreicht (Standard ca. 1.500–2.000 €). Cards erhöht es, oder der Kunde ändert es selbst im Portal. Das ist nicht der VR des Kontos.",
     stand: "2026-08-31",
+    fragen: "karte abgelehnt zu viele tankvorgänge transaktionslimit anzahl",
     caseRef: "Fraud",
   },
   {
@@ -214,6 +238,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Dann liegt es am Karten- oder Tageslimit (z. B. 4 Nutzungen bzw. 2.000 € pro Tag). Cards anrufen oder an cards@uta.com.",
     stand: "2026-07-22",
+    fragen: "karte geht nicht obwohl limit frei abgelehnt tankstelle",
   },
   {
     id: "karte-pin",
@@ -222,6 +247,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["pin", "kasse"],
     antwort: "Paytech zeigt eine falsche PIN-Eingabe. Fahrer bzw. Kasse noch mal versuchen lassen.",
     stand: "2026-08-31",
+    fragen: "pin vergessen falsch eingegeben geheimzahl karte gesperrt pin",
     caseRef: "PIN",
   },
   {
@@ -232,6 +258,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Der Kunde hat eine gesperrte oder abgelaufene Karte eingesetzt. Auf die aktive Karte hinweisen.",
     stand: "2026-10-07",
+    fragen: "alte karte geht nicht neue karte bekommen ersatzkarte",
   },
   {
     id: "karte-einzeln",
@@ -241,6 +268,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Magnetstreifen beschädigt oder Lesegerät hängt. Erneut versuchen, Karte prüfen. Immer Kartennummer, Tankstelle und Uhrzeit aufnehmen.",
     stand: "2026-07-29",
+    fragen: "karte funktioniert an einer tankstelle nicht kartenleser defekt abgelehnt",
   },
   {
     id: "karte-produkt",
@@ -250,6 +278,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Produktbeschränkung der Karte; der Kunde stellt sie im Portal ein. Eine Excel-Liste der Produktgruppen gibt es bei CC.",
     stand: "2026-08-14",
+    fragen: "darf nicht waschen adblue öl kaufen produkt gesperrt",
   },
   {
     id: "karte-altsystem",
@@ -259,6 +288,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Bei Kunden aus dem alten System werden Änderungen verzögert übertragen, meist bis ca. 13:30 Uhr.",
     stand: "2026-08-31",
+    fragen: "änderung dauert wann aktiv freischaltung verzögerung",
     caseRef: "Card wasn",
   },
   {
@@ -269,6 +299,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Im Chat nachfragen, ob eine Störung bekannt ist. Beispiele für Kunden sammeln (Kundennummer, Karte, Uhrzeit). Tankstellen nutzen die manuelle Freigabe.",
     stand: "2026-10-09",
+    fragen: "nichts geht überall abgelehnt systemausfall viele anrufe",
   },
   {
     id: "pp-minus",
@@ -278,6 +309,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Ein Minus ist bei Prepaid Guthaben, keine Schuld. Ist das Guthaben aufgebraucht, braucht es eine neue Vorauskasse.",
     stand: "2026-09-03",
+    fragen: "vorkasse guthaben negativ aufladen konto leer",
   },
   {
     id: "pp-verbuchung",
@@ -287,6 +319,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Die Verbuchung dauert 3–4 Werktage, auch bei Echtzeitüberweisung. Beschleunigen ist nicht möglich.",
     stand: "2026-08-24",
+    fragen: "geld überwiesen aber nicht da guthaben fehlt dauert",
   },
   {
     id: "pp-beleg",
@@ -296,6 +329,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Der Kunde schickt den Überweisungsbeleg an service.finanz@uta.com. Ohne Beleg kann niemand suchen.",
     stand: "2026-07-24",
+    fragen: "zahlung nicht gefunden überweisung nachweisen",
   },
   {
     id: "pp-falsche-kdnr",
@@ -305,6 +339,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Beleg anfordern, die Buchhaltung bucht um. Künftig immer die Kundennummer in den Verwendungszweck.",
     stand: "2026-09-14",
+    fragen: "falsch überwiesen verwendungszweck falsch",
   },
   {
     id: "pp-dritte",
@@ -313,6 +348,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["drittzahlung", "geldwäsche", "anderes konto"],
     antwort: "Nicht erlaubt (Geldwäschegesetz). Nur Zahlungen vom eigenen Firmenkonto.",
     stand: "2026-07-31",
+    fragen: "jemand anderes zahlt fremdes konto privatkonto",
   },
   {
     id: "pp-rechnung",
@@ -322,6 +358,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Das ergibt keinen Sinn. Prepaid heißt: Guthaben einzahlen, die Rechnungen werden damit verrechnet.",
     stand: "2026-07-16",
+    fragen: "vorkasse rechnung bezahlen",
   },
   {
     id: "sperre-endgueltig",
@@ -331,6 +368,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Die Sperre ist endgültig. Der Kunde muss einen Neukundenantrag (NKA) stellen; dann wird neu geprüft. Keinen Case an Credit.",
     stand: "2026-08-14",
+    fragen: "konto gesperrt alle karten gesperrt wieder freischalten",
     caseRef: "Complete blocking",
   },
   {
@@ -341,6 +379,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "In der letzten Zahlungsaufforderung steht die Frist mit Hinweis auf Komplettsperre. Wer danach zahlt, bleibt gesperrt.",
     stand: "2026-07-20",
+    fragen: "gezahlt trotzdem gesperrt mahnung frist verpasst",
     caseRef: "Termination",
   },
   {
@@ -351,6 +390,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Keine Auskunft geben. Satz: „Wir haben keine Einsicht mehr in Ihr Kundenkonto, die Kollegen melden sich.“ Intern an Collection weitergeben.",
     stand: "2026-08-11",
+    fragen: "inkasso anwalt forderung mahnverfahren",
   },
   {
     id: "sperre-monitoring",
@@ -359,6 +399,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["monitoring"],
     antwort: "Der Kunde kann trotz offener Themen weiter tanken.",
     stand: "2026-07-03",
+    fragen: "überwachung status beobachtung",
   },
   {
     id: "sperre-kaution-zurueck",
@@ -368,6 +409,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Wird ausgezahlt, wenn alles abgerechnet ist und keine offenen Posten bestehen. Steht so in der Kündigungsbestätigung.",
     stand: "2026-08-05",
+    fragen: "sicherheit zurück geld zurück vertrag beendet",
     caseRef: "Release of Security",
   },
   {
@@ -378,6 +420,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Insolvente Kunden, die weiter beliefert werden, in die eigene Queue für Insolvenzfälle. Insolvenzfälle mit Anwalt bekommen ihre Antwort vom UTA-Anwalt.",
     stand: "2026-08-12",
+    fragen: "pleite insolvent zahlungsunfähig",
   },
   {
     id: "bank-aendern",
@@ -387,6 +430,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Nur schriftlich per E-Mail, nie auf Zuruf. Pro Kundenkonto ist nur eine Bankverbindung möglich.",
     stand: "2026-09-23",
+    fragen: "neue bank neues konto kontonummer ändern lastschrift mandat",
     caseRef: "Change of bank details",
   },
   {
@@ -397,6 +441,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Meist ist noch die alte Mandatsreferenz hinterlegt: IT-Ticket. Bis dahin überweist der Kunde manuell. Kommt die Änderung kurz vor dem Abbuchungstermin, wird noch vom alten Konto abgebucht.",
     stand: "2026-08-12",
+    fragen: "abgebucht vom falschen konto alte bank",
   },
   {
     id: "bank-umfirmierung",
@@ -406,6 +451,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Das Konto bleibt bestehen, die Daten werden per E-Mail aktualisiert. Das neue SEPA-Mandat kommt erst nach Abschluss der Umfirmierung. Die Abteilung ist im Verzug.",
     stand: "2026-10-12",
+    fragen: "name geändert rechtsform neuer firmenname",
     caseRef: "Legal name/legal form change",
   },
   {
@@ -416,6 +462,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Es wird kein zweites Mal abgebucht; der Kunde überweist. Die Gebühr kommt als Position auf eine spätere Abrechnung.",
     stand: "2026-10-12",
+    fragen: "lastschrift zurückgegangen konto nicht gedeckt abbuchung geplatzt",
     caseRef: "direct debit rejected",
   },
   {
@@ -426,6 +473,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "UNION TANK Eckstein GmbH & Co. KG, Commerzbank Aschaffenburg, IBAN DE47 7958 0099 0158 7882 01, BIC DRESDEFF795. Verwendungszweck: Kundennummer.",
     stand: "2026-08-13",
+    fragen: "wohin überweisen bankdaten kontodaten von uta",
   },
   {
     id: "bank-doppelt",
@@ -434,6 +482,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["doppelt bezahlt", "überwiesen und abgebucht", "rückzahlung"],
     antwort: "Geht an die Buchhaltung zur Rückzahlung bzw. Verrechnung.",
     stand: "2026-10-09",
+    fragen: "zweimal bezahlt geld zurück erstattung",
   },
   {
     id: "bank-samstag",
@@ -442,6 +491,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["samstag", "abbuchung", "werktag"],
     antwort: "Abgebucht wird am nächsten Werktag.",
     stand: "2026-09-14",
+    fragen: "wochenende feiertag wann wird abgebucht",
   },
   {
     id: "portal-rechnungen",
@@ -451,6 +501,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Im Portal jederzeit kostenlos. Bei migrierten Kunden fehlen ältere Jahre teilweise; dann schickt CC die Unterlagen.",
     stand: "2026-09-18",
+    fragen: "rechnung finden herunterladen pdf wo rechnungen",
   },
   {
     id: "portal-login",
@@ -460,6 +511,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Oft die falsche Login-Seite (altes vs. neues Portal) oder eine andere E-Mail-Adresse als die hinterlegte. Eine E-Mail-Adresse gilt nur für ein Portal. Sonst Case an CC.",
     stand: "2026-07-22",
+    fragen: "kann mich nicht einloggen passwort vergessen zugang gesperrt",
   },
   {
     id: "portal-weiss",
@@ -468,6 +520,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["weiß", "lädt", "whitepage", "cookies"],
     antwort: "Cookies und Browserdaten von UTA löschen; prüfen, ob die Uhrzeit am Gerät stimmt.",
     stand: "2026-09-28",
+    fragen: "seite lädt nicht leer weißer bildschirm hängt",
   },
   {
     id: "portal-bestellung",
@@ -476,6 +529,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["kartenbestellung", "error", "bestellen", "email"],
     antwort: "Bei der Bestellung eine andere E-Mail-Adresse als die des Logins angeben.",
     stand: "2026-09-23",
+    fragen: "neue karte bestellen fehler funktioniert nicht",
   },
   {
     id: "portal-limitinfo",
@@ -485,6 +539,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Altes Portal: Service Center → Benachrichtigungen. Neues Portal: Einstellungen → Abonnement & Tarif → Monatliches Ausgabelimit → „Limit-Benachrichtigung aktivieren/ändern“.",
     stand: "2026-09-14",
+    fragen: "benachrichtigung warnung limit email",
   },
   {
     id: "portal-uhrzeit",
@@ -494,6 +549,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Service Center → Reporting → „nicht abgerechnete Transaktionen – Details“. Dort stehen Datum und Uhrzeit.",
     stand: "2026-08-24",
+    fragen: "wann getankt zeitpunkt transaktion uhrzeit",
   },
   {
     id: "portal-stammtankstelle",
@@ -502,6 +558,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["stammtankstelle", "premium", "best price"],
     antwort: "Im alten Portal: Stationsfinder → Auswahl Stammtankstelle.",
     stand: "2026-07-08",
+    fragen: "feste tankstelle günstig tanken",
     caseRef: "Homebase change",
   },
   {
@@ -512,6 +569,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Das entscheidet die IT. Der Kunde wird per E-Mail informiert; vorher lässt sich nichts umstellen.",
     stand: "2026-09-25",
+    fragen: "neues portal umstellen wechsel",
   },
   {
     id: "portal-cardlock",
@@ -521,6 +579,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Cardlock geht im alten und im neuen Portal. EasyFuel geht nur im alten Portal; migrierte Kunden können EasyFuel noch nicht registrieren.",
     stand: "2026-09-11",
+    fragen: "automatentankstelle",
   },
   {
     id: "portal-apps",
@@ -530,6 +589,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Edenred Drive (Stationssuche, auch ohne Login), eCharge-App (Ladekarte) und Kundenportal sind drei getrennte Zugänge. eCharge-Zugangsdaten gibt es nur, wenn sie bei der Kartenbestellung angefordert wurden; sonst ist eine neue Karte nötig.",
     stand: "2026-09-11",
+    fragen: "handy app welche app laden",
   },
   {
     id: "portal-fahrspar",
@@ -539,6 +599,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Seit August 2025 eingestellt, ein Login ist nicht mehr möglich. Ein Nachfolger ist in Arbeit. Das Programm kostet nichts.",
     stand: "2026-09-15",
+    fragen: "liste tankstellen",
   },
   {
     id: "portal-neukunde",
@@ -548,6 +609,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Meist ist das Konto noch nicht aktiv oder steht auf „Prospect“: IT-Ticket bzw. an den Sales-Mitarbeiter.",
     stand: "2026-09-28",
+    fragen: "neuer kunde keine zugangsdaten registrieren",
   },
   {
     id: "re-kopie",
@@ -556,6 +618,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["rechnungskopie", "duplikat", "fehlende rechnung"],
     antwort: "Case an Customer Care (CCDEU), nicht an Credit. Vorher auf das Portal hinweisen.",
     stand: "2026-08-21",
+    fragen: "rechnung fehlt nochmal schicken kopie",
     caseRef: "Second original UTA invoice",
   },
   {
@@ -566,6 +629,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Queue „HQ VAT & Indirect Tax“: Saldenbestätigung, Rechnungsregeln, Korrektur wegen Stammdaten, Duplikat, USt-ID, Erstattung im Ausland. Preise und Kartendaten → Complaints.",
     stand: "2026-08-31",
+    fragen: "mehrwertsteuer umsatzsteuer erstattung steuer",
     caseRef: "VAT/Tax number support",
   },
   {
@@ -575,6 +639,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["kartengebühr", "gekündigt", "abgebucht"],
     antwort: "Reklamation an CCDEU. Die Gutschrift kommt mit dem nächsten Abrechnungslauf.",
     stand: "2026-07-21",
+    fragen: "gekündigt trotzdem gebühren abgebucht",
     caseRef: "Invoice Correction",
   },
   {
@@ -585,6 +650,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Case an Cards bzw. Reklamation. Kategorie: Complaint → Invoice → Fee → CardFee. Das ist kein Notfall.",
     stand: "2026-08-28",
+    fragen: "kartengebühr doppelt berechnet zu viel",
   },
   {
     id: "re-2025",
@@ -593,6 +659,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["2025", "echarge", "alte transaktion", "nachberechnung"],
     antwort: "Wurden verspätet übermittelt und sind korrekt. Keine Cases anlegen.",
     stand: "2026-07-28",
+    fragen: "alte ladevorgänge nachträglich berechnet",
   },
   {
     id: "re-blockier",
@@ -601,6 +668,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["blockiergebühr", "parkgebühr", "charge & park", "stunden"],
     antwort: "Case an Digital (Plus).",
     stand: "2026-07-17",
+    fragen: "parkgebühr laden zu teuer blockiergebühr",
   },
   {
     id: "re-xrechnung",
@@ -610,6 +678,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "X-Rechnung schriftlich mit Formular beantragen (Case). ZUGFeRD kommt als PDF. Absender der Rechnungen: noreply.invoice@uta.com.",
     stand: "2026-10-14",
+    fragen: "elektronische rechnung e-rechnung format",
     caseRef: "X-Rechnung",
   },
   {
@@ -619,6 +688,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["lieferschein", "kassenzettel", "preis fehlt"],
     antwort: "An manchen Tankstellen normal. Maßgeblich ist die UTA-Abrechnung.",
     stand: "2026-09-24",
+    fragen: "beleg ohne preis quittung",
   },
   {
     id: "frei-panne",
@@ -628,6 +698,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "24h-Pannennotruf 00800 88 27 37 84 (gebührenfrei). Abrechnung über UTA auch im Nachgang möglich; der Abschleppdienst meldet sich dafür bei UTA.",
     stand: "2026-07-01",
+    fragen: "liegengeblieben auto kaputt pannenhilfe abschleppdienst",
   },
   {
     id: "frei-reparatur",
@@ -637,6 +708,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Durchwahl 06027 509-149 (Cards Service). Sonst die -660, eine E-Mail an cards@uta.com (wird bevorzugt bearbeitet) oder ein Case an HQ Cards. CC kann keine Freigaben erteilen.",
     stand: "2026-08-10",
+    fragen: "werkstatt will freigabe reparatur genehmigen",
   },
   {
     id: "frei-manuell",
@@ -645,6 +717,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["manuelle freigabe", "notfallplan", "guidelines"],
     antwort: "Prozess laut UTA_Card_Guidelines_DE.pdf; liegt allen Partnern vor.",
     stand: "2026-07-24",
+    fragen: "tankstelle fragt freigabe karte geht nicht manuell",
   },
   {
     id: "wl-einkauf",
@@ -654,6 +727,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "einkauf@uta.com bzw. procurement@uta.com. Nummern, die mit 200… beginnen und länger als Kundennummern sind, gehören zu Lieferanten.",
     stand: "2026-10-09",
+    fragen: "tankstelle ruft an werkstatt lieferant akzeptanzpartner",
   },
   {
     id: "wl-sales",
@@ -662,6 +736,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["sales@uta.com", "allgemein", "mail"],
     antwort: "sales@uta.com, wird intern verteilt.",
     stand: "2026-07-28",
+    fragen: "allgemeine anfrage email adresse",
   },
   {
     id: "wl-emobility",
@@ -670,6 +745,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["wallbox", "e-mobility", "laden", "backend"],
     antwort: "e-mobility_backoffice@uta.com",
     stand: "2026-08-24",
+    fragen: "wallbox ladestation strom laden elektroauto",
   },
   {
     id: "wl-ausland",
@@ -679,6 +755,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Litauen: vilnius@uta.lt. Estland und Österreich: eigener Betreuer bzw. Ländergesellschaft.",
     stand: "2026-09-09",
+    fragen: "ausländischer kunde ausland",
   },
   {
     id: "wl-betrug",
@@ -687,6 +764,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["betrug", "fremd getankt", "prevention"],
     antwort: "Case an CC; der Fall geht an das Prevention-Team.",
     stand: "2026-09-29",
+    fragen: "jemand tankt mit meiner karte fremde umsätze missbrauch gestohlen",
     caseRef: "Fraud",
   },
   {
@@ -697,6 +775,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Wer nie Kunde war: löschen. Kunde: die E-Mail per Mail weiterleiten lassen. Häufen sich die Fälle, im Chat melden.",
     stand: "2026-10-09",
+    fragen: "verdächtige mail phishing betrugsmail",
     caseRef: "Spammails",
   },
   {
@@ -707,6 +786,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     antwort:
       "Der Kunde schickt die falsch zugestellten Rechnungen per E-Mail, damit es geprüft werden kann.",
     stand: "2026-07-27",
+    fragen: "rechnung von anderem kunden falsche rechnung bekommen",
   },
   {
     id: "kurz-chip",
@@ -715,6 +795,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["chip", "magnetstreifen"],
     antwort: "Nicht geplant.",
     stand: "2026-07-28",
+    fragen: "chipkarte",
   },
   {
     id: "kurz-wasserstoff",
@@ -723,6 +804,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["wasserstoff", "h2"],
     antwort: "Ja, geht.",
     stand: "2026-09-18",
+    fragen: "wasserstoff",
   },
   {
     id: "kurz-payback",
@@ -731,6 +813,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["payback", "punkte", "rabattpunkte"],
     antwort: "Nein, wird nicht angeboten.",
     stand: "2026-10-13",
+    fragen: "punkte sammeln bonus",
   },
   {
     id: "kurz-ionity",
@@ -739,6 +822,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["ionity", "abo"],
     antwort: "Wird pro Karte gebucht, die Monatsgebühr gilt ebenfalls pro Karte.",
     stand: "2026-08-12",
+    fragen: "ionity laden abo",
   },
   {
     id: "kurz-mappen",
@@ -747,6 +831,7 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["mappe", "kartenmappe"],
     antwort: "Werden nicht mehr produziert, ein Restbestand liegt in der Logistik.",
     stand: "2026-07-02",
+    fragen: "kartenhülle hülle mappe",
     caseRef: "Card Holders",
   },
   {
@@ -756,5 +841,6 @@ export const SUPPORT_ENTRIES: SupportEntry[] = [
     stichworte: ["smart cockpit", "preis"],
     antwort: "Im FAQ im Kundenportal.",
     stand: "2026-09-11",
+    fragen: "smart cockpit kosten",
   },
 ];

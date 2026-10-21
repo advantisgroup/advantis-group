@@ -4,511 +4,343 @@ import { type ReactNode, useMemo, useState } from "react";
 
 import {
   ArrowRight,
-  Check,
-  Lightbulb,
+  ChevronDown,
   List,
   Map,
   MessageSquare,
-  RotateCcw,
   Search,
+  Sparkles,
   X,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 import { type CaseRow, CASES } from "./case-search-data";
-import { type SupportEntry, SUPPORT_ENTRIES } from "./support-data";
 import { SOPPanel } from "./sop-panel";
 import { StationsFinder } from "./stations-finder";
+import { SUPPORT_ENTRIES } from "./support-data";
+import { CASE_GROUP, caseTitle, DOCS, search, type SearchDoc } from "./support-search";
 
-/** Per record-type accent: badge chip + left card accent. Tuned for both themes. */
-const RECORD_TYPE_STYLES: Record<string, { chip: string; accent: string }> = {
-  Cards: {
-    chip: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
-    accent: "bg-blue-500",
-  },
-  Toll: {
-    chip: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-    accent: "bg-emerald-500",
-  },
-  "Tax Operations": {
-    chip: "bg-orange-500/15 text-orange-700 dark:text-orange-300",
-    accent: "bg-orange-500",
-  },
-  Complaints: {
-    chip: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
-    accent: "bg-rose-500",
-  },
-  Logistics: {
-    chip: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
-    accent: "bg-violet-500",
-  },
-  "Customer Service": {
-    chip: "bg-teal-500/15 text-teal-700 dark:text-teal-300",
-    accent: "bg-teal-500",
-  },
-  Pricing: {
-    chip: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-    accent: "bg-amber-500",
-  },
-  "Internal case": {
-    chip: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
-    accent: "bg-slate-500",
-  },
-  Onboarding: {
-    chip: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
-    accent: "bg-sky-500",
-  },
-  Finance: {
-    chip: "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300",
-    accent: "bg-fuchsia-500",
-  },
-};
+// Domain content of this tool is German (team working language).
 
-const FALLBACK_STYLE = {
-  chip: "bg-muted text-muted-foreground",
-  accent: "bg-muted-foreground",
-};
+type View = "list" | "sop" | "stations";
 
-function styleFor(recordType: string) {
-  return RECORD_TYPE_STYLES[recordType] ?? FALLBACK_STYLE;
-}
-
-function normalize(s: string): string {
-  return s.toLowerCase().replace(/[´`']/g, "");
-}
-
-function fuzzyMatch(text: string, query: string): boolean {
-  if (!text || !query) return false;
-  const t = normalize(text);
-  const q = normalize(query);
-  if (t.includes(q)) return true;
-  // Allow a single typo for queries longer than 4 chars.
-  if (q.length > 4) {
-    for (let i = 0; i <= t.length - q.length + 1; i++) {
-      let mismatches = 0;
-      for (let j = 0; j < q.length; j++) {
-        if (t[i + j] !== q[j]) mismatches++;
-        if (mismatches > 1) break;
-      }
-      if (mismatches <= 1) return true;
-    }
-  }
-  return false;
-}
-
-function scoreMatch(c: CaseRow, query: string): number {
-  let score = 0;
-  const q = query.toLowerCase();
-  if (c.subcategoryDetail.toLowerCase().includes(q)) score += 10;
-  if (c.subcategory.toLowerCase().includes(q)) score += 8;
-  if (c.description.toLowerCase().includes(q)) score += 6;
-  if (c.category.toLowerCase().includes(q)) score += 4;
-  if (c.recordType.toLowerCase().includes(q)) score += 2;
-  if (score === 0) {
-    if (fuzzyMatch(c.subcategoryDetail, query)) score += 5;
-    if (fuzzyMatch(c.subcategory, query)) score += 4;
-    if (fuzzyMatch(c.description, query)) score += 3;
-    if (fuzzyMatch(c.category, query)) score += 2;
-  }
-  return score;
-}
-
-function highlight(text: string, query: string): ReactNode {
-  if (!text || !query) return text;
-  const idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx === -1) return text;
-  return (
-    <>
-      {text.slice(0, idx)}
-      <mark className="rounded-[3px] bg-warning/40 px-0.5 text-foreground">
-        {text.slice(idx, idx + query.length)}
-      </mark>
-      {text.slice(idx + query.length)}
-    </>
-  );
-}
-
-// Mandatory case fields (domain content — kept in the team's working language).
-const CHECKLIST = [
-  { id: 1, label: "Kd-Nr.", hint: "im Betreff" },
-  { id: 2, label: "Firmenname", hint: "+ Ort" },
-  { id: 3, label: "Name Ansprechpartner", hint: "" },
-  { id: 4, label: "Tel. Nr.", hint: "beim Kunden abfragen" },
-  {
-    id: 5,
-    label: "Grund des Falls",
-    hint: "worum es genau geht – keine bloße Rückrufbitte",
-  },
+const EXAMPLES = [
+  "Karte wird an der Tankstelle abgelehnt",
+  "Kunde braucht mehr Limit",
+  "Überweisung ist noch nicht da",
+  "Lastschrift ist geplatzt",
+  "Fahrer hat PIN vergessen",
 ];
 
-const MAX_RESULTS = 40;
-const MAX_SUPPORT = 12;
-
-function scoreSupport(e: SupportEntry, query: string): number {
-  const q = normalize(query);
-  let score = 0;
-  if (e.stichworte.some((k) => normalize(k) === q)) score += 12;
-  if (e.stichworte.some((k) => normalize(k).includes(q))) score += 8;
-  if (normalize(e.titel).includes(q)) score += 10;
-  if (normalize(e.kategorie).includes(q)) score += 4;
-  if (normalize(e.antwort).includes(q)) score += 3;
-  if (score === 0) {
-    if (e.stichworte.some((k) => fuzzyMatch(k, query))) score += 4;
-    if (fuzzyMatch(e.titel, query)) score += 3;
-  }
-  return score;
+function findCase(ref: string): CaseRow | undefined {
+  const r = ref.toLowerCase();
+  return CASES.find((c) =>
+    [c.subcategoryDetail, c.subcategory, c.category].some((v) => v.toLowerCase().includes(r)),
+  );
 }
 
-function CaseSearchTab() {
-  const t = useTranslations("CaseSearch");
-  const [query, setQuery] = useState("");
-  const [selectedType, setSelectedType] = useState("All");
-  const [checked, setChecked] = useState<Record<number, boolean>>({});
-
-  const recordTypes = useMemo(
-    () => ["All", ...Array.from(new Set(CASES.map((c) => c.recordType)))],
-    [],
+function CaseInfo({ row }: { row: CaseRow }) {
+  const parts = [row.recordType, row.category, row.subcategory, row.subcategoryDetail].filter(
+    (p) => p && p !== "None",
   );
-
-  const q = query.trim();
-
-  const results = useMemo(() => {
-    if (!q && selectedType === "All") return [];
-    return CASES.filter((c) => {
-      if (selectedType !== "All" && c.recordType !== selectedType) return false;
-      if (!q) return true;
-      return scoreMatch(c, q) > 0;
-    })
-      .map((c) => ({ ...c, _score: q ? scoreMatch(c, q) : 0 }))
-      .sort((a, b) => b._score - a._score)
-      .slice(0, MAX_RESULTS);
-  }, [q, selectedType]);
-
-  const supportResults = useMemo(() => {
-    if (!q || selectedType !== "All") return [];
-    return SUPPORT_ENTRIES.map((e) => ({ e, s: scoreSupport(e, q) }))
-      .filter((x) => x.s > 0)
-      .sort((a, b) => b.s - a.s)
-      .slice(0, MAX_SUPPORT)
-      .map((x) => x.e);
-  }, [q, selectedType]);
-
-  const doneCount = CHECKLIST.filter((i) => checked[i.id]).length;
-  const allDone = doneCount === CHECKLIST.length;
-
   return (
-    <div className="space-y-5">
-      {/* Mandatory-fields checklist */}
-      <Card className={cn(allDone && "border-success/40")}>
-        <CardContent className="space-y-3 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold">{t("mandatoryTitle")}</span>
-              <span
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
-                  allDone ? "bg-success/15 text-success" : "bg-muted text-muted-foreground",
-                )}
-              >
-                {doneCount}/{CHECKLIST.length}
-              </span>
-            </div>
-            {doneCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setChecked({})}
-                className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <RotateCcw className="size-3.5" />
-                {t("reset")}
-              </button>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground">{t("mandatoryHint")}</p>
-          <div className="flex flex-wrap gap-2">
-            {CHECKLIST.map((item) => {
-              const on = !!checked[item.id];
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => setChecked((p) => ({ ...p, [item.id]: !p[item.id] }))}
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-sm transition-colors",
-                    on
-                      ? "border-success/40 bg-success/10 text-foreground"
-                      : "border-border bg-card hover:bg-accent",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "flex size-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold",
-                      on ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {on ? <Check className="size-3" /> : item.id}
-                  </span>
-                  <span className="font-medium">{item.label}</span>
-                  {item.hint && (
-                    <span className="text-xs italic text-muted-foreground">({item.hint})</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          autoFocus
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t("searchPlaceholder")}
-          className="h-11 pl-10 pr-10 text-base"
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            aria-label={t("clear")}
-            className="absolute right-2.5 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <X className="size-4" />
-          </button>
-        )}
-      </div>
-
-      {/* Filter chips */}
-      <div className="flex flex-wrap gap-2">
-        {recordTypes.map((rt) => {
-          const active = selectedType === rt;
-          const style = rt === "All" ? null : styleFor(rt);
-          return (
-            <button
-              key={rt}
-              type="button"
-              onClick={() => setSelectedType(rt)}
-              aria-pressed={active}
-              className={cn(
-                "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
-                active
-                  ? "border-foreground/25 bg-foreground/[0.07] text-foreground"
-                  : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
-              )}
-            >
-              <span className="flex items-center gap-1.5">
-                {style && <span className={cn("size-2 rounded-full", style.accent)} />}
-                {rt === "All" ? t("allTypes") : rt}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Results */}
-      {!q && selectedType === "All" ? (
-        <div className="flex flex-col items-center gap-2 py-16 text-center">
-          <span className="flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-            <Search className="size-6" />
-          </span>
-          <p className="text-sm font-medium">{t("emptyTitle")}</p>
-          <p className="text-xs text-muted-foreground">
-            {CASES.length} Case-Kategorien · {SUPPORT_ENTRIES.length} Support-Einträge
-          </p>
+    <div className="space-y-1 text-sm">
+      <div className="font-medium">{parts.join(" › ")}</div>
+      {row.processor && (
+        <div className="text-muted-foreground">
+          Queue: <span className="font-medium text-foreground">{row.processor}</span>
         </div>
-      ) : results.length === 0 && supportResults.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-16 text-center">
-          <p className="text-sm font-medium">{t("noResultsTitle", { query: q })}</p>
-          <p className="text-xs text-muted-foreground">{t("noResultsHint")}</p>
-        </div>
-      ) : (
-        <>
-          {supportResults.length > 0 && (
-            <div className="space-y-2.5">
-              <p className="flex items-center gap-1.5 text-sm font-semibold">
-                <Lightbulb className="size-4 text-warning" />
-                Support-Wissen ({supportResults.length})
-              </p>
-              {supportResults.map((e) => (
-                <div
-                  key={e.id}
-                  className="relative overflow-hidden rounded-xl border border-border/70 bg-card p-4 pl-5"
-                >
-                  <span className="absolute inset-y-0 left-0 w-1 bg-warning" />
-                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-warning/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-foreground">
-                      {e.kategorie}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">Stand {e.stand}</span>
-                  </div>
-                  <div className="text-sm font-semibold">{highlight(e.titel, q)}</div>
-                  <p className="mt-1 text-sm leading-relaxed">{highlight(e.antwort, q)}</p>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    {e.stichworte.map((k) => (
-                      <button
-                        key={k}
-                        type="button"
-                        onClick={() => setQuery(k)}
-                        className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"
-                      >
-                        #{k}
-                      </button>
-                    ))}
-                    {e.caseRef && (
-                      <button
-                        type="button"
-                        onClick={() => setQuery(e.caseRef ?? "")}
-                        className="ml-auto flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                      >
-                        Passender Case <ArrowRight className="size-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {results.length > 0 && (
-            <p className="text-sm text-muted-foreground">
-              {t("resultsCount", { count: results.length })}
-              {results.length === MAX_RESULTS ? ` ${t("topN", { n: MAX_RESULTS })}` : ""}
-            </p>
-          )}
-          <div className="space-y-2.5">
-            {results.map((c, i) => {
-              const style = styleFor(c.recordType);
-              return (
-                <div
-                  key={`${c.recordType}-${c.category}-${c.subcategory}-${c.subcategoryDetail}-${i}`}
-                  className="relative overflow-hidden rounded-xl border border-border/70 bg-card p-4 pl-5 shadow-none"
-                >
-                  <span className={cn("absolute inset-y-0 left-0 w-1", style.accent)} />
-                  <div className="mb-3">
-                    <span
-                      className={cn(
-                        "inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide",
-                        style.chip,
-                      )}
-                    >
-                      {c.recordType}
-                    </span>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label={t("fieldCategory")} value={c.category} query={q} />
-                    {c.subcategory && (
-                      <Field label={t("fieldSubcategory")} value={c.subcategory} query={q} />
-                    )}
-                    {c.subcategoryDetail && c.subcategoryDetail !== "None" && (
-                      <Field
-                        label={t("fieldSubcategoryDetail")}
-                        value={c.subcategoryDetail}
-                        query={q}
-                      />
-                    )}
-                    {c.processor && (
-                      <Field label={t("fieldProcessor")} value={c.processor} query={q} />
-                    )}
-                  </div>
-                  {c.description && (
-                    <div className="mt-3 rounded-lg bg-muted/50 px-3 py-2 text-sm leading-relaxed text-foreground">
-                      <span className="text-muted-foreground text-xs font-medium normal-case tracking-normal">
-                        {t("whenToUse")}{" "}
-                      </span>
-                      {highlight(c.description, q)}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </>
+      )}
+      {row.description && (
+        <p className="leading-relaxed text-muted-foreground">{row.description}</p>
       )}
     </div>
   );
 }
 
-function Field({ label, value, query }: { label: string; value: string; query: string }) {
+function docTitle(doc: SearchDoc): string {
+  return doc.kind === "support" ? doc.entry.titel : caseTitle(doc.row);
+}
+
+function EntryItem({
+  doc,
+  open,
+  onToggle,
+  onTag,
+  showGroup,
+}: {
+  doc: SearchDoc;
+  open: boolean;
+  onToggle: () => void;
+  onTag: (q: string) => void;
+  showGroup?: boolean;
+}) {
+  const linkedCase =
+    doc.kind === "support" && doc.entry.caseRef ? findCase(doc.entry.caseRef) : undefined;
   return (
-    <div>
-      <div className="mb-0.5 text-muted-foreground text-xs font-medium normal-case tracking-normal">
-        {label}
-      </div>
-      <div className="text-sm font-medium leading-snug">{highlight(value, query)}</div>
+    <div className="rounded-xl border border-border/70 bg-card">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left"
+      >
+        <span className="min-w-0 flex-1">
+          {showGroup && (
+            <span className="mb-0.5 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {doc.group}
+              {doc.kind === "case" ? ` · ${doc.row.recordType}` : ""}
+            </span>
+          )}
+          <span className="block text-sm font-medium leading-snug">{docTitle(doc)}</span>
+        </span>
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground transition-transform",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+      {open && (
+        <div className="space-y-3 border-t border-border/60 px-4 py-3">
+          {doc.kind === "support" ? (
+            <>
+              <p className="text-sm leading-relaxed">{doc.entry.antwort}</p>
+              {linkedCase && (
+                <div className="rounded-lg bg-muted/50 p-3">
+                  <div className="mb-1 flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                    <ArrowRight className="size-3.5" /> Case anlegen als
+                  </div>
+                  <CaseInfo row={linkedCase} />
+                </div>
+              )}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {doc.entry.stichworte.map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => onTag(k)}
+                    className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"
+                  >
+                    #{k}
+                  </button>
+                ))}
+                <span className="ml-auto text-[11px] text-muted-foreground">
+                  Stand {doc.entry.stand}
+                </span>
+              </div>
+            </>
+          ) : (
+            <CaseInfo row={doc.row} />
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-type Tab = "sop" | "search" | "wiki" | "stations";
+function CaseSupport() {
+  const [query, setQuery] = useState("");
+  const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
-const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
-  { id: "sop", label: "Szenarien", icon: <List className="h-4 w-4" /> },
-  {
-    id: "search",
-    label: "Case & Support",
-    icon: <Search className="h-4 w-4" />,
-  },
-  { id: "wiki", label: "Wiki", icon: <MessageSquare className="h-4 w-4" /> },
-  {
-    id: "stations",
-    label: "Stationsfinder",
-    icon: <Map className="h-4 w-4" />,
-  },
+  const q = query.trim();
+  const hits = useMemo(() => (q.length >= 2 ? search(q, 25) : []), [q]);
+
+  const groups = useMemo(() => {
+    const g: { name: string; docs: SearchDoc[] }[] = [];
+    for (const d of DOCS) {
+      let bucket = g.find((x) => x.name === d.group);
+      if (!bucket) {
+        bucket = { name: d.group, docs: [] };
+        g.push(bucket);
+      }
+      bucket.docs.push(d);
+    }
+    return g;
+  }, []);
+
+  const toggle = (id: string) => setOpenIds((p) => ({ ...p, [id]: !p[id] }));
+  const runTag = (t: string) => {
+    setQuery(t);
+    setOpenIds({});
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Search hero */}
+      <div className="mx-auto max-w-2xl space-y-3 pt-4 text-center">
+        <h1 className="text-2xl font-semibold tracking-tight">Case &amp; Support</h1>
+        <p className="text-sm text-muted-foreground">
+          Beschreib das Problem in deinen eigenen Worten.
+        </p>
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            autoFocus
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setOpenIds({});
+            }}
+            placeholder="z. B. Kunde kann nicht tanken, Karte wird abgelehnt"
+            className="h-14 w-full rounded-2xl border border-border bg-card pl-12 pr-12 text-base shadow-sm outline-none transition focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Suche leeren"
+              className="absolute right-3 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
+        {!q && (
+          <div className="flex flex-wrap justify-center gap-1.5">
+            {EXAMPLES.map((ex) => (
+              <button
+                key={ex}
+                type="button"
+                onClick={() => setQuery(ex)}
+                className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                {ex}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Results */}
+      {q.length >= 2 ? (
+        hits.length === 0 ? (
+          <div className="mx-auto max-w-md space-y-3 py-10 text-center">
+            <p className="text-sm font-medium">Nichts Passendes gefunden.</p>
+            <p className="text-xs text-muted-foreground">
+              Anders formulieren oder die KI im Wiki-Chat fragen.
+            </p>
+            <Link
+              href="/wiki-chat"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background"
+            >
+              <Sparkles className="size-4" /> Wiki-Chat fragen
+            </Link>
+          </div>
+        ) : (
+          <div className="mx-auto max-w-3xl space-y-2">
+            <p className="text-xs text-muted-foreground">
+              {hits.length} Treffer, die besten zuerst
+            </p>
+            {hits.map((h, i) => (
+              <EntryItem
+                key={h.doc.id}
+                doc={h.doc}
+                open={openIds[h.doc.id] ?? i < 3}
+                onToggle={() => setOpenIds((p) => ({ ...p, [h.doc.id]: !(p[h.doc.id] ?? i < 3) }))}
+                onTag={runTag}
+                showGroup
+              />
+            ))}
+          </div>
+        )
+      ) : (
+        <div className="mx-auto max-w-3xl space-y-6">
+          <p className="text-center text-xs text-muted-foreground">
+            {SUPPORT_ENTRIES.length} Support-Themen · {CASES.length} Case-Kategorien
+          </p>
+          {groups.map((g) => {
+            const isCase = g.name === CASE_GROUP;
+            const expanded = !isCase || openGroups[g.name];
+            return (
+              <section key={g.name} className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setOpenGroups((p) => ({ ...p, [g.name]: !p[g.name] }))}
+                  disabled={!isCase}
+                  className="flex w-full items-center gap-2 text-left"
+                >
+                  <h2 className="text-sm font-semibold">{g.name}</h2>
+                  <span className="text-xs text-muted-foreground">{g.docs.length}</span>
+                  {isCase && (
+                    <ChevronDown
+                      className={cn(
+                        "size-4 text-muted-foreground transition-transform",
+                        expanded && "rotate-180",
+                      )}
+                    />
+                  )}
+                </button>
+                {expanded &&
+                  g.docs.map((d) => (
+                    <EntryItem
+                      key={d.id}
+                      doc={d}
+                      open={!!openIds[d.id]}
+                      onToggle={() => toggle(d.id)}
+                      onTag={runTag}
+                      showGroup={isCase}
+                    />
+                  ))}
+              </section>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const MORE: { id: View; label: string; icon: ReactNode }[] = [
+  { id: "sop", label: "Szenarien", icon: <List className="size-4" /> },
+  { id: "stations", label: "Stationsfinder", icon: <Map className="size-4" /> },
 ];
 
 export function CaseSearchGuidebook() {
-  const t = useTranslations("Guidebooks");
-  const [activeTab, setActiveTab] = useState<Tab>("sop");
+  const [view, setView] = useState<View>("list");
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      {/* Tab bar */}
-      <div className="flex gap-1 rounded-xl border border-border bg-muted/40 p-1">
-        {TABS.map((tab) => (
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
+        {view !== "list" && (
           <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            type="button"
+            onClick={() => setView("list")}
+            className="mr-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium hover:bg-accent"
+          >
+            <Search className="size-4" /> Zurück zur Suche
+          </button>
+        )}
+        {MORE.map((m) => (
+          <button
+            key={m.id}
+            type="button"
+            onClick={() => setView(m.id)}
             className={cn(
-              "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              activeTab === tab.id
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
+              "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground",
+              view === m.id && "bg-accent text-foreground",
             )}
           >
-            {tab.icon}
-            <span className="hidden sm:inline">{tab.label}</span>
+            {m.icon}
+            {m.label}
           </button>
         ))}
+        <Link
+          href="/wiki-chat"
+          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          <MessageSquare className="size-4" /> Wiki-Chat
+        </Link>
       </div>
 
-      {/* Tab content */}
       <div className="min-h-0 flex-1">
-        {activeTab === "sop" && <SOPPanel />}
-        {activeTab === "search" && <CaseSearchTab />}
-        {activeTab === "wiki" && (
-          <div className="flex h-[calc(100dvh-16rem)] min-h-[420px] flex-col items-center justify-center gap-4 rounded-xl border border-border bg-muted/20 p-8 text-center">
-            <MessageSquare className="h-10 w-10 text-muted-foreground" />
-            <div className="space-y-1">
-              <p className="text-sm font-medium">{t("wikiChat.title")}</p>
-              <p className="max-w-sm text-sm text-muted-foreground">{t("wikiChat.openFullHint")}</p>
-            </div>
-            <Link
-              href="/wiki-chat"
-              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors bg-foreground text-background hover:bg-foreground/88"
-            >
-              {t("wikiChat.openFull")}
-            </Link>
-          </div>
-        )}
-        {activeTab === "stations" && <StationsFinder />}
+        {view === "list" && <CaseSupport />}
+        {view === "sop" && <SOPPanel />}
+        {view === "stations" && <StationsFinder />}
       </div>
     </div>
   );
