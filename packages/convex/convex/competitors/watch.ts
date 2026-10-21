@@ -464,14 +464,6 @@ function isoWeek(ms: number): number {
   return Math.ceil(((date.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
 }
 
-const host = (url: string) => {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
-};
-
 interface SourcedFeature {
   label: string;
   wert: string;
@@ -519,33 +511,23 @@ function collectProducts(
   return [...products.values()];
 }
 
-const OVERVIEW_COLUMNS = [
-  "Tankstellen Deutschland",
-  "Ladepunkte Deutschland",
-  "Kosten / Gebühren",
-  "Rabatt / Preisvorteil",
-];
+/** Was im Wiki und in den Ankündigungen zählt (Wunsch Vahan, 21.10.):
+ *  nur öffentliche Aktionen, Angebote, Rabatte und Kosten. */
+export const RELEVANT_LABELS = ["Aktion / Angebot", "Rabatt / Preisvorteil", "Kosten / Gebühren"];
 
-function overviewCell(product: Product, label: string): string {
+function cell(product: Product, label: string): string {
   const values = product.merkmale.filter((m) => m.label === label).map((m) => esc(m.wert));
   return values.length > 0 ? values.join("<br>") : "–";
 }
 
-function sourceLink(f: SourcedFeature): string {
-  const stand = f.checkedAt ? `, ${day(f.checkedAt)}` : "";
-  return `<a href="${esc(f.source.url)}">${esc(host(f.source.url))}</a>${stand}`;
-}
+const relevant = (p: Product) => p.merkmale.some((m) => RELEVANT_LABELS.includes(m.label));
 
-function productTable(product: Product): string {
-  const rows = product.merkmale
-    .map(
-      (f) =>
-        `<tr><td>${esc(f.label)}</td><td><strong>${esc(f.wert)}</strong></td><td>„${esc(f.beleg)}“</td><td>${sourceLink(f)}</td></tr>`,
-    )
-    .join("");
-  return `<h3>${esc(product.produkt)} <em>(${esc(product.art)})</em></h3><table><thead><tr><th>Merkmal</th><th>Angabe</th><th>Wortlaut auf der Seite</th><th>Quelle, Stand</th></tr></thead><tbody>${rows}</tbody></table>`;
-}
+/** Erste Quelle eines Produkts – dahin verlinkt der Produktname. */
+const firstSource = (p: Product) =>
+  p.merkmale.find((m) => RELEVANT_LABELS.includes(m.label))?.source ?? p.merkmale[0]!.source;
 
+/** Eine einzige Tabelle: je Produkt Aktionen, Rabatte, Kosten. Angaben von
+ *  Vergleichsportalen stehen mit „laut …“ am Anbieter. */
 export function renderWiki(
   sources: readonly Source[],
   rows: Map<string, Doc<"competitorSources">>,
@@ -554,67 +536,31 @@ export function renderWiki(
   const own = collectProducts(
     sources.filter((s) => !s.portal),
     rows,
-  );
-  const parts: string[] = [];
-  parts.push(
-    `<p>Öffentliche Tank- und Ladekarten-Angebote von Aral, Shell, TKS (heute Radius) und DKV auf einen Blick – damit alle im Vertrieb wissen, womit die Konkurrenz wirbt.</p>`,
-    `<div data-callout="info"><p>Wird jeden Montag automatisch aktualisiert (zuletzt ${day(now)}). Es steht nur drin, was wörtlich auf den Seiten der Anbieter steht – jede Angabe mit Wortlaut und Quelle. Individuelle Rabatte und Vertragspreise veröffentlichen die Anbieter nicht; die fehlen hier also bewusst. Neuigkeiten kommen montags als Ankündigung.</p></div>`,
-  );
-
-  parts.push(`<h2>Überblick</h2>`);
-  if (own.length === 0) {
-    parts.push(`<p>Noch keine Angaben – die erste Auswertung läuft am nächsten Montag.</p>`);
-  } else {
-    const head = ["Anbieter", "Produkt", "Art", ...OVERVIEW_COLUMNS]
-      .map((h) => `<th>${esc(h)}</th>`)
-      .join("");
-    const body = PROVIDERS.flatMap((p) => own.filter((o) => o.anbieter === p))
-      .map(
-        (o) =>
-          `<tr><td>${esc(o.anbieter)}</td><td><strong>${esc(o.produkt)}</strong></td><td>${esc(o.art)}</td>${OVERVIEW_COLUMNS.map((c) => `<td>${overviewCell(o, c)}</td>`).join("")}</tr>`,
-      )
-      .join("");
-    parts.push(`<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`);
-  }
-
-  for (const provider of PROVIDERS) {
-    const list = own.filter((o) => o.anbieter === provider);
-    parts.push(`<h2>${esc(provider)}</h2>`);
-    if (provider === "TKS (Radius)") {
-      parts.push(
-        `<p>TKS (Tankkarten Service GmbH) heißt heute Radius Business Solutions und vermittelt Karten anderer Marken (u. a. Shell, Aral, Esso).</p>`,
-      );
-    }
-    parts.push(
-      list.length > 0 ? list.map(productTable).join("") : `<p>Derzeit keine belegten Angaben.</p>`,
-    );
-  }
-
+  ).filter(relevant);
   const portals = collectProducts(
     sources.filter((s) => s.portal),
     rows,
-  );
-  parts.push(
-    `<h2>Laut Vergleichsportalen</h2>`,
-    `<p>Angaben Dritter – können veraltet sein und weichen teils von den Anbieterseiten ab. Im Zweifel gilt die Anbieterseite.</p>`,
-    portals.length > 0
-      ? portals.map(productTable).join("")
-      : `<p>Derzeit keine belegten Angaben.</p>`,
-  );
-
-  const sourceRows = sources
-    .map((s) => {
-      const row = rows.get(s.key);
-      const stand = row?.checkedAt ? day(row.checkedAt) : "noch nicht gelesen";
-      const problem =
-        row?.lastErrorAt && (!row.checkedAt || row.lastErrorAt > row.checkedAt)
-          ? ` – zuletzt nicht lesbar (${day(row.lastErrorAt)}), Stand bleibt`
-          : "";
-      return `<li><a href="${esc(s.url)}">${esc(s.label)}</a> – ${stand}${problem}</li>`;
-    })
+  ).filter(relevant);
+  const ordered = [
+    ...PROVIDERS.flatMap((p) => own.filter((o) => o.anbieter === p)),
+    ...PROVIDERS.flatMap((p) => portals.filter((o) => o.anbieter === p)),
+  ];
+  const head = ["Anbieter", "Produkt", "Art", ...RELEVANT_LABELS]
+    .map((h) => `<th>${esc(h)}</th>`)
     .join("");
-  parts.push(`<h2>Quellen</h2><ul>${sourceRows}</ul>`);
-  return parts.join("");
+  const body =
+    ordered.length > 0
+      ? ordered
+          .map((o) => {
+            const src = firstSource(o);
+            const anbieter = src.portal
+              ? `${o.anbieter} <em>(laut ${esc(src.group)})</em>`
+              : esc(o.anbieter);
+            return `<tr><td>${anbieter}</td><td><a href="${esc(src.url)}"><strong>${esc(o.produkt)}</strong></a></td><td>${esc(o.art)}</td>${RELEVANT_LABELS.map((l) => `<td>${cell(o, l)}</td>`).join("")}</tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="6">Derzeit keine öffentlichen Aktionen oder Angebote gefunden.</td></tr>`;
+  return `<p><strong>Stand ${day(now)}</strong> · wird jeden Montag aktualisiert · nur, was wörtlich auf den Seiten steht</p><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
 function renderFirstAnnouncement(): string {
@@ -637,9 +583,11 @@ export function renderChangesAnnouncement(
     if (!lines.has(group)) lines.set(group, []);
     lines.get(group)!.push(line);
   };
-  for (const { source, changes: c } of changes) {
+  for (const { source, changes: all } of changes) {
     const src = sourceOf(source);
     if (!src) continue;
+    const keep = (f: { label: string }) => RELEVANT_LABELS.includes(f.label);
+    const c = { ...all, neu: all.neu.filter(keep), entfallen: all.entfallen.filter(keep) };
     const group = src.portal ? `Laut ${src.group}` : src.group;
     for (const p of c.neueProdukte)
       add(group, `Neu: <strong>${esc(p.produkt)}</strong> (${esc(p.art)})`);

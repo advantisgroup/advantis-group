@@ -309,7 +309,13 @@ export default function GuidebookPage() {
   }
 
   return (
-    <div className={cn("mx-auto", staticGuidebook?.wide ? "max-w-6xl" : "max-w-4xl")}>
+    <div
+      className={cn(
+        "mx-auto",
+        // Wiki-Einträge mit Tabelle (Listenpreise, Wettbewerb) brauchen Breite.
+        staticGuidebook?.wide || entry?.erklaerung.includes("<table") ? "max-w-6xl" : "max-w-4xl",
+      )}
+    >
       {guidebook && allowed && <ReadingProgress />}
       <div className="mb-4 flex items-center justify-between gap-3 print:hidden">
         <Link

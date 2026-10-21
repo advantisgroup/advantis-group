@@ -14,14 +14,9 @@ export const OFFER_KINDS = ["Tankkarte", "Ladekarte", "Tank- und Ladekarte"] as 
 export type OfferKind = (typeof OFFER_KINDS)[number];
 
 export const FEATURE_LABELS = [
-  "Tankstellen Deutschland",
-  "Tankstellen Europa",
-  "Ladepunkte Deutschland",
-  "Ladepunkte Europa",
-  "Kosten / Gebühren",
+  "Aktion / Angebot",
   "Rabatt / Preisvorteil",
-  "Zielgruppe",
-  "Besonderheit",
+  "Kosten / Gebühren",
 ] as const;
 export type FeatureLabel = (typeof FEATURE_LABELS)[number];
 

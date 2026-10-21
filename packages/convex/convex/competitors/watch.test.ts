@@ -45,7 +45,7 @@ describe("competitors watch", () => {
             art: "Tank- und Ladekarte",
             merkmale: [
               {
-                label: "Ladepunkte Deutschland",
+                label: "Rabatt / Preisvorteil",
                 wert: "93 % aller öffentlichen Ladepunkte",
                 beleg: "Zugriff auf 93 Prozent aller öffentlich zugänglichen Ladepunkte",
               },
@@ -85,7 +85,7 @@ describe("competitors watch", () => {
               {
                 anbieter: "DKV",
                 produkt: "DKV Card +Charge",
-                label: "Ladepunkte Europa",
+                label: "Rabatt / Preisvorteil",
                 wert: "1,2 Mio.",
               },
             ],
@@ -93,7 +93,7 @@ describe("competitors watch", () => {
               {
                 anbieter: "DKV",
                 produkt: "DKV Card +Charge",
-                label: "Ladepunkte Europa",
+                label: "Rabatt / Preisvorteil",
                 wert: "1 Mio.",
               },
             ],

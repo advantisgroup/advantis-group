@@ -37,7 +37,11 @@ async function fetchPageText(url: string, format: "html" | "aem"): Promise<strin
   return format === "aem" ? aemModelToPageText(JSON.parse(body)) : htmlToPageText(body);
 }
 
-const SYSTEM = `Du liest den Text einer Webseite und listest die Tank- und Ladekarten-Angebote für Geschäftskunden, die dort beschrieben sind. Antworte nur mit JSON.
+/** Erhöhen, wenn sich Prompt oder Merkmale ändern: dann liest der nächste
+ *  Lauf jede Seite neu, auch wenn ihr Text gleich geblieben ist. */
+const EXTRACT_VERSION = "v2";
+
+const SYSTEM = `Du liest den Text einer Webseite und listest die Tank- und Ladekarten für Geschäftskunden, die dort beschrieben sind – mit Fokus auf aktuelle Aktionen, Angebote, Rabatte und Kosten. Antworte nur mit JSON.
 
 Format:
 {"angebote":[{"anbieter":"…","produkt":"…","art":"…","merkmale":[{"label":"…","wert":"…","beleg":"…"}]}]}
@@ -51,7 +55,12 @@ Regeln:
 - "label": genau einer von ${FEATURE_LABELS.map((l) => `"${l}"`).join(", ")}.
 - "anbieter": genau einer aus der Liste, die du mit dem Text bekommst. Angebote anderer Anbieter weglassen.
 - Platzhalter wie \${charge} oder {{…}} sind keine Werte – weglassen.
-- Werbefloskeln ohne konkrete Aussage weglassen. Unter "Besonderheit" nur konkrete Leistungen (z. B. Wallbox-Service, Maut, App-Funktion).
+- "Aktion / Angebot": zeitlich begrenzte oder besondere Angebote (z. B. Neukundenaktion, Monate gebührenfrei, Bonus, Startguthaben, Gutschein), mit Laufzeit, falls genannt.
+- "Rabatt / Preisvorteil": konkrete Nachlässe (z. B. Cent pro Liter, Prozent auf Wäsche, Festpreis).
+- "Kosten / Gebühren": Karten- oder Grundgebühren, Mindestumsatz.
+- Netzgrößen, Ladepunkte, Tankstellen-Anzahlen und allgemeine Leistungen NICHT aufnehmen.
+- Werbefloskeln ohne konkrete Aussage weglassen.
+- Ein Produkt nur aufnehmen, wenn mindestens eine dieser Angaben dazu im Text steht.
 - Steht nichts Passendes im Text: {"angebote":[]}`;
 
 async function extractOffers(pageText: string, providers: string[]): Promise<unknown> {
@@ -96,7 +105,7 @@ export const internalCompetitorsRoute = new Elysia().post(
     }
     if (pageText.length < MIN_TEXT_CHARS) return { ok: false as const, error: "empty" as const };
 
-    const hash = textHash(pageText);
+    const hash = `${EXTRACT_VERSION}:${textHash(pageText)}`;
     if (hash === body.prevHash) return { ok: true as const, unchanged: true as const };
 
     let raw: unknown;

@@ -43,13 +43,13 @@ describe("verifyOffers", () => {
       art: "Tank- und Ladekarte",
       merkmale: [
         {
-          label: "Ladepunkte Deutschland",
+          label: "Rabatt / Preisvorteil",
           wert: "93 % der öffentlichen Ladepunkte",
           beleg: "Zugriff auf 93 Prozent aller öffentlich zugänglichen Ladepunkte",
         },
         // Zahl nicht im Beleg → raus
         {
-          label: "Tankstellen Deutschland",
+          label: "Kosten / Gebühren",
           wert: "7.000",
           beleg: "93 Prozent aller öffentlich zugänglichen Ladestationen und 6.000 Tankstellen",
         },
@@ -73,7 +73,7 @@ describe("verifyOffers", () => {
       produkt: "Aral Fuel & Charge",
       art: "Tankkarte",
       merkmale: [
-        { label: "Besonderheit", wert: "x", beleg: "Zugriff auf 93 Prozent aller öffentlich" },
+        { label: "Aktion / Angebot", wert: "x", beleg: "Zugriff auf 93 Prozent aller öffentlich" },
       ],
     },
   ];
@@ -81,7 +81,7 @@ describe("verifyOffers", () => {
   test("behält nur Belegtes", () => {
     const offers = verifyOffers(raw, text, ["Aral"]);
     expect(offers).toHaveLength(1);
-    expect(offers[0]!.merkmale.map((m) => m.label)).toEqual(["Ladepunkte Deutschland"]);
+    expect(offers[0]!.merkmale.map((m) => m.label)).toEqual(["Rabatt / Preisvorteil"]);
   });
 
   test("Angebote ohne belegtes Merkmal fallen weg", () => {
@@ -95,7 +95,7 @@ describe("mergeWithPrevious", () => {
     anbieter: "DKV",
     produkt: "DKV Card +Charge",
     art: "Tank- und Ladekarte",
-    merkmale: [{ label: "Ladepunkte Europa", wert, beleg }],
+    merkmale: [{ label: "Rabatt / Preisvorteil", wert, beleg }],
   });
   const oldText = "DKV Card +Charge Laden an rund 1 Million Ladepunkten in Europa.";
   const newText = "DKV Card +Charge Laden an rund 1,2 Millionen Ladepunkten in Europa.";
