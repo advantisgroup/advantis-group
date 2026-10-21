@@ -464,13 +464,6 @@ function isoWeek(ms: number): number {
   return Math.ceil(((date.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
 }
 
-const host = (url: string) => {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
-};
 
 interface SourcedFeature {
   label: string;
