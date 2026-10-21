@@ -464,7 +464,6 @@ function isoWeek(ms: number): number {
   return Math.ceil(((date.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
 }
 
-
 interface SourcedFeature {
   label: string;
   wert: string;
