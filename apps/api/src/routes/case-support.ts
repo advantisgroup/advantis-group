@@ -1,5 +1,6 @@
 import { api } from "@advantis/convex/api";
-import { CASES, SUPPORT_ENTRIES } from "@advantis/types/case-support";
+import { CASES } from "../lib/case-support/cases.js";
+import { SUPPORT_ENTRIES } from "../lib/case-support/support.js";
 import { Elysia, t } from "elysia";
 
 import { runModelText, startAiRun } from "../lib/ai.js";
