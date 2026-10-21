@@ -15,7 +15,8 @@
 import { type Infer, v } from "convex/values";
 
 import { internal } from "../_generated/api";
-import { type Doc } from "../_generated/dataModel";
+import { type Doc, type Id } from "../_generated/dataModel";
+import { type MutationCtx } from "../_generated/server";
 import { getOrCreateIntranetBot } from "../announcements";
 import { gatedInternalAction, internalMutation, internalQuery } from "../functions";
 import { internalApiFetch } from "../lib/internalApi";
@@ -274,10 +275,11 @@ export const recordSource = internalMutation({
 
 /** Wöchentlicher Lauf (crons.ts, montags früh). Eine Seite nach der anderen,
  *  damit jeder API-Aufruf kurz bleibt und eine kaputte Seite die anderen
- *  nicht aufhält. Läuft nur, solange KI im Intranet eingeschaltet ist. */
+ *  nicht aufhält. Läuft nur, solange KI im Intranet eingeschaltet ist.
+ *  `test: true` legt einen neuen Eintrag nur für Admins sichtbar an. */
 export const run = gatedInternalAction("ai")({
-  args: {},
-  handler: async (ctx) => {
+  args: { test: v.optional(v.boolean()) },
+  handler: async (ctx, { test }) => {
     const collected: { source: string; changes: Changes }[] = [];
     for (const source of SOURCES) {
       const state = await ctx.runQuery(internal.competitors.watch.sourceState, { key: source.key });
@@ -307,14 +309,17 @@ export const run = gatedInternalAction("ai")({
       if (result.ok && !result.unchanged)
         collected.push({ source: source.key, changes: result.changes });
     }
-    await ctx.runMutation(internal.competitors.watch.publish, { changes: collected });
+    await ctx.runMutation(internal.competitors.watch.publish, { changes: collected, test });
   },
 });
 
 /** Schreibt den Wiki-Eintrag neu und kündigt Neuigkeiten an. */
 export const publish = internalMutation({
-  args: { changes: v.array(v.object({ source: v.string(), changes: changesValidator })) },
-  handler: async (ctx, { changes }) => {
+  args: {
+    changes: v.array(v.object({ source: v.string(), changes: changesValidator })),
+    test: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { changes, test }) => {
     const now = Date.now();
     const rows = await ctx.db.query("competitorSources").collect();
     const byKey = new Map(rows.map((r) => [r.key, r]));
@@ -327,8 +332,12 @@ export const publish = internalMutation({
       .withIndex("by_slug", (q) => q.eq("slug", WIKI_SLUG))
       .unique();
     let created = false;
+    let hidden = false;
     if (existing) {
       if (existing.deletedAt) return; // Bewusst gelöscht: nicht wiederbeleben.
+      // Noch im Testbetrieb (nur Admins sehen den Eintrag): aktualisieren,
+      // aber nichts ankündigen, bis `release` ihn für alle freigibt.
+      hidden = existing.minRole === "admin";
       await ctx.db.patch(existing._id, {
         erklaerung: html,
         version: existing.erklaerung === html ? existing.version : existing.version + 1,
@@ -356,49 +365,82 @@ export const publish = internalMutation({
         validUntil: now + YEAR_MS,
         version: 1,
         pinned: false,
+        minRole: test ? "admin" : undefined,
         authorUserId: botUserId,
         authorName: "Intranet Bot",
         createdAt: now,
         updatedAt: now,
       });
       created = true;
+      hidden = !!test;
     }
+    if (hidden) return;
 
     const body = created
       ? renderFirstAnnouncement()
       : renderChangesAnnouncement(changes, (key) => SOURCES.find((s) => s.key === key));
     if (!body) return;
     const title = created
-      ? "Neu im Wiki: Wettbewerbsübersicht Tank- & Ladekarten"
+      ? FIRST_TITLE
       : `Wettbewerb Tank- & Ladekarten: Neuigkeiten (KW ${isoWeek(now)})`;
-    const id = await ctx.db.insert("announcements", {
-      title,
-      body,
-      authorUserId: botUserId,
-      pinned: false,
-      audience: { kind: "all" },
-      category: "Wettbewerb",
-      attachmentStorageIds: [],
-      publishedAt: now,
-      expiresAt: now + ANNOUNCEMENT_TTL_MS,
-      createdAt: now,
-    });
-    const recipients = await ctx.db
-      .query("users")
-      .withIndex("by_status", (q) => q.eq("status", "active"))
-      .collect();
-    await notifyUsers(
-      ctx,
-      recipients.map((u) => u._id).filter((uid) => uid !== botUserId),
-      {
-        type: "announcement",
-        title: "Neue Ankündigung",
-        body: title,
-        link: `/announcements?id=${id}`,
-      },
-    );
+    await announce(ctx, botUserId, title, body, now);
   },
 });
+
+const FIRST_TITLE = "Neu im Wiki: Wettbewerbsübersicht Tank- & Ladekarten";
+
+/** Testbetrieb beenden: Eintrag für alle sichtbar machen und ihn ankündigen.
+ *  Von Hand im Convex-Dashboard: `internal.competitors.watch.release({})`. */
+export const release = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const entry = await ctx.db
+      .query("wikiEntries")
+      .withIndex("by_slug", (q) => q.eq("slug", WIKI_SLUG))
+      .unique();
+    if (!entry || entry.minRole !== "admin") return { result: "nothing_to_release" as const };
+    const now = Date.now();
+    await ctx.db.patch(entry._id, { minRole: undefined, updatedAt: now });
+    const botUserId = await getOrCreateIntranetBot(ctx);
+    await announce(ctx, botUserId, FIRST_TITLE, renderFirstAnnouncement(), now);
+    return { result: "released" as const };
+  },
+});
+
+async function announce(
+  ctx: MutationCtx,
+  botUserId: Id<"users">,
+  title: string,
+  body: string,
+  now: number,
+) {
+  const id = await ctx.db.insert("announcements", {
+    title,
+    body,
+    authorUserId: botUserId,
+    pinned: false,
+    audience: { kind: "all" },
+    category: "Wettbewerb",
+    attachmentStorageIds: [],
+    publishedAt: now,
+    expiresAt: now + ANNOUNCEMENT_TTL_MS,
+    createdAt: now,
+  });
+  const recipients = await ctx.db
+    .query("users")
+    .withIndex("by_status", (q) => q.eq("status", "active"))
+    .collect();
+  await notifyUsers(
+    ctx,
+    recipients.map((u) => u._id).filter((uid) => uid !== botUserId),
+    {
+      type: "announcement",
+      title: "Neue Ankündigung",
+      body: title,
+      link: `/announcements?id=${id}`,
+    },
+  );
+}
 
 // --- Darstellung --------------------------------------------------------------
 
