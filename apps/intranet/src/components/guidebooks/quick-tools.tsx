@@ -2,11 +2,9 @@
 
 import { type ComponentType, useState } from "react";
 
-import { Ban, CalendarCheck, ChevronRight, type LucideIcon } from "lucide-react";
+import { CalendarCheck, ChevronRight, type LucideIcon } from "lucide-react";
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-
-import { BlacklistForm } from "./BlacklistForm";
 
 /**
  * Feste Werkzeuge in der Wiki-Schnellleiste, die als Pop-up im Intranet
@@ -25,12 +23,6 @@ export const QUICK_TOOLS: readonly QuickTool[] = [
     title: "Terminprozess E-Mobilitäts-Check",
     src: "/tools/terminprozess-ev-check.html",
     icon: CalendarCheck,
-  },
-  {
-    key: "blacklist",
-    title: "Kunde auf die Blacklist setzen",
-    component: BlacklistForm,
-    icon: Ban,
   },
 ];
 

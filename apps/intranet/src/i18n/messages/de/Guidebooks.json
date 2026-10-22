@@ -133,6 +133,10 @@
   "captionPlaceholder": "Bildunterschrift (optional)",
   "uploadFailed": "Upload fehlgeschlagen",
   "imageBlockIncomplete": "Warte, bis alle Bilder hochgeladen sind, bevor du speicherst",
+  "blacklist": {
+    "title": "Kunde auf die Blacklist setzen",
+    "description": "Kunden/Interessenten eintragen, die nicht mehr von UTA kontaktiert werden möchten."
+  },
   "caseSearch": {
     "title": "Case & Support",
     "description": "Stichwort eingeben: Lösungswege aus dem Support plus passende Case-Felder und Queue."
