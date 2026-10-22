@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ladetarife UTA eCharge & IONITY</title>
+<!-- Quelle: UTA eCharge Ladetarif DE (Stand 01.07.2026, V1) und UTA Edenred IONITY Abomodell (Februar 2026).
+     Bei neuer Tarifliste die Daten unten in TARIFE/IONITY anpassen. -->
+<style>
+:root{--bg:#faf9f6;--card:#fff;--ink:#1d1b1a;--mut:#6b6762;--line:#e5e1db;--acc:#c8102e;--tint:#fbeef0;--ok:#23835b;--okbg:#e7f5ee;--warn:#9a6700;--warnbg:#fff4d6;--blue:#2f6fb0;--bluebg:#e9f1fa}
+@media (prefers-color-scheme:dark){:root{--bg:#161514;--card:#201f1d;--ink:#f1eeea;--mut:#a7a19a;--line:#35322f;--acc:#f0506f;--tint:#3a1a22;--ok:#4cc08c;--okbg:#153325;--warn:#e3b341;--warnbg:#3a2e10;--blue:#7fb2e5;--bluebg:#16283b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:0 0 2px;letter-spacing:-.01em}
+.sub{color:var(--mut);margin:0 0 16px;font-size:13.5px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.tabs button{font:inherit;font-size:13.5px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:999px;padding:6px 13px;cursor:pointer}
+.tabs button:hover{color:var(--ink)}
+.tabs button[aria-selected="true"]{background:var(--acc);border-color:var(--acc);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 10px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 10px;border-top:1px solid var(--line);vertical-align:top}
+thead th{border-top:0;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);font-weight:600}
+td.p{font-variant-numeric:tabular-nums;font-weight:700;font-size:16px;white-space:nowrap}
+td.p small{display:block;font-weight:400;font-size:11.5px;color:var(--mut);white-space:normal;margin-top:2px}
+.lvl{display:inline-block;font-weight:700;font-size:12px;border-radius:6px;padding:2px 8px}
+.lvl.b{background:var(--okbg);color:var(--ok)}.lvl.s{background:var(--bluebg);color:var(--blue)}.lvl.h{background:var(--warnbg);color:var(--warn)}.lvl.i{background:var(--tint);color:var(--acc)}.lvl.p{background:var(--line);color:var(--ink)}
+.desc{display:block;color:var(--mut);font-size:12px;margin-top:3px}
+.ion{display:grid;grid-template-columns:repeat(3,auto);gap:2px 10px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.ion span{color:var(--mut);font-weight:500;font-size:11px}
+.note{font-size:12.5px;color:var(--mut);margin:8px 0 0}
+.fee{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;font-size:13.5px}
+.fee b{font-size:16px}
+.abo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.abo .t{border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.abo .t.best{border-color:var(--acc);background:var(--tint)}
+.abo .n{font-weight:700}
+.abo .k{font-size:26px;font-weight:800;margin:6px 0 0;font-variant-numeric:tabular-nums}
+.abo .m{font-size:13px;color:var(--mut)}
+.abo .tag{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:var(--acc)}
+ul{margin:6px 0 0;padding-left:18px}li{margin:3px 0}
+.hidden{display:none}
+@media (max-width:640px){.abo{grid-template-columns:1fr}thead{display:none}tr{display:block;border-top:1px solid var(--line);padding:6px 0}td{display:block;border:0;padding:3px 0}td[data-l]::before{content:attr(data-l)": ";color:var(--mut);font-size:12px;font-weight:500}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ladetarife</h1>
+  <p class="sub">UTA eCharge Einheitstarif (Stand 01.07.2026) und UTA Edenred IONITY Abomodell (Februar 2026). Alle Preise zzgl. MwSt.</p>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div id="view"></div>
+</div>
+<script>
+var IONITY={
+  normal:{name:"IONITY ohne Abo",kwh:"0,59",fee:null},
+  std:{name:"IONITY Standard",kwh:"0,46",fee:"6,00"},
+  prem:{name:"IONITY Premium",kwh:"0,36",fee:"11,00"}
+};
+var T={
+ de:{label:"Deutschland",cur:"€",rows:[
+  ["b","Budget","Besonders günstig laden bei ausgewählten Betreibern","0,28","HamburgerEnergiewerke, EDEKA, Lidl, Ubitricity","0,52","Kaufland, EDEKA, Hamburger Energiewerke, Autostrom.plus, Vattenfall"],
+  ["s","Standard","Faire Preise in einem Großteil des Netzwerks","0,46","Lichtblick, reev GmbH, ALDI Süd","0,66","Mer Germany, E.ON Drive, Fastned"],
+  ["h","High-Price","Hochpreisige Ladenetzbetreiber","0,69","Volkswagen Group Charging/Elli, vaylens, E.ON Solution, Virta Germany, Chargepoint/has.to.be, Wirelane","0,76","CITYWATT, Vaylens, Virta Germany, MOON POWER, EWE Go GmbH, Pfalzwerke"]],
+  ionity:{ac:null,dc:["0,59/0,46/0,36","0,62/0,49/0,39"]},
+  partner:[["Shell Recharge","0,53","0,66"],["EnBW","0,69","0,63"],["Aral pulse","0,66","0,66"]],
+  fee:[["0,10","AC ≥ 210 Min. / DC ≥ 60 Min."],["0,12","EnBW: AC ≥ 210 Min. / DC ≥ 45 Min."]],
+  extra:"Je nach Vereinbarung können Service-Gebühren oder individuelle Tarife anfallen, z. B. bei Ladenetz.de, Ladebusiness.de, Stadtwerke Düsseldorf, Energie Südbayern, ESWE Versorgungs AG."},
+ at:{label:"Österreich",cur:"€",rows:[
+  ["b","Budget","Besonders günstig laden bei ausgewählten Betreibern","0,49","Illwerke vkw AG, ÖAMTC, da emobil GmbH & Co KG, Energie Steiermark, Energie AG OÖ Vertrieb","0,64","EVN Energieservices GmbH, Salzburg AG, da emobil, Energie Steiermark, MER Austria GmbH"],
+  ["s","Standard","Faire Preise in einem Großteil des Netzwerks","0,64","BESolution GmbH, Salzburg AG, Wien Energie, Smatrics","0,71","Smatrics, Leikermoser Energiehandel, Chargepoint Network"],
+  ["h","High-Price","Hochpreisige Ladenetzbetreiber","0,79","GoldbeckParking GmbH, Energie Klagenfurt GmbH, eCarUp AG","0,76","Moonpower GmbH, LINZ STROM, Energie AG OÖ Vertrieb"]],
+  ionity:{ac:["0,42/0,30/0,40","0,46/0,43/0,34"],dc:["0,58/0,44/0,36","0,63/0,49/0,39"]},
+  partner:[],fee:[["0,10","AC ≥ 210 Min. / DC ≥ 60 Min."]],extra:""},
+ ch:{label:"Schweiz",cur:"CHF",rows:[
+  ["b","Budget","Besonders günstig laden bei ausgewählten Betreibern","0,44","AVIA Volt Suisse AG, Migrol AG","0,49","Migrol AG, Vcharge CPO"],
+  ["s","Standard","Faire Preise in einem Großteil des Netzwerks","0,56","Move Mobility AG, Saascharge International GmbH, Enerti","0,69","Go Fast, Fastned, Move Mobility AG"],
+  ["h","High-Price","Hochpreisige Ladenetzbetreiber","0,79","Eponet, Autosense AG, Shell Recharge","0,75","Porsche Sales & Marketplace, Enerti"]],
+  ionity:{ac:null,dc:["0,73/0,56/0,46","0,79/0,60/0,49"]},
+  partner:[["Shell Recharge","0,65","0,75"]],fee:[["0,09","AC ≥ 210 Min. / DC ≥ 60 Min."]],
+  extra:"Je nach Vereinbarung können Service-Gebühren oder individuelle Tarife anfallen, z. B. bei ECarUp oder SOCAR."},
+ pl:{label:"Polen",cur:"zł",rows:[
+  ["b","Budget","Besonders günstig laden bei ausgewählten Betreibern","1,59","Greenway CPO, EQUAY","1,99","ChargePoint Austria GmbH PLNXT"],
+  ["s","Standard","Faire Preise in einem Großteil des Netzwerks","1,99","Noxo (Elocity Sp. z o.o.), Electrip Poland, PLEMO","2,69","PLPOL, EQUAY, Elocity Sp. z o.o."],
+  ["h","High-Price","Hochpreisige Ladenetzbetreiber","2,99","EVPlus, Qwello GmbH, Arinea CPO","3,49","Greenway CPO, Noxo (Elocity Sp. z o.o.)"]],
+  ionity:{ac:null,dc:["2,70/2,20/1,70","2,95/2,40/1,90"]},
+  partner:[["Powerdot","1,85","2,25"]],fee:[["0,43","AC ≥ 210 Min. / DC ≥ 60 Min."]],
+  extra:"Je nach Vereinbarung können Service-Gebühren oder individuelle Tarife anfallen, z. B. bei Noxo."},
+ fr:{label:"Frankreich",cur:"€",rows:[
+  ["b","Budget","Besonders günstig laden bei ausgewählten Betreibern","0,27","Izivia, Lidl, SIPLEC/E.Leclerc","0,34","Izivia, Lidl, NW IECharge"],
+  ["s","Standard","Faire Preise in einem Großteil des Netzwerks","0,34","Powerdot, Allego, Réseau eborn","0,44","Powerdot, E-Totem, ChargeHop"],
+  ["h","High-Price","Hochpreisige Ladenetzbetreiber","0,48","Electra, Greenflux","0,54","Total Energies, Electra, Greenflux"]],
+  ionity:{ac:["0,30/0,29/0,24","0,33/0,32/0,26"],dc:["0,46/0,35/0,29","0,52/0,40/0,33"]},
+  partner:[],fee:[["0,10","AC ≥ 210 Min. / DC ≥ 60 Min."]],extra:""},
+ nl:{label:"Niederlande",cur:"€",rows:[
+  ["b","Budget","Besonders günstig laden bei ausgewählten Betreibern","0,29","Vattenfall NL, Spirii, Lidl Nederland","0,59","Lidl Nederland, Vattenfall NL, TotalEnergies"],
+  ["s","Standard","Faire Preise in einem Großteil des Netzwerks","0,44","Last Mile Solution, Total Energies, Eneco eMobility","0,68","Fastned, E-FLUX / ROAD BV, AVIA"],
+  ["h","High-Price","Hochpreisige Ladenetzbetreiber","0,54","Allego, E-FLUX / ROAD BV, Robocharge","0,74","Shell Recharge, BP Europe SE, Maxern"]],
+  ionity:{ac:["0,47/0,43/0,34","0,51/0,47/0,37"],dc:["0,63/0,48/0,39","0,68/0,51/0,42"]},
+  partner:[],fee:[["0,10","AC ≥ 210 Min. / DC ≥ 60 Min."]],extra:""},
+ be:{label:"Belgien",cur:"€",rows:[
+  ["b","Budget","Besonders günstig laden bei ausgewählten Betreibern","0,34","ZE-WATT, ENGIE Vianeo, Chargewell Netherlands","0,39","Lidl, Move in, Pure (Freshmile), NW IECharge"],
+  ["s","Standard","Faire Preise in einem Großteil des Netzwerks","0,49","Total Energies, Blink","0,54","Powerdot, Electra"],
+  ["h","High-Price","Hochpreisige Ladenetzbetreiber","0,64","Chargepoint, Last Mile Solution","0,69","Spirii, Fastned"]],
+  ionity:{ac:["0,45/0,42/0,33","0,48/0,44/0,35"],dc:["0,61/0,47/0,39","0,65/0,49/0,40"]},
+  partner:[],fee:[["0,10","AC ≥ 210 Min. / DC ≥ 60 Min."]],extra:""}
+};
+var TABS=[["ionity","IONITY-Abo"]].concat(Object.keys(T).map(function(k){return [k,T[k].label]})).concat([["info","Andere Länder & Hinweise"]]);
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function ion(v,lab){if(!v)return '<td class="p" data-l="AC">–</td>';
+  function trip(s){var p=s.split("/");return '<span>ohne</span><span>Std.</span><span>Prem.</span>'+p.map(function(x){return '<div>'+esc(x)+'</div>'}).join("")}
+  return '<td data-l="'+lab+'">'+
+   '<div class="ion">'+trip(v[0])+'</div><span class="desc">abseits v. Autobahnen</span>'+
+   '<div class="ion" style="margin-top:6px">'+trip(v[1])+'</div><span class="desc">an Autobahnen</span></td>'}
+function country(k){var c=T[k],cur=c.cur;
+  var h='<div class="card"><h2>Öffentliches Laden '+esc(c.label)+'</h2><table><thead><tr><th>Tarifstufe</th><th>AC ('+cur+'/kWh)</th><th>DC ('+cur+'/kWh)</th></tr></thead><tbody>';
+  c.rows.forEach(function(r){h+='<tr><td><span class="lvl '+r[0]+'">'+esc(r[1])+'</span><span class="desc">'+esc(r[2])+'</span></td>'+
+    '<td class="p" data-l="AC">'+esc(r[3])+'<small>z. B. '+esc(r[4])+'</small></td><td class="p" data-l="DC">'+esc(r[5])+'<small>z. B. '+esc(r[6])+'</small></td></tr>'});
+  h+='<tr><td><span class="lvl i">Premium Partner</span><span class="desc">IONITY – ohne Abo / Standard / Premium</span></td>'+(c.ionity.ac?ion(c.ionity.ac,'AC'):'<td class="p" data-l="AC">–</td>')+ion(c.ionity.dc,'DC')+'</tr>';
+  c.partner.forEach(function(p){h+='<tr><td><span class="lvl p">'+esc(p[0])+'</span></td><td class="p" data-l="AC">'+esc(p[1])+'</td><td class="p" data-l="DC">'+esc(p[2])+'</td></tr>'});
+  h+='</tbody></table></div><div class="card"><h2>Charge &amp; Park Fee ('+cur+'/Min.)</h2><div class="fee">'+
+    c.fee.map(function(f){return '<div><b>'+esc(f[0])+'</b> ab '+esc(f[1])+'</div>'}).join("")+'</div>'+
+    '<p class="note">Fällt an, wenn das Fahrzeug länger als die angegebene Zeit an der Säule steht (gemessen vom Anstecken bis zum Trennen).</p>'+
+    (c.extra?'<p class="note">'+esc(c.extra)+'</p>':'')+'</div>';
+  return h}
+function ionityView(){var i=IONITY;
+  return '<div class="card"><h2>UTA Edenred IONITY Abomodell</h2><div class="abo">'+
+   '<div class="t"><div class="n">'+i.normal.name+'</div><div class="k">'+i.normal.kwh+' €</div><div class="m">DC / kWh</div><div class="m">keine Monatsgebühr</div></div>'+
+   '<div class="t"><div class="n">'+i.std.name+'</div><div class="k">'+i.std.kwh+' €</div><div class="m">DC / kWh</div><div class="m">'+i.std.fee+' € / Monat je Karte</div></div>'+
+   '<div class="t best"><div class="n">'+i.prem.name+'</div><div class="k">'+i.prem.kwh+' €</div><div class="m">DC / kWh</div><div class="m">'+i.prem.fee+' € / Monat je Karte</div><div class="tag">bis zu 40 % Nachlass</div></div>'+
+   '</div><p class="note">Preise für Deutschland (abseits von Autobahnen), zzgl. MwSt. und zzgl. Kartengebühr/Serviceaufschlag. Preise pro kWh variieren je Land – siehe Länder-Reiter. Der Kunde zahlt den Abopreis des Landes, in dem er lädt.</p></div>'+
+   '<div class="card"><h2>Ab wann lohnt sich das Abo? (Deutschland)</h2><ul>'+
+   '<li><b>Standard</b> spart 0,13 €/kWh → lohnt sich ab ca. <b>47 kWh</b> pro Karte und Monat.</li>'+
+   '<li><b>Premium</b> spart 0,23 €/kWh → lohnt sich ab ca. <b>48 kWh</b>; gegenüber Standard ab ca. <b>50 kWh</b> pro Monat.</li>'+
+   '</ul><p class="note">Faustregel: Wer mehr als ~50 kWh im Monat bei IONITY lädt (etwa 1–2 volle Schnellladungen), fährt mit Premium am günstigsten.</p></div>'+
+   '<div class="card"><h2>Argumente</h2><ul><li>~6.500 Schnellladepunkte in 22 Ländern, davon 1.400 in Deutschland – meist direkt an Autobahnen.</li>'+
+   '<li>Eine Karte für alle Ladebetreiber, einheitliche Standardpreise plus Abo-Rabatt.</li><li>Eine Sammelrechnung für alle Ladevorgänge.</li>'+
+   '<li>Alle Stationen in der UTA eCharge App.</li></ul></div>'}
+function infoView(){return '<div class="card"><h2>Andere Länder</h2><p>Abrechnung nach <b>Betreibertarif</b> (wie in der UTA eCharge App angezeigt) zzgl. UTA-Serviceaufschläge.</p></div>'+
+ '<div class="card"><h2>Tesla-Netzwerk Europa</h2><p>Variable Tarife je nach Uhrzeit; Strompreis und Charge &amp; Park Fee schwanken. Aktuelle Preise in der UTA eCharge App. Tesla ist vom Einheitstarif in DE und AT ausgenommen.</p></div>'+
+ '<div class="card"><h2>Wichtig für das Kundengespräch</h2><ul>'+
+ '<li>Die Preise sind keine Festpreise, sondern der Stand bei Vertragsschluss; sie passen sich dem Markt an.</li>'+
+ '<li>Maßgeblich ist immer die aktuelle UTA eCharge Ladetarifliste (App, UTA Service Center, myUTA, uta.com).</li>'+
+ '<li>Der Tarif richtet sich nach dem <b>Startzeitpunkt</b> des Ladevorgangs.</li>'+
+ '<li>Kostenlose Ladestationen sind auch für UTA-Kunden kostenlos.</li>'+
+ '<li>Je nach Land und Vereinbarung können Service-Gebühren oder individuelle Tarife anfallen.</li>'+
+ '<li>Alle Preise zzgl. gesetzlicher MwSt.; prozentuale Serviceaufschläge beziehen sich auf den Umsatz inkl. MwSt.</li></ul></div>'}
+var tabs=document.getElementById("tabs"),view=document.getElementById("view");
+function show(k){[].forEach.call(tabs.children,function(b){b.setAttribute("aria-selected",b.dataset.k===k?"true":"false")});
+  view.innerHTML=k==="ionity"?ionityView():k==="info"?infoView():country(k);
+  try{localStorage.setItem("ladetarife-tab",k)}catch(e){}}
+TABS.forEach(function(t){var b=document.createElement("button");b.type="button";b.role="tab";b.dataset.k=t[0];b.textContent=t[1];b.onclick=function(){show(t[0])};tabs.appendChild(b)});
+var start="de";try{start=localStorage.getItem("ladetarife-tab")||"de"}catch(e){}
+show(TABS.some(function(t){return t[0]===start})?start:"de");
+</script>
+</body>
+</html>
