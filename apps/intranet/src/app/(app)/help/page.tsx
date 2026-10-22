@@ -21,6 +21,7 @@ import { useTranslations } from "next-intl";
 import { useAiEnabled } from "@/components/ai/use-ai-enabled";
 import { PageHeader } from "@/components/PageHeader";
 import { Link } from "@/components/Link";
+import { isArchived } from "@/lib/maintenance";
 
 interface Choice {
   key: string;
@@ -69,7 +70,11 @@ export default function HelpPage() {
         <span className="flex-1">{t("myRequestsLink")}</span>
         <ChevronRight className="size-4 shrink-0" />
       </Link>
-      <ChoiceGroup title={t("reportTitle")} choices={report} tour="tour-help-report" />
+      <ChoiceGroup
+        title={t("reportTitle")}
+        choices={report.filter((c) => !isArchived(c.href))}
+        tour="tour-help-report"
+      />
       <ChoiceGroup title={t("findTitle")} choices={find} tour="tour-help-find" />
       <p className="flex items-start gap-2 text-sm text-muted-foreground">
         <MessageSquareHeart className="mt-0.5 size-4 shrink-0" />

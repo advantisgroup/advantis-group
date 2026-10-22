@@ -84,6 +84,7 @@ import {
   ConversationUnavailable,
   MessageMenu,
 } from "./ConversationParts";
+import { isArchived } from "@/lib/maintenance";
 
 const URL_RE = /https?:\/\/[^\s]+/i;
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
@@ -981,7 +982,11 @@ export function ConversationView({
                                   canDelete={mine}
                                   pinned={m.pinned}
                                   onTogglePin={() => void togglePinMessage({ messageId: m._id })}
-                                  onCreateTicket={m.body ? () => createTicketFrom(m) : undefined}
+                                  onCreateTicket={
+                                    m.body && !isArchived("/it-tickets")
+                                      ? () => createTicketFrom(m)
+                                      : undefined
+                                  }
                                   onReply={() => {
                                     setEditing(null);
                                     setReplyTo(m);

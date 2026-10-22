@@ -29,7 +29,6 @@ const OPEN_PREFIXES = [
   "/guidebooks",
   "/wiki-chat",
   // Hilfe & Fehler
-  "/it-tickets",
   "/help",
   "/requests",
   "/fehlermanagement",
@@ -49,6 +48,8 @@ const ARCHIVED_PREFIXES = [
   // Blog-Redaktion im Intranet (19.10.2026). Die öffentliche Website zeigt
   // bereits veröffentlichte Artikel weiter an.
   "/blog",
+  // IT-Tickets: ersetzt durch Wiki-Tool „Salesforce-Problem melden“ (22.10.2026).
+  "/it-tickets",
 ] as const;
 
 function matchesPrefix(pathname: string, prefix: string): boolean {

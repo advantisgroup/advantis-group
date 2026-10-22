@@ -61,6 +61,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { addLocalDays, useStartOfToday } from "@/hooks/use-today";
 import { localIsoDate } from "@/lib/absences";
 import { cn } from "@/lib/utils";
+import { isArchived } from "@/lib/maintenance";
 
 const CARD_IDS = [
   "aibrief",
@@ -217,7 +218,8 @@ export default function DashboardPage() {
   const forYouWidgets = toGrid([
     widget("chats", <ChatsCard />),
     widget("myweek", <MyWeekCard />),
-    widget("mytickets", <MyTicketsCard />),
+    // IT-Tickets archiviert (22.10.2026) – Karte ausgeblendet.
+    ...(isArchived("/it-tickets") ? [] : [widget("mytickets", <MyTicketsCard />)]),
     ...(profileGaps.length
       ? [widget("profilecompletion", <ProfileCompletionCard missingFields={profileGaps} />)]
       : []),

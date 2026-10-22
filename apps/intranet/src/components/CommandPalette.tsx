@@ -312,7 +312,9 @@ export function CommandPalette({ className }: { className?: string } = {}) {
         ? [{ href: "/playground", label: tNav("playground"), icon: FlaskConical, searchOnly: true }]
         : []),
     ];
-    return all.filter((p) => !p.managerOnly || isManager).filter((p) => !p.hidden);
+    return all
+      .filter((p) => !p.managerOnly || isManager)
+      .filter((p) => !p.hidden && !isArchived(p.href));
   }, [tNav, isManager, isAdmin, hasApplicantAccess, hasFilesAccess, guidebooks.length]);
 
   const actions = useMemo(
@@ -357,7 +359,10 @@ export function CommandPalette({ className }: { className?: string } = {}) {
           href: "/files",
           filesOnly: true,
         },
-      ].filter((a) => (!a.managerOnly || isManager) && (!a.filesOnly || hasFilesAccess)),
+      ].filter(
+        (a) =>
+          (!a.managerOnly || isManager) && (!a.filesOnly || hasFilesAccess) && !isArchived(a.href),
+      ),
     [t, isManager, hasFilesAccess],
   );
 

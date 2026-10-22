@@ -4,6 +4,7 @@ import { type Role } from "@advantis/types";
 
 import {
   Ban,
+  Bug,
   CalendarCheck,
   CalendarDays,
   Cloud,
@@ -26,6 +27,7 @@ import { type TeamId } from "@/lib/teams";
 
 import { BlacklistForm } from "./BlacklistForm";
 import { CaseSearchGuidebook } from "./case-search";
+import { SfIssuesTool } from "./SfIssuesTool";
 import { AbwesenheitenGenehmigenGuidebook } from "./docs/abwesenheiten-genehmigen";
 import { AnkuendigungenTermineGuidebook } from "./docs/ankuendigungen-termine";
 import { ChatTippsGuidebook } from "./docs/chat-tipps";
@@ -133,6 +135,18 @@ export const GUIDEBOOKS: Guidebook[] = [
     category: "interactive",
     teams: [],
     Component: BlacklistForm,
+    minimalChrome: true,
+  },
+  {
+    // Interaktives Tool: schreibt Salesforce-Probleme in die Meldungs-Tabelle
+    // (ersetzt die IT-Tickets, 22.10.2026).
+    slug: "salesforce-probleme",
+    titleKey: "sfIssues.title",
+    descriptionKey: "sfIssues.description",
+    icon: Bug,
+    category: "interactive",
+    teams: [],
+    Component: SfIssuesTool,
     minimalChrome: true,
   },
   {
