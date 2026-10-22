@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { isArchived } from "@/lib/maintenance";
 
 const GO_TO = {
   h: "/",
@@ -62,7 +63,7 @@ export function KeyboardShortcuts() {
       if (goPending.current > Date.now()) {
         goPending.current = 0;
         const href = GO_TO[e.key as keyof typeof GO_TO];
-        if (href) {
+        if (href && !isArchived(href)) {
           e.preventDefault();
           router.push(href);
         }

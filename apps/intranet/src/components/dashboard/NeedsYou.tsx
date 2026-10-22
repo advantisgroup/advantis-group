@@ -25,6 +25,7 @@ import { isoToday } from "@/lib/absences";
 import { usePendingApprovals } from "@/lib/time-absences";
 import { formatIsoDate, formatTime, relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { isArchived } from "@/lib/maintenance";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const VISIBLE_ITEMS = 6;
@@ -83,13 +84,15 @@ export function NeedsYouPanel() {
     api.people.accessRequests.list,
     isManager ? { status: "pending" } : "skip",
   );
-  const tickets = useQuery(api.itTickets.tickets.listAssignedOpen);
+  // IT-Tickets archiviert (22.10.2026): keine Ticket-Einträge mehr.
+  const ticketsArchived = isArchived("/it-tickets");
+  const tickets = useQuery(api.itTickets.tickets.listAssignedOpen, ticketsArchived ? "skip" : {});
   const measures = useQuery(api.fehlermanagement.measures.listMineOpen);
   const announcements = useQuery(api.announcements.needsAttention);
   const policies = useQuery(api.wiki.policies.pendingMine);
 
   const loading =
-    tickets === undefined ||
+    (!ticketsArchived && tickets === undefined) ||
     measures === undefined ||
     announcements === undefined ||
     policies === undefined ||

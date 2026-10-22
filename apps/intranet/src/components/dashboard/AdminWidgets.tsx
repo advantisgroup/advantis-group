@@ -25,6 +25,7 @@ import { formatIsoDate, relativeTime } from "@/lib/format";
 import { applicantPipelineHealthCounts } from "@/lib/applicant-pipeline-health";
 
 import { DashCard, Empty, Row, RowSkeletons, StatLine } from "./primitives";
+import { isArchived } from "@/lib/maintenance";
 
 const STALE_TICKET_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -98,18 +99,23 @@ export function ManagerBriefCard() {
             value={accessRequests.length}
             href="/admin/requests"
           />
-          <StatLine
-            icon={<Wrench />}
-            label={t("managerBriefStaleTickets")}
-            value={staleTickets.length}
-            href="/it-tickets"
-          />
-          <StatLine
-            icon={<UserPlus />}
-            label={t("managerBriefUnassignedTickets")}
-            value={unassignedTickets.length}
-            href="/it-tickets?filter=unassigned"
-          />
+          {/* IT-Tickets archiviert (22.10.2026) */}
+          {!isArchived("/it-tickets") && (
+            <>
+              <StatLine
+                icon={<Wrench />}
+                label={t("managerBriefStaleTickets")}
+                value={staleTickets.length}
+                href="/it-tickets"
+              />
+              <StatLine
+                icon={<UserPlus />}
+                label={t("managerBriefUnassignedTickets")}
+                value={unassignedTickets.length}
+                href="/it-tickets?filter=unassigned"
+              />
+            </>
+          )}
           <StatLine
             icon={<AlertTriangle />}
             label={t("overdueMeasures")}
