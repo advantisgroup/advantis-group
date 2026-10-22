@@ -38,6 +38,7 @@ import { internalOnedriveRoute } from "./routes/internal/onedrive.js";
 import { internalPushRoute } from "./routes/internal/push.js";
 import { internalUpdatesRoute } from "./routes/internal/updates.js";
 import { meRoute } from "./routes/me.js";
+import { sfIssuesRoute } from "./routes/sf-issues.js";
 import { unfurlRoute } from "./routes/unfurl.js";
 import { clerkWebhookRoute } from "./routes/webhooks/clerk.js";
 import { onedriveWebhookRoute } from "./routes/webhooks/onedrive.js";
@@ -80,6 +81,7 @@ export const app = new Elysia()
   .get("/", () => ({ name: "Advantis Intranet API", version: "1.0.0" }))
   .get("/health", () => ({ status: "ok", timestamp: Date.now() }))
   .use(blacklistRoute)
+  .use(sfIssuesRoute)
   .use(meRoute)
   .use(unfurlRoute)
   .use(clerkWebhookRoute)
