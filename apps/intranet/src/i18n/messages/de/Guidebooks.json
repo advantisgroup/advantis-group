@@ -137,6 +137,10 @@
     "title": "Kunde auf die Blacklist setzen",
     "description": "Kunden/Interessenten eintragen, die nicht mehr von UTA kontaktiert werden möchten."
   },
+  "sfIssues": {
+    "title": "Salesforce-Problem melden",
+    "description": "Probleme in Salesforce melden und den Stand verfolgen."
+  },
   "caseSearch": {
     "title": "Case & Support",
     "description": "Stichwort eingeben: Lösungswege aus dem Support plus passende Case-Felder und Queue."

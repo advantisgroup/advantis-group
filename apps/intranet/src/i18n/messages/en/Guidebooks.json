@@ -137,6 +137,10 @@
     "title": "Add customer to the blacklist",
     "description": "Customers/prospects who no longer want to be contacted by UTA."
   },
+  "sfIssues": {
+    "title": "Report a Salesforce problem",
+    "description": "Report problems in Salesforce and follow their status."
+  },
   "caseSearch": {
     "title": "Case & Support",
     "description": "Type a keyword: support solutions plus the matching case fields and queue."
