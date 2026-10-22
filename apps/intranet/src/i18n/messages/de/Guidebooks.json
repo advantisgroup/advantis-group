@@ -133,6 +133,10 @@
   "captionPlaceholder": "Bildunterschrift (optional)",
   "uploadFailed": "Upload fehlgeschlagen",
   "imageBlockIncomplete": "Warte, bis alle Bilder hochgeladen sind, bevor du speicherst",
+  "evCheck": {
+    "title": "Terminprozess E-Mobilitäts-Check",
+    "description": "Vom Telefonat zum gebuchten Check – Buchungslinks, Kundenkarte, Mailvorlage."
+  },
   "blacklist": {
     "title": "Kunde auf die Blacklist setzen",
     "description": "Kunden/Interessenten eintragen, die nicht mehr von UTA kontaktiert werden möchten."

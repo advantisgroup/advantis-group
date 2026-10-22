@@ -2,7 +2,7 @@
 
 import { type ComponentType, useState } from "react";
 
-import { CalendarCheck, ChevronRight, type LucideIcon } from "lucide-react";
+import { ChevronRight, type LucideIcon, Zap } from "lucide-react";
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
@@ -19,10 +19,10 @@ type QuickTool = { key: string; title: string; icon: LucideIcon } & (
 
 export const QUICK_TOOLS: readonly QuickTool[] = [
   {
-    key: "terminprozess-ev-check",
-    title: "Terminprozess E-Mobilitäts-Check",
-    src: "/tools/terminprozess-ev-check.html",
-    icon: CalendarCheck,
+    key: "ladetarife",
+    title: "Ladetarife (UTA eCharge & IONITY)",
+    src: "/tools/ladetarife.html",
+    icon: Zap,
   },
 ];
 

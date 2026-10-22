@@ -133,6 +133,10 @@
   "captionPlaceholder": "Caption (optional)",
   "uploadFailed": "Upload failed",
   "imageBlockIncomplete": "Finish uploading every image before saving",
+  "evCheck": {
+    "title": "EV check appointment process",
+    "description": "From the call to the booked check – booking links, customer card, mail template."
+  },
   "blacklist": {
     "title": "Add customer to the blacklist",
     "description": "Customers/prospects who no longer want to be contacted by UTA."
