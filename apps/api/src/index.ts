@@ -9,6 +9,7 @@ import { getRequestContext } from "./lib/request-context.js";
 import { aiRunsRoute } from "./routes/ai-runs.js";
 import { applicantsRoute } from "./routes/applicants.js";
 import { askRoute } from "./routes/ask.js";
+import { blacklistRoute } from "./routes/blacklist.js";
 import { caseSupportRoute } from "./routes/case-support.js";
 import { dailyBriefRoute } from "./routes/daily-brief.js";
 import { hrMailboxRoute } from "./routes/hrMailbox.js";
@@ -78,6 +79,7 @@ export const app = new Elysia()
   })
   .get("/", () => ({ name: "Advantis Intranet API", version: "1.0.0" }))
   .get("/health", () => ({ status: "ok", timestamp: Date.now() }))
+  .use(blacklistRoute)
   .use(meRoute)
   .use(unfurlRoute)
   .use(clerkWebhookRoute)

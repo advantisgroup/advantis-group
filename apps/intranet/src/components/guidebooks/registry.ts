@@ -3,6 +3,7 @@ import type { ComponentType } from "react";
 import { type Role } from "@advantis/types";
 
 import {
+  Ban,
   CalendarCheck,
   CalendarDays,
   Cloud,
@@ -23,6 +24,7 @@ import {
 
 import { type TeamId } from "@/lib/teams";
 
+import { BlacklistForm } from "./BlacklistForm";
 import { CaseSearchGuidebook } from "./case-search";
 import { AbwesenheitenGenehmigenGuidebook } from "./docs/abwesenheiten-genehmigen";
 import { AnkuendigungenTermineGuidebook } from "./docs/ankuendigungen-termine";
@@ -122,6 +124,17 @@ export interface Guidebook {
  * register it with its slug, copy keys, icon and the teams that may read it.
  */
 export const GUIDEBOOKS: Guidebook[] = [
+  {
+    // Interaktives Tool: sendet im Hintergrund an das Black-List-Formular von UTA.
+    slug: "blacklist",
+    titleKey: "blacklist.title",
+    descriptionKey: "blacklist.description",
+    icon: Ban,
+    category: "interactive",
+    teams: [],
+    Component: BlacklistForm,
+    minimalChrome: true,
+  },
   {
     slug: "case-search",
     titleKey: "caseSearch.title",

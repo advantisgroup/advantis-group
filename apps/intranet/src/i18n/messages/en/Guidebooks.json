@@ -133,6 +133,10 @@
   "captionPlaceholder": "Caption (optional)",
   "uploadFailed": "Upload failed",
   "imageBlockIncomplete": "Finish uploading every image before saving",
+  "blacklist": {
+    "title": "Add customer to the blacklist",
+    "description": "Customers/prospects who no longer want to be contacted by UTA."
+  },
   "caseSearch": {
     "title": "Case & Support",
     "description": "Type a keyword: support solutions plus the matching case fields and queue."
