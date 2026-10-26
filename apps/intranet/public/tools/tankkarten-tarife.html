@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tankkarten-Tarife UTA</title>
+<!-- Quellen: UTA Tarifliste Pkw Basic/Standard/Premium (v2.0 | 04-2026) und
+     UTA CRT-Bundles Carefree / Economy / Best Price (Tariflisten März 2024).
+     Bei neuen Listen die Tabellen unten anpassen. -->
+<style>
+:root{--bg:#faf9f6;--card:#fff;--ink:#1d1b1a;--mut:#6b6762;--line:#e5e1db;--acc:#c8102e;--tint:#fbeef0;--ok:#23835b;--okbg:#e7f5ee;--no:#a8a29e}
+@media (prefers-color-scheme:dark){:root{--bg:#161514;--card:#201f1d;--ink:#f1eeea;--mut:#a7a19a;--line:#35322f;--acc:#f0506f;--tint:#3a1a22;--ok:#4cc08c;--okbg:#153325;--no:#6b6762}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:0 0 2px}
+.sub{color:var(--mut);margin:0 0 16px;font-size:13.5px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.tabs button{font:inherit;font-size:13.5px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:999px;padding:6px 14px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--acc);border-color:var(--acc);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;overflow-x:auto}
+.card h2{font-size:16px;margin:0 0 10px}
+table{width:100%;border-collapse:collapse;min-width:560px}
+th,td{text-align:left;padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+thead th{border-top:0;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+thead th.pk{font-size:14px;text-transform:none;letter-spacing:0;color:var(--ink);text-align:center}
+td.v{text-align:center;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+td.v.free{color:var(--ok)} td.v.no{color:var(--no);font-weight:400}
+tr.sec td{background:var(--bg);font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+.d{display:block;color:var(--mut);font-size:12px}
+.price td.v{font-size:18px;font-weight:800}
+.note{font-size:12.5px;color:var(--mut);margin:8px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:12px}
+ul{margin:6px 0 0;padding-left:18px}li{margin:3px 0}
+.hl{background:var(--tint)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tankkarten-Tarife</h1>
+  <p class="sub">UTA Tankkarte – Pkw/Transporter bis 3,5 t (Tarifliste v2.0, 04-2026) und Lkw/Bus über 3,5 t „CRT“ (März 2024). Alle Gebühren zzgl. MwSt.</p>
+  <div class="tabs" role="tablist">
+    <button type="button" data-k="pkw" aria-selected="true">Pkw bis 3,5 t</button>
+    <button type="button" data-k="crt" aria-selected="false">Lkw/Bus über 3,5 t (CRT)</button>
+  </div>
+
+  <div data-v="pkw">
+    <div class="card">
+      <h2>Pakete Basic · Standard · Premium</h2>
+      <table>
+        <thead><tr><th></th><th class="pk">Basic</th><th class="pk">Standard</th><th class="pk">Premium</th></tr></thead>
+        <tbody>
+          <tr class="price hl"><td><b>Paketgebühr</b><span class="d">pro Monat und ausgegebener Karte</span></td><td class="v">0,95 €</td><td class="v">2,45 €</td><td class="v">3,45 €</td></tr>
+          <tr class="sec"><td colspan="4">Nachlass auf Diesel (pro Liter, nur Standarddiesel)</td></tr>
+          <tr><td>im deutschen preisgünstigen Netz¹</td><td class="v">1 ct</td><td class="v">1 ct</td><td class="v">1 ct</td></tr>
+          <tr><td>im deutschen Premium-Netz²</td><td class="v no">–</td><td class="v">1 ct</td><td class="v">1 ct</td></tr>
+          <tr><td>außerhalb Deutschlands</td><td class="v no">–</td><td class="v no">–</td><td class="v">1 ct</td></tr>
+          <tr class="sec"><td colspan="4">Stammtankstellen in Deutschland</td></tr>
+          <tr><td>Anzahl frei wählbarer Stammtankstellen<span class="d">weitere Stammtankstelle: 9,95 €; keine Supermarkttankstellen</span></td><td class="v no">–</td><td class="v">3</td><td class="v">5</td></tr>
+          <tr><td>Nachlass Diesel an Stammtankstellen<span class="d">je nach Tankstellenmarke</span></td><td class="v">2–3 ct</td><td class="v">2–3 ct</td><td class="v">2–3 ct</td></tr>
+          <tr><td>Nachlass Vergaserkraftstoff an Stammtankstellen<span class="d">nur Standardkraftstoffe – so in der Liste abgedruckt</span></td><td class="v">1 ct</td><td class="v">1 ct</td><td class="v no">–</td></tr>
+          <tr><td>Nachlass Fahrzeugwäsche &amp; -zubehör an Tankstellen in Europa</td><td class="v no">–</td><td class="v no">–</td><td class="v">2,5 %</td></tr>
+          <tr class="sec"><td colspan="4">Gebühren beim Tanken (auf den Umsatz)³</td></tr>
+          <tr><td>im deutschen preisgünstigen Netz¹</td><td class="v free">frei</td><td class="v free">frei</td><td class="v free">frei</td></tr>
+          <tr><td>im deutschen Premium-Netz²</td><td class="v">2,5 %</td><td class="v free">frei</td><td class="v free">frei</td></tr>
+          <tr><td>außerhalb Deutschlands</td><td class="v">2,5 %</td><td class="v">2,5 %</td><td class="v free">frei</td></tr>
+          <tr><td>Premiumkraftstoffe<span class="d">z. B. Hochleistungsdiesel, Biodiesel, Super Plus, Super Plus Racing</span></td><td class="v">2,5 %</td><td class="v">2,5 %</td><td class="v">2,5 %</td></tr>
+          <tr class="sec"><td colspan="4">Zusatzleistungen (Gebühr auf den Umsatz)</td></tr>
+          <tr><td>Fahrzeugservices in Deutschland<span class="d">Wäsche, Zubehör (Motoröl, Scheibenwischer …), Tunnel &amp; Brücken</span></td><td class="v">2,5 %</td><td class="v free">frei</td><td class="v free">frei</td></tr>
+          <tr><td>Fahrzeugservices außerhalb Deutschlands</td><td class="v">2,5 %</td><td class="v">2,5 %</td><td class="v free">frei</td></tr>
+          <tr><td>Maut-Service<span class="d">europäische Maut mit der UTA Card, z. B. Vignette Österreich</span></td><td class="v">2,5 %</td><td class="v">2,5 %</td><td class="v free">frei</td></tr>
+          <tr class="sec"><td colspan="4">Zahlungsziel ab Rechnungsdatum</td></tr>
+          <tr><td>Reparaturen in Daimler-Werkstätten</td><td class="v">20 Tage</td><td class="v">20 Tage</td><td class="v">20 Tage</td></tr>
+          <tr><td>alle anderen Services</td><td class="v">12 Tage</td><td class="v">12 Tage</td><td class="v">12 Tage</td></tr>
+        </tbody>
+      </table>
+      <p class="note">³ Gilt für Standarddiesel, Vergaserkraftstoff, HVO und HVO-Varianten, AdBlue und alternative Kraftstoffe (Autogas, Erdgas, Wasserstoff). Unterschreitet der Serviceaufschlag einer Transaktion 0,99 € netto, werden pauschal 0,99 € berechnet (nicht bei gebührenfreien Leistungen). Prozentgebühren beziehen sich auf den Umsatz inkl. MwSt.</p>
+    </div>
+
+    <div class="card">
+      <h2>Hinzubuchbar &amp; Verwaltungsgebühren (alle Pakete)</h2>
+      <table>
+        <tbody>
+          <tr><td><b>UTA eCharge Ladekarte</b><span class="d">Laden unterwegs in DE und im Ausland, am Arbeitsplatz und zu Hause</span></td><td class="v">2,95 € / Karte / Monat</td></tr>
+          <tr><td>eCharge: Gebühr auf Ladeumsatz in Deutschland</td><td class="v free">keine</td></tr>
+          <tr><td>eCharge: Gebühr auf Ladeumsatz außerhalb Deutschlands</td><td class="v">5 %</td></tr>
+          <tr><td>Bearbeitung online (Selbstverwaltung)<span class="d">z. B. Stammtankstelle wechseln, Karte bestellen/limitieren/sperren/ersetzen, Paketwechsel</span></td><td class="v free">frei</td></tr>
+          <tr><td>Bearbeitung über das UTA Edenred Support Team</td><td class="v">9,95 € / Vorgang</td></tr>
+          <tr><td>Kartenversand Standard / Express (in DE)</td><td class="v">frei / 4,25 €</td></tr>
+          <tr><td>Papierabrechnung ohne / mit Einzelpostennachweis</td><td class="v">4,95 € / 9,95 €</td></tr>
+          <tr><td>Lastschriftretoure</td><td class="v">45,95 €</td></tr>
+          <tr><td>Mahngebühr ab der 2. Mahnung</td><td class="v">40,00 €</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Ladepreise pro kWh: siehe „Ladetarife“ in der Schnellleiste.</p>
+    </div>
+
+    <div class="card">
+      <h2>Kostenlos in allen Paketen</h2>
+      <ul><li>Einrichtung Kundenkonto</li><li>UTA Edenred Drive App</li><li>myUTA-Kundenportal</li><li>E-Rechnung</li></ul>
+    </div>
+
+    <div class="card">
+      <h2>Netze</h2>
+      <p><b>¹ Preisgünstiges Netz:</b></p>
+      <div class="chips"><span>ESSO</span><span>AVIA</span><span>JET</span><span>STAR</span><span>AGIP</span><span>HEM</span><span>BFT</span><span>Raiffeisen</span><span>OIL!</span><span>Westfalen</span><span>Hoyer</span><span>Q1</span><span>Real</span><span>ED</span><span>BayWa</span><span>Classic</span><span>Sprint</span><span>Team</span><span>Calpam</span><span>Markant</span><span>und viele freie Tankstellen</span></div>
+      <p style="margin-top:12px"><b>² Premium-Netz:</b></p>
+      <div class="chips"><span>ARAL</span><span>SHELL</span><span>TOTAL</span><span>Partnerstationen (z. B. ELAN, SB, TANKCENTER)</span></div>
+      <p class="note">Bei ARAL, SHELL und Shell-Partnerstationen (z. B. SB, Bft, PM24, PM) gelten Tagesfestpreise.</p>
+    </div>
+  </div>
+
+  <div data-v="crt" hidden>
+    <div class="card">
+      <h2>CRT-Pakete für Lkw, Busse &amp; Nutzfahrzeuge über 3,5 t</h2>
+      <table>
+        <thead><tr><th></th><th class="pk">Carefree</th><th class="pk">Economy</th><th class="pk">Best Price</th></tr></thead>
+        <tbody>
+          <tr><td>Für wen</td><td class="v" style="white-space:normal;font-weight:400">wechselnde Routen, maximale Flexibilität</td><td class="v" style="white-space:normal;font-weight:400">günstig tanken an ausgewählten Stationen</td><td class="v" style="white-space:normal;font-weight:400">feste Routen, Preis im Fokus</td></tr>
+          <tr><td>Rabatt-Netz in Deutschland</td><td class="v">> 13.600</td><td class="v">> 8.000<span class="d">ohne ARAL, Shell, OMV + Partner</span></td><td class="v">> 1.000<span class="d">„UTA Listprice Network“</span></td></tr>
+          <tr class="hl price"><td><b>Nachlass Diesel</b><span class="d">pro Liter brutto</span></td><td class="v">1,0 ct</td><td class="v">1,5 ct</td><td class="v">4,5 ct<span class="d">auf den UTA Listprice</span></td></tr>
+          <tr><td>Nachlass AdBlue, Lkw-Wäsche &amp; fahrzeugbezogenes Zubehör</td><td class="v">1,0 %</td><td class="v">1,5 %</td><td class="v">2,0 %</td></tr>
+          <tr><td>Servicegebühr Diesel &amp; AdBlue</td><td class="v">1,00 %</td><td class="v">0,90 %</td><td class="v free">0,00 %</td></tr>
+          <tr><td>Servicegebühr Lkw-Wäsche &amp; Zubehör</td><td class="v">5,70 %</td><td class="v">5,70 %</td><td class="v">5,70 %</td></tr>
+          <tr><td>Weitere Services (Maut, Europa, Papierrechnung …)</td><td class="v" colspan="3" style="font-weight:400">laut separater Serviceaufschlags- und Gebührenliste</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Bei ARAL, Shell und Partnerstationen gelten deren Tagesfestpreise. Fremdwährungsumrechnung: 4,7 % Kursaufschlag. Unterschreitet der Serviceaufschlag einer Transaktion 0,80 € netto, werden pauschal 0,80 € berechnet. Best-Price-Stationen sind in der UTA App per Filter „UTA Listprice Network“ auswählbar.</p>
+    </div>
+    <div class="card">
+      <h2>Für alle CRT-Pakete</h2>
+      <ul>
+        <li>Kein Mindestumsatz, keine Mindestfuhrparkgröße.</li>
+        <li>Karte gilt im ganzen UTA-Netz: über 13.600 Tankstellen in Deutschland (über 90 %) und über 42.000 in Europa – auch bei Economy und Best Price, nur ohne den Paket-Nachlass.</li>
+        <li>Eine Rechnung, steuerkonform und online abrufbar; Zahlungsziele.</li>
+        <li>Zusatzservices: UTA Stationsfinder-App, Fuhrparkanalysen, Maut-, Abschlepp- und Reinigungsservices.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<script>
+var bs=[].slice.call(document.querySelectorAll('.tabs button'));
+function show(k){bs.forEach(function(b){b.setAttribute('aria-selected',b.dataset.k===k?'true':'false')});
+  [].forEach.call(document.querySelectorAll('[data-v]'),function(v){v.hidden=v.dataset.v!==k});
+  try{localStorage.setItem('tankkarten-tab',k)}catch(e){}}
+bs.forEach(function(b){b.addEventListener('click',function(){show(b.dataset.k)})});
+try{var s=localStorage.getItem('tankkarten-tab');if(s==='pkw'||s==='crt')show(s)}catch(e){}
+</script>
+</body>
+</html>

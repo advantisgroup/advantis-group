@@ -2,7 +2,7 @@
 
 import { type ComponentType, useState } from "react";
 
-import { ChevronRight, type LucideIcon, Zap } from "lucide-react";
+import { ChevronRight, Fuel, type LucideIcon, Zap } from "lucide-react";
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
@@ -23,6 +23,12 @@ export const QUICK_TOOLS: readonly QuickTool[] = [
     title: "Ladetarife (UTA eCharge & IONITY)",
     src: "/tools/ladetarife.html",
     icon: Zap,
+  },
+  {
+    key: "tankkarten-tarife",
+    title: "Tankkarten-Tarife (Pkw & CRT)",
+    src: "/tools/tankkarten-tarife.html",
+    icon: Fuel,
   },
 ];
 
