@@ -5,11 +5,15 @@
  * workday (`comparisonCutoff`) and takes each employee's newest snapshot up
  * to that day. When no lead/opp report was uploaded around that day (09/2026:
  * only 01.09. and 15.09.), that snapshot is weeks older than the cutoff and
- * every delta looks far too good. Such a reference is "stale": its stock
- * figures (Analysis, open opps …) can't be compared at all, and the monthly
- * counters are recounted from the dates in the newest reports instead —
- * leads by create date (`performanceLeadDays`), Closed Won by close date
- * (`performanceWonOpps`).
+ * every delta looks far too good.
+ *
+ * The monthly counters don't need a report from that day at all: the
+ * newest reports carry every lead's create date (`performanceLeadDays`) and
+ * every won opportunity's close date (`performanceWonOpps`), so "up to the
+ * cutoff" is recounted by date — whatever the upload rhythm. Only stock
+ * figures (Analysis, open opps …) are a level on the report day and can't
+ * be rebuilt; a reference without a report near its cutoff is "stale" and
+ * those go without VM.
  *
  * Pure functions only; the queries load the data.
  */
@@ -80,23 +84,32 @@ export function matchesMonth(counts: DatedCounts, monthValue: number | undefined
 }
 
 /**
- * The stale reference with its Salesforce figures replaced: stock figures
- * dropped, counters from `exact` (or dropped when they couldn't be
- * recounted), rates and Won/day derived from those. `days` is the divisor
- * for Won/day up to the cutoff (workdays, or the employee's worked days).
- * Call figures stay as they are — they have their own cutoff.
+ * The reference cut with its monthly counters taken from the date recount
+ * (`exact`, only the ones that could be trusted) and, when the reference is
+ * `stale`, its stock figures dropped and untrusted counters too. Rates and
+ * Won/day are derived again; `days` is the Won/day divisor up to the
+ * cutoff (workdays, or the employee's worked days). Call figures stay as
+ * they are — they have their own cutoff.
  */
-export function patchStaleReference(cut: Snapshot, exact: ExactCounts, days: number): Snapshot {
+export function refineReference(
+  cut: Snapshot,
+  exact: ExactCounts,
+  stale: boolean,
+  days: number,
+): Snapshot {
   const next: Snapshot = { ...cut };
-  for (const k of SALES_STATE_KEYS) next[k] = undefined;
-  next.leadsCreated = exact.leadsCreated;
-  next.workableCreated = exact.workableCreated;
-  next.wonMonth = exact.wonMonth;
+  if (stale) for (const k of SALES_STATE_KEYS) next[k] = undefined;
+  for (const k of ["leadsCreated", "workableCreated", "wonMonth"] as const) {
+    if (exact[k] !== undefined) next[k] = exact[k];
+    else if (stale) next[k] = undefined;
+  }
   next.workableRate = rate(next.workableCreated, next.leadsCreated);
   next.hitrate = rate(next.wonMonth, next.workableCreated);
-  next.wonPerDay =
-    next.wonMonth !== undefined && days > 0
-      ? Math.round((next.wonMonth / days) * 100) / 100
-      : undefined;
+  if (exact.wonMonth !== undefined || stale) {
+    next.wonPerDay =
+      next.wonMonth !== undefined && days > 0
+        ? Math.round((next.wonMonth / days) * 100) / 100
+        : undefined;
+  }
   return next;
 }

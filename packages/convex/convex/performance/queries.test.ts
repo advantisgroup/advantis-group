@@ -251,6 +251,43 @@ describe("teamDashboard", () => {
     }
   });
 
+  test("with a report near the cutoff, counters come from dates and stocks stay", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-26T15:00:00Z"));
+    try {
+      const { t, ids, report, admin } = await setup();
+      // A report on 23 Sep (one workday before the cutoff 24 Sep).
+      await report(ids.anna, "2026-09-23", { leadsCreated: 90, wonMonth: 30, leadsAnalysis: 70 });
+      await report(ids.anna, "2026-09-30", { leadsCreated: 120, wonMonth: 40, leadsAnalysis: 90 });
+      await report(ids.anna, "2026-10-26", { leadsCreated: 110, wonMonth: 35, leadsAnalysis: 80 });
+      await t.run(async (ctx) => {
+        for (const [date, created] of [
+          ["2026-09-24", 100],
+          ["2026-09-29", 20],
+        ] as const) {
+          await ctx.db.insert("performanceLeadDays", {
+            companyId: ids.companyId,
+            owner: "Anna Müller",
+            date,
+            created,
+            workable: 0,
+          });
+        }
+      });
+      const data = await admin.query(api.performance.queries.teamDashboard, {
+        companyId: ids.companyId,
+      });
+      expect(data.comparison.vmStaleAsOf).toBeNull();
+      // 100 leads by 24 Sep from the dates (the 23 Sep snapshot said 90).
+      expect(data.dVm.leadsCreated).toBe(10);
+      // No won opps stored: the snapshot's figure stays.
+      expect(data.dVm.wonMonth).toBe(5);
+      expect(data.dVm.leadsAnalysis).toBe(10);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test("a stale badge cache row is recomputed instead of trusted", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-10-10T08:00:00Z"));

@@ -39,7 +39,7 @@ import {
 import {
   isStale,
   matchesMonth,
-  patchStaleReference,
+  refineReference,
   type DatedCounts,
   type ExactCounts,
 } from "./lib/referenceFix";
@@ -192,12 +192,13 @@ async function datedCounts(
 }
 
 /**
- * A cut reference whose newest Salesforce figures (`salesAsOf`) are too
- * far before its cutoff: stock figures dropped, counters recounted by date
- * where that recount matches the month's own snapshot (`full`). `days` is
- * the Won/day divisor up to the cutoff. Anything else is returned as is.
+ * A cut reference with its monthly counters recounted by date (where the
+ * recount matches the month's own snapshot `full`) and, when its newest
+ * Salesforce figures (`salesAsOf`) are too far before the cutoff, its stock
+ * figures dropped. `days` is the Won/day divisor up to the cutoff. A full
+ * month (no cutoff) is returned as is.
  */
-async function fixStaleReference(
+async function refineCutReference(
   ctx: Ctx,
   companyId: Id<"companies">,
   refYm: string,
@@ -206,7 +207,8 @@ async function fixStaleReference(
   days: number,
 ): Promise<Reference> {
   const cutoff = ref.cutoff?.sales;
-  if (!ref.cut || !cutoff || !isStale(cutoff, ref.salesAsOf)) return ref;
+  if (!ref.cut || !cutoff) return ref;
+  const stale = isStale(cutoff, ref.salesAsOf);
   const counts = await datedCounts(ctx, companyId, refYm, cutoff, owners);
   const exact: ExactCounts = {};
   if (matchesMonth(counts.created, ref.full?.leadsCreated)) {
@@ -216,7 +218,7 @@ async function fixStaleReference(
     }
   }
   if (matchesMonth(counts.won, ref.full?.wonMonth)) exact.wonMonth = counts.won.cut;
-  return { ...ref, cut: patchStaleReference(ref.cut, exact, days), stale: true };
+  return { ...ref, cut: refineReference(ref.cut, exact, stale, days), stale };
 }
 
 export function cutoffFor(
@@ -265,10 +267,10 @@ async function teamReference(
   const ref: Reference = { cut: cutSummary.total, full, cutoff, salesAsOf: cutSummary.asOf.sales };
   const { ownerKeys } = await loadRoster(ctx, companyId, cache);
   const days = cutoff.sales ? workdaysElapsed(refYm, parseISODate(cutoff.sales)) : 0;
-  return fixStaleReference(ctx, companyId, refYm, ref, ownerKeys, days);
+  return refineCutReference(ctx, companyId, refYm, ref, ownerKeys, days);
 }
 
-/** `fixStaleReference` for one employee: Won/day over their worked days
+/** `refineCutReference` for one employee: Won/day over their worked days
  * when they have call data, else over workdays (as in `addForecast`). */
 export async function employeeReference(
   ctx: Ctx,
@@ -284,7 +286,7 @@ export async function employeeReference(
       : cutoff
         ? workdaysElapsed(refYm, parseISODate(cutoff))
         : 0;
-  return fixStaleReference(
+  return refineCutReference(
     ctx,
     companyId,
     refYm,

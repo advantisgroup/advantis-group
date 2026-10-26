@@ -286,9 +286,10 @@ export interface LeadDay {
   workable: number;
 }
 
-/** First day of the month before `d` — lead days are kept from there on. */
+/** First day of the same month a year before `d` — lead days are kept from
+ * there on, so VM and VJ can both be recounted by date. */
 export function leadDaysFrom(d: Date): string {
-  return toISODate(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1)));
+  return toISODate(new Date(Date.UTC(d.getUTCFullYear() - 1, d.getUTCMonth(), 1)));
 }
 
 const LEAD_STATE_FIELDS: (keyof MetricFields)[] = [

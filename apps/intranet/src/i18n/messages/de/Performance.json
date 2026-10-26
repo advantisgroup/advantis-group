@@ -341,7 +341,7 @@
   "dashboardWonPerWorkdayEmployee": "Won je Arbeitstag",
   "dashboardWonPerWorkdayEmployeeSubtitle": "Tagesdurchschnitt · {elapsed} Arbeitstage",
   "compareFootnoteRunning": "VM/VJ: Der laufende Monat wird mit Vormonat und Vorjahresmonat zum selben Werktag verglichen (Werktag {workday}, also bis {date}). FC1 wird mit dem Endergebnis des Vergleichsmonats verglichen.",
-  "compareStale": "Vormonat nur eingeschränkt vergleichbar: Vom {cutoff} gibt es keinen Lead-/Opportunity-Report, der letzte ist vom {asOf}. Leads, Workable und Closed Won sind für den Vormonat aus Erstell- bzw. Close-Datum nachgerechnet (Workable mit heutigem Status); Bestände wie Analysis oder offene Opportunities haben keinen VM-Vergleich.",
+  "compareStale": "Vom {cutoff} gibt es keinen Lead-/Opportunity-Report (letzter: {asOf}). Leads, Workable und Closed Won sind trotzdem vergleichbar – sie werden aus Erstell- bzw. Close-Datum nachgezählt. Bestände wie Analysis oder offene Opportunities lassen sich nicht nachträglich rekonstruieren und haben diesmal keinen VM-Vergleich.",
   "compareFootnoteDone": "VM/VJ: Abgeschlossener Monat, verglichen mit dem kompletten Vormonat bzw. Vorjahresmonat.",
   "dataStatusLabel": "Datenstand",
   "dataStatusLead": "Leads",

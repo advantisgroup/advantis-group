@@ -31,8 +31,11 @@ describe("Salesforce export detection", () => {
     expect(iso(sf.reportDate)).toBe("2026-10-01");
     if (sf.kind !== "lead") throw new Error("lead expected");
     const { snapshots, raw, days } = aggregateLeadReport(sf.rows, sf.reportDate);
-    // Lead days from the previous month on (01.08. is before that).
-    expect(days).toEqual([{ owner: "Anna Müller", date: "2026-09-30", created: 1, workable: 0 }]);
+    // Lead days from the same month last year on.
+    expect(days).toEqual([
+      { owner: "Anna Müller", date: "2026-08-01", created: 1, workable: 1 },
+      { owner: "Anna Müller", date: "2026-09-30", created: 1, workable: 0 },
+    ]);
     const today = snapshots.find((s) => s.reportDate === "2026-10-01")!;
     expect(today.fields).toMatchObject({
       leadsAnalysis: 1,

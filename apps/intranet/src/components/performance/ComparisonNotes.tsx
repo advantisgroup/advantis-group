@@ -33,8 +33,8 @@ export function ComparisonFootnote({ comparison }: { comparison: Comparison }) {
 }
 
 /** The previous month has no lead/opp report from the day VM compares
- * with: say so, and that stock figures go without VM while Leads, Workable
- * and Closed Won were recounted from their dates. */
+ * with: stock figures go without VM (the counters are recounted by date
+ * anyway, see `lib/referenceFix.ts`). */
 export function StaleComparisonWarning({ comparison }: { comparison: Comparison }) {
   const t = useTranslations("Performance");
   const locale = useLocale();
