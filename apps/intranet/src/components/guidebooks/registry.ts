@@ -155,7 +155,8 @@ export const GUIDEBOOKS: Guidebook[] = [
     descriptionKey: "caseSearch.description",
     icon: FileSearch,
     category: "interactive",
-    teams: ["customer-care"],
+    // Für alle freigegeben am 26.10.2026 (Vahan) — vorher nur Customer Care.
+    teams: [],
     Component: CaseSearchGuidebook,
     minimalChrome: true,
     wide: true,
