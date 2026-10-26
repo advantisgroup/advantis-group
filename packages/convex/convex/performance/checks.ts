@@ -39,7 +39,7 @@ import {
 } from "./lib/reports";
 import { dashboardKind } from "./lib/roster";
 import { isWorkday, parseISODate, todayBerlin, toISODate } from "./lib/workdays";
-import { cutoffFor } from "./queries";
+import { cutoffFor, employeeReference } from "./queries";
 
 type Ctx = QueryCtx | MutationCtx;
 
@@ -91,14 +91,25 @@ export async function liveCheckKpis(
       cutoff,
       coverage: m === ym && !cutoff ? team.coverage : null,
     }).snaps[0];
-  const reference = (refYm: string): Snapshot | undefined => {
+  const reference = async (refYm: string): Promise<Snapshot | undefined> => {
     if (!byMonth.has(refYm)) return undefined;
     const cutoff = cutoffFor(ym, refYm, team.asOf);
-    return summarize(refYm, cutoff);
+    const cut = summarize(refYm, cutoff);
+    if (!cutoff) return cut;
+    // A reference month without a report near the cutoff is recounted by
+    // date (see `lib/referenceFix.ts`).
+    const teamCut = await teamTotals(ctx, companyId, refYm, cache, cutoff);
+    const ref = await employeeReference(ctx, companyId, refYm, employee.name, {
+      cut,
+      full: summarize(refYm),
+      cutoff,
+      salesAsOf: teamCut.asOf.sales,
+    });
+    return ref.cut;
   };
   const cur = summarize(ym);
-  const vm = reference(shiftYm(ym, -1));
-  const vj = reference(shiftYm(ym, -12));
+  const vm = await reference(shiftYm(ym, -1));
+  const vj = await reference(shiftYm(ym, -12));
 
   // The running calendar week, up to the newest data (at most today).
   const newest = [team.asOf.sales, team.asOf.calls]

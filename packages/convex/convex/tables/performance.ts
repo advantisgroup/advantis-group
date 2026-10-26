@@ -282,6 +282,18 @@ export const performanceTables = {
   // daily. This table sidesteps that entirely by reading the real per-
   // opportunity close date out of the export. Replaced wholesale on every
   // Opportunity import, same rationale as `performanceRawOpps`.
+  // Leads created per owner and day, from the newest lead report (current
+  // status), for the previous and the current month — replaced with every
+  // newer lead report. Lets VM be recounted up to the same day when the
+  // previous month has no report from that day (`lib/referenceFix.ts`).
+  performanceLeadDays: defineTable({
+    companyId: v.id("companies"),
+    owner: v.string(),
+    date: v.string(),
+    created: v.number(),
+    workable: v.number(),
+  }).index("by_company_date", ["companyId", "date"]),
+
   performanceWonOpps: defineTable({
     companyId: v.optional(v.id("companies")),
     owner: v.string(),

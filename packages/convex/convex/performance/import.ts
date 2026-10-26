@@ -861,6 +861,32 @@ export const insertWonOppsChunk = internalMutation({
   },
 });
 
+export const clearLeadDays = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }): Promise<{ more: boolean }> => {
+    const batch = await ctx.db
+      .query("performanceLeadDays")
+      .withIndex("by_company_date", (q) => q.eq("companyId", companyId))
+      .take(CLEAR_BATCH_SIZE);
+    await Promise.all(batch.map((row) => ctx.db.delete(row._id)));
+    return { more: batch.length === CLEAR_BATCH_SIZE };
+  },
+});
+
+export const insertLeadDaysChunk = internalMutation({
+  args: {
+    companyId: v.id("companies"),
+    rows: v.array(
+      v.object({ owner: v.string(), date: v.string(), created: v.number(), workable: v.number() }),
+    ),
+  },
+  handler: async (ctx, { companyId, rows }): Promise<void> => {
+    await Promise.all(
+      rows.map((row) => ctx.db.insert("performanceLeadDays", { ...row, companyId })),
+    );
+  },
+});
+
 /** Admin-only functions below all act on one explicitly chosen dashboard. */
 async function requireCompany(ctx: QueryCtx, companyId: Id<"companies">): Promise<void> {
   if (!(await ctx.db.get(companyId))) {

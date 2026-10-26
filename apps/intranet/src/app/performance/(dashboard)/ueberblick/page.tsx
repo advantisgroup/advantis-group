@@ -6,7 +6,11 @@ import { Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
-import { ComparisonFootnote, MissingReportWarning } from "@/components/performance/ComparisonNotes";
+import {
+  ComparisonFootnote,
+  MissingReportWarning,
+  StaleComparisonWarning,
+} from "@/components/performance/ComparisonNotes";
 import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { useDashboardData } from "@/components/performance/PerformanceDashboardContext";
 import {
@@ -202,6 +206,7 @@ function SalesOverview() {
       </p>
 
       <MissingReportWarning fc={fc} />
+      <StaleComparisonWarning comparison={data.comparison} />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <PrimaryKpiCard

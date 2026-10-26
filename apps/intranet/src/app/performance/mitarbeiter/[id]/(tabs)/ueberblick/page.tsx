@@ -3,7 +3,11 @@
 import { Award, Phone, Target, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { ComparisonFootnote, MissingReportWarning } from "@/components/performance/ComparisonNotes";
+import {
+  ComparisonFootnote,
+  MissingReportWarning,
+  StaleComparisonWarning,
+} from "@/components/performance/ComparisonNotes";
 import { MetricTile } from "@/components/performance/MetricTile";
 import { useEmployeeDetailData } from "@/components/performance/PerformanceEmployeeDetailContext";
 import {
@@ -119,6 +123,7 @@ export default function EmployeeOverviewPage() {
   return (
     <div className="space-y-6">
       <MissingReportWarning fc={fc} />
+      <StaleComparisonWarning comparison={data.comparison} />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <PrimaryKpiCard

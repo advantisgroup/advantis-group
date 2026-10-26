@@ -341,6 +341,7 @@
   "dashboardWonPerWorkdayEmployee": "Won per worked day",
   "dashboardWonPerWorkdayEmployeeSubtitle": "Daily average · {elapsed} worked days",
   "compareFootnoteRunning": "VM/VJ: the running month is compared with last month and the same month last year at the same workday (workday {workday}, i.e. up to {date}). FC1 is compared with the comparison month's final result.",
+  "compareStale": "Previous month only partly comparable: there is no lead/opportunity report from {cutoff}, the latest is from {asOf}. Leads, workable and closed won of the previous month are recounted from create/close dates (workable with today's status); stock figures like Analysis or open opportunities have no VM comparison.",
   "compareFootnoteDone": "VM/VJ: completed month, compared with the complete previous month and the same month last year.",
   "dataStatusLabel": "Data as of",
   "dataStatusLead": "Leads",

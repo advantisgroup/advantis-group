@@ -277,6 +277,20 @@ export interface RawLead {
   lastActivity: string | undefined;
 }
 
+/** Leads created per owner and day (current status), for recounting a
+ * reference month up to any day (`lib/referenceFix.ts`). */
+export interface LeadDay {
+  owner: string;
+  date: string;
+  created: number;
+  workable: number;
+}
+
+/** First day of the month before `d` — lead days are kept from there on. */
+export function leadDaysFrom(d: Date): string {
+  return toISODate(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1)));
+}
+
 const LEAD_STATE_FIELDS: (keyof MetricFields)[] = [
   "leadsAnalysis",
   "overduesAnalysis",
@@ -287,8 +301,10 @@ const LEAD_STATE_FIELDS: (keyof MetricFields)[] = [
 export function aggregateLeadReport(
   rows: LeadRecord[],
   reportDate: Date,
-): { snapshots: EmployeeSnapshot[]; raw: RawLead[] } {
+): { snapshots: EmployeeSnapshot[]; raw: RawLead[]; days: LeadDay[] } {
   const curYm = ym(reportDate);
+  const daysFrom = leadDaysFrom(reportDate);
+  const dayCounts = new Map<string, LeadDay>(); // key: `${owner}\n${date}`
   const reportDateIso = toISODate(reportDate);
   const monthly = new Map<string, Partial<MetricFields>>(); // key: `${owner}\n${ym}`
   const state = new Map<string, Partial<MetricFields>>(); // key: owner
@@ -311,6 +327,14 @@ export function aggregateLeadReport(
       monthlyOwnerYm.set(key, { owner, ym: createdYm });
       bump(monthly, key, "leadsCreated");
       if (WORKABLE_STATUS.has(status)) bump(monthly, key, "workableCreated");
+      const day = toISODate(created);
+      if (day >= daysFrom && day <= reportDateIso) {
+        const dayKey = `${owner}\n${day}`;
+        const entry = dayCounts.get(dayKey) ?? { owner, date: day, created: 0, workable: 0 };
+        entry.created++;
+        if (WORKABLE_STATUS.has(status)) entry.workable++;
+        dayCounts.set(dayKey, entry);
+      }
     }
 
     if (status === "analysis") {
@@ -366,7 +390,7 @@ export function aggregateLeadReport(
     });
   }
 
-  return { snapshots: snapshots.toArray(), raw };
+  return { snapshots: snapshots.toArray(), raw, days: [...dayCounts.values()] };
 }
 
 // -------------------------------------------------- aggregation: opportunities

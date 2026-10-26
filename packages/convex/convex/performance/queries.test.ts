@@ -171,6 +171,86 @@ describe("teamDashboard", () => {
     }
   });
 
+  test("without a report near the cutoff, VM is recounted by date and stocks drop out", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-26T15:00:00Z"));
+    try {
+      const { t, ids, report, admin } = await setup();
+      // September had lead/opp reports only on the 15th and at month end.
+      await report(ids.anna, "2026-09-15", {
+        leadsCreated: 50,
+        workableCreated: 30,
+        wonMonth: 10,
+        leadsAnalysis: 100,
+      });
+      await report(ids.anna, "2026-09-30", {
+        leadsCreated: 120,
+        workableCreated: 80,
+        wonMonth: 40,
+        leadsAnalysis: 90,
+      });
+      await report(ids.anna, "2026-10-26", {
+        leadsCreated: 110,
+        workableCreated: 70,
+        wonMonth: 35,
+        leadsAnalysis: 80,
+      });
+      await t.run(async (ctx) => {
+        const day = (date: string, created: number, workable: number) =>
+          ctx.db.insert("performanceLeadDays", {
+            companyId: ids.companyId,
+            owner: "Anna Müller",
+            date,
+            created,
+            workable,
+          });
+        // 100 created (65 workable) by 24 Sep, 120 (80) in all.
+        await day("2026-09-10", 60, 40);
+        await day("2026-09-24", 40, 25);
+        await day("2026-09-29", 20, 15);
+        for (let i = 0; i < 40; i++) {
+          await ctx.db.insert("performanceWonOpps", {
+            companyId: ids.companyId,
+            owner: "Anna Müller",
+            closeDate: i < 33 ? "2026-09-20" : "2026-09-28",
+          });
+        }
+      });
+
+      const data = await admin.query(api.performance.queries.teamDashboard, {
+        companyId: ids.companyId,
+      });
+      expect(data.comparison).toMatchObject({
+        vmCutoff: "2026-09-24",
+        vmStaleAsOf: "2026-09-15",
+      });
+      expect(data.dVm.leadsCreated).toBe(10);
+      expect(data.dVm.workableCreated).toBe(5);
+      expect(data.dVm.wonMonth).toBe(2);
+      expect(data.dVm.leadsAnalysis).toBeUndefined();
+
+      // The same holds on the employee's own page.
+      const detail = await admin.query(api.performance.queries.employeeDetail, {
+        employeeId: ids.anna,
+      });
+      expect(detail.dVm.leadsCreated).toBe(10);
+      expect(detail.dVm.leadsAnalysis).toBeUndefined();
+
+      // A recount that doesn't add up to the month's own figure isn't used.
+      await t.run(async (ctx) => {
+        const rows = await ctx.db.query("performanceLeadDays").collect();
+        await ctx.db.delete(rows[0]._id);
+      });
+      const partial = await admin.query(api.performance.queries.teamDashboard, {
+        companyId: ids.companyId,
+      });
+      expect(partial.dVm.leadsCreated).toBeUndefined();
+      expect(partial.dVm.wonMonth).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test("a stale badge cache row is recomputed instead of trusted", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-10-10T08:00:00Z"));

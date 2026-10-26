@@ -36,6 +36,13 @@ import {
   type Snapshot,
   type UploadStamp,
 } from "./lib/kpi";
+import {
+  isStale,
+  matchesMonth,
+  patchStaleReference,
+  type DatedCounts,
+  type ExactCounts,
+} from "./lib/referenceFix";
 import { dashboardKind } from "./lib/roster";
 import { type MetricFields } from "./lib/types";
 import { isWorkday, parseISODate, todayBerlin, toISODate, workdaysElapsed } from "./lib/workdays";
@@ -123,12 +130,93 @@ export interface ComparisonInfo {
   /** Last day of the previous month / year counted (sales figures). */
   vmCutoff: string | null;
   vjCutoff: string | null;
+  /** The reference month has no lead/opp report near its cutoff; this is
+   * the day its newest one is from (see `lib/referenceFix.ts`). */
+  vmStaleAsOf: string | null;
+  vjStaleAsOf: string | null;
 }
 
-interface Reference {
+export interface Reference {
   cut: Snapshot | undefined;
   full: Snapshot | undefined;
   cutoff: Cutoff | undefined;
+  /** Day of the newest Salesforce figures behind `cut`. */
+  salesAsOf?: string | null;
+  /** `cut` was patched because `salesAsOf` is too far before the cutoff. */
+  stale?: boolean;
+}
+
+/** Leads created / workable and Closed Won of `refYm` for `owners`
+ * (lowercased names), counted by date — up to `cutoff` and for the whole
+ * month. From the newest reports' dates, not from snapshots. */
+async function datedCounts(
+  ctx: Ctx,
+  companyId: Id<"companies">,
+  refYm: string,
+  cutoff: string,
+  owners: ReadonlySet<string>,
+): Promise<{ created: DatedCounts; workable: DatedCounts; won: DatedCounts }> {
+  const { start, end } = monthBounds(refYm);
+  const [days, won] = await Promise.all([
+    ctx.db
+      .query("performanceLeadDays")
+      .withIndex("by_company_date", (q) =>
+        q.eq("companyId", companyId).gte("date", start).lte("date", end),
+      )
+      .collect(),
+    ctx.db
+      .query("performanceWonOpps")
+      .withIndex("by_company_closeDate", (q) =>
+        q.eq("companyId", companyId).gte("closeDate", start).lte("closeDate", end),
+      )
+      .collect(),
+  ]);
+  const created: DatedCounts = { cut: 0, month: 0 };
+  const workable: DatedCounts = { cut: 0, month: 0 };
+  const wonCounts: DatedCounts = { cut: 0, month: 0 };
+  for (const d of days) {
+    if (!owners.has(d.owner.trim().toLowerCase())) continue;
+    created.month += d.created;
+    workable.month += d.workable;
+    if (d.date <= cutoff) {
+      created.cut += d.created;
+      workable.cut += d.workable;
+    }
+  }
+  for (const o of won) {
+    if (!owners.has(o.owner.trim().toLowerCase())) continue;
+    wonCounts.month++;
+    if (o.closeDate <= cutoff) wonCounts.cut++;
+  }
+  return { created, workable, won: wonCounts };
+}
+
+/**
+ * A cut reference whose newest Salesforce figures (`salesAsOf`) are too
+ * far before its cutoff: stock figures dropped, counters recounted by date
+ * where that recount matches the month's own snapshot (`full`). `days` is
+ * the Won/day divisor up to the cutoff. Anything else is returned as is.
+ */
+async function fixStaleReference(
+  ctx: Ctx,
+  companyId: Id<"companies">,
+  refYm: string,
+  ref: Reference,
+  owners: ReadonlySet<string>,
+  days: number,
+): Promise<Reference> {
+  const cutoff = ref.cutoff?.sales;
+  if (!ref.cut || !cutoff || !isStale(cutoff, ref.salesAsOf)) return ref;
+  const counts = await datedCounts(ctx, companyId, refYm, cutoff, owners);
+  const exact: ExactCounts = {};
+  if (matchesMonth(counts.created, ref.full?.leadsCreated)) {
+    exact.leadsCreated = counts.created.cut;
+    if (matchesMonth(counts.workable, ref.full?.workableCreated)) {
+      exact.workableCreated = counts.workable.cut;
+    }
+  }
+  if (matchesMonth(counts.won, ref.full?.wonMonth)) exact.wonMonth = counts.won.cut;
+  return { ...ref, cut: patchStaleReference(ref.cut, exact, days), stale: true };
 }
 
 export function cutoffFor(
@@ -154,6 +242,8 @@ function comparisonInfo(
     workday: workdaysElapsed(ym, latest ? parseISODate(latest) : todayBerlin()),
     vmCutoff: vm?.cutoff?.sales ?? null,
     vjCutoff: vj?.cutoff?.sales ?? null,
+    vmStaleAsOf: vm?.stale ? (vm.salesAsOf ?? null) : null,
+    vjStaleAsOf: vj?.stale ? (vj.salesAsOf ?? null) : null,
   };
 }
 
@@ -171,8 +261,37 @@ async function teamReference(
   const full = (await teamTotals(ctx, companyId, refYm, cache)).total;
   const cutoff = cutoffFor(ym, refYm, asOf);
   if (!cutoff) return { cut: full, full, cutoff };
-  const cut = (await teamTotals(ctx, companyId, refYm, cache, cutoff)).total;
-  return { cut, full, cutoff };
+  const cutSummary = await teamTotals(ctx, companyId, refYm, cache, cutoff);
+  const ref: Reference = { cut: cutSummary.total, full, cutoff, salesAsOf: cutSummary.asOf.sales };
+  const { ownerKeys } = await loadRoster(ctx, companyId, cache);
+  const days = cutoff.sales ? workdaysElapsed(refYm, parseISODate(cutoff.sales)) : 0;
+  return fixStaleReference(ctx, companyId, refYm, ref, ownerKeys, days);
+}
+
+/** `fixStaleReference` for one employee: Won/day over their worked days
+ * when they have call data, else over workdays (as in `addForecast`). */
+export async function employeeReference(
+  ctx: Ctx,
+  companyId: Id<"companies">,
+  refYm: string,
+  employeeName: string,
+  ref: Reference,
+): Promise<Reference> {
+  const cutoff = ref.cutoff?.sales;
+  const days =
+    ref.cut?.fc?.basis === "Arbeitstage"
+      ? ref.cut.fc.elapsed
+      : cutoff
+        ? workdaysElapsed(refYm, parseISODate(cutoff))
+        : 0;
+  return fixStaleReference(
+    ctx,
+    companyId,
+    refYm,
+    ref,
+    new Set([employeeName.trim().toLowerCase()]),
+    days,
+  );
 }
 
 // ------------------------------------------------------------ day series
@@ -631,14 +750,23 @@ export const employeeDetail = userQuery({
     }
     const cur = hist.find((h) => h.ym === ym);
 
-    const reference = (refYm: string): Reference | undefined => {
+    const reference = async (refYm: string): Promise<Reference | undefined> => {
       if (!byMonth.has(refYm)) return undefined;
       const full = summarize(refYm);
       const cutoff = cutoffFor(ym, refYm, team.asOf);
-      return { cut: cutoff ? summarize(refYm, cutoff) : full, full, cutoff };
+      if (!cutoff) return { cut: full, full, cutoff };
+      // Whether the reference month had a report near the cutoff is a
+      // question about the uploads, so the team's rows answer it.
+      const teamCut = await teamTotals(ctx, companyId, refYm, cache, cutoff);
+      return employeeReference(ctx, companyId, refYm, employee.name, {
+        cut: summarize(refYm, cutoff),
+        full,
+        cutoff,
+        salesAsOf: teamCut.asOf.sales,
+      });
     };
-    const vm = reference(shiftYm(ym, -1));
-    const vj = reference(shiftYm(ym, -12));
+    const vm = await reference(shiftYm(ym, -1));
+    const vj = await reference(shiftYm(ym, -12));
 
     let alerts: ReturnType<typeof employeeSignals>["alerts"] = [];
     let highlights: ReturnType<typeof employeeSignals>["highlights"] = [];

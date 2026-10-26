@@ -10,6 +10,10 @@ export interface Comparison {
   workday: number;
   vmCutoff: string | null;
   vjCutoff: string | null;
+  /** Set when the previous month has no lead/opp report near the cutoff:
+   * the day its newest one is from. */
+  vmStaleAsOf: string | null;
+  vjStaleAsOf: string | null;
 }
 
 /** What VM/VJ compare against — the same workday of the reference month
@@ -25,6 +29,24 @@ export function ComparisonFootnote({ comparison }: { comparison: Comparison }) {
         date: comparison.vmCutoff ? formatIsoDate(comparison.vmCutoff, locale) : "–",
       })}
     </p>
+  );
+}
+
+/** The previous month has no lead/opp report from the day VM compares
+ * with: say so, and that stock figures go without VM while Leads, Workable
+ * and Closed Won were recounted from their dates. */
+export function StaleComparisonWarning({ comparison }: { comparison: Comparison }) {
+  const t = useTranslations("Performance");
+  const locale = useLocale();
+  if (comparison.mode === "full" || !comparison.vmStaleAsOf) return null;
+  return (
+    <div className="flex items-start gap-2 rounded-md border border-warn/40 bg-warn/10 p-3 text-sm text-warn">
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+      {t("compareStale", {
+        cutoff: comparison.vmCutoff ? formatIsoDate(comparison.vmCutoff, locale) : "–",
+        asOf: formatIsoDate(comparison.vmStaleAsOf, locale),
+      })}
+    </div>
   );
 }
 

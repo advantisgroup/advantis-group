@@ -44,6 +44,7 @@ import {
   aggregateLeadReport,
   aggregateOppReport,
   readSalesforceExport,
+  type LeadDay,
   type RawLead,
   type RawOpp,
   type WonOpp,
@@ -215,6 +216,25 @@ async function writeRawOpps(
     const chunk = raw.slice(i, i + RAW_CHUNK_SIZE);
     await runSafely("insertRawOppsChunk", () =>
       ctx.runMutation(internal.performance.import.insertRawOppsChunk, {
+        companyId,
+        rows: chunk,
+      }),
+    );
+  }
+}
+
+async function writeLeadDays(
+  ctx: ActionCtx,
+  companyId: Id<"companies">,
+  days: LeadDay[],
+): Promise<void> {
+  await clearInBatches("clearLeadDays", () =>
+    ctx.runMutation(internal.performance.import.clearLeadDays, { companyId }),
+  );
+  for (let i = 0; i < days.length; i += RAW_CHUNK_SIZE) {
+    const chunk = days.slice(i, i + RAW_CHUNK_SIZE);
+    await runSafely("insertLeadDaysChunk", () =>
+      ctx.runMutation(internal.performance.import.insertLeadDaysChunk, {
         companyId,
         rows: chunk,
       }),
@@ -645,10 +665,11 @@ async function processReport(
     const reportDate = toISODate(sf.reportDate);
     const sfBase = { ...base, reportDate, sourceRowCount: sf.rows.length };
     if (sf.kind === "lead") {
-      const { snapshots, raw } = aggregateLeadReport(sf.rows, sf.reportDate);
-      return importSalesforce(ctx, sfBase, "lead", snapshots, () =>
-        writeRawLeads(ctx, companyId, raw),
-      );
+      const { snapshots, raw, days } = aggregateLeadReport(sf.rows, sf.reportDate);
+      return importSalesforce(ctx, sfBase, "lead", snapshots, async () => {
+        await writeRawLeads(ctx, companyId, raw);
+        await writeLeadDays(ctx, companyId, days);
+      });
     }
     const { snapshots, raw, wonOpps } = aggregateOppReport(sf.rows, sf.reportDate);
     return importSalesforce(ctx, sfBase, "opp", snapshots, async () => {
