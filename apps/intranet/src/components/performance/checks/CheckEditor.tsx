@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, Printer, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Printer, Save, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -32,8 +32,6 @@ import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-
-type CheckType = "employee" | "kpi";
 
 interface KpiRow {
   key: string;
@@ -61,15 +59,16 @@ function padTo(list: string[], n: number): string[] {
   return [...list, ...Array(Math.max(0, n - list.length)).fill("")].slice(0, n);
 }
 
-/** Create (`checkId` null) or edit one employee/KPI check. */
+/** Create (`checkId` null) or edit one Mitarbeiter-Check: KPI table with
+ * rating, note and an optional measure per row, Top/Go for, agreements and
+ * a free note. (The separate KPI check was folded in 10/2026; older KPI
+ * checks open here the same way.) */
 export function CheckEditor({
   employeeId,
   checkId,
-  newType,
 }: {
   employeeId: Id<"performanceEmployees">;
   checkId: Id<"performanceChecks"> | null;
-  newType: CheckType;
 }) {
   const t = useTranslations("Performance.checks");
   const router = useRouter();
@@ -80,7 +79,6 @@ export function CheckEditor({
   const save = useMutation(api.performance.checks.save);
   const remove = useMutation(api.performance.checks.remove);
 
-  const [type, setType] = useState<CheckType>(newType);
   const [date, setDate] = useState(todayIso());
   const [ratings, setRatings] = useState<Record<string, { rating?: Rating; note?: string }>>({});
   const [tops, setTops] = useState<string[]>(["", "", ""]);
@@ -88,6 +86,8 @@ export function CheckEditor({
   const [note, setNote] = useState("");
   const [agreements, setAgreements] = useState<ActionDraft[]>([]);
   const [measures, setMeasures] = useState<Record<string, ActionDraft>>({});
+  // KPI rows whose measure field is open (any row with a measure is).
+  const [measureOpen, setMeasureOpen] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [loadedId, setLoadedId] = useState<string | null>(null);
 
@@ -95,7 +95,6 @@ export function CheckEditor({
   useEffect(() => {
     if (!saved || loadedId === saved.check._id) return;
     const c = saved.check;
-    setType(c.type);
     setDate(c.date);
     setRatings(
       Object.fromEntries(c.ratings.map((r) => [r.key, { rating: r.rating, note: r.note }])),
@@ -151,28 +150,26 @@ export function CheckEditor({
   async function onSave() {
     setBusy(true);
     try {
-      const actions = [
-        ...(type === "employee" ? agreements : []),
-        ...Object.values(measures).filter((m) => m.text.trim()),
-      ].map((a) => ({
-        id: a.id as Id<"performanceActions"> | undefined,
-        kpiKey: a.kpiKey,
-        text: a.text,
-        dueDate: a.dueDate,
-        done: a.done,
-      }));
+      const actions = [...agreements, ...Object.values(measures).filter((m) => m.text.trim())].map(
+        (a) => ({
+          id: a.id as Id<"performanceActions"> | undefined,
+          kpiKey: a.kpiKey,
+          text: a.text,
+          dueDate: a.dueDate,
+          done: a.done,
+        }),
+      );
       const res = await save({
         checkId: checkId ?? undefined,
         employeeId,
-        type,
         date,
         ratings: Object.entries(ratings).map(([key, r]) => ({
           key,
           rating: r.rating,
           note: r.note,
         })),
-        tops: type === "employee" ? tops : [],
-        goFors: type === "employee" ? goFors : [],
+        tops,
+        goFors,
         note,
         actions,
       });
@@ -213,9 +210,7 @@ export function CheckEditor({
             {t("back")}
           </Button>
         </Link>
-        <Badge variant={type === "employee" ? "default" : "secondary"}>
-          {type === "employee" ? t("typeEmployee") : t("typeKpi")}
-        </Badge>
+        <Badge>{t("typeEmployee")}</Badge>
         <span className="font-medium">{employeeName}</span>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">{t("date")}</span>
@@ -274,7 +269,7 @@ export function CheckEditor({
                 <th className="px-2 py-2 font-medium">{t("colVj")}</th>
                 <th className="px-2 py-2 font-medium">{t("colRating")}</th>
                 <th className="px-4 py-2 font-medium">
-                  {type === "kpi" ? t("colMeasure") : t("colNote")}
+                  {t("colNote")} / {t("colMeasure")}
                 </th>
               </tr>
             </thead>
@@ -283,6 +278,7 @@ export function CheckEditor({
                 const meta = CHECK_KPI_META[row.key];
                 const isCheck = meta?.unit === "check";
                 const m = measures[row.key];
+                const showMeasure = measureOpen.has(row.key) || !!m?.text;
                 return (
                   <tr key={row.key} className="border-b align-top last:border-0">
                     <td className="px-4 py-2">
@@ -318,7 +314,17 @@ export function CheckEditor({
                         placeholder={t("colNote")}
                         className="h-8"
                       />
-                      {type === "kpi" && (
+                      {!showMeasure && (
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => setMeasureOpen((prev) => new Set(prev).add(row.key))}
+                        >
+                          <Plus className="h-3 w-3" />
+                          {t("addMeasure")}
+                        </button>
+                      )}
+                      {showMeasure && (
                         <div className="flex items-center gap-2">
                           <Checkbox
                             checked={m?.done ?? false}
@@ -350,48 +356,44 @@ export function CheckEditor({
         </CardContent>
       </Card>
 
-      {type === "employee" && (
-        <div className="grid gap-4 md:grid-cols-2">
-          {(
-            [
-              ["tops", tops, setTops],
-              ["goFors", goFors, setGoFors],
-            ] as const
-          ).map(([key, list, setList]) => (
-            <Card key={key}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">{t(key)}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {list.map((value, i) => (
-                  <Input
-                    key={i}
-                    value={value}
-                    onChange={(e) => setList(list.map((v, j) => (j === i ? e.target.value : v)))}
-                    placeholder={`${t(key)} ${i + 1}`}
-                  />
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <div className="grid gap-4 md:grid-cols-2">
+        {(
+          [
+            ["tops", tops, setTops],
+            ["goFors", goFors, setGoFors],
+          ] as const
+        ).map(([key, list, setList]) => (
+          <Card key={key}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">{t(key)}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {list.map((value, i) => (
+                <Input
+                  key={i}
+                  value={value}
+                  onChange={(e) => setList(list.map((v, j) => (j === i ? e.target.value : v)))}
+                  placeholder={`${t(key)} ${i + 1}`}
+                />
+              ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-      {type === "employee" && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">{t("agreements")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ActionListEditor
-              items={agreements}
-              onChange={setAgreements}
-              addLabel={t("addAgreement")}
-              placeholder={t("agreements")}
-            />
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">{t("agreements")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActionListEditor
+            items={agreements}
+            onChange={setAgreements}
+            addLabel={t("addAgreement")}
+            placeholder={t("agreements")}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-2">

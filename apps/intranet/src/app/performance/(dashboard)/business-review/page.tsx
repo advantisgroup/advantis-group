@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Printer, Save } from "lucide-react";
+import { type FunctionReturnType } from "convex/server";
+import { Plus, Printer, Save, Trash2, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -27,16 +29,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { cn } from "@/lib/utils";
 
-interface MeasureDraft {
+type Review = FunctionReturnType<typeof api.performance.reviews.get>;
+type EntryType = "note" | "decision" | "open";
+
+const ENTRY_TYPES: EntryType[] = ["note", "decision", "open"];
+
+const TYPE_STYLE: Record<EntryType, string> = {
+  note: "bg-muted text-muted-foreground",
+  decision: "bg-primary/10 text-primary",
+  open: "bg-warn/15 text-warn",
+};
+
+interface EntryDraft {
+  key: string;
   id?: string;
+  type: EntryType;
   employeeId?: string;
   text: string;
   dueDate?: string;
   done: boolean;
+  /** Month of the earlier review the entry was carried over from. */
+  fromYm?: string;
 }
 
 function lastMonths(n: number): string[] {
@@ -47,6 +63,53 @@ function lastMonths(n: number): string[] {
     out.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`);
   }
   return out;
+}
+
+let draftSeq = 0;
+const newKey = () => `new-${++draftSeq}`;
+
+/** Discreet picker for who the review shows; applied right away. */
+function PeoplePicker({ data, companyId }: { data: Review; companyId: Id<"companies"> }) {
+  const t = useTranslations("Performance.checks");
+  const handleError = useErrorHandler();
+  const setHidden = useMutation(api.performance.reviews.setHidden);
+  const hidden = data.employees.filter((e) => e.hidden).map((e) => e.id);
+  const shown = data.employees.length - hidden.length;
+
+  const toggle = (id: Id<"performanceEmployees">, show: boolean) => {
+    const next = show ? hidden.filter((h) => h !== id) : [...hidden, id];
+    setHidden({ companyId, ym: data.ym, hiddenEmployeeIds: next }).catch(handleError);
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn("text-muted-foreground", hidden.length > 0 && "text-foreground")}
+        >
+          <Users className="mr-1.5 h-4 w-4" />
+          {t("reviewPeople", { shown, total: data.employees.length })}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 p-0">
+        <p className="border-b px-3 py-2 text-xs text-muted-foreground">{t("reviewPeopleHint")}</p>
+        <ul className="max-h-80 overflow-y-auto py-1">
+          {data.employees.map((e) => (
+            <li key={e.id}>
+              <label className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/60">
+                <Checkbox checked={!e.hidden} onCheckedChange={(v) => toggle(e.id, v === true)} />
+                <span className={cn(e.hidden && "text-muted-foreground line-through")}>
+                  {e.name}
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export default function BusinessReviewPage() {
@@ -62,30 +125,46 @@ export default function BusinessReviewPage() {
   );
   const save = useMutation(api.performance.reviews.save);
   const setActionDone = useMutation(api.performance.checks.setActionDone);
-  const [notes, setNotes] = useState("");
-  const [measures, setMeasures] = useState<MeasureDraft[]>([]);
+  const [entries, setEntries] = useState<EntryDraft[]>([]);
   const [loaded, setLoaded] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!data || loaded === data.ym) return;
-    setNotes(data.review.notes);
-    setMeasures(
-      data.review.actions.map((a) => ({
-        id: a.id,
-        employeeId: a.employeeId ?? undefined,
-        text: a.text,
-        dueDate: a.dueDate ?? undefined,
-        done: a.done,
-      })),
-    );
+    const list: EntryDraft[] = data.review.entries.map((e) => ({
+      key: e.id,
+      id: e.id,
+      type: e.type,
+      employeeId: e.employeeId ?? undefined,
+      text: e.text,
+      dueDate: e.dueDate ?? undefined,
+      done: e.done,
+      fromYm: e.fromYm ?? undefined,
+    }));
+    // The free text of an older review becomes a note on the next save.
+    if (data.review.legacyNotes) {
+      list.unshift({ key: newKey(), type: "note", text: data.review.legacyNotes, done: false });
+    }
+    setEntries(list);
+    setDirty(!!data.review.legacyNotes);
     setLoaded(data.ym);
   }, [data, loaded]);
 
   if (!data || !dashboard) return <PerformanceContentSkeleton />;
 
-  const update = (i: number, patch: Partial<MeasureDraft>) =>
-    setMeasures((prev) => prev.map((m, j) => (j === i ? { ...m, ...patch } : m)));
+  const update = (key: string, patch: Partial<EntryDraft>) => {
+    setEntries((prev) => prev.map((e) => (e.key === key ? { ...e, ...patch } : e)));
+    setDirty(true);
+  };
+  const add = (type: EntryType) => {
+    setEntries((prev) => [...prev, { key: newKey(), type, text: "", done: false }]);
+    setDirty(true);
+  };
+  const removeEntry = (key: string) => {
+    setEntries((prev) => prev.filter((e) => e.key !== key));
+    setDirty(true);
+  };
 
   async function onSave() {
     if (!dashboard || !data) return;
@@ -94,16 +173,17 @@ export default function BusinessReviewPage() {
       await save({
         companyId: dashboard.companyId,
         ym: data.ym,
-        notes,
-        actions: measures.map((m) => ({
-          id: m.id as Id<"performanceActions"> | undefined,
-          employeeId: m.employeeId as Id<"performanceEmployees"> | undefined,
-          text: m.text,
-          dueDate: m.dueDate,
-          done: m.done,
+        entries: entries.map((e) => ({
+          id: e.id as Id<"performanceActions"> | undefined,
+          type: e.type,
+          employeeId: e.employeeId as Id<"performanceEmployees"> | undefined,
+          text: e.text,
+          dueDate: e.dueDate,
+          done: e.done,
         })),
       });
       setLoaded(null);
+      setDirty(false);
       toast.success(t("reviewSaved"));
     } catch (err) {
       handleError(err);
@@ -111,6 +191,8 @@ export default function BusinessReviewPage() {
       setBusy(false);
     }
   }
+
+  const people = data.employees.filter((e) => !e.hidden);
 
   return (
     <div className="space-y-4">
@@ -123,6 +205,7 @@ export default function BusinessReviewPage() {
           onValueChange={(v) => {
             setYm(v);
             setLoaded(null);
+            setDirty(false);
           }}
         >
           <SelectTrigger className="w-48" aria-label={t("reviewMonth")}>
@@ -138,6 +221,7 @@ export default function BusinessReviewPage() {
         </Select>
         {!data.monthDone && <Badge variant="warning">{t("reviewRunning")}</Badge>}
         <div className="flex-1" />
+        <PeoplePicker data={data} companyId={dashboard.companyId} />
         <a
           href={`/performance/druck/business-review?ym=${data.ym}&companyId=${dashboard.companyId}`}
           target="_blank"
@@ -221,9 +305,6 @@ export default function BusinessReviewPage() {
                   >
                     {c.employeeName}
                   </Link>
-                  <Badge variant={c.type === "employee" ? "default" : "secondary"}>
-                    {c.type === "employee" ? t("typeEmployee") : t("typeKpi")}
-                  </Badge>
                 </div>
                 {c.tops.length > 0 && (
                   <p className="mt-1 text-xs">
@@ -275,74 +356,106 @@ export default function BusinessReviewPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-base">{t("reviewNotes")}</CardTitle>
-          <Button size="sm" onClick={() => void onSave()} disabled={busy}>
-            <Save className="mr-1.5 h-4 w-4" />
-            {t("save")}
-          </Button>
+        <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2 pb-2">
+          <div>
+            <CardTitle className="text-base">{t("reviewEntries")}</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">{t("reviewEntriesHint")}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {dirty && <span className="text-xs text-warn">{t("unsaved")}</span>}
+            <Button size="sm" onClick={() => void onSave()} disabled={busy}>
+              <Save className="mr-1.5 h-4 w-4" />
+              {t("save")}
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={5}
-            placeholder={t("reviewNotesPlaceholder")}
-          />
-          <div className="space-y-2">
-            <p className="text-sm font-medium">{t("reviewMeasures")}</p>
-            {measures.map((m, i) => (
-              <div key={m.id ?? `new-${i}`} className="flex flex-wrap items-center gap-2">
+        <CardContent className="space-y-3">
+          {entries.length === 0 && (
+            <p className="text-sm text-muted-foreground">{t("reviewNoEntries")}</p>
+          )}
+          <ul className="divide-y rounded-md border">
+            {entries.map((e) => (
+              <li key={e.key} className="flex flex-wrap items-center gap-2 px-3 py-2">
                 <Checkbox
-                  checked={m.done}
-                  onCheckedChange={(v) => update(i, { done: v === true })}
+                  checked={e.done}
+                  onCheckedChange={(v) => update(e.key, { done: v === true })}
                   aria-label={t("done")}
                 />
-                <Input
-                  value={m.text}
-                  onChange={(e) => update(i, { text: e.target.value })}
-                  className={cn("min-w-48 flex-1", m.done && "text-muted-foreground line-through")}
-                />
                 <Select
-                  value={m.employeeId ?? "team"}
-                  onValueChange={(v) => update(i, { employeeId: v === "team" ? undefined : v })}
+                  value={e.type}
+                  onValueChange={(v) => update(e.key, { type: v as EntryType })}
                 >
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger
+                    className={cn("h-7 w-36 border-0 text-xs font-medium", TYPE_STYLE[e.type])}
+                    aria-label={t("entryTypeLabel")}
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="team">{t("wholeTeam")}</SelectItem>
-                    {data.rows.map((r) => (
-                      <SelectItem key={r.employeeId} value={r.employeeId}>
-                        {r.name}
+                    {ENTRY_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {t(`entryType.${type}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <span className="text-xs text-muted-foreground">{t("due")}</span>
+                <Input
+                  value={e.text}
+                  onChange={(ev) => update(e.key, { text: ev.target.value })}
+                  placeholder={t(`entryPlaceholder.${e.type}`)}
+                  className={cn(
+                    "h-8 min-w-48 flex-1",
+                    e.done && "text-muted-foreground line-through",
+                  )}
+                />
+                {e.fromYm && (
+                  <Badge variant="muted" className="text-[10px]">
+                    {t("entryFrom", { month: fmtYm(e.fromYm, locale) })}
+                  </Badge>
+                )}
+                <Select
+                  value={e.employeeId ?? "team"}
+                  onValueChange={(v) => update(e.key, { employeeId: v === "team" ? undefined : v })}
+                >
+                  <SelectTrigger className="h-8 w-44" aria-label={t("employees")}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="team">{t("wholeTeam")}</SelectItem>
+                    {people.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Input
                   type="date"
-                  value={m.dueDate ?? ""}
-                  onChange={(e) => update(i, { dueDate: e.target.value || undefined })}
-                  className="w-40"
+                  value={e.dueDate ?? ""}
+                  onChange={(ev) => update(e.key, { dueDate: ev.target.value || undefined })}
+                  className="h-8 w-36"
+                  aria-label={t("due")}
+                  title={t("due")}
                 />
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-8 px-2 text-muted-foreground"
-                  onClick={() => setMeasures((prev) => prev.filter((_, j) => j !== i))}
+                  onClick={() => removeEntry(e.key)}
+                  aria-label={t("delete")}
                 >
-                  ✕
+                  <Trash2 className="h-4 w-4" />
                 </Button>
-              </div>
+              </li>
             ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setMeasures((prev) => [...prev, { text: "", done: false }])}
-            >
-              {t("addMeasure")}
-            </Button>
+          </ul>
+          <div className="flex flex-wrap gap-2">
+            {ENTRY_TYPES.map((type) => (
+              <Button key={type} variant="outline" size="sm" onClick={() => add(type)}>
+                <Plus className="mr-1.5 h-4 w-4" />
+                {t(`entryType.${type}`)}
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>

@@ -33,11 +33,10 @@ export default function CheckPrintPage() {
   });
   if (!data) return <PerformancePageSkeleton />;
   const { check, employee, actions } = data;
-  const isEmployee = check.type === "employee";
   const rating = new Map(check.ratings.map((r) => [r.key, r]));
   const measure = new Map(actions.filter((a) => a.kpiKey).map((a) => [a.kpiKey!, a]));
   const agreements = actions.filter((a) => !a.kpiKey);
-  const title = `${isEmployee ? t("typeEmployee") : t("typeKpi")} – ${employee.name}`;
+  const title = `${t("typeEmployee")} – ${employee.name}`;
   const k = check.kpis;
   const reasons = (list: { reason: string; count: number }[]) =>
     list.length ? list.map((r) => `${r.reason} (${r.count})`).join(", ") : t("noReasons");
@@ -72,7 +71,7 @@ export default function CheckPrintPage() {
             <th className="py-1 pr-2 text-right">{t("colVj")}</th>
             <th className="py-1 pr-2 text-center">{t("colRating")}</th>
             <th className="py-1">
-              {isEmployee ? t("colNote") : `${t("colNote")} / ${t("colMeasure")}`}
+              {measure.size > 0 ? `${t("colNote")} / ${t("colMeasure")}` : t("colNote")}
             </th>
           </tr>
         </thead>
@@ -126,41 +125,37 @@ export default function CheckPrintPage() {
         </tbody>
       </table>
 
-      {isEmployee && (
-        <div className="mt-4 grid grid-cols-2 gap-6">
-          {(["tops", "goFors"] as const).map((key) => (
-            <div key={key}>
-              <h2 className="mb-1 font-bold">{t(key)}</h2>
-              <ol className="list-decimal space-y-0.5 pl-4">
-                {[0, 1, 2].map((i) => (
-                  <li key={i} className="min-h-[1.4em] border-b border-dotted border-neutral-300">
-                    {check[key][i] ?? ""}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {isEmployee && (
-        <div className="mt-4">
-          <h2 className="mb-1 font-bold">{t("agreements")}</h2>
-          <table className="w-full border-collapse">
-            <tbody>
-              {(agreements.length ? agreements : [null, null, null]).map((a, i) => (
-                <tr key={a?.id ?? i} className="border-b border-neutral-300">
-                  <td className="w-5 py-1">{a?.done ? "☑" : "☐"}</td>
-                  <td className="py-1">{a?.text ?? ""}</td>
-                  <td className="w-28 py-1 text-right">
-                    {a?.dueDate ? `${t("due")} ${fmtDay(a.dueDate)}` : ""}
-                  </td>
-                </tr>
+      <div className="mt-4 grid grid-cols-2 gap-6">
+        {(["tops", "goFors"] as const).map((key) => (
+          <div key={key}>
+            <h2 className="mb-1 font-bold">{t(key)}</h2>
+            <ol className="list-decimal space-y-0.5 pl-4">
+              {[0, 1, 2].map((i) => (
+                <li key={i} className="min-h-[1.4em] border-b border-dotted border-neutral-300">
+                  {check[key][i] ?? ""}
+                </li>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </ol>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4">
+        <h2 className="mb-1 font-bold">{t("agreements")}</h2>
+        <table className="w-full border-collapse">
+          <tbody>
+            {(agreements.length ? agreements : [null, null, null]).map((a, i) => (
+              <tr key={a?.id ?? i} className="border-b border-neutral-300">
+                <td className="w-5 py-1">{a?.done ? "☑" : "☐"}</td>
+                <td className="py-1">{a?.text ?? ""}</td>
+                <td className="w-28 py-1 text-right">
+                  {a?.dueDate ? `${t("due")} ${fmtDay(a.dueDate)}` : ""}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {check.note && (
         <div className="mt-4">
@@ -169,20 +164,18 @@ export default function CheckPrintPage() {
         </div>
       )}
 
-      {isEmployee && (
-        <div className="mt-8 break-inside-avoid">
-          <p className="mb-10">{t("signatureText")}</p>
-          <div className="grid grid-cols-2 gap-10">
-            {[t("signatureLead"), t("signatureEmployee")].map((label) => (
-              <div key={label}>
-                <div className="border-t border-black pt-1">
-                  {t("place")} · {label}
-                </div>
+      <div className="mt-8 break-inside-avoid">
+        <p className="mb-10">{t("signatureText")}</p>
+        <div className="grid grid-cols-2 gap-10">
+          {[t("signatureLead"), t("signatureEmployee")].map((label) => (
+            <div key={label}>
+              <div className="border-t border-black pt-1">
+                {t("place")} · {label}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
       <div className="mt-6 text-[9px] text-neutral-400">
         {t("by", { name: check.createdByName })}
       </div>

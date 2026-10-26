@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
-import { ClipboardCheck, Gauge } from "lucide-react";
+import { ClipboardCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
@@ -49,12 +49,6 @@ export default function ChecksPage() {
               {t("newEmployeeCheck")}
             </Button>
           </Link>
-          <Link href={`${base}/neu?typ=kpi`}>
-            <Button size="sm" variant="outline">
-              <Gauge className="mr-1.5 h-4 w-4" />
-              {t("newKpiCheck")}
-            </Button>
-          </Link>
         </CardContent>
       </Card>
 
@@ -74,14 +68,12 @@ export default function ChecksPage() {
                   className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-muted/50"
                 >
                   <span className="w-24 font-medium tabular-nums">{fmtDay(c.date)}</span>
-                  <Badge variant={c.type === "employee" ? "default" : "secondary"}>
-                    {c.type === "employee" ? t("typeEmployee") : t("typeKpi")}
-                  </Badge>
+                  <Badge>{t("typeEmployee")}</Badge>
                   <RatingCounts counts={c.ratings} />
                   <span className="flex-1" />
                   {c.total > 0 && (
                     <span className="text-xs text-muted-foreground">
-                      {t("openOf", { open: c.open, total: c.total })}
+                      {t("doneOf", { done: c.done, total: c.total })}
                     </span>
                   )}
                   <span className="text-xs text-muted-foreground">

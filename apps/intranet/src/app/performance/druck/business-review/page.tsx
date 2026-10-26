@@ -81,8 +81,7 @@ export default function ReviewPrintPage() {
             <div key={c.id} className="mb-1.5 break-inside-avoid">
               <b>
                 {fmtDay(c.date)} · {c.employeeName}
-              </b>{" "}
-              ({c.type === "employee" ? t("typeEmployee") : t("typeKpi")})
+              </b>
               {c.tops.length > 0 && (
                 <div>
                   {t("tops")}: {c.tops.join(" · ")}
@@ -111,15 +110,38 @@ export default function ReviewPrintPage() {
       </div>
 
       <div className="mt-4 break-inside-avoid">
-        <h2 className="mb-1 font-bold">{t("reviewNotes")}</h2>
-        <p className="min-h-[3em] whitespace-pre-wrap">{data.review.notes}</p>
-        <h2 className="mb-1 mt-3 font-bold">{t("reviewMeasures")}</h2>
-        {data.review.actions.map((a) => (
-          <div key={a.id}>
-            {a.done ? "☑" : "☐"} {a.text} — {a.employeeName ?? t("wholeTeam")}
-            {a.dueDate ? ` (${t("due")} ${fmtDay(a.dueDate)})` : ""}
-          </div>
-        ))}
+        <h2 className="mb-1 font-bold">{t("reviewEntries")}</h2>
+        {data.review.legacyNotes && (
+          <p className="mb-1 whitespace-pre-wrap">
+            {t("entryType.note")}: {data.review.legacyNotes}
+          </p>
+        )}
+        {data.review.entries.length === 0 && !data.review.legacyNotes && (
+          <p className="min-h-[3em]">{t("reviewNoEntries")}</p>
+        )}
+        <table className="w-full border-collapse">
+          <tbody>
+            {data.review.entries.map((e) => (
+              <tr key={e.id} className="break-inside-avoid border-b border-neutral-200 align-top">
+                <td className="w-5 py-0.5">{e.done ? "☑" : "☐"}</td>
+                <td className="w-24 py-0.5 font-medium">{t(`entryType.${e.type}`)}</td>
+                <td className="py-0.5">
+                  {e.text}
+                  {e.fromYm && (
+                    <span className="text-neutral-500">
+                      {" "}
+                      ({t("entryFrom", { month: fmtYm(e.fromYm, locale) })})
+                    </span>
+                  )}
+                </td>
+                <td className="w-40 py-0.5">{e.employeeName ?? t("wholeTeam")}</td>
+                <td className="w-24 py-0.5 text-right">
+                  {e.dueDate ? `${t("due")} ${fmtDay(e.dueDate)}` : ""}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </PrintFrame>
   );

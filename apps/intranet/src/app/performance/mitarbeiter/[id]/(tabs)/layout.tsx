@@ -42,7 +42,16 @@ import {
   PerformanceYmProvider,
   usePerformanceYm,
 } from "@/components/performance/PerformanceYmContext";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -51,6 +60,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { initials } from "@/lib/format";
+
+/** "05.11." from an ISO day, "–" without one. */
+function fmtDayShortDe(iso: string | null): string {
+  if (!iso) return "–";
+  const [, m, d] = iso.split("-");
+  return `${d}.${m}.`;
+}
 
 interface EmployeeTopData {
   hasCalls: boolean;
@@ -154,6 +171,12 @@ function EmployeeChrome({
         (d) => d.canViewTeam && (!data || d.companyId === data.employee.companyId),
       ));
   const tabsForViewer = TABS_BY_KIND[kind].filter((tab) => tab !== "checks" || canLead);
+  // Check status in the header, for those who run the checks.
+  const checkStatus = useQuery(
+    api.performance.checks.listForEmployee,
+    canLead && kind === "sales" ? { employeeId } : "skip",
+  );
+  const tc = useTranslations("Performance.checks");
   const offTab = !tabsForViewer.includes(activeTab);
   useEffect(() => {
     if (data && offTab) router.replace(employeeHome(employeeId, data.employee.kind));
@@ -212,34 +235,75 @@ function EmployeeChrome({
       <PerformanceHeader />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold">{data?.employee.name}</h1>
-          {usesMonth && (
-            <>
-              <Select
-                value={ym ?? data?.ym ?? ""}
-                onValueChange={(v) => setYm(v)}
-                disabled={!data || data.months.length === 0}
-              >
-                <SelectTrigger className="w-56">
-                  <SelectValue placeholder={t("dashboardMonthLabel")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {[...(data?.months ?? [])].reverse().map((m) => (
-                    <SelectItem key={m} value={m}>
-                      {fmtYm(m, locale)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {data && (
-                <Badge variant={data.monthDone ? "muted" : "success"}>
-                  {data.monthDone ? t("dashboardMonthClosed") : t("dashboardMonthOpen")}
-                </Badge>
-              )}
-            </>
-          )}
-        </div>
+        {canLead && (
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/performance/team">{t("tabTeam")}</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{data?.employee.name ?? "…"}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        )}
+
+        {/* Person card with the sections as tabs, like an HR file. */}
+        <Card className="overflow-hidden">
+          <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+            <div className="flex min-w-0 items-center gap-3.5">
+              <Avatar className="size-12 border-border/70">
+                <AvatarFallback className="font-display text-base font-semibold">
+                  {initials(data?.employee.name ?? "")}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <h1 className="truncate font-display text-2xl font-bold">{data?.employee.name}</h1>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  {dashboard?.name && <span>{dashboard.name}</span>}
+                  {checkStatus && (
+                    <Badge variant={checkStatus.overdue ? "destructive" : "success"}>
+                      {checkStatus.overdue
+                        ? checkStatus.lastEmployeeCheck
+                          ? tc("status.overdue")
+                          : tc("status.never")
+                        : tc("nextCheckOn", { date: fmtDayShortDe(checkStatus.nextDue) })}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+            {usesMonth && (
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  value={ym ?? data?.ym ?? ""}
+                  onValueChange={(v) => setYm(v)}
+                  disabled={!data || data.months.length === 0}
+                >
+                  <SelectTrigger className="w-56">
+                    <SelectValue placeholder={t("dashboardMonthLabel")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[...(data?.months ?? [])].reverse().map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {fmtYm(m, locale)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {data && (
+                  <Badge variant={data.monthDone ? "muted" : "success"}>
+                    {data.monthDone ? t("dashboardMonthClosed") : t("dashboardMonthOpen")}
+                  </Badge>
+                )}
+              </div>
+            )}
+          </CardContent>
+          <div className="border-t border-border/70 px-2">
+            <RouteTabs tabs={tabs} activeValue={activeTab} inline />
+          </div>
+        </Card>
 
         {data && (
           <EmployeeTopSection
@@ -251,12 +315,6 @@ function EmployeeChrome({
             locale={locale}
           />
         )}
-
-        <Card className="overflow-hidden">
-          <div className="px-2">
-            <RouteTabs tabs={tabs} activeValue={activeTab} inline />
-          </div>
-        </Card>
 
         <PerformanceEmployeeDetailProvider data={data}>
           {offTab ? <PerformanceContentSkeleton /> : children}

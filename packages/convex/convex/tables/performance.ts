@@ -471,6 +471,12 @@ export const performanceTables = {
     checkId: v.optional(v.id("performanceChecks")),
     reviewId: v.optional(v.id("performanceReviews")),
     kpiKey: v.optional(v.string()),
+    /** Business-review entries: what kind of line it is (unset on older
+     * review measures = an open point). */
+    entryType: v.optional(v.union(v.literal("note"), v.literal("decision"), v.literal("open"))),
+    /** Month of the business review the entry was written in; until it is
+     * ticked off it also shows up in every later review. */
+    reviewYm: v.optional(v.string()),
     text: v.string(),
     dueDate: v.optional(v.string()),
     doneAt: v.optional(v.number()),
@@ -484,12 +490,15 @@ export const performanceTables = {
     .index("by_review", ["reviewId"]),
 
   // Monthly business review of a dashboard: the month's KPI table is built
-  // live; this row keeps what was said (notes) — its measures live in
-  // `performanceActions` (`source: "review"`).
+  // live; its entries (notes, decisions, open points) live in
+  // `performanceActions` (`source: "review"`). `notes` is the free text of
+  // reviews before 10/2026, turned into an entry on the next save.
   performanceReviews: defineTable({
     companyId: v.id("companies"),
     ym: v.string(),
     notes: v.string(),
+    /** Employees left out of this review's table and lists. */
+    hiddenEmployeeIds: v.optional(v.array(v.id("performanceEmployees"))),
     createdByName: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),

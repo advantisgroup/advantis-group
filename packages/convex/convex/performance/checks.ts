@@ -233,7 +233,9 @@ export const listForEmployee = userQuery({
         .withIndex("by_employee", (q) => q.eq("employeeId", employeeId))
         .collect(),
     ]);
-    const last = checks.find((c) => c.type === "employee");
+    // Every check counts: KPI checks were folded into the one
+    // "Mitarbeiter-Check" (10/2026), older ones keep `type: "kpi"`.
+    const last = checks[0];
     const nextDue = last ? addDays(last.date, CHECK_INTERVAL_DAYS) : null;
     return {
       lastEmployeeCheck: last?.date ?? null,
@@ -245,7 +247,7 @@ export const listForEmployee = userQuery({
         date: c.date,
         createdByName: c.createdByName,
         ratings: ratingCounts(c),
-        open: actions.filter((a) => a.checkId === c._id && !a.doneAt).length,
+        done: actions.filter((a) => a.checkId === c._id && a.doneAt).length,
         total: actions.filter((a) => a.checkId === c._id).length,
       })),
     };
@@ -355,7 +357,9 @@ export const save = userMutation({
   args: {
     checkId: v.optional(v.id("performanceChecks")),
     employeeId: v.id("performanceEmployees"),
-    type: v.union(v.literal("employee"), v.literal("kpi")),
+    /** Ignored: there is one kind of check now (kept so an open page from
+     * before 10/2026 can still save). */
+    type: v.optional(v.union(v.literal("employee"), v.literal("kpi"))),
     date: v.string(),
     ratings: v.array(
       v.object({
@@ -376,7 +380,7 @@ export const save = userMutation({
     const actor = viewer.name;
     const now = Date.now();
     const fields = {
-      type: args.type,
+      type: "employee" as const,
       date: args.date,
       ratings: args.ratings.map((r) => ({
         key: r.key,
@@ -410,19 +414,23 @@ export const save = userMutation({
       .query("performanceActions")
       .withIndex("by_check", (q) => q.eq("checkId", checkId))
       .collect();
-    await syncActions(
-      ctx,
-      existing,
-      args.actions,
-      {
-        companyId,
-        employeeId: employee._id,
-        source: args.type === "employee" ? "agreement" : "kpi",
-        checkId,
-        createdByName: actor,
-      },
-      actor,
-    );
+    // Agreements and per-KPI measures are synced as two groups, each with
+    // its own source.
+    for (const kpi of [false, true]) {
+      await syncActions(
+        ctx,
+        existing.filter((a) => !!a.kpiKey === kpi),
+        args.actions.filter((a) => !!a.kpiKey === kpi),
+        {
+          companyId,
+          employeeId: employee._id,
+          source: kpi ? "kpi" : "agreement",
+          checkId,
+          createdByName: actor,
+        },
+        actor,
+      );
+    }
     return { checkId };
   },
 });
@@ -519,12 +527,13 @@ export const monitoring = userQuery({
       )
     ).flat();
 
+    const todos = actions.filter((a) => a.entryType !== "note" && a.entryType !== "decision");
     const employees = [...roster.names.entries()]
       .map(([id, name]) => {
         const mine = checks
           .filter((c) => c.employeeId === id)
           .sort((a, b) => b.date.localeCompare(a.date));
-        const last = mine.find((c) => c.type === "employee");
+        const last = mine[0];
         const nextDue = last ? addDays(last.date, CHECK_INTERVAL_DAYS) : null;
         const status: "never" | "overdue" | "due" | "ok" = !last
           ? "never"
@@ -545,7 +554,8 @@ export const monitoring = userQuery({
             date: c.date,
             ratings: ratingCounts(c),
           })),
-          open: actions.filter((a) => a.employeeId === id && !a.doneAt).length,
+          open: todos.filter((a) => a.employeeId === id && !a.doneAt).length,
+          done: todos.filter((a) => a.employeeId === id && a.doneAt).length,
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name, "de"));
@@ -554,6 +564,8 @@ export const monitoring = userQuery({
       id ? (roster.names.get(id) ?? null) : null;
     const items: OpenItem[] = [
       ...actions
+        // Notes and decisions of a business review aren't to-dos.
+        .filter((a) => a.entryType !== "note" && a.entryType !== "decision")
         .filter((a) => !a.employeeId || roster.names.has(a.employeeId))
         .map(
           (a): OpenItem => ({

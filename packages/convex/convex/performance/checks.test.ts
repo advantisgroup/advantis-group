@@ -228,24 +228,51 @@ describe("checks", () => {
     await as("admin").mutation(api.performance.reviews.save, {
       companyId: ids.companyId,
       ym: "2026-10",
-      notes: "Gutes Gespräch",
-      actions: [
-        { text: "Team-Schulung Einwände", dueDate: "2026-11-20", done: false },
-        { employeeId: ids.annaEmp, text: "Coaching Abschluss", done: false },
+      entries: [
+        { type: "note", text: "Gutes Gespräch", done: false },
+        { type: "open", text: "Team-Schulung Einwände", dueDate: "2026-11-20", done: false },
+        { type: "decision", employeeId: ids.annaEmp, text: "Coaching Abschluss", done: true },
       ],
     });
     const saved = await as("admin").query(api.performance.reviews.get, {
       companyId: ids.companyId,
       ym: "2026-10",
     });
-    expect(saved.review.notes).toBe("Gutes Gespräch");
-    expect(saved.review.actions.map((a) => a.text).sort()).toEqual([
-      "Coaching Abschluss",
-      "Team-Schulung Einwände",
+    expect(saved.review.entries.map((e) => [e.type, e.text, e.done])).toEqual([
+      ["note", "Gutes Gespräch", false],
+      ["open", "Team-Schulung Einwände", false],
+      ["decision", "Coaching Abschluss", true],
     ]);
+
+    // Next month's review carries over what wasn't ticked off.
+    const next = await as("admin").query(api.performance.reviews.get, {
+      companyId: ids.companyId,
+      ym: "2026-11",
+    });
+    expect(next.review.entries.map((e) => [e.text, e.fromYm])).toEqual([
+      ["Gutes Gespräch", "2026-10"],
+      ["Team-Schulung Einwände", "2026-10"],
+    ]);
+
+    // Leaving Anna out: no row for her, the team row counts the rest.
+    await as("admin").mutation(api.performance.reviews.setHidden, {
+      companyId: ids.companyId,
+      ym: "2026-10",
+      hiddenEmployeeIds: [ids.annaEmp],
+    });
+    const hidden = await as("admin").query(api.performance.reviews.get, {
+      companyId: ids.companyId,
+      ym: "2026-10",
+    });
+    expect(hidden.rows).toEqual([]);
+    expect(hidden.total.cur.leadsCreated).toBeNull();
+    expect(hidden.employees).toEqual([{ id: ids.annaEmp, name: "Anna Müller", hidden: true }]);
+
     const board = await as("admin").query(api.performance.checks.monitoring, {
       companyId: ids.companyId,
     });
     expect(board.open.map((o) => o.text)).toContain("Team-Schulung Einwände");
+    // Notes and decisions aren't to-dos.
+    expect(board.open.map((o) => o.text)).not.toContain("Gutes Gespräch");
   });
 });
