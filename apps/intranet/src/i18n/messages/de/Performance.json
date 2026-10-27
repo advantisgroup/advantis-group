@@ -433,7 +433,6 @@
   "uploadNotImported": "Nicht übernommen in: {dashboards} – dort gerade belegt oder fehlgeschlagen. Bitte die Datei dort noch einmal hochladen.",
   "adminsOnlyBadge": "Nur für Admins sichtbar",
   "adminsOnlyHint": "Performance ist noch nicht freigegeben: andere sehen „Wird gerade überarbeitet“. Freigabe über die Convex-Variable PERFORMANCE_MODE=live und die Wartungsliste.",
-  "underConstruction": "Das Performance-Dashboard ist noch im Aufbau – Zahlen und Ansichten können sich noch ändern. Fehler oder Wünsche bitte an die IT.",
   "viewAs": "Ansicht als",
   "viewAsActive": "Ansicht als {name}",
   "viewAsEnd": "Ansicht beenden",

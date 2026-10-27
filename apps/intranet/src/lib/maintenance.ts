@@ -23,7 +23,7 @@ const OPEN_PREFIXES = [
   // Eigene Zeiterfassung – Zugriff regelt Convex (TIME_MODE), nicht diese Liste
   "/zeiterfassung",
   // Performance: für alle freigegeben am 16.10.2026 (Convex-Env
-  // PERFORMANCE_MODE=live); Hinweis „im Aufbau“ steht im PerformanceHeader.
+  // PERFORMANCE_MODE=live); Hinweis „im Aufbau“ am 27.10.2026 entfernt.
   "/performance",
   // Wissen: Wiki und KI-Assistent für alle freigegeben (19.10. / 21.10.2026, Vahan).
   "/guidebooks",

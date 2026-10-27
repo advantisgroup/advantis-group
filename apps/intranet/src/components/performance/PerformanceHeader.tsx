@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Construction } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
@@ -77,11 +77,6 @@ export function PerformanceHeader() {
           <SettingsMenu />
         </div>
       </header>
-      {/* Shown to everyone while the dashboard is still being built. */}
-      <div className="flex items-center justify-center gap-2 border-b border-warn/30 bg-warn/10 px-4 py-1.5 text-center text-xs text-warn">
-        <Construction className="h-3.5 w-3.5 shrink-0" />
-        {t("underConstruction")}
-      </div>
     </div>
   );
 }
