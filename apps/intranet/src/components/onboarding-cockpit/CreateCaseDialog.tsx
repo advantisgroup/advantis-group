@@ -51,7 +51,6 @@ export function CreateCaseDialog({
   const handleError = useErrorHandler();
   const create = useMutation(api.performance.onboarding.create);
   const [number, setNumber] = useState("");
-  const [name, setName] = useState("");
   const [assignee, setAssignee] = useState(NOBODY);
   const [accountStatus, setAccountStatus] = useState("");
   const [closeDate, setCloseDate] = useState("");
@@ -61,7 +60,6 @@ export function CreateCaseDialog({
 
   const reset = () => {
     setNumber("");
-    setName("");
     setAssignee(NOBODY);
     setAccountStatus("");
     setCloseDate("");
@@ -70,7 +68,7 @@ export function CreateCaseDialog({
   };
 
   const submit = async () => {
-    if (!number.trim() || !name.trim()) {
+    if (!number.trim()) {
       toast.error(t("create.required"));
       return;
     }
@@ -78,7 +76,6 @@ export function CreateCaseDialog({
     try {
       const id = await create({
         customerNumber: number,
-        name,
         assigneeUserId: canManage && assignee !== NOBODY ? (assignee as Id<"users">) : undefined,
         accountStatus: accountStatus || undefined,
         closeDate: closeDate || undefined,
@@ -104,7 +101,7 @@ export function CreateCaseDialog({
           <DialogDescription>{t("create.intro")}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="ob-new-number">{t("create.number")}</Label>
             <Input
               id="ob-new-number"
@@ -112,10 +109,6 @@ export function CreateCaseDialog({
               inputMode="numeric"
               onChange={(e) => setNumber(e.target.value)}
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="ob-new-name">{t("create.name")}</Label>
-            <Input id="ob-new-name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="ob-new-account">{t("create.accountStatus")}</Label>

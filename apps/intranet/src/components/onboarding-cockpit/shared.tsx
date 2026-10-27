@@ -33,13 +33,13 @@ export function followUpDue(c: CaseRow, today: string): boolean {
 /** The date a case is sorted by: close date, else the report's date. */
 export const caseDate = (c: CaseRow) => c.closeDate ?? c.reportDate;
 
-/** Prio first, then due follow-ups, then the oldest case, then name. */
+/** Prio first, then due follow-ups, then the oldest case, then number. */
 export function workOrder(today: string) {
   return (a: CaseRow, b: CaseRow) =>
     Number(b.prio && isOpen(b)) - Number(a.prio && isOpen(a)) ||
     Number(followUpDue(b, today)) - Number(followUpDue(a, today)) ||
     (caseDate(a) ?? "9999").localeCompare(caseDate(b) ?? "9999") ||
-    a.name.localeCompare(b.name, "de");
+    a.customerNumber.localeCompare(b.customerNumber, "de", { numeric: true });
 }
 
 const STATUS_TONE: Record<string, "muted" | "secondary" | "warning" | "success"> = {

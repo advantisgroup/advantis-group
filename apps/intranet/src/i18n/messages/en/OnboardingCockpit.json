@@ -179,7 +179,6 @@
     "title": "Add a customer by hand",
     "intro": "For customers not (yet) in the report. A later report with the same customer number fills in the report columns.",
     "number": "Customer number",
-    "name": "Customer",
     "assignee": "Assigned to",
     "accountStatus": "Account status (optional)",
     "closeDate": "Close date (optional)",
@@ -189,7 +188,7 @@
     "cancel": "Cancel",
     "created": "Customer added.",
     "error": "Couldn't add – does the customer number exist already?",
-    "required": "Customer number and name are required."
+    "required": "Please enter the customer number."
   },
   "export": {
     "button": "Excel export",
