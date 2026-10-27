@@ -55,6 +55,7 @@
   --color-salespirates: var(--salespirates);
   --color-sales-ai: var(--sales-ai);
   --color-oldschool: var(--oldschool);
+  --color-kmubrain: var(--kmubrain);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -135,6 +136,8 @@
     --rodeo: oklch(55% 0.17 240);
     --sales-ai: oklch(48% 0.1 240);
     --oldschool: oklch(45% 0.17 10);
+    /* KMUbrain orange #ef8a2b, a shade darker so it holds on white. */
+    --kmubrain: oklch(66% 0.16 55);
 
     --radius: 0.5rem;
 
@@ -204,6 +207,7 @@
     --rodeo: oklch(68% 0.16 240);
     --sales-ai: oklch(74% 0.11 240);
     --oldschool: oklch(78% 0.06 10);
+    --kmubrain: oklch(74% 0.15 55);
 
     --clerk-color-modal-backdrop: oklch(0% 0 0 / 0.7);
   }

@@ -597,11 +597,83 @@ const Circuit = ({ live }: { live: boolean }) => {
     </>
   );
 };
+// The three industry brands around the core, as (x, y) on the board's surface.
+const BRANCHES = [
+  [-66, -46],
+  [66, -46],
+  [0, 58],
+] as const;
+
+/** KMUbrain: one core that feeds its industry brands — impulses running out from the centre. */
+const Hub = ({ live }: { live: boolean }) => {
+  const [pulse, setPulse] = useState(false);
+
+  useEffect(() => {
+    if (!live) return;
+    const timer = setInterval(() => setPulse((current) => !current), 1100);
+    return () => clearInterval(timer);
+  }, [live]);
+
+  return (
+    <>
+      <IsoBox x={-100} y={-72} z={-6} w={200} d={144} h={6} />
+      {BRANCHES.map(([x, y]) => {
+        const [x1, y1] = iso(0, 0, 0);
+        const [x2, y2] = iso(x, y, 0);
+        return (
+          <line
+            key={`${x}${y}`}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke="currentColor"
+            strokeWidth={1.5}
+            opacity={0.7}
+          />
+        );
+      })}
+      {BRANCHES.map(([x, y]) => (
+        <IsoBox key={`b${x}${y}`} x={x - 9} y={y - 9} w={18} d={18} h={14} />
+      ))}
+      <IsoBox x={-22} y={-22} w={44} d={44} h={12} />
+      <IsoBox x={-10} y={-10} z={12} w={20} d={20} h={6} lit lift={pulse ? 5 : 0} />
+      {live
+        ? BRANCHES.map(([x, y], index) => {
+            const path = [iso(0, 0, 2), iso(x, y, 2)];
+            return (
+              <motion.circle
+                key={index}
+                r={3}
+                fill="var(--iso-accent)"
+                stroke="none"
+                initial={{ cx: path[0][0], cy: path[0][1], opacity: 0 }}
+                animate={{
+                  cx: path.map(([px]) => px),
+                  cy: path.map(([, py]) => py),
+                  opacity: [0, 1, 0],
+                }}
+                transition={{
+                  duration: 1.4,
+                  repeat: Infinity,
+                  repeatDelay: 0.9,
+                  delay: index * 0.5,
+                  ease: "easeOut",
+                }}
+              />
+            );
+          })
+        : null}
+    </>
+  );
+};
+
 const BRAND_SCENES = {
   salespirates: Outreach,
   rodeo: Growth,
   oldschool: Classroom,
   salesai: Circuit,
+  kmubrain: Hub,
 } as const;
 
 /** A brand's drawing, in the brand's colour on a wash of it. */

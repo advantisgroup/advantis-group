@@ -11,9 +11,9 @@
  * and texts stay in the code so they can come back by adding the entry again.
  */
 export type Brand = {
-  key: "salespirates" | "rodeo" | "oldschool" | "salesai";
+  key: "salespirates" | "rodeo" | "oldschool" | "salesai" | "kmubrain";
   name: string;
-  brandText: "salespirates" | "rodeo" | "oldschool-train" | "sales-ai-germany";
+  brandText: "salespirates" | "rodeo" | "oldschool-train" | "sales-ai-germany" | "kmubrain";
   accent: string;
   url: string;
   status: "live" | "soon";
@@ -35,5 +35,13 @@ export const BRANDS: readonly Brand[] = [
     accent: "var(--rodeo)",
     url: "https://rodeoconsulting.de",
     status: "live",
+  },
+  {
+    key: "kmubrain",
+    name: "KMUbrain",
+    brandText: "kmubrain",
+    accent: "var(--kmubrain)",
+    url: "https://kmubrain.de",
+    status: "soon",
   },
 ];

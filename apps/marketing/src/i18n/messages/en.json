@@ -60,7 +60,7 @@
     "menuLabel": "Menu",
     "descriptions": {
       "about": "Who we are and what we stand for",
-      "brands": "Two brands, one shared goal",
+      "brands": "Three brands, one shared goal",
       "team": "The people behind the group",
       "blog": "Insight and practice from the sales floor",
       "whitepaper": "A free download on the sales floor of tomorrow",
@@ -153,7 +153,7 @@
     "groupLabel": "The brands of the group",
     "title": "Our",
     "titleHighlight": "Brands",
-    "subtitle": "Two strong brands, one common goal: Your sales success",
+    "subtitle": "Three strong brands, one common goal: Your sales success",
     "salespirates": {
       "tagline": "External Sales Agency",
       "description": "We generate leads through cold calling, pre-qualify them, and take over your inside sales. From lead to close, for maximum sales success."
@@ -170,6 +170,10 @@
       "tagline": "AI for Sales",
       "description": "We show which AI tools really make sense for sales and how you can make your sales smarter."
     },
+    "kmubrain": {
+      "tagline": "AI for SMEs",
+      "description": "Practical AI for small and medium-sized businesses – with solutions built for each industry: brain4care for kitchens and care, brain4logistics for freight and warehousing, brain4builder for construction and trades."
+    },
     "cta": "Discover All Brands"
   },
   "cta": {
@@ -182,7 +186,7 @@
     "returning": "Already written to us? <link>See your inquiries and our replies</link>."
   },
   "footer": {
-    "description": "We are your partner for successful sales. With over 15 years of experience and two strong brands, we move your business forward.",
+    "description": "We are your partner for successful sales. With over 15 years of experience and three strong brands, we move your business forward.",
     "quickLinks": "Quick Links",
     "ourBrands": "Our Brands",
     "contact": "Contact",
@@ -452,7 +456,7 @@
   "brandsPage": {
     "comingSoon": "Coming soon",
     "hero": {
-      "badge": "Two Premium Brands – One Goal",
+      "badge": "Three Premium Brands – One Goal",
       "titlePrefix": "Our",
       "titleSuffix": "Brands",
       "subtitle": "Tailored sales solutions for sustainable success",
@@ -493,6 +497,15 @@
           "0": "AI Tool Consulting",
           "1": "Practical Integration",
           "2": "Real Added Value"
+        }
+      },
+      "kmubrain": {
+        "tagline": "AI for SMEs",
+        "description": "AI that actually lands in the day-to-day of a mid-sized business. Under the KMUbrain umbrella we bring together industry solutions: brain4care for kitchens and wards in care homes, brain4logistics for freight, warehousing and transport, brain4builder for construction, trades and the building site.",
+        "highlights": {
+          "0": "brain4care – kitchens and care",
+          "1": "brain4logistics – freight and warehousing",
+          "2": "brain4builder – construction and trades"
         }
       }
     },

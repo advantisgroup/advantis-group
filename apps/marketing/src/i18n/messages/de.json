@@ -60,7 +60,7 @@
     "menuLabel": "Menü",
     "descriptions": {
       "about": "Wer wir sind und wofür wir stehen",
-      "brands": "Zwei Marken, ein gemeinsames Ziel",
+      "brands": "Drei Marken, ein gemeinsames Ziel",
       "team": "Die Menschen hinter der Gruppe",
       "blog": "Einblicke und Praxis aus dem Vertrieb",
       "whitepaper": "Kostenloser Download zum Vertrieb von morgen",
@@ -156,7 +156,7 @@
     "groupLabel": "Die Marken der Gruppe",
     "title": "Unsere",
     "titleHighlight": "Marken",
-    "subtitle": "Zwei starke Marken, ein gemeinsames Ziel: dein Vertriebserfolg",
+    "subtitle": "Drei starke Marken, ein gemeinsames Ziel: dein Vertriebserfolg",
     "salespirates": {
       "tagline": "Externe Vertriebsagentur",
       "description": "Wir generieren Leads im Cold Calling, qualifizieren vor und übernehmen deinen Inside Sales. Vom Lead bis zum Abschluss für einen maximalen Erfolg deines Sales."
@@ -173,6 +173,10 @@
       "tagline": "KI für den Vertrieb",
       "description": "Wir zeigen dir, welche KI-Tools für Sales wirklich Sinn machen und wie du deinen Vertrieb smarter gestaltest."
     },
+    "kmubrain": {
+      "tagline": "KI für den Mittelstand",
+      "description": "Praxisnahe KI für kleine und mittlere Unternehmen – mit eigenen Lösungen je Branche: brain4care für Küche und Pflege, brain4logistics für Spedition und Lager, brain4builder für Bau und Handwerk."
+    },
     "cta": "Alle Marken entdecken"
   },
   "cta": {
@@ -185,7 +189,7 @@
     "returning": "Du hast uns schon geschrieben? <link>Hier sind deine Anfragen und unsere Antworten</link>."
   },
   "footer": {
-    "description": "Wir sind dein Partner für erfolgreichen Vertrieb. Mit über 15 Jahren Erfahrung und zwei starken Marken bringen wir dein Unternehmen voran.",
+    "description": "Wir sind dein Partner für erfolgreichen Vertrieb. Mit über 15 Jahren Erfahrung und drei starken Marken bringen wir dein Unternehmen voran.",
     "quickLinks": "Quick Links",
     "ourBrands": "Unsere Marken",
     "contact": "Kontakt",
@@ -455,7 +459,7 @@
   "brandsPage": {
     "comingSoon": "In Vorbereitung",
     "hero": {
-      "badge": "Zwei Premium Marken – Ein Ziel",
+      "badge": "Drei Premium Marken – Ein Ziel",
       "titlePrefix": "Unsere",
       "titleSuffix": "Marken",
       "subtitle": "Maßgeschneiderte Sales-Lösungen für nachhaltigen Erfolg",
@@ -496,6 +500,15 @@
           "0": "KI-Tool Beratung",
           "1": "Praktische Integration",
           "2": "Echter Mehrwert"
+        }
+      },
+      "kmubrain": {
+        "tagline": "KI für den Mittelstand",
+        "description": "KI, die im Alltag eines mittelständischen Betriebs wirklich ankommt. Unter der Dachmarke KMUbrain bündeln wir Lösungen für einzelne Branchen: brain4care für Küche und Station in Pflegeheimen, brain4logistics für Spedition, Lager und Transport, brain4builder für Bau, Handwerk und Baustelle.",
+        "highlights": {
+          "0": "brain4care – Küche und Pflege",
+          "1": "brain4logistics – Spedition und Lager",
+          "2": "brain4builder – Bau und Handwerk"
         }
       }
     },

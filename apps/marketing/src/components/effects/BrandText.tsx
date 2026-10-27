@@ -4,7 +4,13 @@ import React, { isValidElement } from "react";
 import { cn } from "@/lib/utils";
 
 interface BrandTextProps {
-  brand?: "salespirates" | "advantis" | "rodeo" | "oldschool-train" | "sales-ai-germany";
+  brand?:
+    | "salespirates"
+    | "advantis"
+    | "rodeo"
+    | "oldschool-train"
+    | "sales-ai-germany"
+    | "kmubrain";
   children: React.ReactNode;
   className?: string;
   hoverable?: boolean;
@@ -71,6 +77,14 @@ const BRAND_CONFIGS = {
     },
     color: "text-sales-ai",
     hoverColor: "group-hover:text-sales-ai",
+  },
+  kmubrain: {
+    split: (name: string) => {
+      const match = name.match(/(KMU)(.*)/) || [];
+      return [match[1] || "KMU", match[2] || ""];
+    },
+    color: "text-kmubrain",
+    hoverColor: "group-hover:text-kmubrain",
   },
 } as const;
 
