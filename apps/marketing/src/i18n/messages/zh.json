@@ -169,7 +169,7 @@
     },
     "kmubrain": {
       "tagline": "面向中小企业的 AI",
-      "description": "面向中小企业的实用 AI，并按行业提供专属方案：brain4care 用于厨房与护理，brain4logistics 用于货运与仓储，brain4builder 用于建筑与手工业。"
+      "description": "为中小企业准备的现成 AI 助手：撰写报价、接听电话、回答客户问题——无需自建 IT 部门。"
     },
     "cta": "探索所有品牌"
   },
@@ -498,11 +498,11 @@
       },
       "kmubrain": {
         "tagline": "面向中小企业的 AI",
-        "description": "真正融入中小企业日常运营的 AI。在 KMUbrain 品牌之下，我们汇集各行业解决方案：brain4care 服务养老院的厨房与护理站，brain4logistics 服务货运、仓储与运输，brain4builder 服务建筑、手工业与工地。",
+        "description": "KMUbrain 将人工智能带入中小企业，无需自建 IT 部门，也无需漫长的项目。我们的“Brains”是面向您所在行业的现成 AI 助手：撰写报价、接听电话、整理收件箱或回答客户问题。我们为您完成全部部署，负责日常运维，让您的团队把更多时间留给真正重要的事。",
         "highlights": {
-          "0": "brain4care——厨房与护理",
-          "1": "brain4logistics——货运与仓储",
-          "2": "brain4builder——建筑与手工业"
+          "0": "面向您所在行业的现成 AI 助手",
+          "1": "无需 IT 部门，无需漫长项目",
+          "2": "部署与运维一站式服务"
         }
       }
     },

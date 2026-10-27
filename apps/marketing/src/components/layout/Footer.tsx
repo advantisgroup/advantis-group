@@ -162,10 +162,14 @@ export const Footer = () => {
 
           <Column title={t("footer.ourBrands")}>
             {BRANDS.map((brand) =>
-              brand.status === "live" ? (
+              brand.status === "live" && brand.url ? (
                 <Row key={brand.key} href={brand.url}>
                   {brand.name}
                 </Row>
+              ) : brand.status === "live" ? (
+                <li key={brand.key} className="text-sm text-muted-foreground">
+                  {brand.name}
+                </li>
               ) : (
                 <li key={brand.key} className="text-sm text-muted-foreground/70">
                   {brand.name}

@@ -61,7 +61,7 @@ export default function UnsereMarken() {
 
                 {/* No outbound link for a site that isn't up — a dead "learn
                     more" is worse than no button at all. */}
-                {brand.status === "live" ? (
+                {brand.status === "live" && brand.url ? (
                   <Button asChild variant="outline" className="mt-8">
                     <Link href={brand.url} target="_blank" rel="noopener noreferrer">
                       {t("learnMore")}

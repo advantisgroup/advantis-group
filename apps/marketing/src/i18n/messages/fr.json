@@ -175,7 +175,7 @@
     },
     "kmubrain": {
       "tagline": "L'IA pour les PME",
-      "description": "Une IA concrète pour les petites et moyennes entreprises – avec des solutions par secteur : brain4care pour la cuisine et les soins, brain4logistics pour le transport et l'entreposage, brain4builder pour le bâtiment et l'artisanat."
+      "description": "Des assistants IA prêts à l'emploi pour les petites et moyennes entreprises : ils rédigent des devis, prennent les appels et répondent aux clients – sans service informatique."
     },
     "cta": "Découvrir Toutes les Marques"
   },
@@ -504,11 +504,11 @@
       },
       "kmubrain": {
         "tagline": "L'IA pour les PME",
-        "description": "Une IA qui s'intègre vraiment au quotidien d'une PME. Sous la marque ombrelle KMUbrain, nous réunissons des solutions sectorielles : brain4care pour la cuisine et les soins en maison de retraite, brain4logistics pour le transport, l'entreposage et la logistique, brain4builder pour le bâtiment, l'artisanat et le chantier.",
+        "description": "KMUbrain apporte l'intelligence artificielle aux petites et moyennes entreprises, sans service informatique interne et sans long projet. Nos « Brains » sont des assistants IA prêts à l'emploi pour votre secteur : ils rédigent des devis, prennent les appels, trient la boîte de réception ou répondent aux questions des clients. Nous mettons tout en place pour vous, assurons le suivi au quotidien et veillons à ce que votre équipe ait plus de temps pour l'essentiel.",
         "highlights": {
-          "0": "brain4care – cuisine et soins",
-          "1": "brain4logistics – transport et entreposage",
-          "2": "brain4builder – bâtiment et artisanat"
+          "0": "Des assistants IA prêts à l'emploi pour votre secteur",
+          "1": "Sans service informatique, sans long projet",
+          "2": "Mise en place et suivi par un seul interlocuteur"
         }
       }
     },
