@@ -239,7 +239,7 @@ function ReportImport() {
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground">{t("import.preview")}</p>
-              <div className="max-h-56 overflow-auto rounded-md border">
+              <div className="max-h-56 overflow-auto rounded-md border border-border/70">
                 <Table>
                   <TableHeader>
                     <TableRow>

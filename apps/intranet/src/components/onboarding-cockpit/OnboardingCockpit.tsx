@@ -298,8 +298,8 @@ function KpiButton({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "flex flex-col items-start gap-0.5 rounded-xl border bg-card px-4 py-3 text-left transition-colors hover:border-foreground/30",
-        active && "border-foreground ring-1 ring-foreground",
+        "flex flex-col items-start gap-0.5 rounded-xl border border-border/70 bg-card px-4 py-3 text-left transition-colors hover:border-foreground/30",
+        active && "border-foreground/40 bg-muted/50",
       )}
     >
       <span className="text-[12.5px] font-medium text-muted-foreground">{label}</span>
@@ -525,7 +525,7 @@ function ConsultantTable({
   return (
     <div className="space-y-2">
       <h2 className="text-sm font-semibold">{t("kpi.perConsultant")}</h2>
-      <div className="overflow-x-auto rounded-xl border bg-card">
+      <div className="overflow-x-auto rounded-xl border bg-card border-border/70">
         <Table>
           <TableHeader>
             <TableRow>
@@ -722,7 +722,7 @@ function SelectableTable({
   return (
     <div className="space-y-2">
       {chosen.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm border-border/70">
           <span className="font-medium">{t("selected", { count: chosen.length })}</span>
           {!archive && (
             <Select value="" onValueChange={(v) => void bulkAssign(v)}>
@@ -785,7 +785,7 @@ function CaseTable({
   if (rows.length === 0) return <EmptyState title={empty} />;
 
   return (
-    <div className="overflow-x-auto rounded-xl border bg-card">
+    <div className="overflow-x-auto rounded-xl border bg-card border-border/70">
       <Table>
         <TableHeader>
           <TableRow>

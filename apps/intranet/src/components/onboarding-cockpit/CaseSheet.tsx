@@ -132,7 +132,7 @@ function CaseBody({
 
   return (
     <>
-      <div className="shrink-0 space-y-1 border-b bg-background px-6 pb-4 pr-14 pt-5 text-left">
+      <div className="shrink-0 space-y-1 border-b bg-background px-6 pb-4 pr-14 pt-5 text-left border-border/70">
         <SheetTitle className="flex flex-wrap items-center gap-2 text-lg tabular-nums">
           {t("case.number", { number: data.customerNumber })}
           {data.prio && (
