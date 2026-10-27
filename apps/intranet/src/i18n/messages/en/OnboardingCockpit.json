@@ -19,7 +19,8 @@
     "status": "Status changed",
     "assign": "Assignment changed",
     "step": "Step",
-    "created": "Created by hand"
+    "created": "Created by hand",
+    "followUp": "Follow-up changed"
   },
   "tabs": {
     "cases": "Cases",
@@ -88,7 +89,7 @@
     "archive": "No archived cases."
   },
   "prioIntro": "Open prio cases – overdue follow-ups and oldest cases first.",
-  "followUpIntro": "Open cases with a follow-up, by date.",
+  "followUpIntro": "Only the onboarding cockpit's follow-ups – separate from the intranet calendar.",
   "archiveIntro": "Archived cases count nowhere. A new import doesn't change them.",
   "case": {
     "open": "Open",
@@ -129,7 +130,9 @@
     "accountStatus": "Account status",
     "closeDate": "Close date",
     "manualBadge": "Created by hand",
-    "stepsDone": "{done} of 3 done"
+    "stepsDone": "{done} of 3 done",
+    "followUpTime": "Time (optional)",
+    "noFollowUp": "none"
   },
   "import": {
     "reportTitle": "Onboarding report",
@@ -194,5 +197,17 @@
     "button": "Excel export",
     "done": "{count, plural, one {# case exported} other {# cases exported}}",
     "sheet": "Onboarding"
+  },
+  "calendar": {
+    "week": "Week",
+    "day": "Day",
+    "today": "Today",
+    "prev": "Previous",
+    "next": "Next",
+    "noTime": "No time",
+    "overdue": "{count, plural, one {# follow-up overdue} other {# follow-ups overdue}}",
+    "overdueHint": "Click to reschedule or drag into the calendar.",
+    "hint": "Click a follow-up to open the customer file. Drag it to another day or time to move it. Click a day to open the day view.",
+    "moved": "Follow-up moved."
   }
 }

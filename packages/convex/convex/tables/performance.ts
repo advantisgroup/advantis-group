@@ -666,6 +666,8 @@ export const performanceTables = {
     assigneeUserId: v.optional(v.id("users")),
     prio: v.boolean(),
     nextFollowUp: v.optional(v.string()),
+    /** Time of the follow-up, "HH:MM" (Berlin); unset = some time that day. */
+    nextFollowUpTime: v.optional(v.string()),
     /** False once a newer report no longer lists the customer. */
     inReport: v.boolean(),
     lastImportId: v.optional(v.id("onboardingImports")),

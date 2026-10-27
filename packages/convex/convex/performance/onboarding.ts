@@ -104,6 +104,57 @@ async function log(
   });
 }
 
+const hhmm = (value: string): string => {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) throw invalid("Uhrzeit im Format HH:MM.");
+  return value;
+};
+
+/**
+ * Sets (or clears) the follow-up date and time on `patch` and logs a move
+ * when an existing follow-up changes. `time` undefined keeps the current
+ * time when only the date moves; `null` drops it. A closed case never
+ * keeps a follow-up.
+ */
+async function applyFollowUp(
+  ctx: MutationCtx,
+  access: CockpitAccess,
+  row: Doc<"onboardingCases">,
+  patch: Partial<Doc<"onboardingCases">>,
+  date: string | null | undefined,
+  time: string | null | undefined,
+): Promise<void> {
+  if (date === undefined && time === undefined) return;
+  const nextDate =
+    date === undefined
+      ? row.nextFollowUp
+      : date === null
+        ? undefined
+        : isoDate(date, "Wiedervorlage");
+  const nextTime = !nextDate
+    ? undefined
+    : time === undefined
+      ? row.nextFollowUpTime
+      : time === null || time === ""
+        ? undefined
+        : hhmm(time);
+  if (isClosedStatus(patch.status ?? row.status)) {
+    patch.nextFollowUp = undefined;
+    patch.nextFollowUpTime = undefined;
+    return;
+  }
+  patch.nextFollowUp = nextDate;
+  patch.nextFollowUpTime = nextTime;
+  const before = row.nextFollowUp ? `${row.nextFollowUp} ${row.nextFollowUpTime ?? ""}`.trim() : "";
+  const after = nextDate ? `${nextDate} ${nextTime ?? ""}`.trim() : "";
+  if (before !== after) {
+    await log(ctx, access, row._id, {
+      kind: "followUp",
+      fromValue: before || undefined,
+      toValue: after || undefined,
+    });
+  }
+}
+
 const isoDate = (value: string, label: string): string => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw invalid(`${label}: Datum im Format JJJJ-MM-TT.`);
   return value;
@@ -141,7 +192,10 @@ async function applySteps(
   Object.assign(patch, stepTimestamps(row, next, Date.now()));
   const status = statusFromSteps(next);
   patch.status = status;
-  if (isClosedStatus(status)) patch.nextFollowUp = undefined;
+  if (isClosedStatus(status)) {
+    patch.nextFollowUp = undefined;
+    patch.nextFollowUpTime = undefined;
+  }
   for (const step of changed) {
     await log(ctx, access, row._id, {
       kind: "step",
@@ -169,6 +223,7 @@ function caseFields(r: Doc<"onboardingCases">) {
     assigneeUserId: r.assigneeUserId ?? null,
     prio: r.prio,
     nextFollowUp: r.nextFollowUp ?? null,
+    nextFollowUpTime: r.nextFollowUp ? (r.nextFollowUpTime ?? null) : null,
     inReport: r.inReport,
     manual: !!r.manual,
     archived: !!r.archivedAt,
@@ -304,6 +359,7 @@ export const update = userMutation({
     assigneeUserId: v.optional(v.union(v.id("users"), v.null())),
     prio: v.optional(v.boolean()),
     nextFollowUp: v.optional(v.union(v.string(), v.null())),
+    nextFollowUpTime: v.optional(v.union(v.string(), v.null())),
     subStatus: v.optional(v.string()),
     note: v.optional(v.string()),
   },
@@ -339,11 +395,7 @@ export const update = userMutation({
     }
 
     if (args.prio !== undefined) patch.prio = args.prio;
-    if (args.nextFollowUp !== undefined) {
-      patch.nextFollowUp =
-        args.nextFollowUp === null ? undefined : isoDate(args.nextFollowUp, "Wiedervorlage");
-      if (isClosedStatus(patch.status ?? row.status)) patch.nextFollowUp = undefined;
-    }
+    await applyFollowUp(ctx, access, row, patch, args.nextFollowUp, args.nextFollowUpTime);
 
     if (Object.keys(patch).length > 0) {
       await ctx.db.patch(row._id, { ...patch, updatedAt: Date.now() });
@@ -364,6 +416,7 @@ export const addContact = userMutation({
     ),
     note: v.optional(v.string()),
     nextFollowUp: v.optional(v.union(v.string(), v.null())),
+    nextFollowUpTime: v.optional(v.union(v.string(), v.null())),
     status: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -380,14 +433,11 @@ export const addContact = userMutation({
       patch.lastContactKind = args.kind;
       patch.contactAttempts = (row.contactAttempts ?? 0) + 1;
     }
-    if (args.nextFollowUp !== undefined) {
-      patch.nextFollowUp =
-        args.nextFollowUp === null ? undefined : isoDate(args.nextFollowUp, "Wiedervorlage");
-    }
     if (args.status !== undefined && args.status !== row.status) {
       if (!isOnboardingStatus(args.status)) throw invalid("Unbekannter Status.");
       await applySteps(ctx, access, row, stepsFromStatus(args.status), patch);
     }
+    await applyFollowUp(ctx, access, row, patch, args.nextFollowUp, args.nextFollowUpTime);
     await ctx.db.patch(row._id, patch);
   },
 });

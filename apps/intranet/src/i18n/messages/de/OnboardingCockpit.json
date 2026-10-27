@@ -19,7 +19,8 @@
     "status": "Status geändert",
     "assign": "Zuweisung geändert",
     "step": "Schritt",
-    "created": "Von Hand angelegt"
+    "created": "Von Hand angelegt",
+    "followUp": "Wiedervorlage geändert"
   },
   "tabs": {
     "cases": "Fälle",
@@ -88,7 +89,7 @@
     "archive": "Keine archivierten Fälle."
   },
   "prioIntro": "Offene Prio-Fälle – überfällige Wiedervorlagen und älteste Fälle zuerst.",
-  "followUpIntro": "Offene Fälle mit Wiedervorlage, nach Datum sortiert.",
+  "followUpIntro": "Nur die Wiedervorlagen des Onboarding-Cockpits – unabhängig vom Intranet-Kalender.",
   "archiveIntro": "Archivierte Fälle zählen nirgends mit. Ein neuer Import ändert sie nicht.",
   "case": {
     "open": "Öffnen",
@@ -129,7 +130,9 @@
     "accountStatus": "Account Status",
     "closeDate": "Close Date",
     "manualBadge": "Von Hand angelegt",
-    "stepsDone": "{done} von 3 erledigt"
+    "stepsDone": "{done} von 3 erledigt",
+    "followUpTime": "Uhrzeit (optional)",
+    "noFollowUp": "keine"
   },
   "import": {
     "reportTitle": "Onboarding-Report",
@@ -194,5 +197,17 @@
     "button": "Excel-Export",
     "done": "{count, plural, one {# Fall exportiert} other {# Fälle exportiert}}",
     "sheet": "Onboarding"
+  },
+  "calendar": {
+    "week": "Woche",
+    "day": "Tag",
+    "today": "Heute",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "noTime": "Ohne Uhrzeit",
+    "overdue": "{count, plural, one {# Wiedervorlage überfällig} other {# Wiedervorlagen überfällig}}",
+    "overdueHint": "Zum Verschieben anklicken oder in den Kalender ziehen.",
+    "hint": "Wiedervorlage anklicken öffnet die Kundenakte. Zum Verschieben auf einen anderen Tag oder eine andere Uhrzeit ziehen. Klick auf einen Tag öffnet die Tagesansicht.",
+    "moved": "Wiedervorlage verschoben."
   }
 }

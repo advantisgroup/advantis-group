@@ -83,8 +83,8 @@ export function isClosedStatus(status: string): boolean {
   return status === "done";
 }
 
-/** What a contact-log entry records. `status`/`step`/`assign`/`created`
- * are written by the system when someone changes the case, the rest by
+/** What a contact-log entry records. `status`/`step`/`assign`/`created`/
+ * `followUp` (moved) are written by the system when someone changes the case, the rest by
  * people. */
 export const ONBOARDING_CONTACT_KINDS = [
   "reached",
@@ -95,6 +95,7 @@ export const ONBOARDING_CONTACT_KINDS = [
   "step",
   "assign",
   "created",
+  "followUp",
 ] as const;
 export type OnboardingContactKind = (typeof ONBOARDING_CONTACT_KINDS)[number];
 

@@ -252,7 +252,7 @@ describe("onboarding cockpit", () => {
     });
     const detail = await melina.query(api.performance.onboarding.get, { caseId: all[0]._id });
     expect(detail.nextFollowUp).toBe("2026-10-30");
-    expect(detail.contacts.map((c) => c.kind)).toEqual(["not_reached", "assign"]);
+    expect(detail.contacts.map((c) => c.kind)).toEqual(["followUp", "not_reached", "assign"]);
     const listed = await melina.query(api.performance.onboarding.list, {});
     expect(listed[0]).toMatchObject({ contactAttempts: 1, lastContactKind: "not_reached" });
   });
@@ -340,5 +340,38 @@ describe("onboarding cockpit", () => {
     expect(done.missing).toBe(0);
     const all = await as("admin").query(api.performance.onboarding.list, {});
     expect(all.find((c) => c._id === id)!.inReport).toBe(true);
+  });
+
+  test("follow-up with time: moving it keeps the time and is logged", async () => {
+    const { as } = await setup();
+    const admin = as("admin");
+    await importReport(admin, [{ customerNumber: "100" }]);
+    const [c] = await admin.query(api.performance.onboarding.list, {});
+    await admin.mutation(api.performance.onboarding.update, {
+      caseId: c._id,
+      nextFollowUp: "2026-11-02",
+      nextFollowUpTime: "09:30",
+    });
+    await admin.mutation(api.performance.onboarding.update, {
+      caseId: c._id,
+      nextFollowUp: "2026-11-04",
+    });
+    const detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
+    expect(detail).toMatchObject({ nextFollowUp: "2026-11-04", nextFollowUpTime: "09:30" });
+    expect(detail.contacts[0]).toMatchObject({
+      kind: "followUp",
+      fromValue: "2026-11-02 09:30",
+      toValue: "2026-11-04 09:30",
+    });
+    await expect(
+      admin.mutation(api.performance.onboarding.update, {
+        caseId: c._id,
+        nextFollowUpTime: "25:00",
+      }),
+    ).rejects.toThrow();
+    // Clearing the date drops the time too.
+    await admin.mutation(api.performance.onboarding.update, { caseId: c._id, nextFollowUp: null });
+    const cleared = await admin.query(api.performance.onboarding.get, { caseId: c._id });
+    expect(cleared).toMatchObject({ nextFollowUp: null, nextFollowUpTime: null });
   });
 });
