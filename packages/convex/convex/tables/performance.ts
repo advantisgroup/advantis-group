@@ -629,4 +629,70 @@ export const performanceTables = {
     .index("by_employee_date_field", ["employeeId", "reportDate", "field"])
     .index("by_status", ["status"])
     .index("by_company_status", ["companyId", "status"]),
+  // --- Onboarding-Cockpit (Performance → Onboarding) -----------------------
+  // One row per UTA new customer from the Salesforce onboarding report,
+  // keyed by the normalized customer number (`lib/onboarding.ts`'s
+  // `customerKey`). The intranet owns `status`, `assigneeUserId`, `prio` and
+  // `nextFollowUp`; a re-import only refreshes the `report*` fields and
+  // `inReport`. Admins only until the Convex env `ONBOARDING_MODE` is `live`.
+  onboardingCases: defineTable({
+    customerKey: v.string(),
+    customerNumber: v.string(),
+    name: v.string(),
+    /** One of `ONBOARDING_STATUSES` (kept a string so the stages can change
+     * without a migration). */
+    status: v.string(),
+    reportStatus: v.optional(v.string()),
+    reportOwner: v.optional(v.string()),
+    /** Date column of the report (sorting: oldest first). */
+    reportDate: v.optional(v.string()),
+    /** The report's other columns, as they came. */
+    reportFields: v.optional(v.array(v.object({ label: v.string(), value: v.string() }))),
+    assigneeUserId: v.optional(v.id("users")),
+    prio: v.boolean(),
+    nextFollowUp: v.optional(v.string()),
+    /** False once a newer report no longer lists the customer. */
+    inReport: v.boolean(),
+    lastImportId: v.optional(v.id("onboardingImports")),
+    lastContactAt: v.optional(v.number()),
+    lastContactKind: v.optional(v.string()),
+    contactAttempts: v.optional(v.number()),
+    archivedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_key", ["customerKey"])
+    .index("by_assignee", ["assigneeUserId"]),
+
+  // Contact log of a case: calls, mails and notes people enter, plus
+  // system lines for status and assignment changes.
+  onboardingContacts: defineTable({
+    caseId: v.id("onboardingCases"),
+    /** One of `ONBOARDING_CONTACT_KINDS`. */
+    kind: v.string(),
+    note: v.optional(v.string()),
+    fromValue: v.optional(v.string()),
+    toValue: v.optional(v.string()),
+    at: v.number(),
+    byUserId: v.id("users"),
+    byName: v.string(),
+  }).index("by_case", ["caseId"]),
+
+  // One row per report or prio-list import, filled while the browser sends
+  // the rows in chunks.
+  onboardingImports: defineTable({
+    kind: v.union(v.literal("report"), v.literal("prio")),
+    fileName: v.string(),
+    byUserId: v.id("users"),
+    byName: v.string(),
+    startedAt: v.number(),
+    finishedAt: v.optional(v.number()),
+    rows: v.number(),
+    created: v.number(),
+    updated: v.number(),
+    /** Report: cases no longer in the report. Prio: numbers not found. */
+    missing: v.number(),
+    prioHits: v.number(),
+    resetPrio: v.optional(v.boolean()),
+  }),
 };
