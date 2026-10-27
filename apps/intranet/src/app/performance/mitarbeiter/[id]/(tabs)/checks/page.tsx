@@ -11,7 +11,6 @@ import { toast } from "sonner";
 
 import { Link } from "@/components/Link";
 import { fmtDay, RatingCounts } from "@/components/performance/checks/checkUi";
-import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
-/** An employee's checks (team leads and admins only). */
+/** An employee's checks (team leads and admins only — both may delete). */
 export default function ChecksPage() {
   const t = useTranslations("Performance.checks");
   const params = useParams<{ id: string }>();
@@ -28,7 +27,6 @@ export default function ChecksPage() {
   const remove = useMutation(api.performance.checks.remove);
   const confirm = useConfirm();
   const handleError = useErrorHandler();
-  const isAdmin = usePerformanceAccess().me?.isAdmin ?? false;
   const base = `/performance/mitarbeiter/${employeeId}/checks`;
 
   async function onDelete(checkId: Id<"performanceChecks">, date: string) {
@@ -103,18 +101,16 @@ export default function ChecksPage() {
                     {t("by", { name: c.createdByName })}
                   </span>
                 </Link>
-                {isAdmin && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="mr-2 h-8 px-2 text-muted-foreground hover:text-destructive"
-                    onClick={() => void onDelete(c.id, c.date)}
-                    aria-label={t("delete")}
-                    title={t("delete")}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mr-2 h-8 px-2 text-muted-foreground hover:text-destructive"
+                  onClick={() => void onDelete(c.id, c.date)}
+                  aria-label={t("delete")}
+                  title={t("delete")}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </li>
             ))}
           </ul>
