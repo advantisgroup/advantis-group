@@ -353,14 +353,7 @@ function CasesView({
         assignee === NOBODY ? c.assigneeUserId : assignee !== ALL && c.assigneeUserId !== assignee
       )
         return false;
-      return matchesSearch(
-        query,
-        c.customerNumber,
-        c.assigneeName,
-        c.reportOwner,
-        c.note,
-        c.subStatus,
-      );
+      return matchesSearch(query, c.customerNumber, c.assigneeName, c.reportOwner, c.note);
     })
     .sort(workOrder(today));
 
@@ -629,7 +622,6 @@ function ExportButton({ rows }: { rows: CaseRow[] }) {
       t("col.number"),
       t("col.status"),
       ...ONBOARDING_STEPS.map((s) => `${t(`steps.${s}`)} (${STEP_CODES[s]})`),
-      t("case.subStatus"),
       t("col.assignee"),
       t("prioBadge"),
       t("col.followUp"),
@@ -644,7 +636,6 @@ function ExportButton({ rows }: { rows: CaseRow[] }) {
       c.customerNumber,
       t(`status.${c.status as "fresh"}`),
       ...ONBOARDING_STEPS.map((s) => (c.steps[s] ? "Ja" : "Nein")),
-      c.subStatus ?? "",
       c.assigneeName ?? "",
       c.prio ? "Ja" : "",
       c.nextFollowUp
@@ -857,11 +848,6 @@ function CaseTable({
                   <StatusBadge status={c.status} />
                   <span className="flex items-center gap-1.5">
                     <StepChips steps={c.steps} />
-                    {c.subStatus && (
-                      <span className="text-[10px] font-semibold text-muted-foreground">
-                        · {c.subStatus}
-                      </span>
-                    )}
                   </span>
                 </div>
               </TableCell>
