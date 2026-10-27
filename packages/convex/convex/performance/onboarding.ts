@@ -9,7 +9,10 @@
  * cases assigned to them. Until the Convex env `ONBOARDING_MODE` is `live`
  * the cockpit is admins-only.
  *
- * The intranet owns status, assignee, prio and follow-up — a re-import
+ * Each case has three onboarding steps (cards ordered, first fuelling,
+ * two-month check); its stage follows from how many are done.
+ *
+ * The intranet owns steps, assignee, prio and follow-up — a re-import
  * refreshes only the report columns, and customers that drop out of the
  * report stay (flagged `inReport: false`) until an admin archives them.
  */
@@ -25,8 +28,14 @@ import {
   isContactAttempt,
   isOnboardingStatus,
   MAX_REPORT_FIELDS,
+  ONBOARDING_STEPS,
+  STEP_FIELD,
+  type StepState,
   customerKey,
   statusFromReport,
+  statusFromSteps,
+  stepsFromStatus,
+  stepsOf,
 } from "./lib/onboarding";
 
 type Ctx = QueryCtx | MutationCtx;
@@ -100,6 +109,72 @@ const isoDate = (value: string, label: string): string => {
   return value;
 };
 
+/** The step timestamps for `next`, keeping the time a step was first
+ * ticked. Writes all three, so a case from before the steps existed (stage
+ * only) gets its implied steps materialised on its first change. */
+function stepTimestamps(
+  row: Doc<"onboardingCases"> | null,
+  next: StepState,
+  now: number,
+): Pick<Doc<"onboardingCases">, "cardsOrderedAt" | "fuelledAt" | "twoMonthCheckAt"> {
+  const out: Pick<Doc<"onboardingCases">, "cardsOrderedAt" | "fuelledAt" | "twoMonthCheckAt"> = {};
+  for (const step of ONBOARDING_STEPS) {
+    const field = STEP_FIELD[step];
+    out[field] = next[step] ? (row?.[field] ?? now) : undefined;
+  }
+  return out;
+}
+
+/** Applies a new step state to `patch`: step timestamps, the stage that
+ * follows from them (a finished case loses its follow-up) and one log line
+ * per changed step. */
+async function applySteps(
+  ctx: MutationCtx,
+  access: CockpitAccess,
+  row: Doc<"onboardingCases">,
+  next: StepState,
+  patch: Partial<Doc<"onboardingCases">>,
+): Promise<void> {
+  const before = stepsOf(row);
+  const changed = ONBOARDING_STEPS.filter((s) => before[s] !== next[s]);
+  if (changed.length === 0) return;
+  Object.assign(patch, stepTimestamps(row, next, Date.now()));
+  const status = statusFromSteps(next);
+  patch.status = status;
+  if (isClosedStatus(status)) patch.nextFollowUp = undefined;
+  for (const step of changed) {
+    await log(ctx, access, row._id, {
+      kind: "step",
+      fromValue: step,
+      toValue: next[step] ? "1" : "0",
+    });
+  }
+}
+
+/** The fields every case view shares (list rows and the detail). */
+function caseFields(r: Doc<"onboardingCases">) {
+  return {
+    _id: r._id,
+    customerNumber: r.customerNumber,
+    name: r.name,
+    status: r.status,
+    steps: stepsOf(r),
+    subStatus: r.subStatus ?? null,
+    note: r.note ?? null,
+    accountStatus: r.accountStatus ?? null,
+    closeDate: r.closeDate ?? null,
+    reportStatus: r.reportStatus ?? null,
+    reportOwner: r.reportOwner ?? null,
+    reportDate: r.reportDate ?? null,
+    assigneeUserId: r.assigneeUserId ?? null,
+    prio: r.prio,
+    nextFollowUp: r.nextFollowUp ?? null,
+    inReport: r.inReport,
+    manual: !!r.manual,
+    archived: !!r.archivedAt,
+  };
+}
+
 // ------------------------------------------------------------------ reads
 
 /** Whether the cockpit shows for the caller (nav link) and what they may do. */
@@ -134,22 +209,11 @@ export const list = userQuery({
       names.set(id!, displayName(await ctx.db.get(id!)));
     }
     return visible.map((r) => ({
-      _id: r._id,
-      customerNumber: r.customerNumber,
-      name: r.name,
-      status: r.status,
-      reportStatus: r.reportStatus ?? null,
-      reportOwner: r.reportOwner ?? null,
-      reportDate: r.reportDate ?? null,
-      assigneeUserId: r.assigneeUserId ?? null,
+      ...caseFields(r),
       assigneeName: r.assigneeUserId ? (names.get(r.assigneeUserId) ?? null) : null,
-      prio: r.prio,
-      nextFollowUp: r.nextFollowUp ?? null,
-      inReport: r.inReport,
       lastContactAt: r.lastContactAt ?? null,
       lastContactKind: r.lastContactKind ?? null,
       contactAttempts: r.contactAttempts ?? 0,
-      archived: !!r.archivedAt,
     }));
   },
 });
@@ -167,20 +231,9 @@ export const get = userQuery({
       .take(200);
     const assignee = row.assigneeUserId ? await ctx.db.get(row.assigneeUserId) : null;
     return {
-      _id: row._id,
-      customerNumber: row.customerNumber,
-      name: row.name,
-      status: row.status,
-      reportStatus: row.reportStatus ?? null,
-      reportOwner: row.reportOwner ?? null,
-      reportDate: row.reportDate ?? null,
+      ...caseFields(row),
       reportFields: row.reportFields ?? [],
-      assigneeUserId: row.assigneeUserId ?? null,
       assigneeName: assignee ? displayName(assignee) : null,
-      prio: row.prio,
-      nextFollowUp: row.nextFollowUp ?? null,
-      inReport: row.inReport,
-      archived: !!row.archivedAt,
       canManage: access.canManage,
       contacts: contacts.map((c) => ({
         _id: c._id,
@@ -234,16 +287,25 @@ export const imports = userQuery({
 
 // ----------------------------------------------------------------- writes
 
-/** Status, assignee (managers only), prio and follow-up of one case.
- * `null` clears assignee or follow-up. Status and assignee changes are
- * written to the contact log. */
+const stepsValidator = v.object({
+  cards: v.optional(v.boolean()),
+  fuel: v.optional(v.boolean()),
+  twoMonth: v.optional(v.boolean()),
+});
+
+/** Steps, assignee (managers only), prio, follow-up, substatus and note of
+ * one case. `null` clears assignee or follow-up. `status` sets the steps it
+ * implies. Step and assignee changes are written to the contact log. */
 export const update = userMutation({
   args: {
     caseId: v.id("onboardingCases"),
+    steps: v.optional(stepsValidator),
     status: v.optional(v.string()),
     assigneeUserId: v.optional(v.union(v.id("users"), v.null())),
     prio: v.optional(v.boolean()),
     nextFollowUp: v.optional(v.union(v.string(), v.null())),
+    subStatus: v.optional(v.string()),
+    note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const access = requireAccess(ctx.caller);
@@ -252,14 +314,13 @@ export const update = userMutation({
 
     if (args.status !== undefined && args.status !== row.status) {
       if (!isOnboardingStatus(args.status)) throw invalid("Unbekannter Status.");
-      patch.status = args.status;
-      if (isClosedStatus(args.status)) patch.nextFollowUp = undefined;
-      await log(ctx, access, row._id, {
-        kind: "status",
-        fromValue: row.status,
-        toValue: args.status,
-      });
+      await applySteps(ctx, access, row, stepsFromStatus(args.status), patch);
+    } else if (args.steps) {
+      await applySteps(ctx, access, row, { ...stepsOf(row), ...stripUndefined(args.steps) }, patch);
     }
+    if (args.subStatus !== undefined)
+      patch.subStatus = args.subStatus.trim().slice(0, 20) || undefined;
+    if (args.note !== undefined) patch.note = args.note.trim().slice(0, 2000) || undefined;
 
     if (args.assigneeUserId !== undefined) {
       const next = args.assigneeUserId ?? undefined;
@@ -281,6 +342,7 @@ export const update = userMutation({
     if (args.nextFollowUp !== undefined) {
       patch.nextFollowUp =
         args.nextFollowUp === null ? undefined : isoDate(args.nextFollowUp, "Wiedervorlage");
+      if (isClosedStatus(patch.status ?? row.status)) patch.nextFollowUp = undefined;
     }
 
     if (Object.keys(patch).length > 0) {
@@ -324,15 +386,64 @@ export const addContact = userMutation({
     }
     if (args.status !== undefined && args.status !== row.status) {
       if (!isOnboardingStatus(args.status)) throw invalid("Unbekannter Status.");
-      patch.status = args.status;
-      if (isClosedStatus(args.status)) patch.nextFollowUp = undefined;
-      await log(ctx, access, row._id, {
-        kind: "status",
-        fromValue: row.status,
-        toValue: args.status,
-      });
+      await applySteps(ctx, access, row, stepsFromStatus(args.status), patch);
     }
     await ctx.db.patch(row._id, patch);
+  },
+});
+
+/** A customer entered by hand (not from a report). Managers may assign it;
+ * everyone else creates it for themselves. A customer number that already
+ * has a case is refused. */
+export const create = userMutation({
+  args: {
+    customerNumber: v.string(),
+    name: v.string(),
+    assigneeUserId: v.optional(v.union(v.id("users"), v.null())),
+    accountStatus: v.optional(v.string()),
+    closeDate: v.optional(v.string()),
+    note: v.optional(v.string()),
+    prio: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const access = requireAccess(ctx.caller);
+    const number = args.customerNumber.trim().slice(0, 60);
+    const key = customerKey(number);
+    if (!key) throw invalid("Bitte eine Kundennummer eintragen.");
+    const name = args.name.trim().slice(0, 200);
+    if (!name) throw invalid("Bitte den Kundennamen eintragen.");
+    const existing = await ctx.db
+      .query("onboardingCases")
+      .withIndex("by_key", (q) => q.eq("customerKey", key))
+      .first();
+    if (existing) {
+      throw new ConvexError({ code: "conflict", message: "Diese Kundennummer gibt es schon." });
+    }
+    let assignee: Id<"users"> | undefined = access.canManage
+      ? (args.assigneeUserId ?? undefined)
+      : access.userId;
+    if (assignee) {
+      const user = await ctx.db.get(assignee);
+      if (!user || user.status !== "active") assignee = undefined;
+    }
+    const now = Date.now();
+    const id = await ctx.db.insert("onboardingCases", {
+      customerKey: key,
+      customerNumber: number,
+      name,
+      status: "fresh",
+      accountStatus: args.accountStatus?.trim().slice(0, 120) || undefined,
+      closeDate: args.closeDate ? isoDate(args.closeDate, "Close Date") : undefined,
+      note: args.note?.trim().slice(0, 2000) || undefined,
+      assigneeUserId: assignee,
+      prio: !!args.prio,
+      inReport: true,
+      manual: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await log(ctx, access, id, { kind: "created" });
+    return id;
   },
 });
 
@@ -448,6 +559,8 @@ export const importReportChunk = userMutation({
         reportStatus: v.optional(v.string()),
         reportOwner: v.optional(v.string()),
         reportDate: v.optional(v.string()),
+        accountStatus: v.optional(v.string()),
+        closeDate: v.optional(v.string()),
         fields: v.optional(v.array(fieldValidator)),
       }),
     ),
@@ -466,6 +579,8 @@ export const importReportChunk = userMutation({
         reportStatus: r.reportStatus?.trim() || undefined,
         reportOwner: r.reportOwner?.trim() || undefined,
         reportDate: r.reportDate?.trim() || undefined,
+        accountStatus: r.accountStatus?.trim() || undefined,
+        closeDate: r.closeDate?.trim() || undefined,
         reportFields: (r.fields ?? []).slice(0, MAX_REPORT_FIELDS),
         inReport: true,
         lastImportId: imp._id,
@@ -483,12 +598,14 @@ export const importReportChunk = userMutation({
         });
         updated++;
       } else {
+        const status = statusFromReport(r.reportStatus);
         await ctx.db.insert("onboardingCases", {
           ...report,
           customerKey: key,
           customerNumber: r.customerNumber.trim(),
           name: r.name?.trim() || "Ohne Namen",
-          status: statusFromReport(r.reportStatus),
+          ...stepTimestamps(null, stepsFromStatus(status), now),
+          status,
           prio: false,
           createdAt: now,
         });
@@ -554,6 +671,8 @@ export const importFinish = userMutation({
       const all = await ctx.db.query("onboardingCases").collect();
       for (const row of all) {
         if (row.lastImportId === imp._id || row.archivedAt) continue;
+        // Entered by hand and never in a report: nothing to miss.
+        if (row.manual && !row.lastImportId) continue;
         if (row.inReport) await ctx.db.patch(row._id, { inReport: false, updatedAt: Date.now() });
         missing++;
       }
@@ -570,3 +689,12 @@ export const importFinish = userMutation({
     };
   },
 });
+
+function stripUndefined<T extends Record<string, boolean | undefined>>(o: T): Partial<StepState> {
+  const out: Partial<StepState> = {};
+  for (const step of ONBOARDING_STEPS) {
+    const value = o[step];
+    if (value !== undefined) out[step] = value;
+  }
+  return out;
+}

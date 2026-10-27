@@ -15,6 +15,8 @@ import {
   guessColumns,
   reportRows,
   statusFromReport,
+  statusFromSteps,
+  stepsOf,
 } from "./lib/onboarding";
 
 describe("onboarding helpers", () => {
@@ -36,7 +38,15 @@ describe("onboarding helpers", () => {
   test("columns are guessed and the rest kept as report fields", () => {
     const headers = ["Account Name", "Customer Number", "Onboarding Status", "Owner", "Ort"];
     const map = guessColumns(headers);
-    expect(map).toEqual({ number: 1, name: 0, status: 2, owner: 3, date: -1 });
+    expect(map).toEqual({
+      number: 1,
+      name: 0,
+      status: 2,
+      accountStatus: -1,
+      closeDate: -1,
+      owner: 3,
+      date: -1,
+    });
     const { rows, skipped, duplicates } = reportRows(
       headers,
       [
@@ -55,9 +65,37 @@ describe("onboarding helpers", () => {
         reportStatus: "Fresh",
         reportOwner: "Lea",
         reportDate: undefined,
+        accountStatus: undefined,
+        closeDate: undefined,
         fields: [{ label: "Ort", value: "Nürnberg" }],
       },
     ]);
+  });
+
+  test("account status and close date win over the general columns", () => {
+    expect(
+      guessColumns([
+        "Account Name",
+        "Customer Number",
+        "Account Status",
+        "Close Date",
+        "Created Date",
+      ]),
+    ).toMatchObject({ accountStatus: 2, closeDate: 3, status: -1, date: 4 });
+  });
+
+  test("stage follows from the three steps", () => {
+    expect(statusFromSteps({ cards: false, fuel: false, twoMonth: false })).toBe("fresh");
+    expect(statusFromSteps({ cards: true, fuel: false, twoMonth: false })).toBe("step1");
+    expect(statusFromSteps({ cards: true, fuel: true, twoMonth: false })).toBe("step2");
+    expect(statusFromSteps({ cards: true, fuel: true, twoMonth: true })).toBe("done");
+    // Rows from before the steps existed: implied by the stage.
+    expect(stepsOf({ status: "step2" })).toEqual({ cards: true, fuel: true, twoMonth: false });
+    expect(stepsOf({ status: "step2", cardsOrderedAt: 1 })).toEqual({
+      cards: true,
+      fuel: false,
+      twoMonth: false,
+    });
   });
 
   test("follow-up buckets", () => {
@@ -235,5 +273,72 @@ describe("onboarding cockpit", () => {
     });
     const detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
     expect(detail).toMatchObject({ status: "done", nextFollowUp: null });
+  });
+
+  test("ticking steps moves the stage; all three close the case", async () => {
+    const { as } = await setup();
+    const admin = as("admin");
+    await importReport(admin, [{ customerNumber: "100", reportStatus: "Progress Step 1" }]);
+    const [c] = await admin.query(api.performance.onboarding.list, {});
+    expect(c.steps).toEqual({ cards: true, fuel: false, twoMonth: false });
+
+    await admin.mutation(api.performance.onboarding.update, {
+      caseId: c._id,
+      nextFollowUp: "2026-11-01",
+      steps: { fuel: true },
+    });
+    let detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
+    expect(detail).toMatchObject({ status: "step2", nextFollowUp: "2026-11-01" });
+
+    await admin.mutation(api.performance.onboarding.update, {
+      caseId: c._id,
+      steps: { twoMonth: true },
+      subStatus: " 2M ",
+      note: "Rückruf nach Kartenlieferung",
+    });
+    detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
+    expect(detail).toMatchObject({
+      status: "done",
+      nextFollowUp: null,
+      subStatus: "2M",
+      note: "Rückruf nach Kartenlieferung",
+    });
+    expect(detail.contacts.filter((x) => x.kind === "step").map((x) => x.fromValue)).toEqual([
+      "twoMonth",
+      "fuel",
+    ]);
+
+    // Un-ticking reopens it.
+    await admin.mutation(api.performance.onboarding.update, {
+      caseId: c._id,
+      steps: { twoMonth: false },
+    });
+    detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
+    expect(detail.status).toBe("step2");
+  });
+
+  test("cases entered by hand: own for consultants, never missing from a report", async () => {
+    vi.stubEnv("ONBOARDING_MODE", "live");
+    const { as, ids } = await setup();
+    const id = await as("doreen").mutation(api.performance.onboarding.create, {
+      customerNumber: "0777",
+      name: "Handkunde",
+      closeDate: "2026-10-20",
+      assigneeUserId: ids.melina,
+    });
+    const own = await as("doreen").query(api.performance.onboarding.list, {});
+    expect(own.map((c) => c._id)).toEqual([id]);
+    expect(own[0]).toMatchObject({ manual: true, closeDate: "2026-10-20" });
+    await expect(
+      as("admin").mutation(api.performance.onboarding.create, {
+        customerNumber: "777",
+        name: "Doppelt",
+      }),
+    ).rejects.toThrow();
+
+    const done = await importReport(as("admin"), [{ customerNumber: "100" }]);
+    expect(done.missing).toBe(0);
+    const all = await as("admin").query(api.performance.onboarding.list, {});
+    expect(all.find((c) => c._id === id)!.inReport).toBe(true);
   });
 });
