@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tarife</title>
+<!-- Sammelseite „Tarife“ in der Wiki-Schnellleiste: schaltet zwischen den
+     Tankkarten-Tarifen und den Ladetarifen um (beide eigene Seiten hier). -->
+<style>
+:root{--bg:#faf9f6;--card:#fff;--ink:#1d1b1a;--mut:#6b6762;--line:#e5e1db;--acc:#c8102e}
+@media (prefers-color-scheme:dark){:root{--bg:#161514;--card:#201f1d;--ink:#f1eeea;--mut:#a7a19a;--line:#35322f;--acc:#f0506f}}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14.5px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+body{display:flex;flex-direction:column}
+nav{display:flex;gap:4px;padding:12px 16px 0;border-bottom:1px solid var(--line);max-width:1040px;width:100%;margin:0 auto;box-sizing:border-box}
+nav button{font:inherit;font-weight:700;font-size:15px;background:none;border:0;border-bottom:3px solid transparent;color:var(--mut);padding:8px 14px 10px;cursor:pointer}
+nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--acc)}
+iframe{flex:1;border:0;width:100%}
+</style>
+</head>
+<body>
+<nav role="tablist">
+  <button type="button" data-src="tankkarten-tarife.html" aria-selected="true">⛽ Tankkarte</button>
+  <button type="button" data-src="ladetarife.html" aria-selected="false">⚡ Laden (eCharge &amp; IONITY)</button>
+</nav>
+<iframe id="f" src="tankkarten-tarife.html" title="Tarife"></iframe>
+<script>
+var bs=[].slice.call(document.querySelectorAll('nav button')),f=document.getElementById('f');
+function show(src){bs.forEach(function(b){b.setAttribute('aria-selected',b.dataset.src===src?'true':'false')});if(f.getAttribute('src')!==src)f.setAttribute('src',src);try{localStorage.setItem('tarife-tab',src)}catch(e){}}
+bs.forEach(function(b){b.addEventListener('click',function(){show(b.dataset.src)})});
+try{var s=localStorage.getItem('tarife-tab');if(s&&bs.some(function(b){return b.dataset.src===s}))show(s)}catch(e){}
+</script>
+</body>
+</html>

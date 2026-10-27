@@ -2,7 +2,7 @@
 
 import { type ComponentType, useState } from "react";
 
-import { ChevronRight, Fuel, type LucideIcon, Zap } from "lucide-react";
+import { ChevronRight, type LucideIcon, Receipt } from "lucide-react";
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
@@ -19,16 +19,11 @@ type QuickTool = { key: string; title: string; icon: LucideIcon } & (
 
 export const QUICK_TOOLS: readonly QuickTool[] = [
   {
-    key: "ladetarife",
-    title: "Ladetarife (UTA eCharge & IONITY)",
-    src: "/tools/ladetarife.html",
-    icon: Zap,
-  },
-  {
-    key: "tankkarten-tarife",
-    title: "Tankkarten-Tarife (Pkw & CRT)",
-    src: "/tools/tankkarten-tarife.html",
-    icon: Fuel,
+    // Sammelseite: Tankkarten-Tarife (Pkw & CRT) und Ladetarife (eCharge & IONITY).
+    key: "tarife",
+    title: "Tarife",
+    src: "/tools/tarife.html",
+    icon: Receipt,
   },
 ];
 
