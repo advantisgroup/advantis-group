@@ -195,5 +195,15 @@
     "button": "Excel-Export",
     "done": "{count, plural, one {# Fall exportiert} other {# Fälle exportiert}}",
     "sheet": "Onboarding"
+  },
+  "reset": {
+    "title": "Alle Daten zurücksetzen",
+    "hint": "Löscht alle Fälle, den Kontaktverlauf und die Import-Historie – z. B. Testdaten vor dem Start. Kann nicht rückgängig gemacht werden.",
+    "confirm": "Alle Fälle, Kontakte und Imports werden endgültig gelöscht. Zum Bestätigen das Wort eintippen.",
+    "word": "LÖSCHEN",
+    "button": "Alles löschen",
+    "running": "Wird gelöscht …",
+    "done": "{count} Einträge gelöscht.",
+    "error": "Löschen fehlgeschlagen."
   }
 }

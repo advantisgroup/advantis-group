@@ -195,5 +195,15 @@
     "button": "Excel export",
     "done": "{count, plural, one {# case exported} other {# cases exported}}",
     "sheet": "Onboarding"
+  },
+  "reset": {
+    "title": "Reset all data",
+    "hint": "Deletes all cases, the contact log and the import history – e.g. test data before the start. Cannot be undone.",
+    "confirm": "All cases, contacts and imports will be deleted for good. Type the word to confirm.",
+    "word": "DELETE",
+    "button": "Delete everything",
+    "running": "Deleting …",
+    "done": "{count} entries deleted.",
+    "error": "Delete failed."
   }
 }

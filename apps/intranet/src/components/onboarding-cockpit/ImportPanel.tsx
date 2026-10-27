@@ -14,7 +14,7 @@ import {
 } from "@advantis/convex/performance/onboarding";
 import { normalizeZipLocalHeaders } from "@advantis/convex/performance/xlsxZip";
 import { useMutation, useQuery } from "convex/react";
-import { FileSpreadsheet, Flag } from "lucide-react";
+import { FileSpreadsheet, Flag, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -22,6 +22,7 @@ import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useConfirm } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -77,7 +78,60 @@ export function ImportPanel() {
         <PrioImport />
       </div>
       <ImportHistory />
+      <ResetData />
     </div>
+  );
+}
+
+/** Clears every case, log entry and import (e.g. test data before the
+ * start), after typing the confirmation word. */
+function ResetData() {
+  const t = useTranslations("OnboardingCockpit");
+  const handleError = useErrorHandler();
+  const confirm = useConfirm();
+  const resetAll = useMutation(api.performance.onboarding.resetAll);
+  const [busy, setBusy] = useState(false);
+
+  const run = async () => {
+    const ok = await confirm({
+      title: t("reset.title"),
+      description: t("reset.confirm"),
+      confirmText: { target: t("reset.word"), placeholder: t("reset.word") },
+      confirmLabel: t("reset.button"),
+      destructive: true,
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      let deleted = 0;
+      for (let i = 0; i < 200; i++) {
+        const result = await resetAll({});
+        deleted += result.deleted;
+        if (!result.remaining) break;
+      }
+      toast.success(t("reset.done", { count: deleted }));
+    } catch (e) {
+      handleError(e, t("reset.error"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="border-destructive/30">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Trash2 className="h-4 w-4 text-destructive" />
+          {t("reset.title")}
+        </CardTitle>
+        <p className="text-sm text-muted-foreground">{t("reset.hint")}</p>
+      </CardHeader>
+      <CardContent>
+        <Button variant="destructive" size="sm" disabled={busy} onClick={() => void run()}>
+          {busy ? t("reset.running") : t("reset.button")}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
