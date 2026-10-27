@@ -695,6 +695,18 @@ export const performanceTables = {
     byName: v.string(),
   }).index("by_case", ["caseId"]),
 
+  // Team setup of the cockpit (one row): who works onboarding cases (the
+  // distribution splits between them) and who leads the team (may
+  // distribute like an admin). `pausedUserIds` stay in the team but get no
+  // new cases (holiday, sick).
+  onboardingSettings: defineTable({
+    memberUserIds: v.array(v.id("users")),
+    leadUserIds: v.array(v.id("users")),
+    pausedUserIds: v.optional(v.array(v.id("users"))),
+    updatedAt: v.number(),
+    updatedByName: v.string(),
+  }),
+
   // One row per report or prio-list import, filled while the browser sends
   // the rows in chunks.
   onboardingImports: defineTable({

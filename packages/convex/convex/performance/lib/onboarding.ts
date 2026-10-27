@@ -293,3 +293,39 @@ export function followUpBucket(
   d.setUTCDate(d.getUTCDate() + 7);
   return date <= d.toISOString().slice(0, 10) ? "week" : "later";
 }
+
+/**
+ * Balanced split of `total` new cases: fills the people with the fewest
+ * open new cases first, so everyone ends up as level as possible ("water
+ * filling"). Example: 100 to split, A has 100 new, B has 50 → B gets 75,
+ * A gets 25 (both end at 125). Returns the number of cases per person, in
+ * the order given; the counts always add up to `total`.
+ */
+export function balancedSplit(current: number[], total: number): number[] {
+  const n = current.length;
+  if (n === 0 || total <= 0) return current.map(() => 0);
+  // Find the fill level L (real) where sum(max(0, L - c)) = total.
+  const sorted = [...current].sort((a, b) => a - b);
+  let level = sorted[0];
+  let remaining = total;
+  for (let i = 0; i < n; i++) {
+    const next = i + 1 < n ? sorted[i + 1] : Infinity;
+    const width = i + 1; // people at or below the current level
+    const room = (next - level) * width;
+    if (remaining <= room) {
+      level += remaining / width;
+      remaining = 0;
+      break;
+    }
+    remaining -= room;
+    level = next;
+  }
+  // Integer shares; the leftover units go to whoever is lowest after flooring.
+  const share = current.map((c) => Math.max(0, Math.floor(level - c)));
+  let left = total - share.reduce((a, b) => a + b, 0);
+  const order = current
+    .map((c, i) => ({ i, after: c + share[i], c }))
+    .sort((a, b) => a.after - b.after || a.c - b.c || a.i - b.i);
+  for (let k = 0; left > 0; k = (k + 1) % n, left--) share[order[k].i]++;
+  return share;
+}
