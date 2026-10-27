@@ -13,7 +13,7 @@ import {
   STEP_CODES,
 } from "@advantis/convex/performance/onboarding";
 import { useMutation, useQuery } from "convex/react";
-import { Archive, ArchiveRestore, Download, Flag, Inbox, Plus, Rocket } from "lucide-react";
+import { Archive, ArchiveRestore, Download, Eye, Flag, Inbox, Plus, Rocket } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -48,6 +48,7 @@ import { cn } from "@/lib/utils";
 
 import { CaseSheet } from "./CaseSheet";
 import { CreateCaseDialog } from "./CreateCaseDialog";
+import { DistributionPanel } from "./DistributionPanel";
 import { FollowUpCalendar } from "./FollowUpCalendar";
 import { ImportPanel } from "./ImportPanel";
 import {
@@ -62,9 +63,10 @@ import {
   workOrder,
 } from "./shared";
 
-type Tab = "cases" | "prio" | "followUps" | "import" | "archive";
+type Tab = "cases" | "prio" | "followUps" | "distribution" | "import" | "archive";
 type KpiFilter = "open" | "prio" | "due" | "cards" | "unassigned" | "done" | "all";
 const ALL = "__all";
+const SELF = "__self";
 const NOBODY = "__none";
 
 type Assignee = { userId: Id<"users">; name: string };
@@ -79,7 +81,10 @@ export function OnboardingCockpit() {
   const router = useRouter();
   const access = useQuery(api.performance.onboarding.me, {});
   const allowed = access?.access ?? false;
-  const canManage = access?.canManage ?? false;
+  /** "Ansicht als": a manager sees the cockpit exactly as this person does. */
+  const [viewAs, setViewAs] = useState<Id<"users"> | null>(null);
+  const realManage = access?.canManage ?? false;
+  const canManage = realManage && !viewAs;
 
   useEffect(() => {
     if (access && !access.access) router.replace("/");
@@ -88,12 +93,16 @@ export function OnboardingCockpit() {
   const [tab, setTab] = useState<Tab>("cases");
   const [openId, setOpenId] = useState<Id<"onboardingCases"> | null>(null);
   const [creating, setCreating] = useState(false);
-  const cases = useQuery(api.performance.onboarding.list, allowed ? {} : "skip");
+  const cases = useQuery(
+    api.performance.onboarding.list,
+    !allowed ? "skip" : viewAs ? { asUserId: viewAs } : {},
+  );
   const archived = useQuery(
     api.performance.onboarding.list,
     allowed && canManage && tab === "archive" ? { archived: true } : "skip",
   );
-  const assignees = useQuery(api.performance.onboarding.assignees, canManage ? {} : "skip");
+  const assignees = useQuery(api.performance.onboarding.assignees, realManage ? {} : "skip");
+  const viewAsName = viewAs ? assignees?.find((a) => a.userId === viewAs)?.name : null;
 
   const today = todayIso();
   const order = useMemo(() => workOrder(today), [today]);
@@ -115,11 +124,16 @@ export function OnboardingCockpit() {
   if (!allowed) return null;
 
   const tabs = [
-    { value: "cases" as const, label: t("tabs.cases"), count: open.length },
+    {
+      value: "cases" as const,
+      label: canManage ? t("tabs.cases") : t("tabs.myCases"),
+      count: open.length,
+    },
     { value: "prio" as const, label: t("tabs.prio"), count: prio.length },
     { value: "followUps" as const, label: t("tabs.followUps"), count: followUps.length },
     ...(canManage
       ? [
+          { value: "distribution" as const, label: t("tabs.distribution") },
           { value: "import" as const, label: t("tabs.import") },
           { value: "archive" as const, label: t("tabs.archive") },
         ]
@@ -134,16 +148,54 @@ export function OnboardingCockpit() {
         icon={<Rocket className="size-4" />}
       />
       <div className="flex flex-wrap items-center justify-end gap-2">
-        {canManage && !access.live && (
+        {realManage && !access.live && (
           <Badge variant="warning" title={t("adminsOnlyHint")} className="mr-auto">
             {t("adminsOnly")}
           </Badge>
         )}
-        <Button size="sm" onClick={() => setCreating(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t("create.button")}
-        </Button>
+        {realManage && (
+          <div className="flex items-center gap-2">
+            <Eye className="h-4 w-4 text-muted-foreground" />
+            <Select
+              value={viewAs ?? SELF}
+              onValueChange={(v) => {
+                setViewAs(v === SELF ? null : (v as Id<"users">));
+                setTab("cases");
+              }}
+            >
+              <SelectTrigger className="h-9 w-[240px]" aria-label={t("viewAs.label")}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={SELF}>
+                  {access.isAdmin ? t("viewAs.self") : t("viewAs.selfLead")}
+                </SelectItem>
+                {(assignees ?? [])
+                  .filter((a) => a.member)
+                  .map((a) => (
+                    <SelectItem key={a.userId} value={a.userId}>
+                      {t("viewAs.as", { name: a.name })}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {!viewAs && (
+          <Button size="sm" onClick={() => setCreating(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            {t("create.button")}
+          </Button>
+        )}
       </div>
+      {viewAs && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm">
+          <span>{t("viewAs.banner", { name: viewAsName ?? "…" })}</span>
+          <Button variant="outline" size="sm" onClick={() => setViewAs(null)}>
+            {t("viewAs.end")}
+          </Button>
+        </div>
+      )}
       <CountTabs tabs={tabs} value={tab} onChange={setTab} />
 
       {tab === "cases" && (
@@ -165,6 +217,9 @@ export function OnboardingCockpit() {
       )}
       {tab === "followUps" && (
         <FollowUpView rows={followUps} onOpen={setOpenId} canManage={canManage} />
+      )}
+      {tab === "distribution" && canManage && (
+        <DistributionPanel cases={cases ?? []} people={assignees} isAdmin={access.isAdmin} />
       )}
       {tab === "import" && canManage && <ImportPanel />}
       {tab === "archive" && canManage && (

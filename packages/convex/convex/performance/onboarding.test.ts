@@ -15,6 +15,7 @@ import {
   guessColumns,
   reportRows,
   statusFromReport,
+  balancedSplit,
   statusFromSteps,
   stepsOf,
 } from "./lib/onboarding";
@@ -96,6 +97,17 @@ describe("onboarding helpers", () => {
       fuel: false,
       twoMonth: false,
     });
+  });
+
+  test("balanced split fills the emptiest first", () => {
+    expect(balancedSplit([100, 50], 100)).toEqual([25, 75]);
+    expect(balancedSplit([10, 0, 30], 20)).toEqual([5, 15, 0]);
+    expect(balancedSplit([5, 5, 5], 7)).toEqual([3, 2, 2]);
+    expect(balancedSplit([0, 0], 0)).toEqual([0, 0]);
+    // Everyone above the target still gets nothing; total always adds up.
+    const split = balancedSplit([3, 40, 7, 12], 33);
+    expect(split.reduce((a, b) => a + b, 0)).toBe(33);
+    expect(split[1]).toBe(0);
   });
 
   test("follow-up buckets", () => {
@@ -373,5 +385,79 @@ describe("onboarding cockpit", () => {
     await admin.mutation(api.performance.onboarding.update, { caseId: c._id, nextFollowUp: null });
     const cleared = await admin.query(api.performance.onboarding.get, { caseId: c._id });
     expect(cleared).toMatchObject({ nextFollowUp: null, nextFollowUpTime: null });
+  });
+
+  test("distribution hands out unassigned open cases, prio first and in turns", async () => {
+    const { as, ids } = await setup();
+    const admin = as("admin");
+    await importReport(
+      admin,
+      Array.from({ length: 6 }, (_, i) => ({ customerNumber: String(100 + i) })),
+    );
+    const cases = await admin.query(api.performance.onboarding.list, {});
+    const prioCase = cases.find((c) => c.customerNumber === "105")!;
+    await admin.mutation(api.performance.onboarding.update, { caseId: prioCase._id, prio: true });
+
+    const result = await admin.mutation(api.performance.onboarding.distribute, {
+      allocations: [
+        { userId: ids.melina, count: 1 },
+        { userId: ids.doreen, count: 10 },
+      ],
+    });
+    expect(result.perUser).toEqual([
+      { userId: ids.melina, count: 1 },
+      { userId: ids.doreen, count: 5 },
+    ]);
+    const after = await admin.query(api.performance.onboarding.list, {});
+    // The prio case went out first (to Melina, first in turn).
+    expect(after.find((c) => c._id === prioCase._id)!.assigneeUserId).toBe(ids.melina);
+
+    // Doreen is sick: move her new cases to Melina.
+    const moved = await admin.mutation(api.performance.onboarding.reassign, {
+      fromUserId: ids.doreen,
+      toUserIds: [ids.melina],
+      scope: "new",
+      count: 2,
+    });
+    expect(moved.moved).toBe(2);
+    const final = await admin.query(api.performance.onboarding.list, {});
+    expect(final.filter((c) => c.assigneeUserId === ids.melina)).toHaveLength(3);
+
+    // "Ansicht als": exactly Melina's list.
+    const asMelina = await admin.query(api.performance.onboarding.list, { asUserId: ids.melina });
+    expect(asMelina).toHaveLength(3);
+  });
+
+  test("team leads manage before go-live; only admins name leads", async () => {
+    const { as, ids } = await setup();
+    await as("admin").mutation(api.performance.onboarding.saveSettings, {
+      memberUserIds: [ids.melina, ids.doreen],
+      pausedUserIds: [],
+      leadUserIds: [ids.doreen],
+    });
+    expect(await as("doreen").query(api.performance.onboarding.me, {})).toMatchObject({
+      access: true,
+      canManage: true,
+      isAdmin: false,
+    });
+    expect(await as("melina").query(api.performance.onboarding.me, {})).toMatchObject({
+      access: false,
+    });
+    await expect(
+      as("doreen").mutation(api.performance.onboarding.saveSettings, {
+        memberUserIds: [ids.melina],
+        pausedUserIds: [],
+        leadUserIds: [ids.melina],
+      }),
+    ).rejects.toThrow();
+    await as("doreen").mutation(api.performance.onboarding.saveSettings, {
+      memberUserIds: [ids.melina, ids.doreen],
+      pausedUserIds: [ids.melina],
+    });
+    const settings = await as("admin").query(api.performance.onboarding.settings, {});
+    expect(settings).toMatchObject({ leadUserIds: [ids.doreen], pausedUserIds: [ids.melina] });
+    await expect(
+      as("melina").query(api.performance.onboarding.list, { asUserId: ids.doreen }),
+    ).rejects.toThrow();
   });
 });

@@ -52,28 +52,45 @@ export function onboardingIsLive(): boolean {
 }
 
 interface CockpitAccess {
-  /** Sees all cases, assigns, imports, archives. */
+  /** Sees all cases, distributes, imports, archives: admins and the team
+   * leads named in the cockpit's team setup. */
   canManage: boolean;
+  /** Intranet admin: also team setup and the "view as" preview. */
+  isAdmin: boolean;
   userId: Id<"users">;
   name: string;
 }
 
-function cockpitAccess(caller: Caller): CockpitAccess | null {
+async function loadSettings(ctx: Ctx): Promise<Doc<"onboardingSettings"> | null> {
+  return await ctx.db.query("onboardingSettings").first();
+}
+
+/**
+ * Who may do what. Admins always; team leads (team setup) manage like an
+ * admin, also before the go-live so they can distribute first; everyone
+ * else sees their own cases once `ONBOARDING_MODE=live`.
+ */
+async function cockpitAccess(ctx: Ctx & { caller: Caller }): Promise<CockpitAccess | null> {
+  const caller = ctx.caller;
   const base = { userId: caller.user._id, name: displayName(caller.user) };
-  if (caller.isAdmin) return { canManage: true, ...base };
-  if (onboardingIsLive()) return { canManage: false, ...base };
+  if (caller.isAdmin) return { canManage: true, isAdmin: true, ...base };
+  const settings = await loadSettings(ctx);
+  if (settings?.leadUserIds.includes(caller.user._id)) {
+    return { canManage: true, isAdmin: false, ...base };
+  }
+  if (onboardingIsLive()) return { canManage: false, isAdmin: false, ...base };
   return null;
 }
 
-function requireAccess(caller: Caller): CockpitAccess {
-  const access = cockpitAccess(caller);
+async function requireAccess(ctx: Ctx & { caller: Caller }): Promise<CockpitAccess> {
+  const access = await cockpitAccess(ctx);
   if (!access) throw forbidden();
   return access;
 }
 
-function requireManage(caller: Caller): CockpitAccess {
-  const access = requireAccess(caller);
-  if (!access.canManage) throw forbidden("Nur Admins können das.");
+async function requireManage(ctx: Ctx & { caller: Caller }): Promise<CockpitAccess> {
+  const access = await requireAccess(ctx);
+  if (!access.canManage) throw forbidden("Nur Admins und die Teamleitung können das.");
   return access;
 }
 
@@ -236,10 +253,11 @@ function caseFields(r: Doc<"onboardingCases">) {
 export const me = userQuery({
   args: {},
   handler: async (ctx) => {
-    const access = cockpitAccess(ctx.caller);
+    const access = await cockpitAccess(ctx);
     return {
       access: !!access,
       canManage: access?.canManage ?? false,
+      isAdmin: access?.isAdmin ?? false,
       live: onboardingIsLive(),
     };
   },
@@ -248,15 +266,21 @@ export const me = userQuery({
 /** All cases for managers, the own ones for everyone else (archived ones
  * only with `archived: true`). Small table — a few thousand rows at most. */
 export const list = userQuery({
-  args: { archived: v.optional(v.boolean()) },
+  args: {
+    archived: v.optional(v.boolean()),
+    /** "Ansicht als": managers see exactly that person's own list. */
+    asUserId: v.optional(v.id("users")),
+  },
   handler: async (ctx, args) => {
-    const access = requireAccess(ctx.caller);
-    const rows = access.canManage
-      ? await ctx.db.query("onboardingCases").collect()
-      : await ctx.db
+    const access = await requireAccess(ctx);
+    if (args.asUserId && !access.canManage) throw forbidden();
+    const ownerId = args.asUserId ?? (access.canManage ? null : access.userId);
+    const rows = ownerId
+      ? await ctx.db
           .query("onboardingCases")
-          .withIndex("by_assignee", (q) => q.eq("assigneeUserId", access.userId))
-          .collect();
+          .withIndex("by_assignee", (q) => q.eq("assigneeUserId", ownerId))
+          .collect()
+      : await ctx.db.query("onboardingCases").collect();
     const visible = rows.filter((r) => !!r.archivedAt === !!args.archived);
 
     const names = new Map<Id<"users">, string>();
@@ -277,7 +301,7 @@ export const list = userQuery({
 export const get = userQuery({
   args: { caseId: v.id("onboardingCases") },
   handler: async (ctx, args) => {
-    const access = requireAccess(ctx.caller);
+    const access = await requireAccess(ctx);
     const row = await loadCase(ctx, access, args.caseId);
     const contacts = await ctx.db
       .query("onboardingContacts")
@@ -307,14 +331,67 @@ export const get = userQuery({
 export const assignees = userQuery({
   args: {},
   handler: async (ctx) => {
-    requireManage(ctx.caller);
+    await requireManage(ctx);
     const users = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
+    const settings = await loadSettings(ctx);
+    const members = new Set(settings?.memberUserIds ?? []);
+    const leads = new Set(settings?.leadUserIds ?? []);
+    const paused = new Set(settings?.pausedUserIds ?? []);
     return users
-      .map((u) => ({ userId: u._id, name: displayName(u) }))
-      .sort((a, b) => a.name.localeCompare(b.name, "de"));
+      .map((u) => ({
+        userId: u._id,
+        name: displayName(u),
+        member: members.has(u._id),
+        lead: leads.has(u._id),
+        paused: paused.has(u._id),
+      }))
+      .sort((a, b) => Number(b.member) - Number(a.member) || a.name.localeCompare(b.name, "de"));
+  },
+});
+
+/** The cockpit's team setup (members, leads, paused). */
+export const settings = userQuery({
+  args: {},
+  handler: async (ctx) => {
+    await requireManage(ctx);
+    const row = await loadSettings(ctx);
+    return {
+      memberUserIds: row?.memberUserIds ?? [],
+      leadUserIds: row?.leadUserIds ?? [],
+      pausedUserIds: row?.pausedUserIds ?? [],
+      updatedAt: row?.updatedAt ?? null,
+      updatedByName: row?.updatedByName ?? null,
+    };
+  },
+});
+
+/** Team members and paused people: managers. Team leads: admins only
+ * (they grant management rights). */
+export const saveSettings = userMutation({
+  args: {
+    memberUserIds: v.array(v.id("users")),
+    pausedUserIds: v.array(v.id("users")),
+    leadUserIds: v.optional(v.array(v.id("users"))),
+  },
+  handler: async (ctx, args) => {
+    const access = await requireManage(ctx);
+    if (args.leadUserIds !== undefined && !access.isAdmin) {
+      throw forbidden("Teamleitungen legen nur Admins fest.");
+    }
+    const row = await loadSettings(ctx);
+    const members = [...new Set(args.memberUserIds)].slice(0, 100);
+    const next = {
+      memberUserIds: members,
+      pausedUserIds: [...new Set(args.pausedUserIds)].filter((id) => members.includes(id)),
+      leadUserIds: [...new Set(args.leadUserIds ?? row?.leadUserIds ?? [])].slice(0, 20),
+      updatedAt: Date.now(),
+      updatedByName: access.name,
+    };
+    if (row) await ctx.db.patch(row._id, next);
+    else await ctx.db.insert("onboardingSettings", next);
   },
 });
 
@@ -322,7 +399,7 @@ export const assignees = userQuery({
 export const imports = userQuery({
   args: {},
   handler: async (ctx) => {
-    requireManage(ctx.caller);
+    await requireManage(ctx);
     const rows = await ctx.db.query("onboardingImports").order("desc").take(10);
     return rows.map((r) => ({
       _id: r._id,
@@ -364,7 +441,7 @@ export const update = userMutation({
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const access = requireAccess(ctx.caller);
+    const access = await requireAccess(ctx);
     const row = await loadCase(ctx, access, args.caseId);
     const patch: Partial<Doc<"onboardingCases">> = {};
 
@@ -420,7 +497,7 @@ export const addContact = userMutation({
     status: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const access = requireAccess(ctx.caller);
+    const access = await requireAccess(ctx);
     const row = await loadCase(ctx, access, args.caseId);
     const note = args.note?.trim().slice(0, 4000) || undefined;
     if (args.kind === "note" && !note) throw invalid("Bitte eine Notiz eintragen.");
@@ -456,7 +533,7 @@ export const create = userMutation({
     prio: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const access = requireAccess(ctx.caller);
+    const access = await requireAccess(ctx);
     const number = args.customerNumber.trim().slice(0, 60);
     const key = customerKey(number);
     if (!key) throw invalid("Bitte eine Kundennummer eintragen.");
@@ -504,7 +581,7 @@ export const assignMany = userMutation({
     assigneeUserId: v.union(v.id("users"), v.null()),
   },
   handler: async (ctx, args) => {
-    const access = requireManage(ctx.caller);
+    const access = await requireManage(ctx);
     if (args.caseIds.length > 500) throw invalid("Höchstens 500 Fälle auf einmal.");
     const user = args.assigneeUserId ? await ctx.db.get(args.assigneeUserId) : null;
     if (args.assigneeUserId && (!user || user.status !== "active")) {
@@ -528,11 +605,127 @@ export const assignMany = userMutation({
   },
 });
 
+/** Which open cases a distribution may hand out, best first: prio, then
+ * oldest (close date / report date), then number. */
+function distributionOrder(a: Doc<"onboardingCases">, b: Doc<"onboardingCases">): number {
+  const date = (r: Doc<"onboardingCases">) => r.closeDate ?? r.reportDate ?? "9999";
+  return (
+    Number(b.prio) - Number(a.prio) ||
+    date(a).localeCompare(date(b)) ||
+    a.customerNumber.localeCompare(b.customerNumber, "de", { numeric: true })
+  );
+}
+
+const allocationValidator = v.array(v.object({ userId: v.id("users"), count: v.number() }));
+
+async function checkPeople(ctx: Ctx, ids: Id<"users">[]): Promise<Map<Id<"users">, string>> {
+  const names = new Map<Id<"users">, string>();
+  for (const id of new Set(ids)) {
+    const user = await ctx.db.get(id);
+    if (!user || user.status !== "active") throw invalid("Person nicht gefunden.");
+    names.set(id, displayName(user));
+  }
+  return names;
+}
+
+/**
+ * Hands out unassigned open cases: `count` per person, best cases first
+ * and taken in turns so everyone gets a similar mix of prio and old ones.
+ * `onlyNew` limits the pool to cases without any step done. Returns how
+ * many each person actually got (the pool may be smaller than asked).
+ */
+export const distribute = userMutation({
+  args: { allocations: allocationValidator, onlyNew: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const access = await requireManage(ctx);
+    const wanted = args.allocations
+      .map((a) => ({ ...a, count: Math.max(0, Math.floor(a.count)) }))
+      .filter((a) => a.count > 0);
+    const total = wanted.reduce((sum, a) => sum + a.count, 0);
+    if (total === 0) return { assigned: 0, perUser: [] };
+    if (total > 2000) throw invalid("Höchstens 2000 Fälle auf einmal.");
+    const names = await checkPeople(
+      ctx,
+      wanted.map((a) => a.userId),
+    );
+
+    const pool = (await ctx.db.query("onboardingCases").collect())
+      .filter((r) => !r.archivedAt && !r.assigneeUserId && !isClosedStatus(r.status))
+      .filter((r) => !args.onlyNew || r.status === "fresh")
+      .sort(distributionOrder);
+
+    // Round-robin over whoever still has room, so the best cases spread.
+    const left = new Map(wanted.map((a) => [a.userId, a.count]));
+    const got = new Map<Id<"users">, number>();
+    let i = 0;
+    const now = Date.now();
+    for (const row of pool) {
+      const open = wanted.filter((a) => (left.get(a.userId) ?? 0) > 0);
+      if (open.length === 0) break;
+      const target = open[i % open.length];
+      i++;
+      left.set(target.userId, (left.get(target.userId) ?? 0) - 1);
+      got.set(target.userId, (got.get(target.userId) ?? 0) + 1);
+      await ctx.db.patch(row._id, { assigneeUserId: target.userId, updatedAt: now });
+      await log(ctx, access, row._id, {
+        kind: "assign",
+        toValue: names.get(target.userId),
+        note: "Verteilung",
+      });
+    }
+    const perUser = wanted.map((a) => ({ userId: a.userId, count: got.get(a.userId) ?? 0 }));
+    return { assigned: perUser.reduce((sum, a) => sum + a.count, 0), perUser };
+  },
+});
+
+/**
+ * Moves cases away from one person (holiday, sick, leaving) and splits
+ * them evenly among `toUserIds` — or back to unassigned when the list is
+ * empty. `scope`: only cases without any step done ("new"), or all open
+ * ones ("open"). `count` caps how many move (default all).
+ */
+export const reassign = userMutation({
+  args: {
+    fromUserId: v.id("users"),
+    toUserIds: v.array(v.id("users")),
+    scope: v.union(v.literal("new"), v.literal("open")),
+    count: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const access = await requireManage(ctx);
+    const targets = [...new Set(args.toUserIds)].filter((id) => id !== args.fromUserId);
+    const names = await checkPeople(ctx, targets);
+    const from = await ctx.db.get(args.fromUserId);
+    const rows = (
+      await ctx.db
+        .query("onboardingCases")
+        .withIndex("by_assignee", (q) => q.eq("assigneeUserId", args.fromUserId))
+        .collect()
+    )
+      .filter((r) => !r.archivedAt && !isClosedStatus(r.status))
+      .filter((r) => args.scope === "open" || r.status === "fresh")
+      .sort(distributionOrder)
+      .slice(0, args.count === undefined ? undefined : Math.max(0, Math.floor(args.count)));
+    const now = Date.now();
+    for (const [k, row] of rows.entries()) {
+      const to = targets.length ? targets[k % targets.length] : undefined;
+      await ctx.db.patch(row._id, { assigneeUserId: to, updatedAt: now });
+      await log(ctx, access, row._id, {
+        kind: "assign",
+        fromValue: from ? displayName(from) : undefined,
+        toValue: to ? names.get(to) : undefined,
+        note: "Umverteilung",
+      });
+    }
+    return { moved: rows.length };
+  },
+});
+
 /** Archives cases (e.g. no longer in the report) or brings them back. */
 export const setArchived = userMutation({
   args: { caseIds: v.array(v.id("onboardingCases")), archived: v.boolean() },
   handler: async (ctx, args) => {
-    requireManage(ctx.caller);
+    await requireManage(ctx);
     if (args.caseIds.length > 500) throw invalid("Höchstens 500 Fälle auf einmal.");
     const now = Date.now();
     for (const id of args.caseIds) {
@@ -559,7 +752,7 @@ export const importStart = userMutation({
     resetPrio: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const access = requireManage(ctx.caller);
+    const access = await requireManage(ctx);
     if (args.kind === "prio" && args.resetPrio) {
       const all = await ctx.db.query("onboardingCases").collect();
       for (const row of all) {
@@ -616,7 +809,7 @@ export const importReportChunk = userMutation({
     ),
   },
   handler: async (ctx, args) => {
-    requireManage(ctx.caller);
+    await requireManage(ctx);
     if (args.rows.length > MAX_CHUNK) throw invalid(`Höchstens ${MAX_CHUNK} Zeilen je Teil.`);
     const imp = await openImport(ctx, args.importId, "report");
     const now = Date.now();
@@ -676,7 +869,7 @@ export const importReportChunk = userMutation({
 export const importPrioChunk = userMutation({
   args: { importId: v.id("onboardingImports"), customerNumbers: v.array(v.string()) },
   handler: async (ctx, args) => {
-    requireManage(ctx.caller);
+    await requireManage(ctx);
     if (args.customerNumbers.length > MAX_CHUNK) {
       throw invalid(`Höchstens ${MAX_CHUNK} Nummern je Teil.`);
     }
@@ -709,7 +902,7 @@ export const importPrioChunk = userMutation({
 export const importFinish = userMutation({
   args: { importId: v.id("onboardingImports") },
   handler: async (ctx, args) => {
-    requireManage(ctx.caller);
+    await requireManage(ctx);
     const imp = await ctx.db.get(args.importId);
     if (!imp || imp.finishedAt !== undefined) {
       throw invalid("Import nicht gefunden oder schon abgeschlossen.");
