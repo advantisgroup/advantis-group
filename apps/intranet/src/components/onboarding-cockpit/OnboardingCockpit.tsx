@@ -48,6 +48,7 @@ import { cn } from "@/lib/utils";
 
 import { CaseSheet } from "./CaseSheet";
 import { CreateCaseDialog } from "./CreateCaseDialog";
+import { FollowUpCalendar } from "./FollowUpCalendar";
 import { ImportPanel } from "./ImportPanel";
 import {
   type CaseRow,
@@ -162,7 +163,9 @@ export function OnboardingCockpit() {
           <CaseTable rows={prio} onOpen={setOpenId} empty={t("empty.prio")} />
         </section>
       )}
-      {tab === "followUps" && <FollowUpView rows={followUps} onOpen={setOpenId} />}
+      {tab === "followUps" && (
+        <FollowUpView rows={followUps} onOpen={setOpenId} canManage={canManage} />
+      )}
       {tab === "import" && canManage && <ImportPanel />}
       {tab === "archive" && canManage && (
         <section className="space-y-3">
@@ -528,9 +531,11 @@ function ConsultantTable({
 function FollowUpView({
   rows,
   onOpen,
+  canManage,
 }: {
   rows: CaseRow[];
   onOpen: (id: Id<"onboardingCases">) => void;
+  canManage: boolean;
 }) {
   const t = useTranslations("OnboardingCockpit");
   const today = todayIso();
@@ -550,7 +555,11 @@ function FollowUpView({
         <p className="text-sm text-muted-foreground">{t("followUpIntro")}</p>
         <ExportButton rows={rows} />
       </div>
-      <CaseTable rows={rows} onOpen={onOpen} empty={t("empty.followUps")} />
+      {rows.length === 0 ? (
+        <EmptyState title={t("empty.followUps")} />
+      ) : (
+        <FollowUpCalendar rows={rows} onOpen={onOpen} showAssignee={canManage} />
+      )}
     </section>
   );
 }
@@ -583,7 +592,9 @@ function ExportButton({ rows }: { rows: CaseRow[] }) {
       c.subStatus ?? "",
       c.assigneeName ?? "",
       c.prio ? "Ja" : "",
-      c.nextFollowUp ?? "",
+      c.nextFollowUp
+        ? `${c.nextFollowUp}${c.nextFollowUpTime ? ` ${c.nextFollowUpTime}` : ""}`
+        : "",
       c.note ?? "",
       c.accountStatus ?? "",
       c.closeDate ?? "",
@@ -592,7 +603,7 @@ function ExportButton({ rows }: { rows: CaseRow[] }) {
       c.lastContactAt ? new Date(c.lastContactAt).toISOString().slice(0, 10) : "",
     ]);
     const sheet = XLSX.utils.aoa_to_sheet([header, ...data]);
-    sheet["!cols"] = header.map((h, i) => ({ wch: Math.max(12, h.length + 2) }));
+    sheet["!cols"] = header.map((h) => ({ wch: Math.max(12, h.length + 2) }));
     const book = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(book, sheet, t("export.sheet"));
     XLSX.writeFile(book, `Onboarding-Cockpit_${todayIso()}.xlsx`);

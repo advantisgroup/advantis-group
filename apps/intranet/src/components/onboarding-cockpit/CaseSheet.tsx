@@ -102,6 +102,12 @@ function CaseBody({
     s && (ONBOARDING_STEPS as readonly string[]).includes(s)
       ? t(`steps.${s as OnboardingStep}`)
       : (s ?? "–");
+  /** "2026-11-04 09:30" → "4. Nov. 2026, 09:30"; empty → "keine". */
+  const followUpText = (v: string | null) => {
+    if (!v) return t("case.noFollowUp");
+    const [date, time] = v.split(" ");
+    return `${formatIsoDate(date, locale)}${time ? `, ${time}` : ""}`;
+  };
   const logTitle = (c: (typeof data.contacts)[number]) => {
     if (c.kind === "step") {
       return t(c.toValue === "1" ? "case.stepOn" : "case.stepOff", {
@@ -117,6 +123,7 @@ function CaseBody({
       "step",
       "assign",
       "created",
+      "followUp",
     ].includes(c.kind)
       ? t(`contactKind.${c.kind as "note"}`)
       : c.kind;
@@ -213,6 +220,14 @@ function CaseBody({
                 disabled={data.status === "done"}
                 onChange={(e) => void save({ nextFollowUp: e.target.value || null })}
               />
+              <Input
+                type="time"
+                aria-label={t("case.followUpTime")}
+                className="w-[110px]"
+                value={data.nextFollowUpTime ?? ""}
+                disabled={data.status === "done" || !data.nextFollowUp}
+                onChange={(e) => void save({ nextFollowUpTime: e.target.value || null })}
+              />
               {data.nextFollowUp && (
                 <Button
                   variant="ghost"
@@ -292,6 +307,14 @@ function CaseBody({
                       {formatDateTime(c.at, locale)} · {c.byName}
                     </span>
                   </div>
+                  {c.kind === "followUp" && (
+                    <p className="text-muted-foreground">
+                      {t("case.change", {
+                        from: followUpText(c.fromValue),
+                        to: followUpText(c.toValue),
+                      })}
+                    </p>
+                  )}
                   {(c.kind === "status" || c.kind === "assign") && (
                     <p className="text-muted-foreground">
                       {t("case.change", {
@@ -351,6 +374,7 @@ function ContactForm({ caseId, closed }: { caseId: Id<"onboardingCases">; closed
   const [kind, setKind] = useState<ManualContactKind>("reached");
   const [note, setNote] = useState("");
   const [followUp, setFollowUp] = useState("");
+  const [followUpTime, setFollowUpTime] = useState("");
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
@@ -365,9 +389,11 @@ function ContactForm({ caseId, closed }: { caseId: Id<"onboardingCases">; closed
         kind,
         note: note.trim() || undefined,
         nextFollowUp: followUp || undefined,
+        nextFollowUpTime: followUp ? followUpTime || null : undefined,
       });
       setNote("");
       setFollowUp("");
+      setFollowUpTime("");
       toast.success(t("case.saved"));
     } catch (e) {
       handleError(e, t("case.saveError"));
@@ -408,12 +434,22 @@ function ContactForm({ caseId, closed }: { caseId: Id<"onboardingCases">; closed
         {!closed && (
           <div className="space-y-1.5">
             <Label htmlFor="ob-next">{t("case.nextFollowUp")}</Label>
-            <Input
-              id="ob-next"
-              type="date"
-              value={followUp}
-              onChange={(e) => setFollowUp(e.target.value)}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="ob-next"
+                type="date"
+                value={followUp}
+                onChange={(e) => setFollowUp(e.target.value)}
+              />
+              <Input
+                type="time"
+                aria-label={t("case.followUpTime")}
+                className="w-[110px]"
+                value={followUpTime}
+                disabled={!followUp}
+                onChange={(e) => setFollowUpTime(e.target.value)}
+              />
+            </div>
           </div>
         )}
         <Button onClick={() => void submit()} disabled={busy} className="ml-auto">
