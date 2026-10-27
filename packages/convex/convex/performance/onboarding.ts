@@ -1,5 +1,6 @@
 /**
- * Onboarding-Cockpit under Performance: the onboarding team works through
+ * Onboarding-Cockpit (/onboarding-cockpit, its own sidebar entry next to
+ * Performance; data lives beside Performance's): the onboarding team works through
  * UTA new customers from the Salesforce report — prio first, follow-ups,
  * a contact log per customer. Pure helpers in `lib/onboarding.ts`.
  *

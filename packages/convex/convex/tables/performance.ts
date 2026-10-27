@@ -629,7 +629,7 @@ export const performanceTables = {
     .index("by_employee_date_field", ["employeeId", "reportDate", "field"])
     .index("by_status", ["status"])
     .index("by_company_status", ["companyId", "status"]),
-  // --- Onboarding-Cockpit (Performance → Onboarding) -----------------------
+  // --- Onboarding-Cockpit (/onboarding-cockpit, own sidebar entry) -----------------------
   // One row per UTA new customer from the Salesforce onboarding report,
   // keyed by the normalized customer number (`lib/onboarding.ts`'s
   // `customerKey`). The intranet owns `status`, `assigneeUserId`, `prio` and

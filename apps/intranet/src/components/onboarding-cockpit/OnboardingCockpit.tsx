@@ -12,8 +12,7 @@ import { Archive, ArchiveRestore, Flag, Inbox, Rocket } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { PerformanceShell } from "@/components/performance/PerformanceShell";
-import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -59,7 +58,7 @@ const OPEN = "__open";
 const NOBODY = "__none";
 
 /**
- * Performance → Onboarding: the onboarding team's work list. Admins see all
+ * Onboarding-Cockpit (own sidebar entry under Performance): the team's work list. Admins see all
  * cases, distribute them and import the Salesforce report; everyone else
  * (once `ONBOARDING_MODE=live`) only their own.
  */
@@ -71,7 +70,7 @@ export function OnboardingCockpit() {
   const canManage = access?.canManage ?? false;
 
   useEffect(() => {
-    if (access && !access.access) router.replace("/performance");
+    if (access && !access.access) router.replace("/");
   }, [access, router]);
 
   const [tab, setTab] = useState<Tab>("cases");
@@ -91,7 +90,15 @@ export function OnboardingCockpit() {
     .filter((c) => c.nextFollowUp)
     .sort((a, b) => a.nextFollowUp!.localeCompare(b.nextFollowUp!));
 
-  if (access === undefined || (allowed && cases === undefined)) return <PerformancePageSkeleton />;
+  if (access === undefined || (allowed && cases === undefined)) {
+    return (
+      <div className="mx-auto max-w-7xl space-y-4">
+        <Skeleton className="h-9 w-80" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
   if (!allowed) return null;
 
   const tabs = [
@@ -107,19 +114,19 @@ export function OnboardingCockpit() {
   ];
 
   return (
-    <PerformanceShell
-      title={t("title")}
-      description={canManage ? t("introManage") : t("introOwn")}
-      icon={Rocket}
-      width="max-w-7xl"
-      actions={
-        canManage && !access.live ? (
+    <div className="mx-auto max-w-7xl space-y-6">
+      <PageHeaderBar
+        title={t("title")}
+        description={canManage ? t("introManage") : t("introOwn")}
+        icon={<Rocket className="size-4" />}
+      />
+      {canManage && !access.live && (
+        <div className="flex justify-end">
           <Badge variant="warning" title={t("adminsOnlyHint")}>
             {t("adminsOnly")}
           </Badge>
-        ) : undefined
-      }
-    >
+        </div>
+      )}
       <CountTabs tabs={tabs} value={tab} onChange={setTab} />
 
       {tab === "cases" && (
@@ -159,7 +166,7 @@ export function OnboardingCockpit() {
         onOpenChange={(o) => !o && setOpenId(null)}
         assignees={assignees}
       />
-    </PerformanceShell>
+    </div>
   );
 }
 
