@@ -169,10 +169,11 @@ export const get = userQuery({
     const relevant = (a: Doc<"performanceActions">) =>
       a.source !== "review" &&
       isShown(a.employeeId) &&
-      // Still open, or created/done during the month.
+      // Still open, created during the month, or ticked off since it began
+      // — a measure ticked off in the review stays there, struck through.
       (!a.doneAt ||
         (a.createdAt >= monthStart && a.createdAt <= monthEnd) ||
-        (a.doneAt >= monthStart && a.doneAt <= monthEnd));
+        a.doneAt >= monthStart);
     const toItem = (a: Doc<"performanceActions">) => ({
       id: a._id,
       employeeId: a.employeeId ?? null,

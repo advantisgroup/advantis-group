@@ -598,7 +598,8 @@
     "lastCheckShort": "Letzter Check",
     "noItems": "keine Punkte",
     "newCheck": "Check anlegen",
-    "nextCheckOn": "Nächster Check bis {date}"
+    "nextCheckOn": "Nächster Check bis {date}",
+    "deleteConfirmDate": "Check vom {date} löschen?"
   },
   "kpiInfo": {
     "workableRate": "Anteil der in diesem Monat erstellten Leads, die workable sind (Status Analysis, Converted oder Not Interested): Workable ÷ Leads erstellt. VM/VJ = Veränderung in Prozentpunkten gegenüber Vormonat bzw. Vorjahresmonat.",
