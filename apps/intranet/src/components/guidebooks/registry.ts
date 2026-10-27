@@ -27,6 +27,7 @@ import { type TeamId } from "@/lib/teams";
 
 import { BlacklistForm } from "./BlacklistForm";
 import { CaseSearchGuidebook } from "./case-search";
+import { embeddedTool } from "./EmbeddedTool";
 import { SfIssuesTool } from "./SfIssuesTool";
 import { AbwesenheitenGenehmigenGuidebook } from "./docs/abwesenheiten-genehmigen";
 import { AnkuendigungenTermineGuidebook } from "./docs/ankuendigungen-termine";
@@ -126,6 +127,21 @@ export interface Guidebook {
  * register it with its slug, copy keys, icon and the teams that may read it.
  */
 export const GUIDEBOOKS: Guidebook[] = [
+  {
+    // Interaktives Tool (vorher Schnellleiste): eigenständige Seite aus public/tools/.
+    slug: "terminprozess-ev-check",
+    titleKey: "evCheck.title",
+    descriptionKey: "evCheck.description",
+    icon: CalendarCheck,
+    category: "interactive",
+    teams: [],
+    Component: embeddedTool(
+      "/tools/terminprozess-ev-check.html",
+      "Terminprozess E-Mobilitäts-Check",
+    ),
+    minimalChrome: true,
+    wide: true,
+  },
   {
     // Interaktives Tool: sendet im Hintergrund an das Black-List-Formular von UTA.
     slug: "blacklist",
