@@ -173,7 +173,10 @@ function ReportImport() {
     try {
       const importId = await start({ kind: "report", fileName: sheet.fileName });
       for (let i = 0; i < total; i += CHUNK) {
-        await chunk({ importId, rows: parsed.rows.slice(i, i + CHUNK) });
+        // Customer names stay out of the intranet (Vahan, 27.10.): the name
+        // column is recognised so it isn't kept as a report field, but never sent.
+        const rows = parsed.rows.slice(i, i + CHUNK).map(({ name: _name, ...rest }) => rest);
+        await chunk({ importId, rows });
         setProgress({ done: Math.min(i + CHUNK, total), total });
       }
       const result = await finish({ importId });
@@ -214,7 +217,7 @@ function ReportImport() {
               </p>
               <p className="text-xs text-muted-foreground">{t("import.mappingHint")}</p>
               <div className="grid gap-2 sm:grid-cols-2">
-                {REPORT_COLUMNS.map((key) => (
+                {REPORT_COLUMNS.filter((key) => key !== "name").map((key) => (
                   <ColumnSelect
                     key={key}
                     label={t(`import.field.${key}`)}

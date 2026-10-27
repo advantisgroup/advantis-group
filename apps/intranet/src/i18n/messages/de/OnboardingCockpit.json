@@ -179,7 +179,6 @@
     "title": "Kunde von Hand anlegen",
     "intro": "Für Kunden, die (noch) nicht im Report stehen. Ein späterer Report mit derselben Kundennummer ergänzt die Report-Spalten.",
     "number": "Kundennummer",
-    "name": "Kunde",
     "assignee": "Zugewiesen an",
     "accountStatus": "Account Status (optional)",
     "closeDate": "Close Date (optional)",
@@ -189,7 +188,7 @@
     "cancel": "Abbrechen",
     "created": "Kunde angelegt.",
     "error": "Konnte nicht angelegt werden – gibt es die Kundennummer schon?",
-    "required": "Kundennummer und Name sind Pflicht."
+    "required": "Bitte die Kundennummer eintragen."
   },
   "export": {
     "button": "Excel-Export",

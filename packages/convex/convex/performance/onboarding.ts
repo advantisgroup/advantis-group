@@ -398,7 +398,7 @@ export const addContact = userMutation({
 export const create = userMutation({
   args: {
     customerNumber: v.string(),
-    name: v.string(),
+    name: v.optional(v.string()),
     assigneeUserId: v.optional(v.union(v.id("users"), v.null())),
     accountStatus: v.optional(v.string()),
     closeDate: v.optional(v.string()),
@@ -410,8 +410,8 @@ export const create = userMutation({
     const number = args.customerNumber.trim().slice(0, 60);
     const key = customerKey(number);
     if (!key) throw invalid("Bitte eine Kundennummer eintragen.");
-    const name = args.name.trim().slice(0, 200);
-    if (!name) throw invalid("Bitte den Kundennamen eintragen.");
+    // Customer names aren't kept in the intranet; optional for old callers.
+    const name = args.name?.trim().slice(0, 200) ?? "";
     const existing = await ctx.db
       .query("onboardingCases")
       .withIndex("by_key", (q) => q.eq("customerKey", key))
@@ -603,7 +603,7 @@ export const importReportChunk = userMutation({
           ...report,
           customerKey: key,
           customerNumber: r.customerNumber.trim(),
-          name: r.name?.trim() || "Ohne Namen",
+          name: r.name?.trim() || "",
           ...stepTimestamps(null, stepsFromStatus(status), now),
           status,
           prio: false,

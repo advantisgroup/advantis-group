@@ -297,7 +297,6 @@ function CasesView({
         return false;
       return matchesSearch(
         query,
-        c.name,
         c.customerNumber,
         c.assigneeName,
         c.reportOwner,
@@ -563,7 +562,6 @@ function ExportButton({ rows }: { rows: CaseRow[] }) {
   const t = useTranslations("OnboardingCockpit");
   const run = () => {
     const header = [
-      t("col.customer"),
       t("col.number"),
       t("col.status"),
       ...ONBOARDING_STEPS.map((s) => `${t(`steps.${s}`)} (${STEP_CODES[s]})`),
@@ -579,7 +577,6 @@ function ExportButton({ rows }: { rows: CaseRow[] }) {
       t("col.lastContact"),
     ];
     const data = rows.map((c) => [
-      c.name,
       c.customerNumber,
       t(`status.${c.status as "fresh"}`),
       ...ONBOARDING_STEPS.map((s) => (c.steps[s] ? "Ja" : "Nein")),
@@ -595,7 +592,7 @@ function ExportButton({ rows }: { rows: CaseRow[] }) {
       c.lastContactAt ? new Date(c.lastContactAt).toISOString().slice(0, 10) : "",
     ]);
     const sheet = XLSX.utils.aoa_to_sheet([header, ...data]);
-    sheet["!cols"] = header.map((h, i) => ({ wch: i === 0 ? 36 : Math.max(12, h.length + 2) }));
+    sheet["!cols"] = header.map((h, i) => ({ wch: Math.max(12, h.length + 2) }));
     const book = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(book, sheet, t("export.sheet"));
     XLSX.writeFile(book, `Onboarding-Cockpit_${todayIso()}.xlsx`);
@@ -744,7 +741,6 @@ function CaseTable({
                 />
               </TableHead>
             )}
-            <TableHead>{t("col.customer")}</TableHead>
             <TableHead>{t("col.number")}</TableHead>
             <TableHead>{t("col.progress")}</TableHead>
             <TableHead>{t("col.assignee")}</TableHead>
@@ -771,7 +767,7 @@ function CaseTable({
               )}
               <TableCell className="max-w-[320px]">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="font-medium">{c.name}</span>
+                  <span className="font-medium tabular-nums">{c.customerNumber}</span>
                   {c.prio && isOpen(c) && (
                     <Badge variant="destructive" className="gap-1 px-1.5 py-0 text-[10px]">
                       <Flag className="h-2.5 w-2.5" />
@@ -790,7 +786,6 @@ function CaseTable({
                   </p>
                 )}
               </TableCell>
-              <TableCell className="tabular-nums">{c.customerNumber}</TableCell>
               <TableCell>
                 <div className="flex flex-col items-start gap-1">
                   <StatusBadge status={c.status} />

@@ -56,7 +56,7 @@ export function CaseSheet({
 }) {
   return (
     <Sheet open={!!caseId} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-3xl">
         {caseId && <CaseBody key={caseId} caseId={caseId} assignees={assignees} />}
       </SheetContent>
     </Sheet>
@@ -86,7 +86,7 @@ function CaseBody({
 
   if (data === undefined) {
     return (
-      <div className="space-y-3 pt-6">
+      <div className="space-y-3 p-6">
         <Skeleton className="h-7 w-2/3" />
         <Skeleton className="h-24 w-full" />
         <Skeleton className="h-40 w-full" />
@@ -124,10 +124,10 @@ function CaseBody({
   const doneSteps = ONBOARDING_STEPS.filter((s) => data.steps[s]).length;
 
   return (
-    <div className="space-y-6 pb-8">
-      <div className="space-y-1 pr-10 text-left">
-        <SheetTitle className="flex flex-wrap items-center gap-2 text-lg">
-          {data.name}
+    <>
+      <div className="shrink-0 space-y-1 border-b bg-background px-6 pb-4 pr-14 pt-5 text-left">
+        <SheetTitle className="flex flex-wrap items-center gap-2 text-lg tabular-nums">
+          {t("case.number", { number: data.customerNumber })}
           {data.prio && (
             <Badge variant="destructive" className="gap-1">
               <Flag className="h-3 w-3" />
@@ -138,204 +138,209 @@ function CaseBody({
           {data.manual && <Badge variant="muted">{t("case.manualBadge")}</Badge>}
           {data.archived && <Badge variant="muted">{t("case.archivedBadge")}</Badge>}
         </SheetTitle>
-        <SheetDescription className="tabular-nums">
-          {t("case.number", { number: data.customerNumber })}
-          {data.accountStatus && ` · ${t("case.accountStatus")}: ${data.accountStatus}`}
-          {data.closeDate && ` · ${t("case.closeDate")}: ${formatIsoDate(data.closeDate, locale)}`}
+        <SheetDescription className="flex flex-wrap gap-x-3 gap-y-0.5 tabular-nums">
+          <span>
+            {t("case.accountStatus")}: {data.accountStatus ?? "–"}
+          </span>
+          <span>
+            {t("case.closeDate")}: {data.closeDate ? formatIsoDate(data.closeDate, locale) : "–"}
+          </span>
         </SheetDescription>
       </div>
 
-      <section className="space-y-3 rounded-xl border border-border/70 p-4">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold">{t("case.steps")}</h3>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {t("case.stepsDone", { done: doneSteps })}
-            <StatusBadge status={data.status} />
+      <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
+        <section className="space-y-3 rounded-xl border border-border/70 p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold">{t("case.steps")}</h3>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {t("case.stepsDone", { done: doneSteps })}
+              <StatusBadge status={data.status} />
+            </div>
           </div>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-3">
-          {ONBOARDING_STEPS.map((step) => (
-            <label
-              key={step}
-              className="flex cursor-pointer items-center gap-2 rounded-lg border border-border/70 px-3 py-2 text-sm hover:bg-muted/40"
-            >
-              <Checkbox
-                checked={data.steps[step]}
-                onCheckedChange={(v) => void save({ steps: { [step]: v === true } })}
-              />
-              <span className="min-w-0">
-                <span className="block font-medium">{t(`steps.${step}`)}</span>
-                <span className="text-xs text-muted-foreground">{STEP_CODES[step]}</span>
-              </span>
-            </label>
-          ))}
-        </div>
-      </section>
-
-      <section className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>{t("case.assignee")}</Label>
-          {data.canManage ? (
-            <Select
-              value={data.assigneeUserId ?? NOBODY}
-              onValueChange={(v) =>
-                void save({ assigneeUserId: v === NOBODY ? null : (v as Id<"users">) })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NOBODY}>{t("case.nobody")}</SelectItem>
-                {(assignees ?? []).map((a) => (
-                  <SelectItem key={a.userId} value={a.userId}>
-                    {a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <p className="py-2 text-sm">{data.assigneeName ?? t("case.nobody")}</p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="ob-follow">{t("case.followUp")}</Label>
-          <div className="flex gap-2">
-            <Input
-              id="ob-follow"
-              type="date"
-              value={data.nextFollowUp ?? ""}
-              disabled={data.status === "done"}
-              onChange={(e) => void save({ nextFollowUp: e.target.value || null })}
-            />
-            {data.nextFollowUp && (
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={t("case.clearFollowUp")}
-                onClick={() => void save({ nextFollowUp: null })}
+          <div className="grid gap-2 sm:grid-cols-3">
+            {ONBOARDING_STEPS.map((step) => (
+              <label
+                key={step}
+                className="flex cursor-pointer items-center gap-2 rounded-lg border border-border/70 px-3 py-2 text-sm hover:bg-muted/40"
               >
-                <X className="h-4 w-4" />
-              </Button>
+                <Checkbox
+                  checked={data.steps[step]}
+                  onCheckedChange={(v) => void save({ steps: { [step]: v === true } })}
+                />
+                <span className="min-w-0">
+                  <span className="block font-medium">{t(`steps.${step}`)}</span>
+                  <span className="text-xs text-muted-foreground">{STEP_CODES[step]}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>{t("case.assignee")}</Label>
+            {data.canManage ? (
+              <Select
+                value={data.assigneeUserId ?? NOBODY}
+                onValueChange={(v) =>
+                  void save({ assigneeUserId: v === NOBODY ? null : (v as Id<"users">) })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NOBODY}>{t("case.nobody")}</SelectItem>
+                  {(assignees ?? []).map((a) => (
+                    <SelectItem key={a.userId} value={a.userId}>
+                      {a.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="py-2 text-sm">{data.assigneeName ?? t("case.nobody")}</p>
             )}
           </div>
-        </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="ob-sub">{t("case.subStatus")}</Label>
-          <Input
-            id="ob-sub"
-            key={`sub-${data.subStatus ?? ""}`}
-            defaultValue={data.subStatus ?? ""}
-            placeholder={t("case.subStatusHint")}
-            list="ob-sub-codes"
-            maxLength={20}
-            onBlur={(e) => {
-              if (e.target.value.trim() !== (data.subStatus ?? "")) {
-                void save({ subStatus: e.target.value });
-              }
-            }}
-          />
-          <datalist id="ob-sub-codes">
-            {ONBOARDING_STEPS.map((s) => (
-              <option key={s} value={STEP_CODES[s]}>
-                {t(`steps.${s}`)}
-              </option>
-            ))}
-          </datalist>
-        </div>
-
-        <div className="flex items-center gap-3 sm:pt-6">
-          <Switch
-            id="ob-prio"
-            checked={data.prio}
-            onCheckedChange={(prio) => void save({ prio })}
-          />
-          <Label htmlFor="ob-prio">{t("case.prio")}</Label>
-        </div>
-
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="ob-standing-note">{t("case.noteTitle")}</Label>
-          <Textarea
-            id="ob-standing-note"
-            key={`note-${data.note ?? ""}`}
-            rows={2}
-            defaultValue={data.note ?? ""}
-            onBlur={(e) => {
-              if (e.target.value.trim() !== (data.note ?? "")) {
-                void save({ note: e.target.value });
-              }
-            }}
-          />
-          <p className="text-xs text-muted-foreground">{t("case.noteHint")}</p>
-        </div>
-      </section>
-
-      <ContactForm caseId={caseId} closed={data.status === "done"} />
-
-      <section className="space-y-2">
-        <h3 className="text-sm font-semibold">{t("case.log")}</h3>
-        {data.contacts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("case.logEmpty")}</p>
-        ) : (
-          <ol className="space-y-2">
-            {data.contacts.map((c) => (
-              <li key={c._id} className="rounded-lg border border-border/70 px-3 py-2 text-sm">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="font-medium">{logTitle(c)}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDateTime(c.at, locale)} · {c.byName}
-                  </span>
-                </div>
-                {(c.kind === "status" || c.kind === "assign") && (
-                  <p className="text-muted-foreground">
-                    {t("case.change", {
-                      from:
-                        c.kind === "status"
-                          ? statusLabel(c.fromValue)
-                          : (c.fromValue ?? t("case.nobody")),
-                      to:
-                        c.kind === "status"
-                          ? statusLabel(c.toValue)
-                          : (c.toValue ?? t("case.nobody")),
-                    })}
-                  </p>
-                )}
-                {c.note && <p className="mt-1 whitespace-pre-wrap">{c.note}</p>}
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
-
-      <section className="space-y-2">
-        <h3 className="text-sm font-semibold">{t("case.report")}</h3>
-        <dl className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-3 gap-y-1.5 text-sm">
-          <dt className="text-muted-foreground">{t("case.accountStatus")}</dt>
-          <dd>{data.accountStatus ?? "–"}</dd>
-          <dt className="text-muted-foreground">{t("case.closeDate")}</dt>
-          <dd>{data.closeDate ? formatIsoDate(data.closeDate, locale) : "–"}</dd>
-          <dt className="text-muted-foreground">{t("case.reportStatus")}</dt>
-          <dd>{data.reportStatus ?? "–"}</dd>
-          <dt className="text-muted-foreground">{t("case.reportOwner")}</dt>
-          <dd>{data.reportOwner ?? "–"}</dd>
-          <dt className="text-muted-foreground">{t("case.reportDate")}</dt>
-          <dd>{data.reportDate ? formatIsoDate(data.reportDate, locale) : "–"}</dd>
-          {data.reportFields.map((f, i) => (
-            <div key={i} className="contents">
-              <dt className="truncate text-muted-foreground" title={f.label}>
-                {f.label}
-              </dt>
-              <dd className="break-words">{f.value}</dd>
+          <div className="space-y-1.5">
+            <Label htmlFor="ob-follow">{t("case.followUp")}</Label>
+            <div className="flex gap-2">
+              <Input
+                id="ob-follow"
+                type="date"
+                value={data.nextFollowUp ?? ""}
+                disabled={data.status === "done"}
+                onChange={(e) => void save({ nextFollowUp: e.target.value || null })}
+              />
+              {data.nextFollowUp && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t("case.clearFollowUp")}
+                  onClick={() => void save({ nextFollowUp: null })}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-          ))}
-        </dl>
-        {data.reportFields.length === 0 && (
-          <p className="text-xs text-muted-foreground">{t("case.noReportFields")}</p>
-        )}
-      </section>
-    </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="ob-sub">{t("case.subStatus")}</Label>
+            <Input
+              id="ob-sub"
+              key={`sub-${data.subStatus ?? ""}`}
+              defaultValue={data.subStatus ?? ""}
+              placeholder={t("case.subStatusHint")}
+              list="ob-sub-codes"
+              maxLength={20}
+              onBlur={(e) => {
+                if (e.target.value.trim() !== (data.subStatus ?? "")) {
+                  void save({ subStatus: e.target.value });
+                }
+              }}
+            />
+            <datalist id="ob-sub-codes">
+              {ONBOARDING_STEPS.map((s) => (
+                <option key={s} value={STEP_CODES[s]}>
+                  {t(`steps.${s}`)}
+                </option>
+              ))}
+            </datalist>
+          </div>
+
+          <div className="flex items-center gap-3 sm:pt-6">
+            <Switch
+              id="ob-prio"
+              checked={data.prio}
+              onCheckedChange={(prio) => void save({ prio })}
+            />
+            <Label htmlFor="ob-prio">{t("case.prio")}</Label>
+          </div>
+
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="ob-standing-note">{t("case.noteTitle")}</Label>
+            <Textarea
+              id="ob-standing-note"
+              key={`note-${data.note ?? ""}`}
+              rows={2}
+              defaultValue={data.note ?? ""}
+              onBlur={(e) => {
+                if (e.target.value.trim() !== (data.note ?? "")) {
+                  void save({ note: e.target.value });
+                }
+              }}
+            />
+            <p className="text-xs text-muted-foreground">{t("case.noteHint")}</p>
+          </div>
+        </section>
+
+        <ContactForm caseId={caseId} closed={data.status === "done"} />
+
+        <section className="space-y-2">
+          <h3 className="text-sm font-semibold">{t("case.log")}</h3>
+          {data.contacts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("case.logEmpty")}</p>
+          ) : (
+            <ol className="space-y-2">
+              {data.contacts.map((c) => (
+                <li key={c._id} className="rounded-lg border border-border/70 px-3 py-2 text-sm">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="font-medium">{logTitle(c)}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDateTime(c.at, locale)} · {c.byName}
+                    </span>
+                  </div>
+                  {(c.kind === "status" || c.kind === "assign") && (
+                    <p className="text-muted-foreground">
+                      {t("case.change", {
+                        from:
+                          c.kind === "status"
+                            ? statusLabel(c.fromValue)
+                            : (c.fromValue ?? t("case.nobody")),
+                        to:
+                          c.kind === "status"
+                            ? statusLabel(c.toValue)
+                            : (c.toValue ?? t("case.nobody")),
+                      })}
+                    </p>
+                  )}
+                  {c.note && <p className="mt-1 whitespace-pre-wrap">{c.note}</p>}
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold">{t("case.report")}</h3>
+          <dl className="grid gap-x-6 gap-y-3 rounded-xl border border-border/70 p-4 text-sm sm:grid-cols-2">
+            {[
+              { label: t("case.accountStatus"), value: data.accountStatus },
+              {
+                label: t("case.closeDate"),
+                value: data.closeDate ? formatIsoDate(data.closeDate, locale) : null,
+              },
+              { label: t("case.reportStatus"), value: data.reportStatus },
+              { label: t("case.reportOwner"), value: data.reportOwner },
+              {
+                label: t("case.reportDate"),
+                value: data.reportDate ? formatIsoDate(data.reportDate, locale) : null,
+              },
+              ...data.reportFields,
+            ].map((f, i) => (
+              <div key={i} className="min-w-0">
+                <dt className="truncate text-xs text-muted-foreground" title={f.label}>
+                  {f.label}
+                </dt>
+                <dd className="break-words">{f.value || "–"}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      </div>
+    </>
   );
 }
 
