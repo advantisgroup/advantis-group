@@ -343,6 +343,14 @@ export const INTRANET_PAGES: IntranetPage[] = [
     keywords: ["kennzahlen", "kpi", "calls", "performance", "report", "upload", "dashboard"],
   },
   {
+    href: "/onboarding-cockpit",
+    label: "Onboarding-Cockpit",
+    description:
+      "UTA-Neukunden aus dem Onboarding-Report: Prio-Fälle, Wiedervorlagen, Kontakte je Kunde und Verteilung ans Team.",
+    keywords: ["onboarding", "neukunden", "prio", "wiedervorlage", "cockpit", "kunden"],
+    visible: (caller) => caller.isAdmin || process.env.ONBOARDING_MODE === "live",
+  },
+  {
     href: "/hr",
     label: "Bewerbermanagement",
     description: "Bewerbungen, Termine und Mitarbeiterakten.",

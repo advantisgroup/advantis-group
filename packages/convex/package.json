@@ -32,6 +32,11 @@
       "import": "./convex/marketing/lib/inquiry.ts",
       "default": "./convex/marketing/lib/inquiry.ts"
     },
+    "./performance/onboarding": {
+      "types": "./convex/performance/lib/onboarding.ts",
+      "import": "./convex/performance/lib/onboarding.ts",
+      "default": "./convex/performance/lib/onboarding.ts"
+    },
     "./performance/xlsxZip": {
       "types": "./convex/performance/lib/xlsxZip.ts",
       "import": "./convex/performance/lib/xlsxZip.ts",

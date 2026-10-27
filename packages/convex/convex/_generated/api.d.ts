@@ -197,6 +197,7 @@ import type * as performance_lib_callImport from "../performance/lib/callImport.
 import type * as performance_lib_checkKpis from "../performance/lib/checkKpis.js";
 import type * as performance_lib_interactionImport from "../performance/lib/interactionImport.js";
 import type * as performance_lib_kpi from "../performance/lib/kpi.js";
+import type * as performance_lib_onboarding from "../performance/lib/onboarding.js";
 import type * as performance_lib_referenceFix from "../performance/lib/referenceFix.js";
 import type * as performance_lib_reports from "../performance/lib/reports.js";
 import type * as performance_lib_roster from "../performance/lib/roster.js";
@@ -205,6 +206,7 @@ import type * as performance_lib_types from "../performance/lib/types.js";
 import type * as performance_lib_wallboxImport from "../performance/lib/wallboxImport.js";
 import type * as performance_lib_workdays from "../performance/lib/workdays.js";
 import type * as performance_lib_xlsxZip from "../performance/lib/xlsxZip.js";
+import type * as performance_onboarding from "../performance/onboarding.js";
 import type * as performance_queries from "../performance/queries.js";
 import type * as performance_reviews from "../performance/reviews.js";
 import type * as performance_topics from "../performance/topics.js";
@@ -498,6 +500,7 @@ declare const fullApi: ApiFromModules<{
   "performance/lib/checkKpis": typeof performance_lib_checkKpis;
   "performance/lib/interactionImport": typeof performance_lib_interactionImport;
   "performance/lib/kpi": typeof performance_lib_kpi;
+  "performance/lib/onboarding": typeof performance_lib_onboarding;
   "performance/lib/referenceFix": typeof performance_lib_referenceFix;
   "performance/lib/reports": typeof performance_lib_reports;
   "performance/lib/roster": typeof performance_lib_roster;
@@ -506,6 +509,7 @@ declare const fullApi: ApiFromModules<{
   "performance/lib/wallboxImport": typeof performance_lib_wallboxImport;
   "performance/lib/workdays": typeof performance_lib_workdays;
   "performance/lib/xlsxZip": typeof performance_lib_xlsxZip;
+  "performance/onboarding": typeof performance_onboarding;
   "performance/queries": typeof performance_queries;
   "performance/reviews": typeof performance_reviews;
   "performance/topics": typeof performance_topics;

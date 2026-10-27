@@ -26,6 +26,7 @@ import {
   MessageSquare,
   Newspaper,
   PhoneCall,
+  Rocket,
   RotateCcw,
   Rss,
   Settings,
@@ -195,6 +196,7 @@ export function Sidebar() {
   const approvalCover = useQuery(api.org.delegations.mine);
   // Test mode: only the testers named in Convex (TIME_TESTERS) see it.
   const timeMode = useQuery(api.time.mode.status);
+  const onboardingCockpit = useQuery(api.performance.onboarding.me);
   const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
   const pendingAbsences = usePendingAbsenceCount(isAdmin);
   const { setOpenMobile, state, isMobile, editing, setEditing } = useSidebar();
@@ -367,6 +369,19 @@ export function Sidebar() {
       // Part of the intranet now (no separate login), so no external hint.
       isNew: true,
     },
+    // Own entry right under Performance; shown to whoever may open it
+    // (admins until the Convex env ONBOARDING_MODE is live).
+    ...(onboardingCockpit?.access
+      ? [
+          {
+            section: "apps" as const,
+            href: "/onboarding-cockpit",
+            labelKey: "onboardingCockpit",
+            icon: Rocket,
+            isNew: true,
+          },
+        ]
+      : []),
     { section: "apps", href: "/sales-cockpit", labelKey: "salesCockpit", icon: PhoneCall },
     { section: "apps", href: "/sales-coach-ev", labelKey: "salesCoachEv", icon: Zap },
     // Products that happen to be registered as guidebooks — their own route
