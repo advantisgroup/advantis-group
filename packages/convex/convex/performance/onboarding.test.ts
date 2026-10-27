@@ -341,4 +341,19 @@ describe("onboarding cockpit", () => {
     const all = await as("admin").query(api.performance.onboarding.list, {});
     expect(all.find((c) => c._id === id)!.inReport).toBe(true);
   });
+
+  test("reset clears all cockpit data, admins only", async () => {
+    vi.stubEnv("ONBOARDING_MODE", "live");
+    const { as } = await setup();
+    const admin = as("admin");
+    await importReport(admin, [{ customerNumber: "100" }, { customerNumber: "200" }]);
+    const [c] = await admin.query(api.performance.onboarding.list, {});
+    await admin.mutation(api.performance.onboarding.addContact, { caseId: c._id, kind: "email" });
+    await expect(as("melina").mutation(api.performance.onboarding.resetAll, {})).rejects.toThrow();
+
+    let result = await admin.mutation(api.performance.onboarding.resetAll, {});
+    while (result.remaining) result = await admin.mutation(api.performance.onboarding.resetAll, {});
+    expect(await admin.query(api.performance.onboarding.list, {})).toEqual([]);
+    expect(await admin.query(api.performance.onboarding.imports, {})).toEqual([]);
+  });
 });

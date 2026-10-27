@@ -698,3 +698,35 @@ function stripUndefined<T extends Record<string, boolean | undefined>>(o: T): Pa
   }
   return out;
 }
+
+// ------------------------------------------------------------------ reset
+
+const RESET_BATCH = 500;
+
+/**
+ * Deletes every cockpit row — cases, contact log, import history — so test
+ * data can be cleared before the real start. Admins only, behind a typed
+ * confirmation in the UI. Works in batches: call again while `remaining`
+ * is true. These tables aren't in the trash (`lib/trash.ts`), so this is
+ * final.
+ */
+export const resetAll = userMutation({
+  args: {},
+  handler: async (ctx) => {
+    requireManage(ctx.caller);
+    let budget = RESET_BATCH;
+    let deleted = 0;
+    for (const table of ["onboardingContacts", "onboardingCases", "onboardingImports"] as const) {
+      if (budget <= 0) break;
+      const rows = await ctx.db.query(table).take(budget);
+      for (const row of rows) await ctx.db.delete(row._id);
+      deleted += rows.length;
+      budget -= rows.length;
+    }
+    const remaining =
+      (await ctx.db.query("onboardingContacts").first()) !== null ||
+      (await ctx.db.query("onboardingCases").first()) !== null ||
+      (await ctx.db.query("onboardingImports").first()) !== null;
+    return { deleted, remaining };
+  },
+});
