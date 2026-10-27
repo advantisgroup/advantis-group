@@ -290,8 +290,6 @@ export function Sidebar() {
             labelKey: "guidebooks",
             icon: BookOpen,
             tourAttr: "tour-nav-guidebooks",
-            // Für alle freigegeben am 19.10.2026 — „Neu“ für ein paar Wochen.
-            isNew: true,
           },
         ]
       : []),
@@ -366,8 +364,6 @@ export function Sidebar() {
       href: "/performance",
       labelKey: "performance",
       icon: LineChart,
-      // Part of the intranet now (no separate login), so no external hint.
-      isNew: true,
     },
     // Own entry right under Performance; shown to whoever may open it
     // (admins until the Convex env ONBOARDING_MODE is live).
