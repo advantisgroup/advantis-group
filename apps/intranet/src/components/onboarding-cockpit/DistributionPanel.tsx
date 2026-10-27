@@ -126,7 +126,7 @@ function TeamLoad({ loads, pool }: { loads: Load[]; pool: CaseRow[] }) {
         <Users className="h-4 w-4 text-muted-foreground" />
         {t("dist.loadTitle")}
       </h2>
-      <div className="overflow-x-auto rounded-xl border bg-card">
+      <div className="overflow-x-auto rounded-xl border bg-card border-border/70">
         <Table>
           <TableHeader>
             <TableRow>
@@ -300,7 +300,7 @@ function Distribute({ loads, pool }: { loads: Load[]; pool: CaseRow[] }) {
                   <label
                     key={l.userId}
                     className={cn(
-                      "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm",
+                      "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm border-border/70",
                       l.paused && "opacity-50",
                     )}
                   >
@@ -336,7 +336,7 @@ function Distribute({ loads, pool }: { loads: Load[]; pool: CaseRow[] }) {
 
         {proposal && (
           <div className="space-y-3">
-            <div className="overflow-x-auto rounded-lg border">
+            <div className="overflow-x-auto rounded-lg border border-border/70">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -493,7 +493,7 @@ function Reassign({ loads }: { loads: Load[] }) {
             {targets.map((l) => (
               <label
                 key={l.userId}
-                className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm"
+                className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm border-border/70"
               >
                 <Checkbox
                   checked={to.has(l.userId)}
@@ -510,7 +510,7 @@ function Reassign({ loads }: { loads: Load[] }) {
                 {l.name}
               </label>
             ))}
-            <label className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-1.5 text-sm">
+            <label className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-1.5 text-sm border-border/70">
               <Checkbox
                 checked={toPool}
                 onCheckedChange={(v) => setTo(v === true ? new Set([POOL]) : new Set())}
@@ -586,7 +586,7 @@ function TeamSetup({ people, isAdmin }: { people: Person[] | undefined; isAdmin:
         <p className="text-sm text-muted-foreground">{t("dist.teamHint")}</p>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="max-h-80 overflow-y-auto rounded-lg border">
+        <div className="max-h-80 overflow-y-auto rounded-lg border border-border/70">
           <Table>
             <TableHeader>
               <TableRow>

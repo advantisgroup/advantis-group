@@ -201,7 +201,7 @@ export function FollowUpCalendar({
           </Button>
         </div>
         <h3 className="text-sm font-semibold">{title}</h3>
-        <div className="ml-auto flex rounded-lg border p-0.5" role="tablist">
+        <div className="ml-auto flex rounded-lg border p-0.5 border-border/70" role="tablist">
           {(["week", "day"] as const).map((v) => (
             <button
               key={v}
@@ -220,7 +220,7 @@ export function FollowUpCalendar({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border bg-card">
+      <div className="overflow-x-auto rounded-xl border bg-card border-border/70">
         <div
           className={cn("grid", view === "week" ? "min-w-[900px]" : "min-w-0")}
           style={{
@@ -228,7 +228,7 @@ export function FollowUpCalendar({
           }}
         >
           {/* Day headers */}
-          <div className="sticky left-0 border-b bg-card" />
+          <div className="sticky left-0 border-b bg-card border-border/70" />
           {days.map((d) => {
             const date = new Date(`${d}T12:00:00Z`);
             const isToday = d === today;
@@ -241,7 +241,7 @@ export function FollowUpCalendar({
                   setView("day");
                 }}
                 className={cn(
-                  "border-b border-l px-2 py-2 text-left text-xs hover:bg-muted/50",
+                  "border-b border-l px-2 py-2 text-left text-xs hover:bg-muted/50 border-border/70",
                   isToday && "bg-primary/5",
                 )}
               >
@@ -266,7 +266,7 @@ export function FollowUpCalendar({
                   key={d}
                   {...props}
                   className={cn(
-                    "min-h-[52px] space-y-1 border-b border-l bg-muted/20 p-1",
+                    "min-h-[52px] space-y-1 border-b border-l bg-muted/20 p-1 border-border/70",
                     d === today && "bg-primary/5",
                     props.className,
                   )}
@@ -287,7 +287,7 @@ export function FollowUpCalendar({
                     key={d}
                     {...props}
                     className={cn(
-                      "min-h-[44px] space-y-1 border-b border-l p-1",
+                      "min-h-[44px] space-y-1 border-b border-l p-1 border-border/70",
                       d === today && "bg-primary/[0.03]",
                       props.className,
                     )}
@@ -308,7 +308,7 @@ export function FollowUpCalendar({
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <>
-      <div className="sticky left-0 border-b bg-card px-2 py-1 text-right text-[11px] tabular-nums text-muted-foreground">
+      <div className="sticky left-0 border-b bg-card px-2 py-1 text-right text-[11px] tabular-nums text-muted-foreground border-border/70">
         {label}
       </div>
       {children}
@@ -344,7 +344,7 @@ function CaseChip({
       onClick={() => onOpen(c._id)}
       title={c.note ?? undefined}
       className={cn(
-        "block w-full cursor-grab rounded-md border bg-background px-2 py-1 text-left text-xs shadow-sm transition-colors hover:border-foreground/40 active:cursor-grabbing",
+        "block w-full cursor-grab rounded-md border border-border/70 bg-background px-2 py-1 text-left text-xs shadow-sm transition-colors hover:border-foreground/40 active:cursor-grabbing",
         c.prio && "border-l-2 border-l-destructive",
         past && "border-destructive/40 bg-destructive/5",
         !wide && showDate && "w-auto",
