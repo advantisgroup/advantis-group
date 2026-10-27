@@ -9,10 +9,70 @@
  */
 
 /** Working stages of a case, in order. The labels live in the
- * `OnboardingCockpit` translations. Placeholder set from the boss's
- * prototype until the team says what the steps mean. */
+ * `OnboardingCockpit` translations. The stage follows from how many of the
+ * three onboarding steps are done (decision 10/2026): none = fresh,
+ * 1 = step1, 2 = step2, all three = done. */
 export const ONBOARDING_STATUSES = ["fresh", "step1", "step2", "done"] as const;
 export type OnboardingStatus = (typeof ONBOARDING_STATUSES)[number];
+
+/** The three onboarding steps of a new customer, in order: cards ordered
+ * (KAR), first fuelling (TAN), two-month check (2M). */
+export const ONBOARDING_STEPS = ["cards", "fuel", "twoMonth"] as const;
+export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
+export type StepState = Record<OnboardingStep, boolean>;
+
+/** Short codes the team uses for the steps (substatus suggestions). */
+export const STEP_CODES: Record<OnboardingStep, string> = {
+  cards: "KAR",
+  fuel: "TAN",
+  twoMonth: "2M",
+};
+
+export function isOnboardingStep(value: string): value is OnboardingStep {
+  return (ONBOARDING_STEPS as readonly string[]).includes(value);
+}
+
+/** Stage from the steps: how many of the three are done. */
+export function statusFromSteps(steps: StepState): OnboardingStatus {
+  const done = ONBOARDING_STEPS.filter((s) => steps[s]).length;
+  return ONBOARDING_STATUSES[done];
+}
+
+/** Steps implied by a stage (for cases from before the steps existed, and
+ * for new cases from the report's status). */
+export function stepsFromStatus(status: string): StepState {
+  const n = Math.max(0, ONBOARDING_STATUSES.indexOf(status as OnboardingStatus));
+  return { cards: n >= 1, fuel: n >= 2, twoMonth: n >= 3 };
+}
+
+/** The step fields of a case row: a timestamp when done. */
+export interface StepFields {
+  status: string;
+  cardsOrderedAt?: number;
+  fuelledAt?: number;
+  twoMonthCheckAt?: number;
+}
+
+export const STEP_FIELD: Record<
+  OnboardingStep,
+  "cardsOrderedAt" | "fuelledAt" | "twoMonthCheckAt"
+> = {
+  cards: "cardsOrderedAt",
+  fuel: "fuelledAt",
+  twoMonth: "twoMonthCheckAt",
+};
+
+/** Which steps a case has done. Rows without any step timestamp (created
+ * before the steps existed) fall back to their stage. */
+export function stepsOf(row: StepFields): StepState {
+  const any = ONBOARDING_STEPS.some((s) => row[STEP_FIELD[s]] !== undefined);
+  if (!any) return stepsFromStatus(row.status);
+  return {
+    cards: row.cardsOrderedAt !== undefined,
+    fuel: row.fuelledAt !== undefined,
+    twoMonth: row.twoMonthCheckAt !== undefined,
+  };
+}
 
 export function isOnboardingStatus(value: string): value is OnboardingStatus {
   return (ONBOARDING_STATUSES as readonly string[]).includes(value);
@@ -23,15 +83,18 @@ export function isClosedStatus(status: string): boolean {
   return status === "done";
 }
 
-/** What a contact-log entry records. `status`/`assign`/`prio` are written
- * by the system when someone changes the case, the rest by people. */
+/** What a contact-log entry records. `status`/`step`/`assign`/`created`
+ * are written by the system when someone changes the case, the rest by
+ * people. */
 export const ONBOARDING_CONTACT_KINDS = [
   "reached",
   "not_reached",
   "email",
   "note",
   "status",
+  "step",
   "assign",
+  "created",
 ] as const;
 export type OnboardingContactKind = (typeof ONBOARDING_CONTACT_KINDS)[number];
 
@@ -70,24 +133,46 @@ export function statusFromReport(text: string | undefined): OnboardingStatus {
 
 /** The report columns the cockpit knows. Everything else is kept as
  * "further report columns" on the case. */
-export const REPORT_COLUMNS = ["number", "name", "status", "owner", "date"] as const;
+export const REPORT_COLUMNS = [
+  "number",
+  "name",
+  "status",
+  "accountStatus",
+  "closeDate",
+  "owner",
+  "date",
+] as const;
 export type ReportColumn = (typeof REPORT_COLUMNS)[number];
 export type ColumnMap = Record<ReportColumn, number>;
 
 const COLUMN_PATTERNS: Record<ReportColumn, RegExp> = {
   number: /customer.?(number|no|nr)|kunden.?(nummer|nr)|account.?(number|nr)|debitor/i,
   name: /account.?name|kunden.?name|firmen.?name|company|^kunde$|^account$|^name$|firma/i,
+  accountStatus: /account.?status|konto.?status|kunden.?status/i,
+  closeDate: /close.?date|abschluss.?datum|vertrags.?datum|closed.?on/i,
   status: /onboarding.?status|^status|stage|phase|substatus|status/i,
   owner: /owner|zugewiesen|consultant|bearbeiter|assigned|verantwortlich|inhaber/i,
-  date: /created|erstellt|close.?date|datum|date/i,
+  date: /created|erstellt|datum|date/i,
 };
 
+/** Guessing order: the specific columns (account status, close date) go
+ * before the general ones that would also match them. */
+const GUESS_ORDER: ReportColumn[] = [
+  "number",
+  "name",
+  "accountStatus",
+  "closeDate",
+  "status",
+  "owner",
+  "date",
+];
+
 /** Column index per known field, -1 when nothing matches. Each column is
- * used for at most one field, in the order of `REPORT_COLUMNS`. */
+ * used for at most one field. */
 export function guessColumns(headers: string[]): ColumnMap {
   const taken = new Set<number>();
   const map = {} as ColumnMap;
-  for (const key of REPORT_COLUMNS) {
+  for (const key of GUESS_ORDER) {
     const index = headers.findIndex((h, i) => !taken.has(i) && COLUMN_PATTERNS[key].test(h));
     map[key] = index;
     if (index >= 0) taken.add(index);
@@ -132,6 +217,8 @@ export interface ReportRowInput {
   reportStatus?: string;
   reportOwner?: string;
   reportDate?: string;
+  accountStatus?: string;
+  closeDate?: string;
   fields?: { label: string; value: string }[];
 }
 
@@ -185,6 +272,8 @@ export function reportRows(
       reportStatus: at(row, map.status).slice(0, 120) || undefined,
       reportOwner: at(row, map.owner).slice(0, 120) || undefined,
       reportDate: map.date >= 0 ? toIsoDate(row[map.date]) || undefined : undefined,
+      accountStatus: at(row, map.accountStatus).slice(0, 120) || undefined,
+      closeDate: map.closeDate >= 0 ? toIsoDate(row[map.closeDate]) || undefined : undefined,
       fields,
     });
   }

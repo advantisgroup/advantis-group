@@ -648,6 +648,21 @@ export const performanceTables = {
     reportDate: v.optional(v.string()),
     /** The report's other columns, as they came. */
     reportFields: v.optional(v.array(v.object({ label: v.string(), value: v.string() }))),
+    /** Account status and close date from the report (e.g. "Active"). */
+    accountStatus: v.optional(v.string()),
+    closeDate: v.optional(v.string()),
+    /** The three onboarding steps, each a timestamp once ticked off
+     * (`lib/onboarding.ts` `ONBOARDING_STEPS`); `status` follows from them. */
+    cardsOrderedAt: v.optional(v.number()),
+    fuelledAt: v.optional(v.number()),
+    twoMonthCheckAt: v.optional(v.number()),
+    /** Short working code, e.g. KAR / TAN / 2M. */
+    subStatus: v.optional(v.string()),
+    /** Standing note on the case (the log holds the history). */
+    note: v.optional(v.string()),
+    /** Created by hand, not from a report: a report that doesn't list it
+     * doesn't flag it as missing. */
+    manual: v.optional(v.boolean()),
     assigneeUserId: v.optional(v.id("users")),
     prio: v.boolean(),
     nextFollowUp: v.optional(v.string()),

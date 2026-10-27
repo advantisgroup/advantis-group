@@ -7,7 +7,10 @@ import { type Id } from "@advantis/convex/dataModel";
 import {
   MANUAL_CONTACT_KINDS,
   ONBOARDING_STATUSES,
+  ONBOARDING_STEPS,
+  STEP_CODES,
   type ManualContactKind,
+  type OnboardingStep,
 } from "@advantis/convex/performance/onboarding";
 import { useMutation, useQuery } from "convex/react";
 import { Flag, X } from "lucide-react";
@@ -16,6 +19,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -32,13 +36,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, formatIsoDate } from "@/lib/format";
 
+import { StatusBadge } from "./shared";
+
 const NOBODY = "__none";
-const KEEP = "__keep";
 
 type Assignee = { userId: Id<"users">; name: string };
 
-/** One case: stage, assignment, follow-up, the report's columns, the contact
- * log, and the form to log the next contact. */
+/** One case: the three onboarding steps, assignment, follow-up, code and
+ * note, the report's columns, the contact log and the form for the next
+ * contact. */
 export function CaseSheet({
   caseId,
   onOpenChange,
@@ -88,14 +94,34 @@ function CaseBody({
     );
   }
 
-  const kindLabel = (kind: string) =>
-    ["reached", "not_reached", "email", "note", "status", "assign"].includes(kind)
-      ? t(`contactKind.${kind as "note"}`)
-      : kind;
   const statusLabel = (s: string | null) =>
     s && (ONBOARDING_STATUSES as readonly string[]).includes(s)
       ? t(`status.${s as "fresh"}`)
       : (s ?? "–");
+  const stepLabel = (s: string | null) =>
+    s && (ONBOARDING_STEPS as readonly string[]).includes(s)
+      ? t(`steps.${s as OnboardingStep}`)
+      : (s ?? "–");
+  const logTitle = (c: (typeof data.contacts)[number]) => {
+    if (c.kind === "step") {
+      return t(c.toValue === "1" ? "case.stepOn" : "case.stepOff", {
+        step: stepLabel(c.fromValue),
+      });
+    }
+    return [
+      "reached",
+      "not_reached",
+      "email",
+      "note",
+      "status",
+      "step",
+      "assign",
+      "created",
+    ].includes(c.kind)
+      ? t(`contactKind.${c.kind as "note"}`)
+      : c.kind;
+  };
+  const doneSteps = ONBOARDING_STEPS.filter((s) => data.steps[s]).length;
 
   return (
     <div className="space-y-6 pb-8">
@@ -109,30 +135,44 @@ function CaseBody({
             </Badge>
           )}
           {!data.inReport && <Badge variant="muted">{t("notInReportBadge")}</Badge>}
+          {data.manual && <Badge variant="muted">{t("case.manualBadge")}</Badge>}
           {data.archived && <Badge variant="muted">{t("case.archivedBadge")}</Badge>}
         </SheetTitle>
         <SheetDescription className="tabular-nums">
           {t("case.number", { number: data.customerNumber })}
+          {data.accountStatus && ` · ${t("case.accountStatus")}: ${data.accountStatus}`}
+          {data.closeDate && ` · ${t("case.closeDate")}: ${formatIsoDate(data.closeDate, locale)}`}
         </SheetDescription>
       </div>
 
-      <section className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>{t("case.status")}</Label>
-          <Select value={data.status} onValueChange={(status) => void save({ status })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ONBOARDING_STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {t(`status.${s}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <section className="space-y-3 rounded-xl border border-border/70 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold">{t("case.steps")}</h3>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {t("case.stepsDone", { done: doneSteps })}
+            <StatusBadge status={data.status} />
+          </div>
         </div>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {ONBOARDING_STEPS.map((step) => (
+            <label
+              key={step}
+              className="flex cursor-pointer items-center gap-2 rounded-lg border border-border/70 px-3 py-2 text-sm hover:bg-muted/40"
+            >
+              <Checkbox
+                checked={data.steps[step]}
+                onCheckedChange={(v) => void save({ steps: { [step]: v === true } })}
+              />
+              <span className="min-w-0">
+                <span className="block font-medium">{t(`steps.${step}`)}</span>
+                <span className="text-xs text-muted-foreground">{STEP_CODES[step]}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </section>
 
+      <section className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label>{t("case.assignee")}</Label>
           {data.canManage ? (
@@ -166,6 +206,7 @@ function CaseBody({
               id="ob-follow"
               type="date"
               value={data.nextFollowUp ?? ""}
+              disabled={data.status === "done"}
               onChange={(e) => void save({ nextFollowUp: e.target.value || null })}
             />
             {data.nextFollowUp && (
@@ -181,6 +222,30 @@ function CaseBody({
           </div>
         </div>
 
+        <div className="space-y-1.5">
+          <Label htmlFor="ob-sub">{t("case.subStatus")}</Label>
+          <Input
+            id="ob-sub"
+            key={`sub-${data.subStatus ?? ""}`}
+            defaultValue={data.subStatus ?? ""}
+            placeholder={t("case.subStatusHint")}
+            list="ob-sub-codes"
+            maxLength={20}
+            onBlur={(e) => {
+              if (e.target.value.trim() !== (data.subStatus ?? "")) {
+                void save({ subStatus: e.target.value });
+              }
+            }}
+          />
+          <datalist id="ob-sub-codes">
+            {ONBOARDING_STEPS.map((s) => (
+              <option key={s} value={STEP_CODES[s]}>
+                {t(`steps.${s}`)}
+              </option>
+            ))}
+          </datalist>
+        </div>
+
         <div className="flex items-center gap-3 sm:pt-6">
           <Switch
             id="ob-prio"
@@ -189,9 +254,25 @@ function CaseBody({
           />
           <Label htmlFor="ob-prio">{t("case.prio")}</Label>
         </div>
+
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="ob-standing-note">{t("case.noteTitle")}</Label>
+          <Textarea
+            id="ob-standing-note"
+            key={`note-${data.note ?? ""}`}
+            rows={2}
+            defaultValue={data.note ?? ""}
+            onBlur={(e) => {
+              if (e.target.value.trim() !== (data.note ?? "")) {
+                void save({ note: e.target.value });
+              }
+            }}
+          />
+          <p className="text-xs text-muted-foreground">{t("case.noteHint")}</p>
+        </div>
       </section>
 
-      <ContactForm caseId={caseId} currentStatus={data.status} />
+      <ContactForm caseId={caseId} closed={data.status === "done"} />
 
       <section className="space-y-2">
         <h3 className="text-sm font-semibold">{t("case.log")}</h3>
@@ -202,7 +283,7 @@ function CaseBody({
             {data.contacts.map((c) => (
               <li key={c._id} className="rounded-lg border border-border/70 px-3 py-2 text-sm">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="font-medium">{kindLabel(c.kind)}</span>
+                  <span className="font-medium">{logTitle(c)}</span>
                   <span className="text-xs text-muted-foreground">
                     {formatDateTime(c.at, locale)} · {c.byName}
                   </span>
@@ -231,6 +312,10 @@ function CaseBody({
       <section className="space-y-2">
         <h3 className="text-sm font-semibold">{t("case.report")}</h3>
         <dl className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-3 gap-y-1.5 text-sm">
+          <dt className="text-muted-foreground">{t("case.accountStatus")}</dt>
+          <dd>{data.accountStatus ?? "–"}</dd>
+          <dt className="text-muted-foreground">{t("case.closeDate")}</dt>
+          <dd>{data.closeDate ? formatIsoDate(data.closeDate, locale) : "–"}</dd>
           <dt className="text-muted-foreground">{t("case.reportStatus")}</dt>
           <dd>{data.reportStatus ?? "–"}</dd>
           <dt className="text-muted-foreground">{t("case.reportOwner")}</dt>
@@ -254,20 +339,13 @@ function CaseBody({
   );
 }
 
-function ContactForm({
-  caseId,
-  currentStatus,
-}: {
-  caseId: Id<"onboardingCases">;
-  currentStatus: string;
-}) {
+function ContactForm({ caseId, closed }: { caseId: Id<"onboardingCases">; closed: boolean }) {
   const t = useTranslations("OnboardingCockpit");
   const handleError = useErrorHandler();
   const addContact = useMutation(api.performance.onboarding.addContact);
   const [kind, setKind] = useState<ManualContactKind>("reached");
   const [note, setNote] = useState("");
   const [followUp, setFollowUp] = useState("");
-  const [status, setStatus] = useState(KEEP);
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
@@ -282,11 +360,9 @@ function ContactForm({
         kind,
         note: note.trim() || undefined,
         nextFollowUp: followUp || undefined,
-        status: status === KEEP ? undefined : status,
       });
       setNote("");
       setFollowUp("");
-      setStatus(KEEP);
       toast.success(t("case.saved"));
     } catch (e) {
       handleError(e, t("case.saveError"));
@@ -323,35 +399,19 @@ function ContactForm({
           onChange={(e) => setNote(e.target.value)}
         />
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="ob-next">{t("case.nextFollowUp")}</Label>
-          <Input
-            id="ob-next"
-            type="date"
-            value={followUp}
-            onChange={(e) => setFollowUp(e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>{t("case.newStatus")}</Label>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={KEEP}>{t("case.keepStatus")}</SelectItem>
-              {ONBOARDING_STATUSES.filter((s) => s !== currentStatus).map((s) => (
-                <SelectItem key={s} value={s}>
-                  {t(`status.${s}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="flex justify-end">
-        <Button onClick={() => void submit()} disabled={busy}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        {!closed && (
+          <div className="space-y-1.5">
+            <Label htmlFor="ob-next">{t("case.nextFollowUp")}</Label>
+            <Input
+              id="ob-next"
+              type="date"
+              value={followUp}
+              onChange={(e) => setFollowUp(e.target.value)}
+            />
+          </div>
+        )}
+        <Button onClick={() => void submit()} disabled={busy} className="ml-auto">
           {t("case.save")}
         </Button>
       </div>

@@ -6,11 +6,17 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { followUpBucket, ONBOARDING_STATUSES } from "@advantis/convex/performance/onboarding";
+import {
+  followUpBucket,
+  ONBOARDING_STATUSES,
+  ONBOARDING_STEPS,
+  STEP_CODES,
+} from "@advantis/convex/performance/onboarding";
 import { useMutation, useQuery } from "convex/react";
-import { Archive, ArchiveRestore, Flag, Inbox, Rocket } from "lucide-react";
+import { Archive, ArchiveRestore, Download, Flag, Inbox, Plus, Rocket } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Badge } from "@/components/ui/badge";
@@ -41,26 +47,31 @@ import { formatIsoDate, matchesSearch } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { CaseSheet } from "./CaseSheet";
+import { CreateCaseDialog } from "./CreateCaseDialog";
 import { ImportPanel } from "./ImportPanel";
 import {
   type CaseRow,
+  caseDate,
   FollowUpDate,
   followUpDue,
   isOpen,
   StatusBadge,
+  StepChips,
   todayIso,
   workOrder,
 } from "./shared";
 
 type Tab = "cases" | "prio" | "followUps" | "import" | "archive";
+type KpiFilter = "open" | "prio" | "due" | "cards" | "unassigned" | "done" | "all";
 const ALL = "__all";
-const OPEN = "__open";
 const NOBODY = "__none";
 
+type Assignee = { userId: Id<"users">; name: string };
+
 /**
- * Onboarding-Cockpit (own sidebar entry under Performance): the team's work list. Admins see all
- * cases, distribute them and import the Salesforce report; everyone else
- * (once `ONBOARDING_MODE=live`) only their own.
+ * Onboarding-Cockpit (own sidebar entry under Performance): the team's work
+ * list. Admins see all cases, distribute them and import the Salesforce
+ * report; everyone else (once `ONBOARDING_MODE=live`) only their own.
  */
 export function OnboardingCockpit() {
   const t = useTranslations("OnboardingCockpit");
@@ -75,6 +86,7 @@ export function OnboardingCockpit() {
 
   const [tab, setTab] = useState<Tab>("cases");
   const [openId, setOpenId] = useState<Id<"onboardingCases"> | null>(null);
+  const [creating, setCreating] = useState(false);
   const cases = useQuery(api.performance.onboarding.list, allowed ? {} : "skip");
   const archived = useQuery(
     api.performance.onboarding.list,
@@ -120,13 +132,17 @@ export function OnboardingCockpit() {
         description={canManage ? t("introManage") : t("introOwn")}
         icon={<Rocket className="size-4" />}
       />
-      {canManage && !access.live && (
-        <div className="flex justify-end">
-          <Badge variant="warning" title={t("adminsOnlyHint")}>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {canManage && !access.live && (
+          <Badge variant="warning" title={t("adminsOnlyHint")} className="mr-auto">
             {t("adminsOnly")}
           </Badge>
-        </div>
-      )}
+        )}
+        <Button size="sm" onClick={() => setCreating(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          {t("create.button")}
+        </Button>
+      </div>
       <CountTabs tabs={tabs} value={tab} onChange={setTab} />
 
       {tab === "cases" && (
@@ -139,7 +155,10 @@ export function OnboardingCockpit() {
       )}
       {tab === "prio" && (
         <section className="space-y-3">
-          <p className="text-sm text-muted-foreground">{t("prioIntro")}</p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">{t("prioIntro")}</p>
+            <ExportButton rows={prio} />
+          </div>
           <CaseTable rows={prio} onOpen={setOpenId} empty={t("empty.prio")} />
         </section>
       )}
@@ -166,7 +185,76 @@ export function OnboardingCockpit() {
         onOpenChange={(o) => !o && setOpenId(null)}
         assignees={assignees}
       />
+      <CreateCaseDialog
+        open={creating}
+        onOpenChange={setCreating}
+        canManage={canManage}
+        assignees={assignees}
+        onCreated={(id) => {
+          setTab("cases");
+          setOpenId(id);
+        }}
+      />
     </div>
+  );
+}
+
+// ------------------------------------------------------------ cases tab
+
+function matchesKpi(c: CaseRow, filter: KpiFilter, today: string): boolean {
+  switch (filter) {
+    case "all":
+      return true;
+    case "open":
+      return isOpen(c);
+    case "prio":
+      return isOpen(c) && c.prio;
+    case "due":
+      return followUpDue(c, today);
+    case "cards":
+      return isOpen(c) && c.steps.cards;
+    case "unassigned":
+      return isOpen(c) && !c.assigneeUserId;
+    case "done":
+      return !isOpen(c);
+  }
+}
+
+/** A headline figure that filters the list when clicked. */
+function KpiButton({
+  label,
+  value,
+  active,
+  tone = "neutral",
+  onClick,
+}: {
+  label: string;
+  value: number;
+  active: boolean;
+  tone?: "neutral" | "warn" | "critical";
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-start gap-0.5 rounded-xl border bg-card px-4 py-3 text-left transition-colors hover:border-foreground/30",
+        active && "border-foreground ring-1 ring-foreground",
+      )}
+    >
+      <span className="text-[12.5px] font-medium text-muted-foreground">{label}</span>
+      <span
+        className={cn(
+          "text-2xl font-semibold tabular-nums",
+          value > 0 && tone === "warn" && "text-warn",
+          value > 0 && tone === "critical" && "text-destructive",
+        )}
+      >
+        {value}
+      </span>
+    </button>
   );
 }
 
@@ -178,31 +266,15 @@ function CasesView({
 }: {
   cases: CaseRow[];
   canManage: boolean;
-  assignees: { userId: Id<"users">; name: string }[] | undefined;
+  assignees: Assignee[] | undefined;
   onOpen: (id: Id<"onboardingCases">) => void;
 }) {
   const t = useTranslations("OnboardingCockpit");
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState(OPEN);
+  const [kpi, setKpi] = useState<KpiFilter>("open");
+  const [status, setStatus] = useState(ALL);
   const [assignee, setAssignee] = useState(ALL);
   const today = todayIso();
-
-  const open = cases.filter(isOpen);
-  const rows = cases
-    .filter((c) => {
-      if (status === OPEN ? !isOpen(c) : status !== ALL && c.status !== status) return false;
-      if (
-        assignee === NOBODY ? c.assigneeUserId : assignee !== ALL && c.assigneeUserId !== assignee
-      )
-        return false;
-      return matchesSearch(query, c.name, c.customerNumber, c.assigneeName, c.reportOwner);
-    })
-    .sort(workOrder(today));
-
-  const due = open.filter((c) => followUpDue(c, today)).length;
-  const prio = open.filter((c) => c.prio).length;
-  const unassigned = open.filter((c) => !c.assigneeUserId).length;
-  const gone = open.filter((c) => !c.inReport).length;
 
   if (cases.length === 0) {
     return (
@@ -214,23 +286,87 @@ function CasesView({
     );
   }
 
+  const count = (f: KpiFilter) => cases.filter((c) => matchesKpi(c, f, today)).length;
+  const rows = cases
+    .filter((c) => {
+      if (!matchesKpi(c, kpi, today)) return false;
+      if (status !== ALL && c.status !== status) return false;
+      if (
+        assignee === NOBODY ? c.assigneeUserId : assignee !== ALL && c.assigneeUserId !== assignee
+      )
+        return false;
+      return matchesSearch(
+        query,
+        c.name,
+        c.customerNumber,
+        c.assigneeName,
+        c.reportOwner,
+        c.note,
+        c.subStatus,
+      );
+    })
+    .sort(workOrder(today));
+
+  const toggleKpi = (f: KpiFilter) => setKpi(kpi === f ? "all" : f);
+  const filtered = query || kpi !== "open" || status !== ALL || assignee !== ALL;
+
   return (
     <div className="space-y-4">
-      <KpiStrip>
-        <Kpi label={t("kpi.open")} value={open.length} />
-        <Kpi label={t("kpi.prio")} value={prio} tone={prio ? "critical" : "neutral"} />
-        <Kpi label={t("kpi.followUpDue")} value={due} tone={due ? "warn" : "neutral"} />
-        {canManage ? (
-          <Kpi
-            label={gone ? t("kpi.notInReport") : t("kpi.unassigned")}
-            value={gone || unassigned}
-            tone={gone || unassigned ? "warn" : "neutral"}
-            hint={gone ? `${t("kpi.unassigned")}: ${unassigned}` : undefined}
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
+        <KpiButton
+          label={t("kpi.open")}
+          value={count("open")}
+          active={kpi === "open"}
+          onClick={() => toggleKpi("open")}
+        />
+        <KpiButton
+          label={t("kpi.prio")}
+          value={count("prio")}
+          tone="critical"
+          active={kpi === "prio"}
+          onClick={() => toggleKpi("prio")}
+        />
+        <KpiButton
+          label={t("kpi.followUpDue")}
+          value={count("due")}
+          tone="warn"
+          active={kpi === "due"}
+          onClick={() => toggleKpi("due")}
+        />
+        <KpiButton
+          label={t("kpi.cardsOrdered")}
+          value={count("cards")}
+          active={kpi === "cards"}
+          onClick={() => toggleKpi("cards")}
+        />
+        {canManage && (
+          <KpiButton
+            label={t("kpi.unassigned")}
+            value={count("unassigned")}
+            tone="warn"
+            active={kpi === "unassigned"}
+            onClick={() => toggleKpi("unassigned")}
           />
-        ) : (
-          <Kpi label={t("kpi.done")} value={cases.length - open.length} />
         )}
-      </KpiStrip>
+        <KpiButton
+          label={t("kpi.done")}
+          value={count("done")}
+          active={kpi === "done"}
+          onClick={() => toggleKpi("done")}
+        />
+      </div>
+      <p className="text-xs text-muted-foreground">{t("kpi.filterHint")}</p>
+
+      {canManage && (
+        <ConsultantTable
+          cases={cases}
+          active={assignee}
+          onPick={(id) => {
+            setAssignee(assignee === id ? ALL : id);
+            setKpi("open");
+          }}
+        />
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <Input
@@ -241,11 +377,10 @@ function CasesView({
           className="h-9 min-w-[220px] flex-1"
         />
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="h-9 w-[200px]">
+          <SelectTrigger className="h-9 w-[180px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={OPEN}>{t("filter.openOnly")}</SelectItem>
             <SelectItem value={ALL}>{t("filter.allStatuses")}</SelectItem>
             {ONBOARDING_STATUSES.map((s) => (
               <SelectItem key={s} value={s}>
@@ -272,19 +407,21 @@ function CasesView({
             </SelectContent>
           </Select>
         )}
-        {(query || status !== OPEN || assignee !== ALL) && (
+        {filtered && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
               setQuery("");
-              setStatus(OPEN);
+              setKpi("open");
+              setStatus(ALL);
               setAssignee(ALL);
             }}
           >
             {t("filter.reset")}
           </Button>
         )}
+        <ExportButton rows={rows} />
       </div>
 
       {canManage ? (
@@ -297,6 +434,94 @@ function CasesView({
       ) : (
         <CaseTable rows={rows} onOpen={onOpen} empty={t("empty.filtered")} />
       )}
+    </div>
+  );
+}
+
+/** Admin overview: open, prio, due, cards ordered and done per person,
+ * with a workload bar. Clicking a row filters the list to that person. */
+function ConsultantTable({
+  cases,
+  active,
+  onPick,
+}: {
+  cases: CaseRow[];
+  active: string;
+  onPick: (id: string) => void;
+}) {
+  const t = useTranslations("OnboardingCockpit");
+  const today = todayIso();
+  const people = new Map<string, { name: string; rows: CaseRow[] }>();
+  for (const c of cases) {
+    const id = c.assigneeUserId ?? NOBODY;
+    const name = c.assigneeName ?? t("case.nobody");
+    const entry = people.get(id) ?? { name, rows: [] };
+    entry.rows.push(c);
+    people.set(id, entry);
+  }
+  const list = [...people.entries()]
+    .map(([id, p]) => ({
+      id,
+      name: p.name,
+      open: p.rows.filter(isOpen).length,
+      prio: p.rows.filter((c) => isOpen(c) && c.prio).length,
+      due: p.rows.filter((c) => followUpDue(c, today)).length,
+      cards: p.rows.filter((c) => isOpen(c) && c.steps.cards).length,
+      done: p.rows.filter((c) => !isOpen(c)).length,
+    }))
+    .sort((a, b) => Number(a.id === NOBODY) - Number(b.id === NOBODY) || b.open - a.open);
+  const max = Math.max(1, ...list.map((p) => p.open));
+
+  return (
+    <div className="space-y-2">
+      <h2 className="text-sm font-semibold">{t("kpi.perConsultant")}</h2>
+      <div className="overflow-x-auto rounded-xl border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t("kpi.consultant")}</TableHead>
+              <TableHead className="text-right">{t("kpi.open")}</TableHead>
+              <TableHead className="text-right">{t("prioBadge")}</TableHead>
+              <TableHead className="text-right">{t("kpi.due")}</TableHead>
+              <TableHead className="text-right">{t("kpi.cardsOrdered")}</TableHead>
+              <TableHead className="text-right">{t("kpi.done")}</TableHead>
+              <TableHead className="w-[28%]">{t("kpi.load")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {list.map((p) => (
+              <TableRow
+                key={p.id}
+                className={cn("cursor-pointer", active === p.id && "bg-muted/60")}
+                onClick={() => onPick(p.id)}
+              >
+                <TableCell className={cn("font-medium", p.id === NOBODY && "italic")}>
+                  {p.name}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">{p.open}</TableCell>
+                <TableCell
+                  className={cn("text-right tabular-nums", p.prio > 0 && "text-destructive")}
+                >
+                  {p.prio}
+                </TableCell>
+                <TableCell className={cn("text-right tabular-nums", p.due > 0 && "text-warn")}>
+                  {p.due}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">{p.cards}</TableCell>
+                <TableCell className="text-right tabular-nums">{p.done}</TableCell>
+                <TableCell>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${Math.round((p.open / max) * 100)}%` }}
+                    />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
@@ -322,11 +547,69 @@ function FollowUpView({
         <Kpi label={t("kpi.week")} value={count("week")} />
         <Kpi label={t("kpi.later")} value={count("later")} />
       </KpiStrip>
-      <p className="text-sm text-muted-foreground">{t("followUpIntro")}</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">{t("followUpIntro")}</p>
+        <ExportButton rows={rows} />
+      </div>
       <CaseTable rows={rows} onOpen={onOpen} empty={t("empty.followUps")} />
     </section>
   );
 }
+
+// ----------------------------------------------------------------- export
+
+/** Downloads the rows on screen as an .xlsx (one row per case). */
+function ExportButton({ rows }: { rows: CaseRow[] }) {
+  const t = useTranslations("OnboardingCockpit");
+  const run = () => {
+    const header = [
+      t("col.customer"),
+      t("col.number"),
+      t("col.status"),
+      ...ONBOARDING_STEPS.map((s) => `${t(`steps.${s}`)} (${STEP_CODES[s]})`),
+      t("case.subStatus"),
+      t("col.assignee"),
+      t("prioBadge"),
+      t("col.followUp"),
+      t("case.noteTitle"),
+      t("case.accountStatus"),
+      t("case.closeDate"),
+      t("case.reportStatus"),
+      t("case.reportOwner"),
+      t("col.lastContact"),
+    ];
+    const data = rows.map((c) => [
+      c.name,
+      c.customerNumber,
+      t(`status.${c.status as "fresh"}`),
+      ...ONBOARDING_STEPS.map((s) => (c.steps[s] ? "Ja" : "Nein")),
+      c.subStatus ?? "",
+      c.assigneeName ?? "",
+      c.prio ? "Ja" : "",
+      c.nextFollowUp ?? "",
+      c.note ?? "",
+      c.accountStatus ?? "",
+      c.closeDate ?? "",
+      c.reportStatus ?? "",
+      c.reportOwner ?? "",
+      c.lastContactAt ? new Date(c.lastContactAt).toISOString().slice(0, 10) : "",
+    ]);
+    const sheet = XLSX.utils.aoa_to_sheet([header, ...data]);
+    sheet["!cols"] = header.map((h, i) => ({ wch: i === 0 ? 36 : Math.max(12, h.length + 2) }));
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(book, sheet, t("export.sheet"));
+    XLSX.writeFile(book, `Onboarding-Cockpit_${todayIso()}.xlsx`);
+    toast.success(t("export.done", { count: rows.length }));
+  };
+  return (
+    <Button variant="outline" size="sm" onClick={run} disabled={rows.length === 0}>
+      <Download className="mr-2 h-4 w-4" />
+      {t("export.button")}
+    </Button>
+  );
+}
+
+// ----------------------------------------------------------------- tables
 
 /** Admin table with row selection and the bulk bar (assign / archive). */
 function SelectableTable({
@@ -339,7 +622,7 @@ function SelectableTable({
   rows: CaseRow[];
   onOpen: (id: Id<"onboardingCases">) => void;
   empty: string;
-  assignees?: { userId: Id<"users">; name: string }[];
+  assignees?: Assignee[];
   archive?: boolean;
 }) {
   const t = useTranslations("OnboardingCockpit");
@@ -463,11 +746,11 @@ function CaseTable({
             )}
             <TableHead>{t("col.customer")}</TableHead>
             <TableHead>{t("col.number")}</TableHead>
-            <TableHead>{t("col.status")}</TableHead>
+            <TableHead>{t("col.progress")}</TableHead>
             <TableHead>{t("col.assignee")}</TableHead>
             <TableHead>{t("col.followUp")}</TableHead>
             <TableHead>{t("col.lastContact")}</TableHead>
-            <TableHead>{t("col.reportDate")}</TableHead>
+            <TableHead>{t("col.closeDate")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -486,7 +769,7 @@ function CaseTable({
                   />
                 </TableCell>
               )}
-              <TableCell>
+              <TableCell className="max-w-[320px]">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="font-medium">{c.name}</span>
                   {c.prio && isOpen(c) && (
@@ -501,10 +784,25 @@ function CaseTable({
                     </Badge>
                   )}
                 </div>
+                {c.note && (
+                  <p className="truncate text-xs text-muted-foreground" title={c.note}>
+                    {c.note}
+                  </p>
+                )}
               </TableCell>
               <TableCell className="tabular-nums">{c.customerNumber}</TableCell>
               <TableCell>
-                <StatusBadge status={c.status} />
+                <div className="flex flex-col items-start gap-1">
+                  <StatusBadge status={c.status} />
+                  <span className="flex items-center gap-1.5">
+                    <StepChips steps={c.steps} />
+                    {c.subStatus && (
+                      <span className="text-[10px] font-semibold text-muted-foreground">
+                        · {c.subStatus}
+                      </span>
+                    )}
+                  </span>
+                </div>
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 {c.assigneeName ?? (
@@ -528,7 +826,7 @@ function CaseTable({
                 )}
               </TableCell>
               <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">
-                {c.reportDate ? formatIsoDate(c.reportDate, locale) : "–"}
+                {caseDate(c) ? formatIsoDate(caseDate(c)!, locale) : "–"}
               </TableCell>
             </TableRow>
           ))}

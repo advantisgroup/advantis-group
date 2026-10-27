@@ -7,8 +7,8 @@
   "adminsOnlyHint": "The team only sees the cockpit once ONBOARDING_MODE=live is set.",
   "status": {
     "fresh": "New",
-    "step1": "In progress · step 1",
-    "step2": "In progress · step 2",
+    "step1": "1 of 3",
+    "step2": "2 of 3",
     "done": "Done"
   },
   "contactKind": {
@@ -17,7 +17,9 @@
     "email": "Email",
     "note": "Note",
     "status": "Status changed",
-    "assign": "Assignment changed"
+    "assign": "Assignment changed",
+    "step": "Step",
+    "created": "Created by hand"
   },
   "tabs": {
     "cases": "Cases",
@@ -36,7 +38,13 @@
     "overdue": "Overdue",
     "today": "Today",
     "week": "Next 7 days",
-    "later": "Later"
+    "later": "Later",
+    "cardsOrdered": "Cards ordered",
+    "perConsultant": "Cases per consultant",
+    "consultant": "Consultant",
+    "due": "Follow-up due",
+    "load": "Workload (open)",
+    "filterHint": "Click a figure to filter the list."
   },
   "filter": {
     "search": "Search customer, number or note",
@@ -53,7 +61,9 @@
     "assignee": "Assigned to",
     "followUp": "Follow-up",
     "lastContact": "Last contact",
-    "reportDate": "Date (report)"
+    "reportDate": "Date (report)",
+    "progress": "Progress",
+    "closeDate": "Close date"
   },
   "prioBadge": "Prio",
   "notInReportBadge": "No longer in report",
@@ -108,7 +118,18 @@
     "saveError": "Couldn't save.",
     "noteRequired": "Please enter a note.",
     "change": "{from} → {to}",
-    "archivedBadge": "Archived"
+    "archivedBadge": "Archived",
+    "steps": "Onboarding steps",
+    "stepOn": "{step} done",
+    "stepOff": "{step} undone",
+    "subStatus": "Code",
+    "subStatusHint": "e.g. KAR, TAN, 2M",
+    "noteTitle": "Note on the customer",
+    "noteHint": "Stays on the case and shows in the list. Saved when you leave the field.",
+    "accountStatus": "Account status",
+    "closeDate": "Close date",
+    "manualBadge": "Created by hand",
+    "stepsDone": "{done} of 3 done"
   },
   "import": {
     "reportTitle": "Onboarding report",
@@ -126,7 +147,9 @@
       "name": "Customer",
       "status": "Status (report)",
       "owner": "Owner (report)",
-      "date": "Date (sorting)"
+      "date": "Date (sorting)",
+      "accountStatus": "Account status",
+      "closeDate": "Close date"
     },
     "preview": "Preview of the first rows",
     "skipped": "{skipped} rows without a customer number, {duplicates} duplicates – skipped.",
@@ -145,5 +168,32 @@
     "unfinished": "aborted",
     "historyReport": "{rows} rows · {created} new · {updated} updated · {missing} missing",
     "historyPrio": "{rows} numbers · {hits} matches · {missing} not found"
+  },
+  "steps": {
+    "cards": "Cards ordered",
+    "fuel": "First fuelling",
+    "twoMonth": "Two-month check"
+  },
+  "create": {
+    "button": "Add customer",
+    "title": "Add a customer by hand",
+    "intro": "For customers not (yet) in the report. A later report with the same customer number fills in the report columns.",
+    "number": "Customer number",
+    "name": "Customer",
+    "assignee": "Assigned to",
+    "accountStatus": "Account status (optional)",
+    "closeDate": "Close date (optional)",
+    "note": "Note (optional)",
+    "prio": "Prio · contact first",
+    "save": "Add",
+    "cancel": "Cancel",
+    "created": "Customer added.",
+    "error": "Couldn't add – does the customer number exist already?",
+    "required": "Customer number and name are required."
+  },
+  "export": {
+    "button": "Excel export",
+    "done": "{count, plural, one {# case exported} other {# cases exported}}",
+    "sheet": "Onboarding"
   }
 }
