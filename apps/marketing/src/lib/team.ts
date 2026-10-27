@@ -4,15 +4,18 @@
  * her a block of her own.
  */
 export const TEAM: readonly { name: string; role: string; initials: string; photo?: string }[] = [
-  { name: "Andrea Reichl", role: "founder.role", initials: "AR" },
-  { name: "Andrea Lautenbacher", role: "roles.inbound", initials: "AL" },
+  {
+    name: "Andrea Reichl",
+    role: "founder.role",
+    initials: "AR",
+    photo: "/team/andrea-reichl.jpg",
+  },
   {
     name: "Jessica Blume",
     role: "roles.outbound",
     initials: "JB",
     photo: "/team/jessica-blume.png",
   },
-  { name: "Morena Azzuro", role: "roles.hr", initials: "MA" },
   {
     name: "Adam Kämpfer",
     role: "roles.marketing",

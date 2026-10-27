@@ -29,7 +29,7 @@ export const TrustBadges = () => {
   const stats = [
     { value: 15, suffix: "+", label: features("stats.experience") },
     { value: 150, suffix: "+", label: features("stats.projects") },
-    { value: 4, label: features("stats.brands") },
+    { value: 2, label: features("stats.brands") },
     { value: 100, suffix: "%", label: features("stats.passion") },
   ];
 

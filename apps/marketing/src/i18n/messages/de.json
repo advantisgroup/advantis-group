@@ -60,7 +60,7 @@
     "menuLabel": "Menü",
     "descriptions": {
       "about": "Wer wir sind und wofür wir stehen",
-      "brands": "Vier Marken, ein gemeinsames Ziel",
+      "brands": "Zwei Marken, ein gemeinsames Ziel",
       "team": "Die Menschen hinter der Gruppe",
       "blog": "Einblicke und Praxis aus dem Vertrieb",
       "whitepaper": "Kostenloser Download zum Vertrieb von morgen",
@@ -156,7 +156,7 @@
     "groupLabel": "Die Marken der Gruppe",
     "title": "Unsere",
     "titleHighlight": "Marken",
-    "subtitle": "Vier starke Marken, ein gemeinsames Ziel: dein Vertriebserfolg",
+    "subtitle": "Zwei starke Marken, ein gemeinsames Ziel: dein Vertriebserfolg",
     "salespirates": {
       "tagline": "Externe Vertriebsagentur",
       "description": "Wir generieren Leads im Cold Calling, qualifizieren vor und übernehmen deinen Inside Sales. Vom Lead bis zum Abschluss für einen maximalen Erfolg deines Sales."
@@ -185,7 +185,7 @@
     "returning": "Du hast uns schon geschrieben? <link>Hier sind deine Anfragen und unsere Antworten</link>."
   },
   "footer": {
-    "description": "Wir sind dein Partner für erfolgreichen Vertrieb. Mit über 15 Jahren Erfahrung und vier starken Marken bringen wir dein Unternehmen voran.",
+    "description": "Wir sind dein Partner für erfolgreichen Vertrieb. Mit über 15 Jahren Erfahrung und zwei starken Marken bringen wir dein Unternehmen voran.",
     "quickLinks": "Quick Links",
     "ourBrands": "Unsere Marken",
     "contact": "Kontakt",
@@ -385,7 +385,7 @@
     },
     "story": {
       "badge": "Unsere Geschichte",
-      "text1": "Die <brand>ADVANTIS GROUP</brand> wurde 2025 von <founder>Andrea Reichl</founder> gegründet und vereint über 15 Jahre Vertriebserfahrung in unterschiedlichen Branchen unter einem Dach.",
+      "text1": "Die <brand>ADVANTIS GROUP</brand> wurde von <founder>Andrea Reichl</founder> gegründet und vereint über 15 Jahre Vertriebserfahrung in unterschiedlichen Branchen unter einem Dach.",
       "text2": "Was vor Jahren als Einzelunternehmen begann, ist nun eine Unternehmensgruppe mit starken Marken und einem gemeinsamen Focus: 100 % Sales.",
       "text3": "Schnick-schnack liegt uns nicht – wir haben das Rad nicht neu erfunden, nur ein paar schicke Felgen aufgezogen. Pragmatisch, effektiv, nachhaltig."
     },
@@ -455,7 +455,7 @@
   "brandsPage": {
     "comingSoon": "In Vorbereitung",
     "hero": {
-      "badge": "Vier Premium Marken – Ein Ziel",
+      "badge": "Zwei Premium Marken – Ein Ziel",
       "titlePrefix": "Unsere",
       "titleSuffix": "Marken",
       "subtitle": "Maßgeschneiderte Sales-Lösungen für nachhaltigen Erfolg",

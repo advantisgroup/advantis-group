@@ -60,7 +60,7 @@
     "menuLabel": "Menu",
     "descriptions": {
       "about": "Qui nous sommes et ce que nous défendons",
-      "brands": "Quatre marques, un objectif commun",
+      "brands": "Deux marques, un objectif commun",
       "team": "Les personnes derrière le groupe",
       "blog": "Analyses et pratiques de la vente",
       "whitepaper": "Téléchargement gratuit sur la vente de demain",
@@ -156,7 +156,7 @@
     "groupLabel": "Les marques du groupe",
     "title": "Nos",
     "titleHighlight": "Marques",
-    "subtitle": "Quatre marques fortes, un objectif commun : Votre succès commercial",
+    "subtitle": "Deux marques fortes, un objectif commun : Votre succès commercial",
     "salespirates": {
       "tagline": "Agence de Vente Externe",
       "description": "Nous générons des leads par cold calling, les pré-qualifions et prenons en charge votre inside sales. Du lead jusqu'à la conclusion, pour un succès commercial maximal."
@@ -185,7 +185,7 @@
     "returning": "Vous nous avez déjà écrit ? <link>Retrouvez vos demandes et nos réponses</link>."
   },
   "footer": {
-    "description": "Nous sommes votre partenaire pour des ventes réussies. Avec plus de 15 ans d'expérience et quatre marques fortes, nous faisons avancer votre entreprise.",
+    "description": "Nous sommes votre partenaire pour des ventes réussies. Avec plus de 15 ans d'expérience et deux marques fortes, nous faisons avancer votre entreprise.",
     "quickLinks": "Liens Rapides",
     "ourBrands": "Nos Marques",
     "contact": "Contact",
@@ -385,7 +385,7 @@
     },
     "story": {
       "badge": "Notre Histoire",
-      "text1": "<brand>ADVANTIS GROUP</brand> a été fondée en 2025 par <founder>Andrea Reichl</founder> et réunit plus de 15 ans d'expérience commerciale dans divers secteurs sous un même toit.",
+      "text1": "<brand>ADVANTIS GROUP</brand> a été fondée par <founder>Andrea Reichl</founder> et réunit plus de 15 ans d'expérience commerciale dans divers secteurs sous un même toit.",
       "text2": "Ce qui a commencé il y a des années comme une entreprise individuelle est maintenant un groupe d'entreprises avec des marques fortes et un objectif commun : 100 % Sales.",
       "text3": "Nous n'aimons pas le superflu – nous n'avons pas réinventé la roue, juste mis de belles jantes. Pragmatique, efficace, durable."
     },
@@ -455,7 +455,7 @@
   "brandsPage": {
     "comingSoon": "Bientôt disponible",
     "hero": {
-      "badge": "Quatre marques premium – Un objectif",
+      "badge": "Deux marques premium – Un objectif",
       "titlePrefix": "Nos",
       "titleSuffix": "Marques",
       "subtitle": "Des solutions de vente sur mesure pour un succès durable",

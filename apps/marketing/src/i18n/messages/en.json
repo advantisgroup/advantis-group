@@ -60,7 +60,7 @@
     "menuLabel": "Menu",
     "descriptions": {
       "about": "Who we are and what we stand for",
-      "brands": "Four brands, one shared goal",
+      "brands": "Two brands, one shared goal",
       "team": "The people behind the group",
       "blog": "Insight and practice from the sales floor",
       "whitepaper": "A free download on the sales floor of tomorrow",
@@ -153,7 +153,7 @@
     "groupLabel": "The brands of the group",
     "title": "Our",
     "titleHighlight": "Brands",
-    "subtitle": "Four strong brands, one common goal: Your sales success",
+    "subtitle": "Two strong brands, one common goal: Your sales success",
     "salespirates": {
       "tagline": "External Sales Agency",
       "description": "We generate leads through cold calling, pre-qualify them, and take over your inside sales. From lead to close, for maximum sales success."
@@ -182,7 +182,7 @@
     "returning": "Already written to us? <link>See your inquiries and our replies</link>."
   },
   "footer": {
-    "description": "We are your partner for successful sales. With over 15 years of experience and four strong brands, we move your business forward.",
+    "description": "We are your partner for successful sales. With over 15 years of experience and two strong brands, we move your business forward.",
     "quickLinks": "Quick Links",
     "ourBrands": "Our Brands",
     "contact": "Contact",
@@ -382,7 +382,7 @@
     },
     "story": {
       "badge": "Our Story",
-      "text1": "The <brand>ADVANTIS GROUP</brand> was founded in 2025 by <founder>Andrea Reichl</founder> and unites over 15 years of sales experience in various industries under one roof.",
+      "text1": "The <brand>ADVANTIS GROUP</brand> was founded by <founder>Andrea Reichl</founder> and unites over 15 years of sales experience in various industries under one roof.",
       "text2": "What began years ago as a sole proprietorship is now a group of companies with strong brands and a common focus: 100% Sales.",
       "text3": "We don't do frills – we haven't reinvented the wheel, just put on some fancy rims. Pragmatic, effective, sustainable."
     },
@@ -452,7 +452,7 @@
   "brandsPage": {
     "comingSoon": "Coming soon",
     "hero": {
-      "badge": "Four Premium Brands – One Goal",
+      "badge": "Two Premium Brands – One Goal",
       "titlePrefix": "Our",
       "titleSuffix": "Brands",
       "subtitle": "Tailored sales solutions for sustainable success",

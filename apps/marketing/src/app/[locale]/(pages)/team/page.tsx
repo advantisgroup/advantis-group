@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-
 import { useTranslations } from "next-intl";
 
 import { BrandEmphasis } from "@/components/effects/BrandEmphasis";
@@ -10,14 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { TEAM } from "@/lib/team";
-
-/* office-teamwork is the homepage's hero photograph, so it sits this one out. */
-const OFFICE_PHOTOS = [
-  "/office/office-whiteboard.png",
-  "/office/office-andrea-reichl.png",
-  "/office/office-andrea-lautenbacher.png",
-  "/office/office-morena-azzuro.png",
-] as const;
 
 export default function Team() {
   const t = useTranslations("team");
@@ -100,33 +90,6 @@ export default function Team() {
             </li>
           ))}
         </ul>
-      </Section>
-
-      {/*
-       * The office, as photographs rather than as a parallax mosaic. Each one
-       * used to sit inside its own scroll-linked transform at one of three
-       * speeds, which meant five pictures drifting against each other at
-       * once — the photos are worth looking at, and that made them hard to.
-       */}
-      <Section size="loose">
-        <SectionHead
-          title={<BrandEmphasis tint="dynamic">{t("office.title")}</BrandEmphasis>}
-          lede={t("office.subtitle")}
-        />
-
-        <div className="mt-14 grid gap-4 sm:grid-cols-2">
-          {OFFICE_PHOTOS.map((src) => (
-            <div key={src} className="relative aspect-[4/3] overflow-hidden rounded-xl">
-              <Image
-                src={src}
-                alt={t("office.photoAlt")}
-                fill
-                sizes="(min-width: 640px) 50vw, 100vw"
-                className="object-cover"
-              />
-            </div>
-          ))}
-        </div>
       </Section>
     </div>
   );

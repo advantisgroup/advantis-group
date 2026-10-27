@@ -60,7 +60,7 @@
     "menuLabel": "菜单",
     "descriptions": {
       "about": "我们是谁，以及我们的理念",
-      "brands": "四个品牌，一个共同目标",
+      "brands": "两个品牌，一个共同目标",
       "team": "集团背后的团队",
       "blog": "来自一线的销售洞察与实践",
       "whitepaper": "免费下载：面向未来的销售",
@@ -150,7 +150,7 @@
     "groupLabel": "集团旗下品牌",
     "title": "我们的",
     "titleHighlight": "品牌",
-    "subtitle": "四个强大的品牌，一个共同的目标：您的销售成功",
+    "subtitle": "两个强大的品牌，一个共同的目标：您的销售成功",
     "salespirates": {
       "tagline": "外部销售代理",
       "description": "我们通过电话销售（Cold Calling）开发销售线索、进行预筛选，并接管您的内部销售（Inside Sales）。从线索到成交，助您的销售取得最大成功。"
@@ -179,7 +179,7 @@
     "returning": "已经联系过我们？<link>查看您的咨询和我们的回复</link>。"
   },
   "footer": {
-    "description": "我们是您成功销售的合作伙伴。凭借超过15年的经验和四个强大的品牌，我们推动您的业务向前发展。",
+    "description": "我们是您成功销售的合作伙伴。凭借超过15年的经验和两个强大的品牌，我们推动您的业务向前发展。",
     "quickLinks": "快速链接",
     "ourBrands": "我们的品牌",
     "contact": "联系方式",
@@ -379,7 +379,7 @@
     },
     "story": {
       "badge": "我们的故事",
-      "text1": "<brand>ADVANTIS GROUP</brand> 于2025年由 <founder>Andrea Reichl</founder> 创立，汇集了不同行业超过15年的销售经验。",
+      "text1": "<brand>ADVANTIS GROUP</brand> 由 <founder>Andrea Reichl</founder> 创立，汇集了不同行业超过15年的销售经验。",
       "text2": "几年前的一家独资企业，现在已成为拥有强大品牌和共同焦点的企业集团：100% 销售。",
       "text3": "我们不搞花哨——我们没有重新发明轮子，只是装了一些漂亮的轮辋。务实、有效、可持续。"
     },
@@ -449,7 +449,7 @@
   "brandsPage": {
     "comingSoon": "即将推出",
     "hero": {
-      "badge": "四个优质品牌——一个目标",
+      "badge": "两个优质品牌——一个目标",
       "titlePrefix": "我们的",
       "titleSuffix": "品牌",
       "subtitle": "为可持续成功量身定制的销售解决方案",
