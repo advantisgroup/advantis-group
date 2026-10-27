@@ -241,31 +241,7 @@ function CaseBody({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="ob-sub">{t("case.subStatus")}</Label>
-            <Input
-              id="ob-sub"
-              key={`sub-${data.subStatus ?? ""}`}
-              defaultValue={data.subStatus ?? ""}
-              placeholder={t("case.subStatusHint")}
-              list="ob-sub-codes"
-              maxLength={20}
-              onBlur={(e) => {
-                if (e.target.value.trim() !== (data.subStatus ?? "")) {
-                  void save({ subStatus: e.target.value });
-                }
-              }}
-            />
-            <datalist id="ob-sub-codes">
-              {ONBOARDING_STEPS.map((s) => (
-                <option key={s} value={STEP_CODES[s]}>
-                  {t(`steps.${s}`)}
-                </option>
-              ))}
-            </datalist>
-          </div>
-
-          <div className="flex items-center gap-3 sm:pt-6">
+          <div className="flex items-center gap-3">
             <Switch
               id="ob-prio"
               checked={data.prio}
