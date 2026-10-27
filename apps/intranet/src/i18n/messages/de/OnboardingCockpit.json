@@ -7,8 +7,8 @@
   "adminsOnlyHint": "Das Team sieht das Cockpit erst, wenn ONBOARDING_MODE=live gesetzt ist.",
   "status": {
     "fresh": "Neu",
-    "step1": "In Bearbeitung · Schritt 1",
-    "step2": "In Bearbeitung · Schritt 2",
+    "step1": "1 von 3",
+    "step2": "2 von 3",
     "done": "Abgeschlossen"
   },
   "contactKind": {
@@ -17,7 +17,9 @@
     "email": "E-Mail",
     "note": "Notiz",
     "status": "Status geändert",
-    "assign": "Zuweisung geändert"
+    "assign": "Zuweisung geändert",
+    "step": "Schritt",
+    "created": "Von Hand angelegt"
   },
   "tabs": {
     "cases": "Fälle",
@@ -36,7 +38,13 @@
     "overdue": "Überfällig",
     "today": "Heute",
     "week": "Nächste 7 Tage",
-    "later": "Später"
+    "later": "Später",
+    "cardsOrdered": "Karten bestellt",
+    "perConsultant": "Fälle je Consultant",
+    "consultant": "Consultant",
+    "due": "WV fällig",
+    "load": "Auslastung (offen)",
+    "filterHint": "Klick auf eine Kennzahl filtert die Liste."
   },
   "filter": {
     "search": "Kunde, Kundennummer oder Notiz suchen",
@@ -53,7 +61,9 @@
     "assignee": "Zugewiesen an",
     "followUp": "Wiedervorlage",
     "lastContact": "Letzter Kontakt",
-    "reportDate": "Datum (Report)"
+    "reportDate": "Datum (Report)",
+    "progress": "Fortschritt",
+    "closeDate": "Close Date"
   },
   "prioBadge": "Prio",
   "notInReportBadge": "Nicht mehr im Report",
@@ -108,7 +118,18 @@
     "saveError": "Konnte nicht gespeichert werden.",
     "noteRequired": "Bitte eine Notiz eintragen.",
     "change": "{from} → {to}",
-    "archivedBadge": "Archiviert"
+    "archivedBadge": "Archiviert",
+    "steps": "Onboarding-Schritte",
+    "stepOn": "{step} erledigt",
+    "stepOff": "{step} zurückgenommen",
+    "subStatus": "Kürzel",
+    "subStatusHint": "z. B. KAR, TAN, 2M",
+    "noteTitle": "Notiz zum Kunden",
+    "noteHint": "Bleibt am Fall stehen und erscheint in der Liste. Wird beim Verlassen des Feldes gespeichert.",
+    "accountStatus": "Account Status",
+    "closeDate": "Close Date",
+    "manualBadge": "Von Hand angelegt",
+    "stepsDone": "{done} von 3 erledigt"
   },
   "import": {
     "reportTitle": "Onboarding-Report",
@@ -126,7 +147,9 @@
       "name": "Kunde",
       "status": "Status (Report)",
       "owner": "Owner (Report)",
-      "date": "Datum (Sortierung)"
+      "date": "Datum (Sortierung)",
+      "accountStatus": "Account Status",
+      "closeDate": "Close Date"
     },
     "preview": "Vorschau der ersten Zeilen",
     "skipped": "{skipped} Zeilen ohne Kundennummer, {duplicates} doppelt – werden übersprungen.",
@@ -145,5 +168,32 @@
     "unfinished": "abgebrochen",
     "historyReport": "{rows} Zeilen · {created} neu · {updated} aktualisiert · {missing} fehlen",
     "historyPrio": "{rows} Nummern · {hits} Treffer · {missing} nicht gefunden"
+  },
+  "steps": {
+    "cards": "Karten bestellt",
+    "fuel": "Erste Tankung",
+    "twoMonth": "2-Monats-Check"
+  },
+  "create": {
+    "button": "Kunde anlegen",
+    "title": "Kunde von Hand anlegen",
+    "intro": "Für Kunden, die (noch) nicht im Report stehen. Ein späterer Report mit derselben Kundennummer ergänzt die Report-Spalten.",
+    "number": "Kundennummer",
+    "name": "Kunde",
+    "assignee": "Zugewiesen an",
+    "accountStatus": "Account Status (optional)",
+    "closeDate": "Close Date (optional)",
+    "note": "Notiz (optional)",
+    "prio": "Prio · zuerst kontaktieren",
+    "save": "Anlegen",
+    "cancel": "Abbrechen",
+    "created": "Kunde angelegt.",
+    "error": "Konnte nicht angelegt werden – gibt es die Kundennummer schon?",
+    "required": "Kundennummer und Name sind Pflicht."
+  },
+  "export": {
+    "button": "Excel-Export",
+    "done": "{count, plural, one {# Fall exportiert} other {# Fälle exportiert}}",
+    "sheet": "Onboarding"
   }
 }

@@ -4,7 +4,10 @@ import type { api } from "@advantis/convex/api";
 import {
   followUpBucket,
   isClosedStatus,
+  ONBOARDING_STEPS,
   type OnboardingStatus,
+  STEP_CODES,
+  type StepState,
 } from "@advantis/convex/performance/onboarding";
 import { type FunctionReturnType } from "convex/server";
 import { useLocale, useTranslations } from "next-intl";
@@ -27,12 +30,15 @@ export function followUpDue(c: CaseRow, today: string): boolean {
   return c.nextFollowUp <= today;
 }
 
-/** Prio first, then due follow-ups, then the oldest report date, then name. */
+/** The date a case is sorted by: close date, else the report's date. */
+export const caseDate = (c: CaseRow) => c.closeDate ?? c.reportDate;
+
+/** Prio first, then due follow-ups, then the oldest case, then name. */
 export function workOrder(today: string) {
   return (a: CaseRow, b: CaseRow) =>
     Number(b.prio && isOpen(b)) - Number(a.prio && isOpen(a)) ||
     Number(followUpDue(b, today)) - Number(followUpDue(a, today)) ||
-    (a.reportDate ?? "9999").localeCompare(b.reportDate ?? "9999") ||
+    (caseDate(a) ?? "9999").localeCompare(caseDate(b) ?? "9999") ||
     a.name.localeCompare(b.name, "de");
 }
 
@@ -50,6 +56,27 @@ export function StatusBadge({ status }: { status: string }) {
     <Badge variant={STATUS_TONE[status] ?? "muted"} className="whitespace-nowrap">
       {known ? t(`status.${status as OnboardingStatus}`) : status}
     </Badge>
+  );
+}
+
+/** The three steps as small chips (KAR · TAN · 2M), filled when done. */
+export function StepChips({ steps }: { steps: StepState }) {
+  const t = useTranslations("OnboardingCockpit");
+  return (
+    <span className="inline-flex items-center gap-1">
+      {ONBOARDING_STEPS.map((step) => (
+        <span
+          key={step}
+          title={t(`steps.${step}`)}
+          className={cn(
+            "rounded px-1.5 py-px text-[10px] font-semibold tabular-nums",
+            steps[step] ? "bg-ok/15 text-ok" : "bg-muted text-muted-foreground",
+          )}
+        >
+          {STEP_CODES[step]}
+        </span>
+      ))}
+    </span>
   );
 }
 
