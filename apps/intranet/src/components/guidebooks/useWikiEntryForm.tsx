@@ -58,8 +58,8 @@ function WikiEntryDetailFields({
   setValidFrom,
   validUntil,
   setValidUntil,
-  minRole,
-  setMinRole,
+  minRole: _minRole,
+  setMinRole: _setMinRole,
 }: {
   categoryId: string;
   setCategoryId: (v: string) => void;
@@ -111,24 +111,7 @@ function WikiEntryDetailFields({
           placeholder={t("fieldOwnerPlaceholder")}
         />
       </div>
-      <div>
-        <label className="mb-1 block text-xs font-medium text-muted-foreground">
-          {t("fieldAudience")}
-        </label>
-        <Select
-          value={minRole || "everyone"}
-          onValueChange={(v) => setMinRole(v === "everyone" ? "" : (v as WikiEntryAudience))}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="everyone">{t("audienceEveryone")}</SelectItem>
-            <SelectItem value="manager">{t("audienceManagers")}</SelectItem>
-            <SelectItem value="admin">{t("audienceAdmins")}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Sichtbarkeit: alle sehen alles (28.10.2026) – Auswahl ausgeblendet. */}
       <div>
         <label className="mb-1 block text-xs font-medium text-muted-foreground">
           {t("fieldTags")}
