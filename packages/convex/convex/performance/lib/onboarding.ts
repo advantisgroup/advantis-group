@@ -152,7 +152,9 @@ export const DEFAULT_STATUS_CONFIG: StatusConfig = {
   outcomes: [
     { id: "reached", label: "erreicht – alles ok", kind: "reached" },
     { id: "notReached", label: "nicht erreicht", kind: "notReached" },
-    { id: "followUp", label: "Follow-up", kind: "followUp" },
+    // Not needed when logging a contact (Vahan, 28.10.) – hidden, not
+    // deleted, so cases that already have it keep their label.
+    { id: "followUp", label: "Follow-up", kind: "followUp", archived: true },
     {
       id: "case",
       label: "Case eröffnet",
