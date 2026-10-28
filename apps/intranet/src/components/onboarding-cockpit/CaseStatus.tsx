@@ -5,42 +5,23 @@ import { useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import {
-  activeChildren,
-  findStage,
-  isClosedStatus,
-  nextStatus,
-  type OutcomeTop,
+  type FollowUpReason,
+  type Milestone,
+  MILESTONES,
+  suggestFollowUp,
 } from "@advantis/convex/performance/onboarding";
 import { useMutation } from "convex/react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CalendarPlus, Check, RotateCcw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-import { StatusBadge, useOutcomeLabel, useStatusConfig, useStatusName } from "./shared";
-
-type Node = {
-  id: string;
-  label: string;
-  freetext?: boolean;
-  archived?: boolean;
-  kind?: OutcomeTop["kind"];
-  children?: Node[];
-};
+import { STATUS_ORDER, TimeSelect, useOutcomeLabel, useStatusName } from "./shared";
 
 interface CaseStatusData {
   _id: Id<"onboardingCases">;
@@ -50,169 +31,178 @@ interface CaseStatusData {
   outcomeAt: number | null;
   outcomeByName: string | null;
   milestones: string[];
+  nextFollowUp: string | null;
 }
 
+/** Which follow-up to suggest after ticking a milestone. */
+const SUGGEST_AFTER: Partial<Record<Milestone, FollowUpReason>> = {
+  cards: "cards",
+  fuel: "fuel",
+};
+
 /**
- * Stage, milestone ("Zwischenstatus") and outcome of a case. The outcome is
- * picked step by step through the status tree: result → reason →
- * sub-reason, plus free text where asked. "successful" moves the case to the
- * next stage, "will cancel" closes it onto the winback list.
+ * Where the case stands: the phase ladder (Neu → In Kontakt → Karten
+ * bestellt → Getankt → Abgeschlossen) driven by the three milestone ticks,
+ * the situation of the last contact, and – after ticking "Karten bestellt"
+ * or "Getankt" – the matching follow-up (1 week / 2 months) ready to
+ * create with one click.
  */
 export function CaseStatus({ data }: { data: CaseStatusData }) {
   const t = useTranslations("OnboardingCockpit");
   const locale = useLocale();
   const handleError = useErrorHandler();
-  const config = useStatusConfig();
   const statusName = useStatusName();
   const outcomeLabel = useOutcomeLabel();
   const update = useMutation(api.performance.onboarding.update);
-  const setOutcome = useMutation(api.performance.onboarding.setOutcome);
-
-  const stage = findStage(config, data.status);
-  const closed = isClosedStatus(data.status);
-  const [path, setPath] = useState<string[]>([]);
-  const [text, setText] = useState("");
-  const [followUp, setFollowUp] = useState("");
-  const [followUpTime, setFollowUpTime] = useState("");
+  const [suggestion, setSuggestion] = useState<{
+    reason: FollowUpReason;
+    date: string;
+    time: string;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // The picker's levels: options of the stage, then children of each pick.
-  const levels: Node[][] = [];
-  let options: Node[] = (stage?.options ?? []).filter((o) => !o.archived) as Node[];
-  const chosen: Node[] = [];
-  for (let i = 0; i <= path.length && options.length > 0; i++) {
-    levels.push(options);
-    const node = options.find((o) => o.id === path[i]);
-    if (!node) break;
-    chosen.push(node);
-    options = activeChildren(node) as Node[];
-  }
-  const last = chosen[chosen.length - 1];
-  const complete = !!last && activeChildren(last).length === 0;
-  const kind = chosen[0]?.kind ?? "other";
-  const needsText = complete && !!last.freetext;
-  const askFollowUp = complete && (kind === "followUp" || kind === "notReached" || kind === "case");
-
-  const pick = (level: number, id: string) => {
-    setPath([...path.slice(0, level), id]);
-  };
-
-  const submit = async () => {
-    if (!complete) return;
-    if (needsText && !text.trim()) {
-      toast.error(t("statusTree.textRequired"));
-      return;
-    }
+  const save = async (patch: Omit<Parameters<typeof update>[0], "caseId">) => {
     setBusy(true);
     try {
-      const result = await setOutcome({
-        caseId: data._id,
-        path,
-        text: text.trim() || undefined,
-        nextFollowUp: askFollowUp && followUp ? followUp : undefined,
-        nextFollowUpTime: askFollowUp && followUp ? followUpTime || null : undefined,
-      });
-      toast.success(
-        result.status !== data.status
-          ? t("statusTree.movedTo", { status: statusName(result.status) })
-          : t("statusTree.saved"),
-      );
-      setPath([]);
-      setText("");
-      setFollowUp("");
-      setFollowUpTime("");
+      await update({ caseId: data._id, ...patch });
+      return true;
     } catch (e) {
       handleError(e, t("case.saveError"));
+      return false;
     } finally {
       setBusy(false);
     }
   };
 
+  const toggle = async (key: Milestone, done: boolean) => {
+    const ok = await save({ milestone: { key, done } });
+    const reason = SUGGEST_AFTER[key];
+    if (ok && done && reason) setSuggestion({ reason, ...suggestFollowUp(new Date(), reason) });
+    else setSuggestion(null);
+  };
+
+  const createSuggested = async () => {
+    if (!suggestion) return;
+    const ok = await save({
+      nextFollowUp: suggestion.date,
+      nextFollowUpTime: suggestion.time || null,
+    });
+    if (ok) {
+      toast.success(t("phase.followUpCreated"));
+      setSuggestion(null);
+    }
+  };
+
   const current = outcomeLabel(data);
+  const winback = data.status === "winback";
+  const ladder = STATUS_ORDER.filter((s) => s !== "winback");
+  const here = ladder.indexOf(data.status as (typeof ladder)[number]);
 
   return (
     <section className="space-y-4 rounded-xl border border-border/70 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">{t("statusTree.title")}</h3>
-        <Select
-          value={data.status}
-          onValueChange={(status) =>
-            void update({ caseId: data._id, status }).catch((e) =>
-              handleError(e, t("case.saveError")),
-            )
-          }
-        >
-          <SelectTrigger className="h-8 w-[220px]" aria-label={t("statusTree.stage")}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {config.stages
-              .filter((s) => !s.archived || s.id === data.status)
-              .map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            <SelectItem value="done">{t("status.done")}</SelectItem>
-            <SelectItem value="winback">{t("status.winback")}</SelectItem>
-          </SelectContent>
-        </Select>
+        <h3 className="text-sm font-semibold">{t("phase.title")}</h3>
+        {winback ? (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => void save({ status: "open" })}
+          >
+            <RotateCcw className="mr-2 h-3.5 w-3.5" />
+            {t("phase.reopen")}
+          </Button>
+        ) : null}
       </div>
 
-      {/* Stage path: where the case stands */}
+      {/* The ladder */}
       <ol className="flex flex-wrap items-center gap-1.5 text-xs">
-        {config.stages
-          .filter((s) => !s.archived)
-          .map((s, i, list) => {
-            const index = list.findIndex((x) => x.id === data.status);
-            const past = data.status === "done" || (index >= 0 && i < index);
-            const here = s.id === data.status;
-            return (
-              <li key={s.id} className="flex items-center gap-1.5">
-                <span
-                  className={cn(
-                    "rounded-full border px-2 py-0.5",
-                    here && "border-foreground/40 bg-foreground text-background",
-                    past && "border-ok/30 bg-ok/10 text-ok",
-                    !here && !past && "border-border/70 text-muted-foreground",
-                  )}
-                >
-                  {s.label}
-                  {s.milestone && data.milestones.includes(s.id) && " ✓"}
-                </span>
-                {i < list.length - 1 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
-              </li>
-            );
-          })}
-        {closed && (
-          <>
-            <ArrowRight className="h-3 w-3 text-muted-foreground" />
-            <StatusBadge status={data.status} />
-          </>
+        {ladder.map((s, i) => (
+          <li key={s} className="flex items-center gap-1.5">
+            <span
+              className={cn(
+                "rounded-full border px-2.5 py-1",
+                !winback && i === here && "border-foreground bg-foreground text-background",
+                !winback && i < here && "border-ok/30 bg-ok/10 text-ok",
+                (winback || i > here) && "border-border/70 text-muted-foreground",
+              )}
+            >
+              {statusName(s)}
+            </span>
+            {i < ladder.length - 1 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
+          </li>
+        ))}
+        {winback && (
+          <li className="ml-1 rounded-full border border-destructive/40 bg-destructive/10 px-2.5 py-1 text-destructive">
+            {statusName("winback")}
+          </li>
         )}
       </ol>
 
-      {stage?.milestone && (
-        <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-border/70 px-3 py-2 text-sm hover:bg-muted/40">
-          <Checkbox
-            checked={data.milestones.includes(stage.id)}
-            onCheckedChange={(v) =>
-              void update({ caseId: data._id, milestone: { done: v === true } }).catch((e) =>
-                handleError(e, t("case.saveError")),
-              )
-            }
+      {/* The three ticks */}
+      <div className="grid gap-2 sm:grid-cols-3">
+        {MILESTONES.map((m) => {
+          const done = data.milestones.includes(m);
+          return (
+            <button
+              key={m}
+              type="button"
+              disabled={busy || winback}
+              onClick={() => void toggle(m, !done)}
+              className={cn(
+                "flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors disabled:opacity-60",
+                done ? "border-ok/40 bg-ok/10 text-ok" : "border-border/70 hover:bg-muted/50",
+              )}
+            >
+              <span
+                className={cn(
+                  "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
+                  done ? "border-ok bg-ok text-background" : "border-border",
+                )}
+              >
+                {done && <Check className="h-3.5 w-3.5" />}
+              </span>
+              <span className="font-medium">{t(`steps.${m}`)}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {suggestion && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+          <CalendarPlus className="h-4 w-4 text-primary" />
+          <span className="mr-auto">{t(`phase.suggest.${suggestion.reason}`)}</span>
+          <Input
+            type="date"
+            className="h-8 w-[160px]"
+            value={suggestion.date}
+            onChange={(e) => setSuggestion({ ...suggestion, date: e.target.value })}
           />
-          <span>
-            <span className="font-medium">{stage.milestone}</span>
-            <span className="ml-1.5 text-xs text-muted-foreground">
-              {t("statusTree.milestone")}
-            </span>
-          </span>
-        </label>
+          <TimeSelect
+            className="h-8"
+            value={suggestion.time}
+            onChange={(time) => setSuggestion({ ...suggestion, time })}
+          />
+          <Button
+            size="sm"
+            disabled={busy || !suggestion.date}
+            onClick={() => void createSuggested()}
+          >
+            {t("phase.createFollowUp")}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setSuggestion(null)}>
+            {t("phase.skip")}
+          </Button>
+          {data.nextFollowUp && (
+            <p className="w-full text-xs text-muted-foreground">
+              {t("phase.replaces", { date: formatIsoDate(data.nextFollowUp, locale) })}
+            </p>
+          )}
+        </div>
       )}
 
       <div className="rounded-lg bg-muted/40 px-3 py-2 text-sm">
-        <span className="text-muted-foreground">{t("statusTree.current")}: </span>
+        <span className="text-muted-foreground">{t("situation.current")}: </span>
         {current ? (
           <>
             <span className="font-medium">{current}</span>
@@ -226,106 +216,9 @@ export function CaseStatus({ data }: { data: CaseStatusData }) {
             )}
           </>
         ) : (
-          <span className="text-muted-foreground">{t("statusTree.none")}</span>
+          <span className="text-muted-foreground">{t("situation.none")}</span>
         )}
       </div>
-
-      {!closed && stage && levels.length > 0 && (
-        <div className="space-y-3">
-          <p className="text-sm font-medium">{t("statusTree.set")}</p>
-          <div className="flex flex-wrap gap-1.5">
-            {levels[0].map((o) => (
-              <Button
-                key={o.id}
-                type="button"
-                size="sm"
-                variant={path[0] === o.id ? "default" : "outline"}
-                className={cn(
-                  "h-8",
-                  path[0] !== o.id && o.kind === "success" && "border-ok/40 text-ok",
-                  path[0] !== o.id &&
-                    o.kind === "cancel" &&
-                    "border-destructive/40 text-destructive",
-                )}
-                onClick={() => pick(0, o.id)}
-              >
-                {o.label}
-              </Button>
-            ))}
-          </div>
-          {levels.slice(1).map((level, i) => (
-            <div key={i + 1} className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
-                {i === 0 ? t("statusTree.reason") : t("statusTree.detail")}
-              </Label>
-              <div className="flex flex-wrap gap-1.5">
-                {level.map((o) => (
-                  <Button
-                    key={o.id}
-                    type="button"
-                    size="sm"
-                    variant={path[i + 1] === o.id ? "default" : "outline"}
-                    className="h-8"
-                    onClick={() => pick(i + 1, o.id)}
-                  >
-                    {o.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          ))}
-
-          {needsText && (
-            <div className="space-y-1.5">
-              <Label htmlFor="ob-outcome-text">{t("statusTree.freetext")}</Label>
-              <Input id="ob-outcome-text" value={text} onChange={(e) => setText(e.target.value)} />
-            </div>
-          )}
-
-          {askFollowUp && (
-            <div className="space-y-1.5">
-              <Label htmlFor="ob-outcome-follow">{t("case.nextFollowUp")}</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="ob-outcome-follow"
-                  type="date"
-                  className="w-[170px]"
-                  value={followUp}
-                  onChange={(e) => setFollowUp(e.target.value)}
-                />
-                <Input
-                  type="time"
-                  aria-label={t("case.followUpTime")}
-                  className="w-[110px]"
-                  value={followUpTime}
-                  disabled={!followUp}
-                  onChange={(e) => setFollowUpTime(e.target.value)}
-                />
-              </div>
-            </div>
-          )}
-
-          {complete && kind === "success" && (
-            <p className="text-xs text-ok">
-              {t("statusTree.willMove", { status: statusName(nextStatus(config, data.status)) })}
-            </p>
-          )}
-          {complete && kind === "cancel" && (
-            <p className="text-xs text-destructive">{t("statusTree.willWinback")}</p>
-          )}
-
-          <div className="flex flex-wrap justify-end gap-2">
-            {path.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={() => setPath([])}>
-                {t("statusTree.clear")}
-              </Button>
-            )}
-            <Button size="sm" disabled={!complete || busy} onClick={() => void submit()}>
-              {t("statusTree.save")}
-            </Button>
-          </div>
-        </div>
-      )}
     </section>
   );
 }

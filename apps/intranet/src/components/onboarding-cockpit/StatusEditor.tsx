@@ -7,7 +7,7 @@ import {
   allNodeIds,
   OUTCOME_KINDS,
   type OutcomeKind,
-  type StatusStage,
+  type OutcomeTop,
 } from "@advantis/convex/performance/onboarding";
 import { useMutation, useQuery } from "convex/react";
 import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -45,40 +44,38 @@ const newId = (prefix: string) =>
   `${prefix}.n${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 
 /**
- * The status tree editor (admins and team leads): rename and add stages,
- * outcomes, reasons and sub-reasons, set what an outcome does (its kind),
- * ask for free text, hide entries. Saved entries can't be deleted, only
- * hidden, so cases that used them keep their labels.
+ * The situation editor (admins and team leads): rename and add situations,
+ * reasons and sub-reasons, set what a situation means (its kind – "wird
+ * kündigen" closes onto winback), ask for free text, hide entries. Saved
+ * entries can't be deleted, only hidden, so cases that used them keep
+ * their labels. The phases themselves are fixed.
  */
 export function StatusEditor() {
   const t = useTranslations("OnboardingCockpit");
   const handleError = useErrorHandler();
   const config = useQuery(api.performance.onboarding.statusConfig, {});
   const save = useMutation(api.performance.onboarding.saveStatusConfig);
-  const [draft, setDraft] = useState<StatusStage[] | null>(null);
+  const [draft, setDraft] = useState<OutcomeTop[] | null>(null);
   const [busy, setBusy] = useState(false);
 
   const savedIds = useMemo(
-    () =>
-      new Set(
-        config ? [...config.stages.map((s) => s.id), ...allNodeIds({ stages: config.stages })] : [],
-      ),
+    () => new Set(config ? allNodeIds({ outcomes: config.outcomes }) : []),
     [config],
   );
 
   if (!config) return <Skeleton className="h-96 w-full" />;
-  const stages: StatusStage[] = draft ?? config.stages;
-  const change = (fn: (next: StatusStage[]) => void) => {
-    const next = structuredClone(stages);
+  const outcomes: OutcomeTop[] = draft ?? config.outcomes;
+  const change = (fn: (next: EditNode[]) => void) => {
+    const next = structuredClone(outcomes) as EditNode[];
     fn(next);
-    setDraft(next);
+    setDraft(next as OutcomeTop[]);
   };
 
   const submit = async () => {
     if (!draft) return;
     setBusy(true);
     try {
-      await save({ stages: draft });
+      await save({ outcomes: draft });
       toast.success(t("editor.saved"));
       setDraft(null);
     } catch (e) {
@@ -104,82 +101,20 @@ export function StatusEditor() {
         </div>
       </div>
 
-      {stages.map((stage, si) => (
-        <section
-          key={stage.id}
-          className={cn(
-            "space-y-3 rounded-xl border border-border/70 bg-card p-4",
-            stage.archived && "opacity-60",
-          )}
+      <section className="space-y-2 rounded-xl border border-border/70 bg-card p-4">
+        <NodeList nodes={outcomes as EditNode[]} depth={1} savedIds={savedIds} onChange={change} />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            change((n) => void n.push({ id: newId("lage"), label: "", kind: "other" }))
+          }
         >
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="min-w-[220px] flex-1 space-y-1">
-              <Label className="text-xs text-muted-foreground">{t("editor.stage")}</Label>
-              <Input
-                value={stage.label}
-                onChange={(e) => change((n) => void (n[si].label = e.target.value))}
-              />
-            </div>
-            <div className="min-w-[200px] flex-1 space-y-1">
-              <Label className="text-xs text-muted-foreground">{t("editor.milestone")}</Label>
-              <Input
-                value={stage.milestone ?? ""}
-                placeholder={t("editor.milestoneHint")}
-                onChange={(e) =>
-                  change((n) => void (n[si].milestone = e.target.value || undefined))
-                }
-              />
-            </div>
-            {si > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => change((n) => void (n[si].archived = !n[si].archived))}
-              >
-                {stage.archived ? (
-                  <Eye className="mr-2 h-4 w-4" />
-                ) : (
-                  <EyeOff className="mr-2 h-4 w-4" />
-                )}
-                {stage.archived ? t("editor.show") : t("editor.hide")}
-              </Button>
-            )}
-          </div>
+          <Plus className="mr-2 h-4 w-4" />
+          {t("editor.addOutcome")}
+        </Button>
+      </section>
 
-          {si > 0 && (
-            <div className="space-y-1">
-              <NodeList
-                nodes={stage.options as EditNode[]}
-                depth={1}
-                savedIds={savedIds}
-                onChange={(fn) => change((n) => fn(n[si].options as EditNode[]))}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  change((n) =>
-                    n[si].options.push({ id: newId(stage.id), label: "", kind: "other" }),
-                  )
-                }
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                {t("editor.addOutcome")}
-              </Button>
-            </div>
-          )}
-        </section>
-      ))}
-
-      <Button
-        variant="outline"
-        onClick={() =>
-          change((n) => n.push({ id: newId("stage").replace(/\./g, "_"), label: "", options: [] }))
-        }
-      >
-        <Plus className="mr-2 h-4 w-4" />
-        {t("editor.addStage")}
-      </Button>
       {config.updatedByName && (
         <p className="text-xs text-muted-foreground">
           {t("dist.teamUpdated", { name: config.updatedByName })}
