@@ -6,12 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import {
-  followUpBucket,
-  ONBOARDING_STATUSES,
-  ONBOARDING_STEPS,
-  STEP_CODES,
-} from "@advantis/convex/performance/onboarding";
+import { followUpBucket, type StatusConfig } from "@advantis/convex/performance/onboarding";
 import { useMutation, useQuery } from "convex/react";
 import { Archive, ArchiveRestore, Download, Eye, Flag, Inbox, Plus, Rocket } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -51,6 +46,8 @@ import { CreateCaseDialog } from "./CreateCaseDialog";
 import { DistributionPanel } from "./DistributionPanel";
 import { FollowUpCalendar } from "./FollowUpCalendar";
 import { ImportPanel } from "./ImportPanel";
+import { NO_OUTCOME, StageOverview } from "./StageOverview";
+import { StatusEditor } from "./StatusEditor";
 import {
   type CaseRow,
   caseDate,
@@ -58,13 +55,18 @@ import {
   followUpDue,
   isOpen,
   StatusBadge,
-  StepChips,
+  CustomerNumber,
+  outcomeKind,
+  StatusConfigProvider,
+  useOutcomeLabel,
+  useStatusConfig,
+  useStatusName,
   todayIso,
   workOrder,
 } from "./shared";
 
-type Tab = "cases" | "prio" | "followUps" | "distribution" | "import" | "archive";
-type KpiFilter = "open" | "prio" | "due" | "cards" | "unassigned" | "done" | "all";
+type Tab = "cases" | "prio" | "followUps" | "distribution" | "status" | "import" | "archive";
+type KpiFilter = "open" | "prio" | "due" | "case" | "unassigned" | "done" | "all";
 const ALL = "__all";
 const SELF = "__self";
 const NOBODY = "__none";
@@ -102,6 +104,8 @@ export function OnboardingCockpit() {
     allowed && canManage && tab === "archive" ? { archived: true } : "skip",
   );
   const assignees = useQuery(api.performance.onboarding.assignees, realManage ? {} : "skip");
+  const statusConfig = useQuery(api.performance.onboarding.statusConfig, allowed ? {} : "skip");
+  const [archiveView, setArchiveView] = useState<"archived" | "winback">("winback");
   const viewAsName = viewAs ? assignees?.find((a) => a.userId === viewAs)?.name : null;
 
   const today = todayIso();
@@ -134,132 +138,174 @@ export function OnboardingCockpit() {
     ...(canManage
       ? [
           { value: "distribution" as const, label: t("tabs.distribution") },
+          { value: "status" as const, label: t("tabs.status") },
           { value: "import" as const, label: t("tabs.import") },
-          { value: "archive" as const, label: t("tabs.archive") },
+          {
+            value: "archive" as const,
+            label: t("tabs.archive"),
+            count: (cases ?? []).filter((c) => c.status === "winback").length,
+          },
         ]
       : []),
   ];
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <PageHeaderBar
-        title={t("title")}
-        description={canManage ? t("introManage") : t("introOwn")}
-        icon={<Rocket className="size-4" />}
-      />
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {realManage && !access.live && (
-          <Badge variant="warning" title={t("adminsOnlyHint")} className="mr-auto">
-            {t("adminsOnly")}
-          </Badge>
-        )}
-        {realManage && (
-          <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4 text-muted-foreground" />
-            <Select
-              value={viewAs ?? SELF}
-              onValueChange={(v) => {
-                setViewAs(v === SELF ? null : (v as Id<"users">));
-                setTab("cases");
-              }}
-            >
-              <SelectTrigger className="h-9 w-[240px]" aria-label={t("viewAs.label")}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={SELF}>
-                  {access.isAdmin ? t("viewAs.self") : t("viewAs.selfLead")}
-                </SelectItem>
-                {(assignees ?? [])
-                  .filter((a) => a.member)
-                  .map((a) => (
-                    <SelectItem key={a.userId} value={a.userId}>
-                      {t("viewAs.as", { name: a.name })}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+    <StatusConfigProvider config={statusConfig ? { stages: statusConfig.stages } : undefined}>
+      <div className="mx-auto max-w-7xl space-y-6">
+        <PageHeaderBar
+          title={t("title")}
+          description={canManage ? t("introManage") : t("introOwn")}
+          icon={<Rocket className="size-4" />}
+        />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {realManage && !access.live && (
+            <Badge variant="warning" title={t("adminsOnlyHint")} className="mr-auto">
+              {t("adminsOnly")}
+            </Badge>
+          )}
+          {realManage && (
+            <div className="flex items-center gap-2">
+              <Eye className="h-4 w-4 text-muted-foreground" />
+              <Select
+                value={viewAs ?? SELF}
+                onValueChange={(v) => {
+                  setViewAs(v === SELF ? null : (v as Id<"users">));
+                  setTab("cases");
+                }}
+              >
+                <SelectTrigger className="h-9 w-[240px]" aria-label={t("viewAs.label")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SELF}>
+                    {access.isAdmin ? t("viewAs.self") : t("viewAs.selfLead")}
+                  </SelectItem>
+                  {(assignees ?? [])
+                    .filter((a) => a.member)
+                    .map((a) => (
+                      <SelectItem key={a.userId} value={a.userId}>
+                        {t("viewAs.as", { name: a.name })}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {!viewAs && (
+            <Button size="sm" onClick={() => setCreating(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t("create.button")}
+            </Button>
+          )}
+        </div>
+        {viewAs && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm">
+            <span>{t("viewAs.banner", { name: viewAsName ?? "…" })}</span>
+            <Button variant="outline" size="sm" onClick={() => setViewAs(null)}>
+              {t("viewAs.end")}
+            </Button>
           </div>
         )}
-        {!viewAs && (
-          <Button size="sm" onClick={() => setCreating(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            {t("create.button")}
-          </Button>
-        )}
-      </div>
-      {viewAs && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm">
-          <span>{t("viewAs.banner", { name: viewAsName ?? "…" })}</span>
-          <Button variant="outline" size="sm" onClick={() => setViewAs(null)}>
-            {t("viewAs.end")}
-          </Button>
-        </div>
-      )}
-      <CountTabs tabs={tabs} value={tab} onChange={setTab} />
+        <CountTabs tabs={tabs} value={tab} onChange={setTab} />
 
-      {tab === "cases" && (
-        <CasesView
-          cases={cases ?? []}
+        {tab === "cases" && (
+          <CasesView
+            cases={cases ?? []}
+            canManage={canManage}
+            assignees={assignees}
+            onOpen={setOpenId}
+          />
+        )}
+        {tab === "prio" && (
+          <section className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-muted-foreground">{t("prioIntro")}</p>
+              <ExportButton rows={prio} />
+            </div>
+            <CaseTable rows={prio} onOpen={setOpenId} empty={t("empty.prio")} />
+          </section>
+        )}
+        {tab === "followUps" && (
+          <FollowUpView rows={followUps} onOpen={setOpenId} canManage={canManage} />
+        )}
+        {tab === "distribution" && canManage && (
+          <DistributionPanel cases={cases ?? []} people={assignees} isAdmin={access.isAdmin} />
+        )}
+        {tab === "status" && canManage && <StatusEditor />}
+        {tab === "import" && canManage && <ImportPanel />}
+        {tab === "archive" && canManage && (
+          <section className="space-y-3">
+            <CountTabs
+              tabs={[
+                {
+                  value: "winback" as const,
+                  label: t("archiveTabs.winback"),
+                  count: (cases ?? []).filter((c) => c.status === "winback").length,
+                },
+                {
+                  value: "archived" as const,
+                  label: t("archiveTabs.archived"),
+                  count: archived?.length,
+                },
+              ]}
+              value={archiveView}
+              onChange={setArchiveView}
+            />
+            {archiveView === "winback" ? (
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm text-muted-foreground">{t("winbackIntro")}</p>
+                  <ExportButton rows={(cases ?? []).filter((c) => c.status === "winback")} />
+                </div>
+                <CaseTable
+                  rows={(cases ?? [])
+                    .filter((c) => c.status === "winback")
+                    .sort((a, b) => (b.closedAt ?? 0) - (a.closedAt ?? 0))}
+                  onOpen={setOpenId}
+                  empty={t("empty.winback")}
+                />
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">{t("archiveIntro")}</p>
+                {archived === undefined ? (
+                  <Skeleton className="h-40 w-full" />
+                ) : (
+                  <SelectableTable
+                    rows={[...archived].sort(order)}
+                    onOpen={setOpenId}
+                    empty={t("empty.archive")}
+                    archive
+                  />
+                )}
+              </>
+            )}
+          </section>
+        )}
+
+        <CaseSheet
+          caseId={openId}
+          onOpenChange={(o) => !o && setOpenId(null)}
+          assignees={assignees}
+        />
+        <CreateCaseDialog
+          open={creating}
+          onOpenChange={setCreating}
           canManage={canManage}
           assignees={assignees}
-          onOpen={setOpenId}
+          onCreated={(id) => {
+            setTab("cases");
+            setOpenId(id);
+          }}
         />
-      )}
-      {tab === "prio" && (
-        <section className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm text-muted-foreground">{t("prioIntro")}</p>
-            <ExportButton rows={prio} />
-          </div>
-          <CaseTable rows={prio} onOpen={setOpenId} empty={t("empty.prio")} />
-        </section>
-      )}
-      {tab === "followUps" && (
-        <FollowUpView rows={followUps} onOpen={setOpenId} canManage={canManage} />
-      )}
-      {tab === "distribution" && canManage && (
-        <DistributionPanel cases={cases ?? []} people={assignees} isAdmin={access.isAdmin} />
-      )}
-      {tab === "import" && canManage && <ImportPanel />}
-      {tab === "archive" && canManage && (
-        <section className="space-y-3">
-          <p className="text-sm text-muted-foreground">{t("archiveIntro")}</p>
-          {archived === undefined ? (
-            <Skeleton className="h-40 w-full" />
-          ) : (
-            <SelectableTable
-              rows={[...archived].sort(order)}
-              onOpen={setOpenId}
-              empty={t("empty.archive")}
-              archive
-            />
-          )}
-        </section>
-      )}
-
-      <CaseSheet
-        caseId={openId}
-        onOpenChange={(o) => !o && setOpenId(null)}
-        assignees={assignees}
-      />
-      <CreateCaseDialog
-        open={creating}
-        onOpenChange={setCreating}
-        canManage={canManage}
-        assignees={assignees}
-        onCreated={(id) => {
-          setTab("cases");
-          setOpenId(id);
-        }}
-      />
-    </div>
+      </div>
+    </StatusConfigProvider>
   );
 }
 
 // ------------------------------------------------------------ cases tab
 
-function matchesKpi(c: CaseRow, filter: KpiFilter, today: string): boolean {
+function matchesKpi(c: CaseRow, filter: KpiFilter, today: string, config: StatusConfig): boolean {
   switch (filter) {
     case "all":
       return true;
@@ -269,12 +315,12 @@ function matchesKpi(c: CaseRow, filter: KpiFilter, today: string): boolean {
       return isOpen(c) && c.prio;
     case "due":
       return followUpDue(c, today);
-    case "cards":
-      return isOpen(c) && c.steps.cards;
+    case "case":
+      return isOpen(c) && outcomeKind(config, c) === "case";
     case "unassigned":
       return isOpen(c) && !c.assigneeUserId;
     case "done":
-      return !isOpen(c);
+      return c.status === "done";
   }
 }
 
@@ -331,8 +377,11 @@ function CasesView({
   const [query, setQuery] = useState("");
   const [kpi, setKpi] = useState<KpiFilter>("open");
   const [status, setStatus] = useState(ALL);
+  const [outcome, setOutcome] = useState<string | null>(null);
   const [assignee, setAssignee] = useState(ALL);
   const today = todayIso();
+  const config = useStatusConfig();
+  const statusName = useStatusName();
 
   if (cases.length === 0) {
     return (
@@ -344,11 +393,13 @@ function CasesView({
     );
   }
 
-  const count = (f: KpiFilter) => cases.filter((c) => matchesKpi(c, f, today)).length;
+  const count = (f: KpiFilter) => cases.filter((c) => matchesKpi(c, f, today, config)).length;
   const rows = cases
     .filter((c) => {
-      if (!matchesKpi(c, kpi, today)) return false;
+      if (!matchesKpi(c, kpi, today, config)) return false;
       if (status !== ALL && c.status !== status) return false;
+      if (outcome === NO_OUTCOME && c.outcomePath.length > 0) return false;
+      if (outcome && outcome !== NO_OUTCOME && c.outcomePath[0] !== outcome) return false;
       if (
         assignee === NOBODY ? c.assigneeUserId : assignee !== ALL && c.assigneeUserId !== assignee
       )
@@ -358,7 +409,7 @@ function CasesView({
     .sort(workOrder(today));
 
   const toggleKpi = (f: KpiFilter) => setKpi(kpi === f ? "all" : f);
-  const filtered = query || kpi !== "open" || status !== ALL || assignee !== ALL;
+  const filtered = query || kpi !== "open" || status !== ALL || outcome || assignee !== ALL;
 
   return (
     <div className="space-y-4">
@@ -384,10 +435,11 @@ function CasesView({
           onClick={() => toggleKpi("due")}
         />
         <KpiButton
-          label={t("kpi.cardsOrdered")}
-          value={count("cards")}
-          active={kpi === "cards"}
-          onClick={() => toggleKpi("cards")}
+          label={t("kpi.caseOpened")}
+          value={count("case")}
+          tone="warn"
+          active={kpi === "case"}
+          onClick={() => toggleKpi("case")}
         />
         {canManage && (
           <KpiButton
@@ -406,6 +458,17 @@ function CasesView({
         />
       </div>
       <p className="text-xs text-muted-foreground">{t("kpi.filterHint")}</p>
+
+      <StageOverview
+        cases={cases}
+        stage={status === ALL ? null : status}
+        outcome={outcome}
+        onPick={(stage, picked) => {
+          setStatus(stage ?? ALL);
+          setOutcome(picked);
+          setKpi(stage ? "all" : "open");
+        }}
+      />
 
       {canManage && (
         <ConsultantTable
@@ -426,15 +489,22 @@ function CasesView({
           placeholder={t("filter.search")}
           className="h-9 min-w-[220px] flex-1"
         />
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="h-9 w-[180px]">
+        <Select
+          value={status}
+          onValueChange={(v) => {
+            setStatus(v);
+            setOutcome(null);
+            if (v !== ALL) setKpi("all");
+          }}
+        >
+          <SelectTrigger className="h-9 w-[200px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>{t("filter.allStatuses")}</SelectItem>
-            {ONBOARDING_STATUSES.map((s) => (
+            {[...config.stages.map((st) => st.id), "done", "winback"].map((s) => (
               <SelectItem key={s} value={s}>
-                {t(`status.${s}`)}
+                {statusName(s)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -465,6 +535,7 @@ function CasesView({
               setQuery("");
               setKpi("open");
               setStatus(ALL);
+              setOutcome(null);
               setAssignee(ALL);
             }}
           >
@@ -488,7 +559,7 @@ function CasesView({
   );
 }
 
-/** Admin overview: open, prio, due, cards ordered and done per person,
+/** Admin overview: open, prio, due, cases opened and done per person,
  * with a workload bar. Clicking a row filters the list to that person. */
 function ConsultantTable({
   cases,
@@ -501,6 +572,7 @@ function ConsultantTable({
 }) {
   const t = useTranslations("OnboardingCockpit");
   const today = todayIso();
+  const config = useStatusConfig();
   const people = new Map<string, { name: string; rows: CaseRow[] }>();
   for (const c of cases) {
     const id = c.assigneeUserId ?? NOBODY;
@@ -516,7 +588,7 @@ function ConsultantTable({
       open: p.rows.filter(isOpen).length,
       prio: p.rows.filter((c) => isOpen(c) && c.prio).length,
       due: p.rows.filter((c) => followUpDue(c, today)).length,
-      cards: p.rows.filter((c) => isOpen(c) && c.steps.cards).length,
+      cards: p.rows.filter((c) => isOpen(c) && outcomeKind(config, c) === "case").length,
       done: p.rows.filter((c) => !isOpen(c)).length,
     }))
     .sort((a, b) => Number(a.id === NOBODY) - Number(b.id === NOBODY) || b.open - a.open);
@@ -533,7 +605,7 @@ function ConsultantTable({
               <TableHead className="text-right">{t("kpi.open")}</TableHead>
               <TableHead className="text-right">{t("prioBadge")}</TableHead>
               <TableHead className="text-right">{t("kpi.due")}</TableHead>
-              <TableHead className="text-right">{t("kpi.cardsOrdered")}</TableHead>
+              <TableHead className="text-right">{t("kpi.caseOpened")}</TableHead>
               <TableHead className="text-right">{t("kpi.done")}</TableHead>
               <TableHead className="w-[28%]">{t("kpi.load")}</TableHead>
             </TableRow>
@@ -617,11 +689,16 @@ function FollowUpView({
 /** Downloads the rows on screen as an .xlsx (one row per case). */
 function ExportButton({ rows }: { rows: CaseRow[] }) {
   const t = useTranslations("OnboardingCockpit");
+  const config = useStatusConfig();
+  const statusName = useStatusName();
+  const outcomeLabel = useOutcomeLabel();
   const run = () => {
     const header = [
       t("col.number"),
       t("col.status"),
-      ...ONBOARDING_STEPS.map((s) => `${t(`steps.${s}`)} (${STEP_CODES[s]})`),
+      t("statusTree.milestone"),
+      t("statusTree.current"),
+      t("statusTree.freetext"),
       t("col.assignee"),
       t("prioBadge"),
       t("col.followUp"),
@@ -634,8 +711,13 @@ function ExportButton({ rows }: { rows: CaseRow[] }) {
     ];
     const data = rows.map((c) => [
       c.customerNumber,
-      t(`status.${c.status as "fresh"}`),
-      ...ONBOARDING_STEPS.map((s) => (c.steps[s] ? "Ja" : "Nein")),
+      statusName(c.status),
+      config.stages
+        .filter((st) => st.milestone && c.milestones.includes(st.id))
+        .map((st) => st.milestone)
+        .join(", "),
+      outcomeLabel(c) ?? "",
+      c.outcomeText ?? "",
       c.assigneeName ?? "",
       c.prio ? "Ja" : "",
       c.nextFollowUp
@@ -780,6 +862,8 @@ function CaseTable({
     toggleAll: (on: boolean) => void;
   };
 }) {
+  const config = useStatusConfig();
+  const outcomeLabel = useOutcomeLabel();
   const t = useTranslations("OnboardingCockpit");
   const locale = useLocale();
   if (rows.length === 0) return <EmptyState title={empty} />;
@@ -824,16 +908,11 @@ function CaseTable({
               )}
               <TableCell className="max-w-[320px]">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="font-medium tabular-nums">{c.customerNumber}</span>
+                  <CustomerNumber number={c.customerNumber} className="font-medium" />
                   {c.prio && isOpen(c) && (
                     <Badge variant="destructive" className="gap-1 px-1.5 py-0 text-[10px]">
                       <Flag className="h-2.5 w-2.5" />
                       {t("prioBadge")}
-                    </Badge>
-                  )}
-                  {!c.inReport && !c.archived && (
-                    <Badge variant="muted" className="px-1.5 py-0 text-[10px]">
-                      {t("notInReportBadge")}
                     </Badge>
                   )}
                 </div>
@@ -844,11 +923,25 @@ function CaseTable({
                 )}
               </TableCell>
               <TableCell>
-                <div className="flex flex-col items-start gap-1">
-                  <StatusBadge status={c.status} />
+                <div className="flex max-w-[280px] flex-col items-start gap-1">
                   <span className="flex items-center gap-1.5">
-                    <StepChips steps={c.steps} />
+                    <StatusBadge status={c.status} />
+                    {config.stages.some(
+                      (st) => st.id === c.status && st.milestone && c.milestones.includes(st.id),
+                    ) && (
+                      <span className="text-[11px] text-ok" title={t("statusTree.milestone")}>
+                        ✓ {findStageMilestone(config, c.status)}
+                      </span>
+                    )}
                   </span>
+                  {outcomeLabel(c) && (
+                    <span
+                      className="w-full truncate text-xs text-muted-foreground"
+                      title={outcomeLabel(c) ?? undefined}
+                    >
+                      {outcomeLabel(c)}
+                    </span>
+                  )}
                 </div>
               </TableCell>
               <TableCell className="whitespace-nowrap">
@@ -881,4 +974,8 @@ function CaseTable({
       </Table>
     </div>
   );
+}
+
+function findStageMilestone(config: StatusConfig, stageId: string): string {
+  return config.stages.find((st) => st.id === stageId)?.milestone ?? "";
 }

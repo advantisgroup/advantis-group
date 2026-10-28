@@ -16,8 +16,11 @@ import {
   reportRows,
   statusFromReport,
   balancedSplit,
-  statusFromSteps,
-  stepsOf,
+  DEFAULT_STATUS_CONFIG,
+  milestonesOf,
+  nextStatus,
+  pathLabel,
+  validateStatusConfig,
 } from "./lib/onboarding";
 
 describe("onboarding helpers", () => {
@@ -32,6 +35,7 @@ describe("onboarding helpers", () => {
     expect(statusFromReport("Fresh")).toBe("fresh");
     expect(statusFromReport("Progress Step 1")).toBe("step1");
     expect(statusFromReport("Progress Step 2")).toBe("step2");
+    expect(statusFromReport("Progress Step 3")).toBe("step3");
     expect(statusFromReport("Done")).toBe("done");
     expect(statusFromReport(undefined)).toBe("fresh");
   });
@@ -85,18 +89,32 @@ describe("onboarding helpers", () => {
     ).toMatchObject({ accountStatus: 2, closeDate: 3, status: -1, date: 4 });
   });
 
-  test("stage follows from the three steps", () => {
-    expect(statusFromSteps({ cards: false, fuel: false, twoMonth: false })).toBe("fresh");
-    expect(statusFromSteps({ cards: true, fuel: false, twoMonth: false })).toBe("step1");
-    expect(statusFromSteps({ cards: true, fuel: true, twoMonth: false })).toBe("step2");
-    expect(statusFromSteps({ cards: true, fuel: true, twoMonth: true })).toBe("done");
-    // Rows from before the steps existed: implied by the stage.
-    expect(stepsOf({ status: "step2" })).toEqual({ cards: true, fuel: true, twoMonth: false });
-    expect(stepsOf({ status: "step2", cardsOrderedAt: 1 })).toEqual({
-      cards: true,
-      fuel: false,
-      twoMonth: false,
-    });
+  test("default status tree: stages, next stage, labels, milestones", () => {
+    const c = DEFAULT_STATUS_CONFIG;
+    expect(c.stages.map((st) => st.id)).toEqual(["fresh", "step1", "step2", "step3"]);
+    expect(nextStatus(c, "fresh")).toBe("step1");
+    expect(nextStatus(c, "step3")).toBe("done");
+    expect(pathLabel(c, "step1", ["s1.case", "s1.case.login", "s1.case.login.welcome"])).toBe(
+      "case opened › login problem › no welcome mail",
+    );
+    // Step 2: credit problem is its own result, not under case opened.
+    expect(pathLabel(c, "step2", ["s2.credit", "s2.credit.deposit"])).toBe(
+      "credit problem › Deposit",
+    );
+    // Old rows: milestones from the step timestamps.
+    expect(milestonesOf({ cardsOrderedAt: 1, fuelledAt: 2 })).toEqual(["step1", "step2"]);
+    expect(milestonesOf({ milestonesDone: ["step3"], cardsOrderedAt: 1 })).toEqual(["step3"]);
+  });
+
+  test("an edited tree may not drop stages or entries", () => {
+    const c = DEFAULT_STATUS_CONFIG;
+    expect(validateStatusConfig(c, c)).toEqual([]);
+    const dropped = { stages: c.stages.slice(0, 3) };
+    expect(validateStatusConfig(dropped, c).length).toBeGreaterThan(0);
+    const hidden = {
+      stages: c.stages.map((st) => (st.id === "step3" ? { ...st, archived: true } : st)),
+    };
+    expect(validateStatusConfig(hidden, c)).toEqual([]);
   });
 
   test("balanced split fills the emptiest first", () => {
@@ -285,48 +303,107 @@ describe("onboarding cockpit", () => {
     });
     const detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
     expect(detail).toMatchObject({ status: "done", nextFollowUp: null });
+    expect(detail.closedAt).not.toBeNull();
   });
 
-  test("ticking steps moves the stage; all three close the case", async () => {
+  test("outcomes: success moves on, follow up stays, cancel goes to winback", async () => {
     const { as } = await setup();
     const admin = as("admin");
     await importReport(admin, [{ customerNumber: "100", reportStatus: "Progress Step 1" }]);
     const [c] = await admin.query(api.performance.onboarding.list, {});
-    expect(c.steps).toEqual({ cards: true, fuel: false, twoMonth: false });
+    expect(c).toMatchObject({ status: "step1", outcomePath: [] });
 
-    await admin.mutation(api.performance.onboarding.update, {
+    // A reason with children can't be picked on its own.
+    await expect(
+      admin.mutation(api.performance.onboarding.setOutcome, {
+        caseId: c._id,
+        path: ["s1.case", "s1.case.login"],
+      }),
+    ).rejects.toThrow();
+    await admin.mutation(api.performance.onboarding.setOutcome, {
       caseId: c._id,
-      nextFollowUp: "2026-11-01",
-      steps: { fuel: true },
+      path: ["s1.case", "s1.case.login", "s1.case.login.welcome"],
+      nextFollowUp: "2026-11-02",
     });
     let detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
-    expect(detail).toMatchObject({ status: "step2", nextFollowUp: "2026-11-01" });
+    expect(detail).toMatchObject({
+      status: "step1",
+      outcomePath: ["s1.case", "s1.case.login", "s1.case.login.welcome"],
+      nextFollowUp: "2026-11-02",
+    });
 
+    // Milestone of the stage.
     await admin.mutation(api.performance.onboarding.update, {
       caseId: c._id,
-      steps: { twoMonth: true },
-      subStatus: " 2M ",
-      note: "Rückruf nach Kartenlieferung",
+      milestone: { done: true },
+    });
+
+    // Success: on to step 2, which starts without an outcome.
+    await admin.mutation(api.performance.onboarding.setOutcome, {
+      caseId: c._id,
+      path: ["s1.success"],
+    });
+    detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
+    expect(detail).toMatchObject({ status: "step2", outcomePath: [], milestones: ["step1"] });
+
+    // Free text is required where the tree asks for it.
+    await expect(
+      admin.mutation(api.performance.onboarding.setOutcome, {
+        caseId: c._id,
+        path: ["s2.cancel", "s2.cancel.competition"],
+      }),
+    ).rejects.toThrow();
+    await admin.mutation(api.performance.onboarding.setOutcome, {
+      caseId: c._id,
+      path: ["s2.cancel", "s2.cancel.competition"],
+      text: "DKV günstiger",
     });
     detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
     expect(detail).toMatchObject({
-      status: "done",
+      status: "winback",
+      outcomePath: ["s2.cancel", "s2.cancel.competition"],
+      outcomeText: "DKV günstiger",
       nextFollowUp: null,
-      subStatus: "2M",
-      note: "Rückruf nach Kartenlieferung",
     });
-    expect(detail.contacts.filter((x) => x.kind === "step").map((x) => x.fromValue)).toEqual([
-      "twoMonth",
-      "fuel",
-    ]);
+    expect(detail.contacts.map((x) => x.kind).slice(0, 2)).toEqual(["status", "outcome"]);
 
-    // Un-ticking reopens it.
-    await admin.mutation(api.performance.onboarding.update, {
+    // Closed: no further outcomes.
+    await expect(
+      admin.mutation(api.performance.onboarding.setOutcome, {
+        caseId: c._id,
+        path: ["s2.followUp"],
+      }),
+    ).rejects.toThrow();
+  });
+
+  test("admins extend the tree; new entries can be picked", async () => {
+    const { as } = await setup();
+    const admin = as("admin");
+    const config = await admin.query(api.performance.onboarding.statusConfig, {});
+    const stages = config.stages.map((st) =>
+      st.id === "step1"
+        ? {
+            ...st,
+            options: [
+              ...st.options,
+              { id: "s1.custom", label: "Rückruf vom Kunden", kind: "followUp" as const },
+            ],
+          }
+        : st,
+    );
+    await admin.mutation(api.performance.onboarding.saveStatusConfig, { stages });
+    await importReport(admin, [{ customerNumber: "100", reportStatus: "Progress Step 1" }]);
+    const [c] = await admin.query(api.performance.onboarding.list, {});
+    await admin.mutation(api.performance.onboarding.setOutcome, {
       caseId: c._id,
-      steps: { twoMonth: false },
+      path: ["s1.custom"],
     });
-    detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
-    expect(detail.status).toBe("step2");
+    // Deleting an entry is refused (hide instead).
+    await expect(
+      admin.mutation(api.performance.onboarding.saveStatusConfig, {
+        stages: config.stages,
+      }),
+    ).rejects.toThrow();
   });
 
   test("cases entered by hand: own for consultants, never missing from a report", async () => {

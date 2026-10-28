@@ -8,90 +8,289 @@
  * refreshes name and report columns but never the status or assignee.
  */
 
-/** Working stages of a case, in order. The labels live in the
- * `OnboardingCockpit` translations. The stage follows from how many of the
- * three onboarding steps are done (decision 10/2026): none = fresh,
- * 1 = step1, 2 = step2, all three = done. */
-export const ONBOARDING_STATUSES = ["fresh", "step1", "step2", "done"] as const;
-export type OnboardingStatus = (typeof ONBOARDING_STATUSES)[number];
+// ------------------------------------------------------------ status tree
+//
+// Decision 28.10.2026 (Vahan): a case moves through stages (Fresh (no
+// call), Progress Step 1–3). In each stage the team records an *outcome*
+// from a tree the admins can extend: result → reason → sub-reason, some
+// with free text. Each stage also has one milestone tick ("Zwischenstatus":
+// cards ordered, first fuelling, two-month check). The outcome kind drives
+// what happens next:
+//   success  → the case moves on to the next stage (after the last: done)
+//   cancel   → the case is closed and lands on the winback list
+//   others   → stay in the stage (follow up, not reached, case opened …)
 
-/** The three onboarding steps of a new customer, in order: cards ordered
- * (KAR), first fuelling (TAN), two-month check (2M). */
-export const ONBOARDING_STEPS = ["cards", "fuel", "twoMonth"] as const;
-export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
-export type StepState = Record<OnboardingStep, boolean>;
-
-/** Short codes the team uses for the steps (substatus suggestions). */
-export const STEP_CODES: Record<OnboardingStep, string> = {
-  cards: "KAR",
-  fuel: "TAN",
-  twoMonth: "2M",
-};
-
-export function isOnboardingStep(value: string): value is OnboardingStep {
-  return (ONBOARDING_STEPS as readonly string[]).includes(value);
-}
-
-/** Stage from the steps: how many of the three are done. */
-export function statusFromSteps(steps: StepState): OnboardingStatus {
-  const done = ONBOARDING_STEPS.filter((s) => steps[s]).length;
-  return ONBOARDING_STATUSES[done];
-}
-
-/** Steps implied by a stage (for cases from before the steps existed, and
- * for new cases from the report's status). */
-export function stepsFromStatus(status: string): StepState {
-  const n = Math.max(0, ONBOARDING_STATUSES.indexOf(status as OnboardingStatus));
-  return { cards: n >= 1, fuel: n >= 2, twoMonth: n >= 3 };
-}
-
-/** The step fields of a case row: a timestamp when done. */
-export interface StepFields {
-  status: string;
-  cardsOrderedAt?: number;
-  fuelledAt?: number;
-  twoMonthCheckAt?: number;
-}
-
-export const STEP_FIELD: Record<
-  OnboardingStep,
-  "cardsOrderedAt" | "fuelledAt" | "twoMonthCheckAt"
-> = {
-  cards: "cardsOrderedAt",
-  fuel: "fuelledAt",
-  twoMonth: "twoMonthCheckAt",
-};
-
-/** Which steps a case has done. Rows without any step timestamp (created
- * before the steps existed) fall back to their stage. */
-export function stepsOf(row: StepFields): StepState {
-  const any = ONBOARDING_STEPS.some((s) => row[STEP_FIELD[s]] !== undefined);
-  if (!any) return stepsFromStatus(row.status);
-  return {
-    cards: row.cardsOrderedAt !== undefined,
-    fuel: row.fuelledAt !== undefined,
-    twoMonth: row.twoMonthCheckAt !== undefined,
-  };
-}
-
-export function isOnboardingStatus(value: string): value is OnboardingStatus {
-  return (ONBOARDING_STATUSES as readonly string[]).includes(value);
-}
+/** Closed states beside the configurable stages. */
+export const CLOSED_STATUSES = ["done", "winback"] as const;
+export type ClosedStatus = (typeof CLOSED_STATUSES)[number];
 
 /** Closed cases drop out of open counts, prio and follow-ups. */
 export function isClosedStatus(status: string): boolean {
-  return status === "done";
+  return status === "done" || status === "winback";
 }
 
-/** What a contact-log entry records. `status`/`step`/`assign`/`created`/
- * `followUp` (moved) are written by the system when someone changes the case, the rest by
- * people. */
+export const OUTCOME_KINDS = [
+  "success",
+  "followUp",
+  "notReached",
+  "cancel",
+  "case",
+  "other",
+] as const;
+export type OutcomeKind = (typeof OUTCOME_KINDS)[number];
+
+export interface OutcomeLeaf {
+  id: string;
+  label: string;
+  /** Asks for free text when picked (e.g. "other (freetext)"). */
+  freetext?: boolean;
+  /** Hidden for new picks; old cases still show it. */
+  archived?: boolean;
+}
+export interface OutcomeMid extends OutcomeLeaf {
+  children?: OutcomeLeaf[];
+}
+export interface OutcomeTop extends OutcomeLeaf {
+  kind: OutcomeKind;
+  children?: OutcomeMid[];
+}
+export interface StatusStage {
+  id: string;
+  label: string;
+  /** The stage's milestone tick ("Zwischenstatus"), e.g. cards ordered. */
+  milestone?: string;
+  archived?: boolean;
+  options: OutcomeTop[];
+}
+export interface StatusConfig {
+  stages: StatusStage[];
+}
+
+type AnyNode = OutcomeLeaf & { kind?: OutcomeKind; children?: AnyNode[] };
+
+const leaf = (id: string, label: string, freetext?: boolean): OutcomeLeaf =>
+  freetext ? { id, label, freetext } : { id, label };
+
+const credit = (p: string): OutcomeMid => ({
+  id: `${p}.credit`,
+  label: "credit problem",
+  children: [
+    leaf(`${p}.credit.prepaid`, "Prepaid"),
+    leaf(`${p}.credit.limit`, "Credit Limit"),
+    leaf(`${p}.credit.deposit`, "Deposit"),
+  ],
+});
+
+/** Step 2 and 3 share their outcomes (list from 28.10.2026). */
+function laterStep(p: string, label: string): OutcomeTop[] {
+  return [
+    { id: `${p}.success`, label, kind: "success" },
+    { id: `${p}.followUp`, label: "follow up", kind: "followUp" },
+    { id: `${p}.notReached`, label: "not reached", kind: "notReached" },
+    {
+      id: `${p}.cancel`,
+      label: "will cancel",
+      kind: "cancel",
+      children: [
+        {
+          id: `${p}.cancel.unsatisfied`,
+          label: "not satisfied",
+          children: [
+            leaf(`${p}.cancel.unsatisfied.credit`, "credit"),
+            leaf(`${p}.cancel.unsatisfied.network`, "network"),
+            leaf(`${p}.cancel.unsatisfied.discount`, "discount"),
+            leaf(`${p}.cancel.unsatisfied.service`, "service"),
+            leaf(`${p}.cancel.unsatisfied.other`, "other (freetext)", true),
+          ],
+        },
+        {
+          id: `${p}.cancel.competition`,
+          label: "better offer from competition",
+          freetext: true,
+        },
+      ],
+    },
+    { id: `${p}.case`, label: "case opened", kind: "case" },
+    { ...credit(p), kind: "case" },
+    { id: `${p}.bundle`, label: "wrong bundle", kind: "case" },
+    { id: `${p}.delivery`, label: "card delivery problems", kind: "case" },
+    { id: `${p}.it`, label: "IT other problems", kind: "case" },
+    { id: `${p}.care`, label: "customer care problem", kind: "case" },
+  ];
+}
+
+/** The stages and outcomes as handed over on 28.10.2026. Admins can rename,
+ * extend and hide entries in the cockpit (`onboardingStatusConfig`). */
+export const DEFAULT_STATUS_CONFIG: StatusConfig = {
+  stages: [
+    { id: "fresh", label: "Fresh (no call)", options: [] },
+    {
+      id: "step1",
+      label: "Progress Step 1",
+      milestone: "Karten bestellt",
+      options: [
+        { id: "s1.success", label: "Step 1 successful reached (final)", kind: "success" },
+        { id: "s1.followUp", label: "follow up", kind: "followUp" },
+        { id: "s1.notReached", label: "not reached", kind: "notReached" },
+        { id: "s1.cancel", label: "will cancel", kind: "cancel" },
+        {
+          id: "s1.case",
+          label: "case opened",
+          kind: "case",
+          children: [
+            {
+              id: "s1.case.login",
+              label: "login problem",
+              children: [
+                leaf("s1.case.login.welcome", "no welcome mail"),
+                leaf("s1.case.login.problems", "problems with login"),
+              ],
+            },
+            credit("s1.case"),
+            { id: "s1.case.bundle", label: "wrong bundle" },
+            { id: "s1.case.delivery", label: "card delivery problem" },
+            { id: "s1.case.it", label: "IT other problems" },
+          ],
+        },
+      ],
+    },
+    {
+      id: "step2",
+      label: "Progress Step 2",
+      milestone: "Erste Tankung",
+      options: laterStep("s2", "Step 2 successful reached (final)"),
+    },
+    {
+      id: "step3",
+      label: "Progress Step 3",
+      milestone: "2-Monats-Check",
+      options: laterStep("s3", "Step 3 successful reached (final)"),
+    },
+  ],
+};
+
+export function findStage(config: StatusConfig, id: string): StatusStage | undefined {
+  return config.stages.find((s) => s.id === id);
+}
+
+export function isStageId(config: StatusConfig, id: string): boolean {
+  return config.stages.some((s) => s.id === id);
+}
+
+/** A stage id or one of the closed states. */
+export function isValidStatus(config: StatusConfig, status: string): boolean {
+  return isStageId(config, status) || (CLOSED_STATUSES as readonly string[]).includes(status);
+}
+
+/** The stage after `id` (skipping hidden ones), or "done" after the last. */
+export function nextStatus(config: StatusConfig, id: string): string {
+  const i = config.stages.findIndex((s) => s.id === id);
+  for (let k = i + 1; k < config.stages.length; k++) {
+    if (!config.stages[k].archived) return config.stages[k].id;
+  }
+  return "done";
+}
+
+/** The nodes along `path` in `stageId`, or null when the path doesn't exist. */
+export function resolvePath(
+  config: StatusConfig,
+  stageId: string,
+  path: string[],
+): AnyNode[] | null {
+  const stage = findStage(config, stageId);
+  if (!stage || path.length === 0) return null;
+  const nodes: AnyNode[] = [];
+  let level: AnyNode[] = stage.options;
+  for (const id of path) {
+    const node = level.find((n) => n.id === id);
+    if (!node) return null;
+    nodes.push(node);
+    level = node.children ?? [];
+  }
+  return nodes;
+}
+
+/** Children someone can still pick (hidden ones left out). */
+export function activeChildren(node: { children?: AnyNode[] }): AnyNode[] {
+  return (node.children ?? []).filter((c) => !c.archived);
+}
+
+/** "case opened › login problem › no welcome mail" (with stored labels as
+ * fallback when an id no longer resolves). */
+export function pathLabel(config: StatusConfig, stageId: string, path: string[]): string {
+  const nodes = resolvePath(config, stageId, path);
+  return nodes ? nodes.map((n) => n.label).join(" › ") : path.join(" › ");
+}
+
+/** Every node id of a config, for "nothing was deleted" checks. */
+export function allNodeIds(config: StatusConfig): string[] {
+  const ids: string[] = [];
+  const walk = (nodes: AnyNode[]) => {
+    for (const n of nodes) {
+      ids.push(n.id);
+      walk(n.children ?? []);
+    }
+  };
+  for (const s of config.stages) walk(s.options);
+  return ids;
+}
+
+/** Problems with an edited config (empty = fine). */
+export function validateStatusConfig(next: StatusConfig, previous: StatusConfig): string[] {
+  const errors: string[] = [];
+  if (next.stages[0]?.id !== "fresh") errors.push("Die erste Stufe muss „fresh“ bleiben.");
+  const stageIds = next.stages.map((s) => s.id);
+  if (new Set(stageIds).size !== stageIds.length) errors.push("Stufen-IDs doppelt.");
+  if (stageIds.some((id) => (CLOSED_STATUSES as readonly string[]).includes(id))) {
+    errors.push("„done“ und „winback“ sind keine Stufen.");
+  }
+  for (const s of previous.stages) {
+    if (!stageIds.includes(s.id))
+      errors.push(`Stufe „${s.label}“ fehlt – ausblenden statt löschen.`);
+  }
+  const ids = allNodeIds(next);
+  if (new Set(ids).size !== ids.length) errors.push("Ergebnis-IDs doppelt.");
+  const kept = new Set(ids);
+  for (const id of allNodeIds(previous)) {
+    if (!kept.has(id)) errors.push(`Eintrag ${id} fehlt – ausblenden statt löschen.`);
+  }
+  const labels = (nodes: AnyNode[]): boolean =>
+    nodes.every((n) => n.label.trim() !== "" && labels(n.children ?? []));
+  if (!next.stages.every((s) => s.label.trim() !== "" && labels(s.options))) {
+    errors.push("Jeder Eintrag braucht eine Bezeichnung.");
+  }
+  if (ids.length > 600) errors.push("Zu viele Einträge.");
+  return errors;
+}
+
+/** Milestones ticked on a case: the stage ids. Rows from before the status
+ * tree fall back to their old step timestamps. */
+export function milestonesOf(row: {
+  milestonesDone?: string[];
+  cardsOrderedAt?: number;
+  fuelledAt?: number;
+  twoMonthCheckAt?: number;
+}): string[] {
+  if (row.milestonesDone) return row.milestonesDone;
+  const out: string[] = [];
+  if (row.cardsOrderedAt !== undefined) out.push("step1");
+  if (row.fuelledAt !== undefined) out.push("step2");
+  if (row.twoMonthCheckAt !== undefined) out.push("step3");
+  return out;
+}
+
+/** What a contact-log entry records. `status`/`milestone`/`outcome`/
+ * `assign`/`created`/`followUp` (moved) are written by the system when
+ * someone changes the case, the rest by people. `step` is from before the
+ * status tree. */
 export const ONBOARDING_CONTACT_KINDS = [
   "reached",
   "not_reached",
   "email",
   "note",
   "status",
+  "outcome",
+  "milestone",
   "step",
   "assign",
   "created",
@@ -124,9 +323,10 @@ export function customerKey(value: unknown): string {
 
 /** Best guess of the intranet stage for a brand-new case from the
  * report's own status column. Only used when a case is first created. */
-export function statusFromReport(text: string | undefined): OnboardingStatus {
+export function statusFromReport(text: string | undefined): string {
   const t = (text ?? "").toLowerCase();
   if (/done|abgeschlossen|closed|erledigt|complete/.test(t)) return "done";
+  if (/(step|schritt)\s*3/.test(t)) return "step3";
   if (/(step|schritt)\s*2/.test(t)) return "step2";
   if (/progress|step|schritt|bearbeitung/.test(t)) return "step1";
   return "fresh";

@@ -1,6 +1,37 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
+const onboardingLeaf = {
+  id: v.string(),
+  label: v.string(),
+  freetext: v.optional(v.boolean()),
+  archived: v.optional(v.boolean()),
+};
+const onboardingMid = v.object({
+  ...onboardingLeaf,
+  children: v.optional(v.array(v.object(onboardingLeaf))),
+});
+export const onboardingStageValidator = v.object({
+  id: v.string(),
+  label: v.string(),
+  milestone: v.optional(v.string()),
+  archived: v.optional(v.boolean()),
+  options: v.array(
+    v.object({
+      ...onboardingLeaf,
+      kind: v.union(
+        v.literal("success"),
+        v.literal("followUp"),
+        v.literal("notReached"),
+        v.literal("cancel"),
+        v.literal("case"),
+        v.literal("other"),
+      ),
+      children: v.optional(v.array(onboardingMid)),
+    }),
+  ),
+});
+
 export const performanceTables = {
   // --- Performance (KPI dashboards) ---------------------------------------
   // One `companies` row = one dashboard (the table keeps its historical
@@ -656,7 +687,18 @@ export const performanceTables = {
     cardsOrderedAt: v.optional(v.number()),
     fuelledAt: v.optional(v.number()),
     twoMonthCheckAt: v.optional(v.number()),
-    /** Short working code, e.g. KAR / TAN / 2M. */
+    /** Outcome in the current stage: node ids from the status tree
+     * (`onboardingStatusConfig`), top-level first. Cleared when the stage
+     * changes; the log keeps the history. */
+    outcomePath: v.optional(v.array(v.string())),
+    outcomeText: v.optional(v.string()),
+    outcomeAt: v.optional(v.number()),
+    outcomeByName: v.optional(v.string()),
+    /** Stage ids whose milestone ("Zwischenstatus") is ticked. */
+    milestonesDone: v.optional(v.array(v.string())),
+    /** When the case was closed (done / winback). */
+    closedAt: v.optional(v.number()),
+    /** Short working code, e.g. KAR / TAN / 2M (no longer shown). */
     subStatus: v.optional(v.string()),
     /** Standing note on the case (the log holds the history). */
     note: v.optional(v.string()),
@@ -703,6 +745,16 @@ export const performanceTables = {
     memberUserIds: v.array(v.id("users")),
     leadUserIds: v.array(v.id("users")),
     pausedUserIds: v.optional(v.array(v.id("users"))),
+    updatedAt: v.number(),
+    updatedByName: v.string(),
+  }),
+
+  // The status tree of the cockpit (one row; unset = the default from
+  // `performance/lib/onboarding.ts`). Stages → outcome → reason →
+  // sub-reason, edited by admins and team leads. Entries are hidden, never
+  // deleted, so old cases keep their labels.
+  onboardingStatusConfig: defineTable({
+    stages: v.array(onboardingStageValidator),
     updatedAt: v.number(),
     updatedByName: v.string(),
   }),

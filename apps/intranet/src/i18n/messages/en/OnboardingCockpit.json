@@ -9,7 +9,8 @@
     "fresh": "New",
     "step1": "1 of 3",
     "step2": "2 of 3",
-    "done": "Done"
+    "done": "Done",
+    "winback": "Winback"
   },
   "contactKind": {
     "reached": "Phone · reached",
@@ -20,7 +21,8 @@
     "assign": "Assignment changed",
     "step": "Step",
     "created": "Created by hand",
-    "followUp": "Follow-up changed"
+    "followUp": "Follow-up changed",
+    "outcome": "Outcome"
   },
   "tabs": {
     "cases": "Cases",
@@ -29,7 +31,8 @@
     "import": "Import",
     "archive": "Archive",
     "myCases": "My cases",
-    "distribution": "Distribution"
+    "distribution": "Distribution",
+    "status": "Status"
   },
   "kpi": {
     "open": "Open",
@@ -47,7 +50,8 @@
     "consultant": "Consultant",
     "due": "Follow-up due",
     "load": "Workload (open)",
-    "filterHint": "Click a figure to filter the list."
+    "filterHint": "Click a figure to filter the list.",
+    "caseOpened": "Case open"
   },
   "filter": {
     "search": "Search customer, number or note",
@@ -88,7 +92,8 @@
     "filtered": "No cases match these filters.",
     "prio": "No open prio cases. They come from the prio list on import or by hand in a case.",
     "followUps": "No follow-ups planned. Set a date when you log a contact.",
-    "archive": "No archived cases."
+    "archive": "No archived cases.",
+    "winback": "No winback cases."
   },
   "prioIntro": "Open prio cases – overdue follow-ups and oldest cases first.",
   "followUpIntro": "Only the onboarding cockpit's follow-ups – separate from the intranet calendar.",
@@ -134,7 +139,8 @@
     "manualBadge": "Created by hand",
     "stepsDone": "{done} of 3 done",
     "followUpTime": "Time (optional)",
-    "noFollowUp": "none"
+    "noFollowUp": "none",
+    "numberLabel": "Customer number"
   },
   "import": {
     "reportTitle": "Onboarding report",
@@ -266,5 +272,65 @@
     "teamSaved": "Team saved.",
     "teamUpdated": "Last changed by {name}",
     "teamEmpty": "Not set yet."
+  },
+  "archiveTabs": {
+    "winback": "Winback",
+    "archived": "Archived"
+  },
+  "copyNumber": "Copy customer number",
+  "copied": "{number} copied.",
+  "copyFailed": "Couldn't copy.",
+  "overview": {
+    "title": "Status by stage",
+    "noOutcome": "no outcome yet"
+  },
+  "statusTree": {
+    "title": "Status",
+    "stage": "Stage",
+    "milestone": "Milestone",
+    "current": "Current outcome",
+    "none": "No outcome in this stage yet.",
+    "set": "Record outcome",
+    "reason": "Reason",
+    "detail": "Detail",
+    "freetext": "Free text",
+    "textRequired": "Please fill in the free text.",
+    "willMove": "After saving the case moves on to: {status}",
+    "willWinback": "After saving the case is closed and goes to the winback list in the archive.",
+    "save": "Save outcome",
+    "saved": "Outcome saved.",
+    "movedTo": "Saved – the case is now in: {status}",
+    "clear": "Reset selection"
+  },
+  "winbackIntro": "Cases with “will cancel”: closed, with reason – for winning them back.",
+  "editor": {
+    "intro": "Adjust stages, outcomes, reasons and sub-reasons here. An outcome's type decides what happens: “Success” moves the case to the next stage, “Cancellation” closes it onto the winback list. Saved entries can only be hidden, not deleted – old cases keep their labels.",
+    "stage": "Stage",
+    "milestone": "Milestone (tick)",
+    "milestoneHint": "e.g. cards ordered – empty = none",
+    "addOutcome": "Add outcome",
+    "addChild": "Add sub-item",
+    "addStage": "Add stage",
+    "labelHint": "Label",
+    "kind": "Type",
+    "freetext": "Free text",
+    "hidden": "hidden",
+    "hide": "Hide",
+    "show": "Show",
+    "remove": "Remove",
+    "up": "Move up",
+    "down": "Move down",
+    "save": "Save status",
+    "discard": "Discard changes",
+    "saved": "Status saved.",
+    "error": "Couldn't save.",
+    "kinds": {
+      "success": "Success → next stage",
+      "followUp": "Follow-up",
+      "notReached": "Not reached",
+      "cancel": "Cancellation → winback",
+      "case": "Case / problem",
+      "other": "Other"
+    }
   }
 }

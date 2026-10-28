@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { cn } from "@/lib/utils";
 
-import { type CaseRow, StepChips, todayIso } from "./shared";
+import { type CaseRow, todayIso, useStatusName } from "./shared";
 
 /**
  * The follow-ups of the onboarding cockpit as a calendar (week and day
@@ -333,6 +333,7 @@ function CaseChip({
   onOpen: (id: Id<"onboardingCases">) => void;
 }) {
   const locale = useLocale();
+  const statusName = useStatusName();
   return (
     <button
       type="button"
@@ -367,7 +368,7 @@ function CaseChip({
       </span>
       {(wide || showAssignee) && (
         <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-muted-foreground">
-          {wide && <StepChips steps={c.steps} />}
+          {wide && <span>{statusName(c.status)}</span>}
           {showAssignee && c.assigneeName && <span className="truncate">{c.assigneeName}</span>}
         </span>
       )}
