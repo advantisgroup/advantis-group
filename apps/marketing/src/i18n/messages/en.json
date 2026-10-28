@@ -501,10 +501,10 @@
       },
       "kmubrain": {
         "tagline": "AI for SMEs",
-        "description": "KMUbrain brings artificial intelligence to small and medium-sized businesses – without a long project. Our “Brains” are ready-made AI assistants for your industry: they write quotes, take calls, sort the inbox or answer customer questions. We set everything up for you, look after it in operation and make sure your team has more time for what matters.",
+        "description": "KMUbrain brings artificial intelligence to small and medium-sized businesses. Our “Brains” are ready-made AI assistants for your industry: they write quotes, take calls, sort the inbox or answer customer questions. We set everything up for you, look after it in operation and make sure your team has more time for what matters.",
         "highlights": {
           "0": "Ready-made AI assistants for your industry",
-          "1": "No long project",
+          "1": "Quotes, calls, inbox, customer questions",
           "2": "Set-up and support from a single source"
         }
       }
