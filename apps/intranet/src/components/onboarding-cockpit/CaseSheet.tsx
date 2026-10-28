@@ -1,17 +1,11 @@
 "use client";
 
-import { useState } from "react";
-
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import {
-  MANUAL_CONTACT_KINDS,
-  type ManualContactKind,
-} from "@advantis/convex/performance/onboarding";
+import { MILESTONES, suggestFollowUp } from "@advantis/convex/performance/onboarding";
 import { useMutation, useQuery } from "convex/react";
-import { Flag, X } from "lucide-react";
+import { CalendarPlus, Flag, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,15 +26,16 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, formatIsoDate } from "@/lib/format";
 
 import { CaseStatus } from "./CaseStatus";
-import { CustomerNumber, useStatusName } from "./shared";
+import { ContactForm } from "./ContactForm";
+import { CustomerNumber, TimeSelect, useStatusName } from "./shared";
 
 const NOBODY = "__none";
 
 type Assignee = { userId: Id<"users">; name: string };
 
-/** One case: stage, milestone and outcome (status tree), assignment,
- * follow-up and note, the report's columns, the contact log and the form
- * for the next contact. */
+/** One case: phase and milestones, situation of the last contact,
+ * assignment, follow-up and note, the report's columns, the contact log and
+ * the form for the next contact. */
 export function CaseSheet({
   caseId,
   onOpenChange,
@@ -102,11 +97,16 @@ function CaseBody({
   };
   const logTitle = (c: (typeof data.contacts)[number]) => {
     if (c.kind === "step" || c.kind === "milestone") {
+      const key = c.fromValue ?? "";
       return t(c.toValue === "1" ? "case.stepOn" : "case.stepOff", {
-        step: c.kind === "step" ? t(`steps.${c.fromValue as "cards"}`) : (c.fromValue ?? ""),
+        step: (MILESTONES as readonly string[]).includes(key) ? t(`steps.${key as "cards"}`) : key,
       });
     }
-    if (c.kind === "outcome") return `${t("contactKind.outcome")}: ${c.toValue ?? ""}`;
+    if (c.kind === "outcome") {
+      const via =
+        c.fromValue === "email" ? t("situation.channel.email") : t("situation.channel.phone");
+      return `${via} · ${c.toValue ?? ""}`;
+    }
     return [
       "reached",
       "not_reached",
@@ -184,17 +184,28 @@ function CaseBody({
                 id="ob-follow"
                 type="date"
                 value={data.nextFollowUp ?? ""}
-                disabled={data.status === "done"}
+                disabled={data.status === "done" || data.status === "winback"}
                 onChange={(e) => void save({ nextFollowUp: e.target.value || null })}
               />
-              <Input
-                type="time"
-                aria-label={t("case.followUpTime")}
-                className="w-[110px]"
+              <TimeSelect
                 value={data.nextFollowUpTime ?? ""}
                 disabled={data.status === "done" || !data.nextFollowUp}
-                onChange={(e) => void save({ nextFollowUpTime: e.target.value || null })}
+                onChange={(time) => void save({ nextFollowUpTime: time || null })}
               />
+              {!data.nextFollowUp && data.status !== "done" && data.status !== "winback" && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label={t("case.suggestFollowUp")}
+                  title={t("case.suggestFollowUp")}
+                  onClick={() => {
+                    const next = suggestFollowUp(new Date(), "contact");
+                    void save({ nextFollowUp: next.date, nextFollowUpTime: next.time });
+                  }}
+                >
+                  <CalendarPlus className="h-4 w-4" />
+                </Button>
+              )}
               {data.nextFollowUp && (
                 <Button
                   variant="ghost"
@@ -307,98 +318,5 @@ function CaseBody({
         </section>
       </div>
     </>
-  );
-}
-
-function ContactForm({ caseId, closed }: { caseId: Id<"onboardingCases">; closed: boolean }) {
-  const t = useTranslations("OnboardingCockpit");
-  const handleError = useErrorHandler();
-  const addContact = useMutation(api.performance.onboarding.addContact);
-  const [kind, setKind] = useState<ManualContactKind>("reached");
-  const [note, setNote] = useState("");
-  const [followUp, setFollowUp] = useState("");
-  const [followUpTime, setFollowUpTime] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const submit = async () => {
-    if (kind === "note" && !note.trim()) {
-      toast.error(t("case.noteRequired"));
-      return;
-    }
-    setBusy(true);
-    try {
-      await addContact({
-        caseId,
-        kind,
-        note: note.trim() || undefined,
-        nextFollowUp: followUp || undefined,
-        nextFollowUpTime: followUp ? followUpTime || null : undefined,
-      });
-      setNote("");
-      setFollowUp("");
-      setFollowUpTime("");
-      toast.success(t("case.saved"));
-    } catch (e) {
-      handleError(e, t("case.saveError"));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <section className="space-y-3 rounded-xl border border-border/70 bg-muted/30 p-4">
-      <h3 className="text-sm font-semibold">{t("case.addTitle")}</h3>
-      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("case.kind")}>
-        {MANUAL_CONTACT_KINDS.map((k) => (
-          <Button
-            key={k}
-            type="button"
-            size="sm"
-            variant={kind === k ? "default" : "outline"}
-            role="radio"
-            aria-checked={kind === k}
-            onClick={() => setKind(k)}
-          >
-            {t(`contactKind.${k}`)}
-          </Button>
-        ))}
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="ob-note">{t("case.note")}</Label>
-        <Textarea
-          id="ob-note"
-          rows={3}
-          value={note}
-          placeholder={t("case.notePlaceholder")}
-          onChange={(e) => setNote(e.target.value)}
-        />
-      </div>
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        {!closed && (
-          <div className="space-y-1.5">
-            <Label htmlFor="ob-next">{t("case.nextFollowUp")}</Label>
-            <div className="flex gap-2">
-              <Input
-                id="ob-next"
-                type="date"
-                value={followUp}
-                onChange={(e) => setFollowUp(e.target.value)}
-              />
-              <Input
-                type="time"
-                aria-label={t("case.followUpTime")}
-                className="w-[110px]"
-                value={followUpTime}
-                disabled={!followUp}
-                onChange={(e) => setFollowUpTime(e.target.value)}
-              />
-            </div>
-          </div>
-        )}
-        <Button onClick={() => void submit()} disabled={busy} className="ml-auto">
-          {t("case.save")}
-        </Button>
-      </div>
-    </section>
   );
 }

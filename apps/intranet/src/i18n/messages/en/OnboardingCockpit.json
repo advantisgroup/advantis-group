@@ -7,8 +7,9 @@
   "adminsOnlyHint": "The team only sees the cockpit once ONBOARDING_MODE=live is set.",
   "status": {
     "fresh": "New",
-    "step1": "1 of 3",
-    "step2": "2 of 3",
+    "step1": "In contact",
+    "step2": "Cards ordered",
+    "step3": "Fuelled",
     "done": "Done",
     "winback": "Winback"
   },
@@ -32,7 +33,7 @@
     "archive": "Archive",
     "myCases": "My cases",
     "distribution": "Distribution",
-    "status": "Status"
+    "status": "Situations"
   },
   "kpi": {
     "open": "Open",
@@ -59,7 +60,8 @@
     "allAssignees": "Everyone",
     "unassigned": "Unassigned",
     "openOnly": "Open only",
-    "reset": "Reset filters"
+    "reset": "Reset filters",
+    "allSituations": "All situations"
   },
   "col": {
     "customer": "Customer",
@@ -140,7 +142,9 @@
     "stepsDone": "{done} of 3 done",
     "followUpTime": "Time (optional)",
     "noFollowUp": "none",
-    "numberLabel": "Customer number"
+    "numberLabel": "Customer number",
+    "noTime": "no time",
+    "suggestFollowUp": "Add follow-up in 2 days"
   },
   "import": {
     "reportTitle": "Onboarding report",
@@ -182,7 +186,7 @@
   },
   "steps": {
     "cards": "Cards ordered",
-    "fuel": "First fuelling",
+    "fuel": "Fuelled",
     "twoMonth": "Two-month check"
   },
   "create": {
@@ -280,35 +284,13 @@
   "copyNumber": "Copy customer number",
   "copied": "{number} copied.",
   "copyFailed": "Couldn't copy.",
-  "overview": {
-    "title": "Status by stage",
-    "noOutcome": "no outcome yet"
-  },
-  "statusTree": {
-    "title": "Status",
-    "stage": "Stage",
-    "milestone": "Milestone",
-    "current": "Current outcome",
-    "none": "No outcome in this stage yet.",
-    "set": "Record outcome",
-    "reason": "Reason",
-    "detail": "Detail",
-    "freetext": "Free text",
-    "textRequired": "Please fill in the free text.",
-    "willMove": "After saving the case moves on to: {status}",
-    "willWinback": "After saving the case is closed and goes to the winback list in the archive.",
-    "save": "Save outcome",
-    "saved": "Outcome saved.",
-    "movedTo": "Saved – the case is now in: {status}",
-    "clear": "Reset selection"
-  },
   "winbackIntro": "Cases with “will cancel”: closed, with reason – for winning them back.",
   "editor": {
-    "intro": "Adjust stages, outcomes, reasons and sub-reasons here. An outcome's type decides what happens: “Success” moves the case to the next stage, “Cancellation” closes it onto the winback list. Saved entries can only be hidden, not deleted – old cases keep their labels.",
+    "intro": "Adjust the situations and their reasons here (e.g. case opened › credit problem › deposit). The type decides what happens: “Will cancel” closes the case onto the winback list, everything else only changes the situation. The phases (New → In contact → Cards ordered → Fuelled → Done) are fixed. Saved entries can only be hidden, not deleted.",
     "stage": "Stage",
     "milestone": "Milestone (tick)",
     "milestoneHint": "e.g. cards ordered – empty = none",
-    "addOutcome": "Add outcome",
+    "addOutcome": "Add situation",
     "addChild": "Add sub-item",
     "addStage": "Add stage",
     "labelHint": "Label",
@@ -320,17 +302,51 @@
     "remove": "Remove",
     "up": "Move up",
     "down": "Move down",
-    "save": "Save status",
+    "save": "Save situations",
     "discard": "Discard changes",
-    "saved": "Status saved.",
+    "saved": "Situations saved.",
     "error": "Couldn't save.",
     "kinds": {
-      "success": "Success → next stage",
-      "followUp": "Follow-up",
+      "reached": "Reached",
       "notReached": "Not reached",
-      "cancel": "Cancellation → winback",
+      "followUp": "Follow-up",
       "case": "Case / problem",
+      "cancel": "Will cancel → winback",
       "other": "Other"
+    }
+  },
+  "phase": {
+    "title": "Phase",
+    "barLabel": "Cases per phase",
+    "reopen": "Reopen",
+    "createFollowUp": "Add follow-up",
+    "followUpCreated": "Follow-up added.",
+    "skip": "Not now",
+    "replaces": "Replaces the follow-up on {date}.",
+    "suggest": {
+      "cards": "Cards ordered – check fuelling in 1 week?",
+      "fuel": "Fuelled – schedule the two-month check?",
+      "contact": "Follow-up in 2 days?"
+    },
+    "milestones": "Milestones"
+  },
+  "situation": {
+    "title": "Situation",
+    "reason": "Reason",
+    "detail": "Detail",
+    "current": "Last situation",
+    "none": "no outcome yet",
+    "freetext": "Free text",
+    "textRequired": "Please fill in the free text.",
+    "clear": "Reset selection",
+    "withFollowUp": "Follow-up",
+    "saved": "Saved – phase: {status}",
+    "toWinback": "Saved – the case is now on the winback list.",
+    "willWinback": "After saving the case is closed and goes to the winback list in the archive.",
+    "channel": {
+      "phone": "Phone",
+      "email": "Email",
+      "note": "Note only"
     }
   }
 }

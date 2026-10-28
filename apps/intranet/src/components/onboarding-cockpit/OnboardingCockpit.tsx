@@ -6,7 +6,11 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { followUpBucket, type StatusConfig } from "@advantis/convex/performance/onboarding";
+import {
+  followUpBucket,
+  MILESTONES,
+  type StatusConfig,
+} from "@advantis/convex/performance/onboarding";
 import { useMutation, useQuery } from "convex/react";
 import { Archive, ArchiveRestore, Download, Eye, Flag, Inbox, Plus, Rocket } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -46,7 +50,7 @@ import { CreateCaseDialog } from "./CreateCaseDialog";
 import { DistributionPanel } from "./DistributionPanel";
 import { FollowUpCalendar } from "./FollowUpCalendar";
 import { ImportPanel } from "./ImportPanel";
-import { NO_OUTCOME, StageOverview } from "./StageOverview";
+import { PhaseBar } from "./StageOverview";
 import { StatusEditor } from "./StatusEditor";
 import {
   type CaseRow,
@@ -68,6 +72,7 @@ import {
 type Tab = "cases" | "prio" | "followUps" | "distribution" | "status" | "import" | "archive";
 type KpiFilter = "open" | "prio" | "due" | "case" | "unassigned" | "done" | "all";
 const ALL = "__all";
+const NO_SITUATION = "__none_situation";
 const SELF = "__self";
 const NOBODY = "__none";
 
@@ -150,7 +155,7 @@ export function OnboardingCockpit() {
   ];
 
   return (
-    <StatusConfigProvider config={statusConfig ? { stages: statusConfig.stages } : undefined}>
+    <StatusConfigProvider config={statusConfig ? { outcomes: statusConfig.outcomes } : undefined}>
       <div className="mx-auto max-w-7xl space-y-6">
         <PageHeaderBar
           title={t("title")}
@@ -381,7 +386,6 @@ function CasesView({
   const [assignee, setAssignee] = useState(ALL);
   const today = todayIso();
   const config = useStatusConfig();
-  const statusName = useStatusName();
 
   if (cases.length === 0) {
     return (
@@ -398,8 +402,8 @@ function CasesView({
     .filter((c) => {
       if (!matchesKpi(c, kpi, today, config)) return false;
       if (status !== ALL && c.status !== status) return false;
-      if (outcome === NO_OUTCOME && c.outcomePath.length > 0) return false;
-      if (outcome && outcome !== NO_OUTCOME && c.outcomePath[0] !== outcome) return false;
+      if (outcome === NO_SITUATION && c.outcomePath.length > 0) return false;
+      if (outcome && outcome !== NO_SITUATION && c.outcomePath[0] !== outcome) return false;
       if (
         assignee === NOBODY ? c.assigneeUserId : assignee !== ALL && c.assigneeUserId !== assignee
       )
@@ -413,7 +417,16 @@ function CasesView({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
+      <PhaseBar
+        cases={cases}
+        active={status === ALL ? null : status}
+        onPick={(phase) => {
+          setStatus(phase ?? ALL);
+          setKpi(phase ? "all" : "open");
+        }}
+      />
+
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         <KpiButton
           label={t("kpi.open")}
           value={count("open")}
@@ -434,13 +447,6 @@ function CasesView({
           active={kpi === "due"}
           onClick={() => toggleKpi("due")}
         />
-        <KpiButton
-          label={t("kpi.caseOpened")}
-          value={count("case")}
-          tone="warn"
-          active={kpi === "case"}
-          onClick={() => toggleKpi("case")}
-        />
         {canManage && (
           <KpiButton
             label={t("kpi.unassigned")}
@@ -450,25 +456,8 @@ function CasesView({
             onClick={() => toggleKpi("unassigned")}
           />
         )}
-        <KpiButton
-          label={t("kpi.done")}
-          value={count("done")}
-          active={kpi === "done"}
-          onClick={() => toggleKpi("done")}
-        />
       </div>
       <p className="text-xs text-muted-foreground">{t("kpi.filterHint")}</p>
-
-      <StageOverview
-        cases={cases}
-        stage={status === ALL ? null : status}
-        outcome={outcome}
-        onPick={(stage, picked) => {
-          setStatus(stage ?? ALL);
-          setOutcome(picked);
-          setKpi(stage ? "all" : "open");
-        }}
-      />
 
       {canManage && (
         <ConsultantTable
@@ -489,22 +478,16 @@ function CasesView({
           placeholder={t("filter.search")}
           className="h-9 min-w-[220px] flex-1"
         />
-        <Select
-          value={status}
-          onValueChange={(v) => {
-            setStatus(v);
-            setOutcome(null);
-            if (v !== ALL) setKpi("all");
-          }}
-        >
-          <SelectTrigger className="h-9 w-[200px]">
+        <Select value={outcome ?? ALL} onValueChange={(v) => setOutcome(v === ALL ? null : v)}>
+          <SelectTrigger className="h-9 w-[200px]" aria-label={t("situation.title")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>{t("filter.allStatuses")}</SelectItem>
-            {[...config.stages.map((st) => st.id), "done", "winback"].map((s) => (
-              <SelectItem key={s} value={s}>
-                {statusName(s)}
+            <SelectItem value={ALL}>{t("filter.allSituations")}</SelectItem>
+            <SelectItem value={NO_SITUATION}>{t("situation.none")}</SelectItem>
+            {config.outcomes.map((o) => (
+              <SelectItem key={o.id} value={o.id}>
+                {o.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -689,16 +672,15 @@ function FollowUpView({
 /** Downloads the rows on screen as an .xlsx (one row per case). */
 function ExportButton({ rows }: { rows: CaseRow[] }) {
   const t = useTranslations("OnboardingCockpit");
-  const config = useStatusConfig();
   const statusName = useStatusName();
   const outcomeLabel = useOutcomeLabel();
   const run = () => {
     const header = [
       t("col.number"),
       t("col.status"),
-      t("statusTree.milestone"),
-      t("statusTree.current"),
-      t("statusTree.freetext"),
+      t("phase.milestones"),
+      t("situation.current"),
+      t("situation.freetext"),
       t("col.assignee"),
       t("prioBadge"),
       t("col.followUp"),
@@ -712,9 +694,8 @@ function ExportButton({ rows }: { rows: CaseRow[] }) {
     const data = rows.map((c) => [
       c.customerNumber,
       statusName(c.status),
-      config.stages
-        .filter((st) => st.milestone && c.milestones.includes(st.id))
-        .map((st) => st.milestone)
+      MILESTONES.filter((m) => c.milestones.includes(m))
+        .map((m) => t(`steps.${m}`))
         .join(", "),
       outcomeLabel(c) ?? "",
       c.outcomeText ?? "",
@@ -862,7 +843,6 @@ function CaseTable({
     toggleAll: (on: boolean) => void;
   };
 }) {
-  const config = useStatusConfig();
   const outcomeLabel = useOutcomeLabel();
   const t = useTranslations("OnboardingCockpit");
   const locale = useLocale();
@@ -924,16 +904,7 @@ function CaseTable({
               </TableCell>
               <TableCell>
                 <div className="flex max-w-[280px] flex-col items-start gap-1">
-                  <span className="flex items-center gap-1.5">
-                    <StatusBadge status={c.status} />
-                    {config.stages.some(
-                      (st) => st.id === c.status && st.milestone && c.milestones.includes(st.id),
-                    ) && (
-                      <span className="text-[11px] text-ok" title={t("statusTree.milestone")}>
-                        ✓ {findStageMilestone(config, c.status)}
-                      </span>
-                    )}
-                  </span>
+                  <StatusBadge status={c.status} />
                   {outcomeLabel(c) && (
                     <span
                       className="w-full truncate text-xs text-muted-foreground"
@@ -974,8 +945,4 @@ function CaseTable({
       </Table>
     </div>
   );
-}
-
-function findStageMilestone(config: StatusConfig, stageId: string): string {
-  return config.stages.find((st) => st.id === stageId)?.milestone ?? "";
 }

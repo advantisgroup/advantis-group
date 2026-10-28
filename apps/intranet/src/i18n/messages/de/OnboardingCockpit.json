@@ -7,8 +7,9 @@
   "adminsOnlyHint": "Das Team sieht das Cockpit erst, wenn ONBOARDING_MODE=live gesetzt ist.",
   "status": {
     "fresh": "Neu",
-    "step1": "1 von 3",
-    "step2": "2 von 3",
+    "step1": "In Kontakt",
+    "step2": "Karten bestellt",
+    "step3": "Getankt",
     "done": "Abgeschlossen",
     "winback": "Winback"
   },
@@ -32,7 +33,7 @@
     "archive": "Archiv",
     "myCases": "Meine Fälle",
     "distribution": "Verteilung",
-    "status": "Status"
+    "status": "Lagen"
   },
   "kpi": {
     "open": "Offen",
@@ -59,7 +60,8 @@
     "allAssignees": "Alle Personen",
     "unassigned": "Nicht zugewiesen",
     "openOnly": "Nur offene",
-    "reset": "Filter zurücksetzen"
+    "reset": "Filter zurücksetzen",
+    "allSituations": "Alle Lagen"
   },
   "col": {
     "customer": "Kunde",
@@ -140,7 +142,9 @@
     "stepsDone": "{done} von 3 erledigt",
     "followUpTime": "Uhrzeit (optional)",
     "noFollowUp": "keine",
-    "numberLabel": "Kundennummer"
+    "numberLabel": "Kundennummer",
+    "noTime": "ohne Uhrzeit",
+    "suggestFollowUp": "Wiedervorlage in 2 Tagen anlegen"
   },
   "import": {
     "reportTitle": "Onboarding-Report",
@@ -182,7 +186,7 @@
   },
   "steps": {
     "cards": "Karten bestellt",
-    "fuel": "Erste Tankung",
+    "fuel": "Getankt",
     "twoMonth": "2-Monats-Check"
   },
   "create": {
@@ -280,35 +284,13 @@
   "copyNumber": "Kundennummer kopieren",
   "copied": "{number} kopiert.",
   "copyFailed": "Kopieren nicht möglich.",
-  "overview": {
-    "title": "Status je Stufe",
-    "noOutcome": "noch kein Ergebnis"
-  },
-  "statusTree": {
-    "title": "Status",
-    "stage": "Stufe",
-    "milestone": "Zwischenstatus",
-    "current": "Aktuelles Ergebnis",
-    "none": "Noch kein Ergebnis in dieser Stufe.",
-    "set": "Ergebnis festhalten",
-    "reason": "Grund",
-    "detail": "Genauer",
-    "freetext": "Freitext",
-    "textRequired": "Bitte den Freitext ausfüllen.",
-    "willMove": "Nach dem Speichern geht der Fall weiter zu: {status}",
-    "willWinback": "Nach dem Speichern wird der Fall geschlossen und landet auf der Winback-Liste im Archiv.",
-    "save": "Ergebnis speichern",
-    "saved": "Ergebnis gespeichert.",
-    "movedTo": "Gespeichert – Fall ist jetzt in: {status}",
-    "clear": "Auswahl zurücksetzen"
-  },
   "winbackIntro": "Fälle mit „will cancel“: geschlossen, mit Grund – für die Rückgewinnung.",
   "editor": {
-    "intro": "Hier passt du Stufen, Ergebnisse, Gründe und Untergründe an. Die Art eines Ergebnisses bestimmt, was passiert: „Erfolg“ schiebt den Fall in die nächste Stufe, „Kündigung“ schließt ihn auf die Winback-Liste. Gespeicherte Einträge lassen sich nur ausblenden, nicht löschen – alte Fälle behalten so ihre Bezeichnung.",
+    "intro": "Hier passt du die Lagen mit ihren Gründen an (z. B. Case eröffnet › credit problem › Deposit). Die Art bestimmt, was passiert: „Wird kündigen“ schließt den Fall auf die Winback-Liste, alle anderen ändern nur die Lage. Die Phasen (Neu → In Kontakt → Karten bestellt → Getankt → Abgeschlossen) sind fest. Gespeicherte Einträge lassen sich nur ausblenden, nicht löschen.",
     "stage": "Stufe",
     "milestone": "Zwischenstatus (Haken)",
     "milestoneHint": "z. B. Karten bestellt – leer = keiner",
-    "addOutcome": "Ergebnis hinzufügen",
+    "addOutcome": "Lage hinzufügen",
     "addChild": "Unterpunkt hinzufügen",
     "addStage": "Stufe hinzufügen",
     "labelHint": "Bezeichnung",
@@ -320,17 +302,51 @@
     "remove": "Entfernen",
     "up": "Nach oben",
     "down": "Nach unten",
-    "save": "Status speichern",
+    "save": "Lagen speichern",
     "discard": "Änderungen verwerfen",
-    "saved": "Status gespeichert.",
+    "saved": "Lagen gespeichert.",
     "error": "Konnte nicht gespeichert werden.",
     "kinds": {
-      "success": "Erfolg → nächste Stufe",
-      "followUp": "Follow-up",
+      "reached": "Erreicht",
       "notReached": "Nicht erreicht",
-      "cancel": "Kündigung → Winback",
+      "followUp": "Follow-up",
       "case": "Case / Problem",
+      "cancel": "Wird kündigen → Winback",
       "other": "Sonstiges"
+    }
+  },
+  "phase": {
+    "title": "Phase",
+    "barLabel": "Fälle je Phase",
+    "reopen": "Wieder öffnen",
+    "createFollowUp": "Wiedervorlage anlegen",
+    "followUpCreated": "Wiedervorlage angelegt.",
+    "skip": "Nicht jetzt",
+    "replaces": "Ersetzt die bisherige Wiedervorlage vom {date}.",
+    "suggest": {
+      "cards": "Karten bestellt – Tankung in 1 Woche prüfen?",
+      "fuel": "Getankt – 2-Monats-Check vormerken?",
+      "contact": "Wiedervorlage in 2 Tagen?"
+    },
+    "milestones": "Haken"
+  },
+  "situation": {
+    "title": "Lage",
+    "reason": "Grund",
+    "detail": "Genauer",
+    "current": "Letzte Lage",
+    "none": "noch kein Ergebnis",
+    "freetext": "Freitext",
+    "textRequired": "Bitte den Freitext ausfüllen.",
+    "clear": "Auswahl zurücksetzen",
+    "withFollowUp": "Wiedervorlage",
+    "saved": "Gespeichert – Phase: {status}",
+    "toWinback": "Gespeichert – Fall ist jetzt auf der Winback-Liste.",
+    "willWinback": "Nach dem Speichern wird der Fall geschlossen und landet auf der Winback-Liste im Archiv.",
+    "channel": {
+      "phone": "Telefon",
+      "email": "E-Mail",
+      "note": "Nur Notiz"
     }
   }
 }
