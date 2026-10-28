@@ -113,6 +113,13 @@ describe("onboarding helpers", () => {
     expect(pathLabel(c, ["s1.case"])).toBeNull();
     expect(validateStatusConfig(c, c)).toEqual([]);
     expect(validateStatusConfig({ outcomes: c.outcomes.slice(1) }, c).length).toBeGreaterThan(0);
+    // "Follow-up" is not offered when logging a contact any more.
+    expect(c.outcomes.filter((o) => !o.archived).map((o) => o.id)).toEqual([
+      "reached",
+      "notReached",
+      "case",
+      "cancel",
+    ]);
   });
 
   test("follow-up suggestions: +2 days / 1 week / 2 months, quarter hour, no weekend", () => {
