@@ -23,20 +23,23 @@ import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { userMutation, userQuery } from "../functions";
 import { type Caller } from "../lib/caller";
 import { displayName } from "../lib/users";
-import { onboardingStageValidator } from "../tables/performance";
+import { onboardingOutcomeValidator } from "../tables/performance";
 import {
   activeChildren,
   customerKey,
   DEFAULT_STATUS_CONFIG,
-  findStage,
   isClosedStatus,
   isContactAttempt,
-  isValidStatus,
+  isQuarterHour,
   MAX_REPORT_FIELDS,
+  type Milestone,
+  MILESTONES,
+  milestonesForStatus,
   milestonesOf,
-  nextStatus,
   pathLabel,
+  phaseFor,
   resolvePath,
+  setMilestone,
   type StatusConfig,
   statusFromReport,
   validateStatusConfig,
@@ -125,8 +128,9 @@ async function log(
   });
 }
 
+/** Follow-up times on the quarter hour only (Vahan, 28.10.). */
 const hhmm = (value: string): string => {
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) throw invalid("Uhrzeit im Format HH:MM.");
+  if (!isQuarterHour(value)) throw invalid("Uhrzeit nur in Viertelstunden (z. B. 15:45).");
   return value;
 };
 
@@ -183,37 +187,44 @@ const isoDate = (value: string, label: string): string => {
 
 async function loadStatusConfig(ctx: Ctx): Promise<StatusConfig> {
   const row = await ctx.db.query("onboardingStatusConfig").first();
-  return row ? { stages: row.stages } : DEFAULT_STATUS_CONFIG;
+  return { outcomes: row?.outcomes ?? DEFAULT_STATUS_CONFIG.outcomes };
 }
 
-/** "Progress Step 1" / "Abgeschlossen" / "Winback" for the log. */
-function statusName(config: StatusConfig, status: string): string {
-  if (status === "done") return "Abgeschlossen";
-  if (status === "winback") return "Winback";
-  return findStage(config, status)?.label ?? status;
+const STATUS_NAMES: Record<string, string> = {
+  fresh: "Neu",
+  step1: "In Kontakt",
+  step2: "Karten bestellt",
+  step3: "Getankt",
+  done: "Abgeschlossen",
+  winback: "Winback",
+};
+
+/** "In Kontakt" / "Abgeschlossen" … for the log. */
+function statusName(status: string): string {
+  return STATUS_NAMES[status] ?? status;
+}
+
+/** Whether anyone has dealt with the case yet (then it's no longer "Neu"). */
+function contacted(row: Doc<"onboardingCases">): boolean {
+  return (
+    row.status !== "fresh" || (row.contactAttempts ?? 0) > 0 || (row.outcomePath?.length ?? 0) > 0
+  );
 }
 
 /**
- * Moves a case to `status` on `patch`: a new stage starts without an
- * outcome, a closed case loses its follow-up and gets `closedAt`. Logs the
- * change. No-op when the status stays.
+ * Moves a case to `status` on `patch`; a closed case loses its follow-up
+ * and gets `closedAt`. Logs the change. No-op when the status stays.
  */
-async function applyStatus(
+async function setStatus(
   ctx: MutationCtx,
   access: CockpitAccess,
-  config: StatusConfig,
   row: Doc<"onboardingCases">,
   status: string,
   patch: Partial<Doc<"onboardingCases">>,
 ): Promise<void> {
   const from = patch.status ?? row.status;
   if (status === from) return;
-  if (!isValidStatus(config, status)) throw invalid("Unbekannter Status.");
   patch.status = status;
-  patch.outcomePath = undefined;
-  patch.outcomeText = undefined;
-  patch.outcomeAt = undefined;
-  patch.outcomeByName = undefined;
   if (isClosedStatus(status)) {
     patch.closedAt = Date.now();
     patch.nextFollowUp = undefined;
@@ -223,8 +234,8 @@ async function applyStatus(
   }
   await log(ctx, access, row._id, {
     kind: "status",
-    fromValue: statusName(config, from),
-    toValue: statusName(config, status),
+    fromValue: statusName(from),
+    toValue: statusName(status),
   });
 }
 
@@ -429,15 +440,21 @@ export const imports = userQuery({
 
 // ----------------------------------------------------------------- writes
 
-/** Stage (manual move), milestone tick, assignee (managers only), prio,
- * follow-up and note of one case. `null` clears assignee or follow-up.
- * Stage, milestone and assignee changes are written to the contact log. */
+/** Milestone tick (moves the phase), closing/reopening, assignee (managers
+ * only), prio, follow-up and note of one case. `null` clears assignee or
+ * follow-up. Phase, milestone and assignee changes are written to the
+ * contact log. */
 export const update = userMutation({
   args: {
     caseId: v.id("onboardingCases"),
-    status: v.optional(v.string()),
-    /** Ticks or unticks the milestone of a stage (default: the current). */
-    milestone: v.optional(v.object({ stageId: v.optional(v.string()), done: v.boolean() })),
+    /** "winback" / "done" close the case, "open" reopens it in its phase. */
+    status: v.optional(v.union(v.literal("winback"), v.literal("done"), v.literal("open"))),
+    milestone: v.optional(
+      v.object({
+        key: v.union(v.literal("cards"), v.literal("fuel"), v.literal("twoMonth")),
+        done: v.boolean(),
+      }),
+    ),
     assigneeUserId: v.optional(v.union(v.id("users"), v.null())),
     prio: v.optional(v.boolean()),
     nextFollowUp: v.optional(v.union(v.string(), v.null())),
@@ -449,26 +466,34 @@ export const update = userMutation({
     const access = await requireAccess(ctx);
     const row = await loadCase(ctx, access, args.caseId);
     const patch: Partial<Doc<"onboardingCases">> = {};
-    const config = await loadStatusConfig(ctx);
+    let milestones: Milestone[] = milestonesOf(row);
 
-    if (args.status !== undefined) {
-      await applyStatus(ctx, access, config, row, args.status, patch);
-    }
     if (args.milestone) {
-      const stageId = args.milestone.stageId ?? row.status;
-      const stage = findStage(config, stageId);
-      if (!stage?.milestone) throw invalid("Diese Stufe hat keinen Zwischenstatus.");
-      const current = new Set(milestonesOf(row));
-      if (current.has(stageId) !== args.milestone.done) {
-        if (args.milestone.done) current.add(stageId);
-        else current.delete(stageId);
-        patch.milestonesDone = [...current];
-        await log(ctx, access, row._id, {
-          kind: "milestone",
-          fromValue: stage.milestone,
-          toValue: args.milestone.done ? "1" : "0",
-        });
+      const { key, done } = args.milestone;
+      const next = setMilestone(milestones, key, done);
+      for (const m of MILESTONES) {
+        if (milestones.includes(m) !== next.includes(m)) {
+          await log(ctx, access, row._id, {
+            kind: "milestone",
+            fromValue: m,
+            toValue: next.includes(m) ? "1" : "0",
+          });
+        }
       }
+      milestones = next;
+      patch.milestonesDone = next;
+      // A winback case keeps its place; everything else follows the ticks.
+      if (row.status !== "winback") {
+        await setStatus(ctx, access, row, phaseFor(next, true), patch);
+      }
+    }
+    if (args.status === "open") {
+      if (isClosedStatus(row.status)) {
+        const phase = phaseFor(milestones, true);
+        await setStatus(ctx, access, row, phase === "done" ? "step3" : phase, patch);
+      }
+    } else if (args.status !== undefined) {
+      await setStatus(ctx, access, row, args.status, patch);
     }
     if (args.subStatus !== undefined)
       patch.subStatus = args.subStatus.trim().slice(0, 20) || undefined;
@@ -513,7 +538,8 @@ export const addContact = userMutation({
     note: v.optional(v.string()),
     nextFollowUp: v.optional(v.union(v.string(), v.null())),
     nextFollowUpTime: v.optional(v.union(v.string(), v.null())),
-    status: v.optional(v.string()),
+    /** Closes the case in the same step. */
+    status: v.optional(v.union(v.literal("winback"), v.literal("done"))),
   },
   handler: async (ctx, args) => {
     const access = await requireAccess(ctx);
@@ -528,28 +554,28 @@ export const addContact = userMutation({
       patch.lastContactAt = now;
       patch.lastContactKind = args.kind;
       patch.contactAttempts = (row.contactAttempts ?? 0) + 1;
+      if (row.status === "fresh") await setStatus(ctx, access, row, "step1", patch);
     }
-    if (args.status !== undefined) {
-      await applyStatus(ctx, access, await loadStatusConfig(ctx), row, args.status, patch);
-    }
+    if (args.status !== undefined) await setStatus(ctx, access, row, args.status, patch);
     await applyFollowUp(ctx, access, row, patch, args.nextFollowUp, args.nextFollowUpTime);
     await ctx.db.patch(row._id, patch);
   },
 });
 
 /**
- * Records the outcome of the current stage: a path through the status tree
- * down to an entry without (visible) children, plus free text where the
- * entry asks for it. Its kind decides what happens: success moves the case
- * to the next stage (after the last one it's done), cancel closes it onto
- * the winback list. Reaching or not reaching the customer also counts as a
- * contact attempt.
+ * Records the situation of a contact ("Lage"): a path through the tree down
+ * to an entry without (visible) children, plus free text where it asks for
+ * it. Any contact moves a new case to "In Kontakt"; "will cancel" closes
+ * it onto the winback list. Reaching or not reaching the customer counts
+ * as a contact attempt.
  */
 export const setOutcome = userMutation({
   args: {
     caseId: v.id("onboardingCases"),
     path: v.array(v.string()),
     text: v.optional(v.string()),
+    /** How the contact happened (default phone). */
+    channel: v.optional(v.union(v.literal("phone"), v.literal("email"))),
     nextFollowUp: v.optional(v.union(v.string(), v.null())),
     nextFollowUpTime: v.optional(v.union(v.string(), v.null())),
   },
@@ -558,21 +584,20 @@ export const setOutcome = userMutation({
     const row = await loadCase(ctx, access, args.caseId);
     if (isClosedStatus(row.status)) throw invalid("Der Fall ist geschlossen.");
     const config = await loadStatusConfig(ctx);
-    const nodes = resolvePath(config, row.status, args.path);
-    if (!nodes) throw invalid("Dieses Ergebnis gibt es in der Stufe nicht.");
+    const nodes = resolvePath(config, args.path);
+    if (!nodes) throw invalid("Diese Lage gibt es nicht.");
     const last = nodes[nodes.length - 1];
-    if (nodes.some((n) => n.archived)) throw invalid("Dieses Ergebnis ist ausgeblendet.");
-    if (activeChildren(last).length > 0) throw invalid("Bitte das Ergebnis genauer auswählen.");
+    if (nodes.some((n) => n.archived)) throw invalid("Diese Lage ist ausgeblendet.");
+    if (activeChildren(last).length > 0) throw invalid("Bitte den Grund genauer auswählen.");
     const text = args.text?.trim().slice(0, 2000) || undefined;
     if (last.freetext && !text) throw invalid("Bitte den Freitext ausfüllen.");
 
     const now = Date.now();
     const kind = nodes[0].kind ?? "other";
-    const label = pathLabel(config, row.status, args.path);
     await log(ctx, access, row._id, {
       kind: "outcome",
-      fromValue: statusName(config, row.status),
-      toValue: label,
+      fromValue: args.channel === "email" ? "email" : "phone",
+      toValue: pathLabel(config, args.path) ?? undefined,
       note: text,
     });
 
@@ -583,55 +608,48 @@ export const setOutcome = userMutation({
       outcomeByName: access.name,
       updatedAt: now,
     };
-    if (kind !== "other" && kind !== "case") {
+    if (kind !== "other") {
       patch.lastContactAt = now;
-      patch.lastContactKind = kind === "notReached" ? "not_reached" : "reached";
+      patch.lastContactKind =
+        args.channel === "email" ? "email" : kind === "notReached" ? "not_reached" : "reached";
       patch.contactAttempts = (row.contactAttempts ?? 0) + 1;
     }
-    if (kind === "success") {
-      await applyStatus(ctx, access, config, row, nextStatus(config, row.status), patch);
-    } else if (kind === "cancel") {
-      await applyStatus(ctx, access, config, row, "winback", patch);
-      // The reason stays visible on the winback list.
-      patch.outcomePath = args.path;
-      patch.outcomeText = text;
-      patch.outcomeAt = now;
-      patch.outcomeByName = access.name;
-    }
+    if (kind === "cancel") await setStatus(ctx, access, row, "winback", patch);
+    else if (row.status === "fresh") await setStatus(ctx, access, row, "step1", patch);
     await applyFollowUp(ctx, access, row, patch, args.nextFollowUp, args.nextFollowUpTime);
     await ctx.db.patch(row._id, patch);
     return { status: patch.status ?? row.status };
   },
 });
 
-// ------------------------------------------------------------ status tree
+// ------------------------------------------------------------ situations
 
-/** The status tree (stages, outcomes, milestones) everyone works with. */
+/** The situation tree ("Lage" with reasons) everyone works with. */
 export const statusConfig = userQuery({
   args: {},
   handler: async (ctx) => {
     await requireAccess(ctx);
     const row = await ctx.db.query("onboardingStatusConfig").first();
     return {
-      stages: row?.stages ?? DEFAULT_STATUS_CONFIG.stages,
-      custom: !!row,
-      updatedAt: row?.updatedAt ?? null,
-      updatedByName: row?.updatedByName ?? null,
+      outcomes: row?.outcomes ?? DEFAULT_STATUS_CONFIG.outcomes,
+      custom: !!row?.outcomes,
+      updatedAt: row?.outcomes ? row.updatedAt : null,
+      updatedByName: row?.outcomes ? row.updatedByName : null,
     };
   },
 });
 
-/** Saves an edited status tree: admins and team leads. Entries may be
+/** Saves an edited situation tree: admins and team leads. Entries may be
  * renamed, added and hidden, but not deleted (old cases point at them). */
 export const saveStatusConfig = userMutation({
-  args: { stages: v.array(onboardingStageValidator) },
+  args: { outcomes: v.array(onboardingOutcomeValidator) },
   handler: async (ctx, args) => {
     const access = await requireManage(ctx);
     const previous = await loadStatusConfig(ctx);
-    const errors = validateStatusConfig({ stages: args.stages }, previous);
+    const errors = validateStatusConfig({ outcomes: args.outcomes }, previous);
     if (errors.length > 0) throw invalid(errors.slice(0, 3).join(" "));
     const row = await ctx.db.query("onboardingStatusConfig").first();
-    const next = { stages: args.stages, updatedAt: Date.now(), updatedByName: access.name };
+    const next = { outcomes: args.outcomes, updatedAt: Date.now(), updatedByName: access.name };
     if (row) await ctx.db.patch(row._id, next);
     else await ctx.db.insert("onboardingStatusConfig", next);
   },
@@ -966,6 +984,7 @@ export const importReportChunk = userMutation({
           customerNumber: r.customerNumber.trim(),
           name: r.name?.trim() || "",
           status,
+          milestonesDone: milestonesForStatus(status),
           ...(isClosedStatus(status) ? { closedAt: now } : {}),
           prio: false,
           createdAt: now,

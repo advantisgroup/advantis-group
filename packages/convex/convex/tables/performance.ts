@@ -11,7 +11,24 @@ const onboardingMid = v.object({
   ...onboardingLeaf,
   children: v.optional(v.array(v.object(onboardingLeaf))),
 });
-export const onboardingStageValidator = v.object({
+/** One situation of the cockpit's tree (top level) with reasons and
+ * sub-reasons; see `performance/lib/onboarding.ts`. */
+export const onboardingOutcomeValidator = v.object({
+  ...onboardingLeaf,
+  kind: v.union(
+    v.literal("reached"),
+    v.literal("notReached"),
+    v.literal("followUp"),
+    v.literal("case"),
+    v.literal("cancel"),
+    v.literal("other"),
+  ),
+  children: v.optional(v.array(onboardingMid)),
+});
+
+/** First version of the tree (stages with their own outcomes, 28.10.2026
+ * morning) – only kept so stored rows still validate. */
+const onboardingStageValidator = v.object({
   id: v.string(),
   label: v.string(),
   milestone: v.optional(v.string()),
@@ -687,14 +704,15 @@ export const performanceTables = {
     cardsOrderedAt: v.optional(v.number()),
     fuelledAt: v.optional(v.number()),
     twoMonthCheckAt: v.optional(v.number()),
-    /** Outcome in the current stage: node ids from the status tree
-     * (`onboardingStatusConfig`), top-level first. Cleared when the stage
-     * changes; the log keeps the history. */
+    /** Situation of the last contact ("Lage"): node ids from the tree
+     * (`onboardingStatusConfig`), top-level first. The log keeps the
+     * history. */
     outcomePath: v.optional(v.array(v.string())),
     outcomeText: v.optional(v.string()),
     outcomeAt: v.optional(v.number()),
     outcomeByName: v.optional(v.string()),
-    /** Stage ids whose milestone ("Zwischenstatus") is ticked. */
+    /** Milestones ticked: "cards" / "fuel" / "twoMonth" (first version:
+     * stage ids, read via `milestonesOf`). The phase follows from them. */
     milestonesDone: v.optional(v.array(v.string())),
     /** When the case was closed (done / winback). */
     closedAt: v.optional(v.number()),
@@ -749,12 +767,15 @@ export const performanceTables = {
     updatedByName: v.string(),
   }),
 
-  // The status tree of the cockpit (one row; unset = the default from
-  // `performance/lib/onboarding.ts`). Stages → outcome → reason →
-  // sub-reason, edited by admins and team leads. Entries are hidden, never
-  // deleted, so old cases keep their labels.
+  // The situation tree of the cockpit (one row; unset = the default from
+  // `performance/lib/onboarding.ts`): situation → reason → sub-reason,
+  // edited by admins and team leads. Entries are hidden, never deleted, so
+  // old cases keep their labels. The phases themselves are fixed.
   onboardingStatusConfig: defineTable({
-    stages: v.array(onboardingStageValidator),
+    /** The situations ("Lage") and their reasons. */
+    outcomes: v.optional(v.array(onboardingOutcomeValidator)),
+    /** First version, no longer read. */
+    stages: v.optional(v.array(onboardingStageValidator)),
     updatedAt: v.number(),
     updatedByName: v.string(),
   }),

@@ -18,8 +18,10 @@ import {
   balancedSplit,
   DEFAULT_STATUS_CONFIG,
   milestonesOf,
-  nextStatus,
   pathLabel,
+  phaseFor,
+  setMilestone,
+  suggestFollowUp,
   validateStatusConfig,
 } from "./lib/onboarding";
 
@@ -89,32 +91,45 @@ describe("onboarding helpers", () => {
     ).toMatchObject({ accountStatus: 2, closeDate: 3, status: -1, date: 4 });
   });
 
-  test("default status tree: stages, next stage, labels, milestones", () => {
-    const c = DEFAULT_STATUS_CONFIG;
-    expect(c.stages.map((st) => st.id)).toEqual(["fresh", "step1", "step2", "step3"]);
-    expect(nextStatus(c, "fresh")).toBe("step1");
-    expect(nextStatus(c, "step3")).toBe("done");
-    expect(pathLabel(c, "step1", ["s1.case", "s1.case.login", "s1.case.login.welcome"])).toBe(
-      "case opened › login problem › no welcome mail",
-    );
-    // Step 2: credit problem is its own result, not under case opened.
-    expect(pathLabel(c, "step2", ["s2.credit", "s2.credit.deposit"])).toBe(
-      "credit problem › Deposit",
-    );
-    // Old rows: milestones from the step timestamps.
-    expect(milestonesOf({ cardsOrderedAt: 1, fuelledAt: 2 })).toEqual(["step1", "step2"]);
-    expect(milestonesOf({ milestonesDone: ["step3"], cardsOrderedAt: 1 })).toEqual(["step3"]);
+  test("phase follows the milestones; ticks keep their order", () => {
+    expect(phaseFor([], false)).toBe("fresh");
+    expect(phaseFor([], true)).toBe("step1");
+    expect(phaseFor(["cards"], true)).toBe("step2");
+    expect(phaseFor(["cards", "fuel"], true)).toBe("step3");
+    expect(phaseFor(["cards", "fuel", "twoMonth"], true)).toBe("done");
+    // Ticking "fuel" ticks "cards" too; unticking "cards" unticks the rest.
+    expect(setMilestone([], "fuel", true)).toEqual(["cards", "fuel"]);
+    expect(setMilestone(["cards", "fuel"], "cards", false)).toEqual([]);
+    // First versions: stage ids and step timestamps.
+    expect(milestonesOf({ milestonesDone: ["step1", "step2"] })).toEqual(["cards", "fuel"]);
+    expect(milestonesOf({ cardsOrderedAt: 1 })).toEqual(["cards"]);
   });
 
-  test("an edited tree may not drop stages or entries", () => {
+  test("situation tree: labels and no deleting", () => {
     const c = DEFAULT_STATUS_CONFIG;
+    expect(pathLabel(c, ["case", "case.login", "case.login.welcome"])).toBe(
+      "Case eröffnet › login problem › no welcome mail",
+    );
+    expect(pathLabel(c, ["s1.case"])).toBeNull();
     expect(validateStatusConfig(c, c)).toEqual([]);
-    const dropped = { stages: c.stages.slice(0, 3) };
-    expect(validateStatusConfig(dropped, c).length).toBeGreaterThan(0);
-    const hidden = {
-      stages: c.stages.map((st) => (st.id === "step3" ? { ...st, archived: true } : st)),
-    };
-    expect(validateStatusConfig(hidden, c)).toEqual([]);
+    expect(validateStatusConfig({ outcomes: c.outcomes.slice(1) }, c).length).toBeGreaterThan(0);
+  });
+
+  test("follow-up suggestions: +2 days / 1 week / 2 months, quarter hour, no weekend", () => {
+    // Wednesday 28.10.2026 15:37 Berlin (CET, UTC+1) → Friday 15:45.
+    const wed = new Date("2026-10-28T14:37:00Z");
+    expect(suggestFollowUp(wed, "contact")).toEqual({ date: "2026-10-30", time: "15:45" });
+    // Thursday → Saturday → Monday; Friday → Sunday → Monday.
+    expect(suggestFollowUp(new Date("2026-10-29T09:00:00Z"), "contact")).toEqual({
+      date: "2026-11-02",
+      time: "10:00",
+    });
+    expect(suggestFollowUp(new Date("2026-10-30T09:01:00Z"), "contact").date).toBe("2026-11-02");
+    // Cards ordered: one week; fuelled: two months.
+    expect(suggestFollowUp(wed, "cards")).toEqual({ date: "2026-11-04", time: "15:45" });
+    expect(suggestFollowUp(wed, "fuel")).toEqual({ date: "2026-12-28", time: "15:45" });
+    // Late evening is capped at the last slot.
+    expect(suggestFollowUp(new Date("2026-10-28T21:50:00Z"), "contact").time).toBe("21:45");
   });
 
   test("balanced split fills the emptiest first", () => {
@@ -205,7 +220,7 @@ describe("onboarding cockpit", () => {
     expect(cases.find((c) => c.customerNumber === "200")!.status).toBe("step1");
     await admin.mutation(api.performance.onboarding.update, {
       caseId: alpha._id,
-      status: "step2",
+      milestone: { key: "cards", done: true },
       assigneeUserId: ids.melina,
       nextFollowUp: "2026-11-02",
     });
@@ -282,7 +297,12 @@ describe("onboarding cockpit", () => {
     });
     const detail = await melina.query(api.performance.onboarding.get, { caseId: all[0]._id });
     expect(detail.nextFollowUp).toBe("2026-10-30");
-    expect(detail.contacts.map((c) => c.kind)).toEqual(["followUp", "not_reached", "assign"]);
+    expect(detail.contacts.map((c) => c.kind)).toEqual([
+      "followUp",
+      "status",
+      "not_reached",
+      "assign",
+    ]);
     const listed = await melina.query(api.performance.onboarding.list, {});
     expect(listed[0]).toMatchObject({ contactAttempts: 1, lastContactKind: "not_reached" });
   });
@@ -306,103 +326,126 @@ describe("onboarding cockpit", () => {
     expect(detail.closedAt).not.toBeNull();
   });
 
-  test("outcomes: success moves on, follow up stays, cancel goes to winback", async () => {
+  test("phases: first contact, milestones, cancel goes to winback", async () => {
     const { as } = await setup();
     const admin = as("admin");
-    await importReport(admin, [{ customerNumber: "100", reportStatus: "Progress Step 1" }]);
-    const [c] = await admin.query(api.performance.onboarding.list, {});
-    expect(c).toMatchObject({ status: "step1", outcomePath: [] });
+    await importReport(admin, [{ customerNumber: "100" }, { customerNumber: "200" }]);
+    const cases = await admin.query(api.performance.onboarding.list, {});
+    const c = cases.find((x) => x.customerNumber === "100")!;
+    expect(c).toMatchObject({ status: "fresh", outcomePath: [], milestones: [] });
 
     // A reason with children can't be picked on its own.
     await expect(
       admin.mutation(api.performance.onboarding.setOutcome, {
         caseId: c._id,
-        path: ["s1.case", "s1.case.login"],
+        path: ["case", "case.login"],
       }),
     ).rejects.toThrow();
+    // Not reached: now "In Kontakt", situation kept.
     await admin.mutation(api.performance.onboarding.setOutcome, {
       caseId: c._id,
-      path: ["s1.case", "s1.case.login", "s1.case.login.welcome"],
+      path: ["notReached"],
       nextFollowUp: "2026-11-02",
+      nextFollowUpTime: "09:15",
     });
     let detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
     expect(detail).toMatchObject({
       status: "step1",
-      outcomePath: ["s1.case", "s1.case.login", "s1.case.login.welcome"],
+      outcomePath: ["notReached"],
       nextFollowUp: "2026-11-02",
+      nextFollowUpTime: "09:15",
     });
+    expect(
+      (await admin.query(api.performance.onboarding.list, {})).find((x) => x._id === c._id),
+    ).toMatchObject({ lastContactKind: "not_reached", contactAttempts: 1 });
 
-    // Milestone of the stage.
+    // Cards ordered → phase 2; fuelled → phase 3; two-month check → done.
     await admin.mutation(api.performance.onboarding.update, {
       caseId: c._id,
-      milestone: { done: true },
-    });
-
-    // Success: on to step 2, which starts without an outcome.
-    await admin.mutation(api.performance.onboarding.setOutcome, {
-      caseId: c._id,
-      path: ["s1.success"],
+      milestone: { key: "cards", done: true },
     });
     detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
-    expect(detail).toMatchObject({ status: "step2", outcomePath: [], milestones: ["step1"] });
+    expect(detail).toMatchObject({ status: "step2", milestones: ["cards"] });
+    await admin.mutation(api.performance.onboarding.update, {
+      caseId: c._id,
+      milestone: { key: "fuel", done: true },
+    });
+    await admin.mutation(api.performance.onboarding.update, {
+      caseId: c._id,
+      milestone: { key: "twoMonth", done: true },
+    });
+    detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
+    expect(detail).toMatchObject({ status: "done", nextFollowUp: null });
+    // Unticking the check reopens it.
+    await admin.mutation(api.performance.onboarding.update, {
+      caseId: c._id,
+      milestone: { key: "twoMonth", done: false },
+    });
+    detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
+    expect(detail.status).toBe("step3");
 
-    // Free text is required where the tree asks for it.
+    // Will cancel with free text → winback, reason kept.
+    const other = cases.find((x) => x.customerNumber === "200")!;
     await expect(
       admin.mutation(api.performance.onboarding.setOutcome, {
-        caseId: c._id,
-        path: ["s2.cancel", "s2.cancel.competition"],
+        caseId: other._id,
+        path: ["cancel", "cancel.competition"],
       }),
     ).rejects.toThrow();
     await admin.mutation(api.performance.onboarding.setOutcome, {
-      caseId: c._id,
-      path: ["s2.cancel", "s2.cancel.competition"],
+      caseId: other._id,
+      path: ["cancel", "cancel.competition"],
       text: "DKV günstiger",
     });
-    detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
-    expect(detail).toMatchObject({
+    let winback = await admin.query(api.performance.onboarding.get, { caseId: other._id });
+    expect(winback).toMatchObject({
       status: "winback",
-      outcomePath: ["s2.cancel", "s2.cancel.competition"],
+      outcomePath: ["cancel", "cancel.competition"],
       outcomeText: "DKV günstiger",
-      nextFollowUp: null,
     });
-    expect(detail.contacts.map((x) => x.kind).slice(0, 2)).toEqual(["status", "outcome"]);
-
-    // Closed: no further outcomes.
     await expect(
       admin.mutation(api.performance.onboarding.setOutcome, {
+        caseId: other._id,
+        path: ["followUp"],
+      }),
+    ).rejects.toThrow();
+    // Reopen: back to its phase.
+    await admin.mutation(api.performance.onboarding.update, {
+      caseId: other._id,
+      status: "open",
+    });
+    winback = await admin.query(api.performance.onboarding.get, { caseId: other._id });
+    expect(winback.status).toBe("step1");
+
+    // Follow-up times only on the quarter hour.
+    await expect(
+      admin.mutation(api.performance.onboarding.update, {
         caseId: c._id,
-        path: ["s2.followUp"],
+        nextFollowUp: "2026-11-03",
+        nextFollowUpTime: "09:20",
       }),
     ).rejects.toThrow();
   });
 
-  test("admins extend the tree; new entries can be picked", async () => {
+  test("admins extend the situation tree; new entries can be picked", async () => {
     const { as } = await setup();
     const admin = as("admin");
     const config = await admin.query(api.performance.onboarding.statusConfig, {});
-    const stages = config.stages.map((st) =>
-      st.id === "step1"
-        ? {
-            ...st,
-            options: [
-              ...st.options,
-              { id: "s1.custom", label: "Rückruf vom Kunden", kind: "followUp" as const },
-            ],
-          }
-        : st,
-    );
-    await admin.mutation(api.performance.onboarding.saveStatusConfig, { stages });
-    await importReport(admin, [{ customerNumber: "100", reportStatus: "Progress Step 1" }]);
+    await admin.mutation(api.performance.onboarding.saveStatusConfig, {
+      outcomes: [
+        ...config.outcomes,
+        { id: "callback", label: "Rückruf vom Kunden", kind: "followUp" as const },
+      ],
+    });
+    await importReport(admin, [{ customerNumber: "100" }]);
     const [c] = await admin.query(api.performance.onboarding.list, {});
     await admin.mutation(api.performance.onboarding.setOutcome, {
       caseId: c._id,
-      path: ["s1.custom"],
+      path: ["callback"],
     });
     // Deleting an entry is refused (hide instead).
     await expect(
-      admin.mutation(api.performance.onboarding.saveStatusConfig, {
-        stages: config.stages,
-      }),
+      admin.mutation(api.performance.onboarding.saveStatusConfig, { outcomes: config.outcomes }),
     ).rejects.toThrow();
   });
 
@@ -439,18 +482,18 @@ describe("onboarding cockpit", () => {
     await admin.mutation(api.performance.onboarding.update, {
       caseId: c._id,
       nextFollowUp: "2026-11-02",
-      nextFollowUpTime: "09:30",
+      nextFollowUpTime: "09:15",
     });
     await admin.mutation(api.performance.onboarding.update, {
       caseId: c._id,
       nextFollowUp: "2026-11-04",
     });
     const detail = await admin.query(api.performance.onboarding.get, { caseId: c._id });
-    expect(detail).toMatchObject({ nextFollowUp: "2026-11-04", nextFollowUpTime: "09:30" });
+    expect(detail).toMatchObject({ nextFollowUp: "2026-11-04", nextFollowUpTime: "09:15" });
     expect(detail.contacts[0]).toMatchObject({
       kind: "followUp",
-      fromValue: "2026-11-02 09:30",
-      toValue: "2026-11-04 09:30",
+      fromValue: "2026-11-02 09:15",
+      toValue: "2026-11-04 09:15",
     });
     await expect(
       admin.mutation(api.performance.onboarding.update, {
