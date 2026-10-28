@@ -78,15 +78,14 @@ async function seed() {
 }
 
 describe("wiki entry audience", () => {
-  test("an employee doesn't see a managers-only entry in the list or on its page", async () => {
+  // Seit 28.10.2026 sehen alle alles im Wiki; minRole schränkt nicht mehr ein.
+  test("an employee also sees a managers-only entry in the list and on its page", async () => {
     const { t } = await seed();
     const employee = t.withIdentity({ subject: "employee" });
-    expect((await employee.query(api.wiki.entries.list, {})).map((e) => e.slug)).toEqual([
-      "urlaub-beantragen",
-    ]);
+    expect(await employee.query(api.wiki.entries.list, {})).toHaveLength(2);
     expect(
       await employee.query(api.wiki.entries.get, { slug: "abwesenheiten-genehmigen" }),
-    ).toBeNull();
+    ).not.toBeNull();
   });
 
   test("a manager sees both", async () => {
@@ -98,7 +97,7 @@ describe("wiki entry audience", () => {
     ).toMatchObject({ minRole: "manager" });
   });
 
-  test("the AI assistant only draws on entries the asker may read", async () => {
+  test("the AI assistant draws on all entries for everyone", async () => {
     const { t } = await seed();
     const ask = (clerkUserId: string) =>
       t.query(api.wiki.entries.apiSearchForAssistant, {
@@ -106,7 +105,7 @@ describe("wiki entry audience", () => {
         clerkUserId,
         question: "Urlaub beantragen oder genehmigen",
       });
-    expect((await ask("employee")).map((h) => h.title)).toEqual(["Urlaub beantragen"]);
+    expect(await ask("employee")).toHaveLength(2);
     expect(await ask("manager")).toHaveLength(2);
   });
 

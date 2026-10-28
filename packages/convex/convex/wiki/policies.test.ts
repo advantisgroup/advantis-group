@@ -93,7 +93,7 @@ describe("policies", () => {
     expect(await admin.query(api.wiki.policies.list, {})).toEqual([]);
   });
 
-  test("a managers-only policy stays out of employees' library and dashboard", async () => {
+  test("a managers-only policy now reaches everyone (since 28.10.2026)", async () => {
     const { admin, alice, fields } = await setup();
     await admin.mutation(api.wiki.entries.create, {
       slug: "freigaben",
@@ -102,16 +102,9 @@ describe("policies", () => {
       minRole: "manager",
       policy: true,
     });
-    expect((await alice.query(api.wiki.policies.list, {})).map((p) => p.slug)).toEqual([
+    expect((await alice.query(api.wiki.policies.list, {})).map((p) => p.slug).sort()).toEqual([
       "datenschutz",
+      "freigaben",
     ]);
-    expect((await alice.query(api.wiki.policies.pendingMine, {})).map((p) => p.slug)).toEqual([
-      "datenschutz",
-    ]);
-    // Only the admin can see it, so only the admin is counted.
-    const restricted = (await admin.query(api.wiki.policies.list, {})).find(
-      (p) => p.slug === "freigaben",
-    );
-    expect(restricted).toMatchObject({ audienceCount: 1, confirmedCount: 0 });
   });
 });

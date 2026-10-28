@@ -337,18 +337,13 @@ interface AccessUser {
   teams?: string[];
 }
 
+/** Seit 28.10.2026 (Vahan): alle Angemeldeten sehen alle Wiki-Inhalte und
+ *  Tools – Rollen- und Team-Angaben im Registry schränken nicht mehr ein. */
 export function canAccessGuidebook(
-  user: AccessUser,
-  gb: Pick<Guidebook, "minRole" | "teams">,
+  _user: AccessUser,
+  _gb: Pick<Guidebook, "minRole" | "teams">,
 ): boolean {
-  // Admins can always open guidebooks (for review/management).
-  if (user.role === "admin") return true;
-  if (gb.minRole === "admin") return false; // admin already handled above
-  if (gb.minRole === "manager" && user.role !== "manager") return false;
-  // No team restriction → available to everyone signed in.
-  if (gb.teams.length === 0) return true;
-  const mine = user.teams ?? [];
-  return gb.teams.some((t) => mine.includes(t));
+  return true;
 }
 
 export function accessibleGuidebooks(user: AccessUser): Guidebook[] {
