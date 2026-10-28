@@ -6,11 +6,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import {
   MANUAL_CONTACT_KINDS,
-  ONBOARDING_STATUSES,
-  ONBOARDING_STEPS,
-  STEP_CODES,
   type ManualContactKind,
-  type OnboardingStep,
 } from "@advantis/convex/performance/onboarding";
 import { useMutation, useQuery } from "convex/react";
 import { Flag, X } from "lucide-react";
@@ -19,7 +15,6 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -36,15 +31,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, formatIsoDate } from "@/lib/format";
 
-import { StatusBadge } from "./shared";
+import { CaseStatus } from "./CaseStatus";
+import { CustomerNumber, useStatusName } from "./shared";
 
 const NOBODY = "__none";
 
 type Assignee = { userId: Id<"users">; name: string };
 
-/** One case: the three onboarding steps, assignment, follow-up, code and
- * note, the report's columns, the contact log and the form for the next
- * contact. */
+/** One case: stage, milestone and outcome (status tree), assignment,
+ * follow-up and note, the report's columns, the contact log and the form
+ * for the next contact. */
 export function CaseSheet({
   caseId,
   onOpenChange,
@@ -74,6 +70,7 @@ function CaseBody({
   const locale = useLocale();
   const handleError = useErrorHandler();
   const data = useQuery(api.performance.onboarding.get, { caseId });
+  const statusName = useStatusName();
   const update = useMutation(api.performance.onboarding.update);
 
   const save = async (patch: Omit<Parameters<typeof update>[0], "caseId">) => {
@@ -94,14 +91,9 @@ function CaseBody({
     );
   }
 
-  const statusLabel = (s: string | null) =>
-    s && (ONBOARDING_STATUSES as readonly string[]).includes(s)
-      ? t(`status.${s as "fresh"}`)
-      : (s ?? "–");
-  const stepLabel = (s: string | null) =>
-    s && (ONBOARDING_STEPS as readonly string[]).includes(s)
-      ? t(`steps.${s as OnboardingStep}`)
-      : (s ?? "–");
+  // Status log lines store the stage name (since the status tree); older
+  // ones the stage id, which `statusName` resolves too.
+  const statusLabel = (s: string | null) => (s ? statusName(s) : "–");
   /** "2026-11-04 09:30" → "4. Nov. 2026, 09:30"; empty → "keine". */
   const followUpText = (v: string | null) => {
     if (!v) return t("case.noFollowUp");
@@ -109,11 +101,12 @@ function CaseBody({
     return `${formatIsoDate(date, locale)}${time ? `, ${time}` : ""}`;
   };
   const logTitle = (c: (typeof data.contacts)[number]) => {
-    if (c.kind === "step") {
+    if (c.kind === "step" || c.kind === "milestone") {
       return t(c.toValue === "1" ? "case.stepOn" : "case.stepOff", {
-        step: stepLabel(c.fromValue),
+        step: c.kind === "step" ? t(`steps.${c.fromValue as "cards"}`) : (c.fromValue ?? ""),
       });
     }
+    if (c.kind === "outcome") return `${t("contactKind.outcome")}: ${c.toValue ?? ""}`;
     return [
       "reached",
       "not_reached",
@@ -128,20 +121,19 @@ function CaseBody({
       ? t(`contactKind.${c.kind as "note"}`)
       : c.kind;
   };
-  const doneSteps = ONBOARDING_STEPS.filter((s) => data.steps[s]).length;
 
   return (
     <>
       <div className="shrink-0 space-y-1 border-b bg-background px-6 pb-4 pr-14 pt-5 text-left border-border/70">
         <SheetTitle className="flex flex-wrap items-center gap-2 text-lg tabular-nums">
-          {t("case.number", { number: data.customerNumber })}
+          <span className="font-normal text-muted-foreground">{t("case.numberLabel")}</span>
+          <CustomerNumber number={data.customerNumber} />
           {data.prio && (
             <Badge variant="destructive" className="gap-1">
               <Flag className="h-3 w-3" />
               {t("prioBadge")}
             </Badge>
           )}
-          {!data.inReport && <Badge variant="muted">{t("notInReportBadge")}</Badge>}
           {data.manual && <Badge variant="muted">{t("case.manualBadge")}</Badge>}
           {data.archived && <Badge variant="muted">{t("case.archivedBadge")}</Badge>}
         </SheetTitle>
@@ -156,32 +148,7 @@ function CaseBody({
       </div>
 
       <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
-        <section className="space-y-3 rounded-xl border border-border/70 p-4">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold">{t("case.steps")}</h3>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {t("case.stepsDone", { done: doneSteps })}
-              <StatusBadge status={data.status} />
-            </div>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {ONBOARDING_STEPS.map((step) => (
-              <label
-                key={step}
-                className="flex cursor-pointer items-center gap-2 rounded-lg border border-border/70 px-3 py-2 text-sm hover:bg-muted/40"
-              >
-                <Checkbox
-                  checked={data.steps[step]}
-                  onCheckedChange={(v) => void save({ steps: { [step]: v === true } })}
-                />
-                <span className="min-w-0">
-                  <span className="block font-medium">{t(`steps.${step}`)}</span>
-                  <span className="text-xs text-muted-foreground">{STEP_CODES[step]}</span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </section>
+        <CaseStatus data={data} />
 
         <section className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
@@ -267,7 +234,7 @@ function CaseBody({
           </div>
         </section>
 
-        <ContactForm caseId={caseId} closed={data.status === "done"} />
+        <ContactForm caseId={caseId} closed={data.status === "done" || data.status === "winback"} />
 
         <section className="space-y-2">
           <h3 className="text-sm font-semibold">{t("case.log")}</h3>

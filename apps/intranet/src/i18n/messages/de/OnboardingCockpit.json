@@ -9,7 +9,8 @@
     "fresh": "Neu",
     "step1": "1 von 3",
     "step2": "2 von 3",
-    "done": "Abgeschlossen"
+    "done": "Abgeschlossen",
+    "winback": "Winback"
   },
   "contactKind": {
     "reached": "Telefon · erreicht",
@@ -20,7 +21,8 @@
     "assign": "Zuweisung geändert",
     "step": "Schritt",
     "created": "Von Hand angelegt",
-    "followUp": "Wiedervorlage geändert"
+    "followUp": "Wiedervorlage geändert",
+    "outcome": "Ergebnis"
   },
   "tabs": {
     "cases": "Fälle",
@@ -29,7 +31,8 @@
     "import": "Import",
     "archive": "Archiv",
     "myCases": "Meine Fälle",
-    "distribution": "Verteilung"
+    "distribution": "Verteilung",
+    "status": "Status"
   },
   "kpi": {
     "open": "Offen",
@@ -47,7 +50,8 @@
     "consultant": "Consultant",
     "due": "WV fällig",
     "load": "Auslastung (offen)",
-    "filterHint": "Klick auf eine Kennzahl filtert die Liste."
+    "filterHint": "Klick auf eine Kennzahl filtert die Liste.",
+    "caseOpened": "Case offen"
   },
   "filter": {
     "search": "Kunde, Kundennummer oder Notiz suchen",
@@ -88,7 +92,8 @@
     "filtered": "Keine Fälle für diese Filter.",
     "prio": "Keine offenen Prio-Fälle. Sie entstehen über die Prio-Liste beim Import oder per Hand im Fall.",
     "followUps": "Keine Wiedervorlagen geplant. Lege beim Kontakt ein Datum fest.",
-    "archive": "Keine archivierten Fälle."
+    "archive": "Keine archivierten Fälle.",
+    "winback": "Keine Winback-Fälle."
   },
   "prioIntro": "Offene Prio-Fälle – überfällige Wiedervorlagen und älteste Fälle zuerst.",
   "followUpIntro": "Nur die Wiedervorlagen des Onboarding-Cockpits – unabhängig vom Intranet-Kalender.",
@@ -134,7 +139,8 @@
     "manualBadge": "Von Hand angelegt",
     "stepsDone": "{done} von 3 erledigt",
     "followUpTime": "Uhrzeit (optional)",
-    "noFollowUp": "keine"
+    "noFollowUp": "keine",
+    "numberLabel": "Kundennummer"
   },
   "import": {
     "reportTitle": "Onboarding-Report",
@@ -266,5 +272,65 @@
     "teamSaved": "Team gespeichert.",
     "teamUpdated": "Zuletzt geändert von {name}",
     "teamEmpty": "Noch nicht festgelegt."
+  },
+  "archiveTabs": {
+    "winback": "Winback",
+    "archived": "Archiviert"
+  },
+  "copyNumber": "Kundennummer kopieren",
+  "copied": "{number} kopiert.",
+  "copyFailed": "Kopieren nicht möglich.",
+  "overview": {
+    "title": "Status je Stufe",
+    "noOutcome": "noch kein Ergebnis"
+  },
+  "statusTree": {
+    "title": "Status",
+    "stage": "Stufe",
+    "milestone": "Zwischenstatus",
+    "current": "Aktuelles Ergebnis",
+    "none": "Noch kein Ergebnis in dieser Stufe.",
+    "set": "Ergebnis festhalten",
+    "reason": "Grund",
+    "detail": "Genauer",
+    "freetext": "Freitext",
+    "textRequired": "Bitte den Freitext ausfüllen.",
+    "willMove": "Nach dem Speichern geht der Fall weiter zu: {status}",
+    "willWinback": "Nach dem Speichern wird der Fall geschlossen und landet auf der Winback-Liste im Archiv.",
+    "save": "Ergebnis speichern",
+    "saved": "Ergebnis gespeichert.",
+    "movedTo": "Gespeichert – Fall ist jetzt in: {status}",
+    "clear": "Auswahl zurücksetzen"
+  },
+  "winbackIntro": "Fälle mit „will cancel“: geschlossen, mit Grund – für die Rückgewinnung.",
+  "editor": {
+    "intro": "Hier passt du Stufen, Ergebnisse, Gründe und Untergründe an. Die Art eines Ergebnisses bestimmt, was passiert: „Erfolg“ schiebt den Fall in die nächste Stufe, „Kündigung“ schließt ihn auf die Winback-Liste. Gespeicherte Einträge lassen sich nur ausblenden, nicht löschen – alte Fälle behalten so ihre Bezeichnung.",
+    "stage": "Stufe",
+    "milestone": "Zwischenstatus (Haken)",
+    "milestoneHint": "z. B. Karten bestellt – leer = keiner",
+    "addOutcome": "Ergebnis hinzufügen",
+    "addChild": "Unterpunkt hinzufügen",
+    "addStage": "Stufe hinzufügen",
+    "labelHint": "Bezeichnung",
+    "kind": "Art",
+    "freetext": "Freitext",
+    "hidden": "ausgeblendet",
+    "hide": "Ausblenden",
+    "show": "Einblenden",
+    "remove": "Entfernen",
+    "up": "Nach oben",
+    "down": "Nach unten",
+    "save": "Status speichern",
+    "discard": "Änderungen verwerfen",
+    "saved": "Status gespeichert.",
+    "error": "Konnte nicht gespeichert werden.",
+    "kinds": {
+      "success": "Erfolg → nächste Stufe",
+      "followUp": "Follow-up",
+      "notReached": "Nicht erreicht",
+      "cancel": "Kündigung → Winback",
+      "case": "Case / Problem",
+      "other": "Sonstiges"
+    }
   }
 }
