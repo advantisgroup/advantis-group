@@ -92,13 +92,13 @@ describe("move guides to wiki", () => {
     expect(entry?.categoryId).toBe(onboarding);
   });
 
-  test("an employee doesn't get the managers-only guides", async () => {
+  test("an employee gets all guides (everyone sees everything since 28.10.2026)", async () => {
     const { t } = await setup();
     await t.mutation(internal.migrations.moveGuidesToWiki.run, {
       ownerEmail: "owner@advantisgroup.de",
     });
     const visible = await t.withIdentity({ subject: "employee" }).query(api.wiki.entries.list, {});
-    expect(visible).toHaveLength(BUILTIN_GUIDES.length - 4);
+    expect(visible).toHaveLength(BUILTIN_GUIDES.length);
   });
 
   test("a second run skips every guide", async () => {

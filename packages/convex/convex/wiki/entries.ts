@@ -10,19 +10,19 @@ const MAX_PINS = 8;
 /** Whether this caller may read the entry. Every wiki read goes through this —
  * the list, a single page, ⌘K search and the AI assistant's retrieval — so a
  * managers-only page never reaches someone below that role by another path. */
-export function canReadWikiEntry(caller: Caller, entry: Pick<Doc<"wikiEntries">, "minRole">) {
-  return !entry.minRole || caller.meets(entry.minRole);
+// Seit 28.10.2026 (Vahan): alle Angemeldeten sehen alle Wiki-Einträge.
+// `minRole` bleibt im Datensatz, schränkt das Lesen aber nicht mehr ein.
+export function canReadWikiEntry(_caller: Caller, _entry: Pick<Doc<"wikiEntries">, "minRole">) {
+  return true;
 }
 
 /** The same rule for a user outside a request (the weekly email, the policy
  *  library's "how many have confirmed" count), by their actual role. */
 export function userCanReadWikiEntry(
-  user: Pick<Doc<"users">, "role">,
-  entry: Pick<Doc<"wikiEntries">, "minRole">,
+  _user: Pick<Doc<"users">, "role">,
+  _entry: Pick<Doc<"wikiEntries">, "minRole">,
 ) {
-  if (!entry.minRole) return true;
-  if (entry.minRole === "admin") return user.role === "admin";
-  return user.role === "manager" || user.role === "admin";
+  return true;
 }
 
 function plainText(html: string) {

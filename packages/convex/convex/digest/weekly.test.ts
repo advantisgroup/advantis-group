@@ -127,7 +127,7 @@ describe("weekly digest", () => {
     expect(digests.map((d) => d.email)).toEqual(["sales@advantisgroup.de"]);
   });
 
-  test("leaves managers-only wiki pages and policies out for employees", async () => {
+  test("includes managers-only wiki pages and policies for employees too (since 28.10.2026)", async () => {
     const t = await setup();
     await t.run(async (ctx) => {
       const author = (await ctx.db.query("users").first())!._id;
@@ -156,7 +156,7 @@ describe("weekly digest", () => {
     });
     const digests = await t.query(internal.digest.weekly.build, { until: NOW });
     const sales = digests.find((d) => d.email === "sales@advantisgroup.de")!;
-    expect(sales.wiki).toEqual([]);
-    expect(sales.policies.map((p) => p.title)).toEqual(["Datenschutz"]);
+    expect(sales.wiki.length).toBeGreaterThan(0);
+    expect(sales.policies.map((p) => p.title)).toContain("fuehrung-richtlinie");
   });
 });
