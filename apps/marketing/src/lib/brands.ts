@@ -7,9 +7,8 @@
  *
  * `status` is `"soon"` for a brand that has not launched: it renders without
  * its colour, carries a label, and does not link out. A live brand without
- * a `url` (KMUbrain) is shown in full but has no outbound link either. Oldschool-train and
- * Sales-AI-Germany were taken off the site in 10/2026; their colours, scenes
- * and texts stay in the code so they can come back by adding the entry again.
+ * a `url` (KMUbrain, Oldschool-train, Sales-AI-Germany) is shown in full but
+ * has no outbound link and no "learn more" either.
  */
 export type Brand = {
   key: "salespirates" | "rodeo" | "oldschool" | "salesai" | "kmubrain";
@@ -43,6 +42,20 @@ export const BRANDS: readonly Brand[] = [
     brandText: "rodeo",
     accent: "var(--rodeo)",
     url: "https://rodeoconsulting.de",
+    status: "live",
+  },
+  {
+    key: "oldschool",
+    name: "Oldschool-train",
+    brandText: "oldschool-train",
+    accent: "var(--oldschool)",
+    status: "live",
+  },
+  {
+    key: "salesai",
+    name: "Sales-AI-Germany",
+    brandText: "sales-ai-germany",
+    accent: "var(--sales-ai)",
     status: "live",
   },
 ];

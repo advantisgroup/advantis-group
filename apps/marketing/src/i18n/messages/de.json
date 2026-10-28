@@ -60,7 +60,7 @@
     "menuLabel": "Menü",
     "descriptions": {
       "about": "Wer wir sind und wofür wir stehen",
-      "brands": "Drei Marken, ein gemeinsames Ziel",
+      "brands": "Fünf Marken, ein gemeinsames Ziel",
       "team": "Die Menschen hinter der Gruppe",
       "blog": "Einblicke und Praxis aus dem Vertrieb",
       "whitepaper": "Kostenloser Download zum Vertrieb von morgen",
@@ -156,7 +156,7 @@
     "groupLabel": "Die Marken der Gruppe",
     "title": "Unsere",
     "titleHighlight": "Marken",
-    "subtitle": "Drei starke Marken, ein gemeinsames Ziel: dein Vertriebserfolg",
+    "subtitle": "Fünf starke Marken, ein gemeinsames Ziel: dein Vertriebserfolg",
     "salespirates": {
       "tagline": "Externe Vertriebsagentur",
       "description": "Wir generieren Leads im Cold Calling, qualifizieren vor und übernehmen deinen Inside Sales. Vom Lead bis zum Abschluss für einen maximalen Erfolg deines Sales."
@@ -175,7 +175,7 @@
     },
     "kmubrain": {
       "tagline": "KI für den Mittelstand",
-      "description": "Fertige KI-Assistenten für kleine und mittlere Unternehmen: Sie schreiben Angebote, nehmen Anrufe entgegen und beantworten Kundenfragen – ohne eigene IT-Abteilung."
+      "description": "Fertige KI-Assistenten für kleine und mittlere Unternehmen: Sie schreiben Angebote, nehmen Anrufe entgegen und beantworten Kundenfragen"
     },
     "cta": "Alle Marken entdecken"
   },
@@ -189,7 +189,7 @@
     "returning": "Du hast uns schon geschrieben? <link>Hier sind deine Anfragen und unsere Antworten</link>."
   },
   "footer": {
-    "description": "Wir sind dein Partner für erfolgreichen Vertrieb. Mit über 15 Jahren Erfahrung und drei starken Marken bringen wir dein Unternehmen voran.",
+    "description": "Wir sind dein Partner für erfolgreichen Vertrieb. Mit über 15 Jahren Erfahrung und fünf starken Marken bringen wir dein Unternehmen voran.",
     "quickLinks": "Quick Links",
     "ourBrands": "Unsere Marken",
     "contact": "Kontakt",
@@ -459,7 +459,7 @@
   "brandsPage": {
     "comingSoon": "In Vorbereitung",
     "hero": {
-      "badge": "Drei Premium Marken – Ein Ziel",
+      "badge": "Fünf Premium Marken – Ein Ziel",
       "titlePrefix": "Unsere",
       "titleSuffix": "Marken",
       "subtitle": "Maßgeschneiderte Sales-Lösungen für nachhaltigen Erfolg",
@@ -504,10 +504,10 @@
       },
       "kmubrain": {
         "tagline": "KI für den Mittelstand",
-        "description": "KMUbrain bringt künstliche Intelligenz in kleine und mittlere Unternehmen, ohne eigene IT-Abteilung und ohne langes Projekt. Unsere „Brains“ sind fertige KI-Assistenten für Ihre Branche: Sie schreiben Angebote, nehmen Anrufe entgegen, sortieren den Posteingang oder beantworten Kundenfragen. Wir richten alles für Sie ein, betreuen den Betrieb und sorgen dafür, dass Ihr Team mehr Zeit für das Wesentliche hat.",
+        "description": "KMUbrain bringt künstliche Intelligenz in kleine und mittlere Unternehmen – ohne langes Projekt. Unsere „Brains“ sind fertige KI-Assistenten für Ihre Branche: Sie schreiben Angebote, nehmen Anrufe entgegen, sortieren den Posteingang oder beantworten Kundenfragen. Wir richten alles für Sie ein, betreuen den Betrieb und sorgen dafür, dass Ihr Team mehr Zeit für das Wesentliche hat.",
         "highlights": {
           "0": "Fertige KI-Assistenten für Ihre Branche",
-          "1": "Ohne eigene IT-Abteilung, ohne langes Projekt",
+          "1": "Ohne langes Projekt",
           "2": "Einrichtung und Betreuung aus einer Hand"
         }
       }

@@ -20,7 +20,7 @@ export default function UberUns() {
   const stats = [
     { value: 15, suffix: "+", label: t("stats.experience") },
     { value: 150, suffix: "+", label: t("stats.projects") },
-    { value: 3, label: t("stats.brands") },
+    { value: 5, label: t("stats.brands") },
   ];
 
   return (

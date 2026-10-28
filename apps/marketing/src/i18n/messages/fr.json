@@ -60,7 +60,7 @@
     "menuLabel": "Menu",
     "descriptions": {
       "about": "Qui nous sommes et ce que nous défendons",
-      "brands": "Trois marques, un objectif commun",
+      "brands": "Cinq marques, un objectif commun",
       "team": "Les personnes derrière le groupe",
       "blog": "Analyses et pratiques de la vente",
       "whitepaper": "Téléchargement gratuit sur la vente de demain",
@@ -156,7 +156,7 @@
     "groupLabel": "Les marques du groupe",
     "title": "Nos",
     "titleHighlight": "Marques",
-    "subtitle": "Trois marques fortes, un objectif commun : Votre succès commercial",
+    "subtitle": "Cinq marques fortes, un objectif commun : Votre succès commercial",
     "salespirates": {
       "tagline": "Agence de Vente Externe",
       "description": "Nous générons des leads par cold calling, les pré-qualifions et prenons en charge votre inside sales. Du lead jusqu'à la conclusion, pour un succès commercial maximal."
@@ -175,7 +175,7 @@
     },
     "kmubrain": {
       "tagline": "L'IA pour les PME",
-      "description": "Des assistants IA prêts à l'emploi pour les petites et moyennes entreprises : ils rédigent des devis, prennent les appels et répondent aux clients – sans service informatique."
+      "description": "Des assistants IA prêts à l'emploi pour les petites et moyennes entreprises : ils rédigent des devis, prennent les appels et répondent aux clients."
     },
     "cta": "Découvrir Toutes les Marques"
   },
@@ -189,7 +189,7 @@
     "returning": "Vous nous avez déjà écrit ? <link>Retrouvez vos demandes et nos réponses</link>."
   },
   "footer": {
-    "description": "Nous sommes votre partenaire pour des ventes réussies. Avec plus de 15 ans d'expérience et trois marques fortes, nous faisons avancer votre entreprise.",
+    "description": "Nous sommes votre partenaire pour des ventes réussies. Avec plus de 15 ans d'expérience et cinq marques fortes, nous faisons avancer votre entreprise.",
     "quickLinks": "Liens Rapides",
     "ourBrands": "Nos Marques",
     "contact": "Contact",
@@ -459,7 +459,7 @@
   "brandsPage": {
     "comingSoon": "Bientôt disponible",
     "hero": {
-      "badge": "Trois marques premium – Un objectif",
+      "badge": "Cinq marques premium – Un objectif",
       "titlePrefix": "Nos",
       "titleSuffix": "Marques",
       "subtitle": "Des solutions de vente sur mesure pour un succès durable",
@@ -504,10 +504,10 @@
       },
       "kmubrain": {
         "tagline": "L'IA pour les PME",
-        "description": "KMUbrain apporte l'intelligence artificielle aux petites et moyennes entreprises, sans service informatique interne et sans long projet. Nos « Brains » sont des assistants IA prêts à l'emploi pour votre secteur : ils rédigent des devis, prennent les appels, trient la boîte de réception ou répondent aux questions des clients. Nous mettons tout en place pour vous, assurons le suivi au quotidien et veillons à ce que votre équipe ait plus de temps pour l'essentiel.",
+        "description": "KMUbrain apporte l'intelligence artificielle aux petites et moyennes entreprises – sans long projet. Nos « Brains » sont des assistants IA prêts à l'emploi pour votre secteur : ils rédigent des devis, prennent les appels, trient la boîte de réception ou répondent aux questions des clients. Nous mettons tout en place pour vous, assurons le suivi au quotidien et veillons à ce que votre équipe ait plus de temps pour l'essentiel.",
         "highlights": {
           "0": "Des assistants IA prêts à l'emploi pour votre secteur",
-          "1": "Sans service informatique, sans long projet",
+          "1": "Sans long projet",
           "2": "Mise en place et suivi par un seul interlocuteur"
         }
       }

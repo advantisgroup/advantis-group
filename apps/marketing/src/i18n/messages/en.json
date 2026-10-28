@@ -60,7 +60,7 @@
     "menuLabel": "Menu",
     "descriptions": {
       "about": "Who we are and what we stand for",
-      "brands": "Three brands, one shared goal",
+      "brands": "Five brands, one shared goal",
       "team": "The people behind the group",
       "blog": "Insight and practice from the sales floor",
       "whitepaper": "A free download on the sales floor of tomorrow",
@@ -153,7 +153,7 @@
     "groupLabel": "The brands of the group",
     "title": "Our",
     "titleHighlight": "Brands",
-    "subtitle": "Three strong brands, one common goal: Your sales success",
+    "subtitle": "Five strong brands, one common goal: Your sales success",
     "salespirates": {
       "tagline": "External Sales Agency",
       "description": "We generate leads through cold calling, pre-qualify them, and take over your inside sales. From lead to close, for maximum sales success."
@@ -172,7 +172,7 @@
     },
     "kmubrain": {
       "tagline": "AI for SMEs",
-      "description": "Ready-made AI assistants for small and medium-sized businesses: they write quotes, take calls and answer customer questions – no IT department needed."
+      "description": "Ready-made AI assistants for small and medium-sized businesses: they write quotes, take calls and answer customer questions."
     },
     "cta": "Discover All Brands"
   },
@@ -186,7 +186,7 @@
     "returning": "Already written to us? <link>See your inquiries and our replies</link>."
   },
   "footer": {
-    "description": "We are your partner for successful sales. With over 15 years of experience and three strong brands, we move your business forward.",
+    "description": "We are your partner for successful sales. With over 15 years of experience and five strong brands, we move your business forward.",
     "quickLinks": "Quick Links",
     "ourBrands": "Our Brands",
     "contact": "Contact",
@@ -456,7 +456,7 @@
   "brandsPage": {
     "comingSoon": "Coming soon",
     "hero": {
-      "badge": "Three Premium Brands – One Goal",
+      "badge": "Five Premium Brands – One Goal",
       "titlePrefix": "Our",
       "titleSuffix": "Brands",
       "subtitle": "Tailored sales solutions for sustainable success",
@@ -501,10 +501,10 @@
       },
       "kmubrain": {
         "tagline": "AI for SMEs",
-        "description": "KMUbrain brings artificial intelligence to small and medium-sized businesses – without an in-house IT department and without a long project. Our “Brains” are ready-made AI assistants for your industry: they write quotes, take calls, sort the inbox or answer customer questions. We set everything up for you, look after it in operation and make sure your team has more time for what matters.",
+        "description": "KMUbrain brings artificial intelligence to small and medium-sized businesses – without a long project. Our “Brains” are ready-made AI assistants for your industry: they write quotes, take calls, sort the inbox or answer customer questions. We set everything up for you, look after it in operation and make sure your team has more time for what matters.",
         "highlights": {
           "0": "Ready-made AI assistants for your industry",
-          "1": "No IT department, no long project",
+          "1": "No long project",
           "2": "Set-up and support from a single source"
         }
       }
