@@ -34,4 +34,10 @@ export const TEAM: readonly { name: string; role: string; initials: string; phot
     initials: "MB",
     photo: "/team/martin-bergmueller.png",
   },
+  {
+    name: "Vahan Hovhannisyan",
+    role: "roles.ai",
+    initials: "VH",
+    photo: "/team/vahan-hovhannisyan.jpg",
+  },
 ];
