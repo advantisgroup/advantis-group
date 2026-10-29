@@ -269,10 +269,35 @@ describe("onboarding cockpit", () => {
     expect(cases.filter((c) => c.prio).map((c) => c.customerNumber)).toEqual(["100"]);
   });
 
+  test("live: only the team gets in, everyone else stays out", async () => {
+    vi.stubEnv("ONBOARDING_MODE", "live");
+    const { as, ids } = await setup();
+    // No team yet: nobody but admins.
+    expect(await as("melina").query(api.performance.onboarding.me, {})).toMatchObject({
+      access: false,
+    });
+    await as("admin").mutation(api.performance.onboarding.saveSettings, {
+      memberUserIds: [ids.melina],
+      pausedUserIds: [],
+    });
+    expect(await as("melina").query(api.performance.onboarding.me, {})).toMatchObject({
+      access: true,
+      canManage: false,
+    });
+    expect(await as("doreen").query(api.performance.onboarding.me, {})).toMatchObject({
+      access: false,
+    });
+    await expect(as("doreen").query(api.performance.onboarding.list, {})).rejects.toThrow();
+  });
+
   test("consultants see and work only their own cases once live", async () => {
     vi.stubEnv("ONBOARDING_MODE", "live");
     const { as, ids } = await setup();
     const admin = as("admin");
+    await admin.mutation(api.performance.onboarding.saveSettings, {
+      memberUserIds: [ids.melina, ids.doreen],
+      pausedUserIds: [],
+    });
     await importReport(admin, [{ customerNumber: "100" }, { customerNumber: "200" }]);
     const all = await admin.query(api.performance.onboarding.list, {});
     await admin.mutation(api.performance.onboarding.assignMany, {
@@ -459,6 +484,10 @@ describe("onboarding cockpit", () => {
   test("cases entered by hand: own for consultants, never missing from a report", async () => {
     vi.stubEnv("ONBOARDING_MODE", "live");
     const { as, ids } = await setup();
+    await as("admin").mutation(api.performance.onboarding.saveSettings, {
+      memberUserIds: [ids.melina, ids.doreen],
+      pausedUserIds: [],
+    });
     const id = await as("doreen").mutation(api.performance.onboarding.create, {
       customerNumber: "0777",
       name: "Handkunde",
