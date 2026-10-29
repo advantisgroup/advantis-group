@@ -25,6 +25,10 @@ const OPEN_PREFIXES = [
   // Performance: für alle freigegeben am 16.10.2026 (Convex-Env
   // PERFORMANCE_MODE=live); Hinweis „im Aufbau“ am 27.10.2026 entfernt.
   "/performance",
+  // Onboarding-Cockpit: freigegeben am 29.10.2026 (Vahan) für das Team aus
+  // „Verteilung → Team“ und die Teamleitung – Zugriff regelt Convex
+  // (ONBOARDING_MODE=live + Teamliste), nicht diese Liste.
+  "/onboarding-cockpit",
   // Wissen: Wiki und KI-Assistent für alle freigegeben (19.10. / 21.10.2026, Vahan).
   "/guidebooks",
   "/wiki-chat",

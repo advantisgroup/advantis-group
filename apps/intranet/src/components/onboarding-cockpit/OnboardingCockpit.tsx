@@ -81,7 +81,7 @@ type Assignee = { userId: Id<"users">; name: string };
 /**
  * Onboarding-Cockpit (own sidebar entry under Performance): the team's work
  * list. Admins see all cases, distribute them and import the Salesforce
- * report; everyone else (once `ONBOARDING_MODE=live`) only their own.
+ * report; the team members (once `ONBOARDING_MODE=live`) only their own.
  */
 export function OnboardingCockpit() {
   const t = useTranslations("OnboardingCockpit");

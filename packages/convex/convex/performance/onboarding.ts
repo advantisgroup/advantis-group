@@ -85,7 +85,11 @@ async function cockpitAccess(ctx: Ctx & { caller: Caller }): Promise<CockpitAcce
   if (settings?.leadUserIds.includes(caller.user._id)) {
     return { canManage: true, isAdmin: false, ...base };
   }
-  if (onboardingIsLive()) return { canManage: false, isAdmin: false, ...base };
+  // Released (29.10.2026): only the onboarding team set up under
+  // "Verteilung → Team" – everyone else keeps not seeing the cockpit.
+  if (onboardingIsLive() && settings?.memberUserIds.includes(caller.user._id)) {
+    return { canManage: false, isAdmin: false, ...base };
+  }
   return null;
 }
 

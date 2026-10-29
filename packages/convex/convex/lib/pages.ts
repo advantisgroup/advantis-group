@@ -348,6 +348,8 @@ export const INTRANET_PAGES: IntranetPage[] = [
     description:
       "UTA-Neukunden aus dem Onboarding-Report: Prio-Fälle, Wiedervorlagen, Kontakte je Kunde und Verteilung ans Team.",
     keywords: ["onboarding", "neukunden", "prio", "wiedervorlage", "cockpit", "kunden"],
+    // Team membership lives in Convex; the page itself sends anyone else
+    // back to the start page.
     visible: (caller) => caller.isAdmin || process.env.ONBOARDING_MODE === "live",
   },
   {

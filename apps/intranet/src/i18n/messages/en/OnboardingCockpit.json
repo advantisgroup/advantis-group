@@ -4,7 +4,7 @@
   "introManage": "UTA new customers from the Salesforce report: prio cases first, follow-ups in view, every contact logged per customer. Assign cases to the team here.",
   "introOwn": "Your onboarding cases: contact prio cases first, keep your follow-ups, log every contact.",
   "adminsOnly": "Visible to admins only",
-  "adminsOnlyHint": "The team only sees the cockpit once ONBOARDING_MODE=live is set.",
+  "adminsOnlyHint": "The team (Distribution → Team) only sees the cockpit once ONBOARDING_MODE=live is set.",
   "status": {
     "fresh": "New",
     "step1": "In contact",

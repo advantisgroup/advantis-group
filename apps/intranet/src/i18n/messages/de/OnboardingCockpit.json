@@ -4,7 +4,7 @@
   "introManage": "UTA-Neukunden aus dem Salesforce-Report: Prio-Fälle zuerst, Wiedervorlagen im Blick, Kontakte je Kunde festhalten. Fälle verteilst du hier an das Team.",
   "introOwn": "Deine Onboarding-Fälle: Prio-Fälle zuerst kontaktieren, Wiedervorlagen einhalten, jeden Kontakt festhalten.",
   "adminsOnly": "Nur für Admins sichtbar",
-  "adminsOnlyHint": "Das Team sieht das Cockpit erst, wenn ONBOARDING_MODE=live gesetzt ist.",
+  "adminsOnlyHint": "Das Team (Verteilung → Team) sieht das Cockpit erst, wenn ONBOARDING_MODE=live gesetzt ist.",
   "status": {
     "fresh": "Neu",
     "step1": "In Kontakt",

@@ -366,7 +366,7 @@ export function Sidebar() {
       icon: LineChart,
     },
     // Own entry right under Performance; shown to whoever may open it
-    // (admins until the Convex env ONBOARDING_MODE is live).
+    // (admins, team leads, and – once ONBOARDING_MODE is live – the team).
     ...(onboardingCockpit?.access
       ? [
           {
