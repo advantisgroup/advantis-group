@@ -221,8 +221,13 @@ export function summarizeDays(input: {
     const measured = measureDay(byDate.get(date) ?? [], input.now);
     const holiday = holidayByDate.get(date) ?? null;
     const target = targetMinutesOn(date, input.schedules, holiday, input.absences);
-    const workedMinutes = Math.round(measured.workedMs / MINUTE);
-    const breakMinutes = Math.round(measured.breakMs / MINUTE);
+    // A whole day off sick replaces whatever was clocked that day: hours
+    // worked before going home sick don't count on top (Vahan, 02.11.2026).
+    const sickAllDay = input.absences.some(
+      (absence) => absence.type === "sick" && absenceFractionOn(absence, date) >= 1,
+    );
+    const workedMinutes = sickAllDay ? 0 : Math.round(measured.workedMs / MINUTE);
+    const breakMinutes = sickAllDay ? 0 : Math.round(measured.breakMs / MINUTE);
     const rest =
       previousLast !== null && measured.first !== null
         ? Math.round((measured.first - previousLast) / MINUTE)

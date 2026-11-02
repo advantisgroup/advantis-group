@@ -202,6 +202,20 @@ describe("worked time", () => {
     expect(second.workedMinutes).toBe(0);
   });
 
+  test("a whole sick day replaces the hours clocked that day", () => {
+    const sick = {
+      type: "sick",
+      startDate: "2026-10-29",
+      endDate: "2026-10-29",
+      halfDayStart: false,
+      halfDayEnd: false,
+    };
+    const segments = [work("2026-10-29", "08:00", "11:00")];
+    expect(day("2026-10-29", segments, { absences: [sick] }).workedMinutes).toBe(0);
+    const half = { ...sick, halfDayStart: true };
+    expect(day("2026-10-29", segments, { absences: [half] }).workedMinutes).toBe(180);
+  });
+
   test("an open entry counts up to now", () => {
     const now = local("2026-10-05", "10:15");
     const result = day("2026-10-05", [work("2026-10-05", "08:00", null)], { now });
